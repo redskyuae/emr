@@ -1,0 +1,29 @@
+CLAUDE.md
+  a8a3a0dcf397966f 2-96
+CONTEXT.md
+  a8a3a0dcf397966f 1-43
+.github/pull_request_template.md
+  a8a3a0dcf397966f 1-12
+AGENTS.md
+  a8a3a0dcf397966f 8-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "6aa771ba3f6c125e657dfcd95329679c47d657ea",
+  "prompts": {
+    "a8a3a0dcf397966f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "070e1b07-2659-4c42-8fb1-26171da73204",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 174,
+      "total_deletions": 0,
+      "accepted_lines": 174,
+      "overriden_lines": 0
+    }
+  }
+}
