@@ -1,0 +1,8 @@
+.next
+out
+build
+node_modules
+bun.lock
+*.min.js
+app/db/drizzle/**
+**/drizzle/meta/**

@@ -1,11 +1,11 @@
-import type { ValidationResult } from "../../../utils/utils";
-import { createTodoSchema, type CreateTodoInput } from "../schemas/todo-schema";
+import type { ValidationResult } from '@/app/api/lib/utils/types';
+import { createTodoSchema, type CreateTodoInput } from '../schemas/todo-schema';
 
 export function validateCreateTodo(payload: unknown): ValidationResult<CreateTodoInput> {
   const result = createTodoSchema.safeParse(payload);
 
   if (!result.success) {
-    const errors = result.error.issues.map((error) => `${error.path.join(".")}: ${error.message}`);
+    const errors = result.error.issues.map((error) => `${error.path.join('.')}: ${error.message}`);
     return { success: false, errors };
   }
 

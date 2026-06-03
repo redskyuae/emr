@@ -1,8 +1,11 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const createTodoSchema = z.object({
-  title: z.string({ message: "Todo title is required" }).trim().min(1, "Todo title cannot be empty"),
-  description: z.string().trim().default(""),
+  title: z
+    .string({ message: 'Todo title is required' })
+    .trim()
+    .min(1, 'Todo title cannot be empty'),
+  description: z.string().trim().default(''),
   isCompleted: z.boolean().default(false),
 });
 

@@ -1,8 +1,8 @@
-import { asc, count } from "drizzle-orm";
+import { asc, count } from 'drizzle-orm';
 
-import { db } from "@/app/db";
-import { todoTable } from "@/app/db/schema/todo";
-import type { CreateTodoInput } from "../schemas/todo-schema";
+import { db } from '@/app/db';
+import { todoTable } from '@/app/db/schema/todo';
+import type { CreateTodoInput } from '../schemas/todo-schema';
 
 async function createTodo(data: CreateTodoInput) {
   const [createdTodo] = await db
