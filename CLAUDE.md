@@ -1,1 +1,96 @@
 @AGENTS.md
+
+# EMR — Multi-Tenant Hospital Management System
+
+API-first hospital management platform. A **Tenant** is a hospital group (e.g., Apollo Hospitals). Each tenant contains one or more **Facilities** (hospitals, clinics, labs). All clinical and operational data is scoped to a tenant via row-level isolation.
+
+## Stack
+
+| Layer | Tool |
+|---|---|
+| Framework | Next.js 16.2.7 (App Router) |
+| Language | TypeScript |
+| Database | PostgreSQL via Drizzle ORM |
+| Validation | Zod v4 |
+| Auth | BetterAuth (Organizations plugin) |
+| Styles | Tailwind CSS v4 |
+| Package manager | Bun |
+
+## Architecture: CQRS + Repository + Validation
+
+Every API module follows this pattern — no exceptions:
+
+```
+app/
+├── db/
+│   └── schema/{entity}.ts              # Drizzle table definition
+└── api/
+    ├── v1/{module}/route.ts            # Next.js route handler (thin)
+    └── lib/
+        └── modules/{module}/
+            ├── schemas/{module}-schema.ts   # Zod schemas + inferred types
+            ├── validator/                   # Validation functions (wrap Zod)
+            ├── commands/                    # Write operations (one file per command)
+            ├── queries/                     # Read operations (one file per query)
+            └── repository/                  # All DB access (Drizzle queries)
+```
+
+**Route handlers are thin.** Parse HTTP input → call command/query → return NextResponse. No business logic in route files.
+
+**Commands validate first.** Every command calls its validator before touching the repository. A command that skips validation is a bug.
+
+**Queries never mutate.** Query functions are read-only. If you find yourself writing an INSERT inside a query, move it to a command.
+
+**Repositories own all SQL.** Never write Drizzle queries outside a repository file.
+
+## Result types
+
+All commands, queries, and validators return discriminated unions from `app/api/lib/utils/types.ts`. Always use these — never throw or return raw data:
+
+```ts
+CommandResult<T>    // { success: true; data: T } | { success: false; errors: string[] }
+QueryResult<T>      // success variant + optional { data: T[]; total: number } for paginated
+ValidationResult<T> // { success: true; data: T } | { success: false; errors: string[] }
+Paginated<T>        // { data: T[]; meta: { total, totalPages, pageSize, pageNumber } }
+```
+
+## Multi-tenancy — critical rule
+
+Every table that holds tenant-scoped data MUST have a `tenantId` column. Every repository query MUST filter by `tenantId`. There are no exceptions. A query that omits the tenant filter leaks cross-tenant data.
+
+`tenantId` is resolved from the BetterAuth session (Organizations plugin). Route handlers extract it from the session and pass it into commands/queries. It never comes from the request body.
+
+## Adding a new module
+
+1. Define the Drizzle table in `app/db/schema/{entity}.ts`, include `tenantId`
+2. Run `bun run db:generate` to generate the migration, then `bun run db:migrate`
+3. Create `app/api/lib/modules/{module}/schemas/{module}-schema.ts` — Zod schema + exported types
+4. Create validator(s) in `validator/` — one function per operation, returns `ValidationResult<T>`
+5. Create repository in `repository/` — exports a plain object of async functions
+6. Create command(s) in `commands/` — validate → repository → return `CommandResult<T>`
+7. Create query/queries in `queries/` — repository → return `QueryResult<T>`
+8. Create `app/api/v1/{module}/route.ts` — HTTP parsing, call command/query, NextResponse
+
+## Database commands
+
+```bash
+bun run db:generate   # generate migration from schema changes
+bun run db:migrate    # run pending migrations
+bun run db:deploy     # check + migrate (use in CI/prod)
+bun run db:push       # push schema directly (dev only, no migration file)
+bun run db:studio     # open Drizzle Studio
+```
+
+## Dev commands
+
+```bash
+bun run dev           # start dev server
+bun run build         # production build
+bun run lint          # ESLint
+bun run format        # Prettier (write)
+bun run format:check  # Prettier (check only)
+```
+
+## Domain reference
+
+See `CONTEXT.md` for the canonical glossary of domain terms. Use those terms exactly — do not introduce synonyms.
