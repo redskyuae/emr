@@ -1,11 +1,14 @@
+type ResultFailure = { success: false; errors: string[]; status?: number };
+
 export type ValidationResult<T> = { success: true; data: T } | { success: false; errors: string[] };
 
-export type CommandResult<T> = { success: true; data: T } | { success: false; errors: string[] };
+export type CommandResult<T> = { success: true; data: T } | ResultFailure;
 
-export type QueryResult<T> =
-  | { success: true; data: T }
-  | { success: false; errors: string[] }
-  | { success: true; data: T[]; total: number };
+export type SingleQueryResult<T> = { success: true; data: T } | ResultFailure;
+
+export type ListQueryResult<T> = { success: true; data: T[]; total: number } | ResultFailure;
+
+export type QueryResult<T> = SingleQueryResult<T> | ListQueryResult<T>;
 
 export type Paginated<T> = {
   data: T[];
