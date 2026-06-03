@@ -1,0 +1,36 @@
+app/api/lib/modules/todo/commands/create-todo-command.ts
+  9495a28f4bc58081 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "8a16c1c0849ec1535560dba5cf0ec5d5e188c3e6",
+  "prompts": {
+    "9495a28f4bc58081": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0b1e3bd9-a138-4745-8b2b-3335d2ca12a2",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 2,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "a8a3a0dcf397966f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "070e1b07-2659-4c42-8fb1-26171da73204",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 874,
+      "total_deletions": 180,
+      "accepted_lines": 713,
+      "overriden_lines": 28
+    }
+  }
+}
