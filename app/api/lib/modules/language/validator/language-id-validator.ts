@@ -5,7 +5,7 @@ export function validateLanguageId(payload: unknown): ValidationResult<LanguageI
   const result = languageIdSchema.safeParse(payload);
 
   if (!result.success) {
-    return { success: false, errors: [`LanguageId ${String(payload)} is Invalid`] };
+    return { success: false, errors: [`LanguageId ${String(payload)} is Invalid.`] };
   }
 
   return { success: true, data: result.data };

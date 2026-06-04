@@ -46,11 +46,11 @@ export async function updateNationalityCommand(
   const errors: string[] = [];
 
   if (existingName) {
-    errors.push(`Nationality name ${payloadValidationResult.data.name} already exist`);
+    errors.push(`Nationality name ${payloadValidationResult.data.name} already exists.`);
   }
 
   if (existingCode) {
-    errors.push(`Nationality code ${payloadValidationResult.data.code} already exist`);
+    errors.push(`Nationality code ${payloadValidationResult.data.code} already exists.`);
   }
 
   if (errors.length > 0) {
