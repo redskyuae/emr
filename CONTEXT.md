@@ -52,6 +52,10 @@ Reference data shared by all Tenants. Unlike a Master, a Global Reference is not
 
 A Global Reference representing a spoken or written language used during Patient registration and communication preferences.
 
+## Nationality
+
+A Global Reference representing a Patient's citizenship or nationality, used during Patient registration and demographics. Distinct from Language, which represents what a Patient speaks or writes.
+
 ## Department
 
 A clinical or administrative unit within a Facility (e.g., Cardiology, Emergency, Radiology).

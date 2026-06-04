@@ -15,6 +15,13 @@
       "when": 1780473570398,
       "tag": "0001_greedy_chamber",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780555682577,
+      "tag": "0002_good_wraith",
+      "breakpoints": true
     }
   ]
 }
