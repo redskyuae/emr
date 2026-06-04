@@ -41,8 +41,12 @@ export async function seedLanguages() {
 }
 
 if (process.argv[1]?.endsWith('language.ts')) {
-  seedLanguages().catch((error: unknown) => {
-    console.error(error);
-    process.exit(1);
-  });
+  seedLanguages()
+    .then(() => {
+      process.exit(0);
+    })
+    .catch((error: unknown) => {
+      console.error(error);
+      process.exit(1);
+    });
 }

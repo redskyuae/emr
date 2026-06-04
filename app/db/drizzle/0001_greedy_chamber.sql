@@ -3,7 +3,7 @@ CREATE TABLE "language" (
 	"name" varchar(100) NOT NULL,
 	"code" varchar(10) NOT NULL,
 	"is_deleted" boolean DEFAULT false NOT NULL,
-	"created_on" timestamp DEFAULT now() NOT NULL,
-	"modified_on" timestamp DEFAULT now() NOT NULL,
-	"deleted_on" timestamp
+	"created_on" timestamp with time zone DEFAULT now() NOT NULL,
+	"modified_on" timestamp with time zone DEFAULT now() NOT NULL,
+	"deleted_on" timestamp with time zone
 );

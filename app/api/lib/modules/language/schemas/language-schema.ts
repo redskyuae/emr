@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 const languageNameSchema = z
-  .string({ message: 'Language name is required' })
+  .string({ error: 'Language name is required' })
   .trim()
   .min(1, 'Language name cannot be empty')
   .max(100, 'Language name must be at most 100 characters');
 
 const languageCodeSchema = z
-  .string({ message: 'Language code is required' })
+  .string({ error: 'Language code is required' })
   .trim()
   .min(1, 'Language code cannot be empty')
   .max(10, 'Language code must be at most 10 characters')
