@@ -14,7 +14,7 @@ const countryCodeSchema = z
   .transform((code) => code.toUpperCase());
 
 export const countryIdSchema = z.coerce
-  .number({ message: 'Country ID is required' })
+  .number({ error: 'Country ID is required' })
   .int('Country ID must be an integer')
   .positive('Country ID must be positive');
 
