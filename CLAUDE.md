@@ -54,6 +54,10 @@ ValidationResult<T> // { success: true; data: T } | { success: false; errors: st
 Paginated<T>        // { data: T[]; meta: { total, totalPages, pageSize, pageNumber } }
 ```
 
+## API validation messages
+
+Keep API error strings exact when a task specifies them. For Global Reference duplicate checks, include the submitted field value in the error, e.g. `Nationality name Indian already exists.` and `Nationality code IND already exists.` Invalid ID validators should return the task's exact entity wording, e.g. `Nationality abc is Invalid.`.
+
 ## Multi-tenancy — critical rule
 
 Every table that holds tenant-scoped data MUST have a `tenantId` column. Every repository query MUST filter by `tenantId`. There are no exceptions. A query that omits the tenant filter leaks cross-tenant data.

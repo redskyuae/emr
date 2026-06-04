@@ -15,6 +15,20 @@
       "when": 1780473570398,
       "tag": "0001_greedy_chamber",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780555682577,
+      "tag": "0002_good_wraith",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780571825026,
+      "tag": "0003_pink_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }

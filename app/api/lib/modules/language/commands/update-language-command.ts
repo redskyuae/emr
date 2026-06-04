@@ -44,11 +44,11 @@ export async function updateLanguageCommand(
   const errors: string[] = [];
 
   if (existingName) {
-    errors.push('Language name already exists');
+    errors.push(`Language name ${payloadValidationResult.data.name} already exists.`);
   }
 
   if (existingCode) {
-    errors.push('Language code already exists');
+    errors.push(`Language code ${payloadValidationResult.data.code} already exists.`);
   }
 
   if (errors.length > 0) {
