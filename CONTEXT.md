@@ -56,6 +56,10 @@ A Global Reference representing a spoken or written language used during Patient
 
 A Global Reference representing a Patient's citizenship or nationality, used during Patient registration and demographics. Distinct from Language, which represents what a Patient speaks or writes.
 
+## Religion
+
+A Global Reference representing a Patient's religious preference, used during Patient registration and care planning. Distinct from Tenant-scoped Masters because Religion values are shared across Tenants.
+
 ## Department
 
 A clinical or administrative unit within a Facility (e.g., Cardiology, Emergency, Radiology).

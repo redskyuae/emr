@@ -36,6 +36,13 @@
       "when": 1780618652004,
       "tag": "0004_graceful_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780641437401,
+      "tag": "0005_fuzzy_wendell_vaughn",
+      "breakpoints": true
     }
   ]
 }
