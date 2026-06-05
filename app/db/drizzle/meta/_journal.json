@@ -29,6 +29,13 @@
       "when": 1780571825026,
       "tag": "0003_pink_scarlet_witch",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780618652004,
+      "tag": "0004_graceful_gunslinger",
+      "breakpoints": true
     }
   ]
 }
