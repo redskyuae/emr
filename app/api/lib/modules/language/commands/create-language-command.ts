@@ -31,7 +31,23 @@ export async function createLanguageCommand(payload: unknown): Promise<CommandRe
     return { success: false, errors, status: CONFLICT_STATUS };
   }
 
-  const createdLanguage = await languageRepository.createLanguage(validationResult.data);
-
-  return { success: true, data: createdLanguage };
+  try {
+    const createdLanguage = await languageRepository.createLanguage(validationResult.data);
+    return { success: true, data: createdLanguage };
+  } catch (error) {
+    const err = error as Record<string, unknown>;
+    if (err.code === '23505') {
+      const constraintErrors: string[] = [];
+      if (err.constraint === 'language_name_idx') {
+        constraintErrors.push(`Language name ${validationResult.data.name} already exists.`);
+      }
+      if (err.constraint === 'language_code_idx') {
+        constraintErrors.push(`Language code ${validationResult.data.code} already exists.`);
+      }
+      if (constraintErrors.length > 0) {
+        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      }
+    }
+    throw error;
+  }
 }

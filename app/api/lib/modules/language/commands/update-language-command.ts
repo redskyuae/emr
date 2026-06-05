@@ -55,18 +55,35 @@ export async function updateLanguageCommand(
     return { success: false, errors, status: CONFLICT_STATUS };
   }
 
-  const updatedLanguage = await languageRepository.updateLanguage(
-    idValidationResult.data,
-    payloadValidationResult.data
-  );
+  try {
+    const updatedLanguage = await languageRepository.updateLanguage(
+      idValidationResult.data,
+      payloadValidationResult.data
+    );
 
-  if (!updatedLanguage) {
-    return {
-      success: false,
-      errors: ['Language not found'],
-      status: NOT_FOUND_STATUS,
-    };
+    if (!updatedLanguage) {
+      return {
+        success: false,
+        errors: ['Language not found'],
+        status: NOT_FOUND_STATUS,
+      };
+    }
+
+    return { success: true, data: updatedLanguage };
+  } catch (error) {
+    const err = error as Record<string, unknown>;
+    if (err.code === '23505') {
+      const constraintErrors: string[] = [];
+      if (err.constraint === 'language_name_idx') {
+        constraintErrors.push(`Language name ${payloadValidationResult.data.name} already exists.`);
+      }
+      if (err.constraint === 'language_code_idx') {
+        constraintErrors.push(`Language code ${payloadValidationResult.data.code} already exists.`);
+      }
+      if (constraintErrors.length > 0) {
+        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      }
+    }
+    throw error;
   }
-
-  return { success: true, data: updatedLanguage };
 }

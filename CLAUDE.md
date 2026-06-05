@@ -6,15 +6,15 @@ API-first hospital management platform. A **Tenant** is a hospital group (e.g., 
 
 ## Stack
 
-| Layer | Tool |
-|---|---|
-| Framework | Next.js 16.2.7 (App Router) |
-| Language | TypeScript |
-| Database | PostgreSQL via Drizzle ORM |
-| Validation | Zod v4 |
-| Auth | BetterAuth (Organizations plugin) |
-| Styles | Tailwind CSS v4 |
-| Package manager | Bun |
+| Layer           | Tool                              |
+| --------------- | --------------------------------- |
+| Framework       | Next.js 16.2.7 (App Router)       |
+| Language        | TypeScript                        |
+| Database        | PostgreSQL via Drizzle ORM        |
+| Validation      | Zod v4                            |
+| Auth            | BetterAuth (Organizations plugin) |
+| Styles          | Tailwind CSS v4                   |
+| Package manager | Bun                               |
 
 ## Architecture: CQRS + Repository + Validation
 
@@ -48,10 +48,10 @@ app/
 All commands, queries, and validators return discriminated unions from `app/api/lib/utils/types.ts`. Always use these — never throw or return raw data:
 
 ```ts
-CommandResult<T>    // { success: true; data: T } | { success: false; errors: string[] }
-QueryResult<T>      // success variant + optional { data: T[]; total: number } for paginated
-ValidationResult<T> // { success: true; data: T } | { success: false; errors: string[] }
-Paginated<T>        // { data: T[]; meta: { total, totalPages, pageSize, pageNumber } }
+CommandResult<T>; // { success: true; data: T } | { success: false; errors: string[] }
+QueryResult<T>; // success variant + optional { data: T[]; total: number } for paginated
+ValidationResult<T>; // { success: true; data: T } | { success: false; errors: string[] }
+Paginated<T>; // { data: T[]; meta: { total, totalPages, pageSize, pageNumber } }
 ```
 
 ## API validation messages
@@ -64,9 +64,13 @@ Every table that holds tenant-scoped data MUST have a `tenantId` column. Every r
 
 `tenantId` is resolved from the BetterAuth session (Organizations plugin). Route handlers extract it from the session and pass it into commands/queries. It never comes from the request body.
 
+## Lessons Learned
+
+Read `lessons.md` for documented architectural solutions and historical bug fixes. For example, `lessons.md` explains how to properly add unique constraints to tables with soft deletes.
+
 ## Adding a new module
 
-1. Define the Drizzle table in `app/db/schema/{entity}.ts`, include `tenantId`
+1. Define the Drizzle table in `app/db/schema/{entity}.ts`, include `tenantId`. If the table requires unique fields, read `lessons.md` for the correct implementation using partial unique indexes.
 2. Run `bun run db:generate` to generate the migration, then `bun run db:migrate`
 3. Create `app/api/lib/modules/{module}/schemas/{module}-schema.ts` — Zod schema + exported types
 4. Create validator(s) in `validator/` — one function per operation, returns `ValidationResult<T>`

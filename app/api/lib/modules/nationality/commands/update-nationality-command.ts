@@ -57,18 +57,39 @@ export async function updateNationalityCommand(
     return { success: false, errors, status: CONFLICT_STATUS };
   }
 
-  const updatedNationality = await nationalityRepository.updateNationality(
-    idValidationResult.data,
-    payloadValidationResult.data
-  );
+  try {
+    const updatedNationality = await nationalityRepository.updateNationality(
+      idValidationResult.data,
+      payloadValidationResult.data
+    );
 
-  if (!updatedNationality) {
-    return {
-      success: false,
-      errors: ['Nationality not found'],
-      status: NOT_FOUND_STATUS,
-    };
+    if (!updatedNationality) {
+      return {
+        success: false,
+        errors: ['Nationality not found'],
+        status: NOT_FOUND_STATUS,
+      };
+    }
+
+    return { success: true, data: updatedNationality };
+  } catch (error) {
+    const err = error as Record<string, unknown>;
+    if (err.code === '23505') {
+      const constraintErrors: string[] = [];
+      if (err.constraint === 'nationality_name_idx') {
+        constraintErrors.push(
+          `Nationality name ${payloadValidationResult.data.name} already exists.`
+        );
+      }
+      if (err.constraint === 'nationality_code_idx') {
+        constraintErrors.push(
+          `Nationality code ${payloadValidationResult.data.code} already exists.`
+        );
+      }
+      if (constraintErrors.length > 0) {
+        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      }
+    }
+    throw error;
   }
-
-  return { success: true, data: updatedNationality };
 }

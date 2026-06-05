@@ -55,18 +55,35 @@ export async function updateCountryCommand(
     return { success: false, errors, status: CONFLICT_STATUS };
   }
 
-  const updatedCountry = await countryRepository.updateCountry(
-    idValidationResult.data,
-    payloadValidationResult.data
-  );
+  try {
+    const updatedCountry = await countryRepository.updateCountry(
+      idValidationResult.data,
+      payloadValidationResult.data
+    );
 
-  if (!updatedCountry) {
-    return {
-      success: false,
-      errors: ['Country not found'],
-      status: NOT_FOUND_STATUS,
-    };
+    if (!updatedCountry) {
+      return {
+        success: false,
+        errors: ['Country not found'],
+        status: NOT_FOUND_STATUS,
+      };
+    }
+
+    return { success: true, data: updatedCountry };
+  } catch (error) {
+    const err = error as Record<string, unknown>;
+    if (err.code === '23505') {
+      const constraintErrors: string[] = [];
+      if (err.constraint === 'country_name_idx') {
+        constraintErrors.push(`Country name ${payloadValidationResult.data.name} already exists.`);
+      }
+      if (err.constraint === 'country_code_idx') {
+        constraintErrors.push(`Country code ${payloadValidationResult.data.code} already exists.`);
+      }
+      if (constraintErrors.length > 0) {
+        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      }
+    }
+    throw error;
   }
-
-  return { success: true, data: updatedCountry };
 }

@@ -33,7 +33,23 @@ export async function createNationalityCommand(
     return { success: false, errors, status: CONFLICT_STATUS };
   }
 
-  const createdNationality = await nationalityRepository.createNationality(validationResult.data);
-
-  return { success: true, data: createdNationality };
+  try {
+    const createdNationality = await nationalityRepository.createNationality(validationResult.data);
+    return { success: true, data: createdNationality };
+  } catch (error) {
+    const err = error as Record<string, unknown>;
+    if (err.code === '23505') {
+      const constraintErrors: string[] = [];
+      if (err.constraint === 'nationality_name_idx') {
+        constraintErrors.push(`Nationality name ${validationResult.data.name} already exists.`);
+      }
+      if (err.constraint === 'nationality_code_idx') {
+        constraintErrors.push(`Nationality code ${validationResult.data.code} already exists.`);
+      }
+      if (constraintErrors.length > 0) {
+        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      }
+    }
+    throw error;
+  }
 }
