@@ -32,6 +32,10 @@ A person who receives care at a Facility. Belongs to a Tenant (registered within
 
 A scheduled time slot for a Patient to see a Doctor at a Facility. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives. An Appointment is not the clinical event itself.
 
+## AppointmentMode
+
+A Tenant-scoped Master that defines the channel or format of an Appointment, such as in-person, video, phone, or home visit. Each Tenant manages its own AppointmentModes independently.
+
 ## Visit
 
 An outpatient clinical event. Occurs when a Patient attends a Facility for a consultation or procedure without being admitted overnight. A Visit is typically preceded by an Appointment but may be walk-in.
