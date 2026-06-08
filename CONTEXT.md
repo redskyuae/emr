@@ -60,6 +60,14 @@ A Global Reference representing a Patient's citizenship or nationality, used dur
 
 A Global Reference representing a Patient's religious preference, used during Patient registration and care planning. Distinct from Tenant-scoped Masters because Religion values are shared across Tenants.
 
+## Country
+
+A Global Reference representing a country used in Patient addresses and other geographic reference fields. A Country may contain one or more States.
+
+## State
+
+A Global Reference representing a state, province, or union territory within a Country, used in Patient addresses. A State always belongs to exactly one Country.
+
 ## Department
 
 A clinical or administrative unit within a Facility (e.g., Cardiology, Emergency, Radiology).
