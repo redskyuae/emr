@@ -2,8 +2,8 @@ import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { appointmentModeRepository } from '../repository/appointment-mode-repository';
 
 const CONFLICT_STATUS = 409;
-const APPOINTMENT_MODE_NAME_EXISTS = 'An appointment mode with this name already exists';
-const APPOINTMENT_MODE_CODE_EXISTS = 'An appointment mode with this code already exists';
+const APPOINTMENT_MODE_NAME_EXISTS = "Appointment mode name '{value}' already exists.";
+const APPOINTMENT_MODE_CODE_EXISTS = "Appointment mode code '{value}' already exists.";
 
 type AppointmentModeUniquenessInput = {
   tenantId: string;
@@ -11,6 +11,10 @@ type AppointmentModeUniquenessInput = {
   code: string;
   excludeId?: number;
 };
+
+function duplicateError(template: string, value: string) {
+  return template.replace('{value}', value);
+}
 
 export async function validateAppointmentModeUniqueness({
   tenantId,
@@ -26,11 +30,11 @@ export async function validateAppointmentModeUniqueness({
   const errors: string[] = [];
 
   if (existingName) {
-    errors.push(APPOINTMENT_MODE_NAME_EXISTS);
+    errors.push(duplicateError(APPOINTMENT_MODE_NAME_EXISTS, name));
   }
 
   if (existingCode) {
-    errors.push(APPOINTMENT_MODE_CODE_EXISTS);
+    errors.push(duplicateError(APPOINTMENT_MODE_CODE_EXISTS, code));
   }
 
   if (errors.length > 0) {
@@ -40,30 +44,23 @@ export async function validateAppointmentModeUniqueness({
   return { success: true, data: undefined };
 }
 
-export function validateAppointmentModeUniqueConstraint(
-  error: unknown
-): ValidationResult<never> | null {
+export function getAppointmentModeUniqueConstraintErrors(
+  error: unknown,
+  input: Pick<AppointmentModeUniquenessInput, 'name' | 'code'>
+): string[] {
   const err = error as Record<string, unknown>;
 
   if (err.code !== '23505') {
-    return null;
+    return [];
   }
 
   if (err.constraint === 'appointment_mode_tenant_name_idx') {
-    return {
-      success: false,
-      errors: [APPOINTMENT_MODE_NAME_EXISTS],
-      status: CONFLICT_STATUS,
-    };
+    return [duplicateError(APPOINTMENT_MODE_NAME_EXISTS, input.name)];
   }
 
   if (err.constraint === 'appointment_mode_tenant_code_idx') {
-    return {
-      success: false,
-      errors: [APPOINTMENT_MODE_CODE_EXISTS],
-      status: CONFLICT_STATUS,
-    };
+    return [duplicateError(APPOINTMENT_MODE_CODE_EXISTS, input.code)];
   }
 
-  return null;
+  return [];
 }

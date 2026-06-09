@@ -1,9 +1,10 @@
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentModeRepository } from '../repository/appointment-mode-repository';
 import type { AppointmentMode } from '../schemas/appointment-mode-schema';
-import { validateAppointmentModeUniqueConstraint } from '../validator/appointment-mode-uniqueness-validator';
+import { getAppointmentModeUniqueConstraintErrors } from '../validator/appointment-mode-uniqueness-validator';
 import { validateUpdateAppointmentMode } from '../validator/update-appointment-mode-validator';
 
+const CONFLICT_STATUS = 409;
 const NOT_FOUND_STATUS = 404;
 
 export async function updateAppointmentModeCommand(
@@ -38,10 +39,13 @@ export async function updateAppointmentModeCommand(
 
     return { success: true, data: updatedAppointmentMode };
   } catch (error) {
-    const constraintValidationResult = validateAppointmentModeUniqueConstraint(error);
+    const constraintErrors = getAppointmentModeUniqueConstraintErrors(
+      error,
+      validationResult.data.payload
+    );
 
-    if (constraintValidationResult) {
-      return constraintValidationResult;
+    if (constraintErrors.length > 0) {
+      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
     }
 
     throw error;

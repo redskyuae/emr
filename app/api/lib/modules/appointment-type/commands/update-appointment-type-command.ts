@@ -1,9 +1,10 @@
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentTypeRepository } from '../repository/appointment-type-repository';
 import type { AppointmentType } from '../schemas/appointment-type-schema';
-import { validateAppointmentTypeUniqueConstraint } from '../validator/appointment-type-uniqueness-validator';
+import { getAppointmentTypeUniqueConstraintErrors } from '../validator/appointment-type-uniqueness-validator';
 import { validateUpdateAppointmentType } from '../validator/update-appointment-type-validator';
 
+const CONFLICT_STATUS = 409;
 const NOT_FOUND_STATUS = 404;
 
 export async function updateAppointmentTypeCommand(
@@ -36,10 +37,10 @@ export async function updateAppointmentTypeCommand(
 
     return { success: true, data: updatedAppointmentType };
   } catch (error) {
-    const constraintValidationResult = validateAppointmentTypeUniqueConstraint(error);
+    const constraintErrors = getAppointmentTypeUniqueConstraintErrors(error);
 
-    if (constraintValidationResult) {
-      return constraintValidationResult;
+    if (constraintErrors.length > 0) {
+      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
     }
 
     throw error;

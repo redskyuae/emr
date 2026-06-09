@@ -40,30 +40,20 @@ export async function validateAppointmentTypeUniqueness({
   return { success: true, data: undefined };
 }
 
-export function validateAppointmentTypeUniqueConstraint(
-  error: unknown
-): ValidationResult<never> | null {
+export function getAppointmentTypeUniqueConstraintErrors(error: unknown): string[] {
   const err = error as Record<string, unknown>;
 
   if (err.code !== '23505') {
-    return null;
+    return [];
   }
 
   if (err.constraint === 'appointment_type_tenant_name_idx') {
-    return {
-      success: false,
-      errors: [APPOINTMENT_TYPE_NAME_EXISTS],
-      status: CONFLICT_STATUS,
-    };
+    return [APPOINTMENT_TYPE_NAME_EXISTS];
   }
 
   if (err.constraint === 'appointment_type_tenant_code_idx') {
-    return {
-      success: false,
-      errors: [APPOINTMENT_TYPE_CODE_EXISTS],
-      status: CONFLICT_STATUS,
-    };
+    return [APPOINTMENT_TYPE_CODE_EXISTS];
   }
 
-  return null;
+  return [];
 }
