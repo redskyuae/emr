@@ -71,6 +71,13 @@
       "when": 1781003236709,
       "tag": "0009_wooden_tusk",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781023331225,
+      "tag": "0010_funny_gladiator",
+      "breakpoints": true
     }
   ]
 }

@@ -44,6 +44,14 @@ A Tenant-scoped Master that defines the clinical category or visit type of an Ap
 
 A Tenant-scoped Master that defines the lifecycle state of an Appointment, such as scheduled, confirmed, checked-in, completed, cancelled, or no-show. Distinct from AppointmentMode, which describes the channel or format of the Appointment, and AppointmentType, which describes the clinical category or visit type.
 
+## AppointmentReason
+
+A Tenant-scoped Master that defines why an Appointment is being booked, either as stated by the Patient or assigned clinically. Distinct from AppointmentType, which describes the clinical category or visit type of the Appointment.
+
+## AppointmentCancelledReason
+
+A Tenant-scoped Master that defines why an Appointment was cancelled. Distinct from AppointmentStatus: the AppointmentStatus records the cancellation state, while AppointmentCancelledReason records the reason behind that transition.
+
 ## Visit
 
 An outpatient clinical event. Occurs when a Patient attends a Facility for a consultation or procedure without being admitted overnight. A Visit is typically preceded by an Appointment but may be walk-in.
