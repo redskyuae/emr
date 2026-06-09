@@ -29,7 +29,7 @@ app/
     └── lib/
         └── modules/{module}/
             ├── schemas/{module}-schema.ts   # Zod schemas + inferred types
-            ├── validator/                   # Validation functions (wrap Zod)
+            ├── validator/                   # Validation functions (schema + repository-backed checks)
             ├── commands/                    # Write operations (one file per command)
             ├── queries/                     # Read operations (one file per query)
             └── repository/                  # All DB access (Drizzle queries)
@@ -37,11 +37,13 @@ app/
 
 **Route handlers are thin.** Parse HTTP input → call command/query → return NextResponse. No business logic in route files.
 
-**Commands validate first.** Every command calls its validator before touching the repository. A command that skips validation is a bug.
+**Commands validate first.** Every command calls its validator before performing writes. A command that skips validation is a bug.
+
+**Validators own all operation validation.** Files under `app/api/lib/modules/*/validator/**/*.ts` are not limited to Zod parsing. Validators should wrap Zod schema parsing and may also call repository functions for DB-level checks such as existence checks before update/delete operations and uniqueness checks before create/update operations. Validators must still return `ValidationResult<T>` and must not write Drizzle queries directly.
 
 **Queries never mutate.** Query functions are read-only. If you find yourself writing an INSERT inside a query, move it to a command.
 
-**Repositories own all SQL.** Never write Drizzle queries outside a repository file.
+**Repositories own all SQL.** Never write Drizzle queries outside a repository file. When validators need DB-level validation, add or reuse repository read functions and call those from the validator.
 
 ## Result types
 
@@ -73,9 +75,9 @@ Read `lessons.md` for documented architectural solutions and historical bug fixe
 1. Define the Drizzle table in `app/db/schema/{entity}.ts`, include `tenantId`. If the table requires unique fields, read `lessons.md` for the correct implementation using partial unique indexes.
 2. Run `bun run db:generate` to generate the migration, then `bun run db:migrate`
 3. Create `app/api/lib/modules/{module}/schemas/{module}-schema.ts` — Zod schema + exported types
-4. Create validator(s) in `validator/` — one function per operation, returns `ValidationResult<T>`
-5. Create repository in `repository/` — exports a plain object of async functions
-6. Create command(s) in `commands/` — validate → repository → return `CommandResult<T>`
+4. Create repository in `repository/` — exports a plain object of async functions, including reads needed by validators
+5. Create validator(s) in `validator/` — one function per operation, performs Zod parsing plus any repository-backed existence/uniqueness checks, returns `ValidationResult<T>`
+6. Create command(s) in `commands/` — validate → repository write → return `CommandResult<T>`
 7. Create query/queries in `queries/` — repository → return `QueryResult<T>`
 8. Create `app/api/v1/{module}/route.ts` — HTTP parsing, call command/query, NextResponse
 
