@@ -3,7 +3,7 @@ import {
   createAppointmentModeSchema,
   type CreateAppointmentModeInput,
 } from '../schemas/appointment-mode-schema';
-import { formatValidationErrors } from './validation-errors';
+import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
 export function validateCreateAppointmentMode(
   payload: unknown

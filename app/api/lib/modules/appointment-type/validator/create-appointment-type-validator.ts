@@ -1,14 +1,14 @@
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import {
-  type UpdateNationalityInput,
-  updateNationalitySchema,
-} from '../schemas/nationality-schema';
+  createAppointmentTypeSchema,
+  type CreateAppointmentTypeInput,
+} from '../schemas/appointment-type-schema';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
-export function validateUpdateNationality(
+export function validateCreateAppointmentType(
   payload: unknown
-): ValidationResult<UpdateNationalityInput> {
-  const result = updateNationalitySchema.safeParse(payload);
+): ValidationResult<CreateAppointmentTypeInput> {
+  const result = createAppointmentTypeSchema.safeParse(payload);
 
   if (!result.success) {
     return { success: false, errors: formatValidationErrors(result.error) };

@@ -3,7 +3,7 @@ import {
   appointmentModeTenantIdSchema,
   type AppointmentModeTenantIdInput,
 } from '../schemas/appointment-mode-schema';
-import { formatValidationErrors } from './validation-errors';
+import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
 export function validateAppointmentModeTenantId(
   payload: unknown

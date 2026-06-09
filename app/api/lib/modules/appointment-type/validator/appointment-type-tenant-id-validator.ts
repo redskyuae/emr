@@ -1,14 +1,14 @@
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import {
-  type UpdateNationalityInput,
-  updateNationalitySchema,
-} from '../schemas/nationality-schema';
+  appointmentTypeTenantIdSchema,
+  type AppointmentTypeTenantIdInput,
+} from '../schemas/appointment-type-schema';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
-export function validateUpdateNationality(
+export function validateAppointmentTypeTenantId(
   payload: unknown
-): ValidationResult<UpdateNationalityInput> {
-  const result = updateNationalitySchema.safeParse(payload);
+): ValidationResult<AppointmentTypeTenantIdInput> {
+  const result = appointmentTypeTenantIdSchema.safeParse(payload);
 
   if (!result.success) {
     return { success: false, errors: formatValidationErrors(result.error) };

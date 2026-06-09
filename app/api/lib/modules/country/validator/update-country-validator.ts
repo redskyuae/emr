@@ -1,6 +1,6 @@
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { type UpdateCountryInput, updateCountrySchema } from '../schemas/country-schema';
-import { formatValidationErrors } from './validation-errors';
+import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
 export function validateUpdateCountry(payload: unknown): ValidationResult<UpdateCountryInput> {
   const result = updateCountrySchema.safeParse(payload);
