@@ -64,6 +64,13 @@
       "when": 1780935258369,
       "tag": "0008_handy_titania",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1781003236709,
+      "tag": "0009_wooden_tusk",
+      "breakpoints": true
     }
   ]
 }
