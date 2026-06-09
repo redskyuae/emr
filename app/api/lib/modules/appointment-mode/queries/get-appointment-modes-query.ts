@@ -1,7 +1,7 @@
 import type { ListQueryResult } from '@/app/api/lib/utils/types';
 import { appointmentModeRepository } from '../repository/appointment-mode-repository';
 import type { AppointmentMode } from '../schemas/appointment-mode-schema';
-import { validateAppointmentModeTenantId } from '../validator/appointment-mode-tenant-id-validator';
+import { validateGetAppointmentModes } from '../validator/get-appointment-modes-validator';
 
 export type GetAppointmentModesParams = {
   tenantId: unknown;
@@ -16,7 +16,7 @@ export async function getAppointmentModesQuery({
   limit,
   query,
 }: GetAppointmentModesParams): Promise<ListQueryResult<AppointmentMode>> {
-  const tenantIdValidationResult = validateAppointmentModeTenantId(tenantId);
+  const tenantIdValidationResult = validateGetAppointmentModes(tenantId);
 
   if (!tenantIdValidationResult.success) {
     return { success: false, errors: tenantIdValidationResult.errors };

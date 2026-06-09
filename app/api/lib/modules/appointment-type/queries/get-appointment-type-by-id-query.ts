@@ -1,8 +1,7 @@
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { appointmentTypeRepository } from '../repository/appointment-type-repository';
 import type { AppointmentType } from '../schemas/appointment-type-schema';
-import { validateAppointmentTypeId } from '../validator/appointment-type-id-validator';
-import { validateAppointmentTypeTenantId } from '../validator/appointment-type-tenant-id-validator';
+import { validateGetAppointmentTypeById } from '../validator/get-appointment-type-by-id-validator';
 
 const NOT_FOUND_STATUS = 404;
 
@@ -10,20 +9,15 @@ export async function getAppointmentTypeByIdQuery(
   id: unknown,
   tenantId: unknown
 ): Promise<SingleQueryResult<AppointmentType>> {
-  const idValidationResult = validateAppointmentTypeId(id);
-  const tenantIdValidationResult = validateAppointmentTypeTenantId(tenantId);
+  const validationResult = validateGetAppointmentTypeById(id, tenantId);
 
-  if (!idValidationResult.success) {
-    return { success: false, errors: idValidationResult.errors };
-  }
-
-  if (!tenantIdValidationResult.success) {
-    return { success: false, errors: tenantIdValidationResult.errors };
+  if (!validationResult.success) {
+    return { success: false, errors: validationResult.errors };
   }
 
   const appointmentType = await appointmentTypeRepository.getAppointmentTypeById(
-    idValidationResult.data,
-    tenantIdValidationResult.data
+    validationResult.data.id,
+    validationResult.data.tenantId
   );
 
   if (!appointmentType) {
