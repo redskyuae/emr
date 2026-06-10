@@ -1,6 +1,6 @@
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { createStateSchema, type CreateStateInput } from '../schemas/state-schema';
-import { formatValidationErrors } from './validation-errors';
+import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
 export function validateCreateState(payload: unknown): ValidationResult<CreateStateInput> {
   const result = createStateSchema.safeParse(payload);

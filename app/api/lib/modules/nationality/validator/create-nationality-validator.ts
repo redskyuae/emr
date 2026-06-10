@@ -3,7 +3,7 @@ import {
   createNationalitySchema,
   type CreateNationalityInput,
 } from '../schemas/nationality-schema';
-import { formatValidationErrors } from './validation-errors';
+import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
 export function validateCreateNationality(
   payload: unknown

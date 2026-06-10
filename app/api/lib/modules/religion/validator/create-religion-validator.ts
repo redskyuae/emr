@@ -1,6 +1,6 @@
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { createReligionSchema, type CreateReligionInput } from '../schemas/religion-schema';
-import { formatValidationErrors } from './validation-errors';
+import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
 export function validateCreateReligion(payload: unknown): ValidationResult<CreateReligionInput> {
   const result = createReligionSchema.safeParse(payload);

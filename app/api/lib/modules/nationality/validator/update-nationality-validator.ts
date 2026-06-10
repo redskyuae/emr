@@ -3,7 +3,7 @@ import {
   type UpdateNationalityInput,
   updateNationalitySchema,
 } from '../schemas/nationality-schema';
-import { formatValidationErrors } from './validation-errors';
+import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 
 export function validateUpdateNationality(
   payload: unknown
