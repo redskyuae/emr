@@ -50,6 +50,10 @@ export function getAppointmentCancelledReasonUniqueConstraintErrors(
   error: unknown,
   input: Pick<AppointmentCancelledReasonUniquenessInput, 'name' | 'code'>
 ): string[] {
+  if (typeof error !== 'object' || error === null) {
+    return [];
+  }
+
   const err = error as Record<string, unknown>;
 
   if (err.code !== '23505') {

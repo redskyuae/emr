@@ -48,6 +48,10 @@ export function getAppointmentReasonUniqueConstraintErrors(
   error: unknown,
   input: Pick<AppointmentReasonUniquenessInput, 'name' | 'code'>
 ): string[] {
+  if (typeof error !== 'object' || error === null) {
+    return [];
+  }
+
   const err = error as Record<string, unknown>;
 
   if (err.code !== '23505') {
