@@ -70,6 +70,10 @@ Every table that holds tenant-scoped data MUST have a `tenantId` column. Every r
 
 BetterAuth is configured in `app/lib/auth.ts` and mounted at `app/api/auth/[...all]/route.ts`. The BetterAuth Organizations plugin uses generated `organization` tables internally, but project code should continue to use the domain term **Tenant**.
 
+There is no Platform Admin role in the domain. When a user creates a Tenant, that user becomes the Tenant Owner. Tenant ownership is represented through BetterAuth organization membership.
+
+Tenant management APIs are Tenant-scoped. Do not expose a global Tenant list endpoint. Tenant Owners may create a Tenant, update its display details, and deactivate or reactivate it. Any authenticated Tenant member may read that Tenant's basic profile by ID.
+
 `session.session.activeOrganizationId` is the auth-layer source of `tenantId`. Existing route handlers may still accept legacy request-provided `tenantId` until the dedicated migration task removes that path.
 
 ## Lessons Learned

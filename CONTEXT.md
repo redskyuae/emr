@@ -4,13 +4,25 @@
 
 A hospital group or hospital chain (e.g., Apollo Hospitals, Fortis Healthcare). The top-level unit of isolation in the system. All data belongs to a tenant. A tenant owns one or more Facilities.
 
+## Tenant Slug
+
+A stable, URL-safe identifier for a Tenant. Generated when the Tenant is created and not changed when the Tenant's display name changes.
+
+## Active Tenant
+
+A Tenant currently allowed to operate in the system.
+
+## Inactive Tenant
+
+A Tenant that has been deactivated without being removed from the system.
+
 ## Facility
 
 A single physical location operated by a Tenant — a hospital, clinic, diagnostic center, or day-care unit. Has a `facilityType` attribute (HOSPITAL, CLINIC, LAB, etc.). Staff and clinical events are always scoped to a Facility within a Tenant.
 
-## Platform Admin
+## Tenant Owner
 
-An operator-level user who manages the SaaS platform itself. Can onboard Tenants and manage system-wide configuration. Not affiliated with any Tenant.
+The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner.
 
 ## Tenant Admin
 

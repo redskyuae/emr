@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { pgTable, text, timestamp, boolean, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
@@ -87,12 +87,15 @@ export const organization = pgTable(
   {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
-    slug: text('slug').notNull(),
+    slug: text('slug').notNull().unique(),
     logo: text('logo'),
     createdAt: timestamp('created_at').notNull(),
     metadata: text('metadata'),
   },
-  (table) => [uniqueIndex('organization_slug_uidx').on(table.slug)]
+  (table) => [
+    uniqueIndex('organization_slug_uidx').on(table.slug),
+    uniqueIndex('organization_name_idx').on(sql`lower(${table.name})`),
+  ]
 );
 
 export const member = pgTable(
