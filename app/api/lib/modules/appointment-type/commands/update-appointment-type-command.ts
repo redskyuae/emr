@@ -37,7 +37,10 @@ export async function updateAppointmentTypeCommand(
 
     return { success: true, data: updatedAppointmentType };
   } catch (error) {
-    const constraintErrors = getAppointmentTypeUniqueConstraintErrors(error);
+    const constraintErrors = getAppointmentTypeUniqueConstraintErrors(
+      error,
+      validationResult.data.payload
+    );
 
     if (constraintErrors.length > 0) {
       return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };

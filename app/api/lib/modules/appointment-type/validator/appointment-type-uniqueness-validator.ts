@@ -2,8 +2,8 @@ import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { appointmentTypeRepository } from '../repository/appointment-type-repository';
 
 const CONFLICT_STATUS = 409;
-const APPOINTMENT_TYPE_NAME_EXISTS = 'An appointment type with this name already exists';
-const APPOINTMENT_TYPE_CODE_EXISTS = 'An appointment type with this code already exists';
+const APPOINTMENT_TYPE_NAME_EXISTS = "Appointment type name '{value}' already exists.";
+const APPOINTMENT_TYPE_CODE_EXISTS = "Appointment type code '{value}' already exists.";
 
 type AppointmentTypeUniquenessInput = {
   tenantId: string;
@@ -11,6 +11,10 @@ type AppointmentTypeUniquenessInput = {
   code: string;
   excludeId?: number;
 };
+
+function duplicateError(template: string, value: string) {
+  return template.replace('{value}', value);
+}
 
 export async function validateAppointmentTypeUniqueness({
   tenantId,
@@ -26,11 +30,11 @@ export async function validateAppointmentTypeUniqueness({
   const errors: string[] = [];
 
   if (existingName) {
-    errors.push(APPOINTMENT_TYPE_NAME_EXISTS);
+    errors.push(duplicateError(APPOINTMENT_TYPE_NAME_EXISTS, name));
   }
 
   if (existingCode) {
-    errors.push(APPOINTMENT_TYPE_CODE_EXISTS);
+    errors.push(duplicateError(APPOINTMENT_TYPE_CODE_EXISTS, code));
   }
 
   if (errors.length > 0) {
@@ -40,7 +44,10 @@ export async function validateAppointmentTypeUniqueness({
   return { success: true, data: undefined };
 }
 
-export function getAppointmentTypeUniqueConstraintErrors(error: unknown): string[] {
+export function getAppointmentTypeUniqueConstraintErrors(
+  error: unknown,
+  input: Pick<AppointmentTypeUniquenessInput, 'name' | 'code'>
+): string[] {
   const err = error as Record<string, unknown>;
 
   if (err.code !== '23505') {
@@ -48,11 +55,11 @@ export function getAppointmentTypeUniqueConstraintErrors(error: unknown): string
   }
 
   if (err.constraint === 'appointment_type_tenant_name_idx') {
-    return [APPOINTMENT_TYPE_NAME_EXISTS];
+    return [duplicateError(APPOINTMENT_TYPE_NAME_EXISTS, input.name)];
   }
 
   if (err.constraint === 'appointment_type_tenant_code_idx') {
-    return [APPOINTMENT_TYPE_CODE_EXISTS];
+    return [duplicateError(APPOINTMENT_TYPE_CODE_EXISTS, input.code)];
   }
 
   return [];

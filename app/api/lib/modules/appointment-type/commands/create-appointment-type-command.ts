@@ -25,7 +25,7 @@ export async function createAppointmentTypeCommand(
     );
     return { success: true, data: createdAppointmentType };
   } catch (error) {
-    const constraintErrors = getAppointmentTypeUniqueConstraintErrors(error);
+    const constraintErrors = getAppointmentTypeUniqueConstraintErrors(error, validationResult.data);
 
     if (constraintErrors.length > 0) {
       return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
