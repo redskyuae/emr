@@ -54,7 +54,9 @@ export async function updateStateCommand(
   if (duplicateState) {
     return {
       success: false,
-      errors: [`State name ${payloadValidationResult.data.name} already exists for the selected country.`],
+      errors: [
+        `State name ${payloadValidationResult.data.name} already exists for the selected country.`,
+      ],
       status: CONFLICT_STATUS,
     };
   }
@@ -79,7 +81,9 @@ export async function updateStateCommand(
     if (err.code === '23505' && err.constraint === 'state_name_country_idx') {
       return {
         success: false,
-        errors: [`State name ${payloadValidationResult.data.name} already exists for the selected country.`],
+        errors: [
+          `State name ${payloadValidationResult.data.name} already exists for the selected country.`,
+        ],
         status: CONFLICT_STATUS,
       };
     }
