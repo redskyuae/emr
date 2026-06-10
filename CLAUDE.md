@@ -66,6 +66,12 @@ Every table that holds tenant-scoped data MUST have a `tenantId` column. Every r
 
 `tenantId` is resolved from the BetterAuth session (Organizations plugin). Route handlers extract it from the session and pass it into commands/queries. It never comes from the request body.
 
+## Auth infrastructure
+
+BetterAuth is configured in `app/lib/auth.ts` and mounted at `app/api/auth/[...all]/route.ts`. The BetterAuth Organizations plugin uses generated `organization` tables internally, but project code should continue to use the domain term **Tenant**.
+
+`session.session.activeOrganizationId` is the auth-layer source of `tenantId`. Existing route handlers may still accept legacy request-provided `tenantId` until the dedicated migration task removes that path.
+
 ## Lessons Learned
 
 Read `lessons.md` for documented architectural solutions and historical bug fixes. For example, `lessons.md` explains how to properly add unique constraints to tables with soft deletes.
