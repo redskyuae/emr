@@ -27,6 +27,7 @@ export const session = pgTable(
     token: text('token').notNull().unique(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text('ip_address'),
@@ -58,6 +59,7 @@ export const account = pgTable(
     password: text('password'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -85,7 +87,7 @@ export const organization = pgTable(
   {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
-    slug: text('slug').notNull().unique(),
+    slug: text('slug').notNull(),
     logo: text('logo'),
     createdAt: timestamp('created_at').notNull(),
     metadata: text('metadata'),
