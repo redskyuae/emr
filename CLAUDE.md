@@ -90,6 +90,19 @@ Read `lessons.md` for documented architectural solutions and historical bug fixe
 6. Create command(s) in `commands/` — validate → repository write → return `CommandResult<T>`
 7. Create query/queries in `queries/` — repository → return `QueryResult<T>`
 8. Create `app/api/v1/{module}/route.ts` — HTTP parsing, call command/query, NextResponse
+9. Update the Swagger/OpenAPI documentation for every API surface you add or change. Keep the docs in sync with the route path, HTTP method, request body, query/path parameters, response schemas, status codes, auth requirements, and error responses. Every new or changed API operation must include realistic examples for successful requests and responses, plus relevant validation/conflict/not-found error examples.
+
+## Swagger/OpenAPI documentation
+
+The public API documentation lives at `/swagger`. Any agent building, changing, or removing APIs must update the Swagger/OpenAPI source before finishing the task. Treat Swagger updates as part of the API change, not as optional follow-up work.
+
+When updating Swagger/OpenAPI docs:
+
+- Use the canonical domain terms from `CONTEXT.md` exactly.
+- Document all path parameters, query parameters, request bodies, response schemas, status codes, auth/session requirements, and common error shapes.
+- Include proper examples for each operation. Examples should be realistic EMR data, show transformed fields where applicable (for example uppercased codes), and cover both success and important failure cases such as validation errors, conflicts, not found, unauthorized access, and invalid JSON.
+- Keep tenant-scoped APIs explicit about how `tenantId` is resolved or supplied during the current migration period.
+- If the implementation changes validation messages or response envelopes, update Swagger examples in the same change.
 
 ## Database commands
 
