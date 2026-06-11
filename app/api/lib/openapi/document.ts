@@ -90,6 +90,11 @@ const authenticatedErrorResponses = {
   ...errorResponses,
 };
 
+const roleManagementErrorResponses = {
+  ...authenticatedErrorResponses,
+  '422': responseRef('UnprocessableEntity'),
+};
+
 const listParameters = [
   parameterRef('Page'),
   parameterRef('Limit'),
@@ -318,6 +323,7 @@ export const openApiDocument = {
   tags: [
     { name: 'Tenant', description: 'Tenant management APIs.' },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
+    { name: 'Role', description: 'Role management APIs for Tenant Admins.' },
     { name: 'Global Reference', description: 'Global Reference APIs shared by all Tenants.' },
     { name: 'Appointment Type', description: 'Appointment Type Master APIs.' },
     { name: 'Appointment Reason', description: 'Appointment Reason Master APIs.' },
@@ -567,6 +573,120 @@ export const openApiDocument = {
             content: jsonContent(dataEnvelopeSchema('Staff')),
           },
           ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/roles': {
+      get: {
+        tags: ['Role'],
+        summary: 'List Roles',
+        description:
+          'Returns a paginated list of non-deleted Roles in the active Tenant. Requires the caller to be a Tenant Admin for the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [parameterRef('Page'), parameterRef('Limit'), parameterRef('Query')],
+        responses: {
+          '200': {
+            description: 'Paginated Role list.',
+            content: jsonContent(paginatedSchema('Role'), {
+              data: [
+                {
+                  id: 8,
+                  tenantId: 'org_abc123',
+                  name: 'Ward Manager',
+                  code: 'WARD_MGR',
+                  description: 'Oversees ward operations and nursing staff',
+                  isSystem: false,
+                  createdOn: '2026-06-09T10:00:00.000Z',
+                  modifiedOn: '2026-06-09T10:00:00.000Z',
+                },
+              ],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Role'],
+        summary: 'Create Role',
+        description:
+          'Creates a custom Role in the active Tenant. The code is normalized to uppercase and becomes immutable after creation.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateRoleRequest', {
+          name: 'Ward Manager',
+          code: 'WARD_MGR',
+          description: 'Oversees ward operations and nursing staff',
+        }),
+        responses: {
+          '201': {
+            description: 'Role created.',
+            content: jsonContent(dataEnvelopeSchema('Role'), {
+              data: {
+                id: 8,
+                tenantId: 'org_abc123',
+                name: 'Ward Manager',
+                code: 'WARD_MGR',
+                description: 'Oversees ward operations and nursing staff',
+                isSystem: false,
+                createdOn: '2026-06-09T10:00:00.000Z',
+                modifiedOn: '2026-06-09T10:00:00.000Z',
+              },
+            }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/roles/{id}': {
+      get: {
+        tags: ['Role'],
+        summary: 'Get Role',
+        description:
+          'Returns a Role by ID from the active Tenant. Soft-deleted Roles and Roles from other Tenants are not returned.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Role')],
+        responses: {
+          '200': {
+            description: 'Role found.',
+            content: jsonContent(dataEnvelopeSchema('Role')),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Role'],
+        summary: 'Update Role',
+        description:
+          'Updates Role name or description in the active Tenant. Role code is immutable after creation; System Roles may be renamed.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Role')],
+        requestBody: requestBody('UpdateRoleRequest', {
+          name: 'Ward Operations Manager',
+          description: 'Coordinates ward operations and nursing staff',
+        }),
+        responses: {
+          '200': {
+            description: 'Role updated.',
+            content: jsonContent(dataEnvelopeSchema('Role')),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Role'],
+        summary: 'Delete Role',
+        description:
+          'Soft-deletes a custom Role in the active Tenant. System Roles cannot be deleted.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Role')],
+        responses: {
+          '204': { description: 'Role deleted.' },
+          ...roleManagementErrorResponses,
         },
       },
     },
@@ -891,6 +1011,16 @@ export const openApiDocument = {
         required: ['message'],
         properties: { message: { type: 'string', examples: ['Forbidden'] } },
       },
+      UnprocessableEntityError: {
+        type: 'object',
+        required: ['message'],
+        properties: {
+          message: {
+            type: 'string',
+            examples: ['System roles cannot be deleted.'],
+          },
+        },
+      },
       NotFoundError: {
         type: 'object',
         required: ['message'],
@@ -902,6 +1032,7 @@ export const openApiDocument = {
               'Tenant not found',
               'Appointment Type not found',
               'Staff not found',
+              'Role not found',
             ],
           },
           errors: { type: 'array', items: { type: 'string' } },
@@ -922,6 +1053,7 @@ export const openApiDocument = {
               ['Country code IN already exists.'],
               ['A user with this email already exists.'],
               ['Staff code DOC-001 already exists.'],
+              ['Role code WARD_MGR already exists.'],
             ],
           },
         },
@@ -1044,6 +1176,58 @@ export const openApiDocument = {
           modifiedOn: { type: 'string', format: 'date-time' },
         },
       },
+      CreateRoleRequest: {
+        type: 'object',
+        required: ['name', 'code'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 50,
+            description: 'Tenant-scoped Role code. The API normalizes this value to uppercase.',
+          },
+          description: { type: 'string' },
+        },
+      },
+      UpdateRoleRequest: {
+        type: 'object',
+        minProperties: 1,
+        description: 'Role code is intentionally not accepted by this endpoint.',
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          description: { type: ['string', 'null'] },
+        },
+      },
+      Role: {
+        allOf: [
+          schemaRef('CreateRoleRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'description',
+              'isSystem',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: { type: 'string', minLength: 1 },
+              description: { type: ['string', 'null'] },
+              isSystem: {
+                type: 'boolean',
+                description: 'True for System Roles seeded for each Tenant.',
+              },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
       CreateCountryRequest: namedCodeCreateSchema('Country'),
       UpdateCountryRequest: namedCodeCreateSchema('Country'),
       Country: namedCodeSchema('Country'),
@@ -1163,6 +1347,12 @@ export const openApiDocument = {
         content: jsonContent(schemaRef('ConflictError'), {
           message: 'Conflict',
           errors: ['Staff code DOC-001 already exists.'],
+        }),
+      },
+      UnprocessableEntity: {
+        description: 'Request is valid but violates a domain rule.',
+        content: jsonContent(schemaRef('UnprocessableEntityError'), {
+          message: 'System roles cannot be deleted.',
         }),
       },
       InternalServerError: {
