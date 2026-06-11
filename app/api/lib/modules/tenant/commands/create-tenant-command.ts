@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 
 import { auth } from '@/app/lib/auth';
 import type { CommandResult } from '@/app/api/lib/utils/types';
+import { seedSystemRolesCommand } from '../../role/commands/seed-system-roles-command';
 import type { Tenant } from '../schemas/tenant-schema';
 import { tenantRepository } from '../repository/tenant-repository';
 import { validateCreateTenant } from '../validator/create-tenant-validator';
@@ -38,6 +39,16 @@ export async function createTenantCommand(payload: unknown): Promise<CommandResu
         success: false,
         errors: ['Tenant not found'],
         status: 404,
+      };
+    }
+
+    const seedResult = await seedSystemRolesCommand(createdTenant.id);
+
+    if (!seedResult.success) {
+      return {
+        success: false,
+        errors: seedResult.errors,
+        status: seedResult.status ?? 500,
       };
     }
 

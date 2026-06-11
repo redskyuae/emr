@@ -28,6 +28,14 @@ The top-level user for a Tenant. The creator of a Tenant always becomes the Tena
 
 An administrative user belonging to a specific Tenant, including the Tenant Owner and delegated administrators for that Tenant. Manages Facilities, configures Masters, and provisions Staff accounts within their Tenant; Tenant Admin authority does not apply across Tenants.
 
+## Role
+
+A Tenant-scoped authorization label that can carry permissions and be assigned to users. Distinct from Staff job profiles, Doctor clinical identity, and authentication-layer membership roles.
+
+## System Role
+
+A Role provided for every Tenant as a baseline authorization label. System Roles may be renamed but are not removed by Tenant Admins.
+
 ## Staff
 
 A user who works within one or more Facilities under exactly one Tenant. Includes doctors, nurses, receptionists, and technicians. Not the same as a Doctor (see below).
