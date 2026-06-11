@@ -52,6 +52,14 @@ const numberIdPathParameter = (entityName: string) => ({
   schema: { type: 'integer', minimum: 1 },
 });
 
+const stringIdPathParameter = (entityName: string) => ({
+  name: 'id',
+  in: 'path',
+  required: true,
+  description: `${entityName} identifier.`,
+  schema: { type: 'string', minLength: 1 },
+});
+
 const paginatedSchema = (itemSchemaName: string) => ({
   type: 'object',
   required: ['data', 'meta'],
@@ -78,6 +86,7 @@ const errorResponses = {
 
 const authenticatedErrorResponses = {
   '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
   ...errorResponses,
 };
 
@@ -308,6 +317,7 @@ export const openApiDocument = {
   servers: [{ url: '/', description: 'Current deployment' }],
   tags: [
     { name: 'Tenant', description: 'Tenant management APIs.' },
+    { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
     { name: 'Global Reference', description: 'Global Reference APIs shared by all Tenants.' },
     { name: 'Appointment Type', description: 'Appointment Type Master APIs.' },
     { name: 'Appointment Reason', description: 'Appointment Reason Master APIs.' },
@@ -404,6 +414,157 @@ export const openApiDocument = {
           '200': {
             description: 'Tenant reactivated.',
             content: jsonContent(dataEnvelopeSchema('Tenant')),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/users': {
+      get: {
+        tags: ['Staff'],
+        summary: 'List Staff',
+        description:
+          'Returns a paginated list of non-deleted Staff profiles in the active Tenant. Requires the caller to be a Tenant Admin for the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [parameterRef('Page'), parameterRef('Limit'), parameterRef('Query')],
+        responses: {
+          '200': {
+            description: 'Paginated Staff list.',
+            content: jsonContent(paginatedSchema('Staff'), {
+              data: [
+                {
+                  id: 'user_priya',
+                  name: 'Dr. Priya Sharma',
+                  email: 'priya.sharma@apollohospitals.com',
+                  phone: '+91-9876543210',
+                  staffCode: 'DOC-001',
+                  designation: 'Cardiologist',
+                  gender: 'Female',
+                  dateOfBirth: '1985-03-15',
+                  isActive: true,
+                  createdOn: '2026-06-09T10:00:00.000Z',
+                  modifiedOn: '2026-06-09T10:00:00.000Z',
+                },
+              ],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Staff'],
+        summary: 'Create Staff',
+        description:
+          'Creates a credentialed BetterAuth user, adds the user as a member of the active Tenant, and creates the Staff profile. The email address must not already exist anywhere in the system.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateStaffRequest', {
+          name: 'Dr. Priya Sharma',
+          email: 'priya.sharma@apollohospitals.com',
+          password: 'ChangeMe123!',
+          phone: '+91-9876543210',
+          staffCode: 'DOC-001',
+          designation: 'Cardiologist',
+          gender: 'Female',
+          dateOfBirth: '1985-03-15',
+        }),
+        responses: {
+          '201': {
+            description: 'Staff created.',
+            content: jsonContent(dataEnvelopeSchema('Staff'), {
+              data: {
+                id: 'user_priya',
+                name: 'Dr. Priya Sharma',
+                email: 'priya.sharma@apollohospitals.com',
+                phone: '+91-9876543210',
+                staffCode: 'DOC-001',
+                designation: 'Cardiologist',
+                gender: 'Female',
+                dateOfBirth: '1985-03-15',
+                isActive: true,
+                createdOn: '2026-06-09T10:00:00.000Z',
+                modifiedOn: '2026-06-09T10:00:00.000Z',
+              },
+            }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/users/{id}': {
+      get: {
+        tags: ['Staff'],
+        summary: 'Get Staff',
+        description:
+          'Returns a Staff profile by BetterAuth user ID within the active Tenant. Tenant Owners or Admins without a Staff profile are not returned by this API.',
+        security: [{ cookieAuth: [] }],
+        parameters: [stringIdPathParameter('Staff')],
+        responses: {
+          '200': {
+            description: 'Staff found.',
+            content: jsonContent(dataEnvelopeSchema('Staff')),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Staff'],
+        summary: 'Update Staff',
+        description:
+          'Updates Staff profile fields plus BetterAuth name and phone. Email cannot be changed through this API, and password changes require a dedicated credential endpoint.',
+        security: [{ cookieAuth: [] }],
+        parameters: [stringIdPathParameter('Staff')],
+        requestBody: requestBody('UpdateStaffRequest', {
+          name: 'Dr. Priya Sharma',
+          phone: '+91-9876543210',
+          staffCode: 'DOC-001',
+          designation: 'Senior Consultant',
+          gender: 'Female',
+          dateOfBirth: '1985-03-15',
+        }),
+        responses: {
+          '200': {
+            description: 'Staff updated.',
+            content: jsonContent(dataEnvelopeSchema('Staff')),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/users/{id}/deactivate': {
+      patch: {
+        tags: ['Staff'],
+        summary: 'Deactivate Staff',
+        description:
+          'Marks the Staff profile inactive in the active Tenant, bans the BetterAuth user, and clears existing sessions. Staff code remains reserved while the profile is non-deleted.',
+        security: [{ cookieAuth: [] }],
+        parameters: [stringIdPathParameter('Staff')],
+        responses: {
+          '200': {
+            description: 'Staff deactivated.',
+            content: jsonContent(dataEnvelopeSchema('Staff')),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/users/{id}/reactivate': {
+      patch: {
+        tags: ['Staff'],
+        summary: 'Reactivate Staff',
+        description:
+          'Marks the Staff profile active in the active Tenant and unbans the BetterAuth user.',
+        security: [{ cookieAuth: [] }],
+        parameters: [stringIdPathParameter('Staff')],
+        responses: {
+          '200': {
+            description: 'Staff reactivated.',
+            content: jsonContent(dataEnvelopeSchema('Staff')),
           },
           ...authenticatedErrorResponses,
         },
@@ -725,13 +886,23 @@ export const openApiDocument = {
         required: ['message'],
         properties: { message: { type: 'string', examples: ['Unauthorized'] } },
       },
+      ForbiddenError: {
+        type: 'object',
+        required: ['message'],
+        properties: { message: { type: 'string', examples: ['Forbidden'] } },
+      },
       NotFoundError: {
         type: 'object',
         required: ['message'],
         properties: {
           message: {
             type: 'string',
-            examples: ['Country not found', 'Tenant not found', 'Appointment Type not found'],
+            examples: [
+              'Country not found',
+              'Tenant not found',
+              'Appointment Type not found',
+              'Staff not found',
+            ],
           },
           errors: { type: 'array', items: { type: 'string' } },
         },
@@ -740,11 +911,18 @@ export const openApiDocument = {
         type: 'object',
         required: ['message', 'errors'],
         properties: {
-          message: { type: 'string', examples: ['Conflict'] },
+          message: {
+            type: 'string',
+            examples: ['Conflict', 'A user with this email already exists.'],
+          },
           errors: {
             type: 'array',
             items: { type: 'string' },
-            examples: [['Country code IN already exists.']],
+            examples: [
+              ['Country code IN already exists.'],
+              ['A user with this email already exists.'],
+              ['Staff code DOC-001 already exists.'],
+            ],
           },
         },
       },
@@ -779,6 +957,91 @@ export const openApiDocument = {
           logo: { type: ['string', 'null'], format: 'uri' },
           isActive: { type: 'boolean' },
           createdAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateStaffRequest: {
+        type: 'object',
+        required: ['name', 'email', 'password'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          email: { type: 'string', format: 'email' },
+          password: {
+            type: 'string',
+            minLength: 8,
+            maxLength: 128,
+            writeOnly: true,
+            description: 'Initial Staff password.',
+          },
+          phone: { type: 'string' },
+          staffCode: {
+            type: 'string',
+            maxLength: 20,
+            description:
+              'Tenant-scoped Staff code. Unique among non-deleted Staff profiles in the active Tenant.',
+          },
+          designation: { type: 'string', maxLength: 100 },
+          gender: { type: 'string', enum: ['Male', 'Female', 'Other', 'Prefer not to say'] },
+          dateOfBirth: { type: 'string', format: 'date' },
+        },
+      },
+      UpdateStaffRequest: {
+        type: 'object',
+        minProperties: 1,
+        description: 'Email and password are intentionally not accepted by this endpoint.',
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          phone: { type: ['string', 'null'] },
+          staffCode: {
+            type: ['string', 'null'],
+            maxLength: 20,
+            description:
+              'Tenant-scoped Staff code. Unique among non-deleted Staff profiles in the active Tenant.',
+          },
+          designation: { type: ['string', 'null'], maxLength: 100 },
+          gender: {
+            type: ['string', 'null'],
+            enum: ['Male', 'Female', 'Other', 'Prefer not to say', null],
+          },
+          dateOfBirth: { type: ['string', 'null'], format: 'date' },
+        },
+      },
+      Staff: {
+        type: 'object',
+        required: [
+          'id',
+          'name',
+          'email',
+          'phone',
+          'staffCode',
+          'designation',
+          'gender',
+          'dateOfBirth',
+          'isActive',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: {
+            type: 'string',
+            description: 'BetterAuth user ID. The Staff profile row ID is internal.',
+          },
+          name: { type: 'string' },
+          email: {
+            type: 'string',
+            format: 'email',
+            description: 'Immutable Staff email address.',
+          },
+          phone: { type: ['string', 'null'] },
+          staffCode: { type: ['string', 'null'], maxLength: 20 },
+          designation: { type: ['string', 'null'], maxLength: 100 },
+          gender: {
+            type: ['string', 'null'],
+            enum: ['Male', 'Female', 'Other', 'Prefer not to say', null],
+          },
+          dateOfBirth: { type: ['string', 'null'], format: 'date' },
+          isActive: { type: 'boolean' },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
         },
       },
       CreateCountryRequest: namedCodeCreateSchema('Country'),
@@ -887,6 +1150,10 @@ export const openApiDocument = {
         description: 'Authentication failed.',
         content: jsonContent(schemaRef('UnauthorizedError'), { message: 'Unauthorized' }),
       },
+      Forbidden: {
+        description: 'Authenticated user is not allowed to perform this action.',
+        content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+      },
       NotFound: {
         description: 'Entity was not found.',
         content: jsonContent(schemaRef('NotFoundError'), { message: 'Country not found' }),
@@ -895,7 +1162,7 @@ export const openApiDocument = {
         description: 'Conflict with an existing active entity.',
         content: jsonContent(schemaRef('ConflictError'), {
           message: 'Conflict',
-          errors: ['Country code IN already exists.'],
+          errors: ['Staff code DOC-001 already exists.'],
         }),
       },
       InternalServerError: {
