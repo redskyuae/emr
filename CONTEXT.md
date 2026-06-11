@@ -22,15 +22,15 @@ A single physical location operated by a Tenant — a hospital, clinic, diagnost
 
 ## Tenant Owner
 
-The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner.
+The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner. A Tenant Owner is also a Tenant Admin for that Tenant.
 
 ## Tenant Admin
 
-An administrative user belonging to a specific Tenant. Manages Facilities, configures Masters, and provisions Staff accounts within their Tenant.
+An administrative user belonging to a specific Tenant, including the Tenant Owner and delegated administrators for that Tenant. Manages Facilities, configures Masters, and provisions Staff accounts within their Tenant; Tenant Admin authority does not apply across Tenants.
 
 ## Staff
 
-A user who works within one or more Facilities under a Tenant. Includes doctors, nurses, receptionists, and technicians. Has a role that determines access. Not the same as a Doctor (see below).
+A user who works within one or more Facilities under exactly one Tenant. Includes doctors, nurses, receptionists, and technicians. Not the same as a Doctor (see below).
 
 ## Doctor
 
