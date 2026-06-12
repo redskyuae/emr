@@ -324,6 +324,10 @@ export const openApiDocument = {
     { name: 'Tenant', description: 'Tenant management APIs.' },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
     { name: 'Role', description: 'Role management APIs for Tenant Admins.' },
+    {
+      name: 'Permission',
+      description: 'Read-only Permission Catalogue APIs for Tenant Admins.',
+    },
     { name: 'Global Reference', description: 'Global Reference APIs shared by all Tenants.' },
     { name: 'Appointment Type', description: 'Appointment Type Master APIs.' },
     { name: 'Appointment Reason', description: 'Appointment Reason Master APIs.' },
@@ -690,6 +694,86 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/permissions': {
+      get: {
+        tags: ['Permission'],
+        summary: 'List Permission Catalogue',
+        description:
+          'Returns all active Permissions grouped by module. Requires the caller to be a Tenant Admin for the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [parameterRef('PermissionModule')],
+        responses: {
+          '200': {
+            description: 'Permission Catalogue grouped by module.',
+            content: jsonContent(schemaRef('PermissionCatalogue'), {
+              data: {
+                patient: [
+                  {
+                    id: 10,
+                    name: 'patient:read',
+                    resource: 'patient',
+                    action: 'read',
+                    description: null,
+                  },
+                  {
+                    id: 11,
+                    name: 'patient:write',
+                    resource: 'patient',
+                    action: 'write',
+                    description: null,
+                  },
+                ],
+                appointment: [
+                  {
+                    id: 16,
+                    name: 'appointment:read',
+                    resource: 'appointment',
+                    action: 'read',
+                    description: null,
+                  },
+                ],
+              },
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/permissions/{id}': {
+      get: {
+        tags: ['Permission'],
+        summary: 'Get Permission',
+        description:
+          'Returns an active Permission by ID. Inactive Permissions are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Permission')],
+        responses: {
+          '200': {
+            description: 'Permission found.',
+            content: jsonContent(dataEnvelopeSchema('Permission'), {
+              data: {
+                id: 10,
+                module: 'patient',
+                resource: 'patient',
+                action: 'read',
+                name: 'patient:read',
+                description: null,
+                isActive: true,
+                createdOn: '2026-06-11T00:00:00.000Z',
+                modifiedOn: '2026-06-11T00:00:00.000Z',
+              },
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/countries': globalReferenceCollection({
       tag: 'Global Reference',
       entity: 'Country',
@@ -976,6 +1060,17 @@ export const openApiDocument = {
         description: 'Filters State Global References by Country.',
         schema: { type: 'integer', minimum: 1 },
       },
+      PermissionModule: {
+        name: 'module',
+        in: 'query',
+        required: false,
+        description: 'Filters the Permission Catalogue by module.',
+        schema: { type: 'string', minLength: 1, maxLength: 50 },
+        examples: {
+          patient: { value: 'patient' },
+          billing: { value: 'billing' },
+        },
+      },
     },
     schemas: {
       PaginationMeta: {
@@ -1033,6 +1128,7 @@ export const openApiDocument = {
               'Appointment Type not found',
               'Staff not found',
               'Role not found',
+              'Permission not found',
             ],
           },
           errors: { type: 'array', items: { type: 'string' } },
@@ -1227,6 +1323,72 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      PermissionListItem: {
+        type: 'object',
+        required: ['id', 'name', 'resource', 'action', 'description'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: {
+            type: 'string',
+            maxLength: 100,
+            description: 'Canonical Permission key in <resource>:<action> format.',
+          },
+          resource: { type: 'string', maxLength: 50 },
+          action: {
+            type: 'string',
+            maxLength: 20,
+            enum: ['read', 'write', 'delete', 'approve', 'export'],
+          },
+          description: { type: ['string', 'null'] },
+        },
+      },
+      PermissionCatalogue: {
+        type: 'object',
+        required: ['data'],
+        properties: {
+          data: {
+            type: 'object',
+            description: 'Active Permissions grouped by module.',
+            additionalProperties: {
+              type: 'array',
+              items: schemaRef('PermissionListItem'),
+            },
+          },
+        },
+      },
+      Permission: {
+        type: 'object',
+        required: [
+          'id',
+          'module',
+          'resource',
+          'action',
+          'name',
+          'description',
+          'isActive',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          module: { type: 'string', maxLength: 50 },
+          resource: { type: 'string', maxLength: 50 },
+          action: {
+            type: 'string',
+            maxLength: 20,
+            enum: ['read', 'write', 'delete', 'approve', 'export'],
+          },
+          name: {
+            type: 'string',
+            maxLength: 100,
+            description: 'Canonical Permission key in <resource>:<action> format.',
+          },
+          description: { type: ['string', 'null'] },
+          isActive: { type: 'boolean' },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
       },
       CreateCountryRequest: namedCodeCreateSchema('Country'),
       UpdateCountryRequest: namedCodeCreateSchema('Country'),

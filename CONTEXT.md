@@ -32,6 +32,14 @@ An administrative user belonging to a specific Tenant, including the Tenant Owne
 
 A Tenant-scoped authorization label that can carry permissions and be assigned to users. Distinct from Staff job profiles, Doctor clinical identity, and authentication-layer membership roles.
 
+## Permission
+
+A system-wide authorization capability representing one allowed action on one protected resource. Permissions are assigned to Roles and are shared by all Tenants.
+
+## Permission Catalogue
+
+The system-wide set of Permissions available for assignment to Roles. Every Tenant sees the same Permission Catalogue.
+
 ## System Role
 
 A Role provided for every Tenant as a baseline authorization label. System Roles may be renamed but are not removed by Tenant Admins.
