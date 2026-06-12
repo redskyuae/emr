@@ -1,7 +1,6 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { roleRepository } from '../repository/role-repository';
-
-const CONFLICT_STATUS = 409;
 const ROLE_NAME_EXISTS = 'Role name {value} already exists.';
 const ROLE_CODE_EXISTS = 'Role code {value} already exists.';
 
@@ -38,7 +37,7 @@ export async function validateRoleUniqueness({
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   return { success: true, data: undefined };

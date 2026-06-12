@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { reactivateStaffCommand } from '@/app/api/lib/modules/staff/commands/reactivate-staff-command';
@@ -13,7 +14,7 @@ export type StaffResponse = {
 };
 
 function errorMessage(status: number) {
-  if (status === 404) {
+  if (status === StatusCodes.NOT_FOUND) {
     return 'Staff not found';
   }
 
@@ -32,7 +33,7 @@ export async function PATCH(_request: NextRequest, context: StaffRouteContext) {
     const result = await reactivateStaffCommand(id, tenantSession.tenantId);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: errorMessage(status), errors: result.errors },
@@ -42,6 +43,9 @@ export async function PATCH(_request: NextRequest, context: StaffRouteContext) {
 
     return NextResponse.json<StaffResponse>({ data: result.data });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

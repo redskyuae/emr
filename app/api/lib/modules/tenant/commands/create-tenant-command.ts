@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { headers } from 'next/headers';
 
 import { auth } from '@/app/lib/auth';
@@ -7,8 +8,6 @@ import type { Tenant } from '../schemas/tenant-schema';
 import { tenantRepository } from '../repository/tenant-repository';
 import { validateCreateTenant } from '../validator/create-tenant-validator';
 import { getTenantUniqueConstraintErrors } from '../validator/tenant-uniqueness-validator';
-
-const CONFLICT_STATUS = 409;
 
 export async function createTenantCommand(payload: unknown): Promise<CommandResult<Tenant>> {
   const validationResult = await validateCreateTenant(payload);
@@ -38,7 +37,7 @@ export async function createTenantCommand(payload: unknown): Promise<CommandResu
       return {
         success: false,
         errors: ['Tenant not found'],
-        status: 404,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -48,7 +47,7 @@ export async function createTenantCommand(payload: unknown): Promise<CommandResu
       return {
         success: false,
         errors: seedResult.errors,
-        status: seedResult.status ?? 500,
+        status: seedResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
       };
     }
 
@@ -57,7 +56,7 @@ export async function createTenantCommand(payload: unknown): Promise<CommandResu
     const constraintErrors = getTenantUniqueConstraintErrors(error);
 
     if (constraintErrors.length > 0) {
-      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
 
     throw error;

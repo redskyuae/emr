@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentReasonRepository } from '../repository/appointment-reason-repository';
 import type { AppointmentReason } from '../schemas/appointment-reason-schema';
 import { validateDeleteAppointmentReason } from '../validator/delete-appointment-reason-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function deleteAppointmentReasonCommand(
   id: unknown,
@@ -24,7 +23,7 @@ export async function deleteAppointmentReasonCommand(
     return {
       success: false,
       errors: ['Appointment reason not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

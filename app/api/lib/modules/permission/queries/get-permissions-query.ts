@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { permissionRepository } from '../repository/permission-repository';
 import type {
@@ -35,6 +36,6 @@ export async function getPermissionsQuery({ module }: PermissionListParams = {})
   } catch (error) {
     const errMessage = error instanceof Error ? error.message : String(error);
 
-    return { success: false, errors: [errMessage], status: 500 };
+    return { success: false, errors: [errMessage], status: StatusCodes.INTERNAL_SERVER_ERROR };
   }
 }

@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { roleRepository } from '../repository/role-repository';
 import type { Role } from '../schemas/role-schema';
 import { validateDeleteRole } from '../validator/delete-role-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function deleteRoleCommand(
   id: unknown,
@@ -28,7 +27,7 @@ export async function deleteRoleCommand(
     return {
       success: false,
       errors: ['Role not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

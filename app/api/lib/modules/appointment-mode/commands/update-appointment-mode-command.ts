@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentModeRepository } from '../repository/appointment-mode-repository';
 import type { AppointmentMode } from '../schemas/appointment-mode-schema';
 import { getAppointmentModeUniqueConstraintErrors } from '../validator/appointment-mode-uniqueness-validator';
 import { validateUpdateAppointmentMode } from '../validator/update-appointment-mode-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateAppointmentModeCommand(
   id: unknown,
@@ -33,7 +31,7 @@ export async function updateAppointmentModeCommand(
       return {
         success: false,
         errors: ['Appointment mode not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -45,7 +43,7 @@ export async function updateAppointmentModeCommand(
     );
 
     if (constraintErrors.length > 0) {
-      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
 
     throw error;

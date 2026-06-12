@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { appointmentReasonRepository } from '../repository/appointment-reason-repository';
 import type { AppointmentReason } from '../schemas/appointment-reason-schema';
 import { validateGetAppointmentReasonById } from '../validator/get-appointment-reason-by-id-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function getAppointmentReasonByIdQuery(
   id: unknown,
@@ -24,7 +23,7 @@ export async function getAppointmentReasonByIdQuery(
     return {
       success: false,
       errors: ['Appointment reason not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

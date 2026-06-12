@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { auth, type Session } from '@/app/lib/auth';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -11,7 +12,7 @@ export async function requireAuth(): Promise<Session | NextResponse> {
   const session = await getSession();
 
   if (!session) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ message: 'Unauthorized' }, { status: StatusCodes.UNAUTHORIZED });
   }
 
   return session;
@@ -29,7 +30,10 @@ export async function requireTenantSession(): Promise<
   const tenantId = session.session.activeOrganizationId;
 
   if (!tenantId) {
-    return NextResponse.json({ message: 'Tenant session required' }, { status: 403 });
+    return NextResponse.json(
+      { message: 'Tenant session required' },
+      { status: StatusCodes.FORBIDDEN }
+    );
   }
 
   return { session, tenantId };
@@ -57,7 +61,7 @@ export async function requireTenantAdminSession(): Promise<
   );
 
   if (!membership || !hasTenantAdminRole(membership.role)) {
-    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    return NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN });
   }
 
   return tenantSession;

@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { religionRepository } from '../repository/religion-repository';
 import type { Religion } from '../schemas/religion-schema';
 import { validateReligionId } from '../validator/religion-id-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function getReligionByIdQuery(id: unknown): Promise<SingleQueryResult<Religion>> {
   const validationResult = validateReligionId(id);
@@ -18,7 +17,7 @@ export async function getReligionByIdQuery(id: unknown): Promise<SingleQueryResu
     return {
       success: false,
       errors: ['Religion not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { appointmentCancelledReasonRepository } from '../repository/appointment-cancelled-reason-repository';
@@ -12,8 +13,6 @@ export type UpdateAppointmentCancelledReasonParams = {
   id: number;
   payload: UpdateAppointmentCancelledReasonInput;
 };
-
-const NOT_FOUND_STATUS = 404;
 
 export async function validateUpdateAppointmentCancelledReason(
   id: unknown,
@@ -46,7 +45,7 @@ export async function validateUpdateAppointmentCancelledReason(
     return {
       success: false,
       errors: ['Appointment cancelled reason not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

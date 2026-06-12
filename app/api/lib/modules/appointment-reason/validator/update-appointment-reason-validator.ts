@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { appointmentReasonRepository } from '../repository/appointment-reason-repository';
@@ -12,8 +13,6 @@ export type UpdateAppointmentReasonParams = {
   id: number;
   payload: UpdateAppointmentReasonInput;
 };
-
-const NOT_FOUND_STATUS = 404;
 
 export async function validateUpdateAppointmentReason(
   id: unknown,
@@ -45,7 +44,7 @@ export async function validateUpdateAppointmentReason(
     return {
       success: false,
       errors: ['Appointment reason not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import type { Nationality } from '../schemas/nationality-schema';
 import { nationalityRepository } from '../repository/nationality-repository';
 import { validateCreateNationality } from '../validator/create-nationality-validator';
-
-const CONFLICT_STATUS = 409;
 
 export async function createNationalityCommand(
   payload: unknown
@@ -30,7 +29,7 @@ export async function createNationalityCommand(
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   try {
@@ -47,7 +46,7 @@ export async function createNationalityCommand(
         constraintErrors.push(`Nationality code ${validationResult.data.code} already exists.`);
       }
       if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
       }
     }
     throw error;

@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { createTodoCommand } from '@/app/api/lib/modules/todo/commands/create-todo-command';
@@ -32,11 +33,17 @@ export async function GET(request: NextRequest) {
     const queryResult = await getTodosQuery({ page: safePage, limit: safeLimit });
 
     if (!queryResult.success) {
-      return NextResponse.json({ status: 500, message: 'Internal Server Error' });
+      return NextResponse.json({
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: 'Internal Server Error',
+      });
     }
 
     if (!('total' in queryResult)) {
-      return NextResponse.json({ status: 500, message: 'Internal Server Error' });
+      return NextResponse.json({
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: 'Internal Server Error',
+      });
     }
 
     const { data, total } = queryResult;
@@ -53,7 +60,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch {
-    return NextResponse.json({ status: 500, message: 'Internal Server Error' });
+    return NextResponse.json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: 'Internal Server Error',
+    });
   }
 }
 
@@ -64,7 +74,10 @@ export async function POST(request: NextRequest) {
     try {
       payload = await request.json();
     } catch {
-      return NextResponse.json({ message: 'Request body must be valid JSON' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Request body must be valid JSON' },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     const result = await createTodoCommand(payload);
@@ -72,12 +85,18 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       return NextResponse.json(
         { message: 'Validation failed', errors: result.errors },
-        { status: 400 }
+        { status: StatusCodes.BAD_REQUEST }
       );
     }
 
-    return NextResponse.json<SaveTodoResponse>({ data: result.data }, { status: 201 });
+    return NextResponse.json<SaveTodoResponse>(
+      { data: result.data },
+      { status: StatusCodes.CREATED }
+    );
   } catch {
-    return NextResponse.json({ status: 500, message: 'Internal Server Error' });
+    return NextResponse.json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: 'Internal Server Error',
+    });
   }
 }

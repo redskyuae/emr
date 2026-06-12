@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { tenantRepository } from '../repository/tenant-repository';
 import type { Tenant } from '../schemas/tenant-schema';
 import { validateTenantOwnerAccess } from '../validator/tenant-access-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function reactivateTenantCommand(
   id: unknown,
@@ -25,7 +24,7 @@ export async function reactivateTenantCommand(
     return {
       success: false,
       errors: ['Tenant not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

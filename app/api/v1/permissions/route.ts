@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { getPermissionsQuery } from '@/app/api/lib/modules/permission/queries/get-permissions-query';
@@ -22,12 +23,15 @@ export async function GET(request: NextRequest) {
     if (!result.success) {
       return NextResponse.json(
         { message: 'Validation failed', errors: result.errors },
-        { status: result.status ?? 400 }
+        { status: result.status ?? StatusCodes.BAD_REQUEST }
       );
     }
 
     return NextResponse.json<PermissionListResponse>({ data: result.data });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

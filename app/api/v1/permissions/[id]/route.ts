@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { getPermissionByIdQuery } from '@/app/api/lib/modules/permission/queries/get-permission-by-id-query';
@@ -13,7 +14,7 @@ export type PermissionResponse = {
 };
 
 function errorMessage(status: number) {
-  if (status === 404) {
+  if (status === StatusCodes.NOT_FOUND) {
     return 'Permission not found';
   }
 
@@ -32,7 +33,7 @@ export async function GET(_request: NextRequest, context: PermissionRouteContext
     const result = await getPermissionByIdQuery(id);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: errorMessage(status), errors: result.errors },
@@ -42,6 +43,9 @@ export async function GET(_request: NextRequest, context: PermissionRouteContext
 
     return NextResponse.json<PermissionResponse>({ data: result.data });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

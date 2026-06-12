@@ -1,12 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { countryRepository } from '../../country/repository/country-repository';
 import { stateRepository } from '../repository/state-repository';
 import type { State } from '../schemas/state-schema';
 import { validateCreateState } from '../validator/create-state-validator';
-
-const CONFLICT_STATUS = 409;
-const INTERNAL_ERROR_STATUS = 500;
-const VALIDATION_STATUS = 400;
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -46,7 +43,7 @@ export async function createStateCommand(payload: unknown): Promise<CommandResul
       return {
         success: false,
         errors: ['countryId: Country not found'],
-        status: VALIDATION_STATUS,
+        status: StatusCodes.BAD_REQUEST,
       };
     }
 
@@ -61,7 +58,7 @@ export async function createStateCommand(payload: unknown): Promise<CommandResul
         errors: [
           `State name ${validationResult.data.name} already exists for the selected country.`,
         ],
-        status: CONFLICT_STATUS,
+        status: StatusCodes.CONFLICT,
       };
     }
 
@@ -71,7 +68,7 @@ export async function createStateCommand(payload: unknown): Promise<CommandResul
       return {
         success: false,
         errors: ['State creation did not return a row'],
-        status: INTERNAL_ERROR_STATUS,
+        status: StatusCodes.INTERNAL_SERVER_ERROR,
       };
     }
 
@@ -84,14 +81,14 @@ export async function createStateCommand(payload: unknown): Promise<CommandResul
         errors: [
           `State name ${validationResult.data.name} already exists for the selected country.`,
         ],
-        status: CONFLICT_STATUS,
+        status: StatusCodes.CONFLICT,
       };
     }
 
     return {
       success: false,
       errors: [getErrorMessage(error)],
-      status: INTERNAL_ERROR_STATUS,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
     };
   }
 }

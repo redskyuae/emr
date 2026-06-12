@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { reactivateTenantCommand } from '@/app/api/lib/modules/tenant/commands/reactivate-tenant-command';
@@ -13,11 +14,11 @@ export type TenantResponse = {
 };
 
 function errorMessage(status: number) {
-  if (status === 404) {
+  if (status === StatusCodes.NOT_FOUND) {
     return 'Tenant not found';
   }
 
-  if (status === 403) {
+  if (status === StatusCodes.FORBIDDEN) {
     return 'Forbidden';
   }
 
@@ -36,7 +37,7 @@ export async function PATCH(_request: NextRequest, context: TenantRouteContext) 
     const result = await reactivateTenantCommand(id, session.user.id);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: errorMessage(status), errors: result.errors },
@@ -46,6 +47,9 @@ export async function PATCH(_request: NextRequest, context: TenantRouteContext) 
 
     return NextResponse.json<TenantResponse>({ data: result.data });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

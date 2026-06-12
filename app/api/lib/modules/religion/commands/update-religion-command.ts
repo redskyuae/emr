@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { religionRepository } from '../repository/religion-repository';
 import type { Religion } from '../schemas/religion-schema';
 import { validateReligionId } from '../validator/religion-id-validator';
 import { validateUpdateReligion } from '../validator/update-religion-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateReligionCommand(
   id: unknown,
@@ -28,7 +26,7 @@ export async function updateReligionCommand(
     return {
       success: false,
       errors: ['Religion not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
@@ -52,7 +50,7 @@ export async function updateReligionCommand(
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   try {
@@ -65,7 +63,7 @@ export async function updateReligionCommand(
       return {
         success: false,
         errors: ['Religion not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -81,7 +79,7 @@ export async function updateReligionCommand(
         constraintErrors.push(`Religion code ${payloadValidationResult.data.code} already exists.`);
       }
       if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
       }
     }
     throw error;

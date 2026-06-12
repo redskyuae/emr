@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { religionRepository } from '../repository/religion-repository';
 import type { Religion } from '../schemas/religion-schema';
 import { validateCreateReligion } from '../validator/create-religion-validator';
-
-const CONFLICT_STATUS = 409;
 
 export async function createReligionCommand(payload: unknown): Promise<CommandResult<Religion>> {
   const validationResult = validateCreateReligion(payload);
@@ -28,7 +27,7 @@ export async function createReligionCommand(payload: unknown): Promise<CommandRe
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   try {
@@ -45,7 +44,7 @@ export async function createReligionCommand(payload: unknown): Promise<CommandRe
         constraintErrors.push(`Religion code ${validationResult.data.code} already exists.`);
       }
       if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
       }
     }
     throw error;

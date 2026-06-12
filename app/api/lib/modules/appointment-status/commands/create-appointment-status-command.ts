@@ -1,10 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentStatusRepository } from '../repository/appointment-status-repository';
 import type { AppointmentStatus } from '../schemas/appointment-status-schema';
 import { getAppointmentStatusUniqueConstraintErrors } from '../validator/appointment-status-uniqueness-validator';
 import { validateCreateAppointmentStatus } from '../validator/create-appointment-status-validator';
-
-const CONFLICT_STATUS = 409;
 
 export async function createAppointmentStatusCommand(
   payload: unknown
@@ -31,7 +30,7 @@ export async function createAppointmentStatusCommand(
     );
 
     if (constraintErrors.length > 0) {
-      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
 
     throw error;

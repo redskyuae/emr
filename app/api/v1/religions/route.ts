@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { createReligionCommand } from '@/app/api/lib/modules/religion/commands/create-religion-command';
@@ -16,7 +17,7 @@ export type SaveReligionResponse = {
 };
 
 function mutationMessage(status: number) {
-  return status === 409 ? 'Conflict' : 'Validation failed';
+  return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
 export async function GET(request: NextRequest) {
@@ -36,12 +37,15 @@ export async function GET(request: NextRequest) {
     if (!queryResult.success) {
       return NextResponse.json(
         { message: 'Internal Server Error', errors: queryResult.errors },
-        { status: queryResult.status ?? 500 }
+        { status: queryResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR }
       );
     }
 
     if (!('total' in queryResult)) {
-      return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+      return NextResponse.json(
+        { message: 'Internal Server Error' },
+        { status: StatusCodes.INTERNAL_SERVER_ERROR }
+      );
     }
 
     const { data, total } = queryResult;
@@ -57,7 +61,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -68,13 +75,16 @@ export async function POST(request: NextRequest) {
     try {
       payload = await request.json();
     } catch {
-      return NextResponse.json({ message: 'Request body must be valid JSON' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Request body must be valid JSON' },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     const result = await createReligionCommand(payload);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: mutationMessage(status), errors: result.errors },
@@ -82,8 +92,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json<SaveReligionResponse>({ data: result.data }, { status: 201 });
+    return NextResponse.json<SaveReligionResponse>(
+      { data: result.data },
+      { status: StatusCodes.CREATED }
+    );
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

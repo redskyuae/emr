@@ -1,7 +1,6 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { appointmentModeRepository } from '../repository/appointment-mode-repository';
-
-const CONFLICT_STATUS = 409;
 const APPOINTMENT_MODE_NAME_EXISTS = "Appointment mode name '{value}' already exists.";
 const APPOINTMENT_MODE_CODE_EXISTS = "Appointment mode code '{value}' already exists.";
 
@@ -38,7 +37,7 @@ export async function validateAppointmentModeUniqueness({
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   return { success: true, data: undefined };

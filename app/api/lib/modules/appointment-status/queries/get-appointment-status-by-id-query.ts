@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { appointmentStatusRepository } from '../repository/appointment-status-repository';
 import type { AppointmentStatus } from '../schemas/appointment-status-schema';
 import { validateGetAppointmentStatusById } from '../validator/get-appointment-status-by-id-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function getAppointmentStatusByIdQuery(
   id: unknown,
@@ -24,7 +23,7 @@ export async function getAppointmentStatusByIdQuery(
     return {
       success: false,
       errors: ['Appointment status not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
