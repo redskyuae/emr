@@ -28,7 +28,13 @@ function groupPermissionsByModule(permissions: Permission[]) {
 export async function getPermissionsQuery({ module }: PermissionListParams = {}): Promise<
   SingleQueryResult<GroupedPermissions>
 > {
-  const permissions = await permissionRepository.getPermissions({ module });
+  try {
+    const permissions = await permissionRepository.getPermissions({ module });
 
-  return { success: true, data: groupPermissionsByModule(permissions) };
+    return { success: true, data: groupPermissionsByModule(permissions) };
+  } catch (error) {
+    const errMessage = error instanceof Error ? error.message : String(error);
+
+    return { success: false, errors: [errMessage], status: 500 };
+  }
 }

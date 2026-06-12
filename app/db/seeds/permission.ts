@@ -87,27 +87,31 @@ export const permissionSeedData = [
 ] as const;
 
 export async function seedPermissions() {
-  for (const permission of permissionSeedData) {
-    await db
-      .insert(permissionTable)
-      .values(permission)
-      .onConflictDoUpdate({
-        target: permissionTable.name,
-        set: {
-          module: permission.module,
-          resource: permission.resource,
-          action: permission.action,
-          description: null,
-          modifiedOn: new Date(),
-        },
-        setWhere: or(
-          ne(permissionTable.module, permission.module),
-          ne(permissionTable.resource, permission.resource),
-          ne(permissionTable.action, permission.action),
-          isNotNull(permissionTable.description)
-        ),
-      });
-  }
+  await db.transaction(async (tx) => {
+    for (const permission of permissionSeedData) {
+      await tx
+        .insert(permissionTable)
+        .values(permission)
+        .onConflictDoUpdate({
+          target: permissionTable.name,
+          set: {
+            module: permission.module,
+            resource: permission.resource,
+            action: permission.action,
+            description: null,
+            isActive: true,
+            modifiedOn: new Date(),
+          },
+          setWhere: or(
+            ne(permissionTable.module, permission.module),
+            ne(permissionTable.resource, permission.resource),
+            ne(permissionTable.action, permission.action),
+            isNotNull(permissionTable.description),
+            ne(permissionTable.isActive, true)
+          ),
+        });
+    }
+  });
 }
 
 if (process.argv[1]?.endsWith('permission.ts')) {
