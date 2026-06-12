@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { createTenantCommand } from '@/app/api/lib/modules/tenant/commands/create-tenant-command';
@@ -14,15 +15,15 @@ export type SaveTenantResponse = {
 };
 
 function mutationMessage(status: number, errors: string[]) {
-  if (status === 403) {
+  if (status === StatusCodes.FORBIDDEN) {
     return 'Forbidden';
   }
 
-  if (status === 409 && errors.length === 1) {
+  if (status === StatusCodes.CONFLICT && errors.length === 1) {
     return errors[0];
   }
 
-  return status === 409 ? 'Conflict' : 'Validation failed';
+  return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
 export async function POST(request: NextRequest) {
@@ -38,13 +39,16 @@ export async function POST(request: NextRequest) {
     try {
       payload = await request.json();
     } catch {
-      return NextResponse.json({ message: 'Request body must be valid JSON' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Request body must be valid JSON' },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     const result = await createTenantCommand(payload);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: mutationMessage(status, result.errors), errors: result.errors },
@@ -52,8 +56,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json<SaveTenantResponse>({ data: result.data }, { status: 201 });
+    return NextResponse.json<SaveTenantResponse>(
+      { data: result.data },
+      { status: StatusCodes.CREATED }
+    );
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

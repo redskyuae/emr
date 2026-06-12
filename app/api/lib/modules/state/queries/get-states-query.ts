@@ -1,10 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ListQueryResult } from '@/app/api/lib/utils/types';
 import { countryRepository } from '../../country/repository/country-repository';
 import { stateRepository } from '../repository/state-repository';
 import type { State, StateListParams } from '../schemas/state-schema';
 import { validateStateCountryId } from '../validator/state-country-id-validator';
-
-const VALIDATION_STATUS = 400;
 
 export async function getStatesQuery({
   page = 1,
@@ -25,7 +24,7 @@ export async function getStatesQuery({
       return {
         success: false,
         errors: ['countryId: Country not found'],
-        status: VALIDATION_STATUS,
+        status: StatusCodes.BAD_REQUEST,
       };
     }
   }

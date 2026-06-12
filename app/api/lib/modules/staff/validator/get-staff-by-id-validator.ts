@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { staffRepository } from '../repository/staff-repository';
 import { staffUserIdSchema } from '../schemas/staff-schema';
-
-const NOT_FOUND_STATUS = 404;
 
 export type StaffByIdParams = {
   userId: string;
@@ -26,7 +25,7 @@ export async function validateGetStaffById(
     return {
       success: false,
       errors: ['Staff not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

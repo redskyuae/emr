@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import type { Nationality } from '../schemas/nationality-schema';
 import { nationalityRepository } from '../repository/nationality-repository';
 import { validateNationalityId } from '../validator/nationality-id-validator';
 import { validateUpdateNationality } from '../validator/update-nationality-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateNationalityCommand(
   id: unknown,
@@ -30,7 +28,7 @@ export async function updateNationalityCommand(
     return {
       success: false,
       errors: ['Nationality not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
@@ -54,7 +52,7 @@ export async function updateNationalityCommand(
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   try {
@@ -67,7 +65,7 @@ export async function updateNationalityCommand(
       return {
         success: false,
         errors: ['Nationality not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -87,7 +85,7 @@ export async function updateNationalityCommand(
         );
       }
       if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
       }
     }
     throw error;

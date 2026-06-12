@@ -1,13 +1,10 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { countryRepository } from '../../country/repository/country-repository';
 import { stateRepository } from '../repository/state-repository';
 import type { State } from '../schemas/state-schema';
 import { validateStateId } from '../validator/state-id-validator';
 import { validateUpdateState } from '../validator/update-state-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
-const VALIDATION_STATUS = 400;
 
 export async function updateStateCommand(
   id: unknown,
@@ -33,7 +30,7 @@ export async function updateStateCommand(
     return {
       success: false,
       errors: ['State not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
@@ -41,7 +38,7 @@ export async function updateStateCommand(
     return {
       success: false,
       errors: ['countryId: Country not found'],
-      status: VALIDATION_STATUS,
+      status: StatusCodes.BAD_REQUEST,
     };
   }
 
@@ -54,8 +51,10 @@ export async function updateStateCommand(
   if (duplicateState) {
     return {
       success: false,
-      errors: [`State name ${payloadValidationResult.data.name} already exists for the selected country.`],
-      status: CONFLICT_STATUS,
+      errors: [
+        `State name ${payloadValidationResult.data.name} already exists for the selected country.`,
+      ],
+      status: StatusCodes.CONFLICT,
     };
   }
 
@@ -69,7 +68,7 @@ export async function updateStateCommand(
       return {
         success: false,
         errors: ['State not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -79,8 +78,10 @@ export async function updateStateCommand(
     if (err.code === '23505' && err.constraint === 'state_name_country_idx') {
       return {
         success: false,
-        errors: [`State name ${payloadValidationResult.data.name} already exists for the selected country.`],
-        status: CONFLICT_STATUS,
+        errors: [
+          `State name ${payloadValidationResult.data.name} already exists for the selected country.`,
+        ],
+        status: StatusCodes.CONFLICT,
       };
     }
     throw error;

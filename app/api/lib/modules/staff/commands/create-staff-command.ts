@@ -1,11 +1,10 @@
+import { StatusCodes } from 'http-status-codes';
 import { auth } from '@/app/lib/auth';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { staffRepository } from '../repository/staff-repository';
 import type { Staff } from '../schemas/staff-schema';
 import { validateCreateStaff } from '../validator/create-staff-validator';
 import { getStaffUniqueConstraintErrors } from '../validator/staff-uniqueness-validator';
-
-const CONFLICT_STATUS = 409;
 
 async function cleanupCreatedUser(userId: string) {
   try {
@@ -78,7 +77,7 @@ export async function createStaffCommand(
       return {
         success: false,
         errors: ['Staff not found'],
-        status: 404,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -91,13 +90,13 @@ export async function createStaffCommand(
     const constraintErrors = getStaffUniqueConstraintErrors(error, validationResult.data);
 
     if (constraintErrors.length > 0) {
-      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
 
     const authErrors = getAuthCreateUserErrors(error);
 
     if (authErrors.length > 0) {
-      return { success: false, errors: authErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: authErrors, status: StatusCodes.CONFLICT };
     }
 
     throw error;

@@ -1,10 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { roleRepository } from '../repository/role-repository';
 import { roleIdSchema, updateRoleSchema, type UpdateRoleInput } from '../schemas/role-schema';
 import { validateRoleUniqueness } from './role-uniqueness-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export type UpdateRoleParams = {
   id: number;
@@ -62,7 +61,7 @@ export async function validateUpdateRole(
     return {
       success: false,
       errors: ['Role not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

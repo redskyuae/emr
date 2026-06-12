@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentStatusRepository } from '../repository/appointment-status-repository';
 import type { AppointmentStatus } from '../schemas/appointment-status-schema';
 import { validateDeleteAppointmentStatus } from '../validator/delete-appointment-status-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function deleteAppointmentStatusCommand(
   id: unknown,
@@ -24,7 +23,7 @@ export async function deleteAppointmentStatusCommand(
     return {
       success: false,
       errors: ['Appointment status not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

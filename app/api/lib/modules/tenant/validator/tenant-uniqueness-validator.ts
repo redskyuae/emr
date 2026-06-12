@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { tenantRepository } from '../repository/tenant-repository';
 
@@ -6,8 +7,6 @@ type TenantUniquenessInput = {
   slug?: string;
   excludeId?: string;
 };
-
-const CONFLICT_STATUS = 409;
 
 export async function validateTenantUniqueness({
   name,
@@ -30,7 +29,7 @@ export async function validateTenantUniqueness({
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   return { success: true, data: { name, slug, excludeId } };

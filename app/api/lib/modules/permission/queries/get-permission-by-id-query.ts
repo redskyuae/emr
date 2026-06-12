@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { permissionRepository } from '../repository/permission-repository';
 import type { Permission } from '../schemas/permission-schema';
 import { validatePermissionId } from '../validator/permission-id-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function getPermissionByIdQuery(id: unknown): Promise<SingleQueryResult<Permission>> {
   const validationResult = validatePermissionId(id);
@@ -18,7 +17,7 @@ export async function getPermissionByIdQuery(id: unknown): Promise<SingleQueryRe
     return {
       success: false,
       errors: ['Permission not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

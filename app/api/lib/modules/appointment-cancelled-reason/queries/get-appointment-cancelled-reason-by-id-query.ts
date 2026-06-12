@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { appointmentCancelledReasonRepository } from '../repository/appointment-cancelled-reason-repository';
 import type { AppointmentCancelledReason } from '../schemas/appointment-cancelled-reason-schema';
 import { validateGetAppointmentCancelledReasonById } from '../validator/get-appointment-cancelled-reason-by-id-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function getAppointmentCancelledReasonByIdQuery(
   id: unknown,
@@ -25,7 +24,7 @@ export async function getAppointmentCancelledReasonByIdQuery(
     return {
       success: false,
       errors: ['Appointment cancelled reason not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

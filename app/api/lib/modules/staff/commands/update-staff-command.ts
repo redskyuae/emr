@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { staffRepository } from '../repository/staff-repository';
 import type { Staff } from '../schemas/staff-schema';
 import { getStaffUniqueConstraintErrors } from '../validator/staff-uniqueness-validator';
 import { validateUpdateStaff } from '../validator/update-staff-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateStaffCommand(
   userId: unknown,
@@ -33,7 +31,7 @@ export async function updateStaffCommand(
       return {
         success: false,
         errors: ['Staff not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -44,7 +42,7 @@ export async function updateStaffCommand(
     });
 
     if (constraintErrors.length > 0) {
-      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
 
     throw error;

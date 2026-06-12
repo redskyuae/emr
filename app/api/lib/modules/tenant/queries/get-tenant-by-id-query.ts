@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { tenantRepository } from '../repository/tenant-repository';
 import type { Tenant } from '../schemas/tenant-schema';
 import { validateTenantMemberAccess } from '../validator/tenant-access-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function getTenantByIdQuery(
   id: unknown,
@@ -25,7 +24,7 @@ export async function getTenantByIdQuery(
     return {
       success: false,
       errors: ['Tenant not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import type { Language } from '../schemas/language-schema';
 import { languageRepository } from '../repository/language-repository';
 import { validateLanguageId } from '../validator/language-id-validator';
 import { validateUpdateLanguage } from '../validator/update-language-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateLanguageCommand(
   id: unknown,
@@ -28,7 +26,7 @@ export async function updateLanguageCommand(
     return {
       success: false,
       errors: ['Language not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
@@ -52,7 +50,7 @@ export async function updateLanguageCommand(
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   try {
@@ -65,7 +63,7 @@ export async function updateLanguageCommand(
       return {
         success: false,
         errors: ['Language not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -81,7 +79,7 @@ export async function updateLanguageCommand(
         constraintErrors.push(`Language code ${payloadValidationResult.data.code} already exists.`);
       }
       if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
       }
     }
     throw error;

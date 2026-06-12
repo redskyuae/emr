@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentTypeRepository } from '../repository/appointment-type-repository';
 import type { AppointmentType } from '../schemas/appointment-type-schema';
 import { getAppointmentTypeUniqueConstraintErrors } from '../validator/appointment-type-uniqueness-validator';
 import { validateUpdateAppointmentType } from '../validator/update-appointment-type-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateAppointmentTypeCommand(
   id: unknown,
@@ -31,7 +29,7 @@ export async function updateAppointmentTypeCommand(
       return {
         success: false,
         errors: ['Appointment type not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -43,7 +41,7 @@ export async function updateAppointmentTypeCommand(
     );
 
     if (constraintErrors.length > 0) {
-      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
 
     throw error;

@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { tenantRepository } from '../repository/tenant-repository';
 import type { Tenant } from '../schemas/tenant-schema';
 import { validateUpdateTenant } from '../validator/update-tenant-validator';
 import { getTenantUniqueConstraintErrors } from '../validator/tenant-uniqueness-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateTenantCommand(
   id: unknown,
@@ -32,7 +30,7 @@ export async function updateTenantCommand(
       return {
         success: false,
         errors: ['Tenant not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -41,7 +39,7 @@ export async function updateTenantCommand(
     const constraintErrors = getTenantUniqueConstraintErrors(error);
 
     if (constraintErrors.length > 0) {
-      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
 
     throw error;

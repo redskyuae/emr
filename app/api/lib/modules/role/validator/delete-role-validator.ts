@@ -1,10 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { roleRepository } from '../repository/role-repository';
 import { roleIdSchema } from '../schemas/role-schema';
-
-const NOT_FOUND_STATUS = 404;
-const UNPROCESSABLE_STATUS = 422;
 
 export type DeleteRoleParams = {
   id: number;
@@ -27,7 +25,7 @@ export async function validateDeleteRole(
     return {
       success: false,
       errors: ['Role not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
@@ -35,7 +33,7 @@ export async function validateDeleteRole(
     return {
       success: false,
       errors: ['System roles cannot be deleted.'],
-      status: UNPROCESSABLE_STATUS,
+      status: StatusCodes.UNPROCESSABLE_ENTITY,
     };
   }
 

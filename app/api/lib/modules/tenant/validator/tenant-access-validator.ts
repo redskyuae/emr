@@ -1,10 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { tenantRepository } from '../repository/tenant-repository';
 import { tenantIdSchema } from '../schemas/tenant-schema';
-
-const FORBIDDEN_STATUS = 403;
-const NOT_FOUND_STATUS = 404;
 
 type TenantAccess = {
   id: string;
@@ -28,7 +26,7 @@ async function validateTenantAccess(
     return {
       success: false,
       errors: ['Tenant not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
@@ -41,7 +39,7 @@ async function validateTenantAccess(
     return {
       success: false,
       errors: [access === 'owner' ? 'Tenant owner access required' : 'Tenant access required'],
-      status: FORBIDDEN_STATUS,
+      status: StatusCodes.FORBIDDEN,
     };
   }
 

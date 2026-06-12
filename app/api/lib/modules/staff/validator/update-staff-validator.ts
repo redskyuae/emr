@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { staffRepository } from '../repository/staff-repository';
@@ -7,8 +8,6 @@ import {
   type UpdateStaffInput,
 } from '../schemas/staff-schema';
 import { validateStaffUniqueness } from './staff-uniqueness-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export type UpdateStaffParams = {
   userId: string;
@@ -77,7 +76,7 @@ export async function validateUpdateStaff(
     return {
       success: false,
       errors: ['Staff not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

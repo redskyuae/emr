@@ -1,7 +1,6 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { staffRepository } from '../repository/staff-repository';
-
-const CONFLICT_STATUS = 409;
 const STAFF_EMAIL_EXISTS = 'A user with this email already exists.';
 const STAFF_CODE_EXISTS = "Staff code '{value}' already exists.";
 
@@ -40,7 +39,7 @@ export async function validateStaffUniqueness({
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   return { success: true, data: undefined };

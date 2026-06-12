@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentCancelledReasonRepository } from '../repository/appointment-cancelled-reason-repository';
 import type { AppointmentCancelledReason } from '../schemas/appointment-cancelled-reason-schema';
 import { getAppointmentCancelledReasonUniqueConstraintErrors } from '../validator/appointment-cancelled-reason-uniqueness-validator';
 import { validateUpdateAppointmentCancelledReason } from '../validator/update-appointment-cancelled-reason-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateAppointmentCancelledReasonCommand(
   id: unknown,
@@ -34,7 +32,7 @@ export async function updateAppointmentCancelledReasonCommand(
       return {
         success: false,
         errors: ['Appointment cancelled reason not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -46,7 +44,7 @@ export async function updateAppointmentCancelledReasonCommand(
     );
 
     if (constraintErrors.length > 0) {
-      return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
 
     throw error;

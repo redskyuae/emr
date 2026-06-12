@@ -1,7 +1,6 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { appointmentStatusRepository } from '../repository/appointment-status-repository';
-
-const CONFLICT_STATUS = 409;
 const APPOINTMENT_STATUS_NAME_EXISTS = "Appointment status name '{value}' already exists.";
 const APPOINTMENT_STATUS_CODE_EXISTS = "Appointment status code '{value}' already exists.";
 
@@ -38,7 +37,7 @@ export async function validateAppointmentStatusUniqueness({
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   return { success: true, data: undefined };

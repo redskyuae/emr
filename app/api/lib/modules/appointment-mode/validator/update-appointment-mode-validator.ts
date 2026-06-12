@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import {
   type UpdateAppointmentModeInput,
@@ -12,8 +13,6 @@ export type UpdateAppointmentModeParams = {
   id: number;
   payload: UpdateAppointmentModeInput;
 };
-
-const NOT_FOUND_STATUS = 404;
 
 export async function validateUpdateAppointmentMode(
   id: unknown,
@@ -45,7 +44,7 @@ export async function validateUpdateAppointmentMode(
     return {
       success: false,
       errors: ['Appointment mode not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

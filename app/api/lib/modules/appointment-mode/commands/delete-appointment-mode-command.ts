@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { appointmentModeRepository } from '../repository/appointment-mode-repository';
 import type { AppointmentMode } from '../schemas/appointment-mode-schema';
 import { validateDeleteAppointmentMode } from '../validator/delete-appointment-mode-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function deleteAppointmentModeCommand(
   id: unknown,
@@ -24,7 +23,7 @@ export async function deleteAppointmentModeCommand(
     return {
       success: false,
       errors: ['Appointment mode not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

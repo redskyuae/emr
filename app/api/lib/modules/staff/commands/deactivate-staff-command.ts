@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { staffRepository } from '../repository/staff-repository';
 import type { Staff } from '../schemas/staff-schema';
 import { validateGetStaffById } from '../validator/get-staff-by-id-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function deactivateStaffCommand(
   userId: unknown,
@@ -29,7 +28,7 @@ export async function deactivateStaffCommand(
     return {
       success: false,
       errors: ['Staff not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

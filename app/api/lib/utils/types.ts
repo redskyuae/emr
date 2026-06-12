@@ -1,4 +1,6 @@
-type ResultFailure = { success: false; errors: string[]; status?: number };
+import { StatusCodes } from 'http-status-codes';
+
+type ResultFailure = { success: false; errors: string[]; status?: StatusCodes };
 
 export type ValidationResult<T> = { success: true; data: T } | ResultFailure;
 

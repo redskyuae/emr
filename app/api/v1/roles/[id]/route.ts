@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteRoleCommand } from '@/app/api/lib/modules/role/commands/delete-role-command';
@@ -20,15 +21,18 @@ export type RoleResponse = {
 };
 
 function errorMessage(status: number, errors: string[]) {
-  if (status === 404) {
+  if (status === StatusCodes.NOT_FOUND) {
     return 'Role not found';
   }
 
-  if ((status === 409 || status === 422) && errors.length === 1) {
+  if (
+    (status === StatusCodes.CONFLICT || status === StatusCodes.UNPROCESSABLE_ENTITY) &&
+    errors.length === 1
+  ) {
     return errors[0];
   }
 
-  if (status === 409) {
+  if (status === StatusCodes.CONFLICT) {
     return 'Conflict';
   }
 
@@ -47,7 +51,7 @@ export async function GET(_request: NextRequest, context: RoleRouteContext) {
     const result = await getRoleByIdQuery(id, tenantSession.tenantId);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: errorMessage(status, result.errors), errors: result.errors },
@@ -57,7 +61,10 @@ export async function GET(_request: NextRequest, context: RoleRouteContext) {
 
     return NextResponse.json<RoleResponse>({ data: result.data });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -75,13 +82,16 @@ export async function PUT(request: NextRequest, context: RoleRouteContext) {
     try {
       payload = await request.json();
     } catch {
-      return NextResponse.json({ message: 'Request body must be valid JSON' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Request body must be valid JSON' },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     const result = await updateRoleCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: errorMessage(status, result.errors), errors: result.errors },
@@ -91,7 +101,10 @@ export async function PUT(request: NextRequest, context: RoleRouteContext) {
 
     return NextResponse.json<RoleResponse>({ data: result.data });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -107,9 +120,9 @@ export async function DELETE(_request: NextRequest, context: RoleRouteContext) {
     const result = await deleteRoleCommand(id, tenantSession.tenantId);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
-      if (status === 422) {
+      if (status === StatusCodes.UNPROCESSABLE_ENTITY) {
         return NextResponse.json({ message: errorMessage(status, result.errors) }, { status });
       }
 
@@ -119,8 +132,11 @@ export async function DELETE(_request: NextRequest, context: RoleRouteContext) {
       );
     }
 
-    return new Response(null, { status: 204 });
+    return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

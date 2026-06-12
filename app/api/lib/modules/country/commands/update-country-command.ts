@@ -1,11 +1,9 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { countryRepository } from '../repository/country-repository';
 import type { Country } from '../schemas/country-schema';
 import { validateCountryId } from '../validator/country-id-validator';
 import { validateUpdateCountry } from '../validator/update-country-validator';
-
-const CONFLICT_STATUS = 409;
-const NOT_FOUND_STATUS = 404;
 
 export async function updateCountryCommand(
   id: unknown,
@@ -28,7 +26,7 @@ export async function updateCountryCommand(
     return {
       success: false,
       errors: ['Country not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
@@ -52,7 +50,7 @@ export async function updateCountryCommand(
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: CONFLICT_STATUS };
+    return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
   try {
@@ -65,7 +63,7 @@ export async function updateCountryCommand(
       return {
         success: false,
         errors: ['Country not found'],
-        status: NOT_FOUND_STATUS,
+        status: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -81,7 +79,7 @@ export async function updateCountryCommand(
         constraintErrors.push(`Country code ${payloadValidationResult.data.code} already exists.`);
       }
       if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: CONFLICT_STATUS };
+        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
       }
     }
     throw error;

@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteAppointmentStatusCommand } from '@/app/api/lib/modules/appointment-status/commands/delete-appointment-status-command';
@@ -21,15 +22,15 @@ export type AppointmentStatusResponse = {
 };
 
 function errorMessage(status: number, errors: string[]) {
-  if (status === 404) {
+  if (status === StatusCodes.NOT_FOUND) {
     return 'Appointment status not found';
   }
 
-  if (status === 409 && errors.length === 1) {
+  if (status === StatusCodes.CONFLICT && errors.length === 1) {
     return errors[0];
   }
 
-  return status === 409 ? 'Conflict' : 'Validation failed';
+  return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
 function getTenantId(request: NextRequest) {
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest, context: AppointmentStatusRouteC
     const result = await getAppointmentStatusByIdQuery(id, getTenantId(request));
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: errorMessage(status, result.errors), errors: result.errors },
@@ -53,7 +54,10 @@ export async function GET(request: NextRequest, context: AppointmentStatusRouteC
 
     return NextResponse.json<AppointmentStatusResponse>({ data: result.data });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -65,13 +69,16 @@ export async function PUT(request: NextRequest, context: AppointmentStatusRouteC
     try {
       payload = await request.json();
     } catch {
-      return NextResponse.json({ message: 'Request body must be valid JSON' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Request body must be valid JSON' },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     const result = await updateAppointmentStatusCommand(id, payload);
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: errorMessage(status, result.errors), errors: result.errors },
@@ -81,7 +88,10 @@ export async function PUT(request: NextRequest, context: AppointmentStatusRouteC
 
     return NextResponse.json<AppointmentStatusResponse>({ data: result.data });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -91,7 +101,7 @@ export async function DELETE(request: NextRequest, context: AppointmentStatusRou
     const result = await deleteAppointmentStatusCommand(id, getTenantId(request));
 
     if (!result.success) {
-      const status = result.status ?? 400;
+      const status = result.status ?? StatusCodes.BAD_REQUEST;
 
       return NextResponse.json(
         { message: errorMessage(status, result.errors), errors: result.errors },
@@ -99,8 +109,11 @@ export async function DELETE(request: NextRequest, context: AppointmentStatusRou
       );
     }
 
-    return new Response(null, { status: 204 });
+    return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal Server Error' },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

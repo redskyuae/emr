@@ -1,9 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { countryRepository } from '../repository/country-repository';
 import type { Country } from '../schemas/country-schema';
 import { validateCountryId } from '../validator/country-id-validator';
-
-const NOT_FOUND_STATUS = 404;
 
 export async function deleteCountryCommand(id: unknown): Promise<CommandResult<Country>> {
   const validationResult = validateCountryId(id);
@@ -18,7 +17,7 @@ export async function deleteCountryCommand(id: unknown): Promise<CommandResult<C
     return {
       success: false,
       errors: ['Country not found'],
-      status: NOT_FOUND_STATUS,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 

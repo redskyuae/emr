@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { staffRepository } from '../repository/staff-repository';
 import type { Staff } from '../schemas/staff-schema';
@@ -26,7 +27,7 @@ export async function getStaffByIdQuery(
     return {
       success: false,
       errors: ['Staff not found'],
-      status: 404,
+      status: StatusCodes.NOT_FOUND,
     };
   }
 
