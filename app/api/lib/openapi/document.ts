@@ -52,6 +52,14 @@ const numberIdPathParameter = (entityName: string) => ({
   schema: { type: 'integer', minimum: 1 },
 });
 
+const namedNumberPathParameter = (name: string, entityName: string) => ({
+  name,
+  in: 'path',
+  required: true,
+  description: `${entityName} identifier.`,
+  schema: { type: 'integer', minimum: 1 },
+});
+
 const stringIdPathParameter = (entityName: string) => ({
   name: 'id',
   in: 'path',
@@ -77,6 +85,14 @@ const dataEnvelopeSchema = (schemaName: string) => ({
   },
 });
 
+const dataEnvelopeArraySchema = (schemaName: string) => ({
+  type: 'object',
+  required: ['data'],
+  properties: {
+    data: { type: 'array', items: schemaRef(schemaName) },
+  },
+});
+
 const errorResponses = {
   '400': responseRef('ValidationFailed'),
   '404': responseRef('NotFound'),
@@ -93,6 +109,14 @@ const authenticatedErrorResponses = {
 const roleManagementErrorResponses = {
   ...authenticatedErrorResponses,
   '422': responseRef('UnprocessableEntity'),
+};
+
+const rolePermissionErrorResponses = {
+  '400': responseRef('ValidationFailed'),
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': responseRef('NotFound'),
+  '500': responseRef('InternalServerError'),
 };
 
 const listParameters = [
@@ -324,6 +348,10 @@ export const openApiDocument = {
     { name: 'Tenant', description: 'Tenant management APIs.' },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
     { name: 'Role', description: 'Role management APIs for Tenant Admins.' },
+    {
+      name: 'Permission Assignment',
+      description: 'Role Permission Assignment APIs for Tenant Admins.',
+    },
     {
       name: 'Permission',
       description: 'Read-only Permission Catalogue APIs for Tenant Admins.',
@@ -691,6 +719,141 @@ export const openApiDocument = {
         responses: {
           '204': { description: 'Role deleted.' },
           ...roleManagementErrorResponses,
+        },
+      },
+    },
+    '/api/v1/roles/{roleId}/permissions': {
+      get: {
+        tags: ['Permission Assignment'],
+        summary: 'List Role Permissions',
+        description:
+          'Returns a flat list of active Permissions assigned to a Role in the active Tenant. Roles from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [namedNumberPathParameter('roleId', 'Role')],
+        responses: {
+          '200': {
+            description: 'Assigned Permissions for the Role.',
+            content: jsonContent(dataEnvelopeArraySchema('AssignedPermission'), {
+              data: [
+                {
+                  id: 10,
+                  module: 'patient',
+                  resource: 'patient',
+                  action: 'read',
+                  name: 'patient:read',
+                  description: null,
+                },
+                {
+                  id: 11,
+                  module: 'patient',
+                  resource: 'patient',
+                  action: 'write',
+                  name: 'patient:write',
+                  description: null,
+                },
+              ],
+            }),
+          },
+          ...rolePermissionErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Permission Assignment'],
+        summary: 'Assign Permissions To Role',
+        description:
+          'Adds one or more active Permissions to a Role in the active Tenant. Duplicate IDs and already-assigned Permissions are ignored.',
+        security: [{ cookieAuth: [] }],
+        parameters: [namedNumberPathParameter('roleId', 'Role')],
+        requestBody: requestBody('AssignRolePermissionsRequest', {
+          permissionIds: [10, 11, 16],
+        }),
+        responses: {
+          '200': {
+            description: 'The Role Permissions after assignment.',
+            content: jsonContent(dataEnvelopeArraySchema('AssignedPermission'), {
+              data: [
+                {
+                  id: 10,
+                  module: 'patient',
+                  resource: 'patient',
+                  action: 'read',
+                  name: 'patient:read',
+                  description: null,
+                },
+                {
+                  id: 11,
+                  module: 'patient',
+                  resource: 'patient',
+                  action: 'write',
+                  name: 'patient:write',
+                  description: null,
+                },
+                {
+                  id: 16,
+                  module: 'appointment',
+                  resource: 'appointment',
+                  action: 'read',
+                  name: 'appointment:read',
+                  description: null,
+                },
+              ],
+            }),
+          },
+          ...rolePermissionErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Permission Assignment'],
+        summary: 'Replace Role Permissions',
+        description:
+          'Atomically replaces all Permission Assignments for a Role in the active Tenant. An empty permissionIds array clears all Permission Assignments for the Role.',
+        security: [{ cookieAuth: [] }],
+        parameters: [namedNumberPathParameter('roleId', 'Role')],
+        requestBody: requestBody('SetRolePermissionsRequest', {
+          permissionIds: [10, 11],
+        }),
+        responses: {
+          '200': {
+            description: 'The new full Role Permission set.',
+            content: jsonContent(dataEnvelopeArraySchema('AssignedPermission'), {
+              data: [
+                {
+                  id: 10,
+                  module: 'patient',
+                  resource: 'patient',
+                  action: 'read',
+                  name: 'patient:read',
+                  description: null,
+                },
+                {
+                  id: 11,
+                  module: 'patient',
+                  resource: 'patient',
+                  action: 'write',
+                  name: 'patient:write',
+                  description: null,
+                },
+              ],
+            }),
+          },
+          ...rolePermissionErrorResponses,
+        },
+      },
+    },
+    '/api/v1/roles/{roleId}/permissions/{permissionId}': {
+      delete: {
+        tags: ['Permission Assignment'],
+        summary: 'Remove Permission From Role',
+        description:
+          'Hard-deletes one Permission Assignment from a Role in the active Tenant. Returns not found when the Role or assignment does not exist.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          namedNumberPathParameter('roleId', 'Role'),
+          namedNumberPathParameter('permissionId', 'Permission'),
+        ],
+        responses: {
+          '204': { description: 'Permission Assignment removed.' },
+          ...rolePermissionErrorResponses,
         },
       },
     },
@@ -1129,6 +1292,7 @@ export const openApiDocument = {
               'Staff not found',
               'Role not found',
               'Permission not found',
+              'Permission Assignment not found',
             ],
           },
           errors: { type: 'array', items: { type: 'string' } },
@@ -1323,6 +1487,50 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      AssignRolePermissionsRequest: {
+        type: 'object',
+        required: ['permissionIds'],
+        properties: {
+          permissionIds: {
+            type: 'array',
+            minItems: 1,
+            items: { type: 'integer', minimum: 1 },
+            description: 'Active Permission identifiers to assign. Duplicate IDs are ignored.',
+          },
+        },
+      },
+      SetRolePermissionsRequest: {
+        type: 'object',
+        required: ['permissionIds'],
+        properties: {
+          permissionIds: {
+            type: 'array',
+            items: { type: 'integer', minimum: 1 },
+            description:
+              'Active Permission identifiers that should become the complete Permission Assignment set for the Role. An empty array clears all assignments.',
+          },
+        },
+      },
+      AssignedPermission: {
+        type: 'object',
+        required: ['id', 'module', 'resource', 'action', 'name', 'description'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          module: { type: 'string', maxLength: 50 },
+          resource: { type: 'string', maxLength: 50 },
+          action: {
+            type: 'string',
+            maxLength: 20,
+            enum: ['read', 'write', 'delete', 'approve', 'export'],
+          },
+          name: {
+            type: 'string',
+            maxLength: 100,
+            description: 'Canonical Permission key in <resource>:<action> format.',
+          },
+          description: { type: ['string', 'null'] },
+        },
       },
       PermissionListItem: {
         type: 'object',
