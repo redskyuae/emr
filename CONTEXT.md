@@ -40,6 +40,10 @@ A system-wide authorization capability representing one allowed action on one pr
 
 The system-wide set of Permissions available for assignment to Roles. Every Tenant sees the same Permission Catalogue.
 
+## Permission Assignment
+
+The association between a Role and a Permission within a Tenant. A Role's Permission Assignments define what users with that Role are allowed to do.
+
 ## System Role
 
 A Role provided for every Tenant as a baseline authorization label. System Roles may be renamed but are not removed by Tenant Admins.
