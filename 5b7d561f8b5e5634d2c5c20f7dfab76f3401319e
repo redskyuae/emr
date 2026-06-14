@@ -1,0 +1,47 @@
+components/marketing/marketing-animations.tsx
+  5ae80a8db93754be 16,20-21,67-91,96,104,110-113,115-127,132-146,151-152,155,167-172,176-189,191-196
+DESIGN.md
+  5ae80a8db93754be 12,68-75
+components/marketing/site-footer.tsx
+  5ae80a8db93754be 5-6,12,24,29,31-32,44-56,65-81,90-101
+app/(marketing)/page.tsx
+  5ae80a8db93754be 1,4,6-7,10,13,18,20,24-26,28,36,38-55,63-72,114,116-117,119,122-123,125,128-129,131,134-135,137,140-141,143,146-147,149,180,182-186,189-193,196-207,209-243,246-257,259-261,265-266,268-277,288,292,294,297-298,301,308,310,313,319,323-331,333-336,338-384,389,391-393,395-397,399-402,404-407,411-430,432,436-437,439-478,480-487,489-514,522,553-558,563-564,567-569,572-573,576-605,607-648,651-655,657,661-662,664,667,675-676,678-681,684-685,688-692,694-704,706-711,722-723,727-728,738,765-819,821-846,848-852,867-869,872,876-877,883,894,896-898
+app/api/v1/roles/[id]/permissions/route.ts
+  5ae80a8db93754be 11,38,67,107
+components/marketing/site-header.tsx
+  5ae80a8db93754be 2,7-8,11,14,20-44,46-56,59-90
+app/api/v1/roles/[id]/permissions/[permissionId]/route.ts
+  5ae80a8db93754be 8,31
+app/api/lib/openapi/document.ts
+  5ae80a8db93754be 725,732,766,811,843,851
+next.config.ts
+  5ae80a8db93754be 4-7
+app/globals.css
+  5ae80a8db93754be 38-39,72-74,110-111,164-193
+app/(auth)/login/page.tsx
+  5ae80a8db93754be 94
+components/brand/logo.tsx
+  5ae80a8db93754be 26-33,41-55
+app/layout.tsx
+  5ae80a8db93754be 22-24,27-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "5b7d561f8b5e5634d2c5c20f7dfab76f3401319e",
+  "prompts": {
+    "5ae80a8db93754be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4a78201d-6a14-4909-b1e5-64eb15dfa56a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1045,
+      "total_deletions": 396,
+      "accepted_lines": 931,
+      "overriden_lines": 2
+    }
+  }
+}
