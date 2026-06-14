@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "59b2482af0f09fb7b71d8ca9cd2cfbaca912a189",
+  "prompts": {
+    "535784e5625cd4e2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ec4eb-3467-7670-9830-7dffa426d2c7",
+        "model": "unknown"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 36,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
