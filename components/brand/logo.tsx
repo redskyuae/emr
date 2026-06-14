@@ -23,16 +23,36 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ className, inverted = false }: { className?: string; inverted?: boolean }) {
+export function Logo({
+  className,
+  inverted = false,
+  showCompany = false,
+}: {
+  className?: string;
+  inverted?: boolean;
+  showCompany?: boolean;
+}) {
   return (
     <Link
       href="/"
       className={cn('flex items-center gap-2.5 outline-none focus-visible:opacity-80', className)}
     >
       <LogoMark className={inverted ? 'text-primary bg-white' : undefined} />
-      <span className="font-heading text-lg leading-none font-semibold tracking-tight">
-        Meridian
-        <span className={inverted ? 'text-white/60' : 'text-muted-foreground'}> EMR</span>
+      <span className="flex flex-col">
+        <span className="font-heading text-lg leading-none font-semibold tracking-tight">
+          Medical
+          <span className={inverted ? 'text-white/60' : 'text-muted-foreground'}> EMR</span>
+        </span>
+        {showCompany ? (
+          <span
+            className={cn(
+              'mt-1 text-[10px] leading-none font-medium tracking-wide',
+              inverted ? 'text-white/55' : 'text-muted-foreground'
+            )}
+          >
+            by Redsky Consultancy
+          </span>
+        ) : null}
       </span>
     </Link>
   );

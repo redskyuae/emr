@@ -35,6 +35,8 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-pop-foreground: var(--pop-foreground);
+  --color-pop: var(--pop);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -67,6 +69,9 @@
   --popover-foreground: oklch(0.21 0.028 256);
   --primary: oklch(0.43 0.118 254);
   --primary-foreground: oklch(0.985 0.005 247);
+  /* Marketing-only warm pop accent (stat badges, decorative dots). Never used in the clinical app. */
+  --pop: oklch(0.64 0.2 354);
+  --pop-foreground: oklch(0.99 0.005 320);
   --secondary: oklch(0.945 0.012 248);
   --secondary-foreground: oklch(0.32 0.06 254);
   --muted: oklch(0.962 0.007 247);
@@ -102,6 +107,8 @@
   --popover-foreground: oklch(0.96 0.008 247);
   --primary: oklch(0.64 0.125 250);
   --primary-foreground: oklch(0.14 0.025 256);
+  --pop: oklch(0.7 0.18 354);
+  --pop-foreground: oklch(0.14 0.02 320);
   --secondary: oklch(0.27 0.03 256);
   --secondary-foreground: oklch(0.96 0.008 247);
   --muted: oklch(0.255 0.028 256);
@@ -153,5 +160,35 @@
   .acrylic-dark {
     background-color: oklch(0.21 0.04 256 / 0.65);
     @apply backdrop-blur-xl backdrop-saturate-150;
+  }
+
+  /* ── Marketing decorative shapes (marketing surfaces only) ──────────────
+     These power the editorial layout: hexagon-masked hero imagery, organic
+     "blob" photo masks, and dotted-grid accents. Never use inside the app. */
+
+  /* Flat-top hexagon image mask. */
+  .clip-hexagon {
+    clip-path: polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%);
+  }
+
+  /* Organic squircle/blob photo masks (asymmetric border-radius). */
+  .blob-a {
+    border-radius: 56% 44% 58% 42% / 52% 44% 56% 48%;
+  }
+  .blob-b {
+    border-radius: 42% 58% 46% 54% / 56% 50% 50% 44%;
+  }
+
+  /* Dotted grid — set text color to tint the dots, size the box to crop it. */
+  .dot-grid {
+    background-image: radial-gradient(currentColor 1.25px, transparent 1.5px);
+    background-size: 16px 16px;
+  }
+  /* Dotted grid faded into a soft radial halo (behind hero artwork). */
+  .dot-halo {
+    background-image: radial-gradient(currentColor 1.25px, transparent 1.5px);
+    background-size: 18px 18px;
+    -webkit-mask-image: radial-gradient(closest-side, black 40%, transparent 78%);
+    mask-image: radial-gradient(closest-side, black 40%, transparent 78%);
   }
 }

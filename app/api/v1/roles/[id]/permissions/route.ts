@@ -8,7 +8,7 @@ import type { AssignedPermission } from '@/app/api/lib/modules/role-permission/s
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type RolePermissionsRouteContext = {
-  params: Promise<{ roleId: string }>;
+  params: Promise<{ id: string }>;
 };
 
 export type RolePermissionsRequest = {
@@ -35,7 +35,7 @@ export async function GET(_request: NextRequest, context: RolePermissionsRouteCo
       return tenantSession;
     }
 
-    const { roleId } = await context.params;
+    const { id: roleId } = await context.params;
     const result = await getRolePermissionsQuery(roleId, tenantSession.tenantId);
 
     if (!result.success) {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest, context: RolePermissionsRouteCo
       return tenantSession;
     }
 
-    const { roleId } = await context.params;
+    const { id: roleId } = await context.params;
     let payload: unknown;
 
     try {
@@ -104,7 +104,7 @@ export async function PUT(request: NextRequest, context: RolePermissionsRouteCon
       return tenantSession;
     }
 
-    const { roleId } = await context.params;
+    const { id: roleId } = await context.params;
     let payload: unknown;
 
     try {

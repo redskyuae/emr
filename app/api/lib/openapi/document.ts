@@ -722,14 +722,14 @@ export const openApiDocument = {
         },
       },
     },
-    '/api/v1/roles/{roleId}/permissions': {
+    '/api/v1/roles/{id}/permissions': {
       get: {
         tags: ['Permission Assignment'],
         summary: 'List Role Permissions',
         description:
           'Returns a flat list of active Permissions assigned to a Role in the active Tenant. Roles from other Tenants are treated as not found.',
         security: [{ cookieAuth: [] }],
-        parameters: [namedNumberPathParameter('roleId', 'Role')],
+        parameters: [numberIdPathParameter('Role')],
         responses: {
           '200': {
             description: 'Assigned Permissions for the Role.',
@@ -763,7 +763,7 @@ export const openApiDocument = {
         description:
           'Adds one or more active Permissions to a Role in the active Tenant. Duplicate IDs and already-assigned Permissions are ignored.',
         security: [{ cookieAuth: [] }],
-        parameters: [namedNumberPathParameter('roleId', 'Role')],
+        parameters: [numberIdPathParameter('Role')],
         requestBody: requestBody('AssignRolePermissionsRequest', {
           permissionIds: [10, 11, 16],
         }),
@@ -808,7 +808,7 @@ export const openApiDocument = {
         description:
           'Atomically replaces all Permission Assignments for a Role in the active Tenant. An empty permissionIds array clears all Permission Assignments for the Role.',
         security: [{ cookieAuth: [] }],
-        parameters: [namedNumberPathParameter('roleId', 'Role')],
+        parameters: [numberIdPathParameter('Role')],
         requestBody: requestBody('SetRolePermissionsRequest', {
           permissionIds: [10, 11],
         }),
@@ -840,7 +840,7 @@ export const openApiDocument = {
         },
       },
     },
-    '/api/v1/roles/{roleId}/permissions/{permissionId}': {
+    '/api/v1/roles/{id}/permissions/{permissionId}': {
       delete: {
         tags: ['Permission Assignment'],
         summary: 'Remove Permission From Role',
@@ -848,7 +848,7 @@ export const openApiDocument = {
           'Hard-deletes one Permission Assignment from a Role in the active Tenant. Returns not found when the Role or assignment does not exist.',
         security: [{ cookieAuth: [] }],
         parameters: [
-          namedNumberPathParameter('roleId', 'Role'),
+          numberIdPathParameter('Role'),
           namedNumberPathParameter('permissionId', 'Permission'),
         ],
         responses: {

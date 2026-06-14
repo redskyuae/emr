@@ -19,11 +19,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Meridian EMR — One platform for every facility in your hospital group',
-    template: '%s · Meridian EMR',
+    default:
+      'Medical EMR from Redsky Consultancy — One platform for every facility in your hospital group',
+    template: '%s · Medical EMR',
   },
   description:
-    'API-first, multi-tenant hospital management. Run every hospital, clinic, and lab in your group on one secure, tenant-isolated platform.',
+    'Medical EMR by Redsky Consultancy is an API-first, multi-tenant hospital management platform. Run every hospital, clinic, and lab in your group on one secure, tenant-isolated system — with AI-assisted documentation, FHIR/HL7 interoperability, and real-time operations.',
+  applicationName: 'Medical EMR',
+  authors: [{ name: 'Redsky Consultancy', url: 'https://redskyconsultancy.com/' }],
 };
 
 export default function RootLayout({

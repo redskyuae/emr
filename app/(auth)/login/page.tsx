@@ -91,7 +91,7 @@ export default function LoginPage() {
       </form>
 
       <p className="text-muted-foreground text-center text-sm">
-        New to Meridian?{' '}
+        New to Medical EMR?{' '}
         <Link
           href="/signup"
           className="text-primary font-medium underline-offset-4 hover:underline"

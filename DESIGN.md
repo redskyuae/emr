@@ -9,7 +9,7 @@ The design source of truth for all frontend work. Any agent or developer buildin
 - **Why Fluent**: EMR software is enterprise productivity software. Fluent's vocabulary — clean light surfaces, restrained color, depth through elevation, small radii, dense-but-breathable layouts — signals "professional tool", which is the right tone for hospital staff using this 8 hours a day.
 - **Why shadcn/ui**: components are owned in-repo (`components/ui/`), themed centrally through CSS variables, and accessible by default (Radix primitives). We restyle tokens, not components.
 - **Why a darker blue**: Microsoft's brand blue (`#0078D4`) is too bright for long clinical sessions and too recognizable as "Microsoft". Our primary is a deeper, calmer blue — `oklch(0.43 0.118 254)` — that holds AA contrast as a text color and button fill on white.
-- **Decided**: June 2026, while building the marketing and auth pages. Brand name `Meridian EMR` is a placeholder confined to `components/brand/logo.tsx`, the footer, and root metadata.
+- **Decided**: June 2026, while building the marketing and auth pages. The product is **Medical EMR**, built by **Redsky Consultancy** (https://redskyconsultancy.com/). The brand string lives in `components/brand/logo.tsx`, the marketing header/footer, and root metadata — update it in those places only.
 
 ## Tokens
 
@@ -64,6 +64,14 @@ Depth communicates hierarchy: the more an element interrupts the user, the highe
 
 - `.acrylic` — translucent blurred light surface (sticky headers, floating bars).
 - `.acrylic-dark` — navy translucent variant for dark bands.
+
+### Marketing surfaces (editorial layout)
+
+The public marketing pages (`app/(marketing)/`) follow an editorial, image-led layout inspired by a corporate-IT theme: a top utility bar, hexagon/blob-masked photography, dotted-grid accents, eyebrow labels, and a facilities gallery. These treatments are **marketing-only** and must never appear in the clinical app.
+
+- **`--pop` / `bg-pop` / `text-pop`** — a single warm magenta-rose accent used sparingly as a pop (stat badges, a few decorative dots). The deep blue primary is still the dominant colour; `--pop` is the one permitted second accent and is confined to marketing artwork. Dark theme has its own `--pop`.
+- **Decorative utilities** (in `globals.css`, marketing-only): `.clip-hexagon` (hero image mask), `.blob-a` / `.blob-b` (organic squircle photo masks), `.dot-grid` and `.dot-halo` (dotted-grid accents; `currentColor` tints the dots).
+- **Imagery** comes from the Unsplash CDN via `next/image` (`images.unsplash.com` is whitelisted in `next.config.ts`). Large radii and continuous/parallax motion remain marketing-only, as already noted above.
 
 ## Motion (GSAP)
 
