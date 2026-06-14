@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { createAppointmentTypeCommand } from '@/app/api/lib/modules/appointment-type/commands/create-appointment-type-command';
 import { getAppointmentTypesQuery } from '@/app/api/lib/modules/appointment-type/queries/get-appointment-types-query';
 import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
+import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 import type { Paginated } from '@/app/api/lib/utils/types';
 
@@ -26,16 +27,16 @@ function mutationMessage(status: number, errors: string[]) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
-function getTenantId(request: NextRequest) {
-  // TODO: extract tenantId from BetterAuth session once auth is implemented.
-  return request.nextUrl.searchParams.get('tenantId');
-}
-
 export async function GET(request: NextRequest) {
   try {
+    const tenantSession = await requireTenantSession();
+
+    if (tenantSession instanceof Response) {
+      return tenantSession;
+    }
+
     const page = parsePositiveInteger(request.nextUrl.searchParams.get('page'), 1);
     const limit = parsePositiveInteger(request.nextUrl.searchParams.get('limit'), 10);
-    const tenantId = getTenantId(request);
     const query =
       request.nextUrl.searchParams.get('query')?.trim() ||
       request.nextUrl.searchParams.get('search')?.trim() ||
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
     const safeLimit = Math.min(999, Math.max(1, Math.floor(limit)));
 
     const queryResult = await getAppointmentTypesQuery({
-      tenantId,
+      tenantId: tenantSession.tenantId,
       page: safePage,
       limit: safeLimit,
       query,
@@ -87,6 +88,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const tenantSession = await requireTenantSession();
+
+    if (tenantSession instanceof Response) {
+      return tenantSession;
+    }
+
     let payload: unknown;
 
     try {
@@ -96,6 +103,11 @@ export async function POST(request: NextRequest) {
         { message: 'Request body must be valid JSON' },
         { status: StatusCodes.BAD_REQUEST }
       );
+    }
+
+    if (payload && typeof payload === 'object') {
+      // @ts-expect-error Safe assignment to force the tenantId
+      payload.tenantId = tenantSession.tenantId;
     }
 
     const result = await createAppointmentTypeCommand(payload);
