@@ -4,12 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 
-import { MicrosoftIcon } from '@/components/auth/microsoft-icon';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,17 +19,6 @@ export default function LoginPage() {
         <p className="text-muted-foreground text-sm">
           Sign in to your hospital group&apos;s workspace.
         </p>
-      </div>
-
-      <Button variant="outline" className="h-10 w-full" type="button">
-        <MicrosoftIcon className="size-4" />
-        Continue with Microsoft
-      </Button>
-
-      <div className="flex items-center gap-3">
-        <Separator className="flex-1" />
-        <span className="text-muted-foreground text-xs uppercase">or</span>
-        <Separator className="flex-1" />
       </div>
 
       {/* API wiring is intentionally pending — form is UI-only for now */}
