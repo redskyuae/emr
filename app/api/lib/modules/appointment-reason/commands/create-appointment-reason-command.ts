@@ -6,9 +6,10 @@ import { getAppointmentReasonUniqueConstraintErrors } from '../validator/appoint
 import { validateCreateAppointmentReason } from '../validator/create-appointment-reason-validator';
 
 export async function createAppointmentReasonCommand(
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<CommandResult<AppointmentReason>> {
-  const validationResult = await validateCreateAppointmentReason(payload);
+  const validationResult = await validateCreateAppointmentReason(payload, tenantId);
 
   if (!validationResult.success) {
     return {
@@ -18,15 +19,16 @@ export async function createAppointmentReasonCommand(
     };
   }
 
+  const appointmentReasonData = { ...validationResult.data, tenantId };
+
   try {
-    const createdAppointmentReason = await appointmentReasonRepository.createAppointmentReason(
-      validationResult.data
-    );
+    const createdAppointmentReason =
+      await appointmentReasonRepository.createAppointmentReason(appointmentReasonData);
     return { success: true, data: createdAppointmentReason };
   } catch (error) {
     const constraintErrors = getAppointmentReasonUniqueConstraintErrors(
       error,
-      validationResult.data
+      appointmentReasonData
     );
 
     if (constraintErrors.length > 0) {

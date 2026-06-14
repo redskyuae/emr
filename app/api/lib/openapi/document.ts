@@ -60,6 +60,14 @@ const namedNumberPathParameter = (name: string, entityName: string) => ({
   schema: { type: 'integer', minimum: 1 },
 });
 
+const namedStringPathParameter = (name: string, entityName: string) => ({
+  name,
+  in: 'path',
+  required: true,
+  description: `${entityName} identifier.`,
+  schema: { type: 'string', minLength: 1 },
+});
+
 const stringIdPathParameter = (entityName: string) => ({
   name: 'id',
   in: 'path',
@@ -106,6 +114,13 @@ const authenticatedErrorResponses = {
   ...errorResponses,
 };
 
+const authenticatedListErrorResponses = {
+  '400': responseRef('ValidationFailed'),
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '500': responseRef('InternalServerError'),
+};
+
 const roleManagementErrorResponses = {
   ...authenticatedErrorResponses,
   '422': responseRef('UnprocessableEntity'),
@@ -117,6 +132,11 @@ const rolePermissionErrorResponses = {
   '403': responseRef('Forbidden'),
   '404': responseRef('NotFound'),
   '500': responseRef('InternalServerError'),
+};
+
+const roleAssignmentErrorResponses = {
+  ...rolePermissionErrorResponses,
+  '422': responseRef('UnprocessableEntity'),
 };
 
 const listParameters = [
@@ -139,6 +159,12 @@ const collectionOperations = ({
   createSchemaName,
   example,
   extraListParameters = [],
+  security,
+  listErrorResponses = {
+    '400': responseRef('ValidationFailed'),
+    '500': responseRef('InternalServerError'),
+  },
+  mutationErrorResponses = errorResponses,
 }: {
   tag: string;
   entity: string;
@@ -147,31 +173,35 @@ const collectionOperations = ({
   createSchemaName: string;
   example: unknown;
   extraListParameters?: unknown[];
+  security?: unknown[];
+  listErrorResponses?: Record<string, unknown>;
+  mutationErrorResponses?: Record<string, unknown>;
 }) => ({
   get: {
     tags: [tag],
     summary: `List ${summaryEntity}`,
     description: `Returns a paginated list of ${summaryEntity}.`,
+    ...(security ? { security } : {}),
     parameters: [...listParameters, ...extraListParameters],
     responses: {
       '200': {
         description: `Paginated ${summaryEntity} list.`,
         content: jsonContent(paginatedSchema(schemaName)),
       },
-      '400': responseRef('ValidationFailed'),
-      '500': responseRef('InternalServerError'),
+      ...listErrorResponses,
     },
   },
   post: {
     tags: [tag],
     summary: `Create ${entity}`,
+    ...(security ? { security } : {}),
     requestBody: requestBody(createSchemaName, example),
     responses: {
       '201': {
         description: `${entity} created.`,
         content: jsonContent(dataEnvelopeSchema(schemaName)),
       },
-      ...errorResponses,
+      ...mutationErrorResponses,
     },
   },
 });
@@ -183,6 +213,8 @@ const itemOperations = ({
   updateSchemaName,
   example,
   parameters = [],
+  security,
+  operationErrorResponses = errorResponses,
 }: {
   tag: string;
   entity: string;
@@ -190,22 +222,26 @@ const itemOperations = ({
   updateSchemaName: string;
   example: unknown;
   parameters?: unknown[];
+  security?: unknown[];
+  operationErrorResponses?: Record<string, unknown>;
 }) => ({
   get: {
     tags: [tag],
     summary: `Get ${entity}`,
+    ...(security ? { security } : {}),
     parameters,
     responses: {
       '200': {
         description: `${entity} found.`,
         content: jsonContent(dataEnvelopeSchema(schemaName)),
       },
-      ...errorResponses,
+      ...operationErrorResponses,
     },
   },
   put: {
     tags: [tag],
     summary: `Update ${entity}`,
+    ...(security ? { security } : {}),
     parameters,
     requestBody: requestBody(updateSchemaName, example),
     responses: {
@@ -213,16 +249,17 @@ const itemOperations = ({
         description: `${entity} updated.`,
         content: jsonContent(dataEnvelopeSchema(schemaName)),
       },
-      ...errorResponses,
+      ...operationErrorResponses,
     },
   },
   delete: {
     tags: [tag],
     summary: `Delete ${entity}`,
+    ...(security ? { security } : {}),
     parameters,
     responses: {
       '204': { description: `${entity} deleted.` },
-      ...errorResponses,
+      ...operationErrorResponses,
     },
   },
 });
@@ -272,7 +309,9 @@ const appointmentMasterCollection = ({
     schemaName,
     createSchemaName,
     example,
-    extraListParameters: [parameterRef('TenantId')],
+    security: [{ cookieAuth: [] }],
+    listErrorResponses: authenticatedListErrorResponses,
+    mutationErrorResponses: authenticatedErrorResponses,
   });
 
 const stringCodeProperty = (description: string) => ({
@@ -308,9 +347,8 @@ const namedCodeSchema = (entityName: string) => ({
 
 const appointmentMasterCreateSchema = (entityName: string, nullableDescription = false) => ({
   type: 'object',
-  required: ['tenantId', 'name', 'code'],
+  required: ['name', 'code'],
   properties: {
-    tenantId: { type: 'string', minLength: 1, description: 'Tenant identifier.' },
     name: { type: 'string', minLength: 1, maxLength: 100 },
     code: stringCodeProperty(`${entityName} code. The API normalizes this value to uppercase.`),
     description: nullableDescription
@@ -327,6 +365,11 @@ const appointmentMasterSchema = (createSchemaName: string) => ({
       required: ['id', 'tenantId', 'name', 'code', 'description', 'createdOn', 'modifiedOn'],
       properties: {
         id: { type: 'integer', minimum: 1 },
+        tenantId: {
+          type: 'string',
+          minLength: 1,
+          description: 'Tenant identifier resolved from the active authenticated Session.',
+        },
         description: { type: ['string', 'null'] },
         createdOn: { type: 'string', format: 'date-time' },
         modifiedOn: { type: 'string', format: 'date-time' },
@@ -347,7 +390,12 @@ export const openApiDocument = {
   tags: [
     { name: 'Tenant', description: 'Tenant management APIs.' },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
+    { name: 'Session', description: 'Authenticated user Session management APIs.' },
     { name: 'Role', description: 'Role management APIs for Tenant Admins.' },
+    {
+      name: 'Role Assignment',
+      description: 'Staff Role Assignment APIs for Tenant Admins.',
+    },
     {
       name: 'Permission Assignment',
       description: 'Role Permission Assignment APIs for Tenant Admins.',
@@ -457,6 +505,79 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/sessions': {
+      get: {
+        tags: ['Session'],
+        summary: 'List Current User Sessions',
+        description:
+          'Returns active, non-expired Sessions for the authenticated user. The raw BetterAuth session token is never returned.',
+        security: [{ cookieAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Active Sessions for the authenticated user.',
+            content: jsonContent(schemaRef('SessionListResponse'), {
+              data: [
+                {
+                  id: 'sess_abc',
+                  ipAddress: '203.0.113.42',
+                  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+                  createdAt: '2026-06-09T08:00:00.000Z',
+                  expiresAt: '2026-06-16T08:00:00.000Z',
+                  isCurrent: true,
+                },
+                {
+                  id: 'sess_def',
+                  ipAddress: '203.0.113.10',
+                  userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)',
+                  createdAt: '2026-06-08T14:00:00.000Z',
+                  expiresAt: '2026-06-15T14:00:00.000Z',
+                  isCurrent: false,
+                },
+              ],
+              meta: { total: 2 },
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      delete: {
+        tags: ['Session'],
+        summary: 'Revoke Other Current User Sessions',
+        description:
+          'Revokes all Sessions for the authenticated user except the Session making this request. Use BetterAuth sign-out to end the current Session.',
+        security: [{ cookieAuth: [] }],
+        responses: {
+          '204': { description: 'Other Sessions revoked.' },
+          '401': responseRef('Unauthorized'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/sessions/{sessionId}': {
+      delete: {
+        tags: ['Session'],
+        summary: 'Revoke Current User Session',
+        description:
+          'Revokes one Session owned by the authenticated user. The current Session cannot be revoked through this endpoint.',
+        security: [{ cookieAuth: [] }],
+        parameters: [namedStringPathParameter('sessionId', 'Session')],
+        responses: {
+          '204': { description: 'Session revoked.' },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '422': {
+            description: 'The current Session must be ended through sign-out.',
+            content: jsonContent(schemaRef('UnprocessableEntityError'), {
+              message: 'Cannot revoke the current session. Use sign-out instead.',
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/users': {
       get: {
         tags: ['Staff'],
@@ -499,12 +620,13 @@ export const openApiDocument = {
         tags: ['Staff'],
         summary: 'Create Staff',
         description:
-          'Creates a credentialed BetterAuth user, adds the user as a member of the active Tenant, and creates the Staff profile. The email address must not already exist anywhere in the system.',
+          'Creates a credentialed BetterAuth user, adds the user as a member of the active Tenant, creates the Staff profile, and assigns at least one Role in the same Tenant. The email address must not already exist anywhere in the system.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreateStaffRequest', {
           name: 'Dr. Priya Sharma',
           email: 'priya.sharma@apollohospitals.com',
           password: 'ChangeMe123!',
+          roleIds: [2, 8],
           phone: '+91-9876543210',
           staffCode: 'DOC-001',
           designation: 'Cardiologist',
@@ -571,6 +693,159 @@ export const openApiDocument = {
             content: jsonContent(dataEnvelopeSchema('Staff')),
           },
           ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/users/{userId}/roles': {
+      get: {
+        tags: ['Role Assignment'],
+        summary: 'List Staff Roles',
+        description:
+          'Returns the full Role objects assigned to an active Staff member in the active Tenant. Staff from other Tenants, inactive Staff, and non-Staff users are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [namedStringPathParameter('userId', 'Staff')],
+        responses: {
+          '200': {
+            description: 'Roles assigned to the Staff member.',
+            content: jsonContent(dataEnvelopeArraySchema('Role'), {
+              data: [
+                {
+                  id: 2,
+                  tenantId: 'org_abc123',
+                  name: 'Doctor',
+                  code: 'DOCTOR',
+                  description: 'Clinical staff with prescribing authority',
+                  isSystem: true,
+                  createdOn: '2026-06-09T10:00:00.000Z',
+                  modifiedOn: '2026-06-09T10:00:00.000Z',
+                },
+                {
+                  id: 8,
+                  tenantId: 'org_abc123',
+                  name: 'Ward Manager',
+                  code: 'WARD_MGR',
+                  description: 'Oversees ward operations and nursing staff',
+                  isSystem: false,
+                  createdOn: '2026-06-09T10:00:00.000Z',
+                  modifiedOn: '2026-06-09T10:00:00.000Z',
+                },
+              ],
+            }),
+          },
+          ...roleAssignmentErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Role Assignment'],
+        summary: 'Assign Roles To Staff',
+        description:
+          'Assigns one or more active Roles from the active Tenant to an active Staff member. Duplicate IDs and already-assigned Roles are ignored. The assigner is always the authenticated Tenant Admin, not a request body field.',
+        security: [{ cookieAuth: [] }],
+        parameters: [namedStringPathParameter('userId', 'Staff')],
+        requestBody: requestBody('AssignUserRolesRequest', {
+          roleIds: [2, 8],
+        }),
+        responses: {
+          '200': {
+            description: 'The Staff member Roles after assignment.',
+            content: jsonContent(dataEnvelopeArraySchema('Role'), {
+              data: [
+                {
+                  id: 2,
+                  tenantId: 'org_abc123',
+                  name: 'Doctor',
+                  code: 'DOCTOR',
+                  description: 'Clinical staff with prescribing authority',
+                  isSystem: true,
+                  createdOn: '2026-06-09T10:00:00.000Z',
+                  modifiedOn: '2026-06-09T10:00:00.000Z',
+                },
+                {
+                  id: 8,
+                  tenantId: 'org_abc123',
+                  name: 'Ward Manager',
+                  code: 'WARD_MGR',
+                  description: 'Oversees ward operations and nursing staff',
+                  isSystem: false,
+                  createdOn: '2026-06-09T10:00:00.000Z',
+                  modifiedOn: '2026-06-09T10:00:00.000Z',
+                },
+              ],
+            }),
+          },
+          ...roleAssignmentErrorResponses,
+        },
+      },
+    },
+    '/api/v1/users/{userId}/sessions': {
+      get: {
+        tags: ['Session'],
+        summary: 'List Staff Sessions',
+        description:
+          'Returns active, non-expired Sessions for a Staff member in the active Tenant. Requires the caller to be a Tenant Admin for the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [namedStringPathParameter('userId', 'Staff')],
+        responses: {
+          '200': {
+            description: 'Active Sessions for the Staff member.',
+            content: jsonContent(schemaRef('SessionListResponse'), {
+              data: [
+                {
+                  id: 'sess_staff_abc',
+                  ipAddress: '203.0.113.42',
+                  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+                  createdAt: '2026-06-09T08:00:00.000Z',
+                  expiresAt: '2026-06-16T08:00:00.000Z',
+                  isCurrent: false,
+                },
+              ],
+              meta: { total: 1 },
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      delete: {
+        tags: ['Session'],
+        summary: 'Revoke Staff Sessions',
+        description:
+          'Force-revokes all Sessions for a Staff member in the active Tenant, including that Staff member’s current Session if they are online. Requires the caller to be a Tenant Admin for the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [namedStringPathParameter('userId', 'Staff')],
+        responses: {
+          '204': { description: 'Staff Sessions revoked.' },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/users/{userId}/roles/{roleId}': {
+      delete: {
+        tags: ['Role Assignment'],
+        summary: 'Remove Role From Staff',
+        description:
+          'Hard-deletes one Role Assignment from an active Staff member in the active Tenant. Removing the Staff member’s final Role Assignment is rejected.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          namedStringPathParameter('userId', 'Staff'),
+          namedNumberPathParameter('roleId', 'Role'),
+        ],
+        responses: {
+          '204': { description: 'Role Assignment removed.' },
+          '422': {
+            description: 'The Staff member must retain at least one Role Assignment.',
+            content: jsonContent(schemaRef('UnprocessableEntityError'), {
+              message: 'Users must have at least one role.',
+            }),
+          },
+          ...rolePermissionErrorResponses,
         },
       },
     },
@@ -713,7 +988,7 @@ export const openApiDocument = {
         tags: ['Role'],
         summary: 'Delete Role',
         description:
-          'Soft-deletes a custom Role in the active Tenant. System Roles cannot be deleted.',
+          'Soft-deletes a custom Role in the active Tenant. System Roles and Roles with active Role Assignments cannot be deleted.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Role')],
         responses: {
@@ -1019,7 +1294,6 @@ export const openApiDocument = {
       schemaName: 'AppointmentType',
       createSchemaName: 'CreateAppointmentTypeRequest',
       example: {
-        tenantId: 'org_123',
         name: 'Consultation',
         code: 'CONS',
         description: 'General consultation appointment',
@@ -1031,12 +1305,13 @@ export const openApiDocument = {
       schemaName: 'AppointmentType',
       updateSchemaName: 'UpdateAppointmentTypeRequest',
       example: {
-        tenantId: 'org_123',
         name: 'Consultation',
         code: 'CONS',
         description: 'General consultation appointment',
       },
-      parameters: [numberIdPathParameter('Appointment Type'), parameterRef('TenantId')],
+      parameters: [numberIdPathParameter('Appointment Type')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
     }),
     '/api/v1/appointments/reasons': appointmentMasterCollection({
       tag: 'Appointment Reason',
@@ -1044,7 +1319,6 @@ export const openApiDocument = {
       schemaName: 'AppointmentReason',
       createSchemaName: 'CreateAppointmentReasonRequest',
       example: {
-        tenantId: 'org_123',
         name: 'Fever',
         code: 'FEVER',
         description: 'Patient reports fever symptoms',
@@ -1056,12 +1330,13 @@ export const openApiDocument = {
       schemaName: 'AppointmentReason',
       updateSchemaName: 'UpdateAppointmentReasonRequest',
       example: {
-        tenantId: 'org_123',
         name: 'Fever',
         code: 'FEVER',
         description: 'Patient reports fever symptoms',
       },
-      parameters: [numberIdPathParameter('Appointment Reason'), parameterRef('TenantId')],
+      parameters: [numberIdPathParameter('Appointment Reason')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
     }),
     '/api/v1/appointments/modes': appointmentMasterCollection({
       tag: 'Appointment Mode',
@@ -1069,7 +1344,6 @@ export const openApiDocument = {
       schemaName: 'AppointmentMode',
       createSchemaName: 'CreateAppointmentModeRequest',
       example: {
-        tenantId: 'org_123',
         name: 'In Person',
         code: 'INP',
         description: 'Patient visits the Facility',
@@ -1081,12 +1355,13 @@ export const openApiDocument = {
       schemaName: 'AppointmentMode',
       updateSchemaName: 'UpdateAppointmentModeRequest',
       example: {
-        tenantId: 'org_123',
         name: 'In Person',
         code: 'INP',
         description: 'Patient visits the Facility',
       },
-      parameters: [numberIdPathParameter('Appointment Mode'), parameterRef('TenantId')],
+      parameters: [numberIdPathParameter('Appointment Mode')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
     }),
     '/api/v1/appointments/statuses': appointmentMasterCollection({
       tag: 'Appointment Status',
@@ -1094,7 +1369,6 @@ export const openApiDocument = {
       schemaName: 'AppointmentStatus',
       createSchemaName: 'CreateAppointmentStatusRequest',
       example: {
-        tenantId: 'org_123',
         name: 'Scheduled',
         code: 'SCH',
         description: 'Appointment is scheduled',
@@ -1106,12 +1380,13 @@ export const openApiDocument = {
       schemaName: 'AppointmentStatus',
       updateSchemaName: 'UpdateAppointmentStatusRequest',
       example: {
-        tenantId: 'org_123',
         name: 'Scheduled',
         code: 'SCH',
         description: 'Appointment is scheduled',
       },
-      parameters: [numberIdPathParameter('Appointment Status'), parameterRef('TenantId')],
+      parameters: [numberIdPathParameter('Appointment Status')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
     }),
     '/api/v1/appointments/cancelled-reasons': appointmentMasterCollection({
       tag: 'Appointment Cancelled Reason',
@@ -1119,7 +1394,6 @@ export const openApiDocument = {
       schemaName: 'AppointmentCancelledReason',
       createSchemaName: 'CreateAppointmentCancelledReasonRequest',
       example: {
-        tenantId: 'org_123',
         name: 'Patient unavailable',
         code: 'PUNAV',
         description: 'Patient requested cancellation',
@@ -1131,12 +1405,13 @@ export const openApiDocument = {
       schemaName: 'AppointmentCancelledReason',
       updateSchemaName: 'UpdateAppointmentCancelledReasonRequest',
       example: {
-        tenantId: 'org_123',
         name: 'Patient unavailable',
         code: 'PUNAV',
         description: 'Patient requested cancellation',
       },
-      parameters: [numberIdPathParameter('Appointment Cancelled Reason'), parameterRef('TenantId')],
+      parameters: [numberIdPathParameter('Appointment Cancelled Reason')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
     }),
     '/api/v1/todo': {
       get: {
@@ -1208,14 +1483,6 @@ export const openApiDocument = {
         description: 'Alias for query on list endpoints that implement search filtering.',
         schema: { type: 'string' },
       },
-      TenantId: {
-        name: 'tenantId',
-        in: 'query',
-        required: false,
-        description:
-          'Tenant identifier accepted by current Appointment Master routes until request-provided tenant IDs are removed.',
-        schema: { type: 'string', minLength: 1 },
-      },
       CountryId: {
         name: 'countryId',
         in: 'query',
@@ -1275,7 +1542,12 @@ export const openApiDocument = {
         properties: {
           message: {
             type: 'string',
-            examples: ['System roles cannot be deleted.'],
+            examples: [
+              'System roles cannot be deleted.',
+              'Role has active assignments.',
+              'Users must have at least one role.',
+              'Cannot revoke the current session. Use sign-out instead.',
+            ],
           },
         },
       },
@@ -1293,6 +1565,8 @@ export const openApiDocument = {
               'Role not found',
               'Permission not found',
               'Permission Assignment not found',
+              'Role Assignment not found',
+              'Session not found',
             ],
           },
           errors: { type: 'array', items: { type: 'string' } },
@@ -1353,7 +1627,7 @@ export const openApiDocument = {
       },
       CreateStaffRequest: {
         type: 'object',
-        required: ['name', 'email', 'password'],
+        required: ['name', 'email', 'password', 'roleIds'],
         properties: {
           name: { type: 'string', minLength: 1, maxLength: 100 },
           email: { type: 'string', format: 'email' },
@@ -1363,6 +1637,13 @@ export const openApiDocument = {
             maxLength: 128,
             writeOnly: true,
             description: 'Initial Staff password.',
+          },
+          roleIds: {
+            type: 'array',
+            minItems: 1,
+            items: { type: 'integer', minimum: 1 },
+            description:
+              'Active Role identifiers from the active Tenant. At least one Role is required when creating Staff.',
           },
           phone: { type: 'string' },
           staffCode: {
@@ -1434,6 +1715,38 @@ export const openApiDocument = {
           isActive: { type: 'boolean' },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      Session: {
+        type: 'object',
+        required: ['id', 'ipAddress', 'userAgent', 'createdAt', 'expiresAt', 'isCurrent'],
+        properties: {
+          id: {
+            type: 'string',
+            description: 'BetterAuth Session identifier. The raw Session token is never exposed.',
+          },
+          ipAddress: { type: ['string', 'null'] },
+          userAgent: { type: ['string', 'null'] },
+          createdAt: { type: 'string', format: 'date-time' },
+          expiresAt: { type: 'string', format: 'date-time' },
+          isCurrent: {
+            type: 'boolean',
+            description: 'True when this is the Session making the request.',
+          },
+        },
+      },
+      SessionListResponse: {
+        type: 'object',
+        required: ['data', 'meta'],
+        properties: {
+          data: { type: 'array', items: schemaRef('Session') },
+          meta: {
+            type: 'object',
+            required: ['total'],
+            properties: {
+              total: { type: 'integer', minimum: 0 },
+            },
+          },
         },
       },
       CreateRoleRequest: {
@@ -1530,6 +1843,19 @@ export const openApiDocument = {
             description: 'Canonical Permission key in <resource>:<action> format.',
           },
           description: { type: ['string', 'null'] },
+        },
+      },
+      AssignUserRolesRequest: {
+        type: 'object',
+        required: ['roleIds'],
+        properties: {
+          roleIds: {
+            type: 'array',
+            minItems: 1,
+            items: { type: 'integer', minimum: 1 },
+            description:
+              'Active Role identifiers to assign to the Staff member. Duplicate IDs are ignored.',
+          },
         },
       },
       PermissionListItem: {
@@ -1722,7 +2048,7 @@ export const openApiDocument = {
       UnprocessableEntity: {
         description: 'Request is valid but violates a domain rule.',
         content: jsonContent(schemaRef('UnprocessableEntityError'), {
-          message: 'System roles cannot be deleted.',
+          message: 'Users must have at least one role.',
         }),
       },
       InternalServerError: {

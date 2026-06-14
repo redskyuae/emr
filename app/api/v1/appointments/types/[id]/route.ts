@@ -5,13 +5,13 @@ import { deleteAppointmentTypeCommand } from '@/app/api/lib/modules/appointment-
 import { updateAppointmentTypeCommand } from '@/app/api/lib/modules/appointment-type/commands/update-appointment-type-command';
 import { getAppointmentTypeByIdQuery } from '@/app/api/lib/modules/appointment-type/queries/get-appointment-type-by-id-query';
 import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
+import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 type AppointmentTypeRouteContext = {
   params: Promise<{ id: string }>;
 };
 
 export type UpdateAppointmentTypeRequest = {
-  tenantId: string;
   name: string;
   code: string;
   description?: string | null;
@@ -33,15 +33,16 @@ function errorMessage(status: number, errors: string[]) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
-function getTenantId(request: NextRequest) {
-  // TODO: extract tenantId from BetterAuth session once auth is implemented.
-  return request.nextUrl.searchParams.get('tenantId');
-}
-
-export async function GET(request: NextRequest, context: AppointmentTypeRouteContext) {
+export async function GET(_request: NextRequest, context: AppointmentTypeRouteContext) {
   try {
+    const tenantSession = await requireTenantSession();
+
+    if (tenantSession instanceof Response) {
+      return tenantSession;
+    }
+
     const { id } = await context.params;
-    const result = await getAppointmentTypeByIdQuery(id, getTenantId(request));
+    const result = await getAppointmentTypeByIdQuery(id, tenantSession.tenantId);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;
@@ -63,6 +64,12 @@ export async function GET(request: NextRequest, context: AppointmentTypeRouteCon
 
 export async function PUT(request: NextRequest, context: AppointmentTypeRouteContext) {
   try {
+    const tenantSession = await requireTenantSession();
+
+    if (tenantSession instanceof Response) {
+      return tenantSession;
+    }
+
     const { id } = await context.params;
     let payload: unknown;
 
@@ -75,7 +82,7 @@ export async function PUT(request: NextRequest, context: AppointmentTypeRouteCon
       );
     }
 
-    const result = await updateAppointmentTypeCommand(id, payload);
+    const result = await updateAppointmentTypeCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;
@@ -95,10 +102,16 @@ export async function PUT(request: NextRequest, context: AppointmentTypeRouteCon
   }
 }
 
-export async function DELETE(request: NextRequest, context: AppointmentTypeRouteContext) {
+export async function DELETE(_request: NextRequest, context: AppointmentTypeRouteContext) {
   try {
+    const tenantSession = await requireTenantSession();
+
+    if (tenantSession instanceof Response) {
+      return tenantSession;
+    }
+
     const { id } = await context.params;
-    const result = await deleteAppointmentTypeCommand(id, getTenantId(request));
+    const result = await deleteAppointmentTypeCommand(id, tenantSession.tenantId);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;

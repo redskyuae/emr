@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { roleIdSchema } from '../../role/schemas/role-schema';
+
 const STAFF_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'] as const;
 
 const optionalTrimmedString = (schema: z.ZodString) =>
@@ -99,6 +101,13 @@ export const createStaffSchema = z.object({
   name: staffNameSchema,
   email: staffEmailSchema,
   password: staffPasswordSchema,
+  roleIds: z
+    .array(roleIdSchema, {
+      error: 'Role IDs are required',
+    })
+    .refine((roleIds) => roleIds.length > 0, {
+      message: 'At least one Role ID is required',
+    }),
   phone: optionalTrimmedString(staffPhoneSchema),
   staffCode: optionalTrimmedString(staffCodeSchema),
   designation: optionalTrimmedString(designationSchema),

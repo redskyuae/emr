@@ -6,9 +6,10 @@ import { getAppointmentModeUniqueConstraintErrors } from '../validator/appointme
 import { validateCreateAppointmentMode } from '../validator/create-appointment-mode-validator';
 
 export async function createAppointmentModeCommand(
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<CommandResult<AppointmentMode>> {
-  const validationResult = await validateCreateAppointmentMode(payload);
+  const validationResult = await validateCreateAppointmentMode(payload, tenantId);
 
   if (!validationResult.success) {
     return {
@@ -18,13 +19,14 @@ export async function createAppointmentModeCommand(
     };
   }
 
+  const appointmentModeData = { ...validationResult.data, tenantId };
+
   try {
-    const createdAppointmentMode = await appointmentModeRepository.createAppointmentMode(
-      validationResult.data
-    );
+    const createdAppointmentMode =
+      await appointmentModeRepository.createAppointmentMode(appointmentModeData);
     return { success: true, data: createdAppointmentMode };
   } catch (error) {
-    const constraintErrors = getAppointmentModeUniqueConstraintErrors(error, validationResult.data);
+    const constraintErrors = getAppointmentModeUniqueConstraintErrors(error, appointmentModeData);
 
     if (constraintErrors.length > 0) {
       return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };

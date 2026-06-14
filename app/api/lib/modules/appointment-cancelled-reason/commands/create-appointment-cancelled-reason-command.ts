@@ -6,9 +6,10 @@ import { getAppointmentCancelledReasonUniqueConstraintErrors } from '../validato
 import { validateCreateAppointmentCancelledReason } from '../validator/create-appointment-cancelled-reason-validator';
 
 export async function createAppointmentCancelledReasonCommand(
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<CommandResult<AppointmentCancelledReason>> {
-  const validationResult = await validateCreateAppointmentCancelledReason(payload);
+  const validationResult = await validateCreateAppointmentCancelledReason(payload, tenantId);
 
   if (!validationResult.success) {
     return {
@@ -18,16 +19,18 @@ export async function createAppointmentCancelledReasonCommand(
     };
   }
 
+  const appointmentCancelledReasonData = { ...validationResult.data, tenantId };
+
   try {
     const createdAppointmentCancelledReason =
       await appointmentCancelledReasonRepository.createAppointmentCancelledReason(
-        validationResult.data
+        appointmentCancelledReasonData
       );
     return { success: true, data: createdAppointmentCancelledReason };
   } catch (error) {
     const constraintErrors = getAppointmentCancelledReasonUniqueConstraintErrors(
       error,
-      validationResult.data
+      appointmentCancelledReasonData
     );
 
     if (constraintErrors.length > 0) {

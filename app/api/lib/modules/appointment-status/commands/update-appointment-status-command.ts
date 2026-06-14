@@ -7,9 +7,10 @@ import { validateUpdateAppointmentStatus } from '../validator/update-appointment
 
 export async function updateAppointmentStatusCommand(
   id: unknown,
+  tenantId: string,
   payload: unknown
 ): Promise<CommandResult<AppointmentStatus>> {
-  const validationResult = await validateUpdateAppointmentStatus(id, payload);
+  const validationResult = await validateUpdateAppointmentStatus(id, payload, tenantId);
 
   if (!validationResult.success) {
     return {
@@ -20,11 +21,12 @@ export async function updateAppointmentStatusCommand(
   }
 
   const validatedId = validationResult.data.id;
+  const appointmentStatusData = { ...validationResult.data.payload, tenantId };
 
   try {
     const updatedAppointmentStatus = await appointmentStatusRepository.updateAppointmentStatus(
       validatedId,
-      validationResult.data.payload
+      appointmentStatusData
     );
 
     if (!updatedAppointmentStatus) {
@@ -39,7 +41,7 @@ export async function updateAppointmentStatusCommand(
   } catch (error) {
     const constraintErrors = getAppointmentStatusUniqueConstraintErrors(
       error,
-      validationResult.data.payload
+      appointmentStatusData
     );
 
     if (constraintErrors.length > 0) {

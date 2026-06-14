@@ -12,6 +12,7 @@ export type SaveStaffRequest = {
   name: string;
   email: string;
   password: string;
+  roleIds: number[];
   phone?: string;
   staffCode?: string;
   designation?: string;
@@ -24,8 +25,15 @@ export type SaveStaffResponse = {
 };
 
 function mutationMessage(status: number, errors: string[]) {
-  if (status === StatusCodes.NOT_FOUND) {
+  if (status === StatusCodes.NOT_FOUND && errors.includes('Staff not found')) {
     return 'Staff not found';
+  }
+
+  if (
+    status === StatusCodes.NOT_FOUND &&
+    errors.some((error) => error.startsWith('Role not found'))
+  ) {
+    return 'Role not found';
   }
 
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -101,7 +109,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await createStaffCommand(payload, tenantSession.tenantId);
+    const result = await createStaffCommand(
+      payload,
+      tenantSession.tenantId,
+      tenantSession.session.user.id
+    );
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;

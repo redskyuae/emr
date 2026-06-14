@@ -7,7 +7,8 @@ import {
 import { validateAppointmentCancelledReasonUniqueness } from './appointment-cancelled-reason-uniqueness-validator';
 
 export async function validateCreateAppointmentCancelledReason(
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<ValidationResult<CreateAppointmentCancelledReasonInput>> {
   const result = createAppointmentCancelledReasonSchema.safeParse(payload);
 
@@ -15,7 +16,10 @@ export async function validateCreateAppointmentCancelledReason(
     return { success: false, errors: formatValidationErrors(result.error) };
   }
 
-  const uniquenessResult = await validateAppointmentCancelledReasonUniqueness(result.data);
+  const uniquenessResult = await validateAppointmentCancelledReasonUniqueness({
+    ...result.data,
+    tenantId,
+  });
 
   if (!uniquenessResult.success) {
     return {

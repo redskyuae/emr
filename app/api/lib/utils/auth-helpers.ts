@@ -31,7 +31,7 @@ export async function requireTenantSession(): Promise<
 
   if (!tenantId) {
     return NextResponse.json(
-      { message: 'Tenant session required' },
+      { message: 'No active tenant selected.' },
       { status: StatusCodes.FORBIDDEN }
     );
   }

@@ -4,6 +4,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { member, session, user } from '@/app/db/schema/auth';
 import { staffProfileTable } from '@/app/db/schema/staff-profile';
+import { userRoleTable } from '@/app/db/schema/user-role';
 import type {
   CreateStaffInput,
   Staff,
@@ -125,7 +126,12 @@ async function findNonDeletedByStaffCode(
   return staff ? toStaff(staff) : undefined;
 }
 
-async function createStaffProfile(userId: string, tenantId: string, data: CreateStaffInput) {
+async function createStaffProfile(
+  userId: string,
+  tenantId: string,
+  data: CreateStaffInput,
+  assignedBy: string
+) {
   await db.transaction(async (tx) => {
     await tx.insert(member).values({
       id: generateId(),
@@ -144,6 +150,15 @@ async function createStaffProfile(userId: string, tenantId: string, data: Create
       dateOfBirth: data.dateOfBirth ?? null,
       isActive: true,
     });
+
+    await tx.insert(userRoleTable).values(
+      data.roleIds.map((roleId) => ({
+        userId,
+        tenantId,
+        roleId,
+        assignedBy,
+      }))
+    );
   });
 
   return getStaffByUserId(userId, tenantId);

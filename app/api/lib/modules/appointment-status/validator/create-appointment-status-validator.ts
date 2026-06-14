@@ -7,7 +7,8 @@ import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { validateAppointmentStatusUniqueness } from './appointment-status-uniqueness-validator';
 
 export async function validateCreateAppointmentStatus(
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<ValidationResult<CreateAppointmentStatusInput>> {
   const result = createAppointmentStatusSchema.safeParse(payload);
 
@@ -15,7 +16,10 @@ export async function validateCreateAppointmentStatus(
     return { success: false, errors: formatValidationErrors(result.error) };
   }
 
-  const uniquenessResult = await validateAppointmentStatusUniqueness(result.data);
+  const uniquenessResult = await validateAppointmentStatusUniqueness({
+    ...result.data,
+    tenantId,
+  });
 
   if (!uniquenessResult.success) {
     return {

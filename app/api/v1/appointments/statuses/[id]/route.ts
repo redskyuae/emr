@@ -5,13 +5,13 @@ import { deleteAppointmentStatusCommand } from '@/app/api/lib/modules/appointmen
 import { updateAppointmentStatusCommand } from '@/app/api/lib/modules/appointment-status/commands/update-appointment-status-command';
 import { getAppointmentStatusByIdQuery } from '@/app/api/lib/modules/appointment-status/queries/get-appointment-status-by-id-query';
 import type { AppointmentStatus } from '@/app/api/lib/modules/appointment-status/schemas/appointment-status-schema';
+import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 type AppointmentStatusRouteContext = {
   params: Promise<{ id: string }>;
 };
 
 export type UpdateAppointmentStatusRequest = {
-  tenantId: string;
   name: string;
   code: string;
   description?: string;
@@ -33,15 +33,16 @@ function errorMessage(status: number, errors: string[]) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
-function getTenantId(request: NextRequest) {
-  // TODO: extract tenantId from BetterAuth session once auth is implemented.
-  return request.nextUrl.searchParams.get('tenantId');
-}
-
-export async function GET(request: NextRequest, context: AppointmentStatusRouteContext) {
+export async function GET(_request: NextRequest, context: AppointmentStatusRouteContext) {
   try {
+    const tenantSession = await requireTenantSession();
+
+    if (tenantSession instanceof Response) {
+      return tenantSession;
+    }
+
     const { id } = await context.params;
-    const result = await getAppointmentStatusByIdQuery(id, getTenantId(request));
+    const result = await getAppointmentStatusByIdQuery(id, tenantSession.tenantId);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;
@@ -63,6 +64,12 @@ export async function GET(request: NextRequest, context: AppointmentStatusRouteC
 
 export async function PUT(request: NextRequest, context: AppointmentStatusRouteContext) {
   try {
+    const tenantSession = await requireTenantSession();
+
+    if (tenantSession instanceof Response) {
+      return tenantSession;
+    }
+
     const { id } = await context.params;
     let payload: unknown;
 
@@ -75,7 +82,7 @@ export async function PUT(request: NextRequest, context: AppointmentStatusRouteC
       );
     }
 
-    const result = await updateAppointmentStatusCommand(id, payload);
+    const result = await updateAppointmentStatusCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;
@@ -95,10 +102,16 @@ export async function PUT(request: NextRequest, context: AppointmentStatusRouteC
   }
 }
 
-export async function DELETE(request: NextRequest, context: AppointmentStatusRouteContext) {
+export async function DELETE(_request: NextRequest, context: AppointmentStatusRouteContext) {
   try {
+    const tenantSession = await requireTenantSession();
+
+    if (tenantSession instanceof Response) {
+      return tenantSession;
+    }
+
     const { id } = await context.params;
-    const result = await deleteAppointmentStatusCommand(id, getTenantId(request));
+    const result = await deleteAppointmentStatusCommand(id, tenantSession.tenantId);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;

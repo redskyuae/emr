@@ -32,7 +32,6 @@ export const appointmentModeIdSchema = z.coerce
 export const appointmentModeTenantIdSchema = tenantIdSchema;
 
 export const createAppointmentModeSchema = z.object({
-  tenantId: tenantIdSchema,
   name: appointmentModeNameSchema,
   code: appointmentModeCodeSchema,
   description: appointmentModeDescriptionSchema,
@@ -44,6 +43,8 @@ export type AppointmentModeIdInput = z.infer<typeof appointmentModeIdSchema>;
 export type AppointmentModeTenantIdInput = z.infer<typeof appointmentModeTenantIdSchema>;
 export type CreateAppointmentModeInput = z.infer<typeof createAppointmentModeSchema>;
 export type UpdateAppointmentModeInput = z.infer<typeof updateAppointmentModeSchema>;
+export type CreateAppointmentModeData = CreateAppointmentModeInput & { tenantId: string };
+export type UpdateAppointmentModeData = UpdateAppointmentModeInput & { tenantId: string };
 
 export type AppointmentMode = {
   id: number;

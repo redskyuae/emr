@@ -16,7 +16,8 @@ export type UpdateAppointmentCancelledReasonParams = {
 
 export async function validateUpdateAppointmentCancelledReason(
   id: unknown,
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<ValidationResult<UpdateAppointmentCancelledReasonParams>> {
   const idResult = appointmentCancelledReasonIdSchema.safeParse(id);
   const payloadResult = updateAppointmentCancelledReasonSchema.safeParse(payload);
@@ -38,7 +39,7 @@ export async function validateUpdateAppointmentCancelledReason(
   const existingAppointmentCancelledReason =
     await appointmentCancelledReasonRepository.getAppointmentCancelledReasonById(
       idResult.data,
-      payloadResult.data.tenantId
+      tenantId
     );
 
   if (!existingAppointmentCancelledReason) {
@@ -51,6 +52,7 @@ export async function validateUpdateAppointmentCancelledReason(
 
   const uniquenessResult = await validateAppointmentCancelledReasonUniqueness({
     ...payloadResult.data,
+    tenantId,
     excludeId: idResult.data,
   });
 

@@ -36,7 +36,8 @@ function getAuthCreateUserErrors(error: unknown) {
 
 export async function createStaffCommand(
   payload: unknown,
-  tenantId: string
+  tenantId: string,
+  assignedBy: string
 ): Promise<CommandResult<Staff>> {
   const validationResult = await validateCreateStaff(payload, tenantId);
 
@@ -67,7 +68,8 @@ export async function createStaffCommand(
     const staff = await staffRepository.createStaffProfile(
       createdUser.user.id,
       tenantId,
-      validationResult.data
+      validationResult.data,
+      assignedBy
     );
 
     if (!staff) {
