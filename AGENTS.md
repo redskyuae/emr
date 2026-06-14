@@ -27,5 +27,6 @@ Key skills for this project:
 | `prototype`                     | Exploring a design or data model before committing            |
 | `grill-with-docs`               | Stress-testing a plan and updating domain documentation       |
 | `improve-codebase-architecture` | Finding refactoring and architecture improvements             |
+| `design-system`                 | Building or changing any frontend UI (see also `DESIGN.md`)   |
 
 If you are Claude Code, invoke a skill with `/skill-name`. If you are another agent, read the skill's `SKILL.md` directly and follow its instructions.

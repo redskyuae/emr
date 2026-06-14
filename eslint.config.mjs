@@ -16,6 +16,13 @@ const eslintConfig = defineConfig([
   ]),
   // Disable ESLint rules that would conflict with Prettier
   eslintConfigPrettier,
+  // Vendored shadcn/ui registry code — keep upstream patterns intact
+  {
+    files: ['components/ui/**', 'hooks/use-mobile.ts'],
+    rules: {
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
 ]);
 
 export default eslintConfig;

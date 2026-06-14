@@ -14,7 +14,17 @@ API-first hospital management platform. A **Tenant** is a hospital group (e.g., 
 | Validation      | Zod v4                            |
 | Auth            | BetterAuth (Organizations plugin) |
 | Styles          | Tailwind CSS v4                   |
+| UI components   | shadcn/ui (full set, themed)      |
+| Animation       | GSAP + @gsap/react                |
 | Package manager | Bun                               |
+
+## Frontend
+
+All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI, and use the `design-system` team skill. Key facts:
+
+- Themed shadcn components live in `components/ui/` (do not fork them); domain composites in `components/{brand,marketing,auth}/`. Design tokens live only in `app/globals.css`.
+- Pages: marketing in `app/(marketing)/`, auth in `app/(auth)/` (login, signup). Auth pages are UI-only until the BetterAuth wiring task.
+- Animations use GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`; always respect `prefers-reduced-motion`.
 
 ## Architecture: CQRS + Repository + Validation
 
