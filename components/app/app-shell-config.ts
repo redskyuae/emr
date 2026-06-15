@@ -208,11 +208,11 @@ export const appNavGroups: AppNavGroup[] = [
 
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
-    title: 'Dashboard',
-    subtitle: 'Tenant-wide operations for the active Facility context.',
+    title: 'IAM Dashboard',
+    subtitle: 'Identity and access overview for Staff, Roles, Sessions, and audit activity.',
     primaryAction: {
-      label: 'New appointment',
-      href: '/appointments/new',
+      label: 'Invite user',
+      href: '/users/invite',
     },
   },
   '/patients': {
