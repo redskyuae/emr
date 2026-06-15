@@ -1,0 +1,352 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+  Activity,
+  Bed,
+  Building2,
+  CalendarClock,
+  ClipboardList,
+  FileClock,
+  FlaskConical,
+  Gauge,
+  Globe2,
+  Hospital,
+  Languages,
+  MapPinned,
+  Pill,
+  Receipt,
+  ScrollText,
+  Settings,
+  ShieldCheck,
+  Stethoscope,
+  UserRoundCog,
+  UsersRound,
+  WalletCards,
+} from 'lucide-react';
+
+export type AppNavItem = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+  badge?: string;
+  items?: {
+    title: string;
+    href: string;
+    badge?: string;
+  }[];
+};
+
+export type AppNavGroup = {
+  title: string;
+  items: AppNavItem[];
+};
+
+export type AppPageMeta = {
+  title: string;
+  subtitle: string;
+  primaryAction?: {
+    label: string;
+    href: string;
+  };
+};
+
+export const appNavGroups: AppNavGroup[] = [
+  {
+    title: 'Overview',
+    items: [
+      {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: Gauge,
+      },
+    ],
+  },
+  {
+    title: 'Clinical',
+    items: [
+      {
+        title: 'Patients',
+        href: '/patients',
+        icon: UsersRound,
+        badge: '404',
+      },
+      {
+        title: 'Appointments',
+        href: '/appointments',
+        icon: CalendarClock,
+      },
+      {
+        title: 'Visits',
+        href: '/visits',
+        icon: ClipboardList,
+        badge: '404',
+      },
+      {
+        title: 'Admissions',
+        href: '/admissions',
+        icon: Hospital,
+        badge: '404',
+      },
+      {
+        title: 'Labs',
+        href: '/labs',
+        icon: FlaskConical,
+        badge: '404',
+      },
+      {
+        title: 'Pharmacy',
+        href: '/pharmacy',
+        icon: Pill,
+        badge: '404',
+      },
+    ],
+  },
+  {
+    title: 'Operations',
+    items: [
+      {
+        title: 'Beds & Wards',
+        href: '/beds-wards',
+        icon: Bed,
+        badge: '404',
+      },
+      {
+        title: 'Departments',
+        href: '/departments',
+        icon: Building2,
+        badge: '404',
+      },
+      {
+        title: 'Doctors',
+        href: '/doctors',
+        icon: Stethoscope,
+        badge: '404',
+      },
+      {
+        title: 'Billing',
+        href: '/billing',
+        icon: Receipt,
+        badge: '404',
+      },
+      {
+        title: 'Reports',
+        href: '/reports',
+        icon: ScrollText,
+        badge: '404',
+      },
+    ],
+  },
+  {
+    title: 'Identity & Access',
+    items: [
+      {
+        title: 'Users',
+        href: '/users',
+        icon: UsersRound,
+      },
+      {
+        title: 'Roles & Permissions',
+        href: '/roles',
+        icon: ShieldCheck,
+      },
+      {
+        title: 'Sessions',
+        href: '/sessions',
+        icon: FileClock,
+      },
+      {
+        title: 'Audit Log',
+        href: '/audit-log',
+        icon: Activity,
+        badge: 'TASK-019',
+      },
+    ],
+  },
+  {
+    title: 'Configuration',
+    items: [
+      {
+        title: 'Tenant Profile',
+        href: '/tenant-profile',
+        icon: Building2,
+      },
+      {
+        title: 'Appointment Masters',
+        href: '/appointment-masters',
+        icon: CalendarClock,
+        items: [
+          { title: 'Mode', href: '/appointment-masters/modes' },
+          { title: 'Type', href: '/appointment-masters/types' },
+          { title: 'Status', href: '/appointment-masters/statuses' },
+          { title: 'Reason', href: '/appointment-masters/reasons' },
+          {
+            title: 'Cancelled Reason',
+            href: '/appointment-masters/cancelled-reasons',
+          },
+        ],
+      },
+      {
+        title: 'Global References',
+        href: '/global-references',
+        icon: Globe2,
+        items: [
+          { title: 'Languages', href: '/global-references/languages' },
+          { title: 'Nationalities', href: '/global-references/nationalities' },
+          { title: 'Religions', href: '/global-references/religions' },
+          { title: 'Countries', href: '/global-references/countries' },
+          { title: 'States', href: '/global-references/states' },
+        ],
+      },
+      {
+        title: 'Settings',
+        href: '/settings',
+        icon: Settings,
+        badge: '404',
+      },
+    ],
+  },
+];
+
+const pageMetaByHref: Record<string, AppPageMeta> = {
+  '/dashboard': {
+    title: 'Dashboard',
+    subtitle: 'Tenant-wide operations for the active Facility context.',
+    primaryAction: {
+      label: 'New appointment',
+      href: '/appointments/new',
+    },
+  },
+  '/patients': {
+    title: 'Patients',
+    subtitle: 'Patient registry and demographics for this Tenant.',
+    primaryAction: {
+      label: 'Register patient',
+      href: '/patients/new',
+    },
+  },
+  '/appointments': {
+    title: 'Appointments',
+    subtitle: 'Schedule and track outpatient appointments by Facility.',
+    primaryAction: {
+      label: 'New appointment',
+      href: '/appointments/new',
+    },
+  },
+  '/users': {
+    title: 'Users',
+    subtitle: 'Staff user access within this Tenant.',
+    primaryAction: {
+      label: 'Invite user',
+      href: '/users/invite',
+    },
+  },
+  '/roles': {
+    title: 'Roles & Permissions',
+    subtitle: 'Tenant-scoped Roles mapped to the Permission Catalogue.',
+    primaryAction: {
+      label: 'New role',
+      href: '/roles/new',
+    },
+  },
+  '/sessions': {
+    title: 'Sessions',
+    subtitle: 'Active user sessions and revocation controls.',
+  },
+  '/tenant-profile': {
+    title: 'Tenant Profile',
+    subtitle: 'Tenant display details and operating status.',
+  },
+  '/appointment-masters': {
+    title: 'Appointment Masters',
+    subtitle: 'Tenant-scoped appointment configuration.',
+  },
+  '/global-references': {
+    title: 'Global References',
+    subtitle: 'Shared reference data used across Tenants.',
+  },
+};
+
+export const appShellStats = [
+  { label: 'Active Facility', value: 'Northgate General', icon: Hospital },
+  { label: 'Open Appointments', value: '42', icon: CalendarClock },
+  { label: 'Users Online', value: '18', icon: UserRoundCog },
+  { label: 'Pending Billing', value: 'AED 84k', icon: WalletCards },
+];
+
+export const appShellShortcuts = [
+  {
+    title: 'Appointment Masters',
+    href: '/appointment-masters',
+    description: 'Modes, types, statuses, reasons, and cancellation reasons.',
+    icon: CalendarClock,
+  },
+  {
+    title: 'Global References',
+    href: '/global-references',
+    description: 'Languages, Nationalities, Religions, Countries, and States.',
+    icon: Languages,
+  },
+  {
+    title: 'Identity & Access',
+    href: '/users',
+    description: 'Users, Roles, Permission Assignments, and Sessions.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Facility Context',
+    href: '/settings',
+    description: 'Active Tenant and Facility are always visible in the shell.',
+    icon: MapPinned,
+  },
+];
+
+function trimTrailingSlash(pathname: string) {
+  if (pathname === '/') {
+    return pathname;
+  }
+
+  return pathname.replace(/\/+$/, '');
+}
+
+export function isNavItemActive(
+  pathname: string,
+  item: Pick<AppNavItem, 'href' | 'items'>
+): boolean {
+  const currentPath = trimTrailingSlash(pathname);
+  const itemPath = trimTrailingSlash(item.href);
+
+  if (currentPath === itemPath) {
+    return true;
+  }
+
+  if (itemPath !== '/' && currentPath.startsWith(`${itemPath}/`)) {
+    return true;
+  }
+
+  return item.items?.some((subItem) => isNavItemActive(currentPath, subItem)) ?? false;
+}
+
+export function getAppPageMeta(pathname: string): AppPageMeta {
+  const currentPath = trimTrailingSlash(pathname);
+  const exactMeta = pageMetaByHref[currentPath];
+
+  if (exactMeta) {
+    return exactMeta;
+  }
+
+  const parentMatch = Object.entries(pageMetaByHref)
+    .filter(([href]) => href !== '/' && currentPath.startsWith(`${href}/`))
+    .sort(([a], [b]) => b.length - a.length)[0];
+
+  if (parentMatch) {
+    return parentMatch[1];
+  }
+
+  const navItem = appNavGroups
+    .flatMap((group) => group.items)
+    .find((item) => isNavItemActive(currentPath, item));
+
+  return {
+    title: navItem?.title ?? 'Medical EMR',
+    subtitle: 'Navigation shell for Tenant-scoped clinical and operational modules.',
+  };
+}
