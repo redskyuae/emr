@@ -5,7 +5,7 @@ import { removePermissionCommand } from '@/app/api/lib/modules/role-permission/c
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type RolePermissionRouteContext = {
-  params: Promise<{ roleId: string; permissionId: string }>;
+  params: Promise<{ id: string; permissionId: string }>;
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -28,8 +28,8 @@ export async function DELETE(_request: NextRequest, context: RolePermissionRoute
       return tenantSession;
     }
 
-    const { roleId, permissionId } = await context.params;
-    const result = await removePermissionCommand(roleId, permissionId, tenantSession.tenantId);
+    const { id, permissionId } = await context.params;
+    const result = await removePermissionCommand(id, permissionId, tenantSession.tenantId);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;

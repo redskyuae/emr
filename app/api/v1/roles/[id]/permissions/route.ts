@@ -8,7 +8,7 @@ import type { AssignedPermission } from '@/app/api/lib/modules/role-permission/s
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type RolePermissionsRouteContext = {
-  params: Promise<{ roleId: string }>;
+  params: Promise<{ id: string }>;
 };
 
 export type RolePermissionsRequest = {
@@ -35,8 +35,8 @@ export async function GET(_request: NextRequest, context: RolePermissionsRouteCo
       return tenantSession;
     }
 
-    const { roleId } = await context.params;
-    const result = await getRolePermissionsQuery(roleId, tenantSession.tenantId);
+    const { id } = await context.params;
+    const result = await getRolePermissionsQuery(id, tenantSession.tenantId);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest, context: RolePermissionsRouteCo
       return tenantSession;
     }
 
-    const { roleId } = await context.params;
+    const { id } = await context.params;
     let payload: unknown;
 
     try {
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest, context: RolePermissionsRouteCo
       );
     }
 
-    const result = await assignPermissionsCommand(roleId, tenantSession.tenantId, payload);
+    const result = await assignPermissionsCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;
@@ -104,7 +104,7 @@ export async function PUT(request: NextRequest, context: RolePermissionsRouteCon
       return tenantSession;
     }
 
-    const { roleId } = await context.params;
+    const { id } = await context.params;
     let payload: unknown;
 
     try {
@@ -116,7 +116,7 @@ export async function PUT(request: NextRequest, context: RolePermissionsRouteCon
       );
     }
 
-    const result = await setPermissionsCommand(roleId, tenantSession.tenantId, payload);
+    const result = await setPermissionsCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;
