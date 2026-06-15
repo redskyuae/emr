@@ -6,9 +6,10 @@ import { getAppointmentStatusUniqueConstraintErrors } from '../validator/appoint
 import { validateCreateAppointmentStatus } from '../validator/create-appointment-status-validator';
 
 export async function createAppointmentStatusCommand(
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<CommandResult<AppointmentStatus>> {
-  const validationResult = await validateCreateAppointmentStatus(payload);
+  const validationResult = await validateCreateAppointmentStatus(payload, tenantId);
 
   if (!validationResult.success) {
     return {
@@ -18,15 +19,16 @@ export async function createAppointmentStatusCommand(
     };
   }
 
+  const appointmentStatusData = { ...validationResult.data, tenantId };
+
   try {
-    const createdAppointmentStatus = await appointmentStatusRepository.createAppointmentStatus(
-      validationResult.data
-    );
+    const createdAppointmentStatus =
+      await appointmentStatusRepository.createAppointmentStatus(appointmentStatusData);
     return { success: true, data: createdAppointmentStatus };
   } catch (error) {
     const constraintErrors = getAppointmentStatusUniqueConstraintErrors(
       error,
-      validationResult.data
+      appointmentStatusData
     );
 
     if (constraintErrors.length > 0) {

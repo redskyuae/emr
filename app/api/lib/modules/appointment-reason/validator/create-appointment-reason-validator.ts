@@ -7,7 +7,8 @@ import {
 import { validateAppointmentReasonUniqueness } from './appointment-reason-uniqueness-validator';
 
 export async function validateCreateAppointmentReason(
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<ValidationResult<CreateAppointmentReasonInput>> {
   const result = createAppointmentReasonSchema.safeParse(payload);
 
@@ -15,7 +16,10 @@ export async function validateCreateAppointmentReason(
     return { success: false, errors: formatValidationErrors(result.error) };
   }
 
-  const uniquenessResult = await validateAppointmentReasonUniqueness(result.data);
+  const uniquenessResult = await validateAppointmentReasonUniqueness({
+    ...result.data,
+    tenantId,
+  });
 
   if (!uniquenessResult.success) {
     return {

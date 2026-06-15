@@ -16,7 +16,8 @@ export type UpdateAppointmentModeParams = {
 
 export async function validateUpdateAppointmentMode(
   id: unknown,
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<ValidationResult<UpdateAppointmentModeParams>> {
   const idResult = appointmentModeIdSchema.safeParse(id);
   const payloadResult = updateAppointmentModeSchema.safeParse(payload);
@@ -37,7 +38,7 @@ export async function validateUpdateAppointmentMode(
 
   const existingAppointmentMode = await appointmentModeRepository.getAppointmentModeById(
     idResult.data,
-    payloadResult.data.tenantId
+    tenantId
   );
 
   if (!existingAppointmentMode) {
@@ -50,6 +51,7 @@ export async function validateUpdateAppointmentMode(
 
   const uniquenessResult = await validateAppointmentModeUniqueness({
     ...payloadResult.data,
+    tenantId,
     excludeId: idResult.data,
   });
 

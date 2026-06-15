@@ -119,6 +119,24 @@ async function getRoleById(id: number, tenantId: string) {
   return role;
 }
 
+async function getRolesByIds(roleIds: number[], tenantId: string) {
+  if (roleIds.length === 0) {
+    return [];
+  }
+
+  return db
+    .select(roleColumns)
+    .from(roleTable)
+    .where(
+      and(
+        eq(roleTable.tenantId, tenantId),
+        eq(roleTable.isDeleted, false),
+        inArray(roleTable.id, roleIds)
+      )
+    )
+    .orderBy(asc(roleTable.name), asc(roleTable.id));
+}
+
 async function getRoles({ tenantId, page = 1, limit = 10, query }: RoleListParams) {
   const offset = (page - 1) * limit;
   const trimmedQuery = query?.trim();
@@ -243,6 +261,7 @@ export const roleRepository = {
   updateRole,
   softDeleteRole,
   getRoleById,
+  getRolesByIds,
   getRoles,
   findActiveByName,
   findActiveByCode,

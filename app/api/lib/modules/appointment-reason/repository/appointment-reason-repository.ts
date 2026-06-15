@@ -4,8 +4,8 @@ import { db } from '@/app/db';
 import { appointmentReasonTable } from '@/app/db/schema/appointment-reason';
 import type {
   AppointmentReasonListParams,
-  CreateAppointmentReasonInput,
-  UpdateAppointmentReasonInput,
+  CreateAppointmentReasonData,
+  UpdateAppointmentReasonData,
 } from '../schemas/appointment-reason-schema';
 
 const appointmentReasonColumns = {
@@ -18,7 +18,7 @@ const appointmentReasonColumns = {
   modifiedOn: appointmentReasonTable.modifiedOn,
 };
 
-async function createAppointmentReason(data: CreateAppointmentReasonInput) {
+async function createAppointmentReason(data: CreateAppointmentReasonData) {
   const [createdAppointmentReason] = await db
     .insert(appointmentReasonTable)
     .values({
@@ -32,7 +32,7 @@ async function createAppointmentReason(data: CreateAppointmentReasonInput) {
   return createdAppointmentReason;
 }
 
-async function updateAppointmentReason(id: number, data: UpdateAppointmentReasonInput) {
+async function updateAppointmentReason(id: number, data: UpdateAppointmentReasonData) {
   const [updatedAppointmentReason] = await db
     .update(appointmentReasonTable)
     .set({

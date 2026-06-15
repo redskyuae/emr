@@ -4,8 +4,8 @@ import { db } from '@/app/db';
 import { appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
 import type {
   AppointmentCancelledReasonListParams,
-  CreateAppointmentCancelledReasonInput,
-  UpdateAppointmentCancelledReasonInput,
+  CreateAppointmentCancelledReasonData,
+  UpdateAppointmentCancelledReasonData,
 } from '../schemas/appointment-cancelled-reason-schema';
 
 const appointmentCancelledReasonColumns = {
@@ -18,7 +18,7 @@ const appointmentCancelledReasonColumns = {
   modifiedOn: appointmentCancelledReasonTable.modifiedOn,
 };
 
-async function createAppointmentCancelledReason(data: CreateAppointmentCancelledReasonInput) {
+async function createAppointmentCancelledReason(data: CreateAppointmentCancelledReasonData) {
   const [createdAppointmentCancelledReason] = await db
     .insert(appointmentCancelledReasonTable)
     .values({
@@ -34,7 +34,7 @@ async function createAppointmentCancelledReason(data: CreateAppointmentCancelled
 
 async function updateAppointmentCancelledReason(
   id: number,
-  data: UpdateAppointmentCancelledReasonInput
+  data: UpdateAppointmentCancelledReasonData
 ) {
   const [updatedAppointmentCancelledReason] = await db
     .update(appointmentCancelledReasonTable)

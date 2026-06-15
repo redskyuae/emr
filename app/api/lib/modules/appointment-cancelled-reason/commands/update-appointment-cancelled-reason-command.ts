@@ -7,9 +7,10 @@ import { validateUpdateAppointmentCancelledReason } from '../validator/update-ap
 
 export async function updateAppointmentCancelledReasonCommand(
   id: unknown,
+  tenantId: string,
   payload: unknown
 ): Promise<CommandResult<AppointmentCancelledReason>> {
-  const validationResult = await validateUpdateAppointmentCancelledReason(id, payload);
+  const validationResult = await validateUpdateAppointmentCancelledReason(id, payload, tenantId);
 
   if (!validationResult.success) {
     return {
@@ -20,12 +21,13 @@ export async function updateAppointmentCancelledReasonCommand(
   }
 
   const validatedId = validationResult.data.id;
+  const appointmentCancelledReasonData = { ...validationResult.data.payload, tenantId };
 
   try {
     const updatedAppointmentCancelledReason =
       await appointmentCancelledReasonRepository.updateAppointmentCancelledReason(
         validatedId,
-        validationResult.data.payload
+        appointmentCancelledReasonData
       );
 
     if (!updatedAppointmentCancelledReason) {
@@ -40,7 +42,7 @@ export async function updateAppointmentCancelledReasonCommand(
   } catch (error) {
     const constraintErrors = getAppointmentCancelledReasonUniqueConstraintErrors(
       error,
-      validationResult.data.payload
+      appointmentCancelledReasonData
     );
 
     if (constraintErrors.length > 0) {

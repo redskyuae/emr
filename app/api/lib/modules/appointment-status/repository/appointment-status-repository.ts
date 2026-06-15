@@ -4,8 +4,8 @@ import { db } from '@/app/db';
 import { appointmentStatusTable } from '@/app/db/schema/appointment-status';
 import type {
   AppointmentStatusListParams,
-  CreateAppointmentStatusInput,
-  UpdateAppointmentStatusInput,
+  CreateAppointmentStatusData,
+  UpdateAppointmentStatusData,
 } from '../schemas/appointment-status-schema';
 
 const appointmentStatusColumns = {
@@ -18,7 +18,7 @@ const appointmentStatusColumns = {
   modifiedOn: appointmentStatusTable.modifiedOn,
 };
 
-async function createAppointmentStatus(data: CreateAppointmentStatusInput) {
+async function createAppointmentStatus(data: CreateAppointmentStatusData) {
   const [createdAppointmentStatus] = await db
     .insert(appointmentStatusTable)
     .values({
@@ -32,7 +32,7 @@ async function createAppointmentStatus(data: CreateAppointmentStatusInput) {
   return createdAppointmentStatus;
 }
 
-async function updateAppointmentStatus(id: number, data: UpdateAppointmentStatusInput) {
+async function updateAppointmentStatus(id: number, data: UpdateAppointmentStatusData) {
   const [updatedAppointmentStatus] = await db
     .update(appointmentStatusTable)
     .set({

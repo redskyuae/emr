@@ -4,8 +4,8 @@ import { db } from '@/app/db';
 import { appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import type {
   AppointmentModeListParams,
-  CreateAppointmentModeInput,
-  UpdateAppointmentModeInput,
+  CreateAppointmentModeData,
+  UpdateAppointmentModeData,
 } from '../schemas/appointment-mode-schema';
 
 const appointmentModeColumns = {
@@ -18,7 +18,7 @@ const appointmentModeColumns = {
   modifiedOn: appointmentModeTable.modifiedOn,
 };
 
-async function createAppointmentMode(data: CreateAppointmentModeInput) {
+async function createAppointmentMode(data: CreateAppointmentModeData) {
   const [createdAppointmentMode] = await db
     .insert(appointmentModeTable)
     .values({
@@ -32,7 +32,7 @@ async function createAppointmentMode(data: CreateAppointmentModeInput) {
   return createdAppointmentMode;
 }
 
-async function updateAppointmentMode(id: number, data: UpdateAppointmentModeInput) {
+async function updateAppointmentMode(id: number, data: UpdateAppointmentModeData) {
   const [updatedAppointmentMode] = await db
     .update(appointmentModeTable)
     .set({

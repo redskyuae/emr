@@ -16,7 +16,8 @@ export type UpdateAppointmentReasonParams = {
 
 export async function validateUpdateAppointmentReason(
   id: unknown,
-  payload: unknown
+  payload: unknown,
+  tenantId: string
 ): Promise<ValidationResult<UpdateAppointmentReasonParams>> {
   const idResult = appointmentReasonIdSchema.safeParse(id);
   const payloadResult = updateAppointmentReasonSchema.safeParse(payload);
@@ -37,7 +38,7 @@ export async function validateUpdateAppointmentReason(
 
   const existingAppointmentReason = await appointmentReasonRepository.getAppointmentReasonById(
     idResult.data,
-    payloadResult.data.tenantId
+    tenantId
   );
 
   if (!existingAppointmentReason) {
@@ -50,6 +51,7 @@ export async function validateUpdateAppointmentReason(
 
   const uniquenessResult = await validateAppointmentReasonUniqueness({
     ...payloadResult.data,
+    tenantId,
     excludeId: idResult.data,
   });
 

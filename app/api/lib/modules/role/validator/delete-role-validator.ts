@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
+import { userRoleRepository } from '../../user-role/repository/user-role-repository';
 import { roleRepository } from '../repository/role-repository';
 import { roleIdSchema } from '../schemas/role-schema';
 
@@ -33,6 +34,16 @@ export async function validateDeleteRole(
     return {
       success: false,
       errors: ['System roles cannot be deleted.'],
+      status: StatusCodes.UNPROCESSABLE_ENTITY,
+    };
+  }
+
+  const assignmentCount = await userRoleRepository.countAssignmentsByRole(idResult.data, tenantId);
+
+  if (assignmentCount > 0) {
+    return {
+      success: false,
+      errors: ['Role has active assignments.'],
       status: StatusCodes.UNPROCESSABLE_ENTITY,
     };
   }

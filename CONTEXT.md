@@ -32,6 +32,10 @@ An administrative user belonging to a specific Tenant, including the Tenant Owne
 
 A Tenant-scoped authorization label that can carry permissions and be assigned to users. Distinct from Staff job profiles, Doctor clinical identity, and authentication-layer membership roles.
 
+## Role Assignment
+
+The association between a Staff member and a Role within a Tenant. A Staff member must have at least one Role Assignment.
+
 ## Permission
 
 A system-wide authorization capability representing one allowed action on one protected resource. Permissions are assigned to Roles and are shared by all Tenants.

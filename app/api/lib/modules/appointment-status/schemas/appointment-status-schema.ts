@@ -32,7 +32,6 @@ export const appointmentStatusIdSchema = z.coerce
 export const appointmentStatusTenantIdSchema = tenantIdSchema;
 
 export const createAppointmentStatusSchema = z.object({
-  tenantId: tenantIdSchema,
   name: appointmentStatusNameSchema,
   code: appointmentStatusCodeSchema,
   description: appointmentStatusDescriptionSchema,
@@ -44,6 +43,8 @@ export type AppointmentStatusIdInput = z.infer<typeof appointmentStatusIdSchema>
 export type AppointmentStatusTenantIdInput = z.infer<typeof appointmentStatusTenantIdSchema>;
 export type CreateAppointmentStatusInput = z.infer<typeof createAppointmentStatusSchema>;
 export type UpdateAppointmentStatusInput = z.infer<typeof updateAppointmentStatusSchema>;
+export type CreateAppointmentStatusData = CreateAppointmentStatusInput & { tenantId: string };
+export type UpdateAppointmentStatusData = UpdateAppointmentStatusInput & { tenantId: string };
 
 export type AppointmentStatus = {
   id: number;
