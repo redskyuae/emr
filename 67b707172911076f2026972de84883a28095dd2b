@@ -1,0 +1,23 @@
+docs/mockups/iam/README.md
+  1dec3c251ed39626 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "67b707172911076f2026972de84883a28095dd2b",
+  "prompts": {
+    "1dec3c251ed39626": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2b6dc9d8-d330-45a4-b14f-702585d63ef6",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 19,
+      "total_deletions": 0,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    }
+  }
+}
