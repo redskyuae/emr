@@ -15,9 +15,9 @@ export default function SignupPage() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500">
       <div className="space-y-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight">Create your Tenant</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Create your Workspace</h1>
         <p className="text-muted-foreground text-sm">
-          Set up your hospital group&apos;s workspace. You&apos;ll become the Tenant Owner.
+          Set up your hospital group&apos;s workspace. You&apos;ll become the Workspace Owner.
         </p>
       </div>
 
@@ -47,11 +47,11 @@ export default function SignupPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="tenant-name">Hospital group name</Label>
-          <Input id="tenant-name" placeholder="Northgate Health" required className="h-10" />
+          <Label htmlFor="workspace-name">Hospital group name</Label>
+          <Input id="workspace-name" placeholder="Northgate Health" required className="h-10" />
           <p className="text-muted-foreground text-xs">
-            This becomes your Tenant — you can add hospitals, clinics, and labs as Facilities after
-            setup.
+            This becomes your Workspace — you can add hospitals, clinics, and labs as Facilities
+            after setup.
           </p>
         </div>
 
@@ -78,8 +78,8 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <div className="flex items-start gap-2">
-          <Checkbox id="terms" required className="mt-0.5" />
+        <div className="flex items-center gap-2">
+          <Checkbox id="terms" required />
           <Label htmlFor="terms" className="text-muted-foreground font-normal">
             I agree to the{' '}
             <Link href="#" className="text-primary underline-offset-4 hover:underline">

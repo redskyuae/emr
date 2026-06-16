@@ -242,7 +242,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     subtitle: 'Staff user access within this Tenant.',
     primaryAction: {
       label: 'Invite user',
-      href: '/users/invite',
+      href: '/users?invite=1',
     },
   },
   '/iam-dashboard': {
@@ -250,7 +250,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     subtitle: 'Identity and access overview for Staff, Roles, Sessions, and audit activity.',
     primaryAction: {
       label: 'Invite user',
-      href: '/users/invite',
+      href: '/users?invite=1',
     },
   },
   '/roles': {
