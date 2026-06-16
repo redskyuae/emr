@@ -11,6 +11,7 @@ import {
   Globe2,
   Hospital,
   Languages,
+  LayoutDashboard,
   MapPinned,
   Pill,
   Receipt,
@@ -139,6 +140,11 @@ export const appNavGroups: AppNavGroup[] = [
     title: 'Identity & Access',
     items: [
       {
+        title: 'Dashboard',
+        href: '/iam-dashboard',
+        icon: LayoutDashboard,
+      },
+      {
         title: 'Users',
         href: '/users',
         icon: UsersRound,
@@ -234,6 +240,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/users': {
     title: 'Users',
     subtitle: 'Staff user access within this Tenant.',
+    primaryAction: {
+      label: 'Invite user',
+      href: '/users/invite',
+    },
+  },
+  '/iam-dashboard': {
+    title: 'IAM Dashboard',
+    subtitle: 'Identity and access overview for Staff, Roles, Sessions, and audit activity.',
     primaryAction: {
       label: 'Invite user',
       href: '/users/invite',
