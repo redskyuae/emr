@@ -83,7 +83,7 @@ export default function LoginPage() {
           href="/signup"
           className="text-primary font-medium underline-offset-4 hover:underline"
         >
-          Create your Tenant
+          Create your Workspace
         </Link>
       </p>
     </div>

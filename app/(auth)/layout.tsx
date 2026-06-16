@@ -6,13 +6,13 @@ import { Logo } from '@/components/brand/logo';
 const brandPoints = [
   {
     icon: Building2,
-    title: 'One Tenant, every Facility',
+    title: 'One Workspace, every Facility',
     description: 'Hospitals, clinics, and labs under a single hospital group.',
   },
   {
     icon: ShieldCheck,
     title: 'Isolated by architecture',
-    description: 'Row-level tenant isolation on every table, every query.',
+    description: 'Workspace-level isolation on every table, every query.',
   },
 ];
 
