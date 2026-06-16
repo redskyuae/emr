@@ -388,6 +388,10 @@ export const openApiDocument = {
   },
   servers: [{ url: '/', description: 'Current deployment' }],
   tags: [
+    {
+      name: 'Tenant Provisioning',
+      description: 'Public signup API that provisions a Tenant and Tenant Owner.',
+    },
     { name: 'Tenant', description: 'Tenant management APIs.' },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
     { name: 'Session', description: 'Authenticated user Session management APIs.' },
@@ -416,30 +420,52 @@ export const openApiDocument = {
     { name: 'Todo', description: 'Todo API examples.' },
   ],
   paths: {
-    '/api/v1/tenants': {
+    '/api/v1/signup': {
       post: {
-        tags: ['Tenant'],
-        summary: 'Create Tenant',
-        security: [{ cookieAuth: [] }],
-        requestBody: requestBody('CreateTenantRequest', {
-          name: 'Apollo Hospitals',
-          logo: 'https://example.com/logo.png',
+        tags: ['Tenant Provisioning'],
+        summary: 'Signup and provision Tenant',
+        description:
+          'Creates the Tenant Owner user, provisions a Tenant, initializes required baseline configuration, signs the owner in, and sets the new Tenant as active.',
+        requestBody: requestBody('SignupRequest', {
+          tenantName: 'Apollo Hospitals',
+          ownerName: 'Dr. Priya Raghavan',
+          ownerEmail: 'priya.raghavan@apollo.example',
+          password: 'StrongerPass123',
         }),
         responses: {
           '201': {
-            description: 'Tenant created.',
-            content: jsonContent(dataEnvelopeSchema('Tenant'), {
+            description: 'Tenant provisioned and owner signed in.',
+            content: jsonContent(dataEnvelopeSchema('SignupResult'), {
               data: {
-                id: 'org_123',
-                name: 'Apollo Hospitals',
-                slug: 'apollo-hospitals',
-                logo: 'https://example.com/logo.png',
-                isActive: true,
-                createdAt: '2026-06-11T00:00:00.000Z',
+                tenant: {
+                  id: 'org_123',
+                  name: 'Apollo Hospitals',
+                  slug: 'apollo-hospitals',
+                  logo: null,
+                  isActive: true,
+                  createdAt: '2026-06-11T00:00:00.000Z',
+                },
               },
             }),
           },
-          ...authenticatedErrorResponses,
+          '400': {
+            description: 'Validation failed or request body is invalid JSON.',
+            content: jsonContent(
+              { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+              {
+                message: 'Validation failed',
+                errors: ['Password must be at least 8 characters'],
+              }
+            ),
+          },
+          '409': {
+            description: 'Owner email or Tenant name is already in use.',
+            content: jsonContent(schemaRef('ConflictError'), {
+              message: 'A user with this email already exists.',
+              errors: ['A user with this email already exists.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -1578,7 +1604,11 @@ export const openApiDocument = {
         properties: {
           message: {
             type: 'string',
-            examples: ['Conflict', 'A user with this email already exists.'],
+            examples: [
+              'Conflict',
+              'A user with this email already exists.',
+              'A tenant with this name already exists.',
+            ],
           },
           errors: {
             type: 'array',
@@ -1586,6 +1616,7 @@ export const openApiDocument = {
             examples: [
               ['Country code IN already exists.'],
               ['A user with this email already exists.'],
+              ['A tenant with this name already exists.'],
               ['Staff code DOC-001 already exists.'],
               ['Role code WARD_MGR already exists.'],
             ],
@@ -1597,12 +1628,26 @@ export const openApiDocument = {
         required: ['message'],
         properties: { message: { type: 'string', examples: ['Internal Server Error'] } },
       },
-      CreateTenantRequest: {
+      SignupRequest: {
         type: 'object',
-        required: ['name'],
+        required: ['tenantName', 'ownerName', 'ownerEmail', 'password'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          logo: { type: 'string', format: 'uri', maxLength: 2048 },
+          tenantName: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 100,
+            description: 'Canonical Tenant display name. Workspace is user-facing copy only.',
+          },
+          ownerName: { type: 'string', minLength: 1, maxLength: 100 },
+          ownerEmail: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 8, maxLength: 128, writeOnly: true },
+        },
+      },
+      SignupResult: {
+        type: 'object',
+        required: ['tenant'],
+        properties: {
+          tenant: schemaRef('Tenant'),
         },
       },
       UpdateTenantRequest: {

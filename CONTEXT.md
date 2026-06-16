@@ -2,7 +2,7 @@
 
 ## Tenant
 
-A hospital group or hospital chain (e.g., Apollo Hospitals, Fortis Healthcare). The top-level unit of isolation in the system. All data belongs to a tenant. A tenant owns one or more Facilities.
+A hospital group or hospital chain (e.g., Apollo Hospitals, Fortis Healthcare). The top-level unit of isolation in the system. All data belongs to a tenant. A tenant owns one or more Facilities. Workspace may appear as user-facing copy, but Tenant is the canonical domain term.
 
 ## Tenant Slug
 
@@ -16,17 +16,21 @@ A Tenant currently allowed to operate in the system.
 
 A Tenant that has been deactivated without being removed from the system.
 
+## Tenant Provisioning
+
+The domain process that turns a new Tenant into an operational Tenant by establishing ownership and baseline configuration. Distinct from signup, which is only one user-facing entry point into provisioning.
+
 ## Facility
 
 A single physical location operated by a Tenant — a hospital, clinic, diagnostic center, or day-care unit. Has a `facilityType` attribute (HOSPITAL, CLINIC, LAB, etc.). Staff and clinical events are always scoped to a Facility within a Tenant.
 
 ## Tenant Owner
 
-The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner. A Tenant Owner is also a Tenant Admin for that Tenant.
+The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner. A Tenant Owner has Tenant Admin authority for that Tenant and is not necessarily Staff.
 
 ## Tenant Admin
 
-An administrative user belonging to a specific Tenant, including the Tenant Owner and delegated administrators for that Tenant. Manages Facilities, configures Masters, and provisions Staff accounts within their Tenant; Tenant Admin authority does not apply across Tenants.
+An administrative authority belonging to a specific Tenant, including the Tenant Owner and delegated administrators for that Tenant. Manages Facilities, configures Masters, and provisions Staff accounts within their Tenant; Tenant Admin authority does not apply across Tenants.
 
 ## Role
 

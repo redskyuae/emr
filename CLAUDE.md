@@ -23,7 +23,7 @@ API-first hospital management platform. A **Tenant** is a hospital group (e.g., 
 All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI, and use the `design-system` team skill. Key facts:
 
 - Themed shadcn components live in `components/ui/` (do not fork them); domain composites in `components/{brand,marketing,auth}/`. Design tokens live only in `app/globals.css`.
-- Pages: marketing in `app/(marketing)/`, auth in `app/(auth)/` (login, signup). Auth pages are UI-only until the BetterAuth wiring task.
+- Pages: marketing in `app/(marketing)/`, auth in `app/(auth)/` (login, signup). Signup is wired to public Tenant Provisioning; login may still be UI-only until its dedicated auth wiring task.
 - Animations use GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`; always respect `prefers-reduced-motion`.
 
 ## Architecture: CQRS + Repository + Validation
@@ -80,9 +80,9 @@ Every table that holds tenant-scoped data MUST have a `tenantId` column. Every r
 
 BetterAuth is configured in `app/lib/auth.ts` and mounted at `app/api/auth/[...all]/route.ts`. The BetterAuth Organizations plugin uses generated `organization` tables internally, but project code should continue to use the domain term **Tenant**.
 
-There is no Platform Admin role in the domain. When a user creates a Tenant, that user becomes the Tenant Owner. Tenant ownership is represented through BetterAuth organization membership.
+There is no Platform Admin role in the domain. When Tenant Provisioning creates a Tenant, the signup user becomes the Tenant Owner. Tenant ownership is represented through BetterAuth organization membership.
 
-Tenant management APIs are Tenant-scoped. Do not expose a global Tenant list endpoint. Tenant Owners may create a Tenant, update its display details, and deactivate or reactivate it. Any authenticated Tenant member may read that Tenant's basic profile by ID.
+Tenant creation happens only through public signup/Tenant Provisioning. Tenant management APIs are Tenant-scoped. Do not expose a global Tenant list endpoint or an authenticated create-Tenant endpoint. Tenant Owners may update Tenant display details and deactivate or reactivate their Tenant. Any authenticated Tenant member may read that Tenant's basic profile by ID.
 
 `session.session.activeOrganizationId` is the auth-layer source of `tenantId`. Existing route handlers may still accept legacy request-provided `tenantId` until the dedicated migration task removes that path.
 

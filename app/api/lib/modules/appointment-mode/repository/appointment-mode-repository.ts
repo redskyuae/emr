@@ -2,6 +2,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { appointmentModeTable } from '@/app/db/schema/appointment-mode';
+import { isUniqueConstraintViolation } from '@/app/api/lib/utils/db-errors';
 import type {
   AppointmentModeListParams,
   CreateAppointmentModeData,
@@ -167,6 +168,29 @@ async function findActiveByCode(
   return appointmentMode;
 }
 
+type AppointmentModeSeed = Omit<CreateAppointmentModeData, 'tenantId'>;
+
+async function seedDefaultAppointmentModes(tenantId: string, defaults: AppointmentModeSeed[]) {
+  for (const appointmentMode of defaults) {
+    const [existingByCode, existingByName] = await Promise.all([
+      findActiveByCode(tenantId, appointmentMode.code),
+      findActiveByName(tenantId, appointmentMode.name),
+    ]);
+
+    if (existingByCode || existingByName) {
+      continue;
+    }
+
+    try {
+      await createAppointmentMode({ ...appointmentMode, tenantId });
+    } catch (error) {
+      if (!isUniqueConstraintViolation(error)) {
+        throw error;
+      }
+    }
+  }
+}
+
 export const appointmentModeRepository = {
   createAppointmentMode,
   updateAppointmentMode,
@@ -175,4 +199,5 @@ export const appointmentModeRepository = {
   getAppointmentModes,
   findActiveByName,
   findActiveByCode,
+  seedDefaultAppointmentModes,
 };

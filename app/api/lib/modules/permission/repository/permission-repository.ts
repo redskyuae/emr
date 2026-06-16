@@ -1,8 +1,9 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, ne, or } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { permissionTable } from '@/app/db/schema/permission';
 import type { PermissionListParams } from '../schemas/permission-schema';
+import { permissionSeedData } from '../seed-data';
 
 const permissionColumns = {
   id: permissionTable.id,
@@ -46,7 +47,36 @@ async function getPermissions({ module }: PermissionListParams = {}) {
     );
 }
 
+async function seedPermissionCatalogue() {
+  await db.transaction(async (tx) => {
+    for (const permission of permissionSeedData) {
+      await tx
+        .insert(permissionTable)
+        .values(permission)
+        .onConflictDoUpdate({
+          target: permissionTable.name,
+          set: {
+            module: permission.module,
+            resource: permission.resource,
+            action: permission.action,
+            description: null,
+            isActive: true,
+            modifiedOn: new Date(),
+          },
+          setWhere: or(
+            ne(permissionTable.module, permission.module),
+            ne(permissionTable.resource, permission.resource),
+            ne(permissionTable.action, permission.action),
+            isNotNull(permissionTable.description),
+            ne(permissionTable.isActive, true)
+          ),
+        });
+    }
+  });
+}
+
 export const permissionRepository = {
   getPermissionById,
   getPermissions,
+  seedPermissionCatalogue,
 };
