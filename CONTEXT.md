@@ -135,3 +135,19 @@ A named section of a Facility containing Beds, used for inpatient care (e.g., IC
 ## Bed
 
 A physical bed within a Ward. Has a status (available, occupied, reserved). A Patient is assigned a Bed upon Admission.
+
+## Asset
+
+A trackable piece of physical equipment owned by the Tenant, located at a Facility, serving a Department, and overseen by a Custodian.
+
+## Asset Category
+
+A classification for Assets, such as Diagnostic Imaging, Patient Monitoring, Life Support, Surgical, Laboratory, Mobility & Furniture, and IT & Network.
+
+## Custodian
+
+The Staff member accountable for an Asset. An Asset may also be unassigned when no Custodian is currently responsible for it.
+
+## Work Order
+
+A maintenance job against an Asset, such as preventive maintenance, corrective repair, calibration, or inspection.
