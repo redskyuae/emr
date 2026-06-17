@@ -51,10 +51,19 @@ const roleBarClassByTone: Record<IamRoleDistribution['tone'], string> = {
 };
 
 const auditBadgeClassByType: Record<IamAuditEvent['type'], string> = {
+  AUTH: 'border-chart-5/20 bg-chart-5/10 text-chart-5',
   CREATE: 'border-chart-4/20 bg-chart-4/10 text-chart-4',
   MODIFY: 'border-chart-2/20 bg-chart-2/10 text-chart-2',
-  AUTH: 'border-chart-5/20 bg-chart-5/10 text-chart-5',
-  SECURITY: 'border-destructive/20 bg-destructive/10 text-destructive',
+  DELETE: 'border-destructive/20 bg-destructive/10 text-destructive',
+  CRITICAL: 'border-destructive/20 bg-destructive/10 text-destructive',
+};
+
+const auditTypeLabelByType: Record<IamAuditEvent['type'], string> = {
+  AUTH: 'AUTH',
+  CREATE: 'CREATE',
+  MODIFY: 'MODIFY',
+  DELETE: 'DELETE',
+  CRITICAL: 'CRITICAL',
 };
 
 function EmptyDashboardState({ title, description }: { title: string; description: string }) {
@@ -238,7 +247,7 @@ export default function IamDashboardPage() {
           </div>
           <CardAction>
             <Button asChild variant="outline" size="sm">
-              <Link href="/identity-access/audit-log">
+              <Link href="/audit-log">
                 <span>View all</span>
                 <ArrowRight className="size-3.5" />
               </Link>
@@ -264,7 +273,7 @@ export default function IamDashboardPage() {
                     <TableCell className="text-muted-foreground pl-4 font-mono text-xs">
                       {event.when}
                     </TableCell>
-                    <TableCell className="font-medium">{event.actor}</TableCell>
+                    <TableCell className="font-medium">{event.actorName}</TableCell>
                     <TableCell className="font-mono text-xs">{event.action}</TableCell>
                     <TableCell className="text-muted-foreground">{event.target}</TableCell>
                     <TableCell className="text-muted-foreground">{event.details}</TableCell>
@@ -273,7 +282,7 @@ export default function IamDashboardPage() {
                         variant="outline"
                         className={cn('font-mono', auditBadgeClassByType[event.type])}
                       >
-                        {event.type}
+                        {auditTypeLabelByType[event.type]}
                       </Badge>
                     </TableCell>
                   </TableRow>

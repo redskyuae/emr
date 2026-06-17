@@ -90,11 +90,15 @@ export type IamRole = {
 export type IamAuditEvent = {
   id: string;
   when: string;
-  actor: string;
+  actorUserId: string | null;
+  actorName: string;
+  actorEmail: string;
+  actorInitials: string;
   action: string;
   target: string;
   details: string;
-  type: 'CREATE' | 'MODIFY' | 'AUTH' | 'SECURITY';
+  ipAddress: string;
+  type: 'AUTH' | 'CREATE' | 'MODIFY' | 'DELETE' | 'CRITICAL';
 };
 
 export const iamStats: IamStat[] = [
@@ -398,44 +402,166 @@ export const iamRoleDistribution: IamRoleDistribution[] = [
   { role: 'Lab Technician', count: 13, tone: 'chart4' },
 ];
 
-export const iamRecentAuditEvents: IamAuditEvent[] = [
+export const iamAuditEvents: IamAuditEvent[] = [
   {
     id: 'audit-001',
     when: 'Today, 09:55',
-    actor: 'Rana Adnan',
+    actorUserId: 'staff-rana-adnan',
+    actorName: 'Rana Adnan',
+    actorEmail: 'rana.adnan@northgate.example',
+    actorInitials: 'RA',
     action: 'user.invite',
     target: 'waleed.chen@northgate.example',
     details: 'Invited as Nurse for Emergency',
+    ipAddress: '10.24.18.42',
     type: 'CREATE',
   },
   {
     id: 'audit-002',
     when: 'Today, 09:42',
-    actor: 'Rana Adnan',
+    actorUserId: 'staff-rana-adnan',
+    actorName: 'Rana Adnan',
+    actorEmail: 'rana.adnan@northgate.example',
+    actorInitials: 'RA',
     action: 'role.edit',
     target: 'Nurse',
     details: 'Added Pharmacy:Dispense permission',
+    ipAddress: '10.24.18.42',
     type: 'MODIFY',
   },
   {
     id: 'audit-003',
     when: 'Today, 09:32',
-    actor: 'Dr. Sara Ali',
+    actorUserId: 'staff-sara-ali',
+    actorName: 'Dr. Sara Ali',
+    actorEmail: 'sara.ali@northgate.example',
+    actorInitials: 'SA',
     action: 'auth.signin',
     target: 'Self',
     details: 'Password and TOTP accepted from iPad Pro',
+    ipAddress: '10.24.44.19',
     type: 'AUTH',
   },
   {
     id: 'audit-004',
     when: 'Today, 08:58',
-    actor: 'System',
+    actorUserId: null,
+    actorName: 'System',
+    actorEmail: 'system@northgate.example',
+    actorInitials: 'SY',
     action: 'session.revoke',
     target: 'Former contractor',
     details: 'Expired external Staff session revoked',
-    type: 'SECURITY',
+    ipAddress: '10.24.0.10',
+    type: 'CRITICAL',
+  },
+  {
+    id: 'audit-005',
+    when: 'Today, 08:41',
+    actorUserId: 'staff-farah-nasser',
+    actorName: 'Farah Nasser',
+    actorEmail: 'farah.nasser@northgate.example',
+    actorInitials: 'FN',
+    action: 'permission.export',
+    target: 'Billing Officer',
+    details: 'Exported assigned Permission Catalogue view',
+    ipAddress: '10.24.52.73',
+    type: 'AUTH',
+  },
+  {
+    id: 'audit-006',
+    when: 'Yesterday, 17:44',
+    actorUserId: 'staff-rana-adnan',
+    actorName: 'Rana Adnan',
+    actorEmail: 'rana.adnan@northgate.example',
+    actorInitials: 'RA',
+    action: 'user.suspend',
+    target: 'priya.menon@northgate.example',
+    details: 'Suspended Front Desk Staff access',
+    ipAddress: '10.24.18.42',
+    type: 'CRITICAL',
+  },
+  {
+    id: 'audit-007',
+    when: 'Yesterday, 16:28',
+    actorUserId: 'staff-rana-adnan',
+    actorName: 'Rana Adnan',
+    actorEmail: 'rana.adnan@northgate.example',
+    actorInitials: 'RA',
+    action: 'role.delete',
+    target: 'Temporary Intake Clerk',
+    details: 'Removed unused custom Role after Staff reassignment',
+    ipAddress: '10.24.18.42',
+    type: 'DELETE',
+  },
+  {
+    id: 'audit-008',
+    when: 'Yesterday, 15:12',
+    actorUserId: 'staff-imran-khan',
+    actorName: 'Dr. Imran Khan',
+    actorEmail: 'imran.khan@northgate.example',
+    actorInitials: 'IK',
+    action: 'auth.mfa_reset',
+    target: 'Self',
+    details: 'Reset authenticator app after device replacement',
+    ipAddress: '10.24.32.104',
+    type: 'AUTH',
+  },
+  {
+    id: 'audit-009',
+    when: 'Yesterday, 14:36',
+    actorUserId: 'staff-rana-adnan',
+    actorName: 'Rana Adnan',
+    actorEmail: 'rana.adnan@northgate.example',
+    actorInitials: 'RA',
+    action: 'role.create',
+    target: 'Discharge Coordinator',
+    details: 'Created custom Role for Admission discharge workflow',
+    ipAddress: '10.24.18.42',
+    type: 'CREATE',
+  },
+  {
+    id: 'audit-010',
+    when: 'Yesterday, 12:09',
+    actorUserId: 'staff-lina-mathew',
+    actorName: 'Lina Mathew',
+    actorEmail: 'lina.mathew@northgate.example',
+    actorInitials: 'LM',
+    action: 'auth.invite_accept',
+    target: 'Self',
+    details: 'Accepted invite and set initial password',
+    ipAddress: '10.24.74.31',
+    type: 'AUTH',
+  },
+  {
+    id: 'audit-011',
+    when: 'Mon, 18:22',
+    actorUserId: 'staff-rana-adnan',
+    actorName: 'Rana Adnan',
+    actorEmail: 'rana.adnan@northgate.example',
+    actorInitials: 'RA',
+    action: 'permission.modify',
+    target: 'Tenant Admin',
+    details: 'Added Audit Log export permission',
+    ipAddress: '10.24.18.42',
+    type: 'MODIFY',
+  },
+  {
+    id: 'audit-012',
+    when: 'Mon, 11:05',
+    actorUserId: null,
+    actorName: 'System',
+    actorEmail: 'system@northgate.example',
+    actorInitials: 'SY',
+    action: 'auth.lockout',
+    target: 'unknown.user@example.com',
+    details: 'Blocked repeated failed sign-in attempts',
+    ipAddress: '203.0.113.72',
+    type: 'CRITICAL',
   },
 ];
+
+export const iamRecentAuditEvents: IamAuditEvent[] = iamAuditEvents.slice(0, 4);
 
 export const iamDashboardLoadedAt = {
   label: 'Mock data refreshed',

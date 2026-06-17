@@ -159,11 +159,15 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/identity-access/sessions',
         icon: FileClock,
       },
+    ],
+  },
+  {
+    title: 'Activity',
+    items: [
       {
         title: 'Audit Log',
-        href: '/identity-access/audit-log',
+        href: '/audit-log',
         icon: Activity,
-        badge: 'TASK-019',
       },
     ],
   },
@@ -265,7 +269,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Sessions',
     subtitle: 'Active user sessions and revocation controls.',
   },
-  '/identity-access/audit-log': {
+  '/audit-log': {
     title: 'Audit Log',
     subtitle: 'Identity and access audit activity for this Tenant.',
   },
