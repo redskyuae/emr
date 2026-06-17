@@ -57,6 +57,16 @@ import { cn } from '@/lib/utils';
 
 const newRoleId = 'new-role';
 
+function buildCustomRoleId(roleName: string) {
+  const slug =
+    roleName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'custom';
+
+  return `role-${slug}-${crypto.randomUUID()}`;
+}
+
 const iconByRoleIcon: Record<IamRoleIcon, LucideIcon> = {
   crown: Crown,
   shield: ShieldCheck,
@@ -408,7 +418,7 @@ export function RolesPageClient({
           ...currentRoles,
           {
             ...nextRole,
-            id: `role-${nextRole.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'custom'}`,
+            id: buildCustomRoleId(nextRole.name),
           },
         ];
       }

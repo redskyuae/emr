@@ -163,7 +163,15 @@ function InviteUserDialog({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          setShowPassword(false);
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="shadow-fluent-64 sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>Add user</DialogTitle>
