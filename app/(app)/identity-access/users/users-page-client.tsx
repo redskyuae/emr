@@ -14,7 +14,10 @@ import {
   UsersRound,
 } from 'lucide-react';
 
-import type { IamDirectoryUser, IamUserStatus } from '@/app/(app)/iam-dashboard/mock-data';
+import type {
+  IamDirectoryUser,
+  IamUserStatus,
+} from '@/app/(app)/identity-access/dashboard/mock-data';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -274,7 +277,7 @@ export function UsersPageClient({
     setLocalInviteOpen(open);
 
     if (!open) {
-      router.replace('/users', { scroll: false });
+      router.replace('/identity-access/users', { scroll: false });
     }
   }
 

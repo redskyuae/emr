@@ -26,7 +26,7 @@ import {
   type IamPermissionSection,
   type IamRole,
   type IamRoleIcon,
-} from '@/app/(app)/iam-dashboard/mock-data';
+} from '@/app/(app)/identity-access/dashboard/mock-data';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -373,7 +373,7 @@ export function RolesPageClient({
 
   function closeDrawer() {
     setActiveRole(null);
-    router.replace('/roles', { scroll: false });
+    router.replace('/identity-access/roles', { scroll: false });
   }
 
   function handleTogglePermission(permissionId: string, checked: boolean) {

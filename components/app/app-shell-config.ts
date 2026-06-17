@@ -141,27 +141,27 @@ export const appNavGroups: AppNavGroup[] = [
     items: [
       {
         title: 'Dashboard',
-        href: '/iam-dashboard',
+        href: '/identity-access/dashboard',
         icon: LayoutDashboard,
       },
       {
         title: 'Users',
-        href: '/users',
+        href: '/identity-access/users',
         icon: UsersRound,
       },
       {
         title: 'Roles & Permissions',
-        href: '/roles',
+        href: '/identity-access/roles',
         icon: ShieldCheck,
       },
       {
         title: 'Sessions',
-        href: '/sessions',
+        href: '/identity-access/sessions',
         icon: FileClock,
       },
       {
         title: 'Audit Log',
-        href: '/audit-log',
+        href: '/identity-access/audit-log',
         icon: Activity,
         badge: 'TASK-019',
       },
@@ -237,33 +237,37 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       href: '/appointments/new',
     },
   },
-  '/users': {
+  '/identity-access/users': {
     title: 'Users',
     subtitle: 'Staff user access within this Tenant.',
     primaryAction: {
       label: 'Add user',
-      href: '/users?invite=1',
+      href: '/identity-access/users?invite=1',
     },
   },
-  '/iam-dashboard': {
+  '/identity-access/dashboard': {
     title: 'IAM Dashboard',
     subtitle: 'Identity and access overview for Staff, Roles, Sessions, and audit activity.',
     primaryAction: {
       label: 'Add user',
-      href: '/users?invite=1',
+      href: '/identity-access/users?invite=1',
     },
   },
-  '/roles': {
+  '/identity-access/roles': {
     title: 'Roles & Permissions',
     subtitle: 'Tenant-scoped Roles mapped to the Permission Catalogue.',
     primaryAction: {
       label: 'Create Role',
-      href: '/roles?create=1',
+      href: '/identity-access/roles?create=1',
     },
   },
-  '/sessions': {
+  '/identity-access/sessions': {
     title: 'Sessions',
     subtitle: 'Active user sessions and revocation controls.',
+  },
+  '/identity-access/audit-log': {
+    title: 'Audit Log',
+    subtitle: 'Identity and access audit activity for this Tenant.',
   },
   '/tenant-profile': {
     title: 'Tenant Profile',
@@ -301,7 +305,7 @@ export const appShellShortcuts = [
   },
   {
     title: 'Identity & Access',
-    href: '/users',
+    href: '/identity-access/users',
     description: 'Users, Roles, Permission Assignments, and Sessions.',
     icon: ShieldCheck,
   },

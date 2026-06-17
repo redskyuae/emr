@@ -10,7 +10,7 @@ import {
   iamStats,
   type IamAuditEvent,
   type IamRoleDistribution,
-} from '@/app/(app)/iam-dashboard/mock-data';
+} from '@/app/(app)/identity-access/dashboard/mock-data';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -123,7 +123,7 @@ export default function IamDashboardPage() {
             </div>
             <CardAction>
               <Button asChild variant="outline" size="sm">
-                <Link href="/sessions">
+                <Link href="/identity-access/sessions">
                   <span>Sessions</span>
                   <ArrowRight className="size-3.5" />
                 </Link>
@@ -238,7 +238,7 @@ export default function IamDashboardPage() {
           </div>
           <CardAction>
             <Button asChild variant="outline" size="sm">
-              <Link href="/audit-log">
+              <Link href="/identity-access/audit-log">
                 <span>View all</span>
                 <ArrowRight className="size-3.5" />
               </Link>
