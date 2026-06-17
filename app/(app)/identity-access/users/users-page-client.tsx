@@ -4,16 +4,20 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Download,
+  Eye,
+  EyeOff,
   Info,
   MoreVertical,
   Pencil,
   Search,
-  Send,
   UserPlus,
   UsersRound,
 } from 'lucide-react';
 
-import type { IamDirectoryUser, IamUserStatus } from '@/app/(app)/iam-dashboard/mock-data';
+import type {
+  IamDirectoryUser,
+  IamUserStatus,
+} from '@/app/(app)/identity-access/dashboard/mock-data';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -156,14 +160,23 @@ function InviteUserDialog({
 }) {
   const [role, setRole] = useState<string | undefined>(roleOptions[0]);
   const [department, setDepartment] = useState<string | undefined>(departmentOptions[0]);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          setShowPassword(false);
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="shadow-fluent-64 sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Invite user</DialogTitle>
+          <DialogTitle>Add user</DialogTitle>
           <DialogDescription>
-            Create a Staff account invitation for the active Tenant and Facility context.
+            Create a Staff account for the active Tenant and Facility context.
           </DialogDescription>
         </DialogHeader>
 
@@ -180,6 +193,27 @@ function InviteUserDialog({
               placeholder="aisha.rahman@northgate.example"
               autoComplete="email"
             />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="add-user-password">Password</FieldLabel>
+            <div className="relative">
+              <Input
+                id="add-user-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                minLength={8}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center px-3 transition-colors"
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field>
@@ -199,7 +233,9 @@ function InviteUserDialog({
 
         <div className="bg-muted/60 text-muted-foreground flex gap-3 rounded-lg border p-3 text-sm">
           <Info className="text-primary mt-0.5 size-4 shrink-0" />
-          <p>Invited Staff receive a BetterAuth email. Invitations expire after 7 days.</p>
+          <p>
+            Staff can sign in with this email and temporary password after the account is added.
+          </p>
         </div>
 
         <DialogFooter>
@@ -207,8 +243,8 @@ function InviteUserDialog({
             <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button type="button" onClick={() => onOpenChange(false)}>
-            <Send className="size-4" />
-            Send invite
+            <UserPlus className="size-4" />
+            Add user
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -249,7 +285,7 @@ export function UsersPageClient({
     setLocalInviteOpen(open);
 
     if (!open) {
-      router.replace('/users', { scroll: false });
+      router.replace('/identity-access/users', { scroll: false });
     }
   }
 
@@ -300,7 +336,7 @@ export function UsersPageClient({
               </Button>
               <Button type="button" onClick={() => setLocalInviteOpen(true)}>
                 <UserPlus className="size-4" />
-                Invite user
+                Add user
               </Button>
             </div>
           </CardContent>
