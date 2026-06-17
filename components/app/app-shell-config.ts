@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
   Bed,
+  Boxes,
   Building2,
   CalendarClock,
   ClipboardList,
@@ -22,6 +23,7 @@ import {
   UserRoundCog,
   UsersRound,
   WalletCards,
+  Wrench,
 } from 'lucide-react';
 
 export type AppNavItem = {
@@ -29,6 +31,7 @@ export type AppNavItem = {
   href: string;
   icon: LucideIcon;
   badge?: string;
+  exact?: boolean;
   items?: {
     title: string;
     href: string;
@@ -162,6 +165,27 @@ export const appNavGroups: AppNavGroup[] = [
     ],
   },
   {
+    title: 'Asset Management',
+    items: [
+      {
+        title: 'Overview',
+        href: '/assets',
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      {
+        title: 'Inventory',
+        href: '/assets/inventory',
+        icon: Boxes,
+      },
+      {
+        title: 'Maintenance',
+        href: '/assets/maintenance',
+        icon: Wrench,
+      },
+    ],
+  },
+  {
     title: 'Activity',
     items: [
       {
@@ -269,6 +293,22 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Sessions',
     subtitle: 'Active user sessions and revocation controls.',
   },
+  '/assets': {
+    title: 'Asset Management',
+    subtitle: "Equipment estate across this Tenant's Facilities.",
+    primaryAction: {
+      label: 'Add asset',
+      href: '/assets/inventory?add=1',
+    },
+  },
+  '/assets/inventory': {
+    title: 'Asset Inventory',
+    subtitle: 'All tracked equipment by category and Facility.',
+  },
+  '/assets/maintenance': {
+    title: 'Maintenance & Work Orders',
+    subtitle: 'Preventive, corrective, calibration & inspection jobs.',
+  },
   '/audit-log': {
     title: 'Audit Log',
     subtitle: 'Identity and access audit activity for this Tenant.',
@@ -331,13 +371,17 @@ function trimTrailingSlash(pathname: string) {
 
 export function isNavItemActive(
   pathname: string,
-  item: Pick<AppNavItem, 'href' | 'items'>
+  item: Pick<AppNavItem, 'href' | 'items' | 'exact'>
 ): boolean {
   const currentPath = trimTrailingSlash(pathname);
   const itemPath = trimTrailingSlash(item.href);
 
   if (currentPath === itemPath) {
     return true;
+  }
+
+  if (item.exact) {
+    return false;
   }
 
   if (itemPath !== '/' && currentPath.startsWith(`${itemPath}/`)) {
