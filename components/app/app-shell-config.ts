@@ -241,7 +241,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Users',
     subtitle: 'Staff user access within this Tenant.',
     primaryAction: {
-      label: 'Invite user',
+      label: 'Add user',
       href: '/users?invite=1',
     },
   },
@@ -249,7 +249,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'IAM Dashboard',
     subtitle: 'Identity and access overview for Staff, Roles, Sessions, and audit activity.',
     primaryAction: {
-      label: 'Invite user',
+      label: 'Add user',
       href: '/users?invite=1',
     },
   },
@@ -257,8 +257,8 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Roles & Permissions',
     subtitle: 'Tenant-scoped Roles mapped to the Permission Catalogue.',
     primaryAction: {
-      label: 'New role',
-      href: '/roles/new',
+      label: 'Create Role',
+      href: '/roles?create=1',
     },
   },
   '/sessions': {

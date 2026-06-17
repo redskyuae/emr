@@ -40,6 +40,39 @@ export type IamRoleDistribution = {
   tone: 'primary' | 'chart2' | 'chart4' | 'chart5' | 'destructive';
 };
 
+export type IamRoleKind = 'System' | 'Custom';
+
+export type IamRoleIcon = 'crown' | 'shield' | 'stethoscope' | 'heart' | 'receipt' | 'clipboard';
+
+export type IamPermissionAction = {
+  id: string;
+  label: string;
+};
+
+export type IamPermissionResource = {
+  id: string;
+  name: string;
+  actions: IamPermissionAction[];
+};
+
+export type IamPermissionSection = {
+  id: string;
+  name: 'Clinical' | 'Operations' | 'Administration';
+  resources: IamPermissionResource[];
+};
+
+export type IamRole = {
+  id: string;
+  name: string;
+  kind: IamRoleKind;
+  description: string;
+  userCount: number;
+  assignedUserIds: string[];
+  icon: IamRoleIcon;
+  tone: 'primary' | 'chart2' | 'chart4' | 'chart5' | 'destructive';
+  grantedPermissionIds: string[];
+};
+
 export type IamAuditEvent = {
   id: string;
   when: string;
@@ -314,3 +347,282 @@ export const iamDashboardLoadedAt = {
   value: 'Today, 10:00',
   icon: Clock,
 };
+
+export const iamPermissionSections: IamPermissionSection[] = [
+  {
+    id: 'clinical',
+    name: 'Clinical',
+    resources: [
+      {
+        id: 'patients',
+        name: 'Patients',
+        actions: [
+          { id: 'view-list', label: 'View list' },
+          { id: 'view-records', label: 'View records' },
+          { id: 'edit-records', label: 'Edit records' },
+          { id: 'delete', label: 'Delete' },
+          { id: 'export', label: 'Export' },
+        ],
+      },
+      {
+        id: 'appointments',
+        name: 'Appointments',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'create', label: 'Create' },
+          { id: 'edit', label: 'Edit' },
+          { id: 'cancel', label: 'Cancel' },
+        ],
+      },
+      {
+        id: 'labs',
+        name: 'Labs',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'request', label: 'Request' },
+          { id: 'approve', label: 'Approve' },
+          { id: 'export', label: 'Export' },
+        ],
+      },
+      {
+        id: 'pharmacy',
+        name: 'Pharmacy',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'prescribe', label: 'Prescribe' },
+          { id: 'dispense', label: 'Dispense' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'operations',
+    name: 'Operations',
+    resources: [
+      {
+        id: 'beds-wards',
+        name: 'Beds & Wards',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'manage', label: 'Manage' },
+        ],
+      },
+      {
+        id: 'billing',
+        name: 'Billing',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'create-invoices', label: 'Create invoices' },
+          { id: 'void', label: 'Void' },
+          { id: 'approve', label: 'Approve' },
+        ],
+      },
+      {
+        id: 'reports',
+        name: 'Reports',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'export', label: 'Export' },
+        ],
+      },
+      {
+        id: 'departments',
+        name: 'Departments',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'manage', label: 'Manage' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'administration',
+    name: 'Administration',
+    resources: [
+      {
+        id: 'users',
+        name: 'Users',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'invite', label: 'Invite' },
+          { id: 'edit', label: 'Edit' },
+          { id: 'suspend', label: 'Suspend' },
+          { id: 'delete', label: 'Delete' },
+        ],
+      },
+      {
+        id: 'roles',
+        name: 'Roles',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'create', label: 'Create' },
+          { id: 'edit', label: 'Edit' },
+          { id: 'delete', label: 'Delete' },
+        ],
+      },
+      {
+        id: 'sessions',
+        name: 'Sessions',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'revoke', label: 'Revoke' },
+        ],
+      },
+      {
+        id: 'audit-log',
+        name: 'Audit Log',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'export', label: 'Export' },
+        ],
+      },
+      {
+        id: 'tenant-profile',
+        name: 'Tenant Profile',
+        actions: [
+          { id: 'view', label: 'View' },
+          { id: 'edit', label: 'Edit' },
+        ],
+      },
+    ],
+  },
+];
+
+export function iamPermissionId(sectionId: string, resourceId: string, actionId: string) {
+  return `${sectionId}:${resourceId}:${actionId}`;
+}
+
+const allPermissionIds = iamPermissionSections.flatMap((section) =>
+  section.resources.flatMap((resource) =>
+    resource.actions.map((action) => iamPermissionId(section.id, resource.id, action.id))
+  )
+);
+
+const permissionIdsBySection = new Map(
+  iamPermissionSections.map((section) => [
+    section.id,
+    section.resources.flatMap((resource) =>
+      resource.actions.map((action) => iamPermissionId(section.id, resource.id, action.id))
+    ),
+  ])
+);
+
+const permissionIdsByResource = new Map(
+  iamPermissionSections.flatMap((section) =>
+    section.resources.map((resource) => [
+      `${section.id}:${resource.id}`,
+      resource.actions.map((action) => iamPermissionId(section.id, resource.id, action.id)),
+    ])
+  )
+);
+
+function permissionIdsForSection(sectionId: string, limit?: number) {
+  const ids = permissionIdsBySection.get(sectionId) ?? [];
+  return typeof limit === 'number' ? ids.slice(0, limit) : ids;
+}
+
+function permissionIdsForResource(sectionId: string, resourceId: string, limit?: number) {
+  const ids = permissionIdsByResource.get(`${sectionId}:${resourceId}`) ?? [];
+  return typeof limit === 'number' ? ids.slice(0, limit) : ids;
+}
+
+export const iamRoles: IamRole[] = [
+  {
+    id: 'role-tenant-owner',
+    name: 'Tenant Owner',
+    kind: 'System',
+    description: 'Unrestricted Tenant administration, Role setup, and system configuration.',
+    userCount: 1,
+    assignedUserIds: ['staff-rana-adnan'],
+    icon: 'crown',
+    tone: 'destructive',
+    grantedPermissionIds: allPermissionIds,
+  },
+  {
+    id: 'role-tenant-admin',
+    name: 'Tenant Admin',
+    kind: 'System',
+    description: 'Manage Staff, Facility settings, reports, and user onboarding.',
+    userCount: 2,
+    assignedUserIds: ['staff-rana-adnan', 'staff-priya-menon'],
+    icon: 'shield',
+    tone: 'primary',
+    grantedPermissionIds: [
+      ...permissionIdsForSection('operations'),
+      ...permissionIdsForSection('administration'),
+      ...permissionIdsForResource('clinical', 'patients', 2),
+      iamPermissionId('clinical', 'appointments', 'view'),
+    ],
+  },
+  {
+    id: 'role-attending-physician',
+    name: 'Attending Physician',
+    kind: 'System',
+    description: 'Full clinical access for Patient records, lab orders, and prescriptions.',
+    userCount: 4,
+    assignedUserIds: ['staff-imran-khan', 'staff-sara-ali'],
+    icon: 'stethoscope',
+    tone: 'chart4',
+    grantedPermissionIds: [
+      ...permissionIdsForSection('clinical'),
+      iamPermissionId('operations', 'reports', 'view'),
+      iamPermissionId('administration', 'sessions', 'view'),
+    ],
+  },
+  {
+    id: 'role-nurse',
+    name: 'Nurse',
+    kind: 'Custom',
+    description: 'Patient vitals, nursing notes, ward assignments, and medication admin.',
+    userCount: 6,
+    assignedUserIds: ['staff-waleed-chen', 'staff-lina-mathew', 'staff-farah-nasser'],
+    icon: 'heart',
+    tone: 'chart2',
+    grantedPermissionIds: [
+      ...permissionIdsForResource('clinical', 'patients', 3),
+      iamPermissionId('clinical', 'appointments', 'view'),
+      iamPermissionId('clinical', 'labs', 'view'),
+      iamPermissionId('clinical', 'labs', 'request'),
+      iamPermissionId('clinical', 'pharmacy', 'view'),
+      iamPermissionId('clinical', 'pharmacy', 'dispense'),
+      ...permissionIdsForResource('operations', 'beds-wards'),
+      iamPermissionId('operations', 'reports', 'view'),
+    ],
+  },
+  {
+    id: 'role-billing-officer',
+    name: 'Billing Officer',
+    kind: 'Custom',
+    description: 'Insurance claims, invoicing, financial reports, and co-pay collection.',
+    userCount: 3,
+    assignedUserIds: ['staff-farah-nasser'],
+    icon: 'receipt',
+    tone: 'chart5',
+    grantedPermissionIds: [
+      ...permissionIdsForResource('operations', 'billing'),
+      ...permissionIdsForResource('operations', 'reports'),
+      iamPermissionId('clinical', 'patients', 'view-list'),
+      iamPermissionId('clinical', 'patients', 'view-records'),
+      iamPermissionId('clinical', 'appointments', 'view'),
+    ],
+  },
+  {
+    id: 'role-receptionist',
+    name: 'Receptionist',
+    kind: 'Custom',
+    description: 'Front-desk tasks for Patient check-in, appointments, and scheduling.',
+    userCount: 5,
+    assignedUserIds: ['staff-priya-menon'],
+    icon: 'clipboard',
+    tone: 'chart4',
+    grantedPermissionIds: [
+      iamPermissionId('clinical', 'patients', 'view-list'),
+      iamPermissionId('clinical', 'patients', 'view-records'),
+      iamPermissionId('clinical', 'appointments', 'view'),
+      iamPermissionId('clinical', 'appointments', 'create'),
+      iamPermissionId('clinical', 'appointments', 'edit'),
+      iamPermissionId('administration', 'users', 'view'),
+      iamPermissionId('administration', 'sessions', 'view'),
+    ],
+  },
+];
