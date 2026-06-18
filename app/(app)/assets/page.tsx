@@ -36,8 +36,12 @@ const outOfServiceCount = assets.filter(
   (asset) => asset.status === 'maintenance' || asset.status === 'repair'
 ).length;
 const openWorkOrders = workOrders.filter((workOrder) => workOrder.status !== 'completed');
-const attentionWorkOrders = workOrders.filter(
+const attentionWorkOrders = openWorkOrders.filter(
   (workOrder) => workOrder.status === 'overdue' || workOrder.priority === 'Critical'
+);
+
+const upcomingMaintenanceWorkOrders = workOrders.filter(
+  (workOrder) => workOrder.status === 'scheduled' || workOrder.status === 'in-progress'
 );
 
 const categoryCounts = assetCategories.map((category) => ({
@@ -233,7 +237,7 @@ export default function AssetOverviewPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {openWorkOrders.slice(0, 5).map((workOrder) => (
+             {upcomingMaintenanceWorkOrders.slice(0, 5).map((workOrder) => (
                 <TableRow key={workOrder.id}>
                   <TableCell className="pl-4 font-mono text-xs">{workOrder.id}</TableCell>
                   <TableCell className="font-medium">{workOrder.assetLabel}</TableCell>
