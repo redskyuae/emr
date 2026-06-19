@@ -389,6 +389,10 @@ export const openApiDocument = {
   servers: [{ url: '/', description: 'Current deployment' }],
   tags: [
     {
+      name: 'Authentication',
+      description: 'Public sign-in and sign-out APIs for Session lifecycle.',
+    },
+    {
       name: 'Tenant Provisioning',
       description: 'Public signup API that provisions a Tenant and Tenant Owner.',
     },
@@ -420,6 +424,88 @@ export const openApiDocument = {
     { name: 'Todo', description: 'Todo API examples.' },
   ],
   paths: {
+    '/api/v1/signin': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Sign in and select active Tenant',
+        description:
+          'Authenticates a user with email and password, creates a Session, and sets the sole Active Tenant available to that user as the active Tenant for tenant-scoped APIs.',
+        requestBody: requestBody('SigninRequest', {
+          email: 'priya.raghavan@apollo.example',
+          password: 'StrongerPass123',
+          rememberMe: false,
+        }),
+        responses: {
+          '200': {
+            description: 'User signed in and active Tenant selected.',
+            content: jsonContent(dataEnvelopeSchema('SigninResult'), {
+              data: {
+                tenant: {
+                  id: 'org_123',
+                  name: 'Apollo Hospitals',
+                  slug: 'apollo-hospitals',
+                  logo: null,
+                  isActive: true,
+                  createdAt: '2026-06-11T00:00:00.000Z',
+                },
+              },
+            }),
+          },
+          '400': {
+            description: 'Validation failed or request body is invalid JSON.',
+            content: jsonContent(
+              { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+              {
+                message: 'Validation failed',
+                errors: ['Email must be valid'],
+              }
+            ),
+          },
+          '401': {
+            description: 'Email or password is invalid.',
+            content: jsonContent(schemaRef('SigninError'), {
+              message: 'Invalid email or password',
+              errors: ['Invalid email or password'],
+            }),
+          },
+          '403': {
+            description: 'The authenticated user has no Active Tenant available.',
+            content: jsonContent(schemaRef('SigninError'), {
+              message: 'No active Tenant available for this user.',
+              errors: ['No active Tenant available for this user.'],
+            }),
+          },
+          '409': {
+            description:
+              'More than one Active Tenant is available and Tenant selection is required.',
+            content: jsonContent(schemaRef('SigninError'), {
+              message:
+                'Multiple active Tenants available for this user. Tenant selection is required.',
+              errors: [
+                'Multiple active Tenants available for this user. Tenant selection is required.',
+              ],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/signout': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Sign out current Session',
+        description:
+          'Ends the current Session if one exists and clears the BetterAuth Session cookies for this browser.',
+        security: [{ cookieAuth: [] }],
+        responses: {
+          '204': {
+            description: 'Current Session ended and Session cookies cleared.',
+          },
+          '400': responseRef('ValidationFailed'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/signup': {
       post: {
         tags: ['Tenant Provisioning'],
@@ -1627,6 +1713,49 @@ export const openApiDocument = {
         type: 'object',
         required: ['message'],
         properties: { message: { type: 'string', examples: ['Internal Server Error'] } },
+      },
+      SigninRequest: {
+        type: 'object',
+        required: ['email', 'password'],
+        properties: {
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 1, maxLength: 128, writeOnly: true },
+          rememberMe: {
+            type: 'boolean',
+            default: false,
+            description: 'When true, keeps the Session active after the browser closes.',
+          },
+        },
+      },
+      SigninResult: {
+        type: 'object',
+        required: ['tenant'],
+        properties: {
+          tenant: schemaRef('Tenant'),
+        },
+      },
+      SigninError: {
+        type: 'object',
+        required: ['message', 'errors'],
+        properties: {
+          message: {
+            type: 'string',
+            examples: [
+              'Invalid email or password',
+              'No active Tenant available for this user.',
+              'Multiple active Tenants available for this user. Tenant selection is required.',
+            ],
+          },
+          errors: {
+            type: 'array',
+            items: { type: 'string' },
+            examples: [
+              ['Invalid email or password'],
+              ['No active Tenant available for this user.'],
+              ['Multiple active Tenants available for this user. Tenant selection is required.'],
+            ],
+          },
+        },
       },
       SignupRequest: {
         type: 'object',

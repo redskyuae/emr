@@ -32,6 +32,10 @@ The top-level user for a Tenant. The creator of a Tenant always becomes the Tena
 
 An administrative authority belonging to a specific Tenant, including the Tenant Owner and delegated administrators for that Tenant. Manages Facilities, configures Masters, and provisions Staff accounts within their Tenant; Tenant Admin authority does not apply across Tenants.
 
+## Session
+
+An authenticated access period for a user on one browser or device. Signing out ends the current Session only. Revoking all Sessions is a separate administrative/security action.
+
 ## Role
 
 A Tenant-scoped authorization label that can carry permissions and be assigned to users. Distinct from Staff job profiles, Doctor clinical identity, and authentication-layer membership roles.

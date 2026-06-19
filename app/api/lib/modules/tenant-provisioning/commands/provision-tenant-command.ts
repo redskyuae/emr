@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 
 import { auth } from '@/app/lib/auth';
+import { createCookieHeader, getSetCookies } from '@/app/api/lib/utils/auth-cookie-helpers';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { permissionRepository } from '../../permission/repository/permission-repository';
 import { seedSystemRolesCommand } from '../../role/commands/seed-system-roles-command';
@@ -10,33 +11,6 @@ import type { TenantProvisioningResult } from '../schemas/tenant-provisioning-sc
 import { tenantProvisioningRepository } from '../repository/tenant-provisioning-repository';
 import { validateTenantProvisioning } from '../validator/tenant-provisioning-validator';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
-
-type HeadersWithSetCookie = Headers & {
-  getSetCookie?: () => string[];
-};
-
-function getSetCookies(headers?: Headers) {
-  if (!headers) {
-    return [];
-  }
-
-  const setCookies = (headers as HeadersWithSetCookie).getSetCookie?.();
-
-  if (setCookies && setCookies.length > 0) {
-    return setCookies;
-  }
-
-  const setCookie = headers.get('set-cookie');
-
-  return setCookie ? [setCookie] : [];
-}
-
-function createCookieHeader(setCookies: string[]) {
-  return setCookies
-    .map((setCookie) => setCookie.split(';')[0])
-    .filter(Boolean)
-    .join('; ');
-}
 
 function getAuthCreateUserErrors(error: unknown) {
   if (typeof error !== 'object' || error === null) {
