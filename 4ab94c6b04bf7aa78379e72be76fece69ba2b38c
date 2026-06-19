@@ -1,0 +1,39 @@
+app/api/lib/modules/tenant-provisioning/commands/provision-tenant-command.ts
+  ef2a46270c8faf35 114-117
+app/api/lib/modules/appointment-mode/repository/appointment-mode-repository.ts
+  ef2a46270c8faf35 173-174,176-187
+app/api/lib/modules/appointment-type/repository/appointment-type-repository.ts
+  ef2a46270c8faf35 173-174,176-187
+app/api/lib/modules/appointment-status/repository/appointment-status-repository.ts
+  ef2a46270c8faf35 173-174,176-187
+app/api/lib/modules/appointment-cancelled-reason/repository/appointment-cancelled-reason-repository.ts
+  ef2a46270c8faf35 179-180,182-193
+app/api/lib/modules/tenant-provisioning/commands/seed-default-appointment-masters-command.ts
+  ef2a46270c8faf35 57,59-71,73
+app/api/lib/modules/permission/repository/permission-repository.ts
+  ef2a46270c8faf35 1,51-71
+app/api/lib/modules/role/repository/role-repository.ts
+  ef2a46270c8faf35 219-230
+app/api/lib/modules/appointment-reason/repository/appointment-reason-repository.ts
+  ef2a46270c8faf35 173-174,176-187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "4ab94c6b04bf7aa78379e72be76fece69ba2b38c",
+  "prompts": {
+    "ef2a46270c8faf35": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "67d80d89-27bf-4455-a1ee-e13d57d8fa35",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 125,
+      "total_deletions": 171,
+      "accepted_lines": 123,
+      "overriden_lines": 1
+    }
+  }
+}
