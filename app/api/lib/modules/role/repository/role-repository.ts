@@ -39,12 +39,6 @@ const roleColumns = {
 
 type RoleRow = typeof roleTable.$inferSelect;
 
-function isUniqueConstraintViolation(error: unknown) {
-  return (
-    typeof error === 'object' && error !== null && (error as { code?: unknown }).code === '23505'
-  );
-}
-
 async function createRole(tenantId: string, data: CreateRoleInput, isSystem = false) {
   const [createdRole] = await db
     .insert(roleTable)
@@ -221,37 +215,19 @@ async function getSystemRolesForTenant(tenantId: string) {
     .orderBy(asc(roleTable.id));
 }
 
-async function seedSystemRole(
-  tenantId: string,
-  definition: (typeof SYSTEM_ROLE_DEFINITIONS)[number]
-) {
-  const existingRole = await findActiveByCode(tenantId, definition.code);
-
-  if (existingRole) {
-    return existingRole;
-  }
-
-  try {
-    return await createRole(tenantId, definition, true);
-  } catch (error) {
-    if (!isUniqueConstraintViolation(error)) {
-      throw error;
-    }
-
-    const role = await findActiveByCode(tenantId, definition.code);
-
-    if (!role) {
-      throw error;
-    }
-
-    return role;
-  }
-}
-
 async function seedSystemRolesForTenant(tenantId: string) {
-  for (const definition of SYSTEM_ROLE_DEFINITIONS) {
-    await seedSystemRole(tenantId, definition);
-  }
+  await db
+    .insert(roleTable)
+    .values(
+      SYSTEM_ROLE_DEFINITIONS.map((definition) => ({
+        tenantId,
+        name: definition.name,
+        code: definition.code,
+        description: definition.description,
+        isSystem: true,
+      }))
+    )
+    .onConflictDoNothing();
 
   return getSystemRolesForTenant(tenantId);
 }

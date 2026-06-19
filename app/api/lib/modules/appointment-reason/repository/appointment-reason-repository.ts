@@ -2,7 +2,6 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { appointmentReasonTable } from '@/app/db/schema/appointment-reason';
-import { isUniqueConstraintViolation } from '@/app/api/lib/utils/db-errors';
 import type {
   AppointmentReasonListParams,
   CreateAppointmentReasonData,
@@ -171,24 +170,21 @@ async function findActiveByCode(
 type AppointmentReasonSeed = Omit<CreateAppointmentReasonData, 'tenantId'>;
 
 async function seedDefaultAppointmentReasons(tenantId: string, defaults: AppointmentReasonSeed[]) {
-  for (const appointmentReason of defaults) {
-    const [existingByCode, existingByName] = await Promise.all([
-      findActiveByCode(tenantId, appointmentReason.code),
-      findActiveByName(tenantId, appointmentReason.name),
-    ]);
-
-    if (existingByCode || existingByName) {
-      continue;
-    }
-
-    try {
-      await createAppointmentReason({ ...appointmentReason, tenantId });
-    } catch (error) {
-      if (!isUniqueConstraintViolation(error)) {
-        throw error;
-      }
-    }
+  if (defaults.length === 0) {
+    return;
   }
+
+  await db
+    .insert(appointmentReasonTable)
+    .values(
+      defaults.map((appointmentReason) => ({
+        tenantId,
+        name: appointmentReason.name,
+        code: appointmentReason.code,
+        description: appointmentReason.description ?? null,
+      }))
+    )
+    .onConflictDoNothing();
 }
 
 export const appointmentReasonRepository = {

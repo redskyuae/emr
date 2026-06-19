@@ -1,4 +1,4 @@
-import { and, asc, eq, isNotNull, ne, or } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { permissionTable } from '@/app/db/schema/permission';
@@ -48,31 +48,27 @@ async function getPermissions({ module }: PermissionListParams = {}) {
 }
 
 async function seedPermissionCatalogue() {
-  await db.transaction(async (tx) => {
-    for (const permission of permissionSeedData) {
-      await tx
-        .insert(permissionTable)
-        .values(permission)
-        .onConflictDoUpdate({
-          target: permissionTable.name,
-          set: {
-            module: permission.module,
-            resource: permission.resource,
-            action: permission.action,
-            description: null,
-            isActive: true,
-            modifiedOn: new Date(),
-          },
-          setWhere: or(
-            ne(permissionTable.module, permission.module),
-            ne(permissionTable.resource, permission.resource),
-            ne(permissionTable.action, permission.action),
-            isNotNull(permissionTable.description),
-            ne(permissionTable.isActive, true)
-          ),
-        });
-    }
-  });
+  await db
+    .insert(permissionTable)
+    .values([...permissionSeedData])
+    .onConflictDoUpdate({
+      target: permissionTable.name,
+      set: {
+        module: sql`excluded.module`,
+        resource: sql`excluded.resource`,
+        action: sql`excluded.action`,
+        description: sql`excluded.description`,
+        isActive: true,
+        modifiedOn: new Date(),
+      },
+      setWhere: or(
+        ne(permissionTable.module, sql`excluded.module`),
+        ne(permissionTable.resource, sql`excluded.resource`),
+        ne(permissionTable.action, sql`excluded.action`),
+        isNotNull(permissionTable.description),
+        ne(permissionTable.isActive, true)
+      ),
+    });
 }
 
 export const permissionRepository = {

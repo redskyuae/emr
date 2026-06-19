@@ -111,7 +111,10 @@ export async function provisionTenantCommand(
       };
     }
 
-    const rolesResult = await seedSystemRolesCommand(createdTenant.id);
+    const [rolesResult, appointmentMastersResult] = await Promise.all([
+      seedSystemRolesCommand(createdTenant.id),
+      seedDefaultAppointmentMastersCommand(createdTenant.id),
+    ]);
 
     if (!rolesResult.success) {
       await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });
@@ -124,8 +127,6 @@ export async function provisionTenantCommand(
         status: rolesResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
       };
     }
-
-    const appointmentMastersResult = await seedDefaultAppointmentMastersCommand(createdTenant.id);
 
     if (!appointmentMastersResult.success) {
       await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });

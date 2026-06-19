@@ -64,7 +64,11 @@ async function signin(payload: SigninPayload) {
   return response.json() as Promise<unknown>;
 }
 
-export function LoginForm() {
+type LoginFormProps = {
+  redirectTo?: string;
+};
+
+export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -72,7 +76,7 @@ export function LoginForm() {
   const signinMutation = useMutation({
     mutationFn: signin,
     onSuccess: () => {
-      router.replace('/dashboard');
+      router.replace(redirectTo);
       router.refresh();
     },
   });

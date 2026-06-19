@@ -2,7 +2,6 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
-import { isUniqueConstraintViolation } from '@/app/api/lib/utils/db-errors';
 import type {
   AppointmentCancelledReasonListParams,
   CreateAppointmentCancelledReasonData,
@@ -177,24 +176,21 @@ async function seedDefaultAppointmentCancelledReasons(
   tenantId: string,
   defaults: AppointmentCancelledReasonSeed[]
 ) {
-  for (const appointmentCancelledReason of defaults) {
-    const [existingByCode, existingByName] = await Promise.all([
-      findActiveByCode(tenantId, appointmentCancelledReason.code),
-      findActiveByName(tenantId, appointmentCancelledReason.name),
-    ]);
-
-    if (existingByCode || existingByName) {
-      continue;
-    }
-
-    try {
-      await createAppointmentCancelledReason({ ...appointmentCancelledReason, tenantId });
-    } catch (error) {
-      if (!isUniqueConstraintViolation(error)) {
-        throw error;
-      }
-    }
+  if (defaults.length === 0) {
+    return;
   }
+
+  await db
+    .insert(appointmentCancelledReasonTable)
+    .values(
+      defaults.map((appointmentCancelledReason) => ({
+        tenantId,
+        name: appointmentCancelledReason.name,
+        code: appointmentCancelledReason.code,
+        description: appointmentCancelledReason.description ?? null,
+      }))
+    )
+    .onConflictDoNothing();
 }
 
 export const appointmentCancelledReasonRepository = {

@@ -2,7 +2,6 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { appointmentTypeTable } from '@/app/db/schema/appointment-type';
-import { isUniqueConstraintViolation } from '@/app/api/lib/utils/db-errors';
 import type {
   AppointmentTypeListParams,
   CreateAppointmentTypeData,
@@ -171,24 +170,21 @@ async function findActiveByCode(
 type AppointmentTypeSeed = Omit<CreateAppointmentTypeData, 'tenantId'>;
 
 async function seedDefaultAppointmentTypes(tenantId: string, defaults: AppointmentTypeSeed[]) {
-  for (const appointmentType of defaults) {
-    const [existingByCode, existingByName] = await Promise.all([
-      findActiveByCode(tenantId, appointmentType.code),
-      findActiveByName(tenantId, appointmentType.name),
-    ]);
-
-    if (existingByCode || existingByName) {
-      continue;
-    }
-
-    try {
-      await createAppointmentType({ ...appointmentType, tenantId });
-    } catch (error) {
-      if (!isUniqueConstraintViolation(error)) {
-        throw error;
-      }
-    }
+  if (defaults.length === 0) {
+    return;
   }
+
+  await db
+    .insert(appointmentTypeTable)
+    .values(
+      defaults.map((appointmentType) => ({
+        tenantId,
+        name: appointmentType.name,
+        code: appointmentType.code,
+        description: appointmentType.description ?? null,
+      }))
+    )
+    .onConflictDoNothing();
 }
 
 export const appointmentTypeRepository = {

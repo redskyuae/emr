@@ -2,7 +2,6 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { appointmentModeTable } from '@/app/db/schema/appointment-mode';
-import { isUniqueConstraintViolation } from '@/app/api/lib/utils/db-errors';
 import type {
   AppointmentModeListParams,
   CreateAppointmentModeData,
@@ -171,24 +170,21 @@ async function findActiveByCode(
 type AppointmentModeSeed = Omit<CreateAppointmentModeData, 'tenantId'>;
 
 async function seedDefaultAppointmentModes(tenantId: string, defaults: AppointmentModeSeed[]) {
-  for (const appointmentMode of defaults) {
-    const [existingByCode, existingByName] = await Promise.all([
-      findActiveByCode(tenantId, appointmentMode.code),
-      findActiveByName(tenantId, appointmentMode.name),
-    ]);
-
-    if (existingByCode || existingByName) {
-      continue;
-    }
-
-    try {
-      await createAppointmentMode({ ...appointmentMode, tenantId });
-    } catch (error) {
-      if (!isUniqueConstraintViolation(error)) {
-        throw error;
-      }
-    }
+  if (defaults.length === 0) {
+    return;
   }
+
+  await db
+    .insert(appointmentModeTable)
+    .values(
+      defaults.map((appointmentMode) => ({
+        tenantId,
+        name: appointmentMode.name,
+        code: appointmentMode.code,
+        description: appointmentMode.description ?? null,
+      }))
+    )
+    .onConflictDoNothing();
 }
 
 export const appointmentModeRepository = {
