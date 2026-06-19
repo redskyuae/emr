@@ -135,7 +135,6 @@ export function AppSidebar() {
             <span className="truncate text-sm font-medium">Northgate General</span>
             <span className="text-muted-foreground truncate text-xs">Tenant: Northgate Health</span>
           </span>
-          <ChevronsUpDown className="text-muted-foreground size-4 group-data-[collapsible=icon]:hidden" />
         </Button>
       </SidebarHeader>
 
