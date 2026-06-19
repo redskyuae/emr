@@ -40,7 +40,9 @@ export async function validateTenantProvisioning(
 
   if (existingTenantByName) {
     errors.push('A tenant with this name already exists.');
-  } else if (existingTenantBySlug) {
+  }
+
+  if (existingTenantBySlug) {
     errors.push('A tenant with this slug already exists.');
   }
 

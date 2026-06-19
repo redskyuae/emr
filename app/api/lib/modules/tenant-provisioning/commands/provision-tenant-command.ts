@@ -70,12 +70,12 @@ export async function provisionTenantCommand(
     };
   }
 
-  await permissionRepository.seedPermissionCatalogue();
-
   let createdUserId: string | undefined;
   let createdTenantId: string | undefined;
 
   try {
+    await permissionRepository.seedPermissionCatalogue();
+
     const createdUser = await auth.api.createUser({
       body: {
         name: validationResult.data.ownerName,
@@ -184,6 +184,10 @@ export async function provisionTenantCommand(
       return { success: false, errors: tenantErrors, status: StatusCodes.CONFLICT };
     }
 
-    throw error;
+    return {
+      success: false,
+      errors: ['Tenant provisioning failed.'],
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    };
   }
 }

@@ -1,3 +1,5 @@
+import { StatusCodes } from 'http-status-codes';
+
 import { auth } from '@/app/lib/auth';
 import { getSetCookies } from '@/app/api/lib/utils/auth-cookie-helpers';
 import type { CommandResult } from '@/app/api/lib/utils/types';
@@ -11,15 +13,23 @@ export async function signoutCommand(headers: unknown): Promise<CommandResult<Si
     return validationResult;
   }
 
-  const signOutResult = await auth.api.signOut({
-    headers: validationResult.data.headers,
-    returnHeaders: true,
-  });
+  try {
+    const signOutResult = await auth.api.signOut({
+      headers: validationResult.data.headers,
+      returnHeaders: true,
+    });
 
-  return {
-    success: true,
-    data: {
-      setCookies: getSetCookies(signOutResult.headers),
-    },
-  };
+    return {
+      success: true,
+      data: {
+        setCookies: getSetCookies(signOutResult.headers),
+      },
+    };
+  } catch {
+    return {
+      success: false,
+      errors: ['Sign out failed.'],
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    };
+  }
 }

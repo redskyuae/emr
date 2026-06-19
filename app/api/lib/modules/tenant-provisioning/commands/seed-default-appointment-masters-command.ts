@@ -54,24 +54,28 @@ export async function seedDefaultAppointmentMastersCommand(
     return { success: false, errors: formatValidationErrors(tenantIdResult.error) };
   }
 
-  await Promise.all([
-    appointmentModeRepository.seedDefaultAppointmentModes(tenantIdResult.data, [
-      ...DEFAULT_APPOINTMENT_MODES,
-    ]),
-    appointmentTypeRepository.seedDefaultAppointmentTypes(tenantIdResult.data, [
-      ...DEFAULT_APPOINTMENT_TYPES,
-    ]),
-    appointmentStatusRepository.seedDefaultAppointmentStatuses(tenantIdResult.data, [
-      ...DEFAULT_APPOINTMENT_STATUSES,
-    ]),
-    appointmentReasonRepository.seedDefaultAppointmentReasons(tenantIdResult.data, [
-      ...DEFAULT_APPOINTMENT_REASONS,
-    ]),
-    appointmentCancelledReasonRepository.seedDefaultAppointmentCancelledReasons(
-      tenantIdResult.data,
-      [...DEFAULT_APPOINTMENT_CANCELLED_REASONS]
-    ),
-  ]);
+  try {
+    await Promise.all([
+      appointmentModeRepository.seedDefaultAppointmentModes(tenantIdResult.data, [
+        ...DEFAULT_APPOINTMENT_MODES,
+      ]),
+      appointmentTypeRepository.seedDefaultAppointmentTypes(tenantIdResult.data, [
+        ...DEFAULT_APPOINTMENT_TYPES,
+      ]),
+      appointmentStatusRepository.seedDefaultAppointmentStatuses(tenantIdResult.data, [
+        ...DEFAULT_APPOINTMENT_STATUSES,
+      ]),
+      appointmentReasonRepository.seedDefaultAppointmentReasons(tenantIdResult.data, [
+        ...DEFAULT_APPOINTMENT_REASONS,
+      ]),
+      appointmentCancelledReasonRepository.seedDefaultAppointmentCancelledReasons(
+        tenantIdResult.data,
+        [...DEFAULT_APPOINTMENT_CANCELLED_REASONS]
+      ),
+    ]);
+  } catch {
+    return { success: false, errors: ['Failed to seed default appointment masters.'] };
+  }
 
   return { success: true, data: undefined };
 }

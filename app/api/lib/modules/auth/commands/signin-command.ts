@@ -147,6 +147,10 @@ export async function signinCommand(
       return authFailure;
     }
 
-    throw error;
+    return {
+      success: false,
+      errors: ['Internal Server Error'],
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    };
   }
 }

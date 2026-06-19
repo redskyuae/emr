@@ -496,7 +496,7 @@ export const openApiDocument = {
         summary: 'Sign out current Session',
         description:
           'Ends the current Session if one exists and clears the BetterAuth Session cookies for this browser.',
-        security: [{ cookieAuth: [] }],
+        security: [],
         responses: {
           '204': {
             description: 'Current Session ended and Session cookies cleared.',
