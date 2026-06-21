@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 import { createCountryCommand } from '@/app/api/lib/modules/country/commands/create-country-command';
 import { getCountriesQuery } from '@/app/api/lib/modules/country/queries/get-countries-query';
 import type { Country } from '@/app/api/lib/modules/country/schemas/country-schema';
@@ -22,6 +23,12 @@ function mutationMessage(status: number) {
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await requireAuth();
+
+    if (session instanceof Response) {
+      return session;
+    }
+
     const page = parsePositiveInteger(request.nextUrl.searchParams.get('page'), 1);
     const limit = parsePositiveInteger(request.nextUrl.searchParams.get('limit'), 10);
     const query =
@@ -70,6 +77,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireAuth();
+
+    if (session instanceof Response) {
+      return session;
+    }
+
     let payload: unknown;
 
     try {
