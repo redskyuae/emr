@@ -1,0 +1,42 @@
+app/api/lib/modules/auth/commands/signout-command.ts
+  c44c130248dc218f 1-2,16-20,22-34
+app/api/lib/modules/auth/commands/signin-command.ts
+  c44c130248dc218f 150-154
+app/api/lib/modules/role/repository/role-repository.ts
+  ef2a46270c8faf35 219-230
+app/api/lib/utils/auth-cookie-helpers.ts
+  c44c130248dc218f 18-28,33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "d17c12f3d06dac501d401416f07561aa2bda03b1",
+  "prompts": {
+    "c44c130248dc218f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "964a3ceb-a6e1-45a9-8e1a-db3ccb9e3900",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 71,
+      "total_deletions": 37,
+      "accepted_lines": 37,
+      "overriden_lines": 0
+    },
+    "ef2a46270c8faf35": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "67d80d89-27bf-4455-a1ee-e13d57d8fa35",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 125,
+      "total_deletions": 171,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    }
+  }
+}

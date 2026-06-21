@@ -1,0 +1,36 @@
+app/api/lib/modules/role/repository/role-repository.ts
+  ef2a46270c8faf35 219-230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "7b00a9cf4811bbc9d95b7799710917651a19e014",
+  "prompts": {
+    "c44c130248dc218f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "964a3ceb-a6e1-45a9-8e1a-db3ccb9e3900",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 71,
+      "total_deletions": 37,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "ef2a46270c8faf35": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "67d80d89-27bf-4455-a1ee-e13d57d8fa35",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 125,
+      "total_deletions": 171,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    }
+  }
+}
