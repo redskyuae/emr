@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 
+import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
+import { useSignIn } from '@/app/queries/auth/useSignIn';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,80 +14,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 
-type SigninPayload = {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-};
-
-type SigninApiErrorBody = {
-  message?: string;
-  errors?: string[];
-};
-
-class SigninApiError extends Error {
-  errors: string[];
-
-  constructor(message: string, errors: string[] = [message]) {
-    super(message);
-    this.name = 'SigninApiError';
-    this.errors = errors;
-  }
-}
-
-async function parseError(response: Response) {
-  let body: SigninApiErrorBody | undefined;
-
-  try {
-    body = (await response.json()) as SigninApiErrorBody;
-  } catch {
-    // Ignore invalid error payloads and fall back to the response status.
-  }
-
-  const message = body?.message || 'Sign-in failed';
-  const errors = body?.errors && body.errors.length > 0 ? body.errors : [message];
-
-  return new SigninApiError(message, errors);
-}
-
-async function signin(payload: SigninPayload) {
-  const response = await fetch('/api/v1/signin', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw await parseError(response);
-  }
-
-  return response.json() as Promise<unknown>;
-}
-
 type LoginFormProps = {
   redirectTo?: string;
 };
 
 export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
-  const signinMutation = useMutation({
-    mutationFn: signin,
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const signInMutation = useSignIn({
     onSuccess: () => {
       router.replace(redirectTo);
       router.refresh();
     },
   });
 
-  const errors =
-    signinMutation.error instanceof SigninApiError
-      ? signinMutation.error.errors
-      : signinMutation.error
-        ? [signinMutation.error.message]
-        : [];
+  const errors = getAuthMutationErrors(signInMutation.error);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500">
@@ -104,7 +49,7 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
 
           const formData = new FormData(event.currentTarget);
 
-          signinMutation.mutate({
+          signInMutation.mutate({
             email: String(formData.get('email') ?? ''),
             password: String(formData.get('password') ?? ''),
             rememberMe,
@@ -138,7 +83,7 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
             placeholder="you@northgatehealth.com"
             autoComplete="email"
             required
-            disabled={signinMutation.isPending}
+            disabled={signInMutation.isPending}
             className="h-10"
           />
         </div>
@@ -161,14 +106,14 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
               placeholder="••••••••••"
               autoComplete="current-password"
               required
-              disabled={signinMutation.isPending}
+              disabled={signInMutation.isPending}
               className="h-10 pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              disabled={signinMutation.isPending}
+              disabled={signInMutation.isPending}
               className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center px-3 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -180,8 +125,8 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
           <Checkbox
             id="remember"
             checked={rememberMe}
+            disabled={signInMutation.isPending}s
             onCheckedChange={(checked) => setRememberMe(checked === true)}
-            disabled={signinMutation.isPending}
           />
           <Label htmlFor="remember" className="text-muted-foreground font-normal">
             Keep me signed in on this device
@@ -191,9 +136,10 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
         <Button
           type="submit"
           className="h-10 w-full text-[15px]"
-          disabled={signinMutation.isPending}
+          disabled={signInMutation.isPending}
+          aria-busy={signInMutation.isPending}
         >
-          {signinMutation.isPending ? (
+          {signInMutation.isPending ? (
             <span className="inline-flex items-center gap-2">
               <Spinner /> Signing in
             </span>

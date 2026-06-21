@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
 import { DEFAULT_AUTH_REDIRECT_PATH, getSafeNextPath } from '@/app/lib/auth-route-guards';
-import { LoginForm } from '@/components/auth/login-form';
+import { LoginForm } from '@/app/(auth)/login/_components/login-form';
 
 type LoginPageProps = {
   searchParams: Promise<{ next?: string | string[] }>;

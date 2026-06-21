@@ -1,22 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetNationalityResponse, UpdateNationalityResponse } from './types';
 
 import { deleteNationalityCommand } from '@/app/api/lib/modules/nationality/commands/delete-nationality-command';
 import { updateNationalityCommand } from '@/app/api/lib/modules/nationality/commands/update-nationality-command';
 import { getNationalityByIdQuery } from '@/app/api/lib/modules/nationality/queries/get-nationality-by-id-query';
-import type { Nationality } from '@/app/api/lib/modules/nationality/schemas/nationality-schema';
 
 type NationalityRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateNationalityRequest = {
-  name: string;
-  code: string;
-};
-
-export type NationalityResponse = {
-  data: Nationality;
 };
 
 function errorMessage(status: number) {
@@ -45,7 +36,7 @@ export async function GET(_request: NextRequest, context: NationalityRouteContex
       );
     }
 
-    return NextResponse.json<NationalityResponse>({ data: result.data });
+    return NextResponse.json<GetNationalityResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -79,7 +70,7 @@ export async function PUT(request: NextRequest, context: NationalityRouteContext
       );
     }
 
-    return NextResponse.json<NationalityResponse>({ data: result.data });
+    return NextResponse.json<UpdateNationalityResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

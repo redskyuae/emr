@@ -1,21 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { SignupResponse } from './types';
 
 import { provisionTenantCommand } from '@/app/api/lib/modules/tenant-provisioning/commands/provision-tenant-command';
-import type { Tenant } from '@/app/api/lib/modules/tenant/schemas/tenant-schema';
-
-export type SignupRequest = {
-  tenantName: string;
-  ownerName: string;
-  ownerEmail: string;
-  password: string;
-};
-
-export type SignupResponse = {
-  data: {
-    tenant: Tenant;
-  };
-};
 
 function mutationMessage(status: number, errors: string[]) {
   if (status >= StatusCodes.INTERNAL_SERVER_ERROR) {

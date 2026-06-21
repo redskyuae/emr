@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -10,7 +11,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 export default async function AppLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   const [cookieStore, session] = await Promise.all([cookies(), getSession()]);
 

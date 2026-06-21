@@ -1,20 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListUserSessionsResponse } from './types';
 
 import { revokeUserSessionsCommand } from '@/app/api/lib/modules/session/commands/revoke-user-sessions-command';
 import { getUserSessionsQuery } from '@/app/api/lib/modules/session/queries/get-user-sessions-query';
-import type { SessionListItem } from '@/app/api/lib/modules/session/schemas/session-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type UserSessionsRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UserSessionsResponse = {
-  data: SessionListItem[];
-  meta: {
-    total: number;
-  };
 };
 
 function errorMessage(status: number) {
@@ -49,7 +42,7 @@ export async function GET(_request: NextRequest, context: UserSessionsRouteConte
       );
     }
 
-    return NextResponse.json<UserSessionsResponse>({
+    return NextResponse.json<ListUserSessionsResponse>({
       data: result.data,
       meta: { total: result.total },
     });

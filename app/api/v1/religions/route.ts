@@ -1,20 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListReligionsResponse, SaveReligionResponse } from './types';
 
 import { createReligionCommand } from '@/app/api/lib/modules/religion/commands/create-religion-command';
 import { getReligionsQuery } from '@/app/api/lib/modules/religion/queries/get-religions-query';
-import type { Religion } from '@/app/api/lib/modules/religion/schemas/religion-schema';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
-import type { Paginated } from '@/app/api/lib/utils/types';
-
-export type SaveReligionRequest = {
-  name: string;
-  code: string;
-};
-
-export type SaveReligionResponse = {
-  data: Religion;
-};
 
 function mutationMessage(status: number) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
@@ -51,7 +41,7 @@ export async function GET(request: NextRequest) {
     const { data, total } = queryResult;
     const totalPages = total > 0 ? Math.ceil(total / safeLimit) : 0;
 
-    return NextResponse.json<Paginated<Religion>>({
+    return NextResponse.json<ListReligionsResponse>({
       data,
       meta: {
         total,

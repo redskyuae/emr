@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Building2, Hospital, Microscope, ShieldCheck } from 'lucide-react';
 
 import { Logo } from '@/components/brand/logo';
+import { ReactNode } from 'react';
 
 const brandPoints = [
   {
@@ -16,7 +17,7 @@ const brandPoints = [
   },
 ];
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-full flex-1 lg:grid-cols-[1.05fr_1fr]">
       {/* ── Brand panel ──────────────────────────────────────── */}

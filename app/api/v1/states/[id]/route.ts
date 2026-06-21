@@ -1,22 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetStateResponse, UpdateStateResponse } from './types';
 
 import { deleteStateCommand } from '@/app/api/lib/modules/state/commands/delete-state-command';
 import { updateStateCommand } from '@/app/api/lib/modules/state/commands/update-state-command';
 import { getStateByIdQuery } from '@/app/api/lib/modules/state/queries/get-state-by-id-query';
-import type { State } from '@/app/api/lib/modules/state/schemas/state-schema';
 
 type StateRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateStateRequest = {
-  name: string;
-  countryId: number;
-};
-
-export type StateResponse = {
-  data: State;
 };
 
 function errorMessage(status: number) {
@@ -45,7 +36,7 @@ export async function GET(_request: NextRequest, context: StateRouteContext) {
       );
     }
 
-    return NextResponse.json<StateResponse>({ data: result.data });
+    return NextResponse.json<GetStateResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -79,7 +70,7 @@ export async function PUT(request: NextRequest, context: StateRouteContext) {
       );
     }
 
-    return NextResponse.json<StateResponse>({ data: result.data });
+    return NextResponse.json<UpdateStateResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

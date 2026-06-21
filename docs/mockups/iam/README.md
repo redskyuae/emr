@@ -8,12 +8,12 @@ screens must be rebuilt with the project's own design system — shadcn/ui compo
 tokens defined in `app/globals.css` / `DESIGN.md` — **not** by importing the prototype's CSS or
 fonts. Use the project brand ("Medical EMR"), not "Vitals".
 
-| File | Screen | Task |
-| ---- | ------ | ---- |
-| `iam-dashboard.png` | IAM Dashboard (also shows the app shell: sidebar + topbar) | TASK-025, TASK-026 |
-| `users-list.png` | Users list (filters, table) | TASK-027 |
-| `users-invite-modal.png` | Invite User modal | TASK-027 |
-| `roles-grid.png` | Roles & Permissions card grid | TASK-028 |
-| `role-permission-drawer.png` | Role detail/edit drawer + permission matrix | TASK-028 |
-| `sessions.png` | Active Sessions | TASK-029 |
-| `audit-log.png` | Audit Log | TASK-030 |
+| File                         | Screen                                                     | Task               |
+| ---------------------------- | ---------------------------------------------------------- | ------------------ |
+| `iam-dashboard.png`          | IAM Dashboard (also shows the app shell: sidebar + topbar) | TASK-025, TASK-026 |
+| `users-list.png`             | Users list (filters, table)                                | TASK-027           |
+| `users-invite-modal.png`     | Invite User modal                                          | TASK-027           |
+| `roles-grid.png`             | Roles & Permissions card grid                              | TASK-028           |
+| `role-permission-drawer.png` | Role detail/edit drawer + permission matrix                | TASK-028           |
+| `sessions.png`               | Active Sessions                                            | TASK-029           |
+| `audit-log.png`              | Audit Log                                                  | TASK-030           |

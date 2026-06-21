@@ -237,7 +237,7 @@ export default function AssetOverviewPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-             {upcomingMaintenanceWorkOrders.slice(0, 5).map((workOrder) => (
+              {upcomingMaintenanceWorkOrders.slice(0, 5).map((workOrder) => (
                 <TableRow key={workOrder.id}>
                   <TableCell className="pl-4 font-mono text-xs">{workOrder.id}</TableCell>
                   <TableCell className="font-medium">{workOrder.assetLabel}</TableCell>

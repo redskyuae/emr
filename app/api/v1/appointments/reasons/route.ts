@@ -1,22 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListAppointmentReasonsResponse, SaveAppointmentReasonResponse } from './types';
 
 import { createAppointmentReasonCommand } from '@/app/api/lib/modules/appointment-reason/commands/create-appointment-reason-command';
 import { getAppointmentReasonsQuery } from '@/app/api/lib/modules/appointment-reason/queries/get-appointment-reasons-query';
-import type { AppointmentReason } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
-import type { Paginated } from '@/app/api/lib/utils/types';
-
-export type SaveAppointmentReasonRequest = {
-  name: string;
-  code: string;
-  description?: string | null;
-};
-
-export type SaveAppointmentReasonResponse = {
-  data: AppointmentReason;
-};
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -68,7 +57,7 @@ export async function GET(request: NextRequest) {
     const { data, total } = queryResult;
     const totalPages = total > 0 ? Math.ceil(total / safeLimit) : 0;
 
-    return NextResponse.json<Paginated<AppointmentReason>>({
+    return NextResponse.json<ListAppointmentReasonsResponse>({
       data,
       meta: {
         total,

@@ -1,20 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { SigninResponse } from './types';
 
 import { signinCommand } from '@/app/api/lib/modules/auth/commands/signin-command';
-import type { Tenant } from '@/app/api/lib/modules/tenant/schemas/tenant-schema';
-
-export type SigninRequest = {
-  email: string;
-  password: string;
-  rememberMe?: boolean;
-};
-
-export type SigninResponse = {
-  data: {
-    tenant: Tenant;
-  };
-};
 
 function mutationMessage(status: number, errors: string[]) {
   if (status >= StatusCodes.INTERNAL_SERVER_ERROR) {

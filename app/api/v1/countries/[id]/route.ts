@@ -1,22 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetCountryResponse, UpdateCountryResponse } from './types';
 
 import { deleteCountryCommand } from '@/app/api/lib/modules/country/commands/delete-country-command';
 import { updateCountryCommand } from '@/app/api/lib/modules/country/commands/update-country-command';
 import { getCountryByIdQuery } from '@/app/api/lib/modules/country/queries/get-country-by-id-query';
-import type { Country } from '@/app/api/lib/modules/country/schemas/country-schema';
 
 type CountryRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateCountryRequest = {
-  name: string;
-  code: string;
-};
-
-export type CountryResponse = {
-  data: Country;
 };
 
 function errorMessage(status: number) {
@@ -45,7 +36,7 @@ export async function GET(_request: NextRequest, context: CountryRouteContext) {
       );
     }
 
-    return NextResponse.json<CountryResponse>({ data: result.data });
+    return NextResponse.json<GetCountryResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -79,7 +70,7 @@ export async function PUT(request: NextRequest, context: CountryRouteContext) {
       );
     }
 
-    return NextResponse.json<CountryResponse>({ data: result.data });
+    return NextResponse.json<UpdateCountryResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

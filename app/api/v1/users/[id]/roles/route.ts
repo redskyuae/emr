@@ -1,21 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { AssignUserRolesResponse, GetUserRolesResponse } from './types';
 
 import { assignRolesCommand } from '@/app/api/lib/modules/user-role/commands/assign-roles-command';
 import { getUserRolesQuery } from '@/app/api/lib/modules/user-role/queries/get-user-roles-query';
-import type { AssignedRole } from '@/app/api/lib/modules/user-role/schemas/user-role-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type UserRolesRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type AssignUserRolesRequest = {
-  roleIds: number[];
-};
-
-export type UserRolesResponse = {
-  data: AssignedRole[];
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -53,7 +45,7 @@ export async function GET(_request: NextRequest, context: UserRolesRouteContext)
       );
     }
 
-    return NextResponse.json<UserRolesResponse>({ data: result.data });
+    return NextResponse.json<GetUserRolesResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -98,7 +90,7 @@ export async function POST(request: NextRequest, context: UserRolesRouteContext)
       );
     }
 
-    return NextResponse.json<UserRolesResponse>({ data: result.data });
+    return NextResponse.json<AssignUserRolesResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

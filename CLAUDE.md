@@ -25,6 +25,7 @@ All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired,
 - Themed shadcn components live in `components/ui/` (do not fork them); domain composites in `components/{brand,marketing,auth}/`. Design tokens live only in `app/globals.css`.
 - Pages: marketing in `app/(marketing)/`, auth in `app/(auth)/` (login, signup), and authenticated clinical/app pages in `app/(protected)/`. New protected pages must go in `app/(protected)/`; do not create another protected route group for app pages. Signup is wired to public Tenant Provisioning; login is wired to public sign-in and selects the active Tenant before entering the app. The app shell requires a valid Session and uses sign-out to end the current Session.
 - Animations use GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`; always respect `prefers-reduced-motion`.
+- TanStack Query work must use the `tanstack-query-patterns` team skill. Claude Code should invoke `/tanstack-query-patterns`; other agents should read `.agents/skills/tanstack-query-patterns/SKILL.md` before adding or modifying API calls, query hooks, mutations, optimistic updates, query keys, `useQuery`, `useSuspenseQuery`, or `useMutation` code.
 
 ## Architecture: CQRS + Repository + Validation
 
@@ -36,6 +37,7 @@ app/
 │   └── schema/{entity}.ts              # Drizzle table definition
 └── api/
     ├── v1/{module}/route.ts            # Next.js route handler (thin)
+    ├── v1/{module}/types.ts            # Public API request/response contract types
     └── lib/
         └── modules/{module}/
             ├── schemas/{module}-schema.ts   # Zod schemas + inferred types
@@ -46,6 +48,8 @@ app/
 ```
 
 **Route handlers are thin.** Parse HTTP input → call command/query → return NextResponse. No business logic in route files.
+
+**API contract types live beside routes.** Every `app/api/v1/**/route.ts` must have a sibling `types.ts` that exports the public success request/response contract types for that route. `route.ts` must not define/export those contracts inline; import response types from `./types` with `import type` when typing `NextResponse.json<T>()`. `types.ts` must be type-only: no runtime code, no functions/constants, and no `next/server` imports. It may import schema-derived or domain types with `import type`, and may use `z.infer`/`z.input` when that is the clearest contract. Request types describe the raw JSON body clients may send. Success response types describe the server in-memory shape returned by handlers; 204 No Content routes use `void` response types. Error response contracts are not exported per route unless a task explicitly standardizes them.
 
 **Commands validate first.** Every command calls its validator before performing writes. A command that skips validation is a bug.
 

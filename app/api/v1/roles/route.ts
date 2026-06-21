@@ -1,22 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListRolesResponse, SaveRoleResponse } from './types';
 
 import { createRoleCommand } from '@/app/api/lib/modules/role/commands/create-role-command';
 import { getRolesQuery } from '@/app/api/lib/modules/role/queries/get-roles-query';
-import type { Role } from '@/app/api/lib/modules/role/schemas/role-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
-import type { Paginated } from '@/app/api/lib/utils/types';
-
-export type SaveRoleRequest = {
-  name: string;
-  code: string;
-  description?: string;
-};
-
-export type SaveRoleResponse = {
-  data: Role;
-};
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -59,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     const totalPages = queryResult.total > 0 ? Math.ceil(queryResult.total / safeLimit) : 0;
 
-    return NextResponse.json<Paginated<Role>>({
+    return NextResponse.json<ListRolesResponse>({
       data: queryResult.data,
       meta: {
         total: queryResult.total,

@@ -1,26 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListTodosResponse, SaveTodoResponse } from './types';
 
 import { createTodoCommand } from '@/app/api/lib/modules/todo/commands/create-todo-command';
 import { getTodosQuery } from '@/app/api/lib/modules/todo/queries/get-todos-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
-import type { Paginated } from '@/app/api/lib/utils/types';
-import type { Todo } from '@/app/api/lib/modules/todo/schemas/todo-schema';
-
-export type SaveTodoRequest = {
-  title: string;
-  description?: string;
-  isCompleted?: boolean;
-};
-
-export type SaveTodoResponse = {
-  data: {
-    id: number;
-    title: string;
-    description: string;
-    isCompleted: boolean;
-  };
-};
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     const totalPages = total > 0 ? Math.ceil(total / safeLimit) : 0;
 
-    return NextResponse.json<Paginated<Todo>>({
+    return NextResponse.json<ListTodosResponse>({
       data,
       meta: {
         total,

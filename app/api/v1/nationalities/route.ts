@@ -1,20 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListNationalitiesResponse, SaveNationalityResponse } from './types';
 
 import { createNationalityCommand } from '@/app/api/lib/modules/nationality/commands/create-nationality-command';
 import { getNationalitiesQuery } from '@/app/api/lib/modules/nationality/queries/get-nationalities-query';
-import type { Nationality } from '@/app/api/lib/modules/nationality/schemas/nationality-schema';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
-import type { Paginated } from '@/app/api/lib/utils/types';
-
-export type SaveNationalityRequest = {
-  name: string;
-  code: string;
-};
-
-export type SaveNationalityResponse = {
-  data: Nationality;
-};
 
 function mutationMessage(status: number) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
@@ -51,7 +41,7 @@ export async function GET(request: NextRequest) {
     const { data, total } = queryResult;
     const totalPages = total > 0 ? Math.ceil(total / safeLimit) : 0;
 
-    return NextResponse.json<Paginated<Nationality>>({
+    return NextResponse.json<ListNationalitiesResponse>({
       data,
       meta: {
         total,

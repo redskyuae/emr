@@ -1,24 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetAppointmentReasonResponse, UpdateAppointmentReasonResponse } from './types';
 
 import { deleteAppointmentReasonCommand } from '@/app/api/lib/modules/appointment-reason/commands/delete-appointment-reason-command';
 import { updateAppointmentReasonCommand } from '@/app/api/lib/modules/appointment-reason/commands/update-appointment-reason-command';
 import { getAppointmentReasonByIdQuery } from '@/app/api/lib/modules/appointment-reason/queries/get-appointment-reason-by-id-query';
-import type { AppointmentReason } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 type AppointmentReasonRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateAppointmentReasonRequest = {
-  name: string;
-  code: string;
-  description?: string | null;
-};
-
-export type AppointmentReasonResponse = {
-  data: AppointmentReason;
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -53,7 +43,7 @@ export async function GET(_request: NextRequest, context: AppointmentReasonRoute
       );
     }
 
-    return NextResponse.json<AppointmentReasonResponse>({ data: result.data });
+    return NextResponse.json<GetAppointmentReasonResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -93,7 +83,7 @@ export async function PUT(request: NextRequest, context: AppointmentReasonRouteC
       );
     }
 
-    return NextResponse.json<AppointmentReasonResponse>({ data: result.data });
+    return NextResponse.json<UpdateAppointmentReasonResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

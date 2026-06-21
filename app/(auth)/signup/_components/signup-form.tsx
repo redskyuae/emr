@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 
+import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
+import { useSignUp } from '@/app/queries/auth/useSignUp';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,76 +14,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 
-type SignupPayload = {
-  tenantName: string;
-  ownerName: string;
-  ownerEmail: string;
-  password: string;
-};
-
-type SignupApiErrorBody = {
-  message?: string;
-  errors?: string[];
-};
-
-class SignupApiError extends Error {
-  errors: string[];
-
-  constructor(message: string, errors: string[] = [message]) {
-    super(message);
-    this.name = 'SignupApiError';
-    this.errors = errors;
-  }
-}
-
-async function parseError(response: Response) {
-  let body: SignupApiErrorBody | undefined;
-
-  try {
-    body = (await response.json()) as SignupApiErrorBody;
-  } catch {
-    // Ignore invalid error payloads and fall back to the response status.
-  }
-
-  const message = body?.message || 'Signup failed';
-  const errors = body?.errors && body.errors.length > 0 ? body.errors : [message];
-
-  return new SignupApiError(message, errors);
-}
-
-async function signup(payload: SignupPayload) {
-  const response = await fetch('/api/v1/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw await parseError(response);
-  }
-
-  return response.json() as Promise<unknown>;
-}
-
 export function SignupForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
-  const signupMutation = useMutation({
-    mutationFn: signup,
+  const signUpMutation = useSignUp({
     onSuccess: () => {
       router.replace('/dashboard');
       router.refresh();
     },
   });
 
-  const errors =
-    signupMutation.error instanceof SignupApiError
-      ? signupMutation.error.errors
-      : signupMutation.error
-        ? [signupMutation.error.message]
-        : [];
+  const errors = getAuthMutationErrors(signUpMutation.error);
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500">
@@ -100,7 +43,7 @@ export function SignupForm() {
 
           const formData = new FormData(event.currentTarget);
 
-          signupMutation.mutate({
+          signUpMutation.mutate({
             tenantName: String(formData.get('tenantName') ?? ''),
             ownerName: String(formData.get('ownerName') ?? ''),
             ownerEmail: String(formData.get('ownerEmail') ?? ''),
@@ -134,7 +77,7 @@ export function SignupForm() {
             placeholder="Dr. Priya Raghavan"
             autoComplete="name"
             required
-            disabled={signupMutation.isPending}
+            disabled={signUpMutation.isPending}
             className="h-10"
           />
         </div>
@@ -148,7 +91,7 @@ export function SignupForm() {
             placeholder="you@northgatehealth.com"
             autoComplete="email"
             required
-            disabled={signupMutation.isPending}
+            disabled={signUpMutation.isPending}
             className="h-10"
           />
         </div>
@@ -160,7 +103,7 @@ export function SignupForm() {
             name="tenantName"
             placeholder="Northgate Health"
             required
-            disabled={signupMutation.isPending}
+            disabled={signUpMutation.isPending}
             className="h-10"
           />
           <p className="text-muted-foreground text-xs">
@@ -180,14 +123,14 @@ export function SignupForm() {
               autoComplete="new-password"
               minLength={8}
               required
-              disabled={signupMutation.isPending}
+              disabled={signUpMutation.isPending}
               className="h-10 pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              disabled={signupMutation.isPending}
+              disabled={signUpMutation.isPending}
               className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center px-3 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -196,7 +139,7 @@ export function SignupForm() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Checkbox id="terms" name="terms" required disabled={signupMutation.isPending} />
+          <Checkbox id="terms" name="terms" required disabled={signUpMutation.isPending} />
           <Label htmlFor="terms" className="text-muted-foreground font-normal">
             I agree to the{' '}
             <Link href="#" className="text-primary underline-offset-4 hover:underline">
@@ -212,9 +155,10 @@ export function SignupForm() {
         <Button
           type="submit"
           className="h-10 w-full text-[15px]"
-          disabled={signupMutation.isPending}
+          disabled={signUpMutation.isPending}
+          aria-busy={signUpMutation.isPending}
         >
-          {signupMutation.isPending ? (
+          {signUpMutation.isPending ? (
             <span className="inline-flex items-center gap-2">
               <Spinner /> Creating workspace
             </span>

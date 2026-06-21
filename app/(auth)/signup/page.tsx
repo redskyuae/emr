@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
 import { DEFAULT_AUTH_REDIRECT_PATH, getSafeNextPath } from '@/app/lib/auth-route-guards';
-import { SignupForm } from '@/components/auth/signup-form';
+import { SignupForm } from '@/app/(auth)/signup/_components/signup-form';
 
 type SignupPageProps = {
   searchParams: Promise<{ next?: string | string[] }>;

@@ -1,22 +1,18 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type {
+  AssignRolePermissionsResponse,
+  GetRolePermissionsResponse,
+  SetRolePermissionsResponse,
+} from './types';
 
 import { assignPermissionsCommand } from '@/app/api/lib/modules/role-permission/commands/assign-permissions-command';
 import { setPermissionsCommand } from '@/app/api/lib/modules/role-permission/commands/set-permissions-command';
 import { getRolePermissionsQuery } from '@/app/api/lib/modules/role-permission/queries/get-role-permissions-query';
-import type { AssignedPermission } from '@/app/api/lib/modules/role-permission/schemas/role-permission-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type RolePermissionsRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type RolePermissionsRequest = {
-  permissionIds: number[];
-};
-
-export type RolePermissionsResponse = {
-  data: AssignedPermission[];
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -47,7 +43,7 @@ export async function GET(_request: NextRequest, context: RolePermissionsRouteCo
       );
     }
 
-    return NextResponse.json<RolePermissionsResponse>({ data: result.data });
+    return NextResponse.json<GetRolePermissionsResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -87,7 +83,7 @@ export async function POST(request: NextRequest, context: RolePermissionsRouteCo
       );
     }
 
-    return NextResponse.json<RolePermissionsResponse>({ data: result.data });
+    return NextResponse.json<AssignRolePermissionsResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -127,7 +123,7 @@ export async function PUT(request: NextRequest, context: RolePermissionsRouteCon
       );
     }
 
-    return NextResponse.json<RolePermissionsResponse>({ data: result.data });
+    return NextResponse.json<SetRolePermissionsResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

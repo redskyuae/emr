@@ -1,26 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetStaffResponse, UpdateStaffResponse } from './types';
 
 import { updateStaffCommand } from '@/app/api/lib/modules/staff/commands/update-staff-command';
 import { getStaffByIdQuery } from '@/app/api/lib/modules/staff/queries/get-staff-by-id-query';
-import type { Staff } from '@/app/api/lib/modules/staff/schemas/staff-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type StaffRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateStaffRequest = {
-  name?: string;
-  phone?: string | null;
-  staffCode?: string | null;
-  designation?: string | null;
-  gender?: 'Male' | 'Female' | 'Other' | 'Prefer not to say' | null;
-  dateOfBirth?: string | null;
-};
-
-export type StaffResponse = {
-  data: Staff;
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -55,7 +42,7 @@ export async function GET(_request: NextRequest, context: StaffRouteContext) {
       );
     }
 
-    return NextResponse.json<StaffResponse>({ data: result.data });
+    return NextResponse.json<GetStaffResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -95,7 +82,7 @@ export async function PUT(request: NextRequest, context: StaffRouteContext) {
       );
     }
 
-    return NextResponse.json<StaffResponse>({ data: result.data });
+    return NextResponse.json<UpdateStaffResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

@@ -1,28 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListStaffResponse, SaveStaffResponse } from './types';
 
 import { createStaffCommand } from '@/app/api/lib/modules/staff/commands/create-staff-command';
 import { getStaffQuery } from '@/app/api/lib/modules/staff/queries/get-staff-query';
-import type { Staff } from '@/app/api/lib/modules/staff/schemas/staff-schema';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
-import type { Paginated } from '@/app/api/lib/utils/types';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
-
-export type SaveStaffRequest = {
-  name: string;
-  email: string;
-  password: string;
-  roleIds: number[];
-  phone?: string;
-  staffCode?: string;
-  designation?: string;
-  gender?: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
-  dateOfBirth?: string;
-};
-
-export type SaveStaffResponse = {
-  data: Staff;
-};
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.NOT_FOUND && errors.includes('Staff not found')) {
@@ -73,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     const totalPages = queryResult.total > 0 ? Math.ceil(queryResult.total / safeLimit) : 0;
 
-    return NextResponse.json<Paginated<Staff>>({
+    return NextResponse.json<ListStaffResponse>({
       data: queryResult.data,
       meta: {
         total: queryResult.total,
