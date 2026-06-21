@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangle, CalendarClock, CheckCircle2, Search, Wrench } from 'lucide-react';
 
-import { NewWorkOrderSheet } from '@/app/(app)/assets/maintenance/components/new-work-order-sheet';
+import { NewWorkOrderSheet } from '@/app/(protected)/assets-management/maintenance/_components/new-work-order-sheet';
 import {
   workOrderPriorityBadgeMap,
   workOrders,
@@ -11,7 +11,7 @@ import {
   type BadgeToneConfig,
   type WorkOrder,
   type WorkOrderType,
-} from '@/app/(app)/assets/mock-data';
+} from '@/app/(protected)/assets-management/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

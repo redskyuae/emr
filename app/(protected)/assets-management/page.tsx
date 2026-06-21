@@ -10,7 +10,7 @@ import {
   workOrderStatusBadgeMap,
   type AssetCategory,
   type WorkOrder,
-} from '@/app/(protected)/assets/mock-data';
+} from '@/app/(protected)/assets-management/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -157,7 +157,7 @@ export default function AssetOverviewPage() {
             </div>
             <CardAction>
               <Button asChild variant="outline" size="sm">
-                <Link href="/assets/inventory">
+                <Link href="/assets-management/inventory">
                   <span>Inventory</span>
                   <ArrowRight className="size-3.5" />
                 </Link>
@@ -216,7 +216,7 @@ export default function AssetOverviewPage() {
           </div>
           <CardAction>
             <Button asChild variant="outline" size="sm">
-              <Link href="/assets/maintenance">
+              <Link href="/assets-management/maintenance">
                 <span>All work orders</span>
                 <ArrowRight className="size-3.5" />
               </Link>

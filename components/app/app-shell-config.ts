@@ -169,18 +169,18 @@ export const appNavGroups: AppNavGroup[] = [
     items: [
       {
         title: 'Overview',
-        href: '/assets',
+        href: '/assets-management',
         icon: LayoutDashboard,
         exact: true,
       },
       {
         title: 'Inventory',
-        href: '/assets/inventory',
+        href: '/assets-management/inventory',
         icon: Boxes,
       },
       {
         title: 'Maintenance',
-        href: '/assets/maintenance',
+        href: '/assets-management/maintenance',
         icon: Wrench,
       },
     ],
@@ -293,19 +293,19 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Sessions',
     subtitle: 'Active user sessions and revocation controls.',
   },
-  '/assets': {
+  '/assets-management': {
     title: 'Asset Management',
     subtitle: "Equipment estate across this Tenant's Facilities.",
     primaryAction: {
       label: 'Add asset',
-      href: '/assets/inventory?add=1',
+      href: '/assets-management/inventory?add=1',
     },
   },
-  '/assets/inventory': {
+  '/assets-management/inventory': {
     title: 'Asset Inventory',
     subtitle: 'All tracked equipment by category and Facility.',
   },
-  '/assets/maintenance': {
+  '/assets-management/maintenance': {
     title: 'Maintenance & Work Orders',
     subtitle: 'Preventive, corrective, calibration & inspection jobs.',
   },

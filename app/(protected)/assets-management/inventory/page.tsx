@@ -12,8 +12,8 @@ import {
   type AssetCategory,
   type AssetStatus,
   type BadgeToneConfig,
-} from '@/app/(protected)/assets/mock-data';
-import { AddAssetSheet } from '@/app/(protected)/assets/inventory/_components/add-asset-sheet';
+} from '@/app/(protected)/assets-management/mock-data';
+import { AddAssetSheet } from '@/app/(protected)/assets-management/inventory/_components/add-asset-sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

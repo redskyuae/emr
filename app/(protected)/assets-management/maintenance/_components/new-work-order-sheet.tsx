@@ -5,7 +5,7 @@ import {
   type WorkOrderPriority,
   type WorkOrderStatus,
   type WorkOrderType,
-} from '@/app/(app)/assets/mock-data';
+} from '@/app/(protected)/assets-management/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

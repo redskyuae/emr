@@ -11,14 +11,14 @@ describe('auth route guards', () => {
     assert.equal(isPublicPagePath('/swagger'), true);
 
     assert.equal(isPublicPagePath('/dashboard'), false);
-    assert.equal(isPublicPagePath('/assets/inventory'), false);
+    assert.equal(isPublicPagePath('/assets-management/inventory'), false);
     assert.equal(isPublicPagePath('/some-typo-route'), false);
   });
 
   it('preserves safe same-site next destinations with query strings', () => {
     assert.equal(
-      getSafeNextPath('/assets/inventory?page=2&status=active'),
-      '/assets/inventory?page=2&status=active'
+      getSafeNextPath('/assets-management/inventory?page=2&status=active'),
+      '/assets-management/inventory?page=2&status=active'
     );
   });
 
@@ -28,7 +28,7 @@ describe('auth route guards', () => {
       'https://evil.example/dashboard',
       '//evil.example/dashboard',
       '/login',
-      '/signup?next=/assets/inventory',
+      '/signup?next=/assets-management/inventory',
       '/api/v1/users',
       '/_next/static/chunk.js',
       '/favicon.ico',

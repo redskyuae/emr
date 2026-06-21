@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react';
 
-import { assetCategories, type AssetStatus } from '@/app/(protected)/assets/mock-data';
+import { assetCategories, type AssetStatus } from '@/app/(protected)/assets-management/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
