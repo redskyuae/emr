@@ -1,4 +1,4 @@
-import { UsersPageClient } from '@/app/(protected)/identity-access/users/users-page-client';
+import { UsersPageClient } from '@/app/(protected)/identity-access/users/_components/users-page-client';
 import {
   iamDirectoryDepartmentOptions,
   iamDirectoryRoleOptions,

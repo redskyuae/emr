@@ -10,12 +10,22 @@ Run this before or after raising a PR to catch repo-specific merge blockers earl
 ## Quick start
 
 ```bash
-bun .agents/skills/prepare-to-merge-to-main/scripts/check-api-contracts.mjs
+bun .agents/skills/prepare-to-merge-to-main/scripts/check-prepare-to-merge.mjs
 ```
 
 If it fails, fix the reported files and rerun until clean.
 
 ## Current checklist
+
+### Page loaders and co-located components
+
+Verify the frontend route conventions:
+
+- Every `app/**/page.tsx` outside `app/api/` has a sibling `loader.tsx`.
+- Each `loader.tsx` imports and renders `Skeleton` from `@/components/ui/skeleton`.
+- If a `page.tsx` changes in the branch, that route's `loader.tsx` must change too.
+- If a route-local component under `app/**/_components/` changes in the branch, that route's `loader.tsx` must change too.
+- Page-specific React components under `app/` live in the route-local `_components/` directory, not beside `page.tsx` or in ad hoc `components/` folders.
 
 ### API contract type boundary
 

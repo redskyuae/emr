@@ -1,4 +1,4 @@
-import { RolesPageClient } from '@/app/(protected)/identity-access/roles/roles-page-client';
+import { RolesPageClient } from '@/app/(protected)/identity-access/roles/_components/roles-page-client';
 import {
   iamDirectoryUsers,
   iamPermissionSections,

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronRight, ChevronsUpDown } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import { appNavGroups, isNavItemActive, type AppNavItem } from '@/components/app/app-shell-config';
 import { SignOutButton } from '@/components/app/sign-out-button';

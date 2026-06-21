@@ -125,7 +125,7 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
           <Checkbox
             id="remember"
             checked={rememberMe}
-            disabled={signInMutation.isPending}s
+            disabled={signInMutation.isPending}
             onCheckedChange={(checked) => setRememberMe(checked === true)}
           />
           <Label htmlFor="remember" className="text-muted-foreground font-normal">
