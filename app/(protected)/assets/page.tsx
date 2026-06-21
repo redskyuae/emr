@@ -10,7 +10,7 @@ import {
   workOrderStatusBadgeMap,
   type AssetCategory,
   type WorkOrder,
-} from '@/app/(app)/assets/mock-data';
+} from '@/app/(protected)/assets/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

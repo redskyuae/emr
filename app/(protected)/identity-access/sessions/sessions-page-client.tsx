@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangle, Search, ShieldOff } from 'lucide-react';
 
-import type { IamSession } from '@/app/(app)/identity-access/dashboard/mock-data';
+import type { IamSession } from '@/app/(protected)/identity-access/dashboard/mock-data';
 import {
   AlertDialog,
   AlertDialogAction,

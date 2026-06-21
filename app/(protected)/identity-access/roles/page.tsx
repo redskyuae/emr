@@ -1,9 +1,9 @@
-import { RolesPageClient } from '@/app/(app)/identity-access/roles/roles-page-client';
+import { RolesPageClient } from '@/app/(protected)/identity-access/roles/roles-page-client';
 import {
   iamDirectoryUsers,
   iamPermissionSections,
   iamRoles,
-} from '@/app/(app)/identity-access/dashboard/mock-data';
+} from '@/app/(protected)/identity-access/dashboard/mock-data';
 
 export default async function RolesPage({
   searchParams,

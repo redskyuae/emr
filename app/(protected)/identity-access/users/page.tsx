@@ -1,9 +1,9 @@
-import { UsersPageClient } from '@/app/(app)/identity-access/users/users-page-client';
+import { UsersPageClient } from '@/app/(protected)/identity-access/users/users-page-client';
 import {
   iamDirectoryDepartmentOptions,
   iamDirectoryRoleOptions,
   iamDirectoryUsers,
-} from '@/app/(app)/identity-access/dashboard/mock-data';
+} from '@/app/(protected)/identity-access/dashboard/mock-data';
 
 export default async function UsersPage({
   searchParams,

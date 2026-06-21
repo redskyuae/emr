@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Activity, Download, Search } from 'lucide-react';
 
-import type { IamAuditEvent } from '@/app/(app)/identity-access/dashboard/mock-data';
+import type { IamAuditEvent } from '@/app/(protected)/identity-access/dashboard/mock-data';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

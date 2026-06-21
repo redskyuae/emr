@@ -10,7 +10,7 @@ import {
   iamStats,
   type IamAuditEvent,
   type IamRoleDistribution,
-} from '@/app/(app)/identity-access/dashboard/mock-data';
+} from '@/app/(protected)/identity-access/dashboard/mock-data';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
