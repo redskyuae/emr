@@ -141,6 +141,13 @@
       "when": 1782086445989,
       "tag": "0019_reset_permission_catalogue_and_system_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1782111938303,
+      "tag": "0020_salty_lady_bullseye",
+      "breakpoints": true
     }
   ]
 }
