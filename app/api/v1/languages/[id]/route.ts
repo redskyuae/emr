@@ -1,22 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetLanguageResponse, UpdateLanguageResponse } from './types';
 
 import { deleteLanguageCommand } from '@/app/api/lib/modules/language/commands/delete-language-command';
 import { updateLanguageCommand } from '@/app/api/lib/modules/language/commands/update-language-command';
 import { getLanguageByIdQuery } from '@/app/api/lib/modules/language/queries/get-language-by-id-query';
-import type { Language } from '@/app/api/lib/modules/language/schemas/language-schema';
 
 type LanguageRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateLanguageRequest = {
-  name: string;
-  code: string;
-};
-
-export type LanguageResponse = {
-  data: Language;
 };
 
 function errorMessage(status: number) {
@@ -45,7 +36,7 @@ export async function GET(_request: NextRequest, context: LanguageRouteContext) 
       );
     }
 
-    return NextResponse.json<LanguageResponse>({ data: result.data });
+    return NextResponse.json<GetLanguageResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -79,7 +70,7 @@ export async function PUT(request: NextRequest, context: LanguageRouteContext) {
       );
     }
 
-    return NextResponse.json<LanguageResponse>({ data: result.data });
+    return NextResponse.json<UpdateLanguageResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

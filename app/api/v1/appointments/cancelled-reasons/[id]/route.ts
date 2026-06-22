@@ -1,24 +1,17 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type {
+  GetAppointmentCancelledReasonResponse,
+  UpdateAppointmentCancelledReasonResponse,
+} from './types';
 
 import { deleteAppointmentCancelledReasonCommand } from '@/app/api/lib/modules/appointment-cancelled-reason/commands/delete-appointment-cancelled-reason-command';
 import { updateAppointmentCancelledReasonCommand } from '@/app/api/lib/modules/appointment-cancelled-reason/commands/update-appointment-cancelled-reason-command';
 import { getAppointmentCancelledReasonByIdQuery } from '@/app/api/lib/modules/appointment-cancelled-reason/queries/get-appointment-cancelled-reason-by-id-query';
-import type { AppointmentCancelledReason } from '@/app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 type AppointmentCancelledReasonRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateAppointmentCancelledReasonRequest = {
-  name: string;
-  code: string;
-  description?: string | null;
-};
-
-export type AppointmentCancelledReasonResponse = {
-  data: AppointmentCancelledReason;
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -53,7 +46,7 @@ export async function GET(_request: NextRequest, context: AppointmentCancelledRe
       );
     }
 
-    return NextResponse.json<AppointmentCancelledReasonResponse>({ data: result.data });
+    return NextResponse.json<GetAppointmentCancelledReasonResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -97,7 +90,7 @@ export async function PUT(request: NextRequest, context: AppointmentCancelledRea
       );
     }
 
-    return NextResponse.json<AppointmentCancelledReasonResponse>({ data: result.data });
+    return NextResponse.json<UpdateAppointmentCancelledReasonResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

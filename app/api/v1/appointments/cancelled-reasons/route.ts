@@ -1,22 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type {
+  ListAppointmentCancelledReasonsResponse,
+  SaveAppointmentCancelledReasonResponse,
+} from './types';
 
 import { createAppointmentCancelledReasonCommand } from '@/app/api/lib/modules/appointment-cancelled-reason/commands/create-appointment-cancelled-reason-command';
 import { getAppointmentCancelledReasonsQuery } from '@/app/api/lib/modules/appointment-cancelled-reason/queries/get-appointment-cancelled-reasons-query';
-import type { AppointmentCancelledReason } from '@/app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
-import type { Paginated } from '@/app/api/lib/utils/types';
-
-export type SaveAppointmentCancelledReasonRequest = {
-  name: string;
-  code: string;
-  description?: string | null;
-};
-
-export type SaveAppointmentCancelledReasonResponse = {
-  data: AppointmentCancelledReason;
-};
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -68,7 +60,7 @@ export async function GET(request: NextRequest) {
     const { data, total } = queryResult;
     const totalPages = total > 0 ? Math.ceil(total / safeLimit) : 0;
 
-    return NextResponse.json<Paginated<AppointmentCancelledReason>>({
+    return NextResponse.json<ListAppointmentCancelledReasonsResponse>({
       data,
       meta: {
         total,

@@ -1,17 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { NextResponse } from 'next/server';
+import type { ListSessionsResponse } from './types';
 
 import { revokeAllSessionsCommand } from '@/app/api/lib/modules/session/commands/revoke-all-sessions-command';
 import { getSessionsQuery } from '@/app/api/lib/modules/session/queries/get-sessions-query';
-import type { SessionListItem } from '@/app/api/lib/modules/session/schemas/session-schema';
 import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
-
-export type SessionsResponse = {
-  data: SessionListItem[];
-  meta: {
-    total: number;
-  };
-};
 
 export async function GET() {
   try {
@@ -30,7 +23,7 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json<SessionsResponse>({
+    return NextResponse.json<ListSessionsResponse>({
       data: result.data,
       meta: { total: result.total },
     });

@@ -1,16 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { DeactivateStaffResponse } from './types';
 
 import { deactivateStaffCommand } from '@/app/api/lib/modules/staff/commands/deactivate-staff-command';
-import type { Staff } from '@/app/api/lib/modules/staff/schemas/staff-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type StaffRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type StaffResponse = {
-  data: Staff;
 };
 
 function errorMessage(status: number) {
@@ -41,7 +37,7 @@ export async function PATCH(_request: NextRequest, context: StaffRouteContext) {
       );
     }
 
-    return NextResponse.json<StaffResponse>({ data: result.data });
+    return NextResponse.json<DeactivateStaffResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

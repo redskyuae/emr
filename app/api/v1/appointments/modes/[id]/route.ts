@@ -1,24 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetAppointmentModeResponse, UpdateAppointmentModeResponse } from './types';
 
 import { deleteAppointmentModeCommand } from '@/app/api/lib/modules/appointment-mode/commands/delete-appointment-mode-command';
 import { updateAppointmentModeCommand } from '@/app/api/lib/modules/appointment-mode/commands/update-appointment-mode-command';
 import { getAppointmentModeByIdQuery } from '@/app/api/lib/modules/appointment-mode/queries/get-appointment-mode-by-id-query';
-import type { AppointmentMode } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 type AppointmentModeRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateAppointmentModeRequest = {
-  name: string;
-  code: string;
-  description?: string;
-};
-
-export type AppointmentModeResponse = {
-  data: AppointmentMode;
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -53,7 +43,7 @@ export async function GET(_request: NextRequest, context: AppointmentModeRouteCo
       );
     }
 
-    return NextResponse.json<AppointmentModeResponse>({ data: result.data });
+    return NextResponse.json<GetAppointmentModeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -93,7 +83,7 @@ export async function PUT(request: NextRequest, context: AppointmentModeRouteCon
       );
     }
 
-    return NextResponse.json<AppointmentModeResponse>({ data: result.data });
+    return NextResponse.json<UpdateAppointmentModeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

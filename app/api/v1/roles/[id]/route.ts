@@ -1,23 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetRoleResponse, UpdateRoleResponse } from './types';
 
 import { deleteRoleCommand } from '@/app/api/lib/modules/role/commands/delete-role-command';
 import { updateRoleCommand } from '@/app/api/lib/modules/role/commands/update-role-command';
 import { getRoleByIdQuery } from '@/app/api/lib/modules/role/queries/get-role-by-id-query';
-import type { Role } from '@/app/api/lib/modules/role/schemas/role-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type RoleRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateRoleRequest = {
-  name?: string;
-  description?: string | null;
-};
-
-export type RoleResponse = {
-  data: Role;
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -59,7 +50,7 @@ export async function GET(_request: NextRequest, context: RoleRouteContext) {
       );
     }
 
-    return NextResponse.json<RoleResponse>({ data: result.data });
+    return NextResponse.json<GetRoleResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -99,7 +90,7 @@ export async function PUT(request: NextRequest, context: RoleRouteContext) {
       );
     }
 
-    return NextResponse.json<RoleResponse>({ data: result.data });
+    return NextResponse.json<UpdateRoleResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

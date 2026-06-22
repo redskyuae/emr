@@ -21,6 +21,8 @@ This project has a committed design system: **Microsoft Fluent-inspired, built o
 - **Elevation = hierarchy.** Use the `shadow-fluent-*` ramp from DESIGN.md; the more modal the element, the higher the shadow.
 - **Motion**: GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`. Ease `power3.out`, ≤ 0.9s, scroll reveals fire once, and **always** bail out under `prefers-reduced-motion`. No continuous motion inside the clinical app.
 - **Both themes.** Every screen must hold up in light and dark (`.dark`).
+- **Route-local components.** Page-specific React components under `app/` must live in that route's `_components/` directory. Do not create ad hoc `components/` folders beside pages or leave page clients beside `page.tsx`.
+- **Page skeletons.** Every `app/**/page.tsx` must have a sibling `loader.tsx` that imports and renders `Skeleton` from `@/components/ui/skeleton`. When a page or any component under its `_components/` directory changes, update that route's `loader.tsx` in the same change so the skeleton still matches the page shape.
 
 ## EMR-specific UX
 

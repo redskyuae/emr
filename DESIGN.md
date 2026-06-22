@@ -88,6 +88,8 @@ GSAP + `@gsap/react` is the animation library; tw-animate-css is acceptable only
 The full shadcn/ui set (55 components) is installed in `components/ui/` (style `radix-nova`, icon library `lucide-react`). All are themed by the tokens above — **do not fork or restyle a ui component for one screen; pass `className` for layout-level tweaks, and change tokens for theme-level changes.**
 
 - Domain composites live outside `components/ui/`: `components/brand/`, `components/marketing/`, `components/auth/`.
+- Page-specific React components under `app/` live in that route's `_components/` directory. Do not create ad hoc `components/` folders beside pages or leave page clients beside `page.tsx`.
+- Every `app/**/page.tsx` has a sibling `loader.tsx` that imports and renders `Skeleton` from `@/components/ui/skeleton`. When the page or any route-local `_components/` file changes, update that route's `loader.tsx` in the same change so the loading state remains page-shaped.
 - `components/ui/calendar.tsx` was patched for react-day-picker v10 (`month_grid` classNames key replaces v8's `table`). Re-apply if the component is regenerated.
 - Charts use `chart.tsx` (Recharts) with `--chart-1..5` (a blue-led ramp). Toasts use `sonner.tsx`.
 
@@ -118,4 +120,5 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 - [ ] `prefers-reduced-motion` respected for any new animation
 - [ ] Mobile layout verified (≤ 390px) as well as desktop
 - [ ] Loading/empty/error states designed, not defaulted
+- [ ] `page.tsx` has a matching sibling `loader.tsx`; changed route-local components update the loader too
 - [ ] Uses `components/ui/` primitives instead of bespoke equivalents

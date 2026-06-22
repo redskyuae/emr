@@ -1,22 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetReligionResponse, UpdateReligionResponse } from './types';
 
 import { deleteReligionCommand } from '@/app/api/lib/modules/religion/commands/delete-religion-command';
 import { updateReligionCommand } from '@/app/api/lib/modules/religion/commands/update-religion-command';
 import { getReligionByIdQuery } from '@/app/api/lib/modules/religion/queries/get-religion-by-id-query';
-import type { Religion } from '@/app/api/lib/modules/religion/schemas/religion-schema';
 
 type ReligionRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateReligionRequest = {
-  name: string;
-  code: string;
-};
-
-export type ReligionResponse = {
-  data: Religion;
 };
 
 function errorMessage(status: number) {
@@ -45,7 +36,7 @@ export async function GET(_request: NextRequest, context: ReligionRouteContext) 
       );
     }
 
-    return NextResponse.json<ReligionResponse>({ data: result.data });
+    return NextResponse.json<GetReligionResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -79,7 +70,7 @@ export async function PUT(request: NextRequest, context: ReligionRouteContext) {
       );
     }
 
-    return NextResponse.json<ReligionResponse>({ data: result.data });
+    return NextResponse.json<UpdateReligionResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

@@ -1,5 +1,9 @@
+import { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import { Geist_Mono, Public_Sans, Schibsted_Grotesk } from 'next/font/google';
+
+import { QueryProvider } from '@/components/providers/query-provider';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 const publicSans = Public_Sans({
@@ -32,14 +36,19 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html
       lang="en"
       className={`${publicSans.variable} ${schibstedGrotesk.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <QueryProvider>
+          {children}
+          <Toaster />
+        </QueryProvider>
+      </body>
     </html>
   );
 }

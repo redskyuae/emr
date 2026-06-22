@@ -170,6 +170,29 @@ async function findActiveByCode(
   return appointmentCancelledReason;
 }
 
+type AppointmentCancelledReasonSeed = Omit<CreateAppointmentCancelledReasonData, 'tenantId'>;
+
+async function seedDefaultAppointmentCancelledReasons(
+  tenantId: string,
+  defaults: AppointmentCancelledReasonSeed[]
+) {
+  if (defaults.length === 0) {
+    return;
+  }
+
+  await db
+    .insert(appointmentCancelledReasonTable)
+    .values(
+      defaults.map((appointmentCancelledReason) => ({
+        tenantId,
+        name: appointmentCancelledReason.name,
+        code: appointmentCancelledReason.code,
+        description: appointmentCancelledReason.description ?? null,
+      }))
+    )
+    .onConflictDoNothing();
+}
+
 export const appointmentCancelledReasonRepository = {
   createAppointmentCancelledReason,
   updateAppointmentCancelledReason,
@@ -178,4 +201,5 @@ export const appointmentCancelledReasonRepository = {
   getAppointmentCancelledReasons,
   findActiveByName,
   findActiveByCode,
+  seedDefaultAppointmentCancelledReasons,
 };

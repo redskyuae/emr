@@ -1,22 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetTenantResponse, UpdateTenantResponse } from './types';
 
 import { updateTenantCommand } from '@/app/api/lib/modules/tenant/commands/update-tenant-command';
 import { getTenantByIdQuery } from '@/app/api/lib/modules/tenant/queries/get-tenant-by-id-query';
-import type { Tenant } from '@/app/api/lib/modules/tenant/schemas/tenant-schema';
 import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 
 type TenantRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type UpdateTenantRequest = {
-  name?: string;
-  logo?: string;
-};
-
-export type TenantResponse = {
-  data: Tenant;
 };
 
 function errorMessage(status: number, errors: string[]) {
@@ -55,7 +46,7 @@ export async function GET(_request: NextRequest, context: TenantRouteContext) {
       );
     }
 
-    return NextResponse.json<TenantResponse>({ data: result.data });
+    return NextResponse.json<GetTenantResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
@@ -95,7 +86,7 @@ export async function PUT(request: NextRequest, context: TenantRouteContext) {
       );
     }
 
-    return NextResponse.json<TenantResponse>({ data: result.data });
+    return NextResponse.json<UpdateTenantResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

@@ -1,20 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListLanguagesResponse, SaveLanguageResponse } from './types';
 
 import { createLanguageCommand } from '@/app/api/lib/modules/language/commands/create-language-command';
 import { getLanguagesQuery } from '@/app/api/lib/modules/language/queries/get-languages-query';
-import type { Language } from '@/app/api/lib/modules/language/schemas/language-schema';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
-import type { Paginated } from '@/app/api/lib/utils/types';
-
-export type SaveLanguageRequest = {
-  name: string;
-  code: string;
-};
-
-export type SaveLanguageResponse = {
-  data: Language;
-};
 
 function mutationMessage(status: number) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
@@ -51,7 +41,7 @@ export async function GET(request: NextRequest) {
     const { data, total } = queryResult;
     const totalPages = total > 0 ? Math.ceil(total / safeLimit) : 0;
 
-    return NextResponse.json<Paginated<Language>>({
+    return NextResponse.json<ListLanguagesResponse>({
       data,
       meta: {
         total,

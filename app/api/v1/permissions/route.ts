@@ -1,13 +1,9 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { ListPermissionsResponse } from './types';
 
 import { getPermissionsQuery } from '@/app/api/lib/modules/permission/queries/get-permissions-query';
-import type { GroupedPermissions } from '@/app/api/lib/modules/permission/schemas/permission-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
-
-export type PermissionListResponse = {
-  data: GroupedPermissions;
-};
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,7 +23,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json<PermissionListResponse>({ data: result.data });
+    return NextResponse.json<ListPermissionsResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },

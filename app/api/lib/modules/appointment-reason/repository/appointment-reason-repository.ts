@@ -167,6 +167,26 @@ async function findActiveByCode(
   return appointmentReason;
 }
 
+type AppointmentReasonSeed = Omit<CreateAppointmentReasonData, 'tenantId'>;
+
+async function seedDefaultAppointmentReasons(tenantId: string, defaults: AppointmentReasonSeed[]) {
+  if (defaults.length === 0) {
+    return;
+  }
+
+  await db
+    .insert(appointmentReasonTable)
+    .values(
+      defaults.map((appointmentReason) => ({
+        tenantId,
+        name: appointmentReason.name,
+        code: appointmentReason.code,
+        description: appointmentReason.description ?? null,
+      }))
+    )
+    .onConflictDoNothing();
+}
+
 export const appointmentReasonRepository = {
   createAppointmentReason,
   updateAppointmentReason,
@@ -175,4 +195,5 @@ export const appointmentReasonRepository = {
   getAppointmentReasons,
   findActiveByName,
   findActiveByCode,
+  seedDefaultAppointmentReasons,
 };

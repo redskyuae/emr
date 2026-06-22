@@ -43,3 +43,15 @@ export const exampleTable = pgTable(
 ### Handling the Error
 
 Wrap repository writes in a `try/catch` and catch the Postgres `23505` unique constraint violation error to return a clean 409 Conflict response.
+
+# Auth Module Boundary
+
+## The Problem
+
+Creating one-off modules such as `signin` or `signout` fragments the authentication lifecycle. Sign-in, sign-out, cookie forwarding, and active Tenant selection are tightly related auth concerns; splitting them into tiny modules makes the codebase harder to navigate and encourages future agents to create more shallow modules.
+
+## The Solution
+
+Keep authentication lifecycle operations inside `app/api/lib/modules/auth/`. Public routes may remain explicit, such as `/api/v1/signin` and `/api/v1/signout`, but their commands, validators, schemas, and repositories should live under the auth module.
+
+Session administration is distinct: listing Sessions, revoking another Session, or revoking all Sessions may remain in the Session module because those operations manage existing Sessions rather than performing the sign-in/sign-out lifecycle.

@@ -2,7 +2,7 @@
 
 ## Tenant
 
-A hospital group or hospital chain (e.g., Apollo Hospitals, Fortis Healthcare). The top-level unit of isolation in the system. All data belongs to a tenant. A tenant owns one or more Facilities.
+A hospital group or hospital chain (e.g., Apollo Hospitals, Fortis Healthcare). The top-level unit of isolation in the system. All data belongs to a tenant. A tenant owns one or more Facilities. Workspace may appear as user-facing copy, but Tenant is the canonical domain term.
 
 ## Tenant Slug
 
@@ -16,17 +16,25 @@ A Tenant currently allowed to operate in the system.
 
 A Tenant that has been deactivated without being removed from the system.
 
+## Tenant Provisioning
+
+The domain process that turns a new Tenant into an operational Tenant by establishing ownership and baseline configuration. Distinct from signup, which is only one user-facing entry point into provisioning.
+
 ## Facility
 
 A single physical location operated by a Tenant — a hospital, clinic, diagnostic center, or day-care unit. Has a `facilityType` attribute (HOSPITAL, CLINIC, LAB, etc.). Staff and clinical events are always scoped to a Facility within a Tenant.
 
 ## Tenant Owner
 
-The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner. A Tenant Owner is also a Tenant Admin for that Tenant.
+The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner. A Tenant Owner has Tenant Admin authority for that Tenant, is not necessarily Staff, and is not itself a Role.
 
 ## Tenant Admin
 
-An administrative user belonging to a specific Tenant, including the Tenant Owner and delegated administrators for that Tenant. Manages Facilities, configures Masters, and provisions Staff accounts within their Tenant; Tenant Admin authority does not apply across Tenants.
+An administrative authority belonging to a specific Tenant, including the Tenant Owner and delegated administrators for that Tenant. Manages Facilities, configures Masters, and provisions Staff accounts within their Tenant; Tenant Admin authority does not apply across Tenants.
+
+## Session
+
+An authenticated access period for a user on one browser or device. Signing out ends the current Session only. Revoking all Sessions is a separate administrative/security action.
 
 ## Role
 
@@ -44,13 +52,25 @@ A system-wide authorization capability representing one allowed action on one pr
 
 The system-wide set of Permissions available for assignment to Roles. Every Tenant sees the same Permission Catalogue.
 
-## Permission Assignment
+## Permission Module
 
-The association between a Role and a Permission within a Tenant. A Role's Permission Assignments define what users with that Role are allowed to do.
+A user-facing product area used to group Permissions in the Permission Catalogue, such as Identity & Access or Appointment Masters.
 
 ## System Role
 
-A Role provided for every Tenant as a baseline authorization label. System Roles may be renamed but are not removed by Tenant Admins.
+A Role provided by the system rather than created by Tenant Admins. Distinct from Tenant Owner authority; System Roles may be edited but are not removed by Tenant Admins.
+
+## Permission Action
+
+The specific operation allowed by a Permission on a protected resource. Permission Actions should be precise enough to distinguish reading, creating, updating, deleting, assigning, revoking, deactivating, and reactivating access.
+
+## Permission Key
+
+A stable identifier for a Permission in `<resource>:<action>` form. The Permission Module groups the Permission separately and is not part of the Permission Key.
+
+## Permission Assignment
+
+The association between a Role and a Permission within a Tenant. A Role's Permission Assignments define what users with that Role are allowed to do.
 
 ## Staff
 

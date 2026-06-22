@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronRight, ChevronsUpDown, LogOut } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import { appNavGroups, isNavItemActive, type AppNavItem } from '@/components/app/app-shell-config';
+import { SignOutButton } from '@/components/app/sign-out-button';
 import { LogoMark } from '@/components/brand/logo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -102,7 +103,22 @@ function AppNavLink({ item }: { item: AppNavItem }) {
   );
 }
 
-export function AppSidebar() {
+function getInitials(name: string, email: string) {
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+
+  if (initials) {
+    return initials;
+  }
+
+  return email.slice(0, 2).toUpperCase();
+}
+
+export function AppSidebar({ userName, userEmail }: { userName: string; userEmail: string }) {
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
       <SidebarHeader className="gap-3 p-3">
@@ -160,21 +176,13 @@ export function AppSidebar() {
       <SidebarFooter className="p-3">
         <div className="flex min-w-0 items-center gap-2 rounded-md p-1 group-data-[collapsible=icon]:justify-center">
           <Avatar size="sm">
-            <AvatarFallback>RM</AvatarFallback>
+            <AvatarFallback>{getInitials(userName, userEmail)}</AvatarFallback>
           </Avatar>
           <div className="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-medium">Rakesh Mirtha</span>
-            <span className="text-sidebar-foreground/70 truncate text-xs">Tenant Admin</span>
+            <span className="truncate text-sm font-medium">{userName}</span>
+            <span className="text-sidebar-foreground/70 truncate text-xs">{userEmail}</span>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="group-data-[collapsible=icon]:hidden"
-            aria-label="Sign out"
-          >
-            <LogOut className="size-4" />
-          </Button>
+          <SignOutButton />
         </div>
       </SidebarFooter>
 

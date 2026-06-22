@@ -388,6 +388,14 @@ export const openApiDocument = {
   },
   servers: [{ url: '/', description: 'Current deployment' }],
   tags: [
+    {
+      name: 'Authentication',
+      description: 'Public sign-in and sign-out APIs for Session lifecycle.',
+    },
+    {
+      name: 'Tenant Provisioning',
+      description: 'Public signup API that provisions a Tenant and Tenant Owner.',
+    },
     { name: 'Tenant', description: 'Tenant management APIs.' },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
     { name: 'Session', description: 'Authenticated user Session management APIs.' },
@@ -416,30 +424,134 @@ export const openApiDocument = {
     { name: 'Todo', description: 'Todo API examples.' },
   ],
   paths: {
-    '/api/v1/tenants': {
+    '/api/v1/signin': {
       post: {
-        tags: ['Tenant'],
-        summary: 'Create Tenant',
-        security: [{ cookieAuth: [] }],
-        requestBody: requestBody('CreateTenantRequest', {
-          name: 'Apollo Hospitals',
-          logo: 'https://example.com/logo.png',
+        tags: ['Authentication'],
+        summary: 'Sign in and select active Tenant',
+        description:
+          'Authenticates a user with email and password, creates a Session, and sets the sole Active Tenant available to that user as the active Tenant for tenant-scoped APIs.',
+        requestBody: requestBody('SigninRequest', {
+          email: 'priya.raghavan@apollo.example',
+          password: 'StrongerPass123',
+          rememberMe: false,
         }),
         responses: {
-          '201': {
-            description: 'Tenant created.',
-            content: jsonContent(dataEnvelopeSchema('Tenant'), {
+          '200': {
+            description: 'User signed in and active Tenant selected.',
+            content: jsonContent(dataEnvelopeSchema('SigninResult'), {
               data: {
-                id: 'org_123',
-                name: 'Apollo Hospitals',
-                slug: 'apollo-hospitals',
-                logo: 'https://example.com/logo.png',
-                isActive: true,
-                createdAt: '2026-06-11T00:00:00.000Z',
+                tenant: {
+                  id: 'org_123',
+                  name: 'Apollo Hospitals',
+                  slug: 'apollo-hospitals',
+                  logo: null,
+                  isActive: true,
+                  createdAt: '2026-06-11T00:00:00.000Z',
+                },
               },
             }),
           },
-          ...authenticatedErrorResponses,
+          '400': {
+            description: 'Validation failed or request body is invalid JSON.',
+            content: jsonContent(
+              { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+              {
+                message: 'Validation failed',
+                errors: ['Email must be valid'],
+              }
+            ),
+          },
+          '401': {
+            description: 'Email or password is invalid.',
+            content: jsonContent(schemaRef('SigninError'), {
+              message: 'Invalid email or password',
+              errors: ['Invalid email or password'],
+            }),
+          },
+          '403': {
+            description: 'The authenticated user has no Active Tenant available.',
+            content: jsonContent(schemaRef('SigninError'), {
+              message: 'No active Tenant available for this user.',
+              errors: ['No active Tenant available for this user.'],
+            }),
+          },
+          '409': {
+            description:
+              'More than one Active Tenant is available and Tenant selection is required.',
+            content: jsonContent(schemaRef('SigninError'), {
+              message:
+                'Multiple active Tenants available for this user. Tenant selection is required.',
+              errors: [
+                'Multiple active Tenants available for this user. Tenant selection is required.',
+              ],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/signout': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Sign out current Session',
+        description:
+          'Ends the current Session if one exists and clears the BetterAuth Session cookies for this browser.',
+        security: [],
+        responses: {
+          '204': {
+            description: 'Current Session ended and Session cookies cleared.',
+          },
+          '400': responseRef('ValidationFailed'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/signup': {
+      post: {
+        tags: ['Tenant Provisioning'],
+        summary: 'Signup and provision Tenant',
+        description:
+          'Creates the Tenant Owner user, provisions a Tenant, initializes required baseline configuration, signs the owner in, and sets the new Tenant as active.',
+        requestBody: requestBody('SignupRequest', {
+          tenantName: 'Apollo Hospitals',
+          ownerName: 'Dr. Priya Raghavan',
+          ownerEmail: 'priya.raghavan@apollo.example',
+          password: 'StrongerPass123',
+        }),
+        responses: {
+          '201': {
+            description: 'Tenant provisioned and owner signed in.',
+            content: jsonContent(dataEnvelopeSchema('SignupResult'), {
+              data: {
+                tenant: {
+                  id: 'org_123',
+                  name: 'Apollo Hospitals',
+                  slug: 'apollo-hospitals',
+                  logo: null,
+                  isActive: true,
+                  createdAt: '2026-06-11T00:00:00.000Z',
+                },
+              },
+            }),
+          },
+          '400': {
+            description: 'Validation failed or request body is invalid JSON.',
+            content: jsonContent(
+              { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+              {
+                message: 'Validation failed',
+                errors: ['Password must be at least 8 characters'],
+              }
+            ),
+          },
+          '409': {
+            description: 'Owner email or Tenant name is already in use.',
+            content: jsonContent(schemaRef('ConflictError'), {
+              message: 'A user with this email already exists.',
+              errors: ['A user with this email already exists.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -905,6 +1017,8 @@ export const openApiDocument = {
                   isSystem: false,
                   createdOn: '2026-06-09T10:00:00.000Z',
                   modifiedOn: '2026-06-09T10:00:00.000Z',
+                  assignedStaffCount: 0,
+                  permissionAssignmentCount: 12,
                 },
               ],
               meta: {
@@ -942,6 +1056,8 @@ export const openApiDocument = {
                 isSystem: false,
                 createdOn: '2026-06-09T10:00:00.000Z',
                 modifiedOn: '2026-06-09T10:00:00.000Z',
+                assignedStaffCount: 0,
+                permissionAssignmentCount: 0,
               },
             }),
           },
@@ -1012,19 +1128,19 @@ export const openApiDocument = {
               data: [
                 {
                   id: 10,
-                  module: 'patient',
-                  resource: 'patient',
+                  module: 'identity-access',
+                  resource: 'role',
                   action: 'read',
-                  name: 'patient:read',
-                  description: null,
+                  name: 'role:read',
+                  description: 'View Roles.',
                 },
                 {
                   id: 11,
-                  module: 'patient',
-                  resource: 'patient',
-                  action: 'write',
-                  name: 'patient:write',
-                  description: null,
+                  module: 'identity-access',
+                  resource: 'permission-assignment',
+                  action: 'replace',
+                  name: 'permission-assignment:replace',
+                  description: 'Replace all Permission Assignments for a Role.',
                 },
               ],
             }),
@@ -1049,27 +1165,27 @@ export const openApiDocument = {
               data: [
                 {
                   id: 10,
-                  module: 'patient',
-                  resource: 'patient',
+                  module: 'identity-access',
+                  resource: 'role',
                   action: 'read',
-                  name: 'patient:read',
-                  description: null,
+                  name: 'role:read',
+                  description: 'View Roles.',
                 },
                 {
                   id: 11,
-                  module: 'patient',
-                  resource: 'patient',
-                  action: 'write',
-                  name: 'patient:write',
-                  description: null,
+                  module: 'identity-access',
+                  resource: 'permission-assignment',
+                  action: 'replace',
+                  name: 'permission-assignment:replace',
+                  description: 'Replace all Permission Assignments for a Role.',
                 },
                 {
                   id: 16,
-                  module: 'appointment',
-                  resource: 'appointment',
+                  module: 'appointment-masters',
+                  resource: 'appointment-type',
                   action: 'read',
-                  name: 'appointment:read',
-                  description: null,
+                  name: 'appointment-type:read',
+                  description: 'View Appointment Types.',
                 },
               ],
             }),
@@ -1094,19 +1210,19 @@ export const openApiDocument = {
               data: [
                 {
                   id: 10,
-                  module: 'patient',
-                  resource: 'patient',
+                  module: 'identity-access',
+                  resource: 'role',
                   action: 'read',
-                  name: 'patient:read',
-                  description: null,
+                  name: 'role:read',
+                  description: 'View Roles.',
                 },
                 {
                   id: 11,
-                  module: 'patient',
-                  resource: 'patient',
-                  action: 'write',
-                  name: 'patient:write',
-                  description: null,
+                  module: 'identity-access',
+                  resource: 'permission-assignment',
+                  action: 'replace',
+                  name: 'permission-assignment:replace',
+                  description: 'Replace all Permission Assignments for a Role.',
                 },
               ],
             }),
@@ -1145,29 +1261,29 @@ export const openApiDocument = {
             description: 'Permission Catalogue grouped by module.',
             content: jsonContent(schemaRef('PermissionCatalogue'), {
               data: {
-                patient: [
+                'identity-access': [
                   {
                     id: 10,
-                    name: 'patient:read',
-                    resource: 'patient',
+                    name: 'role:read',
+                    resource: 'role',
                     action: 'read',
-                    description: null,
+                    description: 'View Roles.',
                   },
                   {
                     id: 11,
-                    name: 'patient:write',
-                    resource: 'patient',
-                    action: 'write',
-                    description: null,
+                    name: 'role:create',
+                    resource: 'role',
+                    action: 'create',
+                    description: 'Create Roles.',
                   },
                 ],
-                appointment: [
+                'appointment-masters': [
                   {
                     id: 16,
-                    name: 'appointment:read',
-                    resource: 'appointment',
+                    name: 'appointment-type:read',
+                    resource: 'appointment-type',
                     action: 'read',
-                    description: null,
+                    description: 'View Appointment Types.',
                   },
                 ],
               },
@@ -1193,11 +1309,11 @@ export const openApiDocument = {
             content: jsonContent(dataEnvelopeSchema('Permission'), {
               data: {
                 id: 10,
-                module: 'patient',
-                resource: 'patient',
+                module: 'identity-access',
+                resource: 'role',
                 action: 'read',
-                name: 'patient:read',
-                description: null,
+                name: 'role:read',
+                description: 'View Roles.',
                 isActive: true,
                 createdOn: '2026-06-11T00:00:00.000Z',
                 modifiedOn: '2026-06-11T00:00:00.000Z',
@@ -1497,8 +1613,8 @@ export const openApiDocument = {
         description: 'Filters the Permission Catalogue by module.',
         schema: { type: 'string', minLength: 1, maxLength: 50 },
         examples: {
-          patient: { value: 'patient' },
-          billing: { value: 'billing' },
+          identityAccess: { value: 'identity-access' },
+          appointmentMasters: { value: 'appointment-masters' },
         },
       },
     },
@@ -1578,7 +1694,11 @@ export const openApiDocument = {
         properties: {
           message: {
             type: 'string',
-            examples: ['Conflict', 'A user with this email already exists.'],
+            examples: [
+              'Conflict',
+              'A user with this email already exists.',
+              'A tenant with this name already exists.',
+            ],
           },
           errors: {
             type: 'array',
@@ -1586,6 +1706,7 @@ export const openApiDocument = {
             examples: [
               ['Country code IN already exists.'],
               ['A user with this email already exists.'],
+              ['A tenant with this name already exists.'],
               ['Staff code DOC-001 already exists.'],
               ['Role code WARD_MGR already exists.'],
             ],
@@ -1597,12 +1718,69 @@ export const openApiDocument = {
         required: ['message'],
         properties: { message: { type: 'string', examples: ['Internal Server Error'] } },
       },
-      CreateTenantRequest: {
+      SigninRequest: {
         type: 'object',
-        required: ['name'],
+        required: ['email', 'password'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          logo: { type: 'string', format: 'uri', maxLength: 2048 },
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 1, maxLength: 128, writeOnly: true },
+          rememberMe: {
+            type: 'boolean',
+            default: false,
+            description: 'When true, keeps the Session active after the browser closes.',
+          },
+        },
+      },
+      SigninResult: {
+        type: 'object',
+        required: ['tenant'],
+        properties: {
+          tenant: schemaRef('Tenant'),
+        },
+      },
+      SigninError: {
+        type: 'object',
+        required: ['message', 'errors'],
+        properties: {
+          message: {
+            type: 'string',
+            examples: [
+              'Invalid email or password',
+              'No active Tenant available for this user.',
+              'Multiple active Tenants available for this user. Tenant selection is required.',
+            ],
+          },
+          errors: {
+            type: 'array',
+            items: { type: 'string' },
+            examples: [
+              ['Invalid email or password'],
+              ['No active Tenant available for this user.'],
+              ['Multiple active Tenants available for this user. Tenant selection is required.'],
+            ],
+          },
+        },
+      },
+      SignupRequest: {
+        type: 'object',
+        required: ['tenantName', 'ownerName', 'ownerEmail', 'password'],
+        properties: {
+          tenantName: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 100,
+            description: 'Canonical Tenant display name. Workspace is user-facing copy only.',
+          },
+          ownerName: { type: 'string', minLength: 1, maxLength: 100 },
+          ownerEmail: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 8, maxLength: 128, writeOnly: true },
+        },
+      },
+      SignupResult: {
+        type: 'object',
+        required: ['tenant'],
+        properties: {
+          tenant: schemaRef('Tenant'),
         },
       },
       UpdateTenantRequest: {
@@ -1786,6 +1964,8 @@ export const openApiDocument = {
               'isSystem',
               'createdOn',
               'modifiedOn',
+              'assignedStaffCount',
+              'permissionAssignmentCount',
             ],
             properties: {
               id: { type: 'integer', minimum: 1 },
@@ -1793,10 +1973,21 @@ export const openApiDocument = {
               description: { type: ['string', 'null'] },
               isSystem: {
                 type: 'boolean',
-                description: 'True for System Roles seeded for each Tenant.',
+                description:
+                  'True for system-provided Roles. Tenant Provisioning does not create default Roles.',
               },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
+              assignedStaffCount: {
+                type: 'integer',
+                minimum: 0,
+                description: 'Number of non-deleted Staff with this Role Assignment.',
+              },
+              permissionAssignmentCount: {
+                type: 'integer',
+                minimum: 0,
+                description: 'Number of active Permission Assignments on this Role.',
+              },
             },
           },
         ],
@@ -1835,7 +2026,18 @@ export const openApiDocument = {
           action: {
             type: 'string',
             maxLength: 20,
-            enum: ['read', 'write', 'delete', 'approve', 'export'],
+            enum: [
+              'read',
+              'create',
+              'update',
+              'delete',
+              'deactivate',
+              'reactivate',
+              'assign',
+              'replace',
+              'remove',
+              'revoke',
+            ],
           },
           name: {
             type: 'string',
@@ -1872,7 +2074,18 @@ export const openApiDocument = {
           action: {
             type: 'string',
             maxLength: 20,
-            enum: ['read', 'write', 'delete', 'approve', 'export'],
+            enum: [
+              'read',
+              'create',
+              'update',
+              'delete',
+              'deactivate',
+              'reactivate',
+              'assign',
+              'replace',
+              'remove',
+              'revoke',
+            ],
           },
           description: { type: ['string', 'null'] },
         },
@@ -1911,7 +2124,18 @@ export const openApiDocument = {
           action: {
             type: 'string',
             maxLength: 20,
-            enum: ['read', 'write', 'delete', 'approve', 'export'],
+            enum: [
+              'read',
+              'create',
+              'update',
+              'delete',
+              'deactivate',
+              'reactivate',
+              'assign',
+              'replace',
+              'remove',
+              'revoke',
+            ],
           },
           name: {
             type: 'string',

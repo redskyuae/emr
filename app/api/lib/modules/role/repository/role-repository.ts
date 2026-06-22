@@ -1,8 +1,18 @@
 import { and, asc, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
+import { permissionTable } from '@/app/db/schema/permission';
+import { rolePermissionTable } from '@/app/db/schema/role-permission';
 import { roleTable } from '@/app/db/schema/role';
-import type { CreateRoleInput, RoleListParams, UpdateRoleInput } from '../schemas/role-schema';
+import { staffProfileTable } from '@/app/db/schema/staff-profile';
+import { userRoleTable } from '@/app/db/schema/user-role';
+import type {
+  CreateRoleInput,
+  Role,
+  RoleListParams,
+  RoleWithStats,
+  UpdateRoleInput,
+} from '../schemas/role-schema';
 
 export const SYSTEM_ROLE_DEFINITIONS = [
   {
@@ -39,10 +49,81 @@ const roleColumns = {
 
 type RoleRow = typeof roleTable.$inferSelect;
 
-function isUniqueConstraintViolation(error: unknown) {
-  return (
-    typeof error === 'object' && error !== null && (error as { code?: unknown }).code === '23505'
+type RoleStats = Pick<RoleWithStats, 'assignedStaffCount' | 'permissionAssignmentCount'>;
+
+function emptyRoleStats(): RoleStats {
+  return {
+    assignedStaffCount: 0,
+    permissionAssignmentCount: 0,
+  };
+}
+
+async function getRoleStatsById(tenantId: string, roleIds: number[]) {
+  if (roleIds.length === 0) {
+    return new Map<number, RoleStats>();
+  }
+
+  const [staffCounts, permissionCounts] = await Promise.all([
+    db
+      .select({ roleId: userRoleTable.roleId, total: count(userRoleTable.id) })
+      .from(userRoleTable)
+      .innerJoin(
+        staffProfileTable,
+        and(
+          eq(userRoleTable.userId, staffProfileTable.userId),
+          eq(userRoleTable.tenantId, staffProfileTable.tenantId),
+          eq(staffProfileTable.isDeleted, false)
+        )
+      )
+      .where(and(eq(userRoleTable.tenantId, tenantId), inArray(userRoleTable.roleId, roleIds)))
+      .groupBy(userRoleTable.roleId),
+    db
+      .select({ roleId: rolePermissionTable.roleId, total: count(rolePermissionTable.id) })
+      .from(rolePermissionTable)
+      .innerJoin(permissionTable, eq(rolePermissionTable.permissionId, permissionTable.id))
+      .where(
+        and(
+          eq(rolePermissionTable.tenantId, tenantId),
+          inArray(rolePermissionTable.roleId, roleIds),
+          eq(permissionTable.isActive, true)
+        )
+      )
+      .groupBy(rolePermissionTable.roleId),
+  ]);
+
+  const statsByRoleId = new Map<number, RoleStats>();
+
+  for (const roleId of roleIds) {
+    statsByRoleId.set(roleId, emptyRoleStats());
+  }
+
+  for (const staffCount of staffCounts) {
+    statsByRoleId.set(staffCount.roleId, {
+      ...(statsByRoleId.get(staffCount.roleId) ?? emptyRoleStats()),
+      assignedStaffCount: staffCount.total,
+    });
+  }
+
+  for (const permissionCount of permissionCounts) {
+    statsByRoleId.set(permissionCount.roleId, {
+      ...(statsByRoleId.get(permissionCount.roleId) ?? emptyRoleStats()),
+      permissionAssignmentCount: permissionCount.total,
+    });
+  }
+
+  return statsByRoleId;
+}
+
+async function attachRoleStats(tenantId: string, roles: Role[]): Promise<RoleWithStats[]> {
+  const statsByRoleId = await getRoleStatsById(
+    tenantId,
+    roles.map((role) => role.id)
   );
+
+  return roles.map((role) => ({
+    ...role,
+    ...(statsByRoleId.get(role.id) ?? emptyRoleStats()),
+  }));
 }
 
 async function createRole(tenantId: string, data: CreateRoleInput, isSystem = false) {
@@ -119,6 +200,18 @@ async function getRoleById(id: number, tenantId: string) {
   return role;
 }
 
+async function getRoleByIdWithStats(id: number, tenantId: string) {
+  const role = await getRoleById(id, tenantId);
+
+  if (!role) {
+    return undefined;
+  }
+
+  const [roleWithStats] = await attachRoleStats(tenantId, [role]);
+
+  return roleWithStats;
+}
+
 async function getRolesByIds(roleIds: number[], tenantId: string) {
   if (roleIds.length === 0) {
     return [];
@@ -160,7 +253,7 @@ async function getRoles({ tenantId, page = 1, limit = 10, query }: RoleListParam
     db.select({ total: count() }).from(roleTable).where(whereClause),
   ]);
 
-  return { data, total };
+  return { data: await attachRoleStats(tenantId, data), total };
 }
 
 async function findActiveByName(
@@ -221,37 +314,19 @@ async function getSystemRolesForTenant(tenantId: string) {
     .orderBy(asc(roleTable.id));
 }
 
-async function seedSystemRole(
-  tenantId: string,
-  definition: (typeof SYSTEM_ROLE_DEFINITIONS)[number]
-) {
-  const existingRole = await findActiveByCode(tenantId, definition.code);
-
-  if (existingRole) {
-    return existingRole;
-  }
-
-  try {
-    return await createRole(tenantId, definition, true);
-  } catch (error) {
-    if (!isUniqueConstraintViolation(error)) {
-      throw error;
-    }
-
-    const role = await findActiveByCode(tenantId, definition.code);
-
-    if (!role) {
-      throw error;
-    }
-
-    return role;
-  }
-}
-
 async function seedSystemRolesForTenant(tenantId: string) {
-  for (const definition of SYSTEM_ROLE_DEFINITIONS) {
-    await seedSystemRole(tenantId, definition);
-  }
+  await db
+    .insert(roleTable)
+    .values(
+      SYSTEM_ROLE_DEFINITIONS.map((definition) => ({
+        tenantId,
+        name: definition.name,
+        code: definition.code,
+        description: definition.description,
+        isSystem: true,
+      }))
+    )
+    .onConflictDoNothing();
 
   return getSystemRolesForTenant(tenantId);
 }
@@ -261,6 +336,7 @@ export const roleRepository = {
   updateRole,
   softDeleteRole,
   getRoleById,
+  getRoleByIdWithStats,
   getRolesByIds,
   getRoles,
   findActiveByName,

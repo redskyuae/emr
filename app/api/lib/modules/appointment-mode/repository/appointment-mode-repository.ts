@@ -167,6 +167,26 @@ async function findActiveByCode(
   return appointmentMode;
 }
 
+type AppointmentModeSeed = Omit<CreateAppointmentModeData, 'tenantId'>;
+
+async function seedDefaultAppointmentModes(tenantId: string, defaults: AppointmentModeSeed[]) {
+  if (defaults.length === 0) {
+    return;
+  }
+
+  await db
+    .insert(appointmentModeTable)
+    .values(
+      defaults.map((appointmentMode) => ({
+        tenantId,
+        name: appointmentMode.name,
+        code: appointmentMode.code,
+        description: appointmentMode.description ?? null,
+      }))
+    )
+    .onConflictDoNothing();
+}
+
 export const appointmentModeRepository = {
   createAppointmentMode,
   updateAppointmentMode,
@@ -175,4 +195,5 @@ export const appointmentModeRepository = {
   getAppointmentModes,
   findActiveByName,
   findActiveByCode,
+  seedDefaultAppointmentModes,
 };

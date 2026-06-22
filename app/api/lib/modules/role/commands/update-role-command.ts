@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { roleRepository } from '../repository/role-repository';
-import type { Role } from '../schemas/role-schema';
+import type { RoleWithStats } from '../schemas/role-schema';
 import { getRoleUniqueConstraintErrors } from '../validator/role-uniqueness-validator';
 import { validateUpdateRole } from '../validator/update-role-validator';
 
@@ -9,7 +9,7 @@ export async function updateRoleCommand(
   id: unknown,
   tenantId: string,
   payload: unknown
-): Promise<CommandResult<Role>> {
+): Promise<CommandResult<RoleWithStats>> {
   const validationResult = await validateUpdateRole(id, tenantId, payload);
 
   if (!validationResult.success) {
@@ -35,7 +35,19 @@ export async function updateRoleCommand(
       };
     }
 
-    return { success: true, data: updatedRole };
+    const updatedRoleWithStats = await roleRepository.getRoleByIdWithStats(
+      updatedRole.id,
+      validationResult.data.tenantId
+    );
+
+    return {
+      success: true,
+      data: updatedRoleWithStats ?? {
+        ...updatedRole,
+        assignedStaffCount: 0,
+        permissionAssignmentCount: 0,
+      },
+    };
   } catch (error) {
     const constraintErrors = getRoleUniqueConstraintErrors(error, {
       name: validationResult.data.payload.name,

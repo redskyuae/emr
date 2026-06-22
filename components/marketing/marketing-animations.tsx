@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { ReactNode, useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -22,7 +22,7 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
  * - [data-diagram-*]     tenant → facilities diagram build-in
  * - [data-cta]           closing banner reveal
  */
-export function MarketingAnimations({ children }: { children: React.ReactNode }) {
+export function MarketingAnimations({ children }: { children: ReactNode }) {
   const scope = useRef<HTMLDivElement>(null);
 
   useGSAP(

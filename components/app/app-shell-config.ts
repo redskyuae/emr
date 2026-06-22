@@ -1,28 +1,22 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
-  Bed,
   Boxes,
   Building2,
   CalendarClock,
   ClipboardList,
   FileClock,
-  FlaskConical,
   Gauge,
   Globe2,
   Hospital,
   Languages,
   LayoutDashboard,
   MapPinned,
-  Pill,
-  Receipt,
-  ScrollText,
   Settings,
   ShieldCheck,
   Stethoscope,
   UserRoundCog,
   UsersRound,
-  WalletCards,
   Wrench,
 } from 'lucide-react';
 
@@ -84,57 +78,15 @@ export const appNavGroups: AppNavGroup[] = [
         icon: ClipboardList,
         badge: '404',
       },
-      {
-        title: 'Admissions',
-        href: '/admissions',
-        icon: Hospital,
-        badge: '404',
-      },
-      {
-        title: 'Labs',
-        href: '/labs',
-        icon: FlaskConical,
-        badge: '404',
-      },
-      {
-        title: 'Pharmacy',
-        href: '/pharmacy',
-        icon: Pill,
-        badge: '404',
-      },
     ],
   },
   {
     title: 'Operations',
     items: [
       {
-        title: 'Beds & Wards',
-        href: '/beds-wards',
-        icon: Bed,
-        badge: '404',
-      },
-      {
-        title: 'Departments',
-        href: '/departments',
-        icon: Building2,
-        badge: '404',
-      },
-      {
         title: 'Doctors',
         href: '/doctors',
         icon: Stethoscope,
-        badge: '404',
-      },
-      {
-        title: 'Billing',
-        href: '/billing',
-        icon: Receipt,
-        badge: '404',
-      },
-      {
-        title: 'Reports',
-        href: '/reports',
-        icon: ScrollText,
         badge: '404',
       },
     ],
@@ -169,18 +121,18 @@ export const appNavGroups: AppNavGroup[] = [
     items: [
       {
         title: 'Overview',
-        href: '/assets',
+        href: '/assets-management',
         icon: LayoutDashboard,
         exact: true,
       },
       {
         title: 'Inventory',
-        href: '/assets/inventory',
+        href: '/assets-management/inventory',
         icon: Boxes,
       },
       {
         title: 'Maintenance',
-        href: '/assets/maintenance',
+        href: '/assets-management/maintenance',
         icon: Wrench,
       },
     ],
@@ -293,19 +245,19 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Sessions',
     subtitle: 'Active user sessions and revocation controls.',
   },
-  '/assets': {
+  '/assets-management': {
     title: 'Asset Management',
     subtitle: "Equipment estate across this Tenant's Facilities.",
     primaryAction: {
       label: 'Add asset',
-      href: '/assets/inventory?add=1',
+      href: '/assets-management/inventory?add=1',
     },
   },
-  '/assets/inventory': {
+  '/assets-management/inventory': {
     title: 'Asset Inventory',
     subtitle: 'All tracked equipment by category and Facility.',
   },
-  '/assets/maintenance': {
+  '/assets-management/maintenance': {
     title: 'Maintenance & Work Orders',
     subtitle: 'Preventive, corrective, calibration & inspection jobs.',
   },
@@ -331,7 +283,7 @@ export const appShellStats = [
   { label: 'Active Facility', value: 'Northgate General', icon: Hospital },
   { label: 'Open Appointments', value: '42', icon: CalendarClock },
   { label: 'Users Online', value: '18', icon: UserRoundCog },
-  { label: 'Pending Billing', value: 'AED 84k', icon: WalletCards },
+  { label: 'Open Work Orders', value: '12', icon: Wrench },
 ];
 
 export const appShellShortcuts = [

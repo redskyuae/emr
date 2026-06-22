@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -254,7 +255,7 @@ const featuredTestimonial = {
   metricLabel: 'less admin time per clinician',
 };
 
-function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
+function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <p
       className={cn(

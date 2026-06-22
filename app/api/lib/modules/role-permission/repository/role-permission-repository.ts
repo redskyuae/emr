@@ -26,42 +26,12 @@ const TENANT_ADMIN_DEFAULT_PERMISSIONS = 'ALL';
 
 const DEFAULT_PERMISSION_NAMES_BY_SYSTEM_ROLE = {
   TENANT_ADMIN: TENANT_ADMIN_DEFAULT_PERMISSIONS,
-  DOCTOR: [
-    'patient:read',
-    'patient:write',
-    'medical_record:read',
-    'medical_record:write',
-    'prescription:read',
-    'prescription:write',
-    'appointment:read',
-    'appointment:write',
-    'lab_order:read',
-    'lab_order:write',
-    'lab_result:read',
-  ],
-  NURSE: [
-    'patient:read',
-    'medical_record:read',
-    'medical_record:write',
-    'appointment:read',
-    'lab_result:read',
-  ],
-  RECEPTIONIST: [
-    'patient:read',
-    'patient:write',
-    'appointment:read',
-    'appointment:write',
-    'invoice:read',
-  ],
-  PHARMACIST: ['medication:read', 'medication:write', 'dispensing:write', 'prescription:read'],
-  LAB_TECH: ['lab_order:read', 'lab_result:read', 'lab_result:write'],
-  BILLING_STAFF: [
-    'invoice:read',
-    'invoice:write',
-    'payment:read',
-    'payment:write',
-    'billing_report:export',
-  ],
+  DOCTOR: [],
+  NURSE: [],
+  RECEPTIONIST: [],
+  PHARMACIST: [],
+  LAB_TECH: [],
+  BILLING_STAFF: [],
 } as const;
 
 function orderAssignedPermissions() {

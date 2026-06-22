@@ -167,6 +167,26 @@ async function findActiveByCode(
   return appointmentStatus;
 }
 
+type AppointmentStatusSeed = Omit<CreateAppointmentStatusData, 'tenantId'>;
+
+async function seedDefaultAppointmentStatuses(tenantId: string, defaults: AppointmentStatusSeed[]) {
+  if (defaults.length === 0) {
+    return;
+  }
+
+  await db
+    .insert(appointmentStatusTable)
+    .values(
+      defaults.map((appointmentStatus) => ({
+        tenantId,
+        name: appointmentStatus.name,
+        code: appointmentStatus.code,
+        description: appointmentStatus.description ?? null,
+      }))
+    )
+    .onConflictDoNothing();
+}
+
 export const appointmentStatusRepository = {
   createAppointmentStatus,
   updateAppointmentStatus,
@@ -175,4 +195,5 @@ export const appointmentStatusRepository = {
   getAppointmentStatuses,
   findActiveByName,
   findActiveByCode,
+  seedDefaultAppointmentStatuses,
 };

@@ -24,6 +24,7 @@ Key skills for this project:
 | `to-prd`                        | Turning a conversation into a PRD on the issue tracker        |
 | `triage`                        | Creating or triaging issues                                   |
 | `review`                        | Pre-merge code review                                         |
+| `prepare-to-merge-to-main`      | Running branch readiness checks before PR/merge to main       |
 | `prototype`                     | Exploring a design or data model before committing            |
 | `grill-with-docs`               | Stress-testing a plan and updating domain documentation       |
 | `improve-codebase-architecture` | Finding refactoring and architecture improvements             |

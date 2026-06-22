@@ -1,16 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import type { GetPermissionResponse } from './types';
 
 import { getPermissionByIdQuery } from '@/app/api/lib/modules/permission/queries/get-permission-by-id-query';
-import type { Permission } from '@/app/api/lib/modules/permission/schemas/permission-schema';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type PermissionRouteContext = {
   params: Promise<{ id: string }>;
-};
-
-export type PermissionResponse = {
-  data: Permission;
 };
 
 function errorMessage(status: number) {
@@ -41,7 +37,7 @@ export async function GET(_request: NextRequest, context: PermissionRouteContext
       );
     }
 
-    return NextResponse.json<PermissionResponse>({ data: result.data });
+    return NextResponse.json<GetPermissionResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
