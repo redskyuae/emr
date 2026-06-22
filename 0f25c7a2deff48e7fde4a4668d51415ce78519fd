@@ -1,0 +1,57 @@
+app/(protected)/identity-access/roles/loader.tsx
+  c4d81bb7e29b3209 3
+app/(protected)/identity-access/dashboard/page.tsx
+  c4d81bb7e29b3209 40,221
+app/(protected)/audit-log/page.tsx
+  c4d81bb7e29b3209 1,5
+app/(protected)/identity-access/users/page.tsx
+  c4d81bb7e29b3209 1,20
+app/(protected)/audit-log/_components/audit-log-page-impl.tsx
+  c4d81bb7e29b3209 1-214
+lib/format-count.ts
+  c4d81bb7e29b3209 1-5
+app/(protected)/assets-management/maintenance/page.tsx
+  c4d81bb7e29b3209 27,94-95,97
+app/(protected)/audit-log/loader.tsx
+  c4d81bb7e29b3209 3
+app/(protected)/assets-management/inventory/page.tsx
+  c4d81bb7e29b3209 36,88-89,91
+app/(protected)/identity-access/users/_components/users-page-impl.tsx
+  c4d81bb7e29b3209 1-469
+app/(protected)/identity-access/users/loader.tsx
+  c4d81bb7e29b3209 3
+app/(protected)/identity-access/sessions/loader.tsx
+  c4d81bb7e29b3209 3
+package.json
+  c4d81bb7e29b3209 20
+components/app/app-shell-config.ts
+  c4d81bb7e29b3209 286
+app/(protected)/identity-access/roles/_components/roles-page-impl.tsx
+  c4d81bb7e29b3209 1-2,5-6,8-16,28,36,47-56,65-76,78-81,90,96,102,108-109,121,138,141-142,186-188,190-193,195-198,202-204,206-214,218-222,224-226,228-232,238-246,248-250,252-257,259-271,273,275-282,339-344,346-347,352,369-372,374-378,380-381,383-391,393,396-398,400-401,404-407,410,412,414,422-436,438,461,465,467,469-470,472,474,516,522-524,528-531,533-535,537,539-547,556-557,574-576,578,582-583,610,617,638-639,658-672,706-709,711-713,715-724,726-728,730-743,756-764,774-777,787-788,808-814,816-821,840-841,845-847,849-853,855,857-858,862-864,866-870,908-910
+app/(protected)/identity-access/roles/page.tsx
+  c4d81bb7e29b3209 1
+app/(protected)/identity-access/sessions/page.tsx
+  c4d81bb7e29b3209 1,5
+app/(protected)/identity-access/sessions/_components/sessions-page-impl.tsx
+  c4d81bb7e29b3209 1-237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "0f25c7a2deff48e7fde4a4668d51415ce78519fd",
+  "prompts": {
+    "c4d81bb7e29b3209": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eec7d-835d-7a91-9c9d-033a4ddf5d9a",
+        "model": "unknown"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1512,
+      "total_deletions": 1560,
+      "accepted_lines": 1273,
+      "overriden_lines": 173
+    }
+  }
+}
