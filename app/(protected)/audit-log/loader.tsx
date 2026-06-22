@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function PageLoader() {
+export default function AuditLogPageLoader() {
   return (
     <div className="space-y-6" aria-label="Loading page">
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

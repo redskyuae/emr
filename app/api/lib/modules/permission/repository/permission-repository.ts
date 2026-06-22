@@ -1,9 +1,9 @@
-import { and, asc, eq, isNotNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, eq, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { permissionTable } from '@/app/db/schema/permission';
 import type { PermissionListParams } from '../schemas/permission-schema';
-import { permissionSeedData } from '../seed-data';
+import { permissionSeedData, permissionSeedOrder } from '../seed-data';
 
 const permissionColumns = {
   id: permissionTable.id,
@@ -27,10 +27,14 @@ async function getPermissionById(id: number) {
   return permission;
 }
 
+function getSeedOrder(permissionName: string) {
+  return permissionSeedOrder.get(permissionName) ?? Number.MAX_SAFE_INTEGER;
+}
+
 async function getPermissions({ module }: PermissionListParams = {}) {
   const trimmedModule = module?.trim();
 
-  return db
+  const permissions = await db
     .select(permissionColumns)
     .from(permissionTable)
     .where(
@@ -39,12 +43,17 @@ async function getPermissions({ module }: PermissionListParams = {}) {
         trimmedModule ? eq(permissionTable.module, trimmedModule) : undefined
       )
     )
-    .orderBy(
-      asc(permissionTable.module),
-      asc(permissionTable.resource),
-      asc(permissionTable.action),
-      asc(permissionTable.id)
-    );
+    .orderBy(asc(permissionTable.id));
+
+  return permissions.sort((left, right) => {
+    const orderDelta = getSeedOrder(left.name) - getSeedOrder(right.name);
+
+    if (orderDelta !== 0) {
+      return orderDelta;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
 }
 
 async function seedPermissionCatalogue() {
@@ -65,7 +74,7 @@ async function seedPermissionCatalogue() {
         ne(permissionTable.module, sql`excluded.module`),
         ne(permissionTable.resource, sql`excluded.resource`),
         ne(permissionTable.action, sql`excluded.action`),
-        isNotNull(permissionTable.description),
+        sql`${permissionTable.description} is distinct from excluded.description`,
         ne(permissionTable.isActive, true)
       ),
     });

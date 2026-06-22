@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
 
 const staffById = new Map(iamStaffUsers.map((staffUser) => [staffUser.id, staffUser]));
@@ -217,7 +218,7 @@ export default function IamDashboardPage() {
                     <div className="flex items-center justify-between gap-3 text-sm">
                       <span className="font-medium">{role.role}</span>
                       <span className="text-muted-foreground tabular-nums">
-                        {role.count} {role.count === 1 ? 'user' : 'users'}
+                        {formatCount(role.count, 'user')}
                       </span>
                     </div>
                     <div className="bg-muted h-2 overflow-hidden rounded-full">

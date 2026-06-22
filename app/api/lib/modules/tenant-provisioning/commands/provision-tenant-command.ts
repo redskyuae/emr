@@ -4,7 +4,6 @@ import { auth } from '@/app/lib/auth';
 import { createCookieHeader, getSetCookies } from '@/app/api/lib/utils/auth-cookie-helpers';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { permissionRepository } from '../../permission/repository/permission-repository';
-import { seedSystemRolesCommand } from '../../role/commands/seed-system-roles-command';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { getTenantUniqueConstraintErrors } from '../../tenant/validator/tenant-uniqueness-validator';
 import type { TenantProvisioningResult } from '../schemas/tenant-provisioning-schema';
@@ -111,22 +110,7 @@ export async function provisionTenantCommand(
       };
     }
 
-    const [rolesResult, appointmentMastersResult] = await Promise.all([
-      seedSystemRolesCommand(createdTenant.id),
-      seedDefaultAppointmentMastersCommand(createdTenant.id),
-    ]);
-
-    if (!rolesResult.success) {
-      await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });
-      createdTenantId = undefined;
-      createdUserId = undefined;
-
-      return {
-        success: false,
-        errors: rolesResult.errors,
-        status: rolesResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
-      };
-    }
+    const appointmentMastersResult = await seedDefaultAppointmentMastersCommand(createdTenant.id);
 
     if (!appointmentMastersResult.success) {
       await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });

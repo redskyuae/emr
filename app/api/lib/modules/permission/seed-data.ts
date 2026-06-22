@@ -1,82 +1,193 @@
-export const permissionSeedData = [
-  { module: 'admin', resource: 'tenant', action: 'read', name: 'tenant:read' },
-  { module: 'admin', resource: 'tenant', action: 'write', name: 'tenant:write' },
-  { module: 'admin', resource: 'user', action: 'read', name: 'user:read' },
-  { module: 'admin', resource: 'user', action: 'write', name: 'user:write' },
-  { module: 'admin', resource: 'user', action: 'delete', name: 'user:delete' },
-  { module: 'admin', resource: 'role', action: 'read', name: 'role:read' },
-  { module: 'admin', resource: 'role', action: 'write', name: 'role:write' },
-  { module: 'admin', resource: 'role', action: 'delete', name: 'role:delete' },
-  { module: 'admin', resource: 'audit_log', action: 'read', name: 'audit_log:read' },
-  { module: 'patient', resource: 'patient', action: 'read', name: 'patient:read' },
-  { module: 'patient', resource: 'patient', action: 'write', name: 'patient:write' },
-  { module: 'patient', resource: 'patient', action: 'delete', name: 'patient:delete' },
-  { module: 'patient', resource: 'patient', action: 'export', name: 'patient:export' },
+export type PermissionSeed = {
+  module: string;
+  resource: string;
+  action: string;
+  name: string;
+  description: string;
+};
+
+type PermissionGroup = {
+  module: string;
+  resource: string;
+  actions: readonly (readonly [action: string, description: string])[];
+};
+
+const permissionGroups = [
   {
-    module: 'patient',
-    resource: 'medical_record',
-    action: 'read',
-    name: 'medical_record:read',
+    module: 'tenant-management',
+    resource: 'tenant',
+    actions: [
+      ['read', 'View Tenant profile details.'],
+      ['update', 'Update Tenant display details.'],
+      ['deactivate', 'Deactivate the Tenant.'],
+      ['reactivate', 'Reactivate the Tenant.'],
+    ],
   },
   {
-    module: 'patient',
-    resource: 'medical_record',
-    action: 'write',
-    name: 'medical_record:write',
+    module: 'identity-access',
+    resource: 'staff',
+    actions: [
+      ['read', 'View Staff profiles.'],
+      ['create', 'Create Staff accounts.'],
+      ['update', 'Update Staff profile details.'],
+      ['deactivate', 'Deactivate Staff access.'],
+      ['reactivate', 'Reactivate Staff access.'],
+    ],
   },
   {
-    module: 'appointment',
-    resource: 'appointment',
-    action: 'read',
-    name: 'appointment:read',
+    module: 'identity-access',
+    resource: 'role',
+    actions: [
+      ['read', 'View Roles.'],
+      ['create', 'Create Roles.'],
+      ['update', 'Update Role details.'],
+      ['delete', 'Delete Roles without active assignments.'],
+    ],
   },
   {
-    module: 'appointment',
-    resource: 'appointment',
-    action: 'write',
-    name: 'appointment:write',
+    module: 'identity-access',
+    resource: 'permission-catalogue',
+    actions: [['read', 'View the Permission Catalogue.']],
   },
   {
-    module: 'appointment',
-    resource: 'appointment',
-    action: 'delete',
-    name: 'appointment:delete',
+    module: 'identity-access',
+    resource: 'permission-assignment',
+    actions: [
+      ['read', 'View Permission Assignments for Roles.'],
+      ['assign', 'Add Permission Assignments to Roles.'],
+      ['replace', 'Replace all Permission Assignments for a Role.'],
+      ['remove', 'Remove Permission Assignments from Roles.'],
+    ],
   },
   {
-    module: 'appointment',
-    resource: 'appointment',
-    action: 'approve',
-    name: 'appointment:approve',
+    module: 'identity-access',
+    resource: 'role-assignment',
+    actions: [
+      ['read', 'View Role Assignments for Staff.'],
+      ['assign', 'Assign Roles to Staff.'],
+      ['remove', 'Remove Roles from Staff.'],
+    ],
   },
   {
-    module: 'clinical',
-    resource: 'prescription',
-    action: 'read',
-    name: 'prescription:read',
+    module: 'identity-access',
+    resource: 'session',
+    actions: [
+      ['read', 'View active Sessions.'],
+      ['revoke', 'Revoke active Sessions.'],
+    ],
   },
   {
-    module: 'clinical',
-    resource: 'prescription',
-    action: 'write',
-    name: 'prescription:write',
+    module: 'appointment-masters',
+    resource: 'appointment-mode',
+    actions: [
+      ['read', 'View Appointment Modes.'],
+      ['create', 'Create Appointment Modes.'],
+      ['update', 'Update Appointment Modes.'],
+      ['delete', 'Delete Appointment Modes.'],
+    ],
   },
   {
-    module: 'clinical',
-    resource: 'prescription',
-    action: 'approve',
-    name: 'prescription:approve',
+    module: 'appointment-masters',
+    resource: 'appointment-type',
+    actions: [
+      ['read', 'View Appointment Types.'],
+      ['create', 'Create Appointment Types.'],
+      ['update', 'Update Appointment Types.'],
+      ['delete', 'Delete Appointment Types.'],
+    ],
   },
-  { module: 'clinical', resource: 'lab_order', action: 'read', name: 'lab_order:read' },
-  { module: 'clinical', resource: 'lab_order', action: 'write', name: 'lab_order:write' },
-  { module: 'clinical', resource: 'lab_result', action: 'read', name: 'lab_result:read' },
-  { module: 'clinical', resource: 'lab_result', action: 'write', name: 'lab_result:write' },
-  { module: 'pharmacy', resource: 'medication', action: 'read', name: 'medication:read' },
-  { module: 'pharmacy', resource: 'medication', action: 'write', name: 'medication:write' },
-  { module: 'pharmacy', resource: 'dispensing', action: 'write', name: 'dispensing:write' },
-  { module: 'billing', resource: 'invoice', action: 'read', name: 'invoice:read' },
-  { module: 'billing', resource: 'invoice', action: 'write', name: 'invoice:write' },
-  { module: 'billing', resource: 'invoice', action: 'approve', name: 'invoice:approve' },
-  { module: 'billing', resource: 'payment', action: 'read', name: 'payment:read' },
-  { module: 'billing', resource: 'payment', action: 'write', name: 'payment:write' },
-  { module: 'billing', resource: 'report', action: 'export', name: 'billing_report:export' },
-] as const;
+  {
+    module: 'appointment-masters',
+    resource: 'appointment-status',
+    actions: [
+      ['read', 'View Appointment Statuses.'],
+      ['create', 'Create Appointment Statuses.'],
+      ['update', 'Update Appointment Statuses.'],
+      ['delete', 'Delete Appointment Statuses.'],
+    ],
+  },
+  {
+    module: 'appointment-masters',
+    resource: 'appointment-reason',
+    actions: [
+      ['read', 'View Appointment Reasons.'],
+      ['create', 'Create Appointment Reasons.'],
+      ['update', 'Update Appointment Reasons.'],
+      ['delete', 'Delete Appointment Reasons.'],
+    ],
+  },
+  {
+    module: 'appointment-masters',
+    resource: 'appointment-cancelled-reason',
+    actions: [
+      ['read', 'View Appointment Cancelled Reasons.'],
+      ['create', 'Create Appointment Cancelled Reasons.'],
+      ['update', 'Update Appointment Cancelled Reasons.'],
+      ['delete', 'Delete Appointment Cancelled Reasons.'],
+    ],
+  },
+  {
+    module: 'global-references',
+    resource: 'language',
+    actions: [
+      ['read', 'View Languages.'],
+      ['create', 'Create Languages.'],
+      ['update', 'Update Languages.'],
+      ['delete', 'Delete Languages.'],
+    ],
+  },
+  {
+    module: 'global-references',
+    resource: 'nationality',
+    actions: [
+      ['read', 'View Nationalities.'],
+      ['create', 'Create Nationalities.'],
+      ['update', 'Update Nationalities.'],
+      ['delete', 'Delete Nationalities.'],
+    ],
+  },
+  {
+    module: 'global-references',
+    resource: 'religion',
+    actions: [
+      ['read', 'View Religions.'],
+      ['create', 'Create Religions.'],
+      ['update', 'Update Religions.'],
+      ['delete', 'Delete Religions.'],
+    ],
+  },
+  {
+    module: 'global-references',
+    resource: 'country',
+    actions: [
+      ['read', 'View Countries.'],
+      ['create', 'Create Countries.'],
+      ['update', 'Update Countries.'],
+      ['delete', 'Delete Countries.'],
+    ],
+  },
+  {
+    module: 'global-references',
+    resource: 'state',
+    actions: [
+      ['read', 'View States.'],
+      ['create', 'Create States.'],
+      ['update', 'Update States.'],
+      ['delete', 'Delete States.'],
+    ],
+  },
+] satisfies PermissionGroup[];
+
+export const permissionSeedData: PermissionSeed[] = permissionGroups.flatMap((group) =>
+  group.actions.map(([action, description]) => ({
+    module: group.module,
+    resource: group.resource,
+    action,
+    name: `${group.resource}:${action}`,
+    description,
+  }))
+);
+
+export const permissionSeedOrder = new Map(
+  permissionSeedData.map((permission, index) => [permission.name, index])
+);

@@ -1,0 +1,3 @@
+# Reset Permission Catalogue Through Tenant Provisioning
+
+We will hard-delete the existing Permission Catalogue in the migration that replaces mock/future Permissions with API-backed Permissions only, accepting that existing Tenant Permission Assignments are discarded in this development-stage reset. The same migration removes previously seeded System Roles so existing development Tenants match newly provisioned Tenants. Fresh deployments will not pre-seed Permissions globally; Tenant Provisioning will idempotently create the current system-wide Permission Catalogue when a Tenant signs up. Tenant Provisioning does not create default Roles; the signup user receives Tenant Owner authority through Tenant ownership rather than a Role Assignment.

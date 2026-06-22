@@ -1,9 +1,4 @@
-import { RolesPageClient } from '@/app/(protected)/identity-access/roles/_components/roles-page-client';
-import {
-  iamDirectoryUsers,
-  iamPermissionSections,
-  iamRoles,
-} from '@/app/(protected)/identity-access/dashboard/mock-data';
+import { RolesPageImpl } from '@/app/(protected)/identity-access/roles/_components/roles-page-impl';
 
 export default async function RolesPage({
   searchParams,
@@ -16,13 +11,5 @@ export default async function RolesPage({
     ? createParam.includes('1')
     : createParam === '1';
 
-  return (
-    <RolesPageClient
-      key={initialCreateOpen ? 'create-role-open' : 'roles-list'}
-      roles={iamRoles}
-      permissionSections={iamPermissionSections}
-      staffUsers={iamDirectoryUsers}
-      initialCreateOpen={initialCreateOpen}
-    />
-  );
+  return <RolesPageImpl initialCreateOpen={initialCreateOpen} />;
 }

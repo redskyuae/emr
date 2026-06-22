@@ -72,6 +72,11 @@ export type Role = {
   modifiedOn: Date;
 };
 
+export type RoleWithStats = Role & {
+  assignedStaffCount: number;
+  permissionAssignmentCount: number;
+};
+
 export type RoleListParams = {
   tenantId: string;
   query?: string;

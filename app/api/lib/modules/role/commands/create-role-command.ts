@@ -1,14 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { roleRepository } from '../repository/role-repository';
-import type { Role } from '../schemas/role-schema';
+import type { RoleWithStats } from '../schemas/role-schema';
 import { getRoleUniqueConstraintErrors } from '../validator/role-uniqueness-validator';
 import { validateCreateRole } from '../validator/create-role-validator';
 
 export async function createRoleCommand(
   payload: unknown,
   tenantId: string
-): Promise<CommandResult<Role>> {
+): Promise<CommandResult<RoleWithStats>> {
   const validationResult = await validateCreateRole(payload, tenantId);
 
   if (!validationResult.success) {
@@ -24,8 +24,19 @@ export async function createRoleCommand(
       validationResult.data.tenantId,
       validationResult.data.payload
     );
+    const createdRoleWithStats = await roleRepository.getRoleByIdWithStats(
+      createdRole.id,
+      validationResult.data.tenantId
+    );
 
-    return { success: true, data: createdRole };
+    return {
+      success: true,
+      data: createdRoleWithStats ?? {
+        ...createdRole,
+        assignedStaffCount: 0,
+        permissionAssignmentCount: 0,
+      },
+    };
   } catch (error) {
     const constraintErrors = getRoleUniqueConstraintErrors(error, validationResult.data.payload);
 

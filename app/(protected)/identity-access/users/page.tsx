@@ -1,4 +1,4 @@
-import { UsersPageClient } from '@/app/(protected)/identity-access/users/_components/users-page-client';
+import { UsersPageImpl } from '@/app/(protected)/identity-access/users/_components/users-page-impl';
 import {
   iamDirectoryDepartmentOptions,
   iamDirectoryRoleOptions,
@@ -17,7 +17,7 @@ export default async function UsersPage({
     : inviteParam === '1';
 
   return (
-    <UsersPageClient
+    <UsersPageImpl
       users={iamDirectoryUsers}
       roleOptions={iamDirectoryRoleOptions}
       departmentOptions={iamDirectoryDepartmentOptions}

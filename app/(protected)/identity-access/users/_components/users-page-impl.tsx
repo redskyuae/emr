@@ -252,7 +252,7 @@ function InviteUserDialog({
   );
 }
 
-export function UsersPageClient({
+export function UsersPageImpl({
   users,
   roleOptions,
   departmentOptions,

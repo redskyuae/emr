@@ -6,6 +6,7 @@
       "name": "emr",
       "dependencies": {
         "@base-ui/react": "^1.6.0",
+        "@boringnode/pluralize": "^0.1.0",
         "@gsap/react": "^2.1.2",
         "@tanstack/react-query": "^5.101.0",
         "better-auth": "^1.6.19",
@@ -138,6 +139,8 @@
     "@better-auth/utils": ["@better-auth/utils@0.4.2", "", { "dependencies": { "@noble/hashes": "^2.0.1" } }, "sha512-AUxrvu+HaaODsUyzDxFgwd/8RZ1yZaYo42LXKSrU2oGgR38pS1ij8nqQKNgtTWoYGpNevNXtCfgTy6loHveW9A=="],
 
     "@better-fetch/fetch": ["@better-fetch/fetch@1.3.1", "", {}, "sha512-ABkD1WhyfPZprKRQI3bhATjeiFuNWC9PXhfGWqL+sg/gKrM977oFrYkdb4msM3hgUGonr7KlOsOFT5TU2rht9g=="],
+
+    "@boringnode/pluralize": ["@boringnode/pluralize@0.1.0", "", {}, "sha512-6NORDCcdciP9rliHQaqmwRCeoGt+2r27u6Pwis7RDZ8x3OgEhz0J+DP25hga6rAtLDE6CQBnMzGxtlPn3EOcQw=="],
 
     "@date-fns/tz": ["@date-fns/tz@1.5.0", "", {}, "sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg=="],
 

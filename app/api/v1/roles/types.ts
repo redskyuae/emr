@@ -1,7 +1,7 @@
-import type { Role } from '@/app/api/lib/modules/role/schemas/role-schema';
+import type { RoleWithStats } from '@/app/api/lib/modules/role/schemas/role-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 
-export type ListRolesResponse = Paginated<Role>;
+export type ListRolesResponse = Paginated<RoleWithStats>;
 
 export type SaveRoleRequest = {
   name: string;
@@ -10,5 +10,5 @@ export type SaveRoleRequest = {
 };
 
 export type SaveRoleResponse = {
-  data: Role;
+  data: RoleWithStats;
 };

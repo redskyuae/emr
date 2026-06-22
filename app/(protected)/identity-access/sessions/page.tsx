@@ -1,6 +1,6 @@
-import { SessionsPageClient } from '@/app/(protected)/identity-access/sessions/_components/sessions-page-client';
+import { SessionsPageImpl } from '@/app/(protected)/identity-access/sessions/_components/sessions-page-impl';
 import { iamActiveSessions } from '@/app/(protected)/identity-access/dashboard/mock-data';
 
 export default function SessionsPage() {
-  return <SessionsPageClient sessions={iamActiveSessions} />;
+  return <SessionsPageImpl sessions={iamActiveSessions} />;
 }

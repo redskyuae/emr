@@ -134,6 +134,13 @@
       "when": 1781421578754,
       "tag": "0018_futuristic_rafael_vega",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782086445989,
+      "tag": "0019_reset_permission_catalogue_and_system_roles",
+      "breakpoints": true
     }
   ]
 }

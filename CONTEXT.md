@@ -26,7 +26,7 @@ A single physical location operated by a Tenant — a hospital, clinic, diagnost
 
 ## Tenant Owner
 
-The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner. A Tenant Owner has Tenant Admin authority for that Tenant and is not necessarily Staff.
+The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner. A Tenant Owner has Tenant Admin authority for that Tenant, is not necessarily Staff, and is not itself a Role.
 
 ## Tenant Admin
 
@@ -52,13 +52,25 @@ A system-wide authorization capability representing one allowed action on one pr
 
 The system-wide set of Permissions available for assignment to Roles. Every Tenant sees the same Permission Catalogue.
 
-## Permission Assignment
+## Permission Module
 
-The association between a Role and a Permission within a Tenant. A Role's Permission Assignments define what users with that Role are allowed to do.
+A user-facing product area used to group Permissions in the Permission Catalogue, such as Identity & Access or Appointment Masters.
 
 ## System Role
 
-A Role provided for every Tenant as a baseline authorization label. System Roles may be renamed but are not removed by Tenant Admins.
+A Role provided by the system rather than created by Tenant Admins. Distinct from Tenant Owner authority; System Roles may be edited but are not removed by Tenant Admins.
+
+## Permission Action
+
+The specific operation allowed by a Permission on a protected resource. Permission Actions should be precise enough to distinguish reading, creating, updating, deleting, assigning, revoking, deactivating, and reactivating access.
+
+## Permission Key
+
+A stable identifier for a Permission in `<resource>:<action>` form. The Permission Module groups the Permission separately and is not part of the Permission Key.
+
+## Permission Assignment
+
+The association between a Role and a Permission within a Tenant. A Role's Permission Assignments define what users with that Role are allowed to do.
 
 ## Staff
 

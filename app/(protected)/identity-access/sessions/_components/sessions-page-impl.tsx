@@ -36,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
 
 function sessionMatchesSearch(searchTerm: string, session: IamSession) {
@@ -51,11 +52,7 @@ function sessionMatchesSearch(searchTerm: string, session: IamSession) {
     .includes(normalizedSearch);
 }
 
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
-export function SessionsPageClient({ sessions }: { sessions: IamSession[] }) {
+export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [revokedSessionIds, setRevokedSessionIds] = useState<Set<string>>(() => new Set());
 
@@ -98,10 +95,10 @@ export function SessionsPageClient({ sessions }: { sessions: IamSession[] }) {
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="bg-muted/70 font-mono">
-              {pluralize(activeCount, 'active session')}
+              {formatCount(activeCount, 'active session')}
             </Badge>
             <span className="text-muted-foreground text-sm">
-              {pluralize(filteredSessions.length, 'row')} shown
+              {formatCount(filteredSessions.length, 'row')} shown
             </span>
           </div>
 

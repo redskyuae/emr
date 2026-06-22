@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
 
 type TypeFilter = WorkOrderType | 'all';
@@ -89,11 +90,11 @@ function badgeWithDot(config: BadgeToneConfig) {
 }
 
 function formatResultSubtitle(filteredWorkOrders: WorkOrder[]) {
-  const orderLabel = filteredWorkOrders.length === 1 ? 'Work Order' : 'Work Orders';
   const typeCount = new Set(filteredWorkOrders.map((workOrder) => workOrder.type)).size;
-  const typeLabel = typeCount === 1 ? 'type' : 'types';
+  const workOrderCountLabel = formatCount(filteredWorkOrders.length, 'Work Order');
+  const typeCountLabel = formatCount(typeCount, 'type');
 
-  return `${filteredWorkOrders.length} ${orderLabel} across ${typeCount} ${typeLabel}`;
+  return `${workOrderCountLabel} across ${typeCountLabel}`;
 }
 
 function WorkOrderAsset({ workOrder }: { workOrder: WorkOrder }) {

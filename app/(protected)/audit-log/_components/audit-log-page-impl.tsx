@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
 
 type AuditTypeFilter = 'All' | 'Auth' | 'Create' | 'Edit' | 'Delete' | 'Critical';
@@ -84,11 +85,7 @@ function eventMatchesSearch(searchTerm: string, event: IamAuditEvent) {
     .includes(normalizedSearch);
 }
 
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
-export function AuditLogPageClient({ events }: { events: IamAuditEvent[] }) {
+export function AuditLogPageImpl({ events }: { events: IamAuditEvent[] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<AuditTypeFilter>('All');
 
@@ -135,7 +132,7 @@ export function AuditLogPageClient({ events }: { events: IamAuditEvent[] }) {
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:ml-auto">
             <span className="text-muted-foreground text-sm">
-              {pluralize(filteredEvents.length, 'event')} shown
+              {formatCount(filteredEvents.length, 'event')} shown
             </span>
             <Button type="button" variant="outline" className="w-full sm:w-auto">
               <Download className="size-4" />

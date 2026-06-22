@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
 
 type CategoryFilter = AssetCategory['id'] | 'all';
@@ -84,10 +85,10 @@ function badgeWithDot(config: BadgeToneConfig) {
 
 function formatResultSubtitle(filteredAssets: Asset[]) {
   const categoryCount = new Set(filteredAssets.map((asset) => asset.categoryId)).size;
-  const assetLabel = filteredAssets.length === 1 ? 'asset' : 'assets';
-  const categoryLabel = categoryCount === 1 ? 'category' : 'categories';
+  const assetCountLabel = formatCount(filteredAssets.length, 'asset');
+  const categoryCountLabel = formatCount(categoryCount, 'category');
 
-  return `${filteredAssets.length} ${assetLabel} across ${categoryCount} ${categoryLabel}`;
+  return `${assetCountLabel} across ${categoryCountLabel}`;
 }
 
 function formatAssetValue(value: number) {
