@@ -421,7 +421,6 @@ export const openApiDocument = {
       name: 'Appointment Cancelled Reason',
       description: 'Appointment Cancelled Reason Master APIs.',
     },
-    { name: 'Todo', description: 'Todo API examples.' },
   ],
   paths: {
     '/api/v1/signin': {
@@ -1529,37 +1528,6 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
-    '/api/v1/todo': {
-      get: {
-        tags: ['Todo'],
-        summary: 'List Todo items',
-        parameters: [parameterRef('Page'), parameterRef('Limit')],
-        responses: {
-          '200': {
-            description: 'Paginated Todo list.',
-            content: jsonContent(paginatedSchema('Todo')),
-          },
-          '500': responseRef('InternalServerError'),
-        },
-      },
-      post: {
-        tags: ['Todo'],
-        summary: 'Create Todo item',
-        requestBody: requestBody('CreateTodoRequest', {
-          title: 'Call Patient',
-          description: 'Confirm tomorrow appointment',
-          isCompleted: false,
-        }),
-        responses: {
-          '201': {
-            description: 'Todo item created.',
-            content: jsonContent(dataEnvelopeSchema('Todo')),
-          },
-          '400': responseRef('ValidationFailed'),
-          '500': responseRef('InternalServerError'),
-        },
-      },
-    },
   },
   components: {
     securitySchemes: {
@@ -2220,25 +2188,6 @@ export const openApiDocument = {
       AppointmentCancelledReason: appointmentMasterSchema(
         'CreateAppointmentCancelledReasonRequest'
       ),
-      CreateTodoRequest: {
-        type: 'object',
-        required: ['title'],
-        properties: {
-          title: { type: 'string', minLength: 1 },
-          description: { type: 'string', default: '' },
-          isCompleted: { type: 'boolean', default: false },
-        },
-      },
-      Todo: {
-        type: 'object',
-        required: ['id', 'title', 'description', 'isCompleted'],
-        properties: {
-          id: { type: 'integer', minimum: 1 },
-          title: { type: 'string' },
-          description: { type: 'string' },
-          isCompleted: { type: 'boolean' },
-        },
-      },
     },
     responses: {
       ValidationFailed: {
