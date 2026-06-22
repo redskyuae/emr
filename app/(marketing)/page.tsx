@@ -286,20 +286,20 @@ export default function MarketingPage() {
       <section className="relative overflow-hidden">
         <div
           aria-hidden="true"
-          className="bg-accent/60 absolute -top-24 -left-24 -z-10 size-[34rem] rounded-full blur-3xl"
+          className="bg-accent/60 absolute -top-24 -left-24 -z-10 size-96 rounded-full blur-3xl"
         />
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,--alpha(var(--color-border)/40%)_1px,transparent_1px),linear-gradient(to_bottom,--alpha(var(--color-border)/40%)_1px,transparent_1px)] [mask-image:radial-gradient(46rem_26rem_at_30%_0%,black,transparent)] bg-[size:56px_56px]"
         />
-        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pt-14 pb-20 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-20">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pt-14 pb-20 sm:px-6 lg:grid-cols-2 lg:pt-20">
           <div className="space-y-6">
             <Badge variant="secondary" className="text-accent-foreground gap-1.5" data-hero-item>
               <span className="bg-pop size-1.5 rounded-full" />
               Medical EMR · from Redsky Consultancy
             </Badge>
             <h1
-              className="max-w-xl text-4xl leading-[1.05] font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl"
+              className="max-w-xl text-4xl leading-tight font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl"
               data-hero-item
             >
               One platform for every facility in your{' '}
@@ -311,13 +311,13 @@ export default function MarketingPage() {
               shared across your group, with an AI copilot doing the paperwork.
             </p>
             <div className="flex flex-wrap items-center gap-3" data-hero-item>
-              <Button asChild size="lg" className="h-11 px-5 text-[15px]">
+              <Button asChild size="lg" className="h-11 px-5 text-sm">
                 <Link href="/signup">
                   Create your Tenant
                   <ArrowRight data-icon="inline-end" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="h-11 px-5 text-[15px]">
+              <Button asChild variant="outline" size="lg" className="h-11 px-5 text-sm">
                 <Link href="/swagger">Explore the API</Link>
               </Button>
             </div>
@@ -354,8 +354,8 @@ export default function MarketingPage() {
                 </div>
               </div>
               {/* vertex accent dots */}
-              <span className="bg-primary absolute top-[6%] left-1/2 size-3 -translate-x-1/2 rounded-full" />
-              <span className="bg-pop absolute right-0 bottom-[18%] size-3 rounded-full" />
+              <span className="bg-primary absolute top-7 left-1/2 size-3 -translate-x-1/2 rounded-full" />
+              <span className="bg-pop absolute right-0 bottom-20 size-3 rounded-full" />
 
               {/* floating chips */}
               <div
@@ -366,8 +366,8 @@ export default function MarketingPage() {
                   <Sparkles className="size-3.5" />
                 </span>
                 <div className="text-left">
-                  <p className="text-[11px] leading-none font-semibold">AI note drafted</p>
-                  <p className="text-muted-foreground text-[10px] leading-none">in 4 seconds</p>
+                  <p className="text-xs leading-none font-semibold">AI note drafted</p>
+                  <p className="text-muted-foreground text-xs leading-none">in 4 seconds</p>
                 </div>
               </div>
               <div
@@ -378,8 +378,8 @@ export default function MarketingPage() {
                   <CheckCircle2 className="size-5" />
                 </span>
                 <div className="text-left">
-                  <p className="text-[11px] leading-none font-semibold">FHIR synced</p>
-                  <p className="text-muted-foreground text-[10px] leading-none">3 facilities</p>
+                  <p className="text-xs leading-none font-semibold">FHIR synced</p>
+                  <p className="text-muted-foreground text-xs leading-none">3 facilities</p>
                 </div>
               </div>
             </div>
@@ -474,10 +474,11 @@ export default function MarketingPage() {
 
       {/* ── Platform / About (image collage) ─────────────────── */}
       <section id="platform" className="bg-muted/30 scroll-mt-20 border-y">
-        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.05fr]">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
           {/* image collage */}
           <div className="relative" data-reveal>
-            <div className="blob-a shadow-fluent-16 relative ml-auto aspect-[4/5] w-[82%] overflow-hidden">
+            {/* The portrait crop is editorial artwork; no scale class expresses this ratio cleanly. */}
+            <div className="blob-a shadow-fluent-16 relative ml-auto aspect-[4/5] w-4/5 overflow-hidden">
               <Image
                 src={img.aboutTeam}
                 alt="Care team walking through a hospital corridor"
@@ -486,7 +487,7 @@ export default function MarketingPage() {
                 className="object-cover"
               />
             </div>
-            <div className="blob-b border-background shadow-fluent-16 absolute bottom-0 left-0 aspect-square w-[52%] overflow-hidden border-4">
+            <div className="blob-b border-background shadow-fluent-16 absolute bottom-0 left-0 aspect-square w-1/2 overflow-hidden border-4">
               <Image
                 src={img.aboutTablet}
                 alt="Clinician reviewing results with a patient on a tablet"
@@ -497,7 +498,7 @@ export default function MarketingPage() {
             </div>
             <div className="bg-pop text-pop-foreground shadow-fluent-8 absolute top-6 left-2 flex size-24 flex-col items-center justify-center rounded-full text-center">
               <span className="font-heading text-xl font-bold">11M+</span>
-              <span className="text-[10px] leading-tight font-medium opacity-90">
+              <span className="text-xs leading-tight font-medium opacity-90">
                 patient
                 <br />
                 records
@@ -551,7 +552,7 @@ export default function MarketingPage() {
                 </div>
               ))}
             </div>
-            <Button asChild size="lg" className="mt-8 h-11 px-5 text-[15px]">
+            <Button asChild size="lg" className="mt-8 h-11 px-5 text-sm">
               <Link href="/signup">
                 Create your Tenant
                 <ArrowRight data-icon="inline-end" />
@@ -577,7 +578,7 @@ export default function MarketingPage() {
 
           {/* Featured AI copilot card */}
           <div
-            className="bg-card shadow-fluent-8 mt-12 grid overflow-hidden rounded-2xl border lg:grid-cols-[1.1fr_1fr]"
+            className="bg-card shadow-fluent-8 mt-12 grid overflow-hidden rounded-2xl border lg:grid-cols-2"
             data-reveal
           >
             <div className="flex flex-col justify-center gap-4 p-8 sm:p-10">
@@ -614,22 +615,22 @@ export default function MarketingPage() {
                 <div className="flex items-center gap-2 border-b px-4 py-2.5">
                   <BrainCircuit className="text-primary size-4" />
                   <span className="text-xs font-semibold">Copilot</span>
-                  <span className="bg-accent text-accent-foreground ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium">
+                  <span className="bg-accent text-accent-foreground ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
                     <span className="bg-primary size-1.5 animate-pulse rounded-full" />
                     Listening
                   </span>
                 </div>
                 <div className="space-y-3 p-4">
-                  <p className="text-muted-foreground text-[11px] italic">
+                  <p className="text-muted-foreground text-xs italic">
                     “…patient reports chest tightness on exertion for three days, no radiation,
                     settles with rest…”
                   </p>
                   <Separator />
                   <div>
-                    <p className="text-primary font-mono text-[10px] font-semibold">
+                    <p className="text-primary font-mono text-xs font-semibold">
                       ASSESSMENT & PLAN
                     </p>
-                    <div className="mt-2 space-y-1.5 text-[11px]">
+                    <div className="mt-2 space-y-1.5 text-xs">
                       <p className="font-medium">Stable exertional angina, suspected</p>
                       <p className="text-muted-foreground">
                         ECG + troponin ordered · Cardiology referral · Commence GTN PRN
@@ -640,7 +641,7 @@ export default function MarketingPage() {
                     {['I20.8', 'R07.89', 'Z01.810'].map((code) => (
                       <span
                         key={code}
-                        className="bg-accent text-accent-foreground rounded-md px-2 py-0.5 font-mono text-[10px]"
+                        className="bg-accent text-accent-foreground rounded-md px-2 py-0.5 font-mono text-xs"
                       >
                         {code}
                       </span>
@@ -700,7 +701,7 @@ export default function MarketingPage() {
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <span className="bg-pop text-pop-foreground absolute top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1 font-mono text-[10px] font-semibold">
+                  <span className="bg-pop text-pop-foreground absolute top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1 font-mono text-xs font-semibold">
                     <facility.icon className="size-3" />
                     {facility.type}
                   </span>
@@ -718,7 +719,7 @@ export default function MarketingPage() {
       {/* ── Security ─────────────────────────────────────────── */}
       <section id="security" className="bg-foreground text-background dark:bg-card scroll-mt-20">
         <div className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-6">
-          <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr]">
+          <div className="grid gap-12 lg:grid-cols-2">
             <div data-reveal>
               <Eyebrow className="text-chart-3">Security</Eyebrow>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-balance sm:text-4xl">
@@ -791,7 +792,7 @@ export default function MarketingPage() {
 
           {/* featured testimonial */}
           <figure
-            className="bg-card shadow-fluent-8 mt-12 grid overflow-hidden rounded-2xl border lg:grid-cols-[1.4fr_1fr]"
+            className="bg-card shadow-fluent-8 mt-12 grid overflow-hidden rounded-2xl border lg:grid-cols-2"
             data-reveal
           >
             <div className="flex flex-col gap-6 p-8 sm:p-10">
@@ -815,7 +816,7 @@ export default function MarketingPage() {
               <p className="font-heading text-pop text-5xl font-bold tracking-tight sm:text-6xl">
                 {featuredTestimonial.metric}
               </p>
-              <p className="text-muted-foreground max-w-[12rem] text-sm font-medium">
+              <p className="text-muted-foreground max-w-48 text-sm font-medium">
                 {featuredTestimonial.metricLabel}
               </p>
             </div>
@@ -881,7 +882,7 @@ export default function MarketingPage() {
                 <Button
                   asChild
                   size="lg"
-                  className="text-primary h-11 bg-white px-5 text-[15px] hover:bg-white/90"
+                  className="text-primary h-11 bg-white px-5 text-sm hover:bg-white/90"
                 >
                   <Link href="/signup">
                     Get started free
@@ -892,7 +893,7 @@ export default function MarketingPage() {
                   asChild
                   size="lg"
                   variant="ghost"
-                  className="text-primary-foreground hover:text-primary-foreground h-11 px-5 text-[15px] hover:bg-white/10"
+                  className="text-primary-foreground hover:text-primary-foreground h-11 px-5 text-sm hover:bg-white/10"
                 >
                   <a href={REDSKY_URL} target="_blank" rel="noreferrer">
                     Talk to Redsky Consultancy

@@ -105,7 +105,7 @@ function RoleSelect({
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger
-        className={cn('h-9 w-full', includeAll && 'sm:w-[184px]')}
+        className={cn('h-9 w-full', includeAll && 'sm:w-48')}
         aria-label={includeAll ? 'Filter by Role' : 'Role'}
       >
         <SelectValue placeholder="Role" />
@@ -172,7 +172,7 @@ function InviteUserDialog({
         onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="shadow-fluent-64 sm:max-w-[520px]">
+      <DialogContent className="shadow-fluent-64 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add user</DialogTitle>
           <DialogDescription>
@@ -345,7 +345,7 @@ export function UsersPageImpl({
         <Card className="shadow-fluent-2">
           <CardContent className="p-0">
             {filteredUsers.length ? (
-              <Table className="min-w-[1040px]">
+              <Table className="min-w-max">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="pl-4">User</TableHead>

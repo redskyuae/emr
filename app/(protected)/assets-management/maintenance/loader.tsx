@@ -44,17 +44,14 @@ export default function PageLoader() {
           </div>
 
           <div className="overflow-hidden rounded-md border">
-            <div className="grid grid-cols-[110px_minmax(220px,1fr)_110px_110px_140px_120px_120px_120px] gap-4 border-b px-4 py-3">
+            <div className="grid grid-cols-8 gap-4 border-b px-4 py-3">
               {[0, 1, 2, 3, 4, 5, 6, 7].map((item) => (
                 <Skeleton key={item} className="h-4 w-full" />
               ))}
             </div>
             <div className="divide-y">
               {[0, 1, 2, 3, 4].map((row) => (
-                <div
-                  key={row}
-                  className="grid grid-cols-[110px_minmax(220px,1fr)_110px_110px_140px_120px_120px_120px] gap-4 px-4 py-4"
-                >
+                <div key={row} className="grid grid-cols-8 gap-4 px-4 py-4">
                   {[0, 1, 2, 3, 4, 5, 6, 7].map((cell) => (
                     <Skeleton key={cell} className="h-4 w-full" />
                   ))}

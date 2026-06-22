@@ -36,7 +36,7 @@ function NavBadge({ value }: { value: string }) {
     <SidebarMenuBadge>
       <Badge
         variant="outline"
-        className="border-sidebar-border bg-sidebar text-sidebar-foreground h-4 px-1 text-[10px]"
+        className="border-sidebar-border bg-sidebar text-sidebar-foreground h-4 px-1 text-xs"
       >
         {value}
       </Badge>

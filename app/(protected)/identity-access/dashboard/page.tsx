@@ -124,8 +124,8 @@ export default function IamDashboardPage() {
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.95fr)]">
-        <Card className="shadow-fluent-2">
+      <section className="grid gap-4 xl:grid-cols-5">
+        <Card className="shadow-fluent-2 xl:col-span-3">
           <CardHeader className="border-b">
             <div>
               <CardTitle>Recent sign-ins</CardTitle>
@@ -142,7 +142,7 @@ export default function IamDashboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             {iamRecentSignIns.length ? (
-              <Table className="min-w-[680px]">
+              <Table className="min-w-max">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="pl-4">User</TableHead>
@@ -199,7 +199,7 @@ export default function IamDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-fluent-2">
+        <Card className="shadow-fluent-2 xl:col-span-2">
           <CardHeader className="border-b">
             <div>
               <CardTitle>Users by role</CardTitle>
@@ -257,7 +257,7 @@ export default function IamDashboardPage() {
         </CardHeader>
         <CardContent className="p-0">
           {iamRecentAuditEvents.length ? (
-            <Table className="min-w-[920px]">
+            <Table className="min-w-max">
               <TableHeader>
                 <TableRow>
                   <TableHead className="pl-4">When</TableHead>

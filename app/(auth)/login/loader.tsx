@@ -26,8 +26,8 @@ export default function LoginLoader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Skeleton className="size-4 rounded-[4px]" />
-          <Skeleton className="h-4 w-52 max-w-[calc(100%-1.5rem)]" />
+          <Skeleton className="size-4 rounded-sm" />
+          <Skeleton className="h-4 max-w-52 min-w-0 flex-1" />
         </div>
 
         <Skeleton className="h-10 w-full" />

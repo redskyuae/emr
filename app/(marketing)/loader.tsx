@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function MarketingLoader() {
   return (
     <main className="space-y-20 px-6 py-10 lg:px-10" aria-label="Loading marketing page">
-      <section className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2">
         <div className="space-y-6">
           <Skeleton className="h-7 w-40" />
           <Skeleton className="h-16 w-full max-w-xl" />
@@ -18,7 +18,7 @@ export default function MarketingLoader() {
             ))}
           </div>
         </div>
-        <Skeleton className="min-h-[28rem] w-full rounded-2xl" />
+        <Skeleton className="min-h-96 w-full rounded-2xl" />
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-4 md:grid-cols-3">

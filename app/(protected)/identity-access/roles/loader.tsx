@@ -4,7 +4,7 @@ export default function RolesPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Skeleton className="h-5 w-56" />
+        <Skeleton className="h-6 w-60 max-w-full" />
         <Skeleton className="h-9 w-32" />
       </div>
 

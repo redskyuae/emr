@@ -178,8 +178,8 @@ export default function AssetInventoryPage() {
         </CardHeader>
         <CardContent className="space-y-4 p-4">
           <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px] 2xl:min-w-[520px]">
-              <InputGroup className="bg-background h-9">
+            <div className="grid gap-2 sm:grid-cols-3 2xl:w-full 2xl:max-w-xl">
+              <InputGroup className="bg-background h-9 sm:col-span-2">
                 <InputGroupAddon>
                   <Search className="size-4" />
                 </InputGroupAddon>
@@ -197,7 +197,7 @@ export default function AssetInventoryPage() {
                 value={categoryFilter}
                 onValueChange={(value) => setCategoryFilter(value as CategoryFilter)}
               >
-                <SelectTrigger className="bg-background h-9 w-full">
+                <SelectTrigger className="bg-background h-9 w-full sm:col-span-1">
                   <SelectValue placeholder="All categories" />
                 </SelectTrigger>
                 <SelectContent>
@@ -241,7 +241,7 @@ export default function AssetInventoryPage() {
             </div>
           </div>
 
-          <Table className="min-w-[1120px]">
+          <Table className="min-w-max">
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Asset</TableHead>

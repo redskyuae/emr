@@ -43,8 +43,8 @@ export default function DashboardPage() {
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-        <Card className="shadow-fluent-2">
+      <section className="grid gap-4 xl:grid-cols-5">
+        <Card className="shadow-fluent-2 xl:col-span-3">
           <CardHeader className="border-b pb-3">
             <div className="flex items-center justify-between gap-3">
               <CardTitle>Module shortcuts</CardTitle>
@@ -76,7 +76,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-fluent-2">
+        <Card className="shadow-fluent-2 xl:col-span-2">
           <CardHeader className="border-b pb-3">
             <CardTitle>Shell readiness</CardTitle>
           </CardHeader>

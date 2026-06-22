@@ -154,7 +154,7 @@ export function SignupForm() {
 
         <Button
           type="submit"
-          className="h-10 w-full text-[15px]"
+          className="h-10 w-full text-sm"
           disabled={signUpMutation.isPending}
           aria-busy={signUpMutation.isPending}
         >

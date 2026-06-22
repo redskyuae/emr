@@ -145,7 +145,7 @@ export function AuditLogPageImpl({ events }: { events: IamAuditEvent[] }) {
       <Card className="shadow-fluent-2">
         <CardContent className="p-0">
           {filteredEvents.length ? (
-            <Table className="min-w-[1240px]">
+            <Table className="min-w-max">
               <TableHeader>
                 <TableRow>
                   <TableHead className="pl-4">Timestamp</TableHead>
@@ -178,7 +178,7 @@ export function AuditLogPageImpl({ events }: { events: IamAuditEvent[] }) {
                     </TableCell>
                     <TableCell className="font-mono text-xs">{event.action}</TableCell>
                     <TableCell className="text-muted-foreground">{event.target}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-[360px] whitespace-normal">
+                    <TableCell className="text-muted-foreground max-w-sm whitespace-normal">
                       {event.details}
                     </TableCell>
                     <TableCell className="text-muted-foreground font-mono text-xs">

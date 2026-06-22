@@ -141,7 +141,7 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
       <Card className="shadow-fluent-2">
         <CardContent className="p-0">
           {filteredSessions.length ? (
-            <Table className="min-w-[1120px]">
+            <Table className="min-w-max">
               <TableHeader>
                 <TableRow>
                   <TableHead className="pl-4">User</TableHead>

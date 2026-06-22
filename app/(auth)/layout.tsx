@@ -19,7 +19,7 @@ const brandPoints = [
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="grid min-h-full flex-1 lg:grid-cols-[1.05fr_1fr]">
+    <div className="grid min-h-full flex-1 lg:grid-cols-2">
       {/* ── Brand panel ──────────────────────────────────────── */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-[oklch(0.24_0.07_256)] p-10 text-white lg:flex">
         <div

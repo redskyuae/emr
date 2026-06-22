@@ -8,9 +8,9 @@ export default function SwaggerLoader() {
     >
       <Skeleton className="h-10 w-72" />
       <Skeleton className="h-14 w-full" />
-      <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
-        <Skeleton className="h-[42rem] w-full" />
-        <Skeleton className="h-[42rem] w-full" />
+      <div className="grid gap-4 lg:grid-cols-4">
+        <Skeleton className="h-dvh w-full lg:col-span-1" />
+        <Skeleton className="h-dvh w-full lg:col-span-3" />
       </div>
     </main>
   );

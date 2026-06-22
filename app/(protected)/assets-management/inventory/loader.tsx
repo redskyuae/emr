@@ -11,8 +11,9 @@ export default function InventoryLoader() {
         <Skeleton className="h-10 w-32" />
       </div>
       <div className="bg-card shadow-fluent-2 rounded-lg border">
-        <div className="grid gap-3 border-b p-4 md:grid-cols-4">
-          {[0, 1, 2, 3].map((item) => (
+        <div className="grid gap-3 border-b p-4 md:grid-cols-5">
+          <Skeleton className="h-10 w-full md:col-span-2" />
+          {[0, 1, 2].map((item) => (
             <Skeleton key={item} className="h-10 w-full" />
           ))}
         </div>
