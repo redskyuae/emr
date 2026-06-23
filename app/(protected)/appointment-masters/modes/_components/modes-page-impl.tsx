@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, LayoutGrid, LayoutList, MoreVertical, Pencil, Plus, Save, Search, Table as TableIcon, Trash2, } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppointmentMode } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
@@ -12,7 +11,7 @@ import { useCreateAppointmentMode } from '@/app/queries/appointment-masters/useC
 import { useDeleteAppointmentMode } from '@/app/queries/appointment-masters/useDeleteAppointmentMode';
 import { useUpdateAppointmentMode } from '@/app/queries/appointment-masters/useUpdateAppointmentMode';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle,} from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
@@ -22,20 +21,13 @@ import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, } from '@/components/ui/sheet';
-import { Table, TableBody, TableCell, TableHead, TableHeader,TableRow, } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+
 type ViewLayout = 'table' | 'card' | 'list';
 
 const PAGE_SIZE = 10;
-
-function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
 
 function TableSkeleton() {
   return (
@@ -48,7 +40,6 @@ function TableSkeleton() {
                 <TableHead className="pl-4">Name</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Modified on</TableHead>
                 <TableHead className="pr-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -64,11 +55,8 @@ function TableSkeleton() {
                   <TableCell>
                     <Skeleton className="h-5 w-48" />
                   </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-5 w-24" />
-                  </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <Skeleton className="ml-auto h-8 w-20" />
+                    <Skeleton className="ml-auto h-8 w-8" />
                   </TableCell>
                 </TableRow>
               ))}
@@ -86,10 +74,7 @@ function CardViewSkeleton() {
       {Array.from({ length: 6 }, (_, i) => (
         <Card key={i} className="shadow-fluent-2">
           <CardContent className="space-y-3 p-4">
-            <div className="flex items-start justify-between">
-              <Skeleton className="size-10 rounded-full" />
-              <Skeleton className="h-5 w-14" />
-            </div>
+            <Skeleton className="size-10 rounded-full" />
             <Skeleton className="h-5 w-36" />
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-4 w-full" />
@@ -112,19 +97,11 @@ function ListViewSkeleton() {
           <CardContent className="flex items-center gap-4 p-4">
             <Skeleton className="size-10 shrink-0 rounded-full" />
             <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-6">
-              <div className="space-y-1">
-                <Skeleton className="h-5 w-36" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-              <div className="hidden flex-1 sm:flex sm:gap-6">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-4 w-48" />
-              </div>
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-48" />
             </div>
-            <div className="flex shrink-0 gap-2">
-              <Skeleton className="h-8 w-14" />
-              <Skeleton className="h-8 w-8" />
-            </div>
+            <Skeleton className="h-8 w-8 shrink-0" />
           </CardContent>
         </Card>
       ))}
@@ -146,6 +123,44 @@ function ModeIcon() {
   );
 }
 
+function ModeActionsMenu({
+  mode,
+  onEdit,
+  onDelete,
+}: {
+  mode: AppointmentMode;
+  onEdit: (mode: AppointmentMode) => void;
+  onDelete: (mode: AppointmentMode) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Actions for ${mode.name}`}
+        >
+          <MoreVertical className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem onClick={() => onEdit(mode)}>
+          <Pencil className="size-4" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => onDelete(mode)}
+        >
+          <Trash2 className="size-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function ModeTableView({
   modes,
   onEdit,
@@ -159,13 +174,12 @@ function ModeTableView({
     <Card className="shadow-fluent-2">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <Table className="min-w-[700px]">
+          <Table className="min-w-[600px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Name</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Modified on</TableHead>
                 <TableHead className="pr-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -177,46 +191,8 @@ function ModeTableView({
                   <TableCell className="text-muted-foreground max-w-xs truncate">
                     {mode.description || '—'}
                   </TableCell>
-                  <TableCell className="text-muted-foreground font-mono text-xs">
-                    {formatDate(mode.modifiedOn)}
-                  </TableCell>
-                  <TableCell className="pr-4">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEdit(mode)}
-                      >
-                        <Pencil className="size-3.5" />
-                        Edit
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={`More actions for ${mode.name}`}
-                          >
-                            <MoreVertical className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem onClick={() => onEdit(mode)}>
-                            <Pencil className="size-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => onDelete(mode)}
-                          >
-                            <Trash2 className="size-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                  <TableCell className="pr-4 text-right">
+                    <ModeActionsMenu mode={mode} onEdit={onEdit} onDelete={onDelete} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -244,7 +220,7 @@ function ModeCardView({
           <CardContent className="space-y-3 p-4">
             <ModeIcon />
 
-            <div className="mt-3">
+            <div>
               <h3 className="font-heading text-base font-semibold">{mode.name}</h3>
               <p className="text-muted-foreground mt-0.5 text-sm">
                 Appointment Mode Code:{' '}
@@ -316,41 +292,8 @@ function ModeListView({
               </div>
             </div>
 
-            <div className="flex shrink-0 gap-1 pl-13 sm:pl-0">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(mode)}
-              >
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={`More actions for ${mode.name}`}
-                  >
-                    <MoreVertical className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem onClick={() => onEdit(mode)}>
-                    <Pencil className="size-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => onDelete(mode)}
-                  >
-                    <Trash2 className="size-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="shrink-0 pl-13 sm:pl-0">
+              <ModeActionsMenu mode={mode} onEdit={onEdit} onDelete={onDelete} />
             </div>
           </CardContent>
         </Card>
@@ -359,10 +302,8 @@ function ModeListView({
   );
 }
 
-export function ModesPageImpl({ initialAddOpen }: { initialAddOpen: boolean }) {
-  const router = useRouter();
+export function ModesPageImpl() {
   const queryClient = useQueryClient();
-  const initialAddHandledRef = useRef(false);
 
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const [searchTerm, setSearchTerm] = useState('');
@@ -406,15 +347,6 @@ export function ModesPageImpl({ initialAddOpen }: { initialAddOpen: boolean }) {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  useEffect(() => {
-    if (!initialAddOpen || initialAddHandledRef.current) {
-      return;
-    }
-
-    initialAddHandledRef.current = true;
-    openAddSheet();
-  }, [initialAddOpen]);
-
   function resetDraft() {
     setDraftName('');
     setDraftCode('');
@@ -441,7 +373,6 @@ export function ModesPageImpl({ initialAddOpen }: { initialAddOpen: boolean }) {
     setSheetOpen(false);
     setEditingMode(null);
     resetDraft();
-    router.replace('/appointment-masters/modes', { scroll: false });
   }
 
   async function invalidateModes() {
