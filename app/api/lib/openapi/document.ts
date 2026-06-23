@@ -486,6 +486,60 @@ const assetStatusErrorResponses = {
   '500': responseRef('InternalServerError'),
 };
 
+const assetConditionExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'Excellent',
+  code: 'EXC',
+  color: '#16A34A',
+  description: 'Asset is in excellent physical condition',
+  createdOn: '2026-06-23T04:00:00.000Z',
+  modifiedOn: '2026-06-23T04:00:00.000Z',
+};
+
+const assetConditionRequestExample = {
+  name: 'Excellent',
+  code: 'exc',
+  color: '#16A34A',
+  description: 'Asset is in excellent physical condition',
+};
+
+const assetConditionValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Asset condition color must be a hex value like #16A34A.'],
+    }
+  ),
+};
+
+const assetConditionNotFound = {
+  description: 'Asset Condition was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Asset condition not found',
+    errors: ['Asset condition not found'],
+  }),
+};
+
+const assetConditionConflict = {
+  description: 'Asset Condition name or code already exists in the active Tenant.',
+  content: jsonContent(schemaRef('ConflictError'), {
+    message: "Asset condition name 'Excellent' already exists.",
+    errors: ["Asset condition name 'Excellent' already exists."],
+  }),
+};
+
+const assetConditionErrorResponses = {
+  '400': assetConditionValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': assetConditionNotFound,
+  '409': assetConditionConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 export const openApiDocument = {
   openapi: '3.1.0',
   info: {
@@ -531,6 +585,7 @@ export const openApiDocument = {
     },
     { name: 'Asset Category', description: 'Asset Category Master APIs.' },
     { name: 'Asset Status', description: 'Asset Status Master APIs.' },
+    { name: 'Asset Condition', description: 'Asset Condition Master APIs.' },
   ],
   paths: {
     '/api/v1/signin': {
@@ -1824,6 +1879,99 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/assets/conditions': {
+      get: {
+        tags: ['Asset Condition'],
+        summary: 'List Asset Condition Masters',
+        description:
+          'Returns a paginated list of Asset Condition Masters for the active Tenant. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Asset Condition Master list.',
+            content: jsonContent(paginatedSchema('AssetCondition'), {
+              data: [assetConditionExample],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          '400': assetConditionValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Asset Condition'],
+        summary: 'Create Asset Condition',
+        description:
+          'Creates an Asset Condition Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateAssetConditionRequest', assetConditionRequestExample),
+        responses: {
+          '201': {
+            description: 'Asset Condition created.',
+            content: jsonContent(dataEnvelopeSchema('AssetCondition'), {
+              data: assetConditionExample,
+            }),
+          },
+          ...assetConditionErrorResponses,
+        },
+      },
+    },
+    '/api/v1/assets/conditions/{id}': {
+      get: {
+        tags: ['Asset Condition'],
+        summary: 'Get Asset Condition',
+        description:
+          'Returns one active Asset Condition Master by ID from the active Tenant. Asset Conditions from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Condition')],
+        responses: {
+          '200': {
+            description: 'Asset Condition found.',
+            content: jsonContent(dataEnvelopeSchema('AssetCondition'), {
+              data: assetConditionExample,
+            }),
+          },
+          ...assetConditionErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Asset Condition'],
+        summary: 'Update Asset Condition',
+        description:
+          'Updates one active Asset Condition Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Condition')],
+        requestBody: requestBody('UpdateAssetConditionRequest', assetConditionRequestExample),
+        responses: {
+          '200': {
+            description: 'Asset Condition updated.',
+            content: jsonContent(dataEnvelopeSchema('AssetCondition'), {
+              data: assetConditionExample,
+            }),
+          },
+          ...assetConditionErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Asset Condition'],
+        summary: 'Delete Asset Condition',
+        description: 'Soft-deletes one active Asset Condition Master in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Condition')],
+        responses: {
+          '204': { description: 'Asset Condition deleted.' },
+          ...assetConditionErrorResponses,
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -2550,6 +2698,52 @@ export const openApiDocument = {
       AssetStatus: {
         allOf: [
           schemaRef('CreateAssetStatusRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'color',
+              'description',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreateAssetConditionRequest: {
+        type: 'object',
+        required: ['name', 'code', 'color'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty(
+            'Asset Condition code. The API normalizes this value to uppercase.'
+          ),
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Asset Condition display color as a #RRGGBB hex value.',
+          },
+          description: { type: 'string', description: 'Asset Condition description.' },
+        },
+      },
+      UpdateAssetConditionRequest: schemaRef('CreateAssetConditionRequest'),
+      AssetCondition: {
+        allOf: [
+          schemaRef('CreateAssetConditionRequest'),
           {
             type: 'object',
             required: [
