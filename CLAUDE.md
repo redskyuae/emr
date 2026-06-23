@@ -209,3 +209,23 @@ export const repo = {
 ## Domain reference
 
 See `CONTEXT.md` for the canonical glossary of domain terms. Use those terms exactly — do not introduce synonyms.
+
+## Backend testing policy
+
+Backend API/module changes must include colocated Vitest tests that exercise behavior through the public module interface. Use explicit imports from `vitest`; Vitest globals are disabled. Test names must be readable and start with `should ...`.
+
+Use these filename suffixes:
+
+- `*.unit.tests.ts` for mocked or pure backend unit tests.
+- `*.integration.tests.ts` for DB-backed repository integration tests.
+
+Required coverage for new or changed backend modules:
+
+1. Schema unit tests are mandatory for backend module schemas: required fields, trimming/transforms, boundary limits, and exact validation messages where specified.
+2. Validator unit tests are mandatory: schema failure behavior, repository-backed existence/uniqueness checks, no repository calls when schema parsing fails, `ValidationResult<T>` shape, and `status` propagation.
+3. Command unit tests are mandatory: validator is called first, repository writes are not called on validation failure, repository success maps to `CommandResult<T>` success, and known database constraint failures such as Postgres `23505` map to clean conflict errors where applicable.
+4. Query unit tests are mandatory: validate tenant/id/list params, avoid repository calls on validation failure, and return `QueryResult<T>` shapes correctly.
+5. Repository integration tests are mandatory for repositories: tenant isolation for tenant-scoped data, soft-delete filtering, create/update/delete/read behavior, database uniqueness constraints including partial unique indexes, case-insensitive uniqueness where relevant, and pagination/search behavior where relevant.
+6. Route handler tests are required when HTTP adapter logic is non-trivial: auth/session handling, invalid JSON handling, status-code/message mapping, and query/path parameter parsing. Do not duplicate all command/query behavior in route tests.
+
+Unit tests should use Vitest module mocks for collaborators rather than dependency-injection refactors unless the production design already calls for one. Repository integration tests use a real PostgreSQL database and require `TEST_DATABASE_URL`; the database name must include `test` because integration setup truncates known app/auth tables with `RESTART IDENTITY CASCADE` before each test. Run `bun run test:db:migrate` before local integration tests; migrations are intentionally not run automatically by Vitest setup.
