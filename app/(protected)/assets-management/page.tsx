@@ -148,7 +148,7 @@ export default function AssetOverviewPage() {
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.88fr)]">
+      <section className="grid gap-4 xl:grid-cols-2">
         <Card className="shadow-fluent-2">
           <CardHeader className="border-b">
             <div>
@@ -224,7 +224,7 @@ export default function AssetOverviewPage() {
           </CardAction>
         </CardHeader>
         <CardContent className="p-0">
-          <Table className="min-w-[860px]">
+          <Table className="min-w-max">
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Work order</TableHead>

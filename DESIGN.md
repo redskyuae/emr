@@ -59,6 +59,7 @@ Depth communicates hierarchy: the more an element interrupts the user, the highe
 
 - Base radius `--radius: 0.5rem`; shadcn scales it down for small controls. Fluent uses small radii — do not use `rounded-3xl`+ on controls (large radii are reserved for marketing artwork like the CTA banner).
 - Spacing follows the 8px grid: prefer Tailwind steps that are multiples of 2 (`gap-2`, `p-4`, `py-6`); use odd steps only inside dense data UI.
+- Avoid arbitrary Tailwind length utilities (`w-[360px]`, `text-[15px]`, `rounded-[4px]`) in product UI when a Tailwind scale class or design-system utility exists. Arbitrary values require a clear layout reason and should be rare.
 
 ### Surfaces
 

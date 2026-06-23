@@ -135,7 +135,7 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
 
         <Button
           type="submit"
-          className="h-10 w-full text-[15px]"
+          className="h-10 w-full text-sm"
           disabled={signInMutation.isPending}
           aria-busy={signInMutation.isPending}
         >

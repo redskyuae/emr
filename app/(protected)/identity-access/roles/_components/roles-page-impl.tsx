@@ -225,12 +225,12 @@ function RoleCard({
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <h2 className="truncate text-base font-semibold">{role.name}</h2>
               {role.isSystem ? (
-                <Badge variant="outline" className="bg-muted/70 text-[11px] uppercase">
+                <Badge variant="outline" className="bg-muted/70 text-xs uppercase">
                   System
                 </Badge>
               ) : null}
             </div>
-            <Badge variant="outline" className="bg-muted/70 font-mono text-[11px]">
+            <Badge variant="outline" className="bg-muted/70 font-mono text-xs">
               {role.code}
             </Badge>
             <p className="text-muted-foreground line-clamp-2 text-sm">
@@ -320,12 +320,9 @@ function PermissionMatrixSkeleton() {
           </div>
           <div className="divide-y rounded-md border">
             {[0, 1, 2].map((resource) => (
-              <div
-                key={resource}
-                className="grid gap-3 p-3 md:grid-cols-[150px_minmax(0,1fr)] md:items-start"
-              >
+              <div key={resource} className="grid gap-3 p-3 md:grid-cols-3 md:items-start">
                 <Skeleton className="h-5 w-32" />
-                <div className="grid [grid-template-columns:repeat(auto-fit,minmax(8.75rem,1fr))] gap-x-4 gap-y-3">
+                <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2 md:col-span-2 xl:grid-cols-3">
                   {[0, 1, 2, 3].map((action) => (
                     <Skeleton key={action} className="h-7 w-full" />
                   ))}
@@ -385,12 +382,9 @@ function PermissionMatrix({
 
             <div className="divide-y rounded-md border">
               {section.resources.map((resource) => (
-                <div
-                  key={resource.id}
-                  className="grid gap-3 p-3 md:grid-cols-[150px_minmax(0,1fr)] md:items-start"
-                >
+                <div key={resource.id} className="grid gap-3 p-3 md:grid-cols-3 md:items-start">
                   <p className="font-medium">{resource.label}</p>
-                  <div className="grid [grid-template-columns:repeat(auto-fit,minmax(8.75rem,1fr))] gap-x-4 gap-y-3">
+                  <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2 md:col-span-2 xl:grid-cols-3">
                     {resource.permissions.map((permission) => {
                       const checkboxId = `permission-${permission.id}`;
 
@@ -717,8 +711,7 @@ export function RolesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
       <Sheet open={drawerOpen} onOpenChange={(open) => (!open ? closeDrawer() : undefined)}>
         <SheetContent
           side="right"
-          className="shadow-fluent-64 w-full gap-0 p-0 data-[side=right]:w-full sm:max-w-[760px]"
-          style={{ width: 'min(760px, 100vw)', maxWidth: '100vw' }}
+          className="shadow-fluent-64 gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-3xl"
         >
           <SheetHeader className="border-b p-4 pr-12">
             <div className="flex min-w-0 items-start gap-3">
@@ -756,8 +749,8 @@ export function RolesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
                   ) : null}
 
                   <FieldGroup className="gap-4">
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-                      <Field>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <Field className="md:col-span-2">
                         <FieldLabel htmlFor="role-name">Role name</FieldLabel>
                         <Input
                           id="role-name"

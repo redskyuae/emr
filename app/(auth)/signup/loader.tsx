@@ -35,7 +35,7 @@ export default function SignupLoader() {
         </div>
 
         <div className="flex items-start gap-2">
-          <Skeleton className="mt-0.5 size-4 rounded-[4px]" />
+          <Skeleton className="mt-0.5 size-4 rounded-sm" />
           <div className="flex-1 space-y-1.5">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />

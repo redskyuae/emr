@@ -99,7 +99,7 @@ function formatResultSubtitle(filteredWorkOrders: WorkOrder[]) {
 
 function WorkOrderAsset({ workOrder }: { workOrder: WorkOrder }) {
   return (
-    <div className="max-w-[360px] min-w-72 space-y-1">
+    <div className="max-w-sm min-w-72 space-y-1">
       <p className="truncate font-medium">{workOrder.assetLabel}</p>
       <p className="text-muted-foreground truncate text-xs">{workOrder.note}</p>
     </div>
@@ -196,7 +196,7 @@ export default function AssetMaintenancePage() {
             <NewWorkOrderSheet />
           </div>
 
-          <Table className="min-w-[1120px]">
+          <Table className="min-w-max">
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Work order</TableHead>

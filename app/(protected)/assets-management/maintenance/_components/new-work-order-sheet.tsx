@@ -65,8 +65,7 @@ export function NewWorkOrderSheet() {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="shadow-fluent-64 w-full gap-0 p-0 data-[side=right]:w-full sm:max-w-[760px]"
-        style={{ width: 'min(760px, 100vw)', maxWidth: '100vw' }}
+        className="shadow-fluent-64 gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-3xl"
       >
         <SheetHeader className="border-b p-4 pr-12">
           <div className="flex min-w-0 items-start gap-3">

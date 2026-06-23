@@ -46,7 +46,7 @@ export function Logo({
         {showCompany ? (
           <span
             className={cn(
-              'mt-1 text-[10px] leading-none font-medium tracking-wide',
+              'mt-1 text-xs leading-none font-medium tracking-wide',
               inverted ? 'text-white/55' : 'text-muted-foreground'
             )}
           >
