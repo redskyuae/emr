@@ -272,10 +272,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/appointment-masters/modes': {
     title: 'Appointment Modes',
     subtitle: 'Tenant-scoped delivery channel or format records for Appointments.',
-    primaryAction: {
-      label: 'Add Appointment Mode',
-      href: '/appointment-masters/modes?add=1',
-    },
   },
   '/global-references': {
     title: 'Global References',
