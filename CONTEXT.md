@@ -162,7 +162,15 @@ A trackable piece of physical equipment owned by the Tenant, located at a Facili
 
 ## Asset Category
 
-A classification for Assets, such as Diagnostic Imaging, Patient Monitoring, Life Support, Surgical, Laboratory, Mobility & Furniture, and IT & Network.
+A Tenant-scoped Master that classifies Assets, such as Diagnostic Imaging, Patient Monitoring, Life Support, Surgical, Laboratory, Mobility & Furniture, and IT & Network. Each Asset Category carries a display color used to distinguish it in the UI. Each Tenant manages its own Asset Categories independently.
+
+## Asset Status
+
+A Tenant-scoped Master that defines the operational lifecycle state of an Asset, such as in use, available, under maintenance, under repair, or retired. Distinct from Asset Condition, which describes physical wear rather than operational state.
+
+## Asset Condition
+
+A Tenant-scoped Master that grades the physical condition of an Asset, such as Excellent, Good, Fair, or Poor. Distinct from Asset Status, which describes whether the Asset is operationally in use, available, or out of service.
 
 ## Custodian
 
