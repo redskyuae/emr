@@ -432,6 +432,60 @@ const assetCategoryErrorResponses = {
   '500': responseRef('InternalServerError'),
 };
 
+const assetStatusExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'In Use',
+  code: 'INUSE',
+  color: '#16A34A',
+  description: 'Asset is currently assigned and operational',
+  createdOn: '2026-06-23T04:00:00.000Z',
+  modifiedOn: '2026-06-23T04:00:00.000Z',
+};
+
+const assetStatusRequestExample = {
+  name: 'In Use',
+  code: 'inuse',
+  color: '#16A34A',
+  description: 'Asset is currently assigned and operational',
+};
+
+const assetStatusValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Asset status color must be a hex value like #16A34A.'],
+    }
+  ),
+};
+
+const assetStatusNotFound = {
+  description: 'Asset Status was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Asset status not found',
+    errors: ['Asset status not found'],
+  }),
+};
+
+const assetStatusConflict = {
+  description: 'Asset Status name or code already exists in the active Tenant.',
+  content: jsonContent(schemaRef('ConflictError'), {
+    message: "Asset status name 'In Use' already exists.",
+    errors: ["Asset status name 'In Use' already exists."],
+  }),
+};
+
+const assetStatusErrorResponses = {
+  '400': assetStatusValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': assetStatusNotFound,
+  '409': assetStatusConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 export const openApiDocument = {
   openapi: '3.1.0',
   info: {
@@ -476,6 +530,7 @@ export const openApiDocument = {
       description: 'Appointment Cancelled Reason Master APIs.',
     },
     { name: 'Asset Category', description: 'Asset Category Master APIs.' },
+    { name: 'Asset Status', description: 'Asset Status Master APIs.' },
   ],
   paths: {
     '/api/v1/signin': {
@@ -1676,6 +1731,99 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/assets/statuses': {
+      get: {
+        tags: ['Asset Status'],
+        summary: 'List Asset Status Masters',
+        description:
+          'Returns a paginated list of Asset Status Masters for the active Tenant. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Asset Status Master list.',
+            content: jsonContent(paginatedSchema('AssetStatus'), {
+              data: [assetStatusExample],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          '400': assetStatusValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Asset Status'],
+        summary: 'Create Asset Status',
+        description:
+          'Creates an Asset Status Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateAssetStatusRequest', assetStatusRequestExample),
+        responses: {
+          '201': {
+            description: 'Asset Status created.',
+            content: jsonContent(dataEnvelopeSchema('AssetStatus'), {
+              data: assetStatusExample,
+            }),
+          },
+          ...assetStatusErrorResponses,
+        },
+      },
+    },
+    '/api/v1/assets/statuses/{id}': {
+      get: {
+        tags: ['Asset Status'],
+        summary: 'Get Asset Status',
+        description:
+          'Returns one active Asset Status Master by ID from the active Tenant. Asset Statuses from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Status')],
+        responses: {
+          '200': {
+            description: 'Asset Status found.',
+            content: jsonContent(dataEnvelopeSchema('AssetStatus'), {
+              data: assetStatusExample,
+            }),
+          },
+          ...assetStatusErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Asset Status'],
+        summary: 'Update Asset Status',
+        description:
+          'Updates one active Asset Status Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Status')],
+        requestBody: requestBody('UpdateAssetStatusRequest', assetStatusRequestExample),
+        responses: {
+          '200': {
+            description: 'Asset Status updated.',
+            content: jsonContent(dataEnvelopeSchema('AssetStatus'), {
+              data: assetStatusExample,
+            }),
+          },
+          ...assetStatusErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Asset Status'],
+        summary: 'Delete Asset Status',
+        description: 'Soft-deletes one active Asset Status Master in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Status')],
+        responses: {
+          '204': { description: 'Asset Status deleted.' },
+          ...assetStatusErrorResponses,
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -2356,6 +2504,52 @@ export const openApiDocument = {
       AssetCategory: {
         allOf: [
           schemaRef('CreateAssetCategoryRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'color',
+              'description',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreateAssetStatusRequest: {
+        type: 'object',
+        required: ['name', 'code', 'color'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty(
+            'Asset Status code. The API normalizes this value to uppercase.'
+          ),
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Asset Status display color as a #RRGGBB hex value.',
+          },
+          description: { type: 'string', description: 'Asset Status description.' },
+        },
+      },
+      UpdateAssetStatusRequest: schemaRef('CreateAssetStatusRequest'),
+      AssetStatus: {
+        allOf: [
+          schemaRef('CreateAssetStatusRequest'),
           {
             type: 'object',
             required: [
