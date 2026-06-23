@@ -162,6 +162,13 @@
       "when": 1782198812373,
       "tag": "0022_strong_electro",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1782206369313,
+      "tag": "0023_graceful_diamondback",
+      "breakpoints": true
     }
   ]
 }
