@@ -1,0 +1,25 @@
+CONTEXT.md
+  f0c9b6e37c05cc12 165-173
+docs/adr/0008-asset-location-relations-are-free-text.md
+  f0c9b6e37c05cc12 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "0e5a169220af0538f67ab493d09808170311921a",
+  "prompts": {
+    "f0c9b6e37c05cc12": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "349c7ef6-dccf-492c-b74f-d2a636dfe65d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 1,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}
