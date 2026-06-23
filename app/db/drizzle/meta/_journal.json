@@ -155,6 +155,13 @@
       "when": 1782195144265,
       "tag": "0021_moaning_whiplash",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1782198812373,
+      "tag": "0022_strong_electro",
+      "breakpoints": true
     }
   ]
 }
