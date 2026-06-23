@@ -378,6 +378,60 @@ const appointmentMasterSchema = (createSchemaName: string) => ({
   ],
 });
 
+const assetCategoryExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'Diagnostic Imaging',
+  code: 'IMG',
+  color: '#2563EB',
+  description: 'Radiology and imaging equipment',
+  createdOn: '2026-06-23T04:00:00.000Z',
+  modifiedOn: '2026-06-23T04:00:00.000Z',
+};
+
+const assetCategoryRequestExample = {
+  name: 'Diagnostic Imaging',
+  code: 'img',
+  color: '#2563EB',
+  description: 'Radiology and imaging equipment',
+};
+
+const assetCategoryValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Asset category color must be a hex value like #2563EB.'],
+    }
+  ),
+};
+
+const assetCategoryNotFound = {
+  description: 'Asset Category was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Asset category not found',
+    errors: ['Asset category not found'],
+  }),
+};
+
+const assetCategoryConflict = {
+  description: 'Asset Category name or code already exists in the active Tenant.',
+  content: jsonContent(schemaRef('ConflictError'), {
+    message: "Asset category name 'Diagnostic Imaging' already exists.",
+    errors: ["Asset category name 'Diagnostic Imaging' already exists."],
+  }),
+};
+
+const assetCategoryErrorResponses = {
+  '400': assetCategoryValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': assetCategoryNotFound,
+  '409': assetCategoryConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 export const openApiDocument = {
   openapi: '3.1.0',
   info: {
@@ -421,6 +475,7 @@ export const openApiDocument = {
       name: 'Appointment Cancelled Reason',
       description: 'Appointment Cancelled Reason Master APIs.',
     },
+    { name: 'Asset Category', description: 'Asset Category Master APIs.' },
   ],
   paths: {
     '/api/v1/signin': {
@@ -1528,6 +1583,99 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
+    '/api/v1/assets/categories': {
+      get: {
+        tags: ['Asset Category'],
+        summary: 'List Asset Category Masters',
+        description:
+          'Returns a paginated list of Asset Category Masters for the active Tenant. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Asset Category Master list.',
+            content: jsonContent(paginatedSchema('AssetCategory'), {
+              data: [assetCategoryExample],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          '400': assetCategoryValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Asset Category'],
+        summary: 'Create Asset Category',
+        description:
+          'Creates an Asset Category Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateAssetCategoryRequest', assetCategoryRequestExample),
+        responses: {
+          '201': {
+            description: 'Asset Category created.',
+            content: jsonContent(dataEnvelopeSchema('AssetCategory'), {
+              data: assetCategoryExample,
+            }),
+          },
+          ...assetCategoryErrorResponses,
+        },
+      },
+    },
+    '/api/v1/assets/categories/{id}': {
+      get: {
+        tags: ['Asset Category'],
+        summary: 'Get Asset Category',
+        description:
+          'Returns one active Asset Category Master by ID from the active Tenant. Asset Categories from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Category')],
+        responses: {
+          '200': {
+            description: 'Asset Category found.',
+            content: jsonContent(dataEnvelopeSchema('AssetCategory'), {
+              data: assetCategoryExample,
+            }),
+          },
+          ...assetCategoryErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Asset Category'],
+        summary: 'Update Asset Category',
+        description:
+          'Updates one active Asset Category Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Category')],
+        requestBody: requestBody('UpdateAssetCategoryRequest', assetCategoryRequestExample),
+        responses: {
+          '200': {
+            description: 'Asset Category updated.',
+            content: jsonContent(dataEnvelopeSchema('AssetCategory'), {
+              data: assetCategoryExample,
+            }),
+          },
+          ...assetCategoryErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Asset Category'],
+        summary: 'Delete Asset Category',
+        description: 'Soft-deletes one active Asset Category Master in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Asset Category')],
+        responses: {
+          '204': { description: 'Asset Category deleted.' },
+          ...assetCategoryErrorResponses,
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -2188,6 +2336,52 @@ export const openApiDocument = {
       AppointmentCancelledReason: appointmentMasterSchema(
         'CreateAppointmentCancelledReasonRequest'
       ),
+      CreateAssetCategoryRequest: {
+        type: 'object',
+        required: ['name', 'code', 'color'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty(
+            'Asset Category code. The API normalizes this value to uppercase.'
+          ),
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Asset Category display color as a #RRGGBB hex value.',
+          },
+          description: { type: 'string', description: 'Asset Category description.' },
+        },
+      },
+      UpdateAssetCategoryRequest: schemaRef('CreateAssetCategoryRequest'),
+      AssetCategory: {
+        allOf: [
+          schemaRef('CreateAssetCategoryRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'color',
+              'description',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
     },
     responses: {
       ValidationFailed: {
