@@ -1,0 +1,63 @@
+app/(protected)/identity-access/roles/_utils/role-code.ts
+  976efca3489e1d21 1-11
+app/(protected)/identity-access/roles/_components/_modals/delete-role-dialog.tsx
+  976efca3489e1d21 1-81
+components/providers/query-provider.tsx
+  976efca3489e1d21 5,23-27
+app/(protected)/identity-access/roles/_utils/role-form-schema.ts
+  976efca3489e1d21 1-18
+app/(protected)/identity-access/roles/page.tsx
+  976efca3489e1d21 3-4
+.agents/skills/tanstack-query-patterns/SKILL.md
+  976efca3489e1d21 129-148,151,167-198,238,266-267
+app/(protected)/identity-access/roles/_components/role-grid.tsx
+  976efca3489e1d21 1-7,9-32,34-113,115,117-119,121-157
+app/(protected)/identity-access/roles/_components/permission-matrix.tsx
+  976efca3489e1d21 1-122
+app/queries/identity-access/useRoles.ts
+  976efca3489e1d21 1,30-52,55
+app/(protected)/identity-access/roles/_components/role-icon.tsx
+  976efca3489e1d21 1-19
+app/(protected)/identity-access/roles/_components/_sheets/role-form-sheet.tsx
+  976efca3489e1d21 1-37,39-48,50-52,54-62,64-67,70,72-79,81-130,132-134,136-249,251-263,265-289,291-298,300,302-403
+CLAUDE.md
+  976efca3489e1d21 31-58
+app/(protected)/identity-access/roles/_utils/permission-sections.ts
+  976efca3489e1d21 1-94
+DESIGN.md
+  976efca3489e1d21 110
+app/queries/identity-access/useCreateRole.ts
+  976efca3489e1d21 3,6,24-25,27-32
+docs/adr/0009-client-forms-use-react-hook-form.md
+  976efca3489e1d21 1-9
+app/(protected)/identity-access/roles/_components/roles-page-impl.tsx
+  976efca3489e1d21 3-5,8,10-12,17-19,21-22,24,27-28,30-34,36-44,53,59,67-68,70-73,76-78,80,82-94
+app/queries/identity-access/useUpdateRole.ts
+  976efca3489e1d21 3,6,29-30,32-37
+app/queries/identity-access/useDeleteRole.ts
+  976efca3489e1d21 3,6,20-21,23-28
+docs/adr/0010-sheet-and-dialog-state-in-url-via-nuqs.md
+  976efca3489e1d21 1-9
+app/queries/identity-access/useSetRolePermissions.ts
+  976efca3489e1d21 3,6-7,36-37,39-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "e336a14a40084f5b3a0cedbf4963349491fbfa09",
+  "prompts": {
+    "976efca3489e1d21": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e5b572a6-15a4-4d53-bbd0-8392dfc94766",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1282,
+      "total_deletions": 981,
+      "accepted_lines": 1130,
+      "overriden_lines": 10
+    }
+  }
+}
