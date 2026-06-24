@@ -1,9 +1,10 @@
 'use client';
 
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { UpdateAppointmentModeRequest, UpdateAppointmentModeResponse, } from '@/app/api/v1/appointments/modes/[id]/types';
+import { APPOINTMENT_MODES_KEY } from './useAppointmentModes';
 
 type UpdateAppointmentModeVariables = {
   id: number;
@@ -34,5 +35,15 @@ type UseUpdateAppointmentModeOptions = Omit<
 >;
 
 export function useUpdateAppointmentMode(options?: UseUpdateAppointmentModeOptions) {
-  return useMutation({ mutationFn: updateAppointmentMode, ...options });
+  const queryClient = useQueryClient();
+  const { onSuccess, ...rest } = options ?? {};
+
+  return useMutation({
+    ...rest,
+    mutationFn: updateAppointmentMode,
+    onSuccess: async (...args) => {
+      await queryClient.invalidateQueries({ queryKey: APPOINTMENT_MODES_KEY });
+      await onSuccess?.(...args);
+    },
+  });
 }
