@@ -1,4 +1,4 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { ListRolesResponse } from '@/app/api/v1/roles/types';
@@ -27,10 +27,31 @@ export function useRolesQuery() {
   });
 }
 
-export function useRoles() {
-  return useSuspenseQuery({
+export type RoleSummary = {
+  total: number;
+  system: number;
+  custom: number;
+};
+
+// Derived aggregate over the same cached Roles list. Kept as a stable top-level
+// `select` (not a `useMemo` in the component) so it recomputes only when the
+// underlying Roles data changes, and subscribers re-render only when the summary
+// changes. Shares the canonical cache shape with the list hooks above.
+function transformRolesSummary(response: ListRolesResponse): RoleSummary {
+  const roles = response.data;
+  const system = roles.filter((role) => role.isSystem).length;
+
+  return {
+    total: roles.length,
+    system,
+    custom: roles.length - system,
+  };
+}
+
+export function useRolesSummaryQuery() {
+  return useQuery({
     queryKey: rolesQueryKey,
     queryFn: fetchRoles,
-    select: transformRolesResponse,
+    select: transformRolesSummary,
   });
 }

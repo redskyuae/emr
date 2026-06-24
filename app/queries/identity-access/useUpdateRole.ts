@@ -1,8 +1,9 @@
 'use client';
 
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
+import { rolesQueryKey } from '@/app/queries/identity-access/useRoles';
 import type { UpdateRoleRequest, UpdateRoleResponse } from '@/app/api/v1/roles/[id]/types';
 
 type UpdateRoleVariables = {
@@ -25,11 +26,13 @@ async function updateRole({ roleId, request }: UpdateRoleVariables): Promise<Upd
   return response.json() as Promise<UpdateRoleResponse>;
 }
 
-type UseUpdateRoleOptions = Omit<
-  UseMutationOptions<UpdateRoleResponse, Error, UpdateRoleVariables>,
-  'mutationFn'
->;
+export function useUpdateRole() {
+  const queryClient = useQueryClient();
 
-export function useUpdateRole(options?: UseUpdateRoleOptions) {
-  return useMutation({ mutationFn: updateRole, ...options });
+  return useMutation({
+    mutationFn: updateRole,
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: rolesQueryKey });
+    },
+  });
 }

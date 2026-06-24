@@ -28,6 +28,34 @@ All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired,
 - Every `app/**/page.tsx` outside `app/api/` must have a sibling `loader.tsx` that imports and renders `Skeleton` from `@/components/ui/skeleton`. When a page or route-local `_components/` file changes, update that route's `loader.tsx` in the same change so the skeleton stays page-shaped.
 - TanStack Query work must use the `tanstack-query-patterns` team skill. Claude Code should invoke `/tanstack-query-patterns`; other agents should read `.agents/skills/tanstack-query-patterns/SKILL.md` before adding or modifying API calls, query hooks, mutations, optimistic updates, query keys, `useQuery`, `useSuspenseQuery`, or `useMutation` code.
 
+### Screen composition
+
+Every non-trivial page is composed from small, single-responsibility files under its route directory. Do not let a page implementation grow into one giant client component. Follow this structure (see `app/(protected)/identity-access/roles/` as the reference implementation):
+
+```
+{route}/
+├── page.tsx                    # server component; renders the container, no business logic
+├── loader.tsx                  # Skeleton (see loader rule above)
+├── _components/
+│   ├── {feature}-page-impl.tsx # thin container: composes children, owns URL-derived open/close state
+│   ├── {component}.tsx         # presentational / feature components (a component + its skeleton may share a file)
+│   ├── _sheets/                # every Sheet (slide-over) shell lives here
+│   │   └── {thing}-sheet.tsx
+│   └── _modals/                # every Dialog / AlertDialog shell lives here
+│       └── {thing}-dialog.tsx
+└── _utils/                     # pure TypeScript only — no JSX, no React hooks
+    ├── {feature}-form-schema.ts
+    └── {helpers}.ts
+```
+
+- **`_sheets` / `_modals` hold the shell only.** A sheet or dialog is self-contained: it owns its form state and its own mutations. Reusable sub-parts it composes (e.g. a permission matrix) stay in `_components/` root, not nested inside the shell. The container passes only open-state, mode, and the target entity down.
+- **`_utils` is pure.** Only framework-free functions and the form's Zod schema go here. Anything that renders or uses a hook is a component, not a util. Utilities shared across the whole app still belong in `lib/`, not a route `_utils/`.
+- **Types are co-located**, not centralized in `_utils`. A type lives in the component that owns it; a type shared across sibling components is exported from its primary component file (e.g. `PermissionSection` from `permission-matrix.tsx`).
+- **No speculative exports.** Don't `export` a component, hook, type, or helper until something actually imports it — keep it module-private (no `export` keyword) until a real consumer exists, and add the `export` in the same change that adds the first importer. An export with no importer is dead surface area. This applies to all React/TS code, not just screens; where a more specific skill once said to export ahead of need (e.g. query read hooks), this rule overrides it — export only the flavor a consumer uses.
+- **Forms use `react-hook-form` + `zodResolver`** with a dedicated client-side Zod schema in `_utils` (separate from the API schema, which stays the server contract). `mode: 'onTouched'` to match the forgiving-forms rule in `DESIGN.md`; map server errors back with `setError`. See `docs/adr/0009-client-forms-use-react-hook-form.md`.
+- **Required-field asterisks come from the API contract for that operation**, not from an ad-hoc decision. Read required-ness from the request DTO / Zod schema (e.g. `SaveRoleRequest`/`createRoleSchema` vs `UpdateRoleRequest`/`updateRoleSchema`) so a field that is optional or absent in the contract gets no asterisk. Render the asterisk as inline `FieldLabel` children — do **not** fork the themed `FieldLabel` in `components/ui/` — mark it `aria-hidden` and set `aria-required` on the input.
+- **Sheet / dialog open-state lives in the URL via `nuqs`**, not `useState`, so the view is deep-linkable and survives refresh. Use one param to drive the whole surface (e.g. `?role=new` for create, `?role=42` for edit, absent for closed); the container derives mode from it and resolves the entity from already-loaded query data. `page.tsx` does not read `searchParams` for this. See `docs/adr/0010-sheet-and-dialog-state-in-url-via-nuqs.md`.
+
 ## Architecture: CQRS + Repository + Validation
 
 Every API module follows this pattern — no exceptions:

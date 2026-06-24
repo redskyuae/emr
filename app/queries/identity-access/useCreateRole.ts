@@ -1,8 +1,9 @@
 'use client';
 
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
+import { rolesQueryKey } from '@/app/queries/identity-access/useRoles';
 import type { SaveRoleRequest, SaveRoleResponse } from '@/app/api/v1/roles/types';
 
 async function createRole(request: SaveRoleRequest): Promise<SaveRoleResponse> {
@@ -20,11 +21,13 @@ async function createRole(request: SaveRoleRequest): Promise<SaveRoleResponse> {
   return response.json() as Promise<SaveRoleResponse>;
 }
 
-type UseCreateRoleOptions = Omit<
-  UseMutationOptions<SaveRoleResponse, Error, SaveRoleRequest>,
-  'mutationFn'
->;
+export function useCreateRole() {
+  const queryClient = useQueryClient();
 
-export function useCreateRole(options?: UseCreateRoleOptions) {
-  return useMutation({ mutationFn: createRole, ...options });
+  return useMutation({
+    mutationFn: createRole,
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: rolesQueryKey });
+    },
+  });
 }

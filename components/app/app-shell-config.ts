@@ -236,10 +236,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/identity-access/roles': {
     title: 'Roles & Permissions',
     subtitle: 'Tenant-scoped Roles mapped to the Permission Catalogue.',
-    primaryAction: {
-      label: 'Create Role',
-      href: '/identity-access/roles?create=1',
-    },
   },
   '/identity-access/sessions': {
     title: 'Sessions',

@@ -1,8 +1,9 @@
 'use client';
 
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
+import { rolesQueryKey } from '@/app/queries/identity-access/useRoles';
 import type { DeleteRoleResponse } from '@/app/api/v1/roles/[id]/types';
 
 async function deleteRole(roleId: number): Promise<DeleteRoleResponse> {
@@ -16,11 +17,13 @@ async function deleteRole(roleId: number): Promise<DeleteRoleResponse> {
   }
 }
 
-type UseDeleteRoleOptions = Omit<
-  UseMutationOptions<DeleteRoleResponse, Error, number>,
-  'mutationFn'
->;
+export function useDeleteRole() {
+  const queryClient = useQueryClient();
 
-export function useDeleteRole(options?: UseDeleteRoleOptions) {
-  return useMutation({ mutationFn: deleteRole, ...options });
+  return useMutation({
+    mutationFn: deleteRole,
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: rolesQueryKey });
+    },
+  });
 }

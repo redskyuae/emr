@@ -1,8 +1,10 @@
 'use client';
 
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
+import { rolePermissionsQueryKey } from '@/app/queries/identity-access/useRolePermissions';
+import { rolesQueryKey } from '@/app/queries/identity-access/useRoles';
 import type {
   SetRolePermissionsRequest,
   SetRolePermissionsResponse,
@@ -31,11 +33,18 @@ async function setRolePermissions({
   return response.json() as Promise<SetRolePermissionsResponse>;
 }
 
-type UseSetRolePermissionsOptions = Omit<
-  UseMutationOptions<SetRolePermissionsResponse, Error, SetRolePermissionsVariables>,
-  'mutationFn'
->;
+export function useSetRolePermissions() {
+  const queryClient = useQueryClient();
 
-export function useSetRolePermissions(options?: UseSetRolePermissionsOptions) {
-  return useMutation({ mutationFn: setRolePermissions, ...options });
+  return useMutation({
+    mutationFn: setRolePermissions,
+    onSettled: (_data, _error, variables) => {
+      // The Role's assigned Permissions changed, and its permission count is
+      // shown on the Roles list card — invalidate both.
+      void queryClient.invalidateQueries({
+        queryKey: rolePermissionsQueryKey(variables.roleId),
+      });
+      void queryClient.invalidateQueries({ queryKey: rolesQueryKey });
+    },
+  });
 }

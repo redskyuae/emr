@@ -126,9 +126,29 @@ export function useCountries() {
 
 **`select` — derive, don't bake.** Keep the cache in canonical API shape; map to UI shape via `select`. Optimistic helpers can then `getQueryData<ListXxxResponse>()` / `getQueryData<GetXxxResponse>()` against a stable shape, and re-renders are skipped when the underlying data is unchanged. Lift non-trivial transforms to a top-level `transform{Resource}Response` so both hooks share it.
 
+**Derived aggregates belong in `select`, not `useMemo`.** Counts, summaries, filtered/grouped views, and other values computed purely from query data should be derived in a `select`, not recomputed with `useMemo` in a component. A stable top-level `select` function recomputes only when the underlying cached data changes (React Query memoizes the result and applies structural sharing), so it matches `useMemo` semantics while keeping derivation next to the data and out of the component.
+
+Expose a derived view as its own selector hook subscribed to the **same query key** — same cache, one fetch, and each subscriber re-renders only when its slice changes:
+
+```ts
+export type RoleSummary = { total: number; system: number; custom: number };
+
+function transformRolesSummary(response: ListRolesResponse): RoleSummary {
+  const roles = response.data;
+  const system = roles.filter((role) => role.isSystem).length;
+  return { total: roles.length, system, custom: roles.length - system };
+}
+
+export function useRolesSummaryQuery() {
+  return useQuery({ queryKey: rolesQueryKey, queryFn: fetchRoles, select: transformRolesSummary });
+}
+```
+
+A component then reads `useRolesQuery()` for the list and `useRolesSummaryQuery()` for the aggregate, with no `useMemo` in between. Keep the canonical list hook returning the list — add a selector hook for the derived shape rather than baking it into the shared transform.
+
 ### Picking a flavor
 
-Default: export both. Drop one only with a reason.
+Export only the flavor a consumer imports; add the suspense/non-suspense sibling in the same change that introduces its first consumer. Do not export a hook nothing imports — an unused exported hook is dead surface area (see the no-speculative-exports rule in `CLAUDE.md`). Both flavors can share the same `queryKey`, fetcher, and `select`, so adding the sibling later is a few lines.
 
 | Situation                                                  | Flavor                                                              |
 | ---------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -143,6 +163,38 @@ The `Loader`/skeleton component lives next to the consumer, not in the query fil
 ## Mutations
 
 Mutation files own the private API helper but import request/response contract types from `app/api/v1/**/types.ts`. Components call the hook and render pending/error states.
+
+**Cache work lives in the mutation hook, never the component.** A mutation that changes server data owns its cache consequences: the hook calls `useQueryClient()` internally and invalidates the affected query keys in `onSettled` (and runs optimistic writes in `onMutate`/`onError` — see below). **Components must never call `useQueryClient` or `invalidateQueries`.** A component only calls `mutate` / `mutateAsync` and handles UX (toast, navigation, closing a sheet). The hook reads what it needs (e.g. the affected id) from the mutation `variables` passed to `onSettled`.
+
+A caller may still pass **UX-only** options such as `onSuccess: () => router.replace(...)` for navigation, but never cache lifecycle (`onMutate` / `onSettled`) or invalidation. If a hook owns its cache lifecycle and has no UX caller, give it **no `options` parameter at all** — that keeps a caller from passing an `onSettled` that clobbers the hook's invalidation.
+
+```ts
+'use client';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+import { rolesQueryKey } from '@/app/queries/identity-access/useRoles';
+import type { DeleteRoleResponse } from '@/app/api/v1/roles/[id]/types';
+
+async function deleteRole(roleId: number): Promise<DeleteRoleResponse> {
+  /* …fetch… */
+}
+
+export function useDeleteRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteRole,
+    onSettled: (_data, _error, roleId) => {
+      void queryClient.invalidateQueries({ queryKey: rolesQueryKey });
+    },
+  });
+}
+```
+
+Invalidate exactly the keys the write changes — including sibling caches the write affects (e.g. setting a Role's permissions invalidates both `rolePermissionsQueryKey(roleId)` and `rolesQueryKey`, because the Roles list card shows a permission count). When a component orchestrates several mutations in sequence, each hook's own `onSettled` fires as that mutation settles; the component just awaits and handles UX.
+
+When the hook only forwards a UX option (e.g. auth navigation) and does no cache work, the thin passthrough is still fine:
 
 ```ts
 'use client';
@@ -183,7 +235,7 @@ const signInMutation = useSignIn({
 signInMutation.mutate({ email, password, rememberMe });
 ```
 
-Use `isPending` to disable controls during the round-trip (`aria-busy={isPending}`). Do not await unless you need to chain — `mutate` already drives pending/error/success state.
+Use `isPending` to disable controls during the round-trip (`aria-busy={isPending}`). Do not await unless you need to chain — `mutate` already drives pending/error/success state. The component does **no** cache work here: invalidation already happened in the hook's `onSettled`.
 
 ---
 
@@ -211,5 +263,7 @@ Mutation lifecycle for optimistic updates:
 - **`fetch` inlined inside a component.** Move it to `app/queries/...` and expose a hook.
 - **API contract types duplicated in a hook.** Import request/response types from `app/api/v1/**/types.ts`.
 - **Transform applied in `queryFn` instead of `select`.** Cache must stay in API shape so optimistic helpers can read it.
+- **Aggregates derived with `useMemo` in a component instead of `select`.** Counts/summaries/filtered views computed from query data belong in a stable top-level `select` (a dedicated selector hook on the same query key), not a `useMemo` in the consumer.
+- **`useQueryClient` / `invalidateQueries` called in a component.** Cache work belongs in the mutation hook's `onSettled` (and `onMutate`/`onError`), not the component. A component importing `useQueryClient` is the tell.
 - **`setQueryData(produce(...))` inlined inside a mutation.** Move it to a helper in the read file.
 - **`cancelQueries` skipped in optimistic `onMutate`.** A late in-flight refetch will clobber the optimistic write.
