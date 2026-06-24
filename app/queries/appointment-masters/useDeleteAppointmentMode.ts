@@ -1,11 +1,11 @@
 'use client';
 
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
-import type { DeleteAppointmentModeResponse } from '@/app/api/v1/appointments/modes/[id]/types';
+import { APPOINTMENT_MODES_KEY } from './useAppointmentModes';
 
-async function deleteAppointmentMode(id: number): Promise<DeleteAppointmentModeResponse> {
+async function deleteAppointmentMode(id: number): Promise<void> {
   const response = await fetch(`/api/v1/appointments/modes/${id}`, {
     method: 'DELETE',
     credentials: 'same-origin',
@@ -17,10 +17,20 @@ async function deleteAppointmentMode(id: number): Promise<DeleteAppointmentModeR
 }
 
 type UseDeleteAppointmentModeOptions = Omit<
-  UseMutationOptions<DeleteAppointmentModeResponse, Error, number>,
+  UseMutationOptions<void, Error, number>,
   'mutationFn'
 >;
 
 export function useDeleteAppointmentMode(options?: UseDeleteAppointmentModeOptions) {
-  return useMutation({ mutationFn: deleteAppointmentMode, ...options });
+  const queryClient = useQueryClient();
+  const { onSuccess, ...rest } = options ?? {};
+
+  return useMutation({
+    ...rest,
+    mutationFn: deleteAppointmentMode,
+    onSuccess: async (...args) => {
+      await queryClient.invalidateQueries({ queryKey: APPOINTMENT_MODES_KEY });
+      await onSuccess?.(...args);
+    },
+  });
 }

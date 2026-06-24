@@ -1,0 +1,193 @@
+'use client';
+
+import type { UseFormReturn } from 'react-hook-form';
+import { AlertCircle, Save, Trash2 } from 'lucide-react';
+import type { AppointmentMode } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, } from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
+
+export type ModeFormValues = {
+  name: string;
+  code: string;
+  description?: string;
+};
+
+export function ModeFormSheet({
+  open,
+  onClose,
+  isCreating,
+  editingName,
+  form,
+  serverErrors,
+  isSaving,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  isCreating: boolean;
+  editingName: string | null;
+  form: UseFormReturn<ModeFormValues>;
+  serverErrors: string[];
+  isSaving: boolean;
+  onSave: () => void;
+}) {
+  const { register, formState: { errors } } = form;
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => (!o ? onClose() : undefined)}>
+      <SheetContent
+        side="right"
+        className="shadow-fluent-64 w-full gap-0 p-0 data-[side=right]:w-full sm:max-w-lg"
+        style={{ width: 'min(512px, 100vw)', maxWidth: '100vw' }}
+      >
+        <SheetHeader className="border-b p-4 pr-12">
+          <SheetTitle className="text-xl">
+            {isCreating ? 'Add Appointment Mode' : `Edit ${editingName ?? 'Mode'}`}
+          </SheetTitle>
+          <SheetDescription>
+            {isCreating
+              ? 'Create a new delivery channel or format for Appointments.'
+              : 'Update the Appointment Mode details.'}
+          </SheetDescription>
+        </SheetHeader>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSave();
+          }}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto p-4">
+            {serverErrors.length > 0 ? (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="size-4" />
+                <AlertTitle>Save failed</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc space-y-1 pl-4">
+                    {serverErrors.map((error) => (
+                      <li key={error}>{error}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            <FieldGroup className="gap-4">
+              <Field data-invalid={!!errors.name}>
+                <FieldLabel htmlFor="mode-name">Name</FieldLabel>
+                <Input
+                  id="mode-name"
+                  {...register('name')}
+                  disabled={isSaving}
+                  maxLength={100}
+                  placeholder="e.g. In-Person"
+                />
+                <FieldError errors={[errors.name]} />
+              </Field>
+
+              <Field data-invalid={!!errors.code}>
+                <FieldLabel htmlFor="mode-code">Code</FieldLabel>
+                <Input
+                  id="mode-code"
+                  {...register('code', {
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                      e.target.value = e.target.value.toUpperCase();
+                    },
+                  })}
+                  disabled={isSaving}
+                  maxLength={10}
+                  placeholder="e.g. IN_PERSON"
+                  className="font-mono"
+                />
+                <FieldError errors={[errors.code]} />
+              </Field>
+
+              <Field data-invalid={!!errors.description}>
+                <FieldLabel htmlFor="mode-description">Description</FieldLabel>
+                <Textarea
+                  id="mode-description"
+                  {...register('description')}
+                  disabled={isSaving}
+                  rows={3}
+                  placeholder="Optional description"
+                />
+                <FieldError errors={[errors.description]} />
+              </Field>
+            </FieldGroup>
+          </div>
+
+          <SheetFooter className="bg-background flex-row justify-end border-t p-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving}
+              aria-busy={isSaving}
+            >
+              <Save className="size-4" />
+              Save
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+export function ModeDeleteDialog({
+  mode,
+  isDeleting,
+  onCancel,
+  onConfirm,
+}: {
+  mode: AppointmentMode | null;
+  isDeleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AlertDialog
+      open={mode !== null}
+      onOpenChange={(open) => (!open ? onCancel() : undefined)}
+    >
+      <AlertDialogContent className="shadow-fluent-64">
+        <AlertDialogHeader>
+          <AlertDialogMedia className="text-destructive">
+            <Trash2 />
+          </AlertDialogMedia>
+          <AlertDialogTitle>Delete Appointment Mode?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {mode ? (
+              <>
+                Delete Appointment Mode &ldquo;
+                <strong>{mode.name}</strong>&rdquo;? This action cannot be undone.
+              </>
+            ) : (
+              'This Appointment Mode will be deleted.'
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={isDeleting}
+            onClick={(event) => {
+              event.preventDefault();
+              onConfirm();
+            }}
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
