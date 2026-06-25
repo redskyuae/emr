@@ -540,6 +540,123 @@ const assetConditionErrorResponses = {
   '500': responseRef('InternalServerError'),
 };
 
+const assetMasterSummaryExample = {
+  id: 1,
+  name: 'Diagnostic Imaging',
+  color: '#2563EB',
+};
+
+const assetExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'MRI Scanner 1.5T',
+  categoryId: 1,
+  statusId: 2,
+  conditionId: 3,
+  manufacturer: 'Siemens Healthineers',
+  model: 'MAGNETOM Sola',
+  serialNumber: 'SN-MG-88421',
+  facility: 'Apollo Main Hospital',
+  department: 'Radiology',
+  location: 'Radiology Wing - MRI Suite 2',
+  custodian: 'Dr. Kavya Menon',
+  purchaseDate: '2024-02-15',
+  warrantyExpiry: '2029-02-14',
+  cost: 1450000,
+  currentValue: 1325000,
+  lastServiceDate: '2026-05-20',
+  nextServiceDate: '2026-08-20',
+  calibrationDate: '2026-05-20',
+  category: assetMasterSummaryExample,
+  status: {
+    id: 2,
+    name: 'In Use',
+    color: '#16A34A',
+  },
+  condition: {
+    id: 3,
+    name: 'Excellent',
+    color: '#16A34A',
+  },
+  createdOn: '2026-06-24T04:00:00.000Z',
+  modifiedOn: '2026-06-24T04:00:00.000Z',
+};
+
+const assetRequestExample = {
+  name: 'MRI Scanner 1.5T',
+  categoryId: 1,
+  statusId: 2,
+  conditionId: 3,
+  manufacturer: 'Siemens Healthineers',
+  model: 'MAGNETOM Sola',
+  serialNumber: 'SN-MG-88421',
+  facility: 'Apollo Main Hospital',
+  department: 'Radiology',
+  location: 'Radiology Wing - MRI Suite 2',
+  custodian: 'Dr. Kavya Menon',
+  purchaseDate: '2024-02-15',
+  warrantyExpiry: '2029-02-14',
+  cost: 1450000,
+  currentValue: 1325000,
+  lastServiceDate: '2026-05-20',
+  nextServiceDate: '2026-08-20',
+  calibrationDate: '2026-05-20',
+};
+
+const assetValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Asset name cannot be empty'],
+    }
+  ),
+};
+
+const assetNotFound = {
+  description: 'Asset was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Asset not found',
+    errors: ['Asset not found'],
+  }),
+};
+
+const assetConflict = {
+  description:
+    'Asset serial number already exists, or a referenced Asset Master does not exist in the active Tenant.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateSerialNumber: {
+          summary: 'Duplicate serial number',
+          value: {
+            message: "Asset serial number 'SN-MG-88421' already exists.",
+            errors: ["Asset serial number 'SN-MG-88421' already exists."],
+          },
+        },
+        invalidReference: {
+          summary: 'Invalid Asset Master reference',
+          value: {
+            message: 'Asset category 999 is Invalid.',
+            errors: ['Asset category 999 is Invalid.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const assetErrorResponses = {
+  '400': assetValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': assetNotFound,
+  '409': assetConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 export const openApiDocument = {
   openapi: '3.1.0',
   info: {
@@ -586,6 +703,7 @@ export const openApiDocument = {
     { name: 'Asset Category', description: 'Asset Category Master APIs.' },
     { name: 'Asset Status', description: 'Asset Status Master APIs.' },
     { name: 'Asset Condition', description: 'Asset Condition Master APIs.' },
+    { name: 'Asset', description: 'Asset inventory APIs.' },
   ],
   paths: {
     '/api/v1/signin': {
@@ -1693,6 +1811,114 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
+    '/api/v1/assets': {
+      get: {
+        tags: ['Asset'],
+        summary: 'List Assets',
+        description:
+          'Returns a paginated list of active Assets for the active Tenant. The tenantId is resolved from the active authenticated Session. Each Asset embeds its resolved Asset Category, Asset Status, and optional Asset Condition summaries for badge rendering.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          parameterRef('Page'),
+          parameterRef('Limit'),
+          parameterRef('Query'),
+          parameterRef('AssetCategoryId'),
+          parameterRef('AssetStatusId'),
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated Asset list.',
+            content: jsonContent(paginatedSchema('Asset'), {
+              data: [assetExample],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          '400': assetValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Asset'],
+        summary: 'Create Asset',
+        description:
+          'Creates an Asset in the active Tenant. The tenantId is resolved from the active authenticated Session; categoryId, statusId, and conditionId must reference Asset Masters in the same Tenant.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateAssetRequest', assetRequestExample),
+        responses: {
+          '201': {
+            description: 'Asset created.',
+            content: jsonContent(dataEnvelopeSchema('Asset'), {
+              data: assetExample,
+            }),
+          },
+          '400': assetValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '409': assetConflict,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/assets/{id}': {
+      get: {
+        tags: ['Asset'],
+        summary: 'Get Asset',
+        description:
+          'Returns one active Asset by ID from the active Tenant. Assets from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [idPathParameter('Asset')],
+        responses: {
+          '200': {
+            description: 'Asset found.',
+            content: jsonContent(dataEnvelopeSchema('Asset'), {
+              data: assetExample,
+            }),
+          },
+          ...assetErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Asset'],
+        summary: 'Update Asset',
+        description:
+          'Updates one active Asset in the active Tenant. The tenantId is resolved from the active authenticated Session; categoryId, statusId, and conditionId must reference Asset Masters in the same Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [idPathParameter('Asset')],
+        requestBody: requestBody('UpdateAssetRequest', assetRequestExample),
+        responses: {
+          '200': {
+            description: 'Asset updated.',
+            content: jsonContent(dataEnvelopeSchema('Asset'), {
+              data: assetExample,
+            }),
+          },
+          '400': assetValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': assetNotFound,
+          '409': assetConflict,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      delete: {
+        tags: ['Asset'],
+        summary: 'Delete Asset',
+        description: 'Soft-deletes one active Asset in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [idPathParameter('Asset')],
+        responses: {
+          '204': { description: 'Asset deleted.' },
+          ...assetErrorResponses,
+        },
+      },
+    },
     '/api/v1/assets/categories': {
       get: {
         tags: ['Asset Category'],
@@ -2010,6 +2236,20 @@ export const openApiDocument = {
         required: false,
         description: 'Alias for query on list endpoints that implement search filtering.',
         schema: { type: 'string' },
+      },
+      AssetCategoryId: {
+        name: 'categoryId',
+        in: 'query',
+        required: false,
+        description: 'Filters Assets by Asset Category identifier in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      AssetStatusId: {
+        name: 'statusId',
+        in: 'query',
+        required: false,
+        description: 'Filters Assets by Asset Status identifier in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
       },
       CountryId: {
         name: 'countryId',
@@ -2632,6 +2872,133 @@ export const openApiDocument = {
       AppointmentCancelledReason: appointmentMasterSchema(
         'CreateAppointmentCancelledReasonRequest'
       ),
+      AssetMasterSummary: {
+        type: 'object',
+        required: ['id', 'name', 'color'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Display color as a #RRGGBB hex value.',
+          },
+        },
+      },
+      CreateAssetRequest: {
+        type: 'object',
+        required: ['name', 'categoryId', 'statusId', 'serialNumber'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 150 },
+          categoryId: { type: 'integer', minimum: 1 },
+          statusId: { type: 'integer', minimum: 1 },
+          conditionId: { type: 'integer', minimum: 1 },
+          manufacturer: { type: 'string', maxLength: 150 },
+          model: { type: 'string', maxLength: 150 },
+          serialNumber: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 100,
+            description: 'Asset serial number. Must be unique per Tenant, case-insensitively.',
+          },
+          facility: {
+            type: 'string',
+            maxLength: 150,
+            description: 'Free-text Facility location for now.',
+          },
+          department: {
+            type: 'string',
+            maxLength: 150,
+            description: 'Free-text Department location for now.',
+          },
+          location: {
+            type: 'string',
+            maxLength: 200,
+            description: 'Free-text physical location.',
+          },
+          custodian: {
+            type: 'string',
+            maxLength: 150,
+            description: 'Free-text Custodian; omit when the Asset is unassigned.',
+          },
+          purchaseDate: { type: 'string', format: 'date' },
+          warrantyExpiry: { type: 'string', format: 'date' },
+          cost: { type: 'number', minimum: 0 },
+          currentValue: { type: 'number', minimum: 0 },
+          lastServiceDate: { type: 'string', format: 'date' },
+          nextServiceDate: { type: 'string', format: 'date' },
+          calibrationDate: { type: 'string', format: 'date' },
+        },
+      },
+      UpdateAssetRequest: schemaRef('CreateAssetRequest'),
+      Asset: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'name',
+          'categoryId',
+          'statusId',
+          'conditionId',
+          'manufacturer',
+          'model',
+          'serialNumber',
+          'facility',
+          'department',
+          'location',
+          'custodian',
+          'purchaseDate',
+          'warrantyExpiry',
+          'cost',
+          'currentValue',
+          'lastServiceDate',
+          'nextServiceDate',
+          'calibrationDate',
+          'category',
+          'status',
+          'condition',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          name: { type: 'string', minLength: 1, maxLength: 150 },
+          categoryId: { type: 'integer', minimum: 1 },
+          statusId: { type: 'integer', minimum: 1 },
+          conditionId: { type: ['integer', 'null'], minimum: 1 },
+          manufacturer: { type: ['string', 'null'], maxLength: 150 },
+          model: { type: ['string', 'null'], maxLength: 150 },
+          serialNumber: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 100,
+            description: 'Asset serial number. Unique per Tenant, case-insensitively.',
+          },
+          facility: { type: ['string', 'null'], maxLength: 150 },
+          department: { type: ['string', 'null'], maxLength: 150 },
+          location: { type: ['string', 'null'], maxLength: 200 },
+          custodian: { type: ['string', 'null'], maxLength: 150 },
+          purchaseDate: { type: ['string', 'null'], format: 'date' },
+          warrantyExpiry: { type: ['string', 'null'], format: 'date' },
+          cost: { type: ['number', 'null'], minimum: 0 },
+          currentValue: { type: ['number', 'null'], minimum: 0 },
+          lastServiceDate: { type: ['string', 'null'], format: 'date' },
+          nextServiceDate: { type: ['string', 'null'], format: 'date' },
+          calibrationDate: { type: ['string', 'null'], format: 'date' },
+          category: schemaRef('AssetMasterSummary'),
+          status: schemaRef('AssetMasterSummary'),
+          condition: {
+            oneOf: [schemaRef('AssetMasterSummary'), { type: 'null' }],
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
       CreateAssetCategoryRequest: {
         type: 'object',
         required: ['name', 'code', 'color'],

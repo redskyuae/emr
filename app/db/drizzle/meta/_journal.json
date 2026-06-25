@@ -169,6 +169,13 @@
       "when": 1782206369313,
       "tag": "0023_graceful_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1782367978144,
+      "tag": "0024_black_smasher",
+      "breakpoints": true
     }
   ]
 }
