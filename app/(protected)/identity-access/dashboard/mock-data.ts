@@ -147,7 +147,7 @@ export const iamStaffUsers: IamStaffUser[] = [
   {
     id: 'staff-imran-khan',
     name: 'Dr. Imran Khan',
-    email: 'imran.khan@northgate.example',
+    email: 'imran.khan@norrthgate.example',
     initials: 'IK',
     role: 'Attending Physician',
   },
