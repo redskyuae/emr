@@ -9,6 +9,7 @@ import { getTenantUniqueConstraintErrors } from '../../tenant/validator/tenant-u
 import type { TenantProvisioningResult } from '../schemas/tenant-provisioning-schema';
 import { tenantProvisioningRepository } from '../repository/tenant-provisioning-repository';
 import { validateTenantProvisioning } from '../validator/tenant-provisioning-validator';
+import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
 
 function getAuthCreateUserErrors(error: unknown) {
@@ -121,6 +122,20 @@ export async function provisionTenantCommand(
         success: false,
         errors: appointmentMastersResult.errors,
         status: appointmentMastersResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
+      };
+    }
+
+    const assetMastersResult = await seedDefaultAssetMastersCommand(createdTenant.id);
+
+    if (!assetMastersResult.success) {
+      await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });
+      createdTenantId = undefined;
+      createdUserId = undefined;
+
+      return {
+        success: false,
+        errors: assetMastersResult.errors,
+        status: assetMastersResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
       };
     }
 
