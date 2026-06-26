@@ -540,6 +540,60 @@ const assetConditionErrorResponses = {
   '500': responseRef('InternalServerError'),
 };
 
+const workOrderTypeExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'Preventive',
+  code: 'PREV',
+  color: '#2563EB',
+  description: 'Planned preventive maintenance work',
+  createdOn: '2026-06-23T04:00:00.000Z',
+  modifiedOn: '2026-06-23T04:00:00.000Z',
+};
+
+const workOrderTypeRequestExample = {
+  name: 'Preventive',
+  code: 'prev',
+  color: '#2563EB',
+  description: 'Planned preventive maintenance work',
+};
+
+const workOrderTypeValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Work order type color must be a hex value like #16A34A.'],
+    }
+  ),
+};
+
+const workOrderTypeNotFound = {
+  description: 'Work Order Type was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Work order type not found',
+    errors: ['Work order type not found'],
+  }),
+};
+
+const workOrderTypeConflict = {
+  description: 'Work Order Type name or code already exists in the active Tenant.',
+  content: jsonContent(schemaRef('ConflictError'), {
+    message: "Work order type name 'Preventive' already exists.",
+    errors: ["Work order type name 'Preventive' already exists."],
+  }),
+};
+
+const workOrderTypeErrorResponses = {
+  '400': workOrderTypeValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': workOrderTypeNotFound,
+  '409': workOrderTypeConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 const assetMasterSummaryExample = {
   id: 1,
   name: 'Diagnostic Imaging',
@@ -703,6 +757,7 @@ export const openApiDocument = {
     { name: 'Asset Category', description: 'Asset Category Master APIs.' },
     { name: 'Asset Status', description: 'Asset Status Master APIs.' },
     { name: 'Asset Condition', description: 'Asset Condition Master APIs.' },
+    { name: 'Work Order Type', description: 'Work Order Type Master APIs.' },
     { name: 'Asset', description: 'Asset inventory APIs.' },
   ],
   paths: {
@@ -2198,6 +2253,99 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/work-orders/types': {
+      get: {
+        tags: ['Work Order Type'],
+        summary: 'List Work Order Type Masters',
+        description:
+          'Returns a paginated list of Work Order Type Masters for the active Tenant. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Work Order Type Master list.',
+            content: jsonContent(paginatedSchema('WorkOrderType'), {
+              data: [workOrderTypeExample],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          '400': workOrderTypeValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Work Order Type'],
+        summary: 'Create Work Order Type',
+        description:
+          'Creates a Work Order Type Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateWorkOrderTypeRequest', workOrderTypeRequestExample),
+        responses: {
+          '201': {
+            description: 'Work Order Type created.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderType'), {
+              data: workOrderTypeExample,
+            }),
+          },
+          ...workOrderTypeErrorResponses,
+        },
+      },
+    },
+    '/api/v1/work-orders/types/{id}': {
+      get: {
+        tags: ['Work Order Type'],
+        summary: 'Get Work Order Type',
+        description:
+          'Returns one active Work Order Type Master by ID from the active Tenant. Work Order Types from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Type')],
+        responses: {
+          '200': {
+            description: 'Work Order Type found.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderType'), {
+              data: workOrderTypeExample,
+            }),
+          },
+          ...workOrderTypeErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Work Order Type'],
+        summary: 'Update Work Order Type',
+        description:
+          'Updates one active Work Order Type Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Type')],
+        requestBody: requestBody('UpdateWorkOrderTypeRequest', workOrderTypeRequestExample),
+        responses: {
+          '200': {
+            description: 'Work Order Type updated.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderType'), {
+              data: workOrderTypeExample,
+            }),
+          },
+          ...workOrderTypeErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Work Order Type'],
+        summary: 'Delete Work Order Type',
+        description: 'Soft-deletes one active Work Order Type Master in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Type')],
+        responses: {
+          '204': { description: 'Work Order Type deleted.' },
+          ...workOrderTypeErrorResponses,
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -3111,6 +3259,52 @@ export const openApiDocument = {
       AssetCondition: {
         allOf: [
           schemaRef('CreateAssetConditionRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'color',
+              'description',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreateWorkOrderTypeRequest: {
+        type: 'object',
+        required: ['name', 'code', 'color'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty(
+            'Work Order Type code. The API normalizes this value to uppercase.'
+          ),
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Work Order Type display color as a #RRGGBB hex value.',
+          },
+          description: { type: 'string', description: 'Work Order Type description.' },
+        },
+      },
+      UpdateWorkOrderTypeRequest: schemaRef('CreateWorkOrderTypeRequest'),
+      WorkOrderType: {
+        allOf: [
+          schemaRef('CreateWorkOrderTypeRequest'),
           {
             type: 'object',
             required: [
