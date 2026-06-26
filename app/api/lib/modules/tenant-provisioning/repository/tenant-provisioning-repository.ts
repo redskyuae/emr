@@ -6,6 +6,9 @@ import { appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import { appointmentReasonTable } from '@/app/db/schema/appointment-reason';
 import { appointmentStatusTable } from '@/app/db/schema/appointment-status';
 import { appointmentTypeTable } from '@/app/db/schema/appointment-type';
+import { assetCategoryTable } from '@/app/db/schema/asset-category';
+import { assetConditionTable } from '@/app/db/schema/asset-condition';
+import { assetStatusTable } from '@/app/db/schema/asset-status';
 import { organization, user } from '@/app/db/schema/auth';
 
 async function findUserByEmail(email: string) {
@@ -27,6 +30,9 @@ async function deleteTenantArtifacts(tenantId: string) {
     await tx.delete(appointmentStatusTable).where(eq(appointmentStatusTable.tenantId, tenantId));
     await tx.delete(appointmentTypeTable).where(eq(appointmentTypeTable.tenantId, tenantId));
     await tx.delete(appointmentModeTable).where(eq(appointmentModeTable.tenantId, tenantId));
+    await tx.delete(assetConditionTable).where(eq(assetConditionTable.tenantId, tenantId));
+    await tx.delete(assetStatusTable).where(eq(assetStatusTable.tenantId, tenantId));
+    await tx.delete(assetCategoryTable).where(eq(assetCategoryTable.tenantId, tenantId));
     await tx.delete(organization).where(eq(organization.id, tenantId));
   });
 }
