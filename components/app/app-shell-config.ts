@@ -269,6 +269,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Appointment Masters',
     subtitle: 'Tenant-scoped appointment configuration.',
   },
+  '/appointment-masters/modes': {
+    title: 'Appointment Modes',
+    subtitle: 'Tenant-scoped delivery channel or format records for Appointments.',
+  },
   '/global-references': {
     title: 'Global References',
     subtitle: 'Shared reference data used across Tenants.',
