@@ -179,3 +179,15 @@ The Staff member accountable for an Asset. An Asset may also be unassigned when 
 ## Work Order
 
 A maintenance job against an Asset, such as preventive maintenance, corrective repair, calibration, or inspection.
+
+## Work Order Type
+
+A Tenant-scoped Master that classifies the nature of the maintenance work in a Work Order, such as Preventive, Corrective, Calibration, or Inspection. Distinct from Work Order Priority, which ranks urgency, and Work Order Status, which tracks lifecycle state. Each Tenant manages its own Work Order Types independently.
+
+## Work Order Priority
+
+A Tenant-scoped Master that ranks the urgency of a Work Order, such as Low, Medium, High, or Critical. Distinct from Work Order Type, which describes the nature of the work, and from Work Order Status, which tracks lifecycle state.
+
+## Work Order Status
+
+A Tenant-scoped Master that defines the lifecycle state of a Work Order, such as Open, In Progress, Scheduled, Completed, or Overdue. Distinct from Asset Status, which describes the operational state of the Asset itself rather than the maintenance job.
