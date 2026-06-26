@@ -7,29 +7,29 @@ import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, } from 'lucide-react';
 import { toast } from 'sonner';
-import type { AppointmentMode } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
-import { createAppointmentModeSchema } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
+import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
+import { createAppointmentTypeSchema } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
-import { useAppointmentModesQuery } from '@/app/queries/appointment-masters/useAppointmentModes';
-import { useCreateAppointmentMode } from '@/app/queries/appointment-masters/useCreateAppointmentMode';
-import { useDeleteAppointmentMode } from '@/app/queries/appointment-masters/useDeleteAppointmentMode';
-import { useUpdateAppointmentMode } from '@/app/queries/appointment-masters/useUpdateAppointmentMode';
+import { useAppointmentTypesQuery } from '@/app/queries/appointment-masters/types/useAppointmentTypes';
+import { useCreateAppointmentType } from '@/app/queries/appointment-masters/types/useCreateAppointmentType';
+import { useDeleteAppointmentType } from '@/app/queries/appointment-masters/types/useDeleteAppointmentType';
+import { useUpdateAppointmentType } from '@/app/queries/appointment-masters/types/useUpdateAppointmentType';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle, } from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { ModeDeleteDialog } from './_modals/delete-mode-dialog';
-import { ModeFormSheet, type ModeFormValues } from './_sheets/mode-form-sheet';
-import { ViewSkeleton } from './mode-skeletons';
-import { ModeCardView, ModeListView, ModeTableView } from './mode-views';
+import { TypeDeleteDialog } from './_modals/delete-type-dialog';
+import { TypeFormSheet, type TypeFormValues } from './_sheets/type-form-sheet';
+import { ViewSkeleton } from './type-skeletons';
+import { TypeCardView, TypeListView, TypeTableView } from './type-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
 
 const PAGE_SIZE = 10;
 
-export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolean }) {
+export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolean }) {
   const router = useRouter();
   const initialCreateHandledRef = useRef(false);
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
@@ -38,32 +38,32 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
   const [page, setPage] = useState(1);
 
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [editingMode, setEditingMode] = useState<AppointmentMode | null>(null);
-  const [modePendingDelete, setModePendingDelete] = useState<AppointmentMode | null>(null);
+  const [editingType, setEditingType] = useState<AppointmentType | null>(null);
+  const [typePendingDelete, setTypePendingDelete] = useState<AppointmentType | null>(null);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
 
-  const form = useForm<ModeFormValues>({
-    resolver: zodResolver(createAppointmentModeSchema),
+  const form = useForm<TypeFormValues>({
+    resolver: zodResolver(createAppointmentTypeSchema),
     defaultValues: { name: '', code: '', description: '' },
   });
 
-  const modesQuery = useAppointmentModesQuery({
+  const typesQuery = useAppointmentTypesQuery({
     query: debouncedSearch || undefined,
     page,
     limit: PAGE_SIZE,
   });
 
-  const createMutation = useCreateAppointmentMode();
-  const updateMutation = useUpdateAppointmentMode();
-  const deleteMutation = useDeleteAppointmentMode();
+  const createMutation = useCreateAppointmentType();
+  const updateMutation = useUpdateAppointmentType();
+  const deleteMutation = useDeleteAppointmentType();
 
-  const modes = modesQuery.data?.data ?? [];
-  const meta = modesQuery.data?.meta;
+  const types = typesQuery.data?.data ?? [];
+  const meta = typesQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
   const total = meta?.total ?? 0;
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
-  const isCreating = !editingMode;
+  const isCreating = !editingType;
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
@@ -73,7 +73,6 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
 
     initialCreateHandledRef.current = true;
     openAddSheet();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCreateOpen]);
 
   const previousDebouncedRef = useRef(debouncedSearch);
@@ -85,25 +84,25 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
   }
 
   function openAddSheet() {
-    setEditingMode(null);
+    setEditingType(null);
     form.reset({ name: '', code: '', description: '' });
     setServerErrors([]);
     setSheetOpen(true);
   }
 
-  function openEditSheet(mode: AppointmentMode) {
-    setEditingMode(mode);
-    form.reset({ name: mode.name, code: mode.code, description: mode.description ?? '' });
+  function openEditSheet(type: AppointmentType) {
+    setEditingType(type);
+    form.reset({ name: type.name, code: type.code, description: type.description ?? '' });
     setServerErrors([]);
     setSheetOpen(true);
   }
 
   function closeSheet() {
     setSheetOpen(false);
-    setEditingMode(null);
+    setEditingType(null);
     form.reset({ name: '', code: '', description: '' });
     setServerErrors([]);
-    router.replace('/appointment-masters/modes', { scroll: false });
+    router.replace('/appointment-masters/types', { scroll: false });
   }
 
   const handleSave = form.handleSubmit(async (values) => {
@@ -116,18 +115,18 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
           code: values.code,
           description: values.description || undefined,
         });
-        toast.success('Appointment Mode created.');
+        toast.success('Appointment Type created.');
         closeSheet();
       } else {
         await updateMutation.mutateAsync({
-          id: editingMode.id,
+          id: editingType.id,
           request: {
             name: values.name,
             code: values.code,
             description: values.description || undefined,
           },
         });
-        toast.success('Appointment Mode updated.');
+        toast.success('Appointment Type updated.');
         closeSheet();
       }
     } catch (error) {
@@ -138,19 +137,19 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
   });
 
   async function handleConfirmDelete() {
-    if (!modePendingDelete) {
+    if (!typePendingDelete) {
       return;
     }
 
     try {
-      await deleteMutation.mutateAsync(modePendingDelete.id);
-      toast.success('Appointment Mode deleted.');
+      await deleteMutation.mutateAsync(typePendingDelete.id);
+      toast.success('Appointment Type deleted.');
 
-      if (editingMode?.id === modePendingDelete.id) {
+      if (editingType?.id === typePendingDelete.id) {
         closeSheet();
       }
 
-      setModePendingDelete(null);
+      setTypePendingDelete(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -172,12 +171,12 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
-                Table
-              </ToggleGroupItem>
+                <TableIcon className="size-4" /> 
+                Table 
+                </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
                 <LayoutGrid className="size-4" />
-                Card
+                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
                 <LayoutList className="size-4" />
@@ -193,50 +192,50 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
                 type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search appointment modes..."
-                aria-label="Search appointment modes"
+                placeholder="Search appointment types..."
+                aria-label="Search appointment types"
               />
             </InputGroup>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
               <Button type="button" size="lg" onClick={openAddSheet}>
                 <Plus className="size-4" />
-                Add Appointment Mode
+                Add Appointment Type
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {modesQuery.isError ? (
+        {typesQuery.isError ? (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
-            <AlertTitle>Could not load Appointment Modes</AlertTitle>
-            <AlertDescription>{getApiErrorMessage(modesQuery.error)}</AlertDescription>
+            <AlertTitle>Could not load Appointment Types</AlertTitle>
+            <AlertDescription>{getApiErrorMessage(typesQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {modesQuery.isLoading ? (
+        {typesQuery.isLoading ? (
           <ViewSkeleton layout={viewLayout} />
-        ) : modes.length === 0 && !debouncedSearch ? (
+        ) : types.length === 0 && !debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <ClipboardList />
               </EmptyMedia>
-              <EmptyTitle>No Appointment Modes yet</EmptyTitle>
+              <EmptyTitle>No Appointment Types yet</EmptyTitle>
               <EmptyDescription>
-                Create Appointment Modes to define delivery channels or formats for Appointments in
-                this Tenant.
+                Create Appointment Types to define clinical categories or visit types for
+                Appointments in this Tenant.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button type="button" onClick={openAddSheet}>
                 <Plus className="size-4" />
-                Add Appointment Mode
+                Add Appointment Type
               </Button>
             </EmptyContent>
           </Empty>
-        ) : modes.length === 0 && debouncedSearch ? (
+        ) : types.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -244,7 +243,7 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
-                No Appointment Modes match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                No Appointment Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                 term.
               </EmptyDescription>
             </EmptyHeader>
@@ -252,22 +251,22 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <ModeTableView
-                modes={modes}
+              <TypeTableView
+                types={types}
                 onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
+                onDelete={setTypePendingDelete}
               />
             ) : viewLayout === 'card' ? (
-              <ModeCardView
-                modes={modes}
+              <TypeCardView
+                types={types}
                 onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
+                onDelete={setTypePendingDelete}
               />
             ) : (
-              <ModeListView
-                modes={modes}
+              <TypeListView
+                types={types}
                 onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
+                onDelete={setTypePendingDelete}
               />
             )}
 
@@ -304,21 +303,21 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
         )}
       </div>
 
-      <ModeFormSheet
+      <TypeFormSheet
         open={sheetOpen}
         onClose={closeSheet}
         isCreating={isCreating}
-        editingName={editingMode?.name ?? null}
+        editingName={editingType?.name ?? null}
         form={form}
         serverErrors={serverErrors}
         isSaving={isSaving}
         onSave={() => void handleSave()}
       />
 
-      <ModeDeleteDialog
-        mode={modePendingDelete}
+      <TypeDeleteDialog
+        type={typePendingDelete}
         isDeleting={deleteMutation.isPending}
-        onCancel={() => setModePendingDelete(null)}
+        onCancel={() => setTypePendingDelete(null)}
         onConfirm={() => void handleConfirmDelete()}
       />
     </>
