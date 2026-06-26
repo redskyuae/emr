@@ -176,6 +176,13 @@
       "when": 1782367978144,
       "tag": "0024_black_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1782453473677,
+      "tag": "0025_colorful_cobalt_man",
+      "breakpoints": true
     }
   ]
 }

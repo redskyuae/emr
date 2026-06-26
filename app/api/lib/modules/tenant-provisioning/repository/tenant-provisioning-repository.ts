@@ -10,6 +10,7 @@ import { assetCategoryTable } from '@/app/db/schema/asset-category';
 import { assetConditionTable } from '@/app/db/schema/asset-condition';
 import { assetStatusTable } from '@/app/db/schema/asset-status';
 import { organization, user } from '@/app/db/schema/auth';
+import { workOrderTypeTable } from '@/app/db/schema/work-order-type';
 
 async function findUserByEmail(email: string) {
   const [existingUser] = await db
@@ -33,6 +34,7 @@ async function deleteTenantArtifacts(tenantId: string) {
     await tx.delete(assetConditionTable).where(eq(assetConditionTable.tenantId, tenantId));
     await tx.delete(assetStatusTable).where(eq(assetStatusTable.tenantId, tenantId));
     await tx.delete(assetCategoryTable).where(eq(assetCategoryTable.tenantId, tenantId));
+    await tx.delete(workOrderTypeTable).where(eq(workOrderTypeTable.tenantId, tenantId));
     await tx.delete(organization).where(eq(organization.id, tenantId));
   });
 }
