@@ -1,0 +1,25 @@
+docs/adr/0011-work-order-code-is-tenant-scoped-generated-sequence.md
+  e92610e8aa90ad08 1-9
+CONTEXT.md
+  e92610e8aa90ad08 182-193
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "da78e34a8e5db608ad02767d1b3e13aad11856f8",
+  "prompts": {
+    "e92610e8aa90ad08": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "425f9dc9-9a23-43a7-9374-8478ae00d8c7",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 0,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    }
+  }
+}
