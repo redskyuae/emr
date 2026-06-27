@@ -76,6 +76,8 @@ The association between a Role and a Permission within a Tenant. A Role's Permis
 
 A user who works within one or more Facilities under exactly one Tenant. Includes doctors, nurses, receptionists, and technicians. Not the same as a Doctor (see below).
 
+**Staff and User are the same entity, named differently by layer.** Frontend/product copy calls it Staff; the backend, auth layer, and API surface call it User (e.g. the `/api/v1/users` routes and `/identity-access/users` screen both operate on Staff). Treat the terms as synonyms — there is no separate "User" concept distinct from Staff in this domain.
+
 ## Doctor
 
 A Staff member with a clinical specialty who sees Patients. A Doctor is always a Staff member, but not all Staff are Doctors.

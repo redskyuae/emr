@@ -31,3 +31,10 @@ Key skills for this project:
 | `design-system`                 | Building or changing any frontend UI (see also `DESIGN.md`)   |
 
 If you are Claude Code, invoke a skill with `/skill-name`. If you are another agent, read the skill's `SKILL.md` directly and follow its instructions.
+
+# Issue labels
+
+Every issue carries **exactly one layer label** — `frontend` or `backend` — plus zero or more
+orthogonal type labels (`enhancement`, `master-data`, `bug`, `documentation`). See
+[`docs/conventions/labels.md`](docs/conventions/labels.md) for the full taxonomy, colors, and
+how to backfill existing issues.
