@@ -648,6 +648,95 @@ const workOrderPriorityErrorResponses = {
   '500': responseRef('InternalServerError'),
 };
 
+const workOrderStatusExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'In Progress',
+  code: 'INPROG',
+  category: 'IN_PROGRESS',
+  color: '#2563EB',
+  description: 'Maintenance work is actively underway',
+  isSystem: true,
+  createdOn: '2026-06-27T04:00:00.000Z',
+  modifiedOn: '2026-06-27T04:00:00.000Z',
+};
+
+const workOrderStatusRequestExample = {
+  name: 'In Progress',
+  code: 'inprog',
+  category: 'IN_PROGRESS',
+  color: '#2563EB',
+  description: 'Maintenance work is actively underway',
+};
+
+const workOrderStatusValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Work order status color must be a hex value like #16A34A.'],
+    }
+  ),
+};
+
+const workOrderStatusNotFound = {
+  description: 'Work Order Status was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Work order status not found',
+    errors: ['Work order status not found'],
+  }),
+};
+
+const workOrderStatusConflict = {
+  description:
+    'Work Order Status name/code conflicts with an active status, or the mutation targets protected System Work Order Status state.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateName: {
+          summary: 'Duplicate status name',
+          value: {
+            message: "Work order status name 'In Progress' already exists.",
+            errors: ["Work order status name 'In Progress' already exists."],
+          },
+        },
+        immutableSystemCode: {
+          summary: 'System status code is immutable',
+          value: {
+            message: 'System work order status code cannot be changed.',
+            errors: ['System work order status code cannot be changed.'],
+          },
+        },
+        immutableSystemCategory: {
+          summary: 'System status category is immutable',
+          value: {
+            message: 'System work order status category cannot be changed.',
+            errors: ['System work order status category cannot be changed.'],
+          },
+        },
+        protectedSystemStatus: {
+          summary: 'System status cannot be deleted',
+          value: {
+            message: 'System work order status cannot be deleted.',
+            errors: ['System work order status cannot be deleted.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const workOrderStatusErrorResponses = {
+  '400': workOrderStatusValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': workOrderStatusNotFound,
+  '409': workOrderStatusConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 const assetMasterSummaryExample = {
   id: 1,
   name: 'Diagnostic Imaging',
@@ -813,6 +902,7 @@ export const openApiDocument = {
     { name: 'Asset Condition', description: 'Asset Condition Master APIs.' },
     { name: 'Work Order Type', description: 'Work Order Type Master APIs.' },
     { name: 'Work Order Priority', description: 'Work Order Priority Master APIs.' },
+    { name: 'Work Order Status', description: 'Work Order Status Master APIs.' },
     { name: 'Asset', description: 'Asset inventory APIs.' },
   ],
   paths: {
@@ -2434,10 +2524,7 @@ export const openApiDocument = {
         description:
           'Creates a Work Order Priority Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
         security: [{ cookieAuth: [] }],
-        requestBody: requestBody(
-          'CreateWorkOrderPriorityRequest',
-          workOrderPriorityRequestExample
-        ),
+        requestBody: requestBody('CreateWorkOrderPriorityRequest', workOrderPriorityRequestExample),
         responses: {
           '201': {
             description: 'Work Order Priority created.',
@@ -2474,10 +2561,7 @@ export const openApiDocument = {
           'Updates one active Work Order Priority Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Work Order Priority')],
-        requestBody: requestBody(
-          'UpdateWorkOrderPriorityRequest',
-          workOrderPriorityRequestExample
-        ),
+        requestBody: requestBody('UpdateWorkOrderPriorityRequest', workOrderPriorityRequestExample),
         responses: {
           '200': {
             description: 'Work Order Priority updated.',
@@ -2497,6 +2581,100 @@ export const openApiDocument = {
         responses: {
           '204': { description: 'Work Order Priority deleted.' },
           ...workOrderPriorityErrorResponses,
+        },
+      },
+    },
+    '/api/v1/work-orders/statuses': {
+      get: {
+        tags: ['Work Order Status'],
+        summary: 'List Work Order Status Masters',
+        description:
+          'Returns an alphabetically sorted, paginated list of active Work Order Status Masters for the active Tenant. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Work Order Status Master list.',
+            content: jsonContent(paginatedSchema('WorkOrderStatus'), {
+              data: [workOrderStatusExample],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          '400': workOrderStatusValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Work Order Status'],
+        summary: 'Create Work Order Status',
+        description:
+          'Creates a tenant-defined Work Order Status in the active Tenant. The tenantId is resolved from the active authenticated Session, request code is normalized to uppercase, and isSystem is always controlled by the server.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateWorkOrderStatusRequest', workOrderStatusRequestExample),
+        responses: {
+          '201': {
+            description: 'Work Order Status created.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderStatus'), {
+              data: { ...workOrderStatusExample, isSystem: false },
+            }),
+          },
+          ...workOrderStatusErrorResponses,
+        },
+      },
+    },
+    '/api/v1/work-orders/statuses/{id}': {
+      get: {
+        tags: ['Work Order Status'],
+        summary: 'Get Work Order Status',
+        description:
+          'Returns one active Work Order Status Master by ID from the active Tenant. Work Order Statuses from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Status')],
+        responses: {
+          '200': {
+            description: 'Work Order Status found.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderStatus'), {
+              data: workOrderStatusExample,
+            }),
+          },
+          ...workOrderStatusErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Work Order Status'],
+        summary: 'Update Work Order Status',
+        description:
+          'Updates one active Work Order Status Master in the active Tenant. System Work Order Status names, colors, and descriptions may be customized, but their codes and categories are immutable. Request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Status')],
+        requestBody: requestBody('UpdateWorkOrderStatusRequest', workOrderStatusRequestExample),
+        responses: {
+          '200': {
+            description: 'Work Order Status updated.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderStatus'), {
+              data: workOrderStatusExample,
+            }),
+          },
+          ...workOrderStatusErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Work Order Status'],
+        summary: 'Delete Work Order Status',
+        description:
+          'Soft-deletes one active tenant-defined Work Order Status. System Work Order Statuses cannot be deleted.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Status')],
+        responses: {
+          '204': { description: 'Work Order Status deleted.' },
+          ...workOrderStatusErrorResponses,
         },
       },
     },
@@ -3525,6 +3703,65 @@ export const openApiDocument = {
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
               description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreateWorkOrderStatusRequest: {
+        type: 'object',
+        required: ['name', 'code', 'category', 'color'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty(
+            'Work Order Status code. The API normalizes this value to uppercase.'
+          ),
+          category: {
+            type: 'string',
+            enum: ['OPEN', 'IN_PROGRESS', 'SCHEDULED', 'COMPLETED', 'OVERDUE'],
+            description:
+              'System-defined lifecycle meaning used for Work Order rules and reporting.',
+          },
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Work Order Status display color as a #RRGGBB hex value.',
+          },
+          description: { type: 'string', description: 'Work Order Status description.' },
+        },
+      },
+      UpdateWorkOrderStatusRequest: schemaRef('CreateWorkOrderStatusRequest'),
+      WorkOrderStatus: {
+        allOf: [
+          schemaRef('CreateWorkOrderStatusRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'category',
+              'color',
+              'description',
+              'isSystem',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              isSystem: {
+                type: 'boolean',
+                readOnly: true,
+                description: 'True for a System Work Order Status. Clients cannot set this field.',
+              },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },

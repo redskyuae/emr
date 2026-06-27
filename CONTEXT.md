@@ -180,6 +180,10 @@ The Staff member accountable for an Asset. An Asset may also be unassigned when 
 
 A maintenance job against an Asset, such as preventive maintenance, corrective repair, calibration, or inspection.
 
+## Active Work Order
+
+A Work Order whose Work Order Status Category is not Completed. Distinct from a Work Order in the Open category, which is one particular kind of Active Work Order.
+
 ## Work Order Type
 
 A Tenant-scoped Master that classifies the nature of the maintenance work in a Work Order, such as Preventive, Corrective, Calibration, or Inspection. Distinct from Work Order Priority, which ranks urgency, and Work Order Status, which tracks lifecycle state. Each Tenant manages its own Work Order Types independently.
@@ -190,4 +194,12 @@ A Tenant-scoped Master that ranks the urgency of a Work Order, such as Low, Medi
 
 ## Work Order Status
 
-A Tenant-scoped Master that defines the lifecycle state of a Work Order, such as Open, In Progress, Scheduled, Completed, or Overdue. Distinct from Asset Status, which describes the operational state of the Asset itself rather than the maintenance job.
+A Tenant-scoped Master that defines the lifecycle state of a Work Order. Every Work Order Status belongs to a Work Order Status Category; it is distinct from Asset Status, which describes the operational state of the Asset itself rather than the maintenance job.
+
+## Work Order Status Category
+
+The system-defined lifecycle meaning assigned to a Work Order Status: Open, In Progress, Scheduled, Completed, or Overdue. Tenant-created statuses use a category so lifecycle rules and reporting remain stable when display details or codes differ; Overdue is explicitly assigned rather than inferred from a Work Order's due date.
+
+## System Work Order Status
+
+A Work Order Status provided to every Tenant for one Work Order Status Category. Its stable code identifies the system status; a Tenant may customize its display details, but cannot change its code or remove it.
