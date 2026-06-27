@@ -44,6 +44,10 @@ export const exampleTable = pgTable(
 
 Wrap repository writes in a `try/catch` and catch the Postgres `23505` unique constraint violation error to return a clean 409 Conflict response.
 
+### Permanent identifiers are the exception
+
+Use a partial unique index only when a value may legitimately be reused after soft deletion. Permanent operational identifiers that must remain unambiguous across history—such as a system-generated Work Order code—need a full unique index that includes soft-deleted rows. Soft deletion must not make those identifiers available for reuse.
+
 # Auth Module Boundary
 
 ## The Problem

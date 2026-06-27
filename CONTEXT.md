@@ -182,6 +182,10 @@ The Staff member accountable for an Asset. An Asset may also be unassigned when 
 
 A maintenance job against an Asset, such as preventive maintenance, corrective repair, calibration, or inspection.
 
+## Work Order Technician
+
+The person or external service provider responsible for performing a Work Order. A Work Order Technician may be internal Staff or a vendor and is not necessarily a Staff member.
+
 ## Active Work Order
 
 A Work Order whose Work Order Status Category is not Completed. Distinct from a Work Order in the Open category, which is one particular kind of Active Work Order.

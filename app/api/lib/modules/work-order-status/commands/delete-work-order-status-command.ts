@@ -18,12 +18,20 @@ export async function deleteWorkOrderStatusCommand(
     };
   }
 
-  const deletedWorkOrderStatus = await workOrderStatusRepository.softDeleteWorkOrderStatus(
+  const deleteResult = await workOrderStatusRepository.softDeleteWorkOrderStatus(
     validationResult.data.id,
     validationResult.data.tenantId
   );
 
-  if (!deletedWorkOrderStatus) {
+  if (deleteResult.outcome === 'in-use') {
+    return {
+      success: false,
+      errors: ['Work order status cannot be deleted while it is in use.'],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
+  if (deleteResult.outcome === 'not-found') {
     return {
       success: false,
       errors: ['Work order status not found'],
@@ -31,5 +39,5 @@ export async function deleteWorkOrderStatusCommand(
     };
   }
 
-  return { success: true, data: deletedWorkOrderStatus };
+  return { success: true, data: deleteResult.data };
 }

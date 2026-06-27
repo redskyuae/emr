@@ -1,6 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
+import { workOrderTable } from '@/app/db/schema/work-order';
 import { workOrderTypeTable } from '@/app/db/schema/work-order-type';
 import type {
   WorkOrderTypeListParams,
@@ -57,25 +58,51 @@ async function updateWorkOrderType(id: number, data: UpdateWorkOrderTypeData) {
 }
 
 async function softDeleteWorkOrderType(id: number, tenantId: string) {
-  const deletedOn = new Date();
-
-  const [deletedWorkOrderType] = await db
-    .update(workOrderTypeTable)
-    .set({
-      isDeleted: true,
-      modifiedOn: deletedOn,
-      deletedOn,
-    })
-    .where(
-      and(
-        eq(workOrderTypeTable.id, id),
-        eq(workOrderTypeTable.tenantId, tenantId),
-        eq(workOrderTypeTable.isDeleted, false)
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: workOrderTypeTable.id })
+      .from(workOrderTypeTable)
+      .where(
+        and(
+          eq(workOrderTypeTable.id, id),
+          eq(workOrderTypeTable.tenantId, tenantId),
+          eq(workOrderTypeTable.isDeleted, false)
+        )
       )
-    )
-    .returning(workOrderTypeColumns);
+      .for('update')
+      .limit(1);
 
-  return deletedWorkOrderType;
+    if (!existing) return { outcome: 'not-found' as const };
+
+    const [usage] = await tx
+      .select({ id: workOrderTable.id })
+      .from(workOrderTable)
+      .where(
+        and(
+          eq(workOrderTable.typeId, id),
+          eq(workOrderTable.tenantId, tenantId),
+          eq(workOrderTable.isDeleted, false)
+        )
+      )
+      .limit(1);
+
+    if (usage) return { outcome: 'in-use' as const };
+
+    const deletedOn = new Date();
+    const [data] = await tx
+      .update(workOrderTypeTable)
+      .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
+      .where(
+        and(
+          eq(workOrderTypeTable.id, id),
+          eq(workOrderTypeTable.tenantId, tenantId),
+          eq(workOrderTypeTable.isDeleted, false)
+        )
+      )
+      .returning(workOrderTypeColumns);
+
+    return data ? { outcome: 'deleted' as const, data } : { outcome: 'not-found' as const };
+  });
 }
 
 async function getWorkOrderTypeById(id: number, tenantId: string) {

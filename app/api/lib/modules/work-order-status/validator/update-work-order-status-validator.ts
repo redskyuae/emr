@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { workOrderStatusRepository } from '../repository/work-order-status-repository';
+import { workOrderRepository } from '../../work-order/repository/work-order-repository';
 import {
   workOrderStatusIdSchema,
   type UpdateWorkOrderStatusInput,
@@ -15,7 +16,8 @@ export type UpdateWorkOrderStatusParams = { id: number; payload: UpdateWorkOrder
 export async function validateUpdateWorkOrderStatus(
   id: unknown,
   payload: unknown,
-  tenantId: string
+  tenantId: string,
+  usage: Pick<typeof workOrderRepository, 'isStatusInUse'> = workOrderRepository
 ): Promise<ValidationResult<UpdateWorkOrderStatusParams>> {
   const idResult = workOrderStatusIdSchema.safeParse(id);
   const payloadResult = updateWorkOrderStatusSchema.safeParse(payload);
@@ -54,6 +56,17 @@ export async function validateUpdateWorkOrderStatus(
 
   if (!protectionResult.success) {
     return protectionResult;
+  }
+
+  if (
+    existingWorkOrderStatus.category !== payloadResult.data.category &&
+    (await usage.isStatusInUse(idResult.data, tenantId))
+  ) {
+    return {
+      success: false,
+      errors: ['Work order status category cannot be changed while the status is in use.'],
+      status: StatusCodes.CONFLICT,
+    };
   }
 
   const uniquenessResult = await validateWorkOrderStatusUniqueness({
