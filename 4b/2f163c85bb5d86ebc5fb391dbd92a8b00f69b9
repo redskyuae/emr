@@ -1,0 +1,40 @@
+AGENTS.md
+  f22988de47f50fc3 34-40
+CONTEXT.md
+  abd07908aac116f2 79-80
+docs/conventions/labels.md
+  f22988de47f50fc3 1-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "4b2f163c85bb5d86ebc5fb391dbd92a8b00f69b9",
+  "prompts": {
+    "abd07908aac116f2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f24b8967-f8a4-46a5-96bd-e009a256252a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "f22988de47f50fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "83f82d64-9a36-4956-b9c0-2ff5d90a2f4f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 50,
+      "total_deletions": 0,
+      "accepted_lines": 50,
+      "overriden_lines": 0
+    }
+  }
+}
