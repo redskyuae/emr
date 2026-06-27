@@ -1,3 +1,4 @@
+import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetReligionResponse, UpdateReligionResponse } from './types';
@@ -24,6 +25,9 @@ function errorMessage(status: number) {
 
 export async function GET(_request: NextRequest, context: ReligionRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
+
     const { id } = await context.params;
     const result = await getReligionByIdQuery(id);
 
@@ -47,6 +51,9 @@ export async function GET(_request: NextRequest, context: ReligionRouteContext) 
 
 export async function PUT(request: NextRequest, context: ReligionRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
+
     const { id } = await context.params;
     let payload: unknown;
 
@@ -81,6 +88,9 @@ export async function PUT(request: NextRequest, context: ReligionRouteContext) {
 
 export async function DELETE(_request: NextRequest, context: ReligionRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
+
     const { id } = await context.params;
     const result = await deleteReligionCommand(id);
 
