@@ -594,6 +594,60 @@ const workOrderTypeErrorResponses = {
   '500': responseRef('InternalServerError'),
 };
 
+const workOrderPriorityExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'Critical',
+  code: 'CRIT',
+  color: '#DC2626',
+  description: 'Urgent maintenance work requiring immediate attention',
+  createdOn: '2026-06-23T04:00:00.000Z',
+  modifiedOn: '2026-06-23T04:00:00.000Z',
+};
+
+const workOrderPriorityRequestExample = {
+  name: 'Critical',
+  code: 'crit',
+  color: '#DC2626',
+  description: 'Urgent maintenance work requiring immediate attention',
+};
+
+const workOrderPriorityValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Work order priority color must be a hex value like #16A34A.'],
+    }
+  ),
+};
+
+const workOrderPriorityNotFound = {
+  description: 'Work Order Priority was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Work order priority not found',
+    errors: ['Work order priority not found'],
+  }),
+};
+
+const workOrderPriorityConflict = {
+  description: 'Work Order Priority name or code already exists in the active Tenant.',
+  content: jsonContent(schemaRef('ConflictError'), {
+    message: "Work order priority name 'Critical' already exists.",
+    errors: ["Work order priority name 'Critical' already exists."],
+  }),
+};
+
+const workOrderPriorityErrorResponses = {
+  '400': workOrderPriorityValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': workOrderPriorityNotFound,
+  '409': workOrderPriorityConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 const assetMasterSummaryExample = {
   id: 1,
   name: 'Diagnostic Imaging',
@@ -758,6 +812,7 @@ export const openApiDocument = {
     { name: 'Asset Status', description: 'Asset Status Master APIs.' },
     { name: 'Asset Condition', description: 'Asset Condition Master APIs.' },
     { name: 'Work Order Type', description: 'Work Order Type Master APIs.' },
+    { name: 'Work Order Priority', description: 'Work Order Priority Master APIs.' },
     { name: 'Asset', description: 'Asset inventory APIs.' },
   ],
   paths: {
@@ -2346,6 +2401,105 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/work-orders/priorities': {
+      get: {
+        tags: ['Work Order Priority'],
+        summary: 'List Work Order Priority Masters',
+        description:
+          'Returns a paginated list of Work Order Priority Masters for the active Tenant. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Work Order Priority Master list.',
+            content: jsonContent(paginatedSchema('WorkOrderPriority'), {
+              data: [workOrderPriorityExample],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          '400': workOrderPriorityValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Work Order Priority'],
+        summary: 'Create Work Order Priority',
+        description:
+          'Creates a Work Order Priority Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody(
+          'CreateWorkOrderPriorityRequest',
+          workOrderPriorityRequestExample
+        ),
+        responses: {
+          '201': {
+            description: 'Work Order Priority created.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderPriority'), {
+              data: workOrderPriorityExample,
+            }),
+          },
+          ...workOrderPriorityErrorResponses,
+        },
+      },
+    },
+    '/api/v1/work-orders/priorities/{id}': {
+      get: {
+        tags: ['Work Order Priority'],
+        summary: 'Get Work Order Priority',
+        description:
+          'Returns one active Work Order Priority Master by ID from the active Tenant. Work Order Priorities from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Priority')],
+        responses: {
+          '200': {
+            description: 'Work Order Priority found.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderPriority'), {
+              data: workOrderPriorityExample,
+            }),
+          },
+          ...workOrderPriorityErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Work Order Priority'],
+        summary: 'Update Work Order Priority',
+        description:
+          'Updates one active Work Order Priority Master in the active Tenant. The tenantId is resolved from the active authenticated Session and request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Priority')],
+        requestBody: requestBody(
+          'UpdateWorkOrderPriorityRequest',
+          workOrderPriorityRequestExample
+        ),
+        responses: {
+          '200': {
+            description: 'Work Order Priority updated.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderPriority'), {
+              data: workOrderPriorityExample,
+            }),
+          },
+          ...workOrderPriorityErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Work Order Priority'],
+        summary: 'Delete Work Order Priority',
+        description: 'Soft-deletes one active Work Order Priority Master in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Work Order Priority')],
+        responses: {
+          '204': { description: 'Work Order Priority deleted.' },
+          ...workOrderPriorityErrorResponses,
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -3305,6 +3459,52 @@ export const openApiDocument = {
       WorkOrderType: {
         allOf: [
           schemaRef('CreateWorkOrderTypeRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'color',
+              'description',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreateWorkOrderPriorityRequest: {
+        type: 'object',
+        required: ['name', 'code', 'color'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty(
+            'Work Order Priority code. The API normalizes this value to uppercase.'
+          ),
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Work Order Priority display color as a #RRGGBB hex value.',
+          },
+          description: { type: 'string', description: 'Work Order Priority description.' },
+        },
+      },
+      UpdateWorkOrderPriorityRequest: schemaRef('CreateWorkOrderPriorityRequest'),
+      WorkOrderPriority: {
+        allOf: [
+          schemaRef('CreateWorkOrderPriorityRequest'),
           {
             type: 'object',
             required: [

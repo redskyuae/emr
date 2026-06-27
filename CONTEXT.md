@@ -186,7 +186,7 @@ A Tenant-scoped Master that classifies the nature of the maintenance work in a W
 
 ## Work Order Priority
 
-A Tenant-scoped Master that ranks the urgency of a Work Order, such as Low, Medium, High, or Critical. Distinct from Work Order Type, which describes the nature of the work, and from Work Order Status, which tracks lifecycle state.
+A Tenant-scoped Master that ranks the urgency of a Work Order, such as Low, Medium, High, or Critical, and carries a display color for priority badges. Distinct from Work Order Type, which describes the nature of the work, and from Work Order Status, which tracks lifecycle state.
 
 ## Work Order Status
 

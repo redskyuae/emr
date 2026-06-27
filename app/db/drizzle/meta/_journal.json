@@ -183,6 +183,13 @@
       "when": 1782453473677,
       "tag": "0025_colorful_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1782476270493,
+      "tag": "0026_fluffy_zarda",
+      "breakpoints": true
     }
   ]
 }
