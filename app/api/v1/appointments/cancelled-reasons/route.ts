@@ -37,10 +37,10 @@ export async function GET(request: NextRequest) {
     const safeLimit = Math.min(999, Math.max(1, Math.floor(limit)));
 
     const queryResult = await getAppointmentCancelledReasonsQuery({
-      tenantId: tenantSession.tenantId,
+      query,
       page: safePage,
       limit: safeLimit,
-      query,
+      tenantId: tenantSession.tenantId,
     });
 
     if (!queryResult.success) {
