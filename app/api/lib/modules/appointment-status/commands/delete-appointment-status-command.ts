@@ -14,7 +14,7 @@ export async function deleteAppointmentStatusCommand(
     return { success: false, errors: validationResult.errors };
   }
 
-  const deletedAppointmentStatus = await appointmentStatusRepository.softDeleteAppointmentStatus(
+  const deletedAppointmentStatus = await appointmentStatusRepository.deleteAppointmentStatus(
     validationResult.data.id,
     validationResult.data.tenantId
   );

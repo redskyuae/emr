@@ -42,7 +42,7 @@ async function updateCountry(id: number, data: UpdateCountryInput) {
   return updatedCountry;
 }
 
-async function softDeleteCountry(id: number) {
+async function deleteCountry(id: number) {
   const deletedOn = new Date();
 
   const [deletedCountry] = await db
@@ -128,7 +128,7 @@ async function findActiveByCode(code: string, { excludeId }: { excludeId?: numbe
 export const countryRepository = {
   createCountry,
   updateCountry,
-  softDeleteCountry,
+  deleteCountry,
   getCountryById,
   getCountries,
   findActiveByName,

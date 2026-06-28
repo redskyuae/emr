@@ -18,7 +18,7 @@ export async function deleteAppointmentTypeCommand(
     };
   }
 
-  const deletedAppointmentType = await appointmentTypeRepository.softDeleteAppointmentType(
+  const deletedAppointmentType = await appointmentTypeRepository.deleteAppointmentType(
     validationResult.data.id,
     validationResult.data.tenantId
   );

@@ -53,7 +53,7 @@ async function updateAppointmentMode(id: number, data: UpdateAppointmentModeData
   return updatedAppointmentMode;
 }
 
-async function softDeleteAppointmentMode(id: number, tenantId: string) {
+async function deleteAppointmentMode(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedAppointmentMode] = await db
@@ -190,7 +190,7 @@ async function seedDefaultAppointmentModes(tenantId: string, defaults: Appointme
 export const appointmentModeRepository = {
   createAppointmentMode,
   updateAppointmentMode,
-  softDeleteAppointmentMode,
+  deleteAppointmentMode,
   getAppointmentModeById,
   getAppointmentModes,
   findActiveByName,

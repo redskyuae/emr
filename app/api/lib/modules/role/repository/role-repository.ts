@@ -165,7 +165,7 @@ async function updateRole(id: number, tenantId: string, data: UpdateRoleInput) {
   return updatedRole;
 }
 
-async function softDeleteRole(id: number, tenantId: string) {
+async function deleteRole(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedRole] = await db
@@ -334,7 +334,7 @@ async function seedSystemRolesForTenant(tenantId: string) {
 export const roleRepository = {
   createRole,
   updateRole,
-  softDeleteRole,
+  deleteRole,
   getRoleById,
   getRoleByIdWithStats,
   getRolesByIds,

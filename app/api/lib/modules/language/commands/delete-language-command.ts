@@ -11,7 +11,7 @@ export async function deleteLanguageCommand(id: unknown): Promise<CommandResult<
     return { success: false, errors: validationResult.errors };
   }
 
-  const deletedLanguage = await languageRepository.softDeleteLanguage(validationResult.data);
+  const deletedLanguage = await languageRepository.deleteLanguage(validationResult.data);
 
   if (!deletedLanguage) {
     return {

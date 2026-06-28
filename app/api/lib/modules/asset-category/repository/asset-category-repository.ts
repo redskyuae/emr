@@ -56,7 +56,7 @@ async function updateAssetCategory(id: number, data: UpdateAssetCategoryData) {
   return updatedAssetCategory;
 }
 
-async function softDeleteAssetCategory(id: number, tenantId: string) {
+async function deleteAssetCategory(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedAssetCategory] = await db
@@ -194,7 +194,7 @@ async function seedDefaultAssetCategories(tenantId: string, defaults: AssetCateg
 export const assetCategoryRepository = {
   createAssetCategory,
   updateAssetCategory,
-  softDeleteAssetCategory,
+  deleteAssetCategory,
   getAssetCategoryById,
   getAssetCategories,
   findActiveByName,

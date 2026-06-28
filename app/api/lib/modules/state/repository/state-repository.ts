@@ -70,7 +70,7 @@ async function updateState(id: number, data: UpdateStateInput) {
   return getStateById(updatedState.id);
 }
 
-async function softDeleteState(id: number) {
+async function deleteState(id: number) {
   const existingState = await getStateById(id);
 
   if (!existingState) {
@@ -169,7 +169,7 @@ async function findActiveByNameAndCountry(
 export const stateRepository = {
   createState,
   updateState,
-  softDeleteState,
+  deleteState,
   getStateById,
   getStates,
   findActiveByNameAndCountry,

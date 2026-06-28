@@ -11,7 +11,7 @@ export async function deleteReligionCommand(id: unknown): Promise<CommandResult<
     return { success: false, errors: validationResult.errors };
   }
 
-  const deletedReligion = await religionRepository.softDeleteReligion(validationResult.data);
+  const deletedReligion = await religionRepository.deleteReligion(validationResult.data);
 
   if (!deletedReligion) {
     return {

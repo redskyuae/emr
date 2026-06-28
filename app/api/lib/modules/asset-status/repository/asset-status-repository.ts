@@ -56,7 +56,7 @@ async function updateAssetStatus(id: number, data: UpdateAssetStatusData) {
   return updatedAssetStatus;
 }
 
-async function softDeleteAssetStatus(id: number, tenantId: string) {
+async function deleteAssetStatus(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedAssetStatus] = await db
@@ -189,7 +189,7 @@ async function seedDefaultAssetStatuses(tenantId: string, defaults: AssetStatusS
 export const assetStatusRepository = {
   createAssetStatus,
   updateAssetStatus,
-  softDeleteAssetStatus,
+  deleteAssetStatus,
   getAssetStatusById,
   getAssetStatuses,
   findActiveByName,

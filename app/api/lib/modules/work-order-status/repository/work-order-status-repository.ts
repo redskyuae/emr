@@ -98,7 +98,7 @@ async function updateWorkOrderStatus(id: number, data: UpdateWorkOrderStatusData
   });
 }
 
-async function softDeleteWorkOrderStatus(id: number, tenantId: string) {
+async function deleteWorkOrderStatus(id: number, tenantId: string) {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select({ id: workOrderStatusTable.id, isSystem: workOrderStatusTable.isSystem })
@@ -274,7 +274,7 @@ async function seedDefaultWorkOrderStatuses(tenantId: string, defaults: WorkOrde
 export const workOrderStatusRepository = {
   createWorkOrderStatus,
   updateWorkOrderStatus,
-  softDeleteWorkOrderStatus,
+  deleteWorkOrderStatus,
   getWorkOrderStatusById,
   getWorkOrderStatuses,
   findActiveByName,

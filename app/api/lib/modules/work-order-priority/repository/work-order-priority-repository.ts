@@ -57,7 +57,7 @@ async function updateWorkOrderPriority(id: number, data: UpdateWorkOrderPriority
   return updatedWorkOrderPriority;
 }
 
-async function softDeleteWorkOrderPriority(id: number, tenantId: string) {
+async function deleteWorkOrderPriority(id: number, tenantId: string) {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select({ id: workOrderPriorityTable.id })
@@ -221,7 +221,7 @@ async function seedDefaultWorkOrderPriorities(tenantId: string, defaults: WorkOr
 export const workOrderPriorityRepository = {
   createWorkOrderPriority,
   updateWorkOrderPriority,
-  softDeleteWorkOrderPriority,
+  deleteWorkOrderPriority,
   getWorkOrderPriorityById,
   getWorkOrderPriorities,
   findActiveByName,

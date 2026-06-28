@@ -134,7 +134,7 @@ async function updateAsset(id: number, data: UpdateAssetData) {
   return getAssetById(updatedAsset.id, data.tenantId);
 }
 
-async function softDeleteAsset(id: number, tenantId: string) {
+async function deleteAsset(id: number, tenantId: string) {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select({ id: assetTable.id })
@@ -296,7 +296,7 @@ async function findActiveBySerialNumber(
 export const assetRepository = {
   createAsset,
   updateAsset,
-  softDeleteAsset,
+  deleteAsset,
   getAssetById,
   getAssets,
   findActiveBySerialNumber,

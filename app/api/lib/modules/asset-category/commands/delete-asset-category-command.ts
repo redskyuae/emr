@@ -14,7 +14,7 @@ export async function deleteAssetCategoryCommand(
     return { success: false, errors: validationResult.errors };
   }
 
-  const deletedAssetCategory = await assetCategoryRepository.softDeleteAssetCategory(
+  const deletedAssetCategory = await assetCategoryRepository.deleteAssetCategory(
     validationResult.data.id,
     validationResult.data.tenantId
   );

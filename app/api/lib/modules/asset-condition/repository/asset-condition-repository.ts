@@ -56,7 +56,7 @@ async function updateAssetCondition(id: number, data: UpdateAssetConditionData) 
   return updatedAssetCondition;
 }
 
-async function softDeleteAssetCondition(id: number, tenantId: string) {
+async function deleteAssetCondition(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedAssetCondition] = await db
@@ -194,7 +194,7 @@ async function seedDefaultAssetConditions(tenantId: string, defaults: AssetCondi
 export const assetConditionRepository = {
   createAssetCondition,
   updateAssetCondition,
-  softDeleteAssetCondition,
+  deleteAssetCondition,
   getAssetConditionById,
   getAssetConditions,
   findActiveByName,

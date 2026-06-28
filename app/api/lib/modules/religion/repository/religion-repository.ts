@@ -42,7 +42,7 @@ async function updateReligion(id: number, data: UpdateReligionInput) {
   return updatedReligion;
 }
 
-async function softDeleteReligion(id: number) {
+async function deleteReligion(id: number) {
   const deletedOn = new Date();
 
   const [deletedReligion] = await db
@@ -128,7 +128,7 @@ async function findActiveByCode(code: string, { excludeId }: { excludeId?: numbe
 export const religionRepository = {
   createReligion,
   updateReligion,
-  softDeleteReligion,
+  deleteReligion,
   getReligionById,
   getReligions,
   findActiveByName,

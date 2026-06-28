@@ -11,7 +11,7 @@ export async function deleteStateCommand(id: unknown): Promise<CommandResult<Sta
     return { success: false, errors: validationResult.errors };
   }
 
-  const deletedState = await stateRepository.softDeleteState(validationResult.data);
+  const deletedState = await stateRepository.deleteState(validationResult.data);
 
   if (!deletedState) {
     return {

@@ -53,7 +53,7 @@ async function updateAppointmentType(id: number, data: UpdateAppointmentTypeData
   return updatedAppointmentType;
 }
 
-async function softDeleteAppointmentType(id: number, tenantId: string) {
+async function deleteAppointmentType(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedAppointmentType] = await db
@@ -190,7 +190,7 @@ async function seedDefaultAppointmentTypes(tenantId: string, defaults: Appointme
 export const appointmentTypeRepository = {
   createAppointmentType,
   updateAppointmentType,
-  softDeleteAppointmentType,
+  deleteAppointmentType,
   getAppointmentTypeById,
   getAppointmentTypes,
   findActiveByName,

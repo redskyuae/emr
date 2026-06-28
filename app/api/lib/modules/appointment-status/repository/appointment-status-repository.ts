@@ -53,7 +53,7 @@ async function updateAppointmentStatus(id: number, data: UpdateAppointmentStatus
   return updatedAppointmentStatus;
 }
 
-async function softDeleteAppointmentStatus(id: number, tenantId: string) {
+async function deleteAppointmentStatus(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedAppointmentStatus] = await db
@@ -190,7 +190,7 @@ async function seedDefaultAppointmentStatuses(tenantId: string, defaults: Appoin
 export const appointmentStatusRepository = {
   createAppointmentStatus,
   updateAppointmentStatus,
-  softDeleteAppointmentStatus,
+  deleteAppointmentStatus,
   getAppointmentStatusById,
   getAppointmentStatuses,
   findActiveByName,

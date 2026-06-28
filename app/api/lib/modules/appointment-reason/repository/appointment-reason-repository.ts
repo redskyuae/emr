@@ -53,7 +53,7 @@ async function updateAppointmentReason(id: number, data: UpdateAppointmentReason
   return updatedAppointmentReason;
 }
 
-async function softDeleteAppointmentReason(id: number, tenantId: string) {
+async function deleteAppointmentReason(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedAppointmentReason] = await db
@@ -190,7 +190,7 @@ async function seedDefaultAppointmentReasons(tenantId: string, defaults: Appoint
 export const appointmentReasonRepository = {
   createAppointmentReason,
   updateAppointmentReason,
-  softDeleteAppointmentReason,
+  deleteAppointmentReason,
   getAppointmentReasonById,
   getAppointmentReasons,
   findActiveByName,

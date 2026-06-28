@@ -18,7 +18,7 @@ export async function deleteWorkOrderPriorityCommand(
     };
   }
 
-  const deleteResult = await workOrderPriorityRepository.softDeleteWorkOrderPriority(
+  const deleteResult = await workOrderPriorityRepository.deleteWorkOrderPriority(
     validationResult.data.id,
     validationResult.data.tenantId
   );

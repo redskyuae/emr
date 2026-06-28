@@ -42,7 +42,7 @@ async function updateLanguage(id: number, data: UpdateLanguageInput) {
   return updatedLanguage;
 }
 
-async function softDeleteLanguage(id: number) {
+async function deleteLanguage(id: number) {
   const deletedOn = new Date();
 
   const [deletedLanguage] = await db
@@ -128,7 +128,7 @@ async function findActiveByCode(code: string, { excludeId }: { excludeId?: numbe
 export const languageRepository = {
   createLanguage,
   updateLanguage,
-  softDeleteLanguage,
+  deleteLanguage,
   getLanguageById,
   getLanguages,
   findActiveByName,

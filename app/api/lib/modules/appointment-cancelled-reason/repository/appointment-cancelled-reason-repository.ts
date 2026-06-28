@@ -56,7 +56,7 @@ async function updateAppointmentCancelledReason(
   return updatedAppointmentCancelledReason;
 }
 
-async function softDeleteAppointmentCancelledReason(id: number, tenantId: string) {
+async function deleteAppointmentCancelledReason(id: number, tenantId: string) {
   const deletedOn = new Date();
 
   const [deletedAppointmentCancelledReason] = await db
@@ -196,7 +196,7 @@ async function seedDefaultAppointmentCancelledReasons(
 export const appointmentCancelledReasonRepository = {
   createAppointmentCancelledReason,
   updateAppointmentCancelledReason,
-  softDeleteAppointmentCancelledReason,
+  deleteAppointmentCancelledReason,
   getAppointmentCancelledReasonById,
   getAppointmentCancelledReasons,
   findActiveByName,

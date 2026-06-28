@@ -11,7 +11,7 @@ export async function deleteCountryCommand(id: unknown): Promise<CommandResult<C
     return { success: false, errors: validationResult.errors };
   }
 
-  const deletedCountry = await countryRepository.softDeleteCountry(validationResult.data);
+  const deletedCountry = await countryRepository.deleteCountry(validationResult.data);
 
   if (!deletedCountry) {
     return {

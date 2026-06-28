@@ -18,7 +18,7 @@ export async function deleteWorkOrderStatusCommand(
     };
   }
 
-  const deleteResult = await workOrderStatusRepository.softDeleteWorkOrderStatus(
+  const deleteResult = await workOrderStatusRepository.deleteWorkOrderStatus(
     validationResult.data.id,
     validationResult.data.tenantId
   );

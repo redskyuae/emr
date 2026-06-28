@@ -18,7 +18,7 @@ export async function deleteRoleCommand(
     };
   }
 
-  const deletedRole = await roleRepository.softDeleteRole(
+  const deletedRole = await roleRepository.deleteRole(
     validationResult.data.id,
     validationResult.data.tenantId
   );

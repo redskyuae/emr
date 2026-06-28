@@ -57,7 +57,7 @@ async function updateWorkOrderType(id: number, data: UpdateWorkOrderTypeData) {
   return updatedWorkOrderType;
 }
 
-async function softDeleteWorkOrderType(id: number, tenantId: string) {
+async function deleteWorkOrderType(id: number, tenantId: string) {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select({ id: workOrderTypeTable.id })
@@ -221,7 +221,7 @@ async function seedDefaultWorkOrderTypes(tenantId: string, defaults: WorkOrderTy
 export const workOrderTypeRepository = {
   createWorkOrderType,
   updateWorkOrderType,
-  softDeleteWorkOrderType,
+  deleteWorkOrderType,
   getWorkOrderTypeById,
   getWorkOrderTypes,
   findActiveByName,

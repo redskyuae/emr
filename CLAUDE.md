@@ -88,6 +88,8 @@ app/
 
 **Repositories own all SQL.** Never write Drizzle queries outside a repository file. When validators need DB-level validation, add or reuse repository read functions and call those from the validator.
 
+**Delete methods are named `delete{Entity}`, not `softDelete{Entity}`.** Soft delete is the default removal semantics for tenant-scoped domain and master-data tables, so the repository method is named `delete{Entity}` (e.g. `deleteRole`) even though it flips the `isDeleted` flag rather than removing the row. Do not introduce `softDelete`-prefixed names. True hard deletes that physically remove rows (`db.delete(...)`) are the named exception and exist only for transient auth/session/provisioning data (e.g. `deleteSession`, `deleteAuthUser`, `deleteTenantArtifacts`). See `docs/adr/0012-delete-repository-methods-are-soft-delete-by-default.md`.
+
 ## Result types
 
 All commands, queries, and validators return discriminated unions from `app/api/lib/utils/types.ts`. Always use these — never throw or return raw data:

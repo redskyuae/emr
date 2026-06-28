@@ -14,7 +14,7 @@ export async function deleteAssetConditionCommand(
     return { success: false, errors: validationResult.errors };
   }
 
-  const deletedAssetCondition = await assetConditionRepository.softDeleteAssetCondition(
+  const deletedAssetCondition = await assetConditionRepository.deleteAssetCondition(
     validationResult.data.id,
     validationResult.data.tenantId
   );

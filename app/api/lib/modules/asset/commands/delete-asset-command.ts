@@ -18,7 +18,7 @@ export async function deleteAssetCommand(
     };
   }
 
-  const deleteResult = await assetRepository.softDeleteAsset(validationResult.data, tenantId);
+  const deleteResult = await assetRepository.deleteAsset(validationResult.data, tenantId);
 
   if (deleteResult.outcome === 'in-use') {
     return {

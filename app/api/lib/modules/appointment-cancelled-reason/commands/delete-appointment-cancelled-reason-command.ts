@@ -15,7 +15,7 @@ export async function deleteAppointmentCancelledReasonCommand(
   }
 
   const deletedAppointmentCancelledReason =
-    await appointmentCancelledReasonRepository.softDeleteAppointmentCancelledReason(
+    await appointmentCancelledReasonRepository.deleteAppointmentCancelledReason(
       validationResult.data.id,
       validationResult.data.tenantId
     );
