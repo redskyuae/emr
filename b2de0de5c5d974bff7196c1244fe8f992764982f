@@ -1,0 +1,33 @@
+app/(protected)/identity-access/sessions/_utils/sessions-mock.ts
+  abd07908aac116f2 1-94
+app/(protected)/audit-log/_utils/audit-log-mock.ts
+  abd07908aac116f2 1-172
+app/(protected)/identity-access/sessions/_components/sessions-page-impl.tsx
+  abd07908aac116f2 6
+app/(protected)/audit-log/_components/audit-log-page-impl.tsx
+  abd07908aac116f2 6
+app/(protected)/audit-log/page.tsx
+  abd07908aac116f2 2
+app/(protected)/identity-access/sessions/page.tsx
+  abd07908aac116f2 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "b2de0de5c5d974bff7196c1244fe8f992764982f",
+  "prompts": {
+    "abd07908aac116f2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f24b8967-f8a4-46a5-96bd-e009a256252a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 270,
+      "total_deletions": 17,
+      "accepted_lines": 270,
+      "overriden_lines": 0
+    }
+  }
+}
