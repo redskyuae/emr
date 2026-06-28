@@ -40,11 +40,22 @@ export async function GET(request: NextRequest) {
     const safePage = Math.max(1, Math.floor(page));
     const safeLimit = Math.min(999, Math.max(1, Math.floor(limit)));
 
+    const roleIdParam = request.nextUrl.searchParams.get('roleId');
+    const parsedRoleId = roleIdParam ? Number(roleIdParam) : Number.NaN;
+    const roleId =
+      Number.isInteger(parsedRoleId) && parsedRoleId > 0 ? parsedRoleId : undefined;
+
+    const statusParam = request.nextUrl.searchParams.get('status');
+    const status =
+      statusParam === 'active' || statusParam === 'inactive' ? statusParam : undefined;
+
     const queryResult = await getStaffQuery({
       tenantId: tenantSession.tenantId,
       page: safePage,
       limit: safeLimit,
       query,
+      roleId,
+      status,
     });
 
     if (!queryResult.success) {

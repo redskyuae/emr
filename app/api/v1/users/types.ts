@@ -1,7 +1,7 @@
-import type { Staff } from '@/app/api/lib/modules/staff/schemas/staff-schema';
+import type { Staff, StaffWithRoles } from '@/app/api/lib/modules/staff/schemas/staff-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 
-export type ListStaffResponse = Paginated<Staff>;
+export type ListStaffResponse = Paginated<StaffWithRoles>;
 
 export type SaveStaffRequest = {
   name: string;

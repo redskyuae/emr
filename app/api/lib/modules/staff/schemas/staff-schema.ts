@@ -162,9 +162,25 @@ export type Staff = {
   modifiedOn: Date;
 };
 
+// Lean Role shape embedded on each Staff row in the list response. Full Role
+// data still comes from /roles and /users/[id]/roles — see
+// docs/adr/0012-staff-list-embeds-assigned-roles.md.
+export type StaffRoleSummary = {
+  id: number;
+  name: string;
+};
+
+export type StaffWithRoles = Staff & {
+  roles: StaffRoleSummary[];
+};
+
+export type StaffStatusFilter = 'active' | 'inactive';
+
 export type StaffListParams = {
   tenantId: string;
   query?: string;
   page?: number;
   limit?: number;
+  roleId?: number;
+  status?: StaffStatusFilter;
 };
