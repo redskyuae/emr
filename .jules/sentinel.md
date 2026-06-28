@@ -1,0 +1,4 @@
+## 2024-06-28 - [CRITICAL] Missing Route-Level Authentication on Master Data APIs
+**Vulnerability:** Global master data API endpoints (countries, languages, states, religions, nationalities) lacked route-level authentication checks, allowing unauthenticated read/write access.
+**Learning:** In frameworks like Next.js where there isn't always global middleware enforcing authentication across all API routes, developers must ensure every single endpoint explicitly invokes an authentication helper (e.g., `requireAuth()`). Assuming a route is secure just because it's an API route is a critical security gap.
+**Prevention:** Establish a strict policy and potentially a custom ESLint rule or CI/CD check to ensure all files under `app/api/` (except public ones like signin/signup) explicitly call `requireAuth()` or `requireTenantSession()`.
