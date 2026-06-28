@@ -1,0 +1,69 @@
+app/queries/identity-access/useStaff.ts
+  abd07908aac116f2 1-84
+app/(protected)/identity-access/users/_components/_modals/deactivate-user-dialog.tsx
+  abd07908aac116f2 1-81
+app/queries/identity-access/useCreateStaff.ts
+  abd07908aac116f2 1-33
+app/(protected)/identity-access/users/page.tsx
+  abd07908aac116f2 3-4
+app/api/lib/modules/staff/schemas/staff-schema.ts
+  abd07908aac116f2 165-178,184-185
+app/queries/identity-access/useStaffRoles.ts
+  abd07908aac116f2 1-29
+app/(protected)/identity-access/users/_components/users-table.tsx
+  abd07908aac116f2 1-255
+app/api/lib/modules/staff/queries/get-staff-query.ts
+  abd07908aac116f2 3,10-11,19-29
+app/(protected)/identity-access/users/_components/_sheets/user-form-sheet.tsx
+  abd07908aac116f2 1-717
+docs/adr/0012-staff-list-embeds-assigned-roles.md
+  abd07908aac116f2 1-7
+app/api/v1/users/types.ts
+  abd07908aac116f2 1,4
+app/(protected)/identity-access/users/_components/users-page-impl.tsx
+  abd07908aac116f2 3-5,7-52,55-59,65-99,102-118
+app/queries/identity-access/useUpdateStaff.ts
+  abd07908aac116f2 1-41
+app/api/lib/openapi/document.ts
+  abd07908aac116f2 1180,1182-1188,1191-1192,1206-1209,2762-2776,3055-3079
+app/queries/identity-access/useReactivateStaff.ts
+  abd07908aac116f2 1-31
+app/queries/identity-access/useAssignStaffRoles.ts
+  abd07908aac116f2 1-46
+app/(protected)/identity-access/users/_utils/staff-form-schema.ts
+  abd07908aac116f2 1-46
+app/queries/identity-access/useRemoveStaffRole.ts
+  abd07908aac116f2 1-39
+app/api/lib/modules/staff/repository/staff-repository.ts
+  abd07908aac116f2 2,6,13-14,75-119,129-140,144-146,165-168,170-173
+app/(protected)/identity-access/users/loader.tsx
+  abd07908aac116f2 5-11,13-16,19
+app/(protected)/identity-access/users/_components/users-toolbar.tsx
+  abd07908aac116f2 1-124
+components/app/app-shell-config.ts
+  abd07908aac116f2 225,233
+app/queries/identity-access/useDeactivateStaff.ts
+  abd07908aac116f2 1-31
+app/api/v1/users/route.ts
+  abd07908aac116f2 43-51,57-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "f5303101a81d09f690e40d8955f249ef0941b713",
+  "prompts": {
+    "abd07908aac116f2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f24b8967-f8a4-46a5-96bd-e009a256252a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1872,
+      "total_deletions": 644,
+      "accepted_lines": 1856,
+      "overriden_lines": 0
+    }
+  }
+}
