@@ -1,0 +1,45 @@
+app/api/lib/modules/current-user/repository/current-user-repository.ts
+  61770425f7b56f72 1-69
+app/api/v1/me/route.ts
+  61770425f7b56f72 1-42
+app/queries/identity-access/useCurrentUser.ts
+  61770425f7b56f72 1-42
+docs/adr/0014-effective-permissions-grant-tenant-admins-the-full-catalogue.md
+  61770425f7b56f72 1-5
+app/api/v1/me/types.ts
+  61770425f7b56f72 1-5
+app/(protected)/layout.tsx
+  61770425f7b56f72 27
+app/api/lib/utils/auth-helpers.ts
+  61770425f7b56f72 42
+app/api/lib/openapi/document.ts
+  61770425f7b56f72 1002-1005,1169-1219,3231-3315
+app/api/lib/modules/current-user/queries/get-current-user-query.ts
+  61770425f7b56f72 1-75,78-80
+components/app/app-sidebar.tsx
+  61770425f7b56f72 7,12,123-125,149,156-162,188-210
+CONTEXT.md
+  61770425f7b56f72 39-42,79-82
+app/api/lib/modules/current-user/schemas/current-user-schema.ts
+  61770425f7b56f72 1-28,30-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "2ed6085db215a3f58155bab9aef233501e974bc3",
+  "prompts": {
+    "61770425f7b56f72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c9063e9a-8e6d-4f86-b284-c33489c94e9b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 469,
+      "total_deletions": 18,
+      "accepted_lines": 460,
+      "overriden_lines": 0
+    }
+  }
+}
