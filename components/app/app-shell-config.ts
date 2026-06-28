@@ -95,11 +95,6 @@ export const appNavGroups: AppNavGroup[] = [
     title: 'Identity & Access',
     items: [
       {
-        title: 'Dashboard',
-        href: '/identity-access/dashboard',
-        icon: LayoutDashboard,
-      },
-      {
         title: 'Users',
         href: '/identity-access/users',
         icon: UsersRound,
@@ -220,14 +215,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/identity-access/users': {
     title: 'Users',
     subtitle: 'Staff user access within this Tenant.',
-    primaryAction: {
-      label: 'Add user',
-      href: '/identity-access/users?user=new',
-    },
-  },
-  '/identity-access/dashboard': {
-    title: 'IAM Dashboard',
-    subtitle: 'Identity and access overview for Staff, Roles, Sessions, and audit activity.',
     primaryAction: {
       label: 'Add user',
       href: '/identity-access/users?user=new',
