@@ -24,7 +24,7 @@ export default async function AppLayout({
   return (
     <TooltipProvider>
       <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar userName={session.user.name} userEmail={session.user.email} />
+        <AppSidebar />
         <SidebarInset>
           <AppTopbar />
           <div className="flex flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">{children}</div>

@@ -39,7 +39,7 @@ export async function requireTenantSession(): Promise<
   return { session, tenantId };
 }
 
-function hasTenantAdminRole(role: string) {
+export function hasTenantAdminRole(role: string) {
   return role
     .split(',')
     .map((value) => value.trim())

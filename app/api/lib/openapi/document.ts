@@ -999,6 +999,10 @@ export const openApiDocument = {
     { name: 'Tenant', description: 'Tenant management APIs.' },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
     { name: 'Session', description: 'Authenticated user Session management APIs.' },
+    {
+      name: 'Current User',
+      description: 'Identity, Tenant context, and Effective Permissions of the authenticated user.',
+    },
     { name: 'Role', description: 'Role management APIs for Tenant Admins.' },
     {
       name: 'Role Assignment',
@@ -1156,6 +1160,57 @@ export const openApiDocument = {
             content: jsonContent(schemaRef('ConflictError'), {
               message: 'A user with this email already exists.',
               errors: ['A user with this email already exists.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/me': {
+      get: {
+        tags: ['Current User'],
+        summary: 'Get current user',
+        description:
+          'Returns the authenticated user resolved from the Session: identity (and Staff profile when one exists), the Active Tenant, the membership authority level, the assigned Roles, and the Effective Permissions. tenantId is taken from the Session (activeOrganizationId) and is never supplied by the client. Effective Permissions are the entire active Permission Catalogue for an owner/admin membership, otherwise the de-duplicated union of the assigned Roles’ Permission Assignments, each expressed as a Permission Key (resource:action).',
+        responses: {
+          '200': {
+            description: 'Authenticated user, Tenant context, Roles, and Effective Permissions.',
+            content: jsonContent(dataEnvelopeSchema('CurrentUser'), {
+              data: {
+                user: {
+                  id: 'usr_8f3c1a',
+                  name: 'Dr. Asha Rao',
+                  email: 'asha.rao@apollo.example',
+                  image: null,
+                  phone: '+91 90000 11111',
+                  emailVerified: true,
+                  staffProfile: {
+                    staffCode: 'EMP-001',
+                    designation: 'Cardiologist',
+                    gender: 'Female',
+                    dateOfBirth: '1985-04-12',
+                    isActive: true,
+                  },
+                },
+                tenant: {
+                  id: 'org_123',
+                  name: 'Apollo Hospitals',
+                  slug: 'apollo-hospitals',
+                  isActive: true,
+                },
+                roles: [{ id: 4, name: 'Receptionist', code: 'RECEPTIONIST' }],
+                permissions: ['appointment:create', 'appointment:read', 'staff:read'],
+                membership: { role: 'member' },
+              },
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description:
+              'No Active Tenant is selected on the Session, or the user is not a member of the Active Tenant.',
+            content: jsonContent(schemaRef('ForbiddenError'), {
+              message: 'No active tenant selected.',
+              errors: ['No active tenant selected.'],
             }),
           },
           '500': responseRef('InternalServerError'),
@@ -3171,6 +3226,91 @@ export const openApiDocument = {
           logo: { type: ['string', 'null'], format: 'uri' },
           isActive: { type: 'boolean' },
           createdAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      CurrentUserStaffProfile: {
+        type: 'object',
+        description:
+          'Staff-profile fields for the current user in the Active Tenant. Null when the user has no Staff profile, e.g. a Tenant Owner.',
+        required: ['staffCode', 'designation', 'gender', 'dateOfBirth', 'isActive'],
+        properties: {
+          staffCode: { type: ['string', 'null'], maxLength: 20 },
+          designation: { type: ['string', 'null'], maxLength: 100 },
+          gender: {
+            type: ['string', 'null'],
+            enum: ['Male', 'Female', 'Other', 'Prefer not to say', null],
+          },
+          dateOfBirth: { type: ['string', 'null'], format: 'date' },
+          isActive: { type: 'boolean' },
+        },
+      },
+      CurrentUserIdentity: {
+        type: 'object',
+        required: ['id', 'name', 'email', 'image', 'phone', 'emailVerified', 'staffProfile'],
+        properties: {
+          id: { type: 'string', description: 'BetterAuth user ID.' },
+          name: { type: 'string' },
+          email: { type: 'string', format: 'email' },
+          image: { type: ['string', 'null'], format: 'uri' },
+          phone: { type: ['string', 'null'] },
+          emailVerified: { type: 'boolean' },
+          staffProfile: {
+            oneOf: [schemaRef('CurrentUserStaffProfile'), { type: 'null' }],
+          },
+        },
+      },
+      CurrentUserTenant: {
+        type: 'object',
+        description: 'The Active Tenant resolved from the Session.',
+        required: ['id', 'name', 'slug', 'isActive'],
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          slug: { type: 'string', maxLength: 60, pattern: '^[a-z0-9-]+$' },
+          isActive: { type: 'boolean' },
+        },
+      },
+      CurrentUserRoleSummary: {
+        type: 'object',
+        description: 'Lean Role reference for a Role assigned to the current user.',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
+      CurrentUserMembership: {
+        type: 'object',
+        description: 'BetterAuth organization membership authority for the Active Tenant.',
+        required: ['role'],
+        properties: {
+          role: {
+            type: 'string',
+            description:
+              'Membership authority, e.g. owner, admin, or member. owner/admin grant the full Permission Catalogue as Effective Permissions.',
+          },
+        },
+      },
+      CurrentUser: {
+        type: 'object',
+        required: ['user', 'tenant', 'roles', 'permissions', 'membership'],
+        properties: {
+          user: schemaRef('CurrentUserIdentity'),
+          tenant: schemaRef('CurrentUserTenant'),
+          roles: {
+            type: 'array',
+            description:
+              "The current user's assigned Roles in the Active Tenant. Empty for a Tenant Owner, who holds authority through membership rather than Role Assignments.",
+            items: schemaRef('CurrentUserRoleSummary'),
+          },
+          permissions: {
+            type: 'array',
+            description:
+              'Effective Permissions as Permission Keys (resource:action), de-duplicated and sorted.',
+            items: { type: 'string' },
+          },
+          membership: schemaRef('CurrentUserMembership'),
         },
       },
       CreateStaffRequest: {

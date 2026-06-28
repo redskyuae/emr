@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 
+import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import { appNavGroups, isNavItemActive, type AppNavItem } from '@/components/app/app-shell-config';
 import { SignOutButton } from '@/components/app/sign-out-button';
 import { LogoMark } from '@/components/brand/logo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -118,7 +120,9 @@ function getInitials(name: string, email: string) {
   return email.slice(0, 2).toUpperCase();
 }
 
-export function AppSidebar({ userName, userEmail }: { userName: string; userEmail: string }) {
+export function AppSidebar() {
+  const { data: currentUser, isLoading } = useCurrentUserQuery();
+
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
       <SidebarHeader className="gap-3 p-3">
@@ -142,14 +146,20 @@ export function AppSidebar({ userName, userEmail }: { userName: string; userEmai
             'border-sidebar-border bg-sidebar hover:bg-sidebar-accent h-auto w-full justify-start gap-2 p-2 text-left',
             'group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0'
           )}
-          aria-label="Active Facility Northgate General, Tenant Northgate Health"
+          aria-label={`Active Facility Northgate General, Tenant ${currentUser?.tenant.name ?? ''}`}
         >
           <span className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold">
             NG
           </span>
           <span className="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
             <span className="truncate text-sm font-medium">Northgate General</span>
-            <span className="text-muted-foreground truncate text-xs">Tenant: Northgate Health</span>
+            {isLoading || !currentUser ? (
+              <Skeleton className="mt-0.5 h-3 w-28" />
+            ) : (
+              <span className="text-muted-foreground truncate text-xs">
+                Tenant: {currentUser.tenant.name}
+              </span>
+            )}
           </span>
         </Button>
       </SidebarHeader>
@@ -175,13 +185,29 @@ export function AppSidebar({ userName, userEmail }: { userName: string; userEmai
 
       <SidebarFooter className="p-3">
         <div className="flex min-w-0 items-center gap-2 rounded-md p-1 group-data-[collapsible=icon]:justify-center">
-          <Avatar size="sm">
-            <AvatarFallback>{getInitials(userName, userEmail)}</AvatarFallback>
-          </Avatar>
-          <div className="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-medium">{userName}</span>
-            <span className="text-sidebar-foreground/70 truncate text-xs">{userEmail}</span>
-          </div>
+          {isLoading || !currentUser ? (
+            <>
+              <Skeleton className="size-8 shrink-0 rounded-full" />
+              <div className="grid min-w-0 flex-1 gap-1 group-data-[collapsible=icon]:hidden">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </>
+          ) : (
+            <>
+              <Avatar size="sm">
+                <AvatarFallback>
+                  {getInitials(currentUser.user.name, currentUser.user.email)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+                <span className="truncate text-sm font-medium">{currentUser.user.name}</span>
+                <span className="text-sidebar-foreground/70 truncate text-xs">
+                  {currentUser.user.email}
+                </span>
+              </div>
+            </>
+          )}
           <SignOutButton />
         </div>
       </SidebarFooter>

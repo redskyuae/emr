@@ -36,6 +36,10 @@ An administrative authority belonging to a specific Tenant, including the Tenant
 
 An authenticated access period for a user on one browser or device. Signing out ends the current Session only. Revoking all Sessions is a separate administrative/security action.
 
+## Current User
+
+The authenticated user as seen within their Active Tenant for the current Session — their identity, their Tenant membership, their assigned Roles, and their Effective Permissions taken together. The Current User is whoever the Session belongs to and is the subject of the `/api/v1/me` endpoint. A Current User may be a Tenant Owner (who has no Staff profile and no Role Assignments) or a Staff member.
+
 ## Role
 
 A Tenant-scoped authorization label that can carry permissions and be assigned to users. Distinct from Staff job profiles, Doctor clinical identity, and authentication-layer membership roles.
@@ -71,6 +75,10 @@ A stable identifier for a Permission in `<resource>:<action>` form. The Permissi
 ## Permission Assignment
 
 The association between a Role and a Permission within a Tenant. A Role's Permission Assignments define what users with that Role are allowed to do.
+
+## Effective Permissions
+
+The complete set of Permissions a user actually holds within a Tenant, expressed as Permission Keys. For a Tenant Owner or Tenant Admin, the Effective Permissions are the entire active Permission Catalogue. For any other user, they are the de-duplicated union of the Permission Assignments of every Role assigned to that user. Effective Permissions are derived from membership and Role Assignments, never stored.
 
 ## Staff
 
