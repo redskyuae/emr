@@ -80,7 +80,11 @@ A user who works within one or more Facilities under exactly one Tenant. Include
 
 ## Doctor
 
-A Staff member with a clinical specialty who sees Patients. A Doctor is always a Staff member, but not all Staff are Doctors.
+A Staff member with a clinical specialty who sees Patients. A Doctor is always a Staff member, but not all Staff are Doctors. Creating a Doctor always provisions the underlying Staff member; a Doctor cannot exist without a Staff identity.
+
+## Specialty
+
+A Tenant-scoped Master representing a Doctor's clinical area of expertise or credential (e.g., Cardiology, Pediatrics, Orthopedics). A Specialty is a property of the Doctor and is independent of Facility. Distinct from Department, which is an organizational unit within a Facility — a Department named "Cardiology" may be staffed by Doctors of differing Specialties, and a Doctor keeps their Specialty regardless of where they work. Each Tenant manages its own Specialties independently.
 
 ## Patient
 
