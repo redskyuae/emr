@@ -1,0 +1,25 @@
+CLAUDE.md
+  2618148fc17699aa 91-92
+docs/adr/0012-delete-repository-methods-are-soft-delete-by-default.md
+  2618148fc17699aa 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "601e645af352f35e0f173bc93e698b2ffb3722a3",
+  "prompts": {
+    "2618148fc17699aa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c3109ff5-c8e2-4036-b96d-40cdd58ada21",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 0,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
