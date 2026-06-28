@@ -33,8 +33,10 @@ export const staffCreateFormSchema = z.object({
 
 // Edit contract (UpdateStaffRequest): profile fields only. Email and password are
 // not editable through this endpoint; Roles are managed via the granular endpoints.
+// `name` is optional here to mirror UpdateStaffRequest (and the no-asterisk UI) —
+// the server still rejects an empty string, so the sheet omits a blank name.
 export const staffEditFormSchema = z.object({
-  name: nameField,
+  name: z.string().trim().max(100, 'Name must be at most 100 characters.').optional(),
   phone: phoneField,
   staffCode: staffCodeField,
   designation: designationField,

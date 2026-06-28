@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 
@@ -21,7 +21,7 @@ export function UsersPageImpl() {
   const [search, setSearch] = useQueryState('q', { defaultValue: '' });
   const [roleParam, setRoleParam] = useQueryState('role', { defaultValue: '' });
   const [statusParam, setStatusParam] = useQueryState('status', { defaultValue: '' });
-  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [pageParam, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [userParam, setUserParam] = useQueryState('user');
 
   const [staffPendingDeactivate, setStaffPendingDeactivate] = useState<StaffWithRoles | null>(null);
@@ -29,6 +29,8 @@ export function UsersPageImpl() {
   const rolesQuery = useRolesQuery();
   const roles = rolesQuery.data ?? [];
 
+  // Guard against invalid URL values (?page=0, ?page=-1) reaching the query.
+  const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const roleId = roleParam ? Number(roleParam) : Number.NaN;
   const status = statusParam === 'active' || statusParam === 'inactive' ? statusParam : undefined;
 
@@ -43,6 +45,20 @@ export function UsersPageImpl() {
 
   const staff = staffQuery.data?.data ?? [];
   const meta = staffQuery.data?.meta;
+
+  // Re-sync the URL when the requested page is invalid or now out of range (e.g. a
+  // deactivate/reactivate shrank the filtered set past the current page), so the
+  // table doesn't get stuck on an empty page with pagination hidden.
+  useEffect(() => {
+    if (pageParam !== page) {
+      void setPage(page);
+      return;
+    }
+
+    if (meta?.totalPages && page > meta.totalPages) {
+      void setPage(meta.totalPages);
+    }
+  }, [meta?.totalPages, page, pageParam, setPage]);
 
   const isCreating = userParam === 'new';
   const editingUserId = userParam && userParam !== 'new' ? userParam : null;

@@ -442,7 +442,11 @@ function StaffRolesEditor({
   const assigned = assignedQuery.data ?? [];
   const assignedIds = new Set(assigned.map((role) => role.id));
   const assignable = roles.filter((role) => !assignedIds.has(role.id));
-  const busy = assignRoles.isPending || removeRole.isPending;
+  // Stay locked while the assignments query refetches after a mutation: until it
+  // settles, `assigned` is stale, so re-enabling the remove buttons / "Add a Role"
+  // select would act on the old role set (bypassing the keep-≥1 guard or
+  // re-offering a just-assigned Role).
+  const busy = assignRoles.isPending || removeRole.isPending || assignedQuery.isFetching;
 
   function handleAdd(value: string) {
     const roleId = Number(value);
@@ -570,8 +574,11 @@ function EditUserForm({
   const onSubmit = form.handleSubmit(async (values) => {
     setServerErrors([]);
 
+    const trimmedName = values.name?.trim();
     const request: UpdateStaffRequest = {
-      name: values.name,
+      // Omit a blank name: the field is optional in the contract, and the server
+      // rejects an empty string.
+      name: trimmedName ? trimmedName : undefined,
       phone: values.phone || null,
       staffCode: values.staffCode || null,
       designation: values.designation || null,
