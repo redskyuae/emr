@@ -1,0 +1,27 @@
+app/(protected)/identity-access/users/_utils/staff-form-schema.ts
+  755fb79d18142bca 36-37,39
+app/(protected)/identity-access/users/_components/_sheets/user-form-sheet.tsx
+  755fb79d18142bca 445-449,577,579-581
+app/(protected)/identity-access/users/_components/users-page-impl.tsx
+  755fb79d18142bca 3,24,32-33,49-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "22a683b656fb35ef112b3891471f2410e5869397",
+  "prompts": {
+    "755fb79d18142bca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78810894-8d57-42a1-b6ec-e24e4db5b961",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 5,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    }
+  }
+}
