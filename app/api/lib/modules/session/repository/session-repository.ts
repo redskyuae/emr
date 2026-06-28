@@ -65,9 +65,9 @@ async function deleteUserSessions(userId: string) {
 }
 
 export const sessionRepository = {
-  getActiveSessionsByUser,
-  getSessionById,
   deleteSession,
-  deleteUserSessionsExcept,
+  getSessionById,
   deleteUserSessions,
+  getActiveSessionsByUser,
+  deleteUserSessionsExcept,
 };

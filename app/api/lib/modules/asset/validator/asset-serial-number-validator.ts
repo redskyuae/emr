@@ -7,8 +7,8 @@ const ASSET_SERIAL_NUMBER_EXISTS = "Asset serial number '{value}' already exists
 
 type AssetSerialNumberInput = {
   tenantId: string;
-  serialNumber: string;
   excludeId?: number;
+  serialNumber: string;
 };
 
 function duplicateError(value: string) {

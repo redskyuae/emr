@@ -10,12 +10,12 @@ import type {
 
 const appointmentCancelledReasonColumns = {
   id: appointmentCancelledReasonTable.id,
-  tenantId: appointmentCancelledReasonTable.tenantId,
   name: appointmentCancelledReasonTable.name,
   code: appointmentCancelledReasonTable.code,
-  description: appointmentCancelledReasonTable.description,
+  tenantId: appointmentCancelledReasonTable.tenantId,
   createdOn: appointmentCancelledReasonTable.createdOn,
   modifiedOn: appointmentCancelledReasonTable.modifiedOn,
+  description: appointmentCancelledReasonTable.description,
 };
 
 async function createAppointmentCancelledReason(data: CreateAppointmentCancelledReasonData) {
@@ -194,12 +194,12 @@ async function seedDefaultAppointmentCancelledReasons(
 }
 
 export const appointmentCancelledReasonRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getAppointmentCancelledReasons,
   createAppointmentCancelledReason,
   updateAppointmentCancelledReason,
   deleteAppointmentCancelledReason,
   getAppointmentCancelledReasonById,
-  getAppointmentCancelledReasons,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultAppointmentCancelledReasons,
 };

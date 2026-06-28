@@ -23,8 +23,8 @@ export async function deleteAppointmentCancelledReasonCommand(
   if (!deletedAppointmentCancelledReason) {
     return {
       success: false,
-      errors: ['Appointment cancelled reason not found'],
       status: StatusCodes.NOT_FOUND,
+      errors: ['Appointment cancelled reason not found'],
     };
   }
 

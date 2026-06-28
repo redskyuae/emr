@@ -15,9 +15,9 @@ const tenantColumns = {
 
 const membershipColumns = {
   id: member.id,
-  tenantId: member.organizationId,
-  userId: member.userId,
   role: member.role,
+  userId: member.userId,
+  tenantId: member.organizationId,
 };
 
 type TenantRow = typeof organization.$inferSelect;
@@ -52,8 +52,8 @@ function toTenant(
     name: row.name,
     slug: row.slug,
     logo: row.logo,
-    isActive: isActiveTenant(row.metadata),
     createdAt: row.createdAt,
+    isActive: isActiveTenant(row.metadata),
   } satisfies Tenant;
 }
 
@@ -165,12 +165,12 @@ async function isTenantOwner(tenantId: string, userId: string) {
 }
 
 export const tenantRepository = {
+  updateTenant,
   getTenantById,
+  isTenantOwner,
+  isTenantMember,
+  setTenantActive,
   findTenantByName,
   findTenantBySlug,
-  updateTenant,
-  setTenantActive,
   findTenantMembership,
-  isTenantMember,
-  isTenantOwner,
 };

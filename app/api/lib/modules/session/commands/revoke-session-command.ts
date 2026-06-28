@@ -16,14 +16,14 @@ export async function revokeSessionCommand(
   const sessionIdResult = sessionIdSchema.safeParse(sessionId);
 
   if (!sessionIdResult.success) {
-    return { success: false, errors: formatValidationErrors(sessionIdResult.error) };
+    return { errors: formatValidationErrors(sessionIdResult.error), success: false };
   }
 
   if (sessionIdResult.data === currentSessionId) {
     return {
-      success: false,
       errors: [CANNOT_REVOKE_CURRENT_SESSION_MESSAGE],
       status: StatusCodes.UNPROCESSABLE_ENTITY,
+      success: false,
     };
   }
 
@@ -31,17 +31,17 @@ export async function revokeSessionCommand(
 
   if (!existingSession) {
     return {
-      success: false,
       errors: ['Session not found'],
       status: StatusCodes.NOT_FOUND,
+      success: false,
     };
   }
 
   if (existingSession.userId !== callerUserId) {
     return {
-      success: false,
       errors: ['Forbidden'],
       status: StatusCodes.FORBIDDEN,
+      success: false,
     };
   }
 
@@ -49,11 +49,11 @@ export async function revokeSessionCommand(
 
   if (!deletedSession) {
     return {
-      success: false,
       errors: ['Session not found'],
       status: StatusCodes.NOT_FOUND,
+      success: false,
     };
   }
 
-  return { success: true, data: deletedSession };
+  return { data: deletedSession, success: true };
 }

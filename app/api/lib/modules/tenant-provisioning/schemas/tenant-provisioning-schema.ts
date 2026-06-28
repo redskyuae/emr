@@ -28,10 +28,10 @@ const passwordSchema = z
 
 export const signupSchema = z
   .object({
-    tenantName: tenantNameSchema,
-    ownerName: ownerNameSchema,
-    ownerEmail: ownerEmailSchema,
     password: passwordSchema,
+    ownerName: ownerNameSchema,
+    tenantName: tenantNameSchema,
+    ownerEmail: ownerEmailSchema,
   })
   .strict();
 

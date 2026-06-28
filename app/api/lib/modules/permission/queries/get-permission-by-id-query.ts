@@ -16,8 +16,8 @@ export async function getPermissionByIdQuery(id: unknown): Promise<SingleQueryRe
   if (!permission) {
     return {
       success: false,
-      errors: ['Permission not found'],
       status: StatusCodes.NOT_FOUND,
+      errors: ['Permission not found'],
     };
   }
 

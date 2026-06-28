@@ -6,13 +6,13 @@ import { userRoleTable } from '@/app/db/schema/user-role';
 
 const assignedRoleColumns = {
   id: roleTable.id,
-  tenantId: roleTable.tenantId,
   name: roleTable.name,
   code: roleTable.code,
-  description: roleTable.description,
   isSystem: roleTable.isSystem,
-  createdOn: roleTable.createdOn,
+  tenantId: roleTable.tenantId,
+  description: roleTable.description,
   modifiedOn: roleTable.modifiedOn,
+  createdOn: roleTable.createdOn,
 };
 
 const roleAssignmentColumns = {
@@ -20,9 +20,9 @@ const roleAssignmentColumns = {
   userId: userRoleTable.userId,
   roleId: userRoleTable.roleId,
   tenantId: userRoleTable.tenantId,
+  createdOn: userRoleTable.createdOn,
   assignedBy: userRoleTable.assignedBy,
   assignedOn: userRoleTable.assignedOn,
-  createdOn: userRoleTable.createdOn,
 };
 
 function orderAssignedRoles() {
@@ -111,10 +111,10 @@ async function removeRole(userId: string, roleId: number, tenantId: string) {
 }
 
 export const userRoleRepository = {
-  getAssignedRolesByUser,
+  removeRole,
+  assignRoles,
   getRoleAssignment,
+  getAssignedRolesByUser,
   countAssignmentsByUser,
   countAssignmentsByRole,
-  assignRoles,
-  removeRole,
 };

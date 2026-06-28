@@ -37,8 +37,8 @@ export const assetCategoryIdSchema = z.coerce
 export const assetCategoryTenantIdSchema = tenantIdSchema;
 
 export const createAssetCategorySchema = z.object({
-  name: assetCategoryNameSchema,
   code: assetCategoryCodeSchema,
+  name: assetCategoryNameSchema,
   color: assetCategoryColorSchema,
   description: assetCategoryDescriptionSchema,
 });
@@ -54,18 +54,18 @@ export type UpdateAssetCategoryData = UpdateAssetCategoryInput & { tenantId: str
 
 export type AssetCategory = {
   id: number;
-  tenantId: string;
   name: string;
   code: string;
   color: string;
-  description: string | null;
   createdOn: Date;
+  tenantId: string;
   modifiedOn: Date;
+  description: string | null;
 };
 
 export type AssetCategoryListParams = {
-  tenantId: string;
-  query?: string;
   page?: number;
+  query?: string;
   limit?: number;
+  tenantId: string;
 };

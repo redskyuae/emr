@@ -126,11 +126,11 @@ async function findActiveByCode(code: string, { excludeId }: { excludeId?: numbe
 }
 
 export const countryRepository = {
+  getCountries,
   createCountry,
   updateCountry,
   deleteCountry,
   getCountryById,
-  getCountries,
   findActiveByName,
   findActiveByCode,
 };

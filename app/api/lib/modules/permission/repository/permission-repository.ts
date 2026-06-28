@@ -7,14 +7,14 @@ import { permissionSeedData, permissionSeedOrder } from '../seed-data';
 
 const permissionColumns = {
   id: permissionTable.id,
-  module: permissionTable.module,
-  resource: permissionTable.resource,
-  action: permissionTable.action,
   name: permissionTable.name,
-  description: permissionTable.description,
+  module: permissionTable.module,
+  action: permissionTable.action,
+  resource: permissionTable.resource,
   isActive: permissionTable.isActive,
   createdOn: permissionTable.createdOn,
   modifiedOn: permissionTable.modifiedOn,
+  description: permissionTable.description,
 };
 
 async function getPermissionById(id: number) {
@@ -81,7 +81,7 @@ async function seedPermissionCatalogue() {
 }
 
 export const permissionRepository = {
-  getPermissionById,
   getPermissions,
+  getPermissionById,
   seedPermissionCatalogue,
 };

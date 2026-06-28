@@ -26,17 +26,17 @@ export type SetRolePermissionsInput = z.infer<typeof setRolePermissionsSchema>;
 
 export type AssignedPermission = {
   id: number;
+  name: string;
+  action: string;
   module: string;
   resource: string;
-  action: string;
-  name: string;
   description: string | null;
 };
 
 export type PermissionAssignment = {
   id: number;
   roleId: number;
-  permissionId: number;
-  tenantId: string;
   createdOn: Date;
+  tenantId: string;
+  permissionId: number;
 };

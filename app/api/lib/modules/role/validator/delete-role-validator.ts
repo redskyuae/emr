@@ -51,8 +51,8 @@ export async function validateDeleteRole(
   return {
     success: true,
     data: {
-      id: idResult.data,
       tenantId,
+      id: idResult.data,
     },
   };
 }

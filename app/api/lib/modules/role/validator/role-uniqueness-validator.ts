@@ -5,9 +5,9 @@ const ROLE_NAME_EXISTS = 'Role name {value} already exists.';
 const ROLE_CODE_EXISTS = 'Role code {value} already exists.';
 
 type RoleUniquenessInput = {
-  tenantId: string;
-  name?: string;
   code?: string;
+  name?: string;
+  tenantId: string;
   excludeId?: number;
 };
 

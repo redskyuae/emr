@@ -13,20 +13,20 @@ export async function revokeUserSessionsCommand(
   const userIdResult = staffUserIdSchema.safeParse(userId);
 
   if (!userIdResult.success) {
-    return { success: false, errors: formatValidationErrors(userIdResult.error) };
+    return { errors: formatValidationErrors(userIdResult.error), success: false };
   }
 
   const staff = await staffRepository.getStaffByUserId(userIdResult.data, tenantId);
 
   if (!staff) {
     return {
-      success: false,
       errors: ['Staff not found'],
       status: StatusCodes.NOT_FOUND,
+      success: false,
     };
   }
 
   await sessionRepository.deleteUserSessions(userIdResult.data);
 
-  return { success: true, data: undefined };
+  return { data: undefined, success: true };
 }

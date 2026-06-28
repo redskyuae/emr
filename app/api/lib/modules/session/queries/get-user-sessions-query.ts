@@ -15,16 +15,16 @@ export async function getUserSessionsQuery(
   const userIdResult = staffUserIdSchema.safeParse(userId);
 
   if (!userIdResult.success) {
-    return { success: false, errors: formatValidationErrors(userIdResult.error) };
+    return { errors: formatValidationErrors(userIdResult.error), success: false };
   }
 
   const staff = await staffRepository.getStaffByUserId(userIdResult.data, tenantId);
 
   if (!staff) {
     return {
-      success: false,
       errors: ['Staff not found'],
       status: StatusCodes.NOT_FOUND,
+      success: false,
     };
   }
 
@@ -33,5 +33,5 @@ export async function getUserSessionsQuery(
     currentSessionId
   );
 
-  return { success: true, data: sessions, total: sessions.length };
+  return { data: sessions, total: sessions.length, success: true };
 }

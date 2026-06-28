@@ -21,8 +21,8 @@ export type RoleAssignment = {
   id: number;
   userId: string;
   roleId: number;
+  createdOn: Date;
+  assignedOn: Date;
   tenantId: string;
   assignedBy: string;
-  assignedOn: Date;
-  createdOn: Date;
 };

@@ -5,9 +5,9 @@ const ASSET_STATUS_NAME_EXISTS = "Asset status name '{value}' already exists.";
 const ASSET_STATUS_CODE_EXISTS = "Asset status code '{value}' already exists.";
 
 type AssetStatusUniquenessInput = {
-  tenantId: string;
   name: string;
   code: string;
+  tenantId: string;
   excludeId?: number;
 };
 

@@ -20,13 +20,13 @@ const staffColumns = {
   name: user.name,
   email: user.email,
   phone: user.phone,
-  staffCode: staffProfileTable.staffCode,
-  designation: staffProfileTable.designation,
   gender: staffProfileTable.gender,
-  dateOfBirth: staffProfileTable.dateOfBirth,
   isActive: staffProfileTable.isActive,
   createdOn: staffProfileTable.createdOn,
+  staffCode: staffProfileTable.staffCode,
   modifiedOn: staffProfileTable.modifiedOn,
+  dateOfBirth: staffProfileTable.dateOfBirth,
+  designation: staffProfileTable.designation,
 };
 
 type StaffRow = Omit<Staff, 'gender'> & {
@@ -366,12 +366,12 @@ async function deleteAuthUser(userId: string) {
 }
 
 export const staffRepository = {
-  findUserByEmail,
-  getStaffByUserId,
   getStaff,
-  findNonDeletedByStaffCode,
-  createStaffProfile,
   updateStaff,
   setStaffActive,
   deleteAuthUser,
+  findUserByEmail,
+  getStaffByUserId,
+  createStaffProfile,
+  findNonDeletedByStaffCode,
 };

@@ -54,18 +54,18 @@ export type UpdateWorkOrderTypeData = UpdateWorkOrderTypeInput & { tenantId: str
 
 export type WorkOrderType = {
   id: number;
-  tenantId: string;
   name: string;
   code: string;
   color: string;
-  description: string | null;
   createdOn: Date;
+  tenantId: string;
   modifiedOn: Date;
+  description: string | null;
 };
 
 export type WorkOrderTypeListParams = {
-  tenantId: string;
-  query?: string;
   page?: number;
+  query?: string;
   limit?: number;
+  tenantId: string;
 };

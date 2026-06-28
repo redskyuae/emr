@@ -80,22 +80,22 @@ const assetMasterJoins = () =>
 
 function assetValues(data: CreateAssetData | UpdateAssetData) {
   return {
-    tenantId: data.tenantId,
     name: data.name,
-    categoryId: data.categoryId,
+    cost: data.cost ?? null,
+    tenantId: data.tenantId,
     statusId: data.statusId,
+    model: data.model ?? null,
+    categoryId: data.categoryId,
+    facility: data.facility ?? null,
+    location: data.location ?? null,
+    serialNumber: data.serialNumber,
+    custodian: data.custodian ?? null,
+    department: data.department ?? null,
     conditionId: data.conditionId ?? null,
     manufacturer: data.manufacturer ?? null,
-    model: data.model ?? null,
-    serialNumber: data.serialNumber,
-    facility: data.facility ?? null,
-    department: data.department ?? null,
-    location: data.location ?? null,
-    custodian: data.custodian ?? null,
+    currentValue: data.currentValue ?? null,
     purchaseDate: data.purchaseDate ?? null,
     warrantyExpiry: data.warrantyExpiry ?? null,
-    cost: data.cost ?? null,
-    currentValue: data.currentValue ?? null,
     lastServiceDate: data.lastServiceDate ?? null,
     nextServiceDate: data.nextServiceDate ?? null,
     calibrationDate: data.calibrationDate ?? null,
@@ -294,10 +294,10 @@ async function findActiveBySerialNumber(
 }
 
 export const assetRepository = {
+  getAssets,
   createAsset,
   updateAsset,
   deleteAsset,
   getAssetById,
-  getAssets,
   findActiveBySerialNumber,
 };

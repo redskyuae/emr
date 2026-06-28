@@ -7,13 +7,13 @@ import { tenantIdSchema } from '../../tenant/schemas/tenant-schema';
 import { workOrderTypeRepository } from '../../work-order-type/repository/work-order-type-repository';
 
 const DEFAULT_ASSET_CATEGORIES = [
-  { code: 'IMG', name: 'Diagnostic Imaging', color: '#2563EB' },
-  { code: 'MON', name: 'Patient Monitoring', color: '#0EA5E9' },
-  { code: 'LIFE', name: 'Life Support', color: '#DC2626' },
-  { code: 'SURG', name: 'Surgical', color: '#7C3AED' },
-  { code: 'LAB', name: 'Laboratory', color: '#D97706' },
-  { code: 'MOB', name: 'Mobility & Furniture', color: '#16A34A' },
-  { code: 'IT', name: 'IT & Network', color: '#4F46E5' },
+  { code: 'IMG', color: '#2563EB', name: 'Diagnostic Imaging' },
+  { code: 'MON', color: '#0EA5E9', name: 'Patient Monitoring' },
+  { code: 'LIFE', color: '#DC2626', name: 'Life Support' },
+  { code: 'SURG', color: '#7C3AED', name: 'Surgical' },
+  { code: 'LAB', color: '#D97706', name: 'Laboratory' },
+  { code: 'MOB', color: '#16A34A', name: 'Mobility & Furniture' },
+  { code: 'IT', color: '#4F46E5', name: 'IT & Network' },
 ] as const;
 
 const DEFAULT_ASSET_STATUSES = [
@@ -25,17 +25,17 @@ const DEFAULT_ASSET_STATUSES = [
 ] as const;
 
 const DEFAULT_ASSET_CONDITIONS = [
-  { code: 'EXC', name: 'Excellent', color: '#16A34A' },
-  { code: 'GOOD', name: 'Good', color: '#65A30D' },
-  { code: 'FAIR', name: 'Fair', color: '#D97706' },
-  { code: 'POOR', name: 'Poor', color: '#DC2626' },
+  { code: 'EXC', color: '#16A34A', name: 'Excellent' },
+  { code: 'GOOD', color: '#65A30D', name: 'Good' },
+  { code: 'FAIR', color: '#D97706', name: 'Fair' },
+  { code: 'POOR', color: '#DC2626', name: 'Poor' },
 ] as const;
 
 const DEFAULT_WORK_ORDER_TYPES = [
-  { code: 'PREV', name: 'Preventive', color: '#2563EB' },
-  { code: 'CORR', name: 'Corrective', color: '#DC2626' },
-  { code: 'CAL', name: 'Calibration', color: '#7C3AED' },
-  { code: 'INSP', name: 'Inspection', color: '#0EA5E9' },
+  { code: 'PREV', color: '#2563EB', name: 'Preventive' },
+  { code: 'CORR', color: '#DC2626', name: 'Corrective' },
+  { code: 'CAL', color: '#7C3AED', name: 'Calibration' },
+  { code: 'INSP', color: '#0EA5E9', name: 'Inspection' },
 ] as const;
 
 export async function seedDefaultAssetMastersCommand(

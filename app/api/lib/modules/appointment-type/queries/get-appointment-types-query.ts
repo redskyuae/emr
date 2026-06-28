@@ -4,10 +4,10 @@ import type { AppointmentType } from '../schemas/appointment-type-schema';
 import { validateGetAppointmentTypes } from '../validator/get-appointment-types-validator';
 
 export type GetAppointmentTypesParams = {
-  tenantId: unknown;
   page?: number;
   limit?: number;
   query?: string;
+  tenantId: unknown;
 };
 
 export async function getAppointmentTypesQuery({

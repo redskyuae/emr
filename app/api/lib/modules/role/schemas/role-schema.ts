@@ -63,13 +63,13 @@ export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 
 export type Role = {
   id: number;
-  tenantId: string;
-  name: string;
   code: string;
-  description: string | null;
+  name: string;
   isSystem: boolean;
+  tenantId: string;
   createdOn: Date;
   modifiedOn: Date;
+  description: string | null;
 };
 
 export type RoleWithStats = Role & {
@@ -78,8 +78,8 @@ export type RoleWithStats = Role & {
 };
 
 export type RoleListParams = {
-  tenantId: string;
-  query?: string;
   page?: number;
   limit?: number;
+  query?: string;
+  tenantId: string;
 };

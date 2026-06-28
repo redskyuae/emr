@@ -169,6 +169,41 @@ bun run format        # Prettier (write)
 bun run format:check  # Prettier (check only)
 ```
 
+## Style Guide
+
+### Code Formatting: Pyramid Structure
+
+Type definitions, object literals, and object exports should be ordered by line length (shortest to longest) to create a visual pyramid structure. This improves readability by establishing a natural visual hierarchy.
+
+**Examples:**
+
+Object literals:
+```ts
+const columns = {
+  id: table.id,              // 2-char key
+  name: table.name,          // 4-char key
+  code: table.code,          // 4-char key
+  tenantId: table.tenantId,  // 8-char key
+  createdOn: table.createdOn, // 9-char key
+  description: table.description, // 11-char key
+};
+```
+
+Object exports:
+```ts
+export const repo = {
+  getAll,               // short
+  create,               // short
+  update,               // short
+  delete,               // short
+  findByName,           // medium
+  findByCode,           // medium
+  seedDefaults,         // longest
+};
+```
+
+**When to apply:** All new code, all directories. Refactored API modules should follow this pattern. Only comment on violations if asked — this is a style preference, not a hard requirement.
+
 ## Domain reference
 
 See `CONTEXT.md` for the canonical glossary of domain terms. Use those terms exactly — do not introduce synonyms.

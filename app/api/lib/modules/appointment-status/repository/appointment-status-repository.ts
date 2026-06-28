@@ -10,12 +10,12 @@ import type {
 
 const appointmentStatusColumns = {
   id: appointmentStatusTable.id,
-  tenantId: appointmentStatusTable.tenantId,
-  name: appointmentStatusTable.name,
   code: appointmentStatusTable.code,
-  description: appointmentStatusTable.description,
+  name: appointmentStatusTable.name,
+  tenantId: appointmentStatusTable.tenantId,
   createdOn: appointmentStatusTable.createdOn,
   modifiedOn: appointmentStatusTable.modifiedOn,
+  description: appointmentStatusTable.description,
 };
 
 async function createAppointmentStatus(data: CreateAppointmentStatusData) {
@@ -188,12 +188,12 @@ async function seedDefaultAppointmentStatuses(tenantId: string, defaults: Appoin
 }
 
 export const appointmentStatusRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getAppointmentStatuses,
   createAppointmentStatus,
   updateAppointmentStatus,
   deleteAppointmentStatus,
   getAppointmentStatusById,
-  getAppointmentStatuses,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultAppointmentStatuses,
 };

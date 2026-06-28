@@ -4,10 +4,10 @@ import type { AssetStatus } from '../schemas/asset-status-schema';
 import { validateGetAssetStatuses } from '../validator/get-asset-statuses-validator';
 
 export type GetAssetStatusesParams = {
-  tenantId: unknown;
   page?: number;
   limit?: number;
   query?: string;
+  tenantId: unknown;
 };
 
 export async function getAssetStatusesQuery({

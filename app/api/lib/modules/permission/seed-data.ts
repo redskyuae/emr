@@ -1,8 +1,8 @@
 export type PermissionSeed = {
+  name: string;
+  action: string;
   module: string;
   resource: string;
-  action: string;
-  name: string;
   description: string;
 };
 

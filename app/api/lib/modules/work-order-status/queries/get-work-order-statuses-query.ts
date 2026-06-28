@@ -4,10 +4,10 @@ import type { WorkOrderStatus } from '../schemas/work-order-status-schema';
 import { validateGetWorkOrderStatuses } from '../validator/get-work-order-statuses-validator';
 
 export type GetWorkOrderStatusesParams = {
-  tenantId: unknown;
   page?: number;
   limit?: number;
   query?: string;
+  tenantId: unknown;
 };
 
 export async function getWorkOrderStatusesQuery({

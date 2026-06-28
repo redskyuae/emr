@@ -10,13 +10,13 @@ import type {
 
 const assetConditionColumns = {
   id: assetConditionTable.id,
-  tenantId: assetConditionTable.tenantId,
   name: assetConditionTable.name,
   code: assetConditionTable.code,
   color: assetConditionTable.color,
-  description: assetConditionTable.description,
+  tenantId: assetConditionTable.tenantId,
   createdOn: assetConditionTable.createdOn,
   modifiedOn: assetConditionTable.modifiedOn,
+  description: assetConditionTable.description,
 };
 
 async function createAssetCondition(data: CreateAssetConditionData) {
@@ -192,12 +192,12 @@ async function seedDefaultAssetConditions(tenantId: string, defaults: AssetCondi
 }
 
 export const assetConditionRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getAssetConditions,
   createAssetCondition,
   updateAssetCondition,
   deleteAssetCondition,
   getAssetConditionById,
-  getAssetConditions,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultAssetConditions,
 };

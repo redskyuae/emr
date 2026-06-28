@@ -7,31 +7,31 @@ import type { Role } from '../../role/schemas/role-schema';
 
 const assignedPermissionColumns = {
   id: permissionTable.id,
+  name: permissionTable.name,
+  action: permissionTable.action,
   module: permissionTable.module,
   resource: permissionTable.resource,
-  action: permissionTable.action,
-  name: permissionTable.name,
   description: permissionTable.description,
 };
 
 const permissionAssignmentColumns = {
   id: rolePermissionTable.id,
   roleId: rolePermissionTable.roleId,
-  permissionId: rolePermissionTable.permissionId,
   tenantId: rolePermissionTable.tenantId,
   createdOn: rolePermissionTable.createdOn,
+  permissionId: rolePermissionTable.permissionId,
 };
 
 const TENANT_ADMIN_DEFAULT_PERMISSIONS = 'ALL';
 
 const DEFAULT_PERMISSION_NAMES_BY_SYSTEM_ROLE = {
-  TENANT_ADMIN: TENANT_ADMIN_DEFAULT_PERMISSIONS,
-  DOCTOR: [],
   NURSE: [],
-  RECEPTIONIST: [],
-  PHARMACIST: [],
+  DOCTOR: [],
   LAB_TECH: [],
+  PHARMACIST: [],
+  RECEPTIONIST: [],
   BILLING_STAFF: [],
+  TENANT_ADMIN: TENANT_ADMIN_DEFAULT_PERMISSIONS,
 } as const;
 
 function orderAssignedPermissions() {
@@ -214,11 +214,11 @@ async function seedDefaultPermissionsForSystemRoles(tenantId: string, roles: Rol
 }
 
 export const rolePermissionRepository = {
-  getAssignedPermissionsByRole,
-  getActivePermissionsByIds,
-  getPermissionAssignment,
-  assignPermissions,
   setPermissions,
   removePermission,
+  assignPermissions,
+  getPermissionAssignment,
+  getActivePermissionsByIds,
+  getAssignedPermissionsByRole,
   seedDefaultPermissionsForSystemRoles,
 };

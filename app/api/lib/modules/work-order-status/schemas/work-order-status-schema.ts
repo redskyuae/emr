@@ -52,8 +52,8 @@ export const workOrderStatusTenantIdSchema = tenantIdSchema;
 export const createWorkOrderStatusSchema = z.object({
   name: workOrderStatusNameSchema,
   code: workOrderStatusCodeSchema,
-  category: workOrderStatusCategorySchema,
   color: workOrderStatusColorSchema,
+  category: workOrderStatusCategorySchema,
   description: workOrderStatusDescriptionSchema,
 });
 
@@ -68,21 +68,21 @@ export type CreateWorkOrderStatusData = CreateWorkOrderStatusInput & { tenantId:
 export type UpdateWorkOrderStatusData = UpdateWorkOrderStatusInput & { tenantId: string };
 
 export type WorkOrderStatus = {
-  id: number;
-  tenantId: string;
   name: string;
   code: string;
-  category: WorkOrderStatusCategory;
   color: string;
-  description: string | null;
-  isSystem: boolean;
+  id: number;
   createdOn: Date;
   modifiedOn: Date;
+  isSystem: boolean;
+  tenantId: string;
+  description: string | null;
+  category: WorkOrderStatusCategory;
 };
 
 export type WorkOrderStatusListParams = {
-  tenantId: string;
   query?: string;
   page?: number;
   limit?: number;
+  tenantId: string;
 };

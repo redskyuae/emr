@@ -23,8 +23,8 @@ export async function getAppointmentCancelledReasonByIdQuery(
   if (!appointmentCancelledReason) {
     return {
       success: false,
-      errors: ['Appointment cancelled reason not found'],
       status: StatusCodes.NOT_FOUND,
+      errors: ['Appointment cancelled reason not found'],
     };
   }
 

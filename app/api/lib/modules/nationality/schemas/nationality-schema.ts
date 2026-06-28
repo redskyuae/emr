@@ -38,7 +38,7 @@ export type Nationality = {
 };
 
 export type NationalityListParams = {
-  query?: string;
   page?: number;
+  query?: string;
   limit?: number;
 };

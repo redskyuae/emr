@@ -4,10 +4,10 @@ import type { AppointmentStatus } from '../schemas/appointment-status-schema';
 import { validateGetAppointmentStatuses } from '../validator/get-appointment-statuses-validator';
 
 export type GetAppointmentStatusesParams = {
-  tenantId: unknown;
   page?: number;
-  limit?: number;
   query?: string;
+  limit?: number;
+  tenantId: unknown;
 };
 
 export async function getAppointmentStatusesQuery({

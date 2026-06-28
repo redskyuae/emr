@@ -4,10 +4,10 @@ import type { AppointmentCancelledReason } from '../schemas/appointment-cancelle
 import { validateGetAppointmentCancelledReasons } from '../validator/get-appointment-cancelled-reasons-validator';
 
 export type GetAppointmentCancelledReasonsParams = {
-  tenantId: unknown;
   page?: number;
   limit?: number;
   query?: string;
+  tenantId: unknown;
 };
 
 export async function getAppointmentCancelledReasonsQuery({
@@ -24,12 +24,12 @@ export async function getAppointmentCancelledReasonsQuery({
 
   const { data, total } = await appointmentCancelledReasonRepository.getAppointmentCancelledReasons(
     {
-      tenantId: tenantIdValidationResult.data,
       page,
       limit,
       query,
+      tenantId: tenantIdValidationResult.data,
     }
   );
 
-  return { success: true, data, total };
+  return { data, total, success: true };
 }

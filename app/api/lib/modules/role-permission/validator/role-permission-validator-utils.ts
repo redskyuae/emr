@@ -8,9 +8,9 @@ import type { Role } from '../../role/schemas/role-schema';
 import { rolePermissionRepository } from '../repository/role-permission-repository';
 
 export type RolePermissionRoleParams = {
+  role: Role;
   roleId: number;
   tenantId: string;
-  role: Role;
 };
 
 export async function validateRolePermissionRole(

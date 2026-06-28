@@ -38,13 +38,13 @@ export const SYSTEM_ROLE_DEFINITIONS = [
 
 const roleColumns = {
   id: roleTable.id,
-  tenantId: roleTable.tenantId,
-  name: roleTable.name,
   code: roleTable.code,
-  description: roleTable.description,
+  name: roleTable.name,
   isSystem: roleTable.isSystem,
+  tenantId: roleTable.tenantId,
   createdOn: roleTable.createdOn,
   modifiedOn: roleTable.modifiedOn,
+  description: roleTable.description,
 };
 
 type RoleRow = typeof roleTable.$inferSelect;
@@ -332,14 +332,14 @@ async function seedSystemRolesForTenant(tenantId: string) {
 }
 
 export const roleRepository = {
+  getRoles,
   createRole,
   updateRole,
   deleteRole,
   getRoleById,
-  getRoleByIdWithStats,
   getRolesByIds,
-  getRoles,
   findActiveByName,
   findActiveByCode,
+  getRoleByIdWithStats,
   seedSystemRolesForTenant,
 };

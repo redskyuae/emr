@@ -10,12 +10,12 @@ import type {
 
 const appointmentTypeColumns = {
   id: appointmentTypeTable.id,
-  tenantId: appointmentTypeTable.tenantId,
   name: appointmentTypeTable.name,
   code: appointmentTypeTable.code,
-  description: appointmentTypeTable.description,
+  tenantId: appointmentTypeTable.tenantId,
   createdOn: appointmentTypeTable.createdOn,
   modifiedOn: appointmentTypeTable.modifiedOn,
+  description: appointmentTypeTable.description,
 };
 
 async function createAppointmentType(data: CreateAppointmentTypeData) {
@@ -188,12 +188,12 @@ async function seedDefaultAppointmentTypes(tenantId: string, defaults: Appointme
 }
 
 export const appointmentTypeRepository = {
+  findActiveByCode,
+  findActiveByName,
+  getAppointmentTypes,
   createAppointmentType,
   updateAppointmentType,
   deleteAppointmentType,
   getAppointmentTypeById,
-  getAppointmentTypes,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultAppointmentTypes,
 };

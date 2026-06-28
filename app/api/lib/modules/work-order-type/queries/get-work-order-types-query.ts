@@ -4,10 +4,10 @@ import type { WorkOrderType } from '../schemas/work-order-type-schema';
 import { validateGetWorkOrderTypes } from '../validator/get-work-order-types-validator';
 
 export type GetWorkOrderTypesParams = {
-  tenantId: unknown;
   page?: number;
   limit?: number;
   query?: string;
+  tenantId: unknown;
 };
 
 export async function getWorkOrderTypesQuery({

@@ -11,15 +11,15 @@ import { type CreateWorkOrderInput, createWorkOrderSchema } from '../schemas/wor
 type WorkOrderReferenceReader = {
   getAssetById(id: number, tenantId: string): Promise<unknown>;
   getWorkOrderTypeById(id: number, tenantId: string): Promise<unknown>;
-  getWorkOrderPriorityById(id: number, tenantId: string): Promise<unknown>;
   getWorkOrderStatusById(id: number, tenantId: string): Promise<unknown>;
+  getWorkOrderPriorityById(id: number, tenantId: string): Promise<unknown>;
 };
 
 const defaultReferenceReader: WorkOrderReferenceReader = {
   getAssetById: assetRepository.getAssetById,
   getWorkOrderTypeById: workOrderTypeRepository.getWorkOrderTypeById,
-  getWorkOrderPriorityById: workOrderPriorityRepository.getWorkOrderPriorityById,
   getWorkOrderStatusById: workOrderStatusRepository.getWorkOrderStatusById,
+  getWorkOrderPriorityById: workOrderPriorityRepository.getWorkOrderPriorityById,
 };
 
 export async function validateCreateWorkOrder(

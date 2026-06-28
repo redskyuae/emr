@@ -33,11 +33,11 @@ function getAuthCreateUserErrors(error: unknown) {
 }
 
 async function cleanupCreatedProvisioning({
-  tenantId,
   userId,
+  tenantId,
 }: {
-  tenantId?: string;
   userId?: string;
+  tenantId?: string;
 }) {
   try {
     if (tenantId) {
@@ -88,10 +88,10 @@ export async function provisionTenantCommand(
 
     const createdOrganization = await auth.api.createOrganization({
       body: {
+        metadata: { isActive: true },
+        userId: createdUser.user.id,
         name: validationResult.data.tenantName,
         slug: validationResult.data.tenantSlug,
-        userId: createdUser.user.id,
-        metadata: { isActive: true },
       },
     });
 
@@ -155,9 +155,9 @@ export async function provisionTenantCommand(
     }
 
     const setActiveResult = await auth.api.setActiveOrganization({
+      returnHeaders: true,
       body: { organizationId: createdTenant.id },
       headers: new Headers({ cookie: cookieHeader }),
-      returnHeaders: true,
     });
     const setActiveSetCookies = getSetCookies(setActiveResult.headers);
 

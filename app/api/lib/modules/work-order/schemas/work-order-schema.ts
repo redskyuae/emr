@@ -93,31 +93,31 @@ export type WorkOrderAssetSummary = {
 
 export type WorkOrder = {
   id: number;
-  tenantId: string;
   code: string;
-  assetId: number;
-  typeId: number;
-  priorityId: number;
-  statusId: number;
-  technician: string | null;
-  dueDate: string | null;
-  completedOn: Date | null;
   note: string | null;
   type: WorkOrderMasterSummary;
-  priority: WorkOrderMasterSummary;
-  status: WorkOrderStatusSummary;
   asset: WorkOrderAssetSummary;
+  typeId: number;
+  status: WorkOrderStatusSummary;
+  assetId: number;
+  dueDate: string | null;
+  tenantId: string;
+  statusId: number;
+  priority: WorkOrderMasterSummary;
   createdOn: Date;
+  priorityId: number;
+  technician: string | null;
   modifiedOn: Date;
+  completedOn: Date | null;
 };
 
 export type WorkOrderListParams = {
-  tenantId: string;
-  query?: string;
-  typeId?: number;
-  priorityId?: number;
-  statusId?: number;
-  assetId?: number;
   page?: number;
+  query?: string;
   limit?: number;
+  typeId?: number;
+  assetId?: number;
+  tenantId: string;
+  statusId?: number;
+  priorityId?: number;
 };

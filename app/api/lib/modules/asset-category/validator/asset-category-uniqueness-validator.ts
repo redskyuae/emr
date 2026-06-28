@@ -5,9 +5,9 @@ const ASSET_CATEGORY_NAME_EXISTS = "Asset category name '{value}' already exists
 const ASSET_CATEGORY_CODE_EXISTS = "Asset category code '{value}' already exists.";
 
 type AssetCategoryUniquenessInput = {
-  tenantId: string;
   name: string;
   code: string;
+  tenantId: string;
   excludeId?: number;
 };
 

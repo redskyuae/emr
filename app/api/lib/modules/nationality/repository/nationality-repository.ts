@@ -126,11 +126,11 @@ async function findActiveByCode(code: string, { excludeId }: { excludeId?: numbe
 }
 
 export const nationalityRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getNationalities,
   createNationality,
   updateNationality,
   deleteNationality,
   getNationalityById,
-  getNationalities,
-  findActiveByName,
-  findActiveByCode,
 };

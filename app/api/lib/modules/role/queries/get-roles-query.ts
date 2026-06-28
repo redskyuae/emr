@@ -3,10 +3,10 @@ import { roleRepository } from '../repository/role-repository';
 import type { RoleWithStats } from '../schemas/role-schema';
 
 export type GetRolesParams = {
-  tenantId: string;
   page?: number;
   limit?: number;
   query?: string;
+  tenantId: string;
 };
 
 export async function getRolesQuery({

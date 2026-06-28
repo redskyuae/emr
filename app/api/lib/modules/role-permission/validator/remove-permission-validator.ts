@@ -7,8 +7,8 @@ import { validateRolePermissionRole } from './role-permission-validator-utils';
 
 export type RemovePermissionParams = {
   roleId: number;
-  permissionId: number;
   tenantId: string;
+  permissionId: number;
 };
 
 export async function validateRemovePermission(

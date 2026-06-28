@@ -96,15 +96,15 @@ export type StateCountry = {
 export type State = {
   id: number;
   name: string;
-  countryId: number;
-  country: StateCountry;
   createdOn: Date;
   modifiedOn: Date;
+  countryId: number;
+  country: StateCountry;
 };
 
 export type StateListParams = {
-  query?: string;
-  countryId?: number;
   page?: number;
+  query?: string;
   limit?: number;
+  countryId?: number;
 };

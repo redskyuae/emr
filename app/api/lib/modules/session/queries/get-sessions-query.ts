@@ -8,5 +8,5 @@ export async function getSessionsQuery(
 ): Promise<ListQueryResult<SessionListItem>> {
   const sessions = await sessionRepository.getActiveSessionsByUser(userId, currentSessionId);
 
-  return { success: true, data: sessions, total: sessions.length };
+  return { data: sessions, total: sessions.length, success: true };
 }

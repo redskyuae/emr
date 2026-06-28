@@ -12,15 +12,15 @@ import type {
 
 const workOrderStatusColumns = {
   id: workOrderStatusTable.id,
-  tenantId: workOrderStatusTable.tenantId,
   name: workOrderStatusTable.name,
   code: workOrderStatusTable.code,
-  category: workOrderStatusTable.category,
   color: workOrderStatusTable.color,
-  description: workOrderStatusTable.description,
+  tenantId: workOrderStatusTable.tenantId,
   isSystem: workOrderStatusTable.isSystem,
+  category: workOrderStatusTable.category,
   createdOn: workOrderStatusTable.createdOn,
   modifiedOn: workOrderStatusTable.modifiedOn,
+  description: workOrderStatusTable.description,
 };
 
 async function createWorkOrderStatus(data: CreateWorkOrderStatusData) {
@@ -272,12 +272,12 @@ async function seedDefaultWorkOrderStatuses(tenantId: string, defaults: WorkOrde
 }
 
 export const workOrderStatusRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getWorkOrderStatuses,
+  getWorkOrderStatusById,
   createWorkOrderStatus,
   updateWorkOrderStatus,
   deleteWorkOrderStatus,
-  getWorkOrderStatusById,
-  getWorkOrderStatuses,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultWorkOrderStatuses,
 };

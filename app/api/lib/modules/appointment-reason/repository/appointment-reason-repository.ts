@@ -10,12 +10,12 @@ import type {
 
 const appointmentReasonColumns = {
   id: appointmentReasonTable.id,
-  tenantId: appointmentReasonTable.tenantId,
   name: appointmentReasonTable.name,
   code: appointmentReasonTable.code,
-  description: appointmentReasonTable.description,
+  tenantId: appointmentReasonTable.tenantId,
   createdOn: appointmentReasonTable.createdOn,
   modifiedOn: appointmentReasonTable.modifiedOn,
+  description: appointmentReasonTable.description,
 };
 
 async function createAppointmentReason(data: CreateAppointmentReasonData) {
@@ -188,12 +188,12 @@ async function seedDefaultAppointmentReasons(tenantId: string, defaults: Appoint
 }
 
 export const appointmentReasonRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getAppointmentReasons,
   createAppointmentReason,
   updateAppointmentReason,
   deleteAppointmentReason,
   getAppointmentReasonById,
-  getAppointmentReasons,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultAppointmentReasons,
 };

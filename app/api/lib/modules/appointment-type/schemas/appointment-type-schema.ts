@@ -55,17 +55,17 @@ export type UpdateAppointmentTypeData = UpdateAppointmentTypeInput & { tenantId:
 
 export type AppointmentType = {
   id: number;
-  tenantId: string;
   name: string;
   code: string;
-  description: string | null;
   createdOn: Date;
+  tenantId: string;
   modifiedOn: Date;
+  description: string | null;
 };
 
 export type AppointmentTypeListParams = {
-  tenantId: string;
-  query?: string;
   page?: number;
+  query?: string;
   limit?: number;
+  tenantId: string;
 };

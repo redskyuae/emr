@@ -167,10 +167,10 @@ async function findActiveByNameAndCountry(
 }
 
 export const stateRepository = {
+  getStates,
   createState,
   updateState,
   deleteState,
   getStateById,
-  getStates,
   findActiveByNameAndCountry,
 };

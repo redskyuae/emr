@@ -9,14 +9,14 @@ export type PermissionIdInput = z.infer<typeof permissionIdSchema>;
 
 export type Permission = {
   id: number;
-  module: string;
-  resource: string;
-  action: string;
   name: string;
-  description: string | null;
-  isActive: boolean;
+  action: string;
+  module: string;
   createdOn: Date;
+  resource: string;
   modifiedOn: Date;
+  isActive: boolean;
+  description: string | null;
 };
 
 export type PermissionListItem = Pick<

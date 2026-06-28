@@ -10,13 +10,13 @@ import type {
 
 const assetCategoryColumns = {
   id: assetCategoryTable.id,
-  tenantId: assetCategoryTable.tenantId,
   name: assetCategoryTable.name,
   code: assetCategoryTable.code,
   color: assetCategoryTable.color,
-  description: assetCategoryTable.description,
+  tenantId: assetCategoryTable.tenantId,
   createdOn: assetCategoryTable.createdOn,
   modifiedOn: assetCategoryTable.modifiedOn,
+  description: assetCategoryTable.description,
 };
 
 async function createAssetCategory(data: CreateAssetCategoryData) {
@@ -192,12 +192,12 @@ async function seedDefaultAssetCategories(tenantId: string, defaults: AssetCateg
 }
 
 export const assetCategoryRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getAssetCategories,
   createAssetCategory,
   updateAssetCategory,
   deleteAssetCategory,
   getAssetCategoryById,
-  getAssetCategories,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultAssetCategories,
 };

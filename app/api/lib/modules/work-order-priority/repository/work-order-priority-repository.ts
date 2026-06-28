@@ -11,13 +11,13 @@ import type {
 
 const workOrderPriorityColumns = {
   id: workOrderPriorityTable.id,
-  tenantId: workOrderPriorityTable.tenantId,
   name: workOrderPriorityTable.name,
   code: workOrderPriorityTable.code,
   color: workOrderPriorityTable.color,
-  description: workOrderPriorityTable.description,
+  tenantId: workOrderPriorityTable.tenantId,
   createdOn: workOrderPriorityTable.createdOn,
   modifiedOn: workOrderPriorityTable.modifiedOn,
+  description: workOrderPriorityTable.description,
 };
 
 async function createWorkOrderPriority(data: CreateWorkOrderPriorityData) {
@@ -219,12 +219,12 @@ async function seedDefaultWorkOrderPriorities(tenantId: string, defaults: WorkOr
 }
 
 export const workOrderPriorityRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getWorkOrderPriorities,
   createWorkOrderPriority,
   updateWorkOrderPriority,
   deleteWorkOrderPriority,
   getWorkOrderPriorityById,
-  getWorkOrderPriorities,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultWorkOrderPriorities,
 };

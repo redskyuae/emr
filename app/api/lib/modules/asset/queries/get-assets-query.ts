@@ -4,12 +4,12 @@ import type { Asset } from '../schemas/asset-schema';
 import { validateGetAssets } from '../validator/get-assets-validator';
 
 export type GetAssetsParams = {
-  tenantId: unknown;
   page?: number;
-  limit?: number;
   query?: string;
-  categoryId?: number;
+  limit?: number;
   statusId?: number;
+  categoryId?: number;
+  tenantId: unknown;
 };
 
 export async function getAssetsQuery({

@@ -7,5 +7,5 @@ export async function revokeAllSessionsCommand(
 ): Promise<CommandResult<void>> {
   await sessionRepository.deleteUserSessionsExcept(userId, currentSessionId);
 
-  return { success: true, data: undefined };
+  return { data: undefined, success: true };
 }

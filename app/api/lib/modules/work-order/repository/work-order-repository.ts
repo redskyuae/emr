@@ -12,31 +12,12 @@ import { initialCompletedOn } from './work-order-completion';
 
 const workOrderColumns = {
   id: workOrderTable.id,
-  tenantId: workOrderTable.tenantId,
   code: workOrderTable.code,
-  assetId: workOrderTable.assetId,
-  typeId: workOrderTable.typeId,
-  priorityId: workOrderTable.priorityId,
-  statusId: workOrderTable.statusId,
-  technician: workOrderTable.technician,
-  dueDate: workOrderTable.dueDate,
-  completedOn: workOrderTable.completedOn,
   note: workOrderTable.note,
   type: {
     id: workOrderTypeTable.id,
     name: workOrderTypeTable.name,
     color: workOrderTypeTable.color,
-  },
-  priority: {
-    id: workOrderPriorityTable.id,
-    name: workOrderPriorityTable.name,
-    color: workOrderPriorityTable.color,
-  },
-  status: {
-    id: workOrderStatusTable.id,
-    name: workOrderStatusTable.name,
-    category: workOrderStatusTable.category,
-    color: workOrderStatusTable.color,
   },
   asset: {
     id: assetTable.id,
@@ -44,8 +25,27 @@ const workOrderColumns = {
     model: assetTable.model,
     serialNumber: assetTable.serialNumber,
   },
+  typeId: workOrderTable.typeId,
+  dueDate: workOrderTable.dueDate,
+  assetId: workOrderTable.assetId,
+  priority: {
+    id: workOrderPriorityTable.id,
+    name: workOrderPriorityTable.name,
+    color: workOrderPriorityTable.color,
+  },
+  tenantId: workOrderTable.tenantId,
+  statusId: workOrderTable.statusId,
   createdOn: workOrderTable.createdOn,
+  technician: workOrderTable.technician,
+  priorityId: workOrderTable.priorityId,
   modifiedOn: workOrderTable.modifiedOn,
+  completedOn: workOrderTable.completedOn,
+  status: {
+    id: workOrderStatusTable.id,
+    name: workOrderStatusTable.name,
+    category: workOrderStatusTable.category,
+    color: workOrderStatusTable.color,
+  },
 };
 
 type SelectExecutor = Pick<typeof db, 'select'>;
@@ -355,11 +355,11 @@ async function hasActiveWorkOrdersForAsset(assetId: number, tenantId: string) {
 }
 
 export const workOrderRepository = {
+  isTypeInUse,
+  getWorkOrders,
+  isStatusInUse,
+  isPriorityInUse,
   createWorkOrder,
   getWorkOrderById,
-  getWorkOrders,
-  isTypeInUse,
-  isPriorityInUse,
-  isStatusInUse,
   hasActiveWorkOrdersForAsset,
 };

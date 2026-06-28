@@ -12,8 +12,8 @@ function toPermissionListItem(permission: Permission): PermissionListItem {
   return {
     id: permission.id,
     name: permission.name,
-    resource: permission.resource,
     action: permission.action,
+    resource: permission.resource,
     description: permission.description,
   };
 }

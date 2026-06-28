@@ -38,7 +38,7 @@ export type Religion = {
 };
 
 export type ReligionListParams = {
-  query?: string;
   page?: number;
+  query?: string;
   limit?: number;
 };

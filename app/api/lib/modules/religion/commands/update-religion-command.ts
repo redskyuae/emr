@@ -50,7 +50,7 @@ export async function updateReligionCommand(
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: StatusCodes.CONFLICT };
+    return { errors, success: false, status: StatusCodes.CONFLICT };
   }
 
   try {

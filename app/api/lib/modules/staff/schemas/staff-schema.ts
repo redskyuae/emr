@@ -152,14 +152,14 @@ export type Staff = {
   id: string;
   name: string;
   email: string;
+  createdOn: Date;
+  modifiedOn: Date;
+  isActive: boolean;
   phone: string | null;
   staffCode: string | null;
   designation: string | null;
   gender: StaffGender | null;
   dateOfBirth: string | null;
-  isActive: boolean;
-  createdOn: Date;
-  modifiedOn: Date;
 };
 
 // Lean Role shape embedded on each Staff row in the list response. Full Role
@@ -177,10 +177,10 @@ export type StaffWithRoles = Staff & {
 export type StaffStatusFilter = 'active' | 'inactive';
 
 export type StaffListParams = {
-  tenantId: string;
-  query?: string;
   page?: number;
   limit?: number;
+  query?: string;
   roleId?: number;
+  tenantId: string;
   status?: StaffStatusFilter;
 };

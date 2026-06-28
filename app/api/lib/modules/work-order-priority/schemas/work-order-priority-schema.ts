@@ -57,18 +57,18 @@ export type UpdateWorkOrderPriorityData = UpdateWorkOrderPriorityInput & { tenan
 
 export type WorkOrderPriority = {
   id: number;
-  tenantId: string;
   name: string;
   code: string;
   color: string;
-  description: string | null;
   createdOn: Date;
+  tenantId: string;
   modifiedOn: Date;
+  description: string | null;
 };
 
 export type WorkOrderPriorityListParams = {
-  tenantId: string;
-  query?: string;
   page?: number;
+  query?: string;
   limit?: number;
+  tenantId: string;
 };

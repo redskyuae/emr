@@ -5,9 +5,9 @@ const APPOINTMENT_MODE_NAME_EXISTS = "Appointment mode name '{value}' already ex
 const APPOINTMENT_MODE_CODE_EXISTS = "Appointment mode code '{value}' already exists.";
 
 type AppointmentModeUniquenessInput = {
-  tenantId: string;
-  name: string;
   code: string;
+  name: string;
+  tenantId: string;
   excludeId?: number;
 };
 

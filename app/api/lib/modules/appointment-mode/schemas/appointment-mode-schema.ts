@@ -48,17 +48,17 @@ export type UpdateAppointmentModeData = UpdateAppointmentModeInput & { tenantId:
 
 export type AppointmentMode = {
   id: number;
-  tenantId: string;
   name: string;
   code: string;
-  description: string | null;
+  tenantId: string;
   createdOn: Date;
   modifiedOn: Date;
+  description: string | null;
 };
 
 export type AppointmentModeListParams = {
-  tenantId: string;
-  query?: string;
   page?: number;
   limit?: number;
+  query?: string;
+  tenantId: string;
 };

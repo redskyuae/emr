@@ -48,17 +48,17 @@ export type UpdateAppointmentStatusData = UpdateAppointmentStatusInput & { tenan
 
 export type AppointmentStatus = {
   id: number;
-  tenantId: string;
-  name: string;
   code: string;
-  description: string | null;
+  name: string;
+  tenantId: string;
   createdOn: Date;
   modifiedOn: Date;
+  description: string | null;
 };
 
 export type AppointmentStatusListParams = {
-  tenantId: string;
-  query?: string;
   page?: number;
+  query?: string;
   limit?: number;
+  tenantId: string;
 };

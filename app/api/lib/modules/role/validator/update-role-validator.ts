@@ -7,8 +7,8 @@ import { validateRoleUniqueness } from './role-uniqueness-validator';
 
 export type UpdateRoleParams = {
   id: number;
-  tenantId: string;
   payload: UpdateRoleInput;
+  tenantId: string;
 };
 
 function getImmutableCodeErrors(payload: unknown) {
@@ -82,8 +82,8 @@ export async function validateUpdateRole(
   return {
     success: true,
     data: {
-      id: idResult.data,
       tenantId,
+      id: idResult.data,
       payload: payloadResult.data,
     },
   };

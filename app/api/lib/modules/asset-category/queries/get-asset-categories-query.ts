@@ -4,10 +4,10 @@ import type { AssetCategory } from '../schemas/asset-category-schema';
 import { validateGetAssetCategories } from '../validator/get-asset-categories-validator';
 
 export type GetAssetCategoriesParams = {
-  tenantId: unknown;
   page?: number;
   limit?: number;
   query?: string;
+  tenantId: unknown;
 };
 
 export async function getAssetCategoriesQuery({

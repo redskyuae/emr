@@ -5,10 +5,10 @@ const STAFF_EMAIL_EXISTS = 'A user with this email already exists.';
 const STAFF_CODE_EXISTS = "Staff code '{value}' already exists.";
 
 type StaffUniquenessInput = {
-  tenantId: string;
   email?: string;
-  staffCode?: string | null;
+  tenantId: string;
   excludeUserId?: string;
+  staffCode?: string | null;
 };
 
 function duplicateError(template: string, value: string) {

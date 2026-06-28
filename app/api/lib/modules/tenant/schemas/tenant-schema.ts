@@ -61,14 +61,14 @@ export type Tenant = {
   id: string;
   name: string;
   slug: string;
-  logo: string | null;
-  isActive: boolean;
   createdAt: Date;
+  isActive: boolean;
+  logo: string | null;
 };
 
 export type TenantMembership = {
   id: string;
-  tenantId: string;
-  userId: string;
   role: string;
+  userId: string;
+  tenantId: string;
 };

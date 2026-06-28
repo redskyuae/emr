@@ -33,8 +33,8 @@ export async function updateAppointmentCancelledReasonCommand(
     if (!updatedAppointmentCancelledReason) {
       return {
         success: false,
-        errors: ['Appointment cancelled reason not found'],
         status: StatusCodes.NOT_FOUND,
+        errors: ['Appointment cancelled reason not found'],
       };
     }
 

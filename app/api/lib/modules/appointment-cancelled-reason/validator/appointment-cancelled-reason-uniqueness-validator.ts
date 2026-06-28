@@ -7,9 +7,9 @@ const APPOINTMENT_CANCELLED_REASON_CODE_EXISTS =
   "Appointment cancelled reason code '{value}' already exists.";
 
 type AppointmentCancelledReasonUniquenessInput = {
-  tenantId: string;
   name: string;
   code: string;
+  tenantId: string;
   excludeId?: number;
 };
 
@@ -39,7 +39,7 @@ export async function validateAppointmentCancelledReasonUniqueness({
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: StatusCodes.CONFLICT };
+    return { errors, success: false, status: StatusCodes.CONFLICT };
   }
 
   return { success: true, data: undefined };

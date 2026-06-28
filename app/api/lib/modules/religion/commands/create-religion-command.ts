@@ -27,7 +27,7 @@ export async function createReligionCommand(payload: unknown): Promise<CommandRe
   }
 
   if (errors.length > 0) {
-    return { success: false, errors, status: StatusCodes.CONFLICT };
+    return { errors, success: false, status: StatusCodes.CONFLICT };
   }
 
   try {

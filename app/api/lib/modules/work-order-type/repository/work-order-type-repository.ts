@@ -11,13 +11,13 @@ import type {
 
 const workOrderTypeColumns = {
   id: workOrderTypeTable.id,
-  tenantId: workOrderTypeTable.tenantId,
   name: workOrderTypeTable.name,
   code: workOrderTypeTable.code,
   color: workOrderTypeTable.color,
-  description: workOrderTypeTable.description,
   createdOn: workOrderTypeTable.createdOn,
+  tenantId: workOrderTypeTable.tenantId,
   modifiedOn: workOrderTypeTable.modifiedOn,
+  description: workOrderTypeTable.description,
 };
 
 async function createWorkOrderType(data: CreateWorkOrderTypeData) {
@@ -219,12 +219,12 @@ async function seedDefaultWorkOrderTypes(tenantId: string, defaults: WorkOrderTy
 }
 
 export const workOrderTypeRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getWorkOrderTypes,
   createWorkOrderType,
   updateWorkOrderType,
   deleteWorkOrderType,
   getWorkOrderTypeById,
-  getWorkOrderTypes,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultWorkOrderTypes,
 };

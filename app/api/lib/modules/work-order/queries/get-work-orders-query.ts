@@ -4,14 +4,14 @@ import type { WorkOrder } from '../schemas/work-order-schema';
 import { validateGetWorkOrders } from '../validator/get-work-orders-validator';
 
 export type GetWorkOrdersParams = {
-  tenantId: unknown;
   page?: number;
-  limit?: number;
   query?: string;
+  limit?: number;
   typeId?: number;
-  priorityId?: number;
-  statusId?: number;
   assetId?: number;
+  tenantId: unknown;
+  statusId?: number;
+  priorityId?: number;
 };
 
 export async function getWorkOrdersQuery({

@@ -4,10 +4,10 @@ import type { AppointmentReason } from '../schemas/appointment-reason-schema';
 import { validateGetAppointmentReasons } from '../validator/get-appointment-reasons-validator';
 
 export type GetAppointmentReasonsParams = {
-  tenantId: unknown;
   page?: number;
   limit?: number;
   query?: string;
+  tenantId: unknown;
 };
 
 export async function getAppointmentReasonsQuery({

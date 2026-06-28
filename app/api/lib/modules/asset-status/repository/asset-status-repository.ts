@@ -10,13 +10,13 @@ import type {
 
 const assetStatusColumns = {
   id: assetStatusTable.id,
-  tenantId: assetStatusTable.tenantId,
   name: assetStatusTable.name,
   code: assetStatusTable.code,
   color: assetStatusTable.color,
-  description: assetStatusTable.description,
+  tenantId: assetStatusTable.tenantId,
   createdOn: assetStatusTable.createdOn,
   modifiedOn: assetStatusTable.modifiedOn,
+  description: assetStatusTable.description,
 };
 
 async function createAssetStatus(data: CreateAssetStatusData) {
@@ -187,12 +187,12 @@ async function seedDefaultAssetStatuses(tenantId: string, defaults: AssetStatusS
 }
 
 export const assetStatusRepository = {
+  findActiveByName,
+  findActiveByCode,
+  getAssetStatuses,
   createAssetStatus,
   updateAssetStatus,
   deleteAssetStatus,
   getAssetStatusById,
-  getAssetStatuses,
-  findActiveByName,
-  findActiveByCode,
   seedDefaultAssetStatuses,
 };

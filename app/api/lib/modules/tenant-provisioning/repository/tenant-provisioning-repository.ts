@@ -55,7 +55,7 @@ async function deleteAuthUser(userId: string) {
 }
 
 export const tenantProvisioningRepository = {
+  deleteAuthUser,
   findUserByEmail,
   deleteTenantArtifacts,
-  deleteAuthUser,
 };

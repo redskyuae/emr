@@ -10,10 +10,10 @@ function invalidReferenceErrors(
   input: { assetId: number; typeId: number; priorityId: number; statusId: number }
 ) {
   const messages = {
-    asset: `Asset ${input.assetId} is Invalid.`,
     type: `Work order type ${input.typeId} is Invalid.`,
-    priority: `Work order priority ${input.priorityId} is Invalid.`,
+    asset: `Asset ${input.assetId} is Invalid.`,
     status: `Work order status ${input.statusId} is Invalid.`,
+    priority: `Work order priority ${input.priorityId} is Invalid.`,
   };
 
   return references.map((reference) => messages[reference]);

@@ -4,8 +4,8 @@ import { createRoleSchema, type CreateRoleInput } from '../schemas/role-schema';
 import { validateRoleUniqueness } from './role-uniqueness-validator';
 
 export type CreateRoleParams = {
-  tenantId: string;
   payload: CreateRoleInput;
+  tenantId: string;
 };
 
 export async function validateCreateRole(
@@ -35,8 +35,8 @@ export async function validateCreateRole(
   return {
     success: true,
     data: {
-      tenantId,
       payload: payloadResult.data,
+      tenantId,
     },
   };
 }
