@@ -1,0 +1,23 @@
+docs/adr/0013-doctor-is-a-staff-extension-with-coupled-lifecycle.md
+  d654a63df63dda5a 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "57f9c2404ec82579f3cb28526853dfa688232488",
+  "prompts": {
+    "d654a63df63dda5a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a71f403-6d35-48d8-92b6-6a168dd47eaa",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 3,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
