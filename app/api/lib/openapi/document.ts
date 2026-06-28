@@ -1177,13 +1177,19 @@ export const openApiDocument = {
         tags: ['Staff'],
         summary: 'List Staff',
         description:
-          'Returns a paginated list of non-deleted Staff profiles in the active Tenant. Requires the caller to be a Tenant Admin for the active Tenant.',
+          'Returns a paginated list of non-deleted Staff profiles in the active Tenant, each with its assigned Roles embedded. Optionally filter by search text, assigned Role, and activation status. Requires the caller to be a Tenant Admin for the active Tenant.',
         security: [{ cookieAuth: [] }],
-        parameters: [parameterRef('Page'), parameterRef('Limit'), parameterRef('Query')],
+        parameters: [
+          parameterRef('Page'),
+          parameterRef('Limit'),
+          parameterRef('Query'),
+          parameterRef('StaffRoleId'),
+          parameterRef('StaffStatus'),
+        ],
         responses: {
           '200': {
-            description: 'Paginated Staff list.',
-            content: jsonContent(paginatedSchema('Staff'), {
+            description: 'Paginated Staff list with embedded Roles.',
+            content: jsonContent(paginatedSchema('StaffWithRoles'), {
               data: [
                 {
                   id: 'user_priya',
@@ -1197,6 +1203,10 @@ export const openApiDocument = {
                   isActive: true,
                   createdOn: '2026-06-09T10:00:00.000Z',
                   modifiedOn: '2026-06-09T10:00:00.000Z',
+                  roles: [
+                    { id: 2, name: 'Doctor' },
+                    { id: 8, name: 'Ward Manager' },
+                  ],
                 },
               ],
               meta: {
@@ -2749,6 +2759,21 @@ export const openApiDocument = {
           appointmentMasters: { value: 'appointment-masters' },
         },
       },
+      StaffRoleId: {
+        name: 'roleId',
+        in: 'query',
+        required: false,
+        description: 'Filters Staff to those assigned the given Role in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      StaffStatus: {
+        name: 'status',
+        in: 'query',
+        required: false,
+        description:
+          'Filters Staff by activation state. Omit to return both active and inactive Staff.',
+        schema: { type: 'string', enum: ['active', 'inactive'] },
+      },
     },
     schemas: {
       PaginationMeta: {
@@ -3026,6 +3051,31 @@ export const openApiDocument = {
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
         },
+      },
+      StaffRoleSummary: {
+        type: 'object',
+        required: ['id', 'name'],
+        description: 'Lean Role reference embedded on each Staff row in the list response.',
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+        },
+      },
+      StaffWithRoles: {
+        allOf: [
+          schemaRef('Staff'),
+          {
+            type: 'object',
+            required: ['roles'],
+            properties: {
+              roles: {
+                type: 'array',
+                description: "The Staff member's assigned Roles in the active Tenant.",
+                items: schemaRef('StaffRoleSummary'),
+              },
+            },
+          },
+        ],
       },
       Session: {
         type: 'object',

@@ -17,16 +17,6 @@ export type IamStaffUser = {
   role: string;
 };
 
-export type IamUserStatus = 'Active' | 'Suspended' | 'Invited';
-
-export type IamDirectoryUser = IamStaffUser & {
-  department: string;
-  status: IamUserStatus;
-  mfaEnabled: boolean;
-  lastSignIn: string;
-  sessions: number;
-};
-
 export type IamSignIn = {
   id: string;
   userId: string;
@@ -171,111 +161,6 @@ export const iamStaffUsers: IamStaffUser[] = [
     email: 'waleed.chen@northgate.example',
     initials: 'WC',
     role: 'Nurse',
-  },
-];
-
-export const iamDirectoryRoleOptions = [
-  'Tenant Admin',
-  'Attending Physician',
-  'Nurse',
-  'Receptionist',
-  'Billing Officer',
-  'Lab Technician',
-];
-
-export const iamDirectoryDepartmentOptions = [
-  'Administration',
-  'Cardiology',
-  'Emergency',
-  'Front Desk',
-  'Billing',
-  'Laboratory',
-];
-
-export const iamDirectoryUsers: IamDirectoryUser[] = [
-  {
-    id: 'staff-rana-adnan',
-    name: 'Rana Adnan',
-    email: 'rana.adnan@northgate.example',
-    initials: 'RA',
-    role: 'Tenant Admin',
-    department: 'Administration',
-    status: 'Active',
-    mfaEnabled: true,
-    lastSignIn: 'Today, 09:55',
-    sessions: 3,
-  },
-  {
-    id: 'staff-imran-khan',
-    name: 'Dr. Imran Khan',
-    email: 'imran.khan@northgate.example',
-    initials: 'IK',
-    role: 'Attending Physician',
-    department: 'Cardiology',
-    status: 'Active',
-    mfaEnabled: true,
-    lastSignIn: 'Today, 09:48',
-    sessions: 2,
-  },
-  {
-    id: 'staff-sara-ali',
-    name: 'Dr. Sara Ali',
-    email: 'sara.ali@northgate.example',
-    initials: 'SA',
-    role: 'Attending Physician',
-    department: 'Emergency',
-    status: 'Active',
-    mfaEnabled: true,
-    lastSignIn: 'Today, 09:32',
-    sessions: 1,
-  },
-  {
-    id: 'staff-priya-menon',
-    name: 'Priya Menon',
-    email: 'priya.menon@northgate.example',
-    initials: 'PM',
-    role: 'Receptionist',
-    department: 'Front Desk',
-    status: 'Suspended',
-    mfaEnabled: false,
-    lastSignIn: 'Yesterday, 17:44',
-    sessions: 0,
-  },
-  {
-    id: 'staff-waleed-chen',
-    name: 'Waleed Chen',
-    email: 'waleed.chen@northgate.example',
-    initials: 'WC',
-    role: 'Nurse',
-    department: 'Emergency',
-    status: 'Invited',
-    mfaEnabled: false,
-    lastSignIn: '—',
-    sessions: 0,
-  },
-  {
-    id: 'staff-farah-nasser',
-    name: 'Farah Nasser',
-    email: 'farah.nasser@northgate.example',
-    initials: 'FN',
-    role: 'Billing Officer',
-    department: 'Billing',
-    status: 'Active',
-    mfaEnabled: true,
-    lastSignIn: 'Today, 08:16',
-    sessions: 1,
-  },
-  {
-    id: 'staff-lina-mathew',
-    name: 'Lina Mathew',
-    email: 'lina.mathew@northgate.example',
-    initials: 'LM',
-    role: 'Lab Technician',
-    department: 'Laboratory',
-    status: 'Invited',
-    mfaEnabled: false,
-    lastSignIn: '—',
-    sessions: 0,
   },
 ];
 

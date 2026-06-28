@@ -1,14 +1,17 @@
 import { generateId } from '@better-auth/core/utils/id';
-import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { member, session, user } from '@/app/db/schema/auth';
+import { roleTable } from '@/app/db/schema/role';
 import { staffProfileTable } from '@/app/db/schema/staff-profile';
 import { userRoleTable } from '@/app/db/schema/user-role';
 import type {
   CreateStaffInput,
   Staff,
   StaffListParams,
+  StaffRoleSummary,
+  StaffWithRoles,
   UpdateStaffInput,
 } from '../schemas/staff-schema';
 
@@ -69,7 +72,51 @@ async function getStaffByUserId(userId: string, tenantId: string) {
   return staff ? toStaff(staff) : undefined;
 }
 
-async function getStaff({ tenantId, page = 1, limit = 10, query }: StaffListParams) {
+async function getRolesByUserIds(
+  userIds: string[],
+  tenantId: string
+): Promise<Map<string, StaffRoleSummary[]>> {
+  const rolesByUser = new Map<string, StaffRoleSummary[]>();
+
+  if (userIds.length === 0) {
+    return rolesByUser;
+  }
+
+  const roleRows = await db
+    .select({ userId: userRoleTable.userId, id: roleTable.id, name: roleTable.name })
+    .from(userRoleTable)
+    .innerJoin(roleTable, eq(userRoleTable.roleId, roleTable.id))
+    .where(
+      and(
+        inArray(userRoleTable.userId, userIds),
+        eq(userRoleTable.tenantId, tenantId),
+        eq(roleTable.tenantId, tenantId),
+        eq(roleTable.isDeleted, false)
+      )
+    )
+    .orderBy(asc(roleTable.name), asc(roleTable.id));
+
+  for (const row of roleRows) {
+    const existing = rolesByUser.get(row.userId);
+
+    if (existing) {
+      existing.push({ id: row.id, name: row.name });
+    } else {
+      rolesByUser.set(row.userId, [{ id: row.id, name: row.name }]);
+    }
+  }
+
+  return rolesByUser;
+}
+
+async function getStaff({
+  tenantId,
+  page = 1,
+  limit = 10,
+  query,
+  roleId,
+  status,
+}: StaffListParams): Promise<{ data: StaffWithRoles[]; total: number }> {
   const offset = (page - 1) * limit;
   const trimmedQuery = query?.trim();
   const searchCondition = trimmedQuery
@@ -79,10 +126,24 @@ async function getStaff({ tenantId, page = 1, limit = 10, query }: StaffListPara
         ilike(staffProfileTable.staffCode, `%${trimmedQuery}%`)
       )
     : undefined;
+  const statusCondition =
+    status === undefined ? undefined : eq(staffProfileTable.isActive, status === 'active');
+  const roleCondition =
+    roleId === undefined
+      ? undefined
+      : inArray(
+          staffProfileTable.userId,
+          db
+            .select({ userId: userRoleTable.userId })
+            .from(userRoleTable)
+            .where(and(eq(userRoleTable.roleId, roleId), eq(userRoleTable.tenantId, tenantId)))
+        );
   const whereClause = and(
     eq(staffProfileTable.tenantId, tenantId),
     eq(staffProfileTable.isDeleted, false),
-    searchCondition
+    searchCondition,
+    statusCondition,
+    roleCondition
   );
 
   const [data, [{ total }]] = await Promise.all([
@@ -101,7 +162,15 @@ async function getStaff({ tenantId, page = 1, limit = 10, query }: StaffListPara
       .where(whereClause),
   ]);
 
-  return { data: data.map(toStaff), total };
+  const rolesByUser = await getRolesByUserIds(
+    data.map((row) => row.id),
+    tenantId
+  );
+
+  return {
+    data: data.map((row) => ({ ...toStaff(row), roles: rolesByUser.get(row.id) ?? [] })),
+    total,
+  };
 }
 
 async function findNonDeletedByStaffCode(
