@@ -1,6 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
+import { workOrderTable } from '@/app/db/schema/work-order';
 import { workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import type {
   CreateWorkOrderStatusData,
@@ -40,45 +41,112 @@ async function createWorkOrderStatus(data: CreateWorkOrderStatusData) {
 }
 
 async function updateWorkOrderStatus(id: number, data: UpdateWorkOrderStatusData) {
-  const [updatedWorkOrderStatus] = await db
-    .update(workOrderStatusTable)
-    .set({
-      name: data.name,
-      code: data.code,
-      category: data.category,
-      color: data.color,
-      description: data.description ?? null,
-      modifiedOn: new Date(),
-    })
-    .where(
-      and(
-        eq(workOrderStatusTable.id, id),
-        eq(workOrderStatusTable.tenantId, data.tenantId),
-        eq(workOrderStatusTable.isDeleted, false)
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: workOrderStatusTable.id, category: workOrderStatusTable.category })
+      .from(workOrderStatusTable)
+      .where(
+        and(
+          eq(workOrderStatusTable.id, id),
+          eq(workOrderStatusTable.tenantId, data.tenantId),
+          eq(workOrderStatusTable.isDeleted, false)
+        )
       )
-    )
-    .returning(workOrderStatusColumns);
+      .for('update')
+      .limit(1);
 
-  return updatedWorkOrderStatus;
+    if (!existing) return { outcome: 'not-found' as const };
+
+    if (existing.category !== data.category) {
+      const [usage] = await tx
+        .select({ id: workOrderTable.id })
+        .from(workOrderTable)
+        .where(
+          and(
+            eq(workOrderTable.statusId, id),
+            eq(workOrderTable.tenantId, data.tenantId),
+            eq(workOrderTable.isDeleted, false)
+          )
+        )
+        .limit(1);
+
+      if (usage) return { outcome: 'in-use' as const };
+    }
+
+    const [updated] = await tx
+      .update(workOrderStatusTable)
+      .set({
+        name: data.name,
+        code: data.code,
+        category: data.category,
+        color: data.color,
+        description: data.description ?? null,
+        modifiedOn: new Date(),
+      })
+      .where(
+        and(
+          eq(workOrderStatusTable.id, id),
+          eq(workOrderStatusTable.tenantId, data.tenantId),
+          eq(workOrderStatusTable.isDeleted, false)
+        )
+      )
+      .returning(workOrderStatusColumns);
+
+    return updated
+      ? { outcome: 'updated' as const, data: updated }
+      : { outcome: 'not-found' as const };
+  });
 }
 
 async function softDeleteWorkOrderStatus(id: number, tenantId: string) {
-  const deletedOn = new Date();
-
-  const [deletedWorkOrderStatus] = await db
-    .update(workOrderStatusTable)
-    .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
-    .where(
-      and(
-        eq(workOrderStatusTable.id, id),
-        eq(workOrderStatusTable.tenantId, tenantId),
-        eq(workOrderStatusTable.isDeleted, false),
-        eq(workOrderStatusTable.isSystem, false)
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: workOrderStatusTable.id, isSystem: workOrderStatusTable.isSystem })
+      .from(workOrderStatusTable)
+      .where(
+        and(
+          eq(workOrderStatusTable.id, id),
+          eq(workOrderStatusTable.tenantId, tenantId),
+          eq(workOrderStatusTable.isDeleted, false)
+        )
       )
-    )
-    .returning(workOrderStatusColumns);
+      .for('update')
+      .limit(1);
 
-  return deletedWorkOrderStatus;
+    if (!existing || existing.isSystem) return { outcome: 'not-found' as const };
+
+    const [usage] = await tx
+      .select({ id: workOrderTable.id })
+      .from(workOrderTable)
+      .where(
+        and(
+          eq(workOrderTable.statusId, id),
+          eq(workOrderTable.tenantId, tenantId),
+          eq(workOrderTable.isDeleted, false)
+        )
+      )
+      .limit(1);
+
+    if (usage) return { outcome: 'in-use' as const };
+
+    const deletedOn = new Date();
+    const [deleted] = await tx
+      .update(workOrderStatusTable)
+      .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
+      .where(
+        and(
+          eq(workOrderStatusTable.id, id),
+          eq(workOrderStatusTable.tenantId, tenantId),
+          eq(workOrderStatusTable.isDeleted, false),
+          eq(workOrderStatusTable.isSystem, false)
+        )
+      )
+      .returning(workOrderStatusColumns);
+
+    return deleted
+      ? { outcome: 'deleted' as const, data: deleted }
+      : { outcome: 'not-found' as const };
+  });
 }
 
 async function getWorkOrderStatusById(id: number, tenantId: string) {

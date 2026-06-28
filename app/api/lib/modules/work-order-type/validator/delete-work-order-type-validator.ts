@@ -1,3 +1,6 @@
+import { StatusCodes } from 'http-status-codes';
+
+import { workOrderRepository } from '../../work-order/repository/work-order-repository';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import {
   workOrderTypeIdSchema,
@@ -10,10 +13,13 @@ export type DeleteWorkOrderTypeInput = {
   tenantId: string;
 };
 
-export function validateDeleteWorkOrderType(
+type WorkOrderTypeUsageReader = Pick<typeof workOrderRepository, 'isTypeInUse'>;
+
+export async function validateDeleteWorkOrderType(
   id: unknown,
-  tenantId: unknown
-): ValidationResult<DeleteWorkOrderTypeInput> {
+  tenantId: unknown,
+  usage: WorkOrderTypeUsageReader = workOrderRepository
+): Promise<ValidationResult<DeleteWorkOrderTypeInput>> {
   const idResult = workOrderTypeIdSchema.safeParse(id);
   const tenantIdResult = workOrderTypeTenantIdSchema.safeParse(tenantId);
 
@@ -29,6 +35,14 @@ export function validateDeleteWorkOrderType(
     }
 
     return { success: false, errors };
+  }
+
+  if (await usage.isTypeInUse(idResult.data, tenantIdResult.data)) {
+    return {
+      success: false,
+      errors: ['Work order type cannot be deleted while it is in use.'],
+      status: StatusCodes.CONFLICT,
+    };
   }
 
   return {

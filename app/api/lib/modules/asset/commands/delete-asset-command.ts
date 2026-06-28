@@ -18,9 +18,17 @@ export async function deleteAssetCommand(
     };
   }
 
-  const deletedAsset = await assetRepository.softDeleteAsset(validationResult.data, tenantId);
+  const deleteResult = await assetRepository.softDeleteAsset(validationResult.data, tenantId);
 
-  if (!deletedAsset) {
+  if (deleteResult.outcome === 'in-use') {
+    return {
+      success: false,
+      errors: ['Asset cannot be deleted while it has active work orders.'],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
+  if (deleteResult.outcome === 'not-found') {
     return { success: false, errors: ['Asset not found'], status: StatusCodes.NOT_FOUND };
   }
 

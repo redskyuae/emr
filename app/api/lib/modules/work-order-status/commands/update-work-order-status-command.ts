@@ -23,12 +23,20 @@ export async function updateWorkOrderStatusCommand(
   const workOrderStatusData = { ...validationResult.data.payload, tenantId };
 
   try {
-    const updatedWorkOrderStatus = await workOrderStatusRepository.updateWorkOrderStatus(
+    const updateResult = await workOrderStatusRepository.updateWorkOrderStatus(
       validationResult.data.id,
       workOrderStatusData
     );
 
-    if (!updatedWorkOrderStatus) {
+    if (updateResult.outcome === 'in-use') {
+      return {
+        success: false,
+        errors: ['Work order status category cannot be changed while the status is in use.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
+    if (updateResult.outcome === 'not-found') {
       return {
         success: false,
         errors: ['Work order status not found'],
@@ -36,7 +44,7 @@ export async function updateWorkOrderStatusCommand(
       };
     }
 
-    return { success: true, data: updatedWorkOrderStatus };
+    return { success: true, data: updateResult.data };
   } catch (error) {
     const constraintErrors = getWorkOrderStatusUniqueConstraintErrors(error, workOrderStatusData);
 

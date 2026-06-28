@@ -578,11 +578,27 @@ const workOrderTypeNotFound = {
 };
 
 const workOrderTypeConflict = {
-  description: 'Work Order Type name or code already exists in the active Tenant.',
-  content: jsonContent(schemaRef('ConflictError'), {
-    message: "Work order type name 'Preventive' already exists.",
-    errors: ["Work order type name 'Preventive' already exists."],
-  }),
+  description:
+    'Work Order Type name/code already exists, or the Type is referenced by a non-deleted Work Order.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateName: {
+          value: {
+            message: "Work order type name 'Preventive' already exists.",
+            errors: ["Work order type name 'Preventive' already exists."],
+          },
+        },
+        inUse: {
+          value: {
+            message: 'Work order type cannot be deleted while it is in use.',
+            errors: ['Work order type cannot be deleted while it is in use.'],
+          },
+        },
+      },
+    },
+  },
 };
 
 const workOrderTypeErrorResponses = {
@@ -632,11 +648,27 @@ const workOrderPriorityNotFound = {
 };
 
 const workOrderPriorityConflict = {
-  description: 'Work Order Priority name or code already exists in the active Tenant.',
-  content: jsonContent(schemaRef('ConflictError'), {
-    message: "Work order priority name 'Critical' already exists.",
-    errors: ["Work order priority name 'Critical' already exists."],
-  }),
+  description:
+    'Work Order Priority name/code already exists, or the Priority is referenced by a non-deleted Work Order.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateName: {
+          value: {
+            message: "Work order priority name 'Critical' already exists.",
+            errors: ["Work order priority name 'Critical' already exists."],
+          },
+        },
+        inUse: {
+          value: {
+            message: 'Work order priority cannot be deleted while it is in use.',
+            errors: ['Work order priority cannot be deleted while it is in use.'],
+          },
+        },
+      },
+    },
+  },
 };
 
 const workOrderPriorityErrorResponses = {
@@ -690,7 +722,7 @@ const workOrderStatusNotFound = {
 
 const workOrderStatusConflict = {
   description:
-    'Work Order Status name/code conflicts with an active status, or the mutation targets protected System Work Order Status state.',
+    'Work Order Status name/code conflicts with an active status, the mutation targets protected System Work Order Status state, or a non-deleted Work Order prevents category change/deletion.',
   content: {
     'application/json': {
       schema: schemaRef('ConflictError'),
@@ -721,6 +753,20 @@ const workOrderStatusConflict = {
           value: {
             message: 'System work order status cannot be deleted.',
             errors: ['System work order status cannot be deleted.'],
+          },
+        },
+        inUseCategory: {
+          summary: 'In-use status category cannot change',
+          value: {
+            message: 'Work order status category cannot be changed while the status is in use.',
+            errors: ['Work order status category cannot be changed while the status is in use.'],
+          },
+        },
+        inUseDelete: {
+          summary: 'In-use status cannot be deleted',
+          value: {
+            message: 'Work order status cannot be deleted while it is in use.',
+            errors: ['Work order status cannot be deleted while it is in use.'],
           },
         },
       },
@@ -821,7 +867,7 @@ const assetNotFound = {
 
 const assetConflict = {
   description:
-    'Asset serial number already exists, or a referenced Asset Master does not exist in the active Tenant.',
+    'Asset serial number already exists, a referenced Asset Master does not exist in the active Tenant, or the Asset has Active Work Orders.',
   content: {
     'application/json': {
       schema: schemaRef('ConflictError'),
@@ -840,6 +886,13 @@ const assetConflict = {
             errors: ['Asset category 999 is Invalid.'],
           },
         },
+        activeWorkOrders: {
+          summary: 'Asset has Active Work Orders',
+          value: {
+            message: 'Asset cannot be deleted while it has active work orders.',
+            errors: ['Asset cannot be deleted while it has active work orders.'],
+          },
+        },
       },
     },
   },
@@ -852,6 +905,77 @@ const assetErrorResponses = {
   '404': assetNotFound,
   '409': assetConflict,
   '500': responseRef('InternalServerError'),
+};
+
+const workOrderExample = {
+  id: 43,
+  tenantId: 'org_apollo',
+  code: 'WO-1043',
+  assetId: 1,
+  typeId: 1,
+  priorityId: 2,
+  statusId: 1,
+  technician: 'Vendor (Lumenis)',
+  dueDate: '2026-07-04',
+  completedOn: null,
+  note: 'Beam alignment fault — awaiting OEM engineer.',
+  type: { id: 1, name: 'Corrective', color: '#DC2626' },
+  priority: { id: 2, name: 'Critical', color: '#DC2626' },
+  status: { id: 1, name: 'Open', category: 'OPEN', color: '#2563EB' },
+  asset: {
+    id: 1,
+    name: 'Surgical Laser',
+    model: 'AcuPulse',
+    serialNumber: 'SN-LS-90014',
+  },
+  createdOn: '2026-06-27T10:30:00.000Z',
+  modifiedOn: '2026-06-27T10:30:00.000Z',
+};
+
+const workOrderRequestExample = {
+  assetId: 1,
+  typeId: 1,
+  priorityId: 2,
+  statusId: 1,
+  technician: 'Vendor (Lumenis)',
+  dueDate: '2026-07-04',
+  note: 'Beam alignment fault — awaiting OEM engineer.',
+};
+
+const workOrderValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Work order asset ID is required'],
+    }
+  ),
+};
+
+const workOrderConflict = {
+  description: 'A referenced Asset or Work Order Master is not active in the current Tenant.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        invalidStatus: {
+          summary: 'Invalid Work Order Status reference',
+          value: {
+            message: 'Work order status 999 is Invalid.',
+            errors: ['Work order status 999 is Invalid.'],
+          },
+        },
+        invalidAsset: {
+          summary: 'Invalid Asset reference',
+          value: {
+            message: 'Asset 999 is Invalid.',
+            errors: ['Asset 999 is Invalid.'],
+          },
+        },
+      },
+    },
+  },
 };
 
 export const openApiDocument = {
@@ -903,6 +1027,7 @@ export const openApiDocument = {
     { name: 'Work Order Type', description: 'Work Order Type Master APIs.' },
     { name: 'Work Order Priority', description: 'Work Order Priority Master APIs.' },
     { name: 'Work Order Status', description: 'Work Order Status Master APIs.' },
+    { name: 'Work Order', description: 'Maintenance Work Order APIs.' },
     { name: 'Asset', description: 'Asset inventory APIs.' },
   ],
   paths: {
@@ -2011,6 +2136,63 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
+    '/api/v1/work-orders': {
+      get: {
+        tags: ['Work Order'],
+        summary: 'List Work Orders',
+        description:
+          'Returns a newest-first paginated list of non-deleted Work Orders for the active Tenant. The tenantId is resolved from the active authenticated Session. Rows embed live Work Order Type, Priority, Status, and Asset values; completed history remains visible after an Asset is soft-deleted.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          parameterRef('Page'),
+          parameterRef('Limit'),
+          parameterRef('Query'),
+          parameterRef('WorkOrderTypeId'),
+          parameterRef('WorkOrderPriorityId'),
+          parameterRef('WorkOrderStatusId'),
+          parameterRef('WorkOrderAssetId'),
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated Work Order list.',
+            content: jsonContent(paginatedSchema('WorkOrder'), {
+              data: [workOrderExample],
+              meta: {
+                total: 1,
+                totalPages: 1,
+                pageSize: 10,
+                pageNumber: 1,
+              },
+            }),
+          },
+          '400': workOrderValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Work Order'],
+        summary: 'Create Work Order',
+        description:
+          'Creates a Work Order in the active Tenant. The tenantId comes from the authenticated Session. The server atomically generates the permanent tenant-scoped code and derives completedOn from the selected Work Order Status Category; client-supplied code, completedOn, and tenantId fields are ignored.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateWorkOrderRequest', workOrderRequestExample),
+        responses: {
+          '201': {
+            description: 'Work Order created with a server-generated code.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrder'), {
+              data: workOrderExample,
+            }),
+          },
+          '400': workOrderValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '409': workOrderConflict,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/assets': {
       get: {
         tags: ['Asset'],
@@ -2110,7 +2292,8 @@ export const openApiDocument = {
       delete: {
         tags: ['Asset'],
         summary: 'Delete Asset',
-        description: 'Soft-deletes one active Asset in the active Tenant.',
+        description:
+          'Soft-deletes one active Asset in the active Tenant. Deletion is rejected while the Asset has an Active Work Order; completed maintenance history remains listable after deletion.',
         security: [{ cookieAuth: [] }],
         parameters: [idPathParameter('Asset')],
         responses: {
@@ -2482,7 +2665,8 @@ export const openApiDocument = {
       delete: {
         tags: ['Work Order Type'],
         summary: 'Delete Work Order Type',
-        description: 'Soft-deletes one active Work Order Type Master in the active Tenant.',
+        description:
+          'Soft-deletes one active Work Order Type Master in the active Tenant. Deletion is rejected while any non-deleted Work Order references it.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Work Order Type')],
         responses: {
@@ -2575,7 +2759,8 @@ export const openApiDocument = {
       delete: {
         tags: ['Work Order Priority'],
         summary: 'Delete Work Order Priority',
-        description: 'Soft-deletes one active Work Order Priority Master in the active Tenant.',
+        description:
+          'Soft-deletes one active Work Order Priority Master in the active Tenant. Deletion is rejected while any non-deleted Work Order references it.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Work Order Priority')],
         responses: {
@@ -2651,7 +2836,7 @@ export const openApiDocument = {
         tags: ['Work Order Status'],
         summary: 'Update Work Order Status',
         description:
-          'Updates one active Work Order Status Master in the active Tenant. System Work Order Status names, colors, and descriptions may be customized, but their codes and categories are immutable. Request code is normalized to uppercase.',
+          'Updates one active Work Order Status Master in the active Tenant. System Work Order Status names, colors, and descriptions may be customized, but their codes and categories are immutable. A tenant-created Status category cannot change while any non-deleted Work Order references it. Request code is normalized to uppercase.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Work Order Status')],
         requestBody: requestBody('UpdateWorkOrderStatusRequest', workOrderStatusRequestExample),
@@ -2669,7 +2854,7 @@ export const openApiDocument = {
         tags: ['Work Order Status'],
         summary: 'Delete Work Order Status',
         description:
-          'Soft-deletes one active tenant-defined Work Order Status. System Work Order Statuses cannot be deleted.',
+          'Soft-deletes one active tenant-defined Work Order Status. System Work Order Statuses and Statuses referenced by any non-deleted Work Order cannot be deleted.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Work Order Status')],
         responses: {
@@ -2729,6 +2914,34 @@ export const openApiDocument = {
         in: 'query',
         required: false,
         description: 'Filters Assets by Asset Status identifier in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      WorkOrderTypeId: {
+        name: 'typeId',
+        in: 'query',
+        required: false,
+        description: 'Filters Work Orders by Work Order Type in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      WorkOrderPriorityId: {
+        name: 'priorityId',
+        in: 'query',
+        required: false,
+        description: 'Filters Work Orders by Work Order Priority in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      WorkOrderStatusId: {
+        name: 'statusId',
+        in: 'query',
+        required: false,
+        description: 'Filters Work Orders by Work Order Status in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      WorkOrderAssetId: {
+        name: 'assetId',
+        in: 'query',
+        required: false,
+        description: 'Filters Work Orders by Asset in the active Tenant.',
         schema: { type: 'integer', minimum: 1 },
       },
       CountryId: {
@@ -3477,6 +3690,112 @@ export const openApiDocument = {
           },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateWorkOrderRequest: {
+        type: 'object',
+        required: ['assetId', 'typeId', 'priorityId', 'statusId'],
+        properties: {
+          assetId: { type: 'integer', minimum: 1 },
+          typeId: { type: 'integer', minimum: 1 },
+          priorityId: { type: 'integer', minimum: 1 },
+          statusId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Work Order Status in the active Tenant. A Completed-category Status records completion at the current server time.',
+          },
+          technician: {
+            type: ['string', 'null'],
+            maxLength: 150,
+            description:
+              'Free-text Work Order Technician; may identify internal Staff or an external service provider.',
+          },
+          dueDate: {
+            type: ['string', 'null'],
+            format: 'date',
+            description: 'Planned due date. Null means no due date and never means On hold.',
+          },
+          note: { type: ['string', 'null'], description: 'Maintenance scope or fault note.' },
+        },
+      },
+      WorkOrderAssetSummary: {
+        type: 'object',
+        required: ['id', 'name', 'model', 'serialNumber'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string', minLength: 1, maxLength: 150 },
+          model: { type: ['string', 'null'], maxLength: 150 },
+          serialNumber: { type: 'string', minLength: 1, maxLength: 100 },
+        },
+      },
+      WorkOrderStatusSummary: {
+        allOf: [
+          schemaRef('AssetMasterSummary'),
+          {
+            type: 'object',
+            required: ['category'],
+            properties: {
+              category: {
+                type: 'string',
+                enum: ['OPEN', 'IN_PROGRESS', 'SCHEDULED', 'COMPLETED', 'OVERDUE'],
+              },
+            },
+          },
+        ],
+      },
+      WorkOrder: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'code',
+          'assetId',
+          'typeId',
+          'priorityId',
+          'statusId',
+          'technician',
+          'dueDate',
+          'completedOn',
+          'note',
+          'type',
+          'priority',
+          'status',
+          'asset',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          code: {
+            type: 'string',
+            pattern: '^WO-[0-9]{4,}$',
+            readOnly: true,
+            description: 'Permanent system-generated Work Order code, unique per Tenant.',
+          },
+          assetId: { type: 'integer', minimum: 1 },
+          typeId: { type: 'integer', minimum: 1 },
+          priorityId: { type: 'integer', minimum: 1 },
+          statusId: { type: 'integer', minimum: 1 },
+          technician: { type: ['string', 'null'], maxLength: 150 },
+          dueDate: { type: ['string', 'null'], format: 'date' },
+          completedOn: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            readOnly: true,
+          },
+          note: { type: ['string', 'null'] },
+          type: schemaRef('AssetMasterSummary'),
+          priority: schemaRef('AssetMasterSummary'),
+          status: schemaRef('WorkOrderStatusSummary'),
+          asset: schemaRef('WorkOrderAssetSummary'),
+          createdOn: { type: 'string', format: 'date-time', readOnly: true },
+          modifiedOn: { type: 'string', format: 'date-time', readOnly: true },
         },
       },
       CreateAssetCategoryRequest: {

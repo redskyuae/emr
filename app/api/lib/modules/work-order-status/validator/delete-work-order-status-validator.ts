@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { workOrderStatusRepository } from '../repository/work-order-status-repository';
+import { workOrderRepository } from '../../work-order/repository/work-order-repository';
 import {
   workOrderStatusIdSchema,
   workOrderStatusTenantIdSchema,
@@ -12,7 +13,8 @@ export type DeleteWorkOrderStatusInput = { id: number; tenantId: string };
 
 export async function validateDeleteWorkOrderStatus(
   id: unknown,
-  tenantId: unknown
+  tenantId: unknown,
+  usage: Pick<typeof workOrderRepository, 'isStatusInUse'> = workOrderRepository
 ): Promise<ValidationResult<DeleteWorkOrderStatusInput>> {
   const idResult = workOrderStatusIdSchema.safeParse(id);
   const tenantIdResult = workOrderStatusTenantIdSchema.safeParse(tenantId);
@@ -48,6 +50,14 @@ export async function validateDeleteWorkOrderStatus(
 
   if (!protectionResult.success) {
     return protectionResult;
+  }
+
+  if (await usage.isStatusInUse(idResult.data, tenantIdResult.data)) {
+    return {
+      success: false,
+      errors: ['Work order status cannot be deleted while it is in use.'],
+      status: StatusCodes.CONFLICT,
+    };
   }
 
   return { success: true, data: { id: idResult.data, tenantId: tenantIdResult.data } };

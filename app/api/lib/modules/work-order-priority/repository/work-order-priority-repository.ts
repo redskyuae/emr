@@ -1,6 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
+import { workOrderTable } from '@/app/db/schema/work-order';
 import { workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
 import type {
   CreateWorkOrderPriorityData,
@@ -57,25 +58,51 @@ async function updateWorkOrderPriority(id: number, data: UpdateWorkOrderPriority
 }
 
 async function softDeleteWorkOrderPriority(id: number, tenantId: string) {
-  const deletedOn = new Date();
-
-  const [deletedWorkOrderPriority] = await db
-    .update(workOrderPriorityTable)
-    .set({
-      isDeleted: true,
-      modifiedOn: deletedOn,
-      deletedOn,
-    })
-    .where(
-      and(
-        eq(workOrderPriorityTable.id, id),
-        eq(workOrderPriorityTable.tenantId, tenantId),
-        eq(workOrderPriorityTable.isDeleted, false)
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: workOrderPriorityTable.id })
+      .from(workOrderPriorityTable)
+      .where(
+        and(
+          eq(workOrderPriorityTable.id, id),
+          eq(workOrderPriorityTable.tenantId, tenantId),
+          eq(workOrderPriorityTable.isDeleted, false)
+        )
       )
-    )
-    .returning(workOrderPriorityColumns);
+      .for('update')
+      .limit(1);
 
-  return deletedWorkOrderPriority;
+    if (!existing) return { outcome: 'not-found' as const };
+
+    const [usage] = await tx
+      .select({ id: workOrderTable.id })
+      .from(workOrderTable)
+      .where(
+        and(
+          eq(workOrderTable.priorityId, id),
+          eq(workOrderTable.tenantId, tenantId),
+          eq(workOrderTable.isDeleted, false)
+        )
+      )
+      .limit(1);
+
+    if (usage) return { outcome: 'in-use' as const };
+
+    const deletedOn = new Date();
+    const [data] = await tx
+      .update(workOrderPriorityTable)
+      .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
+      .where(
+        and(
+          eq(workOrderPriorityTable.id, id),
+          eq(workOrderPriorityTable.tenantId, tenantId),
+          eq(workOrderPriorityTable.isDeleted, false)
+        )
+      )
+      .returning(workOrderPriorityColumns);
+
+    return data ? { outcome: 'deleted' as const, data } : { outcome: 'not-found' as const };
+  });
 }
 
 async function getWorkOrderPriorityById(id: number, tenantId: string) {
@@ -172,10 +199,7 @@ async function findActiveByCode(
 
 type WorkOrderPrioritySeed = Omit<CreateWorkOrderPriorityData, 'tenantId'>;
 
-async function seedDefaultWorkOrderPriorities(
-  tenantId: string,
-  defaults: WorkOrderPrioritySeed[]
-) {
+async function seedDefaultWorkOrderPriorities(tenantId: string, defaults: WorkOrderPrioritySeed[]) {
   if (defaults.length === 0) {
     return;
   }

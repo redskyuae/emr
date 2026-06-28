@@ -5,6 +5,8 @@ import { assetTable } from '@/app/db/schema/asset';
 import { assetCategoryTable } from '@/app/db/schema/asset-category';
 import { assetConditionTable } from '@/app/db/schema/asset-condition';
 import { assetStatusTable } from '@/app/db/schema/asset-status';
+import { workOrderTable } from '@/app/db/schema/work-order';
+import { workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import type { AssetListParams, CreateAssetData, UpdateAssetData } from '../schemas/asset-schema';
 
 const assetColumns = {
@@ -133,21 +135,62 @@ async function updateAsset(id: number, data: UpdateAssetData) {
 }
 
 async function softDeleteAsset(id: number, tenantId: string) {
-  const deletedOn = new Date();
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: assetTable.id })
+      .from(assetTable)
+      .where(
+        and(
+          eq(assetTable.id, id),
+          eq(assetTable.tenantId, tenantId),
+          eq(assetTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
 
-  const [deletedAsset] = await db
-    .update(assetTable)
-    .set({
-      isDeleted: true,
-      modifiedOn: deletedOn,
-      deletedOn,
-    })
-    .where(
-      and(eq(assetTable.id, id), eq(assetTable.tenantId, tenantId), eq(assetTable.isDeleted, false))
-    )
-    .returning({ id: assetTable.id });
+    if (!existing) return { outcome: 'not-found' as const };
 
-  return deletedAsset;
+    const [usage] = await tx
+      .select({ id: workOrderTable.id })
+      .from(workOrderTable)
+      .innerJoin(
+        workOrderStatusTable,
+        and(
+          eq(workOrderStatusTable.id, workOrderTable.statusId),
+          eq(workOrderStatusTable.tenantId, workOrderTable.tenantId),
+          eq(workOrderStatusTable.isDeleted, false)
+        )
+      )
+      .where(
+        and(
+          eq(workOrderTable.assetId, id),
+          eq(workOrderTable.tenantId, tenantId),
+          eq(workOrderTable.isDeleted, false),
+          ne(workOrderStatusTable.category, 'COMPLETED')
+        )
+      )
+      .limit(1);
+
+    if (usage) return { outcome: 'in-use' as const };
+
+    const deletedOn = new Date();
+    const [deleted] = await tx
+      .update(assetTable)
+      .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
+      .where(
+        and(
+          eq(assetTable.id, id),
+          eq(assetTable.tenantId, tenantId),
+          eq(assetTable.isDeleted, false)
+        )
+      )
+      .returning({ id: assetTable.id });
+
+    return deleted
+      ? { outcome: 'deleted' as const, data: deleted }
+      : { outcome: 'not-found' as const };
+  });
 }
 
 async function getAssetById(id: number, tenantId: string) {

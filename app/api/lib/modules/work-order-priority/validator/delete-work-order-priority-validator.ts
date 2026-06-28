@@ -1,3 +1,6 @@
+import { StatusCodes } from 'http-status-codes';
+
+import { workOrderRepository } from '../../work-order/repository/work-order-repository';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import {
@@ -10,10 +13,13 @@ export type DeleteWorkOrderPriorityInput = {
   tenantId: string;
 };
 
-export function validateDeleteWorkOrderPriority(
+type WorkOrderPriorityUsageReader = Pick<typeof workOrderRepository, 'isPriorityInUse'>;
+
+export async function validateDeleteWorkOrderPriority(
   id: unknown,
-  tenantId: unknown
-): ValidationResult<DeleteWorkOrderPriorityInput> {
+  tenantId: unknown,
+  usage: WorkOrderPriorityUsageReader = workOrderRepository
+): Promise<ValidationResult<DeleteWorkOrderPriorityInput>> {
   const idResult = workOrderPriorityIdSchema.safeParse(id);
   const tenantIdResult = workOrderPriorityTenantIdSchema.safeParse(tenantId);
 
@@ -29,6 +35,14 @@ export function validateDeleteWorkOrderPriority(
     }
 
     return { success: false, errors };
+  }
+
+  if (await usage.isPriorityInUse(idResult.data, tenantIdResult.data)) {
+    return {
+      success: false,
+      errors: ['Work order priority cannot be deleted while it is in use.'],
+      status: StatusCodes.CONFLICT,
+    };
   }
 
   return {
