@@ -1,11 +1,14 @@
 import { and, count, desc, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { assetTable } from '@/app/db/schema/asset';
-import { workOrderTable, workOrderCodeCounterTable } from '@/app/db/schema/work-order';
-import { workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
-import { workOrderStatusTable } from '@/app/db/schema/work-order-status';
-import { workOrderTypeTable } from '@/app/db/schema/work-order-type';
+import { asset as assetTable } from '@/app/db/schema/asset';
+import {
+  workOrder as workOrderTable,
+  workOrderCodeCounter as workOrderCodeCounterTable,
+} from '@/app/db/schema/work-order';
+import { workOrderPriority as workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
+import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
+import { workOrderType as workOrderTypeTable } from '@/app/db/schema/work-order-type';
 import type { CreateWorkOrderData, WorkOrderListParams } from '../schemas/work-order-schema';
 import { formatWorkOrderCode } from './work-order-code';
 import { initialCompletedOn } from './work-order-completion';

@@ -5,7 +5,7 @@ import { masterColumns } from './helpers';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
 
-export const assetStatusTable = pgTable(
+export const assetStatus = pgTable(
   'asset_status',
   {
     id,

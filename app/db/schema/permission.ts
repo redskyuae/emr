@@ -8,7 +8,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
-export const permissionTable = pgTable(
+export const permission = pgTable(
   'permission',
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),

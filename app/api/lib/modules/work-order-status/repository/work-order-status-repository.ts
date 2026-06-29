@@ -1,8 +1,8 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { workOrderTable } from '@/app/db/schema/work-order';
-import { workOrderStatusTable } from '@/app/db/schema/work-order-status';
+import { workOrder as workOrderTable } from '@/app/db/schema/work-order';
+import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import type {
   CreateWorkOrderStatusData,
   WorkOrderStatusCategory,

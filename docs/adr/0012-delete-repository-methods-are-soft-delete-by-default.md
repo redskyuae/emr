@@ -1,6 +1,6 @@
 # Repository `delete{Entity}` Methods Are Soft-Delete by Default
 
-Domain and master-data repositories expose their removal operation as `delete{Entity}` (e.g. `deleteNationality`, `deleteRole`), **not** `softDelete{Entity}`. The method name says *delete*, but the implementation is unchanged: it sets the `isDeleted` flag rather than removing the row. We renamed the former `softDelete{Entity}` functions because soft deletion is the default and overwhelmingly common removal semantics in this codebase, and the `soft` prefix added noise to every call site for behavior that is the norm, not the exception.
+Domain and master-data repositories expose their removal operation as `delete{Entity}` (e.g. `deleteNationality`, `deleteRole`), **not** `softDelete{Entity}`.
 
 The deliberate consequence is that the `delete` prefix is **overloaded**: most `delete{Entity}` functions are soft deletes, but a small, fixed set are true hard deletes that physically remove rows via `db.delete(...)` — `deleteSession`, `deleteUserSessions`, `deleteUserSessionsExcept`, `deleteAuthUser`, and `deleteTenantArtifacts`. These are the named exceptions: ephemeral auth/session state and provisioning cleanup that must not linger. The rule for future work is therefore: **a new `delete{Entity}` on a tenant-scoped domain or master-data table is a soft delete (flip `isDeleted`); only auth/session/provisioning-style transient data is hard-deleted, and that remains the exception.** Do not introduce `softDelete`-prefixed names — they will diverge from the rest of the codebase.
 

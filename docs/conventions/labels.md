@@ -10,8 +10,8 @@ Every task is either frontend work or backend work. Pick exactly one. This lets 
 a glance whether a ticket is for the UI/integration developer or the API developer, and lets
 each developer filter the board down to their lane.
 
-| Label      | Color     | Meaning                                                                 |
-| ---------- | --------- | ----------------------------------------------------------------------- |
+| Label      | Color     | Meaning                                                                  |
+| ---------- | --------- | ------------------------------------------------------------------------ |
 | `frontend` | `#BF5AF2` | UI work and API integration — screens, components, `app/queries/` hooks. |
 | `backend`  | `#1D76DB` | API and data work — routes, commands/queries, repositories, schema, DB.  |
 
@@ -22,7 +22,7 @@ each developer filter the board down to their lane.
 
 ## Type labels — orthogonal, zero or more
 
-Layer answers *who* works on it; type answers *what kind of change* it is. They stack.
+Layer answers _who_ works on it; type answers _what kind of change_ it is. They stack.
 
 | Label           | Meaning                                                       |
 | --------------- | ------------------------------------------------------------- |

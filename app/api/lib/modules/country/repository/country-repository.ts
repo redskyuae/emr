@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { countryTable } from '@/app/db/schema/country';
+import { country as countryTable } from '@/app/db/schema/country';
 import type {
   CountryListParams,
   CreateCountryInput,

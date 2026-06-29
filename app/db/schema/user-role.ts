@@ -1,9 +1,9 @@
 import { index, integer, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 import { organization, user } from './auth';
-import { roleTable } from './role';
+import { role as roleTable } from './role';
 
-export const userRoleTable = pgTable(
+export const userRole = pgTable(
   'user_role',
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),

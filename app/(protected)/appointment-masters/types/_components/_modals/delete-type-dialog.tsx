@@ -1,7 +1,17 @@
 import { Trash2 } from 'lucide-react';
 
 import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function TypeDeleteDialog({
   type,
@@ -15,10 +25,7 @@ export function TypeDeleteDialog({
   onConfirm: () => void;
 }) {
   return (
-    <AlertDialog
-      open={type !== null}
-      onOpenChange={(open) => (!open ? onCancel() : undefined)}
-    >
+    <AlertDialog open={type !== null} onOpenChange={(open) => (!open ? onCancel() : undefined)}>
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">

@@ -5,7 +5,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, } from 'lucide-react';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  LayoutGrid,
+  LayoutList,
+  Plus,
+  Search,
+  Table as TableIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppointmentMode } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
 import { createAppointmentModeSchema } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
@@ -17,7 +27,14 @@ import { useUpdateAppointmentMode } from '@/app/queries/appointment-masters/useU
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle, } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ModeDeleteDialog } from './_modals/delete-mode-dialog';
@@ -252,23 +269,11 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <ModeTableView
-                modes={modes}
-                onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
-              />
+              <ModeTableView modes={modes} onEdit={openEditSheet} onDelete={setModePendingDelete} />
             ) : viewLayout === 'card' ? (
-              <ModeCardView
-                modes={modes}
-                onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
-              />
+              <ModeCardView modes={modes} onEdit={openEditSheet} onDelete={setModePendingDelete} />
             ) : (
-              <ModeListView
-                modes={modes}
-                onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
-              />
+              <ModeListView modes={modes} onEdit={openEditSheet} onDelete={setModePendingDelete} />
             )}
 
             {totalPages > 0 ? (

@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { assetConditionTable } from '@/app/db/schema/asset-condition';
+import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-condition';
 import type {
   AssetConditionListParams,
   CreateAssetConditionData,

@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { languageTable } from '@/app/db/schema/language';
+import { language as languageTable } from '@/app/db/schema/language';
 import type {
   CreateLanguageInput,
   LanguageListParams,

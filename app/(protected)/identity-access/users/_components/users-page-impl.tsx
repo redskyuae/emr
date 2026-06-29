@@ -111,7 +111,9 @@ export function UsersPageImpl() {
           onEdit={(member) => void setUserParam(member.id)}
           onDeactivate={setStaffPendingDeactivate}
           onReactivate={handleReactivate}
-          reactivatingId={reactivateMutation.isPending ? (reactivateMutation.variables ?? null) : null}
+          reactivatingId={
+            reactivateMutation.isPending ? (reactivateMutation.variables ?? null) : null
+          }
         />
       </div>
 

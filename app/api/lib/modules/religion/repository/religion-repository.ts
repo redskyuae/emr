@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { religionTable } from '@/app/db/schema/religion';
+import { religion as religionTable } from '@/app/db/schema/religion';
 import type {
   CreateReligionInput,
   ReligionListParams,

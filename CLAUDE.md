@@ -127,7 +127,7 @@ Read `lessons.md` for documented architectural solutions and historical bug fixe
 
 ## Adding a new module
 
-1. Define the Drizzle table in `app/db/schema/{entity}.ts`, include `tenantId`. If the table requires unique fields, read `lessons.md` for the correct implementation using partial unique indexes.
+1. Define the Drizzle table in `app/db/schema/{entity}.ts`, include `tenantId`. If the table requires unique fields, read `lessons.md` for the correct implementation using partial unique indexes. Export the table variable **without** a `Table` suffix: `export const appointmentCancelledReason = pgTable(...)`. Every consumer (other schema files or repositories) must import it with an `as xxxTable` alias: `import { appointmentCancelledReason as appointmentCancelledReasonTable } from ...`. Auth tables in `auth.ts` are excluded from this convention. See `docs/adr/0015-schema-table-export-naming.md`.
 2. Run `bun run db:generate` to generate the migration, then `bun run db:migrate`
 3. Create `app/api/lib/modules/{module}/schemas/{module}-schema.ts` — Zod schema + exported types
 4. Create repository in `repository/` — exports a plain object of async functions, including reads needed by validators
@@ -178,18 +178,20 @@ Type definitions, object literals, and object exports should be ordered by line 
 **Examples:**
 
 Object literals:
+
 ```ts
 const columns = {
-  id: table.id,              // 2-char key
-  name: table.name,          // 4-char key
-  code: table.code,          // 4-char key
-  tenantId: table.tenantId,  // 8-char key
+  id: table.id, // 2-char key
+  name: table.name, // 4-char key
+  code: table.code, // 4-char key
+  tenantId: table.tenantId, // 8-char key
   createdOn: table.createdOn, // 9-char key
   description: table.description, // 11-char key
 };
 ```
 
 Object exports:
+
 ```ts
 export const repo = {
   getAll,               // short

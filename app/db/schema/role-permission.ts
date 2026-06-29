@@ -1,10 +1,10 @@
 import { index, integer, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 import { organization } from './auth';
-import { permissionTable } from './permission';
-import { roleTable } from './role';
+import { permission as permissionTable } from './permission';
+import { role as roleTable } from './role';
 
-export const rolePermissionTable = pgTable(
+export const rolePermission = pgTable(
   'role_permission',
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),

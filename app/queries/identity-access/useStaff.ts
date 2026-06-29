@@ -14,8 +14,7 @@ export type StaffListFilters = {
 
 // Prefix key for invalidating every Staff query (list pages + details) after a write.
 export const staffBaseKey = ['staff'] as const;
-export const staffListQueryKey = (filters: StaffListFilters) =>
-  ['staff', 'list', filters] as const;
+export const staffListQueryKey = (filters: StaffListFilters) => ['staff', 'list', filters] as const;
 export const staffDetailQueryKey = (userId: string) => ['staff', 'detail', userId] as const;
 
 function buildStaffListParams(filters: StaffListFilters) {

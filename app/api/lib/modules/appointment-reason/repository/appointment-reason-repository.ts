@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { appointmentReasonTable } from '@/app/db/schema/appointment-reason';
+import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
 import type {
   AppointmentReasonListParams,
   CreateAppointmentReasonData,

@@ -1,8 +1,8 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { permissionTable } from '@/app/db/schema/permission';
-import { rolePermissionTable } from '@/app/db/schema/role-permission';
+import { permission as permissionTable } from '@/app/db/schema/permission';
+import { rolePermission as rolePermissionTable } from '@/app/db/schema/role-permission';
 import type { Role } from '../../role/schemas/role-schema';
 
 const assignedPermissionColumns = {

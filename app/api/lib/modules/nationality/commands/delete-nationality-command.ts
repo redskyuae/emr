@@ -11,9 +11,7 @@ export async function deleteNationalityCommand(id: unknown): Promise<CommandResu
     return { success: false, errors: validationResult.errors };
   }
 
-  const deletedNationality = await nationalityRepository.deleteNationality(
-    validationResult.data
-  );
+  const deletedNationality = await nationalityRepository.deleteNationality(validationResult.data);
 
   if (!deletedNationality) {
     return {

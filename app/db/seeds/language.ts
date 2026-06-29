@@ -1,7 +1,7 @@
 import { and, eq, or } from 'drizzle-orm';
 
 import { db } from '../index';
-import { languageTable } from '../schema/language';
+import { language as languageTable } from '../schema/language';
 
 export const languageSeedData = [
   { name: 'English', code: 'ENG' },

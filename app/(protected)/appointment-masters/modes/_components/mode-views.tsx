@@ -1,9 +1,21 @@
-import { ClipboardList, MoreVertical, Pencil, Trash2, } from 'lucide-react';
+import { ClipboardList, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import type { AppointmentMode } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 function ModeIcon() {
   return (
@@ -39,10 +51,7 @@ function ModeActionsMenu({
           <Pencil className="size-4" />
           Edit
         </DropdownMenuItem>
-        <DropdownMenuItem
-          variant="destructive"
-          onClick={() => onDelete(mode)}
-        >
+        <DropdownMenuItem variant="destructive" onClick={() => onDelete(mode)}>
           <Trash2 className="size-4" />
           Delete
         </DropdownMenuItem>
@@ -113,22 +122,15 @@ export function ModeCardView({
             <div>
               <h3 className="font-heading text-base font-semibold">{mode.name}</h3>
               <p className="text-muted-foreground mt-0.5 text-sm">
-                Appointment Mode Code:{' '}
-                <span className="font-mono">{mode.code}</span>
+                Appointment Mode Code: <span className="font-mono">{mode.code}</span>
               </p>
               <p className="text-muted-foreground mt-0.5 text-sm">
-                Appointment Mode Description:{' '}
-                <span>{mode.description || '—'}</span>
+                Appointment Mode Description: <span>{mode.description || '—'}</span>
               </p>
             </div>
 
             <div className="flex gap-2 border-t pt-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(mode)}
-              >
+              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(mode)}>
                 <Pencil className="size-3.5" />
                 Edit
               </Button>

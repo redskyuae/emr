@@ -16,10 +16,7 @@ async function deleteAppointmentMode(id: number): Promise<void> {
   }
 }
 
-type UseDeleteAppointmentModeOptions = Omit<
-  UseMutationOptions<void, Error, number>,
-  'mutationFn'
->;
+type UseDeleteAppointmentModeOptions = Omit<UseMutationOptions<void, Error, number>, 'mutationFn'>;
 
 export function useDeleteAppointmentMode(options?: UseDeleteAppointmentModeOptions) {
   const queryClient = useQueryClient();

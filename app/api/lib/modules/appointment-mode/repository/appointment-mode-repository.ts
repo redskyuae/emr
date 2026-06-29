@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { appointmentModeTable } from '@/app/db/schema/appointment-mode';
+import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import type {
   AppointmentModeListParams,
   CreateAppointmentModeData,

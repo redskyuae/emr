@@ -21,10 +21,7 @@ const workOrderPriorityCodeSchema = z
 const workOrderPriorityColorSchema = z
   .string({ error: 'Work order priority color is required' })
   .trim()
-  .regex(
-    /^#[0-9A-Fa-f]{6}$/,
-    'Work order priority color must be a hex value like #16A34A.'
-  );
+  .regex(/^#[0-9A-Fa-f]{6}$/, 'Work order priority color must be a hex value like #16A34A.');
 
 const workOrderPriorityDescriptionSchema = z
   .string()

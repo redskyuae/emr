@@ -1,8 +1,8 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { workOrderTable } from '@/app/db/schema/work-order';
-import { workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
+import { workOrder as workOrderTable } from '@/app/db/schema/work-order';
+import { workOrderPriority as workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
 import type {
   CreateWorkOrderPriorityData,
   UpdateWorkOrderPriorityData,

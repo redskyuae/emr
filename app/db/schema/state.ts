@@ -1,12 +1,12 @@
 import { sql } from 'drizzle-orm';
 import { integer, pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
-import { countryTable } from './country';
+import { country as countryTable } from './country';
 import { masterColumns } from './helpers';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
 
-export const stateTable = pgTable(
+export const state = pgTable(
   'state',
   {
     id,

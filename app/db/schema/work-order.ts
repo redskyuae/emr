@@ -1,15 +1,15 @@
 import { sql } from 'drizzle-orm';
 import { date, integer, pgTable, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
-import { assetTable } from './asset';
+import { asset as assetTable } from './asset';
 import { masterColumns } from './helpers';
-import { workOrderPriorityTable } from './work-order-priority';
-import { workOrderStatusTable } from './work-order-status';
-import { workOrderTypeTable } from './work-order-type';
+import { workOrderPriority as workOrderPriorityTable } from './work-order-priority';
+import { workOrderStatus as workOrderStatusTable } from './work-order-status';
+import { workOrderType as workOrderTypeTable } from './work-order-type';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
 
-export const workOrderTable = pgTable(
+export const workOrder = pgTable(
   'work_order',
   {
     id,
@@ -44,7 +44,7 @@ export const workOrderTable = pgTable(
   })
 );
 
-export const workOrderCodeCounterTable = pgTable('work_order_code_counter', {
+export const workOrderCodeCounter = pgTable('work_order_code_counter', {
   tenantId: varchar('tenant_id', { length: 255 }).primaryKey(),
   lastNumber: integer('last_number').notNull(),
 });

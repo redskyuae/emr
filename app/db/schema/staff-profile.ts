@@ -6,7 +6,7 @@ import { masterColumns } from './helpers';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
 
-export const staffProfileTable = pgTable(
+export const staffProfile = pgTable(
   'staff_profile',
   {
     id,

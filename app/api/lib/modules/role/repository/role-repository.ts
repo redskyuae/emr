@@ -1,11 +1,11 @@
 import { and, asc, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { permissionTable } from '@/app/db/schema/permission';
-import { rolePermissionTable } from '@/app/db/schema/role-permission';
-import { roleTable } from '@/app/db/schema/role';
-import { staffProfileTable } from '@/app/db/schema/staff-profile';
-import { userRoleTable } from '@/app/db/schema/user-role';
+import { permission as permissionTable } from '@/app/db/schema/permission';
+import { rolePermission as rolePermissionTable } from '@/app/db/schema/role-permission';
+import { role as roleTable } from '@/app/db/schema/role';
+import { staffProfile as staffProfileTable } from '@/app/db/schema/staff-profile';
+import { userRole as userRoleTable } from '@/app/db/schema/user-role';
 import type {
   CreateRoleInput,
   Role,

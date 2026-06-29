@@ -1,7 +1,7 @@
 import { and, eq, or } from 'drizzle-orm';
 
 import { db } from '../index';
-import { religionTable } from '../schema/religion';
+import { religion as religionTable } from '../schema/religion';
 
 export const religionSeedData = [
   { name: 'Hinduism', code: 'HIN' },

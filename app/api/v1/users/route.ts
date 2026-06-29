@@ -42,12 +42,10 @@ export async function GET(request: NextRequest) {
 
     const roleIdParam = request.nextUrl.searchParams.get('roleId');
     const parsedRoleId = roleIdParam ? Number(roleIdParam) : Number.NaN;
-    const roleId =
-      Number.isInteger(parsedRoleId) && parsedRoleId > 0 ? parsedRoleId : undefined;
+    const roleId = Number.isInteger(parsedRoleId) && parsedRoleId > 0 ? parsedRoleId : undefined;
 
     const statusParam = request.nextUrl.searchParams.get('status');
-    const status =
-      statusParam === 'active' || statusParam === 'inactive' ? statusParam : undefined;
+    const status = statusParam === 'active' || statusParam === 'inactive' ? statusParam : undefined;
 
     const queryResult = await getStaffQuery({
       tenantId: tenantSession.tenantId,

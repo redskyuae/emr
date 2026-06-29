@@ -1,7 +1,7 @@
 import { and, eq, or } from 'drizzle-orm';
 
 import { db } from '../index';
-import { nationalityTable } from '../schema/nationality';
+import { nationality as nationalityTable } from '../schema/nationality';
 
 export const nationalitySeedData = [
   { name: 'Indian', code: 'IND' },

@@ -1,8 +1,8 @@
 import { and, asc, count, eq, ilike, ne, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { countryTable } from '@/app/db/schema/country';
-import { stateTable } from '@/app/db/schema/state';
+import { country as countryTable } from '@/app/db/schema/country';
+import { state as stateTable } from '@/app/db/schema/state';
 import type {
   CreateStateInput,
   State,

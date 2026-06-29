@@ -5,7 +5,7 @@ import { masterColumns } from './helpers';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
 
-export const appointmentStatusTable = pgTable(
+export const appointmentStatus = pgTable(
   'appointment_status',
   {
     id,

@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
+import { appointmentCancelledReason as appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
 import type {
   AppointmentCancelledReasonListParams,
   CreateAppointmentCancelledReasonData,

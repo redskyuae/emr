@@ -1,14 +1,14 @@
 import { sql } from 'drizzle-orm';
 import { date, integer, numeric, pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
-import { assetCategoryTable } from './asset-category';
-import { assetConditionTable } from './asset-condition';
-import { assetStatusTable } from './asset-status';
+import { assetCategory as assetCategoryTable } from './asset-category';
+import { assetCondition as assetConditionTable } from './asset-condition';
+import { assetStatus as assetStatusTable } from './asset-status';
 import { masterColumns } from './helpers';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
 
-export const assetTable = pgTable(
+export const asset = pgTable(
   'asset',
   {
     id,

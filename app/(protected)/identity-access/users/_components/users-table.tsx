@@ -1,6 +1,13 @@
 'use client';
 
-import { AlertCircle, MoreVertical, Pencil, UserRoundCheck, UserRoundX, UsersRound } from 'lucide-react';
+import {
+  AlertCircle,
+  MoreVertical,
+  Pencil,
+  UserRoundCheck,
+  UserRoundX,
+  UsersRound,
+} from 'lucide-react';
 
 import type { StaffWithRoles } from '@/app/api/lib/modules/staff/schemas/staff-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';

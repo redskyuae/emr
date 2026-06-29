@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { appointmentTypeTable } from '@/app/db/schema/appointment-type';
+import { appointmentType as appointmentTypeTable } from '@/app/db/schema/appointment-type';
 import type {
   AppointmentTypeListParams,
   CreateAppointmentTypeData,

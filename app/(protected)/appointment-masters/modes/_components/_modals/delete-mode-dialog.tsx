@@ -1,7 +1,17 @@
 import { Trash2 } from 'lucide-react';
 
 import type { AppointmentMode } from '@/app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function ModeDeleteDialog({
   mode,
@@ -15,10 +25,7 @@ export function ModeDeleteDialog({
   onConfirm: () => void;
 }) {
   return (
-    <AlertDialog
-      open={mode !== null}
-      onOpenChange={(open) => (!open ? onCancel() : undefined)}
-    >
+    <AlertDialog open={mode !== null} onOpenChange={(open) => (!open ? onCancel() : undefined)}>
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">

@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { nationalityTable } from '@/app/db/schema/nationality';
+import { nationality as nationalityTable } from '@/app/db/schema/nationality';
 import type {
   CreateNationalityInput,
   NationalityListParams,

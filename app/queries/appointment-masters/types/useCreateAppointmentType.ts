@@ -3,7 +3,10 @@
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
-import type { SaveAppointmentTypeRequest, SaveAppointmentTypeResponse, } from '@/app/api/v1/appointments/types/types';
+import type {
+  SaveAppointmentTypeRequest,
+  SaveAppointmentTypeResponse,
+} from '@/app/api/v1/appointments/types/types';
 import { APPOINTMENT_TYPES_KEY } from './useAppointmentTypes';
 
 async function createAppointmentType(

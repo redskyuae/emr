@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { assetStatusTable } from '@/app/db/schema/asset-status';
+import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import type {
   AssetStatusListParams,
   CreateAssetStatusData,

@@ -1,7 +1,7 @@
 import { and, asc, eq, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { permissionTable } from '@/app/db/schema/permission';
+import { permission as permissionTable } from '@/app/db/schema/permission';
 import type { PermissionListParams } from '../schemas/permission-schema';
 import { permissionSeedData, permissionSeedOrder } from '../seed-data';
 

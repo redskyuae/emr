@@ -1,7 +1,7 @@
 import { and, eq, or } from 'drizzle-orm';
 
 import { db } from '../index';
-import { countryTable } from '../schema/country';
+import { country as countryTable } from '../schema/country';
 
 export const countrySeedData = [
   { name: 'India', code: 'IN' },

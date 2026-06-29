@@ -247,7 +247,11 @@ export function RoleFormSheet({
                       render={({ field, fieldState }) => (
                         <Field className="md:col-span-2">
                           <FieldLabel htmlFor="role-name">
-                            Role name <span aria-hidden="true" className="text-destructive"> *</span>
+                            Role name{' '}
+                            <span aria-hidden="true" className="text-destructive">
+                              {' '}
+                              *
+                            </span>
                           </FieldLabel>
                           <Input
                             id="role-name"
@@ -287,7 +291,11 @@ export function RoleFormSheet({
                     render={({ field, fieldState }) => (
                       <Field>
                         <FieldLabel htmlFor="role-code">
-                          Role code <span aria-hidden="true" className="text-destructive"> * </span>
+                          Role code{' '}
+                          <span aria-hidden="true" className="text-destructive">
+                            {' '}
+                            *{' '}
+                          </span>
                         </FieldLabel>
                         <Input
                           id="role-code"

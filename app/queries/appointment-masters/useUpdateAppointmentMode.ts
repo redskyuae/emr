@@ -3,7 +3,10 @@
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
-import type { UpdateAppointmentModeRequest, UpdateAppointmentModeResponse, } from '@/app/api/v1/appointments/modes/[id]/types';
+import type {
+  UpdateAppointmentModeRequest,
+  UpdateAppointmentModeResponse,
+} from '@/app/api/v1/appointments/modes/[id]/types';
 import { APPOINTMENT_MODES_KEY } from './useAppointmentModes';
 
 type UpdateAppointmentModeVariables = {

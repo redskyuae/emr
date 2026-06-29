@@ -2,8 +2,8 @@ import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { user } from '@/app/db/schema/auth';
-import { permissionTable } from '@/app/db/schema/permission';
-import { rolePermissionTable } from '@/app/db/schema/role-permission';
+import { permission as permissionTable } from '@/app/db/schema/permission';
+import { rolePermission as rolePermissionTable } from '@/app/db/schema/role-permission';
 
 const authUserColumns = {
   id: user.id,

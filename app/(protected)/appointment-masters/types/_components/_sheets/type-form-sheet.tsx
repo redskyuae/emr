@@ -6,7 +6,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 
 export type TypeFormValues = {
@@ -34,7 +41,10 @@ export function TypeFormSheet({
   isSaving: boolean;
   onSave: () => void;
 }) {
-  const { register, formState: { errors } } = form;
+  const {
+    register,
+    formState: { errors },
+  } = form;
 
   return (
     <Sheet open={open} onOpenChange={(o) => (!o ? onClose() : undefined)}>
@@ -124,11 +134,7 @@ export function TypeFormSheet({
             <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isSaving}
-              aria-busy={isSaving}
-            >
+            <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
               <Save className="size-4" />
               Save
             </Button>

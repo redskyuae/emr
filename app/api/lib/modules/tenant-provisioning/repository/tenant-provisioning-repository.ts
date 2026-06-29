@@ -1,20 +1,23 @@
 import { eq, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
-import { appointmentModeTable } from '@/app/db/schema/appointment-mode';
-import { appointmentReasonTable } from '@/app/db/schema/appointment-reason';
-import { appointmentStatusTable } from '@/app/db/schema/appointment-status';
-import { appointmentTypeTable } from '@/app/db/schema/appointment-type';
-import { assetCategoryTable } from '@/app/db/schema/asset-category';
-import { assetConditionTable } from '@/app/db/schema/asset-condition';
-import { assetStatusTable } from '@/app/db/schema/asset-status';
-import { assetTable } from '@/app/db/schema/asset';
+import { appointmentCancelledReason as appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
+import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
+import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
+import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
+import { appointmentType as appointmentTypeTable } from '@/app/db/schema/appointment-type';
+import { assetCategory as assetCategoryTable } from '@/app/db/schema/asset-category';
+import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-condition';
+import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
+import { asset as assetTable } from '@/app/db/schema/asset';
 import { organization, user } from '@/app/db/schema/auth';
-import { workOrderCodeCounterTable, workOrderTable } from '@/app/db/schema/work-order';
-import { workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
-import { workOrderStatusTable } from '@/app/db/schema/work-order-status';
-import { workOrderTypeTable } from '@/app/db/schema/work-order-type';
+import {
+  workOrderCodeCounter as workOrderCodeCounterTable,
+  workOrder as workOrderTable,
+} from '@/app/db/schema/work-order';
+import { workOrderPriority as workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
+import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
+import { workOrderType as workOrderTypeTable } from '@/app/db/schema/work-order-type';
 
 async function findUserByEmail(email: string) {
   const [existingUser] = await db

@@ -510,7 +510,11 @@ function StaffRolesEditor({
         </div>
       )}
 
-      <Select value="" onValueChange={handleAdd} disabled={busy || rolesLoading || assignable.length === 0}>
+      <Select
+        value=""
+        onValueChange={handleAdd}
+        disabled={busy || rolesLoading || assignable.length === 0}
+      >
         <SelectTrigger className="w-full sm:w-64" aria-label="Add a Role">
           <Plus className="size-4" />
           <SelectValue

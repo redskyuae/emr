@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { assetCategoryTable } from '@/app/db/schema/asset-category';
+import { assetCategory as assetCategoryTable } from '@/app/db/schema/asset-category';
 import type {
   AssetCategoryListParams,
   CreateAssetCategoryData,

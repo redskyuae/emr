@@ -1,8 +1,8 @@
 import { and, asc, count, eq } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { roleTable } from '@/app/db/schema/role';
-import { userRoleTable } from '@/app/db/schema/user-role';
+import { role as roleTable } from '@/app/db/schema/role';
+import { userRole as userRoleTable } from '@/app/db/schema/user-role';
 
 const assignedRoleColumns = {
   id: roleTable.id,

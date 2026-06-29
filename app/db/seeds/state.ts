@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '../index';
-import { countryTable } from '../schema/country';
-import { stateTable } from '../schema/state';
+import { country as countryTable } from '../schema/country';
+import { state as stateTable } from '../schema/state';
 
 export const indianStateSeedData = [
   'Andhra Pradesh',

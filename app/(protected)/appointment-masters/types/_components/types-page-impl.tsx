@@ -5,7 +5,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, } from 'lucide-react';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  LayoutGrid,
+  LayoutList,
+  Plus,
+  Search,
+  Table as TableIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
 import { createAppointmentTypeSchema } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
@@ -17,7 +27,14 @@ import { useUpdateAppointmentType } from '@/app/queries/appointment-masters/type
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle, } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { TypeDeleteDialog } from './_modals/delete-type-dialog';
@@ -171,12 +188,12 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" /> 
-                Table 
-                </ToggleGroupItem>
+                <TableIcon className="size-4" />
+                Table
+              </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
                 <LayoutGrid className="size-4" />
-                 Card
+                Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
                 <LayoutList className="size-4" />
@@ -251,23 +268,11 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <TypeTableView
-                types={types}
-                onEdit={openEditSheet}
-                onDelete={setTypePendingDelete}
-              />
+              <TypeTableView types={types} onEdit={openEditSheet} onDelete={setTypePendingDelete} />
             ) : viewLayout === 'card' ? (
-              <TypeCardView
-                types={types}
-                onEdit={openEditSheet}
-                onDelete={setTypePendingDelete}
-              />
+              <TypeCardView types={types} onEdit={openEditSheet} onDelete={setTypePendingDelete} />
             ) : (
-              <TypeListView
-                types={types}
-                onEdit={openEditSheet}
-                onDelete={setTypePendingDelete}
-              />
+              <TypeListView types={types} onEdit={openEditSheet} onDelete={setTypePendingDelete} />
             )}
 
             {totalPages > 0 ? (

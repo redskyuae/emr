@@ -3,7 +3,10 @@
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
-import type { SaveAppointmentModeRequest,SaveAppointmentModeResponse, } from '@/app/api/v1/appointments/modes/types';
+import type {
+  SaveAppointmentModeRequest,
+  SaveAppointmentModeResponse,
+} from '@/app/api/v1/appointments/modes/types';
 import { APPOINTMENT_MODES_KEY } from './useAppointmentModes';
 
 async function createAppointmentMode(

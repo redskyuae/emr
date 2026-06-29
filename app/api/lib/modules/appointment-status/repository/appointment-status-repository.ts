@@ -1,7 +1,7 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { appointmentStatusTable } from '@/app/db/schema/appointment-status';
+import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
 import type {
   AppointmentStatusListParams,
   CreateAppointmentStatusData,

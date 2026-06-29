@@ -1,12 +1,12 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { assetTable } from '@/app/db/schema/asset';
-import { assetCategoryTable } from '@/app/db/schema/asset-category';
-import { assetConditionTable } from '@/app/db/schema/asset-condition';
-import { assetStatusTable } from '@/app/db/schema/asset-status';
-import { workOrderTable } from '@/app/db/schema/work-order';
-import { workOrderStatusTable } from '@/app/db/schema/work-order-status';
+import { asset as assetTable } from '@/app/db/schema/asset';
+import { assetCategory as assetCategoryTable } from '@/app/db/schema/asset-category';
+import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-condition';
+import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
+import { workOrder as workOrderTable } from '@/app/db/schema/work-order';
+import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import type { AssetListParams, CreateAssetData, UpdateAssetData } from '../schemas/asset-schema';
 
 const assetColumns = {

@@ -30,7 +30,7 @@ import { Separator } from '@/components/ui/separator';
 import { formatCount } from '@/lib/format-count';
 
 import { RoleIcon } from './role-icon';
-import {RoleGridSkeleton} from "@/app/(protected)/identity-access/roles/_components/role-grid-skeleton";
+import { RoleGridSkeleton } from '@/app/(protected)/identity-access/roles/_components/role-grid-skeleton';
 
 function RoleCard({
   role,

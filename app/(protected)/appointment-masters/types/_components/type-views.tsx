@@ -1,9 +1,21 @@
-import { ClipboardList, MoreVertical, Pencil, Trash2, } from 'lucide-react';
+import { ClipboardList, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 function TypeIcon() {
   return (
@@ -47,10 +59,7 @@ function TypeActionsMenu({
           <Pencil className="size-4" />
           Edit
         </DropdownMenuItem>
-        <DropdownMenuItem
-          variant="destructive"
-          onClick={() => onDelete(type)}
-        >
+        <DropdownMenuItem variant="destructive" onClick={() => onDelete(type)}>
           <Trash2 className="size-4" />
           Delete
         </DropdownMenuItem>
@@ -125,26 +134,18 @@ export function TypeCardView({
             <div>
               <h3 className="font-heading text-base font-semibold">{type.name}</h3>
               <p className="text-muted-foreground mt-0.5 text-sm">
-                Appointment Type Code:{' '}
-                <span className="font-mono">{type.code}</span>
+                Appointment Type Code: <span className="font-mono">{type.code}</span>
               </p>
               <p className="text-muted-foreground mt-0.5 text-sm">
-                Appointment Type Description:{' '}
-                <span>{type.description || '—'}</span>
+                Appointment Type Description: <span>{type.description || '—'}</span>
               </p>
               <p className="text-muted-foreground mt-0.5 text-sm">
-                Modified on:{' '}
-                <span>{formatDate(type.modifiedOn)}</span>
+                Modified on: <span>{formatDate(type.modifiedOn)}</span>
               </p>
             </div>
 
             <div className="flex gap-2 border-t pt-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(type)}
-              >
+              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(type)}>
                 <Pencil className="size-3.5" />
                 Edit
               </Button>
