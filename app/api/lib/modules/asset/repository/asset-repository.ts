@@ -7,7 +7,12 @@ import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-con
 import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import { workOrder as workOrderTable } from '@/app/db/schema/work-order';
 import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
-import type { AssetListParams, CreateAssetData, UpdateAssetData } from '../schemas/asset-schema';
+import type {
+  AssetSummary,
+  AssetListParams,
+  CreateAssetData,
+  UpdateAssetData,
+} from '../schemas/asset-schema';
 
 const assetColumns = {
   id: assetTable.id,
@@ -272,6 +277,53 @@ async function getAssets({
   return { data, total };
 }
 
+async function getAssetSummary(tenantId: string): Promise<AssetSummary> {
+  const [[summary], byCategory] = await Promise.all([
+    db
+      .select({
+        totalAssets: count(),
+        portfolioValue: sql<number>`coalesce(sum(${assetTable.currentValue}), 0)`.mapWith(Number),
+        outOfServiceCount:
+          sql<number>`count(*) filter (where ${assetStatusTable.code} in ('MAINT', 'REPAIR'))`.mapWith(
+            Number
+          ),
+      })
+      .from(assetTable)
+      .leftJoin(
+        assetStatusTable,
+        and(
+          eq(assetStatusTable.id, assetTable.statusId),
+          eq(assetStatusTable.tenantId, assetTable.tenantId),
+          eq(assetStatusTable.isDeleted, false)
+        )
+      )
+      .where(and(eq(assetTable.tenantId, tenantId), eq(assetTable.isDeleted, false))),
+    db
+      .select({
+        name: assetCategoryTable.name,
+        color: assetCategoryTable.color,
+        count: count(assetTable.id),
+        categoryId: assetCategoryTable.id,
+      })
+      .from(assetCategoryTable)
+      .leftJoin(
+        assetTable,
+        and(
+          eq(assetTable.categoryId, assetCategoryTable.id),
+          eq(assetTable.tenantId, assetCategoryTable.tenantId),
+          eq(assetTable.isDeleted, false)
+        )
+      )
+      .where(
+        and(eq(assetCategoryTable.tenantId, tenantId), eq(assetCategoryTable.isDeleted, false))
+      )
+      .groupBy(assetCategoryTable.id, assetCategoryTable.name, assetCategoryTable.color)
+      .orderBy(asc(assetCategoryTable.name)),
+  ]);
+
+  return { ...summary, byCategory };
+}
+
 async function findActiveBySerialNumber(
   tenantId: string,
   serialNumber: string,
@@ -299,5 +351,6 @@ export const assetRepository = {
   updateAsset,
   deleteAsset,
   getAssetById,
+  getAssetSummary,
   findActiveBySerialNumber,
 };

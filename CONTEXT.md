@@ -182,6 +182,26 @@ A Tenant-scoped Master that classifies Assets, such as Diagnostic Imaging, Patie
 
 A Tenant-scoped Master that defines the operational lifecycle state of an Asset, such as in use, available, under maintenance, under repair, or retired. Distinct from Asset Condition, which describes physical wear rather than operational state.
 
+## System Asset Status
+
+An Asset Status provided to every Tenant whose stable code identifies its system meaning. A Tenant may customize its display details, but cannot change its code.
+
+## Out-of-Service Asset
+
+An Asset in the Maintenance or Repair System Asset Status. Tenant-created Asset Statuses are not considered out of service unless the domain later introduces an explicit classification for them.
+
+## Retired Asset
+
+An Asset in the Retired System Asset Status. It is no longer operational but remains part of the Tenant's Asset portfolio.
+
+## Asset Portfolio Value
+
+The total net book value of the Tenant's Assets. An Asset without a recorded current value contributes zero.
+
+## Tenant Reporting Currency
+
+The single currency in which a Tenant records and aggregates Asset monetary values. Assets within a Tenant do not carry independent currencies.
+
 ## Asset Condition
 
 A Tenant-scoped Master that grades the physical condition of an Asset, such as Excellent, Good, Fair, or Poor. Distinct from Asset Status, which describes whether the Asset is operationally in use, available, or out of service.

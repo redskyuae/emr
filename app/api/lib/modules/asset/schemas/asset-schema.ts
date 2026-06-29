@@ -171,6 +171,20 @@ export type Asset = {
   calibrationDate: string | null;
 };
 
+export type AssetCategoryCount = {
+  name: string;
+  color: string;
+  count: number;
+  categoryId: number;
+};
+
+export type AssetSummary = {
+  byCategory: AssetCategoryCount[];
+  totalAssets: number;
+  portfolioValue: number;
+  outOfServiceCount: number;
+};
+
 export type AssetListParams = {
   page?: number;
   query?: string;
