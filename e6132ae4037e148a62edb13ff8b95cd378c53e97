@@ -1,0 +1,204 @@
+app/db/schema/work-order.ts
+  5b683481e9c55733 4,6-8,12,47
+app/db/schema/language.ts
+  5b683481e9c55733 8
+app/(protected)/appointment-masters/types/_components/_sheets/type-form-sheet.tsx
+  36089d21fc31ce47 9-15,44-47,137
+app/(protected)/identity-access/roles/_components/role-grid.tsx
+  36089d21fc31ce47 33
+app/api/lib/modules/appointment-status/repository/appointment-status-repository.ts
+  5b683481e9c55733 4
+app/db/schema/permission.ts
+  5b683481e9c55733 11
+app/api/lib/modules/appointment-mode/repository/appointment-mode-repository.ts
+  5b683481e9c55733 4
+app/db/schema/work-order-status.ts
+  5b683481e9c55733 8
+app/api/lib/modules/appointment-type/repository/appointment-type-repository.ts
+  5b683481e9c55733 4
+docs/adr/0013-doctor-is-a-staff-extension-with-coupled-lifecycle.md
+  36089d21fc31ce47 7
+app/db/schema/role-permission.ts
+  5b683481e9c55733 4-5,7
+app/db/schema/asset.ts
+  5b683481e9c55733 4-6,11
+app/api/lib/modules/nationality/repository/nationality-repository.ts
+  5b683481e9c55733 4
+docs/adr/0015-schema-table-export-naming.md
+  5b683481e9c55733 1-7
+CLAUDE.md
+  5b683481e9c55733 130
+  36089d21fc31ce47 181,184-187,194
+app/api/v1/users/route.ts
+  36089d21fc31ce47 45,48
+app/queries/appointment-masters/useUpdateAppointmentMode.ts
+  36089d21fc31ce47 6-8
+app/(protected)/appointment-masters/types/_components/types-page-impl.tsx
+  36089d21fc31ce47 8-17,30-36,191-193,196,271,273,275
+app/api/lib/modules/nationality/commands/delete-nationality-command.ts
+  36089d21fc31ce47 14
+app/db/schema/role.ts
+  5b683481e9c55733 9
+app/queries/appointment-masters/useCreateAppointmentMode.ts
+  36089d21fc31ce47 6-8
+app/api/lib/modules/asset-category/repository/asset-category-repository.ts
+  5b683481e9c55733 4
+app/api/lib/modules/role/repository/role-repository.ts
+  5b683481e9c55733 4-8
+app/(protected)/appointment-masters/modes/_components/_modals/delete-mode-dialog.tsx
+  36089d21fc31ce47 4-13,28
+app/api/lib/modules/appointment-cancelled-reason/repository/appointment-cancelled-reason-repository.ts
+  36089d21fc31ce47 4
+app/db/schema/appointment-type.ts
+  5b683481e9c55733 8
+app/api/lib/modules/current-user/repository/current-user-repository.ts
+  5b683481e9c55733 5-6
+app/db/seeds/religion.ts
+  5b683481e9c55733 4
+app/api/lib/modules/asset-status/repository/asset-status-repository.ts
+  5b683481e9c55733 4
+app/(protected)/appointment-masters/modes/_components/mode-views.tsx
+  36089d21fc31ce47 1,5-9,11-17,54,125,128,133,195
+app/db/schema/state.ts
+  5b683481e9c55733 4,9
+app/(protected)/identity-access/users/_components/_sheets/user-form-sheet.tsx
+  36089d21fc31ce47 513-517
+app/(protected)/identity-access/roles/_components/_sheets/role-form-sheet.tsx
+  36089d21fc31ce47 250-254,294-298
+app/(protected)/identity-access/users/_components/users-page-impl.tsx
+  36089d21fc31ce47 114-116
+app/api/lib/modules/country/repository/country-repository.ts
+  5b683481e9c55733 4
+app/api/lib/modules/appointment-reason/repository/appointment-reason-repository.ts
+  5b683481e9c55733 4
+app/db/schema/country.ts
+  5b683481e9c55733 8
+app/(protected)/identity-access/roles/_components/_sheets/permission-matrix-skeleton.tsx
+  36089d21fc31ce47 1,4-21,23-28
+app/db/schema/appointment-status.ts
+  5b683481e9c55733 8
+app/db/schema/user-role.ts
+  5b683481e9c55733 4,6
+app/(protected)/identity-access/users/_components/users-table.tsx
+  36089d21fc31ce47 3-9
+app/api/lib/modules/role-permission/repository/role-permission-repository.ts
+  5b683481e9c55733 4-5
+app/db/seeds/language.ts
+  5b683481e9c55733 4
+app/db/seeds/nationality.ts
+  5b683481e9c55733 4
+app/db/schema/appointment-reason.ts
+  5b683481e9c55733 8
+app/queries/appointment-masters/types/useCreateAppointmentType.ts
+  36089d21fc31ce47 6-8
+app/api/lib/modules/religion/repository/religion-repository.ts
+  5b683481e9c55733 4
+app/api/lib/modules/work-order-type/repository/work-order-type-repository.ts
+  5b683481e9c55733 4-5
+app/db/schema/asset-condition.ts
+  5b683481e9c55733 8
+app/(protected)/appointment-masters/types/_components/type-skeletons.tsx
+  36089d21fc31ce47 3-9
+app/api/lib/modules/permission/repository/permission-repository.ts
+  5b683481e9c55733 4
+app/queries/identity-access/useStaff.ts
+  36089d21fc31ce47 17
+app/api/lib/modules/work-order-status/repository/work-order-status-repository.ts
+  5b683481e9c55733 4-5
+app/db/seeds/country.ts
+  5b683481e9c55733 4
+app/(protected)/appointment-masters/modes/_components/modes-page-impl.tsx
+  36089d21fc31ce47 8-17,30-36,272,274,276
+docs/conventions/labels.md
+  36089d21fc31ce47 13-14,25
+app/(protected)/identity-access/roles/_components/role-grid-skeleton.tsx
+  36089d21fc31ce47 1-2,6-29
+app/db/schema/work-order-type.ts
+  5b683481e9c55733 8
+app/(protected)/appointment-masters/types/_components/type-views.tsx
+  36089d21fc31ce47 1,5-9,11-17,62,137,140,143,148
+app/db/schema/asset-category.ts
+  5b683481e9c55733 8
+app/db/schema/nationality.ts
+  5b683481e9c55733 8
+app/api/lib/modules/asset/repository/asset-repository.ts
+  5b683481e9c55733 4-9
+app/(protected)/appointment-masters/types/_components/_modals/delete-type-dialog.tsx
+  36089d21fc31ce47 4-13,28
+app/api/lib/modules/work-order/repository/work-order-repository.ts
+  5b683481e9c55733 4-6,8-11
+app/(protected)/appointment-masters/modes/_components/mode-skeletons.tsx
+  36089d21fc31ce47 3-9
+app/db/schema/religion.ts
+  5b683481e9c55733 8
+app/api/lib/modules/language/repository/language-repository.ts
+  5b683481e9c55733 4
+app/api/lib/modules/tenant-provisioning/repository/tenant-provisioning-repository.ts
+  36089d21fc31ce47 4
+  5b683481e9c55733 5-12,14-15,17-20
+app/db/schema/staff-profile.ts
+  5b683481e9c55733 9
+app/api/lib/modules/state/repository/state-repository.ts
+  5b683481e9c55733 4-5
+app/queries/appointment-masters/types/useUpdateAppointmentType.ts
+  36089d21fc31ce47 6-8
+app/api/lib/modules/user-role/repository/user-role-repository.ts
+  5b683481e9c55733 4-5
+app/queries/appointment-masters/types/useDeleteAppointmentType.ts
+  36089d21fc31ce47 19
+app/db/schema/appointment-mode.ts
+  5b683481e9c55733 8
+app/(protected)/appointment-masters/modes/_components/_sheets/mode-form-sheet.tsx
+  36089d21fc31ce47 9-15,44-47,137
+app/db/schema/asset-status.ts
+  5b683481e9c55733 8
+app/api/lib/modules/asset-condition/repository/asset-condition-repository.ts
+  5b683481e9c55733 4
+app/queries/appointment-masters/useDeleteAppointmentMode.ts
+  36089d21fc31ce47 19
+app/db/seeds/state.ts
+  5b683481e9c55733 4-5
+app/api/lib/modules/staff/repository/staff-repository.ts
+  5b683481e9c55733 6-8
+app/db/schema/appointment-cancelled-reason.ts
+  36089d21fc31ce47 8
+app/db/schema/work-order-priority.ts
+  5b683481e9c55733 8
+app/api/lib/modules/work-order-priority/schemas/work-order-priority-schema.ts
+  36089d21fc31ce47 24
+app/api/lib/modules/work-order-priority/repository/work-order-priority-repository.ts
+  5b683481e9c55733 4-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "e6132ae4037e148a62edb13ff8b95cd378c53e97",
+  "prompts": {
+    "36089d21fc31ce47": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f122b-6474-7222-ae2b-f51e1f259936",
+        "model": "unknown"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 269,
+      "total_deletions": 195,
+      "accepted_lines": 249,
+      "overriden_lines": 0
+    },
+    "5b683481e9c55733": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e6c07233-d4f6-43de-9226-c76664289414",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 105,
+      "total_deletions": 98,
+      "accepted_lines": 109,
+      "overriden_lines": 2
+    }
+  }
+}
