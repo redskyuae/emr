@@ -1,0 +1,33 @@
+test/setup/integration.ts
+  df2533a176e75d35 21-26,29-36
+app/api/lib/modules/appointment-mode/commands/appointment-mode-commands.unit.tests.ts
+  df2533a176e75d35 46-49,52
+app/api/lib/modules/appointment-mode/repository/appointment-mode-repository.integration.tests.ts
+  df2533a176e75d35 75,84,96
+app/api/lib/modules/appointment-mode/validator/appointment-mode-validator.unit.tests.ts
+  df2533a176e75d35 40-43,85-91,120
+vitest.config.ts
+  df2533a176e75d35 23-24
+app/api/lib/modules/appointment-mode/repository/appointment-mode-repository.ts
+  df2533a176e75d35 6,79-82,136,157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "2217eb2438da8cce152a7b397db1444b837e55d2",
+  "prompts": {
+    "df2533a176e75d35": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32ca7698-bf9b-4285-b35a-15406f24124c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 59,
+      "accepted_lines": 43,
+      "overriden_lines": 0
+    }
+  }
+}
