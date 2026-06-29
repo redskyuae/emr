@@ -90,8 +90,7 @@ describe('AppointmentMode commands', () => {
 
   it('should map known Postgres unique constraint 23505 for name index to conflict error', async () => {
     repo.createAppointmentMode.mockRejectedValue({
-      code: '23505',
-      constraint: 'appointment_mode_tenant_name_idx',
+      cause: { code: '23505', constraint: 'appointment_mode_tenant_name_idx' },
     });
     await expect(createAppointmentModeCommand({}, 'tenant-1')).resolves.toEqual({
       success: false,
@@ -102,8 +101,7 @@ describe('AppointmentMode commands', () => {
 
   it('should map known Postgres unique constraint 23505 for code index to conflict error', async () => {
     repo.updateAppointmentMode.mockRejectedValue({
-      code: '23505',
-      constraint: 'appointment_mode_tenant_code_idx',
+      cause: { code: '23505', constraint: 'appointment_mode_tenant_code_idx' },
     });
     await expect(updateAppointmentModeCommand('1', 'tenant-1', {})).resolves.toEqual({
       success: false,

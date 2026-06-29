@@ -101,16 +101,14 @@ describe('AppointmentMode repository', () => {
   it('should enforce case-insensitive unique active name per tenant', async () => {
     await createMode(tenantA, 'In Person', 'IP');
     await expect(createMode(tenantA, 'in person', 'IP2')).rejects.toMatchObject({
-      code: '23505',
-      constraint: 'appointment_mode_tenant_name_idx',
+      cause: { code: '23505', constraint: 'appointment_mode_tenant_name_idx' },
     });
   });
 
   it('should enforce case-insensitive unique active code per tenant', async () => {
     await createMode(tenantA, 'In Person', 'IP');
     await expect(createMode(tenantA, 'Other', 'ip')).rejects.toMatchObject({
-      code: '23505',
-      constraint: 'appointment_mode_tenant_code_idx',
+      cause: { code: '23505', constraint: 'appointment_mode_tenant_code_idx' },
     });
   });
 
