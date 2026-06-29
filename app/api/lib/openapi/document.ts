@@ -2258,6 +2258,32 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/work-orders/summary': {
+      get: {
+        tags: ['Work Order'],
+        summary: 'Summarize Work Orders',
+        description:
+          'Returns tenant-wide Work Order counts for the maintenance stat cards. The tenantId is resolved from the active authenticated Session. Active means the Work Order Status Category is not Completed; Overdue is an explicitly assigned Category, not a due-date calculation. Due next 7 days uses the half-open range from PostgreSQL current_date through current_date + 7 days, follows the configured database session timezone, and excludes Completed Work Orders. Completed (30d) uses completedOn within the preceding rolling 30 days.',
+        security: [{ cookieAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Work Order summary counts.',
+            content: jsonContent(dataEnvelopeSchema('WorkOrderSummary'), {
+              data: {
+                activeCount: 8,
+                overdueCount: 2,
+                dueNext7DaysCount: 3,
+                completedLast30dCount: 5,
+              },
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/assets': {
       get: {
         tags: ['Asset'],
@@ -3986,6 +4012,36 @@ export const openApiDocument = {
           asset: schemaRef('WorkOrderAssetSummary'),
           createdOn: { type: 'string', format: 'date-time', readOnly: true },
           modifiedOn: { type: 'string', format: 'date-time', readOnly: true },
+        },
+      },
+      WorkOrderSummary: {
+        type: 'object',
+        required: ['activeCount', 'overdueCount', 'dueNext7DaysCount', 'completedLast30dCount'],
+        properties: {
+          activeCount: {
+            type: 'integer',
+            minimum: 0,
+            description:
+              'Non-deleted Work Orders whose Work Order Status Category is not Completed. Includes Overdue Work Orders.',
+          },
+          overdueCount: {
+            type: 'integer',
+            minimum: 0,
+            description:
+              'Non-deleted Work Orders whose explicitly assigned Work Order Status Category is Overdue.',
+          },
+          dueNext7DaysCount: {
+            type: 'integer',
+            minimum: 0,
+            description:
+              'Non-deleted, non-Completed Work Orders with a due date in [PostgreSQL current_date, current_date + 7 days). The database session timezone defines current_date.',
+          },
+          completedLast30dCount: {
+            type: 'integer',
+            minimum: 0,
+            description:
+              'Non-deleted Work Orders in the Completed Category whose server-managed completedOn is within the preceding rolling 30 days.',
+          },
         },
       },
       CreateAssetCategoryRequest: {
