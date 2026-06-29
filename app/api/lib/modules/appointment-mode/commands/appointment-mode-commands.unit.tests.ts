@@ -13,7 +13,7 @@ vi.mock('../repository/appointment-mode-repository', () => ({
   appointmentModeRepository: {
     createAppointmentMode: vi.fn(),
     updateAppointmentMode: vi.fn(),
-    softDeleteAppointmentMode: vi.fn(),
+    deleteAppointmentMode: vi.fn(),
   },
 }));
 vi.mock('../validator/create-appointment-mode-validator', () => ({
@@ -51,7 +51,7 @@ describe('AppointmentMode commands', () => {
     validateDelete.mockReturnValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
     repo.createAppointmentMode.mockResolvedValue(mode);
     repo.updateAppointmentMode.mockResolvedValue(mode);
-    repo.softDeleteAppointmentMode.mockResolvedValue(mode);
+    repo.deleteAppointmentMode.mockResolvedValue(mode);
   });
 
   it('should return validation failure and not call repository when validator fails', async () => {

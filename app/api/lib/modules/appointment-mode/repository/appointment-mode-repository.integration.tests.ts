@@ -49,7 +49,7 @@ describe('AppointmentMode repository', () => {
 
   it('should not list soft-deleted appointment modes', async () => {
     const deleted = await createMode(tenantA, 'Phone', 'PH');
-    await appointmentModeRepository.softDeleteAppointmentMode(deleted.id, tenantA);
+    await appointmentModeRepository.deleteAppointmentMode(deleted.id, tenantA);
     await createMode(tenantA, 'Video', 'VID');
     const result = await appointmentModeRepository.getAppointmentModes({ tenantId: tenantA });
     expect(result.data.map((mode) => mode.code)).toEqual(['VID']);
@@ -58,7 +58,7 @@ describe('AppointmentMode repository', () => {
   it('should soft-delete appointment mode and exclude it from future reads', async () => {
     const created = await createMode(tenantA, 'Phone', 'PH');
     await expect(
-      appointmentModeRepository.softDeleteAppointmentMode(created.id, tenantA)
+      appointmentModeRepository.deleteAppointmentMode(created.id, tenantA)
     ).resolves.toMatchObject({ id: created.id });
     await expect(
       appointmentModeRepository.getAppointmentModeById(created.id, tenantA)
@@ -74,7 +74,7 @@ describe('AppointmentMode repository', () => {
         code: 'TEL',
       })
     ).resolves.toMatchObject({ name: 'Telephone', code: 'TEL' });
-    await appointmentModeRepository.softDeleteAppointmentMode(created.id, tenantA);
+    await appointmentModeRepository.deleteAppointmentMode(created.id, tenantA);
     await expect(
       appointmentModeRepository.updateAppointmentMode(created.id, {
         tenantId: tenantA,
@@ -120,7 +120,7 @@ describe('AppointmentMode repository', () => {
 
   it('should allow reusing name/code after the previous row is soft-deleted, proving partial unique indexes work', async () => {
     const created = await createMode(tenantA, 'In Person', 'IP');
-    await appointmentModeRepository.softDeleteAppointmentMode(created.id, tenantA);
+    await appointmentModeRepository.deleteAppointmentMode(created.id, tenantA);
     await expect(createMode(tenantA, 'in person', 'ip')).resolves.toMatchObject({
       name: 'in person',
       code: 'ip',

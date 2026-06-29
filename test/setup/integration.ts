@@ -10,8 +10,9 @@ if (!testDatabaseUrl) {
 }
 
 const databaseName = new URL(testDatabaseUrl).pathname.replace(/^\//, '').toLowerCase();
+const isTestDatabase = /(^test$|^test[_-]|[_-]test$|[_-]test[_-])/.test(databaseName);
 
-if (!databaseName.includes('test')) {
+if (!isTestDatabase) {
   throw new Error(`Refusing to run integration tests against non-test database: ${databaseName}`);
 }
 
