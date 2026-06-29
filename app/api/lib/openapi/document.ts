@@ -1122,7 +1122,7 @@ export const openApiDocument = {
         tags: ['Tenant Provisioning'],
         summary: 'Signup and provision Tenant',
         description:
-          'Creates the Tenant Owner user, provisions a Tenant, initializes required baseline configuration including default Appointment and Asset masters, signs the owner in, and sets the new Tenant as active.',
+          'Creates the Tenant Owner user, provisions a Tenant, initializes required baseline configuration including default Appointment, Asset, and Work Order masters, signs the owner in, and sets the new Tenant as active.',
         requestBody: requestBody('SignupRequest', {
           tenantName: 'Apollo Hospitals',
           ownerName: 'Dr. Priya Raghavan',

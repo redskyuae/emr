@@ -11,6 +11,7 @@ import { tenantProvisioningRepository } from '../repository/tenant-provisioning-
 import { validateTenantProvisioning } from '../validator/tenant-provisioning-validator';
 import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
+import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 
 function getAuthCreateUserErrors(error: unknown) {
   if (typeof error !== 'object' || error === null) {
@@ -136,6 +137,20 @@ export async function provisionTenantCommand(
         success: false,
         errors: assetMastersResult.errors,
         status: assetMastersResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
+      };
+    }
+
+    const workOrderMastersResult = await seedDefaultWorkOrderMastersCommand(createdTenant.id);
+
+    if (!workOrderMastersResult.success) {
+      await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });
+      createdTenantId = undefined;
+      createdUserId = undefined;
+
+      return {
+        success: false,
+        errors: workOrderMastersResult.errors,
+        status: workOrderMastersResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
       };
     }
 

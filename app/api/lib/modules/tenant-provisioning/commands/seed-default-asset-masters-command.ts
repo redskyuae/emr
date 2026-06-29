@@ -4,7 +4,6 @@ import { assetCategoryRepository } from '../../asset-category/repository/asset-c
 import { assetConditionRepository } from '../../asset-condition/repository/asset-condition-repository';
 import { assetStatusRepository } from '../../asset-status/repository/asset-status-repository';
 import { tenantIdSchema } from '../../tenant/schemas/tenant-schema';
-import { workOrderTypeRepository } from '../../work-order-type/repository/work-order-type-repository';
 
 const DEFAULT_ASSET_CATEGORIES = [
   { code: 'IMG', color: '#2563EB', name: 'Diagnostic Imaging' },
@@ -29,13 +28,6 @@ const DEFAULT_ASSET_CONDITIONS = [
   { code: 'GOOD', color: '#65A30D', name: 'Good' },
   { code: 'FAIR', color: '#D97706', name: 'Fair' },
   { code: 'POOR', color: '#DC2626', name: 'Poor' },
-] as const;
-
-const DEFAULT_WORK_ORDER_TYPES = [
-  { code: 'PREV', color: '#2563EB', name: 'Preventive' },
-  { code: 'CORR', color: '#DC2626', name: 'Corrective' },
-  { code: 'CAL', color: '#7C3AED', name: 'Calibration' },
-  { code: 'INSP', color: '#0EA5E9', name: 'Inspection' },
 ] as const;
 
 export async function seedDefaultAssetMastersCommand(
@@ -64,12 +56,6 @@ export async function seedDefaultAssetMastersCommand(
       assetConditionRepository.seedDefaultAssetConditions(tenantIdResult.data, [
         ...DEFAULT_ASSET_CONDITIONS.map((assetCondition) => ({
           ...assetCondition,
-          description: undefined,
-        })),
-      ]),
-      workOrderTypeRepository.seedDefaultWorkOrderTypes(tenantIdResult.data, [
-        ...DEFAULT_WORK_ORDER_TYPES.map((workOrderType) => ({
-          ...workOrderType,
           description: undefined,
         })),
       ]),
