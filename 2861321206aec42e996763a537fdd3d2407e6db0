@@ -1,0 +1,29 @@
+app/api/lib/modules/appointment-mode/repository/appointment-mode-repository.integration.tests.ts
+  df2533a176e75d35 104,111
+app/api/lib/modules/appointment-mode/validator/appointment-mode-uniqueness-validator.ts
+  df2533a176e75d35 3,51,53,57,61
+app/api/lib/utils/db-errors.ts
+  df2533a176e75d35 1-27,29
+app/api/lib/modules/appointment-mode/commands/appointment-mode-commands.unit.tests.ts
+  df2533a176e75d35 93,104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "2861321206aec42e996763a537fdd3d2407e6db0",
+  "prompts": {
+    "df2533a176e75d35": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32ca7698-bf9b-4285-b35a-15406f24124c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 37,
+      "total_deletions": 19,
+      "accepted_lines": 37,
+      "overriden_lines": 0
+    }
+  }
+}
