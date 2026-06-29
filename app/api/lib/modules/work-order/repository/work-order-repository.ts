@@ -314,11 +314,34 @@ async function getWorkOrderSummary(tenantId: string): Promise<WorkOrderSummary> 
     })
     .from(workOrderTable)
     .innerJoin(
+      workOrderTypeTable,
+      and(
+        eq(workOrderTypeTable.id, workOrderTable.typeId),
+        eq(workOrderTypeTable.tenantId, workOrderTable.tenantId),
+        eq(workOrderTypeTable.isDeleted, false)
+      )
+    )
+    .innerJoin(
+      workOrderPriorityTable,
+      and(
+        eq(workOrderPriorityTable.id, workOrderTable.priorityId),
+        eq(workOrderPriorityTable.tenantId, workOrderTable.tenantId),
+        eq(workOrderPriorityTable.isDeleted, false)
+      )
+    )
+    .innerJoin(
       workOrderStatusTable,
       and(
         eq(workOrderStatusTable.id, workOrderTable.statusId),
         eq(workOrderStatusTable.tenantId, workOrderTable.tenantId),
         eq(workOrderStatusTable.isDeleted, false)
+      )
+    )
+    .innerJoin(
+      assetTable,
+      and(
+        eq(assetTable.id, workOrderTable.assetId),
+        eq(assetTable.tenantId, workOrderTable.tenantId)
       )
     )
     .where(and(eq(workOrderTable.tenantId, tenantId), eq(workOrderTable.isDeleted, false)));
