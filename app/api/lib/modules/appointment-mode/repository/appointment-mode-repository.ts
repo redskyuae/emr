@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import type {
+  AppointmentMode,
   AppointmentModeListParams,
   CreateAppointmentModeData,
   UpdateAppointmentModeData,
@@ -75,7 +76,10 @@ async function deleteAppointmentMode(id: number, tenantId: string) {
   return deletedAppointmentMode;
 }
 
-async function getAppointmentModeById(id: number, tenantId: string) {
+async function getAppointmentModeById(
+  id: number,
+  tenantId: string
+): Promise<AppointmentMode | undefined> {
   const [appointmentMode] = await db
     .select(appointmentModeColumns)
     .from(appointmentModeTable)
@@ -129,7 +133,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AppointmentMode | undefined> {
   const [appointmentMode] = await db
     .select(appointmentModeColumns)
     .from(appointmentModeTable)
@@ -150,7 +154,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AppointmentMode | undefined> {
   const [appointmentMode] = await db
     .select(appointmentModeColumns)
     .from(appointmentModeTable)

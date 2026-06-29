@@ -43,10 +43,13 @@ const mode = {
 describe('AppointmentMode commands', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    validateCreate.mockResolvedValue({ success: true, data: { name: 'In Person', code: 'IP' } });
+    validateCreate.mockResolvedValue({
+      success: true,
+      data: { name: 'In Person', code: 'IP', description: undefined },
+    });
     validateUpdate.mockResolvedValue({
       success: true,
-      data: { id: 1, payload: { name: 'In Person', code: 'IP' } },
+      data: { id: 1, payload: { name: 'In Person', code: 'IP', description: undefined } },
     });
     validateDelete.mockReturnValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
     repo.createAppointmentMode.mockResolvedValue(mode);

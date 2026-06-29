@@ -18,37 +18,20 @@ if (!isTestDatabase) {
 
 process.env.DATABASE_URL = testDatabaseUrl;
 
-const TABLES_TO_TRUNCATE = [
-  'user_role',
-  'staff_profile',
-  'role_permission',
-  'permission',
-  'role',
-  'appointment_cancelled_reason',
-  'appointment_reason',
-  'appointment_status',
-  'appointment_type',
-  'appointment_mode',
-  'state',
-  'country',
-  'religion',
-  'nationality',
-  'language',
-  'todo',
-  'invitation',
-  'member',
-  'organization',
-  'verification',
-  'account',
-  'session',
-  'user',
-];
-
+// Discover application tables at runtime rather than hard-coding a list that
+// drifts from the schema (a stale name makes TRUNCATE fail; a missing one leaks
+// state between tests). CASCADE follows foreign keys, so every table can be
+// truncated in one statement regardless of dependency order. Drizzle's migration
+// bookkeeping lives in the `drizzle` schema, so filtering to `public` leaves it
+// untouched.
 beforeEach(async () => {
   const { db } = await import('@/app/db');
-  await db.execute(
-    sql.raw(
-      `TRUNCATE TABLE ${TABLES_TO_TRUNCATE.map((t) => `"${t}"`).join(', ')} RESTART IDENTITY CASCADE`
-    )
-  );
+
+  const result = await db.execute(sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
+  const tableNames = result.rows.map((row) => row.tablename as string);
+
+  if (tableNames.length === 0) return;
+
+  const quotedTables = tableNames.map((name) => `"${name}"`).join(', ');
+  await db.execute(sql.raw(`TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`));
 });

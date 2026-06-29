@@ -37,8 +37,10 @@ describe('AppointmentMode validators', () => {
 
   it('should return schema validation errors when payload is invalid', async () => {
     const result = await validateCreateAppointmentMode({}, 'tenant-1');
-    expect(result.success).toBe(false);
-    expect(result.errors).toContain('Appointment mode name is required');
+    expect(result).toMatchObject({
+      success: false,
+      errors: expect.arrayContaining(['Appointment mode name is required']),
+    });
   });
 
   it('should not call uniqueness repository checks when schema validation fails', async () => {
@@ -80,10 +82,13 @@ describe('AppointmentMode validators', () => {
       { name: 'In Person', code: 'IP' },
       'tenant-1'
     );
-    expect(result.errors).toEqual([
-      "Appointment mode name 'In Person' already exists.",
-      "Appointment mode code 'IP' already exists.",
-    ]);
+    expect(result).toMatchObject({
+      success: false,
+      errors: [
+        "Appointment mode name 'In Person' already exists.",
+        "Appointment mode code 'IP' already exists.",
+      ],
+    });
   });
 
   it('should pass exclude id during update uniqueness checks', async () => {
@@ -112,7 +117,7 @@ describe('AppointmentMode validators', () => {
   it('should preserve validator status on failure', async () => {
     repo.findActiveByCode.mockResolvedValue(existing);
     const result = await validateCreateAppointmentMode({ name: 'Video', code: 'VID' }, 'tenant-1');
-    expect(result.status).toBe(StatusCodes.CONFLICT);
+    expect(result).toMatchObject({ status: StatusCodes.CONFLICT });
   });
 
   it('should validate delete and list tenant inputs', () => {

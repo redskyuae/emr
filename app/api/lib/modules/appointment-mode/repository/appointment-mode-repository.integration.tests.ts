@@ -72,6 +72,7 @@ describe('AppointmentMode repository', () => {
         tenantId: tenantA,
         name: 'Telephone',
         code: 'TEL',
+        description: undefined,
       })
     ).resolves.toMatchObject({ name: 'Telephone', code: 'TEL' });
     await appointmentModeRepository.deleteAppointmentMode(created.id, tenantA);
@@ -80,6 +81,7 @@ describe('AppointmentMode repository', () => {
         tenantId: tenantA,
         name: 'Phone',
         code: 'PH',
+        description: undefined,
       })
     ).resolves.toBeUndefined();
   });
@@ -91,6 +93,7 @@ describe('AppointmentMode repository', () => {
         tenantId: tenantB,
         name: 'Telephone',
         code: 'TEL',
+        description: undefined,
       })
     ).resolves.toBeUndefined();
   });
