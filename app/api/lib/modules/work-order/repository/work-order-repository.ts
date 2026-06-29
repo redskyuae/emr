@@ -9,7 +9,11 @@ import {
 import { workOrderPriority as workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
 import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import { workOrderType as workOrderTypeTable } from '@/app/db/schema/work-order-type';
-import type { CreateWorkOrderData, WorkOrderListParams } from '../schemas/work-order-schema';
+import type {
+  WorkOrderSummary,
+  CreateWorkOrderData,
+  WorkOrderListParams,
+} from '../schemas/work-order-schema';
 import { formatWorkOrderCode } from './work-order-code';
 import { initialCompletedOn } from './work-order-completion';
 
@@ -288,6 +292,40 @@ async function getWorkOrders({
   return { data, total };
 }
 
+async function getWorkOrderSummary(tenantId: string): Promise<WorkOrderSummary> {
+  const [summary] = await db
+    .select({
+      activeCount:
+        sql<number>`count(*) filter (where ${workOrderStatusTable.category} <> 'COMPLETED')`.mapWith(
+          Number
+        ),
+      overdueCount:
+        sql<number>`count(*) filter (where ${workOrderStatusTable.category} = 'OVERDUE')`.mapWith(
+          Number
+        ),
+      dueNext7DaysCount:
+        sql<number>`count(*) filter (where ${workOrderTable.dueDate} is not null and ${workOrderTable.dueDate} >= current_date and ${workOrderTable.dueDate} < current_date + interval '7 days' and ${workOrderStatusTable.category} <> 'COMPLETED')`.mapWith(
+          Number
+        ),
+      completedLast30dCount:
+        sql<number>`count(*) filter (where ${workOrderStatusTable.category} = 'COMPLETED' and ${workOrderTable.completedOn} >= now() - interval '30 days')`.mapWith(
+          Number
+        ),
+    })
+    .from(workOrderTable)
+    .innerJoin(
+      workOrderStatusTable,
+      and(
+        eq(workOrderStatusTable.id, workOrderTable.statusId),
+        eq(workOrderStatusTable.tenantId, workOrderTable.tenantId),
+        eq(workOrderStatusTable.isDeleted, false)
+      )
+    )
+    .where(and(eq(workOrderTable.tenantId, tenantId), eq(workOrderTable.isDeleted, false)));
+
+  return summary;
+}
+
 async function isTypeInUse(typeId: number, tenantId: string) {
   const [workOrder] = await db
     .select({ id: workOrderTable.id })
@@ -364,5 +402,6 @@ export const workOrderRepository = {
   isPriorityInUse,
   createWorkOrder,
   getWorkOrderById,
+  getWorkOrderSummary,
   hasActiveWorkOrdersForAsset,
 };

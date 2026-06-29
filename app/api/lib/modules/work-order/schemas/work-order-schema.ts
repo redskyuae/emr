@@ -111,6 +111,13 @@ export type WorkOrder = {
   completedOn: Date | null;
 };
 
+export type WorkOrderSummary = {
+  activeCount: number;
+  overdueCount: number;
+  dueNext7DaysCount: number;
+  completedLast30dCount: number;
+};
+
 export type WorkOrderListParams = {
   page?: number;
   query?: string;
