@@ -2339,6 +2339,45 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/assets/summary': {
+      get: {
+        tags: ['Asset'],
+        summary: 'Summarize Assets',
+        description:
+          'Returns tenant-wide Asset metrics for the Asset Overview dashboard. The tenantId is resolved from the active authenticated Session. All metrics exclude soft-deleted Assets. Total assets includes Retired Assets. Portfolio value is the sum of currentValue in the Tenant Reporting Currency, with an unrecorded currentValue contributing zero. Out of service means the Asset Status code is MAINT or REPAIR. Assets by category includes every active Asset Category, including categories with no Assets, ordered by name.',
+        security: [{ cookieAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Asset summary metrics.',
+            content: jsonContent(dataEnvelopeSchema('AssetSummary'), {
+              data: {
+                totalAssets: 16,
+                portfolioValue: 12100000,
+                outOfServiceCount: 3,
+                byCategory: [
+                  {
+                    categoryId: 1,
+                    name: 'Diagnostic Imaging',
+                    color: '#2563EB',
+                    count: 3,
+                  },
+                  {
+                    categoryId: 6,
+                    name: 'Mobility & Furniture',
+                    color: '#16A34A',
+                    count: 0,
+                  },
+                ],
+              },
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/assets/{id}': {
       get: {
         tags: ['Asset'],
@@ -4041,6 +4080,62 @@ export const openApiDocument = {
             minimum: 0,
             description:
               'Non-deleted Work Orders in the Completed Category whose server-managed completedOn is within the preceding rolling 30 days.',
+          },
+        },
+      },
+      AssetCategoryCount: {
+        type: 'object',
+        required: ['categoryId', 'name', 'color', 'count'],
+        properties: {
+          categoryId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Active Asset Category identifier.',
+          },
+          name: {
+            type: 'string',
+            description: 'Asset Category display name.',
+          },
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Asset Category display color.',
+          },
+          count: {
+            type: 'integer',
+            minimum: 0,
+            description:
+              'Number of non-deleted Assets assigned to the Asset Category. Zero-count active categories are included.',
+          },
+        },
+      },
+      AssetSummary: {
+        type: 'object',
+        required: ['totalAssets', 'portfolioValue', 'outOfServiceCount', 'byCategory'],
+        properties: {
+          totalAssets: {
+            type: 'integer',
+            minimum: 0,
+            description:
+              'Count of all non-deleted Assets in the active Tenant, including Retired Assets.',
+          },
+          portfolioValue: {
+            type: 'number',
+            minimum: 0,
+            description:
+              'Sum of coalesce(current_value, 0) across all non-deleted Assets in the Tenant Reporting Currency.',
+          },
+          outOfServiceCount: {
+            type: 'integer',
+            minimum: 0,
+            description:
+              'Count of non-deleted Assets whose joined Asset Status code is MAINT or REPAIR.',
+          },
+          byCategory: {
+            type: 'array',
+            description:
+              'Every active Asset Category ordered by name, including categories with zero Assets.',
+            items: schemaRef('AssetCategoryCount'),
           },
         },
       },
