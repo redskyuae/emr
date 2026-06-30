@@ -2,22 +2,13 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
+import type {
+  SpecialtyListParams,
+  CreateSpecialtyData,
+  UpdateSpecialtyData,
+} from '../schemas/specialty-schema';
 
-type SpecialtyData = {
-  code?: string;
-  name: string;
-  tenantId: string;
-  description?: string;
-};
-
-type SpecialtyListParams = {
-  page?: number;
-  limit?: number;
-  query?: string;
-  tenantId: string;
-};
-
-type SpecialtySeed = Omit<SpecialtyData, 'tenantId'>;
+type SpecialtySeed = Omit<CreateSpecialtyData, 'tenantId'>;
 
 function normalizeCode(code?: string) {
   return code?.trim() || null;
@@ -40,7 +31,7 @@ const specialtyColumns = {
   description: specialtyTable.description,
 };
 
-async function createSpecialty(data: SpecialtyData) {
+async function createSpecialty(data: CreateSpecialtyData) {
   const [createdSpecialty] = await db
     .insert(specialtyTable)
     .values({
@@ -54,7 +45,7 @@ async function createSpecialty(data: SpecialtyData) {
   return createdSpecialty;
 }
 
-async function updateSpecialty(id: number, data: SpecialtyData) {
+async function updateSpecialty(id: number, data: UpdateSpecialtyData) {
   const [updatedSpecialty] = await db
     .update(specialtyTable)
     .set({

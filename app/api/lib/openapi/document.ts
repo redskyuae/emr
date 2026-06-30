@@ -378,6 +378,122 @@ const appointmentMasterSchema = (createSchemaName: string) => ({
   ],
 });
 
+const specialtyExample = {
+  id: 7,
+  tenantId: 'org_apollo',
+  name: 'Cardiology',
+  code: 'CARD',
+  description: 'Diagnosis and treatment of heart and vascular conditions',
+  createdOn: '2026-06-30T08:30:00.000Z',
+  modifiedOn: '2026-06-30T08:30:00.000Z',
+};
+
+const specialtyRequestExample = {
+  name: 'Cardiology',
+  code: 'card',
+  description: 'Diagnosis and treatment of heart and vascular conditions',
+};
+
+const specialtyValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        invalidName: {
+          summary: 'Missing Specialty name',
+          value: {
+            message: 'Validation failed',
+            errors: ['Specialty name is required'],
+          },
+        },
+        invalidId: {
+          summary: 'Invalid Specialty identifier',
+          value: {
+            message: 'Validation failed',
+            errors: ['Specialty abc is Invalid.'],
+          },
+        },
+        invalidJson: {
+          summary: 'Malformed JSON request body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+};
+
+const specialtyUnauthorized = {
+  description: 'A valid authenticated Session is required.',
+  content: jsonContent(schemaRef('UnauthorizedError'), { message: 'Unauthorized' }),
+};
+
+const specialtyForbidden = {
+  description:
+    'No active Tenant is selected, or the authenticated member lacks Tenant Admin authority for a mutation.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ForbiddenError'),
+      examples: {
+        noActiveTenant: {
+          summary: 'No active Tenant selected',
+          value: { message: 'No active tenant selected.' },
+        },
+        tenantAdminRequired: {
+          summary: 'Tenant Admin authority required',
+          value: { message: 'Forbidden' },
+        },
+      },
+    },
+  },
+};
+
+const specialtyNotFound = {
+  description: 'Specialty was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Specialty not found',
+    errors: ['Specialty not found'],
+  }),
+};
+
+const specialtyConflict = {
+  description: 'Specialty name or non-null code already exists in the active Tenant.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateName: {
+          summary: 'Duplicate Specialty name',
+          value: {
+            message: 'Specialty name Cardiology already exists.',
+            errors: ['Specialty name Cardiology already exists.'],
+          },
+        },
+        duplicateCode: {
+          summary: 'Duplicate normalized Specialty code',
+          value: {
+            message: 'Specialty code CARD already exists.',
+            errors: ['Specialty code CARD already exists.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const specialtyReadErrorResponses = {
+  '400': specialtyValidationFailed,
+  '401': specialtyUnauthorized,
+  '403': specialtyForbidden,
+  '404': specialtyNotFound,
+  '500': responseRef('InternalServerError'),
+};
+
+const specialtyMutationErrorResponses = {
+  ...specialtyReadErrorResponses,
+  '409': specialtyConflict,
+};
+
 const assetCategoryExample = {
   id: 1,
   tenantId: 'org_apollo',
@@ -1021,6 +1137,7 @@ export const openApiDocument = {
     { name: 'Appointment Reason', description: 'Appointment Reason Master APIs.' },
     { name: 'Appointment Mode', description: 'Appointment Mode Master APIs.' },
     { name: 'Appointment Status', description: 'Appointment Status Master APIs.' },
+    { name: 'Specialty', description: 'Tenant-scoped Specialty Master APIs.' },
     {
       name: 'Appointment Cancelled Reason',
       description: 'Appointment Cancelled Reason Master APIs.',
@@ -2076,6 +2193,99 @@ export const openApiDocument = {
       example: { name: 'Hindu', code: 'HIN' },
       parameters: [numberIdPathParameter('Religion')],
     }),
+    '/api/v1/specialties': {
+      get: {
+        tags: ['Specialty'],
+        summary: 'List Specialties',
+        description:
+          'Returns active Specialties for the Tenant resolved from the authenticated Session. Any authenticated member of the active Tenant may read this list. Search matches Specialty name and code.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Specialty list.',
+            content: jsonContent(paginatedSchema('Specialty'), {
+              data: [specialtyExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': specialtyValidationFailed,
+          '401': specialtyUnauthorized,
+          '403': specialtyForbidden,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Specialty'],
+        summary: 'Create Specialty',
+        description:
+          'Creates a Specialty in the Tenant resolved from the authenticated Session. Tenant Admin authority is required. A non-empty code is trimmed and normalized to uppercase; an omitted, null, or blank code is stored as null.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateSpecialtyRequest', specialtyRequestExample),
+        responses: {
+          '201': {
+            description: 'Specialty created.',
+            content: jsonContent(dataEnvelopeSchema('Specialty'), {
+              data: specialtyExample,
+            }),
+          },
+          '400': specialtyValidationFailed,
+          '401': specialtyUnauthorized,
+          '403': specialtyForbidden,
+          '409': specialtyConflict,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/specialties/{id}': {
+      get: {
+        tags: ['Specialty'],
+        summary: 'Get Specialty',
+        description:
+          'Returns an active Specialty from the Tenant resolved from the authenticated Session. Cross-Tenant and soft-deleted records are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Specialty')],
+        responses: {
+          '200': {
+            description: 'Specialty found.',
+            content: jsonContent(dataEnvelopeSchema('Specialty'), {
+              data: specialtyExample,
+            }),
+          },
+          ...specialtyReadErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Specialty'],
+        summary: 'Update Specialty',
+        description:
+          'Fully replaces the editable Specialty fields in the active Tenant. Tenant Admin authority is required. Name is required; omitted, null, or blank optional fields are cleared.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Specialty')],
+        requestBody: requestBody('UpdateSpecialtyRequest', specialtyRequestExample),
+        responses: {
+          '200': {
+            description: 'Specialty updated.',
+            content: jsonContent(dataEnvelopeSchema('Specialty'), {
+              data: specialtyExample,
+            }),
+          },
+          ...specialtyMutationErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Specialty'],
+        summary: 'Delete Specialty',
+        description:
+          'Soft-deletes a Specialty in the active Tenant. Tenant Admin authority is required.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Specialty')],
+        responses: {
+          '204': { description: 'Specialty deleted.' },
+          ...specialtyReadErrorResponses,
+        },
+      },
+    },
     '/api/v1/appointments/types': appointmentMasterCollection({
       tag: 'Appointment Type',
       entity: 'Appointment Type',
@@ -3760,6 +3970,62 @@ export const openApiDocument = {
       CreateReligionRequest: namedCodeCreateSchema('Religion'),
       UpdateReligionRequest: namedCodeCreateSchema('Religion'),
       Religion: namedCodeSchema('Religion'),
+      CreateSpecialtyRequest: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: {
+            type: ['string', 'null'],
+            maxLength: 10,
+            description:
+              'Optional Tenant-scoped Specialty code. Non-empty values are trimmed and normalized to uppercase; null, blank, and omitted values are stored as null.',
+          },
+          description: {
+            type: ['string', 'null'],
+            description: 'Optional Specialty description. Blank values are stored as null.',
+          },
+        },
+      },
+      UpdateSpecialtyRequest: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: {
+            type: ['string', 'null'],
+            maxLength: 10,
+            description:
+              'Optional Tenant-scoped Specialty code. Non-empty values are trimmed and normalized to uppercase; null, blank, omitted values clear the code.',
+          },
+          description: {
+            type: ['string', 'null'],
+            description:
+              'Optional Specialty description. Null, blank, and omitted values clear it.',
+          },
+        },
+      },
+      Specialty: {
+        allOf: [
+          schemaRef('CreateSpecialtyRequest'),
+          {
+            type: 'object',
+            required: ['id', 'tenantId', 'name', 'code', 'description', 'createdOn', 'modifiedOn'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the authenticated Session.',
+              },
+              code: { type: ['string', 'null'], maxLength: 10 },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
       CreateStateRequest: {
         type: 'object',
         required: ['name', 'countryId'],
