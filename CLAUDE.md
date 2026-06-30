@@ -220,7 +220,7 @@ command, query, repository integration), the cross-cutting patterns (`vi.mocked`
 mapping), and a table of which existing module to copy for each module shape. This section is the
 binding _what_; that guide is the _how_.
 
-Backend API/module changes must include colocated Vitest tests that exercise behavior through the public module interface. Use explicit imports from `vitest`; Vitest globals are disabled. Test names must be readable and start with `should ...`.
+Backend API/module changes must include colocated Vitest tests that exercise behavior through the public module interface, written in the same change as the code they cover. See `docs/adr/0016-backend-modules-ship-with-colocated-tests.md` for the decision and rationale. Use explicit imports from `vitest`; Vitest globals are disabled. Test names must be readable and start with `should ...`.
 
 Use these filename suffixes (the word **`tests` is plural** — `*.unit.test.ts`, `*.test.ts`, and `*.spec.ts` are **silently ignored** by Vitest and never run):
 
