@@ -1,0 +1,258 @@
+app/api/lib/modules/country/validator/country-validator.unit.tests.ts
+  a04165e519d0f3c8 1-46
+app/api/lib/modules/staff/queries/staff-queries.unit.tests.ts
+  a04165e519d0f3c8 1-85
+app/api/lib/modules/appointment-cancelled-reason/repository/appointment-cancelled-reason-repository.ts
+  a04165e519d0f3c8 6,60-63,85-88,142,163
+app/api/lib/modules/appointment-status/repository/appointment-status-repository.ts
+  a04165e519d0f3c8 6,57-60,82-85,139,160
+app/api/lib/modules/work-order/validator/work-order-validator.unit.tests.ts
+  a04165e519d0f3c8 1-58
+app/api/lib/modules/work-order-priority/commands/work-order-priority-commands.unit.tests.ts
+  a04165e519d0f3c8 58,61,137,142-150
+app/api/lib/modules/asset/repository/asset-repository.ts
+  a04165e519d0f3c8 10-14,201,284
+app/api/lib/modules/appointment-type/queries/appointment-type-queries.unit.tests.ts
+  be4a20aa667e6850 1-85
+app/api/lib/modules/appointment-reason/queries/appointment-reason-queries.unit.tests.ts
+  be4a20aa667e6850 1-11,13-21,25-85
+  a04165e519d0f3c8 22-24
+app/api/lib/modules/staff/schemas/staff-schema.unit.tests.ts
+  a04165e519d0f3c8 1-88
+app/api/lib/modules/work-order-priority/validator/work-order-priority-validator.unit.tests.ts
+  a04165e519d0f3c8 142-144,148,151-160
+app/api/lib/modules/country/queries/country-queries.unit.tests.ts
+  a04165e519d0f3c8 1-60
+app/api/lib/modules/tenant/queries/tenant-queries.unit.tests.ts
+  a04165e519d0f3c8 1-55
+app/api/lib/modules/appointment-mode/validator/appointment-mode-uniqueness-validator.ts
+  df2533a176e75d35 3,51,53,57,61
+app/api/lib/modules/work-order/queries/work-order-queries.unit.tests.ts
+  a04165e519d0f3c8 1-66
+app/api/lib/modules/user-role/schemas/user-role-schema.unit.tests.ts
+  a04165e519d0f3c8 1-30
+app/api/lib/modules/role-permission/schemas/role-permission-schema.unit.tests.ts
+  a04165e519d0f3c8 1-40
+app/api/lib/modules/role/validator/role-validator.unit.tests.ts
+  a04165e519d0f3c8 1-150
+app/api/lib/modules/permission/queries/permission-queries.unit.tests.ts
+  a04165e519d0f3c8 1-15,17-88
+app/api/lib/modules/appointment-reason/validator/appointment-reason-uniqueness-validator.ts
+  a04165e519d0f3c8 3,51,53,57,61
+app/api/lib/modules/appointment-status/schemas/appointment-status-schema.unit.tests.ts
+  be4a20aa667e6850 1-86
+app/api/lib/modules/state/repository/state-repository.ts
+  a04165e519d0f3c8 152
+app/api/lib/modules/state/schemas/state-schema.unit.tests.ts
+  a04165e519d0f3c8 1-69
+app/api/lib/modules/user-role/repository/user-role-repository.ts
+  a04165e519d0f3c8 6,49-53,103-107
+app/api/lib/modules/appointment-type/repository/appointment-type-repository.ts
+  a04165e519d0f3c8 6,57-60,82-85,139,160
+app/api/lib/modules/appointment-reason/commands/appointment-reason-commands.unit.tests.ts
+  be4a20aa667e6850 1-6,8,10-14,18-19,22-35,50,63-65,68,70-71,76-79,82-87,89,91-97,100,102-109,112,114-122,124,133-135,140-144,148,151,156,158-159,162-164
+  a04165e519d0f3c8 21
+app/api/lib/modules/work-order-priority/repository/work-order-priority-repository.ts
+  a04165e519d0f3c8 7
+app/api/lib/modules/appointment-status/validator/appointment-status-validator.unit.tests.ts
+  be4a20aa667e6850 1-138
+app/api/lib/modules/appointment-reason/validator/get-appointment-reason-by-id-validator.unit.tests.ts
+  a04165e519d0f3c8 32-38
+app/api/lib/modules/asset-condition/validator/asset-condition-validator.unit.tests.ts
+  a04165e519d0f3c8 1-168
+app/api/lib/modules/asset-condition/commands/asset-condition-commands.unit.tests.ts
+  a04165e519d0f3c8 1-54,56-157
+app/api/lib/modules/appointment-reason/validator/delete-appointment-reason-validator.unit.tests.ts
+  a04165e519d0f3c8 32-38
+app/api/lib/modules/asset-condition/queries/asset-condition-queries.unit.tests.ts
+  a04165e519d0f3c8 1-93
+app/api/lib/modules/appointment-type/validator/appointment-type-uniqueness-validator.ts
+  a04165e519d0f3c8 3,51,53,57,61
+app/api/lib/modules/country/commands/country-commands.unit.tests.ts
+  a04165e519d0f3c8 1-138
+app/api/lib/modules/appointment-status/validator/appointment-status-uniqueness-validator.ts
+  a04165e519d0f3c8 3,51,53,57,61
+app/api/lib/modules/appointment-reason/validator/update-appointment-reason-validator.unit.tests.ts
+  a04165e519d0f3c8 19-20
+app/api/lib/modules/country/repository/country-repository.ts
+  a04165e519d0f3c8 6,32,46,62,100,119
+app/api/lib/modules/appointment-cancelled-reason/validator/appointment-cancelled-reason-validator.unit.tests.ts
+  be4a20aa667e6850 1-137
+app/api/lib/modules/work-order-status/validator/work-order-status-validator.unit.tests.ts
+  a04165e519d0f3c8 1-212
+app/api/lib/modules/tenant/commands/tenant-commands.unit.tests.ts
+  a04165e519d0f3c8 1-112
+app/api/lib/modules/work-order-status/commands/work-order-status-commands.unit.tests.ts
+  a04165e519d0f3c8 1-163
+tasks.md
+  be4a20aa667e6850 1-43,45-46,66-95
+  a04165e519d0f3c8 44
+app/api/lib/modules/role/commands/role-commands.unit.tests.ts
+  a04165e519d0f3c8 1-46,48-128,130-140
+app/api/lib/modules/work-order-status/repository/work-order-status-repository.ts
+  a04165e519d0f3c8 7,153-156,210,231
+app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema.unit.tests.ts
+  be4a20aa667e6850 1-84
+app/api/lib/modules/state/commands/state-commands.unit.tests.ts
+  a04165e519d0f3c8 1-31,33-92,94-164
+app/api/lib/modules/role/queries/role-queries.unit.tests.ts
+  a04165e519d0f3c8 1-75
+app/api/lib/modules/asset/validator/asset-validator.unit.tests.ts
+  a04165e519d0f3c8 1-70,72-91,93-118,120-156
+app/api/lib/modules/country/schemas/country-schema.unit.tests.ts
+  a04165e519d0f3c8 1-52
+app/api/lib/modules/permission/validator/permission-validator.unit.tests.ts
+  a04165e519d0f3c8 1-16
+app/api/lib/utils/db-errors.ts
+  df2533a176e75d35 1-27,29
+app/api/lib/modules/state/queries/state-queries.unit.tests.ts
+  a04165e519d0f3c8 1-27,29-112
+app/api/lib/modules/user-role/commands/user-role-commands.unit.tests.ts
+  a04165e519d0f3c8 1-47,49-89
+app/api/lib/modules/work-order-status/queries/work-order-status-queries.unit.tests.ts
+  a04165e519d0f3c8 1-95
+app/api/lib/modules/role/schemas/role-schema.unit.tests.ts
+  a04165e519d0f3c8 1-67
+app/api/lib/modules/role-permission/queries/role-permission-queries.unit.tests.ts
+  a04165e519d0f3c8 1-70
+app/api/lib/modules/appointment-cancelled-reason/queries/appointment-cancelled-reason-queries.unit.tests.ts
+  be4a20aa667e6850 1-59,61-90
+app/api/lib/modules/appointment-cancelled-reason/validator/appointment-cancelled-reason-uniqueness-validator.ts
+  a04165e519d0f3c8 3,53,55,59,63
+app/api/lib/modules/appointment-status/commands/appointment-status-commands.unit.tests.ts
+  be4a20aa667e6850 1-103,105-114,116-142
+  a04165e519d0f3c8 104,115
+app/api/lib/modules/role-permission/commands/role-permission-commands.unit.tests.ts
+  a04165e519d0f3c8 1-19,21-103
+app/api/lib/modules/staff/validator/staff-validator.unit.tests.ts
+  a04165e519d0f3c8 1-7,9-43,45-140
+app/api/lib/modules/tenant/schemas/tenant-schema.unit.tests.ts
+  a04165e519d0f3c8 1-57
+app/api/lib/modules/state/validator/state-validator.unit.tests.ts
+  a04165e519d0f3c8 1-45
+app/api/lib/modules/appointment-reason/repository/appointment-reason-repository.ts
+  a04165e519d0f3c8 6,57-60,82-85,139,160
+app/api/lib/modules/staff/commands/staff-commands.unit.tests.ts
+  a04165e519d0f3c8 1-177
+app/api/lib/modules/appointment-type/commands/appointment-type-commands.unit.tests.ts
+  be4a20aa667e6850 1-131
+app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema.unit.tests.ts
+  be4a20aa667e6850 1-96
+app/api/lib/modules/asset-condition/schemas/asset-condition-schema.unit.tests.ts
+  a04165e519d0f3c8 1-110
+app/api/lib/modules/asset-condition/repository/asset-condition-repository.ts
+  a04165e519d0f3c8 6,38-41,63-66,88-91,145,166
+app/api/lib/modules/user-role/validator/user-role-validator.unit.tests.ts
+  a04165e519d0f3c8 1-132
+app/api/lib/modules/asset/schemas/asset-schema.unit.tests.ts
+  a04165e519d0f3c8 1-67
+app/api/lib/modules/role-permission/repository/role-permission-repository.ts
+  a04165e519d0f3c8 7,74-78,137-141
+app/api/lib/modules/work-order-type/validator/work-order-type-validator.unit.tests.ts
+  a04165e519d0f3c8 142-144,148,151-160
+app/api/lib/modules/user-role/queries/user-role-queries.unit.tests.ts
+  a04165e519d0f3c8 1-30,32-61
+app/api/lib/modules/appointment-mode/repository/appointment-mode-repository.ts
+  df2533a176e75d35 6,79-82,136,157
+app/api/lib/modules/asset/commands/asset-commands.unit.tests.ts
+  a04165e519d0f3c8 1-57,59-75,77-158
+app/api/lib/modules/permission/schemas/permission-schema.unit.tests.ts
+  a04165e519d0f3c8 1-22
+app/api/lib/modules/work-order-type/commands/work-order-type-commands.unit.tests.ts
+  a04165e519d0f3c8 58,61,137,142-150
+app/api/lib/modules/role-permission/validator/role-permission-validator.unit.tests.ts
+  a04165e519d0f3c8 1-84,86-123
+app/api/lib/modules/appointment-cancelled-reason/commands/appointment-cancelled-reason-commands.unit.tests.ts
+  be4a20aa667e6850 1-92,94-103,105-131
+  a04165e519d0f3c8 93,104
+app/api/lib/modules/work-order/schemas/work-order-schema.unit.tests.ts
+  a04165e519d0f3c8 1-61
+app/api/lib/modules/work-order-status/schemas/work-order-status-schema.unit.tests.ts
+  a04165e519d0f3c8 1-97
+app/api/lib/modules/appointment-status/queries/appointment-status-queries.unit.tests.ts
+  be4a20aa667e6850 1-12,14-91
+app/api/lib/modules/asset/queries/asset-queries.unit.tests.ts
+  a04165e519d0f3c8 1-58,60-95
+app/api/lib/modules/permission/repository/permission-repository.ts
+  a04165e519d0f3c8 5,20
+app/api/lib/modules/work-order/commands/work-order-commands.unit.tests.ts
+  a04165e519d0f3c8 1-60,62-72,74-87
+app/api/lib/modules/appointment-type/validator/appointment-type-validator.unit.tests.ts
+  be4a20aa667e6850 1-96,98-135
+app/api/lib/modules/appointment-type/schemas/appointment-type-schema.unit.tests.ts
+  be4a20aa667e6850 1-84
+app/api/lib/modules/tenant/validator/tenant-validator.unit.tests.ts
+  a04165e519d0f3c8 1-4,6-83,85-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "7e5d197d9583ff6e799729591fa941a1c8bbcb01",
+  "prompts": {
+    "55571de7d46dd610": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "608a3f5a-f7ce-485a-9e84-beae06ccdb63",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1817,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "89c098de50090be6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c677f9b-ee3e-4fb1-b47d-abf79114dc61",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 3670,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "a04165e519d0f3c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4bd3ea31-bad7-49cb-a285-9c43dcf98081",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 4714,
+      "total_deletions": 131,
+      "accepted_lines": 4751,
+      "overriden_lines": 0
+    },
+    "be4a20aa667e6850": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "410213af-621d-4590-b668-a05a8752aad1",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 2376,
+      "total_deletions": 161,
+      "accepted_lines": 1668,
+      "overriden_lines": 0
+    },
+    "df2533a176e75d35": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32ca7698-bf9b-4285-b35a-15406f24124c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 59,
+      "accepted_lines": 40,
+      "overriden_lines": 0
+    }
+  }
+}
