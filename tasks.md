@@ -37,32 +37,32 @@ For each API module, we need to implement unit tests for:
 
 ## Modules
 
-| Module | Status | Assigned To | Notes |
-|--------|--------|-------------|-------|
-| appointment-mode | ✅ DONE | - | Already has all unit tests |
-| appointment-cancelled-reason | ✅ DONE | a-09-08-09_09-51-13 | Schema, validator, commands, queries tests implemented |
-| appointment-reason | ✅ DONE | subagent | Schema, validator, commands, queries tests implemented. All pass. Fixed: files were misnamed `*.unit.test.ts` (singular) so Vitest never discovered them — renamed to `*.unit.tests.ts`. The earlier "cross-test contamination" was a symptom of that mis-discovery, now resolved. |
-| appointment-status | ✅ DONE | subagent | Schema, validator, commands, queries tests implemented |
-| appointment-type | ✅ DONE | subagent | Schema, validator, commands, queries tests implemented |
-| asset | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| asset-category | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| asset-condition | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| asset-status | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| country | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| language | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| nationality | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| permission | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| religion | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| role | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| role-permission | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| staff | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| state | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| tenant | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| user-role | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| work-order | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| work-order-priority | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| work-order-status | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
-| work-order-type | ✅ DONE | - | Schema, validator, commands, queries unit tests implemented; all pass and typecheck. |
+| Module                       | Status  | Assigned To         | Notes                                                                                                                                                                                                                                                                              |
+| ---------------------------- | ------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| appointment-mode             | ✅ DONE | -                   | Already has all unit tests                                                                                                                                                                                                                                                         |
+| appointment-cancelled-reason | ✅ DONE | a-09-08-09_09-51-13 | Schema, validator, commands, queries tests implemented                                                                                                                                                                                                                             |
+| appointment-reason           | ✅ DONE | subagent            | Schema, validator, commands, queries tests implemented. All pass. Fixed: files were misnamed `*.unit.test.ts` (singular) so Vitest never discovered them — renamed to `*.unit.tests.ts`. The earlier "cross-test contamination" was a symptom of that mis-discovery, now resolved. |
+| appointment-status           | ✅ DONE | subagent            | Schema, validator, commands, queries tests implemented                                                                                                                                                                                                                             |
+| appointment-type             | ✅ DONE | subagent            | Schema, validator, commands, queries tests implemented                                                                                                                                                                                                                             |
+| asset                        | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| asset-category               | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| asset-condition              | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| asset-status                 | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| country                      | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| language                     | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| nationality                  | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| permission                   | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| religion                     | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| role                         | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| role-permission              | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| staff                        | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| state                        | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| tenant                       | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| user-role                    | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| work-order                   | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| work-order-priority          | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| work-order-status            | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
+| work-order-type              | ✅ DONE | -                   | Schema, validator, commands, queries unit tests implemented; all pass and typecheck.                                                                                                                                                                                               |
 
 ## Status Legend
 
@@ -74,6 +74,7 @@ For each API module, we need to implement unit tests for:
 ## Reference Module
 
 Use `appointment-mode` as the reference implementation:
+
 - `app/api/lib/modules/appointment-mode/schemas/appointment-mode-schema.unit.tests.ts`
 - `app/api/lib/modules/appointment-mode/validator/appointment-mode-validator.unit.tests.ts`
 - `app/api/lib/modules/appointment-mode/commands/appointment-mode-commands.unit.tests.ts`
