@@ -1,0 +1,57 @@
+app/api/lib/modules/asset/validator/get-asset-summary-validator.unit.tests.ts
+  a04165e519d0f3c8 6-7,10-11
+app/api/lib/modules/work-order/queries/get-work-order-summary-query.unit.tests.ts
+  a04165e519d0f3c8 20-21
+app/api/lib/modules/work-order/validator/get-work-order-summary-validator.unit.tests.ts
+  a04165e519d0f3c8 6-8,10,13-14
+app/api/lib/modules/asset/queries/get-asset-summary-query.unit.tests.ts
+  a04165e519d0f3c8 23-24
+.github/workflows/ci.yml
+  a04165e519d0f3c8 8-10,35-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "6f0cdc283414156d8051707c06cd988d080e9c6d",
+  "prompts": {
+    "55571de7d46dd610": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "608a3f5a-f7ce-485a-9e84-beae06ccdb63",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1793,
+      "overriden_lines": 0
+    },
+    "89c098de50090be6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c677f9b-ee3e-4fb1-b47d-abf79114dc61",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3758,
+      "overriden_lines": 0
+    },
+    "a04165e519d0f3c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4bd3ea31-bad7-49cb-a285-9c43dcf98081",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 12,
+      "accepted_lines": 19,
+      "overriden_lines": 1
+    }
+  }
+}
