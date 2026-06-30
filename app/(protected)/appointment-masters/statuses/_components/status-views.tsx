@@ -13,14 +13,6 @@ function StatusIcon() {
   );
 }
 
-function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 function StatusActionsMenu({
   status,
   onEdit,
@@ -75,7 +67,6 @@ export function StatusTableView({
                 <TableHead className="pl-4">Name</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Modified on</TableHead>
                 <TableHead className="pr-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -86,9 +77,6 @@ export function StatusTableView({
                   <TableCell className="font-mono text-xs">{status.code}</TableCell>
                   <TableCell className="text-muted-foreground max-w-xs truncate">
                     {status.description || '—'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {formatDate(status.modifiedOn)}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
                     <StatusActionsMenu status={status} onEdit={onEdit} onDelete={onDelete} />
@@ -126,9 +114,6 @@ export function StatusCardView({
               </p>
               <p className="text-muted-foreground mt-0.5 text-sm">
                 Appointment Status Description: <span>{status.description || '—'}</span>
-              </p>
-              <p className="text-muted-foreground mt-0.5 text-sm">
-                Modified on: <span>{formatDate(status.modifiedOn)}</span>
               </p>
             </div>
 
@@ -184,10 +169,6 @@ export function StatusListView({
               <div className="min-w-0">
                 <span className="text-muted-foreground">Appointment Status Description: </span>
                 <span className="truncate">{status.description || '—'}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Modified on: </span>
-                <span>{formatDate(status.modifiedOn)}</span>
               </div>
             </div>
 

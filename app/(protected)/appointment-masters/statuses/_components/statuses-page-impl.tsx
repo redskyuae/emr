@@ -12,7 +12,6 @@ import { createAppointmentStatusSchema } from '@/app/api/lib/modules/appointment
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
 import { useCreateAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useCreateAppointmentStatus';
-import { useDeleteAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useDeleteAppointmentStatus';
 import { useUpdateAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useUpdateAppointmentStatus';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -55,7 +54,6 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
 
   const createMutation = useCreateAppointmentStatus();
   const updateMutation = useUpdateAppointmentStatus();
-  const deleteMutation = useDeleteAppointmentStatus();
 
   const statuses = statusesQuery.data?.data ?? [];
   const meta = statusesQuery.data?.meta;
@@ -136,22 +134,9 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
     }
   });
 
-  async function handleConfirmDelete() {
-    if (!statusPendingDelete) {
-      return;
-    }
-
-    try {
-      await deleteMutation.mutateAsync(statusPendingDelete.id);
-      toast.success('Appointment Status deleted.');
-
-      if (editingStatus?.id === statusPendingDelete.id) {
-        closeSheet();
-      }
-
-      setStatusPendingDelete(null);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
+  function handleStatusDeleted(statusId: number) {
+    if (editingStatus?.id === statusId) {
+      closeSheet();
     }
   }
 
@@ -316,9 +301,8 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
 
       <StatusDeleteDialog
         status={statusPendingDelete}
-        isDeleting={deleteMutation.isPending}
-        onCancel={() => setStatusPendingDelete(null)}
-        onConfirm={() => void handleConfirmDelete()}
+        onClose={() => setStatusPendingDelete(null)}
+        onDeleted={handleStatusDeleted}
       />
     </>
   );

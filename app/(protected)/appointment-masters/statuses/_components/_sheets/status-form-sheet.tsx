@@ -81,19 +81,25 @@ export function StatusFormSheet({
 
             <FieldGroup className="gap-4">
               <Field data-invalid={!!errors.name}>
-                <FieldLabel htmlFor="status-name">Name</FieldLabel>
+                <FieldLabel htmlFor="status-name">
+                  Name <span aria-hidden="true" className="text-destructive">*</span>
+                </FieldLabel>
                 <Input
                   id="status-name"
                   {...register('name')}
                   disabled={isSaving}
                   maxLength={100}
                   placeholder="e.g. Confirmed"
+                  aria-required="true"
+                  aria-invalid={!!errors.name}
                 />
                 <FieldError errors={[errors.name]} />
               </Field>
 
               <Field data-invalid={!!errors.code}>
-                <FieldLabel htmlFor="status-code">Code</FieldLabel>
+                <FieldLabel htmlFor="status-code">
+                  Code <span aria-hidden="true" className="text-destructive">*</span>
+                </FieldLabel>
                 <Input
                   id="status-code"
                   {...register('code', {
@@ -105,6 +111,8 @@ export function StatusFormSheet({
                   maxLength={10}
                   placeholder="e.g. CONFIRMED"
                   className="font-mono"
+                  aria-required="true"
+                  aria-invalid={!!errors.code}
                 />
                 <FieldError errors={[errors.code]} />
               </Field>

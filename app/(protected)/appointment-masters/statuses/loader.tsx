@@ -25,9 +25,6 @@ export default function AppointmentStatusesPageLoader() {
                 <th className="p-3">
                   <Skeleton className="h-4 w-20" />
                 </th>
-                <th className="p-3">
-                  <Skeleton className="h-4 w-20" />
-                </th>
                 <th className="p-3 pr-4 text-right">
                   <Skeleton className="ml-auto h-4 w-14" />
                 </th>
@@ -44,9 +41,6 @@ export default function AppointmentStatusesPageLoader() {
                   </td>
                   <td className="p-3">
                     <Skeleton className="h-5 w-48" />
-                  </td>
-                  <td className="p-3">
-                    <Skeleton className="h-5 w-24" />
                   </td>
                   <td className="p-3 pr-4 text-right">
                     <Skeleton className="ml-auto h-8 w-8" />
