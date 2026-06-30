@@ -19,6 +19,17 @@ type SpecialtyListParams = {
 
 type SpecialtySeed = Omit<SpecialtyData, 'tenantId'>;
 
+function normalizeCode(code?: string) {
+  return code?.trim() || null;
+}
+
+function normalizePagination(page: number, limit: number) {
+  const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
+  const safeLimit = Number.isFinite(limit) ? Math.min(999, Math.max(1, Math.floor(limit))) : 10;
+
+  return { page: safePage, limit: safeLimit };
+}
+
 const specialtyColumns = {
   id: specialtyTable.id,
   name: specialtyTable.name,
@@ -34,7 +45,7 @@ async function createSpecialty(data: SpecialtyData) {
     .insert(specialtyTable)
     .values({
       name: data.name,
-      code: data.code ?? null,
+      code: normalizeCode(data.code),
       tenantId: data.tenantId,
       description: data.description ?? null,
     })
@@ -48,7 +59,7 @@ async function updateSpecialty(id: number, data: SpecialtyData) {
     .update(specialtyTable)
     .set({
       name: data.name,
-      code: data.code ?? null,
+      code: normalizeCode(data.code),
       description: data.description ?? null,
       modifiedOn: new Date(),
     })
@@ -103,7 +114,8 @@ async function getSpecialtyById(id: number, tenantId: string) {
 }
 
 async function getSpecialties({ tenantId, page = 1, limit = 10, query }: SpecialtyListParams) {
-  const offset = (page - 1) * limit;
+  const pagination = normalizePagination(page, limit);
+  const offset = (pagination.page - 1) * pagination.limit;
   const trimmedQuery = query?.trim();
   const searchCondition = trimmedQuery
     ? or(
@@ -123,7 +135,7 @@ async function getSpecialties({ tenantId, page = 1, limit = 10, query }: Special
       .from(specialtyTable)
       .where(whereClause)
       .orderBy(asc(specialtyTable.name), asc(specialtyTable.id))
-      .limit(limit)
+      .limit(pagination.limit)
       .offset(offset),
     db.select({ total: count() }).from(specialtyTable).where(whereClause),
   ]);
@@ -183,7 +195,7 @@ async function seedDefaultSpecialties(tenantId: string, defaults: SpecialtySeed[
     .values(
       defaults.map((specialty) => ({
         name: specialty.name,
-        code: specialty.code ?? null,
+        code: normalizeCode(specialty.code),
         tenantId,
         description: specialty.description ?? null,
       }))
