@@ -17,8 +17,8 @@ describe('GetWorkOrderSummary query', () => {
     getWorkOrderSummary.mockResolvedValue(summary);
   });
 
-  it('should return the repository summary for a valid tenant', async () => {
-    const result = await getWorkOrderSummaryQuery('tenant-a', { getWorkOrderSummary });
+  it('should normalize the tenant id before calling the repository', async () => {
+    const result = await getWorkOrderSummaryQuery('  tenant-a  ', { getWorkOrderSummary });
     expect(getWorkOrderSummary).toHaveBeenCalledWith('tenant-a');
     expect(result).toEqual({ success: true, data: summary });
   });

@@ -20,8 +20,8 @@ describe('GetAssetSummary query', () => {
     getAssetSummary.mockResolvedValue(summary);
   });
 
-  it('should return the repository summary for a valid tenant', async () => {
-    const result = await getAssetSummaryQuery('tenant-a', { getAssetSummary });
+  it('should normalize the tenant id before calling the repository', async () => {
+    const result = await getAssetSummaryQuery('  tenant-a  ', { getAssetSummary });
     expect(getAssetSummary).toHaveBeenCalledWith('tenant-a');
     expect(result).toEqual({ success: true, data: summary });
   });
