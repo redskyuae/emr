@@ -42,7 +42,7 @@ describe('AppointmentCancelledReason queries', () => {
   });
 
   it('should return validation failure and not call repository when tenant/id validation fails', async () => {
-    validateById.mockReturnValue({ success: false, errors: ['Invalid'], status: 422 });
+    validateById.mockReturnValue({ success: false, errors: ['Invalid'] });
     await expect(getAppointmentCancelledReasonByIdQuery('bad', 'tenant-1')).resolves.toEqual({
       success: false,
       errors: ['Invalid'],

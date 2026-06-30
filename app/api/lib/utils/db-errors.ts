@@ -11,8 +11,14 @@ export type DatabaseError = {
  */
 export function getDatabaseError(error: unknown): DatabaseError | undefined {
   let current: unknown = error;
+  const seen = new Set<object>();
 
   while (current && typeof current === 'object') {
+    if (seen.has(current)) {
+      return undefined;
+    }
+    seen.add(current);
+
     const candidate = current as { code?: unknown; cause?: unknown };
 
     if (typeof candidate.code === 'string') {
