@@ -1,0 +1,49 @@
+app/api/lib/utils/db-errors.ts
+  a04165e519d0f3c8 14,17-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "2461a5737f545570fe2457b97eb9910d79341242",
+  "prompts": {
+    "55571de7d46dd610": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "608a3f5a-f7ce-485a-9e84-beae06ccdb63",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1793,
+      "overriden_lines": 0
+    },
+    "89c098de50090be6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c677f9b-ee3e-4fb1-b47d-abf79114dc61",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3758,
+      "overriden_lines": 0
+    },
+    "a04165e519d0f3c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4bd3ea31-bad7-49cb-a285-9c43dcf98081",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 0,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
