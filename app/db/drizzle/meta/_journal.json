@@ -204,6 +204,13 @@
       "when": 1782563373976,
       "tag": "0028_deep_selene",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1782795210255,
+      "tag": "0029_clean_nick_fury",
+      "breakpoints": true
     }
   ]
 }
