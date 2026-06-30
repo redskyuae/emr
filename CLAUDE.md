@@ -129,13 +129,14 @@ Read `lessons.md` for documented architectural solutions and historical bug fixe
 
 1. Define the Drizzle table in `app/db/schema/{entity}.ts`, include `tenantId`. If the table requires unique fields, read `lessons.md` for the correct implementation using partial unique indexes. Export the table variable **without** a `Table` suffix: `export const appointmentCancelledReason = pgTable(...)`. Every consumer (other schema files or repositories) must import it with an `as xxxTable` alias: `import { appointmentCancelledReason as appointmentCancelledReasonTable } from ...`. Auth tables in `auth.ts` are excluded from this convention. See `docs/adr/0015-schema-table-export-naming.md`.
 2. Run `bun run db:generate` to generate the migration, then `bun run db:migrate`
-3. Create `app/api/lib/modules/{module}/schemas/{module}-schema.ts` — Zod schema + exported types
-4. Create repository in `repository/` — exports a plain object of async functions, including reads needed by validators
-5. Create validator(s) in `validator/` — one function per operation, performs Zod parsing plus any repository-backed existence/uniqueness checks, returns `ValidationResult<T>`
-6. Create command(s) in `commands/` — validate → repository write → return `CommandResult<T>`
-7. Create query/queries in `queries/` — repository → return `QueryResult<T>`
-8. Create `app/api/v1/{module}/route.ts` — HTTP parsing, call command/query, NextResponse
-9. Update the Swagger/OpenAPI documentation for every API surface you add or change. Keep the docs in sync with the route path, HTTP method, request body, query/path parameters, response schemas, status codes, auth requirements, and error responses. Every new or changed API operation must include realistic examples for successful requests and responses, plus relevant validation/conflict/not-found error examples.
+3. Create `app/api/lib/modules/{module}/schemas/{module}-schema.ts` — Zod schema + exported types, **and `schemas/{module}-schema.unit.tests.ts`**
+4. Create repository in `repository/` — exports a plain object of async functions, including reads needed by validators, **and `repository/{module}-repository.integration.tests.ts`**
+5. Create validator(s) in `validator/` — one function per operation, performs Zod parsing plus any repository-backed existence/uniqueness checks, returns `ValidationResult<T>`, **and `validator/{module}-validator.unit.tests.ts`**
+6. Create command(s) in `commands/` — validate → repository write → return `CommandResult<T>`, **and `commands/{module}-commands.unit.tests.ts`**
+7. Create query/queries in `queries/` — repository → return `QueryResult<T>`, **and `queries/{module}-queries.unit.tests.ts`**
+8. Create `app/api/v1/{module}/route.ts` — HTTP parsing, call command/query, NextResponse (add route unit tests only if the adapter logic is non-trivial)
+9. Tests are not optional and not a follow-up — write each test file in the **same change** as the code it covers, following the patterns and worked examples in `docs/backend-testing.md`. The whole suite (`bun run test`) and `bunx tsc --noEmit` must stay green before the task is done.
+10. Update the Swagger/OpenAPI documentation for every API surface you add or change. Keep the docs in sync with the route path, HTTP method, request body, query/path parameters, response schemas, status codes, auth requirements, and error responses. Every new or changed API operation must include realistic examples for successful requests and responses, plus relevant validation/conflict/not-found error examples.
 
 ## Swagger/OpenAPI documentation
 
@@ -212,9 +213,16 @@ See `CONTEXT.md` for the canonical glossary of domain terms. Use those terms exa
 
 ## Backend testing policy
 
+**Read `docs/backend-testing.md` before adding or changing backend tests** — it is the example-rich,
+copy-pasteable companion to this policy, with a full worked example for every layer (schema, validator,
+command, query, repository integration), the cross-cutting patterns (`vi.mocked`, repository
+`Promise<Entity | undefined>` return types, injected collaborators, outcome unions, wrapped `23505`
+mapping), and a table of which existing module to copy for each module shape. This section is the
+binding _what_; that guide is the _how_.
+
 Backend API/module changes must include colocated Vitest tests that exercise behavior through the public module interface. Use explicit imports from `vitest`; Vitest globals are disabled. Test names must be readable and start with `should ...`.
 
-Use these filename suffixes:
+Use these filename suffixes (the word **`tests` is plural** — `*.unit.test.ts`, `*.test.ts`, and `*.spec.ts` are **silently ignored** by Vitest and never run):
 
 - `*.unit.tests.ts` for mocked or pure backend unit tests.
 - `*.integration.tests.ts` for DB-backed repository integration tests.
