@@ -1,0 +1,4 @@
+## 2026-06-30 - Missing Authentication on Master Data API Endpoints
+**Vulnerability:** Several API endpoints for master data entities (countries, languages, states, religions, nationalities) were completely unauthenticated. Anyone could query, create, update, or delete this global data without logging in.
+**Learning:** These entities are not tenant-specific (they don't have a `tenantId`), so they weren't protected by the default `requireTenantSession()` or `requireTenantAdminSession()` helpers that are used across most of the application's APIs. Since the project uses route-level authentication instead of a global middleware, these endpoints were left unprotected.
+**Prevention:** When creating new global (non-tenant) master data APIs, ensure that at least the `requireAuth()` helper is explicitly called at the beginning of each HTTP method handler (GET, POST, PUT, DELETE) to enforce authentication.

@@ -1,3 +1,4 @@
+import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListLanguagesResponse, SaveLanguageResponse } from './types';
@@ -11,6 +12,9 @@ function mutationMessage(status: number) {
 }
 
 export async function GET(request: NextRequest) {
+  const session = await requireAuth();
+  if (session instanceof Response) return session;
+
   try {
     const page = parsePositiveInteger(request.nextUrl.searchParams.get('page'), 1);
     const limit = parsePositiveInteger(request.nextUrl.searchParams.get('limit'), 10);
@@ -59,6 +63,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const session = await requireAuth();
+  if (session instanceof Response) return session;
+
   try {
     let payload: unknown;
 
