@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { appointmentCancelledReason as appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
 import type {
+  AppointmentCancelledReason,
   AppointmentCancelledReasonListParams,
   CreateAppointmentCancelledReasonData,
   UpdateAppointmentCancelledReasonData,
@@ -56,7 +57,10 @@ async function updateAppointmentCancelledReason(
   return updatedAppointmentCancelledReason;
 }
 
-async function deleteAppointmentCancelledReason(id: number, tenantId: string) {
+async function deleteAppointmentCancelledReason(
+  id: number,
+  tenantId: string
+): Promise<AppointmentCancelledReason | undefined> {
   const deletedOn = new Date();
 
   const [deletedAppointmentCancelledReason] = await db
@@ -78,7 +82,10 @@ async function deleteAppointmentCancelledReason(id: number, tenantId: string) {
   return deletedAppointmentCancelledReason;
 }
 
-async function getAppointmentCancelledReasonById(id: number, tenantId: string) {
+async function getAppointmentCancelledReasonById(
+  id: number,
+  tenantId: string
+): Promise<AppointmentCancelledReason | undefined> {
   const [appointmentCancelledReason] = await db
     .select(appointmentCancelledReasonColumns)
     .from(appointmentCancelledReasonTable)
@@ -132,7 +139,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AppointmentCancelledReason | undefined> {
   const [appointmentCancelledReason] = await db
     .select(appointmentCancelledReasonColumns)
     .from(appointmentCancelledReasonTable)
@@ -153,7 +160,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AppointmentCancelledReason | undefined> {
   const [appointmentCancelledReason] = await db
     .select(appointmentCancelledReasonColumns)
     .from(appointmentCancelledReasonTable)

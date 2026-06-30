@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { appointmentType as appointmentTypeTable } from '@/app/db/schema/appointment-type';
 import type {
+  AppointmentType,
   AppointmentTypeListParams,
   CreateAppointmentTypeData,
   UpdateAppointmentTypeData,
@@ -53,7 +54,10 @@ async function updateAppointmentType(id: number, data: UpdateAppointmentTypeData
   return updatedAppointmentType;
 }
 
-async function deleteAppointmentType(id: number, tenantId: string) {
+async function deleteAppointmentType(
+  id: number,
+  tenantId: string
+): Promise<AppointmentType | undefined> {
   const deletedOn = new Date();
 
   const [deletedAppointmentType] = await db
@@ -75,7 +79,10 @@ async function deleteAppointmentType(id: number, tenantId: string) {
   return deletedAppointmentType;
 }
 
-async function getAppointmentTypeById(id: number, tenantId: string) {
+async function getAppointmentTypeById(
+  id: number,
+  tenantId: string
+): Promise<AppointmentType | undefined> {
   const [appointmentType] = await db
     .select(appointmentTypeColumns)
     .from(appointmentTypeTable)
@@ -129,7 +136,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AppointmentType | undefined> {
   const [appointmentType] = await db
     .select(appointmentTypeColumns)
     .from(appointmentTypeTable)
@@ -150,7 +157,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AppointmentType | undefined> {
   const [appointmentType] = await db
     .select(appointmentTypeColumns)
     .from(appointmentTypeTable)

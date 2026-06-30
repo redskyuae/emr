@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import type {
+  AssetStatus,
   AssetStatusListParams,
   CreateAssetStatusData,
   UpdateAssetStatusData,
@@ -34,7 +35,10 @@ async function createAssetStatus(data: CreateAssetStatusData) {
   return createdAssetStatus;
 }
 
-async function updateAssetStatus(id: number, data: UpdateAssetStatusData) {
+async function updateAssetStatus(
+  id: number,
+  data: UpdateAssetStatusData
+): Promise<AssetStatus | undefined> {
   const [updatedAssetStatus] = await db
     .update(assetStatusTable)
     .set({
@@ -56,7 +60,7 @@ async function updateAssetStatus(id: number, data: UpdateAssetStatusData) {
   return updatedAssetStatus;
 }
 
-async function deleteAssetStatus(id: number, tenantId: string) {
+async function deleteAssetStatus(id: number, tenantId: string): Promise<AssetStatus | undefined> {
   const deletedOn = new Date();
 
   const [deletedAssetStatus] = await db
@@ -78,7 +82,7 @@ async function deleteAssetStatus(id: number, tenantId: string) {
   return deletedAssetStatus;
 }
 
-async function getAssetStatusById(id: number, tenantId: string) {
+async function getAssetStatusById(id: number, tenantId: string): Promise<AssetStatus | undefined> {
   const [assetStatus] = await db
     .select(assetStatusColumns)
     .from(assetStatusTable)
@@ -127,7 +131,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AssetStatus | undefined> {
   const [assetStatus] = await db
     .select(assetStatusColumns)
     .from(assetStatusTable)
@@ -148,7 +152,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AssetStatus | undefined> {
   const [assetStatus] = await db
     .select(assetStatusColumns)
     .from(assetStatusTable)

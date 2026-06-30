@@ -3,6 +3,7 @@ import { and, asc, count, eq } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { role as roleTable } from '@/app/db/schema/role';
 import { userRole as userRoleTable } from '@/app/db/schema/user-role';
+import type { RoleAssignment } from '../schemas/user-role-schema';
 
 const assignedRoleColumns = {
   id: roleTable.id,
@@ -45,7 +46,11 @@ async function getAssignedRolesByUser(userId: string, tenantId: string) {
     .orderBy(...orderAssignedRoles());
 }
 
-async function getRoleAssignment(userId: string, roleId: number, tenantId: string) {
+async function getRoleAssignment(
+  userId: string,
+  roleId: number,
+  tenantId: string
+): Promise<RoleAssignment | undefined> {
   const [assignment] = await db
     .select(roleAssignmentColumns)
     .from(userRoleTable)
@@ -95,7 +100,11 @@ async function assignRoles(
   return getAssignedRolesByUser(userId, tenantId);
 }
 
-async function removeRole(userId: string, roleId: number, tenantId: string) {
+async function removeRole(
+  userId: string,
+  roleId: number,
+  tenantId: string
+): Promise<RoleAssignment | undefined> {
   const [assignment] = await db
     .delete(userRoleTable)
     .where(

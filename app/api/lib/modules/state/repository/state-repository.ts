@@ -149,7 +149,7 @@ async function findActiveByNameAndCountry(
   name: string,
   countryId: number,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<Pick<State, 'id' | 'name' | 'countryId' | 'createdOn' | 'modifiedOn'> | undefined> {
   const [state] = await db
     .select(stateColumns)
     .from(stateTable)

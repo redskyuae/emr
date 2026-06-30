@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { assetCategory as assetCategoryTable } from '@/app/db/schema/asset-category';
 import type {
+  AssetCategory,
   AssetCategoryListParams,
   CreateAssetCategoryData,
   UpdateAssetCategoryData,
@@ -34,7 +35,10 @@ async function createAssetCategory(data: CreateAssetCategoryData) {
   return createdAssetCategory;
 }
 
-async function updateAssetCategory(id: number, data: UpdateAssetCategoryData) {
+async function updateAssetCategory(
+  id: number,
+  data: UpdateAssetCategoryData
+): Promise<AssetCategory | undefined> {
   const [updatedAssetCategory] = await db
     .update(assetCategoryTable)
     .set({
@@ -56,7 +60,10 @@ async function updateAssetCategory(id: number, data: UpdateAssetCategoryData) {
   return updatedAssetCategory;
 }
 
-async function deleteAssetCategory(id: number, tenantId: string) {
+async function deleteAssetCategory(
+  id: number,
+  tenantId: string
+): Promise<AssetCategory | undefined> {
   const deletedOn = new Date();
 
   const [deletedAssetCategory] = await db
@@ -78,7 +85,10 @@ async function deleteAssetCategory(id: number, tenantId: string) {
   return deletedAssetCategory;
 }
 
-async function getAssetCategoryById(id: number, tenantId: string) {
+async function getAssetCategoryById(
+  id: number,
+  tenantId: string
+): Promise<AssetCategory | undefined> {
   const [assetCategory] = await db
     .select(assetCategoryColumns)
     .from(assetCategoryTable)
@@ -132,7 +142,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AssetCategory | undefined> {
   const [assetCategory] = await db
     .select(assetCategoryColumns)
     .from(assetCategoryTable)
@@ -153,7 +163,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AssetCategory | undefined> {
   const [assetCategory] = await db
     .select(assetCategoryColumns)
     .from(assetCategoryTable)

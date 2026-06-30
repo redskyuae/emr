@@ -1,5 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
+import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { appointmentStatusRepository } from '../repository/appointment-status-repository';
 const APPOINTMENT_STATUS_NAME_EXISTS = "Appointment status name '{value}' already exists.";
 const APPOINTMENT_STATUS_CODE_EXISTS = "Appointment status code '{value}' already exists.";
@@ -47,21 +48,17 @@ export function getAppointmentStatusUniqueConstraintErrors(
   error: unknown,
   input: Pick<AppointmentStatusUniquenessInput, 'name' | 'code'>
 ): string[] {
-  if (typeof error !== 'object' || error === null) {
+  const dbError = getDatabaseError(error);
+
+  if (dbError?.code !== '23505') {
     return [];
   }
 
-  const err = error as Record<string, unknown>;
-
-  if (err.code !== '23505') {
-    return [];
-  }
-
-  if (err.constraint === 'appointment_status_tenant_name_idx') {
+  if (dbError.constraint === 'appointment_status_tenant_name_idx') {
     return [duplicateError(APPOINTMENT_STATUS_NAME_EXISTS, input.name)];
   }
 
-  if (err.constraint === 'appointment_status_tenant_code_idx') {
+  if (dbError.constraint === 'appointment_status_tenant_code_idx') {
     return [duplicateError(APPOINTMENT_STATUS_CODE_EXISTS, input.code)];
   }
 

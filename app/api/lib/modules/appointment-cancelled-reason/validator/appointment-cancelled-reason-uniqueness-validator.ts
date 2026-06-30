@@ -1,5 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
+import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { appointmentCancelledReasonRepository } from '../repository/appointment-cancelled-reason-repository';
 const APPOINTMENT_CANCELLED_REASON_NAME_EXISTS =
   "Appointment cancelled reason name '{value}' already exists.";
@@ -49,21 +50,17 @@ export function getAppointmentCancelledReasonUniqueConstraintErrors(
   error: unknown,
   input: Pick<AppointmentCancelledReasonUniquenessInput, 'name' | 'code'>
 ): string[] {
-  if (typeof error !== 'object' || error === null) {
+  const dbError = getDatabaseError(error);
+
+  if (dbError?.code !== '23505') {
     return [];
   }
 
-  const err = error as Record<string, unknown>;
-
-  if (err.code !== '23505') {
-    return [];
-  }
-
-  if (err.constraint === 'appointment_cancelled_reason_tenant_name_idx') {
+  if (dbError.constraint === 'appointment_cancelled_reason_tenant_name_idx') {
     return [duplicateError(APPOINTMENT_CANCELLED_REASON_NAME_EXISTS, input.name)];
   }
 
-  if (err.constraint === 'appointment_cancelled_reason_tenant_code_idx') {
+  if (dbError.constraint === 'appointment_cancelled_reason_tenant_code_idx') {
     return [duplicateError(APPOINTMENT_CANCELLED_REASON_CODE_EXISTS, input.code)];
   }
 

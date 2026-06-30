@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
 import type {
+  AppointmentStatus,
   AppointmentStatusListParams,
   CreateAppointmentStatusData,
   UpdateAppointmentStatusData,
@@ -53,7 +54,10 @@ async function updateAppointmentStatus(id: number, data: UpdateAppointmentStatus
   return updatedAppointmentStatus;
 }
 
-async function deleteAppointmentStatus(id: number, tenantId: string) {
+async function deleteAppointmentStatus(
+  id: number,
+  tenantId: string
+): Promise<AppointmentStatus | undefined> {
   const deletedOn = new Date();
 
   const [deletedAppointmentStatus] = await db
@@ -75,7 +79,10 @@ async function deleteAppointmentStatus(id: number, tenantId: string) {
   return deletedAppointmentStatus;
 }
 
-async function getAppointmentStatusById(id: number, tenantId: string) {
+async function getAppointmentStatusById(
+  id: number,
+  tenantId: string
+): Promise<AppointmentStatus | undefined> {
   const [appointmentStatus] = await db
     .select(appointmentStatusColumns)
     .from(appointmentStatusTable)
@@ -129,7 +136,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AppointmentStatus | undefined> {
   const [appointmentStatus] = await db
     .select(appointmentStatusColumns)
     .from(appointmentStatusTable)
@@ -150,7 +157,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AppointmentStatus | undefined> {
   const [appointmentStatus] = await db
     .select(appointmentStatusColumns)
     .from(appointmentStatusTable)

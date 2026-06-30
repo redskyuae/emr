@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { language as languageTable } from '@/app/db/schema/language';
 import type {
+  Language,
   CreateLanguageInput,
   LanguageListParams,
   UpdateLanguageInput,
@@ -28,7 +29,10 @@ async function createLanguage(data: CreateLanguageInput) {
   return createdLanguage;
 }
 
-async function updateLanguage(id: number, data: UpdateLanguageInput) {
+async function updateLanguage(
+  id: number,
+  data: UpdateLanguageInput
+): Promise<Language | undefined> {
   const [updatedLanguage] = await db
     .update(languageTable)
     .set({
@@ -42,7 +46,7 @@ async function updateLanguage(id: number, data: UpdateLanguageInput) {
   return updatedLanguage;
 }
 
-async function deleteLanguage(id: number) {
+async function deleteLanguage(id: number): Promise<Language | undefined> {
   const deletedOn = new Date();
 
   const [deletedLanguage] = await db
@@ -58,7 +62,7 @@ async function deleteLanguage(id: number) {
   return deletedLanguage;
 }
 
-async function getLanguageById(id: number) {
+async function getLanguageById(id: number): Promise<Language | undefined> {
   const [language] = await db
     .select(languageColumns)
     .from(languageTable)
@@ -93,7 +97,10 @@ async function getLanguages({ page = 1, limit = 10, query }: LanguageListParams 
   return { data, total };
 }
 
-async function findActiveByName(name: string, { excludeId }: { excludeId?: number } = {}) {
+async function findActiveByName(
+  name: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<Language | undefined> {
   const [language] = await db
     .select(languageColumns)
     .from(languageTable)
@@ -109,7 +116,10 @@ async function findActiveByName(name: string, { excludeId }: { excludeId?: numbe
   return language;
 }
 
-async function findActiveByCode(code: string, { excludeId }: { excludeId?: number } = {}) {
+async function findActiveByCode(
+  code: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<Language | undefined> {
   const [language] = await db
     .select(languageColumns)
     .from(languageTable)

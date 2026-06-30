@@ -4,6 +4,7 @@ import { db } from '@/app/db';
 import { workOrder as workOrderTable } from '@/app/db/schema/work-order';
 import { workOrderPriority as workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
 import type {
+  WorkOrderPriority,
   CreateWorkOrderPriorityData,
   UpdateWorkOrderPriorityData,
   WorkOrderPriorityListParams,
@@ -35,7 +36,10 @@ async function createWorkOrderPriority(data: CreateWorkOrderPriorityData) {
   return createdWorkOrderPriority;
 }
 
-async function updateWorkOrderPriority(id: number, data: UpdateWorkOrderPriorityData) {
+async function updateWorkOrderPriority(
+  id: number,
+  data: UpdateWorkOrderPriorityData
+): Promise<WorkOrderPriority | undefined> {
   const [updatedWorkOrderPriority] = await db
     .update(workOrderPriorityTable)
     .set({
@@ -105,7 +109,10 @@ async function deleteWorkOrderPriority(id: number, tenantId: string) {
   });
 }
 
-async function getWorkOrderPriorityById(id: number, tenantId: string) {
+async function getWorkOrderPriorityById(
+  id: number,
+  tenantId: string
+): Promise<WorkOrderPriority | undefined> {
   const [workOrderPriority] = await db
     .select(workOrderPriorityColumns)
     .from(workOrderPriorityTable)
@@ -159,7 +166,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<WorkOrderPriority | undefined> {
   const [workOrderPriority] = await db
     .select(workOrderPriorityColumns)
     .from(workOrderPriorityTable)
@@ -180,7 +187,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<WorkOrderPriority | undefined> {
   const [workOrderPriority] = await db
     .select(workOrderPriorityColumns)
     .from(workOrderPriorityTable)
