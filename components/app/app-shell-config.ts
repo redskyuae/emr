@@ -271,10 +271,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/appointment-masters/reasons': {
     title: 'Appointment Reasons',
     subtitle: 'Tenant-scoped booking reason records for Appointments.',
-    primaryAction: {
-      label: 'Add Appointment Reason',
-      href: '/appointment-masters/reasons?create=1',
-    },
   },
   '/global-references': {
     title: 'Global References',
