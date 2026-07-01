@@ -1,0 +1,122 @@
+app/api/lib/modules/staff/repository/staff-repository.integration.tests.ts
+  89c098de50090be6 1,3,5-8,14-126,136,138,145-146,148-159,162-170,172-224,226-231,233-238,240-268,270-285,287-292,294-301,303-316,318-322,324-329,331-414,416-422
+  49750a4107378115 160-161,171,317,323,330
+  a04165e519d0f3c8 2,4,9-13,127-135,137,139-144,147,415
+app/api/lib/modules/permission/repository/permission-repository.integration.tests.ts
+  a04165e519d0f3c8 1
+  89c098de50090be6 2-132
+app/api/lib/modules/work-order-priority/repository/work-order-priority-repository.integration.tests.ts
+  49750a4107378115 3-10,103,186-221,228-230,232
+  89c098de50090be6 1-2,11-21,23-90,92-102,104-115,117-157,159-165,167-185,222-227,231,233-241
+app/api/lib/modules/role-permission/repository/role-permission-repository.integration.tests.ts
+  a04165e519d0f3c8 1,3,10-14
+  55571de7d46dd610 2,6-9,15-394
+app/api/lib/modules/nationality/repository/nationality-repository.integration.tests.ts
+  89c098de50090be6 1-169
+app/api/lib/modules/asset-status/repository/asset-status-repository.integration.tests.ts
+  49750a4107378115 142
+  89c098de50090be6 1-13,15-81,83-91,93-104,106-141,143-167
+app/api/lib/modules/asset/repository/asset-repository.integration.tests.ts
+  89c098de50090be6 1-66,69-77,81-182,186-200,204-223,227-324,326-348,356-360,380-384,388-393
+  a04165e519d0f3c8 67-68,78-80,183-185,201-203,224-226,349-355,361-379,385-387
+app/api/lib/modules/appointment-reason/repository/appointment-reason-repository.integration.tests.ts
+  89c098de50090be6 1-158
+app/api/lib/modules/work-order-status/repository/work-order-status-repository.integration.tests.ts
+  89c098de50090be6 1-2,5-9,11-16,18-21,23-27,29-34,36-41,43-48,51-56,58-59,61-65,67-75,77-80,82,84-95,97,99-103,105-108,110,112-116,119-123,126-130,133-137,139,141-146,149-161,165-185,187-198
+app/api/lib/modules/language/repository/language-repository.integration.tests.ts
+  89c098de50090be6 1-169
+app/api/lib/modules/appointment-cancelled-reason/repository/appointment-cancelled-reason-repository.integration.tests.ts
+  89c098de50090be6 1-183
+app/api/lib/modules/tenant/repository/tenant-repository.integration.tests.ts
+  49750a4107378115 1-2,33,46,50
+  55571de7d46dd610 3-32,34-45,47-49,51-317
+app/api/lib/modules/religion/repository/religion-repository.integration.tests.ts
+  89c098de50090be6 1-169
+app/api/lib/modules/country/repository/country-repository.integration.tests.ts
+  89c098de50090be6 1-169
+test/helpers.ts
+  a04165e519d0f3c8 1-38
+app/api/lib/modules/role/repository/role-repository.integration.tests.ts
+  89c098de50090be6 2,4-7,13-267
+  a04165e519d0f3c8 1,3,8-12
+app/api/lib/modules/appointment-type/repository/appointment-type-repository.integration.tests.ts
+  89c098de50090be6 1-158
+app/api/lib/modules/user-role/repository/user-role-repository.integration.tests.ts
+  a04165e519d0f3c8 1-2,4,8,15-19,25,31,226,239,242,246-247
+  55571de7d46dd610 3,5-7,9,11-14,20-24,26-30,32-225,237-238,240-241,243-245,248-337
+  49750a4107378115 227-236
+app/api/lib/modules/work-order/repository/work-order-repository.integration.tests.ts
+  49750a4107378115 34,44,364,404,409-410,412,415,424,598,717,724
+  55571de7d46dd610 1-2,7,10-33,35-43,45-363,365-403,405-408,411,413-414,416-423,425-597,599-614,616-716,718-723,725-741,743-758
+app/api/lib/modules/asset-category/repository/asset-category-repository.integration.tests.ts
+  89c098de50090be6 1-13,15-81,83-91,93-104,106-167
+app/api/lib/modules/asset-condition/repository/asset-condition-repository.integration.tests.ts
+  89c098de50090be6 1-13,15-81,83-91,93-104,106-167
+app/api/lib/modules/work-order-type/repository/work-order-type-repository.integration.tests.ts
+  49750a4107378115 3-10,171-206,213-214,216-217
+  89c098de50090be6 1-2,11-21,23-84,86-94,96-106,108-170,207-212,215,218-223
+app/api/lib/modules/state/repository/state-repository.integration.tests.ts
+  a04165e519d0f3c8 12-16
+  89c098de50090be6 1-11,17-132,134-189
+app/api/lib/modules/appointment-status/repository/appointment-status-repository.integration.tests.ts
+  89c098de50090be6 1-137,139-145,147-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "b29711aca553ada2ef795acacd5ed408a4d0f503",
+  "prompts": {
+    "49750a4107378115": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f39a0ec5-8424-4757-9f54-f9f232934c8e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 136,
+      "total_deletions": 57,
+      "accepted_lines": 131,
+      "overriden_lines": 0
+    },
+    "55571de7d46dd610": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "608a3f5a-f7ce-485a-9e84-beae06ccdb63",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1745,
+      "overriden_lines": 9
+    },
+    "89c098de50090be6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c677f9b-ee3e-4fb1-b47d-abf79114dc61",
+        "model": "glm-4.7"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3653,
+      "overriden_lines": 40
+    },
+    "a04165e519d0f3c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4bd3ea31-bad7-49cb-a285-9c43dcf98081",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 146,
+      "total_deletions": 67,
+      "accepted_lines": 143,
+      "overriden_lines": 0
+    }
+  }
+}
