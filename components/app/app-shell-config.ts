@@ -272,6 +272,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Appointment Reasons',
     subtitle: 'Tenant-scoped booking reason records for Appointments.',
   },
+  '/appointment-masters/cancelled-reasons': {
+    title: 'Appointment Cancelled Reasons',
+    subtitle: 'Tenant-scoped cancellation reason records for Appointments.',
+  },
   '/global-references': {
     title: 'Global References',
     subtitle: 'Shared reference data used across Tenants.',
