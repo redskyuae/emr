@@ -1,6 +1,8 @@
-import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
+import { deactivatePermission } from '@/test/helpers';
+
+import { permissionSeedData } from '../seed-data';
 import { permissionRepository } from './permission-repository';
 
 describe('Permission repository', () => {
@@ -47,12 +49,8 @@ describe('Permission repository', () => {
   it('should return permissions in seed order', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const permissions = await permissionRepository.getPermissions();
-    // Permissions should be ordered by the seed order, not by id
-    expect(permissions).toBeInstanceOf(Array);
-    // Verify basic ordering properties
-    for (let i = 1; i < permissions.length; i++) {
-      expect(permissions[i]?.name).toBeTruthy();
-    }
+    // Ordering should follow the seed catalogue's own definition order, not insertion id.
+    expect(permissions.map((p) => p.name)).toEqual(permissionSeedData.map((p) => p.name));
   });
 
   it('should not return inactive permissions', async () => {
@@ -63,13 +61,7 @@ describe('Permission repository', () => {
       throw new Error('No permissions found after seeding');
     }
 
-    // Manually deactivate a permission by updating it
-    const { db } = await import('@/app/db');
-    const { permission: permissionTable } = await import('@/app/db/schema/permission');
-    await db
-      .update(permissionTable)
-      .set({ isActive: false })
-      .where(eq(permissionTable.id, firstPermission.id));
+    await deactivatePermission(firstPermission.id);
 
     // Should not include inactive permission
     const activePermissions = await permissionRepository.getPermissions();
@@ -85,13 +77,23 @@ describe('Permission repository', () => {
     await permissionRepository.seedPermissionCatalogue();
     const permissionsBefore = await permissionRepository.getPermissions();
     const countBefore = permissionsBefore.length;
+    const firstPermission = permissionsBefore[0];
+    if (!firstPermission) {
+      throw new Error('No permissions found after seeding');
+    }
+
+    // Force a value to drift from the seed catalogue so re-seeding must update it back.
+    await deactivatePermission(firstPermission.id);
 
     await permissionRepository.seedPermissionCatalogue();
     const permissionsAfter = await permissionRepository.getPermissions();
-    const countAfter = permissionsAfter.length;
 
-    // Count should be the same (no duplicates)
-    expect(countAfter).toBe(countBefore);
+    // No duplicate rows were created...
+    expect(permissionsAfter.length).toBe(countBefore);
+    // ...and the drifted value was corrected back to match the catalogue.
+    await expect(permissionRepository.getPermissionById(firstPermission.id)).resolves.toMatchObject(
+      { isActive: true }
+    );
   });
 
   it('should have required fields for each permission', async () => {

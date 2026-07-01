@@ -7,7 +7,12 @@ import { workOrderStatusRepository } from './work-order-status-repository';
 const tenantA = 'tenant-a-test';
 const tenantB = 'tenant-b-test';
 
-const createStatus = (tenantId: string, name: string, code: string, category: WorkOrderStatusCategory) =>
+const createStatus = (
+  tenantId: string,
+  name: string,
+  code: string,
+  category: WorkOrderStatusCategory
+) =>
   workOrderStatusRepository.createWorkOrderStatus({
     tenantId,
     name,
@@ -171,7 +176,7 @@ describe('WorkOrderStatus repository', () => {
     expect(result.data.map((status) => status.name)).toEqual(['Charlie']);
   });
 
-  it('should return in-use outcome when deleting system status', async () => {
+  it('should return not-found outcome when deleting a system status', async () => {
     // System statuses have isSystem: true and cannot be deleted
     const { db } = await import('@/app/db');
     const { workOrderStatus: workOrderStatusTable } =

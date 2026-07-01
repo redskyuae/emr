@@ -65,6 +65,16 @@ describe('AppointmentReason repository', () => {
     ).resolves.toBeUndefined();
   });
 
+  it("should not delete another tenant's appointment reason", async () => {
+    const created = await createReason(tenantA, 'Bruise', 'BRU');
+    await expect(
+      appointmentReasonRepository.deleteAppointmentReason(created.id, tenantB)
+    ).resolves.toBeUndefined();
+    await expect(
+      appointmentReasonRepository.getAppointmentReasonById(created.id, tenantA)
+    ).resolves.toMatchObject({ id: created.id });
+  });
+
   it('should update only active appointment reason for the requested tenant', async () => {
     const created = await createReason(tenantA, 'Rash', 'RAS');
     await expect(

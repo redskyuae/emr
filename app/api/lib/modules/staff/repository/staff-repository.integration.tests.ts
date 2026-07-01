@@ -147,6 +147,33 @@ describe('Staff repository', () => {
     expect(excludingHolder).toBeUndefined();
   });
 
+  it('should enforce unique active staff code per tenant', async () => {
+    const userId1 = await createTestUser('staff4b@example.com', 'Staff User 4B');
+    const userId2 = await createTestUser('staff5b@example.com', 'Staff User 5B');
+    const { db } = await import('@/app/db');
+    const { staffProfile: staffProfileTable } = await import('@/app/db/schema/staff-profile');
+
+    await db.insert(staffProfileTable).values({
+      userId: userId1,
+      tenantId: tenantA,
+      staffCode: 'STF005',
+      designation: 'Doctor',
+      isActive: true,
+    });
+
+    await expect(
+      db.insert(staffProfileTable).values({
+        userId: userId2,
+        tenantId: tenantA,
+        staffCode: 'stf005',
+        designation: 'Nurse',
+        isActive: true,
+      })
+    ).rejects.toMatchObject({
+      cause: { code: '23505', constraint: 'staff_profile_tenant_staff_code_idx' },
+    });
+  });
+
   it('should get staff by user id for tenant', async () => {
     const userId = await createTestUser('staff6@example.com', 'Staff User 6');
     const { db } = await import('@/app/db');
@@ -266,7 +293,7 @@ describe('Staff repository', () => {
 
     const resultByEmail = await staffRepository.getStaff({
       tenantId: tenantA,
-      query: 'searchable',
+      query: 'searchable@example.com',
     });
     expect(resultByEmail.data.map((s) => s.id)).toContain(userId);
   });

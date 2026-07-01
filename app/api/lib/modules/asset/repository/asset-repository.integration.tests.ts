@@ -1,61 +1,39 @@
-import { generateId } from '@better-auth/core/utils/id';
 import { describe, expect, it } from 'vitest';
 
+import { assetCategoryRepository } from '../../asset-category/repository/asset-category-repository';
+import { assetConditionRepository } from '../../asset-condition/repository/asset-condition-repository';
+import { assetStatusRepository } from '../../asset-status/repository/asset-status-repository';
 import { assetRepository } from './asset-repository';
 
 const tenantA = 'tenant-a-test';
 const tenantB = 'tenant-b-test';
 
-const createAssetStatus = async (tenantId: string, name: string, code: string) => {
-  const { db } = await import('@/app/db');
-  const { assetStatus: assetStatusTable } = await import('@/app/db/schema/asset-status');
+const createAssetStatus = (tenantId: string, name: string, code: string) =>
+  assetStatusRepository.createAssetStatus({
+    tenantId,
+    name,
+    code,
+    color: '#FF0000',
+    description: undefined,
+  });
 
-  const [status] = await db
-    .insert(assetStatusTable)
-    .values({
-      tenantId,
-      name,
-      code,
-      color: '#FF0000',
-    })
-    .returning();
+const createAssetCondition = (tenantId: string, name: string, code: string) =>
+  assetConditionRepository.createAssetCondition({
+    tenantId,
+    name,
+    code,
+    color: '#FF0000',
+    description: undefined,
+  });
 
-  return status!;
-};
-
-const createAssetCondition = async (tenantId: string, name: string, code: string) => {
-  const { db } = await import('@/app/db');
-  const { assetCondition: assetConditionTable } = await import('@/app/db/schema/asset-condition');
-
-  const [condition] = await db
-    .insert(assetConditionTable)
-    .values({
-      tenantId,
-      name,
-      code,
-      color: '#FF0000',
-    })
-    .returning();
-
-  return condition!;
-};
-
-const createAssetCategory = async (tenantId: string, name: string, code: string) => {
-  const { db } = await import('@/app/db');
-  const { assetCategory: assetCategoryTable } = await import('@/app/db/schema/asset-category');
-
-  const [category] = await db
-    .insert(assetCategoryTable)
-    .values({
-      tenantId,
-      name,
-      code,
-      color: '#FF0000',
-    })
-    .returning();
-
-  return category!;
-};
+const createAssetCategory = (tenantId: string, name: string, code: string) =>
+  assetCategoryRepository.createAssetCategory({
+    tenantId,
+    name,
+    code,
+    color: '#FF0000',
+    description: undefined,
+  });
 
 const createAsset = async (
   tenantId: string,
@@ -347,12 +325,10 @@ describe('Asset repository', () => {
     const { db } = await import('@/app/db');
     const { workOrder: workOrderTable } = await import('@/app/db/schema/work-order');
     const { workOrderType: workOrderTypeTable } = await import('@/app/db/schema/work-order-type');
-    const { workOrderPriority: workOrderPriorityTable } = await import(
-      '@/app/db/schema/work-order-priority'
-    );
-    const { workOrderStatus: workOrderStatusTable } = await import(
-      '@/app/db/schema/work-order-status'
-    );
+    const { workOrderPriority: workOrderPriorityTable } =
+      await import('@/app/db/schema/work-order-priority');
+    const { workOrderStatus: workOrderStatusTable } =
+      await import('@/app/db/schema/work-order-status');
 
     const status = await createAssetStatus(tenantA, 'Active', 'ACT');
     const category = await createAssetCategory(tenantA, 'Test', 'TST');

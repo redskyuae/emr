@@ -65,6 +65,16 @@ describe('AppointmentStatus repository', () => {
     ).resolves.toBeUndefined();
   });
 
+  it("should not delete another tenant's appointment status", async () => {
+    const created = await createStatus(tenantA, 'On Hold', 'HLD');
+    await expect(
+      appointmentStatusRepository.deleteAppointmentStatus(created.id, tenantB)
+    ).resolves.toBeUndefined();
+    await expect(
+      appointmentStatusRepository.getAppointmentStatusById(created.id, tenantA)
+    ).resolves.toMatchObject({ id: created.id });
+  });
+
   it('should update only active appointment status for the requested tenant', async () => {
     const created = await createStatus(tenantA, 'Checked Out', 'CHO');
     await expect(

@@ -65,6 +65,16 @@ describe('AppointmentType repository', () => {
     ).resolves.toBeUndefined();
   });
 
+  it("should not delete another tenant's appointment type", async () => {
+    const created = await createType(tenantA, 'Vaccination', 'VAC');
+    await expect(
+      appointmentTypeRepository.deleteAppointmentType(created.id, tenantB)
+    ).resolves.toBeUndefined();
+    await expect(
+      appointmentTypeRepository.getAppointmentTypeById(created.id, tenantA)
+    ).resolves.toMatchObject({ id: created.id });
+  });
+
   it('should update only active appointment type for the requested tenant', async () => {
     const created = await createType(tenantA, 'Procedure', 'PRC');
     await expect(

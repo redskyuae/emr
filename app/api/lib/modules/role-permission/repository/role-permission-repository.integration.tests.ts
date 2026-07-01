@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { seedOrganization } from '@/test/helpers';
+import { deactivatePermission, seedOrganization } from '@/test/helpers';
 import { permissionRepository } from '../../permission/repository/permission-repository';
 import { roleRepository } from '../../role/repository/role-repository';
 import { rolePermissionRepository } from './role-permission-repository';
@@ -338,13 +338,11 @@ describe('Role-Permission repository', () => {
     await rolePermissionRepository.assignPermissions(firstRole.id, tenantA, permissionIds);
 
     // Deactivate one permission
-    const { db } = await import('@/app/db');
-    const { permission: permissionTable } = await import('@/app/db/schema/permission');
-    const { eq } = await import('drizzle-orm');
-    await db
-      .update(permissionTable)
-      .set({ isActive: false })
-      .where(eq(permissionTable.id, permissionIds[0]));
+    const [firstPermissionId] = permissionIds;
+    if (firstPermissionId === undefined) {
+      throw new Error('No permission ids found');
+    }
+    await deactivatePermission(firstPermissionId);
 
     const assigned = await rolePermissionRepository.getAssignedPermissionsByRole(
       firstRole.id,
