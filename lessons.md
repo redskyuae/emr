@@ -59,3 +59,15 @@ Creating one-off modules such as `signin` or `signout` fragments the authenticat
 Keep authentication lifecycle operations inside `app/api/lib/modules/auth/`. Public routes may remain explicit, such as `/api/v1/signin` and `/api/v1/signout`, but their commands, validators, schemas, and repositories should live under the auth module.
 
 Session administration is distinct: listing Sessions, revoking another Session, or revoking all Sessions may remain in the Session module because those operations manage existing Sessions rather than performing the sign-in/sign-out lifecycle.
+
+# Backend Test Files Are Discovered by an Exact Suffix
+
+## The Problem
+
+Vitest only collects files matching `**/*.unit.tests.ts` and `**/*.integration.tests.ts` (see `vitest.config.ts`). The word `tests` is plural. A file named `*.unit.test.ts` (singular), `*.test.ts`, or `*.spec.ts` is **silently ignored**: it never runs, no error is reported, and CI stays green while the code it "covers" is actually untested. We have shipped both mis-named unit tests and hand-rolled `node:assert` `*.test.ts` files that executed nothing.
+
+A second, related trap: a repository finder/soft-delete (`getXById`, `findActiveBy*`, soft-`delete`/`update`) that returns the entity at runtime but is inferred as non-optional will pass tests yet fail `bunx tsc --noEmit` the moment a test mocks it as `undefined` — runtime-green is not enough.
+
+## The Solution
+
+Name backend test files `*.unit.tests.ts` / `*.integration.tests.ts` exactly, and gate "done" on both `bun run test` **and** `bunx tsc --noEmit`. Annotate finders/soft-deletes that callers guard with `if (!row)` as `Promise<Entity | undefined>` so the production type matches reality. Full per-layer coverage, worked examples, and the shared mocking patterns live in [`docs/backend-testing.md`](docs/backend-testing.md).

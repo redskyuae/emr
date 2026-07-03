@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-condition';
 import type {
+  AssetCondition,
   AssetConditionListParams,
   CreateAssetConditionData,
   UpdateAssetConditionData,
@@ -34,7 +35,10 @@ async function createAssetCondition(data: CreateAssetConditionData) {
   return createdAssetCondition;
 }
 
-async function updateAssetCondition(id: number, data: UpdateAssetConditionData) {
+async function updateAssetCondition(
+  id: number,
+  data: UpdateAssetConditionData
+): Promise<AssetCondition | undefined> {
   const [updatedAssetCondition] = await db
     .update(assetConditionTable)
     .set({
@@ -56,7 +60,10 @@ async function updateAssetCondition(id: number, data: UpdateAssetConditionData) 
   return updatedAssetCondition;
 }
 
-async function deleteAssetCondition(id: number, tenantId: string) {
+async function deleteAssetCondition(
+  id: number,
+  tenantId: string
+): Promise<AssetCondition | undefined> {
   const deletedOn = new Date();
 
   const [deletedAssetCondition] = await db
@@ -78,7 +85,10 @@ async function deleteAssetCondition(id: number, tenantId: string) {
   return deletedAssetCondition;
 }
 
-async function getAssetConditionById(id: number, tenantId: string) {
+async function getAssetConditionById(
+  id: number,
+  tenantId: string
+): Promise<AssetCondition | undefined> {
   const [assetCondition] = await db
     .select(assetConditionColumns)
     .from(assetConditionTable)
@@ -132,7 +142,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AssetCondition | undefined> {
   const [assetCondition] = await db
     .select(assetConditionColumns)
     .from(assetConditionTable)
@@ -153,7 +163,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<AssetCondition | undefined> {
   const [assetCondition] = await db
     .select(assetConditionColumns)
     .from(assetConditionTable)

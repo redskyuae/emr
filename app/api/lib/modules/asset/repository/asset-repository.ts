@@ -8,6 +8,7 @@ import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import { workOrder as workOrderTable } from '@/app/db/schema/work-order';
 import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import type {
+  Asset,
   AssetSummary,
   AssetListParams,
   CreateAssetData,
@@ -198,7 +199,7 @@ async function deleteAsset(id: number, tenantId: string) {
   });
 }
 
-async function getAssetById(id: number, tenantId: string) {
+async function getAssetById(id: number, tenantId: string): Promise<Asset | undefined> {
   const [asset] = await assetMasterJoins()
     .where(
       and(eq(assetTable.id, id), eq(assetTable.tenantId, tenantId), eq(assetTable.isDeleted, false))
@@ -328,7 +329,7 @@ async function findActiveBySerialNumber(
   tenantId: string,
   serialNumber: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<{ id: number; serialNumber: string } | undefined> {
   const [asset] = await db
     .select({ id: assetTable.id, serialNumber: assetTable.serialNumber })
     .from(assetTable)

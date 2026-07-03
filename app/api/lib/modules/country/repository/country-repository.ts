@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { country as countryTable } from '@/app/db/schema/country';
 import type {
+  Country,
   CountryListParams,
   CreateCountryInput,
   UpdateCountryInput,
@@ -28,7 +29,7 @@ async function createCountry(data: CreateCountryInput) {
   return createdCountry;
 }
 
-async function updateCountry(id: number, data: UpdateCountryInput) {
+async function updateCountry(id: number, data: UpdateCountryInput): Promise<Country | undefined> {
   const [updatedCountry] = await db
     .update(countryTable)
     .set({
@@ -42,7 +43,7 @@ async function updateCountry(id: number, data: UpdateCountryInput) {
   return updatedCountry;
 }
 
-async function deleteCountry(id: number) {
+async function deleteCountry(id: number): Promise<Country | undefined> {
   const deletedOn = new Date();
 
   const [deletedCountry] = await db
@@ -58,7 +59,7 @@ async function deleteCountry(id: number) {
   return deletedCountry;
 }
 
-async function getCountryById(id: number) {
+async function getCountryById(id: number): Promise<Country | undefined> {
   const [country] = await db
     .select(countryColumns)
     .from(countryTable)
@@ -93,7 +94,10 @@ async function getCountries({ page = 1, limit = 10, query }: CountryListParams =
   return { data, total };
 }
 
-async function findActiveByName(name: string, { excludeId }: { excludeId?: number } = {}) {
+async function findActiveByName(
+  name: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<Country | undefined> {
   const [country] = await db
     .select(countryColumns)
     .from(countryTable)
@@ -109,7 +113,10 @@ async function findActiveByName(name: string, { excludeId }: { excludeId?: numbe
   return country;
 }
 
-async function findActiveByCode(code: string, { excludeId }: { excludeId?: number } = {}) {
+async function findActiveByCode(
+  code: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<Country | undefined> {
   const [country] = await db
     .select(countryColumns)
     .from(countryTable)

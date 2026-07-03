@@ -141,7 +141,11 @@ async function createRole(tenantId: string, data: CreateRoleInput, isSystem = fa
   return createdRole;
 }
 
-async function updateRole(id: number, tenantId: string, data: UpdateRoleInput) {
+async function updateRole(
+  id: number,
+  tenantId: string,
+  data: UpdateRoleInput
+): Promise<Role | undefined> {
   const updateData: Partial<Pick<RoleRow, 'name' | 'description' | 'modifiedOn'>> = {
     modifiedOn: new Date(),
   };
@@ -165,7 +169,7 @@ async function updateRole(id: number, tenantId: string, data: UpdateRoleInput) {
   return updatedRole;
 }
 
-async function deleteRole(id: number, tenantId: string) {
+async function deleteRole(id: number, tenantId: string): Promise<Role | undefined> {
   const deletedOn = new Date();
 
   const [deletedRole] = await db
@@ -188,7 +192,7 @@ async function deleteRole(id: number, tenantId: string) {
   return deletedRole;
 }
 
-async function getRoleById(id: number, tenantId: string) {
+async function getRoleById(id: number, tenantId: string): Promise<Role | undefined> {
   const [role] = await db
     .select(roleColumns)
     .from(roleTable)
@@ -260,7 +264,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<Role | undefined> {
   const [role] = await db
     .select(roleColumns)
     .from(roleTable)
@@ -281,7 +285,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<Role | undefined> {
   const [role] = await db
     .select(roleColumns)
     .from(roleTable)

@@ -64,7 +64,7 @@ function hasOwnerRole(role: string) {
     .includes('owner');
 }
 
-async function getTenantById(id: string) {
+async function getTenantById(id: string): Promise<Tenant | undefined> {
   const [tenant] = await db
     .select(tenantColumns)
     .from(organization)
@@ -74,7 +74,10 @@ async function getTenantById(id: string) {
   return tenant ? toTenant(tenant) : undefined;
 }
 
-async function findTenantByName(name: string, { excludeId }: { excludeId?: string } = {}) {
+async function findTenantByName(
+  name: string,
+  { excludeId }: { excludeId?: string } = {}
+): Promise<Tenant | undefined> {
   const [tenant] = await db
     .select(tenantColumns)
     .from(organization)
@@ -89,7 +92,10 @@ async function findTenantByName(name: string, { excludeId }: { excludeId?: strin
   return tenant ? toTenant(tenant) : undefined;
 }
 
-async function findTenantBySlug(slug: string, { excludeId }: { excludeId?: string } = {}) {
+async function findTenantBySlug(
+  slug: string,
+  { excludeId }: { excludeId?: string } = {}
+): Promise<Tenant | undefined> {
   const [tenant] = await db
     .select(tenantColumns)
     .from(organization)
@@ -99,7 +105,7 @@ async function findTenantBySlug(slug: string, { excludeId }: { excludeId?: strin
   return tenant ? toTenant(tenant) : undefined;
 }
 
-async function updateTenant(id: string, data: UpdateTenantInput) {
+async function updateTenant(id: string, data: UpdateTenantInput): Promise<Tenant | undefined> {
   const updateData: Partial<Pick<TenantRow, 'name' | 'logo'>> = {};
 
   if (data.name !== undefined) {
@@ -119,7 +125,7 @@ async function updateTenant(id: string, data: UpdateTenantInput) {
   return updatedTenant ? toTenant(updatedTenant) : undefined;
 }
 
-async function setTenantActive(id: string, isActive: boolean) {
+async function setTenantActive(id: string, isActive: boolean): Promise<Tenant | undefined> {
   const [tenant] = await db
     .select(tenantColumns)
     .from(organization)

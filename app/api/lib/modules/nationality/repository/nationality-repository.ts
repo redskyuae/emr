@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { nationality as nationalityTable } from '@/app/db/schema/nationality';
 import type {
+  Nationality,
   CreateNationalityInput,
   NationalityListParams,
   UpdateNationalityInput,
@@ -28,7 +29,10 @@ async function createNationality(data: CreateNationalityInput) {
   return createdNationality;
 }
 
-async function updateNationality(id: number, data: UpdateNationalityInput) {
+async function updateNationality(
+  id: number,
+  data: UpdateNationalityInput
+): Promise<Nationality | undefined> {
   const [updatedNationality] = await db
     .update(nationalityTable)
     .set({
@@ -42,7 +46,7 @@ async function updateNationality(id: number, data: UpdateNationalityInput) {
   return updatedNationality;
 }
 
-async function deleteNationality(id: number) {
+async function deleteNationality(id: number): Promise<Nationality | undefined> {
   const deletedOn = new Date();
 
   const [deletedNationality] = await db
@@ -58,7 +62,7 @@ async function deleteNationality(id: number) {
   return deletedNationality;
 }
 
-async function getNationalityById(id: number) {
+async function getNationalityById(id: number): Promise<Nationality | undefined> {
   const [nationality] = await db
     .select(nationalityColumns)
     .from(nationalityTable)
@@ -93,7 +97,10 @@ async function getNationalities({ page = 1, limit = 10, query }: NationalityList
   return { data, total };
 }
 
-async function findActiveByName(name: string, { excludeId }: { excludeId?: number } = {}) {
+async function findActiveByName(
+  name: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<Nationality | undefined> {
   const [nationality] = await db
     .select(nationalityColumns)
     .from(nationalityTable)
@@ -109,7 +116,10 @@ async function findActiveByName(name: string, { excludeId }: { excludeId?: numbe
   return nationality;
 }
 
-async function findActiveByCode(code: string, { excludeId }: { excludeId?: number } = {}) {
+async function findActiveByCode(
+  code: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<Nationality | undefined> {
   const [nationality] = await db
     .select(nationalityColumns)
     .from(nationalityTable)

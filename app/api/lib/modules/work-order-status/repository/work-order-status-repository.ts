@@ -4,6 +4,7 @@ import { db } from '@/app/db';
 import { workOrder as workOrderTable } from '@/app/db/schema/work-order';
 import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import type {
+  WorkOrderStatus,
   CreateWorkOrderStatusData,
   WorkOrderStatusCategory,
   WorkOrderStatusListParams,
@@ -149,7 +150,10 @@ async function deleteWorkOrderStatus(id: number, tenantId: string) {
   });
 }
 
-async function getWorkOrderStatusById(id: number, tenantId: string) {
+async function getWorkOrderStatusById(
+  id: number,
+  tenantId: string
+): Promise<WorkOrderStatus | undefined> {
   const [workOrderStatus] = await db
     .select(workOrderStatusColumns)
     .from(workOrderStatusTable)
@@ -203,7 +207,7 @@ async function findActiveByName(
   tenantId: string,
   name: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<WorkOrderStatus | undefined> {
   const [workOrderStatus] = await db
     .select(workOrderStatusColumns)
     .from(workOrderStatusTable)
@@ -224,7 +228,7 @@ async function findActiveByCode(
   tenantId: string,
   code: string,
   { excludeId }: { excludeId?: number } = {}
-) {
+): Promise<WorkOrderStatus | undefined> {
   const [workOrderStatus] = await db
     .select(workOrderStatusColumns)
     .from(workOrderStatusTable)

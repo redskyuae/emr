@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/app/db';
 import { religion as religionTable } from '@/app/db/schema/religion';
 import type {
+  Religion,
   CreateReligionInput,
   ReligionListParams,
   UpdateReligionInput,
@@ -28,7 +29,10 @@ async function createReligion(data: CreateReligionInput) {
   return createdReligion;
 }
 
-async function updateReligion(id: number, data: UpdateReligionInput) {
+async function updateReligion(
+  id: number,
+  data: UpdateReligionInput
+): Promise<Religion | undefined> {
   const [updatedReligion] = await db
     .update(religionTable)
     .set({
@@ -42,7 +46,7 @@ async function updateReligion(id: number, data: UpdateReligionInput) {
   return updatedReligion;
 }
 
-async function deleteReligion(id: number) {
+async function deleteReligion(id: number): Promise<Religion | undefined> {
   const deletedOn = new Date();
 
   const [deletedReligion] = await db
@@ -58,7 +62,7 @@ async function deleteReligion(id: number) {
   return deletedReligion;
 }
 
-async function getReligionById(id: number) {
+async function getReligionById(id: number): Promise<Religion | undefined> {
   const [religion] = await db
     .select(religionColumns)
     .from(religionTable)
@@ -93,7 +97,10 @@ async function getReligions({ page = 1, limit = 10, query }: ReligionListParams 
   return { data, total };
 }
 
-async function findActiveByName(name: string, { excludeId }: { excludeId?: number } = {}) {
+async function findActiveByName(
+  name: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<Religion | undefined> {
   const [religion] = await db
     .select(religionColumns)
     .from(religionTable)
@@ -109,7 +116,10 @@ async function findActiveByName(name: string, { excludeId }: { excludeId?: numbe
   return religion;
 }
 
-async function findActiveByCode(code: string, { excludeId }: { excludeId?: number } = {}) {
+async function findActiveByCode(
+  code: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<Religion | undefined> {
   const [religion] = await db
     .select(religionColumns)
     .from(religionTable)

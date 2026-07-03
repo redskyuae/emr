@@ -10,6 +10,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Read `CLAUDE.md` for the full project architecture, coding conventions, module structure, and multi-tenancy rules. Read `CONTEXT.md` for the canonical domain glossary — use those terms exactly. Read `lessons.md` for important lessons learned, such as how to implement DB-level unique constraints with soft deletes.
 
+Any backend change (anything under `app/api/lib/modules/**` or `app/db/schema/**`) must ship with colocated Vitest tests in the **same change**. Read [`docs/backend-testing.md`](docs/backend-testing.md) — it has the mandatory per-layer coverage, the file-naming rule (the suffix is `*.unit.tests.ts` / `*.integration.tests.ts`, **plural**; singular / `*.test.ts` / `*.spec.ts` files are silently ignored by Vitest), worked examples for schema/validator/command/query/repository tests, and the shared mocking patterns. The suite (`bun run test`) and `bunx tsc --noEmit` must stay green.
+
 # Team Skills
 
 The `.agents/skills/` directory contains shared workflow skills for this project. Each skill is a directory with a `SKILL.md` that describes what it does and when to use it.

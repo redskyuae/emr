@@ -4,6 +4,7 @@ import { db } from '@/app/db';
 import { permission as permissionTable } from '@/app/db/schema/permission';
 import { rolePermission as rolePermissionTable } from '@/app/db/schema/role-permission';
 import type { Role } from '../../role/schemas/role-schema';
+import type { PermissionAssignment } from '../schemas/role-permission-schema';
 
 const assignedPermissionColumns = {
   id: permissionTable.id,
@@ -70,7 +71,11 @@ async function getActivePermissionsByIds(permissionIds: number[]) {
     .orderBy(...orderAssignedPermissions());
 }
 
-async function getPermissionAssignment(roleId: number, permissionId: number, tenantId: string) {
+async function getPermissionAssignment(
+  roleId: number,
+  permissionId: number,
+  tenantId: string
+): Promise<PermissionAssignment | undefined> {
   const [assignment] = await db
     .select(permissionAssignmentColumns)
     .from(rolePermissionTable)
@@ -129,7 +134,11 @@ async function setPermissions(roleId: number, tenantId: string, permissionIds: n
   });
 }
 
-async function removePermission(roleId: number, permissionId: number, tenantId: string) {
+async function removePermission(
+  roleId: number,
+  permissionId: number,
+  tenantId: string
+): Promise<PermissionAssignment | undefined> {
   const [assignment] = await db
     .delete(rolePermissionTable)
     .where(
