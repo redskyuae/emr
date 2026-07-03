@@ -15,6 +15,7 @@ import {
   Settings,
   ShieldCheck,
   Stethoscope,
+  Tag,
   UserRoundCog,
   UsersRound,
   Wrench,
@@ -166,6 +167,14 @@ export const appNavGroups: AppNavGroup[] = [
         ],
       },
       {
+        title: 'Asset Management Masters',
+        href: '/asset-management-masters',
+        icon: Tag,
+        items: [
+          { title: 'Categories', href: '/asset-management-masters/categories' },
+        ],
+      },
+      {
         title: 'Global References',
         href: '/global-references',
         icon: Globe2,
@@ -263,6 +272,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/appointment-masters/types': {
     title: 'Appointment Types',
     subtitle: 'Tenant-scoped clinical category or visit type records for Appointments.',
+  },
+  '/asset-management-masters': {
+    title: 'Asset Management Masters',
+    subtitle: 'Tenant-scoped asset configuration data.',
+  },
+  '/asset-management-masters/categories': {
+    title: 'Asset Categories',
+    subtitle: 'Tenant-scoped category records for classifying tracked assets.',
   },
   '/global-references': {
     title: 'Global References',
