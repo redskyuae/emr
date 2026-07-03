@@ -1,0 +1,23 @@
+eslint.config.mjs
+  b7b858710c8839ee 26-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "b0a9fd19dbc3b3a66d74f1ca0862c651b35034c0",
+  "prompts": {
+    "b7b858710c8839ee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f35cae7-e183-4167-9e13-67baec955c5d",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 0,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
