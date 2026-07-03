@@ -23,6 +23,14 @@ const eslintConfig = defineConfig([
       'react-hooks/set-state-in-effect': 'off',
     },
   },
+  // Backend Vitest suites — mocking Drizzle/repository internals often needs `any`;
+  // tsc still fully type-checks these files, this only softens the lint rule to a warning.
+  {
+    files: ['**/*.unit.tests.ts', '**/*.integration.tests.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
 ]);
 
 export default eslintConfig;
