@@ -1,0 +1,4 @@
+## 2024-07-03 - [Missing Authentication on Master Data API Endpoints]
+**Vulnerability:** Several global master data API endpoints (languages, countries, states, religions, nationalities) were completely unauthenticated, allowing any user to read, create, update, or delete master data without a valid session.
+**Learning:** The project relies on route-level authentication checks. Since master data is not tenant-specific, `requireAuth()` must be used instead of `requireTenantSession()`, but the developers missed applying `requireAuth()` in these specific routes.
+**Prevention:** Ensure that all newly added API route handlers include an explicit authentication check (e.g., `const session = await requireAuth(); if (session instanceof Response) return session;`) at the beginning of the function, unless the endpoint is explicitly designed to be public.
