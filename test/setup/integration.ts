@@ -30,8 +30,10 @@ beforeEach(async () => {
   const result = await db.execute(sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
   const tableNames = result.rows.map((row: Record<string, unknown>) => row.tablename as string);
 
-  if (tableNames.length === 0) return;
+  if (tableNames.length === 0) {
+    return;
+  }
 
-  const quotedTables = tableNames.map((name) => `"${name}"`).join(', ');
+  const quotedTables = tableNames.map((name: string) => `"${name}"`).join(', ');
   await db.execute(sql.raw(`TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`));
 });
