@@ -26,7 +26,7 @@ const eslintConfig = defineConfig([
   // Backend Vitest suites — mocking Drizzle/repository internals often needs `any`;
   // tsc still fully type-checks these files, this only softens the lint rule to a warning.
   {
-    files: ['**/*.unit.tests.ts', '**/*.integration.tests.ts'],
+    files: ['**/*.unit.tests.ts', '**/*.integration.tests.ts', 'test/setup/integration.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
     },
