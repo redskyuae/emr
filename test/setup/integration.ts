@@ -28,7 +28,7 @@ beforeEach(async () => {
   const { db } = await import('@/app/db');
 
   const result = await db.execute(sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`);
-  const tableNames = result.rows.map((row) => row.tablename as string);
+  const tableNames = result.rows.map((row: Record<string, unknown>) => row.tablename as string);
 
   if (tableNames.length === 0) return;
 
