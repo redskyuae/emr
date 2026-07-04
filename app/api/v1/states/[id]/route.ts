@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type { GetStateResponse, UpdateStateResponse } from './types';
 
 import { deleteStateCommand } from '@/app/api/lib/modules/state/commands/delete-state-command';
+import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 import { updateStateCommand } from '@/app/api/lib/modules/state/commands/update-state-command';
 import { getStateByIdQuery } from '@/app/api/lib/modules/state/queries/get-state-by-id-query';
 
@@ -24,6 +25,8 @@ function errorMessage(status: number) {
 
 export async function GET(_request: NextRequest, context: StateRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
     const { id } = await context.params;
     const result = await getStateByIdQuery(id);
 
@@ -47,6 +50,8 @@ export async function GET(_request: NextRequest, context: StateRouteContext) {
 
 export async function PUT(request: NextRequest, context: StateRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
     const { id } = await context.params;
     let payload: unknown;
 
@@ -81,6 +86,8 @@ export async function PUT(request: NextRequest, context: StateRouteContext) {
 
 export async function DELETE(_request: NextRequest, context: StateRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
     const { id } = await context.params;
     const result = await deleteStateCommand(id);
 

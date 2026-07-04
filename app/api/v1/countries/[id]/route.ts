@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type { GetCountryResponse, UpdateCountryResponse } from './types';
 
 import { deleteCountryCommand } from '@/app/api/lib/modules/country/commands/delete-country-command';
+import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 import { updateCountryCommand } from '@/app/api/lib/modules/country/commands/update-country-command';
 import { getCountryByIdQuery } from '@/app/api/lib/modules/country/queries/get-country-by-id-query';
 
@@ -24,6 +25,8 @@ function errorMessage(status: number) {
 
 export async function GET(_request: NextRequest, context: CountryRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
     const { id } = await context.params;
     const result = await getCountryByIdQuery(id);
 
@@ -47,6 +50,8 @@ export async function GET(_request: NextRequest, context: CountryRouteContext) {
 
 export async function PUT(request: NextRequest, context: CountryRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
     const { id } = await context.params;
     let payload: unknown;
 
@@ -81,6 +86,8 @@ export async function PUT(request: NextRequest, context: CountryRouteContext) {
 
 export async function DELETE(_request: NextRequest, context: CountryRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
     const { id } = await context.params;
     const result = await deleteCountryCommand(id);
 
