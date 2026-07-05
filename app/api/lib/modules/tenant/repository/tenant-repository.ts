@@ -44,6 +44,10 @@ function isActiveTenant(metadata: string | null) {
   return parseMetadata(metadata).isActive !== false;
 }
 
+function isOnboardedTenant(metadata: string | null) {
+  return typeof parseMetadata(metadata).onboardedAt === 'string';
+}
+
 function toTenant(
   row: Pick<TenantRow, 'id' | 'name' | 'slug' | 'logo' | 'metadata' | 'createdAt'>
 ) {
@@ -54,6 +58,7 @@ function toTenant(
     logo: row.logo,
     createdAt: row.createdAt,
     isActive: isActiveTenant(row.metadata),
+    isOnboarded: isOnboardedTenant(row.metadata),
   } satisfies Tenant;
 }
 
@@ -150,6 +155,32 @@ async function setTenantActive(id: string, isActive: boolean): Promise<Tenant | 
   return updatedTenant ? toTenant(updatedTenant) : undefined;
 }
 
+async function markTenantOnboarded(id: string): Promise<Tenant | undefined> {
+  const [tenant] = await db
+    .select(tenantColumns)
+    .from(organization)
+    .where(eq(organization.id, id))
+    .limit(1);
+
+  if (!tenant) {
+    return undefined;
+  }
+
+  const metadata = parseMetadata(tenant.metadata);
+
+  if (typeof metadata.onboardedAt === 'string') {
+    return toTenant(tenant);
+  }
+
+  const [updatedTenant] = await db
+    .update(organization)
+    .set({ metadata: JSON.stringify({ ...metadata, onboardedAt: new Date().toISOString() }) })
+    .where(eq(organization.id, id))
+    .returning(tenantColumns);
+
+  return updatedTenant ? toTenant(updatedTenant) : undefined;
+}
+
 async function findTenantMembership(tenantId: string, userId: string) {
   const [membership] = await db
     .select(membershipColumns)
@@ -178,5 +209,6 @@ export const tenantRepository = {
   setTenantActive,
   findTenantByName,
   findTenantBySlug,
+  markTenantOnboarded,
   findTenantMembership,
 };

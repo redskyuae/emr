@@ -994,7 +994,8 @@ export const openApiDocument = {
     },
     {
       name: 'Tenant Provisioning',
-      description: 'Public signup API that provisions a Tenant and Tenant Owner.',
+      description:
+        'Public signup API that provisions a Tenant and Tenant Owner, plus the session-scoped Tenant Onboarding API that installs baseline defaults.',
     },
     { name: 'Tenant', description: 'Tenant management APIs.' },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
@@ -1057,6 +1058,7 @@ export const openApiDocument = {
                   slug: 'apollo-hospitals',
                   logo: null,
                   isActive: true,
+                  isOnboarded: true,
                   createdAt: '2026-06-11T00:00:00.000Z',
                 },
               },
@@ -1122,7 +1124,7 @@ export const openApiDocument = {
         tags: ['Tenant Provisioning'],
         summary: 'Signup and provision Tenant',
         description:
-          'Creates the Tenant Owner user, provisions a Tenant, initializes required baseline configuration including default Appointment, Asset, and Work Order masters, signs the owner in, and sets the new Tenant as active.',
+          'First phase of Tenant Provisioning: creates the Tenant Owner user, provisions a Tenant, signs the owner in, and sets the new Tenant as active. Baseline configuration (Permission Catalogue and default Appointment, Asset, and Work Order masters) is installed by the second phase, Tenant Onboarding, via POST /api/v1/onboarding; the returned Tenant has isOnboarded false until that phase completes.',
         requestBody: requestBody('SignupRequest', {
           tenantName: 'Apollo Hospitals',
           ownerName: 'Dr. Priya Raghavan',
@@ -1131,7 +1133,7 @@ export const openApiDocument = {
         }),
         responses: {
           '201': {
-            description: 'Tenant provisioned and owner signed in.',
+            description: 'Tenant provisioned and owner signed in. Tenant Onboarding still pending.',
             content: jsonContent(dataEnvelopeSchema('SignupResult'), {
               data: {
                 tenant: {
@@ -1140,6 +1142,7 @@ export const openApiDocument = {
                   slug: 'apollo-hospitals',
                   logo: null,
                   isActive: true,
+                  isOnboarded: false,
                   createdAt: '2026-06-11T00:00:00.000Z',
                 },
               },
@@ -1160,6 +1163,49 @@ export const openApiDocument = {
             content: jsonContent(schemaRef('ConflictError'), {
               message: 'A user with this email already exists.',
               errors: ['A user with this email already exists.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/onboarding': {
+      post: {
+        tags: ['Tenant Provisioning'],
+        summary: 'Onboard active Tenant',
+        description:
+          'Second phase of Tenant Provisioning: idempotently seeds the system-wide Permission Catalogue and the active Tenant’s default Appointment, Asset, and Work Order masters, then marks the Tenant as onboarded. The Tenant is resolved from the Session (activeOrganizationId) and never supplied by the client. Calling this API for an already onboarded Tenant returns 200 without re-seeding, and a Tenant that already has seeded defaults but no onboarded flag is only marked onboarded — defaults deleted by a Tenant Admin are never resurrected. The request has no body.',
+        security: [{ cookieAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Tenant onboarded (or already onboarded); baseline defaults are in place.',
+            content: jsonContent(dataEnvelopeSchema('OnboardTenantResult'), {
+              data: {
+                tenant: {
+                  id: 'org_123',
+                  name: 'Apollo Hospitals',
+                  slug: 'apollo-hospitals',
+                  logo: null,
+                  isActive: true,
+                  isOnboarded: true,
+                  createdAt: '2026-06-11T00:00:00.000Z',
+                },
+              },
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No Active Tenant is selected on the Session.',
+            content: jsonContent(schemaRef('ForbiddenError'), {
+              message: 'No active tenant selected.',
+              errors: ['No active tenant selected.'],
+            }),
+          },
+          '404': {
+            description: 'The active Tenant no longer exists.',
+            content: jsonContent(schemaRef('NotFoundError'), {
+              message: 'Tenant not found',
+              errors: ['Tenant not found'],
             }),
           },
           '500': responseRef('InternalServerError'),
@@ -3273,6 +3319,13 @@ export const openApiDocument = {
           tenant: schemaRef('Tenant'),
         },
       },
+      OnboardTenantResult: {
+        type: 'object',
+        required: ['tenant'],
+        properties: {
+          tenant: schemaRef('Tenant'),
+        },
+      },
       UpdateTenantRequest: {
         type: 'object',
         minProperties: 1,
@@ -3283,13 +3336,17 @@ export const openApiDocument = {
       },
       Tenant: {
         type: 'object',
-        required: ['id', 'name', 'slug', 'logo', 'isActive', 'createdAt'],
+        required: ['id', 'name', 'slug', 'logo', 'isActive', 'isOnboarded', 'createdAt'],
         properties: {
           id: { type: 'string' },
           name: { type: 'string' },
           slug: { type: 'string', maxLength: 60, pattern: '^[a-z0-9-]+$' },
           logo: { type: ['string', 'null'], format: 'uri' },
           isActive: { type: 'boolean' },
+          isOnboarded: {
+            type: 'boolean',
+            description: 'True once Tenant Onboarding has installed the baseline configuration.',
+          },
           createdAt: { type: 'string', format: 'date-time' },
         },
       },

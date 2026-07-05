@@ -64,6 +64,7 @@ export type Tenant = {
   createdAt: Date;
   isActive: boolean;
   logo: string | null;
+  isOnboarded: boolean;
 };
 
 export type TenantMembership = {

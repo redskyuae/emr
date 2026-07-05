@@ -37,6 +37,10 @@ function isActiveTenant(metadata: string | null) {
   return parseMetadata(metadata).isActive !== false;
 }
 
+function isOnboardedTenant(metadata: string | null) {
+  return typeof parseMetadata(metadata).onboardedAt === 'string';
+}
+
 function toTenant(
   row: Pick<TenantRow, 'id' | 'name' | 'slug' | 'logo' | 'metadata' | 'createdAt'>
 ) {
@@ -47,6 +51,7 @@ function toTenant(
     logo: row.logo,
     isActive: isActiveTenant(row.metadata),
     createdAt: row.createdAt,
+    isOnboarded: isOnboardedTenant(row.metadata),
   } satisfies Tenant;
 }
 

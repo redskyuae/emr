@@ -314,4 +314,46 @@ describe('Tenant repository', () => {
     const fetched = await tenantRepository.getTenantById(tenantA);
     expect(fetched?.isActive).toBe(true);
   });
+
+  it('should report a tenant without onboardedAt metadata as not onboarded', async () => {
+    await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+
+    const fetched = await tenantRepository.getTenantById(tenantA);
+
+    expect(fetched?.isOnboarded).toBe(false);
+  });
+
+  it('should mark a tenant onboarded and preserve existing metadata', async () => {
+    await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+
+    const onboarded = await tenantRepository.markTenantOnboarded(tenantA);
+
+    expect(onboarded).toMatchObject({ id: tenantA, isActive: true, isOnboarded: true });
+
+    const fetched = await tenantRepository.getTenantById(tenantA);
+    expect(fetched?.isOnboarded).toBe(true);
+    expect(fetched?.isActive).toBe(true);
+  });
+
+  it('should keep the original onboardedAt when marking an already onboarded tenant', async () => {
+    await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+
+    await tenantRepository.markTenantOnboarded(tenantA);
+    const [firstRow] = await db.select().from(organization).where(eq(organization.id, tenantA));
+    const firstMetadata = JSON.parse(firstRow.metadata ?? '{}') as { onboardedAt?: string };
+
+    const again = await tenantRepository.markTenantOnboarded(tenantA);
+    expect(again?.isOnboarded).toBe(true);
+
+    const [secondRow] = await db.select().from(organization).where(eq(organization.id, tenantA));
+    const secondMetadata = JSON.parse(secondRow.metadata ?? '{}') as { onboardedAt?: string };
+
+    expect(firstMetadata.onboardedAt).toBeTruthy();
+    expect(secondMetadata.onboardedAt).toBe(firstMetadata.onboardedAt);
+  });
+
+  it('should return undefined when marking a non-existent tenant onboarded', async () => {
+    const onboarded = await tenantRepository.markTenantOnboarded('non-existent');
+    expect(onboarded).toBeUndefined();
+  });
 });

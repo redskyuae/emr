@@ -3,15 +3,11 @@ import { StatusCodes } from 'http-status-codes';
 import { auth } from '@/app/lib/auth';
 import { createCookieHeader, getSetCookies } from '@/app/api/lib/utils/auth-cookie-helpers';
 import type { CommandResult } from '@/app/api/lib/utils/types';
-import { permissionRepository } from '../../permission/repository/permission-repository';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { getTenantUniqueConstraintErrors } from '../../tenant/validator/tenant-uniqueness-validator';
 import type { TenantProvisioningResult } from '../schemas/tenant-provisioning-schema';
 import { tenantProvisioningRepository } from '../repository/tenant-provisioning-repository';
 import { validateTenantProvisioning } from '../validator/tenant-provisioning-validator';
-import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
-import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
-import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 
 function getAuthCreateUserErrors(error: unknown) {
   if (typeof error !== 'object' || error === null) {
@@ -75,8 +71,6 @@ export async function provisionTenantCommand(
   let createdTenantId: string | undefined;
 
   try {
-    await permissionRepository.seedPermissionCatalogue();
-
     const createdUser = await auth.api.createUser({
       body: {
         name: validationResult.data.ownerName,
@@ -109,48 +103,6 @@ export async function provisionTenantCommand(
         success: false,
         errors: ['Tenant provisioning failed.'],
         status: StatusCodes.INTERNAL_SERVER_ERROR,
-      };
-    }
-
-    const appointmentMastersResult = await seedDefaultAppointmentMastersCommand(createdTenant.id);
-
-    if (!appointmentMastersResult.success) {
-      await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });
-      createdTenantId = undefined;
-      createdUserId = undefined;
-
-      return {
-        success: false,
-        errors: appointmentMastersResult.errors,
-        status: appointmentMastersResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
-      };
-    }
-
-    const assetMastersResult = await seedDefaultAssetMastersCommand(createdTenant.id);
-
-    if (!assetMastersResult.success) {
-      await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });
-      createdTenantId = undefined;
-      createdUserId = undefined;
-
-      return {
-        success: false,
-        errors: assetMastersResult.errors,
-        status: assetMastersResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
-      };
-    }
-
-    const workOrderMastersResult = await seedDefaultWorkOrderMastersCommand(createdTenant.id);
-
-    if (!workOrderMastersResult.success) {
-      await cleanupCreatedProvisioning({ tenantId: createdTenant.id, userId: createdUser.user.id });
-      createdTenantId = undefined;
-      createdUserId = undefined;
-
-      return {
-        success: false,
-        errors: workOrderMastersResult.errors,
-        status: workOrderMastersResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
       };
     }
 

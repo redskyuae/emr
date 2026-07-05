@@ -20,7 +20,7 @@ export function SignupForm() {
 
   const signUpMutation = useSignUp({
     onSuccess: () => {
-      router.replace('/dashboard');
+      router.replace('/onboarding');
       router.refresh();
     },
   });
