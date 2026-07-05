@@ -1,0 +1,93 @@
+CONTEXT.md
+  78ce9972ad9e4861 21-25
+docs/adr/0017-tenant-provisioning-splits-into-signup-and-onboarding-phases.md
+  78ce9972ad9e4861 1-4
+  69620286a16b2c1c 5
+app/(auth)/layout.tsx
+  69620286a16b2c1c 2,5-6,23-29
+docs/adr/0006-tenant-creation-through-signup-provisioning.md
+  78ce9972ad9e4861 4-5
+app/api/lib/modules/tenant-provisioning/validator/tenant-onboarding-validator.ts
+  78ce9972ad9e4861 1-24
+app/(protected)/layout.tsx
+  78ce9972ad9e4861 6,23-32
+app/api/v1/onboarding/types.ts
+  78ce9972ad9e4861 1-7
+app/(auth)/login/page.tsx
+  69620286a16b2c1c 9
+app/api/lib/modules/auth/repository/auth-repository.ts
+  78ce9972ad9e4861 40-43,54
+app/api/lib/modules/tenant-provisioning/validator/tenant-onboarding-validator.unit.tests.ts
+  78ce9972ad9e4861 1-63
+app/api/lib/modules/tenant/schemas/tenant-schema.ts
+  78ce9972ad9e4861 67
+app/api/lib/modules/tenant-provisioning/commands/onboard-tenant-command.ts
+  78ce9972ad9e4861 1-12,29-48,50,61,63,70-91
+  69620286a16b2c1c 13-28,49,51-60,62,64-69
+app/onboarding/page.tsx
+  69620286a16b2c1c 5-6,31-42
+app/api/lib/modules/tenant-provisioning/commands/onboard-tenant-command.unit.tests.ts
+  69620286a16b2c1c 31-33,74-76,128-131,136,140-152
+  78ce9972ad9e4861 1-30,34-73,77-127,132-135,137-139,153-194
+app/queries/auth/useOnboardTenant.ts
+  78ce9972ad9e4861 1-28
+app/api/lib/modules/tenant/repository/tenant-repository.integration.tests.ts
+  78ce9972ad9e4861 317-358
+app/api/lib/modules/tenant-provisioning/commands/provision-tenant-command.unit.tests.ts
+  78ce9972ad9e4861 1-191
+app/(auth)/signup/_components/signup-form.tsx
+  78ce9972ad9e4861 23
+app/api/lib/modules/tenant-provisioning/repository/tenant-provisioning-repository.integration.tests.ts
+  69620286a16b2c1c 1,5,7-12,14-16,34-67,69-85,87-91,93-119,121-124,126-129,131-136,138-161,163-166
+  78ce9972ad9e4861 2-4,6,13,17-33,68,86,92,120,125,130,137,162,167-168
+app/onboarding/_components/onboarding-page-impl.tsx
+  69620286a16b2c1c 47-49,54
+app/api/lib/openapi/document.ts
+  78ce9972ad9e4861 997-998,1061,1127,1136,1145,1172-1214,3322-3328,3339,3346-3349
+app/api/lib/modules/tenant/repository/tenant-repository.ts
+  78ce9972ad9e4861 47-50,61,158-183,212
+app/api/lib/modules/tenant-provisioning/repository/tenant-provisioning-repository.ts
+  69620286a16b2c1c 2,61-67,69-100,102-106,113-115
+  78ce9972ad9e4861 68,101,107-108
+app/api/v1/onboarding/route.ts
+  78ce9972ad9e4861 1-46
+app/onboarding/loader.tsx
+  69620286a16b2c1c 1-34
+app/(auth)/signup/page.tsx
+  69620286a16b2c1c 3
+components/ui/multi-step-loader.tsx
+  78ce9972ad9e4861 1-51,53-54,56-137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "10c17bb31669dee1b3fa93fc6e8c4d20ef5716b8",
+  "prompts": {
+    "69620286a16b2c1c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d70ed88f-9db0-4fec-983e-f37bc86b700c",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 524,
+      "total_deletions": 110,
+      "accepted_lines": 503,
+      "overriden_lines": 0
+    },
+    "78ce9972ad9e4861": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2db297b3-3a04-44a8-81da-92fa5ce2fc90",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1145,
+      "total_deletions": 68,
+      "accepted_lines": 1070,
+      "overriden_lines": 2
+    }
+  }
+}
