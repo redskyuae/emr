@@ -1,0 +1,49 @@
+app/(marketing)/page.tsx
+  2fa156da5db24816 720,724,728,740,746,755,757,759-761
+app/layout.tsx
+  2fa156da5db24816 3,9-12,39
+components/ui/card.tsx
+  2fa156da5db24816 15
+components/ui/input-group.tsx
+  2fa156da5db24816 17
+.agents/skills/design-system/SKILL.md
+  2fa156da5db24816 3,8,20-21
+DESIGN.md
+  2fa156da5db24816 7,9-10,12-13,21-30,36-40,42,44,46,51,61-62,99,101,103-105
+components/ui/button.tsx
+  2fa156da5db24816 8,12-13,15,17,26-30,32,34-35
+components/ui/input.tsx
+  2fa156da5db24816 11
+components/ui/select.tsx
+  2fa156da5db24816 40
+components/marketing/marketing-animations.tsx
+  2fa156da5db24816 192
+CLAUDE.md
+  2fa156da5db24816 23
+app/(auth)/layout.tsx
+  2fa156da5db24816 33,36,40,44,53,61,66,73
+components/marketing/site-header.tsx
+  2fa156da5db24816 22,24,31,37,43-47,55
+app/globals.css
+  2fa156da5db24816 11-12,14-15,18-19,60-79,83-85,87,89-92,96-101,103-108,111-139,149-150,163,170-171,176-192,209-210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "7430477ba367aa0cc43e0065e9cac3a3d0954605",
+  "prompts": {
+    "2fa156da5db24816": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2da2a152-d1c7-4432-9f27-bbed56575564",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 191,
+      "total_deletions": 125,
+      "accepted_lines": 187,
+      "overriden_lines": 0
+    }
+  }
+}
