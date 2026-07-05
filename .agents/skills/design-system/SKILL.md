@@ -1,11 +1,11 @@
 ---
 name: design-system
-description: Apply the project's Microsoft Fluent-inspired design system when building or changing any frontend UI. Use when creating pages, components, forms, dashboards, styling, theming, or animations — or when the user mentions design, look-and-feel, shadcn, or Fluent.
+description: Apply the project's Microsoft-web-inspired claymorphism design system when building or changing any frontend UI. Use when creating pages, components, forms, dashboards, styling, theming, or animations — or when the user mentions design, look-and-feel, shadcn, Fluent, or clay.
 ---
 
 # Design System
 
-This project has a committed design system: **Microsoft Fluent-inspired, built on shadcn/ui, deep blue primary**. It is documented in [`DESIGN.md`](../../../DESIGN.md) at the repo root — that file is the source of truth. This skill tells you how to work inside it.
+This project has a committed design system: **Microsoft web design language (microsoft.com) with claymorphism depth, built on shadcn/ui, Microsoft blue primary, pure white page background**. It is documented in [`DESIGN.md`](../../../DESIGN.md) at the repo root — that file is the source of truth. This skill tells you how to work inside it.
 
 ## Before writing any UI code
 
@@ -17,8 +17,8 @@ This project has a committed design system: **Microsoft Fluent-inspired, built o
 
 - **Tokens only.** `bg-primary`, `text-muted-foreground`, `shadow-fluent-8` — never raw hex/oklch in components. Theme changes happen in `app/globals.css`, nowhere else.
 - **Don't fork `components/ui/`.** Layout tweaks go through `className`; theme tweaks go through tokens. Domain composites go in `components/{brand,marketing,auth,...}/`.
-- **Fonts are fixed**: Schibsted Grotesk (headings, automatic on h1–h4), Public Sans (body), Geist Mono (codes/IDs/timestamps). Do not add fonts.
-- **Elevation = hierarchy.** Use the `shadow-fluent-*` ramp from DESIGN.md; the more modal the element, the higher the shadow.
+- **Fonts are fixed**: the Segoe UI stack with Open Sans as the bundled fallback — headings semibold (automatic on h1–h4), body regular, Geist Mono for codes/IDs/timestamps. Do not add fonts.
+- **Elevation = hierarchy.** Use the `shadow-fluent-*` clay ramp from DESIGN.md (soft drop + inset highlight); the more modal the element, the higher the shadow.
 - **Motion**: GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`. Ease `power3.out`, ≤ 0.9s, scroll reveals fire once, and **always** bail out under `prefers-reduced-motion`. No continuous motion inside the clinical app.
 - **Both themes.** Every screen must hold up in light and dark (`.dark`).
 - **Route-local components.** Page-specific React components under `app/` must live in that route's `_components/` directory. Do not create ad hoc `components/` folders beside pages or leave page clients beside `page.tsx`.

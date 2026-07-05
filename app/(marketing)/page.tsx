@@ -717,15 +717,15 @@ export default function MarketingPage() {
       </section>
 
       {/* ── Security ─────────────────────────────────────────── */}
-      <section id="security" className="bg-foreground text-background dark:bg-card scroll-mt-20">
+      <section id="security" className="scroll-mt-20 border-t">
         <div className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-2">
             <div data-reveal>
-              <Eyebrow className="text-chart-3">Security</Eyebrow>
+              <Eyebrow>Security</Eyebrow>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-balance sm:text-4xl">
                 Healthcare data deserves architectural guarantees
               </h2>
-              <p className="mt-4 text-lg leading-relaxed opacity-70">
+              <p className="text-muted-foreground mt-4 text-lg leading-relaxed">
                 Isolation isn’t a feature flag in Medical EMR — it’s the data model. Every table,
                 every query, every session is tenant-scoped.
               </p>
@@ -737,13 +737,13 @@ export default function MarketingPage() {
                 ].map(([value, label]) => (
                   <div key={label}>
                     <p
-                      className="font-heading text-chart-3 text-3xl font-bold"
+                      className="font-heading text-primary text-3xl font-bold"
                       data-counter={value === '100%' ? 100 : undefined}
                       data-counter-suffix={value === '100%' ? '%' : undefined}
                     >
                       {value}
                     </p>
-                    <p className="mt-1 text-sm opacity-60">{label}</p>
+                    <p className="text-muted-foreground mt-1 text-sm">{label}</p>
                   </div>
                 ))}
               </div>
@@ -752,11 +752,13 @@ export default function MarketingPage() {
               {securityFeatures.map((feature) => (
                 <div
                   key={feature.title}
-                  className="border-background/15 bg-background/5 hover:bg-background/10 rounded-xl border p-5 backdrop-blur transition-colors"
+                  className="bg-card shadow-fluent-2 hover:shadow-fluent-8 rounded-xl border p-5 transition-shadow"
                 >
-                  <feature.icon className="text-chart-3 size-5" />
+                  <feature.icon className="text-primary size-5" />
                   <h3 className="mt-3 font-semibold">{feature.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed opacity-70">{feature.description}</p>
+                  <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+                    {feature.description}
+                  </p>
                 </div>
               ))}
             </div>

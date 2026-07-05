@@ -1,18 +1,15 @@
 import { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { Geist_Mono, Public_Sans, Schibsted_Grotesk } from 'next/font/google';
+import { Geist_Mono, Open_Sans } from 'next/font/google';
 
 import { QueryProvider } from '@/components/providers/query-provider';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
-const publicSans = Public_Sans({
-  variable: '--font-public-sans',
-  subsets: ['latin'],
-});
-
-const schibstedGrotesk = Schibsted_Grotesk({
-  variable: '--font-schibsted-grotesk',
+/* Webfont fallback for the Segoe UI stack — Windows machines render native
+   Segoe UI Variable first; everyone else gets the closest humanist match. */
+const openSans = Open_Sans({
+  variable: '--font-open-sans',
   subsets: ['latin'],
 });
 
@@ -39,10 +36,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${publicSans.variable} ${schibstedGrotesk.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${openSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <QueryProvider>
           {children}

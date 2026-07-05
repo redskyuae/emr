@@ -30,18 +30,18 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
   return (
     <div className="grid min-h-full flex-1 lg:grid-cols-2">
       {/* ── Brand panel ──────────────────────────────────────── */}
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-[oklch(0.24_0.07_256)] p-10 text-white lg:flex">
+      <div className="bg-background relative hidden flex-col justify-between overflow-hidden border-r p-10 lg:flex">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(50rem_30rem_at_85%_-10%,oklch(0.45_0.12_252/0.55),transparent),radial-gradient(40rem_24rem_at_-10%_110%,oklch(0.35_0.1_254/0.6),transparent)]"
+          className="absolute inset-0 bg-[radial-gradient(50rem_30rem_at_85%_-10%,--alpha(var(--color-accent)/60%),transparent),radial-gradient(40rem_24rem_at_-10%_110%,--alpha(var(--color-accent)/45%),transparent)]"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.05)_1px,transparent_1px)] bg-[size:48px_48px]"
+          className="absolute inset-0 bg-[linear-gradient(to_right,--alpha(var(--color-border)/50%)_1px,transparent_1px),linear-gradient(to_bottom,--alpha(var(--color-border)/50%)_1px,transparent_1px)] bg-[size:48px_48px]"
         />
 
         <div className="relative">
-          <Logo inverted className="text-white" />
+          <Logo />
         </div>
 
         <div className="relative max-w-md space-y-8">
@@ -50,7 +50,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
               “We moved three hospitals and eleven clinics onto one system. Our front desks stopped
               juggling logins the same week.”
             </p>
-            <footer className="text-sm text-white/60">
+            <footer className="text-muted-foreground text-sm">
               Director of Operations · Northgate Health
             </footer>
           </blockquote>
@@ -58,19 +58,19 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
           <div className="space-y-4">
             {brandPoints.map((point) => (
               <div key={point.title} className="flex items-start gap-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/10">
+                <span className="bg-accent text-accent-foreground shadow-fluent-2 flex size-8 shrink-0 items-center justify-center rounded-md">
                   <point.icon className="size-4" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold">{point.title}</p>
-                  <p className="text-sm text-white/60">{point.description}</p>
+                  <p className="text-muted-foreground text-sm">{point.description}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative flex items-center gap-6 text-xs text-white/50">
+        <div className="text-muted-foreground relative flex items-center gap-6 text-xs">
           <span className="flex items-center gap-1.5">
             <Hospital className="size-3.5" /> Hospitals
           </span>

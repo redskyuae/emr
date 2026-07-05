@@ -20,7 +20,7 @@ API-first hospital management platform. A **Tenant** is a hospital group (e.g., 
 
 ## Frontend
 
-All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI, and use the `design-system` team skill. Key facts:
+All UI work follows the design system in `DESIGN.md` (Microsoft web design language + claymorphism, shadcn/ui, Microsoft blue primary, pure white page background) — read it before building or changing any UI, and use the `design-system` team skill. Key facts:
 
 - Themed shadcn components live in `components/ui/` (do not fork them); domain composites in `components/{brand,marketing,auth}/`. Page-specific React components under `app/` must live in the route-local `_components/` directory. Design tokens live only in `app/globals.css`.
 - Pages: marketing in `app/(marketing)/`, auth in `app/(auth)/` (login, signup), and authenticated clinical/app pages in `app/(protected)/`. New protected pages must go in `app/(protected)/`; do not create another protected route group for app pages. Signup is wired to public Tenant Provisioning; login is wired to public sign-in and selects the active Tenant before entering the app. The app shell requires a valid Session and uses sign-out to end the current Session.

@@ -4,12 +4,13 @@ The design source of truth for all frontend work. Any agent or developer buildin
 
 ## The decision
 
-**Microsoft Fluent-inspired, built on shadcn/ui, with a deep blue primary.**
+**Microsoft web design language (microsoft.com) with claymorphism depth, built on shadcn/ui, on a pure white canvas.**
 
-- **Why Fluent**: EMR software is enterprise productivity software. Fluent's vocabulary — clean light surfaces, restrained color, depth through elevation, small radii, dense-but-breathable layouts — signals "professional tool", which is the right tone for hospital staff using this 8 hours a day.
+- **Why the microsoft.com language**: EMR software is enterprise productivity software. Microsoft's web vocabulary — a white canvas, Segoe UI type, restrained color with one confident blue, generous whitespace, comfortable 40px+ controls — signals "professional tool", the right tone for hospital staff using this 8 hours a day.
+- **Why claymorphism**: depth comes from soft, pillowy elevation — double drop shadows plus an inset top highlight — instead of hard borders. Surfaces read as gently extruded clay on the white page, which keeps hierarchy legible without adding color.
 - **Why shadcn/ui**: components are owned in-repo (`components/ui/`), themed centrally through CSS variables, and accessible by default (Radix primitives). We restyle tokens, not components.
-- **Why a darker blue**: Microsoft's brand blue (`#0078D4`) is too bright for long clinical sessions and too recognizable as "Microsoft". Our primary is a deeper, calmer blue — `oklch(0.43 0.118 254)` — that holds AA contrast as a text color and button fill on white.
-- **Decided**: June 2026, while building the marketing and auth pages. The product is **Medical EMR**, built by **Redsky Consultancy** (https://redskyconsultancy.com/). The brand string lives in `components/brand/logo.tsx`, the marketing header/footer, and root metadata — update it in those places only.
+- **The primary is Microsoft web blue** (`#0067b8` → `oklch(0.51 0.145 251.5)`): it holds AA contrast as a text color and button fill on white.
+- **Decided**: June 2026 (Fluent-inspired baseline); July 2026 (re-aligned to microsoft.com + claymorphism, white background). The product is **Medical EMR**, built by **Redsky Consultancy** (https://redskyconsultancy.com/). The brand string lives in `components/brand/logo.tsx`, the marketing header/footer, and root metadata — update it in those places only.
 
 ## Tokens
 
@@ -17,37 +18,37 @@ All tokens live in `app/globals.css` as CSS variables, mapped to Tailwind utilit
 
 ### Color (light theme)
 
-| Token                            | Value                    | Use for                                                          |
-| -------------------------------- | ------------------------ | ---------------------------------------------------------------- |
-| `--primary`                      | `oklch(0.43 0.118 254)`  | Primary actions, links, active states                            |
-| `--background`                   | `oklch(0.988 0.003 247)` | App/page background (cool near-white)                            |
-| `--foreground`                   | `oklch(0.21 0.028 256)`  | Body text (navy ink, not pure black)                             |
-| `--card`                         | white                    | Elevated surfaces                                                |
-| `--accent`                       | `oklch(0.948 0.02 248)`  | Light blue wash: hovers, selected items                          |
-| `--muted` / `--muted-foreground` | cool greys               | Secondary surfaces and text                                      |
-| `--border` / `--input`           | cool greys               | Hairlines; inputs slightly darker (Fluent visible-field borders) |
-| `--destructive`                  | red oklch                | Errors and destructive actions only                              |
+| Token                            | Value                     | Use for                                                           |
+| -------------------------------- | ------------------------- | ----------------------------------------------------------------- |
+| `--primary`                      | `oklch(0.51 0.145 251.5)` | Primary actions, links, active states (Microsoft blue `#0067b8`)  |
+| `--background`                   | `oklch(1 0 0)`            | App/page background — **always pure white**                       |
+| `--foreground`                   | `oklch(0.205 0.01 255)`   | Body text (near-black neutral ink)                                |
+| `--card`                         | white                     | Elevated surfaces (separated from the page by clay shadow + ring) |
+| `--accent`                       | `oklch(0.945 0.022 250)`  | Light blue wash: hovers, selected items                           |
+| `--muted` / `--muted-foreground` | neutral greys             | Secondary surfaces and text                                       |
+| `--border` / `--input`           | neutral greys             | Hairlines; inputs slightly darker (visible field borders)         |
+| `--destructive`                  | red oklch                 | Errors and destructive actions only                               |
 
 A full dark theme exists under `.dark` (navy-tinted darks, lighter blue primary). Every screen must work in both; never use raw `white`/`black` utilities for surfaces or text.
 
 ### Typography
 
-| Role     | Font                                       | Tailwind                              |
-| -------- | ------------------------------------------ | ------------------------------------- |
-| Headings | Schibsted Grotesk                          | `font-heading` (automatic on `h1–h4`) |
-| Body/UI  | Public Sans                                | `font-sans` (default)                 |
-| Data     | Geist Mono — codes, IDs, timestamps, slugs | `font-mono`                           |
+| Role     | Font                                                                 | Tailwind                              |
+| -------- | -------------------------------------------------------------------- | ------------------------------------- |
+| Headings | Segoe UI Variable Display / Segoe UI → Open Sans fallback (semibold) | `font-heading` (automatic on `h1–h4`) |
+| Body/UI  | Segoe UI Variable Text / Segoe UI → Open Sans fallback               | `font-sans` (default)                 |
+| Data     | Geist Mono — codes, IDs, timestamps, slugs                           | `font-mono`                           |
 
-Loaded in `app/layout.tsx` via `next/font`. Do not introduce other fonts.
+The stack is Segoe UI first — the microsoft.com typeface, native on Windows — with **Open Sans** (loaded in `app/layout.tsx` via `next/font`) as the bundled webfont fallback on other platforms. Headings default to semibold with tight tracking (the "Segoe UI Semibold" voice). Do not introduce other fonts.
 
-### Elevation (Fluent depth ramp)
+### Elevation (clay depth ramp)
 
-Custom shadow utilities defined in `globals.css`, replacing Tailwind's default shadows for surfaces:
+Custom shadow utilities defined in `globals.css`. Each level is a **claymorphic** shadow: a soft key + ambient drop shadow pair, an inset white highlight along the top edge, and a faint inset shade at the bottom — surfaces read as gently extruded clay on the white page. Values are theme-aware (`--elevation-*` in `:root` / `.dark`), and Tailwind's built-in `shadow-sm…shadow-2xl` are mapped onto the same ramp so floating shadcn surfaces match automatically.
 
 | Utility            | Use for                                |
 | ------------------ | -------------------------------------- |
 | `shadow-fluent-2`  | Cards at rest, small chips             |
-| `shadow-fluent-4`  | Raised cards                           |
+| `shadow-fluent-4`  | Raised cards, primary buttons          |
 | `shadow-fluent-8`  | Hover states, dropdowns, command bars  |
 | `shadow-fluent-16` | Popovers, tooltips, teaching callouts  |
 | `shadow-fluent-28` | Hero artwork, marketing feature panels |
@@ -57,7 +58,8 @@ Depth communicates hierarchy: the more an element interrupts the user, the highe
 
 ### Radius & spacing
 
-- Base radius `--radius: 0.5rem`; shadcn scales it down for small controls. Fluent uses small radii — do not use `rounded-3xl`+ on controls (large radii are reserved for marketing artwork like the CTA banner).
+- Base radius `--radius: 0.75rem` — the soft clay rounding; shadcn scales it down for small controls. Do not use `rounded-3xl`+ on controls (large radii are reserved for marketing artwork like the CTA banner).
+- Controls follow microsoft.com sizing: default buttons/inputs/selects are 40px tall (`h-10`), large CTAs 48px (`h-12`), with generous horizontal padding and semibold labels. Compact `sm`/`xs` sizes remain for dense data UI.
 - Spacing follows the 8px grid: prefer Tailwind steps that are multiples of 2 (`gap-2`, `p-4`, `py-6`); use odd steps only inside dense data UI.
 - Avoid arbitrary Tailwind length utilities (`w-[360px]`, `text-[15px]`, `rounded-[4px]`) in product UI when a Tailwind scale class or design-system utility exists. Arbitrary values require a clear layout reason and should be rare.
 
@@ -94,13 +96,13 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 - `components/ui/calendar.tsx` was patched for react-day-picker v10 (`month_grid` classNames key replaces v8's `table`). Re-apply if the component is regenerated.
 - Charts use `chart.tsx` (Recharts) with `--chart-1..5` (a blue-led ramp). Toasts use `sonner.tsx`.
 
-## UI principles (Fluent-inspired)
+## UI principles (Microsoft-web-inspired)
 
-1. **Light, calm, blue-accented.** Surfaces are near-white and cool-tinted; the deep blue primary is the only loud color. If a screen feels colorful, it's wrong.
+1. **White, calm, blue-accented.** The page is pure white; the Microsoft blue primary is the only loud color. If a screen feels colorful, it's wrong.
 2. **One accent at a time.** Primary blue marks the single most important action per view. Secondary actions are `outline`/`ghost`.
-3. **Depth over decoration.** Hierarchy comes from elevation, spacing, and type weight — not from colored boxes and heavy borders.
-4. **Small radii, crisp edges.** This is a tool, not a toy.
-5. **Type does the talking.** Schibsted Grotesk headings carry personality; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).
+3. **Clay depth over decoration.** Hierarchy comes from the soft clay elevation ramp, spacing, and type weight — not from colored boxes and heavy borders.
+4. **Soft radii, pillowy surfaces.** Corners are gently rounded (12px base) and surfaces sit on soft shadows — friendly, but still a tool.
+5. **Type does the talking.** Segoe-voice semibold headings carry personality; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).
 6. **Density with breathing room.** Clinical screens may be dense (tables, schedules) but always on the 8px grid with clear group separation.
 
 ## UX principles (EMR-specific)

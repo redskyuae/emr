@@ -19,28 +19,32 @@ export function SiteHeader() {
   return (
     <div className="flex flex-col">
       {/* ── Top utility bar ─────────────────────────────────── */}
-      <div className="bg-foreground text-background dark:bg-card hidden md:block">
+      <div className="border-border/60 bg-background text-muted-foreground hidden border-b md:block">
         <div className="mx-auto flex h-9 w-full max-w-6xl items-center justify-between gap-6 px-4 text-xs sm:px-6">
-          <div className="flex items-center gap-5 opacity-80">
+          <div className="flex items-center gap-5">
             <span className="flex items-center gap-1.5">
               <MapPin className="size-3.5" />
               Redsky Consultancy, Dubai · UAE
             </span>
             <a
               href="mailto:hello@redskyconsultancy.com"
-              className="flex items-center gap-1.5 hover:opacity-100"
+              className="hover:text-foreground flex items-center gap-1.5 transition-colors"
             >
               <Mail className="size-3.5" />
               hello@redskyconsultancy.com
             </a>
           </div>
-          <div className="flex items-center gap-5 opacity-80">
+          <div className="flex items-center gap-5">
             <span className="flex items-center gap-1.5">
               <Clock className="size-3.5" />
               Support 24/7 · 365 days
             </span>
             <span className="flex items-center gap-3">
-              <Link href="#" aria-label="Social profile" className="hover:opacity-100">
+              <Link
+                href="#"
+                aria-label="Social profile"
+                className="hover:text-foreground transition-colors"
+              >
                 <AtSign className="size-3.5" />
               </Link>
               <a
@@ -48,7 +52,7 @@ export function SiteHeader() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Redsky Consultancy website"
-                className="hover:opacity-100"
+                className="hover:text-foreground transition-colors"
               >
                 <Globe className="size-3.5" />
               </a>
