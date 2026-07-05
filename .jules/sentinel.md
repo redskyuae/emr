@@ -1,0 +1,4 @@
+## 2026-07-05 - Missing Authentication on Master Data Endpoints
+**Vulnerability:** The API endpoints for global master data entities (countries, languages, nationalities, religions, states) were lacking authentication checks, allowing unrestricted access and potential abuse (like creating or deleting entries unauthenticated).
+**Learning:** These entities are not tenant-specific, so `requireTenantSession()` was not appropriate, and `requireAuth()` was incorrectly omitted from their API route handlers (`route.ts` and `[id]/route.ts`), leaving them exposed.
+**Prevention:** Ensure that all API routes explicitly implement authentication checks at the route level (since there is no global middleware for authentication). Master data routes should use `requireAuth()` and verify the response to prevent unauthorized access.
