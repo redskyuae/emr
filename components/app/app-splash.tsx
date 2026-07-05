@@ -2,7 +2,7 @@ import { LogoMark } from '@/components/brand/logo';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 
 function AppSplashFrame({ fading, children }: { fading: boolean; children: ReactNode }) {
   return (
