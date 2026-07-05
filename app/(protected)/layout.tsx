@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
+import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
 import { AppSidebar } from '@/components/app/app-sidebar';
 import { AppTopbar } from '@/components/app/app-topbar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -17,6 +18,16 @@ export default async function AppLayout({
 
   if (!session) {
     redirect('/login');
+  }
+
+  const tenantId = session.session.activeOrganizationId;
+
+  if (tenantId) {
+    const tenant = await tenantRepository.getTenantById(tenantId);
+
+    if (tenant && !tenant.isOnboarded) {
+      redirect('/onboarding');
+    }
   }
 
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';

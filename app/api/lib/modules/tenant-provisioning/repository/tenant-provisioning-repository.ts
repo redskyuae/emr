@@ -1,4 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
+import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 
 import { db } from '@/app/db';
 import { appointmentCancelledReason as appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
@@ -57,8 +58,59 @@ async function deleteAuthUser(userId: string) {
   await db.delete(user).where(eq(user.id, userId));
 }
 
+type TenantScopedMasterTable = PgTable & { tenantId: PgColumn };
+
+async function tableHasTenantRows(table: TenantScopedMasterTable, tenantId: string) {
+  const [existingRow] = await db
+    .select({ id: sql<number>`1` })
+    .from(table)
+    .where(eq(table.tenantId, tenantId))
+    .limit(1);
+
+  return Boolean(existingRow);
+}
+
+// A master family counts as seeded only when every one of its tables holds at
+// least one row for the tenant (soft-deleted rows included) — seeding is not
+// atomic, so a single populated table can be leftover from a failed attempt.
+async function hasSeededMasterTables(tables: TenantScopedMasterTable[], tenantId: string) {
+  const results = await Promise.all(tables.map((table) => tableHasTenantRows(table, tenantId)));
+
+  return results.every(Boolean);
+}
+
+async function hasSeededAppointmentMasters(tenantId: string) {
+  return hasSeededMasterTables(
+    [
+      appointmentModeTable,
+      appointmentTypeTable,
+      appointmentReasonTable,
+      appointmentStatusTable,
+      appointmentCancelledReasonTable,
+    ],
+    tenantId
+  );
+}
+
+async function hasSeededAssetMasters(tenantId: string) {
+  return hasSeededMasterTables(
+    [assetStatusTable, assetCategoryTable, assetConditionTable],
+    tenantId
+  );
+}
+
+async function hasSeededWorkOrderMasters(tenantId: string) {
+  return hasSeededMasterTables(
+    [workOrderTypeTable, workOrderStatusTable, workOrderPriorityTable],
+    tenantId
+  );
+}
+
 export const tenantProvisioningRepository = {
   deleteAuthUser,
   findUserByEmail,
   deleteTenantArtifacts,
+  hasSeededAssetMasters,
+  hasSeededWorkOrderMasters,
+  hasSeededAppointmentMasters,
 };

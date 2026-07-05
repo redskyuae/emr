@@ -1,6 +1,3 @@
-import { redirect } from 'next/navigation';
-
-import { getSession } from '@/app/api/lib/utils/auth-helpers';
 import { DEFAULT_AUTH_REDIRECT_PATH, getSafeNextPath } from '@/app/lib/auth-route-guards';
 import { LoginForm } from '@/app/(auth)/login/_components/login-form';
 
@@ -9,12 +6,8 @@ type LoginPageProps = {
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const [{ next }, session] = await Promise.all([searchParams, getSession()]);
+  const { next } = await searchParams;
   const redirectTo = getSafeNextPath(next, DEFAULT_AUTH_REDIRECT_PATH);
-
-  if (session) {
-    redirect(redirectTo);
-  }
 
   return <LoginForm redirectTo={redirectTo} />;
 }

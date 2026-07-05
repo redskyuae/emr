@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Building2, Hospital, Microscope, ShieldCheck } from 'lucide-react';
 
+import { getSession } from '@/app/api/lib/utils/auth-helpers';
+import { DEFAULT_AUTH_REDIRECT_PATH } from '@/app/lib/auth-route-guards';
 import { Logo } from '@/components/brand/logo';
 import { ReactNode } from 'react';
 
@@ -17,7 +20,13 @@ const brandPoints = [
   },
 ];
 
-export default function AuthLayout({ children }: { children: ReactNode }) {
+export default async function AuthLayout({ children }: { children: ReactNode }) {
+  const session = await getSession();
+
+  if (session) {
+    redirect(DEFAULT_AUTH_REDIRECT_PATH);
+  }
+
   return (
     <div className="grid min-h-full flex-1 lg:grid-cols-2">
       {/* ── Brand panel ──────────────────────────────────────── */}

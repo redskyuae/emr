@@ -18,7 +18,11 @@ A Tenant that has been deactivated without being removed from the system.
 
 ## Tenant Provisioning
 
-The domain process that turns a new Tenant into an operational Tenant by establishing ownership and baseline configuration. Distinct from signup, which is only one user-facing entry point into provisioning.
+The domain process that turns a new Tenant into an operational Tenant by establishing ownership and baseline configuration. Distinct from signup, which is only one user-facing entry point into provisioning. Tenant Provisioning has two phases: signup, which establishes the Tenant, its Owner, and an active Session; and Tenant Onboarding, which installs the baseline configuration.
+
+## Tenant Onboarding
+
+The second phase of Tenant Provisioning, in which a newly created Tenant receives its baseline configuration (default Masters and the Permission Catalogue). A Tenant is an Onboarded Tenant once this phase completes; onboarding runs at most once per Tenant.
 
 ## Facility
 
