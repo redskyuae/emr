@@ -3,7 +3,10 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { isAuthError, useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
+import {
+  isSessionExpiredError,
+  useCurrentUserQuery,
+} from '@/app/queries/identity-access/useCurrentUser';
 import { AppSplashError, AppSplashLoading } from '@/components/app/app-splash';
 
 type Phase = 'loading' | 'fading' | 'ready';
@@ -25,7 +28,7 @@ export function AppShellGate({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (isError && isAuthError(error) && !redirectedRef.current) {
+    if (isError && isSessionExpiredError(error) && !redirectedRef.current) {
       redirectedRef.current = true;
       router.replace('/login');
     }
@@ -53,7 +56,7 @@ export function AppShellGate({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  if (phase === 'loading' && isError && !isAuthError(error)) {
+  if (phase === 'loading' && isError && !isSessionExpiredError(error)) {
     return (
       <AppSplashError
         message={LOAD_ERROR_MESSAGE}

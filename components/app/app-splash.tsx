@@ -40,7 +40,11 @@ export function AppSplashLoading({ fading }: { fading: boolean }) {
   return (
     <AppSplashFrame fading={fading}>
       <AppSplashBrand pulse />
-      <span className="sr-only">Loading your workspace…</span>
+      {/* The pulse is the only motion cue and is stripped under prefers-reduced-motion,
+          so surface a visible caption for those sighted users; it stays sr-only otherwise. */}
+      <span className="text-muted-foreground sr-only text-sm motion-reduce:not-sr-only">
+        Loading your workspace…
+      </span>
     </AppSplashFrame>
   );
 }

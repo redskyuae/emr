@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { LogOut } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner';
 
 export function SignOutButton() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isPending, setIsPending] = useState(false);
   const [hasError, setHasError] = useState(false);
 
@@ -25,6 +27,11 @@ export function SignOutButton() {
       if (!response.ok) {
         throw new Error('Sign out failed');
       }
+
+      // Drop all cached queries (including the Current User) so a subsequent
+      // sign-in in the same tab can't reveal the previous user's shell from
+      // still-fresh cache before the new /me resolves.
+      queryClient.clear();
 
       router.replace('/login');
       router.refresh();
