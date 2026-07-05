@@ -1,0 +1,33 @@
+components/app/app-splash.tsx
+  8b76c880cc090719 1-4,6,8-69
+components/app/app-shell-gate.tsx
+  8b76c880cc090719 1-8,10,13-72
+app/queries/identity-access/useCurrentUser.ts
+  8b76c880cc090719 3,8-11,31
+docs/adr/0018-protected-app-boot-splash-gate.md
+  8b76c880cc090719 1-11
+app/queries/api-error.ts
+  8b76c880cc090719 8,10,14,39
+app/(protected)/layout.tsx
+  8b76c880cc090719 7,37-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "3bce90b88e955eee6c6599cda3d224681365b0a6",
+  "prompts": {
+    "8b76c880cc090719": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c5093e95-f434-4bfa-b9ae-9f3d672197b5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 231,
+      "total_deletions": 40,
+      "accepted_lines": 169,
+      "overriden_lines": 2
+    }
+  }
+}
