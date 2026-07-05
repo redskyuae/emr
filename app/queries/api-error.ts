@@ -5,11 +5,13 @@ type ApiErrorBody = {
 
 export class ApiError extends Error {
   errors: string[];
+  status?: number;
 
-  constructor(message: string, errors: string[] = [message]) {
+  constructor(message: string, errors: string[] = [message], status?: number) {
     super(message);
     this.name = 'ApiError';
     this.errors = errors;
+    this.status = status;
   }
 }
 
@@ -34,7 +36,7 @@ export async function parseApiError(response: Response, fallbackMessage: string)
     typeof body?.message === 'string' && body.message.length > 0 ? body.message : fallbackMessage;
   const errors = getStringErrors(body?.errors);
 
-  return new ApiError(message, errors.length > 0 ? errors : [message]);
+  return new ApiError(message, errors.length > 0 ? errors : [message], response.status);
 }
 
 export function getApiErrors(error: unknown) {
