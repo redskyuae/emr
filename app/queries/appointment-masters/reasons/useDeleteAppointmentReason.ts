@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
+import { appointmentReasonQueryKey } from './useAppointmentReason';
 import { APPOINTMENT_REASONS_KEY } from './useAppointmentReasons';
 
 async function deleteAppointmentReason(id: number): Promise<void> {
@@ -29,7 +30,12 @@ export function useDeleteAppointmentReason(options?: UseDeleteAppointmentReasonO
     ...rest,
     mutationFn: deleteAppointmentReason,
     onSuccess: async (...args) => {
-      await queryClient.invalidateQueries({ queryKey: APPOINTMENT_REASONS_KEY });
+      const [, id] = args;
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: APPOINTMENT_REASONS_KEY }),
+        queryClient.invalidateQueries({ queryKey: appointmentReasonQueryKey(id) }),
+      ]);
       await onSuccess?.(...args);
     },
   });

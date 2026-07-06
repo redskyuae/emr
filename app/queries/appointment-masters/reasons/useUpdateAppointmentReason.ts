@@ -7,6 +7,7 @@ import type {
   UpdateAppointmentReasonRequest,
   UpdateAppointmentReasonResponse,
 } from '@/app/api/v1/appointments/reasons/[id]/types';
+import { appointmentReasonQueryKey } from './useAppointmentReason';
 import { APPOINTMENT_REASONS_KEY } from './useAppointmentReasons';
 
 type UpdateAppointmentReasonVariables = {
@@ -45,7 +46,12 @@ export function useUpdateAppointmentReason(options?: UseUpdateAppointmentReasonO
     ...rest,
     mutationFn: updateAppointmentReason,
     onSuccess: async (...args) => {
-      await queryClient.invalidateQueries({ queryKey: APPOINTMENT_REASONS_KEY });
+      const [, variables] = args;
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: APPOINTMENT_REASONS_KEY }),
+        queryClient.invalidateQueries({ queryKey: appointmentReasonQueryKey(variables.id) }),
+      ]);
       await onSuccess?.(...args);
     },
   });
