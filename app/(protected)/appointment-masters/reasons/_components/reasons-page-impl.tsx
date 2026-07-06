@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import type { AppointmentReason } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
+import { useAppointmentReasonQuery } from '@/app/queries/appointment-masters/reasons/useAppointmentReason';
 import { useAppointmentReasonsQuery } from '@/app/queries/appointment-masters/reasons/useAppointmentReasons';
 import { useCreateAppointmentReason } from '@/app/queries/appointment-masters/reasons/useCreateAppointmentReason';
 import { useUpdateAppointmentReason } from '@/app/queries/appointment-masters/reasons/useUpdateAppointmentReason';
@@ -83,12 +84,27 @@ export function ReasonsPageImpl() {
     reasonParam !== null && reasonParam !== 'new' && /^\d+$/.test(reasonParam)
       ? Number(reasonParam)
       : null;
-  const editingReason =
+  const editingReasonFromList =
     editingReasonId !== null
       ? (reasons.find((reason) => reason.id === editingReasonId) ?? null)
       : null;
+
+  // The current page's `reasons` may not include the target id (it lives on a
+  // different page or is filtered out by the active search), so fall back to
+  // fetching it directly by id once the list has loaded and it isn't there.
+  const shouldFetchEditingReason =
+    editingReasonId !== null && !reasonsQuery.isLoading && editingReasonFromList === null;
+  const editingReasonQuery = useAppointmentReasonQuery(
+    shouldFetchEditingReason ? editingReasonId : null
+  );
+  const editingReason = editingReasonFromList ?? editingReasonQuery.data ?? null;
+
+  const editingReasonResolving =
+    editingReasonId !== null &&
+    editingReason === null &&
+    (reasonsQuery.isLoading || editingReasonQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingReasonId !== null && (reasonsQuery.isLoading || editingReason !== null));
+    isCreating || (editingReasonId !== null && (editingReasonResolving || editingReason !== null));
 
   const previousDebouncedRef = useRef(debouncedSearch);
   useEffect(() => {
