@@ -12,6 +12,7 @@ import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-con
 import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import { asset as assetTable } from '@/app/db/schema/asset';
 import { organization, user } from '@/app/db/schema/auth';
+import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import {
   workOrderCodeCounter as workOrderCodeCounterTable,
   workOrder as workOrderTable,
@@ -92,6 +93,10 @@ async function hasSeededAppointmentMasters(tenantId: string) {
   );
 }
 
+async function hasSeededSpecialties(tenantId: string) {
+  return tableHasTenantRows(specialtyTable, tenantId);
+}
+
 async function hasSeededAssetMasters(tenantId: string) {
   return hasSeededMasterTables(
     [assetStatusTable, assetCategoryTable, assetConditionTable],
@@ -110,6 +115,7 @@ export const tenantProvisioningRepository = {
   deleteAuthUser,
   findUserByEmail,
   deleteTenantArtifacts,
+  hasSeededSpecialties,
   hasSeededAssetMasters,
   hasSeededWorkOrderMasters,
   hasSeededAppointmentMasters,

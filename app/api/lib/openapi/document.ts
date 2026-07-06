@@ -1241,7 +1241,7 @@ export const openApiDocument = {
         tags: ['Tenant Provisioning'],
         summary: 'Signup and provision Tenant',
         description:
-          'First phase of Tenant Provisioning: creates the Tenant Owner user, provisions a Tenant, signs the owner in, and sets the new Tenant as active. Baseline configuration (Permission Catalogue and default Appointment, Asset, and Work Order masters) is installed by the second phase, Tenant Onboarding, via POST /api/v1/onboarding; the returned Tenant has isOnboarded false until that phase completes.',
+          'First phase of Tenant Provisioning: creates the Tenant Owner user, provisions a Tenant, signs the owner in, and sets the new Tenant as active. Baseline configuration (Permission Catalogue and default Specialty, Appointment, Asset, and Work Order masters) is installed by the second phase, Tenant Onboarding, via POST /api/v1/onboarding; the returned Tenant has isOnboarded false until that phase completes.',
         requestBody: requestBody('SignupRequest', {
           tenantName: 'Apollo Hospitals',
           ownerName: 'Dr. Priya Raghavan',
@@ -1291,7 +1291,7 @@ export const openApiDocument = {
         tags: ['Tenant Provisioning'],
         summary: 'Onboard active Tenant',
         description:
-          'Second phase of Tenant Provisioning: idempotently seeds the system-wide Permission Catalogue and the active Tenant’s default Appointment, Asset, and Work Order masters, then marks the Tenant as onboarded. The Tenant is resolved from the Session (activeOrganizationId) and never supplied by the client. Calling this API for an already onboarded Tenant returns 200 without re-seeding, and a Tenant that already has seeded defaults but no onboarded flag is only marked onboarded — defaults deleted by a Tenant Admin are never resurrected. The request has no body.',
+          'Second phase of Tenant Provisioning: idempotently seeds the system-wide Permission Catalogue and the active Tenant’s default Specialty, Appointment, Asset, and Work Order masters, then marks the Tenant as onboarded. The Tenant is resolved from the Session (activeOrganizationId) and never supplied by the client. Calling this API for an already onboarded Tenant returns 200 without re-seeding, and a legacy Tenant that already has the older seeded defaults but no onboarded flag is only marked onboarded — established Tenants are not backfilled and defaults deleted by a Tenant Admin are never resurrected. The request has no body.',
         security: [{ cookieAuth: [] }],
         responses: {
           '200': {

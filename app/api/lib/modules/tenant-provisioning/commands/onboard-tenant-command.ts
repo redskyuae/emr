@@ -7,24 +7,34 @@ import type { Tenant } from '../../tenant/schemas/tenant-schema';
 import { tenantProvisioningRepository } from '../repository/tenant-provisioning-repository';
 import { validateTenantOnboarding } from '../validator/tenant-onboarding-validator';
 import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
+import { seedDefaultSpecialtiesCommand } from './seed-default-specialties-command';
 import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
 
 const seedDefaultMastersOperations = [
   {
+    seedMasters: seedDefaultSpecialtiesCommand,
+    hasSeededMasters: (tenantId: string) =>
+      tenantProvisioningRepository.hasSeededSpecialties(tenantId),
+    isLegacyMasterFamily: false,
+  },
+  {
     seedMasters: seedDefaultAppointmentMastersCommand,
     hasSeededMasters: (tenantId: string) =>
       tenantProvisioningRepository.hasSeededAppointmentMasters(tenantId),
+    isLegacyMasterFamily: true,
   },
   {
     seedMasters: seedDefaultAssetMastersCommand,
     hasSeededMasters: (tenantId: string) =>
       tenantProvisioningRepository.hasSeededAssetMasters(tenantId),
+    isLegacyMasterFamily: true,
   },
   {
     seedMasters: seedDefaultWorkOrderMastersCommand,
     hasSeededMasters: (tenantId: string) =>
       tenantProvisioningRepository.hasSeededWorkOrderMasters(tenantId),
+    isLegacyMasterFamily: true,
   },
 ] as const;
 
@@ -54,8 +64,20 @@ export async function onboardTenantCommand(tenantId: unknown): Promise<CommandRe
     // partial onboarding, while tenants provisioned before the
     // signup/onboarding split keep their existing masters untouched —
     // re-seeding those would resurrect soft-deleted defaults.
-    for (const { seedMasters, hasSeededMasters } of seedDefaultMastersOperations) {
-      if (await hasSeededMasters(tenant.id)) {
+    const masterFamilyStates = await Promise.all(
+      seedDefaultMastersOperations.map(async (operation) => ({
+        ...operation,
+        isSeeded: await operation.hasSeededMasters(tenant.id),
+      }))
+    );
+    const isLegacyTenant = masterFamilyStates
+      .filter(({ isLegacyMasterFamily }) => isLegacyMasterFamily)
+      .every(({ isSeeded }) => isSeeded);
+
+    for (const { seedMasters, isSeeded, isLegacyMasterFamily } of masterFamilyStates) {
+      // Tenants created before Specialty joined onboarding can have every older
+      // master family but no Specialty rows. They must not be backfilled.
+      if (isSeeded || (isLegacyTenant && !isLegacyMasterFamily)) {
         continue;
       }
 
