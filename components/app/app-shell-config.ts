@@ -264,6 +264,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Appointment Types',
     subtitle: 'Tenant-scoped clinical category or visit type records for Appointments.',
   },
+  '/appointment-masters/statuses': {
+    title: 'Appointment Statuses',
+    subtitle: 'Tenant-scoped lifecycle state records for Appointments.',
+  },
   '/global-references': {
     title: 'Global References',
     subtitle: 'Shared reference data used across Tenants.',
