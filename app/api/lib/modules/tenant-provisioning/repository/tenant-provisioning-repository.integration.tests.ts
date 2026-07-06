@@ -11,6 +11,7 @@ import { assetCategory as assetCategoryTable } from '@/app/db/schema/asset-categ
 import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-condition';
 import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import { organization } from '@/app/db/schema/auth';
+import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import { workOrderPriority as workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
 import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import { workOrderType as workOrderTypeTable } from '@/app/db/schema/work-order-type';
@@ -66,6 +67,37 @@ const seedWorkOrderMasterRows = async (tenantId: string) => {
 };
 
 describe('TenantProvisioning repository', () => {
+  describe('hasSeededSpecialties', () => {
+    it('should report specialties as not seeded for a tenant with no rows', async () => {
+      await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+
+      await expect(tenantProvisioningRepository.hasSeededSpecialties(tenantA)).resolves.toBe(false);
+    });
+
+    it('should report specialties as seeded when the tenant has a row, including a soft-deleted row', async () => {
+      await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+      await db.insert(specialtyTable).values({
+        tenantId: tenantA,
+        name: 'Cardiology',
+        code: 'CARD',
+        isDeleted: true,
+        deletedOn: new Date(),
+      });
+
+      await expect(tenantProvisioningRepository.hasSeededSpecialties(tenantA)).resolves.toBe(true);
+    });
+
+    it("should not count another tenant's specialties as seeded", async () => {
+      await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+      await createTestOrganization(tenantB, 'Hospital B', 'hospital-b');
+      await db
+        .insert(specialtyTable)
+        .values({ tenantId: tenantB, name: 'Cardiology', code: 'CARD' });
+
+      await expect(tenantProvisioningRepository.hasSeededSpecialties(tenantA)).resolves.toBe(false);
+    });
+  });
+
   describe('hasSeededAppointmentMasters', () => {
     it('should report appointment masters as not seeded for a tenant with no rows', async () => {
       await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
