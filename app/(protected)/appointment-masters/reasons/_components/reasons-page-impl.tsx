@@ -4,18 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { useRouter } from 'next/navigation';
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Table as TableIcon,
-} from 'lucide-react';
+import { useQueryState } from 'nuqs';
+import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppointmentReason } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
 import { createAppointmentReasonSchema } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
@@ -26,14 +16,7 @@ import { useUpdateAppointmentReason } from '@/app/queries/appointment-masters/re
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle, } from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ReasonDeleteDialog } from './_modals/delete-reason-dialog';
@@ -45,16 +28,13 @@ type ViewLayout = 'table' | 'card' | 'list';
 
 const PAGE_SIZE = 10;
 
-export function ReasonsPageImpl({ initialCreateOpen }: { initialCreateOpen: boolean }) {
-  const router = useRouter();
-  const initialCreateHandledRef = useRef(false);
+export function ReasonsPageImpl() {
+  const [reasonParam, setReasonParam] = useQueryState('reason');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
 
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [editingReason, setEditingReason] = useState<AppointmentReason | null>(null);
   const [reasonPendingDelete, setReasonPendingDelete] = useState<AppointmentReason | null>(null);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
 
@@ -78,46 +58,65 @@ export function ReasonsPageImpl({ initialCreateOpen }: { initialCreateOpen: bool
   const total = meta?.total ?? 0;
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
-  const isCreating = !editingReason;
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
+ 
+  const isCreating = reasonParam === 'new';
+  const editingReasonId =
+    reasonParam !== null && reasonParam !== 'new' && /^\d+$/.test(reasonParam)
+      ? Number(reasonParam)
+      : null;
+  const editingReason =
+    editingReasonId !== null
+      ? (reasons.find((reason) => reason.id === editingReasonId) ?? null)
+      : null;
+  const sheetOpen =
+    isCreating || (editingReasonId !== null && (reasonsQuery.isLoading || editingReason !== null));
+
+  const previousDebouncedRef = useRef(debouncedSearch);
   useEffect(() => {
-    if (!initialCreateOpen || initialCreateHandledRef.current) {
+    if (previousDebouncedRef.current !== debouncedSearch) {
+      previousDebouncedRef.current = debouncedSearch;
+      setPage(1);
+    }
+  }, [debouncedSearch]);
+
+  const sessionKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!sheetOpen) {
+      sessionKeyRef.current = null;
       return;
     }
 
-    initialCreateHandledRef.current = true;
-    openAddSheet();
-  }, [initialCreateOpen]);
-
-  const previousDebouncedRef = useRef(debouncedSearch);
-  if (previousDebouncedRef.current !== debouncedSearch) {
-    previousDebouncedRef.current = debouncedSearch;
-    if (page !== 1) {
-      setPage(1);
+    if (!isCreating && editingReason === null) {
+      return;
     }
-  }
+
+    const sessionKey = isCreating ? 'new' : String(editingReasonId);
+
+    if (sessionKeyRef.current === sessionKey) {
+      return;
+    }
+
+    sessionKeyRef.current = sessionKey;
+    form.reset({
+      name: editingReason?.name ?? '',
+      code: editingReason?.code ?? '',
+      description: editingReason?.description ?? '',
+    });
+    setServerErrors([]);
+  }, [sheetOpen, isCreating, editingReasonId, editingReason, form]);
 
   function openAddSheet() {
-    setEditingReason(null);
-    form.reset({ name: '', code: '', description: '' });
-    setServerErrors([]);
-    setSheetOpen(true);
+    void setReasonParam('new');
   }
 
   function openEditSheet(reason: AppointmentReason) {
-    setEditingReason(reason);
-    form.reset({ name: reason.name, code: reason.code, description: reason.description ?? '' });
-    setServerErrors([]);
-    setSheetOpen(true);
+    void setReasonParam(String(reason.id));
   }
 
   function closeSheet() {
-    setSheetOpen(false);
-    setEditingReason(null);
-    form.reset({ name: '', code: '', description: '' });
-    setServerErrors([]);
-    router.replace('/appointment-masters/reasons', { scroll: false });
+    void setReasonParam(null);
   }
 
   const handleSave = form.handleSubmit(async (values) => {
@@ -132,9 +131,9 @@ export function ReasonsPageImpl({ initialCreateOpen }: { initialCreateOpen: bool
         });
         toast.success('Appointment Reason created.');
         closeSheet();
-      } else {
+      } else if (editingReasonId !== null) {
         await updateMutation.mutateAsync({
-          id: editingReason.id,
+          id: editingReasonId,
           request: {
             name: values.name,
             code: values.code,
@@ -152,7 +151,7 @@ export function ReasonsPageImpl({ initialCreateOpen }: { initialCreateOpen: bool
   });
 
   function handleReasonDeleted(reasonId: number) {
-    if (editingReason?.id === reasonId) {
+    if (editingReasonId === reasonId) {
       closeSheet();
     }
   }
