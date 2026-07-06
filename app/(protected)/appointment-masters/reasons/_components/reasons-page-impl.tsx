@@ -5,10 +5,19 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useQueryState } from 'nuqs';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, } from 'lucide-react';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  LayoutGrid,
+  LayoutList,
+  Plus,
+  Search,
+  Table as TableIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppointmentReason } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
-import { createAppointmentReasonSchema } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useAppointmentReasonsQuery } from '@/app/queries/appointment-masters/reasons/useAppointmentReasons';
 import { useCreateAppointmentReason } from '@/app/queries/appointment-masters/reasons/useCreateAppointmentReason';
@@ -16,13 +25,21 @@ import { useUpdateAppointmentReason } from '@/app/queries/appointment-masters/re
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle, } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ReasonDeleteDialog } from './_modals/delete-reason-dialog';
-import { ReasonFormSheet, type ReasonFormValues } from './_sheets/reason-form-sheet';
+import { ReasonFormSheet } from './_sheets/reason-form-sheet';
 import { ViewSkeleton } from './reason-skeletons';
 import { ReasonCardView, ReasonListView, ReasonTableView } from './reason-views';
+import { reasonFormSchema, type ReasonFormValues } from '../_utils/reason-form-schema';
 
 type ViewLayout = 'table' | 'card' | 'list';
 
@@ -39,7 +56,8 @@ export function ReasonsPageImpl() {
   const [serverErrors, setServerErrors] = useState<string[]>([]);
 
   const form = useForm<ReasonFormValues>({
-    resolver: zodResolver(createAppointmentReasonSchema),
+    mode: 'onTouched',
+    resolver: zodResolver(reasonFormSchema),
     defaultValues: { name: '', code: '', description: '' },
   });
 
@@ -60,7 +78,6 @@ export function ReasonsPageImpl() {
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
- 
   const isCreating = reasonParam === 'new';
   const editingReasonId =
     reasonParam !== null && reasonParam !== 'new' && /^\d+$/.test(reasonParam)

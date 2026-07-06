@@ -15,12 +15,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
-
-export type ReasonFormValues = {
-  name: string;
-  code: string;
-  description?: string | null;
-};
+import type { ReasonFormValues } from '../../_utils/reason-form-schema';
 
 export function ReasonFormSheet({
   open,

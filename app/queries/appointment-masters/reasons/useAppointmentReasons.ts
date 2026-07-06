@@ -1,4 +1,4 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { ListAppointmentReasonsResponse } from '@/app/api/v1/appointments/reasons/types';
@@ -43,13 +43,6 @@ async function fetchAppointmentReasons(
 
 export function useAppointmentReasonsQuery(params: AppointmentReasonsParams) {
   return useQuery({
-    queryKey: appointmentReasonsQueryKey(params),
-    queryFn: () => fetchAppointmentReasons(params),
-  });
-}
-
-export function useAppointmentReasons(params: AppointmentReasonsParams) {
-  return useSuspenseQuery({
     queryKey: appointmentReasonsQueryKey(params),
     queryFn: () => fetchAppointmentReasons(params),
   });
