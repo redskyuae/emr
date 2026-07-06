@@ -5,7 +5,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, } from 'lucide-react';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  LayoutGrid,
+  LayoutList,
+  Plus,
+  Search,
+  Table as TableIcon,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppointmentReason } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
 import { createAppointmentReasonSchema } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
@@ -16,7 +26,14 @@ import { useUpdateAppointmentReason } from '@/app/queries/appointment-masters/re
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle, } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ReasonDeleteDialog } from './_modals/delete-reason-dialog';
@@ -228,8 +245,8 @@ export function ReasonsPageImpl({ initialCreateOpen }: { initialCreateOpen: bool
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
-                No Appointment Reasons match &ldquo;{debouncedSearch}&rdquo;. Try a different
-                search term.
+                No Appointment Reasons match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                term.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

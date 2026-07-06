@@ -6,7 +6,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 
 export type ReasonFormValues = {
@@ -82,7 +89,10 @@ export function ReasonFormSheet({
             <FieldGroup className="gap-4">
               <Field data-invalid={!!errors.name}>
                 <FieldLabel htmlFor="reason-name">
-                  Name <span aria-hidden="true" className="text-destructive">*</span>
+                  Name{' '}
+                  <span aria-hidden="true" className="text-destructive">
+                    *
+                  </span>
                 </FieldLabel>
                 <Input
                   id="reason-name"
@@ -98,7 +108,10 @@ export function ReasonFormSheet({
 
               <Field data-invalid={!!errors.code}>
                 <FieldLabel htmlFor="reason-code">
-                  Code <span aria-hidden="true" className="text-destructive">*</span>
+                  Code{' '}
+                  <span aria-hidden="true" className="text-destructive">
+                    *
+                  </span>
                 </FieldLabel>
                 <Input
                   id="reason-code"
