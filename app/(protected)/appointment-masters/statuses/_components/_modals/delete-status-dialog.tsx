@@ -6,7 +6,17 @@ import { toast } from 'sonner';
 import type { AppointmentStatus } from '@/app/api/lib/modules/appointment-status/schemas/appointment-status-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useDeleteAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useDeleteAppointmentStatus';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type StatusDeleteDialogProps = {
   status: AppointmentStatus | null;
