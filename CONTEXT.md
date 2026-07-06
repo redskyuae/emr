@@ -62,7 +62,7 @@ The system-wide set of Permissions available for assignment to Roles. Every Tena
 
 ## Permission Module
 
-A user-facing product area used to group Permissions in the Permission Catalogue, such as Identity & Access or Appointment Masters.
+A user-facing product area used to group Permissions in the Permission Catalogue, such as Identity & Access, Clinical Masters, or Appointment Masters.
 
 ## System Role
 
