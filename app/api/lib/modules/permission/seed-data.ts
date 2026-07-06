@@ -36,6 +36,17 @@ const permissionGroups = [
   },
   {
     module: 'identity-access',
+    resource: 'doctor',
+    actions: [
+      ['read', 'View Doctors.'],
+      ['create', 'Create Doctors.'],
+      ['update', 'Update Doctor details.'],
+      ['deactivate', 'Deactivate Doctor access.'],
+      ['reactivate', 'Reactivate Doctor access.'],
+    ],
+  },
+  {
+    module: 'identity-access',
     resource: 'role',
     actions: [
       ['read', 'View Roles.'],
@@ -74,6 +85,16 @@ const permissionGroups = [
     actions: [
       ['read', 'View active Sessions.'],
       ['revoke', 'Revoke active Sessions.'],
+    ],
+  },
+  {
+    module: 'clinical-masters',
+    resource: 'specialty',
+    actions: [
+      ['read', 'View Specialties.'],
+      ['create', 'Create Specialties.'],
+      ['update', 'Update Specialties.'],
+      ['delete', 'Delete Specialties.'],
     ],
   },
   {

@@ -53,6 +53,86 @@ describe('Permission repository', () => {
     expect(permissions.map((p) => p.name)).toEqual(permissionSeedData.map((p) => p.name));
   });
 
+  it('should seed Doctor and Specialty permissions in their Permission Modules', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const permissions = await permissionRepository.getPermissions();
+    const doctorAndSpecialtyPermissions = permissions
+      .filter(({ resource }) => resource === 'doctor' || resource === 'specialty')
+      .map(({ name, module, resource, action, description }) => ({
+        name,
+        module,
+        resource,
+        action,
+        description,
+      }));
+
+    expect(doctorAndSpecialtyPermissions).toEqual([
+      {
+        name: 'doctor:read',
+        module: 'identity-access',
+        resource: 'doctor',
+        action: 'read',
+        description: 'View Doctors.',
+      },
+      {
+        name: 'doctor:create',
+        module: 'identity-access',
+        resource: 'doctor',
+        action: 'create',
+        description: 'Create Doctors.',
+      },
+      {
+        name: 'doctor:update',
+        module: 'identity-access',
+        resource: 'doctor',
+        action: 'update',
+        description: 'Update Doctor details.',
+      },
+      {
+        name: 'doctor:deactivate',
+        module: 'identity-access',
+        resource: 'doctor',
+        action: 'deactivate',
+        description: 'Deactivate Doctor access.',
+      },
+      {
+        name: 'doctor:reactivate',
+        module: 'identity-access',
+        resource: 'doctor',
+        action: 'reactivate',
+        description: 'Reactivate Doctor access.',
+      },
+      {
+        name: 'specialty:read',
+        module: 'clinical-masters',
+        resource: 'specialty',
+        action: 'read',
+        description: 'View Specialties.',
+      },
+      {
+        name: 'specialty:create',
+        module: 'clinical-masters',
+        resource: 'specialty',
+        action: 'create',
+        description: 'Create Specialties.',
+      },
+      {
+        name: 'specialty:update',
+        module: 'clinical-masters',
+        resource: 'specialty',
+        action: 'update',
+        description: 'Update Specialties.',
+      },
+      {
+        name: 'specialty:delete',
+        module: 'clinical-masters',
+        resource: 'specialty',
+        action: 'delete',
+        description: 'Delete Specialties.',
+      },
+    ]);
+  });
+
   it('should not return inactive permissions', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const permissions = await permissionRepository.getPermissions();
