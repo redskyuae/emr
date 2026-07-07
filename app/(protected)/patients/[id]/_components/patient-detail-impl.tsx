@@ -11,12 +11,10 @@ import {
   UserRoundX,
   UsersRound,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
-import { useReactivatePatient } from '@/app/queries/patients/useReactivatePatient';
 import {
   getPatientGenderLabel,
   getPatientGovtIdTypeLabel,
@@ -78,8 +76,8 @@ function PatientDetailSkeleton() {
 
 export function PatientDetailImpl({ patientId }: { patientId: number }) {
   const patientQuery = usePatientQuery(patientId);
-  const reactivateMutation = useReactivatePatient();
-  const [patientPendingDeactivate, setPatientPendingDeactivate] = useState<Patient | null>(null);
+  const [patientPendingLifecycleChange, setPatientPendingLifecycleChange] =
+    useState<Patient | null>(null);
   const [patientPendingDelete, setPatientPendingDelete] = useState<Patient | null>(null);
 
   if (patientQuery.isLoading) {
@@ -104,13 +102,6 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
   }
 
   const patient = patientQuery.data;
-
-  function handleReactivate() {
-    reactivateMutation.mutate(patient.id, {
-      onSuccess: () => toast.success(`${patient.firstName} ${patient.lastName} reactivated.`),
-      onError: (error) => toast.error(getApiErrorMessage(error)),
-    });
-  }
 
   return (
     <div className="space-y-4">
@@ -150,7 +141,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setPatientPendingDeactivate(patient)}
+                onClick={() => setPatientPendingLifecycleChange(patient)}
               >
                 <UserRoundX className="size-4" />
                 Deactivate
@@ -159,8 +150,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
               <Button
                 type="button"
                 variant="outline"
-                disabled={reactivateMutation.isPending}
-                onClick={handleReactivate}
+                onClick={() => setPatientPendingLifecycleChange(patient)}
               >
                 <UserRoundCheck className="size-4" />
                 Reactivate
@@ -257,8 +247,8 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
       </Card>
 
       <DeactivatePatientDialog
-        patient={patientPendingDeactivate}
-        onClose={() => setPatientPendingDeactivate(null)}
+        patient={patientPendingLifecycleChange}
+        onClose={() => setPatientPendingLifecycleChange(null)}
       />
       <DeletePatientDialog
         patient={patientPendingDelete}
