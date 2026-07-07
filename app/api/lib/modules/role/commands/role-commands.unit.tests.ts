@@ -1,12 +1,14 @@
 import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { rolePermissionRepository } from '../../role-permission/repository/role-permission-repository';
 import { roleRepository } from '../repository/role-repository';
 import { validateCreateRole } from '../validator/create-role-validator';
 import { validateDeleteRole } from '../validator/delete-role-validator';
 import { validateUpdateRole } from '../validator/update-role-validator';
 import { createRoleCommand } from './create-role-command';
 import { deleteRoleCommand } from './delete-role-command';
+import { seedSystemRolesCommand } from './seed-system-roles-command';
 import { updateRoleCommand } from './update-role-command';
 
 vi.mock('../repository/role-repository', () => ({
@@ -15,13 +17,18 @@ vi.mock('../repository/role-repository', () => ({
     updateRole: vi.fn(),
     deleteRole: vi.fn(),
     getRoleByIdWithStats: vi.fn(),
+    seedSystemRolesForTenant: vi.fn(),
   },
+}));
+vi.mock('../../role-permission/repository/role-permission-repository', () => ({
+  rolePermissionRepository: { seedDefaultPermissionsForSystemRoles: vi.fn() },
 }));
 vi.mock('../validator/create-role-validator', () => ({ validateCreateRole: vi.fn() }));
 vi.mock('../validator/update-role-validator', () => ({ validateUpdateRole: vi.fn() }));
 vi.mock('../validator/delete-role-validator', () => ({ validateDeleteRole: vi.fn() }));
 
 const repo = vi.mocked(roleRepository);
+const rolePermissionRepo = vi.mocked(rolePermissionRepository);
 const validateCreate = vi.mocked(validateCreateRole);
 const validateUpdate = vi.mocked(validateUpdateRole);
 const validateDelete = vi.mocked(validateDeleteRole);
@@ -56,6 +63,8 @@ describe('Role commands', () => {
     repo.updateRole.mockResolvedValue(role);
     repo.deleteRole.mockResolvedValue(role);
     repo.getRoleByIdWithStats.mockResolvedValue(roleWithStats);
+    repo.seedSystemRolesForTenant.mockResolvedValue([role]);
+    rolePermissionRepo.seedDefaultPermissionsForSystemRoles.mockResolvedValue(undefined);
   });
 
   it('should return validation failure and not write when create validator fails', async () => {
@@ -97,6 +106,19 @@ describe('Role commands', () => {
     const error = new Error('database down');
     repo.createRole.mockRejectedValue(error);
     await expect(createRoleCommand({}, 'tenant-1')).rejects.toThrow(error);
+  });
+
+  it('should map a reserved Role code collision to a conflict error when seeding System Roles', async () => {
+    repo.seedSystemRolesForTenant.mockRejectedValue(
+      new Error('System Role seeding failed because a reserved Role code is unavailable.')
+    );
+
+    await expect(seedSystemRolesCommand('tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['System Role seeding failed because a reserved Role code is unavailable.'],
+    });
+    expect(rolePermissionRepo.seedDefaultPermissionsForSystemRoles).not.toHaveBeenCalled();
   });
 
   it('should update the role and return it with stats', async () => {
