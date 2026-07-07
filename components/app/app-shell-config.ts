@@ -65,7 +65,6 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Patients',
         href: '/patients',
         icon: UsersRound,
-        badge: '404',
       },
       {
         title: 'Appointments',
@@ -203,6 +202,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       label: 'Register patient',
       href: '/patients/new',
     },
+  },
+  '/patients/new': {
+    title: 'Register patient',
+    subtitle: 'Capture demographics, contact details, and identifiers for this Tenant.',
   },
   '/appointments': {
     title: 'Appointments',

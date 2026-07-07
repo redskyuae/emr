@@ -106,6 +106,10 @@ A person who receives care at a Facility. Belongs to a Tenant (registered within
 
 The process of adding a Patient to a Tenant's system: capturing demographics, contact details, and identifiers, and assigning the Patient's Medical Record Number. Registration does not create a login or Session; it is distinct from any clinical event such as a Visit or Admission.
 
+## Inactive Patient
+
+A Patient who has been deactivated without being removed from the system. The Patient's record and history remain retained and readable, but an Inactive Patient is not eligible for new clinical activity — they cannot be selected for a new Appointment, Visit, or Admission until reactivated. Deactivation is reversible and distinct from deletion.
+
 ## Medical Record Number
 
 The human-facing identifier for a Patient within a Tenant, assigned by the system at Patient Registration and never chosen by the user. A Patient keeps the same Medical Record Number across all of the Tenant's Facilities, and a Medical Record Number is never reused. Commonly abbreviated MRN.
