@@ -1,0 +1,4 @@
+## 2024-05-24 - Missing Auth Middleware on Global Master Data API Routes
+**Vulnerability:** Global master data API endpoints (countries, states, languages, nationalities, religions) were missing authentication checks, allowing unauthenticated users to perform CRUD operations on master data.
+**Learning:** The project does not use a global Next.js authentication middleware. Instead, route-level authentication must be explicitly added to each endpoint route handler. If not included, the route is completely public.
+**Prevention:** Always explicitly include `const session = await requireAuth(); if (session instanceof Response) return session;` (or `requireTenantSession` as appropriate) in every new API route handler method. Use automated scripts to periodically scan route handlers for missing auth helpers.
