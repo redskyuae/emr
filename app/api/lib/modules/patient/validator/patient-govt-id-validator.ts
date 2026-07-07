@@ -5,6 +5,7 @@ import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { patientRepository } from '../repository/patient-repository';
 
 const PATIENT_GOVT_ID_EXISTS = 'Patient government ID {value} already exists.';
+const PATIENT_MRN_CONFLICT = 'Patient MRN allocation conflicted. Please retry.';
 
 type PatientGovtIdInput = {
   tenantId: string;
@@ -45,7 +46,7 @@ export async function validatePatientGovtIdUniqueness({
   return { success: true, data: undefined };
 }
 
-export function getPatientGovtIdUniqueConstraintErrors(
+export function getPatientUniqueConstraintErrors(
   error: unknown,
   input: Pick<PatientGovtIdInput, 'govtIdNumber'>
 ): string[] {
@@ -57,6 +58,10 @@ export function getPatientGovtIdUniqueConstraintErrors(
 
   if (dbError.constraint === 'patient_tenant_govt_id_idx' && input.govtIdNumber) {
     return [duplicateError(input.govtIdNumber)];
+  }
+
+  if (dbError.constraint === 'patient_tenant_mrn_idx') {
+    return [PATIENT_MRN_CONFLICT];
   }
 
   return [];

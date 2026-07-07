@@ -46,7 +46,10 @@ export async function GET(request: NextRequest) {
 
     const page = parsePositiveInteger(request.nextUrl.searchParams.get('page'), 1);
     const limit = parsePositiveInteger(request.nextUrl.searchParams.get('limit'), 10);
-    const query = request.nextUrl.searchParams.get('query')?.trim() || undefined;
+    const query =
+      request.nextUrl.searchParams.get('query')?.trim() ||
+      request.nextUrl.searchParams.get('search')?.trim() ||
+      undefined;
     const gender = parseGenderFilter(request.nextUrl.searchParams.get('gender'));
     const isActive = parseActiveFilter(request.nextUrl.searchParams.get('isActive'));
 

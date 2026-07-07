@@ -116,6 +116,17 @@ describe('Patient commands', () => {
     });
   });
 
+  it('should map a duplicate MRN constraint on create to a conflict error', async () => {
+    repo.createPatient.mockRejectedValue({
+      cause: { code: '23505', constraint: 'patient_tenant_mrn_idx' },
+    });
+    await expect(createPatientCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Patient MRN allocation conflicted. Please retry.'],
+    });
+  });
+
   it('should rethrow unknown create errors', async () => {
     const error = new Error('database down');
     repo.createPatient.mockRejectedValue(error);

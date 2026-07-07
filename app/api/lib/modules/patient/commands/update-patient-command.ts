@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { patientRepository } from '../repository/patient-repository';
 import type { Patient } from '../schemas/patient-schema';
-import { getPatientGovtIdUniqueConstraintErrors } from '../validator/patient-govt-id-validator';
+import { getPatientUniqueConstraintErrors } from '../validator/patient-govt-id-validator';
 import { validateUpdatePatient } from '../validator/update-patient-validator';
 
 export async function updatePatientCommand(
@@ -35,7 +35,7 @@ export async function updatePatientCommand(
 
     return { success: true, data: updatedPatient };
   } catch (error) {
-    const constraintErrors = getPatientGovtIdUniqueConstraintErrors(error, patientData);
+    const constraintErrors = getPatientUniqueConstraintErrors(error, patientData);
 
     if (constraintErrors.length > 0) {
       return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
