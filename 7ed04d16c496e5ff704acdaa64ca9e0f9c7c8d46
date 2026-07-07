@@ -1,0 +1,35 @@
+app/api/lib/modules/patient/commands/patient-commands.unit.tests.ts
+  d6973098fe44ea6a 119-129
+app/api/lib/modules/patient/commands/update-patient-command.ts
+  d6973098fe44ea6a 6,38
+app/api/lib/modules/patient/validator/patient-govt-id-validator.ts
+  d6973098fe44ea6a 8,49,63-64
+app/api/v1/patients/route.ts
+  d6973098fe44ea6a 49-52
+app/api/v1/patients/[id]/types.ts
+  d6973098fe44ea6a 7-33
+app/api/lib/modules/patient/commands/create-patient-command.ts
+  d6973098fe44ea6a 7,30
+app/api/lib/openapi/document.ts
+  d6973098fe44ea6a 2935,2955
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "7ed04d16c496e5ff704acdaa64ca9e0f9c7c8d46",
+  "prompts": {
+    "d6973098fe44ea6a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f95bdd5f-ab00-4ac3-94ea-2d6e59f36766",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 54,
+      "total_deletions": 6,
+      "accepted_lines": 54,
+      "overriden_lines": 0
+    }
+  }
+}
