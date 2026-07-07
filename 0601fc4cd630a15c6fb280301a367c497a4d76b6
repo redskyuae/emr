@@ -1,0 +1,95 @@
+app/api/lib/modules/patient/validator/get-patients-validator.ts
+  d6973098fe44ea6a 1-15
+app/api/lib/modules/patient/commands/update-patient-command.ts
+  d6973098fe44ea6a 1-46
+app/api/lib/modules/patient/validator/patient-validator.unit.tests.ts
+  d6973098fe44ea6a 1-202,204-280
+app/api/lib/modules/patient/commands/reactivate-patient-command.ts
+  d6973098fe44ea6a 1-33
+app/api/v1/patients/[id]/deactivate/route.ts
+  d6973098fe44ea6a 1-47
+app/api/lib/modules/patient/queries/get-patient-by-id-query.ts
+  d6973098fe44ea6a 1-28
+app/api/lib/modules/patient/repository/patient-mrn.ts
+  d6973098fe44ea6a 1-3
+app/api/lib/modules/patient/repository/patient-repository.integration.tests.ts
+  d6973098fe44ea6a 1-189
+app/api/lib/openapi/document.ts
+  d6973098fe44ea6a 1026-1160,1289,2827-2836,2838-2960,3575-3588,4557-4727
+app/api/v1/patients/route.ts
+  d6973098fe44ea6a 1-139
+tasks_be.md
+  d6973098fe44ea6a 1-11,13-38,40-71,73-135,137-153
+app/api/lib/modules/patient/queries/patient-queries.unit.tests.ts
+  d6973098fe44ea6a 1-115
+app/api/lib/modules/patient/commands/delete-patient-command.ts
+  d6973098fe44ea6a 1-28
+app/api/v1/patients/[id]/route.ts
+  d6973098fe44ea6a 1-122
+app/api/lib/modules/patient/commands/patient-commands.unit.tests.ts
+  d6973098fe44ea6a 1-143,145-188
+app/api/lib/modules/patient/repository/patient-repository.ts
+  d6973098fe44ea6a 1-8,10-323
+app/api/lib/modules/patient/validator/patient-govt-id-validator.ts
+  d6973098fe44ea6a 1-63
+app/api/lib/modules/patient/queries/get-patients-query.ts
+  d6973098fe44ea6a 1-39
+app/api/lib/modules/patient/schemas/patient-schema.unit.tests.ts
+  d6973098fe44ea6a 1-142
+CONTEXT.md
+  d6973098fe44ea6a 103-115
+app/api/lib/modules/patient/commands/deactivate-patient-command.ts
+  d6973098fe44ea6a 1-33
+app/api/lib/modules/patient/schemas/patient-schema.ts
+  d6973098fe44ea6a 1-5,7-229
+app/api/lib/modules/patient/validator/update-patient-validator.ts
+  d6973098fe44ea6a 1-8,10-83
+app/api/v1/patients/[id]/types.ts
+  d6973098fe44ea6a 1-11
+app/db/schema/patient.ts
+  d6973098fe44ea6a 1-63
+app/api/v1/patients/[id]/reactivate/types.ts
+  d6973098fe44ea6a 1-5
+app/api/lib/modules/patient/commands/create-patient-command.ts
+  d6973098fe44ea6a 1-38
+app/api/v1/patients/[id]/reactivate/route.ts
+  d6973098fe44ea6a 1-47
+app/api/v1/patients/[id]/deactivate/types.ts
+  d6973098fe44ea6a 1-5
+app/api/lib/modules/patient/validator/create-patient-validator.ts
+  d6973098fe44ea6a 1-42
+app/api/lib/modules/patient/validator/get-patient-by-id-validator.ts
+  d6973098fe44ea6a 1-37
+app/api/v1/patients/types.ts
+  d6973098fe44ea6a 1-35
+app/api/lib/modules/patient/validator/patient-existence-validator.ts
+  d6973098fe44ea6a 1-42
+app/api/lib/modules/patient/validator/patient-reference-validator.ts
+  d6973098fe44ea6a 1-66
+app/api/lib/modules/permission/seed-data.ts
+  d6973098fe44ea6a 101-111
+docs/adr/0020-patient-coded-demographics-are-fixed-value-sets.md
+  d6973098fe44ea6a 1-7
+docs/adr/0019-patient-mrn-is-tenant-scoped-generated-sequence.md
+  d6973098fe44ea6a 1-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "0601fc4cd630a15c6fb280301a367c497a4d76b6",
+  "prompts": {
+    "d6973098fe44ea6a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f95bdd5f-ab00-4ac3-94ea-2d6e59f36766",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 3204,
+      "total_deletions": 40,
+      "accepted_lines": 3175,
+      "overriden_lines": 10
+    }
+  }
+}
