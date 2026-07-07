@@ -3,12 +3,13 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { parseApiError } from '@/app/queries/api-error';
 import type { GetPatientResponse } from '@/app/api/v1/patients/[id]/types';
 import type { ListPatientsResponse } from '@/app/api/v1/patients/types';
+import type { PatientGender } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 
 export type PatientListFilters = {
   page: number;
   limit: number;
   query?: string;
-  gender?: string;
+  gender?: PatientGender;
   isActive?: boolean;
 };
 

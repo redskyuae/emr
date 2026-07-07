@@ -564,14 +564,18 @@ function IdentifiersSection({ control }: { control: Control<PatientFormValues> }
             <Controller
               control={control}
               name="govtIdType"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Field>
                   <FieldLabel htmlFor="patient-govt-id-type">Government ID type</FieldLabel>
                   <Select
                     value={field.value || NONE}
                     onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
                   >
-                    <SelectTrigger id="patient-govt-id-type" className="w-full">
+                    <SelectTrigger
+                      id="patient-govt-id-type"
+                      className="w-full"
+                      aria-invalid={fieldState.invalid}
+                    >
                       <SelectValue placeholder="Not specified" />
                     </SelectTrigger>
                     <SelectContent>
@@ -583,6 +587,9 @@ function IdentifiersSection({ control }: { control: Control<PatientFormValues> }
                       ))}
                     </SelectContent>
                   </Select>
+                  {fieldState.error ? (
+                    <p className="text-destructive text-xs">{fieldState.error.message}</p>
+                  ) : null}
                 </Field>
               )}
             />

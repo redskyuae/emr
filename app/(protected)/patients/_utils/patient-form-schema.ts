@@ -46,7 +46,7 @@ export const patientFormSchema = z
     firstName: requiredNameField('First name'),
     middleName: optionalNameField('Middle name', 100),
     lastName: requiredNameField('Last name'),
-    gender: z.enum(PATIENT_GENDERS, { error: 'Gender is required.' }).or(z.literal('')),
+    gender: z.enum(PATIENT_GENDERS).or(z.literal('')),
     dateOfBirth: z
       .string()
       .trim()
@@ -57,10 +57,9 @@ export const patientFormSchema = z
     phone: requiredPhoneField('Phone'),
     alternatePhone: optionalPhoneField('Alternate phone'),
     email: z
-      .string()
+      .email('Email must be valid.')
       .trim()
       .max(255, 'Email must be at most 255 characters.')
-      .email('Email must be valid.')
       .optional()
       .or(z.literal('')),
     addressLine1: optionalNameField('Address line 1', 255),
@@ -84,11 +83,9 @@ export const patientFormSchema = z
     }
 
     if (Boolean(data.govtIdType) !== Boolean(data.govtIdNumber)) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Government ID type and number must be provided together.',
-        path: ['govtIdNumber'],
-      });
+      const message = 'Government ID type and number must be provided together.';
+      ctx.addIssue({ code: 'custom', message, path: ['govtIdNumber'] });
+      ctx.addIssue({ code: 'custom', message, path: ['govtIdType'] });
     }
 
     if (data.stateId !== undefined && data.countryId === undefined) {
