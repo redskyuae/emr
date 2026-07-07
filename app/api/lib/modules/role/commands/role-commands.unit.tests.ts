@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { rolePermissionRepository } from '../../role-permission/repository/role-permission-repository';
+import { SystemRoleSeedConflictError } from '../errors/system-role-seed-conflict-error';
 import { roleRepository } from '../repository/role-repository';
 import { validateCreateRole } from '../validator/create-role-validator';
 import { validateDeleteRole } from '../validator/delete-role-validator';
@@ -109,9 +110,7 @@ describe('Role commands', () => {
   });
 
   it('should map a reserved Role code collision to a conflict error when seeding System Roles', async () => {
-    repo.seedSystemRolesForTenant.mockRejectedValue(
-      new Error('System Role seeding failed because a reserved Role code is unavailable.')
-    );
+    repo.seedSystemRolesForTenant.mockRejectedValue(new SystemRoleSeedConflictError());
 
     await expect(seedSystemRolesCommand('tenant-1')).resolves.toEqual({
       success: false,
@@ -119,6 +118,13 @@ describe('Role commands', () => {
       errors: ['System Role seeding failed because a reserved Role code is unavailable.'],
     });
     expect(rolePermissionRepo.seedDefaultPermissionsForSystemRoles).not.toHaveBeenCalled();
+  });
+
+  it('should rethrow unknown System Role seeding errors', async () => {
+    const error = new Error('database down');
+    repo.seedSystemRolesForTenant.mockRejectedValue(error);
+
+    await expect(seedSystemRolesCommand('tenant-1')).rejects.toThrow(error);
   });
 
   it('should update the role and return it with stats', async () => {

@@ -6,6 +6,7 @@ import { rolePermission as rolePermissionTable } from '@/app/db/schema/role-perm
 import { role as roleTable } from '@/app/db/schema/role';
 import { staffProfile as staffProfileTable } from '@/app/db/schema/staff-profile';
 import { userRole as userRoleTable } from '@/app/db/schema/user-role';
+import { SystemRoleSeedConflictError } from '../errors/system-role-seed-conflict-error';
 import type {
   CreateRoleInput,
   Role,
@@ -358,7 +359,7 @@ async function seedSystemRolesForTenant(tenantId: string) {
   const systemRoles = await getSystemRolesForTenant(tenantId);
 
   if (systemRoles.length !== SYSTEM_ROLE_DEFINITIONS.length) {
-    throw new Error('System Role seeding failed because a reserved Role code is unavailable.');
+    throw new SystemRoleSeedConflictError();
   }
 
   return systemRoles;
