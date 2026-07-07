@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { permissionRepository } from '../../permission/repository/permission-repository';
+import { seedSystemRolesCommand } from '../../role/commands/seed-system-roles-command';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { tenantProvisioningRepository } from '../repository/tenant-provisioning-repository';
 import { validateTenantOnboarding } from '../validator/tenant-onboarding-validator';
@@ -19,6 +20,10 @@ vi.mock('../../permission/repository/permission-repository', () => ({
   permissionRepository: {
     seedPermissionCatalogue: vi.fn(),
   },
+}));
+
+vi.mock('../../role/commands/seed-system-roles-command', () => ({
+  seedSystemRolesCommand: vi.fn(),
 }));
 
 vi.mock('../../tenant/repository/tenant-repository', () => ({
@@ -54,6 +59,7 @@ vi.mock('./seed-default-work-order-masters-command', () => ({
 
 const validate = vi.mocked(validateTenantOnboarding);
 const permissionRepo = vi.mocked(permissionRepository);
+const seedSystemRoles = vi.mocked(seedSystemRolesCommand);
 const tenantRepo = vi.mocked(tenantRepository);
 const provisioningRepo = vi.mocked(tenantProvisioningRepository);
 const seedAppointmentMasters = vi.mocked(seedDefaultAppointmentMastersCommand);
@@ -78,6 +84,7 @@ describe('OnboardTenant command', () => {
     vi.clearAllMocks();
     validate.mockResolvedValue({ success: true, data: tenant });
     permissionRepo.seedPermissionCatalogue.mockResolvedValue(undefined);
+    seedSystemRoles.mockResolvedValue({ success: true, data: [] });
     provisioningRepo.hasSeededSpecialties.mockResolvedValue(false);
     provisioningRepo.hasSeededAssetMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededWorkOrderMasters.mockResolvedValue(false);
@@ -104,6 +111,7 @@ describe('OnboardTenant command', () => {
       status: StatusCodes.NOT_FOUND,
     });
     expect(permissionRepo.seedPermissionCatalogue).not.toHaveBeenCalled();
+    expect(seedSystemRoles).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
@@ -118,6 +126,7 @@ describe('OnboardTenant command', () => {
 
     expect(result).toEqual({ success: true, data: onboardedTenant });
     expect(permissionRepo.seedPermissionCatalogue).not.toHaveBeenCalled();
+    expect(seedSystemRoles).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
@@ -130,11 +139,15 @@ describe('OnboardTenant command', () => {
 
     expect(result).toEqual({ success: true, data: onboardedTenant });
     expect(permissionRepo.seedPermissionCatalogue).toHaveBeenCalledTimes(1);
+    expect(seedSystemRoles).toHaveBeenCalledWith('org-1');
     expect(seedSpecialties).toHaveBeenCalledWith('org-1');
     expect(seedAppointmentMasters).toHaveBeenCalledWith('org-1');
     expect(seedAssetMasters).toHaveBeenCalledWith('org-1');
     expect(seedWorkOrderMasters).toHaveBeenCalledWith('org-1');
     expect(tenantRepo.markTenantOnboarded).toHaveBeenCalledWith('org-1');
+    expect(seedSystemRoles.mock.invocationCallOrder[0]).toBeLessThan(
+      seedSpecialties.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER
+    );
   });
 
   it('should not backfill specialties when every older master family identifies a legacy tenant', async () => {
@@ -146,6 +159,7 @@ describe('OnboardTenant command', () => {
 
     expect(result).toEqual({ success: true, data: onboardedTenant });
     expect(permissionRepo.seedPermissionCatalogue).toHaveBeenCalledTimes(1);
+    expect(seedSystemRoles).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
@@ -191,6 +205,23 @@ describe('OnboardTenant command', () => {
       errors: ['Asset seeding failed'],
       status: StatusCodes.INTERNAL_SERVER_ERROR,
     });
+    expect(seedWorkOrderMasters).not.toHaveBeenCalled();
+    expect(tenantRepo.markTenantOnboarded).not.toHaveBeenCalled();
+  });
+
+  it('should stop before default masters when System Role seeding fails', async () => {
+    seedSystemRoles.mockResolvedValue({ success: false, errors: ['System Role seeding failed'] });
+
+    const result = await onboardTenantCommand('org-1');
+
+    expect(result).toEqual({
+      success: false,
+      errors: ['System Role seeding failed'],
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    });
+    expect(seedSpecialties).not.toHaveBeenCalled();
+    expect(seedAppointmentMasters).not.toHaveBeenCalled();
+    expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();
     expect(tenantRepo.markTenantOnboarded).not.toHaveBeenCalled();
   });

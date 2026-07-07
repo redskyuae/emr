@@ -276,6 +276,42 @@ describe('Role-Permission repository', () => {
     expect(assigned).toHaveLength(allPermissions.length);
   });
 
+  it('should seed exactly the Doctor System Role clinical read permissions', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const roles = await roleRepository.seedSystemRolesForTenant(tenantA);
+
+    await rolePermissionRepository.seedDefaultPermissionsForSystemRoles(tenantA, roles);
+
+    const doctorRole = roles.find((role) => role.code === 'DOCTOR');
+    if (!doctorRole) {
+      throw new Error('DOCTOR role not found');
+    }
+
+    const assigned = await rolePermissionRepository.getAssignedPermissionsByRole(
+      doctorRole.id,
+      tenantA
+    );
+    const expectedPermissionNames = [
+      'appointment-mode:read',
+      'appointment-type:read',
+      'appointment-status:read',
+      'appointment-reason:read',
+      'appointment-cancelled-reason:read',
+      'language:read',
+      'nationality:read',
+      'religion:read',
+      'country:read',
+      'state:read',
+      'specialty:read',
+      'doctor:read',
+      'patient:read',
+    ];
+
+    expect(assigned.map((permission) => permission.name).sort()).toEqual(
+      expectedPermissionNames.sort()
+    );
+  });
+
   it('should not duplicate default permissions on repeated seed', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const roles = await roleRepository.seedSystemRolesForTenant(tenantA);

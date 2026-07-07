@@ -27,7 +27,21 @@ const TENANT_ADMIN_DEFAULT_PERMISSIONS = 'ALL';
 
 const DEFAULT_PERMISSION_NAMES_BY_SYSTEM_ROLE = {
   NURSE: [],
-  DOCTOR: [],
+  DOCTOR: [
+    'appointment-mode:read',
+    'appointment-type:read',
+    'appointment-status:read',
+    'appointment-reason:read',
+    'appointment-cancelled-reason:read',
+    'language:read',
+    'nationality:read',
+    'religion:read',
+    'country:read',
+    'state:read',
+    'specialty:read',
+    'doctor:read',
+    'patient:read',
+  ],
   LAB_TECH: [],
   PHARMACIST: [],
   RECEPTIONIST: [],
