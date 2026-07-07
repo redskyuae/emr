@@ -1,0 +1,25 @@
+app/(protected)/patients/[id]/_components/_modals/deactivate-patient-dialog.tsx
+  da18e095ce96ad9e 3,9,23-24,31-33,41-48,59-60,62-64,67-83,85,90,92-93,99
+app/(protected)/patients/[id]/_components/patient-detail-impl.tsx
+  da18e095ce96ad9e 79-80,144,153,250-251
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "da4789bc5372254b5156419b3d7aa181645ba209",
+  "prompts": {
+    "da18e095ce96ad9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7fdf804-3c96-4264-a378-c9380878f8da",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 48,
+      "total_deletions": 35,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    }
+  }
+}
