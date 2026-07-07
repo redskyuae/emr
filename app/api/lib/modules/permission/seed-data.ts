@@ -98,6 +98,18 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'patient-management',
+    resource: 'patient',
+    actions: [
+      ['read', 'View Patients.'],
+      ['create', 'Register Patients.'],
+      ['update', 'Update Patient details.'],
+      ['delete', 'Delete Patients.'],
+      ['deactivate', 'Deactivate Patients.'],
+      ['reactivate', 'Reactivate Patients.'],
+    ],
+  },
+  {
     module: 'appointment-masters',
     resource: 'appointment-mode',
     actions: [

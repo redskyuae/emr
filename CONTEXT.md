@@ -100,7 +100,19 @@ A Tenant-scoped Master representing a Doctor's clinical area of expertise or cre
 
 ## Patient
 
-A person who receives care at a Facility. Belongs to a Tenant (registered within that tenant's system). Not a Staff member.
+A person who receives care at a Facility. Belongs to a Tenant (registered within that tenant's system) and is identified within that Tenant by a Medical Record Number. Not a Staff member, and not a system user — a Patient has no login.
+
+## Patient Registration
+
+The process of adding a Patient to a Tenant's system: capturing demographics, contact details, and identifiers, and assigning the Patient's Medical Record Number. Registration does not create a login or Session; it is distinct from any clinical event such as a Visit or Admission.
+
+## Medical Record Number
+
+The human-facing identifier for a Patient within a Tenant, assigned by the system at Patient Registration and never chosen by the user. A Patient keeps the same Medical Record Number across all of the Tenant's Facilities, and a Medical Record Number is never reused. Commonly abbreviated MRN.
+
+## Emergency Contact
+
+The person to reach on a Patient's behalf in urgent situations, recorded during Patient Registration with their relationship to the Patient. An Emergency Contact is contact information only — not a Patient, not Staff, and not a system user.
 
 ## Appointment
 

@@ -1023,6 +1023,141 @@ const assetErrorResponses = {
   '500': responseRef('InternalServerError'),
 };
 
+const patientRequestExample = {
+  firstName: 'Asha',
+  middleName: 'Kiran',
+  lastName: 'Rao',
+  gender: 'female',
+  dateOfBirth: '1990-05-14',
+  bloodGroup: 'B+',
+  maritalStatus: 'married',
+  phone: '+91-9876543210',
+  alternatePhone: '+91-9123456780',
+  email: 'asha.rao@example.com',
+  addressLine1: '221B Residency Road',
+  addressLine2: 'Near City Hospital',
+  city: 'Bengaluru',
+  stateId: 5,
+  countryId: 1,
+  postalCode: '560025',
+  nationalityId: 1,
+  languageId: 2,
+  religionId: 3,
+  govtIdType: 'passport',
+  govtIdNumber: 'N1234567',
+  emergencyContactName: 'Kiran Rao',
+  emergencyContactRelationship: 'Spouse',
+  emergencyContactPhone: '+91-9988776655',
+};
+
+const patientExample = {
+  id: 42,
+  tenantId: 'org_apollo',
+  mrn: 'MRN-1042',
+  ...patientRequestExample,
+  state: { id: 5, name: 'Karnataka' },
+  country: { id: 1, name: 'India', code: 'IN' },
+  nationality: { id: 1, name: 'Indian' },
+  language: { id: 2, name: 'Kannada' },
+  religion: { id: 3, name: 'Hindu' },
+  isActive: true,
+  createdOn: '2026-06-24T04:00:00.000Z',
+  modifiedOn: '2026-06-24T04:00:00.000Z',
+};
+
+const patientValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        missingRequiredField: {
+          summary: 'Missing a required Patient field',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient first name is required'],
+          },
+        },
+        futureDateOfBirth: {
+          summary: 'Date of birth in the future',
+          value: {
+            message: 'Validation failed',
+            errors: ['Date of birth must not be in the future'],
+          },
+        },
+        govtIdPairing: {
+          summary: 'Government ID type and number not provided together',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient government ID type and number must be provided together'],
+          },
+        },
+        invalidId: {
+          summary: 'Invalid Patient identifier',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient abc is Invalid.'],
+          },
+        },
+        invalidJson: {
+          summary: 'Malformed JSON request body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+};
+
+const patientNotFound = {
+  description: 'Patient was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Patient not found',
+    errors: ['Patient not found'],
+  }),
+};
+
+const patientConflict = {
+  description:
+    'Patient government ID already exists in the active Tenant, or a referenced State, Country, Nationality, Language, or Religion is invalid.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateGovtId: {
+          summary: 'Duplicate government ID',
+          value: {
+            message: 'Patient government ID N1234567 already exists.',
+            errors: ['Patient government ID N1234567 already exists.'],
+          },
+        },
+        invalidReference: {
+          summary: 'Invalid Global Reference',
+          value: {
+            message: 'Patient nationality 999 is Invalid.',
+            errors: ['Patient nationality 999 is Invalid.'],
+          },
+        },
+        stateCountryMismatch: {
+          summary: 'State does not belong to the given Country',
+          value: {
+            message: 'Patient state 5 does not belong to country 2.',
+            errors: ['Patient state 5 does not belong to country 2.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const patientErrorResponses = {
+  '400': patientValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': patientNotFound,
+  '409': patientConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 const workOrderExample = {
   id: 43,
   tenantId: 'org_apollo',
@@ -1151,6 +1286,7 @@ export const openApiDocument = {
     { name: 'Work Order Status', description: 'Work Order Status Master APIs.' },
     { name: 'Work Order', description: 'Maintenance Work Order APIs.' },
     { name: 'Asset', description: 'Asset inventory APIs.' },
+    { name: 'Patient', description: 'Patient Registration and management APIs.' },
   ],
   paths: {
     '/api/v1/signin': {
@@ -2688,6 +2824,140 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/patients': {
+      get: {
+        tags: ['Patient'],
+        summary: 'List Patients',
+        description:
+          'Returns a paginated list of active Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, MRN, and phone. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          ...listParameters,
+          parameterRef('PatientGender'),
+          parameterRef('PatientIsActive'),
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated Patient list.',
+            content: jsonContent(paginatedSchema('Patient'), {
+              data: [patientExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': patientValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Patient'],
+        summary: 'Register Patient',
+        description:
+          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. govtIdType and govtIdNumber must be provided together and are unique per Tenant when present.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreatePatientRequest', patientRequestExample),
+        responses: {
+          '201': {
+            description: 'Patient registered.',
+            content: jsonContent(dataEnvelopeSchema('Patient'), {
+              data: patientExample,
+            }),
+          },
+          '400': patientValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '409': patientConflict,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/patients/{id}': {
+      get: {
+        tags: ['Patient'],
+        summary: 'Get Patient',
+        description:
+          'Returns one active Patient by ID from the active Tenant. Patients from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Patient')],
+        responses: {
+          '200': {
+            description: 'Patient found.',
+            content: jsonContent(dataEnvelopeSchema('Patient'), {
+              data: patientExample,
+            }),
+          },
+          ...patientErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Patient'],
+        summary: 'Update Patient',
+        description:
+          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference and government ID rules are the same as registration.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Patient')],
+        requestBody: requestBody('UpdatePatientRequest', patientRequestExample),
+        responses: {
+          '200': {
+            description: 'Patient updated.',
+            content: jsonContent(dataEnvelopeSchema('Patient'), {
+              data: patientExample,
+            }),
+          },
+          ...patientErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Patient'],
+        summary: 'Delete Patient',
+        description: 'Soft-deletes one active Patient in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Patient')],
+        responses: {
+          '204': { description: 'Patient deleted.' },
+          ...patientErrorResponses,
+        },
+      },
+    },
+    '/api/v1/patients/{id}/deactivate': {
+      patch: {
+        tags: ['Patient'],
+        summary: 'Deactivate Patient',
+        description: 'Marks the Patient inactive in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Patient')],
+        responses: {
+          '200': {
+            description: 'Patient deactivated.',
+            content: jsonContent(dataEnvelopeSchema('Patient'), { data: patientExample }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': patientNotFound,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/patients/{id}/reactivate': {
+      patch: {
+        tags: ['Patient'],
+        summary: 'Reactivate Patient',
+        description: 'Marks the Patient active in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Patient')],
+        responses: {
+          '200': {
+            description: 'Patient reactivated.',
+            content: jsonContent(dataEnvelopeSchema('Patient'), { data: patientExample }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': patientNotFound,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/assets/categories': {
       get: {
         tags: ['Asset Category'],
@@ -3301,6 +3571,20 @@ export const openApiDocument = {
         required: false,
         description: 'Filters Assets by Asset Status identifier in the active Tenant.',
         schema: { type: 'integer', minimum: 1 },
+      },
+      PatientGender: {
+        name: 'gender',
+        in: 'query',
+        required: false,
+        description: 'Filters Patients by gender.',
+        schema: { type: 'string', enum: ['male', 'female', 'other', 'unknown'] },
+      },
+      PatientIsActive: {
+        name: 'isActive',
+        in: 'query',
+        required: false,
+        description: 'Filters Patients by active status.',
+        schema: { type: 'boolean' },
       },
       WorkOrderTypeId: {
         name: 'typeId',
@@ -4266,6 +4550,177 @@ export const openApiDocument = {
           condition: {
             oneOf: [schemaRef('AssetMasterSummary'), { type: 'null' }],
           },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      PatientReferenceSummary: {
+        type: 'object',
+        required: ['id', 'name'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+        },
+      },
+      PatientCountrySummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
+      CreatePatientRequest: {
+        type: 'object',
+        required: ['firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
+        properties: {
+          firstName: { type: 'string', minLength: 1, maxLength: 100 },
+          middleName: { type: 'string', maxLength: 100 },
+          lastName: { type: 'string', minLength: 1, maxLength: 100 },
+          gender: { type: 'string', enum: ['male', 'female', 'other', 'unknown'] },
+          dateOfBirth: {
+            type: 'string',
+            format: 'date',
+            description: 'Must not be in the future.',
+          },
+          bloodGroup: {
+            type: 'string',
+            enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+          },
+          maritalStatus: {
+            type: 'string',
+            enum: ['single', 'married', 'divorced', 'widowed', 'other'],
+          },
+          phone: { type: 'string', minLength: 1, maxLength: 20 },
+          alternatePhone: { type: 'string', maxLength: 20 },
+          email: { type: 'string', format: 'email', maxLength: 255 },
+          addressLine1: { type: 'string', maxLength: 255 },
+          addressLine2: { type: 'string', maxLength: 255 },
+          city: { type: 'string', maxLength: 100 },
+          stateId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Requires countryId to also be provided, and must belong to that Country.',
+          },
+          countryId: { type: 'integer', minimum: 1 },
+          postalCode: { type: 'string', maxLength: 20 },
+          nationalityId: { type: 'integer', minimum: 1 },
+          languageId: { type: 'integer', minimum: 1, description: 'Preferred Language.' },
+          religionId: { type: 'integer', minimum: 1 },
+          govtIdType: {
+            type: 'string',
+            enum: ['passport', 'national-id', 'driving-license', 'other'],
+            description: 'Must be provided together with govtIdNumber.',
+          },
+          govtIdNumber: {
+            type: 'string',
+            maxLength: 50,
+            description:
+              'Government ID number. Unique per Tenant (case-insensitive) together with govtIdType.',
+          },
+          emergencyContactName: { type: 'string', maxLength: 150 },
+          emergencyContactRelationship: { type: 'string', maxLength: 50 },
+          emergencyContactPhone: { type: 'string', maxLength: 20 },
+        },
+      },
+      UpdatePatientRequest: schemaRef('CreatePatientRequest'),
+      Patient: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'mrn',
+          'firstName',
+          'middleName',
+          'lastName',
+          'gender',
+          'dateOfBirth',
+          'bloodGroup',
+          'maritalStatus',
+          'phone',
+          'alternatePhone',
+          'email',
+          'addressLine1',
+          'addressLine2',
+          'city',
+          'stateId',
+          'state',
+          'countryId',
+          'country',
+          'postalCode',
+          'nationalityId',
+          'nationality',
+          'languageId',
+          'language',
+          'religionId',
+          'religion',
+          'govtIdType',
+          'govtIdNumber',
+          'emergencyContactName',
+          'emergencyContactRelationship',
+          'emergencyContactPhone',
+          'isActive',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          mrn: {
+            type: 'string',
+            description:
+              'Server-generated Medical Record Number, e.g. MRN-1042. Immutable after registration.',
+          },
+          firstName: { type: 'string', minLength: 1, maxLength: 100 },
+          middleName: { type: ['string', 'null'], maxLength: 100 },
+          lastName: { type: 'string', minLength: 1, maxLength: 100 },
+          gender: { type: 'string', enum: ['male', 'female', 'other', 'unknown'] },
+          dateOfBirth: { type: 'string', format: 'date' },
+          bloodGroup: {
+            oneOf: [
+              { type: 'string', enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
+              { type: 'null' },
+            ],
+          },
+          maritalStatus: {
+            oneOf: [
+              { type: 'string', enum: ['single', 'married', 'divorced', 'widowed', 'other'] },
+              { type: 'null' },
+            ],
+          },
+          phone: { type: 'string', minLength: 1, maxLength: 20 },
+          alternatePhone: { type: ['string', 'null'], maxLength: 20 },
+          email: { type: ['string', 'null'], format: 'email', maxLength: 255 },
+          addressLine1: { type: ['string', 'null'], maxLength: 255 },
+          addressLine2: { type: ['string', 'null'], maxLength: 255 },
+          city: { type: ['string', 'null'], maxLength: 100 },
+          stateId: { type: ['integer', 'null'], minimum: 1 },
+          state: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
+          countryId: { type: ['integer', 'null'], minimum: 1 },
+          country: { oneOf: [schemaRef('PatientCountrySummary'), { type: 'null' }] },
+          postalCode: { type: ['string', 'null'], maxLength: 20 },
+          nationalityId: { type: ['integer', 'null'], minimum: 1 },
+          nationality: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
+          languageId: { type: ['integer', 'null'], minimum: 1 },
+          language: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
+          religionId: { type: ['integer', 'null'], minimum: 1 },
+          religion: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
+          govtIdType: {
+            oneOf: [
+              { type: 'string', enum: ['passport', 'national-id', 'driving-license', 'other'] },
+              { type: 'null' },
+            ],
+          },
+          govtIdNumber: { type: ['string', 'null'], maxLength: 50 },
+          emergencyContactName: { type: ['string', 'null'], maxLength: 150 },
+          emergencyContactRelationship: { type: ['string', 'null'], maxLength: 50 },
+          emergencyContactPhone: { type: ['string', 'null'], maxLength: 20 },
+          isActive: { type: 'boolean' },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
         },
