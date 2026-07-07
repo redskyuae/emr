@@ -54,6 +54,8 @@ export async function GET(_request: NextRequest, context: PatientRouteContext) {
 
 export async function PUT(request: NextRequest, context: PatientRouteContext) {
   try {
+    // Any authenticated Tenant member may update a Patient — see the note on POST
+    // in ../route.ts for why this isn't requireTenantAdminSession.
     const tenantSession = await requireTenantSession();
 
     if (tenantSession instanceof Response) {
@@ -94,6 +96,8 @@ export async function PUT(request: NextRequest, context: PatientRouteContext) {
 
 export async function DELETE(_request: NextRequest, context: PatientRouteContext) {
   try {
+    // Any authenticated Tenant member may delete a Patient — see the note on POST
+    // in ../route.ts for why this isn't requireTenantAdminSession.
     const tenantSession = await requireTenantSession();
 
     if (tenantSession instanceof Response) {

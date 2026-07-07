@@ -19,6 +19,8 @@ function errorMessage(status: number) {
 
 export async function PATCH(_request: NextRequest, context: PatientRouteContext) {
   try {
+    // Any authenticated Tenant member may reactivate a Patient — see the note on
+    // POST in ../../route.ts for why this isn't requireTenantAdminSession.
     const tenantSession = await requireTenantSession();
 
     if (tenantSession instanceof Response) {

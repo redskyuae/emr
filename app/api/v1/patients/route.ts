@@ -98,6 +98,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Any authenticated Tenant member may register a Patient — intentionally not
+    // requireTenantAdminSession. No module enforces Permission-level checks at the
+    // route layer yet, so this matches every other module's current posture (Asset,
+    // Specialty, etc.), not just a Patient-specific choice.
     const tenantSession = await requireTenantSession();
 
     if (tenantSession instanceof Response) {
