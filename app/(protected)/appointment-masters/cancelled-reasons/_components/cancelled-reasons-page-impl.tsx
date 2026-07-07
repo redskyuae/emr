@@ -15,7 +15,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import type { AppointmentCancelledReason } from '@/app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema';
-import { getApiErrorMessage } from '@/app/queries/api-error';
+import { ApiError, getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentCancelledReasonQuery } from '@/app/queries/appointment-masters/cancelled-reasons/useAppointmentCancelledReason';
 import { useAppointmentCancelledReasonsQuery } from '@/app/queries/appointment-masters/cancelled-reasons/useAppointmentCancelledReasons';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -68,12 +68,6 @@ export function CancelledReasonsPageImpl() {
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  // The sheet opens straight from the URL, with no effect syncing state back to it.
-  // - ?reason=new                 -> create
-  // - ?reason=<id> still loading  -> open, resolving
-  // - ?reason=<id> found          -> edit
-  // - ?reason=<id> not found, or garbage -> stays closed (the stale param is
-  //   harmless and gets overwritten by the next action)
   const isCreating = reasonParam === 'new';
   const editingReasonId =
     reasonParam !== null && reasonParam !== 'new' && /^\d+$/.test(reasonParam)
@@ -84,9 +78,6 @@ export function CancelledReasonsPageImpl() {
       ? (reasons.find((reason) => reason.id === editingReasonId) ?? null)
       : null;
 
-  // The current page's `reasons` may not include the target id (it lives on a
-  // different page or is filtered out by the active search), so fall back to
-  // fetching it directly by id once the list has loaded and it isn't there.
   const shouldFetchEditingReason =
     editingReasonId !== null && !reasonsQuery.isLoading && editingReasonFromList === null;
   const editingReasonQuery = useAppointmentCancelledReasonQuery(
@@ -98,8 +89,17 @@ export function CancelledReasonsPageImpl() {
     editingReasonId !== null &&
     editingReason === null &&
     (reasonsQuery.isLoading || editingReasonQuery.isFetching);
+
+  const editingReasonNotFound =
+    editingReasonQuery.isError &&
+    editingReasonQuery.error instanceof ApiError &&
+    editingReasonQuery.error.status === 404;
+  const editingReasonLoadFailed = editingReasonQuery.isError && !editingReasonNotFound;
+
   const sheetOpen =
-    isCreating || (editingReasonId !== null && (editingReasonResolving || editingReason !== null));
+    isCreating ||
+    (editingReasonId !== null &&
+      (editingReasonResolving || editingReason !== null || editingReasonLoadFailed));
 
   const previousDebouncedRef = useRef(debouncedSearch);
   useEffect(() => {
@@ -280,6 +280,8 @@ export function CancelledReasonsPageImpl() {
         onClose={closeSheet}
         mode={isCreating ? 'new' : 'edit'}
         reason={editingReason}
+        loadError={editingReasonLoadFailed}
+        onRetryLoad={() => void editingReasonQuery.refetch()}
       />
 
       <DeleteCancelledReasonDialog

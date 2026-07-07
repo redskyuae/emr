@@ -22,6 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 
 import {
@@ -55,6 +56,8 @@ type CancelledReasonFormSheetProps = {
   onClose: () => void;
   mode: 'new' | 'edit';
   reason: AppointmentCancelledReason | null;
+  loadError?: boolean;
+  onRetryLoad?: () => void;
 };
 
 export function CancelledReasonFormSheet({
@@ -62,8 +65,12 @@ export function CancelledReasonFormSheet({
   onClose,
   mode,
   reason,
+  loadError = false,
+  onRetryLoad,
 }: CancelledReasonFormSheetProps) {
   const isCreating = mode === 'new';
+  const hasNoData = !isCreating && reason === null;
+  const isResolving = hasNoData && !loadError;
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const initializedKeyRef = useRef<string | null>(null);
 
@@ -87,6 +94,10 @@ export function CancelledReasonFormSheet({
       return;
     }
 
+    if (hasNoData) {
+      return;
+    }
+
     const sessionKey = isCreating ? 'new' : String(reason?.id ?? '');
 
     if (initializedKeyRef.current === sessionKey) {
@@ -100,7 +111,7 @@ export function CancelledReasonFormSheet({
       description: reason?.description ?? '',
     });
     setServerErrors([]);
-  }, [open, isCreating, reason, form]);
+  }, [open, isCreating, hasNoData, reason, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     setServerErrors([]);
@@ -175,69 +186,101 @@ export function CancelledReasonFormSheet({
               </Alert>
             ) : null}
 
-            <FieldGroup className="gap-4">
-              <Field data-invalid={!!errors.name}>
-                <FieldLabel htmlFor="cancelled-reason-name">
-                  Name{' '}
-                  <span aria-hidden="true" className="text-destructive">
-                    *
-                  </span>
-                </FieldLabel>
-                <Input
-                  id="cancelled-reason-name"
-                  {...register('name')}
-                  disabled={isSaving}
-                  maxLength={100}
-                  placeholder="e.g. Patient requested"
-                  aria-required="true"
-                  aria-invalid={!!errors.name}
-                />
-                <FieldError errors={[errors.name]} />
-              </Field>
+            {loadError ? (
+              <Alert variant="destructive">
+                <AlertCircle className="size-4" />
+                <AlertTitle>Could not load Appointment Cancelled Reason</AlertTitle>
+                <AlertDescription className="space-y-3">
+                  <p>Something went wrong loading this record. Please try again.</p>
+                  <Button type="button" size="sm" variant="outline" onClick={onRetryLoad}>
+                    Retry
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : isResolving ? (
+              <FieldGroup className="gap-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              </FieldGroup>
+            ) : (
+              <FieldGroup className="gap-4">
+                <Field data-invalid={!!errors.name}>
+                  <FieldLabel htmlFor="cancelled-reason-name">
+                    Name{' '}
+                    <span aria-hidden="true" className="text-destructive">
+                      *
+                    </span>
+                  </FieldLabel>
+                  <Input
+                    id="cancelled-reason-name"
+                    {...register('name')}
+                    disabled={isSaving}
+                    maxLength={100}
+                    placeholder="e.g. Patient requested"
+                    aria-required="true"
+                    aria-invalid={!!errors.name}
+                  />
+                  <FieldError errors={[errors.name]} />
+                </Field>
 
-              <Field data-invalid={!!errors.code}>
-                <FieldLabel htmlFor="cancelled-reason-code">
-                  Code{' '}
-                  <span aria-hidden="true" className="text-destructive">
-                    *
-                  </span>
-                </FieldLabel>
-                <Input
-                  id="cancelled-reason-code"
-                  {...register('code', {
-                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                      e.target.value = e.target.value.toUpperCase();
-                    },
-                  })}
-                  disabled={isSaving}
-                  maxLength={10}
-                  placeholder="e.g. PAT_REQ"
-                  className="font-mono"
-                  aria-required="true"
-                  aria-invalid={!!errors.code}
-                />
-                <FieldError errors={[errors.code]} />
-              </Field>
+                <Field data-invalid={!!errors.code}>
+                  <FieldLabel htmlFor="cancelled-reason-code">
+                    Code{' '}
+                    <span aria-hidden="true" className="text-destructive">
+                      *
+                    </span>
+                  </FieldLabel>
+                  <Input
+                    id="cancelled-reason-code"
+                    {...register('code', {
+                      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                        e.target.value = e.target.value.toUpperCase();
+                      },
+                    })}
+                    disabled={isSaving}
+                    maxLength={10}
+                    placeholder="e.g. PAT_REQ"
+                    className="font-mono"
+                    aria-required="true"
+                    aria-invalid={!!errors.code}
+                  />
+                  <FieldError errors={[errors.code]} />
+                </Field>
 
-              <Field data-invalid={!!errors.description}>
-                <FieldLabel htmlFor="cancelled-reason-description">Description</FieldLabel>
-                <Textarea
-                  id="cancelled-reason-description"
-                  {...register('description')}
-                  disabled={isSaving}
-                  rows={3}
-                  placeholder="Optional description"
-                />
-                <FieldError errors={[errors.description]} />
-              </Field>
-            </FieldGroup>
+                <Field data-invalid={!!errors.description}>
+                  <FieldLabel htmlFor="cancelled-reason-description">Description</FieldLabel>
+                  <Textarea
+                    id="cancelled-reason-description"
+                    {...register('description')}
+                    disabled={isSaving}
+                    rows={3}
+                    placeholder="Optional description"
+                  />
+                  <FieldError errors={[errors.description]} />
+                </Field>
+              </FieldGroup>
+            )}
           </div>
 
           <SheetFooter className="bg-background flex-row justify-end border-t p-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
+            <Button
+              type="submit"
+              disabled={isSaving || isResolving || loadError}
+              aria-busy={isSaving || isResolving}
+            >
               <Save className="size-4" />
               Save
             </Button>
