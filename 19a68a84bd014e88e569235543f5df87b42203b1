@@ -1,0 +1,33 @@
+app/(protected)/patients/_utils/patient-form-schema.ts
+  da18e095ce96ad9e 60,86-88
+app/(protected)/patients/_utils/parse-patient-id.ts
+  da18e095ce96ad9e 1-11
+app/(protected)/patients/[id]/page.tsx
+  da18e095ce96ad9e 4,12,14
+app/(protected)/patients/_components/patient-form.tsx
+  da18e095ce96ad9e 567,574-578,590-592
+app/queries/patients/usePatients.ts
+  da18e095ce96ad9e 6,12
+app/(protected)/patients/[id]/edit/page.tsx
+  da18e095ce96ad9e 4,12,14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "19a68a84bd014e88e569235543f5df87b42203b1",
+  "prompts": {
+    "da18e095ce96ad9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7fdf804-3c96-4264-a378-c9380878f8da",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 33,
+      "total_deletions": 15,
+      "accepted_lines": 32,
+      "overriden_lines": 0
+    }
+  }
+}
