@@ -268,6 +268,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Appointment Statuses',
     subtitle: 'Tenant-scoped lifecycle state records for Appointments.',
   },
+  '/appointment-masters/reasons': {
+    title: 'Appointment Reasons',
+    subtitle: 'Tenant-scoped booking reason records for Appointments.',
+  },
   '/global-references': {
     title: 'Global References',
     subtitle: 'Shared reference data used across Tenants.',
