@@ -14,8 +14,8 @@ import {
   Table as TableIcon,
   Tag,
 } from 'lucide-react';
-import type { AssetCategory } from '@/app/api/lib/modules/asset-category/schemas/asset-category-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useAssetCategoryQuery } from '@/app/queries/asset-masters/useAssetCategory';
 import { useAssetCategoriesQuery } from '@/app/queries/asset-masters/useAssetCategories';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -45,16 +45,20 @@ const PAGE_SIZE = 10;
 
 export function AssetCategoryPageImpl() {
   const [categoryParam, setCategoryParam] = useQueryState('category');
+  const [deleteCategoryParam, setDeleteCategoryParam] = useQueryState('deleteCategory');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
-  const [categoryPendingDelete, setCategoryPendingDelete] = useState<AssetCategory | null>(null);
 
   const isCreating = categoryParam === 'new';
   const editingCategoryId =
     categoryParam !== null && categoryParam !== 'new' && /^\d+$/.test(categoryParam)
       ? Number(categoryParam)
+      : null;
+  const deleteCategoryId =
+    deleteCategoryParam !== null && /^\d+$/.test(deleteCategoryParam)
+      ? Number(deleteCategoryParam)
       : null;
 
   const categoriesQuery = useAssetCategoriesQuery({
@@ -70,15 +74,26 @@ export function AssetCategoryPageImpl() {
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  const editingCategory =
+  const editingCategoryFromList =
     editingCategoryId !== null
       ? (categories.find((c) => c.id === editingCategoryId) ?? null)
       : null;
+  const categoryPendingDelete =
+    deleteCategoryId !== null ? (categories.find((c) => c.id === deleteCategoryId) ?? null) : null;
 
+  const shouldFetchEditingCategory =
+    editingCategoryId !== null && !categoriesQuery.isLoading && editingCategoryFromList === null;
+  const editingCategoryQuery = useAssetCategoryQuery(
+    shouldFetchEditingCategory ? editingCategoryId : null
+  );
+  const editingCategory = editingCategoryFromList ?? editingCategoryQuery.data ?? null;
+
+  const categoryResolving =
+    editingCategoryId !== null &&
+    editingCategory === null &&
+    (categoriesQuery.isLoading || editingCategoryQuery.isFetching);
   const sheetOpen =
-    isCreating ||
-    (editingCategoryId !== null && (categoriesQuery.isLoading || editingCategory !== null));
-  const categoryResolving = sheetOpen && !isCreating && editingCategory === null;
+    isCreating || (editingCategoryId !== null && (categoryResolving || editingCategory !== null));
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -184,19 +199,19 @@ export function AssetCategoryPageImpl() {
               <AssetCategoryTableView
                 categories={categories}
                 onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={setCategoryPendingDelete}
+                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
               />
             ) : viewLayout === 'card' ? (
               <AssetCategoryCardView
                 categories={categories}
                 onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={setCategoryPendingDelete}
+                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
               />
             ) : (
               <AssetCategoryListView
                 categories={categories}
                 onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={setCategoryPendingDelete}
+                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
               />
             )}
 
@@ -244,7 +259,7 @@ export function AssetCategoryPageImpl() {
 
       <AssetCategoryDeleteDialog
         category={categoryPendingDelete}
-        onClose={() => setCategoryPendingDelete(null)}
+        onClose={() => void setDeleteCategoryParam(null)}
         onDeleted={(deletedId) => {
           if (editingCategoryId === deletedId) {
             void setCategoryParam(null);

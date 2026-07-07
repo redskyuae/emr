@@ -7,6 +7,7 @@ import type {
   UpdateAssetCategoryRequest,
   UpdateAssetCategoryResponse,
 } from '@/app/api/v1/assets/categories/[id]/types';
+import { assetCategoryQueryKey } from './useAssetCategory';
 import { assetCategoriesQueryKey } from './useAssetCategories';
 
 type UpdateAssetCategoryVariables = {
@@ -37,8 +38,9 @@ export function useUpdateAssetCategory() {
 
   return useMutation({
     mutationFn: updateAssetCategory,
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({ queryKey: assetCategoriesQueryKey });
+      void queryClient.invalidateQueries({ queryKey: assetCategoryQueryKey(variables.id) });
     },
   });
 }

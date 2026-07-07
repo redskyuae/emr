@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
+import { assetCategoryQueryKey } from './useAssetCategory';
 import { assetCategoriesQueryKey } from './useAssetCategories';
 
 async function deleteAssetCategory(id: number): Promise<void> {
@@ -21,8 +22,9 @@ export function useDeleteAssetCategory() {
 
   return useMutation({
     mutationFn: deleteAssetCategory,
-    onSettled: () => {
+    onSettled: (_data, _error, id) => {
       void queryClient.invalidateQueries({ queryKey: assetCategoriesQueryKey });
+      void queryClient.invalidateQueries({ queryKey: assetCategoryQueryKey(id) });
     },
   });
 }
