@@ -3,8 +3,20 @@ import { MoreVertical, Pencil, Tag, Trash2 } from 'lucide-react';
 import type { AssetCategory } from '@/app/api/lib/modules/asset-category/schemas/asset-category-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 function CategoryColorSwatch({ color }: { color: string }) {
   return (
@@ -99,11 +111,7 @@ export function AssetCategoryTableView({
                     {category.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <CategoryActionsMenu
-                      category={category}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                    />
+                    <CategoryActionsMenu category={category} onEdit={onEdit} onDelete={onDelete} />
                   </TableCell>
                 </TableRow>
               ))}

@@ -5,7 +5,17 @@ import { toast } from 'sonner';
 import type { AssetCategory } from '@/app/api/lib/modules/asset-category/schemas/asset-category-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useDeleteAssetCategory } from '@/app/queries/asset-masters/useDeleteAssetCategory';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type AssetCategoryDeleteDialogProps = {
   category: AssetCategory | null;
@@ -36,10 +46,7 @@ export function AssetCategoryDeleteDialog({
   }
 
   return (
-    <AlertDialog
-      open={category !== null}
-      onOpenChange={(open) => (!open ? onClose() : undefined)}
-    >
+    <AlertDialog open={category !== null} onOpenChange={(open) => (!open ? onClose() : undefined)}>
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">

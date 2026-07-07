@@ -11,9 +11,7 @@ export const assetCategoryFormSchema = z.object({
     .trim()
     .min(1, 'Code is required.')
     .max(10, 'Code must be at most 10 characters.'),
-  color: z
-    .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be a hex value like #2563EB.'),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be a hex value like #2563EB.'),
   description: z.string().trim(),
 });
 

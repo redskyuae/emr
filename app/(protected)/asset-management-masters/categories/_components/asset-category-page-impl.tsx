@@ -3,20 +3,41 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Plus, Search, Table as TableIcon,Tag, } from 'lucide-react';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  LayoutList,
+  Plus,
+  Search,
+  Table as TableIcon,
+  Tag,
+} from 'lucide-react';
 import type { AssetCategory } from '@/app/api/lib/modules/asset-category/schemas/asset-category-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetCategoriesQuery } from '@/app/queries/asset-masters/useAssetCategories';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle, } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AssetCategoryDeleteDialog } from './_modals/asset-category-delete-dialog';
 import { AssetCategoryFormSheet } from './_sheets/asset-category-form-sheet';
 import { ViewSkeleton } from './asset-category-skeletons';
-import { AssetCategoryCardView, AssetCategoryListView, AssetCategoryTableView, } from './asset-category-views';
+import {
+  AssetCategoryCardView,
+  AssetCategoryListView,
+  AssetCategoryTableView,
+} from './asset-category-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
 
@@ -108,11 +129,7 @@ export function AssetCategoryPageImpl() {
             </InputGroup>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button
-                type="button"
-                size="lg"
-                onClick={() => void setCategoryParam('new')}
-              >
+              <Button type="button" size="lg" onClick={() => void setCategoryParam('new')}>
                 <Plus className="size-4" />
                 Add Asset Category
               </Button>

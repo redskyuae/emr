@@ -23,10 +23,9 @@ async function fetchAssetCategories(
   if (params.limit) searchParams.set('limit', String(params.limit));
   if (params.query) searchParams.set('query', params.query);
 
-  const response = await fetch(
-    `/api/v1/assets/categories?${searchParams.toString()}`,
-    { credentials: 'same-origin' }
-  );
+  const response = await fetch(`/api/v1/assets/categories?${searchParams.toString()}`, {
+    credentials: 'same-origin',
+  });
 
   if (!response.ok) {
     throw await parseApiError(response, 'Could not load Asset Categories');
