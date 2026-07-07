@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Stethoscope,
   Tag,
+  Tag,
   UserRoundCog,
   UsersRound,
   Wrench,
@@ -275,14 +276,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/appointment-masters/types': {
     title: 'Appointment Types',
     subtitle: 'Tenant-scoped clinical category or visit type records for Appointments.',
-  },
-    '/asset-management-masters': {
-    title: 'Asset Management Masters',
-    subtitle: 'Tenant-scoped asset configuration data.',
-  },
-  '/asset-management-masters/categories': {
-    title: 'Asset Categories',
-    subtitle: 'Tenant-scoped category records for classifying tracked assets.',
   },
   '/global-references': {
     title: 'Global References',
