@@ -1,0 +1,91 @@
+components/app/app-shell-config.ts
+  da18e095ce96ad9e 206-209
+app/(protected)/patients/_components/patient-form.tsx
+  da18e095ce96ad9e 1-3,5-27,29-685,687-746
+app/(protected)/patients/[id]/_components/patient-detail-impl.tsx
+  da18e095ce96ad9e 1-280
+app/(protected)/patients/[id]/edit/_components/patient-edit-impl.tsx
+  da18e095ce96ad9e 1-100
+app/(protected)/patients/new/loader.tsx
+  da18e095ce96ad9e 1-18
+app/(protected)/patients/_utils/patient-value-sets.ts
+  da18e095ce96ad9e 1-61,63-64,66-70
+app/queries/global-references/useReligions.ts
+  da18e095ce96ad9e 1-32
+app/(protected)/patients/[id]/_components/_modals/delete-patient-dialog.tsx
+  da18e095ce96ad9e 1-85
+app/queries/global-references/useLanguages.ts
+  da18e095ce96ad9e 1-32
+app/(protected)/patients/_utils/patient-form-values.ts
+  da18e095ce96ad9e 1-89
+app/queries/global-references/useStates.ts
+  da18e095ce96ad9e 1-36
+app/queries/patients/useUpdatePatient.ts
+  da18e095ce96ad9e 1-41
+app/(protected)/patients/_components/patients-table.tsx
+  da18e095ce96ad9e 1-199
+app/(protected)/patients/_components/patients-toolbar.tsx
+  da18e095ce96ad9e 1-116
+tasks_fe.md
+  da18e095ce96ad9e 1-9,11-80,90-97
+CONTEXT.md
+  da18e095ce96ad9e 109-112
+app/(protected)/patients/[id]/edit/page.tsx
+  da18e095ce96ad9e 1-18
+app/queries/patients/useDeletePatient.ts
+  da18e095ce96ad9e 1-29
+app/(protected)/patients/[id]/loader.tsx
+  da18e095ce96ad9e 1-25
+app/queries/patients/usePatients.ts
+  da18e095ce96ad9e 1-85
+app/(protected)/patients/new/_components/patient-registration-impl.tsx
+  da18e095ce96ad9e 1-30
+app/(protected)/patients/[id]/edit/loader.tsx
+  da18e095ce96ad9e 1-20
+app/(protected)/patients/[id]/_components/_modals/deactivate-patient-dialog.tsx
+  da18e095ce96ad9e 1-82
+app/(protected)/patients/page.tsx
+  da18e095ce96ad9e 1-5
+app/(protected)/patients/[id]/page.tsx
+  da18e095ce96ad9e 1-18
+app/queries/patients/useReactivatePatient.ts
+  da18e095ce96ad9e 1-31
+app/(protected)/patients/_components/patients-page-impl.tsx
+  da18e095ce96ad9e 1-91
+app/(protected)/patients/_utils/patient-form-schema.ts
+  da18e095ce96ad9e 1-103
+app/(protected)/patients/new/page.tsx
+  da18e095ce96ad9e 1-5
+app/queries/patients/useRegisterPatient.ts
+  da18e095ce96ad9e 1-33
+app/queries/global-references/useNationalities.ts
+  da18e095ce96ad9e 1-32
+app/queries/patients/useDeactivatePatient.ts
+  da18e095ce96ad9e 1-31
+app/queries/global-references/useCountries.ts
+  da18e095ce96ad9e 1-34
+app/(protected)/patients/loader.tsx
+  da18e095ce96ad9e 1-22
+docs/adr/0021-clinical-entity-forms-use-dedicated-pages.md
+  da18e095ce96ad9e 1-6,8-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "4ef721591bdde59d0045f6f308c87c6be0ec86c8",
+  "prompts": {
+    "da18e095ce96ad9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7fdf804-3c96-4264-a378-c9380878f8da",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 2725,
+      "total_deletions": 77,
+      "accepted_lines": 2636,
+      "overriden_lines": 15
+    }
+  }
+}
