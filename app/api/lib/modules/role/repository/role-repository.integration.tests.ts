@@ -248,6 +248,31 @@ describe('Role repository', () => {
     ]);
   });
 
+  it('should get an active System Role by reserved code for one tenant', async () => {
+    await roleRepository.seedSystemRolesForTenant(tenantA);
+
+    await expect(roleRepository.getSystemRoleByCode(tenantA, 'DOCTOR')).resolves.toMatchObject({
+      code: 'DOCTOR',
+      isSystem: true,
+      tenantId: tenantA,
+    });
+    await expect(roleRepository.getSystemRoleByCode(tenantB, 'DOCTOR')).resolves.toBeUndefined();
+  });
+
+  it('should not resolve a Tenant-created Role as a System Role', async () => {
+    await createRole(tenantA, 'Custom Doctor', 'DOCTOR');
+
+    await expect(roleRepository.getSystemRoleByCode(tenantA, 'DOCTOR')).resolves.toBeUndefined();
+  });
+
+  it('should fail System Role seeding when a Tenant-created Role uses a reserved code', async () => {
+    await createRole(tenantA, 'Custom Doctor', 'DOCTOR');
+
+    await expect(roleRepository.seedSystemRolesForTenant(tenantA)).rejects.toThrow(
+      'System Role seeding failed because a reserved Role code is unavailable.'
+    );
+  });
+
   it('should not duplicate system roles on repeated seed', async () => {
     await roleRepository.seedSystemRolesForTenant(tenantA);
     await roleRepository.seedSystemRolesForTenant(tenantA);

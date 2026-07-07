@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { permissionRepository } from '../../permission/repository/permission-repository';
+import { seedSystemRolesCommand } from '../../role/commands/seed-system-roles-command';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import type { Tenant } from '../../tenant/schemas/tenant-schema';
 import { tenantProvisioningRepository } from '../repository/tenant-provisioning-repository';
@@ -73,6 +74,18 @@ export async function onboardTenantCommand(tenantId: unknown): Promise<CommandRe
     const isLegacyTenant = masterFamilyStates
       .filter(({ isLegacyMasterFamily }) => isLegacyMasterFamily)
       .every(({ isSeeded }) => isSeeded);
+
+    if (!isLegacyTenant) {
+      const seedRolesResult = await seedSystemRolesCommand(tenant.id);
+
+      if (!seedRolesResult.success) {
+        return {
+          success: false,
+          errors: seedRolesResult.errors,
+          status: seedRolesResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
+        };
+      }
+    }
 
     for (const { seedMasters, isSeeded, isLegacyMasterFamily } of masterFamilyStates) {
       // Tenants created before Specialty joined onboarding can have every older

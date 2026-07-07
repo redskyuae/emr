@@ -36,6 +36,8 @@ export const SYSTEM_ROLE_DEFINITIONS = [
   { name: 'Billing Staff', code: 'BILLING_STAFF', description: 'Billing and insurance' },
 ] as const;
 
+type SystemRoleCode = (typeof SYSTEM_ROLE_DEFINITIONS)[number]['code'];
+
 const roleColumns = {
   id: roleTable.id,
   code: roleTable.code,
@@ -312,10 +314,31 @@ async function getSystemRolesForTenant(tenantId: string) {
       and(
         eq(roleTable.tenantId, tenantId),
         eq(roleTable.isDeleted, false),
+        eq(roleTable.isSystem, true),
         inArray(roleTable.code, codes)
       )
     )
     .orderBy(asc(roleTable.id));
+}
+
+async function getSystemRoleByCode(
+  tenantId: string,
+  code: SystemRoleCode
+): Promise<Role | undefined> {
+  const [role] = await db
+    .select(roleColumns)
+    .from(roleTable)
+    .where(
+      and(
+        eq(roleTable.tenantId, tenantId),
+        eq(roleTable.code, code),
+        eq(roleTable.isSystem, true),
+        eq(roleTable.isDeleted, false)
+      )
+    )
+    .limit(1);
+
+  return role;
 }
 
 async function seedSystemRolesForTenant(tenantId: string) {
@@ -332,7 +355,13 @@ async function seedSystemRolesForTenant(tenantId: string) {
     )
     .onConflictDoNothing();
 
-  return getSystemRolesForTenant(tenantId);
+  const systemRoles = await getSystemRolesForTenant(tenantId);
+
+  if (systemRoles.length !== SYSTEM_ROLE_DEFINITIONS.length) {
+    throw new Error('System Role seeding failed because a reserved Role code is unavailable.');
+  }
+
+  return systemRoles;
 }
 
 export const roleRepository = {
@@ -344,6 +373,7 @@ export const roleRepository = {
   getRolesByIds,
   findActiveByName,
   findActiveByCode,
+  getSystemRoleByCode,
   getRoleByIdWithStats,
   seedSystemRolesForTenant,
 };
