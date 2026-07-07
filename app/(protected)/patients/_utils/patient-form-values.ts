@@ -1,0 +1,89 @@
+import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
+import type { SavePatientRequest } from '@/app/api/v1/patients/types';
+
+import type { PatientFormValues } from './patient-form-schema';
+
+export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
+  firstName: '',
+  middleName: '',
+  lastName: '',
+  gender: '',
+  dateOfBirth: '',
+  bloodGroup: '',
+  maritalStatus: '',
+  phone: '',
+  alternatePhone: '',
+  email: '',
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  stateId: undefined,
+  countryId: undefined,
+  postalCode: '',
+  nationalityId: undefined,
+  languageId: undefined,
+  religionId: undefined,
+  govtIdType: '',
+  govtIdNumber: '',
+  emergencyContactName: '',
+  emergencyContactRelationship: '',
+  emergencyContactPhone: '',
+};
+
+export function patientToFormValues(patient: Patient): PatientFormValues {
+  return {
+    firstName: patient.firstName,
+    middleName: patient.middleName ?? '',
+    lastName: patient.lastName,
+    gender: patient.gender,
+    dateOfBirth: patient.dateOfBirth,
+    bloodGroup: patient.bloodGroup ?? '',
+    maritalStatus: patient.maritalStatus ?? '',
+    phone: patient.phone,
+    alternatePhone: patient.alternatePhone ?? '',
+    email: patient.email ?? '',
+    addressLine1: patient.addressLine1 ?? '',
+    addressLine2: patient.addressLine2 ?? '',
+    city: patient.city ?? '',
+    stateId: patient.stateId ?? undefined,
+    countryId: patient.countryId ?? undefined,
+    postalCode: patient.postalCode ?? '',
+    nationalityId: patient.nationalityId ?? undefined,
+    languageId: patient.languageId ?? undefined,
+    religionId: patient.religionId ?? undefined,
+    govtIdType: patient.govtIdType ?? '',
+    govtIdNumber: patient.govtIdNumber ?? '',
+    emergencyContactName: patient.emergencyContactName ?? '',
+    emergencyContactRelationship: patient.emergencyContactRelationship ?? '',
+    emergencyContactPhone: patient.emergencyContactPhone ?? '',
+  };
+}
+
+export function patientFormValuesToRequest(values: PatientFormValues): SavePatientRequest {
+  return {
+    firstName: values.firstName,
+    middleName: values.middleName || undefined,
+    lastName: values.lastName,
+    gender: values.gender,
+    dateOfBirth: values.dateOfBirth,
+    bloodGroup: values.bloodGroup || undefined,
+    maritalStatus: values.maritalStatus || undefined,
+    phone: values.phone,
+    alternatePhone: values.alternatePhone || undefined,
+    email: values.email || undefined,
+    addressLine1: values.addressLine1 || undefined,
+    addressLine2: values.addressLine2 || undefined,
+    city: values.city || undefined,
+    stateId: values.stateId,
+    countryId: values.countryId,
+    postalCode: values.postalCode || undefined,
+    nationalityId: values.nationalityId,
+    languageId: values.languageId,
+    religionId: values.religionId,
+    govtIdType: values.govtIdType || undefined,
+    govtIdNumber: values.govtIdNumber || undefined,
+    emergencyContactName: values.emergencyContactName || undefined,
+    emergencyContactRelationship: values.emergencyContactRelationship || undefined,
+    emergencyContactPhone: values.emergencyContactPhone || undefined,
+  };
+}
