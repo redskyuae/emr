@@ -1,56 +1,59 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { useRouter } from 'next/navigation';
-import { AlertCircle, ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, XCircle, } from 'lucide-react';
-import { toast } from 'sonner';
+import { useQueryState } from 'nuqs';
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  LayoutList,
+  Plus,
+  Search,
+  Table as TableIcon,
+  XCircle,
+} from 'lucide-react';
 import type { AppointmentCancelledReason } from '@/app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema';
-import { createAppointmentCancelledReasonSchema } from '@/app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema';
-import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
+import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useAppointmentCancelledReasonQuery } from '@/app/queries/appointment-masters/cancelled-reasons/useAppointmentCancelledReason';
 import { useAppointmentCancelledReasonsQuery } from '@/app/queries/appointment-masters/cancelled-reasons/useAppointmentCancelledReasons';
-import { useCreateAppointmentCancelledReason } from '@/app/queries/appointment-masters/cancelled-reasons/useCreateAppointmentCancelledReason';
-import { useUpdateAppointmentCancelledReason } from '@/app/queries/appointment-masters/cancelled-reasons/useUpdateAppointmentCancelledReason';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle, } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { DeleteCancelledReasonDialog } from './_modals/delete-cancelled-reason-dialog';
-import { CancelledReasonFormSheet, type CancelledReasonFormValues, } from './_sheets/cancelled-reason-form-sheet';
+import { CancelledReasonFormSheet } from './_sheets/cancelled-reason-form-sheet';
 import { ViewSkeleton } from './cancelled-reason-skeletons';
-import { CancelledReasonCardView, CancelledReasonListView, CancelledReasonTableView, } from './cancelled-reason-views';
+import {
+  CancelledReasonCardView,
+  CancelledReasonListView,
+  CancelledReasonTableView,
+} from './cancelled-reason-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
 
 const PAGE_SIZE = 10;
 
-export function CancelledReasonsPageImpl({
-  initialCreateOpen,
-}: {
-  initialCreateOpen: boolean;
-}) {
-  const router = useRouter();
-  const initialCreateHandledRef = useRef(false);
+export function CancelledReasonsPageImpl() {
+  const [reasonParam, setReasonParam] = useQueryState('reason');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
 
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [editingReason, setEditingReason] = useState<AppointmentCancelledReason | null>(null);
-  const [reasonPendingDelete, setReasonPendingDelete] =
-    useState<AppointmentCancelledReason | null>(null);
-  const [serverErrors, setServerErrors] = useState<string[]>([]);
-
-  const form = useForm<CancelledReasonFormValues>({
-    resolver: zodResolver(createAppointmentCancelledReasonSchema),
-    defaultValues: { name: '', code: '', description: '' },
-    mode: 'onTouched',
-  });
+  const [reasonPendingDelete, setReasonPendingDelete] = useState<AppointmentCancelledReason | null>(
+    null
+  );
 
   const reasonsQuery = useAppointmentCancelledReasonsQuery({
     query: debouncedSearch || undefined,
@@ -58,90 +61,68 @@ export function CancelledReasonsPageImpl({
     limit: PAGE_SIZE,
   });
 
-  const createMutation = useCreateAppointmentCancelledReason();
-  const updateMutation = useUpdateAppointmentCancelledReason();
-
   const reasons = reasonsQuery.data?.data ?? [];
   const meta = reasonsQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
   const total = meta?.total ?? 0;
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
-  const isCreating = !editingReason;
-  const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  useEffect(() => {
-    if (!initialCreateOpen || initialCreateHandledRef.current) {
-      return;
-    }
+  // The sheet opens straight from the URL, with no effect syncing state back to it.
+  // - ?reason=new                 -> create
+  // - ?reason=<id> still loading  -> open, resolving
+  // - ?reason=<id> found          -> edit
+  // - ?reason=<id> not found, or garbage -> stays closed (the stale param is
+  //   harmless and gets overwritten by the next action)
+  const isCreating = reasonParam === 'new';
+  const editingReasonId =
+    reasonParam !== null && reasonParam !== 'new' && /^\d+$/.test(reasonParam)
+      ? Number(reasonParam)
+      : null;
+  const editingReasonFromList =
+    editingReasonId !== null
+      ? (reasons.find((reason) => reason.id === editingReasonId) ?? null)
+      : null;
 
-    initialCreateHandledRef.current = true;
-    openAddSheet();
-  }, [initialCreateOpen]);
+  // The current page's `reasons` may not include the target id (it lives on a
+  // different page or is filtered out by the active search), so fall back to
+  // fetching it directly by id once the list has loaded and it isn't there.
+  const shouldFetchEditingReason =
+    editingReasonId !== null && !reasonsQuery.isLoading && editingReasonFromList === null;
+  const editingReasonQuery = useAppointmentCancelledReasonQuery(
+    shouldFetchEditingReason ? editingReasonId : null
+  );
+  const editingReason = editingReasonFromList ?? editingReasonQuery.data ?? null;
+
+  const editingReasonResolving =
+    editingReasonId !== null &&
+    editingReason === null &&
+    (reasonsQuery.isLoading || editingReasonQuery.isFetching);
+  const sheetOpen =
+    isCreating || (editingReasonId !== null && (editingReasonResolving || editingReason !== null));
 
   const previousDebouncedRef = useRef(debouncedSearch);
-  if (previousDebouncedRef.current !== debouncedSearch) {
-    previousDebouncedRef.current = debouncedSearch;
-    if (page !== 1) {
+  useEffect(() => {
+    if (previousDebouncedRef.current !== debouncedSearch) {
+      previousDebouncedRef.current = debouncedSearch;
       setPage(1);
     }
-  }
+  }, [debouncedSearch]);
 
   function openAddSheet() {
-    setEditingReason(null);
-    form.reset({ name: '', code: '', description: '' });
-    setServerErrors([]);
-    setSheetOpen(true);
+    void setReasonParam('new');
   }
 
   function openEditSheet(reason: AppointmentCancelledReason) {
-    setEditingReason(reason);
-    form.reset({ name: reason.name, code: reason.code, description: reason.description ?? '' });
-    setServerErrors([]);
-    setSheetOpen(true);
+    void setReasonParam(String(reason.id));
   }
 
   function closeSheet() {
-    setSheetOpen(false);
-    setEditingReason(null);
-    form.reset({ name: '', code: '', description: '' });
-    setServerErrors([]);
-    router.replace('/appointment-masters/cancelled-reasons', { scroll: false });
+    void setReasonParam(null);
   }
 
-  const handleSave = form.handleSubmit(async (values) => {
-    setServerErrors([]);
-
-    try {
-      if (isCreating) {
-        await createMutation.mutateAsync({
-          name: values.name,
-          code: values.code,
-          description: values.description || undefined,
-        });
-        toast.success('Appointment Cancelled Reason created.');
-        closeSheet();
-      } else {
-        await updateMutation.mutateAsync({
-          id: editingReason.id,
-          request: {
-            name: values.name,
-            code: values.code,
-            description: values.description || undefined,
-          },
-        });
-        toast.success('Appointment Cancelled Reason updated.');
-        closeSheet();
-      }
-    } catch (error) {
-      const errors = getApiErrors(error);
-      setServerErrors(errors);
-      toast.error(getApiErrorMessage(error));
-    }
-  });
-
   function handleReasonDeleted(reasonId: number) {
-    if (editingReason?.id === reasonId) {
+    if (editingReasonId === reasonId) {
       closeSheet();
     }
   }
@@ -297,12 +278,8 @@ export function CancelledReasonsPageImpl({
       <CancelledReasonFormSheet
         open={sheetOpen}
         onClose={closeSheet}
-        isCreating={isCreating}
-        editingName={editingReason?.name ?? null}
-        form={form}
-        serverErrors={serverErrors}
-        isSaving={isSaving}
-        onSave={() => void handleSave()}
+        mode={isCreating ? 'new' : 'edit'}
+        reason={editingReason}
       />
 
       <DeleteCancelledReasonDialog

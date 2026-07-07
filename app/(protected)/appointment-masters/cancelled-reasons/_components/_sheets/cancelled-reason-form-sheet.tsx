@@ -1,44 +1,137 @@
 'use client';
 
-import type { UseFormReturn } from 'react-hook-form';
+import { useEffect, useRef, useState } from 'react';
+import { useForm, type UseFormSetError } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Save } from 'lucide-react';
+import { toast } from 'sonner';
 
+import type { AppointmentCancelledReason } from '@/app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema';
+import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
+import { useCreateAppointmentCancelledReason } from '@/app/queries/appointment-masters/cancelled-reasons/useCreateAppointmentCancelledReason';
+import { useUpdateAppointmentCancelledReason } from '@/app/queries/appointment-masters/cancelled-reasons/useUpdateAppointmentCancelledReason';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 
-export type CancelledReasonFormValues = {
-  name: string;
-  code: string;
-  description?: string | null;
+import {
+  cancelledReasonFormSchema,
+  type CancelledReasonFormValues,
+} from '../../_utils/cancelled-reason-form-schema';
+
+const EMPTY_DEFAULTS: CancelledReasonFormValues = { name: '', code: '', description: '' };
+
+function applyServerErrorsToFields(
+  errors: string[],
+  setError: UseFormSetError<CancelledReasonFormValues>
+): string[] {
+  const unmatched: string[] = [];
+
+  for (const message of errors) {
+    if (/\bname\b/i.test(message)) {
+      setError('name', { type: 'server', message });
+    } else if (/\bcode\b/i.test(message)) {
+      setError('code', { type: 'server', message });
+    } else {
+      unmatched.push(message);
+    }
+  }
+
+  return unmatched;
+}
+
+type CancelledReasonFormSheetProps = {
+  open: boolean;
+  onClose: () => void;
+  mode: 'new' | 'edit';
+  reason: AppointmentCancelledReason | null;
 };
 
 export function CancelledReasonFormSheet({
   open,
   onClose,
-  isCreating,
-  editingName,
-  form,
-  serverErrors,
-  isSaving,
-  onSave,
-}: {
-  open: boolean;
-  onClose: () => void;
-  isCreating: boolean;
-  editingName: string | null;
-  form: UseFormReturn<CancelledReasonFormValues>;
-  serverErrors: string[];
-  isSaving: boolean;
-  onSave: () => void;
-}) {
+  mode,
+  reason,
+}: CancelledReasonFormSheetProps) {
+  const isCreating = mode === 'new';
+  const [serverErrors, setServerErrors] = useState<string[]>([]);
+  const initializedKeyRef = useRef<string | null>(null);
+
+  const createMutation = useCreateAppointmentCancelledReason();
+  const updateMutation = useUpdateAppointmentCancelledReason();
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  const form = useForm<CancelledReasonFormValues>({
+    mode: 'onTouched',
+    resolver: zodResolver(cancelledReasonFormSchema),
+    defaultValues: EMPTY_DEFAULTS,
+  });
   const {
     register,
     formState: { errors },
   } = form;
+
+  useEffect(() => {
+    if (!open) {
+      initializedKeyRef.current = null;
+      return;
+    }
+
+    const sessionKey = isCreating ? 'new' : String(reason?.id ?? '');
+
+    if (initializedKeyRef.current === sessionKey) {
+      return;
+    }
+
+    initializedKeyRef.current = sessionKey;
+    form.reset({
+      name: reason?.name ?? '',
+      code: reason?.code ?? '',
+      description: reason?.description ?? '',
+    });
+    setServerErrors([]);
+  }, [open, isCreating, reason, form]);
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    setServerErrors([]);
+
+    try {
+      if (isCreating) {
+        await createMutation.mutateAsync({
+          name: values.name,
+          code: values.code,
+          description: values.description || undefined,
+        });
+        toast.success('Appointment Cancelled Reason created.');
+        onClose();
+      } else if (reason !== null) {
+        await updateMutation.mutateAsync({
+          id: reason.id,
+          request: {
+            name: values.name,
+            code: values.code,
+            description: values.description || undefined,
+          },
+        });
+        toast.success('Appointment Cancelled Reason updated.');
+        onClose();
+      }
+    } catch (error) {
+      const unmatched = applyServerErrorsToFields(getApiErrors(error), form.setError);
+      setServerErrors(unmatched);
+      toast.error(getApiErrorMessage(error));
+    }
+  });
 
   return (
     <Sheet open={open} onOpenChange={(o) => (!o ? onClose() : undefined)}>
@@ -51,7 +144,7 @@ export function CancelledReasonFormSheet({
           <SheetTitle className="text-xl">
             {isCreating
               ? 'Add Appointment Cancelled Reason'
-              : `Edit ${editingName ?? 'Cancelled Reason'}`}
+              : `Edit ${reason?.name ?? 'Cancelled Reason'}`}
           </SheetTitle>
           <SheetDescription>
             {isCreating
@@ -63,7 +156,7 @@ export function CancelledReasonFormSheet({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            onSave();
+            void onSubmit();
           }}
           className="flex flex-1 flex-col overflow-hidden"
         >
@@ -85,7 +178,10 @@ export function CancelledReasonFormSheet({
             <FieldGroup className="gap-4">
               <Field data-invalid={!!errors.name}>
                 <FieldLabel htmlFor="cancelled-reason-name">
-                  Name <span aria-hidden="true" className="text-destructive">*</span>
+                  Name{' '}
+                  <span aria-hidden="true" className="text-destructive">
+                    *
+                  </span>
                 </FieldLabel>
                 <Input
                   id="cancelled-reason-name"
@@ -101,7 +197,10 @@ export function CancelledReasonFormSheet({
 
               <Field data-invalid={!!errors.code}>
                 <FieldLabel htmlFor="cancelled-reason-code">
-                  Code <span aria-hidden="true" className="text-destructive">*</span>
+                  Code{' '}
+                  <span aria-hidden="true" className="text-destructive">
+                    *
+                  </span>
                 </FieldLabel>
                 <Input
                   id="cancelled-reason-code"

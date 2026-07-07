@@ -5,7 +5,17 @@ import { toast } from 'sonner';
 import type { AppointmentCancelledReason } from '@/app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useDeleteAppointmentCancelledReason } from '@/app/queries/appointment-masters/cancelled-reasons/useDeleteAppointmentCancelledReason';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogMedia, AlertDialogTitle, } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type DeleteCancelledReasonDialogProps = {
   reason: AppointmentCancelledReason | null;

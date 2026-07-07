@@ -3,8 +3,20 @@ import { MoreVertical, Pencil, Trash2, XCircle } from 'lucide-react';
 import type { AppointmentCancelledReason } from '@/app/api/lib/modules/appointment-cancelled-reason/schemas/appointment-cancelled-reason-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from '@/components/ui/dropdown-menu';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 function CancelledReasonIcon() {
   return (
@@ -80,7 +92,11 @@ export function CancelledReasonTableView({
                     {reason.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <CancelledReasonActionsMenu reason={reason} onEdit={onEdit} onDelete={onDelete} />
+                    <CancelledReasonActionsMenu
+                      reason={reason}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

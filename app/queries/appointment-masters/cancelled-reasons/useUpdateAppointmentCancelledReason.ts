@@ -7,6 +7,7 @@ import type {
   UpdateAppointmentCancelledReasonRequest,
   UpdateAppointmentCancelledReasonResponse,
 } from '@/app/api/v1/appointments/cancelled-reasons/[id]/types';
+import { appointmentCancelledReasonQueryKey } from './useAppointmentCancelledReason';
 import { APPOINTMENT_CANCELLED_REASONS_KEY } from './useAppointmentCancelledReasons';
 
 type UpdateAppointmentCancelledReasonVariables = {
@@ -51,7 +52,14 @@ export function useUpdateAppointmentCancelledReason(
     ...rest,
     mutationFn: updateAppointmentCancelledReason,
     onSuccess: async (...args) => {
-      await queryClient.invalidateQueries({ queryKey: APPOINTMENT_CANCELLED_REASONS_KEY });
+      const [, variables] = args;
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: APPOINTMENT_CANCELLED_REASONS_KEY }),
+        queryClient.invalidateQueries({
+          queryKey: appointmentCancelledReasonQueryKey(variables.id),
+        }),
+      ]);
       await onSuccess?.(...args);
     },
   });
