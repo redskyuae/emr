@@ -166,8 +166,8 @@ export function AssetStatusFormSheet({
                   <AlertTitle>Save failed</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc space-y-1 pl-4">
-                      {serverErrors.map((error) => (
-                        <li key={error}>{error}</li>
+                      {serverErrors.map((error, index) => (
+                        <li key={index}>{error}</li>
                       ))}
                     </ul>
                   </AlertDescription>

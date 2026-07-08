@@ -76,13 +76,18 @@ export function AssetStatusPageImpl() {
 
   const editingStatusFromList =
     editingStatusId !== null ? (statuses.find((s) => s.id === editingStatusId) ?? null) : null;
-  const statusPendingDelete =
+  const statusPendingDeleteFromList =
     deleteStatusId !== null ? (statuses.find((s) => s.id === deleteStatusId) ?? null) : null;
 
   const shouldFetchEditingStatus =
     editingStatusId !== null && !statusesQuery.isLoading && editingStatusFromList === null;
   const editingStatusQuery = useAssetStatusQuery(shouldFetchEditingStatus ? editingStatusId : null);
   const editingStatus = editingStatusFromList ?? editingStatusQuery.data ?? null;
+
+  const shouldFetchDeleteStatus =
+    deleteStatusId !== null && !statusesQuery.isLoading && statusPendingDeleteFromList === null;
+  const deleteStatusQuery = useAssetStatusQuery(shouldFetchDeleteStatus ? deleteStatusId : null);
+  const statusPendingDelete = statusPendingDeleteFromList ?? deleteStatusQuery.data ?? null;
 
   const statusResolving =
     editingStatusId !== null &&
