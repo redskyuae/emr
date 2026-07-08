@@ -15,6 +15,7 @@ import {
   Settings,
   ShieldCheck,
   Stethoscope,
+  Tag,
   UserRoundCog,
   UsersRound,
   Wrench,
@@ -165,6 +166,12 @@ export const appNavGroups: AppNavGroup[] = [
         ],
       },
       {
+        title: 'Asset Management',
+        href: '/asset-management-masters',
+        icon: Tag,
+        items: [{ title: 'Categories', href: '/asset-management-masters/categories' }],
+      },
+      {
         title: 'Global References',
         href: '/global-references',
         icon: Globe2,
@@ -278,6 +285,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/appointment-masters/cancelled-reasons': {
     title: 'Appointment Cancelled Reasons',
     subtitle: 'Tenant-scoped cancellation reason records for Appointments.',
+  },
+  '/asset-management-masters': {
+    title: 'Asset Management',
+    subtitle: 'Tenant-scoped Asset classification configuration.',
+  },
+  '/asset-management-masters/categories': {
+    title: 'Asset Categories',
+    subtitle: 'Tenant-scoped classification records for Assets.',
   },
   '/global-references': {
     title: 'Global References',
