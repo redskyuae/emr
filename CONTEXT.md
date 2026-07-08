@@ -92,7 +92,7 @@ A user who works within one or more Facilities under exactly one Tenant. Include
 
 ## Doctor
 
-A Staff member with a clinical specialty who sees Patients. A Doctor is always a Staff member, but not all Staff are Doctors. Creating a Doctor always provisions the underlying Staff member; a Doctor cannot exist without a Staff identity.
+A Staff member with a clinical specialty who sees Patients. A Doctor is always a Staff member, shares that Staff member's active lifecycle, and cannot exist without the underlying Staff identity.
 
 ## Specialty
 

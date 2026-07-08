@@ -1,4 +1,5 @@
 import { generateId } from '@better-auth/core/utils/id';
+import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { seedOrganization } from '@/test/helpers';
@@ -404,6 +405,39 @@ describe('Staff repository', () => {
     // Reactivate staff
     const reactivated = await staffRepository.setStaffActive(userId, tenantA, true);
     expect(reactivated?.isActive).toBe(true);
+  });
+
+  it('should keep a linked Doctor active state coupled to Staff', async () => {
+    const userId = await createTestUser('doctor-lifecycle@example.com', 'Lifecycle Doctor');
+    const { db } = await import('@/app/db');
+    const { doctor: doctorTable } = await import('@/app/db/schema/doctor');
+    const { specialty: specialtyTable } = await import('@/app/db/schema/specialty');
+    const { staffProfile: staffProfileTable } = await import('@/app/db/schema/staff-profile');
+
+    const [specialty] = await db
+      .insert(specialtyTable)
+      .values({ tenantId: tenantA, name: 'Cardiology', code: 'CARD' })
+      .returning({ id: specialtyTable.id });
+    await db.insert(staffProfileTable).values({
+      userId,
+      tenantId: tenantA,
+      designation: 'Doctor',
+      isActive: true,
+    });
+    await db.insert(doctorTable).values({
+      userId,
+      tenantId: tenantA,
+      specialtyId: specialty.id,
+      isActive: true,
+    });
+
+    await staffRepository.setStaffActive(userId, tenantA, false);
+
+    const [doctor] = await db
+      .select({ isActive: doctorTable.isActive })
+      .from(doctorTable)
+      .where(eq(doctorTable.userId, userId));
+    expect(doctor.isActive).toBe(false);
   });
 
   it('should return undefined when updating non-existent staff', async () => {

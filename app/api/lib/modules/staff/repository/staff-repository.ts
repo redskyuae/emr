@@ -3,6 +3,7 @@ import { and, asc, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { member, session, user } from '@/app/db/schema/auth';
+import { doctor as doctorTable } from '@/app/db/schema/doctor';
 import { role as roleTable } from '@/app/db/schema/role';
 import { staffProfile as staffProfileTable } from '@/app/db/schema/staff-profile';
 import { userRole as userRoleTable } from '@/app/db/schema/user-role';
@@ -327,6 +328,17 @@ async function setStaffActive(userId: string, tenantId: string, isActive: boolea
     if (!profile) {
       return undefined;
     }
+
+    await tx
+      .update(doctorTable)
+      .set({ isActive, modifiedOn: now })
+      .where(
+        and(
+          eq(doctorTable.userId, userId),
+          eq(doctorTable.tenantId, tenantId),
+          eq(doctorTable.isDeleted, false)
+        )
+      );
 
     await tx
       .update(user)
