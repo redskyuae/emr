@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { auth } from '@/app/lib/auth';
 import type { CommandResult } from '@/app/api/lib/utils/types';
+import { StaffTenantMembershipConflictError } from '../errors/staff-tenant-membership-conflict-error';
 import { staffRepository } from '../repository/staff-repository';
 import type { Staff } from '../schemas/staff-schema';
 import { validateCreateStaff } from '../validator/create-staff-validator';
@@ -8,7 +9,7 @@ import { getStaffUniqueConstraintErrors } from '../validator/staff-uniqueness-va
 
 async function cleanupCreatedUser(userId: string) {
   try {
-    await staffRepository.deleteAuthUser(userId);
+    await staffRepository.deleteAuthUserIfUnprovisioned(userId);
   } catch {
     // Preserve the original create failure; cleanup is best-effort.
   }
@@ -87,6 +88,10 @@ export async function createStaffCommand(
   } catch (error) {
     if (createdUserId) {
       await cleanupCreatedUser(createdUserId);
+    }
+
+    if (error instanceof StaffTenantMembershipConflictError) {
+      return { success: false, errors: [error.message], status: StatusCodes.CONFLICT };
     }
 
     const constraintErrors = getStaffUniqueConstraintErrors(error, validationResult.data);

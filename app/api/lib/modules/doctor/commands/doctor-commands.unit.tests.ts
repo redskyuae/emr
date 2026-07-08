@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { auth } from '@/app/lib/auth';
 import { roleRepository } from '../../role/repository/role-repository';
+import { StaffTenantMembershipConflictError } from '../../staff/errors/staff-tenant-membership-conflict-error';
 import { staffRepository } from '../../staff/repository/staff-repository';
 import { doctorRepository } from '../repository/doctor-repository';
 import { validateCreateDoctor } from '../validator/create-doctor-validator';
@@ -18,7 +19,7 @@ vi.mock('../../role/repository/role-repository', () => ({
   roleRepository: { getSystemRoleByCode: vi.fn() },
 }));
 vi.mock('../../staff/repository/staff-repository', () => ({
-  staffRepository: { deleteAuthUser: vi.fn() },
+  staffRepository: { deleteAuthUserIfUnprovisioned: vi.fn() },
 }));
 vi.mock('../repository/doctor-repository', () => ({
   doctorRepository: { createDoctor: vi.fn(), updateDoctor: vi.fn(), setDoctorActive: vi.fn() },
@@ -74,6 +75,7 @@ describe('Doctor commands', () => {
     validateExists.mockResolvedValue({ success: true, data: doctor });
     roleRepo.getSystemRoleByCode.mockResolvedValue({ id: 9 } as never);
     createUser.mockResolvedValue({ user: { id: 'user-1' } } as never);
+    staffRepo.deleteAuthUserIfUnprovisioned.mockResolvedValue(true);
     doctorRepo.createDoctor.mockResolvedValue(doctor);
     doctorRepo.updateDoctor.mockResolvedValue(doctor);
     doctorRepo.setDoctorActive.mockResolvedValue(doctor);
@@ -138,7 +140,7 @@ describe('Doctor commands', () => {
       errors: ['Doctor registration number TN-123 already exists.'],
       status: StatusCodes.CONFLICT,
     });
-    expect(staffRepo.deleteAuthUser).toHaveBeenCalledWith('user-1');
+    expect(staffRepo.deleteAuthUserIfUnprovisioned).toHaveBeenCalledWith('user-1');
   });
 
   it('should clean up the auth user and rethrow unknown aggregate failures', async () => {
@@ -146,7 +148,51 @@ describe('Doctor commands', () => {
     doctorRepo.createDoctor.mockRejectedValue(error);
 
     await expect(createDoctorCommand(createInput, 'tenant-1', 'admin-1')).rejects.toThrow(error);
-    expect(staffRepo.deleteAuthUser).toHaveBeenCalledWith('user-1');
+    expect(staffRepo.deleteAuthUserIfUnprovisioned).toHaveBeenCalledWith('user-1');
+  });
+
+  it('should map cross-Tenant Staff membership to conflict', async () => {
+    doctorRepo.createDoctor.mockRejectedValue(new StaffTenantMembershipConflictError());
+
+    await expect(createDoctorCommand(createInput, 'tenant-1', 'admin-1')).resolves.toEqual({
+      success: false,
+      errors: ['Staff user already belongs to a Tenant.'],
+      status: StatusCodes.CONFLICT,
+    });
+  });
+
+  it('should warn with the user ID and cleanup error while preserving the create failure', async () => {
+    const createError = new Error('database unavailable');
+    const cleanupError = new Error('cleanup unavailable');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    doctorRepo.createDoctor.mockRejectedValue(createError);
+    staffRepo.deleteAuthUserIfUnprovisioned.mockRejectedValue(cleanupError);
+
+    await expect(createDoctorCommand(createInput, 'tenant-1', 'admin-1')).rejects.toThrow(
+      createError
+    );
+    expect(warn).toHaveBeenCalledWith('Failed to clean up created BetterAuth user', {
+      userId: 'user-1',
+      error: cleanupError,
+    });
+
+    warn.mockRestore();
+  });
+
+  it('should warn when cleanup is skipped for a user with linked data', async () => {
+    const createError = new Error('database unavailable');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    doctorRepo.createDoctor.mockRejectedValue(createError);
+    staffRepo.deleteAuthUserIfUnprovisioned.mockResolvedValue(false);
+
+    await expect(createDoctorCommand(createInput, 'tenant-1', 'admin-1')).rejects.toThrow(
+      createError
+    );
+    expect(warn).toHaveBeenCalledWith('Skipped cleanup of BetterAuth user with linked data', {
+      userId: 'user-1',
+    });
+
+    warn.mockRestore();
   });
 
   it('should validate before update and map the successful aggregate update', async () => {
@@ -168,11 +214,82 @@ describe('Doctor commands', () => {
     expect(doctorRepo.updateDoctor).not.toHaveBeenCalled();
   });
 
-  it('should couple deactivate and reactivate through the repository', async () => {
-    await deactivateDoctorCommand('1', 'tenant-1');
-    expect(doctorRepo.setDoctorActive).toHaveBeenCalledWith(1, 'tenant-1', false);
+  it('should map an update unique constraint violation to conflict', async () => {
+    validateUpdate.mockResolvedValue({
+      success: true,
+      data: {
+        id: 1,
+        userId: 'user-1',
+        payload: { registrationNumber: 'TN-456' },
+      },
+    });
+    doctorRepo.updateDoctor.mockRejectedValue({
+      cause: { code: '23505', constraint: 'doctor_tenant_registration_number_idx' },
+    });
 
-    await reactivateDoctorCommand('1', 'tenant-1');
-    expect(doctorRepo.setDoctorActive).toHaveBeenCalledWith(1, 'tenant-1', true);
+    await expect(
+      updateDoctorCommand('1', 'tenant-1', { registrationNumber: 'TN-456' })
+    ).resolves.toEqual({
+      success: false,
+      errors: ['Doctor registration number TN-456 already exists.'],
+      status: StatusCodes.CONFLICT,
+    });
   });
+
+  it('should rethrow an unknown update repository error unchanged', async () => {
+    const error = new Error('database unavailable');
+    doctorRepo.updateDoctor.mockRejectedValue(error);
+
+    await expect(updateDoctorCommand('1', 'tenant-1', { name: 'Dr Anita' })).rejects.toBe(error);
+  });
+
+  it.each([
+    ['deactivate', deactivateDoctorCommand, false],
+    ['reactivate', reactivateDoctorCommand, true],
+  ] as const)(
+    'should validate before %s and map repository success',
+    async (_operation, command, isActive) => {
+      await expect(command('1', 'tenant-1')).resolves.toEqual({ success: true, data: doctor });
+      expect(validateExists).toHaveBeenCalledWith('1', 'tenant-1');
+      expect(doctorRepo.setDoctorActive).toHaveBeenCalledWith(1, 'tenant-1', isActive);
+      expect(validateExists.mock.invocationCallOrder[0]).toBeLessThan(
+        doctorRepo.setDoctorActive.mock.invocationCallOrder[0]
+      );
+    }
+  );
+
+  it.each([
+    ['deactivate', deactivateDoctorCommand],
+    ['reactivate', reactivateDoctorCommand],
+  ] as const)('should not write when %s validation fails', async (_operation, command) => {
+    validateExists.mockResolvedValue({
+      success: false,
+      errors: ['Doctor not found'],
+      status: StatusCodes.NOT_FOUND,
+    });
+
+    await expect(command('bad', 'tenant-1')).resolves.toEqual({
+      success: false,
+      errors: ['Doctor not found'],
+      status: StatusCodes.NOT_FOUND,
+    });
+    expect(doctorRepo.setDoctorActive).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['deactivate', deactivateDoctorCommand, false],
+    ['reactivate', reactivateDoctorCommand, true],
+  ] as const)(
+    'should return not found when %s write finds no Doctor',
+    async (_operation, command, isActive) => {
+      doctorRepo.setDoctorActive.mockResolvedValue(null as never);
+
+      await expect(command('1', 'tenant-1')).resolves.toEqual({
+        success: false,
+        errors: ['Doctor not found'],
+        status: StatusCodes.NOT_FOUND,
+      });
+      expect(doctorRepo.setDoctorActive).toHaveBeenCalledWith(1, 'tenant-1', isActive);
+    }
+  );
 });

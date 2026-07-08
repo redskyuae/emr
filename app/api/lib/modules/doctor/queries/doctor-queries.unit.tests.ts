@@ -40,7 +40,7 @@ describe('Doctor queries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     validateById.mockReturnValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
-    validateList.mockImplementation((params) => ({ success: true, data: params }));
+    validateList.mockReturnValue({ success: true, data: { tenantId: 'tenant-1' } });
     repo.getDoctorById.mockResolvedValue(doctor);
     repo.getDoctors.mockResolvedValue({ data: [doctor], total: 1 });
   });
@@ -73,6 +73,7 @@ describe('Doctor queries', () => {
       specialtyId: 7,
       status: 'active' as const,
     };
+    validateList.mockReturnValue({ success: true, data: params });
 
     await expect(getDoctorsQuery(params)).resolves.toEqual({
       success: true,

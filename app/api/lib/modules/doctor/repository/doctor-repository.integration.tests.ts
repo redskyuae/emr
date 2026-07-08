@@ -2,12 +2,13 @@ import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
-import { organization, user } from '@/app/db/schema/auth';
+import { member, organization, user } from '@/app/db/schema/auth';
 import { doctor as doctorTable } from '@/app/db/schema/doctor';
 import { role as roleTable } from '@/app/db/schema/role';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import { staffProfile as staffProfileTable } from '@/app/db/schema/staff-profile';
 import { staffRepository } from '../../staff/repository/staff-repository';
+import { StaffTenantMembershipConflictError } from '../../staff/errors/staff-tenant-membership-conflict-error';
 import { doctorRepository } from './doctor-repository';
 
 let sequence = 0;
@@ -97,6 +98,61 @@ describe('Doctor repository', () => {
     await expect(doctorRepository.getDoctorById(created.id, 'tenant-b')).resolves.toBeUndefined();
   });
 
+  it('should reject provisioning a Doctor user who already belongs to another Tenant', async () => {
+    const tenantA = await createTenantFixtures('tenant-a');
+    await createTenantFixtures('tenant-b');
+    await createUser('doctor-1');
+    await db.insert(member).values({
+      id: 'doctor-1-tenant-b',
+      userId: 'doctor-1',
+      role: 'member',
+      organizationId: 'tenant-b',
+      createdAt: new Date(),
+    });
+
+    await expect(
+      doctorRepository.createDoctor({
+        name: 'Anita Mehta',
+        email: 'doctor-1@example.com',
+        password: 'password123',
+        userId: 'doctor-1',
+        tenantId: 'tenant-a',
+        roleId: tenantA.roleId,
+        assignedBy: tenantA.assignedBy,
+        specialtyId: tenantA.specialtyId,
+        registrationNumber: 'TN-123',
+      })
+    ).rejects.toBeInstanceOf(StaffTenantMembershipConflictError);
+  });
+
+  it('should keep a Doctor visible and manageable after its Specialty is soft-deleted', async () => {
+    const fixtures = await createTenantFixtures('tenant-a');
+    const created = await createDoctor('tenant-a', 'doctor-1', 'TN-123', fixtures);
+    await db
+      .update(specialtyTable)
+      .set({ isDeleted: true, deletedOn: new Date() })
+      .where(eq(specialtyTable.id, fixtures.specialtyId));
+
+    await expect(doctorRepository.getDoctorById(created.id, 'tenant-a')).resolves.toMatchObject({
+      id: created.id,
+      specialtyName: null,
+    });
+    await expect(doctorRepository.getDoctors({ tenantId: 'tenant-a' })).resolves.toMatchObject({
+      data: [{ id: created.id, specialtyName: null }],
+      total: 1,
+    });
+    await expect(
+      doctorRepository.findActiveByRegistrationNumber('tenant-a', 'TN-123')
+    ).resolves.toMatchObject({ id: created.id, specialtyName: null });
+    await expect(doctorRepository.findByUserId('tenant-a', 'doctor-1')).resolves.toMatchObject({
+      id: created.id,
+      specialtyName: null,
+    });
+    await expect(
+      doctorRepository.setDoctorActive(created.id, 'tenant-a', false)
+    ).resolves.toMatchObject({ id: created.id, isActive: false, specialtyName: null });
+  });
+
   it('should enforce case-insensitive registration uniqueness per Tenant', async () => {
     const fixtures = await createTenantFixtures('tenant-a');
     await createDoctor('tenant-a', 'doctor-1', 'TN-123', fixtures);
@@ -104,17 +160,6 @@ describe('Doctor repository', () => {
     await expect(createDoctor('tenant-a', 'doctor-2', 'tn-123', fixtures)).rejects.toMatchObject({
       cause: { code: '23505' },
     });
-  });
-
-  it('should allow registration reuse after the Doctor row is soft-deleted', async () => {
-    const fixtures = await createTenantFixtures('tenant-a');
-    const created = await createDoctor('tenant-a', 'doctor-1', 'TN-123', fixtures);
-    await doctorRepository.deleteDoctor(created.id, 'tenant-a');
-
-    await expect(createDoctor('tenant-a', 'doctor-2', 'tn-123', fixtures)).resolves.toMatchObject({
-      registrationNumber: 'tn-123',
-    });
-    await expect(doctorRepository.getDoctorById(created.id, 'tenant-a')).resolves.toBeUndefined();
   });
 
   it('should update person and clinical fields in one operation', async () => {

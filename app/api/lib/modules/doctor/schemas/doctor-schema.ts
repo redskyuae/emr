@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { StaffGender } from '../../staff/schemas/staff-schema';
 
 const DOCTOR_GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say'] as const;
+const DOCTOR_STATUS_FILTERS = ['active', 'inactive'] as const;
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
@@ -90,6 +91,34 @@ export const doctorIdSchema = z.coerce
 
 export const doctorTenantIdSchema = tenantIdSchema;
 
+export const doctorListParamsSchema = z
+  .object({
+    page: z.coerce
+      .number({ error: 'Page must be a number' })
+      .int('Page must be an integer')
+      .positive('Page must be positive')
+      .optional(),
+    limit: z.coerce
+      .number({ error: 'Limit must be a number' })
+      .int('Limit must be an integer')
+      .positive('Limit must be positive')
+      .max(999, 'Limit must be at most 999')
+      .optional(),
+    query: z
+      .string({ error: 'Query must be a string' })
+      .trim()
+      .min(1, 'Query cannot be empty')
+      .optional(),
+    tenantId: tenantIdSchema,
+    specialtyId: z.coerce
+      .number({ error: 'Specialty ID must be a number' })
+      .int('Specialty ID must be an integer')
+      .positive('Specialty ID must be positive')
+      .optional(),
+    status: z.enum(DOCTOR_STATUS_FILTERS, { error: 'Doctor status is invalid' }).optional(),
+  })
+  .strict();
+
 export const createDoctorSchema = z
   .object({
     name: nameSchema,
@@ -153,7 +182,7 @@ export const updateDoctorSchema = z
   })
   .strict()
   .refine((data) => Object.values(data).some((value) => value !== undefined), {
-    message: 'At least one Doctor field is required',
+    error: 'At least one Doctor field is required',
   });
 
 export type CreateDoctorInput = z.infer<typeof createDoctorSchema>;
@@ -174,21 +203,13 @@ export type Doctor = {
   gender: StaffGender | null;
   dateOfBirth: string | null;
   specialtyId: number;
-  specialtyName: string;
+  specialtyName: string | null;
   qualifications: string | null;
   registrationNumber: string | null;
 };
 
-export type DoctorStatusFilter = 'active' | 'inactive';
-
-export type DoctorListParams = {
-  page?: number;
-  limit?: number;
-  query?: string;
-  tenantId: string;
-  specialtyId?: number;
-  status?: DoctorStatusFilter;
-};
+export type DoctorStatusFilter = (typeof DOCTOR_STATUS_FILTERS)[number];
+export type DoctorListParams = z.infer<typeof doctorListParamsSchema>;
 
 export type CreateDoctorData = CreateDoctorInput & {
   userId: string;

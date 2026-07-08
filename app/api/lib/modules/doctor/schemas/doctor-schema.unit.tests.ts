@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDoctorSchema, doctorIdSchema, updateDoctorSchema } from './doctor-schema';
+import {
+  createDoctorSchema,
+  doctorIdSchema,
+  doctorListParamsSchema,
+  updateDoctorSchema,
+} from './doctor-schema';
 
 const validDoctor = {
   name: 'Anita Mehta',
@@ -62,9 +67,44 @@ describe('Doctor schema', () => {
   });
 
   it('should reject an empty update and invalid Doctor ID', () => {
-    expect(updateDoctorSchema.safeParse({}).success).toBe(false);
+    const updateResult = updateDoctorSchema.safeParse({});
+
+    expect(updateResult.error?.issues.map((issue) => issue.message)).toContain(
+      'At least one Doctor field is required'
+    );
     expect(doctorIdSchema.safeParse('0').success).toBe(false);
     expect(doctorIdSchema.parse('4')).toBe(4);
+  });
+
+  it('should validate and parse Doctor list parameters', () => {
+    expect(
+      doctorListParamsSchema.parse({
+        page: '2',
+        limit: '5',
+        query: ' Anita ',
+        tenantId: ' tenant-1 ',
+        specialtyId: '7',
+        status: 'active',
+      })
+    ).toEqual({
+      page: 2,
+      limit: 5,
+      query: 'Anita',
+      tenantId: 'tenant-1',
+      specialtyId: 7,
+      status: 'active',
+    });
+
+    const result = doctorListParamsSchema.safeParse({
+      tenantId: 'tenant-1',
+      specialtyId: 'bad',
+      status: 'archived',
+    });
+
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+      'Specialty ID must be a number',
+      'Doctor status is invalid',
+    ]);
   });
 
   it('should enforce registration number and password boundaries', () => {

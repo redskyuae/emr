@@ -7,6 +7,7 @@ import { doctor as doctorTable } from '@/app/db/schema/doctor';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import { staffProfile as staffProfileTable } from '@/app/db/schema/staff-profile';
 import { userRole as userRoleTable } from '@/app/db/schema/user-role';
+import { StaffTenantMembershipConflictError } from '../../staff/errors/staff-tenant-membership-conflict-error';
 import type {
   Doctor,
   CreateDoctorData,
@@ -65,7 +66,7 @@ function doctorJoins() {
       )
     )
     .innerJoin(user, eq(doctorTable.userId, user.id))
-    .innerJoin(
+    .leftJoin(
       specialtyTable,
       and(
         eq(doctorTable.specialtyId, specialtyTable.id),
@@ -91,6 +92,23 @@ async function getDoctorById(id: number, tenantId: string): Promise<Doctor | und
 
 async function createDoctor(data: CreateDoctorData): Promise<Doctor> {
   const doctorId = await db.transaction(async (tx) => {
+    await tx
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.id, data.userId))
+      .for('update')
+      .limit(1);
+
+    const [existingMembership] = await tx
+      .select({ id: member.id })
+      .from(member)
+      .where(eq(member.userId, data.userId))
+      .limit(1);
+
+    if (existingMembership) {
+      throw new StaffTenantMembershipConflictError();
+    }
+
     await tx.insert(member).values({
       id: generateId(),
       userId: data.userId,
@@ -220,29 +238,6 @@ async function updateDoctor(id: number, data: UpdateDoctorData): Promise<Doctor 
   return updated ? getDoctorById(id, data.tenantId) : undefined;
 }
 
-async function deleteDoctor(id: number, tenantId: string): Promise<Doctor | undefined> {
-  const existingDoctor = await getDoctorById(id, tenantId);
-
-  if (!existingDoctor) {
-    return undefined;
-  }
-
-  const deletedOn = new Date();
-  const [deletedDoctor] = await db
-    .update(doctorTable)
-    .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
-    .where(
-      and(
-        eq(doctorTable.id, id),
-        eq(doctorTable.tenantId, tenantId),
-        eq(doctorTable.isDeleted, false)
-      )
-    )
-    .returning({ id: doctorTable.id });
-
-  return deletedDoctor ? existingDoctor : undefined;
-}
-
 async function setDoctorActive(
   id: number,
   tenantId: string,
@@ -351,7 +346,7 @@ async function getDoctors({
         )
       )
       .innerJoin(user, eq(doctorTable.userId, user.id))
-      .innerJoin(
+      .leftJoin(
         specialtyTable,
         and(
           eq(doctorTable.specialtyId, specialtyTable.id),
@@ -402,7 +397,6 @@ export const doctorRepository = {
   getDoctors,
   createDoctor,
   updateDoctor,
-  deleteDoctor,
   getDoctorById,
   findByUserId,
   setDoctorActive,

@@ -4694,7 +4694,7 @@ export const openApiDocument = {
           staffCode: { type: ['string', 'null'], maxLength: 20 },
           designation: { type: ['string', 'null'], maxLength: 100 },
           specialtyId: { type: 'integer', minimum: 1 },
-          specialtyName: { type: 'string', minLength: 1, maxLength: 100 },
+          specialtyName: { type: ['string', 'null'], minLength: 1, maxLength: 100 },
           registrationNumber: { type: ['string', 'null'], maxLength: 100 },
           qualifications: { type: ['string', 'null'] },
           isActive: {

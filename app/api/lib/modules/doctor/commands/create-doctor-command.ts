@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { auth } from '@/app/lib/auth';
 import { roleRepository } from '../../role/repository/role-repository';
+import { StaffTenantMembershipConflictError } from '../../staff/errors/staff-tenant-membership-conflict-error';
 import { staffRepository } from '../../staff/repository/staff-repository';
 import { doctorRepository } from '../repository/doctor-repository';
 import type { Doctor } from '../schemas/doctor-schema';
@@ -14,8 +15,13 @@ import { validateCreateDoctor } from '../validator/create-doctor-validator';
 
 async function cleanupCreatedUser(userId: string) {
   try {
-    await staffRepository.deleteAuthUser(userId);
-  } catch {
+    const deleted = await staffRepository.deleteAuthUserIfUnprovisioned(userId);
+
+    if (!deleted) {
+      console.warn('Skipped cleanup of BetterAuth user with linked data', { userId });
+    }
+  } catch (error) {
+    console.warn('Failed to clean up created BetterAuth user', { userId, error });
     // Preserve the original create failure; cleanup is best-effort.
   }
 }
@@ -93,6 +99,10 @@ export async function createDoctorCommand(
   } catch (error) {
     if (createdUserId) {
       await cleanupCreatedUser(createdUserId);
+    }
+
+    if (error instanceof StaffTenantMembershipConflictError) {
+      return { success: false, errors: [error.message], status: StatusCodes.CONFLICT };
     }
 
     const constraintErrors = getDoctorUniqueConstraintErrors(error, validationResult.data);

@@ -1,5 +1,5 @@
 import { generateId } from '@better-auth/core/utils/id';
-import { and, asc, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, eq, exists, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { member, session, user } from '@/app/db/schema/auth';
@@ -7,6 +7,7 @@ import { doctor as doctorTable } from '@/app/db/schema/doctor';
 import { role as roleTable } from '@/app/db/schema/role';
 import { staffProfile as staffProfileTable } from '@/app/db/schema/staff-profile';
 import { userRole as userRoleTable } from '@/app/db/schema/user-role';
+import { StaffTenantMembershipConflictError } from '../errors/staff-tenant-membership-conflict-error';
 import type {
   CreateStaffInput,
   Staff,
@@ -203,6 +204,18 @@ async function createStaffProfile(
   assignedBy: string
 ) {
   await db.transaction(async (tx) => {
+    await tx.select({ id: user.id }).from(user).where(eq(user.id, userId)).for('update').limit(1);
+
+    const [existingMembership] = await tx
+      .select({ id: member.id })
+      .from(member)
+      .where(eq(member.userId, userId))
+      .limit(1);
+
+    if (existingMembership) {
+      throw new StaffTenantMembershipConflictError();
+    }
+
     await tx.insert(member).values({
       id: generateId(),
       organizationId: tenantId,
@@ -373,15 +386,61 @@ async function setStaffActive(userId: string, tenantId: string, isActive: boolea
   return updatedStaff;
 }
 
-async function deleteAuthUser(userId: string) {
-  await db.delete(user).where(eq(user.id, userId));
+async function deleteAuthUserIfUnprovisioned(userId: string) {
+  return db.transaction(async (tx) => {
+    const [authUser] = await tx
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.id, userId))
+      .for('update')
+      .limit(1);
+
+    if (!authUser) {
+      return true;
+    }
+
+    const [references] = await tx
+      .select({
+        hasDoctor: exists(
+          tx.select({ id: doctorTable.id }).from(doctorTable).where(eq(doctorTable.userId, userId))
+        ),
+        hasSession: exists(
+          tx.select({ id: session.id }).from(session).where(eq(session.userId, userId))
+        ),
+        hasMembership: exists(
+          tx.select({ id: member.id }).from(member).where(eq(member.userId, userId))
+        ),
+        hasStaffProfile: exists(
+          tx
+            .select({ id: staffProfileTable.id })
+            .from(staffProfileTable)
+            .where(eq(staffProfileTable.userId, userId))
+        ),
+        hasRoleAssignment: exists(
+          tx
+            .select({ id: userRoleTable.id })
+            .from(userRoleTable)
+            .where(or(eq(userRoleTable.userId, userId), eq(userRoleTable.assignedBy, userId)))
+        ),
+      })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (Object.values(references).some(Boolean)) {
+      return false;
+    }
+
+    await tx.delete(user).where(eq(user.id, userId));
+    return true;
+  });
 }
 
 export const staffRepository = {
   getStaff,
   updateStaff,
   setStaffActive,
-  deleteAuthUser,
+  deleteAuthUserIfUnprovisioned,
   findUserByEmail,
   getStaffByUserId,
   createStaffProfile,

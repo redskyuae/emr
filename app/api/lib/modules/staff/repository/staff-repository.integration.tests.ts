@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { seedOrganization } from '@/test/helpers';
+import { StaffTenantMembershipConflictError } from '../errors/staff-tenant-membership-conflict-error';
 import { staffRepository } from './staff-repository';
 
 const tenantA = 'tenant-a-test';
@@ -60,6 +61,54 @@ describe('Staff repository', () => {
   it('should return undefined for non-existent user email', async () => {
     const found = await staffRepository.findUserByEmail('nonexistent@example.com');
     expect(found).toBeUndefined();
+  });
+
+  it('should delete an auth user only while it is unprovisioned', async () => {
+    const userId = await createTestUser('pending@example.com', 'Pending User');
+
+    await expect(staffRepository.deleteAuthUserIfUnprovisioned(userId)).resolves.toBe(true);
+    await expect(staffRepository.findUserByEmail('pending@example.com')).resolves.toBeUndefined();
+  });
+
+  it('should preserve an auth user with linked Staff data', async () => {
+    const userId = await createTestUser('linked@example.com', 'Linked User');
+    const { db } = await import('@/app/db');
+    const { staffProfile: staffProfileTable } = await import('@/app/db/schema/staff-profile');
+    await db.insert(staffProfileTable).values({ userId, tenantId: tenantA });
+
+    await expect(staffRepository.deleteAuthUserIfUnprovisioned(userId)).resolves.toBe(false);
+    await expect(staffRepository.findUserByEmail('linked@example.com')).resolves.toMatchObject({
+      id: userId,
+    });
+  });
+
+  it('should reject provisioning a Staff user who already belongs to another Tenant', async () => {
+    const userId = await createTestUser('cross-tenant@example.com', 'Cross Tenant User');
+    const assignedBy = await createTestUser('cross-tenant-admin@example.com', 'Admin User');
+    const role = await createTestRole(tenantA, 'Nurse', 'NURSE');
+    const { db } = await import('@/app/db');
+    const { member } = await import('@/app/db/schema/auth');
+    await db.insert(member).values({
+      id: generateId(),
+      userId,
+      role: 'member',
+      organizationId: tenantB,
+      createdAt: new Date(),
+    });
+
+    await expect(
+      staffRepository.createStaffProfile(
+        userId,
+        tenantA,
+        {
+          name: 'Cross Tenant User',
+          email: 'cross-tenant@example.com',
+          password: 'password123',
+          roleIds: [role.id],
+        },
+        assignedBy
+      )
+    ).rejects.toBeInstanceOf(StaffTenantMembershipConflictError);
   });
 
   it('should find non-deleted staff by staff code case-insensitively', async () => {

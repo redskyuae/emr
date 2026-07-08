@@ -7,6 +7,7 @@ import { doctorRepository } from '../repository/doctor-repository';
 import { validateCreateDoctor } from './create-doctor-validator';
 import { validateDoctorExists } from './doctor-exists-validator';
 import { validateGetDoctorById } from './get-doctor-by-id-validator';
+import { validateGetDoctors } from './get-doctors-validator';
 import { validateUpdateDoctor } from './update-doctor-validator';
 
 vi.mock('../../specialty/repository/specialty-repository', () => ({
@@ -71,6 +72,51 @@ describe('Doctor validators', () => {
     expect(specialtyRepo.getSpecialtyById).not.toHaveBeenCalled();
     expect(doctorRepo.findActiveByRegistrationNumber).not.toHaveBeenCalled();
     expect(staffRepo.findUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it('should return validation errors without repository calls when list Tenant parsing fails', () => {
+    expect(validateGetDoctors({ tenantId: '   ' })).toEqual({
+      success: false,
+      errors: ['Tenant ID cannot be empty'],
+    });
+    expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
+    expect(doctorRepo.findActiveByRegistrationNumber).not.toHaveBeenCalled();
+  });
+
+  it('should reject invalid Doctor list filters', () => {
+    expect(
+      validateGetDoctors({
+        tenantId: 'tenant-1',
+        specialtyId: 'bad',
+        status: 'archived',
+      })
+    ).toEqual({
+      success: false,
+      errors: ['Specialty ID must be a number', 'Doctor status is invalid'],
+    });
+  });
+
+  it('should return parsed list parameters for valid raw input', () => {
+    expect(
+      validateGetDoctors({
+        page: '2',
+        limit: '5',
+        query: ' Anita ',
+        tenantId: ' tenant-1 ',
+        specialtyId: '7',
+        status: 'active',
+      })
+    ).toEqual({
+      success: true,
+      data: {
+        page: 2,
+        limit: 5,
+        query: 'Anita',
+        tenantId: 'tenant-1',
+        specialtyId: 7,
+        status: 'active',
+      },
+    });
   });
 
   it('should reject a Specialty outside the Tenant', async () => {
