@@ -1,16 +1,27 @@
 import { StatusCodes } from 'http-status-codes';
-import { auth } from '@/app/lib/auth';
+
 import type { CommandResult } from '@/app/api/lib/utils/types';
-import { StaffTenantMembershipConflictError } from '../errors/staff-tenant-membership-conflict-error';
-import { staffRepository } from '../repository/staff-repository';
-import type { Staff } from '../schemas/staff-schema';
-import { validateCreateStaff } from '../validator/create-staff-validator';
-import { getStaffUniqueConstraintErrors } from '../validator/staff-uniqueness-validator';
+import { auth } from '@/app/lib/auth';
+import { roleRepository } from '../../role/repository/role-repository';
+import { StaffTenantMembershipConflictError } from '../../staff/errors/staff-tenant-membership-conflict-error';
+import { staffRepository } from '../../staff/repository/staff-repository';
+import { doctorRepository } from '../repository/doctor-repository';
+import type { Doctor } from '../schemas/doctor-schema';
+import {
+  doctorEmailExistsError,
+  getDoctorUniqueConstraintErrors,
+} from '../validator/doctor-uniqueness-validator';
+import { validateCreateDoctor } from '../validator/create-doctor-validator';
 
 async function cleanupCreatedUser(userId: string) {
   try {
-    await staffRepository.deleteAuthUserIfUnprovisioned(userId);
-  } catch {
+    const deleted = await staffRepository.deleteAuthUserIfUnprovisioned(userId);
+
+    if (!deleted) {
+      console.warn('Skipped cleanup of BetterAuth user with linked data', { userId });
+    }
+  } catch (error) {
+    console.warn('Failed to clean up created BetterAuth user', { userId, error });
     // Preserve the original create failure; cleanup is best-effort.
   }
 }
@@ -29,18 +40,18 @@ function getAuthCreateUserErrors(error: unknown) {
     code === 'USER_ALREADY_EXISTS' ||
     message === 'User already exists. Use another email.'
   ) {
-    return ['A user with this email already exists.'];
+    return [doctorEmailExistsError()];
   }
 
   return [];
 }
 
-export async function createStaffCommand(
+export async function createDoctorCommand(
   payload: unknown,
   tenantId: string,
   assignedBy: string
-): Promise<CommandResult<Staff>> {
-  const validationResult = await validateCreateStaff(payload, tenantId);
+): Promise<CommandResult<Doctor>> {
+  const validationResult = await validateCreateDoctor(payload, tenantId);
 
   if (!validationResult.success) {
     return {
@@ -50,41 +61,41 @@ export async function createStaffCommand(
     };
   }
 
+  const doctorRole = await roleRepository.getSystemRoleByCode(tenantId, 'DOCTOR');
+
+  if (!doctorRole) {
+    return {
+      success: false,
+      errors: ['Doctor role not found'],
+      status: StatusCodes.NOT_FOUND,
+    };
+  }
+
   let createdUserId: string | undefined;
 
   try {
+    // BetterAuth user creation cannot join the Drizzle transaction used for the
+    // rest of the Doctor aggregate. If that transaction fails, the user is
+    // explicitly removed so no partial Staff identity remains.
     const createdUser = await auth.api.createUser({
       body: {
         name: validationResult.data.name,
         email: validationResult.data.email,
         password: validationResult.data.password,
-        data: {
-          phone: validationResult.data.phone ?? null,
-        },
       },
     });
 
     createdUserId = createdUser.user.id;
 
-    const staff = await staffRepository.createStaffProfile(
-      createdUser.user.id,
+    const doctor = await doctorRepository.createDoctor({
+      ...validationResult.data,
+      userId: createdUser.user.id,
       tenantId,
-      validationResult.data,
-      assignedBy
-    );
+      roleId: doctorRole.id,
+      assignedBy,
+    });
 
-    if (!staff) {
-      await cleanupCreatedUser(createdUser.user.id);
-      createdUserId = undefined;
-
-      return {
-        success: false,
-        errors: ['Staff not found'],
-        status: StatusCodes.NOT_FOUND,
-      };
-    }
-
-    return { success: true, data: staff };
+    return { success: true, data: doctor };
   } catch (error) {
     if (createdUserId) {
       await cleanupCreatedUser(createdUserId);
@@ -94,7 +105,7 @@ export async function createStaffCommand(
       return { success: false, errors: [error.message], status: StatusCodes.CONFLICT };
     }
 
-    const constraintErrors = getStaffUniqueConstraintErrors(error, validationResult.data);
+    const constraintErrors = getDoctorUniqueConstraintErrors(error, validationResult.data);
 
     if (constraintErrors.length > 0) {
       return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };

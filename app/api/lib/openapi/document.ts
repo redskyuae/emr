@@ -494,6 +494,112 @@ const specialtyMutationErrorResponses = {
   '409': specialtyConflict,
 };
 
+const doctorRequestExample = {
+  name: 'Anita Mehta',
+  email: 'anita.mehta@apollo.example',
+  password: 'StrongerPass123',
+  gender: 'Female',
+  dateOfBirth: '1985-04-12',
+  staffCode: 'DOC-1042',
+  designation: 'Consultant Cardiologist',
+  specialtyId: 7,
+  registrationNumber: 'TN-MED-558211',
+  qualifications: 'MBBS, MD, DM Cardiology',
+};
+
+const doctorExample = {
+  id: 42,
+  userId: 'usr_anita_mehta',
+  tenantId: 'org_apollo',
+  name: doctorRequestExample.name,
+  email: doctorRequestExample.email,
+  phone: null,
+  gender: doctorRequestExample.gender,
+  dateOfBirth: doctorRequestExample.dateOfBirth,
+  staffCode: doctorRequestExample.staffCode,
+  designation: doctorRequestExample.designation,
+  specialtyId: doctorRequestExample.specialtyId,
+  specialtyName: 'Cardiology',
+  registrationNumber: doctorRequestExample.registrationNumber,
+  qualifications: doctorRequestExample.qualifications,
+  isActive: true,
+  createdOn: '2026-07-07T08:30:00.000Z',
+  modifiedOn: '2026-07-07T08:30:00.000Z',
+};
+
+const doctorValidationFailed = {
+  description: 'Doctor validation failed or the request body is not valid JSON.',
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        missingSpecialty: {
+          summary: 'Missing required Specialty',
+          value: { message: 'Validation failed', errors: ['Specialty is required.'] },
+        },
+        invalidSpecialty: {
+          summary: 'Specialty is not in the active Tenant',
+          value: { message: 'Validation failed', errors: ['Specialty 999 is Invalid.'] },
+        },
+        invalidId: {
+          summary: 'Invalid Doctor identifier',
+          value: { message: 'Validation failed', errors: ['Doctor abc is Invalid.'] },
+        },
+        invalidJson: {
+          summary: 'Malformed JSON request body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+};
+
+const doctorNotFound = {
+  description: 'Doctor was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Doctor not found',
+    errors: ['Doctor not found'],
+  }),
+};
+
+const doctorConflict = {
+  description: 'Doctor email, registration number, or Staff code conflicts with an active record.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateEmail: {
+          summary: 'Email already belongs to Staff',
+          value: {
+            message: 'A Staff member with this email already exists.',
+            errors: ['A Staff member with this email already exists.'],
+          },
+        },
+        duplicateRegistration: {
+          summary: 'Registration number already exists',
+          value: {
+            message: 'Doctor registration number TN-MED-558211 already exists.',
+            errors: ['Doctor registration number TN-MED-558211 already exists.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const doctorReadErrorResponses = {
+  '400': doctorValidationFailed,
+  '401': specialtyUnauthorized,
+  '403': specialtyForbidden,
+  '404': doctorNotFound,
+  '500': responseRef('InternalServerError'),
+};
+
+const doctorMutationErrorResponses = {
+  ...doctorReadErrorResponses,
+  '409': doctorConflict,
+};
+
 const assetCategoryExample = {
   id: 1,
   tenantId: 'org_apollo',
@@ -1274,6 +1380,7 @@ export const openApiDocument = {
     { name: 'Appointment Mode', description: 'Appointment Mode Master APIs.' },
     { name: 'Appointment Status', description: 'Appointment Status Master APIs.' },
     { name: 'Specialty', description: 'Tenant-scoped Specialty Master APIs.' },
+    { name: 'Doctor', description: 'Tenant-scoped Doctor registry and lifecycle APIs.' },
     {
       name: 'Appointment Cancelled Reason',
       description: 'Appointment Cancelled Reason Master APIs.',
@@ -2465,6 +2572,133 @@ export const openApiDocument = {
         responses: {
           '204': { description: 'Specialty deleted.' },
           ...specialtyReadErrorResponses,
+        },
+      },
+    },
+    '/api/v1/doctors': {
+      get: {
+        tags: ['Doctor'],
+        summary: 'List Doctors',
+        description:
+          'Returns Doctors in the Tenant resolved from the authenticated Session. Search matches joined Staff identity fields and registration number; filters support Specialty and coupled active status.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          ...listParameters,
+          {
+            name: 'specialtyId',
+            in: 'query',
+            description: 'Filter by a Specialty in the active Tenant.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'status',
+            in: 'query',
+            description: 'Filter by the coupled Doctor and Staff active state.',
+            schema: { type: 'string', enum: ['active', 'inactive'] },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated Doctor list.',
+            content: jsonContent(paginatedSchema('Doctor'), {
+              data: [doctorExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': doctorValidationFailed,
+          '401': specialtyUnauthorized,
+          '403': specialtyForbidden,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Doctor'],
+        summary: 'Create Doctor',
+        description:
+          'Creates a Doctor aggregate in the active Tenant: login, Staff profile, Doctor System Role Assignment, and clinical Doctor record. Tenant Admin authority is required. tenantId and assignedBy come from the Session, and callers must not send roleIds.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateDoctorRequest', doctorRequestExample),
+        responses: {
+          '201': {
+            description: 'Doctor created and Doctor System Role auto-assigned.',
+            content: jsonContent(dataEnvelopeSchema('Doctor'), { data: doctorExample }),
+          },
+          ...doctorMutationErrorResponses,
+        },
+      },
+    },
+    '/api/v1/doctors/{id}': {
+      get: {
+        tags: ['Doctor'],
+        summary: 'Get Doctor',
+        description:
+          'Returns the joined Staff identity and Doctor clinical record in the active Tenant. Cross-Tenant identifiers are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Doctor')],
+        responses: {
+          '200': {
+            description: 'Doctor found.',
+            content: jsonContent(dataEnvelopeSchema('Doctor'), { data: doctorExample }),
+          },
+          ...doctorReadErrorResponses,
+        },
+      },
+      patch: {
+        tags: ['Doctor'],
+        summary: 'Update Doctor',
+        description:
+          'Partially updates permitted Staff person fields and Doctor clinical fields atomically. Email and password are not editable here.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Doctor')],
+        requestBody: requestBody('UpdateDoctorRequest', {
+          name: 'Dr Anita Mehta',
+          specialtyId: 7,
+          registrationNumber: 'TN-MED-558211',
+          qualifications: 'MBBS, MD, DM Cardiology',
+        }),
+        responses: {
+          '200': {
+            description: 'Doctor updated.',
+            content: jsonContent(dataEnvelopeSchema('Doctor'), {
+              data: { ...doctorExample, name: 'Dr Anita Mehta' },
+            }),
+          },
+          ...doctorMutationErrorResponses,
+        },
+      },
+    },
+    '/api/v1/doctors/{id}/deactivate': {
+      post: {
+        tags: ['Doctor'],
+        summary: 'Deactivate Doctor',
+        description:
+          'Atomically deactivates the Doctor, underlying Staff profile, and login, and revokes active Sessions.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Doctor')],
+        responses: {
+          '200': {
+            description: 'Doctor and Staff login deactivated.',
+            content: jsonContent(dataEnvelopeSchema('Doctor'), {
+              data: { ...doctorExample, isActive: false },
+            }),
+          },
+          ...doctorReadErrorResponses,
+        },
+      },
+    },
+    '/api/v1/doctors/{id}/reactivate': {
+      post: {
+        tags: ['Doctor'],
+        summary: 'Reactivate Doctor',
+        description: 'Atomically reactivates the Doctor, underlying Staff profile, and login.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Doctor')],
+        responses: {
+          '200': {
+            description: 'Doctor and Staff login reactivated.',
+            content: jsonContent(dataEnvelopeSchema('Doctor'), { data: doctorExample }),
+          },
+          ...doctorReadErrorResponses,
         },
       },
     },
@@ -4368,6 +4602,109 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      CreateDoctorRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['name', 'email', 'password', 'specialtyId'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 8, maxLength: 128, writeOnly: true },
+          gender: {
+            type: 'string',
+            enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+          },
+          dateOfBirth: { type: 'string', format: 'date' },
+          staffCode: { type: 'string', maxLength: 20 },
+          designation: { type: 'string', maxLength: 100 },
+          specialtyId: { type: 'integer', minimum: 1 },
+          registrationNumber: { type: 'string', maxLength: 100 },
+          qualifications: { type: 'string' },
+        },
+        description:
+          'Creates the Staff and Doctor aggregate. roleIds and tenantId are intentionally not accepted.',
+      },
+      UpdateDoctorRequest: {
+        type: 'object',
+        additionalProperties: false,
+        minProperties: 1,
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          gender: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+              },
+              { type: 'null' },
+            ],
+          },
+          dateOfBirth: { type: ['string', 'null'], format: 'date' },
+          staffCode: { type: ['string', 'null'], maxLength: 20 },
+          designation: { type: ['string', 'null'], maxLength: 100 },
+          specialtyId: { type: 'integer', minimum: 1 },
+          registrationNumber: { type: ['string', 'null'], maxLength: 100 },
+          qualifications: { type: ['string', 'null'] },
+        },
+        description: 'Email, password, roleIds, and tenantId are intentionally not accepted.',
+      },
+      Doctor: {
+        type: 'object',
+        required: [
+          'id',
+          'userId',
+          'tenantId',
+          'name',
+          'email',
+          'phone',
+          'gender',
+          'dateOfBirth',
+          'staffCode',
+          'designation',
+          'specialtyId',
+          'specialtyName',
+          'registrationNumber',
+          'qualifications',
+          'isActive',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          userId: { type: 'string', minLength: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the authenticated Session.',
+          },
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          email: { type: 'string', format: 'email' },
+          phone: { type: ['string', 'null'] },
+          gender: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+              },
+              { type: 'null' },
+            ],
+          },
+          dateOfBirth: { type: ['string', 'null'], format: 'date' },
+          staffCode: { type: ['string', 'null'], maxLength: 20 },
+          designation: { type: ['string', 'null'], maxLength: 100 },
+          specialtyId: { type: 'integer', minimum: 1 },
+          specialtyName: { type: ['string', 'null'], minLength: 1, maxLength: 100 },
+          registrationNumber: { type: ['string', 'null'], maxLength: 100 },
+          qualifications: { type: ['string', 'null'] },
+          isActive: {
+            type: 'boolean',
+            description:
+              'Coupled active state shared with the underlying Staff identity and login.',
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
       },
       CreateStateRequest: {
         type: 'object',

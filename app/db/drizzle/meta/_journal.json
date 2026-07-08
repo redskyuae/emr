@@ -218,6 +218,13 @@
       "when": 1783383691505,
       "tag": "0030_salty_joshua_kane",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1783424134334,
+      "tag": "0031_curly_tusk",
+      "breakpoints": true
     }
   ]
 }

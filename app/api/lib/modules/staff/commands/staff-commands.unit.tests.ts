@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { staffRepository } from '../repository/staff-repository';
+import { StaffTenantMembershipConflictError } from '../errors/staff-tenant-membership-conflict-error';
 import { auth } from '@/app/lib/auth';
 import { validateCreateStaff } from '../validator/create-staff-validator';
 import { validateGetStaffById } from '../validator/get-staff-by-id-validator';
@@ -16,7 +17,7 @@ vi.mock('../repository/staff-repository', () => ({
     createStaffProfile: vi.fn(),
     updateStaff: vi.fn(),
     setStaffActive: vi.fn(),
-    deleteAuthUser: vi.fn(),
+    deleteAuthUserIfUnprovisioned: vi.fn(),
   },
 }));
 vi.mock('@/app/lib/auth', () => ({ auth: { api: { createUser: vi.fn() } } }));
@@ -59,6 +60,7 @@ describe('Staff commands', () => {
       data: { userId: 'user-1', tenantId: 'tenant-1' },
     });
     createUser.mockResolvedValue({ user: { id: 'user-1' } } as never);
+    repo.deleteAuthUserIfUnprovisioned.mockResolvedValue(true);
     repo.createStaffProfile.mockResolvedValue(staff);
     repo.updateStaff.mockResolvedValue(staff);
     repo.setStaffActive.mockResolvedValue(staff);
@@ -86,18 +88,28 @@ describe('Staff commands', () => {
   it('should clean up the created user and return not found when the profile is missing', async () => {
     repo.createStaffProfile.mockResolvedValue(undefined);
     const result = await createStaffCommand({}, 'tenant-1', 'admin');
-    expect(repo.deleteAuthUser).toHaveBeenCalledWith('user-1');
+    expect(repo.deleteAuthUserIfUnprovisioned).toHaveBeenCalledWith('user-1');
     expect(result).toMatchObject({ success: false, status: StatusCodes.NOT_FOUND });
   });
 
   it('should map a duplicate email constraint to a conflict error', async () => {
     repo.createStaffProfile.mockRejectedValue({ code: '23505', constraint: 'user_email_unique' });
     const result = await createStaffCommand({}, 'tenant-1', 'admin');
-    expect(repo.deleteAuthUser).toHaveBeenCalledWith('user-1');
+    expect(repo.deleteAuthUserIfUnprovisioned).toHaveBeenCalledWith('user-1');
     expect(result).toEqual({
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['A user with this email already exists.'],
+    });
+  });
+
+  it('should map cross-Tenant Staff membership to conflict', async () => {
+    repo.createStaffProfile.mockRejectedValue(new StaffTenantMembershipConflictError());
+
+    await expect(createStaffCommand({}, 'tenant-1', 'admin')).resolves.toEqual({
+      success: false,
+      errors: ['Staff user already belongs to a Tenant.'],
+      status: StatusCodes.CONFLICT,
     });
   });
 
