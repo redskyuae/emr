@@ -1,0 +1,4 @@
+## 2026-07-08 - Missing Authentication on Master Data Endpoints
+**Vulnerability:** Found unauthenticated API endpoints for global master data entities (countries, states, languages, nationalities, religions). These endpoints allowed public, unauthenticated access to list, create, update, and delete master data.
+**Learning:** In a multi-tenant architecture, some global entities fall outside tenant-specific boundaries. Because they aren't protected by standard tenant session checks (like `requireTenantSession`), developers might accidentally omit authentication altogether, creating IDOR and unauthorized access vulnerabilities.
+**Prevention:** Always verify that every API endpoint in a Next.js application without global middleware has explicit route-level authentication checks (e.g., `requireAuth()`). Ensure that global master data is secured at the top level of each request handler.
