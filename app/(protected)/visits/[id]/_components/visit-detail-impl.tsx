@@ -185,14 +185,17 @@ function VisitDetailsSection({ visit }: { visit: Visit }) {
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="edit-visit-doctor">Doctor</FieldLabel>
                     <Select
-                      value={field.value ? String(field.value) : ''}
-                      onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                      value={field.value ? String(field.value) : 'unassigned'}
+                      onValueChange={(value) =>
+                        field.onChange(value === 'unassigned' ? undefined : Number(value))
+                      }
                       disabled={updateMutation.isPending}
                     >
                       <SelectTrigger id="edit-visit-doctor" className="w-full">
                         <SelectValue placeholder="Unassigned" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
                         {(doctorsQuery.data?.data ?? []).map((doctor) => (
                           <SelectItem key={doctor.id} value={String(doctor.id)}>
                             {doctor.name}
@@ -242,14 +245,17 @@ function VisitDetailsSection({ visit }: { visit: Visit }) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="edit-visit-reason">Reason</FieldLabel>
                   <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                    value={field.value ? String(field.value) : 'none'}
+                    onValueChange={(value) =>
+                      field.onChange(value === 'none' ? undefined : Number(value))
+                    }
                     disabled={updateMutation.isPending}
                   >
                     <SelectTrigger id="edit-visit-reason" className="w-full">
                       <SelectValue placeholder="Not specified" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">Not specified</SelectItem>
                       {(appointmentReasonsQuery.data?.data ?? []).map((reason) => (
                         <SelectItem key={reason.id} value={String(reason.id)}>
                           {reason.name}
