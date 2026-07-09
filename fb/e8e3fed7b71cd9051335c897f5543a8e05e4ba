@@ -1,0 +1,33 @@
+app/api/lib/modules/visit/commands/create-visit-command.ts
+  e3de6e682fafd9b3 4,28
+app/api/lib/modules/visit/commands/visit-commands.unit.tests.ts
+  e3de6e682fafd9b3 5,146-155
+app/queries/visit-masters/useUpdateVisitStatus.ts
+  e3de6e682fafd9b3 11,47
+app/api/lib/modules/visit/errors/patient-inactive-conflict-error.ts
+  e3de6e682fafd9b3 1-6
+app/api/lib/modules/visit/repository/visit-repository.ts
+  e3de6e682fafd9b3 16,186-189,192-199,203-205
+app/api/lib/modules/visit/repository/visit-repository.integration.tests.ts
+  e3de6e682fafd9b3 151-170
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "fbe8e3fed7b71cd9051335c897f5543a8e05e4ba",
+  "prompts": {
+    "e3de6e682fafd9b3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "174b9bf9-82e9-4e1a-96a3-e56497a27974",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 58,
+      "total_deletions": 4,
+      "accepted_lines": 58,
+      "overriden_lines": 0
+    }
+  }
+}
