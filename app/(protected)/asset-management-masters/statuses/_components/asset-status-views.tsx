@@ -19,13 +19,10 @@ import {
 
 function StatusColorSwatch({ color }: { color: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <span
-        className="border-border inline-block size-4 rounded-sm border"
-        style={{ backgroundColor: color }}
-      />
-      <span className="font-mono text-xs">{color.toUpperCase()}</span>
-    </div>
+    <span
+      className="border-border inline-block size-4 rounded-sm border"
+      style={{ backgroundColor: color }}
+    />
   );
 }
 

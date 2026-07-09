@@ -241,41 +241,31 @@ export function AssetStatusFormSheet({
                             *
                           </span>
                         </FieldLabel>
-                        <div className="flex items-center gap-2">
-                          <label
-                            aria-label="Pick a color"
-                            className="shrink-0 cursor-pointer"
-                            title="Pick a color"
-                          >
-                            <span
-                              className="border-input block size-9 rounded-md border"
-                              style={{
-                                backgroundColor: isValidHex ? field.value : '#16A34A',
-                              }}
-                            />
-                            <input
-                              type="color"
-                              className="sr-only"
-                              value={isValidHex ? field.value : '#16A34A'}
-                              onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                              disabled={isSaving}
-                            />
-                          </label>
-                          <Input
-                            id="status-color"
-                            {...field}
-                            onChange={(e) => {
-                              const val = e.target.value.toUpperCase();
-                              field.onChange(val.startsWith('#') ? val : '#' + val);
+                        <label
+                          aria-label="Pick a color"
+                          className="flex w-fit cursor-pointer items-center gap-2"
+                          title="Pick a color"
+                        >
+                          <span
+                            className="border-input block size-9 shrink-0 rounded-md border"
+                            style={{
+                              backgroundColor: isValidHex ? field.value : '#16A34A',
                             }}
-                            className="font-mono"
-                            maxLength={7}
-                            placeholder="#16A34A"
+                          />
+                          <span className="text-muted-foreground text-sm">
+                            Click to choose color
+                          </span>
+                          <input
+                            id="status-color"
+                            type="color"
+                            className="sr-only"
+                            value={isValidHex ? field.value : '#16A34A'}
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                            disabled={isSaving}
                             aria-required="true"
                             aria-invalid={fieldState.invalid}
-                            disabled={isSaving}
                           />
-                        </div>
+                        </label>
                         <FieldError errors={[fieldState.error]} />
                       </Field>
                     );
