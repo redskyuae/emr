@@ -26,7 +26,7 @@ The second phase of Tenant Provisioning, in which a newly created Tenant receive
 
 ## Facility
 
-A single physical location operated by a Tenant — a hospital, clinic, diagnostic center, or day-care unit. Has a `facilityType` attribute (HOSPITAL, CLINIC, LAB, etc.). Staff and clinical events are always scoped to a Facility within a Tenant. Facility is not yet a modeled entity in the system: every Tenant currently operates as a single implicit Facility, and clinical events are scoped by Tenant alone until Facility is introduced as its own entity.
+A single physical location operated by a Tenant — a hospital, clinic, diagnostic center, or day-care unit. Has a `facilityType` attribute (HOSPITAL, CLINIC, LAB, etc.). Staff and clinical events are conceptually scoped to a Facility within a Tenant; the system currently models this as tenant-wide scope until Facility becomes a first-class entity.
 
 ## Tenant Owner
 

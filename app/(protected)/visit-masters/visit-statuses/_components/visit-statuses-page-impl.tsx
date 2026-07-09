@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from 'lucide-react';
+import type { VisitStatus } from '@/app/api/lib/modules/visit-status/schemas/visit-status-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useVisitStatusQuery } from '@/app/queries/visit-masters/useVisitStatus';
 import { useVisitStatusesQuery } from '@/app/queries/visit-masters/useVisitStatuses';
@@ -27,7 +28,7 @@ const PAGE_SIZE = 10;
 
 export function VisitStatusesPageImpl() {
   const [statusParam, setStatusParam] = useQueryState('status');
-  const [deleteStatusParam, setDeleteStatusParam] = useQueryState('deleteStatus');
+  const [statusPendingDelete, setStatusPendingDelete] = useState<VisitStatus | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
@@ -36,10 +37,6 @@ export function VisitStatusesPageImpl() {
   const editingStatusId =
     statusParam !== null && statusParam !== 'new' && /^\d+$/.test(statusParam)
       ? Number(statusParam)
-      : null;
-  const deleteStatusId =
-    deleteStatusParam !== null && /^\d+$/.test(deleteStatusParam)
-      ? Number(deleteStatusParam)
       : null;
 
   const statusesQuery = useVisitStatusesQuery({
@@ -57,8 +54,6 @@ export function VisitStatusesPageImpl() {
 
   const editingStatusFromList =
     editingStatusId !== null ? (statuses.find((s) => s.id === editingStatusId) ?? null) : null;
-  const statusPendingDelete =
-    deleteStatusId !== null ? (statuses.find((s) => s.id === deleteStatusId) ?? null) : null;
 
   const shouldFetchEditingStatus =
     editingStatusId !== null && !statusesQuery.isLoading && editingStatusFromList === null;
@@ -151,7 +146,7 @@ export function VisitStatusesPageImpl() {
             <VisitStatusTable
               statuses={statuses}
               onEdit={(status) => void setStatusParam(String(status.id))}
-              onDelete={(status) => void setDeleteStatusParam(String(status.id))}
+              onDelete={(status) => setStatusPendingDelete(status)}
             />
 
             {totalPages > 0 ? (
@@ -198,7 +193,7 @@ export function VisitStatusesPageImpl() {
 
       <VisitStatusDeleteDialog
         status={statusPendingDelete}
-        onClose={() => void setDeleteStatusParam(null)}
+        onClose={() => setStatusPendingDelete(null)}
         onDeleted={(deletedId) => {
           if (editingStatusId === deletedId) {
             void setStatusParam(null);

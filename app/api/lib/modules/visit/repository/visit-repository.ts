@@ -259,12 +259,27 @@ async function updateVisit(id: number, data: UpdateVisitData): Promise<Visit | u
       and(
         eq(visitTable.id, id),
         eq(visitTable.tenantId, data.tenantId),
-        eq(visitTable.isDeleted, false)
+        eq(visitTable.isDeleted, false),
+        // Guards against a concurrent complete/cancel making the Visit terminal
+        // between validation and this write: only the request that observed the
+        // current status wins the edit, so a stale edit can't be applied on top
+        // of a Visit that has since become Completed or Cancelled.
+        eq(visitTable.statusId, data.expectedStatusId)
       )
     )
     .returning({ id: visitTable.id });
 
-  return updated ? getVisitById(updated.id, data.tenantId) : undefined;
+  if (updated) {
+    return getVisitById(updated.id, data.tenantId);
+  }
+
+  const stillExists = await getVisitById(id, data.tenantId);
+
+  if (stillExists) {
+    throw new VisitStatusConflictError();
+  }
+
+  return undefined;
 }
 
 type VisitTransition = {

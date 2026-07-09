@@ -96,7 +96,7 @@ export function VisitsPageImpl() {
           void setSearch(value || null);
           goToFirstPage();
         }}
-        statusCategory={statusParam}
+        statusCategory={statusCategory ?? ''}
         onStatusCategoryChange={(value) => {
           void setStatusParam(value || null);
           goToFirstPage();

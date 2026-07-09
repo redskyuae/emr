@@ -100,6 +100,7 @@ export function CancelVisitDialog({ visit, onClose, onCancelled }: CancelVisitDi
               if (error) setError(null);
             }}
             rows={3}
+            maxLength={500}
             placeholder="e.g. Patient left before consultation"
             aria-required="true"
             aria-invalid={error !== null}

@@ -6,7 +6,7 @@ import { updateVisitSchema, type UpdateVisitInput } from '../schemas/visit-schem
 import { validateVisitExists } from './visit-existence-validator';
 import { validateVisitReferences } from './visit-reference-validator';
 
-export type UpdateVisitParams = { id: number; payload: UpdateVisitInput };
+export type UpdateVisitParams = { id: number; payload: UpdateVisitInput; expectedStatusId: number };
 
 export async function validateUpdateVisit(
   id: unknown,
@@ -45,5 +45,12 @@ export async function validateUpdateVisit(
     return { success: false, errors: referenceResult.errors, status: referenceResult.status };
   }
 
-  return { success: true, data: { id: existsResult.data.id, payload: payloadResult.data } };
+  return {
+    success: true,
+    data: {
+      id: existsResult.data.id,
+      payload: payloadResult.data,
+      expectedStatusId: existsResult.data.statusId,
+    },
+  };
 }

@@ -130,7 +130,7 @@ export type CancelVisitInput = z.infer<typeof cancelVisitSchema>;
 export type VisitListParams = z.infer<typeof visitListParamsSchema>;
 
 export type CreateVisitData = CreateVisitInput & { tenantId: string; statusId: number };
-export type UpdateVisitData = UpdateVisitInput & { tenantId: string };
+export type UpdateVisitData = UpdateVisitInput & { tenantId: string; expectedStatusId: number };
 
 export type VisitPatientSummary = { id: number; name: string; mrn: string };
 export type VisitDoctorSummary = { id: number; name: string };

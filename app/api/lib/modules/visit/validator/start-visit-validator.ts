@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
+import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { startVisitSchema } from '../schemas/visit-schema';
 import { validateVisitExists } from './visit-existence-validator';
 import { resolveVisitTargetStatus } from './resolve-visit-target-status';
@@ -42,6 +43,16 @@ export async function validateStartVisit(
     return {
       success: false,
       errors: ['Visit must have a Doctor assigned before it can be started.'],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
+  const doctor = await doctorRepository.getDoctorById(visit.doctorId, tenantId);
+
+  if (!doctor || !doctor.isActive) {
+    return {
+      success: false,
+      errors: ['Visit doctor is Inactive and cannot be assigned to a Visit.'],
       status: StatusCodes.CONFLICT,
     };
   }

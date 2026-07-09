@@ -258,6 +258,7 @@ describe('Visit repository', () => {
       tenantId: tenantA,
       appointmentTypeId: otherType.id,
       chiefComplaint: 'Fever and cough',
+      expectedStatusId: status.id,
     });
 
     expect(updated).toMatchObject({
@@ -268,6 +269,42 @@ describe('Visit repository', () => {
     const deleted = await visitRepository.deleteVisit(created.id, tenantA);
     expect(deleted).toMatchObject({ id: created.id });
     await expect(visitRepository.getVisitById(created.id, tenantA)).resolves.toBeUndefined();
+  });
+
+  it('should reject an edit whose expected status no longer matches (concurrent terminal transition)', async () => {
+    await createTenant(tenantA);
+    const patient = await createPatient(tenantA);
+    const appointmentType = await createAppointmentType(tenantA);
+    const waiting = await createVisitStatus(tenantA, 'WAITING', 'WAIT');
+    const completed = await createVisitStatus(tenantA, 'COMPLETED', 'DONE');
+
+    const created = await visitRepository.createVisit({
+      tenantId: tenantA,
+      patientId: patient.id,
+      appointmentTypeId: appointmentType.id,
+      statusId: waiting.id,
+    });
+
+    // Simulate a concurrent completion that already moved the visit to a terminal status.
+    await visitRepository.updateVisitStatusTransition(created.id, tenantA, {
+      statusId: completed.id,
+      expectedStatusId: waiting.id,
+      timestampField: 'completedOn',
+    });
+
+    // An edit request that read the visit while it was still Waiting now races in late.
+    await expect(
+      visitRepository.updateVisit(created.id, {
+        tenantId: tenantA,
+        appointmentTypeId: appointmentType.id,
+        chiefComplaint: 'Fever and cough',
+        expectedStatusId: waiting.id,
+      })
+    ).rejects.toThrow('Visit status changed since it was loaded');
+
+    const finalVisit = await visitRepository.getVisitById(created.id, tenantA);
+    expect(finalVisit?.status.category).toBe('COMPLETED');
+    expect(finalVisit?.chiefComplaint).toBeNull();
   });
 
   it('should apply the correct lifecycle timestamp per transition', async () => {

@@ -85,7 +85,7 @@ describe('Visit commands', () => {
     });
     validateUpdate.mockResolvedValue({
       success: true,
-      data: { id: 100, payload: { appointmentTypeId: 3 } },
+      data: { id: 100, payload: { appointmentTypeId: 3 }, expectedStatusId: 10 },
     });
     validateStart.mockResolvedValue({
       success: true,
@@ -142,6 +142,19 @@ describe('Visit commands', () => {
     });
   });
 
+  it('should rethrow unknown repository errors on create', async () => {
+    const error = new Error('database down');
+    repo.createVisit.mockRejectedValue(error);
+    await expect(createVisitCommand({}, 'tenant-1')).rejects.toThrow(error);
+  });
+
+  it('should return validation failure and not call repository on update failure', async () => {
+    validateUpdate.mockResolvedValue({ success: false, errors: ['Invalid'], status: 422 });
+    const result = await updateVisitCommand('100', 'tenant-1', {});
+    expect(result).toEqual({ success: false, errors: ['Invalid'], status: 422 });
+    expect(repo.updateVisit).not.toHaveBeenCalled();
+  });
+
   it('should return not found when update repository returns undefined', async () => {
     repo.updateVisit.mockResolvedValue(undefined);
     const result = await updateVisitCommand('100', 'tenant-1', {});
@@ -152,11 +165,36 @@ describe('Visit commands', () => {
     });
   });
 
+  it('should call repository with the expected status id observed at validation on update', async () => {
+    await updateVisitCommand('100', 'tenant-1', {});
+    expect(repo.updateVisit).toHaveBeenCalledWith(100, {
+      appointmentTypeId: 3,
+      tenantId: 'tenant-1',
+      expectedStatusId: 10,
+    });
+  });
+
   it('should return updated visit on success', async () => {
     await expect(updateVisitCommand('100', 'tenant-1', {})).resolves.toEqual({
       success: true,
       data: visit,
     });
+  });
+
+  it('should map a concurrent terminal transition to a clean conflict error on update', async () => {
+    repo.updateVisit.mockRejectedValue(new VisitStatusConflictError());
+    const result = await updateVisitCommand('100', 'tenant-1', {});
+    expect(result).toEqual({
+      success: false,
+      errors: ['Visit status changed since it was loaded. Reload and try again.'],
+      status: StatusCodes.CONFLICT,
+    });
+  });
+
+  it('should rethrow unknown repository errors on update', async () => {
+    const error = new Error('database down');
+    repo.updateVisit.mockRejectedValue(error);
+    await expect(updateVisitCommand('100', 'tenant-1', {})).rejects.toThrow(error);
   });
 
   it('should call updateVisitStatusTransition with startedOn on start', async () => {
@@ -189,6 +227,30 @@ describe('Visit commands', () => {
     });
   });
 
+  it('should return started visit on success', async () => {
+    await expect(startVisitCommand('100', {}, 'tenant-1')).resolves.toEqual({
+      success: true,
+      data: visit,
+    });
+  });
+
+  it('should rethrow unknown repository errors on start', async () => {
+    const error = new Error('database down');
+    repo.updateVisitStatusTransition.mockRejectedValue(error);
+    await expect(startVisitCommand('100', {}, 'tenant-1')).rejects.toThrow(error);
+  });
+
+  it('should return validation failure and not call repository on complete failure', async () => {
+    validateComplete.mockResolvedValue({
+      success: false,
+      errors: ['Bad'],
+      status: StatusCodes.CONFLICT,
+    });
+    const result = await completeVisitCommand('100', {}, 'tenant-1');
+    expect(result).toEqual({ success: false, errors: ['Bad'], status: StatusCodes.CONFLICT });
+    expect(repo.updateVisitStatusTransition).not.toHaveBeenCalled();
+  });
+
   it('should call updateVisitStatusTransition with completedOn on complete', async () => {
     await completeVisitCommand('100', {}, 'tenant-1');
     expect(repo.updateVisitStatusTransition).toHaveBeenCalledWith(100, 'tenant-1', {
@@ -196,6 +258,34 @@ describe('Visit commands', () => {
       expectedStatusId: 11,
       timestampField: 'completedOn',
     });
+  });
+
+  it('should return completed visit on success', async () => {
+    await expect(completeVisitCommand('100', {}, 'tenant-1')).resolves.toEqual({
+      success: true,
+      data: visit,
+    });
+  });
+
+  it('should map a concurrent status change to a clean conflict error on complete', async () => {
+    repo.updateVisitStatusTransition.mockRejectedValue(new VisitStatusConflictError());
+    const result = await completeVisitCommand('100', {}, 'tenant-1');
+    expect(result).toEqual({
+      success: false,
+      errors: ['Visit status changed since it was loaded. Reload and try again.'],
+      status: StatusCodes.CONFLICT,
+    });
+  });
+
+  it('should return validation failure and not call repository on cancel failure', async () => {
+    validateCancel.mockResolvedValue({
+      success: false,
+      errors: ['Bad'],
+      status: StatusCodes.CONFLICT,
+    });
+    const result = await cancelVisitCommand('100', {}, 'tenant-1');
+    expect(result).toEqual({ success: false, errors: ['Bad'], status: StatusCodes.CONFLICT });
+    expect(repo.updateVisitStatusTransition).not.toHaveBeenCalled();
   });
 
   it('should call updateVisitStatusTransition with cancelledOn and reason on cancel', async () => {
@@ -208,6 +298,25 @@ describe('Visit commands', () => {
     });
   });
 
+  it('should return cancelled visit on success', async () => {
+    await expect(
+      cancelVisitCommand('100', { cancelledReason: 'Left' }, 'tenant-1')
+    ).resolves.toEqual({
+      success: true,
+      data: visit,
+    });
+  });
+
+  it('should map a concurrent status change to a clean conflict error on cancel', async () => {
+    repo.updateVisitStatusTransition.mockRejectedValue(new VisitStatusConflictError());
+    const result = await cancelVisitCommand('100', {}, 'tenant-1');
+    expect(result).toEqual({
+      success: false,
+      errors: ['Visit status changed since it was loaded. Reload and try again.'],
+      status: StatusCodes.CONFLICT,
+    });
+  });
+
   it('should return not found when a transition repository call returns undefined', async () => {
     repo.updateVisitStatusTransition.mockResolvedValue(undefined);
     const result = await startVisitCommand('100', {}, 'tenant-1');
@@ -216,6 +325,13 @@ describe('Visit commands', () => {
       errors: ['Visit not found'],
       status: StatusCodes.NOT_FOUND,
     });
+  });
+
+  it('should return validation failure and not call repository on delete failure', async () => {
+    validateDelete.mockResolvedValue({ success: false, errors: ['Invalid'], status: 404 });
+    const result = await deleteVisitCommand('100', 'tenant-1');
+    expect(result).toEqual({ success: false, errors: ['Invalid'], status: 404 });
+    expect(repo.deleteVisit).not.toHaveBeenCalled();
   });
 
   it('should return void on delete success', async () => {

@@ -330,10 +330,10 @@ describe('Visit validators', () => {
       });
     });
 
-    it('should return parsed id/payload on success', async () => {
+    it('should return parsed id/payload plus the expected status id on success', async () => {
       await expect(validateUpdateVisit('100', payload, 'tenant-1')).resolves.toEqual({
         success: true,
-        data: { id: 100, payload },
+        data: { id: 100, payload, expectedStatusId: waitingStatus.id },
       });
     });
   });
@@ -385,6 +385,26 @@ describe('Visit validators', () => {
         success: false,
         status: StatusCodes.CONFLICT,
         errors: ['Visit must have a Doctor assigned before it can be started.'],
+      });
+    });
+
+    it('should reject starting a visit whose assigned doctor is now inactive', async () => {
+      doctorRepo.getDoctorById.mockResolvedValue({ ...doctor, isActive: false });
+      const result = await validateStartVisit('100', {}, 'tenant-1');
+      expect(result).toMatchObject({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Visit doctor is Inactive and cannot be assigned to a Visit.'],
+      });
+    });
+
+    it('should reject starting a visit whose assigned doctor no longer exists', async () => {
+      doctorRepo.getDoctorById.mockResolvedValue(undefined);
+      const result = await validateStartVisit('100', {}, 'tenant-1');
+      expect(result).toMatchObject({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Visit doctor is Inactive and cannot be assigned to a Visit.'],
       });
     });
 

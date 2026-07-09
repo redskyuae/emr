@@ -1683,7 +1683,7 @@ const visitCreateConflict = {
 
 const visitUpdateConflict = {
   description:
-    'A referenced Doctor, Appointment Type, or Appointment Reason is invalid or inactive in the active Tenant, or the Visit is no longer open for editing.',
+    'A referenced Doctor, Appointment Type, or Appointment Reason is invalid or inactive in the active Tenant, the Visit is no longer open for editing, or a concurrent request already transitioned the Visit to a terminal status.',
   content: {
     'application/json': {
       schema: schemaRef('ConflictError'),
@@ -1709,13 +1709,21 @@ const visitUpdateConflict = {
             errors: ['Visit can no longer be edited once it is Completed or Cancelled.'],
           },
         },
+        concurrentTerminalTransition: {
+          summary: 'Visit became terminal during this edit',
+          value: {
+            message: 'Visit status changed since it was loaded. Reload and try again.',
+            errors: ['Visit status changed since it was loaded. Reload and try again.'],
+          },
+        },
       },
     },
   },
 };
 
 const startVisitConflict = {
-  description: 'The Visit is not Waiting, or the Visit has no Doctor assigned.',
+  description:
+    'The Visit is not Waiting, the Visit has no Doctor assigned, or the assigned Doctor is Inactive.',
   content: {
     'application/json': {
       schema: schemaRef('ConflictError'),
@@ -1732,6 +1740,13 @@ const startVisitConflict = {
           value: {
             message: 'Visit must have a Doctor assigned before it can be started.',
             errors: ['Visit must have a Doctor assigned before it can be started.'],
+          },
+        },
+        doctorInactive: {
+          summary: 'Assigned Doctor is Inactive',
+          value: {
+            message: 'Visit doctor is Inactive and cannot be assigned to a Visit.',
+            errors: ['Visit doctor is Inactive and cannot be assigned to a Visit.'],
           },
         },
       },
@@ -4404,7 +4419,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Update Visit',
         description:
-          'Updates the editable Doctor, Appointment Type, Appointment Reason, chief complaint, and notes fields of an open Visit in the active Tenant. A Visit that is Completed or Cancelled can no longer be edited.',
+          'Updates the editable Doctor, Appointment Type, Appointment Reason, chief complaint, and notes fields of an open Visit in the active Tenant. A Visit that is Completed or Cancelled can no longer be edited, and an edit is rejected with a conflict if the Visit was concurrently transitioned to a terminal status after being loaded.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         requestBody: requestBody('UpdateVisitRequest', updateVisitRequestExample),
@@ -4433,7 +4448,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Start Visit',
         description:
-          'Transitions a Waiting Visit that has a Doctor assigned to In Progress. The tenantId is resolved from the active authenticated Session. statusId is optional and defaults to the Tenant System In Progress Visit Status when omitted; a supplied statusId must reference an In Progress category Visit Status.',
+          'Transitions a Waiting Visit that has a Doctor assigned to In Progress. The assigned Doctor must still be Active at the time of starting. The tenantId is resolved from the active authenticated Session. statusId is optional and defaults to the Tenant System In Progress Visit Status when omitted; a supplied statusId must reference an In Progress category Visit Status.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         requestBody: optionalRequestBody('StartVisitRequest', startVisitRequestExample),
