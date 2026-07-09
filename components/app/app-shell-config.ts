@@ -321,6 +321,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/visits/new': {
     title: 'Check in Visit',
     subtitle: 'Start a new outpatient Visit for a Patient.',
+  },
   '/asset-management-masters/statuses': {
     title: 'Asset Statuses',
     subtitle: 'Tenant-scoped operational lifecycle state records for Assets.',
