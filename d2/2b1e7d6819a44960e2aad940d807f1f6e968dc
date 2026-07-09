@@ -1,0 +1,23 @@
+plans.md
+  7ef8a8b49194e4ef 1-7,9-117,119-197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "d22b1e7d6819a44960e2aad940d807f1f6e968dc",
+  "prompts": {
+    "7ef8a8b49194e4ef": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "25941665-c8a3-4409-8454-20ad33932abb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 195,
+      "overriden_lines": 2
+    }
+  }
+}
