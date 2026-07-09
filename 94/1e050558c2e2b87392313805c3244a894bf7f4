@@ -1,0 +1,51 @@
+CONTEXT.md
+  e3de6e682fafd9b3 29
+app/api/lib/modules/visit-status/commands/visit-status-commands.unit.tests.ts
+  e3de6e682fafd9b3 149-180
+app/api/lib/modules/visit/validator/visit-validator.unit.tests.ts
+  e3de6e682fafd9b3 333,336,391-410
+app/(protected)/visit-masters/visit-statuses/_components/visit-statuses-page-impl.tsx
+  e3de6e682fafd9b3 7,31,149,196
+app/api/lib/modules/visit/commands/visit-commands.unit.tests.ts
+  e3de6e682fafd9b3 88,145-157,168-176,184-190,192-197,230-253,263-284,286-288,301-316,330-334
+app/api/lib/openapi/document.ts
+  e3de6e682fafd9b3 1686,1712-1718,1725-1726,1745-1749,4422,4451
+app/(protected)/visits/_components/visits-page-impl.tsx
+  e3de6e682fafd9b3 99
+app/api/lib/modules/visit/repository/visit-repository.integration.tests.ts
+  e3de6e682fafd9b3 261,274-309
+app/api/lib/modules/visit/commands/update-visit-command.ts
+  e3de6e682fafd9b3 3,23-28,30-32,34-38,40-41
+app/queries/visits/useVisits.ts
+  e3de6e682fafd9b3 1-2
+app/api/lib/modules/visit/validator/start-visit-validator.ts
+  e3de6e682fafd9b3 5,50-59
+app/api/lib/modules/visit/validator/update-visit-validator.ts
+  e3de6e682fafd9b3 9,48-55
+app/api/lib/modules/visit/schemas/visit-schema.ts
+  e3de6e682fafd9b3 133
+app/(protected)/visits/_components/_modals/cancel-visit-dialog.tsx
+  e3de6e682fafd9b3 103
+app/api/lib/modules/visit/repository/visit-repository.ts
+  e3de6e682fafd9b3 262-267,272-282
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "941e050558c2e2b87392313805c3244a894bf7f4",
+  "prompts": {
+    "e3de6e682fafd9b3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "174b9bf9-82e9-4e1a-96a3-e56497a27974",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 292,
+      "total_deletions": 31,
+      "accepted_lines": 292,
+      "overriden_lines": 0
+    }
+  }
+}
