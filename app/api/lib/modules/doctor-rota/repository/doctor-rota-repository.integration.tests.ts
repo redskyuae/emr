@@ -17,7 +17,7 @@ describe('DoctorRota repository', () => {
   it('should create doctor rota for a tenant', async () => {
     const created = await createRota(tenantA, 'Morning Rota');
     expect(created).toMatchObject({
-      id: 1,
+      id: expect.any(Number),
       tenantId: tenantA,
       name: 'Morning Rota',
       fromTime: '09:00',
