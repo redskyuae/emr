@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OpenVisitConflictError } from '../errors/open-visit-conflict-error';
+import { PatientInactiveConflictError } from '../errors/patient-inactive-conflict-error';
 import { VisitStatusConflictError } from '../errors/visit-status-conflict-error';
 import { visitRepository } from '../repository/visit-repository';
 import { validateCreateVisit } from '../validator/create-visit-validator';
@@ -138,6 +139,16 @@ describe('Visit commands', () => {
       errors: [
         'Patient already has an Open Visit (VST-1001). Complete or cancel it before starting a new Visit.',
       ],
+      status: StatusCodes.CONFLICT,
+    });
+  });
+
+  it('should map a repository-level inactive patient conflict to a clean conflict error', async () => {
+    repo.createVisit.mockRejectedValue(new PatientInactiveConflictError());
+    const result = await createVisitCommand({}, 'tenant-1');
+    expect(result).toEqual({
+      success: false,
+      errors: ['Visit patient is Inactive and cannot be selected for a new Visit.'],
       status: StatusCodes.CONFLICT,
     });
   });

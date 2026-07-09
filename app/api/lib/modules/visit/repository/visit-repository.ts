@@ -13,6 +13,7 @@ import {
 import { visitStatus as visitStatusTable } from '@/app/db/schema/visit-status';
 import type { VisitStatusCategory } from '../../visit-status/schemas/visit-status-schema';
 import { OpenVisitConflictError } from '../errors/open-visit-conflict-error';
+import { PatientInactiveConflictError } from '../errors/patient-inactive-conflict-error';
 import { VisitStatusConflictError } from '../errors/visit-status-conflict-error';
 import type {
   Visit,
@@ -182,13 +183,26 @@ async function findOpenVisitByPatientId(
 async function createVisit(data: CreateVisitData): Promise<Visit> {
   const createdId = await db.transaction(async (tx) => {
     // Lock the patient row so concurrent check-ins for the same patient serialize here,
-    // closing the TOCTOU window between the validator's pre-check and this insert.
-    await tx
+    // closing the TOCTOU window between the validator's pre-check and this insert. Re-check
+    // active/deleted state under the lock too: a concurrent deactivate could otherwise commit
+    // between the validator's read and this lock, leaving an inactive Patient checked in.
+    const [lockedPatient] = await tx
       .select({ id: patientTable.id })
       .from(patientTable)
-      .where(eq(patientTable.id, data.patientId))
+      .where(
+        and(
+          eq(patientTable.id, data.patientId),
+          eq(patientTable.tenantId, data.tenantId),
+          eq(patientTable.isActive, true),
+          eq(patientTable.isDeleted, false)
+        )
+      )
       .for('update')
       .limit(1);
+
+    if (!lockedPatient) {
+      throw new PatientInactiveConflictError();
+    }
 
     const [openVisit] = await tx
       .select({ visitNumber: visitTable.visitNumber })

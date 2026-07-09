@@ -8,6 +8,7 @@ import type {
   UpdateVisitStatusResponse,
 } from '@/app/api/v1/visits/statuses/[id]/types';
 import { VISIT_STATUSES_KEY } from './useVisitStatuses';
+import { visitsBaseKey } from '@/app/queries/visits/useVisits';
 
 type UpdateVisitStatusVariables = { id: number; request: UpdateVisitStatusRequest };
 
@@ -43,6 +44,7 @@ export function useUpdateVisitStatus(options?: UseUpdateVisitStatusOptions) {
     mutationFn: updateVisitStatus,
     onSuccess: async (...args) => {
       await queryClient.invalidateQueries({ queryKey: VISIT_STATUSES_KEY });
+      await queryClient.invalidateQueries({ queryKey: visitsBaseKey });
       await onSuccess?.(...args);
     },
   });

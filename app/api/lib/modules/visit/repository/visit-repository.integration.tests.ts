@@ -148,6 +148,26 @@ describe('Visit repository', () => {
     ).rejects.toThrow('already has an Open Visit');
   });
 
+  it('should reject creating a visit for a patient deactivated after validation but before the lock', async () => {
+    await createTenant(tenantA);
+    const patient = await createPatient(tenantA);
+    const appointmentType = await createAppointmentType(tenantA);
+    const status = await createVisitStatus(tenantA, 'WAITING', 'WAIT');
+
+    // Simulate a concurrent deactivation that lands between the validator's
+    // pre-check and this repository call taking the patient row lock.
+    await patientRepository.setPatientActive(patient.id, tenantA, false);
+
+    await expect(
+      visitRepository.createVisit({
+        tenantId: tenantA,
+        patientId: patient.id,
+        appointmentTypeId: appointmentType.id,
+        statusId: status.id,
+      })
+    ).rejects.toThrow('Visit patient is Inactive and cannot be selected for a new Visit.');
+  });
+
   it('should allocate visit numbers independently per tenant', async () => {
     await createTenant(tenantA);
     await createTenant(tenantB);
