@@ -1,0 +1,25 @@
+app/(protected)/visits/new/_components/visit-check-in-impl.tsx
+  e7d7bad8a233be72 18,109-123,126-127,130-131,244,246,257,283,286-301
+app/(protected)/visits/new/loader.tsx
+  e7d7bad8a233be72 5,8-12,14-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "4eeacd2508524dbb97a93ffca7f924f75dec13e1",
+  "prompts": {
+    "e7d7bad8a233be72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb4b8122-f1c4-4bfa-ba99-a51cbd263089",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 54,
+      "total_deletions": 47,
+      "accepted_lines": 54,
+      "overriden_lines": 0
+    }
+  }
+}
