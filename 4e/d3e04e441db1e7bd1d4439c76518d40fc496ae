@@ -1,0 +1,43 @@
+app/api/lib/modules/visit/repository/visit-repository.integration.tests.ts
+  e7d7bad8a233be72 233,290,298,307-347
+app/api/lib/modules/visit/commands/start-visit-command.ts
+  e7d7bad8a233be72 3,23-32,34-36,38-42,44-45
+app/api/lib/modules/visit/commands/cancel-visit-command.ts
+  e7d7bad8a233be72 3,23-36,39-43,45-46
+app/api/lib/modules/visit/validator/start-visit-validator.ts
+  e7d7bad8a233be72 9,59-62
+app/api/lib/modules/visit/validator/complete-visit-validator.ts
+  e7d7bad8a233be72 9,51-54
+app/api/lib/modules/visit/commands/complete-visit-command.ts
+  e7d7bad8a233be72 3,23-32,34-36,38-42,44-45
+app/api/lib/modules/visit/validator/visit-validator.unit.tests.ts
+  e7d7bad8a233be72 395,411-415,419,446-451
+app/api/lib/modules/visit/commands/visit-commands.unit.tests.ts
+  e7d7bad8a233be72 5,90-97,100,166,182-191,196,205
+app/api/lib/modules/visit/errors/visit-status-conflict-error.ts
+  e7d7bad8a233be72 1-6
+app/api/lib/modules/visit/repository/visit-repository.ts
+  e7d7bad8a233be72 16,272,302-311,315-325
+app/api/lib/modules/visit/validator/cancel-visit-validator.ts
+  e7d7bad8a233be72 9-13,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "4ed3e04e441db1e7bd1d4439c76518d40fc496ae",
+  "prompts": {
+    "e7d7bad8a233be72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb4b8122-f1c4-4bfa-ba99-a51cbd263089",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 196,
+      "total_deletions": 46,
+      "accepted_lines": 195,
+      "overriden_lines": 0
+    }
+  }
+}
