@@ -51,12 +51,14 @@ export function AssetCategoryDeleteDialog({
   }
 
   return (
-        <AlertDialog open={open} onOpenChange={(next) => {
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
         if (!next && !deleteMutation.isPending) {
-            onClose();
-          }
-        }}
-      >
+          onClose();
+        }
+      }}
+    >
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
