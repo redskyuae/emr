@@ -5,6 +5,7 @@ import type { ListLanguagesResponse, SaveLanguageResponse } from './types';
 import { createLanguageCommand } from '@/app/api/lib/modules/language/commands/create-language-command';
 import { getLanguagesQuery } from '@/app/api/lib/modules/language/queries/get-languages-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 
 function mutationMessage(status: number) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
@@ -12,6 +13,9 @@ function mutationMessage(status: number) {
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
+
     const page = parsePositiveInteger(request.nextUrl.searchParams.get('page'), 1);
     const limit = parsePositiveInteger(request.nextUrl.searchParams.get('limit'), 10);
     const query =
@@ -60,6 +64,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
+
     let payload: unknown;
 
     try {

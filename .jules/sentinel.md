@@ -1,0 +1,4 @@
+## 2026-07-09 - Missing Authentication on Master Data APIs
+**Vulnerability:** Global master data API endpoints (countries, languages, states, religions, nationalities) lacked any authentication checks (`requireAuth()`), allowing unauthenticated external users to perform CRUD operations on reference tables.
+**Learning:** This repo does not use global middleware for authentication. Because master data tables aren't scoped to a specific tenant, they bypassed the typical `requireTenantSession()` protection seen in other routes, but developers forgot to apply the baseline `requireAuth()` helper.
+**Prevention:** For any new global or non-tenant specific API endpoint, developers must explicitly add `requireAuth()` at the start of the exported route handlers, as Next.js doesn't enforce this by default in this architecture.
