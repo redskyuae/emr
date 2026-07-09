@@ -94,6 +94,10 @@ A user who works within one or more Facilities under exactly one Tenant. Include
 
 A Staff member with a clinical specialty who sees Patients. A Doctor is always a Staff member, shares that Staff member's active lifecycle, and cannot exist without the underlying Staff identity.
 
+## DoctorRota
+
+A Tenant-scoped reusable scheduling template that defines a named time window during which Doctors may be scheduled. A DoctorRota is not tied to one Doctor until a Doctor Schedule assigns it; its name identifies the template, and multiple DoctorRotas may cover the same time window when they represent different scheduling purposes.
+
 ## Specialty
 
 A Tenant-scoped Master representing a Doctor's clinical area of expertise or credential (e.g., Cardiology, Pediatrics, Orthopedics). A Specialty is a property of the Doctor and is independent of Facility. Distinct from Department, which is an organizational unit within a Facility — a Department named "Cardiology" may be staffed by Doctors of differing Specialties, and a Doctor keeps their Specialty regardless of where they work. Each Tenant manages its own Specialties independently.
