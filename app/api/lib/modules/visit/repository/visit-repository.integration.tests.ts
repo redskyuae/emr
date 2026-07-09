@@ -97,6 +97,7 @@ describe('Visit repository', () => {
   it('should allocate visit numbers starting at 1001 per tenant and read back the joined projection', async () => {
     await createTenant(tenantA);
     const patient = await createPatient(tenantA);
+    const otherPatient = await createPatient(tenantA);
     const appointmentType = await createAppointmentType(tenantA);
     const status = await createVisitStatus(tenantA, 'WAITING', 'WAIT');
 
@@ -108,7 +109,7 @@ describe('Visit repository', () => {
     });
     const second = await visitRepository.createVisit({
       tenantId: tenantA,
-      patientId: patient.id,
+      patientId: otherPatient.id,
       appointmentTypeId: appointmentType.id,
       statusId: status.id,
     });
@@ -122,6 +123,29 @@ describe('Visit repository', () => {
       status: { id: status.id, category: 'WAITING' },
       doctor: null,
     });
+  });
+
+  it('should reject creating a second open visit for a patient that already has one', async () => {
+    await createTenant(tenantA);
+    const patient = await createPatient(tenantA);
+    const appointmentType = await createAppointmentType(tenantA);
+    const status = await createVisitStatus(tenantA, 'WAITING', 'WAIT');
+
+    await visitRepository.createVisit({
+      tenantId: tenantA,
+      patientId: patient.id,
+      appointmentTypeId: appointmentType.id,
+      statusId: status.id,
+    });
+
+    await expect(
+      visitRepository.createVisit({
+        tenantId: tenantA,
+        patientId: patient.id,
+        appointmentTypeId: appointmentType.id,
+        statusId: status.id,
+      })
+    ).rejects.toThrow('already has an Open Visit');
   });
 
   it('should allocate visit numbers independently per tenant', async () => {
@@ -325,6 +349,7 @@ describe('Visit repository', () => {
   it('should filter by status category and doctor', async () => {
     await createTenant(tenantA);
     const patient = await createPatient(tenantA);
+    const otherPatient = await createPatient(tenantA);
     const appointmentType = await createAppointmentType(tenantA);
     const waiting = await createVisitStatus(tenantA, 'WAITING', 'WAIT');
     const inProgress = await createVisitStatus(tenantA, 'IN_PROGRESS', 'INPROG');
@@ -338,7 +363,7 @@ describe('Visit repository', () => {
     });
     const withDoctor = await visitRepository.createVisit({
       tenantId: tenantA,
-      patientId: patient.id,
+      patientId: otherPatient.id,
       doctorId: doctor.id,
       appointmentTypeId: appointmentType.id,
       statusId: inProgress.id,
@@ -354,11 +379,11 @@ describe('Visit repository', () => {
 
   it('should paginate list results and return total', async () => {
     await createTenant(tenantA);
-    const patient = await createPatient(tenantA);
     const appointmentType = await createAppointmentType(tenantA);
     const status = await createVisitStatus(tenantA, 'WAITING', 'WAIT');
 
     for (let i = 0; i < 3; i += 1) {
+      const patient = await createPatient(tenantA);
       await visitRepository.createVisit({
         tenantId: tenantA,
         patientId: patient.id,

@@ -1,4 +1,6 @@
+import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
+import { OpenVisitConflictError } from '../errors/open-visit-conflict-error';
 import { visitRepository } from '../repository/visit-repository';
 import type { Visit } from '../schemas/visit-schema';
 import { validateCreateVisit } from '../validator/create-visit-validator';
@@ -17,7 +19,15 @@ export async function createVisitCommand(
     };
   }
 
-  const createdVisit = await visitRepository.createVisit({ ...validationResult.data, tenantId });
+  try {
+    const createdVisit = await visitRepository.createVisit({ ...validationResult.data, tenantId });
 
-  return { success: true, data: createdVisit };
+    return { success: true, data: createdVisit };
+  } catch (error) {
+    if (error instanceof OpenVisitConflictError) {
+      return { success: false, errors: [error.message], status: StatusCodes.CONFLICT };
+    }
+
+    throw error;
+  }
 }

@@ -12,6 +12,7 @@ import {
 } from '@/app/db/schema/visit';
 import { visitStatus as visitStatusTable } from '@/app/db/schema/visit-status';
 import type { VisitStatusCategory } from '../../visit-status/schemas/visit-status-schema';
+import { OpenVisitConflictError } from '../errors/open-visit-conflict-error';
 import type {
   Visit,
   CreateVisitData,
@@ -179,6 +180,33 @@ async function findOpenVisitByPatientId(
 
 async function createVisit(data: CreateVisitData): Promise<Visit> {
   const createdId = await db.transaction(async (tx) => {
+    // Lock the patient row so concurrent check-ins for the same patient serialize here,
+    // closing the TOCTOU window between the validator's pre-check and this insert.
+    await tx
+      .select({ id: patientTable.id })
+      .from(patientTable)
+      .where(eq(patientTable.id, data.patientId))
+      .for('update')
+      .limit(1);
+
+    const [openVisit] = await tx
+      .select({ visitNumber: visitTable.visitNumber })
+      .from(visitTable)
+      .innerJoin(visitStatusTable, eq(visitTable.statusId, visitStatusTable.id))
+      .where(
+        and(
+          eq(visitTable.tenantId, data.tenantId),
+          eq(visitTable.patientId, data.patientId),
+          eq(visitTable.isDeleted, false),
+          inArray(visitStatusTable.category, OPEN_VISIT_CATEGORIES)
+        )
+      )
+      .limit(1);
+
+    if (openVisit) {
+      throw new OpenVisitConflictError(openVisit.visitNumber);
+    }
+
     const [counter] = await tx
       .insert(visitNumberCounterTable)
       .values({ tenantId: data.tenantId, lastNumber: 1001 })

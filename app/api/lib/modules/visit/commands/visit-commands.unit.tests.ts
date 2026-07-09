@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { OpenVisitConflictError } from '../errors/open-visit-conflict-error';
 import { visitRepository } from '../repository/visit-repository';
 import { validateCreateVisit } from '../validator/create-visit-validator';
 import { validateUpdateVisit } from '../validator/update-visit-validator';
@@ -119,6 +120,18 @@ describe('Visit commands', () => {
     await expect(createVisitCommand({}, 'tenant-1')).resolves.toEqual({
       success: true,
       data: visit,
+    });
+  });
+
+  it('should map a repository-level open visit conflict to a clean conflict error', async () => {
+    repo.createVisit.mockRejectedValue(new OpenVisitConflictError('VST-1001'));
+    const result = await createVisitCommand({}, 'tenant-1');
+    expect(result).toEqual({
+      success: false,
+      errors: [
+        'Patient already has an Open Visit (VST-1001). Complete or cancel it before starting a new Visit.',
+      ],
+      status: StatusCodes.CONFLICT,
     });
   });
 
