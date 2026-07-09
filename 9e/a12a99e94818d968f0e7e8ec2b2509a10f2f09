@@ -1,0 +1,23 @@
+components/app/app-shell-config.ts
+  e3de6e682fafd9b3 324
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "9ea12a99e94818d968f0e7e8ec2b2509a10f2f09",
+  "prompts": {
+    "e3de6e682fafd9b3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "174b9bf9-82e9-4e1a-96a3-e56497a27974",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
