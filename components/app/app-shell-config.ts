@@ -172,6 +172,7 @@ export const appNavGroups: AppNavGroup[] = [
         items: [
           { title: 'Categories', href: '/asset-management-masters/categories' },
           { title: 'Status', href: '/asset-management-masters/statuses' },
+          { title: 'Condition', href: '/asset-management-masters/conditions' },
         ],
       },
       {
@@ -300,6 +301,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/asset-management-masters/statuses': {
     title: 'Asset Statuses',
     subtitle: 'Tenant-scoped operational lifecycle state records for Assets.',
+  },
+  '/asset-management-masters/conditions': {
+    title: 'Asset Conditions',
+    subtitle: 'Tenant-scoped physical condition grade records for Assets.',
   },
   '/global-references': {
     title: 'Global References',

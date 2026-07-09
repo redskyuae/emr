@@ -7,16 +7,16 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Gauge,
   LayoutGrid,
   LayoutList,
   Plus,
   Search,
   Table as TableIcon,
-  Tag,
 } from 'lucide-react';
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { useAssetCategoryQuery } from '@/app/queries/asset-masters/useAssetCategory';
-import { useAssetCategoriesQuery } from '@/app/queries/asset-masters/useAssetCategories';
+import { useAssetConditionQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetCondition';
+import { useAssetConditionsQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetConditions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,79 +30,83 @@ import {
 } from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { AssetCategoryDeleteDialog } from './_modals/asset-category-delete-dialog';
-import { AssetCategoryFormSheet } from './_sheets/asset-category-form-sheet';
-import { ViewSkeleton } from './asset-category-skeletons';
+import { AssetConditionDeleteDialog } from './_modals/asset-condition-delete-dialog';
+import { AssetConditionFormSheet } from './_sheets/asset-condition-form-sheet';
+import { ViewSkeleton } from './asset-condition-skeletons';
 import {
-  AssetCategoryCardView,
-  AssetCategoryListView,
-  AssetCategoryTableView,
-} from './asset-category-views';
+  AssetConditionCardView,
+  AssetConditionListView,
+  AssetConditionTableView,
+} from './asset-condition-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
 
 const PAGE_SIZE = 10;
 
-export function AssetCategoryPageImpl() {
-  const [categoryParam, setCategoryParam] = useQueryState('category');
-  const [deleteCategoryParam, setDeleteCategoryParam] = useQueryState('deleteCategory');
+export function AssetConditionPageImpl() {
+  const [conditionParam, setConditionParam] = useQueryState('condition');
+  const [deleteConditionParam, setDeleteConditionParam] = useQueryState('deleteCondition');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
 
-  const isCreating = categoryParam === 'new';
-  const editingCategoryId =
-    categoryParam !== null && categoryParam !== 'new' && /^\d+$/.test(categoryParam)
-      ? Number(categoryParam)
+  const isCreating = conditionParam === 'new';
+  const editingConditionId =
+    conditionParam !== null && conditionParam !== 'new' && /^\d+$/.test(conditionParam)
+      ? Number(conditionParam)
       : null;
-  const deleteCategoryId =
-    deleteCategoryParam !== null && /^\d+$/.test(deleteCategoryParam)
-      ? Number(deleteCategoryParam)
+  const deleteConditionId =
+    deleteConditionParam !== null && /^\d+$/.test(deleteConditionParam)
+      ? Number(deleteConditionParam)
       : null;
 
-  const categoriesQuery = useAssetCategoriesQuery({
+  const conditionsQuery = useAssetConditionsQuery({
     query: debouncedSearch || undefined,
     page,
     limit: PAGE_SIZE,
   });
 
-  const categories = categoriesQuery.data?.data ?? [];
-  const meta = categoriesQuery.data?.meta;
+  const conditions = conditionsQuery.data?.data ?? [];
+  const meta = conditionsQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
   const total = meta?.total ?? 0;
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  const editingCategoryFromList =
-    editingCategoryId !== null
-      ? (categories.find((c) => c.id === editingCategoryId) ?? null)
+  const editingConditionFromList =
+    editingConditionId !== null
+      ? (conditions.find((c) => c.id === editingConditionId) ?? null)
       : null;
-  const categoryPendingDeleteFromList =
-    deleteCategoryId !== null ? (categories.find((c) => c.id === deleteCategoryId) ?? null) : null;
+  const conditionPendingDeleteFromList =
+    deleteConditionId !== null
+      ? (conditions.find((c) => c.id === deleteConditionId) ?? null)
+      : null;
 
-  const shouldFetchEditingCategory =
-    editingCategoryId !== null && !categoriesQuery.isLoading && editingCategoryFromList === null;
-  const editingCategoryQuery = useAssetCategoryQuery(
-    shouldFetchEditingCategory ? editingCategoryId : null
+  const shouldFetchEditingCondition =
+    editingConditionId !== null && !conditionsQuery.isLoading && editingConditionFromList === null;
+  const editingConditionQuery = useAssetConditionQuery(
+    shouldFetchEditingCondition ? editingConditionId : null
   );
-  const editingCategory = editingCategoryFromList ?? editingCategoryQuery.data ?? null;
+  const editingCondition = editingConditionFromList ?? editingConditionQuery.data ?? null;
 
-  const shouldFetchDeleteCategory =
-    deleteCategoryId !== null &&
-    !categoriesQuery.isLoading &&
-    categoryPendingDeleteFromList === null;
-  const deleteCategoryQuery = useAssetCategoryQuery(
-    shouldFetchDeleteCategory ? deleteCategoryId : null
+  const shouldFetchDeleteCondition =
+    deleteConditionId !== null &&
+    !conditionsQuery.isLoading &&
+    conditionPendingDeleteFromList === null;
+  const deleteConditionQuery = useAssetConditionQuery(
+    shouldFetchDeleteCondition ? deleteConditionId : null
   );
-  const categoryPendingDelete = categoryPendingDeleteFromList ?? deleteCategoryQuery.data ?? null;
+  const conditionPendingDelete =
+    conditionPendingDeleteFromList ?? deleteConditionQuery.data ?? null;
 
-  const categoryResolving =
-    editingCategoryId !== null &&
-    editingCategory === null &&
-    (categoriesQuery.isLoading || editingCategoryQuery.isFetching);
+  const conditionResolving =
+    editingConditionId !== null &&
+    editingCondition === null &&
+    (conditionsQuery.isLoading || editingConditionQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingCategoryId !== null && (categoryResolving || editingCategory !== null));
+    isCreating ||
+    (editingConditionId !== null && (conditionResolving || editingCondition !== null));
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -147,49 +151,50 @@ export function AssetCategoryPageImpl() {
                 type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search asset categories..."
-                aria-label="Search asset categories"
+                placeholder="Search asset conditions..."
+                aria-label="Search asset conditions"
               />
             </InputGroup>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setCategoryParam('new')}>
+              <Button type="button" size="lg" onClick={() => void setConditionParam('new')}>
                 <Plus className="size-4" />
-                Add Asset Category
+                Add Asset Condition
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {categoriesQuery.isError ? (
+        {conditionsQuery.isError ? (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
-            <AlertTitle>Could not load Asset Categories</AlertTitle>
-            <AlertDescription>{getApiErrorMessage(categoriesQuery.error)}</AlertDescription>
+            <AlertTitle>Could not load Asset Conditions</AlertTitle>
+            <AlertDescription>{getApiErrorMessage(conditionsQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {categoriesQuery.isLoading ? (
+        {conditionsQuery.isLoading ? (
           <ViewSkeleton layout={viewLayout} />
-        ) : categories.length === 0 && !debouncedSearch ? (
+        ) : conditions.length === 0 && !debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Tag />
+                <Gauge />
               </EmptyMedia>
-              <EmptyTitle>No Asset Categories yet</EmptyTitle>
+              <EmptyTitle>No Asset Conditions yet</EmptyTitle>
               <EmptyDescription>
-                Create Asset Categories to classify the equipment and assets tracked in this Tenant.
+                Create Asset Conditions to grade the physical condition of equipment and assets in
+                this Tenant.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
-              <Button type="button" onClick={() => void setCategoryParam('new')}>
+              <Button type="button" onClick={() => void setConditionParam('new')}>
                 <Plus className="size-4" />
-                Add Asset Category
+                Add Asset Condition
               </Button>
             </EmptyContent>
           </Empty>
-        ) : categories.length === 0 && debouncedSearch ? (
+        ) : conditions.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -197,7 +202,7 @@ export function AssetCategoryPageImpl() {
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
-                No Asset Categories match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                No Asset Conditions match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                 term.
               </EmptyDescription>
             </EmptyHeader>
@@ -205,22 +210,22 @@ export function AssetCategoryPageImpl() {
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <AssetCategoryTableView
-                categories={categories}
-                onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
+              <AssetConditionTableView
+                conditions={conditions}
+                onEdit={(condition) => void setConditionParam(String(condition.id))}
+                onDelete={(condition) => void setDeleteConditionParam(String(condition.id))}
               />
             ) : viewLayout === 'card' ? (
-              <AssetCategoryCardView
-                categories={categories}
-                onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
+              <AssetConditionCardView
+                conditions={conditions}
+                onEdit={(condition) => void setConditionParam(String(condition.id))}
+                onDelete={(condition) => void setDeleteConditionParam(String(condition.id))}
               />
             ) : (
-              <AssetCategoryListView
-                categories={categories}
-                onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
+              <AssetConditionListView
+                conditions={conditions}
+                onEdit={(condition) => void setConditionParam(String(condition.id))}
+                onDelete={(condition) => void setDeleteConditionParam(String(condition.id))}
               />
             )}
 
@@ -257,21 +262,21 @@ export function AssetCategoryPageImpl() {
         )}
       </div>
 
-      <AssetCategoryFormSheet
+      <AssetConditionFormSheet
         open={sheetOpen}
         mode={isCreating ? 'new' : 'edit'}
-        categoryId={editingCategoryId}
-        category={editingCategory}
-        isResolving={categoryResolving}
-        onClose={() => void setCategoryParam(null)}
+        conditionId={editingConditionId}
+        condition={editingCondition}
+        isResolving={conditionResolving}
+        onClose={() => void setConditionParam(null)}
       />
 
-      <AssetCategoryDeleteDialog
-        category={categoryPendingDelete}
-        onClose={() => void setDeleteCategoryParam(null)}
+      <AssetConditionDeleteDialog
+        condition={conditionPendingDelete}
+        onClose={() => void setDeleteConditionParam(null)}
         onDeleted={(deletedId) => {
-          if (editingCategoryId === deletedId) {
-            void setCategoryParam(null);
+          if (editingConditionId === deletedId) {
+            void setConditionParam(null);
           }
         }}
       />
