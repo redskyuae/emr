@@ -15,7 +15,7 @@ import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useCreateVisit } from '@/app/queries/visits/useCreateVisit';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import {
   Select,
@@ -106,28 +106,29 @@ export function VisitCheckInImpl({ initialPatientId }: { initialPatientId: numbe
   });
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4">
+    <form onSubmit={onSubmit} className="space-y-6">
+      {serverErrors.length > 0 ? (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Could not check in Visit</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc space-y-1 pl-4">
+              {serverErrors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <Card className="shadow-fluent-2">
         <CardHeader>
-          <CardTitle>Check in Visit</CardTitle>
+          <CardTitle>Visit details</CardTitle>
+          <CardDescription>Who the Visit is for and how to classify it.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-6">
-            {serverErrors.length > 0 ? (
-              <Alert variant="destructive">
-                <AlertCircle className="size-4" />
-                <AlertTitle>Could not check in Visit</AlertTitle>
-                <AlertDescription>
-                  <ul className="list-disc space-y-1 pl-4">
-                    {serverErrors.map((error) => (
-                      <li key={error}>{error}</li>
-                    ))}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            ) : null}
-
-            <FieldGroup className="gap-4">
+          <FieldGroup className="gap-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Controller
                 control={form.control}
                 name="patientId"
@@ -240,7 +241,9 @@ export function VisitCheckInImpl({ initialPatientId }: { initialPatientId: numbe
                   </Field>
                 )}
               />
+            </div>
 
+            <div className="grid gap-4 sm:grid-cols-2">
               <Controller
                 control={form.control}
                 name="chiefComplaint"
@@ -251,7 +254,7 @@ export function VisitCheckInImpl({ initialPatientId }: { initialPatientId: numbe
                       id="visit-chief-complaint"
                       {...field}
                       disabled={isSaving}
-                      rows={2}
+                      rows={3}
                       placeholder="e.g. Fever for 3 days"
                     />
                     <FieldError errors={[fieldState.error]} />
@@ -276,25 +279,25 @@ export function VisitCheckInImpl({ initialPatientId }: { initialPatientId: numbe
                   </Field>
                 )}
               />
-            </FieldGroup>
-
-            <div className="flex justify-end gap-2 border-t pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push('/visits')}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
-                <Save className="size-4" />
-                Check in
-              </Button>
             </div>
-          </form>
+          </FieldGroup>
         </CardContent>
       </Card>
-    </div>
+
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push('/visits')}
+          disabled={isSaving}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
+          <Save className="size-4" />
+          Check in
+        </Button>
+      </div>
+    </form>
   );
 }
