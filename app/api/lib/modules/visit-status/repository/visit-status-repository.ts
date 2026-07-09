@@ -93,7 +93,9 @@ async function updateVisitStatus(id: number, data: UpdateVisitStatusData) {
       )
       .returning(visitStatusColumns);
 
-    return updated ? { outcome: 'updated' as const, data: updated } : { outcome: 'not-found' as const };
+    return updated
+      ? { outcome: 'updated' as const, data: updated }
+      : { outcome: 'not-found' as const };
   });
 }
 
@@ -142,7 +144,9 @@ async function deleteVisitStatus(id: number, tenantId: string) {
       )
       .returning(visitStatusColumns);
 
-    return deleted ? { outcome: 'deleted' as const, data: deleted } : { outcome: 'not-found' as const };
+    return deleted
+      ? { outcome: 'deleted' as const, data: deleted }
+      : { outcome: 'not-found' as const };
   });
 }
 

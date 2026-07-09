@@ -28,7 +28,10 @@ export async function validateUpdateVisit(
     return { success: false, errors: formatValidationErrors(payloadResult.error) };
   }
 
-  if (existsResult.data.status.category === 'COMPLETED' || existsResult.data.status.category === 'CANCELLED') {
+  if (
+    existsResult.data.status.category === 'COMPLETED' ||
+    existsResult.data.status.category === 'CANCELLED'
+  ) {
     return {
       success: false,
       errors: ['Visit can no longer be edited once it is Completed or Cancelled.'],

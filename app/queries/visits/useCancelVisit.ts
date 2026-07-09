@@ -3,7 +3,10 @@
 import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
-import type { CancelVisitRequest, CancelVisitResponse } from '@/app/api/v1/visits/[id]/cancel/types';
+import type {
+  CancelVisitRequest,
+  CancelVisitResponse,
+} from '@/app/api/v1/visits/[id]/cancel/types';
 import { visitsBaseKey } from './useVisits';
 
 type CancelVisitVariables = { id: number; request: CancelVisitRequest };

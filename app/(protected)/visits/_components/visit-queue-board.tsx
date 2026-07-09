@@ -93,7 +93,16 @@ function QueueCard({
   );
 }
 
-function QueueColumn({ title, visits, isLoading, isError, error, onStart, onComplete, onCancel }: QueueColumnProps) {
+function QueueColumn({
+  title,
+  visits,
+  isLoading,
+  isError,
+  error,
+  onStart,
+  onComplete,
+  onCancel,
+}: QueueColumnProps) {
   return (
     <div className="flex min-w-72 flex-1 flex-col gap-3">
       <div className="flex items-center gap-2">

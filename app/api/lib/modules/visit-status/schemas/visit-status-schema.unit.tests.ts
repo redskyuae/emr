@@ -45,7 +45,9 @@ describe('VisitStatus schema', () => {
   it('should return validation error when category is not one of the allowed values', () => {
     expect(
       errorsOf(createVisitStatusSchema.safeParse({ ...valid, category: 'PENDING' }))
-    ).toContain('Visit status category must be one of WAITING, IN_PROGRESS, COMPLETED, or CANCELLED.');
+    ).toContain(
+      'Visit status category must be one of WAITING, IN_PROGRESS, COMPLETED, or CANCELLED.'
+    );
   });
 
   it('should accept each allowed category value', () => {
@@ -77,7 +79,9 @@ describe('VisitStatus schema', () => {
   });
 
   it('should transform empty description to undefined', () => {
-    expect(createVisitStatusSchema.parse({ ...valid, description: '   ' }).description).toBeUndefined();
+    expect(
+      createVisitStatusSchema.parse({ ...valid, description: '   ' }).description
+    ).toBeUndefined();
   });
 
   it('should validate visit status id is positive integer', () => {

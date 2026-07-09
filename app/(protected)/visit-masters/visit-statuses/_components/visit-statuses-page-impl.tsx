@@ -38,7 +38,9 @@ export function VisitStatusesPageImpl() {
       ? Number(statusParam)
       : null;
   const deleteStatusId =
-    deleteStatusParam !== null && /^\d+$/.test(deleteStatusParam) ? Number(deleteStatusParam) : null;
+    deleteStatusParam !== null && /^\d+$/.test(deleteStatusParam)
+      ? Number(deleteStatusParam)
+      : null;
 
   const statusesQuery = useVisitStatusesQuery({
     query: debouncedSearch || undefined,
@@ -139,7 +141,8 @@ export function VisitStatusesPageImpl() {
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
-                No Visit Statuses match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
+                No Visit Statuses match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                term.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

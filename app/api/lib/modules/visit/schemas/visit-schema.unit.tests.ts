@@ -77,7 +77,10 @@ describe('Visit schema', () => {
 
   it('should accept an optional status id on cancel', () => {
     const result = cancelVisitSchema.safeParse({ cancelledReason: 'Patient left', statusId: 3 });
-    expect(result).toMatchObject({ success: true, data: { cancelledReason: 'Patient left', statusId: 3 } });
+    expect(result).toMatchObject({
+      success: true,
+      data: { cancelledReason: 'Patient left', statusId: 3 },
+    });
   });
 
   it('should validate visit id is positive integer', () => {

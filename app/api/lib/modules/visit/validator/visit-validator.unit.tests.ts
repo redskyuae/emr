@@ -147,9 +147,27 @@ const waitingStatus = {
   modifiedOn: new Date(),
 };
 
-const inProgressStatus = { ...waitingStatus, id: 11, name: 'In Progress', code: 'INPROG', category: 'IN_PROGRESS' as const };
-const completedStatus = { ...waitingStatus, id: 12, name: 'Completed', code: 'DONE', category: 'COMPLETED' as const };
-const cancelledStatus = { ...waitingStatus, id: 13, name: 'Cancelled', code: 'CANC', category: 'CANCELLED' as const };
+const inProgressStatus = {
+  ...waitingStatus,
+  id: 11,
+  name: 'In Progress',
+  code: 'INPROG',
+  category: 'IN_PROGRESS' as const,
+};
+const completedStatus = {
+  ...waitingStatus,
+  id: 12,
+  name: 'Completed',
+  code: 'DONE',
+  category: 'COMPLETED' as const,
+};
+const cancelledStatus = {
+  ...waitingStatus,
+  id: 13,
+  name: 'Cancelled',
+  code: 'CANC',
+  category: 'CANCELLED' as const,
+};
 
 const visit: Visit = {
   id: 100,

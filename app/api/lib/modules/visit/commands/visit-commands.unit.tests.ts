@@ -125,7 +125,11 @@ describe('Visit commands', () => {
   it('should return not found when update repository returns undefined', async () => {
     repo.updateVisit.mockResolvedValue(undefined);
     const result = await updateVisitCommand('100', 'tenant-1', {});
-    expect(result).toEqual({ success: false, errors: ['Visit not found'], status: StatusCodes.NOT_FOUND });
+    expect(result).toEqual({
+      success: false,
+      errors: ['Visit not found'],
+      status: StatusCodes.NOT_FOUND,
+    });
   });
 
   it('should return updated visit on success', async () => {
@@ -144,7 +148,11 @@ describe('Visit commands', () => {
   });
 
   it('should propagate start validation failure', async () => {
-    validateStart.mockResolvedValue({ success: false, errors: ['Bad'], status: StatusCodes.CONFLICT });
+    validateStart.mockResolvedValue({
+      success: false,
+      errors: ['Bad'],
+      status: StatusCodes.CONFLICT,
+    });
     const result = await startVisitCommand('100', {}, 'tenant-1');
     expect(result).toEqual({ success: false, errors: ['Bad'], status: StatusCodes.CONFLICT });
     expect(repo.updateVisitStatusTransition).not.toHaveBeenCalled();
@@ -170,7 +178,11 @@ describe('Visit commands', () => {
   it('should return not found when a transition repository call returns undefined', async () => {
     repo.updateVisitStatusTransition.mockResolvedValue(undefined);
     const result = await startVisitCommand('100', {}, 'tenant-1');
-    expect(result).toEqual({ success: false, errors: ['Visit not found'], status: StatusCodes.NOT_FOUND });
+    expect(result).toEqual({
+      success: false,
+      errors: ['Visit not found'],
+      status: StatusCodes.NOT_FOUND,
+    });
   });
 
   it('should return void on delete success', async () => {
@@ -183,6 +195,10 @@ describe('Visit commands', () => {
   it('should return not found when delete repository returns undefined', async () => {
     repo.deleteVisit.mockResolvedValue(undefined);
     const result = await deleteVisitCommand('100', 'tenant-1');
-    expect(result).toEqual({ success: false, errors: ['Visit not found'], status: StatusCodes.NOT_FOUND });
+    expect(result).toEqual({
+      success: false,
+      errors: ['Visit not found'],
+      status: StatusCodes.NOT_FOUND,
+    });
   });
 });

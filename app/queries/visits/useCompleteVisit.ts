@@ -11,7 +11,10 @@ import { visitsBaseKey } from './useVisits';
 
 type CompleteVisitVariables = { id: number; request?: CompleteVisitRequest };
 
-async function completeVisit({ id, request }: CompleteVisitVariables): Promise<CompleteVisitResponse> {
+async function completeVisit({
+  id,
+  request,
+}: CompleteVisitVariables): Promise<CompleteVisitResponse> {
   const response = await fetch(`/api/v1/visits/${id}/complete`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

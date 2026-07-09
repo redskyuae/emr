@@ -86,7 +86,9 @@ type VisitRow = {
   modifiedOn: Date;
 };
 
-function patientName(row: Pick<VisitRow, 'patientFirstName' | 'patientMiddleName' | 'patientLastName'>) {
+function patientName(
+  row: Pick<VisitRow, 'patientFirstName' | 'patientMiddleName' | 'patientLastName'>
+) {
   return [row.patientFirstName, row.patientMiddleName, row.patientLastName]
     .filter((part): part is string => Boolean(part))
     .join(' ');
@@ -143,10 +145,7 @@ function visitJoins() {
     .leftJoin(doctorTable, eq(visitTable.doctorId, doctorTable.id))
     .leftJoin(user, eq(doctorTable.userId, user.id))
     .innerJoin(appointmentTypeTable, eq(visitTable.appointmentTypeId, appointmentTypeTable.id))
-    .leftJoin(
-      appointmentReasonTable,
-      eq(visitTable.appointmentReasonId, appointmentReasonTable.id)
-    )
+    .leftJoin(appointmentReasonTable, eq(visitTable.appointmentReasonId, appointmentReasonTable.id))
     .innerJoin(visitStatusTable, eq(visitTable.statusId, visitStatusTable.id));
 }
 
@@ -270,11 +269,7 @@ async function updateVisitStatusTransition(
       ...timestampUpdate,
     })
     .where(
-      and(
-        eq(visitTable.id, id),
-        eq(visitTable.tenantId, tenantId),
-        eq(visitTable.isDeleted, false)
-      )
+      and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false))
     )
     .returning({ id: visitTable.id });
 
@@ -293,11 +288,7 @@ async function deleteVisit(id: number, tenantId: string): Promise<Visit | undefi
     .update(visitTable)
     .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
     .where(
-      and(
-        eq(visitTable.id, id),
-        eq(visitTable.tenantId, tenantId),
-        eq(visitTable.isDeleted, false)
-      )
+      and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false))
     )
     .returning({ id: visitTable.id });
 

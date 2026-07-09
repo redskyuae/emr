@@ -15,7 +15,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -361,7 +367,12 @@ export function VisitStatusFormSheet({
               <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
                 Cancel
               </Button>
-              <Button type="submit" form="visit-status-form" disabled={isSaving} aria-busy={isSaving}>
+              <Button
+                type="submit"
+                form="visit-status-form"
+                disabled={isSaving}
+                aria-busy={isSaving}
+              >
                 <Save className="size-4" />
                 Save
               </Button>

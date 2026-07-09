@@ -5,23 +5,17 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  ArrowLeft,
-  ClipboardList,
-  Pencil,
-  Play,
-  Save,
-  Square,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, ClipboardList, Pencil, Play, Save, Square, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { CancelVisitDialog } from '@/app/(protected)/visits/_components/_modals/cancel-visit-dialog';
 import { DeleteVisitDialog } from '@/app/(protected)/visits/_components/_modals/delete-visit-dialog';
 import { VisitStatusBadge } from '@/app/(protected)/visits/_components/visit-status-badge';
-import { visitEditFormSchema, type VisitEditFormValues } from '@/app/(protected)/visits/_utils/visit-form-schema';
+import {
+  visitEditFormSchema,
+  type VisitEditFormValues,
+} from '@/app/(protected)/visits/_utils/visit-form-schema';
 import { useAppointmentReasonsQuery } from '@/app/queries/appointment-masters/reasons/useAppointmentReasons';
 import { useAppointmentTypesQuery } from '@/app/queries/appointment-masters/types/useAppointmentTypes';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -32,9 +26,21 @@ import { useUpdateVisit } from '@/app/queries/visits/useUpdateVisit';
 import { useVisitQuery } from '@/app/queries/visits/useVisit';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -300,7 +306,11 @@ function VisitDetailsSection({ visit }: { visit: Visit }) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending} aria-busy={updateMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={updateMutation.isPending}
+              aria-busy={updateMutation.isPending}
+            >
               <Save className="size-4" />
               Save changes
             </Button>

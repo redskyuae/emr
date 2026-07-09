@@ -9,7 +9,9 @@ import type {
 } from '@/app/api/v1/visits/statuses/types';
 import { VISIT_STATUSES_KEY } from './useVisitStatuses';
 
-async function createVisitStatus(request: SaveVisitStatusRequest): Promise<SaveVisitStatusResponse> {
+async function createVisitStatus(
+  request: SaveVisitStatusRequest
+): Promise<SaveVisitStatusResponse> {
   const response = await fetch('/api/v1/visits/statuses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

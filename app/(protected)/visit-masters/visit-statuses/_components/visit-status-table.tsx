@@ -44,7 +44,12 @@ function StatusActionsMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label={`Actions for ${status.name}`}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Actions for ${status.name}`}
+        >
           <MoreVertical className="size-4" />
         </Button>
       </DropdownMenuTrigger>

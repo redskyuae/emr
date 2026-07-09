@@ -53,7 +53,10 @@ export function CancelVisitDialog({ visit, onClose, onCancelled }: CancelVisitDi
     }
 
     try {
-      await cancelMutation.mutateAsync({ id: visit.id, request: { cancelledReason: trimmedReason } });
+      await cancelMutation.mutateAsync({
+        id: visit.id,
+        request: { cancelledReason: trimmedReason },
+      });
       toast.success('Visit cancelled.');
       onCancelled?.(visit.id);
       onClose();

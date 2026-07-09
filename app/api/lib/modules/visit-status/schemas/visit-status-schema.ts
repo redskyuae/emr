@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-export const VISIT_STATUS_CATEGORIES = ['WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const;
+export const VISIT_STATUS_CATEGORIES = [
+  'WAITING',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'CANCELLED',
+] as const;
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })

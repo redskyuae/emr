@@ -8,8 +8,7 @@ export default async function VisitNewPage({
   const params = await searchParams;
   const patientParam = params.patient;
   const patientIdRaw = Array.isArray(patientParam) ? patientParam[0] : patientParam;
-  const initialPatientId =
-    patientIdRaw && /^\d+$/.test(patientIdRaw) ? Number(patientIdRaw) : null;
+  const initialPatientId = patientIdRaw && /^\d+$/.test(patientIdRaw) ? Number(patientIdRaw) : null;
 
   return <VisitCheckInImpl initialPatientId={initialPatientId} />;
 }

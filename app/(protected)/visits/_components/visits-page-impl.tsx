@@ -17,7 +17,12 @@ import { VisitsTable } from './visits-table';
 import { VisitsToolbar } from './visits-toolbar';
 
 const PAGE_SIZE = 10;
-const VALID_CATEGORIES: VisitStatusCategory[] = ['WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+const VALID_CATEGORIES: VisitStatusCategory[] = [
+  'WAITING',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'CANCELLED',
+];
 
 export function VisitsPageImpl() {
   const [search, setSearch] = useQueryState('q', { defaultValue: '' });

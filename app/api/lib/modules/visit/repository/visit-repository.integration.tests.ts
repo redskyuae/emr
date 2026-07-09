@@ -30,7 +30,13 @@ async function createDoctorFixture(tenantId: string, userId: string) {
   await createUser(userId, 'Anita Mehta');
   const [role] = await db
     .insert(roleTable)
-    .values({ name: 'Doctor', code: 'DOCTOR', tenantId, isSystem: true, description: 'Doctor role' })
+    .values({
+      name: 'Doctor',
+      code: 'DOCTOR',
+      tenantId,
+      isSystem: true,
+      description: 'Doctor role',
+    })
     .returning({ id: roleTable.id });
   const [specialty] = await db
     .insert(specialtyTable)
