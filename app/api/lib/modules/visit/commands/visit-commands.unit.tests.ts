@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OpenVisitConflictError } from '../errors/open-visit-conflict-error';
+import { VisitStatusConflictError } from '../errors/visit-status-conflict-error';
 import { visitRepository } from '../repository/visit-repository';
 import { validateCreateVisit } from '../validator/create-visit-validator';
 import { validateUpdateVisit } from '../validator/update-visit-validator';
@@ -86,11 +87,17 @@ describe('Visit commands', () => {
       success: true,
       data: { id: 100, payload: { appointmentTypeId: 3 } },
     });
-    validateStart.mockResolvedValue({ success: true, data: { id: 100, statusId: 11 } });
-    validateComplete.mockResolvedValue({ success: true, data: { id: 100, statusId: 12 } });
+    validateStart.mockResolvedValue({
+      success: true,
+      data: { id: 100, statusId: 11, expectedStatusId: 10 },
+    });
+    validateComplete.mockResolvedValue({
+      success: true,
+      data: { id: 100, statusId: 12, expectedStatusId: 11 },
+    });
     validateCancel.mockResolvedValue({
       success: true,
-      data: { id: 100, statusId: 13, cancelledReason: 'Left' },
+      data: { id: 100, statusId: 13, cancelledReason: 'Left', expectedStatusId: 10 },
     });
     validateDelete.mockResolvedValue({ success: true, data: { id: 100, tenantId: 'tenant-1' } });
     repo.createVisit.mockResolvedValue(visit);
@@ -156,6 +163,7 @@ describe('Visit commands', () => {
     await startVisitCommand('100', {}, 'tenant-1');
     expect(repo.updateVisitStatusTransition).toHaveBeenCalledWith(100, 'tenant-1', {
       statusId: 11,
+      expectedStatusId: 10,
       timestampField: 'startedOn',
     });
   });
@@ -171,10 +179,21 @@ describe('Visit commands', () => {
     expect(repo.updateVisitStatusTransition).not.toHaveBeenCalled();
   });
 
+  it('should map a concurrent status change to a clean conflict error on start', async () => {
+    repo.updateVisitStatusTransition.mockRejectedValue(new VisitStatusConflictError());
+    const result = await startVisitCommand('100', {}, 'tenant-1');
+    expect(result).toEqual({
+      success: false,
+      errors: ['Visit status changed since it was loaded. Reload and try again.'],
+      status: StatusCodes.CONFLICT,
+    });
+  });
+
   it('should call updateVisitStatusTransition with completedOn on complete', async () => {
     await completeVisitCommand('100', {}, 'tenant-1');
     expect(repo.updateVisitStatusTransition).toHaveBeenCalledWith(100, 'tenant-1', {
       statusId: 12,
+      expectedStatusId: 11,
       timestampField: 'completedOn',
     });
   });
@@ -183,6 +202,7 @@ describe('Visit commands', () => {
     await cancelVisitCommand('100', { cancelledReason: 'Left' }, 'tenant-1');
     expect(repo.updateVisitStatusTransition).toHaveBeenCalledWith(100, 'tenant-1', {
       statusId: 13,
+      expectedStatusId: 10,
       timestampField: 'cancelledOn',
       cancelledReason: 'Left',
     });

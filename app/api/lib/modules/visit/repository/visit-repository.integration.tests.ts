@@ -230,6 +230,7 @@ describe('Visit repository', () => {
 
     await visitRepository.updateVisitStatusTransition(created.id, tenantA, {
       statusId: completed.id,
+      expectedStatusId: waiting.id,
       timestampField: 'completedOn',
     });
 
@@ -286,6 +287,7 @@ describe('Visit repository', () => {
 
     const started = await visitRepository.updateVisitStatusTransition(created.id, tenantA, {
       statusId: inProgress.id,
+      expectedStatusId: waiting.id,
       timestampField: 'startedOn',
     });
     expect(started?.startedOn).not.toBeNull();
@@ -293,12 +295,56 @@ describe('Visit repository', () => {
 
     const cancelledVisit = await visitRepository.updateVisitStatusTransition(created.id, tenantA, {
       statusId: cancelled.id,
+      expectedStatusId: inProgress.id,
       timestampField: 'cancelledOn',
       cancelledReason: 'Patient left',
     });
     expect(cancelledVisit?.cancelledOn).not.toBeNull();
     expect(cancelledVisit?.cancelledReason).toBe('Patient left');
     expect(cancelledVisit?.status.category).toBe('CANCELLED');
+  });
+
+  it('should reject a transition whose expected status no longer matches (concurrent transition)', async () => {
+    await createTenant(tenantA);
+    const patient = await createPatient(tenantA);
+    const appointmentType = await createAppointmentType(tenantA);
+    const waiting = await createVisitStatus(tenantA, 'WAITING', 'WAIT');
+    const inProgress = await createVisitStatus(tenantA, 'IN_PROGRESS', 'INPROG');
+    const completed = await createVisitStatus(tenantA, 'COMPLETED', 'DONE');
+    const cancelled = await createVisitStatus(tenantA, 'CANCELLED', 'CANC');
+
+    const created = await visitRepository.createVisit({
+      tenantId: tenantA,
+      patientId: patient.id,
+      appointmentTypeId: appointmentType.id,
+      statusId: waiting.id,
+    });
+
+    // Simulate a concurrent completion that already moved the visit past IN_PROGRESS.
+    await visitRepository.updateVisitStatusTransition(created.id, tenantA, {
+      statusId: inProgress.id,
+      expectedStatusId: waiting.id,
+      timestampField: 'startedOn',
+    });
+    await visitRepository.updateVisitStatusTransition(created.id, tenantA, {
+      statusId: completed.id,
+      expectedStatusId: inProgress.id,
+      timestampField: 'completedOn',
+    });
+
+    // A cancel request that read the visit while it was still IN_PROGRESS now races in late.
+    await expect(
+      visitRepository.updateVisitStatusTransition(created.id, tenantA, {
+        statusId: cancelled.id,
+        expectedStatusId: inProgress.id,
+        timestampField: 'cancelledOn',
+        cancelledReason: 'Patient left',
+      })
+    ).rejects.toThrow('Visit status changed since it was loaded');
+
+    const finalVisit = await visitRepository.getVisitById(created.id, tenantA);
+    expect(finalVisit?.status.category).toBe('COMPLETED');
+    expect(finalVisit?.cancelledOn).toBeNull();
   });
 
   it('should report status usage for isStatusInUse', async () => {

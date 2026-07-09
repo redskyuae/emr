@@ -13,6 +13,7 @@ import {
 import { visitStatus as visitStatusTable } from '@/app/db/schema/visit-status';
 import type { VisitStatusCategory } from '../../visit-status/schemas/visit-status-schema';
 import { OpenVisitConflictError } from '../errors/open-visit-conflict-error';
+import { VisitStatusConflictError } from '../errors/visit-status-conflict-error';
 import type {
   Visit,
   CreateVisitData,
@@ -268,6 +269,7 @@ async function updateVisit(id: number, data: UpdateVisitData): Promise<Visit | u
 
 type VisitTransition = {
   statusId: number;
+  expectedStatusId: number;
   timestampField: 'startedOn' | 'completedOn' | 'cancelledOn';
   cancelledReason?: string;
 };
@@ -297,11 +299,30 @@ async function updateVisitStatusTransition(
       ...timestampUpdate,
     })
     .where(
-      and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false))
+      and(
+        eq(visitTable.id, id),
+        eq(visitTable.tenantId, tenantId),
+        eq(visitTable.isDeleted, false),
+        // Guards against a second transition (e.g. cancel) racing a first (e.g.
+        // complete) on the same Visit: only the request that observed the current
+        // status wins the write, closing the window that could otherwise mix a
+        // terminal statusId with the other transition's timestamp/reason.
+        eq(visitTable.statusId, transition.expectedStatusId)
+      )
     )
     .returning({ id: visitTable.id });
 
-  return updated ? getVisitById(updated.id, tenantId) : undefined;
+  if (updated) {
+    return getVisitById(updated.id, tenantId);
+  }
+
+  const stillExists = await getVisitById(id, tenantId);
+
+  if (stillExists) {
+    throw new VisitStatusConflictError();
+  }
+
+  return undefined;
 }
 
 async function deleteVisit(id: number, tenantId: string): Promise<Visit | undefined> {

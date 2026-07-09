@@ -6,7 +6,7 @@ import { completeVisitSchema } from '../schemas/visit-schema';
 import { validateVisitExists } from './visit-existence-validator';
 import { resolveVisitTargetStatus } from './resolve-visit-target-status';
 
-export type CompleteVisitParams = { id: number; statusId: number };
+export type CompleteVisitParams = { id: number; statusId: number; expectedStatusId: number };
 
 export async function validateCompleteVisit(
   id: unknown,
@@ -48,5 +48,8 @@ export async function validateCompleteVisit(
     return { success: false, errors: statusResult.errors, status: statusResult.status };
   }
 
-  return { success: true, data: { id: visit.id, statusId: statusResult.data } };
+  return {
+    success: true,
+    data: { id: visit.id, statusId: statusResult.data, expectedStatusId: visit.statusId },
+  };
 }

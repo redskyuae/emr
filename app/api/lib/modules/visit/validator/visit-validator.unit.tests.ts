@@ -392,7 +392,7 @@ describe('Visit validators', () => {
       visitStatusRepo.getSystemVisitStatusByCategory.mockResolvedValue(inProgressStatus);
       await expect(validateStartVisit('100', {}, 'tenant-1')).resolves.toEqual({
         success: true,
-        data: { id: 100, statusId: inProgressStatus.id },
+        data: { id: 100, statusId: inProgressStatus.id, expectedStatusId: waitingStatus.id },
       });
     });
   });
@@ -408,11 +408,15 @@ describe('Visit validators', () => {
     });
 
     it('should resolve the completed status and succeed', async () => {
-      visitRepo.getVisitById.mockResolvedValue({ ...visit, status: inProgressStatus });
+      visitRepo.getVisitById.mockResolvedValue({
+        ...visit,
+        statusId: inProgressStatus.id,
+        status: inProgressStatus,
+      });
       visitStatusRepo.getSystemVisitStatusByCategory.mockResolvedValue(completedStatus);
       await expect(validateCompleteVisit('100', {}, 'tenant-1')).resolves.toEqual({
         success: true,
-        data: { id: 100, statusId: completedStatus.id },
+        data: { id: 100, statusId: completedStatus.id, expectedStatusId: inProgressStatus.id },
       });
     });
   });
@@ -439,7 +443,12 @@ describe('Visit validators', () => {
         validateCancelVisit('100', { cancelledReason: 'Patient left' }, 'tenant-1')
       ).resolves.toEqual({
         success: true,
-        data: { id: 100, statusId: cancelledStatus.id, cancelledReason: 'Patient left' },
+        data: {
+          id: 100,
+          statusId: cancelledStatus.id,
+          cancelledReason: 'Patient left',
+          expectedStatusId: waitingStatus.id,
+        },
       });
     });
   });

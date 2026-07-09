@@ -6,7 +6,12 @@ import { cancelVisitSchema } from '../schemas/visit-schema';
 import { validateVisitExists } from './visit-existence-validator';
 import { resolveVisitTargetStatus } from './resolve-visit-target-status';
 
-export type CancelVisitParams = { id: number; statusId: number; cancelledReason: string };
+export type CancelVisitParams = {
+  id: number;
+  statusId: number;
+  cancelledReason: string;
+  expectedStatusId: number;
+};
 
 export async function validateCancelVisit(
   id: unknown,
@@ -54,6 +59,7 @@ export async function validateCancelVisit(
       id: visit.id,
       statusId: statusResult.data,
       cancelledReason: payloadResult.data.cancelledReason,
+      expectedStatusId: visit.statusId,
     },
   };
 }
