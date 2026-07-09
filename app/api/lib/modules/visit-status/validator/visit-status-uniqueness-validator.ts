@@ -1,5 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
+import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { visitStatusRepository } from '../repository/visit-status-repository';
 
 const VISIT_STATUS_NAME_EXISTS = "Visit status name '{value}' already exists.";
@@ -48,21 +49,17 @@ export function getVisitStatusUniqueConstraintErrors(
   error: unknown,
   input: Pick<VisitStatusUniquenessInput, 'name' | 'code'>
 ): string[] {
-  if (typeof error !== 'object' || error === null) {
+  const dbError = getDatabaseError(error);
+
+  if (dbError?.code !== '23505') {
     return [];
   }
 
-  const err = error as Record<string, unknown>;
-
-  if (err.code !== '23505') {
-    return [];
-  }
-
-  if (err.constraint === 'visit_status_tenant_name_idx') {
+  if (dbError.constraint === 'visit_status_tenant_name_idx') {
     return [duplicateError(VISIT_STATUS_NAME_EXISTS, input.name)];
   }
 
-  if (err.constraint === 'visit_status_tenant_code_idx') {
+  if (dbError.constraint === 'visit_status_tenant_code_idx') {
     return [duplicateError(VISIT_STATUS_CODE_EXISTS, input.code)];
   }
 

@@ -4342,7 +4342,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'List Visits',
         description:
-          'Returns a newest-first paginated list of non-deleted Visits for the active Tenant. The tenantId is resolved from the active authenticated Session. Rows embed live Patient, Doctor, Appointment Type, Appointment Reason, and Visit Status values.',
+          'Returns a paginated list of non-deleted Visits for the active Tenant, ordered by check-in time newest-first by default (pass sortOrder=asc for oldest-first queue ordering). The tenantId is resolved from the active authenticated Session. Rows embed live Patient, Doctor, Appointment Type, Appointment Reason, and Visit Status values.',
         security: [{ cookieAuth: [] }],
         parameters: [
           parameterRef('Page'),
@@ -4352,6 +4352,7 @@ export const openApiDocument = {
           parameterRef('VisitStatusCategory'),
           parameterRef('VisitDoctorId'),
           parameterRef('VisitPatientId'),
+          parameterRef('VisitSortOrder'),
         ],
         responses: {
           '200': {
@@ -4636,6 +4637,14 @@ export const openApiDocument = {
         required: false,
         description: 'Filters Visits by Patient identifier in the active Tenant.',
         schema: { type: 'integer', minimum: 1 },
+      },
+      VisitSortOrder: {
+        name: 'sortOrder',
+        in: 'query',
+        required: false,
+        description:
+          'Orders Visits by check-in time. Defaults to newest-first (desc); pass asc for oldest-first queue ordering.',
+        schema: { type: 'string', enum: ['asc', 'desc'], default: 'desc' },
       },
     },
     schemas: {

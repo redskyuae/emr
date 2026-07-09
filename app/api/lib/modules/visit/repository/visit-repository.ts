@@ -353,6 +353,7 @@ async function getVisits({
   statusCategory,
   doctorId,
   patientId,
+  sortOrder = 'desc',
 }: VisitListParams): Promise<{ data: Visit[]; total: number }> {
   const offset = (page - 1) * limit;
   const trimmedQuery = query?.trim();
@@ -377,7 +378,10 @@ async function getVisits({
   const [data, [{ total }]] = await Promise.all([
     visitJoins()
       .where(whereClause)
-      .orderBy(desc(visitTable.createdOn), asc(visitTable.id))
+      .orderBy(
+        sortOrder === 'asc' ? asc(visitTable.createdOn) : desc(visitTable.createdOn),
+        asc(visitTable.id)
+      )
       .limit(limit)
       .offset(offset),
     db

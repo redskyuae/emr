@@ -118,6 +118,9 @@ export const visitListParamsSchema = z
       .int('Patient ID must be an integer')
       .positive('Patient ID must be positive')
       .optional(),
+    sortOrder: z
+      .enum(['asc', 'desc'], { error: 'Visit sort order is invalid' })
+      .optional(),
   })
   .strict();
 

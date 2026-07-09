@@ -13,6 +13,10 @@ function parseVisitStatusCategory(value: string | null): VisitStatusCategory | u
   return VISIT_STATUS_CATEGORIES.find((category) => category === value);
 }
 
+function parseSortOrder(value: string | null): 'asc' | 'desc' | undefined {
+  return value === 'asc' || value === 'desc' ? value : undefined;
+}
+
 function parseOptionalPositiveInteger(value: string | null) {
   if (!value) {
     return undefined;
@@ -53,6 +57,7 @@ export async function GET(request: NextRequest) {
       statusCategory: parseVisitStatusCategory(request.nextUrl.searchParams.get('statusCategory')),
       doctorId: parseOptionalPositiveInteger(request.nextUrl.searchParams.get('doctorId')),
       patientId: parseOptionalPositiveInteger(request.nextUrl.searchParams.get('patientId')),
+      sortOrder: parseSortOrder(request.nextUrl.searchParams.get('sortOrder')),
     });
 
     if (!result.success) {

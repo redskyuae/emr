@@ -92,6 +92,18 @@ describe('VisitStatus commands', () => {
     });
   });
 
+  it('should map a Drizzle-wrapped Postgres 23505 error on create to conflict error', async () => {
+    repo.createVisitStatus.mockRejectedValue({
+      message: 'duplicate key value violates unique constraint',
+      cause: { code: '23505', constraint: 'visit_status_tenant_code_idx' },
+    });
+    await expect(createVisitStatusCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ["Visit status code 'WAIT' already exists."],
+    });
+  });
+
   it('should rethrow unknown repository errors on create', async () => {
     const error = new Error('database down');
     repo.createVisitStatus.mockRejectedValue(error);

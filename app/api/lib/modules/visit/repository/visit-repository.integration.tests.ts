@@ -443,6 +443,34 @@ describe('Visit repository', () => {
     expect(result.data).toHaveLength(1);
   });
 
+  it('should order by check-in time ascending or descending per sortOrder', async () => {
+    await createTenant(tenantA);
+    const appointmentType = await createAppointmentType(tenantA);
+    const status = await createVisitStatus(tenantA, 'WAITING', 'WAIT');
+
+    const created: number[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      const patient = await createPatient(tenantA);
+      const visit = await visitRepository.createVisit({
+        tenantId: tenantA,
+        patientId: patient.id,
+        appointmentTypeId: appointmentType.id,
+        statusId: status.id,
+      });
+      created.push(visit.id);
+    }
+
+    const oldestFirst = await visitRepository.getVisits({
+      tenantId: tenantA,
+      limit: 50,
+      sortOrder: 'asc',
+    });
+    expect(oldestFirst.data.map((v) => v.id)).toEqual(created);
+
+    const newestFirst = await visitRepository.getVisits({ tenantId: tenantA, limit: 50 });
+    expect(newestFirst.data.map((v) => v.id)).toEqual([...created].reverse());
+  });
+
   it('should enforce a full unique index on visit number, including soft-deleted rows', async () => {
     await createTenant(tenantA);
     const patient = await createPatient(tenantA);

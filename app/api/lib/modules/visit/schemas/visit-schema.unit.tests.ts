@@ -102,4 +102,13 @@ describe('Visit schema', () => {
       visitListParamsSchema.safeParse({ tenantId: 'tenant-1', statusCategory: 'WAITING' }).success
     ).toBe(true);
   });
+
+  it('should validate sortOrder and reject an invalid value', () => {
+    expect(
+      visitListParamsSchema.safeParse({ tenantId: 'tenant-1', sortOrder: 'asc' }).success
+    ).toBe(true);
+    expect(
+      visitListParamsSchema.safeParse({ tenantId: 'tenant-1', sortOrder: 'sideways' }).success
+    ).toBe(false);
+  });
 });

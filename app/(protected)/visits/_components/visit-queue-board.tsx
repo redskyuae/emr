@@ -160,17 +160,20 @@ export function VisitQueueBoard({ doctorId, onStart, onComplete, onCancel }: Vis
     limit: 50,
     statusCategory: 'WAITING',
     doctorId,
+    sortOrder: 'asc',
   });
   const inProgressQuery = useVisitsQuery({
     page: 1,
     limit: 50,
     statusCategory: 'IN_PROGRESS',
     doctorId,
+    sortOrder: 'asc',
   });
 
-  // The list API returns newest-first; a queue reads naturally oldest-first (FIFO).
-  const waitingVisits = [...(waitingQuery.data?.data ?? [])].reverse();
-  const inProgressVisits = [...(inProgressQuery.data?.data ?? [])].reverse();
+  // A queue reads naturally oldest-first (FIFO); request that order directly so the
+  // page itself holds the oldest queued Visits instead of reversing a newest-first page.
+  const waitingVisits = waitingQuery.data?.data ?? [];
+  const inProgressVisits = inProgressQuery.data?.data ?? [];
 
   return (
     <Card className="shadow-fluent-2">

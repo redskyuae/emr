@@ -12,6 +12,7 @@ export type VisitListFilters = {
   statusCategory?: VisitStatusCategory;
   doctorId?: number;
   patientId?: number;
+  sortOrder?: 'asc' | 'desc';
 };
 
 export const visitsBaseKey = ['visits'] as const;
@@ -41,6 +42,10 @@ function buildVisitListParams(filters: VisitListFilters) {
 
   if (filters.patientId) {
     params.set('patientId', String(filters.patientId));
+  }
+
+  if (filters.sortOrder) {
+    params.set('sortOrder', filters.sortOrder);
   }
 
   return params.toString();
