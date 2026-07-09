@@ -9,6 +9,7 @@ import { validateTenantOnboarding } from '../validator/tenant-onboarding-validat
 import { onboardTenantCommand } from './onboard-tenant-command';
 import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
 import { seedDefaultSpecialtiesCommand } from './seed-default-specialties-command';
+import { seedDefaultVisitMastersCommand } from './seed-default-visit-masters-command';
 import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
 
@@ -35,6 +36,7 @@ vi.mock('../../tenant/repository/tenant-repository', () => ({
 vi.mock('../repository/tenant-provisioning-repository', () => ({
   tenantProvisioningRepository: {
     hasSeededSpecialties: vi.fn(),
+    hasSeededVisitMasters: vi.fn(),
     hasSeededAssetMasters: vi.fn(),
     hasSeededWorkOrderMasters: vi.fn(),
     hasSeededAppointmentMasters: vi.fn(),
@@ -53,6 +55,10 @@ vi.mock('./seed-default-specialties-command', () => ({
   seedDefaultSpecialtiesCommand: vi.fn(),
 }));
 
+vi.mock('./seed-default-visit-masters-command', () => ({
+  seedDefaultVisitMastersCommand: vi.fn(),
+}));
+
 vi.mock('./seed-default-work-order-masters-command', () => ({
   seedDefaultWorkOrderMastersCommand: vi.fn(),
 }));
@@ -65,6 +71,7 @@ const provisioningRepo = vi.mocked(tenantProvisioningRepository);
 const seedAppointmentMasters = vi.mocked(seedDefaultAppointmentMastersCommand);
 const seedAssetMasters = vi.mocked(seedDefaultAssetMastersCommand);
 const seedSpecialties = vi.mocked(seedDefaultSpecialtiesCommand);
+const seedVisitMasters = vi.mocked(seedDefaultVisitMastersCommand);
 const seedWorkOrderMasters = vi.mocked(seedDefaultWorkOrderMastersCommand);
 
 const tenant = {
@@ -86,12 +93,14 @@ describe('OnboardTenant command', () => {
     permissionRepo.seedPermissionCatalogue.mockResolvedValue(undefined);
     seedSystemRoles.mockResolvedValue({ success: true, data: [] });
     provisioningRepo.hasSeededSpecialties.mockResolvedValue(false);
+    provisioningRepo.hasSeededVisitMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededAssetMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededWorkOrderMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededAppointmentMasters.mockResolvedValue(false);
     seedAppointmentMasters.mockResolvedValue({ success: true, data: undefined });
     seedAssetMasters.mockResolvedValue({ success: true, data: undefined });
     seedSpecialties.mockResolvedValue({ success: true, data: undefined });
+    seedVisitMasters.mockResolvedValue({ success: true, data: undefined });
     seedWorkOrderMasters.mockResolvedValue({ success: true, data: undefined });
     tenantRepo.markTenantOnboarded.mockResolvedValue(onboardedTenant);
   });
@@ -115,6 +124,7 @@ describe('OnboardTenant command', () => {
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
+    expect(seedVisitMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();
     expect(tenantRepo.markTenantOnboarded).not.toHaveBeenCalled();
   });
@@ -130,6 +140,7 @@ describe('OnboardTenant command', () => {
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
+    expect(seedVisitMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();
     expect(tenantRepo.markTenantOnboarded).not.toHaveBeenCalled();
   });
@@ -141,6 +152,7 @@ describe('OnboardTenant command', () => {
     expect(permissionRepo.seedPermissionCatalogue).toHaveBeenCalledTimes(1);
     expect(seedSystemRoles).toHaveBeenCalledWith('org-1');
     expect(seedSpecialties).toHaveBeenCalledWith('org-1');
+    expect(seedVisitMasters).toHaveBeenCalledWith('org-1');
     expect(seedAppointmentMasters).toHaveBeenCalledWith('org-1');
     expect(seedAssetMasters).toHaveBeenCalledWith('org-1');
     expect(seedWorkOrderMasters).toHaveBeenCalledWith('org-1');
@@ -161,6 +173,7 @@ describe('OnboardTenant command', () => {
     expect(permissionRepo.seedPermissionCatalogue).toHaveBeenCalledTimes(1);
     expect(seedSystemRoles).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
+    expect(seedVisitMasters).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();
@@ -175,6 +188,7 @@ describe('OnboardTenant command', () => {
 
     expect(result).toEqual({ success: true, data: onboardedTenant });
     expect(seedSpecialties).toHaveBeenCalledWith('org-1');
+    expect(seedVisitMasters).toHaveBeenCalledWith('org-1');
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).toHaveBeenCalledWith('org-1');
@@ -191,6 +205,7 @@ describe('OnboardTenant command', () => {
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
+    expect(seedVisitMasters).toHaveBeenCalledWith('org-1');
     expect(seedWorkOrderMasters).toHaveBeenCalledWith('org-1');
     expect(tenantRepo.markTenantOnboarded).toHaveBeenCalledWith('org-1');
   });
@@ -220,6 +235,7 @@ describe('OnboardTenant command', () => {
       status: StatusCodes.INTERNAL_SERVER_ERROR,
     });
     expect(seedSpecialties).not.toHaveBeenCalled();
+    expect(seedVisitMasters).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();
@@ -239,6 +255,7 @@ describe('OnboardTenant command', () => {
       errors: ['Specialty seeding failed'],
       status: StatusCodes.INTERNAL_SERVER_ERROR,
     });
+    expect(seedVisitMasters).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();

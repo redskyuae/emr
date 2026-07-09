@@ -151,6 +151,11 @@ const requestBody = (schemaName: string, example: unknown) => ({
   content: jsonContent(schemaRef(schemaName), example),
 });
 
+const optionalRequestBody = (schemaName: string, example: unknown) => ({
+  required: false,
+  content: jsonContent(schemaRef(schemaName), example),
+});
+
 const collectionOperations = ({
   tag,
   entity,
@@ -1335,6 +1340,473 @@ const workOrderConflict = {
   },
 };
 
+const visitStatusExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'Waiting',
+  code: 'WAIT',
+  category: 'WAITING',
+  color: '#6B7280',
+  description: null,
+  isSystem: true,
+  createdOn: '2026-07-08T04:00:00.000Z',
+  modifiedOn: '2026-07-08T04:00:00.000Z',
+};
+
+const visitStatusRequestExample = {
+  name: 'In Progress',
+  code: 'inprog',
+  category: 'IN_PROGRESS',
+  color: '#2563EB',
+  description: 'Visit is actively being seen by a Doctor',
+};
+
+const visitStatusValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Visit status color must be a hex value like #16A34A.'],
+    }
+  ),
+};
+
+const visitStatusNotFound = {
+  description: 'Visit Status was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Visit status not found',
+    errors: ['Visit status not found'],
+  }),
+};
+
+const visitStatusConflict = {
+  description:
+    'Visit Status name/code conflicts with an active status, the mutation targets protected System Visit Status state, or a non-deleted Visit prevents category change/deletion.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateName: {
+          summary: 'Duplicate status name',
+          value: {
+            message: "Visit status name 'Waiting' already exists.",
+            errors: ["Visit status name 'Waiting' already exists."],
+          },
+        },
+        duplicateCode: {
+          summary: 'Duplicate status code',
+          value: {
+            message: "Visit status code 'WAIT' already exists.",
+            errors: ["Visit status code 'WAIT' already exists."],
+          },
+        },
+        immutableSystemCode: {
+          summary: 'System status code is immutable',
+          value: {
+            message: 'System visit status code cannot be changed.',
+            errors: ['System visit status code cannot be changed.'],
+          },
+        },
+        immutableSystemCategory: {
+          summary: 'System status category is immutable',
+          value: {
+            message: 'System visit status category cannot be changed.',
+            errors: ['System visit status category cannot be changed.'],
+          },
+        },
+        protectedSystemStatus: {
+          summary: 'System status cannot be deleted',
+          value: {
+            message: 'System visit status cannot be deleted.',
+            errors: ['System visit status cannot be deleted.'],
+          },
+        },
+        inUseCategory: {
+          summary: 'In-use status category cannot change',
+          value: {
+            message: 'Visit status category cannot be changed while the status is in use.',
+            errors: ['Visit status category cannot be changed while the status is in use.'],
+          },
+        },
+        inUseDelete: {
+          summary: 'In-use status cannot be deleted',
+          value: {
+            message: 'Visit status cannot be deleted while it is in use.',
+            errors: ['Visit status cannot be deleted while it is in use.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const visitStatusErrorResponses = {
+  '400': visitStatusValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': visitStatusNotFound,
+  '409': visitStatusConflict,
+  '500': responseRef('InternalServerError'),
+};
+
+const visitPatientSummaryExample = { id: 42, name: 'Asha Rao', mrn: 'MRN-1042' };
+const visitDoctorSummaryExample = { id: 7, name: 'Dr Anita Mehta' };
+const visitAppointmentTypeSummaryExample = { id: 1, name: 'Consultation', code: 'CONS' };
+const visitAppointmentReasonSummaryExample = { id: 1, name: 'Fever', code: 'FEVER' };
+const visitStatusSummaryExample = {
+  id: 1,
+  name: 'Waiting',
+  code: 'WAIT',
+  color: '#6B7280',
+  category: 'WAITING',
+};
+
+const visitExample = {
+  id: 101,
+  tenantId: 'org_apollo',
+  visitNumber: 'VST-1001',
+  patientId: 42,
+  patient: visitPatientSummaryExample,
+  doctorId: 7,
+  doctor: visitDoctorSummaryExample,
+  appointmentTypeId: 1,
+  appointmentType: visitAppointmentTypeSummaryExample,
+  appointmentReasonId: 1,
+  appointmentReason: visitAppointmentReasonSummaryExample,
+  statusId: 1,
+  status: visitStatusSummaryExample,
+  chiefComplaint: 'Fever and body ache for 2 days',
+  notes: null,
+  cancelledReason: null,
+  startedOn: null,
+  completedOn: null,
+  cancelledOn: null,
+  createdOn: '2026-07-08T09:00:00.000Z',
+  modifiedOn: '2026-07-08T09:00:00.000Z',
+};
+
+const createVisitRequestExample = {
+  patientId: 42,
+  doctorId: 7,
+  appointmentTypeId: 1,
+  appointmentReasonId: 1,
+  chiefComplaint: 'Fever and body ache for 2 days',
+  notes: 'Patient reports fatigue as well.',
+};
+
+const updateVisitRequestExample = {
+  doctorId: 7,
+  appointmentTypeId: 1,
+  appointmentReasonId: 1,
+  chiefComplaint: 'Fever and body ache for 2 days, now with mild cough',
+  notes: 'Patient reports fatigue as well.',
+};
+
+const startedVisitExample = {
+  ...visitExample,
+  statusId: 2,
+  status: {
+    id: 2,
+    name: 'In Progress',
+    code: 'INPROG',
+    color: '#2563EB',
+    category: 'IN_PROGRESS',
+  },
+  startedOn: '2026-07-08T09:15:00.000Z',
+};
+
+const startVisitRequestExample = { statusId: 2 };
+
+const completedVisitExample = {
+  ...startedVisitExample,
+  statusId: 3,
+  status: {
+    id: 3,
+    name: 'Completed',
+    code: 'COMPLETE',
+    color: '#16A34A',
+    category: 'COMPLETED',
+  },
+  completedOn: '2026-07-08T09:45:00.000Z',
+};
+
+const completeVisitRequestExample = { statusId: 3 };
+
+const cancelledVisitExample = {
+  ...visitExample,
+  statusId: 4,
+  status: {
+    id: 4,
+    name: 'Cancelled',
+    code: 'CANCEL',
+    color: '#DC2626',
+    category: 'CANCELLED',
+  },
+  cancelledReason: 'Patient requested cancellation before being seen',
+  cancelledOn: '2026-07-08T09:20:00.000Z',
+};
+
+const cancelVisitRequestExample = {
+  cancelledReason: 'Patient requested cancellation before being seen',
+};
+
+const visitValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        missingPatient: {
+          summary: 'Missing required Patient reference',
+          value: {
+            message: 'Validation failed',
+            errors: ['Visit patient ID is required'],
+          },
+        },
+        missingAppointmentType: {
+          summary: 'Missing required Appointment Type reference',
+          value: {
+            message: 'Validation failed',
+            errors: ['Visit appointment type ID is required'],
+          },
+        },
+        invalidId: {
+          summary: 'Invalid Visit identifier',
+          value: {
+            message: 'Validation failed',
+            errors: ['Visit abc is Invalid.'],
+          },
+        },
+        invalidJson: {
+          summary: 'Malformed JSON request body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+};
+
+const visitCancelValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        missingCancelledReason: {
+          summary: 'Missing cancelled reason',
+          value: {
+            message: 'Validation failed',
+            errors: ['Visit cancelled reason is required'],
+          },
+        },
+        invalidJson: {
+          summary: 'Malformed JSON request body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+};
+
+const visitNotFound = {
+  description: 'Visit was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Visit not found',
+    errors: ['Visit not found'],
+  }),
+};
+
+const visitCreateConflict = {
+  description:
+    'A referenced Patient, Doctor, Appointment Type, or Appointment Reason is invalid or inactive in the active Tenant, or the Patient already has an Open Visit.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        invalidPatient: {
+          summary: 'Invalid Patient reference',
+          value: {
+            message: 'Visit patient 1 is Invalid.',
+            errors: ['Visit patient 1 is Invalid.'],
+          },
+        },
+        inactivePatient: {
+          summary: 'Inactive Patient reference',
+          value: {
+            message: 'Visit patient is Inactive and cannot be selected for a new Visit.',
+            errors: ['Visit patient is Inactive and cannot be selected for a new Visit.'],
+          },
+        },
+        invalidDoctor: {
+          summary: 'Invalid Doctor reference',
+          value: {
+            message: 'Visit doctor 2 is Invalid.',
+            errors: ['Visit doctor 2 is Invalid.'],
+          },
+        },
+        inactiveDoctor: {
+          summary: 'Inactive Doctor reference',
+          value: {
+            message: 'Visit doctor is Inactive and cannot be assigned to a Visit.',
+            errors: ['Visit doctor is Inactive and cannot be assigned to a Visit.'],
+          },
+        },
+        invalidAppointmentType: {
+          summary: 'Invalid Appointment Type reference',
+          value: {
+            message: 'Visit appointment type 3 is Invalid.',
+            errors: ['Visit appointment type 3 is Invalid.'],
+          },
+        },
+        invalidAppointmentReason: {
+          summary: 'Invalid Appointment Reason reference',
+          value: {
+            message: 'Visit appointment reason 4 is Invalid.',
+            errors: ['Visit appointment reason 4 is Invalid.'],
+          },
+        },
+        openVisitExists: {
+          summary: 'Patient already has an Open Visit',
+          value: {
+            message:
+              'Patient already has an Open Visit (VST-1001). Complete or cancel it before starting a new Visit.',
+            errors: [
+              'Patient already has an Open Visit (VST-1001). Complete or cancel it before starting a new Visit.',
+            ],
+          },
+        },
+      },
+    },
+  },
+};
+
+const visitUpdateConflict = {
+  description:
+    'A referenced Doctor, Appointment Type, or Appointment Reason is invalid or inactive in the active Tenant, or the Visit is no longer open for editing.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        invalidDoctor: {
+          summary: 'Invalid Doctor reference',
+          value: {
+            message: 'Visit doctor 2 is Invalid.',
+            errors: ['Visit doctor 2 is Invalid.'],
+          },
+        },
+        invalidAppointmentType: {
+          summary: 'Invalid Appointment Type reference',
+          value: {
+            message: 'Visit appointment type 3 is Invalid.',
+            errors: ['Visit appointment type 3 is Invalid.'],
+          },
+        },
+        noLongerEditable: {
+          summary: 'Visit is Completed or Cancelled',
+          value: {
+            message: 'Visit can no longer be edited once it is Completed or Cancelled.',
+            errors: ['Visit can no longer be edited once it is Completed or Cancelled.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const startVisitConflict = {
+  description: 'The Visit is not Waiting, or the Visit has no Doctor assigned.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        notWaiting: {
+          summary: 'Visit is not Waiting',
+          value: {
+            message: 'Only a Visit that is Waiting can be started.',
+            errors: ['Only a Visit that is Waiting can be started.'],
+          },
+        },
+        noDoctorAssigned: {
+          summary: 'Visit has no Doctor assigned',
+          value: {
+            message: 'Visit must have a Doctor assigned before it can be started.',
+            errors: ['Visit must have a Doctor assigned before it can be started.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const completeVisitConflict = {
+  description: 'The Visit is not In Progress.',
+  content: jsonContent(schemaRef('ConflictError'), {
+    message: 'Only a Visit that is In Progress can be completed.',
+    errors: ['Only a Visit that is In Progress can be completed.'],
+  }),
+};
+
+const cancelVisitConflict = {
+  description: 'The Visit is not Waiting or In Progress.',
+  content: jsonContent(schemaRef('ConflictError'), {
+    message: 'Only a Visit that is Waiting or In Progress can be cancelled.',
+    errors: ['Only a Visit that is Waiting or In Progress can be cancelled.'],
+  }),
+};
+
+const visitReadErrorResponses = {
+  '400': visitValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': visitNotFound,
+  '500': responseRef('InternalServerError'),
+};
+
+const visitCreateErrorResponses = {
+  '400': visitValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '409': visitCreateConflict,
+  '500': responseRef('InternalServerError'),
+};
+
+const visitUpdateErrorResponses = {
+  '400': visitValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': visitNotFound,
+  '409': visitUpdateConflict,
+  '500': responseRef('InternalServerError'),
+};
+
+const startVisitErrorResponses = {
+  '400': visitValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': visitNotFound,
+  '409': startVisitConflict,
+  '500': responseRef('InternalServerError'),
+};
+
+const completeVisitErrorResponses = {
+  '400': visitValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': visitNotFound,
+  '409': completeVisitConflict,
+  '500': responseRef('InternalServerError'),
+};
+
+const cancelVisitErrorResponses = {
+  '400': visitCancelValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': visitNotFound,
+  '409': cancelVisitConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 export const openApiDocument = {
   openapi: '3.1.0',
   info: {
@@ -1394,6 +1866,8 @@ export const openApiDocument = {
     { name: 'Work Order', description: 'Maintenance Work Order APIs.' },
     { name: 'Asset', description: 'Asset inventory APIs.' },
     { name: 'Patient', description: 'Patient Registration and management APIs.' },
+    { name: 'Visit Status', description: 'Visit Status Master APIs.' },
+    { name: 'Visit', description: 'Patient Visit lifecycle APIs.' },
   ],
   paths: {
     '/api/v1/signin': {
@@ -3755,6 +4229,258 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/visits/statuses': {
+      get: {
+        tags: ['Visit Status'],
+        summary: 'List Visit Status Masters',
+        description:
+          'Returns an alphabetically sorted, paginated list of active Visit Status Masters for the active Tenant. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Visit Status Master list.',
+            content: jsonContent(paginatedSchema('VisitStatus'), {
+              data: [
+                visitStatusExample,
+                {
+                  ...visitStatusExample,
+                  id: 2,
+                  name: 'In Progress',
+                  code: 'INPROG',
+                  category: 'IN_PROGRESS',
+                  color: '#2563EB',
+                },
+              ],
+              meta: { total: 2, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': visitStatusValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Visit Status'],
+        summary: 'Create Visit Status',
+        description:
+          'Creates a tenant-defined Visit Status in the active Tenant. The tenantId is resolved from the active authenticated Session, request code is normalized to uppercase, and isSystem is always controlled by the server.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateVisitStatusRequest', visitStatusRequestExample),
+        responses: {
+          '201': {
+            description: 'Visit Status created.',
+            content: jsonContent(dataEnvelopeSchema('VisitStatus'), {
+              data: {
+                ...visitStatusExample,
+                id: 5,
+                name: 'In Progress',
+                code: 'INPROG',
+                category: 'IN_PROGRESS',
+                color: '#2563EB',
+                description: 'Visit is actively being seen by a Doctor',
+                isSystem: false,
+              },
+            }),
+          },
+          ...visitStatusErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits/statuses/{id}': {
+      get: {
+        tags: ['Visit Status'],
+        summary: 'Get Visit Status',
+        description:
+          'Returns one active Visit Status Master by ID from the active Tenant. Visit Statuses from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit Status')],
+        responses: {
+          '200': {
+            description: 'Visit Status found.',
+            content: jsonContent(dataEnvelopeSchema('VisitStatus'), {
+              data: visitStatusExample,
+            }),
+          },
+          ...visitStatusErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Visit Status'],
+        summary: 'Update Visit Status',
+        description:
+          'Updates one active Visit Status Master in the active Tenant. System Visit Status names, colors, and descriptions may be customized, but their codes and categories are immutable. A tenant-created Status category cannot change while any non-deleted Visit references it. Request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit Status')],
+        requestBody: requestBody('UpdateVisitStatusRequest', visitStatusRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit Status updated.',
+            content: jsonContent(dataEnvelopeSchema('VisitStatus'), {
+              data: visitStatusExample,
+            }),
+          },
+          ...visitStatusErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Visit Status'],
+        summary: 'Delete Visit Status',
+        description:
+          'Soft-deletes one active tenant-defined Visit Status. System Visit Statuses and Statuses referenced by any non-deleted Visit cannot be deleted.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit Status')],
+        responses: {
+          '204': { description: 'Visit Status deleted.' },
+          ...visitStatusErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits': {
+      get: {
+        tags: ['Visit'],
+        summary: 'List Visits',
+        description:
+          'Returns a newest-first paginated list of non-deleted Visits for the active Tenant. The tenantId is resolved from the active authenticated Session. Rows embed live Patient, Doctor, Appointment Type, Appointment Reason, and Visit Status values.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          parameterRef('Page'),
+          parameterRef('Limit'),
+          parameterRef('Query'),
+          parameterRef('VisitStatusId'),
+          parameterRef('VisitStatusCategory'),
+          parameterRef('VisitDoctorId'),
+          parameterRef('VisitPatientId'),
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated Visit list.',
+            content: jsonContent(paginatedSchema('Visit'), {
+              data: [visitExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': visitValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Visit'],
+        summary: 'Check In Visit',
+        description:
+          'Checks in a Patient by creating a Visit in the active Tenant. The tenantId comes from the authenticated Session. The server atomically generates the permanent tenant-scoped Visit number and assigns the Tenant System Waiting Visit Status; client-supplied visitNumber, statusId, and tenantId fields are ignored. A Patient with an existing Open Visit (Waiting or In Progress) cannot be checked in again.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateVisitRequest', createVisitRequestExample),
+        responses: {
+          '201': {
+            description: 'Visit created with a server-generated Visit number.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: visitExample }),
+          },
+          ...visitCreateErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits/{id}': {
+      get: {
+        tags: ['Visit'],
+        summary: 'Get Visit',
+        description:
+          'Returns the joined Visit record in the active Tenant. Visits from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Visit found.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: visitExample }),
+          },
+          ...visitReadErrorResponses,
+        },
+      },
+      patch: {
+        tags: ['Visit'],
+        summary: 'Update Visit',
+        description:
+          'Updates the editable Doctor, Appointment Type, Appointment Reason, chief complaint, and notes fields of an open Visit in the active Tenant. A Visit that is Completed or Cancelled can no longer be edited.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('UpdateVisitRequest', updateVisitRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit updated.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: visitExample }),
+          },
+          ...visitUpdateErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Visit'],
+        summary: 'Delete Visit',
+        description: 'Soft-deletes one active Visit in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '204': { description: 'Visit deleted.' },
+          ...visitReadErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits/{id}/start': {
+      post: {
+        tags: ['Visit'],
+        summary: 'Start Visit',
+        description:
+          'Transitions a Waiting Visit that has a Doctor assigned to In Progress. The tenantId is resolved from the active authenticated Session. statusId is optional and defaults to the Tenant System In Progress Visit Status when omitted; a supplied statusId must reference an In Progress category Visit Status.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: optionalRequestBody('StartVisitRequest', startVisitRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit started.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: startedVisitExample }),
+          },
+          ...startVisitErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits/{id}/complete': {
+      post: {
+        tags: ['Visit'],
+        summary: 'Complete Visit',
+        description:
+          'Transitions an In Progress Visit to Completed. The tenantId is resolved from the active authenticated Session. statusId is optional and defaults to the Tenant System Completed Visit Status when omitted; a supplied statusId must reference a Completed category Visit Status.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: optionalRequestBody('CompleteVisitRequest', completeVisitRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit completed.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: completedVisitExample }),
+          },
+          ...completeVisitErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits/{id}/cancel': {
+      post: {
+        tags: ['Visit'],
+        summary: 'Cancel Visit',
+        description:
+          'Transitions a Waiting or In Progress Visit to Cancelled. The tenantId is resolved from the active authenticated Session. cancelledReason is required; statusId is optional and defaults to the Tenant System Cancelled Visit Status when omitted, and a supplied statusId must reference a Cancelled category Visit Status.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('CancelVisitRequest', cancelVisitRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit cancelled.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: cancelledVisitExample }),
+          },
+          ...cancelVisitErrorResponses,
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -3882,6 +4608,34 @@ export const openApiDocument = {
         description:
           'Filters Staff by activation state. Omit to return both active and inactive Staff.',
         schema: { type: 'string', enum: ['active', 'inactive'] },
+      },
+      VisitStatusId: {
+        name: 'statusId',
+        in: 'query',
+        required: false,
+        description: 'Filters Visits by Visit Status identifier in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      VisitStatusCategory: {
+        name: 'statusCategory',
+        in: 'query',
+        required: false,
+        description: 'Filters Visits by Visit Status Category.',
+        schema: { type: 'string', enum: ['WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] },
+      },
+      VisitDoctorId: {
+        name: 'doctorId',
+        in: 'query',
+        required: false,
+        description: 'Filters Visits by assigned Doctor identifier in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      VisitPatientId: {
+        name: 'patientId',
+        in: 'query',
+        required: false,
+        description: 'Filters Visits by Patient identifier in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
       },
     },
     schemas: {
@@ -5544,6 +6298,247 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      CreateVisitStatusRequest: {
+        type: 'object',
+        required: ['name', 'code', 'category', 'color'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty(
+            'Visit Status code. The API normalizes this value to uppercase.'
+          ),
+          category: {
+            type: 'string',
+            enum: ['WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
+            description: 'System-defined lifecycle meaning used for Visit rules and reporting.',
+          },
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Visit Status display color as a #RRGGBB hex value.',
+          },
+          description: { type: 'string', description: 'Visit Status description.' },
+        },
+      },
+      UpdateVisitStatusRequest: schemaRef('CreateVisitStatusRequest'),
+      VisitStatus: {
+        allOf: [
+          schemaRef('CreateVisitStatusRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'category',
+              'color',
+              'description',
+              'isSystem',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              isSystem: {
+                type: 'boolean',
+                readOnly: true,
+                description: 'True for a System Visit Status. Clients cannot set this field.',
+              },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      VisitPatientSummary: {
+        type: 'object',
+        required: ['id', 'name', 'mrn'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string', minLength: 1 },
+          mrn: { type: 'string', minLength: 1, description: 'Patient Medical Record Number.' },
+        },
+      },
+      VisitDoctorSummary: {
+        type: 'object',
+        required: ['id', 'name'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string', minLength: 1 },
+        },
+      },
+      VisitAppointmentTypeSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string', minLength: 1 },
+          code: { type: 'string', minLength: 1, maxLength: 10 },
+        },
+      },
+      VisitAppointmentReasonSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string', minLength: 1 },
+          code: { type: 'string', minLength: 1, maxLength: 10 },
+        },
+      },
+      VisitStatusSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code', 'color', 'category'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string', minLength: 1 },
+          code: { type: 'string', minLength: 1, maxLength: 10 },
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Visit Status display color as a #RRGGBB hex value.',
+          },
+          category: {
+            type: 'string',
+            enum: ['WAITING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
+          },
+        },
+      },
+      CreateVisitRequest: {
+        type: 'object',
+        required: ['patientId', 'appointmentTypeId'],
+        properties: {
+          patientId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Patient being checked in for this Visit.',
+          },
+          doctorId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Doctor assigned to this Visit. Must be an active Doctor when supplied.',
+          },
+          appointmentTypeId: { type: 'integer', minimum: 1 },
+          appointmentReasonId: { type: 'integer', minimum: 1 },
+          chiefComplaint: { type: 'string', maxLength: 500 },
+          notes: { type: 'string', maxLength: 2000 },
+        },
+      },
+      UpdateVisitRequest: {
+        type: 'object',
+        required: ['appointmentTypeId'],
+        properties: {
+          doctorId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Doctor assigned to this Visit. Must be an active Doctor when supplied.',
+          },
+          appointmentTypeId: { type: 'integer', minimum: 1 },
+          appointmentReasonId: { type: 'integer', minimum: 1 },
+          chiefComplaint: { type: 'string', maxLength: 500 },
+          notes: { type: 'string', maxLength: 2000 },
+        },
+      },
+      StartVisitRequest: {
+        type: 'object',
+        properties: {
+          statusId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'In Progress category Visit Status. Defaults to the Tenant System In Progress Visit Status when omitted.',
+          },
+        },
+      },
+      CompleteVisitRequest: {
+        type: 'object',
+        properties: {
+          statusId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Completed category Visit Status. Defaults to the Tenant System Completed Visit Status when omitted.',
+          },
+        },
+      },
+      CancelVisitRequest: {
+        type: 'object',
+        required: ['cancelledReason'],
+        properties: {
+          statusId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Cancelled category Visit Status. Defaults to the Tenant System Cancelled Visit Status when omitted.',
+          },
+          cancelledReason: { type: 'string', minLength: 1, maxLength: 500 },
+        },
+      },
+      Visit: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'visitNumber',
+          'patientId',
+          'patient',
+          'doctorId',
+          'doctor',
+          'appointmentTypeId',
+          'appointmentType',
+          'appointmentReasonId',
+          'appointmentReason',
+          'statusId',
+          'status',
+          'chiefComplaint',
+          'notes',
+          'cancelledReason',
+          'startedOn',
+          'completedOn',
+          'cancelledOn',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          visitNumber: {
+            type: 'string',
+            pattern: '^VST-[0-9]{4,}$',
+            readOnly: true,
+            description: 'Permanent system-generated Visit number, unique per Tenant.',
+          },
+          patientId: { type: 'integer', minimum: 1 },
+          patient: schemaRef('VisitPatientSummary'),
+          doctorId: { type: ['integer', 'null'], minimum: 1 },
+          doctor: { oneOf: [schemaRef('VisitDoctorSummary'), { type: 'null' }] },
+          appointmentTypeId: { type: 'integer', minimum: 1 },
+          appointmentType: schemaRef('VisitAppointmentTypeSummary'),
+          appointmentReasonId: { type: ['integer', 'null'], minimum: 1 },
+          appointmentReason: {
+            oneOf: [schemaRef('VisitAppointmentReasonSummary'), { type: 'null' }],
+          },
+          statusId: { type: 'integer', minimum: 1 },
+          status: schemaRef('VisitStatusSummary'),
+          chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
+          notes: { type: ['string', 'null'], maxLength: 2000 },
+          cancelledReason: { type: ['string', 'null'], maxLength: 500 },
+          startedOn: { type: ['string', 'null'], format: 'date-time', readOnly: true },
+          completedOn: { type: ['string', 'null'], format: 'date-time', readOnly: true },
+          cancelledOn: { type: ['string', 'null'], format: 'date-time', readOnly: true },
+          createdOn: { type: 'string', format: 'date-time', readOnly: true },
+          modifiedOn: { type: 'string', format: 'date-time', readOnly: true },
+        },
       },
     },
     responses: {

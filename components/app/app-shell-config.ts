@@ -76,7 +76,6 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Visits',
         href: '/visits',
         icon: ClipboardList,
-        badge: '404',
       },
     ],
   },
@@ -170,6 +169,12 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/asset-management-masters',
         icon: Tag,
         items: [{ title: 'Categories', href: '/asset-management-masters/categories' }],
+      },
+      {
+        title: 'Visit Masters',
+        href: '/visit-masters',
+        icon: ClipboardList,
+        items: [{ title: 'Visit Statuses', href: '/visit-masters/visit-statuses' }],
       },
       {
         title: 'Global References',
@@ -293,6 +298,26 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/asset-management-masters/categories': {
     title: 'Asset Categories',
     subtitle: 'Tenant-scoped classification records for Assets.',
+  },
+  '/visit-masters': {
+    title: 'Visit Masters',
+    subtitle: 'Tenant-scoped Visit configuration.',
+  },
+  '/visit-masters/visit-statuses': {
+    title: 'Visit Statuses',
+    subtitle: 'Tenant-scoped lifecycle state records for Visits.',
+  },
+  '/visits': {
+    title: 'Visits',
+    subtitle: 'Outpatient clinical encounters for this Tenant.',
+    primaryAction: {
+      label: 'New visit',
+      href: '/visits/new',
+    },
+  },
+  '/visits/new': {
+    title: 'Check in Visit',
+    subtitle: 'Start a new outpatient Visit for a Patient.',
   },
   '/global-references': {
     title: 'Global References',

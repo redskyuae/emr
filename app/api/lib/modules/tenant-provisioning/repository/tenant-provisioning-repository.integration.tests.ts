@@ -12,6 +12,7 @@ import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-con
 import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import { organization } from '@/app/db/schema/auth';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
+import { visitStatus as visitStatusTable } from '@/app/db/schema/visit-status';
 import { workOrderPriority as workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
 import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import { workOrderType as workOrderTypeTable } from '@/app/db/schema/work-order-type';
@@ -95,6 +96,47 @@ describe('TenantProvisioning repository', () => {
         .values({ tenantId: tenantB, name: 'Cardiology', code: 'CARD' });
 
       await expect(tenantProvisioningRepository.hasSeededSpecialties(tenantA)).resolves.toBe(false);
+    });
+  });
+
+  describe('hasSeededVisitMasters', () => {
+    it('should report visit masters as not seeded for a tenant with no rows', async () => {
+      await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+
+      await expect(tenantProvisioningRepository.hasSeededVisitMasters(tenantA)).resolves.toBe(
+        false
+      );
+    });
+
+    it('should report visit masters as seeded when the tenant has a row, including a soft-deleted row', async () => {
+      await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+      await db.insert(visitStatusTable).values({
+        tenantId: tenantA,
+        name: 'Waiting',
+        code: 'WAIT',
+        category: 'WAITING',
+        color: '#6B7280',
+        isDeleted: true,
+        deletedOn: new Date(),
+      });
+
+      await expect(tenantProvisioningRepository.hasSeededVisitMasters(tenantA)).resolves.toBe(true);
+    });
+
+    it("should not count another tenant's visit statuses as seeded", async () => {
+      await createTestOrganization(tenantA, 'Hospital A', 'hospital-a');
+      await createTestOrganization(tenantB, 'Hospital B', 'hospital-b');
+      await db.insert(visitStatusTable).values({
+        tenantId: tenantB,
+        name: 'Waiting',
+        code: 'WAIT',
+        category: 'WAITING',
+        color: '#6B7280',
+      });
+
+      await expect(tenantProvisioningRepository.hasSeededVisitMasters(tenantA)).resolves.toBe(
+        false
+      );
     });
   });
 

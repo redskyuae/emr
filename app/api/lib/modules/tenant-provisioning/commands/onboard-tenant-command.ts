@@ -9,6 +9,7 @@ import { tenantProvisioningRepository } from '../repository/tenant-provisioning-
 import { validateTenantOnboarding } from '../validator/tenant-onboarding-validator';
 import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
 import { seedDefaultSpecialtiesCommand } from './seed-default-specialties-command';
+import { seedDefaultVisitMastersCommand } from './seed-default-visit-masters-command';
 import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
 
@@ -17,6 +18,12 @@ const seedDefaultMastersOperations = [
     seedMasters: seedDefaultSpecialtiesCommand,
     hasSeededMasters: (tenantId: string) =>
       tenantProvisioningRepository.hasSeededSpecialties(tenantId),
+    isLegacyMasterFamily: false,
+  },
+  {
+    seedMasters: seedDefaultVisitMastersCommand,
+    hasSeededMasters: (tenantId: string) =>
+      tenantProvisioningRepository.hasSeededVisitMasters(tenantId),
     isLegacyMasterFamily: false,
   },
   {

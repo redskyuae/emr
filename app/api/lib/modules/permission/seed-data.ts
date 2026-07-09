@@ -110,6 +110,29 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'visit-management',
+    resource: 'visit',
+    actions: [
+      ['read', 'View Visits.'],
+      ['create', 'Check in Visits.'],
+      ['update', 'Update Visit details.'],
+      ['delete', 'Delete Visits.'],
+      ['start', 'Start Visits.'],
+      ['complete', 'Complete Visits.'],
+      ['cancel', 'Cancel Visits.'],
+    ],
+  },
+  {
+    module: 'visit-masters',
+    resource: 'visit-status',
+    actions: [
+      ['read', 'View Visit Statuses.'],
+      ['create', 'Create Visit Statuses.'],
+      ['update', 'Update Visit Statuses.'],
+      ['delete', 'Delete Visit Statuses.'],
+    ],
+  },
+  {
     module: 'appointment-masters',
     resource: 'appointment-mode',
     actions: [

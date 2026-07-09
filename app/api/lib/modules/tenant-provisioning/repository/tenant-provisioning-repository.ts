@@ -20,6 +20,11 @@ import {
 import { workOrderPriority as workOrderPriorityTable } from '@/app/db/schema/work-order-priority';
 import { workOrderStatus as workOrderStatusTable } from '@/app/db/schema/work-order-status';
 import { workOrderType as workOrderTypeTable } from '@/app/db/schema/work-order-type';
+import {
+  visitNumberCounter as visitNumberCounterTable,
+  visit as visitTable,
+} from '@/app/db/schema/visit';
+import { visitStatus as visitStatusTable } from '@/app/db/schema/visit-status';
 
 async function findUserByEmail(email: string) {
   const [existingUser] = await db
@@ -51,6 +56,9 @@ async function deleteTenantArtifacts(tenantId: string) {
     await tx.delete(workOrderStatusTable).where(eq(workOrderStatusTable.tenantId, tenantId));
     await tx.delete(workOrderPriorityTable).where(eq(workOrderPriorityTable.tenantId, tenantId));
     await tx.delete(workOrderTypeTable).where(eq(workOrderTypeTable.tenantId, tenantId));
+    await tx.delete(visitTable).where(eq(visitTable.tenantId, tenantId));
+    await tx.delete(visitNumberCounterTable).where(eq(visitNumberCounterTable.tenantId, tenantId));
+    await tx.delete(visitStatusTable).where(eq(visitStatusTable.tenantId, tenantId));
     await tx.delete(organization).where(eq(organization.id, tenantId));
   });
 }
@@ -111,11 +119,16 @@ async function hasSeededWorkOrderMasters(tenantId: string) {
   );
 }
 
+async function hasSeededVisitMasters(tenantId: string) {
+  return tableHasTenantRows(visitStatusTable, tenantId);
+}
+
 export const tenantProvisioningRepository = {
   deleteAuthUser,
   findUserByEmail,
   deleteTenantArtifacts,
   hasSeededSpecialties,
+  hasSeededVisitMasters,
   hasSeededAssetMasters,
   hasSeededWorkOrderMasters,
   hasSeededAppointmentMasters,

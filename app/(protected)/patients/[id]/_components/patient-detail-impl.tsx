@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 
 import { DeactivatePatientDialog } from './_modals/deactivate-patient-dialog';
 import { DeletePatientDialog } from './_modals/delete-patient-dialog';
+import { PatientVisitsSection } from './patient-visits-section';
 
 function DetailField({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -245,6 +246,8 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
           <DetailField label="Phone" value={patient.emergencyContactPhone} />
         </CardContent>
       </Card>
+
+      <PatientVisitsSection patientId={patient.id} patientIsActive={patient.isActive} />
 
       <DeactivatePatientDialog
         patient={patientPendingLifecycleChange}

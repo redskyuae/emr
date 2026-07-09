@@ -1,0 +1,9 @@
+# Visits Reuse Appointment Classification Masters
+
+A Visit needs to be classified by clinical category (new consultation, follow-up, emergency, procedure) and, optionally, by why it is happening. AppointmentType and AppointmentReason already exist as Tenant-scoped Masters serving exactly this purpose for Appointments. We decided Visit references these same two Masters — `appointmentTypeId` (required) and `appointmentReasonId` (optional) — rather than introducing parallel VisitType and VisitReason Masters.
+
+The alternative was a second, Visit-specific taxonomy. We rejected it because Appointment and Visit describe the same underlying clinical intent at two different points in time — an Appointment is the scheduling of care, a Visit is the encounter itself — and a Tenant should not have to configure and keep two near-identical lists in sync. Shared classification also sets up a clean path for the future Appointment module: when a scheduled Appointment converts into a Visit on check-in, its type and reason carry over directly instead of requiring a mapping table between two taxonomies.
+
+`CONTEXT.md`'s entries for AppointmentType and AppointmentReason were updated to say they classify both Appointments and Visits, rather than being renamed to something Appointment-neutral — the terms are already in use and well understood, and the entities remain Tenant-scoped Masters regardless of which clinical event references them.
+
+The trade-off is that these two masters now carry two callers instead of one: a future change to how AppointmentType works (e.g. restricting certain types to only Appointments) needs to consider Visit's usage too. This is accepted because the cost of two divergent taxonomies — Tenants maintaining duplicate lists, and a future mapping step at Appointment→Visit conversion — is materially worse than a small amount of shared-Master coupling.

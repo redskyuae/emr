@@ -26,7 +26,7 @@ The second phase of Tenant Provisioning, in which a newly created Tenant receive
 
 ## Facility
 
-A single physical location operated by a Tenant — a hospital, clinic, diagnostic center, or day-care unit. Has a `facilityType` attribute (HOSPITAL, CLINIC, LAB, etc.). Staff and clinical events are always scoped to a Facility within a Tenant.
+A single physical location operated by a Tenant — a hospital, clinic, diagnostic center, or day-care unit. Has a `facilityType` attribute (HOSPITAL, CLINIC, LAB, etc.). Staff and clinical events are always scoped to a Facility within a Tenant. Facility is not yet a modeled entity in the system: every Tenant currently operates as a single implicit Facility, and clinical events are scoped by Tenant alone until Facility is introduced as its own entity.
 
 ## Tenant Owner
 
@@ -128,7 +128,7 @@ A Tenant-scoped Master that defines the channel or format of an Appointment, suc
 
 ## AppointmentType
 
-A Tenant-scoped Master that defines the clinical category or visit type of an Appointment, such as new consultation, follow-up, emergency, or procedure. Distinct from AppointmentMode, which describes the channel or format of the Appointment.
+A Tenant-scoped Master that defines the clinical category or visit type of an Appointment or a Visit, such as new consultation, follow-up, emergency, or procedure. Distinct from AppointmentMode, which describes the channel or format of the Appointment.
 
 ## AppointmentStatus
 
@@ -136,7 +136,7 @@ A Tenant-scoped Master that defines the lifecycle state of an Appointment, such 
 
 ## AppointmentReason
 
-A Tenant-scoped Master that defines why an Appointment is being booked, either as stated by the Patient or assigned clinically. Distinct from AppointmentType, which describes the clinical category or visit type of the Appointment.
+A Tenant-scoped Master that defines why an Appointment or a Visit is happening, either as stated by the Patient or assigned clinically. Distinct from AppointmentType, which describes the clinical category or visit type.
 
 ## AppointmentCancelledReason
 
@@ -144,7 +144,27 @@ A Tenant-scoped Master that defines why an Appointment was cancelled. Distinct f
 
 ## Visit
 
-An outpatient clinical event. Occurs when a Patient attends a Facility for a consultation or procedure without being admitted overnight. A Visit is typically preceded by an Appointment but may be walk-in.
+An outpatient clinical event. Occurs when a Patient attends a Facility for a consultation or procedure without being admitted overnight. A Visit is typically preceded by an Appointment but may be walk-in. A Visit is created once the Patient is present, is identified by a Visit Number, and moves through a lifecycle expressed by its VisitStatus.
+
+## Visit Number
+
+The human-facing identifier for a Visit within a Tenant, assigned by the system when the Visit is created and never chosen by the user. A Visit Number is never reused.
+
+## VisitStatus
+
+A Tenant-scoped Master that defines the lifecycle state of a Visit, such as waiting, in progress, completed, or cancelled. Every VisitStatus belongs to a Visit Status Category. Distinct from AppointmentStatus, which tracks the scheduling lifecycle of an Appointment rather than the clinical event itself.
+
+## Visit Status Category
+
+The system-defined lifecycle meaning assigned to a VisitStatus: Waiting, In Progress, Completed, or Cancelled. Tenant-created statuses use a category so lifecycle rules remain stable when display details or codes differ.
+
+## System Visit Status
+
+A VisitStatus provided to every Tenant for one Visit Status Category. Its stable code identifies the system status; a Tenant may customize its display details, but cannot change its code or category.
+
+## Open Visit
+
+A Visit whose VisitStatus belongs to the Waiting or In Progress category. A Patient has at most one Open Visit at a time within a Tenant.
 
 ## Admission
 

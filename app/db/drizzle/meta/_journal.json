@@ -225,6 +225,13 @@
       "when": 1783424134334,
       "tag": "0031_curly_tusk",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1783507512700,
+      "tag": "0032_outstanding_overlord",
+      "breakpoints": true
     }
   ]
 }
