@@ -106,7 +106,7 @@ export function VisitCheckInImpl({ initialPatientId }: { initialPatientId: numbe
   });
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto w-full max-w-2xl space-y-4">
       <Card className="shadow-fluent-2">
         <CardHeader>
           <CardTitle>Check in Visit</CardTitle>

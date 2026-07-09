@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function VisitNewPageLoader() {
   return (
-    <div className="mx-auto max-w-2xl space-y-4" aria-label="Loading page">
+    <div className="mx-auto w-full max-w-2xl space-y-4" aria-label="Loading page">
       <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-9 w-full" />
