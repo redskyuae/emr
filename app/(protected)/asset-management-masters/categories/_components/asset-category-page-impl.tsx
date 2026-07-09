@@ -104,6 +104,13 @@ export function AssetCategoryPageImpl() {
   const sheetOpen =
     isCreating || (editingCategoryId !== null && (categoryResolving || editingCategory !== null));
 
+  const deleteCategoryResolving =
+    deleteCategoryId !== null &&
+    categoryPendingDelete === null &&
+    (categoriesQuery.isLoading || deleteCategoryQuery.isFetching);
+  const deleteDialogOpen =
+    deleteCategoryId !== null && (deleteCategoryResolving || categoryPendingDelete !== null);
+
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
     setPrevSearch(debouncedSearch);
@@ -267,6 +274,8 @@ export function AssetCategoryPageImpl() {
       />
 
       <AssetCategoryDeleteDialog
+        open={deleteDialogOpen}
+        isResolving={deleteCategoryResolving}
         category={categoryPendingDelete}
         onClose={() => void setDeleteCategoryParam(null)}
         onDeleted={(deletedId) => {

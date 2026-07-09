@@ -14,6 +14,7 @@ import {
   Search,
   Table as TableIcon,
 } from 'lucide-react';
+import type { AssetCondition } from '@/app/api/lib/modules/asset-condition/schemas/asset-condition-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetConditionQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetCondition';
 import { useAssetConditionsQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetConditions';
@@ -45,20 +46,16 @@ const PAGE_SIZE = 10;
 
 export function AssetConditionPageImpl() {
   const [conditionParam, setConditionParam] = useQueryState('condition');
-  const [deleteConditionParam, setDeleteConditionParam] = useQueryState('deleteCondition');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
+  const [conditionPendingDelete, setConditionPendingDelete] = useState<AssetCondition | null>(null);
 
   const isCreating = conditionParam === 'new';
   const editingConditionId =
     conditionParam !== null && conditionParam !== 'new' && /^\d+$/.test(conditionParam)
       ? Number(conditionParam)
-      : null;
-  const deleteConditionId =
-    deleteConditionParam !== null && /^\d+$/.test(deleteConditionParam)
-      ? Number(deleteConditionParam)
       : null;
 
   const conditionsQuery = useAssetConditionsQuery({
@@ -78,10 +75,6 @@ export function AssetConditionPageImpl() {
     editingConditionId !== null
       ? (conditions.find((c) => c.id === editingConditionId) ?? null)
       : null;
-  const conditionPendingDeleteFromList =
-    deleteConditionId !== null
-      ? (conditions.find((c) => c.id === deleteConditionId) ?? null)
-      : null;
 
   const shouldFetchEditingCondition =
     editingConditionId !== null && !conditionsQuery.isLoading && editingConditionFromList === null;
@@ -89,16 +82,6 @@ export function AssetConditionPageImpl() {
     shouldFetchEditingCondition ? editingConditionId : null
   );
   const editingCondition = editingConditionFromList ?? editingConditionQuery.data ?? null;
-
-  const shouldFetchDeleteCondition =
-    deleteConditionId !== null &&
-    !conditionsQuery.isLoading &&
-    conditionPendingDeleteFromList === null;
-  const deleteConditionQuery = useAssetConditionQuery(
-    shouldFetchDeleteCondition ? deleteConditionId : null
-  );
-  const conditionPendingDelete =
-    conditionPendingDeleteFromList ?? deleteConditionQuery.data ?? null;
 
   const conditionResolving =
     editingConditionId !== null &&
@@ -213,19 +196,19 @@ export function AssetConditionPageImpl() {
               <AssetConditionTableView
                 conditions={conditions}
                 onEdit={(condition) => void setConditionParam(String(condition.id))}
-                onDelete={(condition) => void setDeleteConditionParam(String(condition.id))}
+                onDelete={setConditionPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <AssetConditionCardView
                 conditions={conditions}
                 onEdit={(condition) => void setConditionParam(String(condition.id))}
-                onDelete={(condition) => void setDeleteConditionParam(String(condition.id))}
+                onDelete={setConditionPendingDelete}
               />
             ) : (
               <AssetConditionListView
                 conditions={conditions}
                 onEdit={(condition) => void setConditionParam(String(condition.id))}
-                onDelete={(condition) => void setDeleteConditionParam(String(condition.id))}
+                onDelete={setConditionPendingDelete}
               />
             )}
 
@@ -273,7 +256,7 @@ export function AssetConditionPageImpl() {
 
       <AssetConditionDeleteDialog
         condition={conditionPendingDelete}
-        onClose={() => void setDeleteConditionParam(null)}
+        onClose={() => setConditionPendingDelete(null)}
         onDeleted={(deletedId) => {
           if (editingConditionId === deletedId) {
             void setConditionParam(null);

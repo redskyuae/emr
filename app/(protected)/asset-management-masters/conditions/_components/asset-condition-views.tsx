@@ -197,7 +197,7 @@ export function AssetConditionListView({
               </div>
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col gap-1 pl-13 text-sm sm:flex-row sm:items-center sm:gap-6 sm:pl-0">
+            <div className="flex min-w-0 flex-1 flex-col gap-1 pl-14 text-sm sm:flex-row sm:items-center sm:gap-6 sm:pl-0">
               <div>
                 <span className="text-muted-foreground">Code: </span>
                 <span className="font-mono">{condition.code}</span>
@@ -210,7 +210,7 @@ export function AssetConditionListView({
               ) : null}
             </div>
 
-            <div className="shrink-0 pl-13 sm:pl-0">
+            <div className="shrink-0 pl-14 sm:pl-0">
               <ConditionActionsMenu condition={condition} onEdit={onEdit} onDelete={onDelete} />
             </div>
           </CardContent>
