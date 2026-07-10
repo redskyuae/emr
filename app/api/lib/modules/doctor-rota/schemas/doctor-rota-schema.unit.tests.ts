@@ -42,12 +42,42 @@ describe('DoctorRota schema', () => {
     ).toContain('Doctor rota from time is required');
   });
 
+  it('should return validation error when from time is empty after trimming', () => {
+    expect(
+      errorsOf(
+        createDoctorRotaSchema.safeParse({ name: 'Morning', fromTime: '   ', toTime: '13:00' })
+      )
+    ).toContain('Doctor rota from time cannot be empty');
+  });
+
+  it('should return validation error when to time is missing', () => {
+    expect(
+      errorsOf(createDoctorRotaSchema.safeParse({ name: 'Morning', fromTime: '09:00' }))
+    ).toContain('Doctor rota to time is required');
+  });
+
+  it('should return validation error when to time is empty after trimming', () => {
+    expect(
+      errorsOf(
+        createDoctorRotaSchema.safeParse({ name: 'Morning', fromTime: '09:00', toTime: '   ' })
+      )
+    ).toContain('Doctor rota to time cannot be empty');
+  });
+
   it('should return validation error when time format is invalid', () => {
     expect(
       errorsOf(
         createDoctorRotaSchema.safeParse({ name: 'Morning', fromTime: '9:00', toTime: '13:00' })
       )
     ).toContain('Doctor rota from time must be in HH:mm format');
+  });
+
+  it('should return validation error when to time format is invalid', () => {
+    expect(
+      errorsOf(
+        createDoctorRotaSchema.safeParse({ name: 'Morning', fromTime: '09:00', toTime: '1:00' })
+      )
+    ).toContain('Doctor rota to time must be in HH:mm format');
   });
 
   it('should return validation error when to time is not after from time', () => {

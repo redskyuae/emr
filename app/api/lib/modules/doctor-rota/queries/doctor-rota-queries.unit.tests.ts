@@ -48,6 +48,15 @@ describe('DoctorRota queries', () => {
     expect(repo.getDoctorRotaById).not.toHaveBeenCalled();
   });
 
+  it('should return validation failure and not call repository when list tenant validation fails', async () => {
+    validateList.mockReturnValue({ success: false, errors: ['Invalid tenant'] });
+    await expect(getDoctorRotasQuery({ tenantId: ' ' })).resolves.toEqual({
+      success: false,
+      errors: ['Invalid tenant'],
+    });
+    expect(repo.getDoctorRotas).not.toHaveBeenCalled();
+  });
+
   it('should call repository with parsed tenant/id/list params on success', async () => {
     await getDoctorRotaByIdQuery('1', 'tenant-1');
     expect(repo.getDoctorRotaById).toHaveBeenCalledWith(1, 'tenant-1');

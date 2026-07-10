@@ -71,6 +71,37 @@ describe('DoctorRota validators', () => {
     });
   });
 
+  it('should return update schema validation errors without repository access', async () => {
+    const result = await validateUpdateDoctorRota(
+      '1',
+      { name: '', fromTime: '13:00', toTime: '12:00' },
+      'tenant-1'
+    );
+    expect(result).toMatchObject({
+      success: false,
+      errors: expect.arrayContaining([
+        'Doctor rota name cannot be empty',
+        'Doctor rota to time must be after from time',
+      ]),
+    });
+    expect(repo.getDoctorRotaById).not.toHaveBeenCalled();
+    expect(repo.findActiveByName).not.toHaveBeenCalled();
+  });
+
+  it('should return conflict when update name already exists and preserve conflict status', async () => {
+    repo.findActiveByName.mockResolvedValue(existing);
+    const result = await validateUpdateDoctorRota(
+      '1',
+      { name: 'Morning Rota', fromTime: '09:00', toTime: '13:00' },
+      'tenant-1'
+    );
+    expect(result).toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ["Doctor rota name 'Morning Rota' already exists."],
+    });
+  });
+
   it('should return not-found or validation error when requested id is invalid/missing according to existing validator behavior', async () => {
     expect(validateGetDoctorRotaById('abc', 'tenant-1')).toMatchObject({
       success: false,
@@ -113,5 +144,12 @@ describe('DoctorRota validators', () => {
       data: { id: 1, tenantId: 'tenant-1' },
     });
     expect(validateGetDoctorRotas('  ')).toMatchObject({ success: false });
+  });
+
+  it('should return failure when delete id is invalid', () => {
+    expect(validateDeleteDoctorRota('abc', 'tenant-1')).toMatchObject({
+      success: false,
+      errors: ['Doctor rota abc is Invalid.'],
+    });
   });
 });

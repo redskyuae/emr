@@ -150,6 +150,13 @@ describe('DoctorRota repository', () => {
     ).toEqual(['Morning Rota']);
   });
 
+  it('should search LIKE wildcard characters as literals', async () => {
+    await createRota(tenantA, '100% Rota');
+    await createRota(tenantA, '100X Rota');
+    const result = await doctorRotaRepository.getDoctorRotas({ tenantId: tenantA, query: '%' });
+    expect(result.data.map((rota) => rota.name)).toEqual(['100% Rota']);
+  });
+
   it('should paginate list results and return total', async () => {
     await createRota(tenantA, 'Alpha');
     await createRota(tenantA, 'Bravo');

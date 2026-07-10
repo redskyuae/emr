@@ -20,6 +20,10 @@ const doctorRotaColumns = {
   modifiedOn: doctorRotaTable.modifiedOn,
 };
 
+function escapeLikePattern(value: string) {
+  return value.replace(/[\\%_]/g, (character) => `\\${character}`);
+}
+
 async function createDoctorRota(data: CreateDoctorRotaData) {
   const [createdDoctorRota] = await db
     .insert(doctorRotaTable)
@@ -100,11 +104,13 @@ async function getDoctorRotaById(id: number, tenantId: string): Promise<DoctorRo
 async function getDoctorRotas({ tenantId, page = 1, limit = 10, query }: DoctorRotaListParams) {
   const offset = (page - 1) * limit;
   const trimmedQuery = query?.trim();
-  const searchCondition = trimmedQuery
+  const escapedQuery = trimmedQuery ? escapeLikePattern(trimmedQuery) : undefined;
+  const searchPattern = escapedQuery ? `%${escapedQuery}%` : undefined;
+  const searchCondition = searchPattern
     ? or(
-        ilike(doctorRotaTable.name, `%${trimmedQuery}%`),
-        ilike(doctorRotaTable.fromTime, `%${trimmedQuery}%`),
-        ilike(doctorRotaTable.toTime, `%${trimmedQuery}%`)
+        ilike(doctorRotaTable.name, searchPattern),
+        ilike(doctorRotaTable.fromTime, searchPattern),
+        ilike(doctorRotaTable.toTime, searchPattern)
       )
     : undefined;
   const whereClause = and(
