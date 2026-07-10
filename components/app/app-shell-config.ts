@@ -172,7 +172,7 @@ export const appNavGroups: AppNavGroup[] = [
         items: [
           { title: 'Categories', href: '/asset-management-masters/categories' },
           { title: 'Status', href: '/asset-management-masters/statuses' },
-          { title: 'Work Order Priority', href: '/asset-management-masters/work-order-priorities', },
+          { title: 'Work Order Priority', href: '/asset-management-masters/work-order-priorities' },
         ],
       },
       {
