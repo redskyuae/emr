@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
+=======
+"use client"
+import { useQuery } from '@tanstack/react-query';
+>>>>>>> 3530472 (greptil sugesstions updated)
 import { parseApiError } from '@/app/queries/api-error';
 import type { ListWorkOrderTypesResponse } from '@/app/api/v1/work-orders/types/types';
 
