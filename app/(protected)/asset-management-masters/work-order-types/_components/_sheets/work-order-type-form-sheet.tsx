@@ -99,7 +99,7 @@ export function WorkOrderTypeFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
-          description: values.description.trim() || undefined,
+          description: values.description.trim(),
         });
         toast.success('Work Order Type created.');
         onClose();
@@ -116,7 +116,7 @@ export function WorkOrderTypeFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
-          description: values.description.trim() || undefined,
+          description: values.description.trim(),
         },
       });
       toast.success('Work Order Type updated.');
