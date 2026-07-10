@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
 =======
 "use client"
+=======
+'use client';
+>>>>>>> 0693485 (build updating)
 import { useQuery } from '@tanstack/react-query';
 >>>>>>> 3530472 (greptil sugesstions updated)
 import { parseApiError } from '@/app/queries/api-error';
