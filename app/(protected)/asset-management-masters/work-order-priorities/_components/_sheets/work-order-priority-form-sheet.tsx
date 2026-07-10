@@ -99,7 +99,7 @@ export function WorkOrderPriorityFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
-          description: values.description.trim(),
+          description: values.description || undefined,
         });
         toast.success('Work Order Priority created.');
         onClose();
@@ -116,7 +116,7 @@ export function WorkOrderPriorityFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
-          description: values.description.trim(),
+          description: values.description || undefined,
         },
       });
       toast.success('Work Order Priority updated.');
