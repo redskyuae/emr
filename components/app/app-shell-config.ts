@@ -4,6 +4,7 @@ import {
   Boxes,
   Building2,
   CalendarClock,
+  Clock3,
   ClipboardList,
   FileClock,
   Gauge,
@@ -151,6 +152,11 @@ export const appNavGroups: AppNavGroup[] = [
         icon: Building2,
       },
       {
+        title: 'Rota Management',
+        href: '/rota-management',
+        icon: Clock3,
+      },
+      {
         title: 'Appointment Masters',
         href: '/appointment-masters',
         icon: CalendarClock,
@@ -264,6 +270,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/tenant-profile': {
     title: 'Tenant Profile',
     subtitle: 'Tenant display details and operating status.',
+  },
+  '/rota-management': {
+    title: 'Rota Management',
+    subtitle: 'Reusable Doctor Rota templates for scheduling Doctors.',
   },
   '/appointment-masters': {
     title: 'Appointment Masters',
