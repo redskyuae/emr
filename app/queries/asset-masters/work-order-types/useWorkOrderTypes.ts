@@ -1,5 +1,5 @@
+"use client"
 import { useQuery } from '@tanstack/react-query';
-
 import { parseApiError } from '@/app/queries/api-error';
 import type { ListWorkOrderTypesResponse } from '@/app/api/v1/work-orders/types/types';
 
