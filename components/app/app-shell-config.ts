@@ -178,7 +178,7 @@ export const appNavGroups: AppNavGroup[] = [
         items: [
           { title: 'Categories', href: '/asset-management-masters/categories' },
           { title: 'Status', href: '/asset-management-masters/statuses' },
-          { title: 'Work Order Type', href: '/asset-management-masters/work-order-types' },
+          { title: 'Work Order Priority', href: '/asset-management-masters/work-order-priorities', },
         ],
       },
       {
@@ -312,9 +312,9 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Asset Statuses',
     subtitle: 'Tenant-scoped operational lifecycle state records for Assets.',
   },
-  '/asset-management-masters/work-order-types': {
-    title: 'Work Order Types',
-    subtitle: 'Tenant-scoped maintenance work classification records for Work Orders.',
+  '/asset-management-masters/work-order-priorities': {
+    title: 'Work Order Priorities',
+    subtitle: 'Tenant-scoped urgency ranking records for Work Orders.',
   },
   '/global-references': {
     title: 'Global References',
