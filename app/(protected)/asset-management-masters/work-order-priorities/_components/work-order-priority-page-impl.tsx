@@ -157,7 +157,7 @@ export function WorkOrderPriorityPageImpl() {
           </Alert>
         ) : null}
 
-        {prioritiesQuery.isLoading ? (
+        {prioritiesQuery.isError ? null : prioritiesQuery.isLoading ? (
           <ViewSkeleton layout={viewLayout} />
         ) : priorities.length === 0 && !debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
@@ -260,6 +260,9 @@ export function WorkOrderPriorityPageImpl() {
         onDeleted={(deletedId) => {
           if (editingPriorityId === deletedId) {
             void setPriorityParam(null);
+          }
+          if (priorities.length === 1 && page > 1) {
+            setPage((p) => p - 1);
           }
         }}
       />
