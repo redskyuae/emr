@@ -1,0 +1,4 @@
+## 2025-02-21 - [Critical] Missing Authentication on Reference Data API Endpoints
+**Vulnerability:** Reference data API endpoints (countries, languages, nationalities, religions, states) lacked route-level authentication, allowing unauthenticated read and write access to the entire master data catalog.
+**Learning:** The project lacks global authentication middleware. Instead, route-level authentication helpers like `requireAuth()` or `requireTenantSession()` must be manually added to *every* API route. Reference data is not tenant-scoped, so it must use the base `requireAuth()` instead of `requireTenantSession()`.
+**Prevention:** Whenever generating a new API route, verify that the appropriate authentication helper is explicitly called and the returning `Response` type is checked immediately inside the handler block.
