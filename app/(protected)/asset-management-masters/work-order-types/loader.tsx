@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -9,14 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-=======
-import { Skeleton } from '@/components/ui/skeleton';
->>>>>>> 7a21517 (integrate Work Order Type master screen)
 
 export default function WorkOrderTypesPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-<<<<<<< HEAD
       <Card className="shadow-fluent-2">
         <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
           <Skeleton className="h-9 w-56" />
@@ -65,7 +60,6 @@ export default function WorkOrderTypesPageLoader() {
           </div>
         </CardContent>
       </Card>
-=======
       <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
         <Skeleton className="h-9 w-56" />
         <Skeleton className="h-9 w-full lg:max-w-sm" />
@@ -120,7 +114,6 @@ export default function WorkOrderTypesPageLoader() {
           </table>
         </div>
       </div>
->>>>>>> 7a21517 (integrate Work Order Type master screen)
 
       <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
         <Skeleton className="h-5 w-36" />
