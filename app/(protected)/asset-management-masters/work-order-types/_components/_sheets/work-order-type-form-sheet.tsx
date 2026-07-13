@@ -99,7 +99,11 @@ export function WorkOrderTypeFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
+<<<<<<< HEAD
           description: values.description.trim(),
+=======
+          description: values.description.trim() || undefined,
+>>>>>>> 7a21517 (integrate Work Order Type master screen)
         });
         toast.success('Work Order Type created.');
         onClose();
@@ -116,7 +120,11 @@ export function WorkOrderTypeFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
+<<<<<<< HEAD
           description: values.description.trim(),
+=======
+          description: values.description.trim() || undefined,
+>>>>>>> 7a21517 (integrate Work Order Type master screen)
         },
       });
       toast.success('Work Order Type updated.');

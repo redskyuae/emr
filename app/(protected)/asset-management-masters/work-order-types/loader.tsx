@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -8,10 +9,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+=======
+import { Skeleton } from '@/components/ui/skeleton';
+>>>>>>> 7a21517 (integrate Work Order Type master screen)
 
 export default function WorkOrderTypesPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
+<<<<<<< HEAD
       <Card className="shadow-fluent-2">
         <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
           <Skeleton className="h-9 w-56" />
@@ -60,6 +65,62 @@ export default function WorkOrderTypesPageLoader() {
           </div>
         </CardContent>
       </Card>
+=======
+      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
+        <Skeleton className="h-9 w-56" />
+        <Skeleton className="h-9 w-full lg:max-w-sm" />
+        <div className="flex gap-2 lg:ml-auto">
+          <Skeleton className="h-9 w-44" />
+        </div>
+      </div>
+
+      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
+            <thead>
+              <tr className="border-b">
+                <th className="p-3 pl-4">
+                  <Skeleton className="h-4 w-12" />
+                </th>
+                <th className="p-3">
+                  <Skeleton className="h-4 w-10" />
+                </th>
+                <th className="p-3">
+                  <Skeleton className="h-4 w-12" />
+                </th>
+                <th className="p-3">
+                  <Skeleton className="h-4 w-20" />
+                </th>
+                <th className="p-3 pr-4 text-right">
+                  <Skeleton className="ml-auto h-4 w-14" />
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }, (_, i) => (
+                <tr key={i} className="border-b last:border-b-0">
+                  <td className="p-3 pl-4">
+                    <Skeleton className="h-5 w-32" />
+                  </td>
+                  <td className="p-3">
+                    <Skeleton className="h-5 w-16" />
+                  </td>
+                  <td className="p-3">
+                    <Skeleton className="size-4 rounded-sm" />
+                  </td>
+                  <td className="p-3">
+                    <Skeleton className="h-5 w-40" />
+                  </td>
+                  <td className="p-3 pr-4 text-right">
+                    <Skeleton className="ml-auto h-8 w-8" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+>>>>>>> 7a21517 (integrate Work Order Type master screen)
 
       <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
         <Skeleton className="h-5 w-36" />
