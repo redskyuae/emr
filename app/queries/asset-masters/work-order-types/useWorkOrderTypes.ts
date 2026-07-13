@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
@@ -43,7 +43,6 @@ export function useWorkOrderTypesQuery(params: WorkOrderTypesParams) {
   });
 }
 
-
 export function removeWorkOrderType(queryClient: QueryClient, id: number) {
   queryClient.setQueriesData<ListWorkOrderTypesResponse>(
     { queryKey: workOrderTypesQueryKey },
@@ -65,4 +64,3 @@ export function removeWorkOrderType(queryClient: QueryClient, id: number) {
     }
   );
 }
-
