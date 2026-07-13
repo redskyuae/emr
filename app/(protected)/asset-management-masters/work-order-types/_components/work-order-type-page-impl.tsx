@@ -253,6 +253,9 @@ export function WorkOrderTypePageImpl() {
           if (editingTypeId === deletedId) {
             void setTypeParam(null);
           }
+          if (types.length === 1 && page > 1) {
+            setPage((p) => p - 1);
+          }
         }}
       />
     </>

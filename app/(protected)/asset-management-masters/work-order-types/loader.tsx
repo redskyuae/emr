@@ -25,30 +25,30 @@ export default function WorkOrderTypesPageLoader() {
       <Card className="shadow-fluent-2">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table className="min-w-[700px]">
+            <Table className="min-w-[700px] table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Color</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="pr-4 text-right">Actions</TableHead>
+                  <TableHead className="w-[26%] pl-4">Name</TableHead>
+                  <TableHead className="w-[14%]">Code</TableHead>
+                  <TableHead className="w-[12%]">Color</TableHead>
+                  <TableHead className="w-[34%]">Description</TableHead>
+                  <TableHead className="w-[14%] pr-4 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {Array.from({ length: 5 }, (_, i) => (
                   <TableRow key={i}>
                     <TableCell className="pl-4">
-                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-5 w-3/4" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-2/3" />
                     </TableCell>
                     <TableCell>
                       <Skeleton className="size-4 rounded-sm" />
                     </TableCell>
                     <TableCell>
-                      <Skeleton className="h-5 w-40" />
+                      <Skeleton className="h-5 w-3/4" />
                     </TableCell>
                     <TableCell className="pr-4 text-right">
                       <Skeleton className="ml-auto h-8 w-8" />
@@ -60,60 +60,6 @@ export default function WorkOrderTypesPageLoader() {
           </div>
         </CardContent>
       </Card>
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
-        <Skeleton className="h-9 w-56" />
-        <Skeleton className="h-9 w-full lg:max-w-sm" />
-        <div className="flex gap-2 lg:ml-auto">
-          <Skeleton className="h-9 w-44" />
-        </div>
-      </div>
-
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead>
-              <tr className="border-b">
-                <th className="p-3 pl-4">
-                  <Skeleton className="h-4 w-12" />
-                </th>
-                <th className="p-3">
-                  <Skeleton className="h-4 w-10" />
-                </th>
-                <th className="p-3">
-                  <Skeleton className="h-4 w-12" />
-                </th>
-                <th className="p-3">
-                  <Skeleton className="h-4 w-20" />
-                </th>
-                <th className="p-3 pr-4 text-right">
-                  <Skeleton className="ml-auto h-4 w-14" />
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 5 }, (_, i) => (
-                <tr key={i} className="border-b last:border-b-0">
-                  <td className="p-3 pl-4">
-                    <Skeleton className="h-5 w-32" />
-                  </td>
-                  <td className="p-3">
-                    <Skeleton className="h-5 w-16" />
-                  </td>
-                  <td className="p-3">
-                    <Skeleton className="size-4 rounded-sm" />
-                  </td>
-                  <td className="p-3">
-                    <Skeleton className="h-5 w-40" />
-                  </td>
-                  <td className="p-3 pr-4 text-right">
-                    <Skeleton className="ml-auto h-8 w-8" />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
         <Skeleton className="h-5 w-36" />

@@ -86,25 +86,25 @@ export function WorkOrderTypeTableView({
     <Card className="shadow-fluent-2">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <Table className="min-w-[700px]">
+          <Table className="min-w-[700px] table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-4">Name</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Color</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="pr-4 text-right">Actions</TableHead>
+                <TableHead className="w-[26%] pl-4">Name</TableHead>
+                <TableHead className="w-[14%]">Code</TableHead>
+                <TableHead className="w-[12%]">Color</TableHead>
+                <TableHead className="w-[34%]">Description</TableHead>
+                <TableHead className="w-[14%] pr-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {types.map((type) => (
                 <TableRow key={type.id}>
-                  <TableCell className="pl-4 font-medium">{type.name}</TableCell>
-                  <TableCell className="font-mono text-xs">{type.code}</TableCell>
+                  <TableCell className="truncate pl-4 font-medium">{type.name}</TableCell>
+                  <TableCell className="truncate font-mono text-xs">{type.code}</TableCell>
                   <TableCell>
                     <TypeColorSwatch color={type.color} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground max-w-xs truncate">
+                  <TableCell className="text-muted-foreground truncate">
                     {type.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
