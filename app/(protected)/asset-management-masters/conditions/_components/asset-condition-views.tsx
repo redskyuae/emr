@@ -1,6 +1,6 @@
-import { MoreVertical, Pencil, Tag, Trash2 } from 'lucide-react';
+import { Gauge, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
-import type { AssetCategory } from '@/app/api/lib/modules/asset-category/schemas/asset-category-schema';
+import type { AssetCondition } from '@/app/api/lib/modules/asset-condition/schemas/asset-condition-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -18,7 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-function CategoryColorSwatch({ color }: { color: string }) {
+function ConditionColorSwatch({ color }: { color: string }) {
   return (
     <span
       className="border-border inline-block size-4 rounded-sm border"
@@ -27,25 +27,25 @@ function CategoryColorSwatch({ color }: { color: string }) {
   );
 }
 
-function CategoryIcon({ color }: { color: string }) {
+function ConditionIcon({ color }: { color: string }) {
   return (
     <div
       className="flex size-10 items-center justify-center rounded-full"
       style={{ backgroundColor: color + '22' }}
     >
-      <Tag className="size-5" style={{ color }} />
+      <Gauge className="size-5" style={{ color }} />
     </div>
   );
 }
 
-function CategoryActionsMenu({
-  category,
+function ConditionActionsMenu({
+  condition,
   onEdit,
   onDelete,
 }: {
-  category: AssetCategory;
-  onEdit: (category: AssetCategory) => void;
-  onDelete: (category: AssetCategory) => void;
+  condition: AssetCondition;
+  onEdit: (condition: AssetCondition) => void;
+  onDelete: (condition: AssetCondition) => void;
 }) {
   return (
     <DropdownMenu>
@@ -54,17 +54,17 @@ function CategoryActionsMenu({
           type="button"
           variant="ghost"
           size="icon-sm"
-          aria-label={`Actions for ${category.name}`}
+          aria-label={`Actions for ${condition.name}`}
         >
           <MoreVertical className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(category)}>
+        <DropdownMenuItem onClick={() => onEdit(condition)}>
           <Pencil className="size-4" />
           Edit
         </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(category)}>
+        <DropdownMenuItem variant="destructive" onClick={() => onDelete(condition)}>
           <Trash2 className="size-4" />
           Delete
         </DropdownMenuItem>
@@ -73,14 +73,14 @@ function CategoryActionsMenu({
   );
 }
 
-export function AssetCategoryTableView({
-  categories,
+export function AssetConditionTableView({
+  conditions,
   onEdit,
   onDelete,
 }: {
-  categories: AssetCategory[];
-  onEdit: (category: AssetCategory) => void;
-  onDelete: (category: AssetCategory) => void;
+  conditions: AssetCondition[];
+  onEdit: (condition: AssetCondition) => void;
+  onDelete: (condition: AssetCondition) => void;
 }) {
   return (
     <Card className="shadow-fluent-2">
@@ -97,18 +97,22 @@ export function AssetCategoryTableView({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell className="pl-4 font-medium">{category.name}</TableCell>
-                  <TableCell className="font-mono text-xs">{category.code}</TableCell>
+              {conditions.map((condition) => (
+                <TableRow key={condition.id}>
+                  <TableCell className="pl-4 font-medium">{condition.name}</TableCell>
+                  <TableCell className="font-mono text-xs">{condition.code}</TableCell>
                   <TableCell>
-                    <CategoryColorSwatch color={category.color} />
+                    <ConditionColorSwatch color={condition.color} />
                   </TableCell>
                   <TableCell className="text-muted-foreground max-w-xs truncate">
-                    {category.description || '—'}
+                    {condition.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <CategoryActionsMenu category={category} onEdit={onEdit} onDelete={onDelete} />
+                    <ConditionActionsMenu
+                      condition={condition}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -120,37 +124,37 @@ export function AssetCategoryTableView({
   );
 }
 
-export function AssetCategoryCardView({
-  categories,
+export function AssetConditionCardView({
+  conditions,
   onEdit,
   onDelete,
 }: {
-  categories: AssetCategory[];
-  onEdit: (category: AssetCategory) => void;
-  onDelete: (category: AssetCategory) => void;
+  conditions: AssetCondition[];
+  onEdit: (condition: AssetCondition) => void;
+  onDelete: (condition: AssetCondition) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {categories.map((category) => (
-        <Card key={category.id} className="shadow-fluent-2">
+      {conditions.map((condition) => (
+        <Card key={condition.id} className="shadow-fluent-2">
           <CardContent className="space-y-3 p-4">
-            <CategoryIcon color={category.color} />
+            <ConditionIcon color={condition.color} />
 
             <div>
-              <h3 className="font-heading text-base font-semibold">{category.name}</h3>
+              <h3 className="font-heading text-base font-semibold">{condition.name}</h3>
               <p className="text-muted-foreground mt-0.5 text-sm">
-                Code: <span className="font-mono">{category.code}</span>
+                Code: <span className="font-mono">{condition.code}</span>
               </p>
               <div className="mt-0.5">
-                <CategoryColorSwatch color={category.color} />
+                <ConditionColorSwatch color={condition.color} />
               </div>
-              {category.description ? (
-                <p className="text-muted-foreground mt-0.5 text-sm">{category.description}</p>
+              {condition.description ? (
+                <p className="text-muted-foreground mt-0.5 text-sm">{condition.description}</p>
               ) : null}
             </div>
 
             <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(category)}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(condition)}>
                 <Pencil className="size-3.5" />
                 Edit
               </Button>
@@ -158,7 +162,7 @@ export function AssetCategoryCardView({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => onDelete(category)}
+                onClick={() => onDelete(condition)}
                 className="text-destructive hover:text-destructive"
               >
                 <Trash2 className="size-3.5" />
@@ -172,42 +176,42 @@ export function AssetCategoryCardView({
   );
 }
 
-export function AssetCategoryListView({
-  categories,
+export function AssetConditionListView({
+  conditions,
   onEdit,
   onDelete,
 }: {
-  categories: AssetCategory[];
-  onEdit: (category: AssetCategory) => void;
-  onDelete: (category: AssetCategory) => void;
+  conditions: AssetCondition[];
+  onEdit: (condition: AssetCondition) => void;
+  onDelete: (condition: AssetCondition) => void;
 }) {
   return (
     <div className="space-y-3">
-      {categories.map((category) => (
-        <Card key={category.id} className="shadow-fluent-2">
+      {conditions.map((condition) => (
+        <Card key={condition.id} className="shadow-fluent-2">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
-              <CategoryIcon color={category.color} />
+              <ConditionIcon color={condition.color} />
               <div className="min-w-0">
-                <h3 className="font-heading text-base font-semibold">{category.name}</h3>
+                <h3 className="font-heading text-base font-semibold">{condition.name}</h3>
               </div>
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col gap-1 pl-13 text-sm sm:flex-row sm:items-center sm:gap-6 sm:pl-0">
+            <div className="flex min-w-0 flex-1 flex-col gap-1 pl-14 text-sm sm:flex-row sm:items-center sm:gap-6 sm:pl-0">
               <div>
                 <span className="text-muted-foreground">Code: </span>
-                <span className="font-mono">{category.code}</span>
+                <span className="font-mono">{condition.code}</span>
               </div>
-              <CategoryColorSwatch color={category.color} />
-              {category.description ? (
+              <ConditionColorSwatch color={condition.color} />
+              {condition.description ? (
                 <div className="min-w-0">
-                  <span className="text-muted-foreground truncate">{category.description}</span>
+                  <span className="text-muted-foreground truncate">{condition.description}</span>
                 </div>
               ) : null}
             </div>
 
-            <div className="shrink-0 pl-13 sm:pl-0">
-              <CategoryActionsMenu category={category} onEdit={onEdit} onDelete={onDelete} />
+            <div className="shrink-0 pl-14 sm:pl-0">
+              <ConditionActionsMenu condition={condition} onEdit={onEdit} onDelete={onDelete} />
             </div>
           </CardContent>
         </Card>

@@ -16,14 +16,19 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type AssetCategoryDeleteDialogProps = {
+  open: boolean;
+  isResolving: boolean;
   category: AssetCategory | null;
   onClose: () => void;
   onDeleted: (categoryId: number) => void;
 };
 
 export function AssetCategoryDeleteDialog({
+  open,
+  isResolving,
   category,
   onClose,
   onDeleted,
@@ -46,21 +51,30 @@ export function AssetCategoryDeleteDialog({
   }
 
   return (
-    <AlertDialog open={category !== null} onOpenChange={(open) => (!open ? onClose() : undefined)}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && !deleteMutation.isPending) {
+          onClose();
+        }
+      }}
+    >
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
             <Trash2 />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Asset Category?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {category ? (
-              <>
+          <AlertDialogDescription asChild>
+            {isResolving ? (
+              <Skeleton className="h-4 w-3/4" />
+            ) : category ? (
+              <span>
                 Delete Asset Category &ldquo;<strong>{category.name}</strong>&rdquo;? This action
                 cannot be undone.
-              </>
+              </span>
             ) : (
-              'This Asset Category will be deleted.'
+              <span>This Asset Category will be deleted.</span>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -68,7 +82,7 @@ export function AssetCategoryDeleteDialog({
           <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            disabled={deleteMutation.isPending}
+            disabled={deleteMutation.isPending || isResolving || category === null}
             onClick={(event) => {
               event.preventDefault();
               void handleConfirmDelete();
