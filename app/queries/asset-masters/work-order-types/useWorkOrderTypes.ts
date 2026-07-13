@@ -1,5 +1,6 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
 =======
@@ -9,6 +10,10 @@ import { useQuery, type QueryClient } from '@tanstack/react-query';
 >>>>>>> 0693485 (build updating)
 import { useQuery } from '@tanstack/react-query';
 >>>>>>> 3530472 (greptil sugesstions updated)
+=======
+'use client';
+import { useQuery } from '@tanstack/react-query';
+>>>>>>> 069348530b0ed134064b4dad6e0ad65735f9fe8d
 import { parseApiError } from '@/app/queries/api-error';
 import type { ListWorkOrderTypesResponse } from '@/app/api/v1/work-orders/types/types';
 
@@ -49,6 +54,7 @@ export function useWorkOrderTypesQuery(params: WorkOrderTypesParams) {
     queryFn: () => fetchWorkOrderTypes(params),
   });
 }
+<<<<<<< HEAD
 
 export function removeWorkOrderType(queryClient: QueryClient, id: number) {
   queryClient.setQueriesData<ListWorkOrderTypesResponse>(
@@ -71,3 +77,5 @@ export function removeWorkOrderType(queryClient: QueryClient, id: number) {
     }
   );
 }
+=======
+>>>>>>> 069348530b0ed134064b4dad6e0ad65735f9fe8d
