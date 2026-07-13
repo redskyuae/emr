@@ -378,6 +378,12 @@ const appointmentMasterSchema = (createSchemaName: string) => ({
   ],
 });
 
+const doctorRotaRequestExample = {
+  name: 'Morning Rota',
+  fromTime: '09:00',
+  toTime: '13:00',
+};
+
 const specialtyExample = {
   id: 7,
   tenantId: 'org_apollo',
@@ -1381,6 +1387,10 @@ export const openApiDocument = {
     { name: 'Appointment Status', description: 'Appointment Status Master APIs.' },
     { name: 'Specialty', description: 'Tenant-scoped Specialty Master APIs.' },
     { name: 'Doctor', description: 'Tenant-scoped Doctor registry and lifecycle APIs.' },
+    {
+      name: 'Doctor Rota',
+      description: 'Tenant-scoped reusable Doctor scheduling template APIs.',
+    },
     {
       name: 'Appointment Cancelled Reason',
       description: 'Appointment Cancelled Reason Master APIs.',
@@ -2702,6 +2712,27 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/doctor-rotas': collectionOperations({
+      tag: 'Doctor Rota',
+      entity: 'Doctor Rota',
+      summaryEntity: 'Doctor Rotas',
+      schemaName: 'DoctorRota',
+      createSchemaName: 'CreateDoctorRotaRequest',
+      example: doctorRotaRequestExample,
+      security: [{ cookieAuth: [] }],
+      listErrorResponses: authenticatedListErrorResponses,
+      mutationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/doctor-rotas/{id}': itemOperations({
+      tag: 'Doctor Rota',
+      entity: 'Doctor Rota',
+      schemaName: 'DoctorRota',
+      updateSchemaName: 'UpdateDoctorRotaRequest',
+      example: doctorRotaRequestExample,
+      parameters: [numberIdPathParameter('Doctor Rota')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
     '/api/v1/appointments/types': appointmentMasterCollection({
       tag: 'Appointment Type',
       entity: 'Appointment Type',
@@ -4752,6 +4783,44 @@ export const openApiDocument = {
       CreateAppointmentModeRequest: appointmentMasterCreateSchema('Appointment Mode'),
       UpdateAppointmentModeRequest: appointmentMasterCreateSchema('Appointment Mode'),
       AppointmentMode: appointmentMasterSchema('CreateAppointmentModeRequest'),
+      CreateDoctorRotaRequest: {
+        type: 'object',
+        required: ['name', 'fromTime', 'toTime'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          fromTime: {
+            type: 'string',
+            pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
+            description: 'Start time in 24-hour HH:mm format.',
+          },
+          toTime: {
+            type: 'string',
+            pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
+            description: 'End time in 24-hour HH:mm format. Must be after fromTime.',
+          },
+        },
+      },
+      UpdateDoctorRotaRequest: schemaRef('CreateDoctorRotaRequest'),
+      DoctorRota: {
+        allOf: [
+          schemaRef('CreateDoctorRotaRequest'),
+          {
+            type: 'object',
+            required: ['id', 'tenantId', 'isActive', 'createdOn', 'modifiedOn'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              isActive: { type: 'boolean' },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
       CreateAppointmentStatusRequest: appointmentMasterCreateSchema('Appointment Status', true),
       UpdateAppointmentStatusRequest: appointmentMasterCreateSchema('Appointment Status', true),
       AppointmentStatus: appointmentMasterSchema('CreateAppointmentStatusRequest'),
