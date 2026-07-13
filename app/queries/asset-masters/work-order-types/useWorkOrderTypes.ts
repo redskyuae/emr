@@ -1,5 +1,19 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+import { useQuery, type QueryClient } from '@tanstack/react-query';
+
+=======
+"use client"
+=======
+'use client';
+>>>>>>> 0693485 (build updating)
+import { useQuery } from '@tanstack/react-query';
+>>>>>>> 3530472 (greptil sugesstions updated)
+=======
 'use client';
 import { useQuery } from '@tanstack/react-query';
+>>>>>>> 069348530b0ed134064b4dad6e0ad65735f9fe8d
 import { parseApiError } from '@/app/queries/api-error';
 import type { ListWorkOrderTypesResponse } from '@/app/api/v1/work-orders/types/types';
 
@@ -40,3 +54,28 @@ export function useWorkOrderTypesQuery(params: WorkOrderTypesParams) {
     queryFn: () => fetchWorkOrderTypes(params),
   });
 }
+<<<<<<< HEAD
+
+export function removeWorkOrderType(queryClient: QueryClient, id: number) {
+  queryClient.setQueriesData<ListWorkOrderTypesResponse>(
+    { queryKey: workOrderTypesQueryKey },
+    (previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      const data = previous.data.filter((type) => type.id !== id);
+
+      if (data.length === previous.data.length) {
+        return previous;
+      }
+
+      const total = Math.max(previous.meta.total - 1, 0);
+      const totalPages = previous.meta.pageSize > 0 ? Math.ceil(total / previous.meta.pageSize) : 0;
+
+      return { ...previous, data, meta: { ...previous.meta, total, totalPages } };
+    }
+  );
+}
+=======
+>>>>>>> 069348530b0ed134064b4dad6e0ad65735f9fe8d
