@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
+  BedDouble,
   Boxes,
   Building2,
   CalendarClock,
@@ -84,6 +85,11 @@ export const appNavGroups: AppNavGroup[] = [
   {
     title: 'Operations',
     items: [
+      {
+        title: 'Rooms',
+        href: '/rooms',
+        icon: BedDouble,
+      },
       {
         title: 'Doctors',
         href: '/doctors',
@@ -180,6 +186,12 @@ export const appNavGroups: AppNavGroup[] = [
           { title: 'Status', href: '/asset-management-masters/statuses' },
           { title: 'Work Order Type', href: '/asset-management-masters/work-order-types' },
         ],
+      },
+      {
+        title: 'Room Masters',
+        href: '/room-masters',
+        icon: BedDouble,
+        items: [{ title: 'Room Type', href: '/room-masters/types' }],
       },
       {
         title: 'Global References',
@@ -315,6 +327,18 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/asset-management-masters/work-order-types': {
     title: 'Work Order Types',
     subtitle: 'Tenant-scoped maintenance work classification records for Work Orders.',
+  },
+  '/rooms': {
+    title: 'Rooms',
+    subtitle: 'Room registry, Bed capacity, and availability across this Tenant.',
+    primaryAction: {
+      label: 'Add room',
+      href: '/rooms?room=new',
+    },
+  },
+  '/room-masters/types': {
+    title: 'Room Types',
+    subtitle: 'Tenant-scoped classification and daily rate records for Rooms.',
   },
   '/global-references': {
     title: 'Global References',
