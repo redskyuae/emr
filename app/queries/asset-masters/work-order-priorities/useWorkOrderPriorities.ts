@@ -55,8 +55,7 @@ export function removeWorkOrderPriority(queryClient: QueryClient, id: number) {
         return previous;
       }
       const total = Math.max(previous.meta.total - 1, 0);
-      const totalPages =
-        previous.meta.pageSize > 0 ? Math.ceil(total / previous.meta.pageSize) : 0;
+      const totalPages = previous.meta.pageSize > 0 ? Math.ceil(total / previous.meta.pageSize) : 0;
       return { ...previous, data, meta: { ...previous.meta, total, totalPages } };
     }
   );
