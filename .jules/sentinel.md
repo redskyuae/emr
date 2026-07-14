@@ -1,0 +1,4 @@
+## 2024-07-14 - Missing Authentication on Master Data Endpoints
+**Vulnerability:** Master data API endpoints (countries, languages, states, religions, nationalities) lacked authentication checks, allowing unauthenticated users to read, create, update, and delete these records.
+**Learning:** The application does not use global middleware for authentication. Instead, route-level authentication must be explicitly enforced in each individual API endpoint using helpers like `requireAuth()`, `requireTenantSession()`, or `requireTenantAdminSession()` from `@/app/api/lib/utils/auth-helpers`. It's easy to forget to add these checks when creating new routes.
+**Prevention:** Always verify that every new API route includes the appropriate authentication helper (e.g., `requireAuth()`) and properly handles unauthorized responses before merging.

@@ -5,6 +5,8 @@ import type { GetLanguageResponse, UpdateLanguageResponse } from './types';
 import { deleteLanguageCommand } from '@/app/api/lib/modules/language/commands/delete-language-command';
 import { updateLanguageCommand } from '@/app/api/lib/modules/language/commands/update-language-command';
 import { getLanguageByIdQuery } from '@/app/api/lib/modules/language/queries/get-language-by-id-query';
+import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
+
 
 type LanguageRouteContext = {
   params: Promise<{ id: string }>;
@@ -24,6 +26,9 @@ function errorMessage(status: number) {
 
 export async function GET(_request: NextRequest, context: LanguageRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
+
     const { id } = await context.params;
     const result = await getLanguageByIdQuery(id);
 
@@ -47,6 +52,9 @@ export async function GET(_request: NextRequest, context: LanguageRouteContext) 
 
 export async function PUT(request: NextRequest, context: LanguageRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
+
     const { id } = await context.params;
     let payload: unknown;
 
@@ -81,6 +89,9 @@ export async function PUT(request: NextRequest, context: LanguageRouteContext) {
 
 export async function DELETE(_request: NextRequest, context: LanguageRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) return session;
+
     const { id } = await context.params;
     const result = await deleteLanguageCommand(id);
 
