@@ -1,0 +1,189 @@
+app/api/lib/modules/room/commands/update-room-command.ts
+  be786855b46b87e5 1-44
+app/api/lib/modules/room/validator/delete-room-validator.ts
+  be786855b46b87e5 1-38
+app/(protected)/rooms/_utils/room-status.ts
+  be786855b46b87e5 1-48
+CONTEXT.md
+  be786855b46b87e5 205-224
+app/(protected)/rooms/_components/room-skeletons.tsx
+  be786855b46b87e5 1-114
+app/(protected)/room-masters/types/_utils/room-type-form-schema.ts
+  be786855b46b87e5 1-23
+app/api/lib/modules/room/validator/get-room-by-id-validator.ts
+  be786855b46b87e5 1-38
+app/api/v1/rooms/types.ts
+  be786855b46b87e5 1-20
+app/api/lib/modules/room/validator/room-reference-validator.ts
+  be786855b46b87e5 1-24
+app/(protected)/rooms/_components/_sheets/room-form-sheet.tsx
+  be786855b46b87e5 1-448
+app/(protected)/rooms/loader.tsx
+  be786855b46b87e5 1-97
+app/api/lib/modules/room-type/validator/get-room-types-validator.ts
+  be786855b46b87e5 1-13
+app/api/lib/modules/room-type/validator/update-room-type-validator.ts
+  be786855b46b87e5 1-71
+app/(protected)/rooms/_components/_modals/room-delete-dialog.tsx
+  be786855b46b87e5 1-79
+app/queries/rooms/useRooms.ts
+  be786855b46b87e5 1-65
+app/api/lib/modules/room/commands/delete-room-command.ts
+  be786855b46b87e5 1-35
+app/api/lib/modules/room-type/validator/room-type-validator.unit.tests.ts
+  be786855b46b87e5 1-137
+app/api/lib/modules/room/queries/get-rooms-query.ts
+  be786855b46b87e5 1-39
+app/api/lib/modules/room-type/commands/update-room-type-command.ts
+  be786855b46b87e5 1-48
+app/queries/rooms/useUpdateRoom.ts
+  be786855b46b87e5 1-42
+app/api/lib/modules/room-type/validator/get-room-type-by-id-validator.ts
+  be786855b46b87e5 1-38
+app/api/lib/modules/room/repository/room-repository.integration.tests.ts
+  be786855b46b87e5 1-224
+app/api/lib/openapi/document.ts
+  be786855b46b87e5 889-1076,1646-1647,4146-4330,4459-4473,6147-6331
+app/api/v1/rooms/summary/route.ts
+  be786855b46b87e5 1-32
+app/api/lib/modules/room/validator/get-rooms-validator.ts
+  be786855b46b87e5 1-13
+app/api/lib/modules/room-type/commands/room-type-commands.unit.tests.ts
+  be786855b46b87e5 1-177
+app/api/lib/modules/room-type/schemas/room-type-schema.unit.tests.ts
+  be786855b46b87e5 1-97
+app/(protected)/room-masters/types/_utils/format-daily-rate.ts
+  be786855b46b87e5 1-10
+app/(protected)/room-masters/types/loader.tsx
+  be786855b46b87e5 1-77
+app/(protected)/room-masters/types/_components/room-type-views.tsx
+  be786855b46b87e5 1-210
+app/(protected)/room-masters/types/_components/room-type-skeletons.tsx
+  be786855b46b87e5 1-108
+app/api/lib/modules/room-type/schemas/room-type-schema.ts
+  be786855b46b87e5 1-82
+app/(protected)/rooms/_components/room-summary-cards.tsx
+  be786855b46b87e5 1-68
+app/api/lib/modules/room-type/queries/get-room-type-by-id-query.ts
+  be786855b46b87e5 1-32
+app/api/lib/modules/room/commands/room-commands.unit.tests.ts
+  be786855b46b87e5 1-167
+app/(protected)/rooms/_components/rooms-page-impl.tsx
+  be786855b46b87e5 1-317
+app/(protected)/room-masters/types/_components/_sheets/room-type-form-sheet.tsx
+  be786855b46b87e5 1-325
+app/(protected)/room-masters/types/_components/_modals/room-type-delete-dialog.tsx
+  be786855b46b87e5 1-25,27-79
+app/api/lib/modules/room/queries/get-room-summary-query.ts
+  be786855b46b87e5 1-18
+app/queries/room-masters/room-types/useRoomType.ts
+  be786855b46b87e5 1-29
+app/queries/room-masters/room-types/useDeleteRoomType.ts
+  be786855b46b87e5 1-33
+app/api/lib/modules/room-type/repository/room-type-repository.ts
+  be786855b46b87e5 1-217
+app/api/lib/modules/room/schemas/room-schema.ts
+  be786855b46b87e5 1-132
+app/api/lib/modules/room/commands/create-room-command.ts
+  be786855b46b87e5 1-42
+app/api/v1/rooms/types/[id]/types.ts
+  be786855b46b87e5 1-19
+app/queries/rooms/useCreateRoom.ts
+  be786855b46b87e5 1-35
+app/api/lib/modules/room-type/queries/room-type-queries.unit.tests.ts
+  be786855b46b87e5 1-81
+app/api/v1/rooms/summary/types.ts
+  be786855b46b87e5 1-5
+app/api/v1/rooms/route.ts
+  be786855b46b87e5 1-147
+app/api/lib/modules/room-type/validator/create-room-type-validator.ts
+  be786855b46b87e5 1-30
+app/api/lib/modules/room-type/commands/delete-room-type-command.ts
+  be786855b46b87e5 1-40
+app/(protected)/rooms/_components/room-views.tsx
+  be786855b46b87e5 1-224
+app/api/lib/modules/room-type/validator/room-type-uniqueness-validator.ts
+  be786855b46b87e5 1-68
+app/api/lib/modules/room/validator/create-room-validator.ts
+  be786855b46b87e5 1-41
+app/queries/rooms/useRoomSummary.ts
+  be786855b46b87e5 1-26
+app/(protected)/room-masters/types/_components/room-type-page-impl.tsx
+  be786855b46b87e5 1-264
+app/db/schema/room.ts
+  be786855b46b87e5 1-48
+app/(protected)/room-masters/types/page.tsx
+  be786855b46b87e5 1-5
+app/api/v1/rooms/[id]/types.ts
+  be786855b46b87e5 1-23
+components/app/app-shell-config.ts
+  be786855b46b87e5 4,89-92,191-195,331-342
+app/(protected)/rooms/page.tsx
+  be786855b46b87e5 1-5
+app/api/lib/modules/room/queries/room-queries.unit.tests.ts
+  be786855b46b87e5 1-110
+app/api/lib/modules/room-type/commands/create-room-type-command.ts
+  be786855b46b87e5 1-37
+app/api/lib/modules/room/queries/get-room-by-id-query.ts
+  be786855b46b87e5 1-28
+app/api/v1/rooms/[id]/route.ts
+  be786855b46b87e5 1-122
+app/api/lib/modules/room-type/validator/delete-room-type-validator.ts
+  be786855b46b87e5 1-38
+app/queries/rooms/useRoom.ts
+  be786855b46b87e5 1-27
+app/api/lib/modules/room/repository/room-repository.ts
+  be786855b46b87e5 1-147,149-276
+app/api/lib/modules/room/validator/update-room-validator.ts
+  be786855b46b87e5 1-74
+app/api/lib/modules/room/schemas/room-schema.unit.tests.ts
+  be786855b46b87e5 1-97
+app/api/lib/modules/room-type/queries/get-room-types-query.ts
+  be786855b46b87e5 1-33
+app/api/v1/rooms/types/route.ts
+  be786855b46b87e5 1-117
+app/(protected)/rooms/_utils/room-form-schema.ts
+  be786855b46b87e5 1-31
+app/api/v1/rooms/types/[id]/route.ts
+  be786855b46b87e5 1-122
+app/queries/room-masters/room-types/useUpdateRoomType.ts
+  be786855b46b87e5 1-46
+app/api/lib/modules/room-type/repository/room-type-repository.integration.tests.ts
+  be786855b46b87e5 1-188
+app/api/lib/modules/room/validator/room-number-validator.ts
+  be786855b46b87e5 1-52
+app/api/lib/modules/room/validator/get-room-summary-validator.ts
+  be786855b46b87e5 1-13
+app/api/lib/modules/room/validator/room-validator.unit.tests.ts
+  be786855b46b87e5 1-157
+app/db/schema/room-type.ts
+  be786855b46b87e5 1-31
+app/queries/rooms/useDeleteRoom.ts
+  be786855b46b87e5 1-35
+app/queries/room-masters/room-types/useRoomTypes.ts
+  be786855b46b87e5 1-61
+app/queries/room-masters/room-types/useCreateRoomType.ts
+  be786855b46b87e5 1-33
+app/api/v1/rooms/types/types.ts
+  be786855b46b87e5 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "46295b16e2f717fa6a1463c7040dd83ce22447a9",
+  "prompts": {
+    "be786855b46b87e5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ba4812a-5ec7-41a8-b59a-7b26629d7360",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 7383,
+      "total_deletions": 6,
+      "accepted_lines": 7372,
+      "overriden_lines": 2
+    }
+  }
+}
