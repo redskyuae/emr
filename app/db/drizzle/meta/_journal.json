@@ -232,6 +232,13 @@
       "when": 1783592296363,
       "tag": "0032_cool_gorgon",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1784005134635,
+      "tag": "0033_superb_maginty",
+      "breakpoints": true
     }
   ]
 }
