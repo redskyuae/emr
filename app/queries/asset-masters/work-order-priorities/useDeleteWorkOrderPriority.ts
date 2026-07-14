@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import { workOrderPriorityQueryKey } from './useWorkOrderPriority';
-import { workOrderPrioritiesQueryKey } from './useWorkOrderPriorities';
+import { removeWorkOrderPriority, workOrderPrioritiesQueryKey } from './useWorkOrderPriorities';
 
 async function deleteWorkOrderPriority(id: number): Promise<void> {
   const response = await fetch(`/api/v1/work-orders/priorities/${id}`, {
@@ -22,6 +22,9 @@ export function useDeleteWorkOrderPriority() {
 
   return useMutation({
     mutationFn: deleteWorkOrderPriority,
+    onSuccess: (_data, id) => {
+      removeWorkOrderPriority(queryClient, id);
+    },
     onSettled: (_data, _error, id) => {
       void queryClient.invalidateQueries({ queryKey: workOrderPrioritiesQueryKey });
       void queryClient.invalidateQueries({ queryKey: workOrderPriorityQueryKey(id) });
