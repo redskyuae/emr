@@ -384,6 +384,54 @@ const doctorRotaRequestExample = {
   toTime: '13:00',
 };
 
+const doctorScheduleRequestExample = {
+  doctorId: 42,
+  rotaIds: [1, 2],
+  slotInMinute: '00:15',
+  slotFromDate: '2026-07-15',
+  slotToDate: '2026-07-20',
+};
+
+const doctorScheduleExample = {
+  id: 11,
+  tenantId: 'org_apollo',
+  doctorId: 42,
+  isActive: true,
+  slotFromDate: '2026-07-15',
+  slotToDate: '2026-07-20',
+  slotInMinute: '00:15',
+  slotDurationMinutes: 15,
+  rotaDetails: [
+    {
+      rotaId: 1,
+      rotaName: 'Morning Rota',
+      rotaTime: '09:00 - 13:00',
+      fromTime: '09:00',
+      toTime: '13:00',
+    },
+  ],
+  createdOn: '2026-07-14T08:30:00.000Z',
+  modifiedOn: '2026-07-14T08:30:00.000Z',
+};
+
+const doctorSlotsExample = [
+  {
+    slotDate: '2026-07-15',
+    status: 'Available',
+    rotas: [
+      {
+        doctorRotaId: 1,
+        rotaName: 'Morning Rota',
+        duration: 15,
+        slots: [
+          { slot: 1, slotTime: '09:00', slotStatus: 'Available' },
+          { slot: 2, slotTime: '09:15', slotStatus: 'Available' },
+        ],
+      },
+    ],
+  },
+];
+
 const specialtyExample = {
   id: 7,
   tenantId: 'org_apollo',
@@ -1390,6 +1438,10 @@ export const openApiDocument = {
     {
       name: 'Doctor Rota',
       description: 'Tenant-scoped reusable Doctor scheduling template APIs.',
+    },
+    {
+      name: 'Doctor Schedule',
+      description: 'Tenant-scoped Doctor availability assignment and generated slot APIs.',
     },
     {
       name: 'Appointment Cancelled Reason',
@@ -2733,6 +2785,121 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
+    '/api/v1/doctor-schedules': {
+      get: {
+        tags: ['Doctor Schedule'],
+        summary: 'List Doctor Schedules',
+        description:
+          'Returns paginated DoctorSchedules for the active Tenant. Optional filters narrow by Doctor and schedule date range.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          parameterRef('Page'),
+          parameterRef('Limit'),
+          {
+            name: 'doctorId',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 1 },
+            description: 'Doctor identifier.',
+          },
+          {
+            name: 'fromDate',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', format: 'date' },
+          },
+          {
+            name: 'toDate',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', format: 'date' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated DoctorSchedule list.',
+            content: jsonContent(paginatedSchema('DoctorSchedule'), {
+              data: [doctorScheduleExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          ...authenticatedListErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Doctor Schedule'],
+        summary: 'Create Doctor Schedule',
+        description:
+          'Assigns one or more DoctorRotas to a Doctor over a date range. tenantId is resolved from the active Session.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateDoctorScheduleRequest', doctorScheduleRequestExample),
+        responses: {
+          '201': {
+            description: 'DoctorSchedule created.',
+            content: jsonContent(dataEnvelopeSchema('DoctorSchedule'), {
+              data: doctorScheduleExample,
+            }),
+          },
+          ...authenticatedErrorResponses,
+          '409': responseRef('Conflict'),
+        },
+      },
+      put: {
+        tags: ['Doctor Schedule'],
+        summary: 'Update Doctor Schedule',
+        description:
+          'Updates a DoctorSchedule by id supplied in the request body. rotaType=new adds rota links; rotaType=remove removes rota links.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('UpdateDoctorScheduleRequest', {
+          doctorScheduleId: 11,
+          rotaIds: [2],
+          rotaType: 'new',
+        }),
+        responses: {
+          '200': {
+            description: 'DoctorSchedule updated.',
+            content: jsonContent(dataEnvelopeSchema('DoctorSchedule'), {
+              data: doctorScheduleExample,
+            }),
+          },
+          ...authenticatedErrorResponses,
+          '409': responseRef('Conflict'),
+        },
+      },
+    },
+    '/api/v1/doctor-slots': {
+      get: {
+        tags: ['Doctor Schedule'],
+        summary: 'List Doctor Slots',
+        description:
+          'Generates available DoctorSlots for a Doctor on one date from active DoctorSchedules and assigned DoctorRotas.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'doctorId',
+            in: 'query',
+            required: true,
+            schema: { type: 'integer', minimum: 1 },
+            description: 'Doctor identifier.',
+          },
+          {
+            name: 'slotDate',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', format: 'date' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Generated DoctorSlots grouped by date and DoctorRota.',
+            content: jsonContent(dataEnvelopeArraySchema('DoctorSlotDate'), {
+              data: doctorSlotsExample,
+            }),
+          },
+          ...authenticatedListErrorResponses,
+        },
+      },
+    },
     '/api/v1/appointments/types': appointmentMasterCollection({
       tag: 'Appointment Type',
       entity: 'Appointment Type',
@@ -4820,6 +4987,130 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      CreateDoctorScheduleRequest: {
+        type: 'object',
+        required: ['rotaIds', 'slotInMinute', 'slotFromDate', 'slotToDate'],
+        properties: {
+          doctorId: { type: 'integer', minimum: 1 },
+          clinicianLicenseId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Legacy alias accepted for doctorId.',
+          },
+          rotaIds: { type: 'array', items: { type: 'integer', minimum: 1 }, minItems: 1 },
+          slotInMinute: {
+            oneOf: [
+              { type: 'integer', minimum: 1, maximum: 1440 },
+              { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+            ],
+            description: 'Slot duration as minutes or legacy HH:mm duration.',
+          },
+          slotFromDate: { type: 'string', format: 'date' },
+          slotToDate: { type: 'string', format: 'date' },
+        },
+      },
+      UpdateDoctorScheduleRequest: {
+        type: 'object',
+        properties: {
+          doctorScheduleId: { type: 'integer', minimum: 1 },
+          clinicianScheduleId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Legacy alias accepted for doctorScheduleId.',
+          },
+          doctorId: { type: 'integer', minimum: 1 },
+          clinicianLicenseId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Legacy alias accepted for doctorId.',
+          },
+          rotaIds: { type: 'array', items: { type: 'integer', minimum: 1 }, minItems: 1 },
+          rotaType: { type: 'string', enum: ['new', 'remove'] },
+          slotInMinute: {
+            oneOf: [
+              { type: 'integer', minimum: 1, maximum: 1440 },
+              { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+            ],
+          },
+          slotFromDate: { type: 'string', format: 'date' },
+          slotToDate: { type: 'string', format: 'date' },
+        },
+      },
+      DoctorScheduleRotaDetail: {
+        type: 'object',
+        required: ['rotaId', 'rotaName', 'rotaTime', 'fromTime', 'toTime'],
+        properties: {
+          rotaId: { type: 'integer', minimum: 1 },
+          rotaName: { type: 'string' },
+          rotaTime: { type: 'string' },
+          fromTime: { type: 'string' },
+          toTime: { type: 'string' },
+        },
+      },
+      DoctorSchedule: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'doctorId',
+          'isActive',
+          'slotFromDate',
+          'slotToDate',
+          'slotInMinute',
+          'slotDurationMinutes',
+          'rotaDetails',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          doctorId: { type: 'integer', minimum: 1 },
+          isActive: { type: 'boolean' },
+          slotFromDate: { type: 'string', format: 'date' },
+          slotToDate: { type: 'string', format: 'date' },
+          slotInMinute: { type: 'string' },
+          slotDurationMinutes: { type: 'integer', minimum: 1 },
+          rotaDetails: {
+            type: 'array',
+            items: schemaRef('DoctorScheduleRotaDetail'),
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      DoctorSlot: {
+        type: 'object',
+        required: ['slot', 'slotTime', 'slotStatus'],
+        properties: {
+          slot: { type: 'integer', minimum: 1 },
+          slotTime: { type: 'string' },
+          slotStatus: { type: 'string', enum: ['Available'] },
+        },
+      },
+      DoctorSlotRota: {
+        type: 'object',
+        required: ['doctorRotaId', 'rotaName', 'duration', 'slots'],
+        properties: {
+          doctorRotaId: { type: 'integer', minimum: 1 },
+          rotaName: { type: 'string' },
+          duration: { type: 'integer', minimum: 1 },
+          slots: { type: 'array', items: schemaRef('DoctorSlot') },
+        },
+      },
+      DoctorSlotDate: {
+        type: 'object',
+        required: ['slotDate', 'status', 'rotas'],
+        properties: {
+          slotDate: { type: 'string', format: 'date' },
+          status: { type: 'string', enum: ['Available'] },
+          rotas: { type: 'array', items: schemaRef('DoctorSlotRota') },
+        },
       },
       CreateAppointmentStatusRequest: appointmentMasterCreateSchema('Appointment Status', true),
       UpdateAppointmentStatusRequest: appointmentMasterCreateSchema('Appointment Status', true),

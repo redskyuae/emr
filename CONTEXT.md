@@ -98,6 +98,14 @@ A Staff member with a clinical specialty who sees Patients. A Doctor is always a
 
 A Tenant-scoped reusable scheduling template that defines a named time window during which Doctors may be scheduled. A DoctorRota is not tied to one Doctor until a Doctor Schedule assigns it; its name identifies the template, and multiple DoctorRotas may cover the same time window when they represent different scheduling purposes.
 
+## DoctorSchedule
+
+A Tenant-scoped assignment of one or more DoctorRotas to a Doctor over a date range. A DoctorSchedule defines when a Doctor is available for Appointment booking and the duration used to divide that availability into DoctorSlots.
+
+## DoctorSlot
+
+A bookable time interval for a Doctor on a specific date. DoctorSlots are derived from DoctorSchedules and DoctorRotas; they are not the same as Appointments because no Patient has been booked until an Appointment is created.
+
 ## Specialty
 
 A Tenant-scoped Master representing a Doctor's clinical area of expertise or credential (e.g., Cardiology, Pediatrics, Orthopedics). A Specialty is a property of the Doctor and is independent of Facility. Distinct from Department, which is an organizational unit within a Facility — a Department named "Cardiology" may be staffed by Doctors of differing Specialties, and a Doctor keeps their Specialty regardless of where they work. Each Tenant manages its own Specialties independently.
