@@ -15,7 +15,6 @@ vi.mock('../repository/doctor-schedule-repository', () => ({
   doctorScheduleRepository: {
     getActiveRotaCount: vi.fn(),
     getDoctorScheduleById: vi.fn(),
-    hasOverlappingSchedule: vi.fn(),
   },
 }));
 
@@ -67,12 +66,24 @@ describe('DoctorSchedule validators', () => {
     doctorRepo.getDoctorById.mockResolvedValue(doctor);
     scheduleRepo.getActiveRotaCount.mockResolvedValue(1);
     scheduleRepo.getDoctorScheduleById.mockResolvedValue(schedule);
-    scheduleRepo.hasOverlappingSchedule.mockResolvedValue(false);
   });
 
   it('should return schema validation errors without repository access on create', async () => {
     const result = await validateCreateDoctorSchedule({}, 'tenant-1');
     expect(result).toMatchObject({ success: false });
+    expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
+    expect(scheduleRepo.getActiveRotaCount).not.toHaveBeenCalled();
+  });
+
+  it('should return validation errors without repository access when create rota ids are duplicated', async () => {
+    const result = await validateCreateDoctorSchedule(
+      { ...payload, rotaIds: [3, 3, 4] },
+      'tenant-1'
+    );
+    expect(result).toEqual({
+      success: false,
+      errors: ['Doctor rota IDs must be unique'],
+    });
     expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
     expect(scheduleRepo.getActiveRotaCount).not.toHaveBeenCalled();
   });
@@ -90,15 +101,6 @@ describe('DoctorSchedule validators', () => {
     await expect(validateCreateDoctorSchedule(payload, 'tenant-1')).resolves.toEqual({
       success: false,
       errors: ['One or more Doctor rotas are invalid.'],
-    });
-  });
-
-  it('should return conflict when create date range overlaps existing schedule', async () => {
-    scheduleRepo.hasOverlappingSchedule.mockResolvedValue(true);
-    await expect(validateCreateDoctorSchedule(payload, 'tenant-1')).resolves.toEqual({
-      success: false,
-      status: StatusCodes.CONFLICT,
-      errors: ['Doctor schedule overlaps with an existing schedule.'],
     });
   });
 
@@ -132,16 +134,9 @@ describe('DoctorSchedule validators', () => {
     });
   });
 
-  it('should validate update rotas and overlap against existing schedule values', async () => {
+  it('should validate update rotas without performing overlap checks outside the write transaction', async () => {
     await validateUpdateDoctorSchedule({ doctorScheduleId: 1, rotaIds: [3] }, 'tenant-1');
     expect(scheduleRepo.getActiveRotaCount).toHaveBeenCalledWith('tenant-1', [3]);
-    expect(scheduleRepo.hasOverlappingSchedule).toHaveBeenCalledWith(
-      'tenant-1',
-      2,
-      '2026-07-15',
-      '2026-07-20',
-      { excludeId: 1 }
-    );
   });
 
   it('should validate list and slot params', () => {

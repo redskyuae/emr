@@ -1,5 +1,3 @@
-import { StatusCodes } from 'http-status-codes';
-
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
@@ -35,21 +33,6 @@ export async function validateCreateDoctorSchedule(
     return {
       success: false,
       errors: ['One or more Doctor rotas are invalid.'],
-    };
-  }
-
-  const hasOverlap = await doctorScheduleRepository.hasOverlappingSchedule(
-    tenantId,
-    result.data.doctorId,
-    result.data.slotFromDate,
-    result.data.slotToDate
-  );
-
-  if (hasOverlap) {
-    return {
-      success: false,
-      status: StatusCodes.CONFLICT,
-      errors: ['Doctor schedule overlaps with an existing schedule.'],
     };
   }
 

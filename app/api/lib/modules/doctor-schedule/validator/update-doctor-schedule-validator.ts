@@ -30,8 +30,6 @@ export async function validateUpdateDoctorSchedule(
     };
   }
 
-  const doctorId = result.data.payload.doctorId ?? existingSchedule.doctorId;
-
   if (result.data.payload.doctorId !== undefined) {
     const doctor = await doctorRepository.getDoctorById(result.data.payload.doctorId, tenantId);
 
@@ -55,25 +53,6 @@ export async function validateUpdateDoctorSchedule(
         errors: ['One or more Doctor rotas are invalid.'],
       };
     }
-  }
-
-  const slotFromDate = result.data.payload.slotFromDate ?? existingSchedule.slotFromDate;
-  const slotToDate = result.data.payload.slotToDate ?? existingSchedule.slotToDate;
-
-  const hasOverlap = await doctorScheduleRepository.hasOverlappingSchedule(
-    tenantId,
-    doctorId,
-    slotFromDate,
-    slotToDate,
-    { excludeId: result.data.id }
-  );
-
-  if (hasOverlap) {
-    return {
-      success: false,
-      status: StatusCodes.CONFLICT,
-      errors: ['Doctor schedule overlaps with an existing schedule.'],
-    };
   }
 
   return { success: true, data: result.data };

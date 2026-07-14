@@ -13,10 +13,8 @@ export async function GET(request: NextRequest) {
       return tenantSession;
     }
 
-    const doctorId =
-      request.nextUrl.searchParams.get('doctorId') ??
-      request.nextUrl.searchParams.get('clinicianId');
-    const slotDate = request.nextUrl.searchParams.get('slotDate');
+    const doctorId = request.nextUrl.searchParams.get('doctorId') ?? undefined;
+    const slotDate = request.nextUrl.searchParams.get('slotDate') ?? undefined;
 
     const queryResult = await getDoctorSlotsQuery({
       tenantId: tenantSession.tenantId,

@@ -2800,7 +2800,7 @@ export const openApiDocument = {
             in: 'query',
             required: false,
             schema: { type: 'integer', minimum: 1 },
-            description: 'Doctor identifier. The legacy clinicianId alias is also accepted.',
+            description: 'Doctor identifier.',
           },
           {
             name: 'fromDate',
@@ -2830,7 +2830,7 @@ export const openApiDocument = {
         tags: ['Doctor Schedule'],
         summary: 'Create Doctor Schedule',
         description:
-          'Assigns one or more DoctorRotas to a Doctor over a date range. tenantId is resolved from the active Session; facilityId is not persisted while Facility is not modeled in this backend.',
+          'Assigns one or more DoctorRotas to a Doctor over a date range. tenantId is resolved from the active Session.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreateDoctorScheduleRequest', doctorScheduleRequestExample),
         responses: {
@@ -2841,6 +2841,7 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedErrorResponses,
+          '409': responseRef('Conflict'),
         },
       },
       put: {
@@ -2862,6 +2863,7 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedErrorResponses,
+          '409': responseRef('Conflict'),
         },
       },
     },
@@ -2878,7 +2880,7 @@ export const openApiDocument = {
             in: 'query',
             required: true,
             schema: { type: 'integer', minimum: 1 },
-            description: 'Doctor identifier. The legacy clinicianId alias is also accepted.',
+            description: 'Doctor identifier.',
           },
           {
             name: 'slotDate',
@@ -4996,11 +4998,6 @@ export const openApiDocument = {
             minimum: 1,
             description: 'Legacy alias accepted for doctorId.',
           },
-          facilityId: {
-            type: 'integer',
-            minimum: 1,
-            description: 'Accepted for legacy clients but not persisted.',
-          },
           rotaIds: { type: 'array', items: { type: 'integer', minimum: 1 }, minItems: 1 },
           slotInMinute: {
             oneOf: [
@@ -5011,7 +5008,6 @@ export const openApiDocument = {
           },
           slotFromDate: { type: 'string', format: 'date' },
           slotToDate: { type: 'string', format: 'date' },
-          rotaType: { type: 'string', enum: ['new', 'remove'] },
         },
       },
       UpdateDoctorScheduleRequest: {
@@ -5028,11 +5024,6 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description: 'Legacy alias accepted for doctorId.',
-          },
-          facilityId: {
-            type: 'integer',
-            minimum: 1,
-            description: 'Accepted for legacy clients but not persisted.',
           },
           rotaIds: { type: 'array', items: { type: 'integer', minimum: 1 }, minItems: 1 },
           rotaType: { type: 'string', enum: ['new', 'remove'] },

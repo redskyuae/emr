@@ -11,6 +11,7 @@ import type {
   CreateDoctorScheduleData,
   UpdateDoctorScheduleData,
 } from '../schemas/doctor-schedule-schema';
+import { DoctorScheduleOverlapError } from '../errors/doctor-schedule-overlap-error';
 import { formatSlotDuration, minutesFromTime } from '../schemas/doctor-schedule-schema';
 
 type DoctorScheduleRow = {
@@ -114,6 +115,40 @@ function generateSlotTimes(fromTime: string, toTime: string, duration: number) {
   return slots;
 }
 
+async function lockDoctorScheduleScope(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tenantId: string,
+  doctorId: number
+) {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${tenantId}), ${doctorId})`);
+}
+
+async function hasOverlappingScheduleInTransaction(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tenantId: string,
+  doctorId: number,
+  fromDate: string,
+  toDate: string,
+  { excludeId }: { excludeId?: number } = {}
+) {
+  const [overlap] = await tx
+    .select({ id: doctorScheduleTable.id })
+    .from(doctorScheduleTable)
+    .where(
+      and(
+        eq(doctorScheduleTable.tenantId, tenantId),
+        eq(doctorScheduleTable.doctorId, doctorId),
+        eq(doctorScheduleTable.isDeleted, false),
+        lte(doctorScheduleTable.slotFromDate, toDate),
+        gte(doctorScheduleTable.slotToDate, fromDate),
+        excludeId ? sql`${doctorScheduleTable.id} <> ${excludeId}` : undefined
+      )
+    )
+    .limit(1);
+
+  return overlap !== undefined;
+}
+
 async function getDoctorScheduleById(
   id: number,
   tenantId: string
@@ -151,6 +186,20 @@ async function getDoctorScheduleById(
 
 async function createDoctorSchedule(data: CreateDoctorScheduleData): Promise<DoctorSchedule> {
   const scheduleId = await db.transaction(async (tx) => {
+    await lockDoctorScheduleScope(tx, data.tenantId, data.doctorId);
+
+    const hasOverlap = await hasOverlappingScheduleInTransaction(
+      tx,
+      data.tenantId,
+      data.doctorId,
+      data.slotFromDate,
+      data.slotToDate
+    );
+
+    if (hasOverlap) {
+      throw new DoctorScheduleOverlapError();
+    }
+
     const [createdSchedule] = await tx
       .insert(doctorScheduleTable)
       .values({
@@ -163,13 +212,15 @@ async function createDoctorSchedule(data: CreateDoctorScheduleData): Promise<Doc
       })
       .returning({ id: doctorScheduleTable.id });
 
-    await tx.insert(doctorScheduleRotaTable).values(
-      data.rotaIds.map((doctorRotaId) => ({
-        doctorRotaId,
-        tenantId: data.tenantId,
-        doctorScheduleId: createdSchedule.id,
-      }))
-    );
+    if (data.rotaIds.length > 0) {
+      await tx.insert(doctorScheduleRotaTable).values(
+        data.rotaIds.map((doctorRotaId) => ({
+          doctorRotaId,
+          tenantId: data.tenantId,
+          doctorScheduleId: createdSchedule.id,
+        }))
+      );
+    }
 
     return createdSchedule.id;
   });
@@ -189,9 +240,48 @@ async function updateDoctorSchedule(
 ): Promise<DoctorSchedule | undefined> {
   const updated = await db.transaction(async (tx) => {
     const now = new Date();
-    const scheduleUpdate: Partial<typeof doctorScheduleTable.$inferInsert> = {
-      modifiedOn: now,
-    };
+
+    const [existingSchedule] = await tx
+      .select({
+        doctorId: doctorScheduleTable.doctorId,
+        slotToDate: doctorScheduleTable.slotToDate,
+        slotFromDate: doctorScheduleTable.slotFromDate,
+      })
+      .from(doctorScheduleTable)
+      .where(
+        and(
+          eq(doctorScheduleTable.id, id),
+          eq(doctorScheduleTable.tenantId, data.tenantId),
+          eq(doctorScheduleTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!existingSchedule) {
+      return false;
+    }
+
+    const nextDoctorId = data.doctorId ?? existingSchedule.doctorId;
+    const nextSlotToDate = data.slotToDate ?? existingSchedule.slotToDate;
+    const nextSlotFromDate = data.slotFromDate ?? existingSchedule.slotFromDate;
+
+    await lockDoctorScheduleScope(tx, data.tenantId, nextDoctorId);
+
+    const hasOverlap = await hasOverlappingScheduleInTransaction(
+      tx,
+      data.tenantId,
+      nextDoctorId,
+      nextSlotFromDate,
+      nextSlotToDate,
+      { excludeId: id }
+    );
+
+    if (hasOverlap) {
+      throw new DoctorScheduleOverlapError();
+    }
+
+    const scheduleUpdate: Partial<typeof doctorScheduleTable.$inferInsert> = { modifiedOn: now };
 
     if (data.doctorId !== undefined) {
       scheduleUpdate.doctorId = data.doctorId;
@@ -209,7 +299,7 @@ async function updateDoctorSchedule(
       scheduleUpdate.slotDurationMinutes = data.slotDurationMinutes;
     }
 
-    const [schedule] = await tx
+    await tx
       .update(doctorScheduleTable)
       .set(scheduleUpdate)
       .where(
@@ -218,12 +308,7 @@ async function updateDoctorSchedule(
           eq(doctorScheduleTable.tenantId, data.tenantId),
           eq(doctorScheduleTable.isDeleted, false)
         )
-      )
-      .returning({ id: doctorScheduleTable.id });
-
-    if (!schedule) {
-      return false;
-    }
+      );
 
     if (data.rotaIds && data.rotaIds.length > 0) {
       if (data.rotaType === 'remove') {
@@ -260,6 +345,73 @@ async function updateDoctorSchedule(
   });
 
   return updated ? getDoctorScheduleById(id, data.tenantId) : undefined;
+}
+
+async function deleteDoctorSchedule(
+  id: number,
+  tenantId: string
+): Promise<DoctorSchedule | undefined> {
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .select(scheduleWithRotaColumns)
+      .from(doctorScheduleTable)
+      .leftJoin(
+        doctorScheduleRotaTable,
+        and(
+          eq(doctorScheduleRotaTable.doctorScheduleId, doctorScheduleTable.id),
+          eq(doctorScheduleRotaTable.tenantId, tenantId),
+          eq(doctorScheduleRotaTable.isDeleted, false)
+        )
+      )
+      .leftJoin(
+        doctorRotaTable,
+        and(
+          eq(doctorRotaTable.id, doctorScheduleRotaTable.doctorRotaId),
+          eq(doctorRotaTable.tenantId, tenantId),
+          eq(doctorRotaTable.isDeleted, false)
+        )
+      )
+      .where(
+        and(
+          eq(doctorScheduleTable.id, id),
+          eq(doctorScheduleTable.tenantId, tenantId),
+          eq(doctorScheduleTable.isDeleted, false)
+        )
+      )
+      .orderBy(asc(doctorRotaTable.name), asc(doctorRotaTable.id));
+
+    const existingSchedule = toSchedule(rows);
+
+    if (!existingSchedule) {
+      return undefined;
+    }
+
+    const deletedOn = new Date();
+
+    await tx
+      .update(doctorScheduleTable)
+      .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
+      .where(
+        and(
+          eq(doctorScheduleTable.id, id),
+          eq(doctorScheduleTable.tenantId, tenantId),
+          eq(doctorScheduleTable.isDeleted, false)
+        )
+      );
+
+    await tx
+      .update(doctorScheduleRotaTable)
+      .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
+      .where(
+        and(
+          eq(doctorScheduleRotaTable.tenantId, tenantId),
+          eq(doctorScheduleRotaTable.doctorScheduleId, id),
+          eq(doctorScheduleRotaTable.isDeleted, false)
+        )
+      );
+
+    return existingSchedule;
+  });
 }
 
 async function getDoctorSchedules({
@@ -423,6 +575,7 @@ export const doctorScheduleRepository = {
   getDoctorSchedules,
   createDoctorSchedule,
   updateDoctorSchedule,
+  deleteDoctorSchedule,
   getDoctorScheduleById,
   hasOverlappingSchedule,
 };

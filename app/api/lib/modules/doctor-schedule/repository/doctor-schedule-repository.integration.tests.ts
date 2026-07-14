@@ -83,6 +83,25 @@ describe('DoctorSchedule repository', () => {
     ).resolves.toMatchObject({ id: created.id });
   });
 
+  it('should create a doctor schedule without rota links when rota ids are empty', async () => {
+    const fixtures = await createTenantFixtures('tenant-a');
+    const created = await doctorScheduleRepository.createDoctorSchedule({
+      tenantId: 'tenant-a',
+      doctorId: fixtures.doctorId,
+      rotaIds: [],
+      slotToDate: '2026-07-20',
+      slotFromDate: '2026-07-15',
+      slotDurationMinutes: 15,
+    });
+
+    expect(created).toMatchObject({
+      id: expect.any(Number),
+      tenantId: 'tenant-a',
+      doctorId: fixtures.doctorId,
+      rotaDetails: [],
+    });
+  });
+
   it('should isolate schedules by tenant', async () => {
     const tenantA = await createTenantFixtures('tenant-a');
     await createTenantFixtures('tenant-b');
@@ -100,6 +119,28 @@ describe('DoctorSchedule repository', () => {
     ).resolves.toBeUndefined();
     await expect(
       doctorScheduleRepository.getDoctorSchedules({ tenantId: 'tenant-b' })
+    ).resolves.toMatchObject({ data: [], total: 0 });
+  });
+
+  it('should soft-delete doctor schedule and exclude it from future reads', async () => {
+    const fixtures = await createTenantFixtures('tenant-a');
+    const created = await doctorScheduleRepository.createDoctorSchedule({
+      tenantId: 'tenant-a',
+      doctorId: fixtures.doctorId,
+      rotaIds: [fixtures.morningRotaId],
+      slotToDate: '2026-07-20',
+      slotFromDate: '2026-07-15',
+      slotDurationMinutes: 15,
+    });
+
+    await expect(
+      doctorScheduleRepository.deleteDoctorSchedule(created.id, 'tenant-a')
+    ).resolves.toMatchObject({ id: created.id });
+    await expect(
+      doctorScheduleRepository.getDoctorScheduleById(created.id, 'tenant-a')
+    ).resolves.toBeUndefined();
+    await expect(
+      doctorScheduleRepository.getDoctorSchedules({ tenantId: 'tenant-a' })
     ).resolves.toMatchObject({ data: [], total: 0 });
   });
 
@@ -144,22 +185,24 @@ describe('DoctorSchedule repository', () => {
       slotDurationMinutes: 15,
     });
 
-    await expect(
-      doctorScheduleRepository.updateDoctorSchedule(created.id, {
-        tenantId: 'tenant-a',
-        rotaIds: [fixtures.eveningRotaId],
-        rotaType: 'new',
-      })
-    ).resolves.toMatchObject({
-      rotaDetails: expect.arrayContaining([{ rotaName: 'Evening Rota' }]),
+    const afterAdd = await doctorScheduleRepository.updateDoctorSchedule(created.id, {
+      tenantId: 'tenant-a',
+      rotaIds: [fixtures.eveningRotaId],
+      rotaType: 'new',
     });
-    await expect(
-      doctorScheduleRepository.updateDoctorSchedule(created.id, {
-        tenantId: 'tenant-a',
-        rotaIds: [fixtures.morningRotaId],
-        rotaType: 'remove',
-      })
-    ).resolves.toMatchObject({ rotaDetails: [{ rotaName: 'Evening Rota' }] });
+
+    expect(afterAdd?.rotaDetails.map((rota) => rota.rotaName)).toEqual([
+      'Evening Rota',
+      'Morning Rota',
+    ]);
+
+    const afterRemove = await doctorScheduleRepository.updateDoctorSchedule(created.id, {
+      tenantId: 'tenant-a',
+      rotaIds: [fixtures.morningRotaId],
+      rotaType: 'remove',
+    });
+
+    expect(afterRemove?.rotaDetails.map((rota) => rota.rotaName)).toEqual(['Evening Rota']);
   });
 
   it('should generate available slots from assigned rotas', async () => {
@@ -224,5 +267,55 @@ describe('DoctorSchedule repository', () => {
         { excludeId: created.id }
       )
     ).resolves.toBe(false);
+  });
+
+  it('should reject creating an overlapping schedule inside the transaction', async () => {
+    const fixtures = await createTenantFixtures('tenant-a');
+    await doctorScheduleRepository.createDoctorSchedule({
+      tenantId: 'tenant-a',
+      doctorId: fixtures.doctorId,
+      rotaIds: [fixtures.morningRotaId],
+      slotToDate: '2026-07-20',
+      slotFromDate: '2026-07-15',
+      slotDurationMinutes: 15,
+    });
+
+    await expect(
+      doctorScheduleRepository.createDoctorSchedule({
+        tenantId: 'tenant-a',
+        doctorId: fixtures.doctorId,
+        rotaIds: [fixtures.eveningRotaId],
+        slotToDate: '2026-07-25',
+        slotFromDate: '2026-07-18',
+        slotDurationMinutes: 15,
+      })
+    ).rejects.toThrow('Doctor schedule overlaps with an existing schedule.');
+  });
+
+  it('should reject updating a schedule into an overlapping date range inside the transaction', async () => {
+    const fixtures = await createTenantFixtures('tenant-a');
+    await doctorScheduleRepository.createDoctorSchedule({
+      tenantId: 'tenant-a',
+      doctorId: fixtures.doctorId,
+      rotaIds: [fixtures.morningRotaId],
+      slotToDate: '2026-07-20',
+      slotFromDate: '2026-07-15',
+      slotDurationMinutes: 15,
+    });
+    const laterSchedule = await doctorScheduleRepository.createDoctorSchedule({
+      tenantId: 'tenant-a',
+      doctorId: fixtures.doctorId,
+      rotaIds: [fixtures.eveningRotaId],
+      slotToDate: '2026-07-25',
+      slotFromDate: '2026-07-21',
+      slotDurationMinutes: 15,
+    });
+
+    await expect(
+      doctorScheduleRepository.updateDoctorSchedule(laterSchedule.id, {
+        tenantId: 'tenant-a',
+        slotFromDate: '2026-07-18',
+      })
+    ).rejects.toThrow('Doctor schedule overlaps with an existing schedule.');
   });
 });

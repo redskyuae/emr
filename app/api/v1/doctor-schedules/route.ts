@@ -29,10 +29,7 @@ export async function GET(request: NextRequest) {
 
     const page = parsePositiveInteger(request.nextUrl.searchParams.get('page'), 1);
     const limit = parsePositiveInteger(request.nextUrl.searchParams.get('limit'), 10);
-    const doctorId =
-      request.nextUrl.searchParams.get('doctorId') ??
-      request.nextUrl.searchParams.get('clinicianId') ??
-      undefined;
+    const doctorId = request.nextUrl.searchParams.get('doctorId') ?? undefined;
     const fromDate = request.nextUrl.searchParams.get('fromDate') ?? undefined;
     const toDate = request.nextUrl.searchParams.get('toDate') ?? undefined;
 

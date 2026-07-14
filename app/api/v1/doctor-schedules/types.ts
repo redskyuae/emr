@@ -5,16 +5,15 @@ export type ListDoctorSchedulesResponse = Paginated<DoctorSchedule>;
 
 export type SaveDoctorScheduleRequest = {
   doctorId?: number;
-  facilityId?: number;
   clinicianLicenseId?: number;
   rotaIds: number[];
   slotInMinute: string | number;
   slotToDate: string;
   slotFromDate: string;
-  rotaType?: 'new' | 'remove';
 };
 
 export type UpdateDoctorScheduleRequest = Partial<SaveDoctorScheduleRequest> & {
+  rotaType?: 'new' | 'remove';
   doctorScheduleId?: number;
   clinicianScheduleId?: number;
 };

@@ -47,7 +47,8 @@ const positiveIdSchema = (fieldName: string) =>
 
 const rotaIdsSchema = z
   .array(positiveIdSchema('Doctor rota ID'), { error: 'Doctor rota is required' })
-  .min(1, 'Doctor rota is required');
+  .min(1, 'Doctor rota is required')
+  .refine((ids) => new Set(ids).size === ids.length, 'Doctor rota IDs must be unique');
 
 const slotDurationSchema = z.unknown().transform((value, context) => {
   if (value === undefined || value === null || value === '') {
@@ -106,13 +107,11 @@ const optionalSlotDurationSchema = z.preprocess((value) => {
 const createDoctorScheduleRawSchema = z
   .object({
     doctorId: positiveIdSchema('Doctor ID').optional(),
-    facilityId: positiveIdSchema('Facility ID').optional(),
     clinicianLicenseId: positiveIdSchema('Doctor ID').optional(),
     rotaIds: rotaIdsSchema,
     slotInMinute: slotDurationSchema,
     slotToDate: dateOnlySchema('Slot to date'),
     slotFromDate: dateOnlySchema('Slot from date'),
-    rotaType: z.enum(rotaTypes, { error: 'Rota type is invalid' }).optional(),
   })
   .strict()
   .refine((data) => data.doctorId !== undefined || data.clinicianLicenseId !== undefined, {
@@ -127,7 +126,6 @@ const createDoctorScheduleRawSchema = z
 const updateDoctorScheduleRawSchema = z
   .object({
     doctorId: positiveIdSchema('Doctor ID').optional(),
-    facilityId: positiveIdSchema('Facility ID').optional(),
     rotaIds: rotaIdsSchema.optional(),
     rotaType: z.enum(rotaTypes, { error: 'Rota type is invalid' }).optional(),
     slotToDate: dateOnlySchema('Slot to date').optional(),
@@ -147,7 +145,6 @@ const updateDoctorScheduleRawSchema = z
       [
         data.doctorId,
         data.rotaIds,
-        data.rotaType,
         data.slotToDate,
         data.slotFromDate,
         data.slotInMinute,
@@ -157,6 +154,10 @@ const updateDoctorScheduleRawSchema = z
       message: 'At least one Doctor schedule field is required',
     }
   )
+  .refine((data) => data.rotaType === undefined || data.rotaIds !== undefined, {
+    path: ['rotaIds'],
+    message: 'Doctor rota is required when rota type is provided',
+  })
   .refine(
     (data) =>
       data.slotFromDate === undefined ||
