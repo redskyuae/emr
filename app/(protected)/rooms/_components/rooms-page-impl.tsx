@@ -67,7 +67,7 @@ export function RoomsPageImpl() {
     roomParam !== null && roomParam !== 'new' && /^\d+$/.test(roomParam) ? Number(roomParam) : null;
 
   const summaryQuery = useRoomSummaryQuery();
-  const roomTypesQuery = useRoomTypesQuery({ limit: 100 });
+  const roomTypesQuery = useRoomTypesQuery({ limit: 999 });
   const roomsQuery = useRoomsQuery({
     query: debouncedSearch || undefined,
     status: statusFilter === ALL_FILTER ? undefined : statusFilter,
