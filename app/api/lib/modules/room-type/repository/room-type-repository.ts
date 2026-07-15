@@ -136,7 +136,9 @@ async function getRoomTypeById(id: number, tenantId: string): Promise<RoomType |
 }
 
 async function getRoomTypes({ tenantId, page = 1, limit = 10, query }: RoomTypeListParams) {
-  const offset = (page - 1) * limit;
+  const safePage = Math.max(1, Math.floor(page));
+  const safeLimit = Math.max(1, Math.floor(limit));
+  const offset = (safePage - 1) * safeLimit;
   const trimmedQuery = query?.trim();
   const searchCondition = trimmedQuery
     ? or(
@@ -156,7 +158,7 @@ async function getRoomTypes({ tenantId, page = 1, limit = 10, query }: RoomTypeL
       .from(roomTypeTable)
       .where(whereClause)
       .orderBy(asc(roomTypeTable.name), asc(roomTypeTable.id))
-      .limit(limit)
+      .limit(safeLimit)
       .offset(offset),
     db.select({ total: count() }).from(roomTypeTable).where(whereClause),
   ]);

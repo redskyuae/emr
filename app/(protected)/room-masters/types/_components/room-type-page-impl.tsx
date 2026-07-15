@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -14,6 +14,7 @@ import {
   Search,
   Table as TableIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { RoomType } from '@/app/api/lib/modules/room-type/schemas/room-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useRoomTypeQuery } from '@/app/queries/room-masters/room-types/useRoomType';
@@ -85,6 +86,16 @@ export function RoomTypePageImpl() {
     (roomTypesQuery.isLoading || editingRoomTypeQuery.isFetching);
   const sheetOpen =
     isCreating || (editingRoomTypeId !== null && (roomTypeResolving || editingRoomType !== null));
+  const roomTypeNotFound =
+    editingRoomTypeId !== null && !roomTypeResolving && editingRoomType === null;
+
+  useEffect(() => {
+    if (roomTypeNotFound) {
+      toast.error('This Room Type no longer exists.');
+      void setRoomTypeParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomTypeNotFound]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {

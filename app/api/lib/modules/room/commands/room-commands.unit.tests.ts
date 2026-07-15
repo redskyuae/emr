@@ -163,5 +163,32 @@ describe('Room commands', () => {
       errors: ['Room type 3 is Invalid.'],
       status: StatusCodes.CONFLICT,
     });
+    expect(repo.updateRoom).not.toHaveBeenCalled();
+  });
+
+  it('should not write when the delete validator fails', async () => {
+    validateDelete.mockReturnValue({
+      success: false,
+      errors: ['Room abc is Invalid.'],
+    });
+
+    await expect(deleteRoomCommand('abc', 'tenant-1')).resolves.toEqual({
+      success: false,
+      errors: ['Room abc is Invalid.'],
+    });
+    expect(repo.deleteRoom).not.toHaveBeenCalled();
+  });
+
+  it('should map a Postgres 23505 room number violation on update to a conflict error', async () => {
+    repo.updateRoom.mockRejectedValue({
+      code: '23505',
+      constraint: 'room_tenant_room_number_idx',
+    });
+
+    await expect(updateRoomCommand('1', 'tenant-1', {})).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ["Room number '101-A' already exists."],
+    });
   });
 });

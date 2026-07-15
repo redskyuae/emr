@@ -64,7 +64,7 @@ export function RoomFormSheet({
 }: RoomFormSheetProps) {
   const createMutation = useCreateRoom();
   const updateMutation = useUpdateRoom();
-  const roomTypesQuery = useRoomTypesQuery({ limit: 100 });
+  const roomTypesQuery = useRoomTypesQuery({ limit: 999 });
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const initializedKeyRef = useRef<string | null>(null);
 
@@ -149,7 +149,8 @@ export function RoomFormSheet({
     ? 'Create a new Room in this Tenant.'
     : 'Update the Room details and its Room Status.';
 
-  const hasNoRoomTypes = !roomTypesQuery.isLoading && roomTypes.length === 0;
+  const hasNoRoomTypes =
+    !roomTypesQuery.isLoading && !roomTypesQuery.isError && roomTypes.length === 0;
 
   return (
     <Sheet open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
@@ -188,7 +189,15 @@ export function RoomFormSheet({
                 </Alert>
               ) : null}
 
-              {hasNoRoomTypes ? (
+              {roomTypesQuery.isError ? (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Could not load Room Types</AlertTitle>
+                  <AlertDescription>
+                    {getApiErrorMessage(roomTypesQuery.error)}
+                  </AlertDescription>
+                </Alert>
+              ) : hasNoRoomTypes ? (
                 <Alert className="mb-4">
                   <AlertCircle className="size-4" />
                   <AlertTitle>No Room Types configured</AlertTitle>

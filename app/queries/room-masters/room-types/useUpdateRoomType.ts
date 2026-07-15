@@ -7,6 +7,8 @@ import type {
   UpdateRoomTypeRequest,
   UpdateRoomTypeResponse,
 } from '@/app/api/v1/rooms/types/[id]/types';
+import { roomsQueryKey } from '@/app/queries/rooms/useRooms';
+import { roomSummaryQueryKey } from '@/app/queries/rooms/useRoomSummary';
 import { roomTypeQueryKey } from './useRoomType';
 import { roomTypesQueryKey } from './useRoomTypes';
 
@@ -41,6 +43,8 @@ export function useUpdateRoomType() {
     onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({ queryKey: roomTypesQueryKey });
       void queryClient.invalidateQueries({ queryKey: roomTypeQueryKey(variables.id) });
+      void queryClient.invalidateQueries({ queryKey: roomsQueryKey });
+      void queryClient.invalidateQueries({ queryKey: roomSummaryQueryKey });
     },
   });
 }

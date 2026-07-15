@@ -50,7 +50,6 @@ const roomTypeJoin = () =>
 function roomValues(data: CreateRoomData | UpdateRoomData) {
   return {
     status: data.status,
-    tenantId: data.tenantId,
     bedCount: data.bedCount,
     wing: data.wing ?? null,
     floor: data.floor ?? null,
@@ -62,10 +61,14 @@ function roomValues(data: CreateRoomData | UpdateRoomData) {
   };
 }
 
+function roomInsertValues(data: CreateRoomData) {
+  return { tenantId: data.tenantId, ...roomValues(data) };
+}
+
 async function createRoom(data: CreateRoomData): Promise<Room | undefined> {
   const [createdRoom] = await db
     .insert(roomTable)
-    .values(roomValues(data))
+    .values(roomInsertValues(data))
     .returning({ id: roomTable.id });
 
   return getRoomById(createdRoom.id, data.tenantId);
