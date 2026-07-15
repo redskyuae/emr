@@ -1,0 +1,33 @@
+app/api/lib/modules/room/repository/room-repository.ts
+  278ced19ecac0447 64-67,71
+app/(protected)/rooms/_components/_sheets/room-form-sheet.tsx
+  278ced19ecac0447 67,152-153,192-200
+app/api/lib/modules/room-type/repository/room-type-repository.ts
+  278ced19ecac0447 139-141,161
+app/queries/room-masters/room-types/useUpdateRoomType.ts
+  278ced19ecac0447 10-11,46-47
+app/(protected)/room-masters/types/_components/room-type-page-impl.tsx
+  278ced19ecac0447 3,17,89-98
+app/api/lib/modules/room/commands/room-commands.unit.tests.ts
+  278ced19ecac0447 166-192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "a0dec9d898ae701b8a5e58e99b6f69330c2c2720",
+  "prompts": {
+    "278ced19ecac0447": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a3a9b741-e8be-499e-aef4-ca4a2cd9ccf8",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 64,
+      "total_deletions": 8,
+      "accepted_lines": 64,
+      "overriden_lines": 0
+    }
+  }
+}
