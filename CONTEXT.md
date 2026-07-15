@@ -202,6 +202,26 @@ A named section of a Facility containing Beds, used for inpatient care (e.g., IC
 
 A physical bed within a Ward. Has a status (available, occupied, reserved). A Patient is assigned a Bed upon Admission.
 
+## Room
+
+A physical room within a Facility that holds one or more Beds and is classified by a Room Type. A Room is identified within a Tenant by its Room Number, carries a Room Status, and records where it sits (floor, wing, Facility, Department). A Room is the physical container that Beds belong to; it is not itself a Ward, which is an organizational section of a Facility.
+
+## Room Number
+
+The human-facing identifier for a Room within a Tenant (e.g., `101-A`). Unique within the Tenant and compared case-insensitively, so `101-a` and `101-A` are the same Room Number.
+
+## Room Type
+
+A Tenant-scoped Master that classifies Rooms, such as General Ward, Semi Private, Private, Deluxe, or Intensive Care. A Room Type carries a display color and an optional daily rate — the tariff charged per day for a Room of that type, expressed in the Tenant Reporting Currency. Each Tenant manages its own Room Types independently. A Room Type cannot be removed while any Room is still assigned to it.
+
+## Room Status
+
+The operational state of a Room: Available, Occupied, Reserved, Maintenance, or Cleaning. Unlike Asset Status or Work Order Status, Room Status is a fixed system-defined set rather than a Tenant-scoped Master — the same values apply to every Tenant. An Occupied Room cannot be deleted. Distinct from Bed status, which describes an individual Bed rather than the Room containing it.
+
+## Occupancy Rate
+
+The share of a Tenant's Rooms currently in the Occupied Room Status, expressed as a percentage and rounded to one decimal place. A Tenant with no Rooms has an Occupancy Rate of zero. Derived from Room Status, never stored.
+
 ## Asset
 
 A trackable piece of physical equipment owned by the Tenant, located at a Facility, serving a Department, and overseen by a Custodian.

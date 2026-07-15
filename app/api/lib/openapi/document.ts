@@ -886,6 +886,194 @@ const workOrderTypeErrorResponses = {
   '500': responseRef('InternalServerError'),
 };
 
+const roomTypeExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  name: 'Private Room',
+  code: 'PVT',
+  color: '#2563EB',
+  dailyRate: 4500,
+  description: 'Single-occupancy room with an attached bathroom',
+  createdOn: '2026-06-23T04:00:00.000Z',
+  modifiedOn: '2026-06-23T04:00:00.000Z',
+};
+
+const roomTypeRequestExample = {
+  name: 'Private Room',
+  code: 'pvt',
+  color: '#2563EB',
+  dailyRate: 4500,
+  description: 'Single-occupancy room with an attached bathroom',
+};
+
+const roomTypeValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Room type color must be a hex value like #2563EB.'],
+    }
+  ),
+};
+
+const roomTypeNotFound = {
+  description: 'Room Type was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Room type not found',
+    errors: ['Room type not found'],
+  }),
+};
+
+const roomTypeConflict = {
+  description:
+    'Room Type name/code already exists in the active Tenant, or the Room Type still has Rooms assigned to it.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateName: {
+          value: {
+            message: "Room type name 'Private Room' already exists.",
+            errors: ["Room type name 'Private Room' already exists."],
+          },
+        },
+        duplicateCode: {
+          value: {
+            message: "Room type code 'PVT' already exists.",
+            errors: ["Room type code 'PVT' already exists."],
+          },
+        },
+        inUse: {
+          value: {
+            message: 'Room type cannot be deleted while Rooms are assigned to it.',
+            errors: ['Room type cannot be deleted while Rooms are assigned to it.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const roomTypeErrorResponses = {
+  '400': roomTypeValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': roomTypeNotFound,
+  '409': roomTypeConflict,
+  '500': responseRef('InternalServerError'),
+};
+
+const roomExample = {
+  id: 1,
+  tenantId: 'org_apollo',
+  roomNumber: '101-A',
+  roomTypeId: 1,
+  status: 'AVAILABLE',
+  bedCount: 2,
+  floor: '1',
+  wing: 'East',
+  facility: 'Apollo Main Hospital',
+  department: 'Cardiology',
+  notes: 'Corner room with a window',
+  roomType: {
+    id: 1,
+    name: 'Private Room',
+    code: 'PVT',
+    color: '#2563EB',
+    dailyRate: 4500,
+  },
+  createdOn: '2026-06-23T04:00:00.000Z',
+  modifiedOn: '2026-06-23T04:00:00.000Z',
+};
+
+const roomRequestExample = {
+  roomNumber: '101-A',
+  roomTypeId: 1,
+  status: 'AVAILABLE',
+  bedCount: 2,
+  floor: '1',
+  wing: 'East',
+  facility: 'Apollo Main Hospital',
+  department: 'Cardiology',
+  notes: 'Corner room with a window',
+};
+
+const roomSummaryExample = {
+  totalRooms: 42,
+  totalBeds: 96,
+  availableRooms: 18,
+  occupancyRate: 45.2,
+  byStatus: [
+    { status: 'AVAILABLE', count: 18 },
+    { status: 'CLEANING', count: 3 },
+    { status: 'MAINTENANCE', count: 2 },
+    { status: 'OCCUPIED', count: 19 },
+  ],
+  byType: [
+    { roomTypeId: 1, name: 'Private Room', color: '#2563EB', count: 24 },
+    { roomTypeId: 2, name: 'General Ward', color: '#16A34A', count: 18 },
+  ],
+};
+
+const roomValidationFailed = {
+  description: 'Validation failed or the request body is not valid JSON.',
+  content: jsonContent(
+    { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+    {
+      message: 'Validation failed',
+      errors: ['Room status must be one of AVAILABLE, OCCUPIED, RESERVED, MAINTENANCE, CLEANING'],
+    }
+  ),
+};
+
+const roomNotFound = {
+  description: 'Room was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Room not found',
+    errors: ['Room not found'],
+  }),
+};
+
+const roomConflict = {
+  description:
+    'Room number already exists in the active Tenant, the referenced Room Type is invalid, or the Room is occupied.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateRoomNumber: {
+          value: {
+            message: "Room number '101-A' already exists.",
+            errors: ["Room number '101-A' already exists."],
+          },
+        },
+        invalidRoomType: {
+          value: {
+            message: 'Room type 99 is Invalid.',
+            errors: ['Room type 99 is Invalid.'],
+          },
+        },
+        occupied: {
+          value: {
+            message: 'Room cannot be deleted while it is occupied.',
+            errors: ['Room cannot be deleted while it is occupied.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const roomErrorResponses = {
+  '400': roomValidationFailed,
+  '401': responseRef('Unauthorized'),
+  '403': responseRef('Forbidden'),
+  '404': roomNotFound,
+  '409': roomConflict,
+  '500': responseRef('InternalServerError'),
+};
+
 const workOrderPriorityExample = {
   id: 1,
   tenantId: 'org_apollo',
@@ -1455,6 +1643,8 @@ export const openApiDocument = {
     { name: 'Work Order Status', description: 'Work Order Status Master APIs.' },
     { name: 'Work Order', description: 'Maintenance Work Order APIs.' },
     { name: 'Asset', description: 'Asset inventory APIs.' },
+    { name: 'Room Type', description: 'Tenant-scoped Room Type Master APIs.' },
+    { name: 'Room', description: 'Tenant-scoped Room registry and occupancy APIs.' },
     { name: 'Patient', description: 'Patient Registration and management APIs.' },
   ],
   paths: {
@@ -3953,6 +4143,191 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/rooms/types': {
+      get: {
+        tags: ['Room Type'],
+        summary: 'List Room Type Masters',
+        description:
+          'Returns a paginated list of Room Type Masters for the active Tenant. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Room Type Master list.',
+            content: jsonContent(paginatedSchema('RoomType'), {
+              data: [roomTypeExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': roomTypeValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Room Type'],
+        summary: 'Create Room Type',
+        description:
+          'Creates a Room Type Master in the active Tenant. The tenantId is resolved from the active authenticated Session and the request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateRoomTypeRequest', roomTypeRequestExample),
+        responses: {
+          '201': {
+            description: 'Room Type created.',
+            content: jsonContent(dataEnvelopeSchema('RoomType'), { data: roomTypeExample }),
+          },
+          ...roomTypeErrorResponses,
+        },
+      },
+    },
+    '/api/v1/rooms/types/{id}': {
+      get: {
+        tags: ['Room Type'],
+        summary: 'Get Room Type',
+        description:
+          'Returns one active Room Type Master by ID from the active Tenant. Room Types from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Room Type')],
+        responses: {
+          '200': {
+            description: 'Room Type found.',
+            content: jsonContent(dataEnvelopeSchema('RoomType'), { data: roomTypeExample }),
+          },
+          ...roomTypeErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Room Type'],
+        summary: 'Update Room Type',
+        description:
+          'Updates one active Room Type Master in the active Tenant. The tenantId is resolved from the active authenticated Session and the request code is normalized to uppercase.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Room Type')],
+        requestBody: requestBody('UpdateRoomTypeRequest', roomTypeRequestExample),
+        responses: {
+          '200': {
+            description: 'Room Type updated.',
+            content: jsonContent(dataEnvelopeSchema('RoomType'), { data: roomTypeExample }),
+          },
+          ...roomTypeErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Room Type'],
+        summary: 'Delete Room Type',
+        description:
+          'Soft-deletes one active Room Type Master in the active Tenant. Deletion is rejected while any non-deleted Room is assigned to the Room Type.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Room Type')],
+        responses: {
+          '204': { description: 'Room Type deleted.' },
+          ...roomTypeErrorResponses,
+        },
+      },
+    },
+    '/api/v1/rooms': {
+      get: {
+        tags: ['Room'],
+        summary: 'List Rooms',
+        description:
+          'Returns a paginated list of Rooms for the active Tenant, each with its Room Type resolved. Supports free-text search over room number, floor, wing, facility, and department, plus Room Status and Room Type filters.',
+        security: [{ cookieAuth: [] }],
+        parameters: [...listParameters, parameterRef('RoomTypeId'), parameterRef('RoomStatus')],
+        responses: {
+          '200': {
+            description: 'Paginated Room list.',
+            content: jsonContent(paginatedSchema('Room'), {
+              data: [roomExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': roomValidationFailed,
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Room'],
+        summary: 'Create Room',
+        description:
+          'Creates a Room in the active Tenant. The tenantId is resolved from the active authenticated Session. The room number must be unique within the Tenant (case-insensitive) and the Room Type must exist in the same Tenant.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateRoomRequest', roomRequestExample),
+        responses: {
+          '201': {
+            description: 'Room created.',
+            content: jsonContent(dataEnvelopeSchema('Room'), { data: roomExample }),
+          },
+          ...roomErrorResponses,
+        },
+      },
+    },
+    '/api/v1/rooms/summary': {
+      get: {
+        tags: ['Room'],
+        summary: 'Get Room summary',
+        description:
+          'Returns Room occupancy totals for the active Tenant: Room and Bed counts, counts grouped by Room Status and Room Type, and the occupancy rate as the percentage of Rooms in the OCCUPIED status. A Tenant with no Rooms reports a zero occupancy rate.',
+        security: [{ cookieAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Room summary for the active Tenant.',
+            content: jsonContent(dataEnvelopeSchema('RoomSummary'), { data: roomSummaryExample }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/rooms/{id}': {
+      get: {
+        tags: ['Room'],
+        summary: 'Get Room',
+        description:
+          'Returns one active Room by ID from the active Tenant, with its Room Type resolved. Rooms from other Tenants are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Room')],
+        responses: {
+          '200': {
+            description: 'Room found.',
+            content: jsonContent(dataEnvelopeSchema('Room'), { data: roomExample }),
+          },
+          ...roomErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Room'],
+        summary: 'Update Room',
+        description:
+          'Updates one active Room in the active Tenant, including its Room Status. The room number must remain unique within the Tenant (case-insensitive) and the Room Type must exist in the same Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Room')],
+        requestBody: requestBody('UpdateRoomRequest', roomRequestExample),
+        responses: {
+          '200': {
+            description: 'Room updated.',
+            content: jsonContent(dataEnvelopeSchema('Room'), { data: roomExample }),
+          },
+          ...roomErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Room'],
+        summary: 'Delete Room',
+        description:
+          'Soft-deletes one active Room in the active Tenant. Deletion is rejected while the Room is in the OCCUPIED Room Status.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Room')],
+        responses: {
+          '204': { description: 'Room deleted.' },
+          ...roomErrorResponses,
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -4080,6 +4455,21 @@ export const openApiDocument = {
         description:
           'Filters Staff by activation state. Omit to return both active and inactive Staff.',
         schema: { type: 'string', enum: ['active', 'inactive'] },
+      },
+      RoomTypeId: {
+        name: 'roomTypeId',
+        in: 'query',
+        required: false,
+        description: 'Filters Rooms by Room Type in the active Tenant.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+      RoomStatus: {
+        name: 'status',
+        in: 'query',
+        required: false,
+        description:
+          'Filters Rooms by Room Status. Unrecognized values are ignored and all Rooms are returned.',
+        schema: schemaRef('RoomStatus'),
       },
     },
     schemas: {
@@ -5753,6 +6143,191 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      RoomStatus: {
+        type: 'string',
+        enum: ['AVAILABLE', 'OCCUPIED', 'RESERVED', 'MAINTENANCE', 'CLEANING'],
+        description: 'Operational state of a Room.',
+      },
+      CreateRoomTypeRequest: {
+        type: 'object',
+        required: ['name', 'code', 'color'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty('Room Type code. The API normalizes this value to uppercase.'),
+          color: {
+            type: 'string',
+            pattern: '^#[0-9A-Fa-f]{6}$',
+            description: 'Room Type display color as a #RRGGBB hex value.',
+          },
+          dailyRate: {
+            type: ['number', 'null'],
+            minimum: 0,
+            maximum: 99999999.99,
+            description:
+              'Daily tariff for a Room of this Room Type, in the Tenant Reporting Currency. Omit when the Tenant does not price this Room Type.',
+          },
+          description: { type: ['string', 'null'], description: 'Room Type description.' },
+        },
+      },
+      UpdateRoomTypeRequest: schemaRef('CreateRoomTypeRequest'),
+      RoomType: {
+        allOf: [
+          schemaRef('CreateRoomTypeRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'color',
+              'dailyRate',
+              'description',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              dailyRate: { type: ['number', 'null'] },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreateRoomRequest: {
+        type: 'object',
+        required: ['roomNumber', 'roomTypeId', 'status', 'bedCount'],
+        properties: {
+          roomNumber: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            description: 'Room number, unique within the Tenant and compared case-insensitively.',
+          },
+          roomTypeId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Room Type Master in the same Tenant.',
+          },
+          status: schemaRef('RoomStatus'),
+          bedCount: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 50,
+            description: 'Number of Beds the Room holds.',
+          },
+          floor: { type: ['string', 'null'], maxLength: 20 },
+          wing: { type: ['string', 'null'], maxLength: 50 },
+          facility: { type: ['string', 'null'], maxLength: 150 },
+          department: { type: ['string', 'null'], maxLength: 150 },
+          notes: { type: ['string', 'null'], maxLength: 500 },
+        },
+      },
+      UpdateRoomRequest: schemaRef('CreateRoomRequest'),
+      Room: {
+        allOf: [
+          schemaRef('CreateRoomRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'roomNumber',
+              'roomTypeId',
+              'status',
+              'bedCount',
+              'floor',
+              'wing',
+              'facility',
+              'department',
+              'notes',
+              'roomType',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              floor: { type: ['string', 'null'] },
+              wing: { type: ['string', 'null'] },
+              facility: { type: ['string', 'null'] },
+              department: { type: ['string', 'null'] },
+              notes: { type: ['string', 'null'] },
+              roomType: {
+                type: 'object',
+                description: 'Room Type Master resolved for the Room.',
+                required: ['id', 'name', 'code', 'color', 'dailyRate'],
+                properties: {
+                  id: { type: 'integer', minimum: 1 },
+                  name: { type: 'string' },
+                  code: { type: 'string' },
+                  color: { type: 'string' },
+                  dailyRate: { type: ['number', 'null'] },
+                },
+              },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      RoomSummary: {
+        type: 'object',
+        required: [
+          'totalRooms',
+          'totalBeds',
+          'availableRooms',
+          'occupancyRate',
+          'byStatus',
+          'byType',
+        ],
+        properties: {
+          totalRooms: { type: 'integer', minimum: 0 },
+          totalBeds: { type: 'integer', minimum: 0 },
+          availableRooms: { type: 'integer', minimum: 0 },
+          occupancyRate: {
+            type: 'number',
+            minimum: 0,
+            maximum: 100,
+            description: 'Percentage of Rooms in the OCCUPIED Room Status, rounded to one decimal.',
+          },
+          byStatus: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['status', 'count'],
+              properties: {
+                status: schemaRef('RoomStatus'),
+                count: { type: 'integer', minimum: 0 },
+              },
+            },
+          },
+          byType: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['roomTypeId', 'name', 'color', 'count'],
+              properties: {
+                roomTypeId: { type: 'integer', minimum: 1 },
+                name: { type: 'string' },
+                color: { type: 'string' },
+                count: { type: 'integer', minimum: 0 },
+              },
+            },
+          },
+        },
       },
       CreateWorkOrderTypeRequest: {
         type: 'object',
