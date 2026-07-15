@@ -1,0 +1,25 @@
+app/(protected)/rooms/_components/rooms-page-impl.tsx
+  278ced19ecac0447 70
+app/api/lib/openapi/document.ts
+  278ced19ecac0447 6164,6170,6227-6231
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "eb6c0d1d8536b38f00dadeecffe94be33329402a",
+  "prompts": {
+    "278ced19ecac0447": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a3a9b741-e8be-499e-aef4-ca4a2cd9ccf8",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 8,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
