@@ -193,9 +193,7 @@ export function RoomFormSheet({
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="size-4" />
                   <AlertTitle>Could not load Room Types</AlertTitle>
-                  <AlertDescription>
-                    {getApiErrorMessage(roomTypesQuery.error)}
-                  </AlertDescription>
+                  <AlertDescription>{getApiErrorMessage(roomTypesQuery.error)}</AlertDescription>
                 </Alert>
               ) : hasNoRoomTypes ? (
                 <Alert className="mb-4">
