@@ -8,6 +8,7 @@ import { tenantProvisioningRepository } from '../repository/tenant-provisioning-
 import { validateTenantOnboarding } from '../validator/tenant-onboarding-validator';
 import { onboardTenantCommand } from './onboard-tenant-command';
 import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
+import { seedDefaultClinicalMastersCommand } from './seed-default-clinical-masters-command';
 import { seedDefaultSpecialtiesCommand } from './seed-default-specialties-command';
 import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
@@ -35,6 +36,7 @@ vi.mock('../../tenant/repository/tenant-repository', () => ({
 vi.mock('../repository/tenant-provisioning-repository', () => ({
   tenantProvisioningRepository: {
     hasSeededSpecialties: vi.fn(),
+    hasSeededClinicalMasters: vi.fn(),
     hasSeededAssetMasters: vi.fn(),
     hasSeededWorkOrderMasters: vi.fn(),
     hasSeededAppointmentMasters: vi.fn(),
@@ -47,6 +49,10 @@ vi.mock('./seed-default-appointment-masters-command', () => ({
 
 vi.mock('./seed-default-asset-masters-command', () => ({
   seedDefaultAssetMastersCommand: vi.fn(),
+}));
+
+vi.mock('./seed-default-clinical-masters-command', () => ({
+  seedDefaultClinicalMastersCommand: vi.fn(),
 }));
 
 vi.mock('./seed-default-specialties-command', () => ({
@@ -64,6 +70,7 @@ const tenantRepo = vi.mocked(tenantRepository);
 const provisioningRepo = vi.mocked(tenantProvisioningRepository);
 const seedAppointmentMasters = vi.mocked(seedDefaultAppointmentMastersCommand);
 const seedAssetMasters = vi.mocked(seedDefaultAssetMastersCommand);
+const seedClinicalMasters = vi.mocked(seedDefaultClinicalMastersCommand);
 const seedSpecialties = vi.mocked(seedDefaultSpecialtiesCommand);
 const seedWorkOrderMasters = vi.mocked(seedDefaultWorkOrderMastersCommand);
 
@@ -86,11 +93,13 @@ describe('OnboardTenant command', () => {
     permissionRepo.seedPermissionCatalogue.mockResolvedValue(undefined);
     seedSystemRoles.mockResolvedValue({ success: true, data: [] });
     provisioningRepo.hasSeededSpecialties.mockResolvedValue(false);
+    provisioningRepo.hasSeededClinicalMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededAssetMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededWorkOrderMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededAppointmentMasters.mockResolvedValue(false);
     seedAppointmentMasters.mockResolvedValue({ success: true, data: undefined });
     seedAssetMasters.mockResolvedValue({ success: true, data: undefined });
+    seedClinicalMasters.mockResolvedValue({ success: true, data: undefined });
     seedSpecialties.mockResolvedValue({ success: true, data: undefined });
     seedWorkOrderMasters.mockResolvedValue({ success: true, data: undefined });
     tenantRepo.markTenantOnboarded.mockResolvedValue(onboardedTenant);
@@ -141,6 +150,7 @@ describe('OnboardTenant command', () => {
     expect(permissionRepo.seedPermissionCatalogue).toHaveBeenCalledTimes(1);
     expect(seedSystemRoles).toHaveBeenCalledWith('org-1');
     expect(seedSpecialties).toHaveBeenCalledWith('org-1');
+    expect(seedClinicalMasters).toHaveBeenCalledWith('org-1');
     expect(seedAppointmentMasters).toHaveBeenCalledWith('org-1');
     expect(seedAssetMasters).toHaveBeenCalledWith('org-1');
     expect(seedWorkOrderMasters).toHaveBeenCalledWith('org-1');
@@ -161,6 +171,7 @@ describe('OnboardTenant command', () => {
     expect(permissionRepo.seedPermissionCatalogue).toHaveBeenCalledTimes(1);
     expect(seedSystemRoles).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
+    expect(seedClinicalMasters).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();

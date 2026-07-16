@@ -37,8 +37,10 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
+import { PatientChartSection } from './_chart/patient-chart-section';
 import { DeactivatePatientDialog } from './_modals/deactivate-patient-dialog';
 import { DeletePatientDialog } from './_modals/delete-patient-dialog';
 
@@ -177,74 +179,87 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2">
-        <CardHeader>
-          <CardTitle>Demographics</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          <DetailField label="Gender" value={getPatientGenderLabel(patient.gender)} />
-          <DetailField label="Date of birth" value={patient.dateOfBirth} />
-          <DetailField label="Blood group" value={patient.bloodGroup} />
-          <DetailField
-            label="Marital status"
-            value={
-              patient.maritalStatus ? getPatientMaritalStatusLabel(patient.maritalStatus) : null
-            }
-          />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="chart">Chart</TabsTrigger>
+        </TabsList>
 
-      <Card className="shadow-fluent-2">
-        <CardHeader>
-          <CardTitle>Contact</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <DetailField label="Phone" value={patient.phone} />
-          <DetailField label="Alternate phone" value={patient.alternatePhone} />
-          <DetailField label="Email" value={patient.email} />
-        </CardContent>
-      </Card>
+        <TabsContent value="overview" className="mt-4 space-y-4">
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Demographics</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              <DetailField label="Gender" value={getPatientGenderLabel(patient.gender)} />
+              <DetailField label="Date of birth" value={patient.dateOfBirth} />
+              <DetailField label="Blood group" value={patient.bloodGroup} />
+              <DetailField
+                label="Marital status"
+                value={
+                  patient.maritalStatus ? getPatientMaritalStatusLabel(patient.maritalStatus) : null
+                }
+              />
+            </CardContent>
+          </Card>
 
-      <Card className="shadow-fluent-2">
-        <CardHeader>
-          <CardTitle>Address</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <DetailField label="Address line 1" value={patient.addressLine1} />
-          <DetailField label="Address line 2" value={patient.addressLine2} />
-          <DetailField label="City" value={patient.city} />
-          <DetailField label="State" value={patient.state?.name} />
-          <DetailField label="Country" value={patient.country?.name} />
-          <DetailField label="Postal code" value={patient.postalCode} />
-        </CardContent>
-      </Card>
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Contact</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-3">
+              <DetailField label="Phone" value={patient.phone} />
+              <DetailField label="Alternate phone" value={patient.alternatePhone} />
+              <DetailField label="Email" value={patient.email} />
+            </CardContent>
+          </Card>
 
-      <Card className="shadow-fluent-2">
-        <CardHeader>
-          <CardTitle>Identifiers</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <DetailField label="Nationality" value={patient.nationality?.name} />
-          <DetailField label="Preferred language" value={patient.language?.name} />
-          <DetailField label="Religion" value={patient.religion?.name} />
-          <DetailField
-            label="Government ID type"
-            value={patient.govtIdType ? getPatientGovtIdTypeLabel(patient.govtIdType) : null}
-          />
-          <DetailField label="Government ID number" value={patient.govtIdNumber} />
-        </CardContent>
-      </Card>
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Address</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <DetailField label="Address line 1" value={patient.addressLine1} />
+              <DetailField label="Address line 2" value={patient.addressLine2} />
+              <DetailField label="City" value={patient.city} />
+              <DetailField label="State" value={patient.state?.name} />
+              <DetailField label="Country" value={patient.country?.name} />
+              <DetailField label="Postal code" value={patient.postalCode} />
+            </CardContent>
+          </Card>
 
-      <Card className="shadow-fluent-2">
-        <CardHeader>
-          <CardTitle>Emergency contact</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <DetailField label="Name" value={patient.emergencyContactName} />
-          <DetailField label="Relationship" value={patient.emergencyContactRelationship} />
-          <DetailField label="Phone" value={patient.emergencyContactPhone} />
-        </CardContent>
-      </Card>
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Identifiers</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-3">
+              <DetailField label="Nationality" value={patient.nationality?.name} />
+              <DetailField label="Preferred language" value={patient.language?.name} />
+              <DetailField label="Religion" value={patient.religion?.name} />
+              <DetailField
+                label="Government ID type"
+                value={patient.govtIdType ? getPatientGovtIdTypeLabel(patient.govtIdType) : null}
+              />
+              <DetailField label="Government ID number" value={patient.govtIdNumber} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Emergency contact</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-3">
+              <DetailField label="Name" value={patient.emergencyContactName} />
+              <DetailField label="Relationship" value={patient.emergencyContactRelationship} />
+              <DetailField label="Phone" value={patient.emergencyContactPhone} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="chart" className="mt-4">
+          <PatientChartSection patientId={patient.id} />
+        </TabsContent>
+      </Tabs>
 
       <DeactivatePatientDialog
         patient={patientPendingLifecycleChange}

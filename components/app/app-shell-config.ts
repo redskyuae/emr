@@ -195,6 +195,16 @@ export const appNavGroups: AppNavGroup[] = [
         items: [{ title: 'Room Type', href: '/room-masters/types' }],
       },
       {
+        title: 'Clinical Masters',
+        href: '/clinical-masters',
+        icon: ClipboardList,
+        items: [
+          { title: 'Diagnosis Codes', href: '/clinical-masters/diagnosis-codes' },
+          { title: 'Allergens', href: '/clinical-masters/allergens' },
+          { title: 'Note Types', href: '/clinical-masters/note-types' },
+        ],
+      },
+      {
         title: 'Global References',
         href: '/global-references',
         icon: Globe2,
@@ -348,6 +358,30 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/global-references': {
     title: 'Global References',
     subtitle: 'Shared reference data used across Tenants.',
+  },
+  '/clinical-masters/diagnosis-codes': {
+    title: 'Diagnosis Codes',
+    subtitle: 'Tenant-scoped ICD-10 diagnosis catalogue used across clinical records.',
+    primaryAction: {
+      label: 'Add Diagnosis Code',
+      href: '/clinical-masters/diagnosis-codes?create=1',
+    },
+  },
+  '/clinical-masters/allergens': {
+    title: 'Allergens',
+    subtitle: 'Tenant-scoped Allergen catalogue used when recording Patient allergies.',
+    primaryAction: {
+      label: 'Add Allergen',
+      href: '/clinical-masters/allergens?create=1',
+    },
+  },
+  '/clinical-masters/note-types': {
+    title: 'Clinical Note Types',
+    subtitle: 'Tenant-scoped classification records for Clinical Notes.',
+    primaryAction: {
+      label: 'Add Note Type',
+      href: '/clinical-masters/note-types?create=1',
+    },
   },
 };
 

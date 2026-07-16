@@ -209,6 +209,87 @@ const permissionGroups = [
       ['delete', 'Delete States.'],
     ],
   },
+  {
+    module: 'clinical-masters',
+    resource: 'diagnosis-code',
+    actions: [
+      ['read', 'View Diagnosis Codes.'],
+      ['create', 'Create Diagnosis Codes.'],
+      ['update', 'Update Diagnosis Codes.'],
+      ['delete', 'Delete Diagnosis Codes.'],
+    ],
+  },
+  {
+    module: 'clinical-masters',
+    resource: 'allergen',
+    actions: [
+      ['read', 'View Allergens.'],
+      ['create', 'Create Allergens.'],
+      ['update', 'Update Allergens.'],
+      ['delete', 'Delete Allergens.'],
+    ],
+  },
+  {
+    module: 'clinical-masters',
+    resource: 'clinical-note-type',
+    actions: [
+      ['read', 'View Clinical Note Types.'],
+      ['create', 'Create Clinical Note Types.'],
+      ['update', 'Update Clinical Note Types.'],
+      ['delete', 'Delete Clinical Note Types.'],
+    ],
+  },
+  {
+    module: 'clinical-records',
+    resource: 'allergy',
+    actions: [
+      ['read', 'View Patient Allergies.'],
+      ['create', 'Create Patient Allergies.'],
+      ['update', 'Update Patient Allergies.'],
+      ['delete', 'Delete Patient Allergies.'],
+    ],
+  },
+  {
+    module: 'clinical-records',
+    resource: 'problem',
+    actions: [
+      ['read', 'View Patient Problems.'],
+      ['create', 'Create Patient Problems.'],
+      ['update', 'Update Patient Problems.'],
+      ['delete', 'Delete Patient Problems.'],
+    ],
+  },
+  {
+    module: 'clinical-records',
+    resource: 'vital-sign',
+    actions: [
+      ['read', 'View Patient Vital Signs.'],
+      ['create', 'Create Patient Vital Signs.'],
+      ['update', 'Update Patient Vital Signs.'],
+      ['delete', 'Delete Patient Vital Signs.'],
+    ],
+  },
+  {
+    module: 'clinical-records',
+    resource: 'medication',
+    actions: [
+      ['read', 'View Patient Medications.'],
+      ['create', 'Create Patient Medications.'],
+      ['update', 'Update Patient Medications.'],
+      ['delete', 'Delete Patient Medications.'],
+    ],
+  },
+  {
+    module: 'clinical-records',
+    resource: 'clinical-note',
+    actions: [
+      ['read', 'View Clinical Notes.'],
+      ['create', 'Create Clinical Notes.'],
+      ['update', 'Update Clinical Notes.'],
+      ['delete', 'Delete Clinical Notes.'],
+      ['sign', 'Sign Clinical Notes.'],
+    ],
+  },
 ] satisfies PermissionGroup[];
 
 export const permissionSeedData: PermissionSeed[] = permissionGroups.flatMap((group) =>
