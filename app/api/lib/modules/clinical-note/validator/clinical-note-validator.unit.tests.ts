@@ -8,6 +8,7 @@ import { clinicalNoteRepository } from '../repository/clinical-note-repository';
 import { validateCreateClinicalNote } from './create-clinical-note-validator';
 import { validateUpdateClinicalNote } from './update-clinical-note-validator';
 import { validateSignClinicalNote } from './sign-clinical-note-validator';
+import { validateDeleteClinicalNote } from './delete-clinical-note-validator';
 
 vi.mock('../../patient/repository/patient-repository', () => ({
   patientRepository: { getPatientById: vi.fn() },
@@ -81,6 +82,26 @@ describe('ClinicalNote validators', () => {
 
   it('should pass signing a draft note', async () => {
     const result = await validateSignClinicalNote('4', 'tenant-1');
+    expect(result).toMatchObject({ success: true, data: { id: 4, tenantId: 'tenant-1' } });
+  });
+
+  it('should reject deleting a signed note', async () => {
+    noteRepo.getClinicalNoteById.mockResolvedValue({ id: 4, status: 'signed' } as never);
+    const result = await validateDeleteClinicalNote('4', 'tenant-1');
+    expect(result).toMatchObject({ success: false, status: StatusCodes.CONFLICT });
+    expect(result.success ? [] : result.errors).toContain(
+      'Clinical note 4 is signed and cannot be deleted.'
+    );
+  });
+
+  it('should return not-found when deleting a missing note', async () => {
+    noteRepo.getClinicalNoteById.mockResolvedValue(undefined);
+    const result = await validateDeleteClinicalNote('4', 'tenant-1');
+    expect(result).toMatchObject({ success: false, status: StatusCodes.NOT_FOUND });
+  });
+
+  it('should pass deleting a draft note', async () => {
+    const result = await validateDeleteClinicalNote('4', 'tenant-1');
     expect(result).toMatchObject({ success: true, data: { id: 4, tenantId: 'tenant-1' } });
   });
 });

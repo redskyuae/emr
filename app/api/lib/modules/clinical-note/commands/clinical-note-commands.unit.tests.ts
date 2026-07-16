@@ -58,7 +58,7 @@ describe('ClinicalNote commands', () => {
       data: { id: 4, payload: { noteTypeId: 2, subjective: 'Cough' } },
     });
     validateSign.mockResolvedValue({ success: true, data: { id: 4, tenantId: 'tenant-1' } });
-    validateDelete.mockReturnValue({ success: true, data: { id: 4, tenantId: 'tenant-1' } });
+    validateDelete.mockResolvedValue({ success: true, data: { id: 4, tenantId: 'tenant-1' } });
     repo.createClinicalNote.mockResolvedValue(note);
     repo.updateClinicalNote.mockResolvedValue(note);
     repo.signClinicalNote.mockResolvedValue(signedNote);

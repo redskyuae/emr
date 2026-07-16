@@ -8,10 +8,14 @@ export async function deleteClinicalNoteCommand(
   id: unknown,
   tenantId: unknown
 ): Promise<CommandResult<ClinicalNote>> {
-  const validationResult = validateDeleteClinicalNote(id, tenantId);
+  const validationResult = await validateDeleteClinicalNote(id, tenantId);
 
   if (!validationResult.success) {
-    return { success: false, errors: validationResult.errors };
+    return {
+      success: false,
+      errors: validationResult.errors,
+      status: validationResult.status,
+    };
   }
 
   const deleted = await clinicalNoteRepository.deleteClinicalNote(

@@ -57,7 +57,7 @@ export function ChartRowActions({
   extra,
 }: {
   onEdit?: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   editDisabled?: boolean;
   extra?: ReactNode;
 }) {
@@ -69,15 +69,17 @@ export function ChartRowActions({
           Edit
         </Button>
       ) : null}
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="text-destructive hover:text-destructive"
-        onClick={onDelete}
-      >
-        Delete
-      </Button>
+      {onDelete ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive"
+          onClick={onDelete}
+        >
+          Delete
+        </Button>
+      ) : null}
     </div>
   );
 }

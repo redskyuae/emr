@@ -72,7 +72,7 @@ function NoteCard({
           ) : null}
           <ChartRowActions
             onEdit={isSigned ? undefined : () => onEdit(note)}
-            onDelete={() => onDelete(note)}
+            onDelete={isSigned ? undefined : () => onDelete(note)}
           />
         </div>
       </div>

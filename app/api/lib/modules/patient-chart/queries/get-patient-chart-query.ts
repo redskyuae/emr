@@ -11,6 +11,10 @@ import { validateGetPatientChart } from '../validator/get-patient-chart-validato
 // per-record endpoints remain the source of truth for pagination and writes.
 const CHART_SLICE_LIMIT = 100;
 
+// Allergies drive the safety-critical allergy banner, which must surface every
+// active allergy — so they are never truncated by the generic slice cap.
+const ALLERGY_SLICE_LIMIT = 1000;
+
 export async function getPatientChartQuery(
   patientId: unknown,
   tenantId: unknown
@@ -29,7 +33,7 @@ export async function getPatientChartQuery(
   };
 
   const [allergies, problems, vitalSigns, medications, clinicalNotes] = await Promise.all([
-    patientAllergyRepository.getPatientAllergies(params),
+    patientAllergyRepository.getPatientAllergies({ ...params, limit: ALLERGY_SLICE_LIMIT }),
     patientProblemRepository.getPatientProblems(params),
     patientVitalSignRepository.getPatientVitalSigns(params),
     patientMedicationRepository.getPatientMedications(params),
