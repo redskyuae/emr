@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest, context: PatientMedicationRoute
       return tenantSession;
     }
 
-    const { medicationId } = await context.params;
+    const { id, medicationId } = await context.params;
     const result = await getPatientMedicationByIdQuery(medicationId, tenantSession.tenantId);
 
     if (!result.success) {
@@ -36,6 +36,13 @@ export async function GET(_request: NextRequest, context: PatientMedicationRoute
       return NextResponse.json(
         { message: errorMessage(status, result.errors), errors: result.errors },
         { status }
+      );
+    }
+
+    if (result.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Medication not found' },
+        { status: StatusCodes.NOT_FOUND }
       );
     }
 
@@ -56,7 +63,16 @@ export async function PUT(request: NextRequest, context: PatientMedicationRouteC
       return tenantSession;
     }
 
-    const { medicationId } = await context.params;
+    const { id, medicationId } = await context.params;
+
+    const owned = await getPatientMedicationByIdQuery(medicationId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Medication not found' },
+        { status: StatusCodes.NOT_FOUND }
+      );
+    }
+
     let payload: unknown;
 
     try {
@@ -100,7 +116,16 @@ export async function DELETE(_request: NextRequest, context: PatientMedicationRo
       return tenantSession;
     }
 
-    const { medicationId } = await context.params;
+    const { id, medicationId } = await context.params;
+
+    const owned = await getPatientMedicationByIdQuery(medicationId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Medication not found' },
+        { status: StatusCodes.NOT_FOUND }
+      );
+    }
+
     const result = await deletePatientMedicationCommand(medicationId, tenantSession.tenantId);
 
     if (!result.success) {

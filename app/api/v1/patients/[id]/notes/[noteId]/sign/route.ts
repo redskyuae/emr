@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type { SignClinicalNoteResponse } from './types';
 
 import { signClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/commands/sign-clinical-note-command';
+import { getClinicalNoteByIdQuery } from '@/app/api/lib/modules/clinical-note/queries/get-clinical-note-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 type SignClinicalNoteRouteContext = {
@@ -25,7 +26,16 @@ export async function POST(_request: NextRequest, context: SignClinicalNoteRoute
       return tenantSession;
     }
 
-    const { noteId } = await context.params;
+    const { id, noteId } = await context.params;
+
+    const owned = await getClinicalNoteByIdQuery(noteId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Clinical note not found' },
+        { status: StatusCodes.NOT_FOUND }
+      );
+    }
+
     const result = await signClinicalNoteCommand(noteId, tenantSession.tenantId);
 
     if (!result.success) {

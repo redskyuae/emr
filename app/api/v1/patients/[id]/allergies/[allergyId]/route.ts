@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest, context: PatientAllergyRouteCon
       return tenantSession;
     }
 
-    const { allergyId } = await context.params;
+    const { id, allergyId } = await context.params;
     const result = await getPatientAllergyByIdQuery(allergyId, tenantSession.tenantId);
 
     if (!result.success) {
@@ -37,6 +37,10 @@ export async function GET(_request: NextRequest, context: PatientAllergyRouteCon
         { message: errorMessage(status, result.errors), errors: result.errors },
         { status }
       );
+    }
+
+    if (result.data.patientId !== Number(id)) {
+      return NextResponse.json({ message: 'Allergy not found' }, { status: StatusCodes.NOT_FOUND });
     }
 
     return NextResponse.json<GetPatientAllergyResponse>({ data: result.data });
@@ -56,7 +60,13 @@ export async function PUT(request: NextRequest, context: PatientAllergyRouteCont
       return tenantSession;
     }
 
-    const { allergyId } = await context.params;
+    const { id, allergyId } = await context.params;
+
+    const owned = await getPatientAllergyByIdQuery(allergyId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json({ message: 'Allergy not found' }, { status: StatusCodes.NOT_FOUND });
+    }
+
     let payload: unknown;
 
     try {
@@ -96,7 +106,13 @@ export async function DELETE(_request: NextRequest, context: PatientAllergyRoute
       return tenantSession;
     }
 
-    const { allergyId } = await context.params;
+    const { id, allergyId } = await context.params;
+
+    const owned = await getPatientAllergyByIdQuery(allergyId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json({ message: 'Allergy not found' }, { status: StatusCodes.NOT_FOUND });
+    }
+
     const result = await deletePatientAllergyCommand(allergyId, tenantSession.tenantId);
 
     if (!result.success) {

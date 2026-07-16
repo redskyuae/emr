@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest, context: PatientVitalSignRouteC
       return tenantSession;
     }
 
-    const { vitalId } = await context.params;
+    const { id, vitalId } = await context.params;
     const result = await getPatientVitalSignByIdQuery(vitalId, tenantSession.tenantId);
 
     if (!result.success) {
@@ -36,6 +36,13 @@ export async function GET(_request: NextRequest, context: PatientVitalSignRouteC
       return NextResponse.json(
         { message: errorMessage(status), errors: result.errors },
         { status }
+      );
+    }
+
+    if (result.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Vital sign not found' },
+        { status: StatusCodes.NOT_FOUND }
       );
     }
 
@@ -56,7 +63,16 @@ export async function PUT(request: NextRequest, context: PatientVitalSignRouteCo
       return tenantSession;
     }
 
-    const { vitalId } = await context.params;
+    const { id, vitalId } = await context.params;
+
+    const owned = await getPatientVitalSignByIdQuery(vitalId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Vital sign not found' },
+        { status: StatusCodes.NOT_FOUND }
+      );
+    }
+
     let payload: unknown;
 
     try {
@@ -96,7 +112,16 @@ export async function DELETE(_request: NextRequest, context: PatientVitalSignRou
       return tenantSession;
     }
 
-    const { vitalId } = await context.params;
+    const { id, vitalId } = await context.params;
+
+    const owned = await getPatientVitalSignByIdQuery(vitalId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Vital sign not found' },
+        { status: StatusCodes.NOT_FOUND }
+      );
+    }
+
     const result = await deletePatientVitalSignCommand(vitalId, tenantSession.tenantId);
 
     if (!result.success) {

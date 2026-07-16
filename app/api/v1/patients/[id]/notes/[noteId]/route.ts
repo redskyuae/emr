@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest, context: ClinicalNoteRouteConte
       return tenantSession;
     }
 
-    const { noteId } = await context.params;
+    const { id, noteId } = await context.params;
     const result = await getClinicalNoteByIdQuery(noteId, tenantSession.tenantId);
 
     if (!result.success) {
@@ -36,6 +36,13 @@ export async function GET(_request: NextRequest, context: ClinicalNoteRouteConte
       return NextResponse.json(
         { message: errorMessage(status, result.errors), errors: result.errors },
         { status }
+      );
+    }
+
+    if (result.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Clinical note not found' },
+        { status: StatusCodes.NOT_FOUND }
       );
     }
 
@@ -56,7 +63,16 @@ export async function PUT(request: NextRequest, context: ClinicalNoteRouteContex
       return tenantSession;
     }
 
-    const { noteId } = await context.params;
+    const { id, noteId } = await context.params;
+
+    const owned = await getClinicalNoteByIdQuery(noteId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Clinical note not found' },
+        { status: StatusCodes.NOT_FOUND }
+      );
+    }
+
     let payload: unknown;
 
     try {
@@ -96,7 +112,16 @@ export async function DELETE(_request: NextRequest, context: ClinicalNoteRouteCo
       return tenantSession;
     }
 
-    const { noteId } = await context.params;
+    const { id, noteId } = await context.params;
+
+    const owned = await getClinicalNoteByIdQuery(noteId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json(
+        { message: 'Clinical note not found' },
+        { status: StatusCodes.NOT_FOUND }
+      );
+    }
+
     const result = await deleteClinicalNoteCommand(noteId, tenantSession.tenantId);
 
     if (!result.success) {

@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest, context: PatientProblemRouteCon
       return tenantSession;
     }
 
-    const { problemId } = await context.params;
+    const { id, problemId } = await context.params;
     const result = await getPatientProblemByIdQuery(problemId, tenantSession.tenantId);
 
     if (!result.success) {
@@ -37,6 +37,10 @@ export async function GET(_request: NextRequest, context: PatientProblemRouteCon
         { message: errorMessage(status, result.errors), errors: result.errors },
         { status }
       );
+    }
+
+    if (result.data.patientId !== Number(id)) {
+      return NextResponse.json({ message: 'Problem not found' }, { status: StatusCodes.NOT_FOUND });
     }
 
     return NextResponse.json<GetPatientProblemResponse>({ data: result.data });
@@ -56,7 +60,13 @@ export async function PUT(request: NextRequest, context: PatientProblemRouteCont
       return tenantSession;
     }
 
-    const { problemId } = await context.params;
+    const { id, problemId } = await context.params;
+
+    const owned = await getPatientProblemByIdQuery(problemId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json({ message: 'Problem not found' }, { status: StatusCodes.NOT_FOUND });
+    }
+
     let payload: unknown;
 
     try {
@@ -96,7 +106,13 @@ export async function DELETE(_request: NextRequest, context: PatientProblemRoute
       return tenantSession;
     }
 
-    const { problemId } = await context.params;
+    const { id, problemId } = await context.params;
+
+    const owned = await getPatientProblemByIdQuery(problemId, tenantSession.tenantId);
+    if (!owned.success || owned.data.patientId !== Number(id)) {
+      return NextResponse.json({ message: 'Problem not found' }, { status: StatusCodes.NOT_FOUND });
+    }
+
     const result = await deletePatientProblemCommand(problemId, tenantSession.tenantId);
 
     if (!result.success) {
