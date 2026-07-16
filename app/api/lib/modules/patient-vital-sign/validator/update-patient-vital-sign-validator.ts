@@ -8,6 +8,7 @@ import {
   updatePatientVitalSignSchema,
   type UpdatePatientVitalSignInput,
 } from '../schemas/patient-vital-sign-schema';
+import { validateVisitForClinicalCapture } from '../../visit/validator/visit-clinical-capture-validator';
 
 export type UpdatePatientVitalSignParams = {
   id: number;
@@ -43,6 +44,21 @@ export async function validateUpdatePatientVitalSign(
 
   if (!existing) {
     return { success: false, errors: ['Vital sign not found'], status: StatusCodes.NOT_FOUND };
+  }
+
+  // The foreign key only proves the Visit row exists — it cannot stop an update
+  // relinking this observation to another Patient's or Tenant's Visit, so re-run
+  // the same guard the create path uses, against the record's own Patient.
+  if (payloadResult.data.visitId !== undefined && payloadResult.data.visitId !== null) {
+    const visitResult = await validateVisitForClinicalCapture(
+      payloadResult.data.visitId,
+      existing.patientId,
+      tenantId
+    );
+
+    if (!visitResult.success) {
+      return visitResult;
+    }
   }
 
   return { success: true, data: { id: idResult.data, payload: payloadResult.data } };

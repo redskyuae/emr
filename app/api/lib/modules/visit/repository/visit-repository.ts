@@ -533,23 +533,80 @@ async function updateVisit(
   return getVisitById(id, tenantId);
 }
 
-async function deleteVisit(id: number, tenantId: string): Promise<Visit | undefined> {
-  const existing = await getVisitById(id, tenantId);
+export type DeleteVisitResult =
+  | { outcome: 'deleted'; data: Visit }
+  | { outcome: 'not-found' }
+  | { outcome: 'appointment-status-not-configured' };
 
-  if (!existing) {
-    return undefined;
+async function runDeleteVisitTransaction(id: number, tenantId: string): Promise<DeleteVisitResult> {
+  return db.transaction(async (tx) => {
+    const [existingRow] = await tx
+      .select({
+        id: visitTable.id,
+        status: visitTable.status,
+        appointmentId: visitTable.appointmentId,
+      })
+      .from(visitTable)
+      .where(
+        and(
+          eq(visitTable.id, id),
+          eq(visitTable.tenantId, tenantId),
+          eq(visitTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!existingRow) {
+      return { outcome: 'not-found' };
+    }
+
+    const existing = await getVisitById(id, tenantId, tx);
+
+    if (!existing) {
+      return { outcome: 'not-found' };
+    }
+
+    const deletedOn = new Date();
+
+    await tx
+      .update(visitTable)
+      .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
+      .where(and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId)));
+
+    // Deleting an Active Visit must hand its Appointment back, exactly as
+    // cancelling does. Otherwise the Appointment is stranded in Checked In with
+    // no visible Visit, and Check-in refuses it forever (ADR 0030).
+    if (
+      existingRow.appointmentId !== null &&
+      ACTIVE_VISIT_STATUSES.includes(existingRow.status as VisitStatus)
+    ) {
+      const synced = await syncAppointmentStatus(
+        tx,
+        tenantId,
+        existingRow.appointmentId,
+        'SCHEDULED'
+      );
+
+      if (!synced) {
+        throw new AppointmentStatusNotConfiguredError();
+      }
+    }
+
+    return { outcome: 'deleted', data: existing };
+  });
+}
+
+async function deleteVisit(id: number, tenantId: string): Promise<DeleteVisitResult> {
+  try {
+    return await runDeleteVisitTransaction(id, tenantId);
+  } catch (error) {
+    if (error instanceof AppointmentStatusNotConfiguredError) {
+      return { outcome: 'appointment-status-not-configured' };
+    }
+
+    throw error;
   }
-
-  const deletedOn = new Date();
-
-  await db
-    .update(visitTable)
-    .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
-    .where(
-      and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false))
-    );
-
-  return existing;
 }
 
 export const visitRepository = {

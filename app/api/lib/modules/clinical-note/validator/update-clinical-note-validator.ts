@@ -8,6 +8,7 @@ import {
   updateClinicalNoteSchema,
   type UpdateClinicalNoteInput,
 } from '../schemas/clinical-note-schema';
+import { validateVisitForClinicalCapture } from '../../visit/validator/visit-clinical-capture-validator';
 import { validateNoteTypeReference } from './clinical-note-reference-validator';
 
 export type UpdateClinicalNoteParams = {
@@ -55,6 +56,21 @@ export async function validateUpdateClinicalNote(
 
   if (!noteTypeResult.success) {
     return noteTypeResult;
+  }
+
+  // The foreign key only proves the Visit row exists — it cannot stop an update
+  // relinking this note to another Patient's or Tenant's Visit, so re-run the
+  // same guard the create path uses, against the note's own Patient.
+  if (payloadResult.data.visitId !== undefined && payloadResult.data.visitId !== null) {
+    const visitResult = await validateVisitForClinicalCapture(
+      payloadResult.data.visitId,
+      existing.patientId,
+      tenantId
+    );
+
+    if (!visitResult.success) {
+      return visitResult;
+    }
   }
 
   return { success: true, data: { id: idResult.data, payload: payloadResult.data } };

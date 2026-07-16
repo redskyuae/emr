@@ -563,18 +563,54 @@ describe('Visit repository', () => {
       if (!created.success) throw new Error('check-in failed');
 
       await expect(visitRepository.deleteVisit(created.data.id, tenantA)).resolves.toMatchObject({
-        visitNumber: 'VST-1001',
+        outcome: 'deleted',
+        data: { visitNumber: 'VST-1001' },
       });
       await expect(
         visitRepository.findActiveVisitByPatientId(tenantA, fixturesA.patientId)
       ).resolves.toBeUndefined();
     });
 
+    it('should return the appointment to scheduled when deleting an active linked visit', async () => {
+      const { appointmentId } = await createAppointment(tenantA, fixturesA);
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await expect(appointmentStatusCategoryOf(appointmentId)).resolves.toBe('CHECKED_IN');
+
+      await expect(visitRepository.deleteVisit(created.data.id, tenantA)).resolves.toMatchObject({
+        outcome: 'deleted',
+      });
+
+      // Otherwise the Appointment is stranded in Checked In with no visible
+      // Visit, and Check-in refuses it forever.
+      await expect(appointmentStatusCategoryOf(appointmentId)).resolves.toBe('SCHEDULED');
+    });
+
+    it('should leave the appointment untouched when deleting a completed visit', async () => {
+      const { appointmentId } = await createAppointment(tenantA, fixturesA);
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+      await visitRepository.completeVisit(created.data.id, tenantA);
+
+      await visitRepository.deleteVisit(created.data.id, tenantA);
+
+      // A Completed Appointment is real history — deleting the Visit record
+      // must not rewind it to Scheduled.
+      await expect(appointmentStatusCategoryOf(appointmentId)).resolves.toBe('COMPLETED');
+    });
+
     it('should not soft-delete a visit belonging to another tenant', async () => {
       const created = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
       if (!created.success) throw new Error('check-in failed');
 
-      await expect(visitRepository.deleteVisit(created.data.id, tenantB)).resolves.toBeUndefined();
+      await expect(visitRepository.deleteVisit(created.data.id, tenantB)).resolves.toEqual({
+        outcome: 'not-found',
+      });
       await expect(visitRepository.getVisitById(created.data.id, tenantA)).resolves.toBeDefined();
     });
 

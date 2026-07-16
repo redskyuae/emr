@@ -45,5 +45,13 @@ CREATE UNIQUE INDEX "visit_active_appointment_idx" ON "visit" USING btree ("tena
 CREATE UNIQUE INDEX "visit_active_patient_idx" ON "visit" USING btree ("tenant_id","patient_id") WHERE "visit"."is_deleted" = false and "visit"."status" in ('CHECKED_IN', 'IN_CONSULTATION');--> statement-breakpoint
 CREATE UNIQUE INDEX "visit_doctor_day_token_idx" ON "visit" USING btree ("tenant_id","doctor_id","visit_date","queue_token") WHERE "visit"."is_deleted" = false;--> statement-breakpoint
 CREATE INDEX "visit_tenant_visit_date_idx" ON "visit" USING btree ("tenant_id","visit_date");--> statement-breakpoint
+-- The visit_id columns predate the "visit" table: the Clinical Note and Vital Sign
+-- create APIs accepted an arbitrary visitId with no foreign key and no validation.
+-- "visit" is created empty above, so every pre-existing non-null value is dangling
+-- by construction and would abort the ADD CONSTRAINT below (or, worse, silently
+-- alias a brand-new Visit id). Clear them first — the value never referenced a real
+-- Visit, so nothing is lost.
+UPDATE "clinical_note" SET "visit_id" = NULL WHERE "visit_id" IS NOT NULL;--> statement-breakpoint
+UPDATE "patient_vital_sign" SET "visit_id" = NULL WHERE "visit_id" IS NOT NULL;--> statement-breakpoint
 ALTER TABLE "clinical_note" ADD CONSTRAINT "clinical_note_visit_id_visit_id_fk" FOREIGN KEY ("visit_id") REFERENCES "public"."visit"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "patient_vital_sign" ADD CONSTRAINT "patient_vital_sign_visit_id_visit_id_fk" FOREIGN KEY ("visit_id") REFERENCES "public"."visit"("id") ON DELETE no action ON UPDATE no action;

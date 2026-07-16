@@ -69,7 +69,7 @@ describe('Visit commands', () => {
     repo.completeVisit.mockResolvedValue({ outcome: 'updated', data: visit });
     repo.cancelVisit.mockResolvedValue({ outcome: 'updated', data: visit });
     repo.updateVisit.mockResolvedValue(visit);
-    repo.deleteVisit.mockResolvedValue(visit);
+    repo.deleteVisit.mockResolvedValue({ outcome: 'deleted', data: visit });
   });
 
   describe('checkInVisitCommand', () => {
@@ -324,11 +324,21 @@ describe('Visit commands', () => {
     });
 
     it('should return not found when the row does not exist', async () => {
-      repo.deleteVisit.mockResolvedValue(undefined);
+      repo.deleteVisit.mockResolvedValue({ outcome: 'not-found' });
 
       await expect(deleteVisitCommand('1', 'tenant-1')).resolves.toMatchObject({
         success: false,
         status: StatusCodes.NOT_FOUND,
+      });
+    });
+
+    it('should map a missing scheduled appointment status to a conflict', async () => {
+      repo.deleteVisit.mockResolvedValue({ outcome: 'appointment-status-not-configured' });
+
+      await expect(deleteVisitCommand('1', 'tenant-1')).resolves.toEqual({
+        success: false,
+        errors: ['Scheduled appointment status is not configured.'],
+        status: StatusCodes.CONFLICT,
       });
     });
 

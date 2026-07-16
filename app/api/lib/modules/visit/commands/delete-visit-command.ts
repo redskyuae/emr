@@ -15,14 +15,22 @@ export async function deleteVisitCommand(
     return { success: false, errors: validationResult.errors, status: validationResult.status };
   }
 
-  const deletedVisit = await visitRepository.deleteVisit(
+  const result = await visitRepository.deleteVisit(
     validationResult.data.id,
     validationResult.data.tenantId
   );
 
-  if (!deletedVisit) {
+  if (result.outcome === 'not-found') {
     return { success: false, errors: ['Visit not found'], status: StatusCodes.NOT_FOUND };
   }
 
-  return { success: true, data: deletedVisit };
+  if (result.outcome === 'appointment-status-not-configured') {
+    return {
+      success: false,
+      errors: ['Scheduled appointment status is not configured.'],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
+  return { success: true, data: result.data };
 }
