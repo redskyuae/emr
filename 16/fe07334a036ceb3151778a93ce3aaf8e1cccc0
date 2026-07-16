@@ -1,0 +1,281 @@
+app/queries/visit-masters/visit-types/useUpdateVisitType.ts
+  70c93f2dabd16321 1-52
+app/api/lib/modules/visit/queries/visit-queries.unit.tests.ts
+  70c93f2dabd16321 1-33,35-107,109-139
+app/api/v1/visits/route.unit.tests.ts
+  70c93f2dabd16321 1-216
+app/api/lib/modules/visit-type/validator/visit-type-uniqueness-validator.ts
+  70c93f2dabd16321 1-68
+app/(protected)/visit-masters/visit-types/_utils/visit-type-form-schema.ts
+  70c93f2dabd16321 1-19
+app/api/v1/visits/[id]/cancel/types.ts
+  70c93f2dabd16321 1-9
+app/api/lib/modules/appointment/schemas/appointment-schema.ts
+  70c93f2dabd16321 142-147
+app/api/lib/modules/visit-type/repository/visit-type-repository.integration.tests.ts
+  70c93f2dabd16321 1-138,140-194
+docs/adr/0031-one-non-cancelled-visit-per-appointment-and-patient.md
+  70c93f2dabd16321 1-13
+app/db/schema/patient-vital-sign.ts
+  70c93f2dabd16321 5,15-16
+app/api/lib/modules/visit-type/validator/visit-type-validator.unit.tests.ts
+  70c93f2dabd16321 1-210
+app/api/lib/modules/visit-type/queries/get-visit-types-query.ts
+  70c93f2dabd16321 1-33
+app/queries/visits/useCheckInVisit.ts
+  70c93f2dabd16321 1-41
+app/api/lib/modules/visit-type/commands/create-visit-type-command.ts
+  70c93f2dabd16321 1-37
+app/api/lib/modules/visit/commands/check-in-visit-command.ts
+  70c93f2dabd16321 1-78
+app/api/v1/visits/[id]/cancel/route.ts
+  70c93f2dabd16321 1-62
+app/queries/visits/useStartConsultation.ts
+  70c93f2dabd16321 1-42
+app/api/lib/modules/visit/schemas/visit-schema.ts
+  70c93f2dabd16321 1-201
+app/api/lib/modules/visit/validator/get-visits-validator.ts
+  70c93f2dabd16321 1-5,7-34
+app/(protected)/visit-masters/visit-types/page.tsx
+  70c93f2dabd16321 1-5
+app/api/v1/visits/[id]/start/route.ts
+  70c93f2dabd16321 1-51
+docs/adr/0027-visit-status-is-a-fixed-system-set.md
+  70c93f2dabd16321 1-15
+app/api/lib/modules/visit/commands/complete-visit-command.ts
+  70c93f2dabd16321 1-44
+app/queries/visit-masters/visit-types/useVisitTypes.ts
+  70c93f2dabd16321 1-54
+app/api/lib/modules/visit/validator/cancel-visit-validator.ts
+  70c93f2dabd16321 1-35
+app/api/lib/modules/visit/validator/delete-visit-validator.ts
+  70c93f2dabd16321 1-35
+app/api/v1/visits/types.ts
+  70c93f2dabd16321 1-21
+docs/adr/0030-visit-transitions-drive-appointment-system-status.md
+  70c93f2dabd16321 1-13
+app/queries/visit-masters/visit-types/useDeleteVisitType.ts
+  70c93f2dabd16321 1-33
+app/queries/visits/useCancelVisit.ts
+  70c93f2dabd16321 1-7,9-52
+app/api/lib/modules/visit-type/commands/update-visit-type-command.ts
+  70c93f2dabd16321 1-50
+app/api/v1/visits/types/[id]/types.ts
+  70c93f2dabd16321 1-17
+app/api/lib/modules/tenant-provisioning/commands/onboard-tenant-command.ts
+  70c93f2dabd16321 13,31-35
+app/api/v1/appointments/lookup/route.ts
+  70c93f2dabd16321 1-38
+app/db/schema/clinical-note.ts
+  70c93f2dabd16321 6,16-17
+app/api/lib/modules/visit/commands/start-consultation-command.ts
+  70c93f2dabd16321 1-44
+app/(protected)/visit-masters/visit-types/loader.tsx
+  70c93f2dabd16321 1-63
+app/api/v1/visits/[id]/complete/route.ts
+  70c93f2dabd16321 1-51
+app/api/lib/modules/visit/schemas/visit-schema.unit.tests.ts
+  70c93f2dabd16321 1-41,43-187
+app/(protected)/visits/[id]/_utils/visit-capture-form-schema.ts
+  70c93f2dabd16321 1-50
+app/db/drizzle/0040_seed_visit_permissions.sql
+  70c93f2dabd16321 1-17
+app/api/lib/modules/visit-type/commands/visit-type-commands.unit.tests.ts
+  70c93f2dabd16321 1-166
+app/api/lib/modules/visit-type/validator/delete-visit-type-validator.ts
+  70c93f2dabd16321 1-38
+app/(protected)/visits/[id]/_components/visit-status-timeline.tsx
+  70c93f2dabd16321 1-27,29-81
+app/(protected)/visits/[id]/_components/_sheets/record-vitals-sheet.tsx
+  70c93f2dabd16321 1-172
+app/(protected)/visit-masters/visit-types/_components/_modals/delete-visit-type-dialog.tsx
+  70c93f2dabd16321 1-67
+docs/adr/0028-visit-number-is-tenant-scoped-generated-sequence.md
+  70c93f2dabd16321 1-7
+app/api/lib/modules/visit/validator/visit-clinical-capture-validator.ts
+  70c93f2dabd16321 1-45
+app/(protected)/visits/_components/visits-page-impl.tsx
+  70c93f2dabd16321 1-264
+app/api/lib/modules/visit-type/schemas/visit-type-schema.ts
+  70c93f2dabd16321 1-71
+app/api/lib/modules/visit-type/validator/get-visit-types-validator.ts
+  70c93f2dabd16321 1-13
+app/api/lib/modules/visit-type/validator/get-visit-type-by-id-validator.ts
+  70c93f2dabd16321 1-38
+app/api/v1/visits/[id]/types.ts
+  70c93f2dabd16321 1-16
+app/api/v1/appointments/lookup/types.ts
+  70c93f2dabd16321 1-5
+app/api/lib/modules/visit/repository/visit-repository.ts
+  70c93f2dabd16321 1-534
+app/api/lib/modules/visit/queries/get-visit-by-id-query.ts
+  70c93f2dabd16321 1-28
+CONTEXT.md
+  70c93f2dabd16321 199,203-227
+app/api/v1/visits/types/types.ts
+  70c93f2dabd16321 1-14
+app/api/lib/modules/appointment/repository/appointment-repository.ts
+  70c93f2dabd16321 182-203,582
+app/api/lib/modules/patient-vital-sign/validator/create-patient-vital-sign-validator.ts
+  70c93f2dabd16321 8,39-50
+app/(protected)/visits/_utils/visit-status.ts
+  70c93f2dabd16321 1-51
+app/api/v1/visits/[id]/route.ts
+  70c93f2dabd16321 1-122
+app/api/lib/modules/visit-type/commands/delete-visit-type-command.ts
+  70c93f2dabd16321 1-36
+app/api/lib/modules/tenant-provisioning/repository/tenant-provisioning-repository.ts
+  70c93f2dabd16321 19,125-128,134
+app/(protected)/visits/[id]/_components/_sheets/add-note-sheet.tsx
+  70c93f2dabd16321 1-31,33-190
+app/api/lib/modules/visit/queries/get-visits-query.ts
+  70c93f2dabd16321 1-39
+app/api/lib/modules/clinical-note/validator/create-clinical-note-validator.ts
+  70c93f2dabd16321 8,48-59
+app/api/v1/visits/types/[id]/route.ts
+  70c93f2dabd16321 1-122
+app/api/lib/modules/visit/commands/update-visit-command.ts
+  70c93f2dabd16321 1-30
+app/api/v1/visits/types/route.ts
+  70c93f2dabd16321 1-117
+app/api/lib/modules/visit/commands/delete-visit-command.ts
+  70c93f2dabd16321 1-28
+app/(protected)/visits/_components/visits-table.tsx
+  70c93f2dabd16321 1-183
+app/(protected)/visits/page.tsx
+  70c93f2dabd16321 1-5
+app/db/schema/visit-type.ts
+  70c93f2dabd16321 1-29
+app/queries/visits/useVisits.ts
+  70c93f2dabd16321 1-49
+app/api/v1/visits/route.ts
+  70c93f2dabd16321 1-119
+app/api/lib/modules/visit/validator/check-in-visit-validator.ts
+  70c93f2dabd16321 1-155,157-196
+app/(protected)/visits/_utils/check-in-form-schema.ts
+  70c93f2dabd16321 1-25
+app/queries/visit-masters/visit-types/useCreateVisitType.ts
+  70c93f2dabd16321 1-41
+app/(protected)/visits/loader.tsx
+  70c93f2dabd16321 1-31
+app/api/lib/modules/tenant-provisioning/commands/seed-default-visit-masters-command.unit.tests.ts
+  70c93f2dabd16321 1-53
+app/api/lib/modules/appointment/queries/get-appointment-by-booking-number-query.ts
+  70c93f2dabd16321 1-32
+app/api/v1/visits/[id]/start/types.ts
+  70c93f2dabd16321 1-5
+app/api/lib/modules/appointment/queries/appointment-queries.unit.tests.ts
+  70c93f2dabd16321 1-63,65-68
+app/api/lib/modules/visit-type/validator/update-visit-type-validator.ts
+  70c93f2dabd16321 1-71
+app/(protected)/visit-masters/visit-types/_components/_sheets/visit-type-form-sheet.tsx
+  70c93f2dabd16321 1-25,27-199
+app/api/lib/modules/visit-type/repository/visit-type-repository.ts
+  70c93f2dabd16321 1-198
+app/api/lib/modules/permission/seed-data.ts
+  70c93f2dabd16321 293-315
+app/queries/appointments/useAppointmentLookup.ts
+  70c93f2dabd16321 1-38
+app/queries/visits/useUpdateVisit.ts
+  70c93f2dabd16321 1-49
+app/api/lib/modules/visit/validator/get-visit-by-id-validator.ts
+  70c93f2dabd16321 1-38
+app/api/lib/modules/visit-type/validator/create-visit-type-validator.ts
+  70c93f2dabd16321 1-30
+app/api/lib/openapi/document.ts
+  70c93f2dabd16321 594-621,1907-1908,3448-3488,3616-3704,3706-3716,3718-3761,3763-3807,3809-3842,3844-3877,3879-3887,3889-3921,6348-6494,7142-7147,7255-7260
+docs/adr/0029-queue-token-resets-per-doctor-per-day.md
+  70c93f2dabd16321 1-9
+app/api/lib/modules/visit/validator/update-visit-validator.ts
+  70c93f2dabd16321 1-55
+app/(protected)/visits/[id]/page.tsx
+  70c93f2dabd16321 1-13
+app/api/lib/modules/visit/repository/visit-repository.integration.tests.ts
+  70c93f2dabd16321 1-654,656-728
+app/api/lib/modules/visit-type/queries/get-visit-type-by-id-query.ts
+  70c93f2dabd16321 1-32
+app/api/lib/modules/visit/repository/visit-number.ts
+  70c93f2dabd16321 1-3
+app/(protected)/visit-masters/visit-types/_components/visit-type-table.tsx
+  70c93f2dabd16321 1-90
+app/(protected)/visits/_components/_modals/cancel-visit-dialog.tsx
+  70c93f2dabd16321 1-108
+app/api/lib/modules/appointment/validator/get-appointment-by-booking-number-validator.ts
+  70c93f2dabd16321 1-35
+components/app/app-shell-config.ts
+  70c93f2dabd16321 185-189,332-339
+app/api/lib/modules/visit-type/schemas/visit-type-schema.unit.tests.ts
+  70c93f2dabd16321 1-47,49-93
+app/(protected)/visit-masters/visit-types/_components/visit-types-page-impl.tsx
+  70c93f2dabd16321 1-189
+app/api/v1/visits/[id]/complete/types.ts
+  70c93f2dabd16321 1-5
+app/queries/visits/useVisit.ts
+  70c93f2dabd16321 1-29
+app/api/lib/modules/visit-type/queries/visit-type-queries.unit.tests.ts
+  70c93f2dabd16321 1-92
+app/queries/visits/useCompleteVisit.ts
+  70c93f2dabd16321 1-42
+app/api/lib/modules/visit/commands/visit-commands.unit.tests.ts
+  70c93f2dabd16321 1-246,248-343
+app/db/schema/visit.ts
+  70c93f2dabd16321 1-99
+app/(protected)/visits/_components/_sheets/check-in-sheet.tsx
+  70c93f2dabd16321 1-62,64-67,79-206,208,210,216,218,228,231,239,246,253,258,269,271,273,288-291,301,313-356,358-528
+app/api/lib/modules/tenant-provisioning/commands/seed-default-visit-masters-command.ts
+  70c93f2dabd16321 1-33
+app/(protected)/visits/[id]/loader.tsx
+  70c93f2dabd16321 1-55
+app/api/lib/modules/visit/commands/cancel-visit-command.ts
+  70c93f2dabd16321 1-46
+app/api/lib/modules/visit/validator/visit-validator.unit.tests.ts
+  70c93f2dabd16321 1-69,71-485
+app/(protected)/visits/[id]/_components/visit-detail-impl.tsx
+  70c93f2dabd16321 1-313
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "16fe07334a036ceb3151778a93ce3aaf8e1cccc0",
+  "prompts": {
+    "225dfa28518475a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d63a4abb-0aad-4b83-9aac-cfcad244d860",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 1
+    },
+    "70c93f2dabd16321": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a42eff1-af26-4f37-9bac-7bcd86d59a62",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 10717,
+      "total_deletions": 569,
+      "accepted_lines": 10507,
+      "overriden_lines": 67
+    },
+    "c865739078e5e665": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "050cc829-e9ac-41f8-8366-2d1051e0d5ff",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 35,
+      "overriden_lines": 6
+    }
+  }
+}
