@@ -32,7 +32,10 @@ describe('PatientProblem validators', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     patientRepo.getPatientById.mockResolvedValue({ id: 1 } as never);
-    codeRepo.getDiagnosisCodeById.mockResolvedValue({ id: 7, title: 'Essential hypertension' } as never);
+    codeRepo.getDiagnosisCodeById.mockResolvedValue({
+      id: 7,
+      title: 'Essential hypertension',
+    } as never);
     problemRepo.getPatientProblemById.mockResolvedValue({ id: 9, patientId: 1 } as never);
   });
 

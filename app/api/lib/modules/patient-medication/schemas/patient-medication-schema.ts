@@ -70,9 +70,7 @@ export const patientMedicationPayloadSchema = z
   })
   .refine(
     (data) =>
-      data.startDate === undefined ||
-      data.endDate === undefined ||
-      data.endDate >= data.startDate,
+      data.startDate === undefined || data.endDate === undefined || data.endDate >= data.startDate,
     {
       message: 'Medication end date must be on or after the start date',
       path: ['endDate'],

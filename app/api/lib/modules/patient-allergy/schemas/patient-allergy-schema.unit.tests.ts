@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createPatientAllergySchema,
-  patientAllergyIdSchema,
-} from './patient-allergy-schema';
+import { createPatientAllergySchema, patientAllergyIdSchema } from './patient-allergy-schema';
 
 const errorsOf = (result: ReturnType<typeof createPatientAllergySchema.safeParse>) =>
   result.error?.issues.map((issue) => issue.message) ?? [];

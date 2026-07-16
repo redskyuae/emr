@@ -51,7 +51,9 @@ const optionalDate = (label: string) =>
     z.string().refine(isValidDateOnly, `${label} must be a valid date`).optional()
   );
 
-const clinicalStatusSchema = z.enum(PROBLEM_STATUSES, { error: 'Problem clinical status is invalid' });
+const clinicalStatusSchema = z.enum(PROBLEM_STATUSES, {
+  error: 'Problem clinical status is invalid',
+});
 
 export const patientProblemIdSchema = z.coerce
   .number({ error: 'Problem ID is required' })

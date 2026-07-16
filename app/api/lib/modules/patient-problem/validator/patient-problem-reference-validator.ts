@@ -26,7 +26,10 @@ export async function validateDiagnosisCodeReference(
     return { success: true, data: undefined };
   }
 
-  const diagnosisCode = await diagnosisCodeRepository.getDiagnosisCodeById(diagnosisCodeId, tenantId);
+  const diagnosisCode = await diagnosisCodeRepository.getDiagnosisCodeById(
+    diagnosisCodeId,
+    tenantId
+  );
 
   if (!diagnosisCode) {
     return {

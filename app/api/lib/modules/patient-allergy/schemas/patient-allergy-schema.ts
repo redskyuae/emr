@@ -17,10 +17,7 @@ const optionalTrimmed = (max: number, label: string) =>
       const trimmed = value.trim();
       return trimmed === '' ? undefined : trimmed;
     },
-    z
-      .string()
-      .max(max, `${label} must be at most ${max} characters`)
-      .optional()
+    z.string().max(max, `${label} must be at most ${max} characters`).optional()
   );
 
 const optionalAllergenId = z.preprocess(
@@ -43,16 +40,13 @@ function isValidDateOnly(value: string) {
   );
 }
 
-const optionalDate = z.preprocess(
-  (value) => {
-    if (typeof value !== 'string') {
-      return value;
-    }
-    const trimmed = value.trim();
-    return trimmed === '' ? undefined : trimmed;
-  },
-  z.string().refine(isValidDateOnly, 'Allergy noted-on date must be a valid date').optional()
-);
+const optionalDate = z.preprocess((value) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  const trimmed = value.trim();
+  return trimmed === '' ? undefined : trimmed;
+}, z.string().refine(isValidDateOnly, 'Allergy noted-on date must be a valid date').optional());
 
 const severitySchema = z.enum(ALLERGY_SEVERITIES, { error: 'Allergy severity is invalid' });
 const statusSchema = z.enum(ALLERGY_STATUSES, { error: 'Allergy status is invalid' });

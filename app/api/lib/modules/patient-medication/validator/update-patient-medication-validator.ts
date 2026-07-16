@@ -36,7 +36,10 @@ export async function validateUpdatePatientMedication(
     return { success: false, errors };
   }
 
-  const existing = await patientMedicationRepository.getPatientMedicationById(idResult.data, tenantId);
+  const existing = await patientMedicationRepository.getPatientMedicationById(
+    idResult.data,
+    tenantId
+  );
 
   if (!existing) {
     return { success: false, errors: ['Medication not found'], status: StatusCodes.NOT_FOUND };
