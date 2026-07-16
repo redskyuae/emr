@@ -104,7 +104,15 @@ A Tenant-scoped assignment of one or more DoctorRotas to a Doctor over a date ra
 
 ## DoctorSlot
 
-A bookable time interval for a Doctor on a specific date. DoctorSlots are derived from DoctorSchedules and DoctorRotas; they are not the same as Appointments because no Patient has been booked until an Appointment is created.
+A bookable time interval for a Doctor on a specific date whose start time has not passed. DoctorSlots are derived from DoctorSchedules and DoctorRotas; they are not the same as Appointments because no Patient has been booked until an Appointment is created.
+
+## Appointment Slot Reservation
+
+The exclusive reservation of one DoctorSlot for an Appointment, regardless of which DoctorRota exposes that time. One Appointment may hold multiple consecutive Appointment Slot Reservations from the same DoctorRota on the same date.
+
+## Released Appointment Slot Reservation
+
+An Appointment Slot Reservation that no longer blocks booking because its Appointment was cancelled, removed, or rescheduled. It remains part of scheduling history but is excluded from current availability.
 
 ## Specialty
 
@@ -118,13 +126,29 @@ A person who receives care at a Facility. Belongs to a Tenant (registered within
 
 The process of adding a Patient to a Tenant's system: capturing demographics, contact details, and identifiers, and assigning the Patient's Medical Record Number. Registration does not create a login or Session; it is distinct from any clinical event such as a Visit or Admission.
 
+## Patient Registration Status
+
+The system-controlled state indicating whether a Patient is Provisional or Registered. It is distinct from the Patient's active lifecycle: either registration state may later be deactivated.
+
+## Registered Patient
+
+A Patient whose required identity, demographic, and contact information has completed Patient Registration. A Provisional Patient becomes a Registered Patient when the required information is supplied and validated; only Registered Patients may check in or begin clinical care.
+
+## Provisional Patient
+
+A Patient record created with first name, last name, and phone so an Appointment can be booked before full Patient Registration is completed. A Provisional Patient receives a permanent Medical Record Number immediately and may hold Appointments, but must be completed or reconciled before check-in or clinical care begins.
+
+## Patient Reconciliation
+
+The deliberate resolution of a Provisional Patient against an existing Patient record. Matching identity or contact details may identify candidates but never links or merges Patient records automatically.
+
 ## Inactive Patient
 
 A Patient who has been deactivated without being removed from the system. The Patient's record and history remain retained and readable, but an Inactive Patient is not eligible for new clinical activity — they cannot be selected for a new Appointment, Visit, or Admission until reactivated. Deactivation is reversible and distinct from deletion.
 
 ## Medical Record Number
 
-The human-facing identifier for a Patient within a Tenant, assigned by the system at Patient Registration and never chosen by the user. A Patient keeps the same Medical Record Number across all of the Tenant's Facilities, and a Medical Record Number is never reused. Commonly abbreviated MRN.
+The human-facing identifier for a Patient within a Tenant, assigned by the system when the Patient record is first created and never chosen by the user. A Patient keeps the same Medical Record Number across all of the Tenant's Facilities and registration states, and a Medical Record Number is never reused. Commonly abbreviated MRN.
 
 ## Emergency Contact
 
@@ -132,7 +156,11 @@ The person to reach on a Patient's behalf in urgent situations, recorded during 
 
 ## Appointment
 
-A scheduled time slot for a Patient to see a Doctor at a Facility. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives. An Appointment is not the clinical event itself.
+A scheduled period for a Patient to see a Doctor within a Tenant, reserving one or more consecutive DoctorSlots from the same DoctorRota on the same date. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
+
+## Booking Number
+
+The permanent, human-facing identifier assigned by the system to an Appointment within a Tenant, formatted as `APT-` followed by a Tenant-scoped sequence beginning at `1001`. A Booking Number is immutable and never reused, including after the Appointment is removed.
 
 ## AppointmentMode
 
@@ -146,6 +174,14 @@ A Tenant-scoped Master that defines the clinical category or visit type of an Ap
 
 A Tenant-scoped Master that defines the lifecycle state of an Appointment, such as scheduled, confirmed, checked-in, completed, cancelled, or no-show. Distinct from AppointmentMode, which describes the channel or format of the Appointment, and AppointmentType, which describes the clinical category or visit type.
 
+## Appointment Status Category
+
+The system-defined lifecycle meaning assigned to an AppointmentStatus: Scheduled, Confirmed, Checked In, Completed, Cancelled, or No Show. Tenant-created AppointmentStatuses use a category so lifecycle rules remain stable when display details differ.
+
+## System Appointment Status
+
+An AppointmentStatus provided to every Tenant for one Appointment Status Category. Its category identifies the system meaning; a Tenant may customize its display details but cannot remove it or change its category.
+
 ## AppointmentReason
 
 A Tenant-scoped Master that defines why an Appointment is being booked, either as stated by the Patient or assigned clinically. Distinct from AppointmentType, which describes the clinical category or visit type of the Appointment.
@@ -157,6 +193,10 @@ A Tenant-scoped Master that defines why an Appointment was cancelled. Distinct f
 ## Visit
 
 An outpatient clinical event. Occurs when a Patient attends a Facility for a consultation or procedure without being admitted overnight. A Visit is typically preceded by an Appointment but may be walk-in.
+
+## Queue Token
+
+A same-day ordering number assigned when a Patient checks in for a Visit. A Queue Token belongs to the arrival workflow and is not assigned when an Appointment is booked.
 
 ## Admission
 
