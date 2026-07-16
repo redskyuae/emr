@@ -1,0 +1,59 @@
+app/api/lib/modules/visit/repository/visit-repository.ts
+  70c93f2dabd16321 536-539,541-562,564,566-568,570,572-575,577-606,608-609
+app/api/lib/modules/visit/commands/delete-visit-command.ts
+  70c93f2dabd16321 18,23,27-35
+app/api/lib/modules/clinical-note/validator/update-clinical-note-validator.ts
+  70c93f2dabd16321 11,61-75
+app/api/lib/modules/patient-vital-sign/validator/update-patient-vital-sign-validator.ts
+  70c93f2dabd16321 11,49-63
+app/db/drizzle/0043_seed_visit_types_for_existing_tenants.sql
+  70c93f2dabd16321 1-27
+app/db/drizzle/0042_slim_katie_power.sql
+  70c93f2dabd16321 48-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "9e759e33f73551171b5c698aea0b30a21b387c19",
+  "prompts": {
+    "225dfa28518475a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d63a4abb-0aad-4b83-9aac-cfcad244d860",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "70c93f2dabd16321": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a42eff1-af26-4f37-9bac-7bcd86d59a62",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 149,
+      "total_deletions": 17,
+      "accepted_lines": 605,
+      "overriden_lines": 0
+    },
+    "c865739078e5e665": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "050cc829-e9ac-41f8-8366-2d1051e0d5ff",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 35,
+      "overriden_lines": 0
+    }
+  }
+}
