@@ -83,7 +83,7 @@ export async function provisionTenantCommand(
 
     const createdOrganization = await auth.api.createOrganization({
       body: {
-        metadata: { isActive: true },
+        metadata: { isActive: true, timeZone: 'Asia/Kolkata' },
         userId: createdUser.user.id,
         name: validationResult.data.tenantName,
         slug: validationResult.data.tenantSlug,

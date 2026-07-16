@@ -8,6 +8,10 @@ A hospital group or hospital chain (e.g., Apollo Hospitals, Fortis Healthcare). 
 
 A stable, URL-safe identifier for a Tenant. Generated when the Tenant is created and not changed when the Tenant's display name changes.
 
+## Tenant Time Zone
+
+The IANA time zone used to interpret the Tenant's local operational dates and times. Existing Tenants use `Asia/Kolkata` until explicitly configured otherwise.
+
 ## Active Tenant
 
 A Tenant currently allowed to operate in the system.

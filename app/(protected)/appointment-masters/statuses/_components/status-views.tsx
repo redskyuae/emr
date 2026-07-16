@@ -1,5 +1,9 @@
 import { ClipboardList, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import type { AppointmentStatus } from '@/app/api/lib/modules/appointment-status/schemas/appointment-status-schema';
+import type {
+  AppointmentStatus,
+  AppointmentStatusCategory,
+} from '@/app/api/lib/modules/appointment-status/schemas/appointment-status-schema';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -17,10 +21,28 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+const STATUS_CATEGORY_LABELS: Record<AppointmentStatusCategory, string> = {
+  SCHEDULED: 'Scheduled',
+  CONFIRMED: 'Confirmed',
+  CHECKED_IN: 'Checked in',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+  NO_SHOW: 'No show',
+};
+
 function StatusIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
       <ClipboardList className="size-5" />
+    </div>
+  );
+}
+
+function StatusBadges({ status }: { status: AppointmentStatus }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      <Badge variant="secondary">{STATUS_CATEGORY_LABELS[status.category]}</Badge>
+      {status.isSystem ? <Badge variant="outline">System</Badge> : null}
     </div>
   );
 }
@@ -78,6 +100,7 @@ export function StatusTableView({
               <TableRow>
                 <TableHead className="pl-4">Name</TableHead>
                 <TableHead>Code</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="pr-4 text-right">Actions</TableHead>
               </TableRow>
@@ -87,6 +110,9 @@ export function StatusTableView({
                 <TableRow key={status.id}>
                   <TableCell className="pl-4 font-medium">{status.name}</TableCell>
                   <TableCell className="font-mono text-xs">{status.code}</TableCell>
+                  <TableCell>
+                    <StatusBadges status={status} />
+                  </TableCell>
                   <TableCell className="text-muted-foreground max-w-xs truncate">
                     {status.description || '—'}
                   </TableCell>
@@ -124,6 +150,9 @@ export function StatusCardView({
               <p className="text-muted-foreground mt-0.5 text-sm">
                 Appointment Status Code: <span className="font-mono">{status.code}</span>
               </p>
+              <div className="mt-2">
+                <StatusBadges status={status} />
+              </div>
               <p className="text-muted-foreground mt-0.5 text-sm">
                 Appointment Status Description: <span>{status.description || '—'}</span>
               </p>
@@ -178,6 +207,7 @@ export function StatusListView({
                 <span className="text-muted-foreground">Appointment Status Code: </span>
                 <span className="font-mono">{status.code}</span>
               </div>
+              <StatusBadges status={status} />
               <div className="min-w-0">
                 <span className="text-muted-foreground">Appointment Status Description: </span>
                 <span className="truncate">{status.description || '—'}</span>

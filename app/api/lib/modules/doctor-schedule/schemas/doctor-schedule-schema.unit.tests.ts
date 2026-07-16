@@ -298,7 +298,7 @@ describe('DoctorSchedule schema', () => {
       expect.arrayContaining([
         'Tenant ID cannot be empty',
         'Doctor ID is required',
-        'Slot date must be a valid date',
+        'Slot date must be a valid date in DD-MM-YYYY or YYYY-MM-DD format',
       ])
     );
   });

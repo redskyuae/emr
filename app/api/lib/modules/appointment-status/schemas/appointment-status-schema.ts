@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+export const APPOINTMENT_STATUS_CATEGORIES = [
+  'SCHEDULED',
+  'CONFIRMED',
+  'CHECKED_IN',
+  'COMPLETED',
+  'CANCELLED',
+  'NO_SHOW',
+] as const;
+
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
@@ -24,6 +33,11 @@ const appointmentStatusDescriptionSchema = z
   .optional()
   .transform((description) => (description === '' ? undefined : description));
 
+const appointmentStatusCategorySchema = z.enum(APPOINTMENT_STATUS_CATEGORIES, {
+  error:
+    'Appointment status category must be one of SCHEDULED, CONFIRMED, CHECKED_IN, COMPLETED, CANCELLED, or NO_SHOW.',
+});
+
 export const appointmentStatusIdSchema = z.coerce
   .number({ error: 'Appointment status ID is required' })
   .int('Appointment status ID must be an integer')
@@ -34,6 +48,7 @@ export const appointmentStatusTenantIdSchema = tenantIdSchema;
 export const createAppointmentStatusSchema = z.object({
   name: appointmentStatusNameSchema,
   code: appointmentStatusCodeSchema,
+  category: appointmentStatusCategorySchema,
   description: appointmentStatusDescriptionSchema,
 });
 
@@ -41,6 +56,7 @@ export const updateAppointmentStatusSchema = createAppointmentStatusSchema;
 
 export type AppointmentStatusIdInput = z.infer<typeof appointmentStatusIdSchema>;
 export type AppointmentStatusTenantIdInput = z.infer<typeof appointmentStatusTenantIdSchema>;
+export type AppointmentStatusCategory = (typeof APPOINTMENT_STATUS_CATEGORIES)[number];
 export type CreateAppointmentStatusInput = z.infer<typeof createAppointmentStatusSchema>;
 export type UpdateAppointmentStatusInput = z.infer<typeof updateAppointmentStatusSchema>;
 export type CreateAppointmentStatusData = CreateAppointmentStatusInput & { tenantId: string };
@@ -51,6 +67,8 @@ export type AppointmentStatus = {
   code: string;
   name: string;
   tenantId: string;
+  isSystem: boolean;
+  category: AppointmentStatusCategory;
   createdOn: Date;
   modifiedOn: Date;
   description: string | null;

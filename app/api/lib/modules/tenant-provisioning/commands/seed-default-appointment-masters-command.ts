@@ -21,12 +21,48 @@ const DEFAULT_APPOINTMENT_TYPES = [
 ] as const;
 
 const DEFAULT_APPOINTMENT_STATUSES = [
-  { code: 'SCH', name: 'Scheduled', description: 'Appointment is scheduled' },
-  { code: 'CNF', name: 'Confirmed', description: 'Appointment is confirmed' },
-  { code: 'CHK', name: 'Checked-in', description: 'Patient has checked in' },
-  { code: 'CMP', name: 'Completed', description: 'Appointment is completed' },
-  { code: 'CAN', name: 'Cancelled', description: 'Appointment is cancelled' },
-  { code: 'NSH', name: 'No-show', description: 'Patient did not attend' },
+  {
+    code: 'SCH',
+    name: 'Scheduled',
+    category: 'SCHEDULED',
+    isSystem: true,
+    description: 'Appointment is scheduled',
+  },
+  {
+    code: 'CNF',
+    name: 'Confirmed',
+    category: 'CONFIRMED',
+    isSystem: true,
+    description: 'Appointment is confirmed',
+  },
+  {
+    code: 'CHK',
+    name: 'Checked-in',
+    category: 'CHECKED_IN',
+    isSystem: true,
+    description: 'Patient has checked in',
+  },
+  {
+    code: 'CMP',
+    name: 'Completed',
+    category: 'COMPLETED',
+    isSystem: true,
+    description: 'Appointment is completed',
+  },
+  {
+    code: 'CAN',
+    name: 'Cancelled',
+    category: 'CANCELLED',
+    isSystem: true,
+    description: 'Appointment is cancelled',
+  },
+  {
+    code: 'NSH',
+    name: 'No-show',
+    category: 'NO_SHOW',
+    isSystem: true,
+    description: 'Patient did not attend',
+  },
 ] as const;
 
 const DEFAULT_APPOINTMENT_REASONS = [

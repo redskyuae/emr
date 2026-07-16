@@ -60,7 +60,7 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
 
   const form = useForm<StatusFormValues>({
     resolver: zodResolver(createAppointmentStatusSchema),
-    defaultValues: { name: '', code: '', description: '' },
+    defaultValues: { name: '', code: '', category: 'SCHEDULED', description: '' },
   });
 
   const statusesQuery = useAppointmentStatusesQuery({
@@ -100,14 +100,19 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
 
   function openAddSheet() {
     setEditingStatus(null);
-    form.reset({ name: '', code: '', description: '' });
+    form.reset({ name: '', code: '', category: 'SCHEDULED', description: '' });
     setServerErrors([]);
     setSheetOpen(true);
   }
 
   function openEditSheet(status: AppointmentStatus) {
     setEditingStatus(status);
-    form.reset({ name: status.name, code: status.code, description: status.description ?? '' });
+    form.reset({
+      name: status.name,
+      code: status.code,
+      category: status.category,
+      description: status.description ?? '',
+    });
     setServerErrors([]);
     setSheetOpen(true);
   }
@@ -115,7 +120,7 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
   function closeSheet() {
     setSheetOpen(false);
     setEditingStatus(null);
-    form.reset({ name: '', code: '', description: '' });
+    form.reset({ name: '', code: '', category: 'SCHEDULED', description: '' });
     setServerErrors([]);
     router.replace('/appointment-masters/statuses', { scroll: false });
   }
@@ -128,6 +133,7 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
         await createMutation.mutateAsync({
           name: values.name,
           code: values.code,
+          category: values.category,
           description: values.description || undefined,
         });
         toast.success('Appointment Status created.');
@@ -138,6 +144,7 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
           request: {
             name: values.name,
             code: values.code,
+            category: values.category,
             description: values.description || undefined,
           },
         });

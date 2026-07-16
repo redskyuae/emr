@@ -48,6 +48,11 @@ function isOnboardedTenant(metadata: string | null) {
   return typeof parseMetadata(metadata).onboardedAt === 'string';
 }
 
+function tenantTimeZone(metadata: string | null) {
+  const timeZone = parseMetadata(metadata).timeZone;
+  return typeof timeZone === 'string' ? timeZone : 'Asia/Kolkata';
+}
+
 function toTenant(
   row: Pick<TenantRow, 'id' | 'name' | 'slug' | 'logo' | 'metadata' | 'createdAt'>
 ) {
@@ -57,6 +62,7 @@ function toTenant(
     slug: row.slug,
     logo: row.logo,
     createdAt: row.createdAt,
+    timeZone: tenantTimeZone(row.metadata),
     isActive: isActiveTenant(row.metadata),
     isOnboarded: isOnboardedTenant(row.metadata),
   } satisfies Tenant;
@@ -111,7 +117,7 @@ async function findTenantBySlug(
 }
 
 async function updateTenant(id: string, data: UpdateTenantInput): Promise<Tenant | undefined> {
-  const updateData: Partial<Pick<TenantRow, 'name' | 'logo'>> = {};
+  const updateData: Partial<Pick<TenantRow, 'name' | 'logo' | 'metadata'>> = {};
 
   if (data.name !== undefined) {
     updateData.name = data.name;
@@ -119,6 +125,23 @@ async function updateTenant(id: string, data: UpdateTenantInput): Promise<Tenant
 
   if (data.logo !== undefined) {
     updateData.logo = data.logo;
+  }
+
+  if (data.timeZone !== undefined) {
+    const [tenant] = await db
+      .select({ metadata: organization.metadata })
+      .from(organization)
+      .where(eq(organization.id, id))
+      .limit(1);
+
+    if (!tenant) {
+      return undefined;
+    }
+
+    updateData.metadata = JSON.stringify({
+      ...parseMetadata(tenant.metadata),
+      timeZone: data.timeZone,
+    });
   }
 
   const [updatedTenant] = await db

@@ -33,6 +33,8 @@ const status = {
   tenantId: 'tenant-1',
   name: 'Scheduled',
   code: 'SCH',
+  category: 'SCHEDULED' as const,
+  isSystem: false,
   description: null,
   createdOn: new Date(),
   modifiedOn: new Date(),

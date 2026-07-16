@@ -1,6 +1,7 @@
 import { and, asc, count, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
+import { appointmentRepository } from '../../appointment/repository/appointment-repository';
 import { doctorSchedule as doctorScheduleTable } from '@/app/db/schema/doctor-schedule';
 import { doctorScheduleRota as doctorScheduleRotaTable } from '@/app/db/schema/doctor-schedule';
 import { doctorRota as doctorRotaTable } from '@/app/db/schema/doctor-rota';
@@ -99,16 +100,26 @@ function toSchedules(rows: DoctorScheduleRow[]) {
     .filter((schedule): schedule is DoctorSchedule => schedule !== undefined);
 }
 
-function generateSlotTimes(fromTime: string, toTime: string, duration: number) {
+function generateSlotTimes(
+  fromTime: string,
+  toTime: string,
+  duration: number,
+  bookedSlotTimes: Set<string>
+) {
   const start = minutesFromTime(fromTime);
   const end = minutesFromTime(toTime);
-  const slots: { slot: number; slotTime: string; slotStatus: 'Available' }[] = [];
+  const slots: {
+    slot: number;
+    slotTime: string;
+    slotStatus: 'Available' | 'Booked';
+  }[] = [];
 
   for (let current = start, slot = 1; current + duration <= end; current += duration, slot += 1) {
+    const slotTime = formatSlotDuration(current);
     slots.push({
       slot,
-      slotStatus: 'Available',
-      slotTime: formatSlotDuration(current),
+      slotTime,
+      slotStatus: bookedSlotTimes.has(slotTime) ? 'Booked' : 'Available',
     });
   }
 
@@ -503,13 +514,20 @@ async function getDoctorSlots(
     toDate: slotDate,
     fromDate: slotDate,
   });
+  const reserved = await appointmentRepository.getReservedSlotTimes(tenantId, doctorId, slotDate);
+  const bookedSlotTimes = new Set(reserved.map((reservation) => reservation.slotTime));
 
   const rotas = schedules.flatMap((schedule) =>
     schedule.rotaDetails.map((rota) => ({
       rotaName: rota.rotaName,
       duration: schedule.slotDurationMinutes,
       doctorRotaId: rota.rotaId,
-      slots: generateSlotTimes(rota.fromTime, rota.toTime, schedule.slotDurationMinutes),
+      slots: generateSlotTimes(
+        rota.fromTime,
+        rota.toTime,
+        schedule.slotDurationMinutes,
+        bookedSlotTimes
+      ),
     }))
   );
 

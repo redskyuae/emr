@@ -4,6 +4,8 @@ import { db } from '@/app/db';
 import { member, organization } from '@/app/db/schema/auth';
 import type { Tenant } from '../../tenant/schemas/tenant-schema';
 
+const DEFAULT_TENANT_TIME_ZONE = 'Asia/Kolkata';
+
 const tenantColumns = {
   id: organization.id,
   name: organization.name,
@@ -41,6 +43,12 @@ function isOnboardedTenant(metadata: string | null) {
   return typeof parseMetadata(metadata).onboardedAt === 'string';
 }
 
+function getTenantTimeZone(metadata: string | null) {
+  const timeZone = parseMetadata(metadata).timeZone;
+
+  return typeof timeZone === 'string' && timeZone.trim() ? timeZone : DEFAULT_TENANT_TIME_ZONE;
+}
+
 function toTenant(
   row: Pick<TenantRow, 'id' | 'name' | 'slug' | 'logo' | 'metadata' | 'createdAt'>
 ) {
@@ -51,6 +59,7 @@ function toTenant(
     logo: row.logo,
     isActive: isActiveTenant(row.metadata),
     createdAt: row.createdAt,
+    timeZone: getTenantTimeZone(row.metadata),
     isOnboarded: isOnboardedTenant(row.metadata),
   } satisfies Tenant;
 }

@@ -7,6 +7,7 @@ export type GetTenantResponse = {
 export type UpdateTenantRequest = {
   name?: string;
   logo?: string;
+  timeZone?: string;
 };
 
 export type UpdateTenantResponse = {
