@@ -264,6 +264,126 @@ const itemOperations = ({
   },
 });
 
+const patientRecordCollectionOperations = ({
+  tag,
+  entity,
+  summaryEntity,
+  schemaName,
+  createSchemaName,
+  requestExample,
+  responseExample,
+}: {
+  tag: string;
+  entity: string;
+  summaryEntity: string;
+  schemaName: string;
+  createSchemaName: string;
+  requestExample: unknown;
+  responseExample: unknown;
+}) => ({
+  get: {
+    tags: [tag],
+    summary: `List ${summaryEntity}`,
+    description: `Returns a paginated list of ${summaryEntity} for one Patient in the active Tenant, most-recent first. The tenantId is resolved from the active authenticated Session.`,
+    security: [{ cookieAuth: [] }],
+    parameters: [numberIdPathParameter('Patient'), ...listParameters],
+    responses: {
+      '200': {
+        description: `Paginated ${summaryEntity} list.`,
+        content: jsonContent(paginatedSchema(schemaName), {
+          data: [responseExample],
+          meta: { total: 1, totalPages: 1, pageSize: 100, pageNumber: 1 },
+        }),
+      },
+      ...authenticatedListErrorResponses,
+    },
+  },
+  post: {
+    tags: [tag],
+    summary: `Create ${entity}`,
+    description: `Records a new ${entity} for one Patient in the active Tenant. The tenantId and recording user are resolved from the active authenticated Session, never from the request body.`,
+    security: [{ cookieAuth: [] }],
+    parameters: [numberIdPathParameter('Patient')],
+    requestBody: requestBody(createSchemaName, requestExample),
+    responses: {
+      '201': {
+        description: `${entity} created.`,
+        content: jsonContent(dataEnvelopeSchema(schemaName), { data: responseExample }),
+      },
+      ...authenticatedErrorResponses,
+    },
+  },
+});
+
+const patientRecordItemOperations = ({
+  tag,
+  entity,
+  schemaName,
+  updateSchemaName,
+  recordParam,
+  requestExample,
+  responseExample,
+  extraPutErrorResponses = {},
+}: {
+  tag: string;
+  entity: string;
+  schemaName: string;
+  updateSchemaName: string;
+  recordParam: string;
+  requestExample: unknown;
+  responseExample: unknown;
+  extraPutErrorResponses?: Record<string, unknown>;
+}) => {
+  const parameters = [
+    numberIdPathParameter('Patient'),
+    namedNumberPathParameter(recordParam, entity),
+  ];
+
+  return {
+    get: {
+      tags: [tag],
+      summary: `Get ${entity}`,
+      description: `Returns one ${entity} by ID for the Patient in the active Tenant. Records from other Tenants are treated as not found.`,
+      security: [{ cookieAuth: [] }],
+      parameters,
+      responses: {
+        '200': {
+          description: `${entity} found.`,
+          content: jsonContent(dataEnvelopeSchema(schemaName), { data: responseExample }),
+        },
+        ...authenticatedErrorResponses,
+      },
+    },
+    put: {
+      tags: [tag],
+      summary: `Update ${entity}`,
+      description: `Updates one ${entity} for the Patient in the active Tenant.`,
+      security: [{ cookieAuth: [] }],
+      parameters,
+      requestBody: requestBody(updateSchemaName, requestExample),
+      responses: {
+        '200': {
+          description: `${entity} updated.`,
+          content: jsonContent(dataEnvelopeSchema(schemaName), { data: responseExample }),
+        },
+        ...authenticatedErrorResponses,
+        ...extraPutErrorResponses,
+      },
+    },
+    delete: {
+      tags: [tag],
+      summary: `Delete ${entity}`,
+      description: `Soft-deletes one ${entity} for the Patient in the active Tenant.`,
+      security: [{ cookieAuth: [] }],
+      parameters,
+      responses: {
+        '204': { description: `${entity} deleted.` },
+        ...authenticatedErrorResponses,
+      },
+    },
+  };
+};
+
 const globalReferenceCollection = ({
   tag,
   entity,
@@ -1413,6 +1533,101 @@ const patientExample = {
   modifiedOn: '2026-06-24T04:00:00.000Z',
 };
 
+const patientAllergyExample = {
+  id: 7,
+  tenantId: 'org_apollo',
+  patientId: 42,
+  allergenId: 12,
+  substance: null,
+  reaction: 'Hives and facial swelling',
+  severity: 'severe',
+  status: 'active',
+  notedOn: '2026-03-01',
+  notes: 'Reaction documented during intake.',
+  recordedByUserId: 'user_9f3',
+  createdOn: '2026-03-01T09:30:00.000Z',
+  modifiedOn: '2026-03-01T09:30:00.000Z',
+};
+
+const patientProblemExample = {
+  id: 3,
+  tenantId: 'org_apollo',
+  patientId: 42,
+  diagnosisCodeId: 5,
+  title: 'Essential (primary) hypertension',
+  clinicalStatus: 'active',
+  onsetDate: '2025-11-15',
+  resolvedDate: null,
+  notes: null,
+  recordedByUserId: 'user_9f3',
+  createdOn: '2025-11-15T10:00:00.000Z',
+  modifiedOn: '2025-11-15T10:00:00.000Z',
+};
+
+const patientVitalSignExample = {
+  id: 15,
+  tenantId: 'org_apollo',
+  patientId: 42,
+  visitId: null,
+  recordedAt: '2026-03-01T09:30:00.000Z',
+  heightCm: 170,
+  weightKg: 70,
+  bmi: 24.2,
+  systolic: 120,
+  diastolic: 80,
+  pulseBpm: 72,
+  respRate: 16,
+  temperatureC: 36.8,
+  spo2: 98,
+  painScore: 2,
+  notes: null,
+  recordedByUserId: 'user_9f3',
+  createdOn: '2026-03-01T09:30:00.000Z',
+  modifiedOn: '2026-03-01T09:30:00.000Z',
+};
+
+const patientMedicationExample = {
+  id: 21,
+  tenantId: 'org_apollo',
+  patientId: 42,
+  drugName: 'Metformin',
+  dose: '500 mg',
+  route: 'oral',
+  frequency: 'BID',
+  status: 'active',
+  startDate: '2026-01-10',
+  endDate: null,
+  notes: null,
+  recordedByUserId: 'user_9f3',
+  createdOn: '2026-01-10T08:00:00.000Z',
+  modifiedOn: '2026-01-10T08:00:00.000Z',
+};
+
+const clinicalNoteExample = {
+  id: 31,
+  tenantId: 'org_apollo',
+  patientId: 42,
+  visitId: null,
+  noteTypeId: 3,
+  subjective: 'Patient reports a productive cough for three days with mild fever.',
+  objective: 'Temp 37.8C, chest clear on auscultation, throat mildly erythematous.',
+  assessment: 'Acute upper respiratory infection.',
+  plan: 'Supportive care, fluids, paracetamol as needed. Review in 5 days if not improving.',
+  status: 'draft',
+  signedAt: null,
+  authorUserId: 'user_9f3',
+  recordedByUserId: 'user_9f3',
+  createdOn: '2026-03-01T09:45:00.000Z',
+  modifiedOn: '2026-03-01T09:45:00.000Z',
+};
+
+const signedClinicalNoteExample = {
+  ...clinicalNoteExample,
+  status: 'signed',
+  signedAt: '2026-03-01T10:15:00.000Z',
+  modifiedOn: '2026-03-01T10:15:00.000Z',
+};
+
 const patientValidationFailed = {
   description: 'Validation failed or the request body is not valid JSON.',
   content: {
@@ -1645,7 +1860,27 @@ export const openApiDocument = {
     { name: 'Asset', description: 'Asset inventory APIs.' },
     { name: 'Room Type', description: 'Tenant-scoped Room Type Master APIs.' },
     { name: 'Room', description: 'Tenant-scoped Room registry and occupancy APIs.' },
+    { name: 'Diagnosis Code', description: 'Tenant-scoped Diagnosis Code (ICD-10) Master APIs.' },
+    { name: 'Allergen', description: 'Tenant-scoped Allergen Master APIs.' },
+    { name: 'Clinical Note Type', description: 'Tenant-scoped Clinical Note Type Master APIs.' },
     { name: 'Patient', description: 'Patient Registration and management APIs.' },
+    { name: 'Patient Allergy', description: 'Patient-scoped Allergy record APIs (Patient Chart).' },
+    {
+      name: 'Patient Problem',
+      description: 'Patient-scoped Problem List record APIs (Patient Chart).',
+    },
+    {
+      name: 'Patient Vital Sign',
+      description: 'Patient-scoped Vital Sign record APIs (Patient Chart).',
+    },
+    {
+      name: 'Patient Medication',
+      description: 'Patient-scoped Medication record APIs (Patient Chart).',
+    },
+    {
+      name: 'Clinical Note',
+      description: 'Patient-scoped Clinical Note (SOAP) record APIs (Patient Chart).',
+    },
   ],
   paths: {
     '/api/v1/signin': {
@@ -3215,6 +3450,294 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
+    '/api/v1/clinical-masters/diagnosis-codes': collectionOperations({
+      tag: 'Diagnosis Code',
+      entity: 'Diagnosis Code',
+      summaryEntity: 'Diagnosis Codes',
+      schemaName: 'DiagnosisCode',
+      createSchemaName: 'CreateDiagnosisCodeRequest',
+      example: {
+        code: 'I10',
+        title: 'Essential (primary) hypertension',
+        category: 'Circulatory system',
+      },
+      security: [{ cookieAuth: [] }],
+      listErrorResponses: authenticatedListErrorResponses,
+      mutationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/clinical-masters/diagnosis-codes/{id}': itemOperations({
+      tag: 'Diagnosis Code',
+      entity: 'Diagnosis Code',
+      schemaName: 'DiagnosisCode',
+      updateSchemaName: 'UpdateDiagnosisCodeRequest',
+      example: {
+        code: 'I10',
+        title: 'Essential (primary) hypertension',
+        category: 'Circulatory system',
+      },
+      parameters: [numberIdPathParameter('Diagnosis Code')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/clinical-masters/allergens': collectionOperations({
+      tag: 'Allergen',
+      entity: 'Allergen',
+      summaryEntity: 'Allergens',
+      schemaName: 'Allergen',
+      createSchemaName: 'CreateAllergenRequest',
+      example: {
+        name: 'Penicillin',
+        code: 'PEN',
+        category: 'drug',
+      },
+      security: [{ cookieAuth: [] }],
+      listErrorResponses: authenticatedListErrorResponses,
+      mutationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/clinical-masters/allergens/{id}': itemOperations({
+      tag: 'Allergen',
+      entity: 'Allergen',
+      schemaName: 'Allergen',
+      updateSchemaName: 'UpdateAllergenRequest',
+      example: {
+        name: 'Penicillin',
+        code: 'PEN',
+        category: 'drug',
+      },
+      parameters: [numberIdPathParameter('Allergen')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/clinical-masters/note-types': collectionOperations({
+      tag: 'Clinical Note Type',
+      entity: 'Clinical Note Type',
+      summaryEntity: 'Clinical Note Types',
+      schemaName: 'ClinicalNoteType',
+      createSchemaName: 'CreateClinicalNoteTypeRequest',
+      example: {
+        name: 'Progress Note',
+        code: 'PROG',
+        description: 'Daily progress note documenting patient status.',
+      },
+      security: [{ cookieAuth: [] }],
+      listErrorResponses: authenticatedListErrorResponses,
+      mutationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/clinical-masters/note-types/{id}': itemOperations({
+      tag: 'Clinical Note Type',
+      entity: 'Clinical Note Type',
+      schemaName: 'ClinicalNoteType',
+      updateSchemaName: 'UpdateClinicalNoteTypeRequest',
+      example: {
+        name: 'Progress Note',
+        code: 'PROG',
+        description: 'Daily progress note documenting patient status.',
+      },
+      parameters: [numberIdPathParameter('Clinical Note Type')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/patients/{id}/allergies': patientRecordCollectionOperations({
+      tag: 'Patient Allergy',
+      entity: 'Patient Allergy',
+      summaryEntity: 'Patient Allergies',
+      schemaName: 'PatientAllergy',
+      createSchemaName: 'CreatePatientAllergyRequest',
+      requestExample: {
+        allergenId: 12,
+        reaction: 'Hives and facial swelling',
+        severity: 'severe',
+        status: 'active',
+        notedOn: '2026-03-01',
+        notes: 'Reaction documented during intake.',
+      },
+      responseExample: patientAllergyExample,
+    }),
+    '/api/v1/patients/{id}/allergies/{allergyId}': patientRecordItemOperations({
+      tag: 'Patient Allergy',
+      entity: 'Patient Allergy',
+      schemaName: 'PatientAllergy',
+      updateSchemaName: 'UpdatePatientAllergyRequest',
+      recordParam: 'allergyId',
+      requestExample: {
+        substance: 'Shellfish',
+        reaction: 'Anaphylaxis',
+        severity: 'severe',
+        status: 'active',
+      },
+      responseExample: patientAllergyExample,
+    }),
+    '/api/v1/patients/{id}/problems': patientRecordCollectionOperations({
+      tag: 'Patient Problem',
+      entity: 'Patient Problem',
+      summaryEntity: 'Patient Problems',
+      schemaName: 'PatientProblem',
+      createSchemaName: 'CreatePatientProblemRequest',
+      requestExample: {
+        diagnosisCodeId: 5,
+        title: 'Essential (primary) hypertension',
+        clinicalStatus: 'active',
+        onsetDate: '2025-11-15',
+      },
+      responseExample: patientProblemExample,
+    }),
+    '/api/v1/patients/{id}/problems/{problemId}': patientRecordItemOperations({
+      tag: 'Patient Problem',
+      entity: 'Patient Problem',
+      schemaName: 'PatientProblem',
+      updateSchemaName: 'UpdatePatientProblemRequest',
+      recordParam: 'problemId',
+      requestExample: {
+        title: 'Essential (primary) hypertension',
+        clinicalStatus: 'resolved',
+        resolvedDate: '2026-06-01',
+      },
+      responseExample: patientProblemExample,
+    }),
+    '/api/v1/patients/{id}/vitals': patientRecordCollectionOperations({
+      tag: 'Patient Vital Sign',
+      entity: 'Patient Vital Sign',
+      summaryEntity: 'Patient Vital Signs',
+      schemaName: 'PatientVitalSign',
+      createSchemaName: 'CreatePatientVitalSignRequest',
+      requestExample: {
+        recordedAt: '2026-03-01T09:30:00Z',
+        heightCm: 170,
+        weightKg: 70,
+        systolic: 120,
+        diastolic: 80,
+        pulseBpm: 72,
+        respRate: 16,
+        temperatureC: 36.8,
+        spo2: 98,
+        painScore: 2,
+      },
+      responseExample: patientVitalSignExample,
+    }),
+    '/api/v1/patients/{id}/vitals/{vitalId}': patientRecordItemOperations({
+      tag: 'Patient Vital Sign',
+      entity: 'Patient Vital Sign',
+      schemaName: 'PatientVitalSign',
+      updateSchemaName: 'UpdatePatientVitalSignRequest',
+      recordParam: 'vitalId',
+      requestExample: {
+        heightCm: 170,
+        weightKg: 72,
+        systolic: 118,
+        diastolic: 78,
+        pulseBpm: 68,
+      },
+      responseExample: patientVitalSignExample,
+    }),
+    '/api/v1/patients/{id}/medications': patientRecordCollectionOperations({
+      tag: 'Patient Medication',
+      entity: 'Patient Medication',
+      summaryEntity: 'Patient Medications',
+      schemaName: 'PatientMedication',
+      createSchemaName: 'CreatePatientMedicationRequest',
+      requestExample: {
+        drugName: 'Metformin',
+        dose: '500 mg',
+        route: 'oral',
+        frequency: 'BID',
+        status: 'active',
+        startDate: '2026-01-10',
+      },
+      responseExample: patientMedicationExample,
+    }),
+    '/api/v1/patients/{id}/medications/{medicationId}': patientRecordItemOperations({
+      tag: 'Patient Medication',
+      entity: 'Patient Medication',
+      schemaName: 'PatientMedication',
+      updateSchemaName: 'UpdatePatientMedicationRequest',
+      recordParam: 'medicationId',
+      requestExample: {
+        drugName: 'Metformin',
+        dose: '1000 mg',
+        route: 'oral',
+        frequency: 'BID',
+        status: 'stopped',
+        startDate: '2026-01-10',
+        endDate: '2026-05-20',
+      },
+      responseExample: patientMedicationExample,
+    }),
+    '/api/v1/patients/{id}/notes': patientRecordCollectionOperations({
+      tag: 'Clinical Note',
+      entity: 'Clinical Note',
+      summaryEntity: 'Clinical Notes',
+      schemaName: 'ClinicalNote',
+      createSchemaName: 'CreateClinicalNoteRequest',
+      requestExample: {
+        noteTypeId: 3,
+        subjective: 'Patient reports a productive cough for three days with mild fever.',
+        objective: 'Temp 37.8C, chest clear on auscultation, throat mildly erythematous.',
+        assessment: 'Acute upper respiratory infection.',
+        plan: 'Supportive care, fluids, paracetamol as needed. Review in 5 days if not improving.',
+      },
+      responseExample: clinicalNoteExample,
+    }),
+    '/api/v1/patients/{id}/notes/{noteId}': patientRecordItemOperations({
+      tag: 'Clinical Note',
+      entity: 'Clinical Note',
+      schemaName: 'ClinicalNote',
+      updateSchemaName: 'UpdateClinicalNoteRequest',
+      recordParam: 'noteId',
+      requestExample: {
+        noteTypeId: 3,
+        subjective: 'Cough improving, no fever since yesterday.',
+        assessment: 'Resolving URTI.',
+        plan: 'Continue supportive care.',
+      },
+      responseExample: clinicalNoteExample,
+    }),
+    '/api/v1/patients/{id}/notes/{noteId}/sign': {
+      post: {
+        tags: ['Clinical Note'],
+        summary: 'Sign Clinical Note',
+        description:
+          'Signs a draft Clinical Note for the Patient in the active Tenant, setting status to "signed" and stamping signedAt. A signed note is immutable — subsequent updates are rejected with 409 Conflict, and re-signing an already-signed note returns 409 Conflict.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Patient'),
+          namedNumberPathParameter('noteId', 'Clinical Note'),
+        ],
+        responses: {
+          '200': {
+            description: 'Clinical Note signed.',
+            content: jsonContent(dataEnvelopeSchema('ClinicalNote'), {
+              data: signedClinicalNoteExample,
+            }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/patients/{id}/chart': {
+      get: {
+        tags: ['Patient'],
+        summary: 'Get Patient Chart',
+        description:
+          'Returns the aggregated Patient Chart for one Patient in the active Tenant — Allergies, Problem List, Vital Signs, Medications, and Clinical Notes in a single payload for the chart initial load. Each collection is capped at its most-recent 100 records; the per-record endpoints remain the source of truth for pagination and writes. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Patient')],
+        responses: {
+          '200': {
+            description: 'Patient Chart.',
+            content: jsonContent(dataEnvelopeSchema('PatientChart'), {
+              data: {
+                allergies: [patientAllergyExample],
+                problems: [patientProblemExample],
+                vitalSigns: [patientVitalSignExample],
+                medications: [patientMedicationExample],
+                clinicalNotes: [clinicalNoteExample],
+              },
+            }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
     '/api/v1/work-orders': {
       get: {
         tags: ['Work Order'],
@@ -5505,6 +6028,396 @@ export const openApiDocument = {
       CreateAppointmentStatusRequest: appointmentMasterCreateSchema('Appointment Status', true),
       UpdateAppointmentStatusRequest: appointmentMasterCreateSchema('Appointment Status', true),
       AppointmentStatus: appointmentMasterSchema('CreateAppointmentStatusRequest'),
+      CreateDiagnosisCodeRequest: {
+        type: 'object',
+        required: ['code', 'title'],
+        properties: {
+          code: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 10,
+            description: 'ICD-10 diagnosis code. The API normalizes this value to uppercase.',
+          },
+          title: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 255,
+            description: 'Human-readable diagnosis title.',
+          },
+          category: {
+            type: 'string',
+            maxLength: 100,
+            description: 'Optional ICD chapter or grouping.',
+          },
+        },
+      },
+      UpdateDiagnosisCodeRequest: schemaRef('CreateDiagnosisCodeRequest'),
+      DiagnosisCode: {
+        allOf: [
+          schemaRef('CreateDiagnosisCodeRequest'),
+          {
+            type: 'object',
+            required: ['id', 'tenantId', 'code', 'title', 'category', 'createdOn', 'modifiedOn'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              category: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreateAllergenRequest: {
+        type: 'object',
+        required: ['name', 'code', 'category'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 150 },
+          code: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            description: 'Allergen code. The API normalizes this value to uppercase.',
+          },
+          category: {
+            type: 'string',
+            enum: ['drug', 'food', 'environmental', 'other'],
+            description: 'Allergen category.',
+          },
+        },
+      },
+      UpdateAllergenRequest: schemaRef('CreateAllergenRequest'),
+      Allergen: {
+        allOf: [
+          schemaRef('CreateAllergenRequest'),
+          {
+            type: 'object',
+            required: ['id', 'tenantId', 'name', 'code', 'category', 'createdOn', 'modifiedOn'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreateClinicalNoteTypeRequest: {
+        type: 'object',
+        required: ['name', 'code'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            description: 'Clinical note type code. The API normalizes this value to uppercase.',
+          },
+          description: { type: ['string', 'null'], description: 'Clinical note type description.' },
+        },
+      },
+      UpdateClinicalNoteTypeRequest: schemaRef('CreateClinicalNoteTypeRequest'),
+      ClinicalNoteType: {
+        allOf: [
+          schemaRef('CreateClinicalNoteTypeRequest'),
+          {
+            type: 'object',
+            required: ['id', 'tenantId', 'name', 'code', 'description', 'createdOn', 'modifiedOn'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      CreatePatientAllergyRequest: {
+        type: 'object',
+        required: ['severity'],
+        description:
+          'Either allergenId (a Tenant Allergen) or substance (free-text) must be supplied.',
+        properties: {
+          allergenId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Tenant Allergen reference. Omit when using a free-text substance.',
+          },
+          substance: {
+            type: 'string',
+            maxLength: 150,
+            description: 'Free-text substance. Omit when an allergenId is supplied.',
+          },
+          reaction: { type: 'string', maxLength: 255 },
+          severity: { type: 'string', enum: ['mild', 'moderate', 'severe'] },
+          status: {
+            type: 'string',
+            enum: ['active', 'inactive', 'resolved'],
+            description: 'Clinical status. Defaults to "active".',
+          },
+          notedOn: { type: 'string', format: 'date' },
+          notes: { type: 'string', maxLength: 2000 },
+        },
+      },
+      UpdatePatientAllergyRequest: schemaRef('CreatePatientAllergyRequest'),
+      PatientAllergy: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'patientId',
+          'severity',
+          'status',
+          'recordedByUserId',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: { type: 'string', minLength: 1 },
+          patientId: { type: 'integer', minimum: 1 },
+          allergenId: { type: ['integer', 'null'] },
+          substance: { type: ['string', 'null'] },
+          reaction: { type: ['string', 'null'] },
+          severity: { type: 'string', enum: ['mild', 'moderate', 'severe'] },
+          status: { type: 'string', enum: ['active', 'inactive', 'resolved'] },
+          notedOn: { type: ['string', 'null'], format: 'date' },
+          notes: { type: ['string', 'null'] },
+          recordedByUserId: {
+            type: 'string',
+            description: 'Auth user id resolved from the Session that recorded this Allergy.',
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreatePatientProblemRequest: {
+        type: 'object',
+        description:
+          'Either diagnosisCodeId or a free-text title must be supplied; when a code is given without a title, the code title is used. resolvedDate is only allowed when clinicalStatus is "resolved".',
+        properties: {
+          diagnosisCodeId: { type: 'integer', minimum: 1 },
+          title: { type: 'string', maxLength: 255 },
+          clinicalStatus: {
+            type: 'string',
+            enum: ['active', 'resolved', 'inactive'],
+            description: 'Clinical status. Defaults to "active".',
+          },
+          onsetDate: { type: 'string', format: 'date' },
+          resolvedDate: { type: 'string', format: 'date' },
+          notes: { type: 'string', maxLength: 2000 },
+        },
+      },
+      UpdatePatientProblemRequest: schemaRef('CreatePatientProblemRequest'),
+      PatientProblem: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'patientId',
+          'title',
+          'clinicalStatus',
+          'recordedByUserId',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: { type: 'string', minLength: 1 },
+          patientId: { type: 'integer', minimum: 1 },
+          diagnosisCodeId: { type: ['integer', 'null'] },
+          title: { type: 'string' },
+          clinicalStatus: { type: 'string', enum: ['active', 'resolved', 'inactive'] },
+          onsetDate: { type: ['string', 'null'], format: 'date' },
+          resolvedDate: { type: ['string', 'null'], format: 'date' },
+          notes: { type: ['string', 'null'] },
+          recordedByUserId: { type: 'string' },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreatePatientVitalSignRequest: {
+        type: 'object',
+        description:
+          'At least one measurement must be supplied. BMI is computed server-side when height and weight are both present and is not accepted in the request.',
+        properties: {
+          visitId: { type: 'integer', minimum: 1 },
+          recordedAt: { type: 'string', format: 'date-time' },
+          heightCm: { type: 'number', minimum: 0, maximum: 300 },
+          weightKg: { type: 'number', minimum: 0, maximum: 700 },
+          systolic: { type: 'integer', minimum: 0, maximum: 400 },
+          diastolic: { type: 'integer', minimum: 0, maximum: 400 },
+          pulseBpm: { type: 'integer', minimum: 0, maximum: 400 },
+          respRate: { type: 'integer', minimum: 0, maximum: 150 },
+          temperatureC: { type: 'number', minimum: 20, maximum: 45 },
+          spo2: { type: 'integer', minimum: 0, maximum: 100 },
+          painScore: { type: 'integer', minimum: 0, maximum: 10 },
+          notes: { type: 'string', maxLength: 2000 },
+        },
+      },
+      UpdatePatientVitalSignRequest: schemaRef('CreatePatientVitalSignRequest'),
+      PatientVitalSign: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'patientId',
+          'recordedAt',
+          'recordedByUserId',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: { type: 'string', minLength: 1 },
+          patientId: { type: 'integer', minimum: 1 },
+          visitId: { type: ['integer', 'null'] },
+          recordedAt: { type: 'string', format: 'date-time' },
+          heightCm: { type: ['number', 'null'] },
+          weightKg: { type: ['number', 'null'] },
+          bmi: {
+            type: ['number', 'null'],
+            description:
+              'Computed server-side to one decimal place when height and weight present.',
+          },
+          systolic: { type: ['integer', 'null'] },
+          diastolic: { type: ['integer', 'null'] },
+          pulseBpm: { type: ['integer', 'null'] },
+          respRate: { type: ['integer', 'null'] },
+          temperatureC: { type: ['number', 'null'] },
+          spo2: { type: ['integer', 'null'] },
+          painScore: { type: ['integer', 'null'] },
+          notes: { type: ['string', 'null'] },
+          recordedByUserId: { type: 'string' },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreatePatientMedicationRequest: {
+        type: 'object',
+        required: ['drugName'],
+        description: 'endDate, when present, must be on or after startDate.',
+        properties: {
+          drugName: { type: 'string', minLength: 1, maxLength: 200 },
+          dose: { type: 'string', maxLength: 100 },
+          route: { type: 'string', maxLength: 50 },
+          frequency: { type: 'string', maxLength: 100 },
+          status: {
+            type: 'string',
+            enum: ['active', 'stopped', 'completed'],
+            description: 'Medication status. Defaults to "active".',
+          },
+          startDate: { type: 'string', format: 'date' },
+          endDate: { type: 'string', format: 'date' },
+          notes: { type: 'string', maxLength: 2000 },
+        },
+      },
+      UpdatePatientMedicationRequest: schemaRef('CreatePatientMedicationRequest'),
+      PatientMedication: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'patientId',
+          'drugName',
+          'status',
+          'recordedByUserId',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: { type: 'string', minLength: 1 },
+          patientId: { type: 'integer', minimum: 1 },
+          drugName: { type: 'string' },
+          dose: { type: ['string', 'null'] },
+          route: { type: ['string', 'null'] },
+          frequency: { type: ['string', 'null'] },
+          status: { type: 'string', enum: ['active', 'stopped', 'completed'] },
+          startDate: { type: ['string', 'null'], format: 'date' },
+          endDate: { type: ['string', 'null'], format: 'date' },
+          notes: { type: ['string', 'null'] },
+          recordedByUserId: { type: 'string' },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateClinicalNoteRequest: {
+        type: 'object',
+        required: ['noteTypeId'],
+        description:
+          'At least one SOAP section (subjective, objective, assessment, plan) must be non-empty. Notes are created in "draft" status; author and recorder are resolved from the Session.',
+        properties: {
+          noteTypeId: { type: 'integer', minimum: 1 },
+          visitId: { type: 'integer', minimum: 1 },
+          subjective: { type: 'string', maxLength: 20000 },
+          objective: { type: 'string', maxLength: 20000 },
+          assessment: { type: 'string', maxLength: 20000 },
+          plan: { type: 'string', maxLength: 20000 },
+        },
+      },
+      UpdateClinicalNoteRequest: schemaRef('CreateClinicalNoteRequest'),
+      ClinicalNote: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'patientId',
+          'noteTypeId',
+          'status',
+          'authorUserId',
+          'recordedByUserId',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: { type: 'string', minLength: 1 },
+          patientId: { type: 'integer', minimum: 1 },
+          visitId: { type: ['integer', 'null'] },
+          noteTypeId: { type: 'integer', minimum: 1 },
+          subjective: { type: ['string', 'null'] },
+          objective: { type: ['string', 'null'] },
+          assessment: { type: ['string', 'null'] },
+          plan: { type: ['string', 'null'] },
+          status: { type: 'string', enum: ['draft', 'signed'] },
+          signedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            description: 'Set when the note is signed; null while in draft.',
+          },
+          authorUserId: { type: 'string' },
+          recordedByUserId: { type: 'string' },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      PatientChart: {
+        type: 'object',
+        required: ['allergies', 'problems', 'vitalSigns', 'medications', 'clinicalNotes'],
+        description:
+          'Aggregated clinical view of a single Patient. Not a stored entity — a composition over the clinical record types.',
+        properties: {
+          allergies: { type: 'array', items: schemaRef('PatientAllergy') },
+          problems: { type: 'array', items: schemaRef('PatientProblem') },
+          vitalSigns: { type: 'array', items: schemaRef('PatientVitalSign') },
+          medications: { type: 'array', items: schemaRef('PatientMedication') },
+          clinicalNotes: { type: 'array', items: schemaRef('ClinicalNote') },
+        },
+      },
       CreateAppointmentCancelledReasonRequest: appointmentMasterCreateSchema(
         'Appointment Cancelled Reason',
         true

@@ -11,6 +11,9 @@ import { assetCategory as assetCategoryTable } from '@/app/db/schema/asset-categ
 import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-condition';
 import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import { asset as assetTable } from '@/app/db/schema/asset';
+import { allergen as allergenTable } from '@/app/db/schema/allergen';
+import { clinicalNoteType as clinicalNoteTypeTable } from '@/app/db/schema/clinical-note-type';
+import { diagnosisCode as diagnosisCodeTable } from '@/app/db/schema/diagnosis-code';
 import { organization, user } from '@/app/db/schema/auth';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import {
@@ -111,6 +114,13 @@ async function hasSeededWorkOrderMasters(tenantId: string) {
   );
 }
 
+async function hasSeededClinicalMasters(tenantId: string) {
+  return hasSeededMasterTables(
+    [diagnosisCodeTable, allergenTable, clinicalNoteTypeTable],
+    tenantId
+  );
+}
+
 export const tenantProvisioningRepository = {
   deleteAuthUser,
   findUserByEmail,
@@ -118,5 +128,6 @@ export const tenantProvisioningRepository = {
   hasSeededSpecialties,
   hasSeededAssetMasters,
   hasSeededWorkOrderMasters,
+  hasSeededClinicalMasters,
   hasSeededAppointmentMasters,
 };
