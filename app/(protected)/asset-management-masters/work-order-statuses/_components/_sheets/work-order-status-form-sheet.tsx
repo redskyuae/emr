@@ -112,7 +112,7 @@ export function WorkOrderStatusFormSheet({
           code: values.code,
           category: values.category,
           color: values.color,
-          description: values.description.trim(),
+          description: values.description || undefined,
         });
         toast.success('Work Order Status created.');
         onClose();
@@ -130,7 +130,7 @@ export function WorkOrderStatusFormSheet({
           code: values.code,
           category: values.category,
           color: values.color,
-          description: values.description.trim(),
+          description: values.description || undefined,
         },
       });
       toast.success('Work Order Status updated.');
@@ -238,7 +238,7 @@ export function WorkOrderStatusFormSheet({
                         onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                         disabled={isSaving || isSystem}
                         maxLength={10}
-                        placeholder="e.g. AWAITING_PARTS"
+                        placeholder="e.g. AWAITING"
                         className="font-mono"
                         aria-required="true"
                         aria-invalid={fieldState.invalid}

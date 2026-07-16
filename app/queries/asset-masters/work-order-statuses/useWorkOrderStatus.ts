@@ -22,7 +22,7 @@ async function fetchWorkOrderStatus(id: number): Promise<GetWorkOrderStatusRespo
 export function useWorkOrderStatusQuery(id: number | null) {
   return useQuery({
     queryKey: id === null ? ['work-order-status', 'none'] : workOrderStatusQueryKey(id),
-    queryFn: () => fetchWorkOrderStatus(id ?? 0),
+    queryFn: () => fetchWorkOrderStatus(id!),
     enabled: id !== null,
     select: (response) => response.data,
   });
