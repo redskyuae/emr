@@ -104,7 +104,7 @@ A Tenant-scoped reusable scheduling template that defines a named time window du
 
 ## DoctorSchedule
 
-A Tenant-scoped assignment of one or more DoctorRotas to a Doctor over a date range. A DoctorSchedule defines when a Doctor is available for Appointment booking and the duration used to divide that availability into DoctorSlots.
+A Tenant-scoped assignment of one or more DoctorRotas to a Doctor over a date range. A DoctorSchedule defines when a Doctor is available for Appointment booking and the duration used to divide that availability into DoctorSlots. Use DoctorSchedule as the canonical term for this concept; Clinician Schedule is not a separate domain concept.
 
 ## DoctorSlot
 

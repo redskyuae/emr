@@ -96,6 +96,11 @@ export const appNavGroups: AppNavGroup[] = [
         icon: Stethoscope,
         badge: '404',
       },
+      {
+        title: 'Doctor Schedules',
+        href: '/doctor-schedules',
+        icon: CalendarClock,
+      },
     ],
   },
   {
@@ -286,6 +291,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/assets-management/maintenance': {
     title: 'Maintenance & Work Orders',
     subtitle: 'Preventive, corrective, calibration & inspection jobs.',
+  },
+  '/doctor-schedules': {
+    title: 'Doctor Schedules',
+    subtitle: 'Doctor availability assignments built from Doctor Rotas.',
+    primaryAction: {
+      label: 'New schedule',
+      href: '/doctor-schedules?schedule=new',
+    },
   },
   '/audit-log': {
     title: 'Audit Log',
