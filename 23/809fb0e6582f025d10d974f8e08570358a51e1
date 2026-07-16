@@ -1,0 +1,48 @@
+app/api/lib/modules/clinical-note/validator/delete-clinical-note-validator.ts
+  225dfa28518475a8 1-2,5,13,16,34-50
+app/(protected)/patients/[id]/_components/_chart/chart-panel.tsx
+  225dfa28518475a8 60,72-82
+app/(protected)/patients/[id]/_components/_chart/clinical-notes-panel.tsx
+  225dfa28518475a8 75
+app/api/lib/modules/patient-chart/queries/get-patient-chart-query.ts
+  225dfa28518475a8 14-17,36
+app/api/lib/modules/clinical-note/validator/clinical-note-validator.unit.tests.ts
+  225dfa28518475a8 11,87-106
+app/api/lib/modules/clinical-note/commands/clinical-note-commands.unit.tests.ts
+  225dfa28518475a8 61
+app/api/lib/modules/clinical-note/commands/delete-clinical-note-command.ts
+  225dfa28518475a8 11,14-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "23809fb0e6582f025d10d974f8e08570358a51e1",
+  "prompts": {
+    "225dfa28518475a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d63a4abb-0aad-4b83-9aac-cfcad244d860",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 70,
+      "total_deletions": 17,
+      "accepted_lines": 108,
+      "overriden_lines": 0
+    },
+    "c865739078e5e665": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "050cc829-e9ac-41f8-8366-2d1051e0d5ff",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 392,
+      "overriden_lines": 0
+    }
+  }
+}
