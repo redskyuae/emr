@@ -1,0 +1,46 @@
+app/api/v1/patients/[id]/allergies/[allergyId]/route.ts
+  225dfa28518475a8 30,42-43,63-69,109-115
+app/api/v1/patients/[id]/problems/[problemId]/route.ts
+  225dfa28518475a8 30,42-43,63-69,109-115
+app/api/v1/patients/[id]/vitals/[vitalId]/route.ts
+  225dfa28518475a8 30,42-45,66-75,115-124
+app/api/v1/patients/[id]/notes/[noteId]/sign/route.ts
+  225dfa28518475a8 6,29-38
+app/api/v1/patients/[id]/notes/[noteId]/route.ts
+  225dfa28518475a8 30,42-45,66-75,115-124
+app/api/v1/patients/[id]/medications/[medicationId]/route.ts
+  225dfa28518475a8 30,42-45,66-75,119-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "c0fa6faf705572bf6c2d5059e8e9bb4f83666fc3",
+  "prompts": {
+    "225dfa28518475a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d63a4abb-0aad-4b83-9aac-cfcad244d860",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 133,
+      "total_deletions": 16,
+      "accepted_lines": 171,
+      "overriden_lines": 0
+    },
+    "c865739078e5e665": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "050cc829-e9ac-41f8-8366-2d1051e0d5ff",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 392,
+      "overriden_lines": 0
+    }
+  }
+}
