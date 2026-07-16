@@ -186,6 +186,7 @@ export const appNavGroups: AppNavGroup[] = [
           { title: 'Status', href: '/asset-management-masters/statuses' },
           { title: 'Work Order Type', href: '/asset-management-masters/work-order-types' },
           { title: 'Work Order Priority', href: '/asset-management-masters/work-order-priorities' },
+          { title: 'Work Order Status', href: '/asset-management-masters/work-order-statuses' },
         ],
       },
       {
@@ -329,6 +330,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Work Order Types',
     subtitle: 'Tenant-scoped maintenance work classification records for Work Orders.',
   },
+  '/asset-management-masters/work-order-priorities': {
+    title: 'Work Order Priorities',
+    subtitle: 'Tenant-scoped urgency ranking records for Work Orders.',
+  },
+  '/asset-management-masters/work-order-statuses': {
+    title: 'Work Order Statuses',
+    subtitle: 'Tenant-scoped lifecycle state records for Work Orders.',
+  },
   '/rooms': {
     title: 'Rooms',
     subtitle: 'Room registry, Bed capacity, and availability across this Tenant.',
@@ -340,10 +349,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/room-masters/types': {
     title: 'Room Types',
     subtitle: 'Tenant-scoped classification and daily rate records for Rooms.',
-  },
-  '/asset-management-masters/work-order-priorities': {
-    title: 'Work Order Priorities',
-    subtitle: 'Tenant-scoped urgency ranking records for Work Orders.',
   },
   '/global-references': {
     title: 'Global References',
