@@ -4,6 +4,7 @@ const PATIENT_GENDERS = ['male', 'female', 'other', 'unknown'] as const;
 const PATIENT_BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 const PATIENT_MARITAL_STATUSES = ['single', 'married', 'divorced', 'widowed', 'other'] as const;
 const PATIENT_GOVT_ID_TYPES = ['passport', 'national-id', 'driving-license', 'other'] as const;
+const PATIENT_REGISTRATION_STATUSES = ['provisional', 'registered'] as const;
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
@@ -162,6 +163,7 @@ export type PatientGender = (typeof PATIENT_GENDERS)[number];
 export type PatientBloodGroup = (typeof PATIENT_BLOOD_GROUPS)[number];
 export type PatientMaritalStatus = (typeof PATIENT_MARITAL_STATUSES)[number];
 export type PatientGovtIdType = (typeof PATIENT_GOVT_ID_TYPES)[number];
+export type PatientRegistrationStatus = (typeof PATIENT_REGISTRATION_STATUSES)[number];
 
 export type PatientIdInput = z.infer<typeof patientIdSchema>;
 export type PatientTenantIdInput = z.infer<typeof patientTenantIdSchema>;
@@ -188,8 +190,8 @@ export type Patient = {
   firstName: string;
   middleName: string | null;
   lastName: string;
-  gender: PatientGender;
-  dateOfBirth: string;
+  gender: PatientGender | null;
+  dateOfBirth: string | null;
   bloodGroup: PatientBloodGroup | null;
   maritalStatus: PatientMaritalStatus | null;
   phone: string;
@@ -215,6 +217,7 @@ export type Patient = {
   emergencyContactRelationship: string | null;
   emergencyContactPhone: string | null;
   isActive: boolean;
+  registrationStatus: PatientRegistrationStatus;
   createdOn: Date;
   modifiedOn: Date;
 };

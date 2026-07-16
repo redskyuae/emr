@@ -17,6 +17,21 @@ const tenantLogoSchema = z
   .url('Tenant logo must be a valid URL')
   .max(2048, 'Tenant logo must be at most 2048 characters');
 
+function isIanaTimeZone(value: string) {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const tenantTimeZoneSchema = z
+  .string({ error: 'Tenant time zone is required' })
+  .trim()
+  .min(1, 'Tenant time zone cannot be empty')
+  .refine(isIanaTimeZone, 'Tenant time zone must be a valid IANA time zone');
+
 export const tenantSlugSchema = z
   .string({ error: 'Tenant slug is required' })
   .min(1, 'Tenant slug is required')
@@ -32,10 +47,14 @@ export const updateTenantSchema = z
   .object({
     name: tenantNameSchema.optional(),
     logo: tenantLogoSchema.optional(),
+    timeZone: tenantTimeZoneSchema.optional(),
   })
-  .refine((data) => data.name !== undefined || data.logo !== undefined, {
-    message: 'At least one tenant field is required',
-  });
+  .refine(
+    (data) => data.name !== undefined || data.logo !== undefined || data.timeZone !== undefined,
+    {
+      message: 'At least one tenant field is required',
+    }
+  );
 
 export function createTenantSlug(name: string) {
   return name
@@ -64,6 +83,7 @@ export type Tenant = {
   createdAt: Date;
   isActive: boolean;
   logo: string | null;
+  timeZone: string;
   isOnboarded: boolean;
 };
 

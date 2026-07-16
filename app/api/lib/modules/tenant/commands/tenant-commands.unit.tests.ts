@@ -27,6 +27,7 @@ const tenant = {
   createdAt: new Date(),
   isActive: true,
   logo: null,
+  timeZone: 'Asia/Kolkata',
   isOnboarded: true,
 };
 

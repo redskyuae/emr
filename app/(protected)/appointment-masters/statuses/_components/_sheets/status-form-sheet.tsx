@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -15,12 +22,23 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import type { AppointmentStatusCategory } from '@/app/api/lib/modules/appointment-status/schemas/appointment-status-schema';
 
 export type StatusFormValues = {
   name: string;
   code: string;
+  category: AppointmentStatusCategory;
   description?: string;
 };
+
+const STATUS_CATEGORY_OPTIONS: { value: AppointmentStatusCategory; label: string }[] = [
+  { value: 'SCHEDULED', label: 'Scheduled' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'CHECKED_IN', label: 'Checked in' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+  { value: 'NO_SHOW', label: 'No show' },
+];
 
 export function StatusFormSheet({
   open,
@@ -128,6 +146,37 @@ export function StatusFormSheet({
                   aria-invalid={!!errors.code}
                 />
                 <FieldError errors={[errors.code]} />
+              </Field>
+
+              <Field data-invalid={!!errors.category}>
+                <FieldLabel htmlFor="status-category">
+                  Category{' '}
+                  <span aria-hidden="true" className="text-destructive">
+                    *
+                  </span>
+                </FieldLabel>
+                <Select
+                  value={form.watch('category')}
+                  onValueChange={(value) =>
+                    form.setValue('category', value as AppointmentStatusCategory, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  disabled={isSaving}
+                >
+                  <SelectTrigger id="status-category" className="w-full" aria-required="true">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_CATEGORY_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError errors={[errors.category]} />
               </Field>
 
               <Field data-invalid={!!errors.description}>

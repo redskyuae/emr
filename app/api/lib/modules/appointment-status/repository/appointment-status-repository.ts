@@ -4,6 +4,7 @@ import { db } from '@/app/db';
 import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
 import type {
   AppointmentStatus,
+  AppointmentStatusCategory,
   AppointmentStatusListParams,
   CreateAppointmentStatusData,
   UpdateAppointmentStatusData,
@@ -14,6 +15,8 @@ const appointmentStatusColumns = {
   code: appointmentStatusTable.code,
   name: appointmentStatusTable.name,
   tenantId: appointmentStatusTable.tenantId,
+  isSystem: appointmentStatusTable.isSystem,
+  category: appointmentStatusTable.category,
   createdOn: appointmentStatusTable.createdOn,
   modifiedOn: appointmentStatusTable.modifiedOn,
   description: appointmentStatusTable.description,
@@ -26,7 +29,9 @@ async function createAppointmentStatus(data: CreateAppointmentStatusData) {
       tenantId: data.tenantId,
       name: data.name,
       code: data.code,
+      category: data.category,
       description: data.description ?? null,
+      isSystem: false,
     })
     .returning(appointmentStatusColumns);
 
@@ -34,24 +39,47 @@ async function createAppointmentStatus(data: CreateAppointmentStatusData) {
 }
 
 async function updateAppointmentStatus(id: number, data: UpdateAppointmentStatusData) {
-  const [updatedAppointmentStatus] = await db
-    .update(appointmentStatusTable)
-    .set({
-      name: data.name,
-      code: data.code,
-      description: data.description ?? null,
-      modifiedOn: new Date(),
-    })
-    .where(
-      and(
-        eq(appointmentStatusTable.id, id),
-        eq(appointmentStatusTable.tenantId, data.tenantId),
-        eq(appointmentStatusTable.isDeleted, false)
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({
+        category: appointmentStatusTable.category,
+        isSystem: appointmentStatusTable.isSystem,
+      })
+      .from(appointmentStatusTable)
+      .where(
+        and(
+          eq(appointmentStatusTable.id, id),
+          eq(appointmentStatusTable.tenantId, data.tenantId),
+          eq(appointmentStatusTable.isDeleted, false)
+        )
       )
-    )
-    .returning(appointmentStatusColumns);
+      .for('update')
+      .limit(1);
 
-  return updatedAppointmentStatus;
+    if (!existing) {
+      return undefined;
+    }
+
+    const [updatedAppointmentStatus] = await tx
+      .update(appointmentStatusTable)
+      .set({
+        name: data.name,
+        code: data.code,
+        category: existing.isSystem ? existing.category : data.category,
+        description: data.description ?? null,
+        modifiedOn: new Date(),
+      })
+      .where(
+        and(
+          eq(appointmentStatusTable.id, id),
+          eq(appointmentStatusTable.tenantId, data.tenantId),
+          eq(appointmentStatusTable.isDeleted, false)
+        )
+      )
+      .returning(appointmentStatusColumns);
+
+    return updatedAppointmentStatus;
+  });
 }
 
 async function deleteAppointmentStatus(
@@ -71,7 +99,8 @@ async function deleteAppointmentStatus(
       and(
         eq(appointmentStatusTable.id, id),
         eq(appointmentStatusTable.tenantId, tenantId),
-        eq(appointmentStatusTable.isDeleted, false)
+        eq(appointmentStatusTable.isDeleted, false),
+        eq(appointmentStatusTable.isSystem, false)
       )
     )
     .returning(appointmentStatusColumns);
@@ -174,7 +203,27 @@ async function findActiveByCode(
   return appointmentStatus;
 }
 
-type AppointmentStatusSeed = Omit<CreateAppointmentStatusData, 'tenantId'>;
+async function findSystemByCategory(
+  tenantId: string,
+  category: AppointmentStatusCategory
+): Promise<AppointmentStatus | undefined> {
+  const [appointmentStatus] = await db
+    .select(appointmentStatusColumns)
+    .from(appointmentStatusTable)
+    .where(
+      and(
+        eq(appointmentStatusTable.tenantId, tenantId),
+        eq(appointmentStatusTable.category, category),
+        eq(appointmentStatusTable.isSystem, true),
+        eq(appointmentStatusTable.isDeleted, false)
+      )
+    )
+    .limit(1);
+
+  return appointmentStatus;
+}
+
+type AppointmentStatusSeed = Omit<CreateAppointmentStatusData, 'tenantId'> & { isSystem?: boolean };
 
 async function seedDefaultAppointmentStatuses(tenantId: string, defaults: AppointmentStatusSeed[]) {
   if (defaults.length === 0) {
@@ -188,7 +237,9 @@ async function seedDefaultAppointmentStatuses(tenantId: string, defaults: Appoin
         tenantId,
         name: appointmentStatus.name,
         code: appointmentStatus.code,
+        category: appointmentStatus.category,
         description: appointmentStatus.description ?? null,
+        isSystem: appointmentStatus.isSystem ?? false,
       }))
     )
     .onConflictDoNothing();
@@ -197,6 +248,7 @@ async function seedDefaultAppointmentStatuses(tenantId: string, defaults: Appoin
 export const appointmentStatusRepository = {
   findActiveByName,
   findActiveByCode,
+  findSystemByCategory,
   getAppointmentStatuses,
   createAppointmentStatus,
   updateAppointmentStatus,

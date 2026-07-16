@@ -55,6 +55,10 @@ function DetailField({ label, value }: { label: string; value: string | null | u
   );
 }
 
+function getRegistrationStatusLabel(status: Patient['registrationStatus']) {
+  return status === 'registered' ? 'Registered' : 'Provisional';
+}
+
 function PatientDetailSkeleton() {
   return (
     <div className="space-y-6" aria-label="Loading Patient">
@@ -127,6 +131,11 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
               >
                 {patient.isActive ? 'Active' : 'Inactive'}
               </Badge>
+              <Badge
+                variant={patient.registrationStatus === 'registered' ? 'secondary' : 'outline'}
+              >
+                {getRegistrationStatusLabel(patient.registrationStatus)}
+              </Badge>
             </div>
             <p className="text-muted-foreground font-mono text-sm">MRN {patient.mrn}</p>
           </div>
@@ -191,7 +200,10 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
               <CardTitle>Demographics</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              <DetailField label="Gender" value={getPatientGenderLabel(patient.gender)} />
+              <DetailField
+                label="Gender"
+                value={patient.gender ? getPatientGenderLabel(patient.gender) : null}
+              />
               <DetailField label="Date of birth" value={patient.dateOfBirth} />
               <DetailField label="Blood group" value={patient.bloodGroup} />
               <DetailField

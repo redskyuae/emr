@@ -47,9 +47,10 @@ describe('AppointmentStatus schema', () => {
   });
 
   it('should uppercase code on successful parse', () => {
-    expect(createAppointmentStatusSchema.parse({ name: 'Scheduled', code: 'sch' }).code).toBe(
-      'SCH'
-    );
+    expect(
+      createAppointmentStatusSchema.parse({ name: 'Scheduled', code: 'sch', category: 'SCHEDULED' })
+        .code
+    ).toBe('SCH');
   });
 
   it('should trim name/code/description on successful parse', () => {
@@ -57,20 +58,40 @@ describe('AppointmentStatus schema', () => {
       createAppointmentStatusSchema.parse({
         name: ' Scheduled ',
         code: ' sch ',
+        category: 'SCHEDULED',
         description: ' Clinic ',
       })
     ).toEqual({
       name: 'Scheduled',
       code: 'SCH',
+      category: 'SCHEDULED',
       description: 'Clinic',
     });
   });
 
   it('should transform empty description to undefined', () => {
     expect(
-      createAppointmentStatusSchema.parse({ name: 'Scheduled', code: 'SCH', description: '   ' })
-        .description
+      createAppointmentStatusSchema.parse({
+        name: 'Scheduled',
+        code: 'SCH',
+        category: 'SCHEDULED',
+        description: '   ',
+      }).description
     ).toBeUndefined();
+  });
+
+  it('should validate category is a known lifecycle category', () => {
+    expect(
+      errorsOf(
+        createAppointmentStatusSchema.safeParse({
+          name: 'Scheduled',
+          code: 'SCH',
+          category: 'WAITING',
+        })
+      )
+    ).toContain(
+      'Appointment status category must be one of SCHEDULED, CONFIRMED, CHECKED_IN, COMPLETED, CANCELLED, or NO_SHOW.'
+    );
   });
 
   it('should validate appointment status id is positive integer', () => {

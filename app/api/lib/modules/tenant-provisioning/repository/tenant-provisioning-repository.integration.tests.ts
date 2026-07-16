@@ -35,7 +35,9 @@ const createTestOrganization = async (id: string, name: string, slug: string) =>
 const seedAppointmentMasterRows = async (tenantId: string) => {
   await db.insert(appointmentModeTable).values({ tenantId, name: 'In-person', code: 'INP' });
   await db.insert(appointmentTypeTable).values({ tenantId, name: 'New Consultation', code: 'NEW' });
-  await db.insert(appointmentStatusTable).values({ tenantId, name: 'Scheduled', code: 'SCH' });
+  await db
+    .insert(appointmentStatusTable)
+    .values({ tenantId, name: 'Scheduled', code: 'SCH', category: 'SCHEDULED' });
   await db.insert(appointmentReasonTable).values({ tenantId, name: 'Consultation', code: 'CONS' });
   await db
     .insert(appointmentCancelledReasonTable)

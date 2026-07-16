@@ -59,6 +59,23 @@ function getPatientAge(dateOfBirth: string) {
   return age;
 }
 
+function getPatientGenderDisplay(patient: Patient) {
+  return patient.gender ? getPatientGenderLabel(patient.gender) : 'Not provided';
+}
+
+function getPatientDateOfBirthDisplay(patient: Patient) {
+  if (!patient.dateOfBirth) {
+    return <span className="text-muted-foreground">Not provided</span>;
+  }
+
+  return (
+    <>
+      {patient.dateOfBirth}{' '}
+      <span className="text-muted-foreground">({getPatientAge(patient.dateOfBirth)}y)</span>
+    </>
+  );
+}
+
 export function PatientsTable({
   patients,
   meta,
@@ -109,6 +126,7 @@ export function PatientsTable({
                   <TableHead>Gender</TableHead>
                   <TableHead>Date of birth</TableHead>
                   <TableHead>Phone</TableHead>
+                  <TableHead>Registration</TableHead>
                   <TableHead className="pr-4">Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -128,14 +146,18 @@ export function PatientsTable({
                         {getPatientFullName(patient)}
                       </Link>
                     </TableCell>
-                    <TableCell>{getPatientGenderLabel(patient.gender)}</TableCell>
-                    <TableCell>
-                      {patient.dateOfBirth}{' '}
-                      <span className="text-muted-foreground">
-                        ({getPatientAge(patient.dateOfBirth)}y)
-                      </span>
-                    </TableCell>
+                    <TableCell>{getPatientGenderDisplay(patient)}</TableCell>
+                    <TableCell>{getPatientDateOfBirthDisplay(patient)}</TableCell>
                     <TableCell>{patient.phone}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          patient.registrationStatus === 'registered' ? 'secondary' : 'outline'
+                        }
+                      >
+                        {patient.registrationStatus === 'registered' ? 'Registered' : 'Provisional'}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="pr-4">
                       <Badge
                         variant="outline"

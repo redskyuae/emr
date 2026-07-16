@@ -19,7 +19,7 @@ import type {
 import { formatPatientMrn } from './patient-mrn';
 
 type PatientRow = Omit<Patient, 'gender' | 'bloodGroup' | 'maritalStatus' | 'govtIdType'> & {
-  gender: string;
+  gender: string | null;
   bloodGroup: string | null;
   govtIdType: string | null;
   maritalStatus: string | null;
@@ -45,6 +45,7 @@ const patientColumns = {
   stateId: patientTable.stateId,
   tenantId: patientTable.tenantId,
   isActive: patientTable.isActive,
+  registrationStatus: patientTable.registrationStatus,
   lastName: patientTable.lastName,
   createdOn: patientTable.createdOn,
   countryId: patientTable.countryId,
@@ -108,6 +109,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     email: data.email ?? null,
     phone: data.phone,
     gender: data.gender,
+    registrationStatus: 'registered' as const,
     tenantId: data.tenantId,
     stateId: data.stateId ?? null,
     lastName: data.lastName,

@@ -545,12 +545,51 @@ const doctorSlotsExample = [
         duration: 15,
         slots: [
           { slot: 1, slotTime: '09:00', slotStatus: 'Available' },
-          { slot: 2, slotTime: '09:15', slotStatus: 'Available' },
+          { slot: 2, slotTime: '09:15', slotStatus: 'Booked' },
         ],
       },
     ],
   },
 ];
+
+const createAppointmentRequestExample = {
+  doctorId: 42,
+  appointmentModeId: 1,
+  appointmentTypeId: 2,
+  appointmentReasonId: 3,
+  patientId: 42,
+  slotDate: '31-12-2099',
+  doctorRotaId: 1,
+  slotTimes: ['09:00', '09:15'],
+  remarks: 'Patient requested a morning appointment.',
+};
+
+const appointmentExample = {
+  id: 101,
+  tenantId: 'org_apollo',
+  bookingNumber: 'APT-1001',
+  patient: {
+    id: 42,
+    mrn: 'MRN-1042',
+    firstName: 'Asha',
+    lastName: 'Rao',
+    phone: '+91-9876543210',
+    registrationStatus: 'registered',
+  },
+  doctor: { id: 42, name: 'Dr. Meera Iyer' },
+  appointmentMode: { id: 1, name: 'In Person', code: 'INP' },
+  appointmentType: { id: 2, name: 'Consultation', code: 'CONS' },
+  appointmentReason: { id: 3, name: 'Follow-up', code: 'FUP' },
+  appointmentStatus: { id: 4, name: 'Scheduled', code: 'SCH', category: 'scheduled' },
+  slotDate: '31-12-2099',
+  rotaName: 'Morning Rota',
+  slots: [
+    { slotTime: '09:00', status: 'Booked' },
+    { slotTime: '09:15', status: 'Booked' },
+  ],
+  remarks: 'Patient requested a morning appointment.',
+  createdOn: '2099-12-01T04:30:00.000Z',
+};
 
 const specialtyExample = {
   id: 7,
@@ -1523,6 +1562,7 @@ const patientExample = {
   tenantId: 'org_apollo',
   mrn: 'MRN-1042',
   ...patientRequestExample,
+  registrationStatus: 'registered',
   state: { id: 5, name: 'Karnataka' },
   country: { id: 1, name: 'India', code: 'IN' },
   nationality: { id: 1, name: 'Indian' },
@@ -1845,6 +1885,10 @@ export const openApiDocument = {
     {
       name: 'Doctor Schedule',
       description: 'Tenant-scoped Doctor availability assignment and generated slot APIs.',
+    },
+    {
+      name: 'Appointment',
+      description: 'Tenant-scoped Appointment booking APIs.',
     },
     {
       name: 'Appointment Cancelled Reason',
@@ -3311,7 +3355,14 @@ export const openApiDocument = {
             name: 'slotDate',
             in: 'query',
             required: true,
-            schema: { type: 'string', format: 'date' },
+            schema: {
+              oneOf: [
+                { type: 'string', format: 'date', description: 'YYYY-MM-DD' },
+                { type: 'string', pattern: '^\\d{2}-\\d{2}-\\d{4}$', description: 'DD-MM-YYYY' },
+              ],
+            },
+            description:
+              'Slot date. Existing schedule storage and responses use YYYY-MM-DD; legacy appointment booking clients may query with DD-MM-YYYY.',
           },
         ],
         responses: {
@@ -3322,6 +3373,45 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedListErrorResponses,
+        },
+      },
+    },
+    '/api/v1/appointments': {
+      post: {
+        tags: ['Appointment'],
+        summary: 'Create Appointment',
+        description:
+          'Creates an Appointment in the active Tenant. The server assigns bookingNumber, uses the protected system Scheduled Appointment Status, validates the Patient or creates a provisional Patient, snapshots rotaName, and reserves one or more consecutive DoctorSlots atomically. Clients send doctorId, not clinicianId; facility/location/regulatory and visitClassification are intentionally omitted until Visits/Facilities are integrated.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateAppointmentRequest', createAppointmentRequestExample),
+        responses: {
+          '201': {
+            description: 'Appointment created.',
+            content: jsonContent(dataEnvelopeSchema('Appointment'), { data: appointmentExample }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '409': {
+            description:
+              'A referenced master is invalid, the Patient is inactive, a selected slot is no longer available, or provisional Patient details match an existing Patient.',
+            content: jsonContent(schemaRef('AppointmentConflictError'), {
+              message: 'Conflict',
+              errors: ['Potential Patient match found. Retry with patientId.'],
+              patientMatches: [
+                {
+                  id: 42,
+                  mrn: 'MRN-1042',
+                  firstName: 'Asha',
+                  lastName: 'Rao',
+                  phone: '+91-9876543210',
+                  registrationStatus: 'registered',
+                  isActive: true,
+                },
+              ],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -3408,6 +3498,7 @@ export const openApiDocument = {
       example: {
         name: 'Scheduled',
         code: 'SCH',
+        category: 'SCHEDULED',
         description: 'Appointment is scheduled',
       },
     }),
@@ -3419,6 +3510,7 @@ export const openApiDocument = {
       example: {
         name: 'Scheduled',
         code: 'SCH',
+        category: 'SCHEDULED',
         description: 'Appointment is scheduled',
       },
       parameters: [numberIdPathParameter('Appointment Status')],
@@ -5173,17 +5265,36 @@ export const openApiDocument = {
         properties: {
           name: { type: 'string', minLength: 1, maxLength: 100 },
           logo: { type: 'string', format: 'uri', maxLength: 2048 },
+          timeZone: {
+            type: 'string',
+            description: 'Tenant operational IANA time zone used for local scheduling rules.',
+            example: 'Asia/Kolkata',
+          },
         },
       },
       Tenant: {
         type: 'object',
-        required: ['id', 'name', 'slug', 'logo', 'isActive', 'isOnboarded', 'createdAt'],
+        required: [
+          'id',
+          'name',
+          'slug',
+          'logo',
+          'isActive',
+          'timeZone',
+          'isOnboarded',
+          'createdAt',
+        ],
         properties: {
           id: { type: 'string' },
           name: { type: 'string' },
           slug: { type: 'string', maxLength: 60, pattern: '^[a-z0-9-]+$' },
           logo: { type: ['string', 'null'], format: 'uri' },
           isActive: { type: 'boolean' },
+          timeZone: {
+            type: 'string',
+            description: 'Tenant operational IANA time zone used for local scheduling rules.',
+            example: 'Asia/Kolkata',
+          },
           isOnboarded: {
             type: 'boolean',
             description: 'True once Tenant Onboarding has installed the baseline configuration.',
@@ -6002,8 +6113,8 @@ export const openApiDocument = {
         required: ['slot', 'slotTime', 'slotStatus'],
         properties: {
           slot: { type: 'integer', minimum: 1 },
-          slotTime: { type: 'string' },
-          slotStatus: { type: 'string', enum: ['Available'] },
+          slotTime: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+          slotStatus: { type: 'string', enum: ['Available', 'Booked'] },
         },
       },
       DoctorSlotRota: {
@@ -6025,9 +6136,259 @@ export const openApiDocument = {
           rotas: { type: 'array', items: schemaRef('DoctorSlotRota') },
         },
       },
-      CreateAppointmentStatusRequest: appointmentMasterCreateSchema('Appointment Status', true),
-      UpdateAppointmentStatusRequest: appointmentMasterCreateSchema('Appointment Status', true),
-      AppointmentStatus: appointmentMasterSchema('CreateAppointmentStatusRequest'),
+      CreateAppointmentStatusRequest: {
+        type: 'object',
+        required: ['name', 'code', 'category'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: stringCodeProperty(
+            'Appointment Status code. The API normalizes this value to uppercase.'
+          ),
+          category: {
+            type: 'string',
+            enum: ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED', 'NO_SHOW'],
+            description:
+              'Lifecycle category used by the backend. The protected Scheduled system status is selected automatically by Appointment creation.',
+          },
+          description: { type: ['string', 'null'], description: 'Appointment Status description.' },
+        },
+      },
+      UpdateAppointmentStatusRequest: schemaRef('CreateAppointmentStatusRequest'),
+      AppointmentStatus: {
+        allOf: [
+          schemaRef('CreateAppointmentStatusRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'category',
+              'isSystem',
+              'description',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              isSystem: {
+                type: 'boolean',
+                description: 'True for protected system lifecycle statuses seeded for the Tenant.',
+              },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      ProvisionalPatientInput: {
+        type: 'object',
+        required: ['firstName', 'lastName', 'phone'],
+        additionalProperties: false,
+        description:
+          'Minimum Patient details accepted when booking by phone before full registration. gender and dateOfBirth are optional here, unlike full Patient registration.',
+        properties: {
+          firstName: { type: 'string', minLength: 1, maxLength: 100 },
+          middleName: { type: 'string', maxLength: 100 },
+          lastName: { type: 'string', minLength: 1, maxLength: 100 },
+          gender: { type: 'string', enum: ['male', 'female', 'other', 'unknown'] },
+          dateOfBirth: {
+            type: 'string',
+            format: 'date',
+            description: 'Must not be in the future.',
+          },
+          bloodGroup: { type: 'string', enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
+          maritalStatus: {
+            type: 'string',
+            enum: ['single', 'married', 'divorced', 'widowed', 'other'],
+          },
+          phone: { type: 'string', minLength: 1, maxLength: 20 },
+          alternatePhone: { type: 'string', maxLength: 20 },
+          email: { type: 'string', format: 'email', maxLength: 255 },
+          addressLine1: { type: 'string', maxLength: 255 },
+          addressLine2: { type: 'string', maxLength: 255 },
+          city: { type: 'string', maxLength: 100 },
+          stateId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Requires countryId to also be provided, and must belong to that Country.',
+          },
+          countryId: { type: 'integer', minimum: 1 },
+          postalCode: { type: 'string', maxLength: 20 },
+          nationalityId: { type: 'integer', minimum: 1 },
+          languageId: { type: 'integer', minimum: 1, description: 'Preferred Language.' },
+          religionId: { type: 'integer', minimum: 1 },
+          govtIdType: {
+            type: 'string',
+            enum: ['passport', 'national-id', 'driving-license', 'other'],
+            description: 'Must be provided together with govtIdNumber.',
+          },
+          govtIdNumber: { type: 'string', maxLength: 50 },
+          emergencyContactName: { type: 'string', maxLength: 150 },
+          emergencyContactRelationship: { type: 'string', maxLength: 50 },
+          emergencyContactPhone: { type: 'string', maxLength: 20 },
+        },
+      },
+      CreateAppointmentRequest: {
+        type: 'object',
+        required: [
+          'doctorId',
+          'appointmentModeId',
+          'appointmentTypeId',
+          'appointmentReasonId',
+          'slotDate',
+          'doctorRotaId',
+          'slotTimes',
+        ],
+        additionalProperties: false,
+        properties: {
+          doctorId: { type: 'integer', minimum: 1, description: 'Doctor identifier.' },
+          appointmentModeId: { type: 'integer', minimum: 1 },
+          appointmentTypeId: { type: 'integer', minimum: 1 },
+          appointmentReasonId: { type: 'integer', minimum: 1 },
+          patientId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Existing active Patient identifier. Send exactly one of patientId or provisionalPatient.',
+          },
+          provisionalPatient: schemaRef('ProvisionalPatientInput'),
+          slotDate: {
+            type: 'string',
+            pattern: '^\\d{2}-\\d{2}-\\d{4}$',
+            description: 'Appointment slot date in DD-MM-YYYY format.',
+            example: '31-12-2099',
+          },
+          doctorRotaId: { type: 'integer', minimum: 1 },
+          slotTimes: {
+            type: 'array',
+            minItems: 1,
+            uniqueItems: true,
+            items: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+            description:
+              'Ordered HH:mm slot starts. All selected slots must be consecutive in the same DoctorRota.',
+          },
+          remarks: { type: 'string', maxLength: 1000 },
+        },
+        oneOf: [{ required: ['patientId'] }, { required: ['provisionalPatient'] }],
+      },
+      AppointmentReferenceSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
+      AppointmentPatientSummary: {
+        type: 'object',
+        required: ['id', 'mrn', 'firstName', 'lastName', 'phone', 'registrationStatus'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          mrn: { type: 'string' },
+          firstName: { type: 'string' },
+          lastName: { type: 'string' },
+          phone: { type: 'string' },
+          registrationStatus: { type: 'string', enum: ['provisional', 'registered'] },
+        },
+      },
+      PotentialPatientMatch: {
+        allOf: [
+          schemaRef('AppointmentPatientSummary'),
+          {
+            type: 'object',
+            required: ['isActive'],
+            properties: { isActive: { type: 'boolean' } },
+          },
+        ],
+      },
+      AppointmentSlotBooking: {
+        type: 'object',
+        required: ['slotTime', 'status'],
+        properties: {
+          slotTime: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+          status: { type: 'string', enum: ['Booked'] },
+        },
+      },
+      Appointment: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'bookingNumber',
+          'patient',
+          'doctor',
+          'appointmentMode',
+          'appointmentType',
+          'appointmentReason',
+          'appointmentStatus',
+          'slotDate',
+          'rotaName',
+          'slots',
+          'remarks',
+          'createdOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: { type: 'string' },
+          bookingNumber: { type: 'string', example: 'APT-1001' },
+          patient: schemaRef('AppointmentPatientSummary'),
+          doctor: {
+            type: 'object',
+            required: ['id', 'name'],
+            properties: { id: { type: 'integer', minimum: 1 }, name: { type: 'string' } },
+          },
+          appointmentMode: schemaRef('AppointmentReferenceSummary'),
+          appointmentType: schemaRef('AppointmentReferenceSummary'),
+          appointmentReason: schemaRef('AppointmentReferenceSummary'),
+          appointmentStatus: {
+            allOf: [
+              schemaRef('AppointmentReferenceSummary'),
+              {
+                type: 'object',
+                required: ['category'],
+                properties: {
+                  category: {
+                    type: 'string',
+                    enum: [
+                      'scheduled',
+                      'confirmed',
+                      'checked_in',
+                      'completed',
+                      'cancelled',
+                      'no_show',
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+          slotDate: { type: 'string', pattern: '^\\d{2}-\\d{2}-\\d{4}$' },
+          rotaName: { type: 'string' },
+          slots: { type: 'array', items: schemaRef('AppointmentSlotBooking') },
+          remarks: { type: ['string', 'null'] },
+          createdOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      AppointmentConflictError: {
+        allOf: [
+          schemaRef('ConflictError'),
+          {
+            type: 'object',
+            properties: {
+              patientMatches: { type: 'array', items: schemaRef('PotentialPatientMatch') },
+            },
+          },
+        ],
+      },
       CreateDiagnosisCodeRequest: {
         type: 'object',
         required: ['code', 'title'],
@@ -6638,6 +6999,7 @@ export const openApiDocument = {
           'lastName',
           'gender',
           'dateOfBirth',
+          'registrationStatus',
           'bloodGroup',
           'maritalStatus',
           'phone',
@@ -6681,8 +7043,19 @@ export const openApiDocument = {
           firstName: { type: 'string', minLength: 1, maxLength: 100 },
           middleName: { type: ['string', 'null'], maxLength: 100 },
           lastName: { type: 'string', minLength: 1, maxLength: 100 },
-          gender: { type: 'string', enum: ['male', 'female', 'other', 'unknown'] },
-          dateOfBirth: { type: 'string', format: 'date' },
+          gender: {
+            oneOf: [
+              { type: 'string', enum: ['male', 'female', 'other', 'unknown'] },
+              { type: 'null' },
+            ],
+          },
+          dateOfBirth: { type: ['string', 'null'], format: 'date' },
+          registrationStatus: {
+            type: 'string',
+            enum: ['provisional', 'registered'],
+            description:
+              'Server-controlled Patient registration state. Appointment booking may create provisional Patients.',
+          },
           bloodGroup: {
             oneOf: [
               { type: 'string', enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },

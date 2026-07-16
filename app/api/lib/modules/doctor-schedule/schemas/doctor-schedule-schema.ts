@@ -39,6 +39,33 @@ const dateOnlySchema = (fieldName: string) =>
     .min(1, `${fieldName} is required`)
     .refine(isValidDateOnly, `${fieldName} must be a valid date`);
 
+const compatibleSlotDateSchema = z
+  .string({ error: 'Slot date is required' })
+  .trim()
+  .min(1, 'Slot date is required')
+  .transform((value, context) => {
+    if (isValidDateOnly(value)) {
+      return value;
+    }
+
+    const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value);
+
+    if (match) {
+      const [, day, month, year] = match;
+      const isoDate = `${year}-${month}-${day}`;
+
+      if (isValidDateOnly(isoDate)) {
+        return isoDate;
+      }
+    }
+
+    context.addIssue({
+      code: 'custom',
+      message: 'Slot date must be a valid date in DD-MM-YYYY or YYYY-MM-DD format',
+    });
+    return z.NEVER;
+  });
+
 const positiveIdSchema = (fieldName: string) =>
   z.coerce
     .number({ error: `${fieldName} is required` })
@@ -225,7 +252,7 @@ export const doctorSlotsParamsSchema = z
   .object({
     tenantId: tenantIdSchema,
     doctorId: positiveIdSchema('Doctor ID'),
-    slotDate: dateOnlySchema('Slot date'),
+    slotDate: compatibleSlotDateSchema,
   })
   .strict();
 
@@ -276,7 +303,7 @@ export type DoctorSlotRota = {
   slots: {
     slot: number;
     slotTime: string;
-    slotStatus: 'Available';
+    slotStatus: 'Available' | 'Booked';
   }[];
 };
 

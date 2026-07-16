@@ -6,6 +6,7 @@ export type ListAppointmentStatusesResponse = Paginated<AppointmentStatus>;
 export type SaveAppointmentStatusRequest = {
   name: string;
   code: string;
+  category: string;
   description?: string;
 };
 

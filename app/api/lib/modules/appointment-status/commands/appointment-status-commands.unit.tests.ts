@@ -46,6 +46,8 @@ const status = {
   tenantId: 'tenant-1',
   name: 'Scheduled',
   code: 'SCH',
+  category: 'SCHEDULED' as const,
+  isSystem: false,
   description: null,
   createdOn: new Date(),
   modifiedOn: new Date(),
@@ -56,11 +58,19 @@ describe('AppointmentStatus commands', () => {
     vi.clearAllMocks();
     validateCreate.mockResolvedValue({
       success: true,
-      data: { name: 'Scheduled', code: 'SCH', description: undefined },
+      data: { name: 'Scheduled', code: 'SCH', category: 'SCHEDULED', description: undefined },
     });
     validateUpdate.mockResolvedValue({
       success: true,
-      data: { id: 1, payload: { name: 'Scheduled', code: 'SCH', description: undefined } },
+      data: {
+        id: 1,
+        payload: {
+          name: 'Scheduled',
+          code: 'SCH',
+          category: 'SCHEDULED',
+          description: undefined,
+        },
+      },
     });
     validateDelete.mockReturnValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
     repo.createAppointmentStatus.mockResolvedValue(status);
@@ -80,6 +90,7 @@ describe('AppointmentStatus commands', () => {
     expect(repo.createAppointmentStatus).toHaveBeenCalledWith({
       name: 'Scheduled',
       code: 'SCH',
+      category: 'SCHEDULED',
       tenantId: 'tenant-1',
     });
   });

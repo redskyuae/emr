@@ -10,6 +10,7 @@ const createStatus = (tenantId: string, name: string, code: string) =>
     tenantId,
     name,
     code,
+    category: 'SCHEDULED',
     description: `${name} description`,
   });
 
@@ -82,6 +83,7 @@ describe('AppointmentStatus repository', () => {
         tenantId: tenantA,
         name: 'Discharged',
         code: 'DIS',
+        category: 'COMPLETED',
         description: undefined,
       })
     ).resolves.toMatchObject({ name: 'Discharged', code: 'DIS' });
@@ -91,6 +93,7 @@ describe('AppointmentStatus repository', () => {
         tenantId: tenantA,
         name: 'Checked Out',
         code: 'CHO',
+        category: 'COMPLETED',
         description: undefined,
       })
     ).resolves.toBeUndefined();
@@ -103,6 +106,7 @@ describe('AppointmentStatus repository', () => {
         tenantId: tenantB,
         name: 'Moved',
         code: 'MOV',
+        category: 'SCHEDULED',
         description: undefined,
       })
     ).resolves.toBeUndefined();

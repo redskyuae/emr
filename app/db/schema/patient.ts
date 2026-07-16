@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, date, integer, pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, check, date, integer, pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
 import { country as countryTable } from './country';
 import { masterColumns } from './helpers';
@@ -19,8 +19,14 @@ export const patient = pgTable(
     firstName: varchar('first_name', { length: 100 }).notNull(),
     middleName: varchar('middle_name', { length: 100 }),
     lastName: varchar('last_name', { length: 100 }).notNull(),
-    gender: varchar({ length: 20 }).notNull(),
-    dateOfBirth: date('date_of_birth').notNull(),
+    gender: varchar({ length: 20 }),
+    dateOfBirth: date('date_of_birth'),
+    registrationStatus: varchar('registration_status', {
+      length: 20,
+      enum: ['provisional', 'registered'],
+    })
+      .notNull()
+      .default('registered'),
     bloodGroup: varchar('blood_group', { length: 5 }),
     maritalStatus: varchar('marital_status', { length: 20 }),
     phone: varchar({ length: 20 }).notNull(),
@@ -47,6 +53,10 @@ export const patient = pgTable(
     deletedOn,
   },
   (table) => ({
+    registrationStatusCheck: check(
+      'patient_registration_status_check',
+      sql`${table.registrationStatus} in ('provisional', 'registered')`
+    ),
     tenantMrnUniqueIdx: uniqueIndex('patient_tenant_mrn_idx').on(
       table.tenantId,
       sql`lower(${table.mrn})`
