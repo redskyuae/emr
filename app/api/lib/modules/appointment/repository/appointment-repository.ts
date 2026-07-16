@@ -179,6 +179,28 @@ async function getAppointmentById(
   };
 }
 
+async function getAppointmentByBookingNumber(
+  bookingNumber: string,
+  tenantId: string,
+  executor: SelectExecutor = db
+): Promise<Appointment | undefined> {
+  const [row] = await appointmentJoins(executor)
+    .where(
+      and(
+        sql`lower(${appointmentTable.bookingNumber}) = ${bookingNumber.trim().toLowerCase()}`,
+        eq(appointmentTable.tenantId, tenantId),
+        eq(appointmentTable.isDeleted, false)
+      )
+    )
+    .limit(1);
+
+  if (!row) {
+    return undefined;
+  }
+
+  return getAppointmentById(row.id, tenantId, executor);
+}
+
 async function getSlotBookingContext(
   tenantId: string,
   doctorId: number,
@@ -557,4 +579,5 @@ export const appointmentRepository = {
   getReservedSlotTimes,
   getSlotBookingContext,
   findPotentialPatientMatches,
+  getAppointmentByBookingNumber,
 };

@@ -290,6 +290,29 @@ const permissionGroups = [
       ['sign', 'Sign Clinical Notes.'],
     ],
   },
+  {
+    module: 'visits',
+    resource: 'visit-type',
+    actions: [
+      ['read', 'View VisitTypes.'],
+      ['create', 'Create VisitTypes.'],
+      ['update', 'Update VisitTypes.'],
+      ['delete', 'Delete VisitTypes.'],
+    ],
+  },
+  {
+    module: 'visits',
+    resource: 'visit',
+    actions: [
+      ['read', 'View Visits.'],
+      ['create', 'Check Patients in for Visits.'],
+      ['update', 'Update Visit details.'],
+      ['delete', 'Delete Visits.'],
+      ['start', 'Start the consultation for a Visit.'],
+      ['complete', 'Complete a Visit.'],
+      ['cancel', 'Cancel a Visit.'],
+    ],
+  },
 ] satisfies PermissionGroup[];
 
 export const permissionSeedData: PermissionSeed[] = permissionGroups.flatMap((group) =>

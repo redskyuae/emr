@@ -218,4 +218,54 @@ describe('Appointment repository', () => {
       patientMatches: [{ id: fixtures.patient.id, firstName: 'Asha', lastName: 'Rao' }],
     });
   });
+
+  describe('getAppointmentByBookingNumber', () => {
+    it('should find an appointment by its booking number case-insensitively', async () => {
+      const fixtures = await createFixtures();
+      const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+      if (!created.success) throw new Error('appointment creation failed');
+
+      await expect(
+        appointmentRepository.getAppointmentByBookingNumber(
+          created.data.bookingNumber.toLowerCase(),
+          fixtures.tenantId
+        )
+      ).resolves.toMatchObject({ id: created.data.id, bookingNumber: created.data.bookingNumber });
+    });
+
+    it('should trim surrounding whitespace from the booking number', async () => {
+      const fixtures = await createFixtures();
+      const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+      if (!created.success) throw new Error('appointment creation failed');
+
+      await expect(
+        appointmentRepository.getAppointmentByBookingNumber(
+          `  ${created.data.bookingNumber}  `,
+          fixtures.tenantId
+        )
+      ).resolves.toMatchObject({ id: created.data.id });
+    });
+
+    it('should not find an appointment belonging to another tenant', async () => {
+      const fixtures = await createFixtures();
+      const other = await createFixtures();
+      const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+      if (!created.success) throw new Error('appointment creation failed');
+
+      await expect(
+        appointmentRepository.getAppointmentByBookingNumber(
+          created.data.bookingNumber,
+          other.tenantId
+        )
+      ).resolves.toBeUndefined();
+    });
+
+    it('should return undefined for an unknown booking number', async () => {
+      const fixtures = await createFixtures();
+
+      await expect(
+        appointmentRepository.getAppointmentByBookingNumber('APT-9999', fixtures.tenantId)
+      ).resolves.toBeUndefined();
+    });
+  });
 });

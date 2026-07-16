@@ -281,6 +281,27 @@
       "when": 1784184221862,
       "tag": "0039_lean_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1784184222862,
+      "tag": "0040_seed_visit_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1784209900526,
+      "tag": "0041_slimy_shard",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1784210410958,
+      "tag": "0042_slim_katie_power",
+      "breakpoints": true
     }
   ]
 }

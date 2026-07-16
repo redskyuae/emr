@@ -78,7 +78,6 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Visits',
         href: '/visits',
         icon: ClipboardList,
-        badge: '404',
       },
     ],
   },
@@ -181,6 +180,12 @@ export const appNavGroups: AppNavGroup[] = [
             href: '/appointment-masters/cancelled-reasons',
           },
         ],
+      },
+      {
+        title: 'Visit Masters',
+        href: '/visit-masters',
+        icon: ClipboardList,
+        items: [{ title: 'Visit Type', href: '/visit-masters/visit-types' }],
       },
       {
         title: 'Asset Management',
@@ -323,6 +328,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/appointment-masters/types': {
     title: 'Appointment Types',
     subtitle: 'Tenant-scoped clinical category or visit type records for Appointments.',
+  },
+  '/visits': {
+    title: 'Visits',
+    subtitle: "Today's outpatient queue. Check Patients in from an Appointment or as a Walk-in.",
+  },
+  '/visit-masters/visit-types': {
+    title: 'Visit Types',
+    subtitle: 'Tenant-scoped records classifying the clinical nature of a Visit.',
   },
   '/appointment-masters/statuses': {
     title: 'Appointment Statuses',
