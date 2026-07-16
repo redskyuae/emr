@@ -1,0 +1,594 @@
+app/api/lib/modules/patient-vital-sign/commands/patient-vital-sign-commands.unit.tests.ts
+  225dfa28518475a8 1-103
+app/api/lib/modules/clinical-note/commands/sign-clinical-note-command.ts
+  225dfa28518475a8 1-31
+app/queries/patients/chart/useUpdatePatientMedication.ts
+  225dfa28518475a8 1-48,50,52,54-56
+app/api/lib/modules/patient-medication/validator/delete-patient-medication-validator.ts
+  c865739078e5e665 1-35
+app/(protected)/patients/[id]/_components/_chart/_modals/delete-chart-record-dialog.tsx
+  225dfa28518475a8 1-69
+app/api/lib/modules/patient-medication/commands/create-patient-medication-command.ts
+  c865739078e5e665 1-30
+app/api/lib/modules/tenant-provisioning/commands/onboard-tenant-command.unit.tests.ts
+  225dfa28518475a8 11,39,54-55,73,96,102,153,174
+app/api/lib/modules/clinical-note-type/commands/create-clinical-note-type-command.ts
+  c865739078e5e665 1-37
+app/api/lib/modules/allergen/commands/delete-allergen-command.ts
+  c865739078e5e665 1-31
+app/api/v1/patients/[id]/allergies/route.ts
+  c865739078e5e665 1-118
+app/api/lib/modules/patient-problem/queries/get-patient-problems-query.ts
+  c865739078e5e665 1-33
+app/(protected)/clinical-masters/allergens/_components/allergen-views.tsx
+  c865739078e5e665 1-213
+app/api/lib/modules/patient-medication/commands/update-patient-medication-command.ts
+  c865739078e5e665 1-32
+app/api/lib/modules/patient-vital-sign/repository/patient-vital-sign-repository.integration.tests.ts
+  225dfa28518475a8 1-96
+app/api/lib/modules/tenant-provisioning/commands/seed-default-clinical-masters-command.ts
+  225dfa28518475a8 1-78
+app/(protected)/patients/[id]/_utils/problem-form-schema.ts
+  225dfa28518475a8 1-30
+app/queries/clinical-masters/diagnosis-codes/useUpdateDiagnosisCode.ts
+  c865739078e5e665 1-52
+app/queries/patients/chart/useDeletePatientVitalSign.ts
+  225dfa28518475a8 1-39,41,43,45-47
+app/api/lib/modules/patient-allergy/commands/patient-allergy-commands.unit.tests.ts
+  c865739078e5e665 1-98
+app/api/lib/modules/patient-allergy/repository/patient-allergy-repository.integration.tests.ts
+  c865739078e5e665 1-104
+app/api/lib/modules/diagnosis-code/commands/create-diagnosis-code-command.ts
+  c865739078e5e665 1-37
+app/api/lib/modules/patient-problem/validator/patient-problem-reference-validator.ts
+  c865739078e5e665 1-40
+app/api/lib/modules/patient-medication/validator/get-patient-medication-by-id-validator.ts
+  c865739078e5e665 1-35
+app/api/lib/modules/patient-problem/commands/delete-patient-problem-command.ts
+  c865739078e5e665 1-27
+app/api/lib/modules/clinical-note-type/validator/update-clinical-note-type-validator.ts
+  c865739078e5e665 1-73
+app/api/v1/patients/[id]/vitals/[vitalId]/types.ts
+  225dfa28518475a8 1-26
+app/(protected)/patients/[id]/_components/_chart/medications-panel.tsx
+  225dfa28518475a8 1-116
+app/queries/clinical-masters/allergens/useDeleteAllergen.ts
+  c865739078e5e665 1-33
+app/(protected)/patients/[id]/_components/_chart/problem-list-panel.tsx
+  225dfa28518475a8 1-122
+app/api/lib/modules/clinical-note-type/validator/create-clinical-note-type-validator.ts
+  c865739078e5e665 1-33
+app/api/lib/openapi/document.ts
+  225dfa28518475a8 267-386,1536-1630,1867-1869,1871-1873,1875-1877,1879-1881,1883,3540-3740,6148-6420
+  c865739078e5e665 1863-1865,3453-3539,6031-6147
+app/api/v1/patients/[id]/problems/[problemId]/route.ts
+  c865739078e5e665 1-118
+app/api/lib/modules/clinical-note-type/validator/clinical-note-type-uniqueness-validator.ts
+  c865739078e5e665 1-67
+app/(protected)/clinical-masters/diagnosis-codes/_components/_modals/delete-diagnosis-code-dialog.tsx
+  c865739078e5e665 1-89
+app/api/lib/modules/clinical-note/schemas/clinical-note-schema.unit.tests.ts
+  225dfa28518475a8 1-41
+app/queries/patients/chart/useDeleteClinicalNote.ts
+  225dfa28518475a8 1-39,41,43,45-47
+app/api/lib/modules/patient-allergy/validator/get-patient-allergies-validator.ts
+  c865739078e5e665 1-38
+app/api/v1/clinical-masters/diagnosis-codes/types.ts
+  c865739078e5e665 1-14
+app/queries/clinical-masters/allergens/useCreateAllergen.ts
+  c865739078e5e665 1-44
+app/(protected)/patients/[id]/_components/_chart/clinical-notes-panel.tsx
+  225dfa28518475a8 1-142
+app/(protected)/patients/[id]/_utils/chart-value-sets.ts
+  225dfa28518475a8 1-85
+app/api/v1/patients/[id]/notes/route.ts
+  225dfa28518475a8 1-118
+components/app/app-shell-config.ts
+  c865739078e5e665 198-206,362-385
+app/queries/clinical-masters/allergens/useUpdateAllergen.ts
+  c865739078e5e665 1-52
+app/api/lib/modules/patient-problem/queries/patient-problem-queries.unit.tests.ts
+  c865739078e5e665 1-55
+app/api/lib/modules/allergen/validator/allergen-validator.unit.tests.ts
+  c865739078e5e665 1-120
+app/api/lib/modules/patient-vital-sign/validator/patient-vital-sign-validator.unit.tests.ts
+  225dfa28518475a8 1-56
+app/api/lib/modules/patient-allergy/queries/get-patient-allergies-query.ts
+  c865739078e5e665 1-33
+app/db/schema/patient-medication.ts
+  c865739078e5e665 1-27
+app/api/lib/modules/clinical-note-type/validator/get-clinical-note-types-validator.ts
+  c865739078e5e665 1-13
+app/api/lib/modules/clinical-note/validator/delete-clinical-note-validator.ts
+  225dfa28518475a8 1-32
+app/queries/clinical-masters/note-types/useCreateClinicalNoteType.ts
+  c865739078e5e665 1-46
+app/(protected)/clinical-masters/allergens/_components/_modals/delete-allergen-dialog.tsx
+  c865739078e5e665 1-80
+app/queries/clinical-masters/note-types/useClinicalNoteTypes.ts
+  c865739078e5e665 1-49
+app/api/lib/modules/clinical-note/queries/clinical-note-queries.unit.tests.ts
+  225dfa28518475a8 1-38,40-57
+app/(protected)/patients/[id]/_utils/clinical-note-form-schema.ts
+  225dfa28518475a8 1-26
+app/api/v1/clinical-masters/note-types/route.ts
+  c865739078e5e665 1-117
+app/api/v1/patients/[id]/allergies/[allergyId]/types.ts
+  c865739078e5e665 1-21
+app/api/lib/modules/allergen/validator/get-allergen-by-id-validator.ts
+  c865739078e5e665 1-38
+app/queries/patients/chart/useDeletePatientAllergy.ts
+  225dfa28518475a8 1-39,41,43,45-47
+app/api/lib/modules/patient-allergy/commands/delete-patient-allergy-command.ts
+  c865739078e5e665 1-27
+app/api/lib/modules/clinical-note-type/repository/clinical-note-type-repository.ts
+  c865739078e5e665 1-206
+app/(protected)/clinical-masters/note-types/_components/note-type-skeletons.tsx
+  c865739078e5e665 1-98
+app/queries/clinical-masters/note-types/useDeleteClinicalNoteType.ts
+  c865739078e5e665 1-33
+app/api/v1/clinical-masters/note-types/[id]/types.ts
+  c865739078e5e665 1-17
+app/api/lib/modules/patient-problem/schemas/patient-problem-schema.unit.tests.ts
+  c865739078e5e665 1-57
+app/api/lib/modules/allergen/queries/get-allergen-by-id-query.ts
+  c865739078e5e665 1-31
+app/api/lib/modules/clinical-note-type/queries/get-clinical-note-type-by-id-query.ts
+  c865739078e5e665 1-31
+app/(protected)/patients/[id]/_components/_chart/_sheets/chart-form-sheet-shell.tsx
+  225dfa28518475a8 1-91
+app/api/lib/modules/patient-medication/validator/get-patient-medications-validator.ts
+  c865739078e5e665 1-38
+app/api/lib/modules/patient-medication/validator/patient-medication-reference-validator.ts
+  c865739078e5e665 1-17
+app/(protected)/clinical-masters/note-types/_components/_sheets/note-type-form-sheet.tsx
+  c865739078e5e665 1-160
+app/api/lib/modules/patient-vital-sign/queries/get-patient-vital-sign-by-id-query.ts
+  c865739078e5e665 1-27
+app/api/v1/patients/[id]/notes/[noteId]/route.ts
+  225dfa28518475a8 1-118
+app/queries/patients/chart/useSignClinicalNote.ts
+  225dfa28518475a8 1-41,43,45,47-49
+app/(protected)/patients/[id]/_utils/medication-form-schema.ts
+  225dfa28518475a8 1-37
+app/api/lib/modules/patient-chart/validator/patient-chart-validator.unit.tests.ts
+  225dfa28518475a8 1-38
+app/(protected)/patients/[id]/_components/_chart/allergy-banner.tsx
+  225dfa28518475a8 1-37,39-46
+app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema.ts
+  c865739078e5e665 1-65
+app/db/drizzle/0038_seed_clinical_records_permissions.sql
+  225dfa28518475a8 1-28
+app/(protected)/patients/[id]/_utils/allergy-form-schema.ts
+  225dfa28518475a8 1-28
+app/api/lib/modules/allergen/validator/delete-allergen-validator.ts
+  c865739078e5e665 1-38
+app/api/lib/modules/clinical-note/repository/clinical-note-repository.integration.tests.ts
+  225dfa28518475a8 1-92
+app/queries/clinical-masters/allergens/useAllergens.ts
+  c865739078e5e665 1-46
+app/api/v1/clinical-masters/allergens/[id]/route.ts
+  c865739078e5e665 1-122
+app/db/schema/diagnosis-code.ts
+  c865739078e5e665 1-26
+app/queries/patients/chart/usePatientChart.ts
+  225dfa28518475a8 1-33
+app/(protected)/patients/[id]/_components/_chart/patient-chart-section.tsx
+  225dfa28518475a8 1-314
+app/api/lib/modules/allergen/validator/allergen-uniqueness-validator.ts
+  c865739078e5e665 1-67
+app/api/lib/modules/clinical-note-type/validator/get-clinical-note-type-by-id-validator.ts
+  c865739078e5e665 1-41
+app/api/lib/modules/patient-vital-sign/validator/get-patient-vital-sign-by-id-validator.ts
+  c865739078e5e665 1-35
+app/api/lib/modules/clinical-note/validator/sign-clinical-note-validator.ts
+  225dfa28518475a8 1-52
+app/api/lib/modules/patient-chart/validator/get-patient-chart-validator.ts
+  225dfa28518475a8 1-44
+app/(protected)/clinical-masters/note-types/_components/note-types-page-impl.tsx
+  c865739078e5e665 1-112,114-329
+app/api/v1/patients/[id]/notes/[noteId]/sign/route.ts
+  225dfa28518475a8 1-47
+app/api/lib/modules/diagnosis-code/commands/delete-diagnosis-code-command.ts
+  c865739078e5e665 1-31
+app/api/lib/modules/clinical-note/validator/create-clinical-note-validator.ts
+  225dfa28518475a8 1-48
+app/api/lib/modules/diagnosis-code/validator/get-diagnosis-code-by-id-validator.ts
+  c865739078e5e665 1-41
+app/db/drizzle/0036_seed_clinical_masters_permissions.sql
+  c865739078e5e665 1-19
+app/api/lib/modules/patient-medication/schemas/patient-medication-schema.unit.tests.ts
+  c865739078e5e665 1-54
+app/api/lib/modules/diagnosis-code/commands/diagnosis-code-commands.unit.tests.ts
+  c865739078e5e665 1-129
+app/api/lib/modules/patient-allergy/queries/get-patient-allergy-by-id-query.ts
+  c865739078e5e665 1-27
+app/api/lib/modules/clinical-note-type/schemas/clinical-note-type-schema.ts
+  c865739078e5e665 1-64
+app/api/v1/clinical-masters/note-types/types.ts
+  c865739078e5e665 1-14
+app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes.ts
+  c865739078e5e665 1-49
+app/queries/patients/chart/useDeletePatientProblem.ts
+  225dfa28518475a8 1-39,41,43,45-47
+app/api/lib/modules/allergen/commands/allergen-commands.unit.tests.ts
+  c865739078e5e665 1-137
+app/api/v1/patients/[id]/problems/route.ts
+  c865739078e5e665 1-118
+app/api/lib/modules/patient-vital-sign/validator/delete-patient-vital-sign-validator.ts
+  c865739078e5e665 1-35
+app/api/lib/modules/patient-medication/repository/patient-medication-repository.integration.tests.ts
+  c865739078e5e665 1-88
+app/queries/patients/chart/useUpdatePatientAllergy.ts
+  225dfa28518475a8 1-48,50,52,54-56
+app/api/lib/modules/patient-allergy/validator/create-patient-allergy-validator.ts
+  c865739078e5e665 1-48
+app/api/lib/modules/allergen/queries/get-allergens-query.ts
+  c865739078e5e665 1-33
+app/api/v1/patients/[id]/medications/types.ts
+  c865739078e5e665 1-19
+app/api/lib/modules/diagnosis-code/commands/update-diagnosis-code-command.ts
+  c865739078e5e665 1-50
+app/api/lib/modules/allergen/commands/create-allergen-command.ts
+  c865739078e5e665 1-36
+app/db/schema/clinical-note-type.ts
+  c865739078e5e665 1-29
+app/api/lib/modules/clinical-note-type/queries/clinical-note-type-queries.unit.tests.ts
+  c865739078e5e665 1-91
+app/api/lib/modules/patient-allergy/queries/patient-allergy-queries.unit.tests.ts
+  c865739078e5e665 1-61
+app/api/lib/modules/patient-chart/schemas/patient-chart-schema.ts
+  225dfa28518475a8 1-25
+app/api/v1/patients/[id]/allergies/[allergyId]/route.ts
+  c865739078e5e665 1-118
+app/api/lib/modules/patient-medication/queries/get-patient-medication-by-id-query.ts
+  c865739078e5e665 1-27
+app/(protected)/clinical-masters/note-types/_components/_modals/delete-note-type-dialog.tsx
+  c865739078e5e665 1-80
+app/queries/patients/chart/useCreatePatientMedication.ts
+  225dfa28518475a8 1-46,48,50,52-54
+app/db/schema/patient-vital-sign.ts
+  c865739078e5e665 1-33
+app/db/schema/allergen.ts
+  c865739078e5e665 1-29
+app/api/v1/patients/[id]/notes/types.ts
+  225dfa28518475a8 1-17
+app/(protected)/clinical-masters/note-types/_components/note-type-views.tsx
+  c865739078e5e665 1-195
+app/api/lib/modules/diagnosis-code/queries/get-diagnosis-code-by-id-query.ts
+  c865739078e5e665 1-31
+app/api/lib/modules/patient-problem/validator/delete-patient-problem-validator.ts
+  c865739078e5e665 1-35
+app/api/lib/modules/patient-problem/commands/update-patient-problem-command.ts
+  c865739078e5e665 1-32
+app/queries/clinical-masters/note-types/useUpdateClinicalNoteType.ts
+  c865739078e5e665 1-52
+app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema.ts
+  c865739078e5e665 1-143
+app/queries/clinical-masters/diagnosis-codes/useCreateDiagnosisCode.ts
+  c865739078e5e665 1-46
+app/api/lib/modules/patient-vital-sign/queries/patient-vital-sign-queries.unit.tests.ts
+  225dfa28518475a8 1-55
+app/api/lib/modules/allergen/schemas/allergen-schema.unit.tests.ts
+  c865739078e5e665 1-69
+app/api/v1/patients/[id]/chart/types.ts
+  225dfa28518475a8 1-5
+app/(protected)/clinical-masters/allergens/_components/allergen-skeletons.tsx
+  c865739078e5e665 1-98
+app/queries/patients/chart/useUpdatePatientProblem.ts
+  225dfa28518475a8 1-48,50,52,54-56
+app/api/lib/modules/patient-vital-sign/repository/patient-vital-sign-repository.ts
+  c865739078e5e665 1-167
+app/(protected)/clinical-masters/note-types/loader.tsx
+  c865739078e5e665 1-64
+app/api/v1/clinical-masters/allergens/route.ts
+  c865739078e5e665 1-117
+app/api/lib/modules/patient-chart/queries/patient-chart-queries.unit.tests.ts
+  225dfa28518475a8 1-56,58-83
+app/api/lib/modules/diagnosis-code/validator/update-diagnosis-code-validator.ts
+  c865739078e5e665 1-73
+app/api/lib/modules/clinical-note/schemas/clinical-note-schema.ts
+  225dfa28518475a8 1-99
+app/api/lib/modules/clinical-note/queries/get-clinical-notes-query.ts
+  225dfa28518475a8 1-33
+app/api/lib/modules/patient-problem/validator/get-patient-problems-validator.ts
+  c865739078e5e665 1-38
+app/(protected)/patients/[id]/_components/_chart/vitals-panel.tsx
+  225dfa28518475a8 1-105
+app/api/lib/modules/clinical-note/commands/delete-clinical-note-command.ts
+  225dfa28518475a8 1-27
+app/api/lib/modules/patient-vital-sign/validator/patient-vital-sign-reference-validator.ts
+  c865739078e5e665 1-17
+app/api/lib/modules/clinical-note-type/schemas/clinical-note-type-schema.unit.tests.ts
+  c865739078e5e665 1-63,65-79
+app/api/lib/modules/clinical-note/validator/clinical-note-validator.unit.tests.ts
+  225dfa28518475a8 1-86
+app/api/v1/patients/[id]/chart/route.ts
+  225dfa28518475a8 1-37
+app/(protected)/patients/[id]/_components/_chart/chart-panel.tsx
+  225dfa28518475a8 1-83
+app/api/lib/modules/patient-vital-sign/validator/update-patient-vital-sign-validator.ts
+  c865739078e5e665 1-49
+app/api/lib/modules/patient-allergy/validator/update-patient-allergy-validator.ts
+  c865739078e5e665 1-53
+app/api/lib/modules/patient-chart/queries/get-patient-chart-query.ts
+  225dfa28518475a8 1-49
+app/api/lib/modules/clinical-note/validator/get-clinical-note-by-id-validator.ts
+  225dfa28518475a8 1-32
+app/api/lib/modules/clinical-note-type/commands/delete-clinical-note-type-command.ts
+  c865739078e5e665 1-31
+app/api/lib/modules/allergen/validator/create-allergen-validator.ts
+  c865739078e5e665 1-30
+app/api/lib/modules/patient-medication/validator/update-patient-medication-validator.ts
+  c865739078e5e665 1-46
+app/api/lib/modules/diagnosis-code/queries/diagnosis-code-queries.unit.tests.ts
+  c865739078e5e665 1-89
+app/api/lib/modules/clinical-note/commands/clinical-note-commands.unit.tests.ts
+  225dfa28518475a8 1-117
+app/api/lib/modules/patient-vital-sign/queries/get-patient-vital-signs-query.ts
+  c865739078e5e665 1-33
+app/(protected)/patients/[id]/_components/_chart/allergy-panel.tsx
+  225dfa28518475a8 1-73
+app/api/lib/modules/patient-allergy/validator/patient-allergy-validator.unit.tests.ts
+  c865739078e5e665 1-93
+app/api/lib/modules/patient-problem/validator/update-patient-problem-validator.ts
+  c865739078e5e665 1-67
+app/api/v1/clinical-masters/note-types/[id]/route.ts
+  c865739078e5e665 1-122
+app/api/lib/modules/patient-problem/validator/get-patient-problem-by-id-validator.ts
+  c865739078e5e665 1-35
+app/api/lib/modules/patient-medication/schemas/patient-medication-schema.ts
+  c865739078e5e665 1-118
+app/api/lib/modules/patient-vital-sign/commands/update-patient-vital-sign-command.ts
+  c865739078e5e665 1-35
+app/api/lib/modules/patient-medication/commands/patient-medication-commands.unit.tests.ts
+  c865739078e5e665 1-102
+app/api/lib/modules/diagnosis-code/validator/get-diagnosis-codes-validator.ts
+  c865739078e5e665 1-13
+app/api/lib/modules/clinical-note-type/validator/clinical-note-type-validator.unit.tests.ts
+  c865739078e5e665 1-85,87-115
+app/api/lib/modules/clinical-note-type/queries/get-clinical-note-types-query.ts
+  c865739078e5e665 1-33
+app/api/lib/modules/permission/seed-data.ts
+  225dfa28518475a8 242-292
+  c865739078e5e665 212-241
+app/(protected)/clinical-masters/diagnosis-codes/page.tsx
+  c865739078e5e665 1-15
+app/db/schema/patient-problem.ts
+  c865739078e5e665 1-26
+app/api/lib/modules/clinical-note-type/commands/clinical-note-type-commands.unit.tests.ts
+  c865739078e5e665 1-143
+app/api/lib/modules/patient-medication/queries/patient-medication-queries.unit.tests.ts
+  c865739078e5e665 1-55
+app/db/schema/clinical-note.ts
+  c865739078e5e665 1-32
+app/queries/patients/chart/useUpdateClinicalNote.ts
+  225dfa28518475a8 1-48,50,52,54-56
+app/queries/patients/chart/useCreateClinicalNote.ts
+  225dfa28518475a8 1-46,48,50,52-54
+app/api/lib/modules/patient-medication/repository/patient-medication-repository.ts
+  c865739078e5e665 1-153
+app/api/lib/modules/tenant-provisioning/repository/tenant-provisioning-repository.ts
+  225dfa28518475a8 14-16,117-123,131
+app/api/v1/clinical-masters/allergens/[id]/types.ts
+  c865739078e5e665 1-17
+app/(protected)/patients/[id]/_components/_chart/_sheets/problem-form-sheet.tsx
+  225dfa28518475a8 1-219
+app/queries/clinical-masters/diagnosis-codes/useDeleteDiagnosisCode.ts
+  c865739078e5e665 1-33
+app/(protected)/clinical-masters/allergens/_components/_sheets/allergen-form-sheet.tsx
+  c865739078e5e665 1-196
+app/api/lib/modules/allergen/validator/get-allergens-validator.ts
+  c865739078e5e665 1-13
+app/api/lib/modules/diagnosis-code/queries/get-diagnosis-codes-query.ts
+  c865739078e5e665 1-33
+app/api/lib/modules/patient-problem/queries/get-patient-problem-by-id-query.ts
+  c865739078e5e665 1-27
+app/api/v1/patients/[id]/medications/[medicationId]/types.ts
+  c865739078e5e665 1-22
+app/queries/patients/chart/useDeletePatientMedication.ts
+  225dfa28518475a8 1-39,41,43,45-47
+app/api/lib/modules/patient-allergy/commands/create-patient-allergy-command.ts
+  c865739078e5e665 1-30
+app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema.unit.tests.ts
+  225dfa28518475a8 1-65
+app/api/v1/patients/[id]/vitals/[vitalId]/route.ts
+  225dfa28518475a8 1-118
+app/api/lib/modules/clinical-note-type/commands/update-clinical-note-type-command.ts
+  c865739078e5e665 1-50
+app/queries/patients/chart/useCreatePatientProblem.ts
+  225dfa28518475a8 1-46,48,50,52-54
+app/api/v1/patients/[id]/notes/[noteId]/types.ts
+  225dfa28518475a8 1-20
+app/(protected)/patients/[id]/_utils/vitals-form-schema.ts
+  225dfa28518475a8 1-58
+app/api/lib/modules/tenant-provisioning/commands/seed-default-clinical-masters-command.unit.tests.ts
+  225dfa28518475a8 1-71
+app/api/lib/modules/allergen/commands/update-allergen-command.ts
+  c865739078e5e665 1-47
+app/(protected)/clinical-masters/diagnosis-codes/_components/diagnosis-code-skeletons.tsx
+  c865739078e5e665 1-98
+app/(protected)/patients/[id]/_components/_chart/_sheets/allergy-form-sheet.tsx
+  225dfa28518475a8 1-24,26-256
+app/(protected)/patients/[id]/_components/_chart/_sheets/vitals-form-sheet.tsx
+  225dfa28518475a8 1-224
+app/(protected)/patients/[id]/_components/_chart/_sheets/medication-form-sheet.tsx
+  225dfa28518475a8 1-232
+app/api/v1/clinical-masters/diagnosis-codes/route.ts
+  c865739078e5e665 1-117
+app/(protected)/clinical-masters/diagnosis-codes/_components/_sheets/diagnosis-code-form-sheet.tsx
+  c865739078e5e665 1-159
+app/(protected)/patients/[id]/loader.tsx
+  225dfa28518475a8 13-17
+app/api/lib/modules/diagnosis-code/repository/diagnosis-code-repository.integration.tests.ts
+  c865739078e5e665 1-148
+app/api/lib/modules/allergen/queries/allergen-queries.unit.tests.ts
+  c865739078e5e665 1-89
+app/api/lib/modules/patient-problem/schemas/patient-problem-schema.ts
+  c865739078e5e665 1-129
+app/api/lib/modules/patient-vital-sign/validator/get-patient-vital-signs-validator.ts
+  c865739078e5e665 1-38
+app/api/lib/modules/patient-problem/repository/patient-problem-repository.ts
+  c865739078e5e665 1-149
+app/api/v1/patients/[id]/medications/[medicationId]/route.ts
+  c865739078e5e665 1-122
+app/api/lib/modules/patient-allergy/schemas/patient-allergy-schema.ts
+  c865739078e5e665 1-118
+app/api/lib/modules/clinical-note/validator/clinical-note-reference-validator.ts
+  225dfa28518475a8 1-35
+app/(protected)/clinical-masters/allergens/page.tsx
+  c865739078e5e665 1-15
+app/api/lib/modules/allergen/schemas/allergen-schema.ts
+  c865739078e5e665 1-23,25-65
+app/api/lib/modules/patient-allergy/validator/get-patient-allergy-by-id-validator.ts
+  c865739078e5e665 1-35
+app/api/lib/modules/clinical-note/queries/get-clinical-note-by-id-query.ts
+  225dfa28518475a8 1-27
+app/api/lib/modules/patient-problem/validator/create-patient-problem-validator.ts
+  c865739078e5e665 1-68
+app/api/lib/modules/patient-allergy/commands/update-patient-allergy-command.ts
+  c865739078e5e665 1-32
+app/api/lib/modules/clinical-note/repository/clinical-note-repository.ts
+  225dfa28518475a8 1-168
+app/api/lib/modules/diagnosis-code/validator/diagnosis-code-uniqueness-validator.ts
+  c865739078e5e665 1-23,25-53
+app/api/lib/modules/allergen/repository/allergen-repository.integration.tests.ts
+  c865739078e5e665 1-147
+app/(protected)/clinical-masters/allergens/_components/allergens-page-impl.tsx
+  c865739078e5e665 1-324
+app/api/lib/modules/patient-problem/validator/patient-problem-validator.unit.tests.ts
+  c865739078e5e665 1-68
+app/api/lib/modules/clinical-note-type/validator/delete-clinical-note-type-validator.ts
+  c865739078e5e665 1-41
+app/api/lib/modules/patient-medication/validator/patient-medication-validator.unit.tests.ts
+  c865739078e5e665 1-56
+app/api/lib/modules/allergen/repository/allergen-repository.ts
+  c865739078e5e665 1-196
+app/api/lib/modules/patient-vital-sign/validator/create-patient-vital-sign-validator.ts
+  c865739078e5e665 1-39
+app/(protected)/patients/[id]/_components/patient-detail-impl.tsx
+  225dfa28518475a8 40,43,182-186,188-189,257-262
+app/(protected)/clinical-masters/diagnosis-codes/_components/diagnosis-codes-page-impl.tsx
+  c865739078e5e665 1-337
+app/(protected)/clinical-masters/diagnosis-codes/loader.tsx
+  c865739078e5e665 1-64
+app/(protected)/clinical-masters/allergens/loader.tsx
+  c865739078e5e665 1-64
+app/api/lib/modules/patient-problem/commands/create-patient-problem-command.ts
+  c865739078e5e665 1-30
+app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema.unit.tests.ts
+  c865739078e5e665 1-80
+app/queries/patients/chart/useUpdatePatientVitalSign.ts
+  225dfa28518475a8 1-48,50,52,54-56
+app/api/lib/modules/diagnosis-code/validator/create-diagnosis-code-validator.ts
+  c865739078e5e665 1-33
+app/api/lib/modules/patient-vital-sign/commands/delete-patient-vital-sign-command.ts
+  c865739078e5e665 1-27
+app/api/lib/modules/clinical-note/validator/update-clinical-note-validator.ts
+  225dfa28518475a8 1-61
+app/api/v1/clinical-masters/diagnosis-codes/[id]/route.ts
+  c865739078e5e665 1-122
+app/api/lib/modules/diagnosis-code/validator/delete-diagnosis-code-validator.ts
+  c865739078e5e665 1-41
+app/api/lib/modules/patient-vital-sign/commands/create-patient-vital-sign-command.ts
+  c865739078e5e665 1-34
+app/db/schema/patient-allergy.ts
+  c865739078e5e665 1-27
+app/api/v1/patients/[id]/allergies/types.ts
+  c865739078e5e665 1-18
+app/api/lib/modules/patient-allergy/repository/patient-allergy-repository.ts
+  c865739078e5e665 1-151
+app/api/lib/modules/diagnosis-code/repository/diagnosis-code-repository.ts
+  c865739078e5e665 1-104,106-184
+app/api/v1/patients/[id]/problems/types.ts
+  c865739078e5e665 1-17
+app/api/v1/patients/[id]/problems/[problemId]/types.ts
+  c865739078e5e665 1-20
+app/api/lib/modules/patient-medication/validator/create-patient-medication-validator.ts
+  c865739078e5e665 1-39
+app/api/lib/modules/patient-medication/queries/get-patient-medications-query.ts
+  c865739078e5e665 1-33
+app/api/lib/modules/tenant-provisioning/commands/onboard-tenant-command.ts
+  225dfa28518475a8 11,24-28
+app/queries/patients/chart/useCreatePatientVitalSign.ts
+  225dfa28518475a8 1-46,48,50,52-54
+app/api/lib/modules/diagnosis-code/validator/diagnosis-code-validator.unit.tests.ts
+  c865739078e5e665 1-98
+app/api/v1/patients/[id]/notes/[noteId]/sign/types.ts
+  225dfa28518475a8 1-5
+app/api/lib/modules/patient-problem/repository/patient-problem-repository.integration.tests.ts
+  c865739078e5e665 1-83
+app/api/lib/modules/patient-allergy/validator/delete-patient-allergy-validator.ts
+  c865739078e5e665 1-35
+app/api/v1/patients/[id]/vitals/route.ts
+  225dfa28518475a8 1-118
+app/(protected)/clinical-masters/note-types/page.tsx
+  c865739078e5e665 1-15
+app/api/v1/clinical-masters/diagnosis-codes/[id]/types.ts
+  c865739078e5e665 1-17
+app/api/lib/modules/clinical-note-type/repository/clinical-note-type-repository.integration.tests.ts
+  c865739078e5e665 1-154
+app/api/lib/modules/patient-allergy/validator/patient-allergy-reference-validator.ts
+  c865739078e5e665 1-39
+app/api/lib/modules/patient-medication/commands/delete-patient-medication-command.ts
+  c865739078e5e665 1-27
+app/(protected)/patients/[id]/_components/_chart/use-chart-form-server-errors.ts
+  225dfa28518475a8 1-12
+app/api/lib/modules/allergen/validator/update-allergen-validator.ts
+  c865739078e5e665 1-70
+app/(protected)/patients/[id]/_components/_chart/_sheets/clinical-note-form-sheet.tsx
+  225dfa28518475a8 1-36,38-188
+app/api/lib/modules/clinical-note/validator/get-clinical-notes-validator.ts
+  225dfa28518475a8 1-35
+app/api/lib/modules/patient-allergy/schemas/patient-allergy-schema.unit.tests.ts
+  c865739078e5e665 1-66
+app/api/v1/patients/[id]/vitals/types.ts
+  225dfa28518475a8 1-23
+app/api/lib/modules/clinical-note/commands/update-clinical-note-command.ts
+  225dfa28518475a8 1-32
+app/queries/patients/chart/useCreatePatientAllergy.ts
+  225dfa28518475a8 1-46,48,50,52-54
+app/api/lib/modules/patient-problem/commands/patient-problem-commands.unit.tests.ts
+  c865739078e5e665 1-96
+app/api/lib/modules/clinical-note/commands/create-clinical-note-command.ts
+  225dfa28518475a8 1-31
+app/(protected)/clinical-masters/diagnosis-codes/_components/diagnosis-code-views.tsx
+  c865739078e5e665 1-207
+app/api/v1/clinical-masters/allergens/types.ts
+  c865739078e5e665 1-14
+app/api/v1/patients/[id]/medications/route.ts
+  c865739078e5e665 1-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "e7b6222bf6cf923c4c365144630014aedc9ddb5b",
+  "prompts": {
+    "225dfa28518475a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d63a4abb-0aad-4b83-9aac-cfcad244d860",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 6884,
+      "total_deletions": 49,
+      "accepted_lines": 6790,
+      "overriden_lines": 57
+    },
+    "c865739078e5e665": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "050cc829-e9ac-41f8-8366-2d1051e0d5ff",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 13601,
+      "total_deletions": 2,
+      "accepted_lines": 13588,
+      "overriden_lines": 6
+    }
+  }
+}
