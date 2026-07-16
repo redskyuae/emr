@@ -13,6 +13,7 @@ import {
 } from '@/app/db/schema/visit';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
+import { AppointmentStatusNotConfiguredError } from '../errors/appointment-status-not-configured-error';
 import {
   formatVisitDate,
   type ValidatedCheckInVisitData,
@@ -289,7 +290,7 @@ async function syncAppointmentStatus(
 export type CheckInVisitRepositoryResult =
   { success: true; data: Visit } | { success: false; outcome: 'appointment-status-not-configured' };
 
-async function checkInVisit(
+async function runCheckInVisitTransaction(
   data: ValidatedCheckInVisitData
 ): Promise<CheckInVisitRepositoryResult> {
   return db.transaction(async (tx) => {
@@ -348,7 +349,7 @@ async function checkInVisit(
       if (!synced) {
         // Roll the Check-in back rather than leave the Appointment claiming the
         // Patient never arrived.
-        tx.rollback();
+        throw new AppointmentStatusNotConfiguredError();
       }
     }
 
@@ -360,6 +361,20 @@ async function checkInVisit(
 
     return { success: true, data: created };
   });
+}
+
+async function checkInVisit(
+  data: ValidatedCheckInVisitData
+): Promise<CheckInVisitRepositoryResult> {
+  try {
+    return await runCheckInVisitTransaction(data);
+  } catch (error) {
+    if (error instanceof AppointmentStatusNotConfiguredError) {
+      return { success: false, outcome: 'appointment-status-not-configured' };
+    }
+
+    throw error;
+  }
 }
 
 export type VisitTransitionResult =
@@ -377,7 +392,7 @@ type TransitionSpec = {
 
 // Every transition is guarded in one transaction: the row is locked, its status
 // re-checked, then the Visit and any linked Appointment move together.
-async function transitionVisit(
+async function runTransitionVisitTransaction(
   id: number,
   tenantId: string,
   spec: TransitionSpec
@@ -430,7 +445,9 @@ async function transitionVisit(
       );
 
       if (!synced) {
-        tx.rollback();
+        // Undo the Visit move too — the Visit and its Appointment must never
+        // disagree about what happened (ADR 0030).
+        throw new AppointmentStatusNotConfiguredError();
       }
     }
 
@@ -442,6 +459,22 @@ async function transitionVisit(
 
     return { outcome: 'updated', data: updated };
   });
+}
+
+async function transitionVisit(
+  id: number,
+  tenantId: string,
+  spec: TransitionSpec
+): Promise<VisitTransitionResult> {
+  try {
+    return await runTransitionVisitTransaction(id, tenantId, spec);
+  } catch (error) {
+    if (error instanceof AppointmentStatusNotConfiguredError) {
+      return { outcome: 'appointment-status-not-configured' };
+    }
+
+    throw error;
+  }
 }
 
 async function startConsultation(id: number, tenantId: string): Promise<VisitTransitionResult> {

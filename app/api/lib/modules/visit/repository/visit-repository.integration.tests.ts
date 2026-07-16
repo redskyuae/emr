@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
@@ -346,7 +346,7 @@ describe('Visit repository', () => {
       ).rejects.toThrow();
     });
 
-    it('should roll the check-in back when no system checked-in status is configured', async () => {
+    it('should return the not-configured outcome and roll back when no system checked-in status exists', async () => {
       const [status] = await db
         .insert(appointmentStatusTable)
         .values({
@@ -385,11 +385,13 @@ describe('Visit repository', () => {
         })
         .returning({ id: appointmentTable.id });
 
+      // The caller gets the typed outcome, not a thrown TransactionRollbackError,
+      // so the command can map it to a clean 409 rather than a 500.
       await expect(
         visitRepository.checkInVisit(
           checkInData(tenantA, fixturesA, { appointmentId: appointment.id })
         )
-      ).rejects.toThrow();
+      ).resolves.toEqual({ success: false, outcome: 'appointment-status-not-configured' });
 
       // The rollback must leave no half-created Visit behind.
       await expect(
@@ -481,6 +483,35 @@ describe('Visit repository', () => {
       const result = await visitRepository.cancelVisit(created.data.id, tenantA, 'Too late');
 
       expect(result.outcome).toBe('invalid-status');
+    });
+
+    it('should return the not-configured outcome and roll back when the completed status is missing', async () => {
+      // Seed every category except COMPLETED, so check-in succeeds but completing cannot.
+      const { appointmentId } = await createAppointment(tenantA, fixturesA);
+      await db
+        .delete(appointmentStatusTable)
+        .where(
+          and(
+            eq(appointmentStatusTable.tenantId, tenantA),
+            eq(appointmentStatusTable.category, 'COMPLETED')
+          )
+        );
+
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+
+      await expect(visitRepository.completeVisit(created.data.id, tenantA)).resolves.toEqual({
+        outcome: 'appointment-status-not-configured',
+      });
+
+      // The Visit must not be left Completed when its Appointment could not follow.
+      await expect(visitRepository.getVisitById(created.data.id, tenantA)).resolves.toMatchObject({
+        status: 'IN_CONSULTATION',
+      });
+      await expect(appointmentStatusCategoryOf(appointmentId)).resolves.toBe('CHECKED_IN');
     });
 
     it('should not transition a visit belonging to another tenant', async () => {
