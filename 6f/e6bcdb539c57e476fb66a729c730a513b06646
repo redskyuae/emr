@@ -1,0 +1,51 @@
+app/api/lib/modules/visit/errors/appointment-status-not-configured-error.ts
+  70c93f2dabd16321 1-16
+app/api/lib/modules/visit/repository/visit-repository.ts
+  70c93f2dabd16321 16,293,352,366-377,395,448-450,464-477
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "6fe6bcdb539c57e476fb66a729c730a513b06646",
+  "prompts": {
+    "225dfa28518475a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d63a4abb-0aad-4b83-9aac-cfcad244d860",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "70c93f2dabd16321": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a42eff1-af26-4f37-9bac-7bcd86d59a62",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 53,
+      "total_deletions": 4,
+      "accepted_lines": 509,
+      "overriden_lines": 0
+    },
+    "c865739078e5e665": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "050cc829-e9ac-41f8-8366-2d1051e0d5ff",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 35,
+      "overriden_lines": 0
+    }
+  }
+}
