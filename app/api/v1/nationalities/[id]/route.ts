@@ -1,5 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 import type { GetNationalityResponse, UpdateNationalityResponse } from './types';
 
 import { deleteNationalityCommand } from '@/app/api/lib/modules/nationality/commands/delete-nationality-command';
@@ -24,6 +25,11 @@ function errorMessage(status: number) {
 
 export async function GET(_request: NextRequest, context: NationalityRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) {
+      return session;
+    }
+
     const { id } = await context.params;
     const result = await getNationalityByIdQuery(id);
 
@@ -47,6 +53,11 @@ export async function GET(_request: NextRequest, context: NationalityRouteContex
 
 export async function PUT(request: NextRequest, context: NationalityRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) {
+      return session;
+    }
+
     const { id } = await context.params;
     let payload: unknown;
 
@@ -81,6 +92,11 @@ export async function PUT(request: NextRequest, context: NationalityRouteContext
 
 export async function DELETE(_request: NextRequest, context: NationalityRouteContext) {
   try {
+    const session = await requireAuth();
+    if (session instanceof Response) {
+      return session;
+    }
+
     const { id } = await context.params;
     const result = await deleteNationalityCommand(id);
 
