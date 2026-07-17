@@ -101,7 +101,6 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Doctors',
         href: '/doctors',
         icon: Stethoscope,
-        badge: '404',
       },
       {
         title: 'Doctor Schedules',
@@ -309,6 +308,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'New schedule',
       href: '/doctor-schedules?schedule=new',
+    },
+  },
+  '/doctors': {
+    title: 'Doctors',
+    subtitle: 'Staff-backed Doctors, Specialties, and clinical profile details.',
+    primaryAction: {
+      label: 'Add Doctor',
+      href: '/doctors?doctor=new',
     },
   },
   '/audit-log': {
