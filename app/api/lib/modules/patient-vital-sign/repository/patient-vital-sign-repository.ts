@@ -14,6 +14,7 @@ const patientVitalSignColumns = {
   tenantId: patientVitalSignTable.tenantId,
   patientId: patientVitalSignTable.patientId,
   visitId: patientVitalSignTable.visitId,
+  admissionId: patientVitalSignTable.admissionId,
   recordedAt: patientVitalSignTable.recordedAt,
   heightCm: patientVitalSignTable.heightCm,
   weightKg: patientVitalSignTable.weightKg,
@@ -38,6 +39,7 @@ async function createPatientVitalSign(data: CreatePatientVitalSignData) {
       tenantId: data.tenantId,
       patientId: data.patientId,
       visitId: data.visitId ?? null,
+      admissionId: data.admissionId ?? null,
       recordedAt: data.recordedAt ?? new Date(),
       heightCm: data.heightCm ?? null,
       weightKg: data.weightKg ?? null,
@@ -65,6 +67,7 @@ async function updatePatientVitalSign(
     .update(patientVitalSignTable)
     .set({
       visitId: data.visitId ?? null,
+      admissionId: data.admissionId ?? null,
       recordedAt: data.recordedAt ?? new Date(),
       heightCm: data.heightCm ?? null,
       weightKg: data.weightKg ?? null,

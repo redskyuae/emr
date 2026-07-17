@@ -228,7 +228,51 @@ The front-desk act that creates a Visit: verifying the Patient is a Registered P
 
 ## Admission
 
-An inpatient clinical event. Occurs when a Patient is admitted to a Facility and occupies a Bed, typically overnight or for an extended stay. Distinct from a Visit — do not conflate them.
+An inpatient clinical event. Occurs when a Patient is admitted to a Facility and occupies a Bed, typically overnight or for an extended stay. Distinct from a Visit — do not conflate them. An Admission may record the OPD Visit it originated from, but it is never nested inside one.
+
+## Admission Number
+
+The permanent, human-facing identifier assigned by the system to an Admission within a Tenant, formatted as `ADM-` followed by a Tenant-scoped sequence beginning at `1001`. Immutable and never reused, including after the Admission is removed.
+
+## Admission Status
+
+The lifecycle state of an Admission: Admitted, Discharged, or Cancelled. A fixed system-defined set (like Visit Status), not a Tenant-scoped Master.
+
+## AdmissionType
+
+A Tenant-scoped Master that classifies how a Patient came to be admitted, such as Emergency, Elective, Transfer, or Maternity. Distinct from VisitType, which classifies outpatient Visits.
+
+## Active Admission
+
+An Admission in the Admitted status. A Patient has at most one Active Admission at a time within a Tenant, and a Bed hosts at most one Active Admission.
+
+## Bed Transfer
+
+The movement of an Active Admission from one Bed to another within the Tenant, recorded with the source Bed, target Bed, reason, and time. The Admission always reflects the current Bed.
+
+## Discharge
+
+The act that ends an Active Admission: recording the Discharge Disposition and optional Discharge Summary, and releasing the Bed.
+
+## Discharge Disposition
+
+The system-defined outcome of a Discharge: Routine, LAMA (leave against medical advice), Transferred, Deceased, or Absconded. A fixed system-defined set, not a Tenant-scoped Master.
+
+## Discharge Summary
+
+The narrative record captured at Discharge describing the course of the Admission. Stored as text on the Admission.
+
+## Expected Discharge Date
+
+The anticipated date an Active Admission will end. Informational only and editable while the Admission is Admitted.
+
+## Bed Board
+
+The ward-wise operational view of every Bed and its Bed Status, showing the Patient occupying each Occupied Bed.
+
+## Inpatient Census
+
+The list of Admissions, defaulting to Active Admissions, used by ward staff to see who is currently admitted, where, and under which Doctor.
 
 ## Master
 
@@ -268,7 +312,15 @@ A named section of a Facility containing Beds, used for inpatient care (e.g., IC
 
 ## Bed
 
-A physical bed within a Ward. Has a status (available, occupied, reserved). A Patient is assigned a Bed upon Admission.
+A physical bed within a Ward, optionally located in a Room. Identified within its Ward by a Bed Number and carrying a Bed Status. A Patient is assigned a Bed upon Admission.
+
+## Bed Number
+
+The human-facing identifier for a Bed within its Ward (e.g., `ICU-01`). Unique within the Ward and compared case-insensitively.
+
+## Bed Status
+
+The operational state of a Bed: Available, Occupied, Reserved, or Maintenance. A fixed system-defined set (like Room Status), not a Tenant-scoped Master. Occupied is system-managed: it is set and cleared only by Admission lifecycle events, never edited directly. Distinct from Room Status, which describes the Room containing the Bed.
 
 ## Room
 

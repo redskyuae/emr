@@ -591,6 +591,75 @@ const appointmentExample = {
   createdOn: '2099-12-01T04:30:00.000Z',
 };
 
+const admissionExample = {
+  id: 12,
+  tenantId: 'org_apollo',
+  admissionNumber: 'ADM-1001',
+  status: 'ADMITTED',
+  admissionReason: 'Chest pain, observation',
+  remarks: null,
+  expectedDischargeDate: '20-07-2026',
+  admittedAt: '2026-07-17T06:15:00.000Z',
+  dischargedAt: null,
+  dischargeDisposition: null,
+  dischargeSummary: null,
+  cancelledAt: null,
+  cancellationReason: null,
+  createdOn: '2026-07-17T06:15:00.000Z',
+  modifiedOn: '2026-07-17T06:15:00.000Z',
+  patient: {
+    id: 42,
+    mrn: 'MRN-1042',
+    firstName: 'Asha',
+    lastName: 'Rao',
+    phone: '+91-9876543210',
+  },
+  doctor: { id: 42, name: 'Dr. Meera Iyer' },
+  admissionType: { id: 1, name: 'Emergency', code: 'EMER' },
+  bed: { id: 9, bedNumber: 'ICU-01' },
+  ward: { id: 3, name: 'ICU', code: 'ICU' },
+  visit: { id: 7, visitNumber: 'VST-1001' },
+};
+
+const bedExample = {
+  id: 9,
+  tenantId: 'org_apollo',
+  bedNumber: 'ICU-01',
+  wardId: 3,
+  roomId: 4,
+  status: 'AVAILABLE',
+  notes: null,
+  createdOn: '2026-07-01T08:00:00.000Z',
+  modifiedOn: '2026-07-01T08:00:00.000Z',
+  ward: { id: 3, name: 'ICU', code: 'ICU' },
+  room: { id: 4, roomNumber: '301-A' },
+};
+
+const bedBoardExample = [
+  {
+    wardId: 3,
+    wardName: 'ICU',
+    wardCode: 'ICU',
+    beds: [
+      {
+        id: 9,
+        bedNumber: 'ICU-01',
+        status: 'OCCUPIED',
+        roomNumber: '301-A',
+        occupant: {
+          mrn: 'MRN-1042',
+          patientId: 42,
+          lastName: 'Rao',
+          firstName: 'Asha',
+          admissionId: 12,
+          admissionNumber: 'ADM-1001',
+        },
+      },
+      { id: 10, bedNumber: 'ICU-02', status: 'AVAILABLE', roomNumber: null, occupant: null },
+    ],
+  },
+];
+
 const visitExample = {
   id: 501,
   tenantId: 'org_apollo',
@@ -1637,6 +1706,7 @@ const patientVitalSignExample = {
   tenantId: 'org_apollo',
   patientId: 42,
   visitId: null,
+  admissionId: null,
   recordedAt: '2026-03-01T09:30:00.000Z',
   heightCm: 170,
   weightKg: 70,
@@ -1676,6 +1746,7 @@ const clinicalNoteExample = {
   tenantId: 'org_apollo',
   patientId: 42,
   visitId: null,
+  admissionId: null,
   noteTypeId: 3,
   subjective: 'Patient reports a productive cough for three days with mild fever.',
   objective: 'Temp 37.8C, chest clear on auscultation, throat mildly erythematous.',
@@ -1906,6 +1977,13 @@ export const openApiDocument = {
     { name: 'Appointment Status', description: 'Appointment Status Master APIs.' },
     { name: 'Visit Type', description: 'Visit Type Master APIs.' },
     { name: 'Visit', description: 'Tenant-scoped Visit check-in, queue, and lifecycle APIs.' },
+    { name: 'Ward', description: 'Ward Master APIs.' },
+    { name: 'Bed', description: 'Tenant-scoped Bed registry and Bed Board APIs.' },
+    { name: 'Admission Type', description: 'Admission Type Master APIs.' },
+    {
+      name: 'Admission',
+      description: 'Tenant-scoped inpatient Admission, transfer, and discharge APIs.',
+    },
     { name: 'Specialty', description: 'Tenant-scoped Specialty Master APIs.' },
     { name: 'Doctor', description: 'Tenant-scoped Doctor registry and lifecycle APIs.' },
     {
@@ -3919,6 +3997,481 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
+    '/api/v1/wards': appointmentMasterCollection({
+      tag: 'Ward',
+      entity: 'Ward',
+      schemaName: 'Ward',
+      createSchemaName: 'CreateWardRequest',
+      example: { name: 'ICU', code: 'ICU', description: 'Intensive care unit' },
+    }),
+    '/api/v1/wards/{id}': itemOperations({
+      tag: 'Ward',
+      entity: 'Ward',
+      schemaName: 'Ward',
+      updateSchemaName: 'UpdateWardRequest',
+      example: { name: 'ICU', code: 'ICU', description: 'Intensive care unit' },
+      parameters: [numberIdPathParameter('Ward')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: {
+        ...authenticatedErrorResponses,
+        '409': {
+          description: 'The Ward still has Beds assigned, or the new name/code already exists.',
+          content: jsonContent(schemaRef('ValidationError'), {
+            message: 'Ward ICU cannot be removed while Beds are assigned to it.',
+            errors: ['Ward ICU cannot be removed while Beds are assigned to it.'],
+          }),
+        },
+      },
+    }),
+    '/api/v1/admission-types': appointmentMasterCollection({
+      tag: 'Admission Type',
+      entity: 'Admission Type',
+      schemaName: 'AdmissionType',
+      createSchemaName: 'CreateAdmissionTypeRequest',
+      example: {
+        name: 'Emergency',
+        code: 'EMER',
+        description: 'Unplanned admission through emergency attendance',
+      },
+    }),
+    '/api/v1/admission-types/{id}': itemOperations({
+      tag: 'Admission Type',
+      entity: 'Admission Type',
+      schemaName: 'AdmissionType',
+      updateSchemaName: 'UpdateAdmissionTypeRequest',
+      example: {
+        name: 'Emergency',
+        code: 'EMER',
+        description: 'Unplanned admission through emergency attendance',
+      },
+      parameters: [numberIdPathParameter('Admission Type')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/beds': {
+      get: {
+        tags: ['Bed'],
+        summary: 'List Beds',
+        description:
+          'Returns a paginated list of Beds in the active Tenant with their Ward and optional Room resolved. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'wardId',
+            in: 'query',
+            required: false,
+            description: 'Filter to one Ward.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            description: 'Filter by Bed Status.',
+            schema: schemaRef('BedStatus'),
+          },
+          ...listParameters,
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated Bed list.',
+            content: jsonContent(paginatedSchema('Bed'), {
+              data: [bedExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          ...authenticatedListErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Bed'],
+        summary: 'Create Bed',
+        description:
+          'Creates a Bed in a Ward. Bed Numbers are unique within their Ward, compared case-insensitively. OCCUPIED is system-managed by Admissions and cannot be set manually.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateBedRequest', {
+          bedNumber: 'ICU-01',
+          wardId: 3,
+          roomId: 4,
+          status: 'AVAILABLE',
+        }),
+        responses: {
+          '201': {
+            description: 'Bed created.',
+            content: jsonContent(dataEnvelopeSchema('Bed'), { data: bedExample }),
+          },
+          '400': {
+            description: 'The request body is invalid or names the OCCUPIED status.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Bed status OCCUPIED cannot be set manually.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '409': {
+            description:
+              'The Ward or Room is invalid, or the Bed Number already exists in the Ward.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: "Bed number 'ICU-01' already exists in ward ICU.",
+              errors: ["Bed number 'ICU-01' already exists in ward ICU."],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/beds/board': {
+      get: {
+        tags: ['Bed'],
+        summary: 'Get the Bed Board',
+        description:
+          'Returns every Bed in the active Tenant grouped by Ward, with the occupying Patient and Admission for each Occupied Bed. This is the ward-wise occupancy view.',
+        security: [{ cookieAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Ward-grouped Bed occupancy.',
+            content: jsonContent(
+              {
+                type: 'object',
+                required: ['data'],
+                properties: { data: { type: 'array', items: schemaRef('BedBoardWard') } },
+              },
+              { data: bedBoardExample }
+            ),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/beds/{id}': {
+      get: {
+        tags: ['Bed'],
+        summary: 'Get Bed',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Bed')],
+        responses: {
+          '200': {
+            description: 'Bed found.',
+            content: jsonContent(dataEnvelopeSchema('Bed'), { data: bedExample }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Bed'],
+        summary: 'Update Bed',
+        description:
+          'Updates a Bed. An occupied Bed cannot be edited: its status is managed by Admission lifecycle events.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Bed')],
+        requestBody: requestBody('UpdateBedRequest', {
+          bedNumber: 'ICU-01',
+          wardId: 3,
+          status: 'MAINTENANCE',
+          notes: 'Ventilator service due',
+        }),
+        responses: {
+          '200': {
+            description: 'Bed updated.',
+            content: jsonContent(dataEnvelopeSchema('Bed'), { data: bedExample }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Bed is occupied, a reference is invalid, or the Bed Number is taken.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Bed ICU-01 is occupied and its status is managed by admissions.',
+              errors: ['Bed ICU-01 is occupied and its status is managed by admissions.'],
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      delete: {
+        tags: ['Bed'],
+        summary: 'Delete Bed',
+        description: 'Soft deletes a Bed. An occupied Bed cannot be removed.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Bed')],
+        responses: {
+          '204': { description: 'Bed deleted.' },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Bed is occupied by an Active Admission.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Bed ICU-01 cannot be removed while occupied.',
+              errors: ['Bed ICU-01 cannot be removed while occupied.'],
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/admissions': {
+      get: {
+        tags: ['Admission'],
+        summary: 'List Admissions',
+        description:
+          'Lists Admissions in the active Tenant, most recently admitted first. With no status or patientId filter the census defaults to Active Admissions; a patientId filter reads that Patient\u2019s full admission history.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            description: 'Filter by Admission Status. Defaults to ADMITTED when omitted.',
+            schema: schemaRef('AdmissionStatus'),
+          },
+          {
+            name: 'wardId',
+            in: 'query',
+            required: false,
+            description: 'Filter to one Ward via the current Bed.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'doctorId',
+            in: 'query',
+            required: false,
+            description: 'Filter to one admitting Doctor.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'patientId',
+            in: 'query',
+            required: false,
+            description:
+              "Filter to one Patient's admission history. Suppresses the ADMITTED default.",
+            schema: { type: 'integer', minimum: 1 },
+          },
+          ...listParameters,
+        ],
+        responses: {
+          '200': {
+            description: 'The inpatient census.',
+            content: jsonContent(paginatedSchema('Admission'), {
+              data: [admissionExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          ...authenticatedListErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Admission'],
+        summary: 'Admit a Patient',
+        description:
+          'Creates an Admission in the active Tenant. The target Bed must be Available or Reserved and moves to Occupied in the same transaction; the server assigns the Admission Number. The Patient must be a Registered Patient who is active and must not already have an Active Admission. An optional visitId records the source OPD Visit.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('AdmitPatientRequest', {
+          patientId: 42,
+          doctorId: 7,
+          admissionTypeId: 1,
+          bedId: 9,
+          visitId: 7,
+          admissionReason: 'Chest pain, observation',
+          expectedDischargeDate: '20-07-2026',
+        }),
+        responses: {
+          '201': {
+            description: 'Admission created and Bed occupied.',
+            content: jsonContent(dataEnvelopeSchema('Admission'), { data: admissionExample }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '409': {
+            description:
+              'A referenced record is invalid, the Bed is not available, the Patient is provisional or inactive, or the Patient already has an Active Admission.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient 42 already has an active admission.',
+              errors: ['Patient 42 already has an active admission.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/admissions/{id}': {
+      get: {
+        tags: ['Admission'],
+        summary: 'Get Admission',
+        description: 'Returns one Admission with its Bed Transfer history embedded.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Admission')],
+        responses: {
+          '200': {
+            description: 'Admission found.',
+            content: jsonContent(dataEnvelopeSchema('AdmissionDetail'), {
+              data: { ...admissionExample, transfers: [] },
+            }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Admission'],
+        summary: 'Update Admission',
+        description:
+          'Updates the admission reason, remarks, and Expected Discharge Date of an Active Admission. Closed Admissions are immutable.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Admission')],
+        requestBody: requestBody('UpdateAdmissionRequest', {
+          admissionReason: 'Observation',
+          remarks: 'Stable overnight',
+          expectedDischargeDate: '21-07-2026',
+        }),
+        responses: {
+          '200': {
+            description: 'Admission updated.',
+            content: jsonContent(dataEnvelopeSchema('Admission'), { data: admissionExample }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Admission is discharged or cancelled.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Admission ADM-1001 is closed and cannot be edited.',
+              errors: ['Admission ADM-1001 is closed and cannot be edited.'],
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      delete: {
+        tags: ['Admission'],
+        summary: 'Delete Admission',
+        description:
+          'Soft deletes an Admission as an administrative correction. Deleting an Active Admission frees its Bed exactly as discharging does.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Admission')],
+        responses: {
+          '204': { description: 'Admission deleted.' },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/admissions/{id}/transfer': {
+      post: {
+        tags: ['Admission'],
+        summary: 'Transfer an Admission to another Bed',
+        description:
+          'Moves an Active Admission to another Bed: the target Bed must be Available or Reserved and becomes Occupied, the previous Bed is released, and the movement is recorded in the Bed Transfer history \u2014 all in one transaction.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Admission')],
+        requestBody: requestBody('TransferBedRequest', {
+          toBedId: 10,
+          reason: 'Closer to the nursing station',
+        }),
+        responses: {
+          '200': {
+            description: 'Admission transferred.',
+            content: jsonContent(dataEnvelopeSchema('Admission'), { data: admissionExample }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description:
+              'The Admission is not active, the target Bed is unavailable, or it is the current Bed.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Admission ADM-1001 is already in bed ICU-01.',
+              errors: ['Admission ADM-1001 is already in bed ICU-01.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/admissions/{id}/discharge': {
+      post: {
+        tags: ['Admission'],
+        summary: 'Discharge an Admission',
+        description:
+          'Ends an Active Admission with a Discharge Disposition and optional Discharge Summary, releasing the Bed in the same transaction. A discharged Admission is immutable.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Admission')],
+        requestBody: requestBody('DischargeAdmissionRequest', {
+          dischargeDisposition: 'ROUTINE',
+          dischargeSummary: 'Recovered well. Follow-up in two weeks.',
+        }),
+        responses: {
+          '200': {
+            description: 'Admission discharged and Bed released.',
+            content: jsonContent(dataEnvelopeSchema('Admission'), {
+              data: {
+                ...admissionExample,
+                status: 'DISCHARGED',
+                dischargedAt: '2026-07-20T10:00:00.000Z',
+                dischargeDisposition: 'ROUTINE',
+                dischargeSummary: 'Recovered well. Follow-up in two weeks.',
+              },
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Admission is not in the Admitted status.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Admission ADM-1001 cannot be discharged from its current status.',
+              errors: ['Admission ADM-1001 cannot be discharged from its current status.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/admissions/{id}/cancel': {
+      post: {
+        tags: ['Admission'],
+        summary: 'Cancel an Admission',
+        description:
+          'Cancels an Active Admission that was created in error or where the Patient left before care, releasing the Bed. A reason is required.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Admission')],
+        requestBody: requestBody('CancelAdmissionRequest', {
+          cancellationReason: 'Admitted in error',
+        }),
+        responses: {
+          '200': {
+            description: 'Admission cancelled and Bed released.',
+            content: jsonContent(dataEnvelopeSchema('Admission'), {
+              data: {
+                ...admissionExample,
+                status: 'CANCELLED',
+                cancelledAt: '2026-07-17T08:00:00.000Z',
+                cancellationReason: 'Admitted in error',
+              },
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Admission is not in the Admitted status.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Admission ADM-1001 cannot be cancelled from its current status.',
+              errors: ['Admission ADM-1001 cannot be cancelled from its current status.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/clinical-masters/diagnosis-codes': collectionOperations({
       tag: 'Diagnosis Code',
       entity: 'Diagnosis Code',
@@ -6492,6 +7045,323 @@ export const openApiDocument = {
           modifiedOn: { type: 'string', format: 'date-time' },
         },
       },
+      CreateWardRequest: appointmentMasterCreateSchema('Ward', true),
+      UpdateWardRequest: appointmentMasterCreateSchema('Ward', true),
+      Ward: appointmentMasterSchema('CreateWardRequest'),
+      CreateAdmissionTypeRequest: appointmentMasterCreateSchema('Admission Type', true),
+      UpdateAdmissionTypeRequest: appointmentMasterCreateSchema('Admission Type', true),
+      AdmissionType: appointmentMasterSchema('CreateAdmissionTypeRequest'),
+      BedStatus: {
+        type: 'string',
+        enum: ['AVAILABLE', 'OCCUPIED', 'RESERVED', 'MAINTENANCE'],
+        description:
+          'Operational state of a Bed. A fixed system-defined set; OCCUPIED is system-managed and set only by Admission lifecycle events.',
+      },
+      CreateBedRequest: {
+        type: 'object',
+        required: ['bedNumber', 'wardId'],
+        properties: {
+          bedNumber: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            description: 'Unique within the Ward, compared case-insensitively.',
+            example: 'ICU-01',
+          },
+          wardId: { type: 'integer', minimum: 1 },
+          roomId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description: 'Optional physical Room containing the Bed.',
+          },
+          status: {
+            type: 'string',
+            enum: ['AVAILABLE', 'RESERVED', 'MAINTENANCE'],
+            default: 'AVAILABLE',
+            description: 'OCCUPIED cannot be set manually.',
+          },
+          notes: { type: ['string', 'null'], maxLength: 500 },
+        },
+      },
+      UpdateBedRequest: schemaRef('CreateBedRequest'),
+      BedWardSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
+      BedRoomSummary: {
+        type: 'object',
+        required: ['id', 'roomNumber'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          roomNumber: { type: 'string', example: '301-A' },
+        },
+      },
+      Bed: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'bedNumber',
+          'wardId',
+          'status',
+          'ward',
+          'room',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          bedNumber: { type: 'string', example: 'ICU-01' },
+          wardId: { type: 'integer', minimum: 1 },
+          roomId: { type: ['integer', 'null'] },
+          status: schemaRef('BedStatus'),
+          notes: { type: ['string', 'null'] },
+          ward: schemaRef('BedWardSummary'),
+          room: {
+            oneOf: [schemaRef('BedRoomSummary'), { type: 'null' }],
+            description: 'The containing Room, or null when the Bed is not room-linked.',
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      BedBoardOccupant: {
+        type: 'object',
+        required: ['mrn', 'patientId', 'lastName', 'firstName', 'admissionId', 'admissionNumber'],
+        properties: {
+          mrn: { type: 'string', example: 'MRN-1042' },
+          patientId: { type: 'integer', minimum: 1 },
+          lastName: { type: 'string' },
+          firstName: { type: 'string' },
+          admissionId: { type: 'integer', minimum: 1 },
+          admissionNumber: { type: 'string', example: 'ADM-1001' },
+        },
+      },
+      BedBoardBed: {
+        type: 'object',
+        required: ['id', 'bedNumber', 'status', 'roomNumber', 'occupant'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          bedNumber: { type: 'string' },
+          status: schemaRef('BedStatus'),
+          roomNumber: { type: ['string', 'null'] },
+          occupant: {
+            oneOf: [schemaRef('BedBoardOccupant'), { type: 'null' }],
+            description: 'The occupying Patient and Admission, or null for a free Bed.',
+          },
+        },
+      },
+      BedBoardWard: {
+        type: 'object',
+        required: ['wardId', 'wardName', 'wardCode', 'beds'],
+        properties: {
+          wardId: { type: 'integer', minimum: 1 },
+          wardName: { type: 'string', example: 'ICU' },
+          wardCode: { type: 'string', example: 'ICU' },
+          beds: { type: 'array', items: schemaRef('BedBoardBed') },
+        },
+      },
+      AdmissionStatus: {
+        type: 'string',
+        enum: ['ADMITTED', 'DISCHARGED', 'CANCELLED'],
+        description:
+          'Lifecycle state of an Admission. A fixed system-defined set, not a Tenant-scoped Master.',
+      },
+      DischargeDisposition: {
+        type: 'string',
+        enum: ['ROUTINE', 'LAMA', 'TRANSFERRED', 'DECEASED', 'ABSCONDED'],
+        description: 'System-defined outcome of a Discharge. LAMA is leave against medical advice.',
+      },
+      AdmitPatientRequest: {
+        type: 'object',
+        required: ['patientId', 'doctorId', 'admissionTypeId', 'bedId'],
+        properties: {
+          patientId: { type: 'integer', minimum: 1 },
+          doctorId: { type: 'integer', minimum: 1, description: 'Admitting Doctor.' },
+          admissionTypeId: { type: 'integer', minimum: 1 },
+          bedId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Target Bed. Must be Available or Reserved.',
+          },
+          visitId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional source OPD Visit. Must belong to the same Patient and not be cancelled.',
+          },
+          admissionReason: { type: ['string', 'null'], maxLength: 500 },
+          remarks: { type: ['string', 'null'] },
+          expectedDischargeDate: {
+            type: ['string', 'null'],
+            description: 'Expected Discharge Date in DD-MM-YYYY format.',
+            example: '20-07-2026',
+          },
+        },
+      },
+      UpdateAdmissionRequest: {
+        type: 'object',
+        properties: {
+          admissionReason: { type: ['string', 'null'], maxLength: 500 },
+          remarks: { type: ['string', 'null'] },
+          expectedDischargeDate: {
+            type: ['string', 'null'],
+            description: 'Expected Discharge Date in DD-MM-YYYY format.',
+            example: '21-07-2026',
+          },
+        },
+      },
+      TransferBedRequest: {
+        type: 'object',
+        required: ['toBedId'],
+        properties: {
+          toBedId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Target Bed. Must be Available or Reserved.',
+          },
+          reason: { type: ['string', 'null'], maxLength: 255 },
+        },
+      },
+      DischargeAdmissionRequest: {
+        type: 'object',
+        required: ['dischargeDisposition'],
+        properties: {
+          dischargeDisposition: schemaRef('DischargeDisposition'),
+          dischargeSummary: { type: ['string', 'null'] },
+        },
+      },
+      CancelAdmissionRequest: {
+        type: 'object',
+        required: ['cancellationReason'],
+        properties: {
+          cancellationReason: { type: 'string', minLength: 1, maxLength: 255 },
+        },
+      },
+      AdmissionPatientSummary: schemaRef('VisitPatientSummary'),
+      AdmissionDoctorSummary: schemaRef('VisitDoctorSummary'),
+      AdmissionTypeSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
+      AdmissionBedSummary: {
+        type: 'object',
+        required: ['id', 'bedNumber'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          bedNumber: { type: 'string', example: 'ICU-01' },
+        },
+      },
+      AdmissionVisitSummary: {
+        type: 'object',
+        required: ['id', 'visitNumber'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          visitNumber: { type: 'string', example: 'VST-1001' },
+        },
+      },
+      Admission: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'admissionNumber',
+          'status',
+          'patient',
+          'doctor',
+          'admissionType',
+          'bed',
+          'ward',
+          'visit',
+          'admittedAt',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          admissionNumber: {
+            type: 'string',
+            description: 'Permanent Tenant-scoped identifier assigned by the server.',
+            example: 'ADM-1001',
+          },
+          status: schemaRef('AdmissionStatus'),
+          admissionReason: { type: ['string', 'null'] },
+          remarks: { type: ['string', 'null'] },
+          expectedDischargeDate: {
+            type: ['string', 'null'],
+            description: 'Expected Discharge Date in DD-MM-YYYY format.',
+            example: '20-07-2026',
+          },
+          admittedAt: { type: 'string', format: 'date-time' },
+          dischargedAt: { type: ['string', 'null'], format: 'date-time' },
+          dischargeDisposition: {
+            oneOf: [schemaRef('DischargeDisposition'), { type: 'null' }],
+            description: 'Set at Discharge; null while Admitted or Cancelled.',
+          },
+          dischargeSummary: { type: ['string', 'null'] },
+          cancelledAt: { type: ['string', 'null'], format: 'date-time' },
+          cancellationReason: { type: ['string', 'null'] },
+          patient: schemaRef('AdmissionPatientSummary'),
+          doctor: schemaRef('AdmissionDoctorSummary'),
+          admissionType: schemaRef('AdmissionTypeSummary'),
+          bed: {
+            allOf: [schemaRef('AdmissionBedSummary')],
+            description: 'The current Bed; transfers update it.',
+          },
+          ward: schemaRef('BedWardSummary'),
+          visit: {
+            oneOf: [schemaRef('AdmissionVisitSummary'), { type: 'null' }],
+            description: 'The source OPD Visit, or null for a direct Admission.',
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      AdmissionBedTransferEntry: {
+        type: 'object',
+        required: ['id', 'reason', 'transferredAt', 'fromBed', 'toBed'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          reason: { type: ['string', 'null'] },
+          transferredAt: { type: 'string', format: 'date-time' },
+          fromBed: schemaRef('AdmissionBedSummary'),
+          toBed: schemaRef('AdmissionBedSummary'),
+        },
+      },
+      AdmissionDetail: {
+        allOf: [
+          schemaRef('Admission'),
+          {
+            type: 'object',
+            required: ['transfers'],
+            properties: {
+              transfers: {
+                type: 'array',
+                items: schemaRef('AdmissionBedTransferEntry'),
+                description: 'Bed Transfer history, oldest first.',
+              },
+            },
+          },
+        ],
+      },
       CreateAppointmentReasonRequest: appointmentMasterCreateSchema('Appointment Reason', true),
       UpdateAppointmentReasonRequest: appointmentMasterCreateSchema('Appointment Reason', true),
       AppointmentReason: appointmentMasterSchema('CreateAppointmentReasonRequest'),
@@ -7145,6 +8015,12 @@ export const openApiDocument = {
             description:
               'Optional Visit this observation was captured during. The Visit must belong to this Patient and still be Active (Checked In or In Consultation). Omit for a standalone observation.',
           },
+          admissionId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional Admission this observation was captured during. The Admission must belong to this Patient and still be Admitted. A record may reference a Visit or an Admission, not both.',
+          },
           recordedAt: { type: 'string', format: 'date-time' },
           heightCm: { type: 'number', minimum: 0, maximum: 300 },
           weightKg: { type: 'number', minimum: 0, maximum: 700 },
@@ -7175,6 +8051,7 @@ export const openApiDocument = {
           tenantId: { type: 'string', minLength: 1 },
           patientId: { type: 'integer', minimum: 1 },
           visitId: { type: ['integer', 'null'] },
+          admissionId: { type: ['integer', 'null'] },
           recordedAt: { type: 'string', format: 'date-time' },
           heightCm: { type: ['number', 'null'] },
           weightKg: { type: ['number', 'null'] },
@@ -7258,6 +8135,12 @@ export const openApiDocument = {
             description:
               'Optional Visit this note was authored during. The Visit must belong to this Patient and still be Active (Checked In or In Consultation). Omit for a standalone note.',
           },
+          admissionId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional Admission this note was authored during. The Admission must belong to this Patient and still be Admitted. A record may reference a Visit or an Admission, not both.',
+          },
           subjective: { type: 'string', maxLength: 20000 },
           objective: { type: 'string', maxLength: 20000 },
           assessment: { type: 'string', maxLength: 20000 },
@@ -7283,6 +8166,7 @@ export const openApiDocument = {
           tenantId: { type: 'string', minLength: 1 },
           patientId: { type: 'integer', minimum: 1 },
           visitId: { type: ['integer', 'null'] },
+          admissionId: { type: ['integer', 'null'] },
           noteTypeId: { type: 'integer', minimum: 1 },
           subjective: { type: ['string', 'null'] },
           objective: { type: ['string', 'null'] },

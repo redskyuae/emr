@@ -38,4 +38,26 @@ describe('ClinicalNote schema', () => {
     expect(clinicalNoteIdSchema.safeParse('1').success).toBe(true);
     expect(clinicalNoteIdSchema.safeParse('0').success).toBe(false);
   });
+
+  it('should accept a visit or an admission parent alone', () => {
+    expect(
+      createClinicalNoteSchema.safeParse({ noteTypeId: 3, plan: 'Rest', visitId: 5 }).success
+    ).toBe(true);
+    expect(
+      createClinicalNoteSchema.safeParse({ noteTypeId: 3, plan: 'Rest', admissionId: 5 }).success
+    ).toBe(true);
+  });
+
+  it('should reject a note referencing both a visit and an admission', () => {
+    expect(
+      errorsOf(
+        createClinicalNoteSchema.safeParse({
+          noteTypeId: 3,
+          plan: 'Rest',
+          visitId: 5,
+          admissionId: 6,
+        })
+      )
+    ).toContain('A record may reference a Visit or an Admission, not both.');
+  });
 });

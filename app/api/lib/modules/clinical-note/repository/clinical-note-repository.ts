@@ -15,6 +15,7 @@ const clinicalNoteColumns = {
   tenantId: clinicalNoteTable.tenantId,
   patientId: clinicalNoteTable.patientId,
   visitId: clinicalNoteTable.visitId,
+  admissionId: clinicalNoteTable.admissionId,
   noteTypeId: clinicalNoteTable.noteTypeId,
   subjective: clinicalNoteTable.subjective,
   objective: clinicalNoteTable.objective,
@@ -35,6 +36,7 @@ async function createClinicalNote(data: CreateClinicalNoteData) {
       tenantId: data.tenantId,
       patientId: data.patientId,
       visitId: data.visitId ?? null,
+      admissionId: data.admissionId ?? null,
       noteTypeId: data.noteTypeId,
       subjective: data.subjective ?? null,
       objective: data.objective ?? null,
@@ -58,6 +60,7 @@ async function updateClinicalNote(
     .set({
       noteTypeId: data.noteTypeId,
       visitId: data.visitId ?? null,
+      admissionId: data.admissionId ?? null,
       subjective: data.subjective ?? null,
       objective: data.objective ?? null,
       assessment: data.assessment ?? null,

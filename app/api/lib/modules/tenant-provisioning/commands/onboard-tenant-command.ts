@@ -10,6 +10,7 @@ import { validateTenantOnboarding } from '../validator/tenant-onboarding-validat
 import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
 import { seedDefaultClinicalMastersCommand } from './seed-default-clinical-masters-command';
 import { seedDefaultSpecialtiesCommand } from './seed-default-specialties-command';
+import { seedDefaultInpatientMastersCommand } from './seed-default-inpatient-masters-command';
 import { seedDefaultVisitMastersCommand } from './seed-default-visit-masters-command';
 import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
@@ -31,6 +32,12 @@ const seedDefaultMastersOperations = [
     seedMasters: seedDefaultVisitMastersCommand,
     hasSeededMasters: (tenantId: string) =>
       tenantProvisioningRepository.hasSeededVisitMasters(tenantId),
+    isLegacyMasterFamily: false,
+  },
+  {
+    seedMasters: seedDefaultInpatientMastersCommand,
+    hasSeededMasters: (tenantId: string) =>
+      tenantProvisioningRepository.hasSeededInpatientMasters(tenantId),
     isLegacyMasterFamily: false,
   },
   {

@@ -6,6 +6,7 @@ export type ListClinicalNotesResponse = Paginated<ClinicalNote>;
 export type SaveClinicalNoteRequest = {
   noteTypeId: number;
   visitId?: number;
+  admissionId?: number;
   subjective?: string;
   objective?: string;
   assessment?: string;

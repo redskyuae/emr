@@ -5,6 +5,7 @@ export type ListPatientVitalSignsResponse = Paginated<PatientVitalSign>;
 
 export type SavePatientVitalSignRequest = {
   visitId?: number;
+  admissionId?: number;
   recordedAt?: string;
   heightCm?: number;
   weightKg?: number;

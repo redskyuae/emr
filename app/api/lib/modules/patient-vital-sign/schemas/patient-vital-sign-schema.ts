@@ -35,6 +35,15 @@ const optionalVisitId = z.preprocess(
     .optional()
 );
 
+const optionalAdmissionId = z.preprocess(
+  (value) => (value === null || value === undefined || value === '' ? undefined : value),
+  z.coerce
+    .number({ error: 'Vital sign admission ID must be a number' })
+    .int('Vital sign admission ID must be an integer')
+    .positive('Vital sign admission ID must be positive')
+    .optional()
+);
+
 const optionalNotes = z.preprocess((value) => {
   if (typeof value !== 'string') {
     return value;
@@ -70,6 +79,7 @@ export const patientVitalSignTenantIdSchema = tenantIdSchema;
 export const patientVitalSignPayloadSchema = z
   .object({
     visitId: optionalVisitId,
+    admissionId: optionalAdmissionId,
     recordedAt: optionalRecordedAt,
     heightCm: optionalDecimal('Vital sign height', 0, 300),
     weightKg: optionalDecimal('Vital sign weight', 0, 700),
@@ -85,6 +95,10 @@ export const patientVitalSignPayloadSchema = z
   .refine((data) => MEASUREMENT_KEYS.some((key) => data[key] !== undefined), {
     message: 'At least one vital sign measurement is required',
     path: ['heightCm'],
+  })
+  .refine((data) => !(data.visitId !== undefined && data.admissionId !== undefined), {
+    message: 'A record may reference a Visit or an Admission, not both.',
+    path: ['admissionId'],
   });
 
 export const createPatientVitalSignSchema = patientVitalSignPayloadSchema;
@@ -109,6 +123,7 @@ export type PatientVitalSign = {
   tenantId: string;
   patientId: number;
   visitId: number | null;
+  admissionId: number | null;
   recordedAt: Date;
   heightCm: number | null;
   weightKg: number | null;

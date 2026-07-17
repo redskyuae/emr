@@ -13,6 +13,7 @@ import {
   Hospital,
   Languages,
   LayoutDashboard,
+  LayoutGrid,
   MapPinned,
   Settings,
   ShieldCheck,
@@ -78,6 +79,21 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Visits',
         href: '/visits',
         icon: ClipboardList,
+      },
+    ],
+  },
+  {
+    title: 'Inpatient',
+    items: [
+      {
+        title: 'Admissions',
+        href: '/admissions',
+        icon: BedDouble,
+      },
+      {
+        title: 'Bed Board',
+        href: '/bed-board',
+        icon: LayoutGrid,
       },
     ],
   },
@@ -186,6 +202,16 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/visit-masters',
         icon: ClipboardList,
         items: [{ title: 'Visit Type', href: '/visit-masters/visit-types' }],
+      },
+      {
+        title: 'Inpatient Masters',
+        href: '/inpatient-masters',
+        icon: Hospital,
+        items: [
+          { title: 'Wards', href: '/inpatient-masters/wards' },
+          { title: 'Beds', href: '/inpatient-masters/beds' },
+          { title: 'Admission Types', href: '/inpatient-masters/admission-types' },
+        ],
       },
       {
         title: 'Asset Management',
@@ -332,6 +358,34 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/visits': {
     title: 'Visits',
     subtitle: "Today's outpatient queue. Check Patients in from an Appointment or as a Walk-in.",
+  },
+  '/admissions': {
+    title: 'Admissions',
+    subtitle: 'The inpatient census. Admit Patients to Beds, transfer, and discharge.',
+    primaryAction: {
+      label: 'Admit patient',
+      href: '/admissions?admit=new',
+    },
+  },
+  '/bed-board': {
+    title: 'Bed Board',
+    subtitle: 'Ward-wise Bed occupancy with the Patient in every Occupied Bed.',
+  },
+  '/inpatient-masters': {
+    title: 'Inpatient Masters',
+    subtitle: 'Tenant-scoped inpatient configuration.',
+  },
+  '/inpatient-masters/wards': {
+    title: 'Wards',
+    subtitle: 'Tenant-scoped named sections of the Facility that contain Beds.',
+  },
+  '/inpatient-masters/beds': {
+    title: 'Beds',
+    subtitle: 'Physical Beds within Wards, with system-managed occupancy.',
+  },
+  '/inpatient-masters/admission-types': {
+    title: 'Admission Types',
+    subtitle: 'Tenant-scoped records classifying how a Patient came to be admitted.',
   },
   '/visit-masters/visit-types': {
     title: 'Visit Types',
