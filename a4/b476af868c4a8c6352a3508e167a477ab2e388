@@ -1,0 +1,41 @@
+app/api/lib/modules/clinical-note/repository/clinical-note-repository.integration.tests.ts
+  a4316988aef7757d 1-2,5-11,14,40-73,76-90,155-197
+app/(protected)/admissions/_components/_sheets/admit-patient-sheet.tsx
+  a4316988aef7757d 345-354,365-371,384-386
+app/api/lib/modules/clinical-note/repository/clinical-note-repository.ts
+  a4316988aef7757d 32-44,75-78
+app/api/lib/modules/patient-vital-sign/repository/patient-vital-sign-repository.integration.tests.ts
+  a4316988aef7757d 1-2,5-11,13,30-73,75-80,159-184
+app/api/lib/modules/admission/repository/admission-repository.ts
+  a4316988aef7757d 618-620,625-626
+app/api/lib/modules/patient-vital-sign/repository/patient-vital-sign-repository.ts
+  a4316988aef7757d 35-47,82-85
+app/api/lib/modules/bed/repository/bed-repository.ts
+  a4316988aef7757d 42-46,72-74,76-81,217-221,232-236
+app/(protected)/admissions/[id]/_utils/admission-capture-form-schema.ts
+  a4316988aef7757d 14-25,27-45
+app/api/lib/modules/admission/repository/admission-repository.integration.tests.ts
+  a4316988aef7757d 378-393
+app/api/lib/modules/bed/repository/bed-repository.integration.tests.ts
+  a4316988aef7757d 165-213
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "a4b476af868c4a8c6352a3508e167a477ab2e388",
+  "prompts": {
+    "a4316988aef7757d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fe4ecd89-dc2b-4455-b7fa-f1a09aad358c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 383,
+      "total_deletions": 29,
+      "accepted_lines": 376,
+      "overriden_lines": 0
+    }
+  }
+}
