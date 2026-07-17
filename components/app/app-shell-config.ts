@@ -5,6 +5,7 @@ import {
   Boxes,
   Building2,
   CalendarClock,
+  CalendarPlus,
   Clock3,
   ClipboardList,
   FileClock,
@@ -74,6 +75,12 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Appointments',
         href: '/appointments',
         icon: CalendarClock,
+        exact: true,
+      },
+      {
+        title: 'Book Appointment',
+        href: '/appointments/new',
+        icon: CalendarPlus,
       },
       {
         title: 'Visits',
@@ -109,7 +116,6 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Doctors',
         href: '/doctors',
         icon: Stethoscope,
-        badge: '404',
       },
       {
         title: 'Doctor Schedules',
@@ -267,7 +273,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Dashboard',
     subtitle: 'Tenant-wide operations for the active Facility context.',
     primaryAction: {
-      label: 'New appointment',
+      label: 'Book Appointment',
       href: '/appointments/new',
     },
   },
@@ -287,9 +293,13 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Appointments',
     subtitle: 'Schedule and track outpatient appointments by Facility.',
     primaryAction: {
-      label: 'New appointment',
+      label: 'Book Appointment',
       href: '/appointments/new',
     },
+  },
+  '/appointments/new': {
+    title: 'Book Appointment',
+    subtitle: 'Reserve DoctorSlots and create an Appointment for this Tenant.',
   },
   '/identity-access/users': {
     title: 'Users',
@@ -329,6 +339,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'New schedule',
       href: '/doctor-schedules?schedule=new',
+    },
+  },
+  '/doctors': {
+    title: 'Doctors',
+    subtitle: 'Staff-backed Doctors, Specialties, and clinical profile details.',
+    primaryAction: {
+      label: 'Add Doctor',
+      href: '/doctors?doctor=new',
     },
   },
   '/audit-log': {
