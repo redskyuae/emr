@@ -70,6 +70,8 @@ type MasterOption = {
   value?: string;
 };
 
+type SelectedPatient = Pick<Patient, 'id' | 'firstName' | 'lastName' | 'phone'>;
+
 function todayIsoDate() {
   const now = new Date();
   const year = now.getFullYear();
@@ -129,10 +131,11 @@ function FormErrors({
                   type="button"
                   size="sm"
                   variant="outline"
+                  disabled={!match.isActive}
                   onClick={() => onUsePatient(match)}
                 >
                   <Check className="size-4" />
-                  Use Patient
+                  {match.isActive ? 'Use Patient' : 'Inactive'}
                 </Button>
               </div>
             ))}
@@ -313,8 +316,10 @@ function PatientSection({
   searchTerm,
   setSearchTerm,
   patientsLoading,
+  patientsError,
   selectedPatient,
   patientMode,
+  onRetryPatients,
   onSelectPatient,
   onChangePatientMode,
 }: {
@@ -324,8 +329,10 @@ function PatientSection({
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   patientsLoading: boolean;
-  selectedPatient: Patient | null;
+  patientsError: unknown;
+  selectedPatient: SelectedPatient | null;
   patientMode: BookAppointmentFormValues['patientMode'];
+  onRetryPatients: () => void;
   onSelectPatient: (patient: Patient) => void;
   onChangePatientMode: (mode: BookAppointmentFormValues['patientMode']) => void;
 }) {
@@ -393,6 +400,18 @@ function PatientSection({
                   <Skeleton className="h-16 w-full" />
                   <Skeleton className="h-16 w-full" />
                 </>
+              ) : patientsError ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Could not load Patients</AlertTitle>
+                  <AlertDescription className="space-y-3">
+                    <p>{getApiErrorMessage(patientsError)}</p>
+                    <Button type="button" variant="outline" size="sm" onClick={onRetryPatients}>
+                      <RefreshCcw className="size-4" />
+                      Retry
+                    </Button>
+                  </AlertDescription>
+                </Alert>
               ) : patients.length > 0 ? (
                 patients.map((patient) => (
                   <PatientSearchResult
@@ -743,7 +762,7 @@ function BookingSummary({
   values: BookAppointmentFormValues;
   isSaving: boolean;
   selectedDoctor: MasterOption | null;
-  selectedPatient: Patient | null;
+  selectedPatient: SelectedPatient | null;
   selectedRota: DoctorSlotRota | null;
   selectedMode: MasterOption | null;
   selectedType: MasterOption | null;
@@ -827,9 +846,31 @@ function DependencyAlert({
   );
 }
 
+function isConsecutiveSlotSelection(slotTimes: string[], rota: DoctorSlotRota | null) {
+  if (slotTimes.length <= 1 || !rota) {
+    return true;
+  }
+
+  const selectedIndexes = rota.slots
+    .map((slot, index) => (slotTimes.includes(slot.slotTime) ? index : -1))
+    .filter((index) => index !== -1);
+
+  if (selectedIndexes.length !== slotTimes.length) {
+    return false;
+  }
+
+  const firstIndex = Math.min(...selectedIndexes);
+  const lastIndex = Math.max(...selectedIndexes);
+
+  return lastIndex - firstIndex + 1 === selectedIndexes.length;
+}
+
 export function BookAppointmentPageImpl() {
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [patientSearch, setPatientSearch] = useState('');
+  const [selectedPatientSnapshot, setSelectedPatientSnapshot] = useState<SelectedPatient | null>(
+    null
+  );
   const [patientMatches, setPatientMatches] = useState<PotentialPatientMatch[]>([]);
   const [debouncedPatientSearch] = useDebouncedValue(patientSearch, { wait: 300 });
   const createAppointmentMutation = useCreateAppointment();
@@ -875,7 +916,9 @@ export function BookAppointmentPageImpl() {
   const rotas = slotsQuery.data?.data[0]?.rotas ?? [];
 
   const selectedPatient =
-    patients.find((patient) => String(patient.id) === selectedPatientId) ?? null;
+    selectedPatientSnapshot?.id === Number(selectedPatientId)
+      ? selectedPatientSnapshot
+      : (patients.find((patient) => String(patient.id) === selectedPatientId) ?? null);
   const selectedDoctor = doctors.find((doctor) => String(doctor.id) === selectedDoctorId) ?? null;
   const selectedMode = modes.find((mode) => String(mode.id) === values.appointmentModeId) ?? null;
   const selectedType = types.find((type) => String(type.id) === values.appointmentTypeId) ?? null;
@@ -890,6 +933,62 @@ export function BookAppointmentPageImpl() {
     form.setValue('doctorRotaId', '', { shouldDirty: true, shouldValidate: false });
     form.setValue('slotTimes', [], { shouldDirty: true, shouldValidate: false });
   }, [form, selectedDoctorId, slotDate]);
+
+  function applyServerErrors(errors: string[]) {
+    for (const error of errors) {
+      if (error.includes('Appointment mode')) {
+        form.setError('appointmentModeId', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('Appointment type')) {
+        form.setError('appointmentTypeId', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('Appointment reason')) {
+        form.setError('appointmentReasonId', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('Doctor slots') || error.includes('selected Doctor slots')) {
+        form.setError('slotTimes', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('Doctor slot')) {
+        form.setError('doctorRotaId', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('future')) {
+        form.setError('slotDate', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('Patient first name')) {
+        form.setError('firstName', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('Patient last name')) {
+        form.setError('lastName', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('Patient phone')) {
+        form.setError('phone', { type: 'server', message: error });
+        continue;
+      }
+
+      if (error.includes('Patient')) {
+        form.setError('patientId', { type: 'server', message: error });
+        continue;
+      }
+
+      form.setError('root.server', { type: 'server', message: error });
+    }
+  }
 
   function setPatientMode(mode: BookAppointmentFormValues['patientMode']) {
     form.setValue('patientMode', mode, { shouldDirty: true, shouldValidate: true });
@@ -908,11 +1007,13 @@ export function BookAppointmentPageImpl() {
     }
 
     form.setValue('patientId', '');
+    setSelectedPatientSnapshot(null);
   }
 
   function selectPatient(patient: Pick<Patient, 'id' | 'firstName' | 'lastName' | 'phone'>) {
     form.setValue('patientMode', 'existing', { shouldDirty: true, shouldValidate: true });
     form.setValue('patientId', String(patient.id), { shouldDirty: true, shouldValidate: true });
+    setSelectedPatientSnapshot(patient);
     setPatientSearch(`${patient.firstName} ${patient.lastName}`);
     setPatientMatches([]);
     setServerErrors([]);
@@ -921,6 +1022,7 @@ export function BookAppointmentPageImpl() {
   function changeRota(rotaId: string) {
     form.setValue('doctorRotaId', rotaId, { shouldDirty: true, shouldValidate: true });
     form.setValue('slotTimes', [], { shouldDirty: true, shouldValidate: true });
+    form.clearErrors(['doctorRotaId', 'slotTimes']);
   }
 
   function toggleSlot(slotTime: string) {
@@ -933,12 +1035,30 @@ export function BookAppointmentPageImpl() {
         .filter((slot) => nextSlotTimes.includes(slot.slotTime))
         .map((slot) => slot.slotTime) ?? nextSlotTimes;
 
+    if (!isConsecutiveSlotSelection(orderedSlotTimes, selectedRota)) {
+      form.setError('slotTimes', {
+        type: 'manual',
+        message: 'Selected DoctorSlots must be consecutive.',
+      });
+      return;
+    }
+
+    form.clearErrors('slotTimes');
     form.setValue('slotTimes', orderedSlotTimes, { shouldDirty: true, shouldValidate: true });
   }
 
   const onSubmit = form.handleSubmit(async (formValues) => {
+    form.clearErrors();
     setServerErrors([]);
     setPatientMatches([]);
+
+    if (!isConsecutiveSlotSelection(formValues.slotTimes, selectedRota)) {
+      form.setError('slotTimes', {
+        type: 'manual',
+        message: 'Selected DoctorSlots must be consecutive.',
+      });
+      return;
+    }
 
     try {
       const response = await createAppointmentMutation.mutateAsync(
@@ -951,8 +1071,11 @@ export function BookAppointmentPageImpl() {
         slotDate: todayIsoDate(),
       });
       setPatientSearch('');
+      setSelectedPatientSnapshot(null);
     } catch (error) {
-      setServerErrors(getApiErrors(error));
+      const errors = getApiErrors(error);
+      setServerErrors(errors);
+      applyServerErrors(errors);
 
       if (error instanceof AppointmentApiError) {
         setPatientMatches(error.patientMatches);
@@ -1014,8 +1137,10 @@ export function BookAppointmentPageImpl() {
           searchTerm={patientSearch}
           setSearchTerm={setPatientSearch}
           patientsLoading={patientsQuery.isLoading || patientsQuery.isFetching}
+          patientsError={patientsQuery.isError ? patientsQuery.error : null}
           selectedPatient={selectedPatient}
           patientMode={patientMode}
+          onRetryPatients={() => void patientsQuery.refetch()}
           onSelectPatient={selectPatient}
           onChangePatientMode={setPatientMode}
         />
