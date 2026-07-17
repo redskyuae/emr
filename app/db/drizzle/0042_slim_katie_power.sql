@@ -1,3 +1,28 @@
+-- Environments that deployed the abandoned Visit Management branch (PR #217, closed
+-- unmerged) still carry the "visit", "visit_status", and "visit_number_counter" tables
+-- created by its "0032_outstanding_overlord" migration, which no longer exists on this
+-- branch. That stale "visit" squats on this migration's table name and its
+-- "visit_id_seq" identity sequence, so the CREATE TABLE below aborts with
+-- 42P07 relation "visit_id_seq" already exists — and because Drizzle applies every
+-- pending migration in a single transaction, it takes the whole batch down with it.
+-- The cleanup has to live here, ahead of the CREATE: a later migration is never reached.
+--
+-- Guarded on "status_id", which exists only in the abandoned shape (the rebuilt "visit"
+-- below has no such column), so this drops the stale tables and nothing else. On a clean
+-- database — CI, prod, a fresh dev — "visit" does not exist yet and this is a no-op.
+-- The abandoned rows are outpatient Visits from a model that never shipped; the rebuild
+-- shares no identifiers with them, so there is nothing to carry forward.
+DO $$
+BEGIN
+	IF EXISTS (
+		SELECT 1 FROM information_schema.columns
+		WHERE table_schema = 'public'
+			AND table_name = 'visit'
+			AND column_name = 'status_id'
+	) THEN
+		DROP TABLE IF EXISTS "visit", "visit_status", "visit_number_counter" CASCADE;
+	END IF;
+END $$;--> statement-breakpoint
 CREATE TABLE "visit" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "visit_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"tenant_id" varchar(255) NOT NULL,
