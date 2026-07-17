@@ -591,6 +591,34 @@ const appointmentExample = {
   createdOn: '2099-12-01T04:30:00.000Z',
 };
 
+const visitExample = {
+  id: 501,
+  tenantId: 'org_apollo',
+  visitNumber: 'VST-1001',
+  status: 'CHECKED_IN',
+  visitDate: '16-07-2026',
+  queueToken: 7,
+  patient: {
+    id: 42,
+    mrn: 'MRN-1042',
+    firstName: 'Asha',
+    lastName: 'Rao',
+    phone: '+91-9876543210',
+  },
+  doctor: { id: 42, name: 'Dr. Meera Iyer' },
+  visitType: { id: 1, name: 'OPD Consultation', code: 'OPD' },
+  appointment: { id: 101, bookingNumber: 'APT-1042' },
+  chiefComplaint: 'Fever for 3 days',
+  remarks: null,
+  checkedInAt: '2026-07-16T04:30:00.000Z',
+  consultationStartedAt: null,
+  completedAt: null,
+  cancelledAt: null,
+  cancellationReason: null,
+  createdOn: '2026-07-16T04:30:00.000Z',
+  modifiedOn: '2026-07-16T04:30:00.000Z',
+};
+
 const specialtyExample = {
   id: 7,
   tenantId: 'org_apollo',
@@ -1876,6 +1904,8 @@ export const openApiDocument = {
     { name: 'Appointment Reason', description: 'Appointment Reason Master APIs.' },
     { name: 'Appointment Mode', description: 'Appointment Mode Master APIs.' },
     { name: 'Appointment Status', description: 'Appointment Status Master APIs.' },
+    { name: 'Visit Type', description: 'Visit Type Master APIs.' },
+    { name: 'Visit', description: 'Tenant-scoped Visit check-in, queue, and lifecycle APIs.' },
     { name: 'Specialty', description: 'Tenant-scoped Specialty Master APIs.' },
     { name: 'Doctor', description: 'Tenant-scoped Doctor registry and lifecycle APIs.' },
     {
@@ -3415,6 +3445,47 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/appointments/lookup': {
+      get: {
+        tags: ['Appointment'],
+        summary: 'Look up an Appointment by Booking Number',
+        description:
+          'Resolves one Appointment in the active Tenant from its human-facing Booking Number, compared case-insensitively. Intended for the Visit Check-in desk, which reads the Booking Number off the Patient rather than an internal identifier.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'bookingNumber',
+            in: 'query',
+            required: true,
+            description: 'Booking Number of the Appointment.',
+            schema: { type: 'string', minLength: 1, maxLength: 20, example: 'APT-1042' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Appointment found.',
+            content: jsonContent(dataEnvelopeSchema('Appointment'), { data: appointmentExample }),
+          },
+          '400': {
+            description: 'The Booking Number is missing or blank.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Booking Number is required'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'No Appointment in this Tenant carries that Booking Number.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Appointment not found',
+              errors: ['Appointment APT-9999 is Invalid.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/appointments/types': appointmentMasterCollection({
       tag: 'Appointment Type',
       entity: 'Appointment Type',
@@ -3539,6 +3610,312 @@ export const openApiDocument = {
         description: 'Patient requested cancellation',
       },
       parameters: [numberIdPathParameter('Appointment Cancelled Reason')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/visits': {
+      get: {
+        tags: ['Visit'],
+        summary: 'List Visits',
+        description:
+          "Lists Visits in the active Tenant. With no visitDate or patientId filter, the list defaults to today's queue in the Tenant Time Zone and is ordered by Queue Token; otherwise it is ordered most recently checked in first.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'visitDate',
+            in: 'query',
+            required: false,
+            description: 'Tenant-local Visit date in DD-MM-YYYY format. Defaults to today.',
+            schema: { type: 'string', example: '16-07-2026' },
+          },
+          {
+            name: 'doctorId',
+            in: 'query',
+            required: false,
+            description: 'Filter to one Doctor queue.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'patientId',
+            in: 'query',
+            required: false,
+            description: "Filter to one Patient's Visit history. Suppresses the today default.",
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            description: 'Filter by Visit Status.',
+            schema: schemaRef('VisitStatus'),
+          },
+          parameterRef('Page'),
+          parameterRef('Limit'),
+          parameterRef('Query'),
+          parameterRef('Search'),
+        ],
+        responses: {
+          '200': {
+            description: "Today's Visit queue.",
+            content: jsonContent(paginatedSchema('Visit'), {
+              data: [visitExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          ...authenticatedListErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Visit'],
+        summary: 'Check in a Patient for a Visit',
+        description:
+          'Creates a Visit in the active Tenant. Send either appointmentId to fulfil an Appointment booked for today — the Patient and Doctor are taken from it and the Appointment moves to its Checked In status — or patientId and doctorId for a Walk-in Visit; sending both is invalid. The server assigns the Visit Number and the Queue Token (per Doctor, per Tenant-local day). The Patient must be a Registered Patient who is active, and must not already have an Active Visit.',
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: schemaRef('CheckInVisitRequest'),
+              examples: {
+                fromAppointment: {
+                  summary: 'Check in against a booked Appointment',
+                  value: { appointmentId: 42, visitTypeId: 1, chiefComplaint: 'Fever for 3 days' },
+                },
+                walkIn: {
+                  summary: 'Walk-in Visit with no Appointment',
+                  value: {
+                    patientId: 1042,
+                    doctorId: 7,
+                    visitTypeId: 1,
+                    chiefComplaint: 'Chest pain since morning',
+                    remarks: 'Arrived without an appointment',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Visit created and Queue Token issued.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: visitExample }),
+          },
+          '400': {
+            description: 'The request body is invalid or mixes the two check-in shapes.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: [
+                'Provide either appointmentId for an Appointment check-in or patientId and doctorId for a Walk-in Visit, not both.',
+              ],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '409': {
+            description:
+              'A referenced record is invalid, the Appointment is not checkable today, the Patient is provisional or inactive, or the Patient already has an Active Visit.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient 1042 already has an active visit.',
+              errors: ['Patient 1042 already has an active visit.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}': {
+      get: {
+        tags: ['Visit'],
+        summary: 'Get Visit',
+        description: 'Reads one Visit in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Visit details.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: visitExample }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Visit'],
+        summary: 'Update Visit details',
+        description:
+          'Updates the chief complaint and remarks of an Active Visit. A Completed or Cancelled Visit is a historical record and cannot be edited.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('UpdateVisitRequest', {
+          chiefComplaint: 'Fever for 3 days, now with cough',
+          remarks: 'Referred by GP',
+        }),
+        responses: {
+          '200': {
+            description: 'Visit updated.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: visitExample }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Visit is Completed or Cancelled.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 is closed and cannot be edited.',
+              errors: ['Visit VST-1001 is closed and cannot be edited.'],
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      delete: {
+        tags: ['Visit'],
+        summary: 'Delete Visit',
+        description:
+          'Soft-deletes a Visit as an administrative correction. Cancelling a Visit is the clinical outcome and is a separate operation.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '204': { description: 'Visit deleted.' },
+          ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits/{id}/start': {
+      post: {
+        tags: ['Visit'],
+        summary: 'Start the consultation',
+        description:
+          'Moves a Checked In Visit to In Consultation and stamps the start time. Only a Checked In Visit may be started.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Consultation started.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), {
+              data: {
+                ...visitExample,
+                status: 'IN_CONSULTATION',
+                consultationStartedAt: '2026-07-16T04:45:00.000Z',
+              },
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Visit is not Checked In.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 cannot be started from its current status.',
+              errors: ['Visit VST-1001 cannot be started from its current status.'],
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/complete': {
+      post: {
+        tags: ['Visit'],
+        summary: 'Complete the Visit',
+        description:
+          'Moves an In Consultation Visit to Completed and moves any linked Appointment to its Completed status. Only an In Consultation Visit may be completed.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Visit completed.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), {
+              data: {
+                ...visitExample,
+                status: 'COMPLETED',
+                consultationStartedAt: '2026-07-16T04:45:00.000Z',
+                completedAt: '2026-07-16T05:10:00.000Z',
+              },
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Visit is not In Consultation.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 cannot be completed from its current status.',
+              errors: ['Visit VST-1001 cannot be completed from its current status.'],
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/cancel': {
+      post: {
+        tags: ['Visit'],
+        summary: 'Cancel the Visit',
+        description:
+          'Cancels an Active Visit with a reason and returns any linked Appointment to its Scheduled status so the Patient can be checked in again. The Queue Token is not reused. The Appointment itself is not cancelled.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('CancelVisitRequest', {
+          cancellationReason: 'Patient left before consultation',
+        }),
+        responses: {
+          '200': {
+            description: 'Visit cancelled.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), {
+              data: {
+                ...visitExample,
+                status: 'CANCELLED',
+                cancelledAt: '2026-07-16T05:00:00.000Z',
+                cancellationReason: 'Patient left before consultation',
+              },
+            }),
+          },
+          '400': {
+            description: 'The cancellation reason is missing.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Cancellation reason is required'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Visit is already Completed or Cancelled.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 cannot be cancelled from its current status.',
+              errors: ['Visit VST-1001 cannot be cancelled from its current status.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/types': appointmentMasterCollection({
+      tag: 'Visit Type',
+      entity: 'Visit Type',
+      schemaName: 'VisitType',
+      createSchemaName: 'CreateVisitTypeRequest',
+      example: {
+        name: 'OPD Consultation',
+        code: 'OPD',
+        description: 'Standard outpatient consultation',
+      },
+    }),
+    '/api/v1/visits/types/{id}': itemOperations({
+      tag: 'Visit Type',
+      entity: 'Visit Type',
+      schemaName: 'VisitType',
+      updateSchemaName: 'UpdateVisitTypeRequest',
+      example: {
+        name: 'OPD Consultation',
+        code: 'OPD',
+        description: 'Standard outpatient consultation',
+      },
+      parameters: [numberIdPathParameter('Visit Type')],
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
@@ -5968,6 +6345,153 @@ export const openApiDocument = {
       CreateAppointmentTypeRequest: appointmentMasterCreateSchema('Appointment Type', true),
       UpdateAppointmentTypeRequest: appointmentMasterCreateSchema('Appointment Type', true),
       AppointmentType: appointmentMasterSchema('CreateAppointmentTypeRequest'),
+      CreateVisitTypeRequest: appointmentMasterCreateSchema('Visit Type', true),
+      UpdateVisitTypeRequest: appointmentMasterCreateSchema('Visit Type', true),
+      VisitType: appointmentMasterSchema('CreateVisitTypeRequest'),
+      VisitStatus: {
+        type: 'string',
+        enum: ['CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED'],
+        description:
+          'Lifecycle state of a Visit. A fixed system-defined set, not a Tenant-scoped Master.',
+      },
+      CheckInVisitRequest: {
+        type: 'object',
+        required: ['visitTypeId'],
+        description:
+          'Send exactly one of: appointmentId (Appointment check-in), or patientId together with doctorId (Walk-in Visit).',
+        properties: {
+          visitTypeId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'VisitType classifying the Visit.',
+          },
+          appointmentId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Appointment being fulfilled. Must be scheduled for today in the Tenant Time Zone and be in a Scheduled or Confirmed status. The Patient and Doctor are taken from it.',
+          },
+          patientId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Walk-in only. Must be a Registered, active Patient.',
+          },
+          doctorId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Walk-in only. Must be an active Doctor.',
+          },
+          chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
+          remarks: { type: ['string', 'null'] },
+        },
+      },
+      UpdateVisitRequest: {
+        type: 'object',
+        properties: {
+          chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
+          remarks: { type: ['string', 'null'] },
+        },
+      },
+      CancelVisitRequest: {
+        type: 'object',
+        required: ['cancellationReason'],
+        properties: {
+          cancellationReason: { type: 'string', minLength: 1, maxLength: 255 },
+        },
+      },
+      VisitPatientSummary: {
+        type: 'object',
+        required: ['id', 'mrn', 'firstName', 'lastName', 'phone'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          mrn: { type: 'string' },
+          firstName: { type: 'string' },
+          lastName: { type: 'string' },
+          phone: { type: 'string' },
+        },
+      },
+      VisitDoctorSummary: {
+        type: 'object',
+        required: ['id', 'name'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+        },
+      },
+      VisitTypeSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
+      VisitAppointmentSummary: {
+        type: 'object',
+        required: ['id', 'bookingNumber'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          bookingNumber: { type: 'string', example: 'APT-1042' },
+        },
+      },
+      Visit: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'visitNumber',
+          'status',
+          'visitDate',
+          'queueToken',
+          'patient',
+          'doctor',
+          'visitType',
+          'appointment',
+          'checkedInAt',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          visitNumber: {
+            type: 'string',
+            description: 'Permanent Tenant-scoped identifier assigned by the server.',
+            example: 'VST-1001',
+          },
+          status: schemaRef('VisitStatus'),
+          visitDate: {
+            type: 'string',
+            description: 'Tenant-local date of Check-in, in DD-MM-YYYY format.',
+            example: '16-07-2026',
+          },
+          queueToken: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Ordering number within the Doctor queue for this Tenant-local day.',
+          },
+          patient: schemaRef('VisitPatientSummary'),
+          doctor: schemaRef('VisitDoctorSummary'),
+          visitType: schemaRef('VisitTypeSummary'),
+          appointment: {
+            oneOf: [schemaRef('VisitAppointmentSummary'), { type: 'null' }],
+            description: 'The fulfilled Appointment, or null for a Walk-in Visit.',
+          },
+          chiefComplaint: { type: ['string', 'null'] },
+          remarks: { type: ['string', 'null'] },
+          checkedInAt: { type: 'string', format: 'date-time' },
+          consultationStartedAt: { type: ['string', 'null'], format: 'date-time' },
+          completedAt: { type: ['string', 'null'], format: 'date-time' },
+          cancelledAt: { type: ['string', 'null'], format: 'date-time' },
+          cancellationReason: { type: ['string', 'null'] },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
       CreateAppointmentReasonRequest: appointmentMasterCreateSchema('Appointment Reason', true),
       UpdateAppointmentReasonRequest: appointmentMasterCreateSchema('Appointment Reason', true),
       AppointmentReason: appointmentMasterSchema('CreateAppointmentReasonRequest'),
@@ -6615,7 +7139,12 @@ export const openApiDocument = {
         description:
           'At least one measurement must be supplied. BMI is computed server-side when height and weight are both present and is not accepted in the request.',
         properties: {
-          visitId: { type: 'integer', minimum: 1 },
+          visitId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional Visit this observation was captured during. The Visit must belong to this Patient and still be Active (Checked In or In Consultation). Omit for a standalone observation.',
+          },
           recordedAt: { type: 'string', format: 'date-time' },
           heightCm: { type: 'number', minimum: 0, maximum: 300 },
           weightKg: { type: 'number', minimum: 0, maximum: 700 },
@@ -6723,7 +7252,12 @@ export const openApiDocument = {
           'At least one SOAP section (subjective, objective, assessment, plan) must be non-empty. Notes are created in "draft" status; author and recorder are resolved from the Session.',
         properties: {
           noteTypeId: { type: 'integer', minimum: 1 },
-          visitId: { type: 'integer', minimum: 1 },
+          visitId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional Visit this note was authored during. The Visit must belong to this Patient and still be Active (Checked In or In Consultation). Omit for a standalone note.',
+          },
           subjective: { type: 'string', maxLength: 20000 },
           objective: { type: 'string', maxLength: 20000 },
           assessment: { type: 'string', maxLength: 20000 },

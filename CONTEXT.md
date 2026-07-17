@@ -196,11 +196,35 @@ A Tenant-scoped Master that defines why an Appointment was cancelled. Distinct f
 
 ## Visit
 
-An outpatient clinical event. Occurs when a Patient attends a Facility for a consultation or procedure without being admitted overnight. A Visit is typically preceded by an Appointment but may be walk-in.
+An outpatient clinical event. Occurs when a Patient attends a Facility for a consultation or procedure without being admitted overnight. A Visit is typically preceded by an Appointment but may be walk-in. A Visit is the clinical event an Appointment leads to; the Appointment remains the scheduling concept. Clinical records captured during the encounter — Vital Signs and Clinical Notes — may be attached to the Visit, while longitudinal records (Allergies, Problems, Medications) stay attached to the Patient.
 
 ## Queue Token
 
-A same-day ordering number assigned when a Patient checks in for a Visit. A Queue Token belongs to the arrival workflow and is not assigned when an Appointment is booked.
+A same-day ordering number assigned when a Patient checks in for a Visit. A Queue Token belongs to the arrival workflow and is not assigned when an Appointment is booked. Queue Tokens are numbered per Doctor per Tenant-local day in check-in order and are never reused within that day, including when the Visit is cancelled.
+
+## VisitType
+
+A Tenant-scoped Master that classifies the clinical nature of a Visit, such as OPD Consultation, Follow-up, Procedure, or Vaccination. Distinct from AppointmentType, which classifies the Appointment at booking time — a Walk-in Visit has a VisitType but no Appointment.
+
+## Visit Number
+
+The permanent, human-facing identifier assigned by the system to a Visit within a Tenant, formatted as `VST-` followed by a Tenant-scoped sequence beginning at `1001`. A Visit Number is immutable and never reused, including after the Visit is removed.
+
+## Visit Status
+
+The lifecycle state of a Visit: Checked In, In Consultation, Completed, or Cancelled. Unlike AppointmentStatus, Visit Status is a fixed system-defined set rather than a Tenant-scoped Master — the same values apply to every Tenant.
+
+## Walk-in Visit
+
+A Visit created at the Facility without a preceding Appointment. Identical to any other Visit once created; the Doctor is supplied directly at Check-in rather than derived from an Appointment.
+
+## Active Visit
+
+A Visit in the Checked In or In Consultation Visit Status. A Patient has at most one Active Visit at a time within a Tenant.
+
+## Check-in
+
+The front-desk act that creates a Visit: verifying the Patient is a Registered Patient and active, assigning the Queue Token, and — when an Appointment is being fulfilled — moving that Appointment to its Checked In AppointmentStatus.
 
 ## Admission
 

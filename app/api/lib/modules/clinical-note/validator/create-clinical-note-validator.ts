@@ -5,6 +5,7 @@ import {
   createClinicalNoteSchema,
   type CreateClinicalNoteInput,
 } from '../schemas/clinical-note-schema';
+import { validateVisitForClinicalCapture } from '../../visit/validator/visit-clinical-capture-validator';
 import {
   validateNoteTypeReference,
   validatePatientExistsForNote,
@@ -42,6 +43,18 @@ export async function validateCreateClinicalNote(
 
   if (!noteTypeResult.success) {
     return noteTypeResult;
+  }
+
+  if (payloadResult.data.visitId !== undefined && payloadResult.data.visitId !== null) {
+    const visitResult = await validateVisitForClinicalCapture(
+      payloadResult.data.visitId,
+      patientIdResult.data,
+      tenantId
+    );
+
+    if (!visitResult.success) {
+      return visitResult;
+    }
   }
 
   return { success: true, data: { patientId: patientIdResult.data, payload: payloadResult.data } };

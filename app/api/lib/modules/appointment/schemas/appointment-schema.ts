@@ -139,6 +139,12 @@ export const createAppointmentSchema = z
 
 export const appointmentTenantIdSchema = tenantIdSchema;
 
+export const bookingNumberSchema = z
+  .string({ error: 'Booking Number is required' })
+  .trim()
+  .min(1, 'Booking Number cannot be empty')
+  .max(20, 'Booking Number must be at most 20 characters');
+
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
 export type CreateAppointmentData = CreateAppointmentInput & { tenantId: string };
 export type ValidatedCreateAppointmentData = CreateAppointmentData & { timeZone: string };

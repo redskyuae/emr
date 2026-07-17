@@ -16,6 +16,7 @@ import { clinicalNoteType as clinicalNoteTypeTable } from '@/app/db/schema/clini
 import { diagnosisCode as diagnosisCodeTable } from '@/app/db/schema/diagnosis-code';
 import { organization, user } from '@/app/db/schema/auth';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
+import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import {
   workOrderCodeCounter as workOrderCodeCounterTable,
   workOrder as workOrderTable,
@@ -121,11 +122,16 @@ async function hasSeededClinicalMasters(tenantId: string) {
   );
 }
 
+async function hasSeededVisitMasters(tenantId: string) {
+  return tableHasTenantRows(visitTypeTable, tenantId);
+}
+
 export const tenantProvisioningRepository = {
   deleteAuthUser,
   findUserByEmail,
   deleteTenantArtifacts,
   hasSeededSpecialties,
+  hasSeededVisitMasters,
   hasSeededAssetMasters,
   hasSeededWorkOrderMasters,
   hasSeededClinicalMasters,
