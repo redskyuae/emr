@@ -9,6 +9,7 @@ import { validateTenantOnboarding } from '../validator/tenant-onboarding-validat
 import { onboardTenantCommand } from './onboard-tenant-command';
 import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
 import { seedDefaultClinicalMastersCommand } from './seed-default-clinical-masters-command';
+import { seedDefaultInpatientMastersCommand } from './seed-default-inpatient-masters-command';
 import { seedDefaultVisitMastersCommand } from './seed-default-visit-masters-command';
 import { seedDefaultSpecialtiesCommand } from './seed-default-specialties-command';
 import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
@@ -39,6 +40,7 @@ vi.mock('../repository/tenant-provisioning-repository', () => ({
     hasSeededSpecialties: vi.fn(),
     hasSeededClinicalMasters: vi.fn(),
     hasSeededVisitMasters: vi.fn(),
+    hasSeededInpatientMasters: vi.fn(),
     hasSeededAssetMasters: vi.fn(),
     hasSeededWorkOrderMasters: vi.fn(),
     hasSeededAppointmentMasters: vi.fn(),
@@ -53,6 +55,9 @@ vi.mock('./seed-default-asset-masters-command', () => ({
   seedDefaultAssetMastersCommand: vi.fn(),
 }));
 
+vi.mock('./seed-default-inpatient-masters-command', () => ({
+  seedDefaultInpatientMastersCommand: vi.fn(),
+}));
 vi.mock('./seed-default-visit-masters-command', () => ({
   seedDefaultVisitMastersCommand: vi.fn(),
 }));
@@ -77,6 +82,7 @@ const seedAppointmentMasters = vi.mocked(seedDefaultAppointmentMastersCommand);
 const seedAssetMasters = vi.mocked(seedDefaultAssetMastersCommand);
 const seedClinicalMasters = vi.mocked(seedDefaultClinicalMastersCommand);
 const seedVisitMasters = vi.mocked(seedDefaultVisitMastersCommand);
+const seedInpatientMasters = vi.mocked(seedDefaultInpatientMastersCommand);
 const seedSpecialties = vi.mocked(seedDefaultSpecialtiesCommand);
 const seedWorkOrderMasters = vi.mocked(seedDefaultWorkOrderMastersCommand);
 
@@ -102,6 +108,7 @@ describe('OnboardTenant command', () => {
     provisioningRepo.hasSeededSpecialties.mockResolvedValue(false);
     provisioningRepo.hasSeededClinicalMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededVisitMasters.mockResolvedValue(false);
+    provisioningRepo.hasSeededInpatientMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededAssetMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededWorkOrderMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededAppointmentMasters.mockResolvedValue(false);
@@ -109,6 +116,7 @@ describe('OnboardTenant command', () => {
     seedAssetMasters.mockResolvedValue({ success: true, data: undefined });
     seedClinicalMasters.mockResolvedValue({ success: true, data: undefined });
     seedVisitMasters.mockResolvedValue({ success: true, data: undefined });
+    seedInpatientMasters.mockResolvedValue({ success: true, data: undefined });
     seedSpecialties.mockResolvedValue({ success: true, data: undefined });
     seedWorkOrderMasters.mockResolvedValue({ success: true, data: undefined });
     tenantRepo.markTenantOnboarded.mockResolvedValue(onboardedTenant);
@@ -161,6 +169,7 @@ describe('OnboardTenant command', () => {
     expect(seedSpecialties).toHaveBeenCalledWith('org-1');
     expect(seedClinicalMasters).toHaveBeenCalledWith('org-1');
     expect(seedVisitMasters).toHaveBeenCalledWith('org-1');
+    expect(seedInpatientMasters).toHaveBeenCalledWith('org-1');
     expect(seedAppointmentMasters).toHaveBeenCalledWith('org-1');
     expect(seedAssetMasters).toHaveBeenCalledWith('org-1');
     expect(seedWorkOrderMasters).toHaveBeenCalledWith('org-1');
@@ -183,6 +192,7 @@ describe('OnboardTenant command', () => {
     expect(seedSpecialties).not.toHaveBeenCalled();
     expect(seedClinicalMasters).not.toHaveBeenCalled();
     expect(seedVisitMasters).not.toHaveBeenCalled();
+    expect(seedInpatientMasters).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();

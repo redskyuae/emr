@@ -15,6 +15,7 @@ const clinicalNoteColumns = {
   tenantId: clinicalNoteTable.tenantId,
   patientId: clinicalNoteTable.patientId,
   visitId: clinicalNoteTable.visitId,
+  admissionId: clinicalNoteTable.admissionId,
   noteTypeId: clinicalNoteTable.noteTypeId,
   subjective: clinicalNoteTable.subjective,
   objective: clinicalNoteTable.objective,
@@ -28,6 +29,19 @@ const clinicalNoteColumns = {
   modifiedOn: clinicalNoteTable.modifiedOn,
 };
 
+// A record belongs to a Visit or an Admission, never both. On update we only
+// rewrite the parent when the client supplies one; when both are absent the
+// existing linkage is left untouched so ordinary edits never orphan the record.
+function linkageChanges(data: UpdateClinicalNoteData) {
+  const linkageProvided = data.visitId !== undefined || data.admissionId !== undefined;
+
+  if (!linkageProvided) {
+    return {};
+  }
+
+  return { visitId: data.visitId ?? null, admissionId: data.admissionId ?? null };
+}
+
 async function createClinicalNote(data: CreateClinicalNoteData) {
   const [created] = await db
     .insert(clinicalNoteTable)
@@ -35,6 +49,7 @@ async function createClinicalNote(data: CreateClinicalNoteData) {
       tenantId: data.tenantId,
       patientId: data.patientId,
       visitId: data.visitId ?? null,
+      admissionId: data.admissionId ?? null,
       noteTypeId: data.noteTypeId,
       subjective: data.subjective ?? null,
       objective: data.objective ?? null,
@@ -57,7 +72,10 @@ async function updateClinicalNote(
     .update(clinicalNoteTable)
     .set({
       noteTypeId: data.noteTypeId,
-      visitId: data.visitId ?? null,
+      // Preserve the existing Visit/Admission link unless the client explicitly
+      // sends one. A chart edit that omits both must not orphan an Admission-linked
+      // note (which would drop it from the Admission detail).
+      ...linkageChanges(data),
       subjective: data.subjective ?? null,
       objective: data.objective ?? null,
       assessment: data.assessment ?? null,

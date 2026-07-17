@@ -8,6 +8,7 @@ import {
   updateClinicalNoteSchema,
   type UpdateClinicalNoteInput,
 } from '../schemas/clinical-note-schema';
+import { validateAdmissionForClinicalCapture } from '../../admission/validator/admission-clinical-capture-validator';
 import { validateVisitForClinicalCapture } from '../../visit/validator/visit-clinical-capture-validator';
 import { validateNoteTypeReference } from './clinical-note-reference-validator';
 
@@ -70,6 +71,18 @@ export async function validateUpdateClinicalNote(
 
     if (!visitResult.success) {
       return visitResult;
+    }
+  }
+
+  if (payloadResult.data.admissionId !== undefined && payloadResult.data.admissionId !== null) {
+    const admissionResult = await validateAdmissionForClinicalCapture(
+      payloadResult.data.admissionId,
+      existing.patientId,
+      tenantId
+    );
+
+    if (!admissionResult.success) {
+      return admissionResult;
     }
   }
 

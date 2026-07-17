@@ -309,6 +309,27 @@
       "when": 1784210411958,
       "tag": "0043_seed_visit_types_for_existing_tenants",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1784210412958,
+      "tag": "0044_seed_inpatient_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1784270314545,
+      "tag": "0045_overjoyed_blue_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1784270315545,
+      "tag": "0046_seed_admission_types_for_existing_tenants",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,7 @@ export type GetClinicalNoteResponse = {
 export type UpdateClinicalNoteRequest = {
   noteTypeId: number;
   visitId?: number;
+  admissionId?: number;
   subjective?: string;
   objective?: string;
   assessment?: string;

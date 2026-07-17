@@ -7,6 +7,7 @@ import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appoint
 import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
 import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
 import { appointmentType as appointmentTypeTable } from '@/app/db/schema/appointment-type';
+import { admissionType as admissionTypeTable } from '@/app/db/schema/admission-type';
 import { assetCategory as assetCategoryTable } from '@/app/db/schema/asset-category';
 import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-condition';
 import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
@@ -126,6 +127,10 @@ async function hasSeededVisitMasters(tenantId: string) {
   return tableHasTenantRows(visitTypeTable, tenantId);
 }
 
+async function hasSeededInpatientMasters(tenantId: string) {
+  return tableHasTenantRows(admissionTypeTable, tenantId);
+}
+
 export const tenantProvisioningRepository = {
   deleteAuthUser,
   findUserByEmail,
@@ -135,5 +140,6 @@ export const tenantProvisioningRepository = {
   hasSeededAssetMasters,
   hasSeededWorkOrderMasters,
   hasSeededClinicalMasters,
+  hasSeededInpatientMasters,
   hasSeededAppointmentMasters,
 };

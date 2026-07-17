@@ -6,6 +6,7 @@ export type GetPatientVitalSignResponse = {
 
 export type UpdatePatientVitalSignRequest = {
   visitId?: number;
+  admissionId?: number;
   recordedAt?: string;
   heightCm?: number;
   weightKg?: number;

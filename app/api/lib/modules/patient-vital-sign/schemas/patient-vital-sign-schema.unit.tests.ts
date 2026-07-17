@@ -47,6 +47,19 @@ describe('PatientVitalSign schema', () => {
     expect(patientVitalSignIdSchema.safeParse('1').success).toBe(true);
     expect(patientVitalSignIdSchema.safeParse('0').success).toBe(false);
   });
+
+  it('should accept a visit or an admission parent alone', () => {
+    expect(createPatientVitalSignSchema.safeParse({ pulseBpm: 72, visitId: 5 }).success).toBe(true);
+    expect(createPatientVitalSignSchema.safeParse({ pulseBpm: 72, admissionId: 5 }).success).toBe(
+      true
+    );
+  });
+
+  it('should reject a record referencing both a visit and an admission', () => {
+    expect(
+      errorsOf(createPatientVitalSignSchema.safeParse({ pulseBpm: 72, visitId: 5, admissionId: 6 }))
+    ).toContain('A record may reference a Visit or an Admission, not both.');
+  });
 });
 
 describe('computeBmi', () => {

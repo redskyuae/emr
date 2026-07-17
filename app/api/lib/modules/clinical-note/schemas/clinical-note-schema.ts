@@ -34,6 +34,15 @@ const optionalVisitId = z.preprocess(
     .optional()
 );
 
+const optionalAdmissionId = z.preprocess(
+  (value) => (value === null || value === undefined || value === '' ? undefined : value),
+  z.coerce
+    .number({ error: 'Clinical note admission ID must be a number' })
+    .int('Clinical note admission ID must be an integer')
+    .positive('Clinical note admission ID must be positive')
+    .optional()
+);
+
 export const clinicalNoteIdSchema = z.coerce
   .number({ error: 'Clinical note ID is required' })
   .int('Clinical note ID must be an integer')
@@ -45,6 +54,7 @@ export const clinicalNotePayloadSchema = z
   .object({
     noteTypeId: requiredNoteTypeId,
     visitId: optionalVisitId,
+    admissionId: optionalAdmissionId,
     subjective: optionalSoap('subjective'),
     objective: optionalSoap('objective'),
     assessment: optionalSoap('assessment'),
@@ -53,6 +63,10 @@ export const clinicalNotePayloadSchema = z
   .refine((data) => SOAP_KEYS.some((key) => data[key] !== undefined), {
     message: 'At least one clinical note section is required',
     path: ['subjective'],
+  })
+  .refine((data) => !(data.visitId !== undefined && data.admissionId !== undefined), {
+    message: 'A record may reference a Visit or an Admission, not both.',
+    path: ['admissionId'],
   });
 
 export const createClinicalNoteSchema = clinicalNotePayloadSchema;
@@ -78,6 +92,7 @@ export type ClinicalNote = {
   tenantId: string;
   patientId: number;
   visitId: number | null;
+  admissionId: number | null;
   noteTypeId: number;
   subjective: string | null;
   objective: string | null;

@@ -5,6 +5,7 @@ import {
   patientVitalSignIdSchema,
   type CreatePatientVitalSignInput,
 } from '../schemas/patient-vital-sign-schema';
+import { validateAdmissionForClinicalCapture } from '../../admission/validator/admission-clinical-capture-validator';
 import { validateVisitForClinicalCapture } from '../../visit/validator/visit-clinical-capture-validator';
 import { validatePatientExistsForVitalSign } from './patient-vital-sign-reference-validator';
 
@@ -45,6 +46,18 @@ export async function validateCreatePatientVitalSign(
 
     if (!visitResult.success) {
       return visitResult;
+    }
+  }
+
+  if (payloadResult.data.admissionId !== undefined && payloadResult.data.admissionId !== null) {
+    const admissionResult = await validateAdmissionForClinicalCapture(
+      payloadResult.data.admissionId,
+      patientIdResult.data,
+      tenantId
+    );
+
+    if (!admissionResult.success) {
+      return admissionResult;
     }
   }
 

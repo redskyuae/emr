@@ -14,6 +14,7 @@ const patientVitalSignColumns = {
   tenantId: patientVitalSignTable.tenantId,
   patientId: patientVitalSignTable.patientId,
   visitId: patientVitalSignTable.visitId,
+  admissionId: patientVitalSignTable.admissionId,
   recordedAt: patientVitalSignTable.recordedAt,
   heightCm: patientVitalSignTable.heightCm,
   weightKg: patientVitalSignTable.weightKg,
@@ -31,6 +32,19 @@ const patientVitalSignColumns = {
   modifiedOn: patientVitalSignTable.modifiedOn,
 };
 
+// A record belongs to a Visit or an Admission, never both. On update we only
+// rewrite the parent when the client supplies one; when both are absent the
+// existing linkage is left untouched so ordinary edits never orphan the record.
+function linkageChanges(data: UpdatePatientVitalSignData) {
+  const linkageProvided = data.visitId !== undefined || data.admissionId !== undefined;
+
+  if (!linkageProvided) {
+    return {};
+  }
+
+  return { visitId: data.visitId ?? null, admissionId: data.admissionId ?? null };
+}
+
 async function createPatientVitalSign(data: CreatePatientVitalSignData) {
   const [created] = await db
     .insert(patientVitalSignTable)
@@ -38,6 +52,7 @@ async function createPatientVitalSign(data: CreatePatientVitalSignData) {
       tenantId: data.tenantId,
       patientId: data.patientId,
       visitId: data.visitId ?? null,
+      admissionId: data.admissionId ?? null,
       recordedAt: data.recordedAt ?? new Date(),
       heightCm: data.heightCm ?? null,
       weightKg: data.weightKg ?? null,
@@ -64,7 +79,10 @@ async function updatePatientVitalSign(
   const [updated] = await db
     .update(patientVitalSignTable)
     .set({
-      visitId: data.visitId ?? null,
+      // Preserve the existing Visit/Admission link unless the client explicitly
+      // sends one, so a chart edit that omits both does not orphan an
+      // Admission-linked reading.
+      ...linkageChanges(data),
       recordedAt: data.recordedAt ?? new Date(),
       heightCm: data.heightCm ?? null,
       weightKg: data.weightKg ?? null,

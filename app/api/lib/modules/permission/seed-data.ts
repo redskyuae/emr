@@ -313,6 +313,49 @@ const permissionGroups = [
       ['cancel', 'Cancel a Visit.'],
     ],
   },
+  {
+    module: 'inpatient-masters',
+    resource: 'ward',
+    actions: [
+      ['read', 'View Wards.'],
+      ['create', 'Create Wards.'],
+      ['update', 'Update Wards.'],
+      ['delete', 'Delete Wards without assigned Beds.'],
+    ],
+  },
+  {
+    module: 'inpatient-masters',
+    resource: 'bed',
+    actions: [
+      ['read', 'View Beds.'],
+      ['create', 'Create Beds.'],
+      ['update', 'Update Beds.'],
+      ['delete', 'Delete unoccupied Beds.'],
+    ],
+  },
+  {
+    module: 'inpatient-masters',
+    resource: 'admission-type',
+    actions: [
+      ['read', 'View AdmissionTypes.'],
+      ['create', 'Create AdmissionTypes.'],
+      ['update', 'Update AdmissionTypes.'],
+      ['delete', 'Delete AdmissionTypes.'],
+    ],
+  },
+  {
+    module: 'inpatient',
+    resource: 'admission',
+    actions: [
+      ['read', 'View Admissions.'],
+      ['create', 'Admit Patients.'],
+      ['update', 'Update Admission details.'],
+      ['delete', 'Delete Admissions.'],
+      ['transfer', 'Transfer an Admission to another Bed.'],
+      ['discharge', 'Discharge an Admission.'],
+      ['cancel', 'Cancel an Admission.'],
+    ],
+  },
 ] satisfies PermissionGroup[];
 
 export const permissionSeedData: PermissionSeed[] = permissionGroups.flatMap((group) =>
