@@ -1,0 +1,266 @@
+app/(protected)/admissions/_components/_modals/transfer-bed-dialog.tsx
+  074518265b161804 1-60,62-178
+app/api/lib/modules/admission/repository/admission-number.ts
+  074518265b161804 1-3
+app/api/lib/modules/admission/validator/get-admission-by-id-validator.ts
+  074518265b161804 1-38
+app/api/lib/modules/admission/validator/discharge-admission-validator.ts
+  074518265b161804 1-42
+app/api/lib/modules/admission/commands/update-admission-command.ts
+  074518265b161804 1-30
+app/api/lib/modules/admission/validator/admission-clinical-capture-validator.ts
+  074518265b161804 1-45
+app/db/schema/admission-type.ts
+  074518265b161804 1-29
+app/api/lib/modules/bed/commands/delete-bed-command.ts
+  074518265b161804 1-35
+app/api/v1/beds/board/route.ts
+  074518265b161804 1-32
+app/api/lib/modules/admission/commands/delete-admission-command.ts
+  074518265b161804 1-28
+app/(protected)/admissions/_utils/admit-form-schema.ts
+  074518265b161804 1-15
+app/db/schema/admission.ts
+  074518265b161804 1-85
+app/(protected)/admissions/_components/_modals/discharge-dialog.tsx
+  074518265b161804 1-142
+CONTEXT.md
+  074518265b161804 231-275,315-323
+app/api/lib/modules/admission/schemas/admission-schema.unit.tests.ts
+  074518265b161804 1-34,36-114,116-208
+app/api/v1/admissions/types.ts
+  074518265b161804 1-19
+app/(protected)/inpatient-masters/beds/_components/_sheets/bed-form-sheet.tsx
+  074518265b161804 1-300
+app/api/lib/modules/tenant-provisioning/commands/seed-default-inpatient-masters-command.unit.tests.ts
+  074518265b161804 1-18,20-54
+app/api/lib/modules/clinical-note/schemas/clinical-note-schema.unit.tests.ts
+  074518265b161804 41-57,59-62
+app/api/lib/modules/admission/commands/transfer-bed-command.ts
+  074518265b161804 1-80
+app/api/lib/modules/ward/validator/ward-validator.unit.tests.ts
+  074518265b161804 4,21-26,28,45,136-137,141-142,145-146,149-171,175
+docs/adr/0034-one-active-admission-per-patient-and-per-bed.md
+  074518265b161804 1-10
+app/api/lib/modules/tenant-provisioning/commands/seed-default-inpatient-masters-command.ts
+  074518265b161804 1-11,13-17,19-41
+app/api/lib/modules/admission/commands/admission-commands.unit.tests.ts
+  074518265b161804 1-98,100-324
+app/api/lib/modules/admission/commands/cancel-admission-command.ts
+  074518265b161804 1-40
+app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema.ts
+  074518265b161804 38-46,82,98-101,126
+app/(protected)/admissions/loader.tsx
+  074518265b161804 1-31
+app/api/lib/modules/bed/validator/get-beds-validator.ts
+  074518265b161804 1-13
+app/api/lib/modules/bed/queries/bed-queries.unit.tests.ts
+  074518265b161804 1-196
+app/queries/inpatient-masters/beds/useBedBoard.ts
+  074518265b161804 1-30
+app/api/lib/modules/admission/queries/get-admissions-query.ts
+  074518265b161804 1-39
+app/api/lib/modules/bed/queries/get-bed-board-query.ts
+  074518265b161804 1-62
+app/api/v1/beds/[id]/route.ts
+  074518265b161804 1-122
+app/api/lib/modules/admission/validator/update-admission-validator.ts
+  074518265b161804 1-49,51-59
+app/api/lib/modules/tenant-provisioning/commands/onboard-tenant-command.ts
+  074518265b161804 13,38-42
+app/api/lib/modules/admission/validator/transfer-bed-validator.ts
+  074518265b161804 1-68
+app/api/lib/modules/bed/schemas/bed-schema.unit.tests.ts
+  074518265b161804 1-51,53-119
+app/db/schema/admission-bed-transfer.ts
+  074518265b161804 1-36
+app/api/lib/modules/admission/commands/discharge-admission-command.ts
+  074518265b161804 1-41
+app/api/v1/admissions/[id]/route.ts
+  074518265b161804 1-122
+app/api/lib/modules/bed/queries/get-beds-query.ts
+  074518265b161804 1-39
+app/api/lib/modules/admission/commands/admit-patient-command.ts
+  074518265b161804 1-70
+app/api/lib/modules/permission/seed-data.ts
+  074518265b161804 316-358
+app/api/lib/modules/bed/validator/get-bed-by-id-validator.ts
+  074518265b161804 1-38
+app/api/lib/modules/bed/commands/create-bed-command.ts
+  074518265b161804 1-45
+app/api/lib/modules/admission/validator/admission-validator.unit.tests.ts
+  074518265b161804 1-283,285-449
+app/api/lib/modules/admission/queries/admission-queries.unit.tests.ts
+  074518265b161804 1-110
+app/api/lib/modules/bed/commands/update-bed-command.ts
+  074518265b161804 1-46
+app/api/lib/modules/bed/commands/bed-commands.unit.tests.ts
+  074518265b161804 1-192
+plans.md
+  074518265b161804 1,8-9,13-16,18-22,26-40,44-59,64-87,91-103,105-110,112-156,160-198,203-204,206,217,219-221,223-228,231,233-237,239-269,271,273-277,279,281-283,289,292,294-323,325-327,329-349,352-357,361-370,372-373,375-378,380-381,383,385-396,401-414,416,422-432,442-448,450-452,454-512,516-519,521-531,535-547,553,555-562,619-620,625,630,637,642,644-645,652,654,661,663,666
+  70c93f2dabd16321 7,24,61-63,88-90,104,111,157-159,199-202,205,211,213,229,232,270,280,284-288,290,293,324,350-351,358-359,371,374,379,384,398-400,415,417-421,433-441,449,453,513-515,520,532-534,548-549,552,554,568-570,617,638,656,669,673
+  c865739078e5e665 2-6,10-12,17,23,25,41-43,208,210,212,215-216,218,291,382,397,550-551,563-567,616,636,657
+app/db/schema/bed.ts
+  074518265b161804 1-40
+app/api/lib/modules/bed/queries/get-bed-by-id-query.ts
+  074518265b161804 1-28
+app/(protected)/inpatient-masters/beds/_components/_modals/delete-bed-dialog.tsx
+  074518265b161804 1-61
+app/(protected)/inpatient-masters/beds/_components/beds-page-impl.tsx
+  074518265b161804 1-217
+app/api/lib/modules/bed/schemas/bed-schema.ts
+  074518265b161804 1-137
+app/api/v1/admissions/route.ts
+  074518265b161804 1-117
+app/(protected)/admissions/_components/_modals/cancel-admission-dialog.tsx
+  074518265b161804 1-113
+app/api/v1/admissions/[id]/types.ts
+  074518265b161804 1-20
+app/(protected)/admissions/[id]/_components/admission-status-timeline.tsx
+  074518265b161804 1-74,76-81
+app/(protected)/admissions/[id]/_components/admission-detail-impl.tsx
+  074518265b161804 1-377
+components/app/app-shell-config.ts
+  074518265b161804 16,86-99,207-215,362-389
+docs/adr/0033-bed-status-is-a-fixed-system-set-managed-by-admissions.md
+  074518265b161804 1-7
+app/(protected)/inpatient-masters/beds/_components/bed-table.tsx
+  074518265b161804 1-101
+app/api/lib/modules/admission/schemas/admission-schema.ts
+  074518265b161804 1-249
+app/api/lib/modules/bed/repository/bed-repository.ts
+  074518265b161804 1-268
+app/db/schema/clinical-note.ts
+  074518265b161804 1-2,4,12-44
+docs/adr/0032-admission-number-is-tenant-scoped-generated-sequence.md
+  074518265b161804 1-7
+app/api/lib/modules/bed/validator/delete-bed-validator.ts
+  074518265b161804 1-38
+app/api/lib/modules/bed/validator/bed-number-validator.ts
+  074518265b161804 1-58
+app/api/lib/modules/ward/commands/delete-ward-command.ts
+  074518265b161804 12
+app/api/lib/modules/tenant-provisioning/repository/tenant-provisioning-repository.ts
+  074518265b161804 10,130-133,143
+app/api/lib/modules/admission/validator/get-admissions-validator.ts
+  074518265b161804 1-34
+app/queries/admissions/useAdmission.ts
+  074518265b161804 1-32
+app/(protected)/admissions/_utils/admission-status.ts
+  074518265b161804 1-54
+app/(protected)/inpatient-masters/beds/_utils/bed-status.ts
+  074518265b161804 1-44
+app/(protected)/bed-board/_components/bed-board-impl.tsx
+  074518265b161804 1-232
+app/(protected)/admissions/_components/admissions-page-impl.tsx
+  074518265b161804 1-278
+app/api/lib/modules/admission/repository/admission-repository.integration.tests.ts
+  074518265b161804 1-140,142-176,178-280,282-402,404-409,411-493
+app/queries/inpatient-masters/beds/useBeds.ts
+  074518265b161804 1-52
+app/api/lib/modules/bed/validator/bed-validator.unit.tests.ts
+  074518265b161804 1-256
+app/db/schema/ward.ts
+  074518265b161804 1-29
+app/api/v1/beds/route.ts
+  074518265b161804 1-147
+app/api/lib/modules/admission/queries/get-admission-by-id-query.ts
+  074518265b161804 1-33
+app/queries/admissions/useAdmissions.ts
+  074518265b161804 1-50
+app/api/lib/modules/bed/repository/bed-repository.integration.tests.ts
+  074518265b161804 1-236
+app/api/v1/beds/types.ts
+  074518265b161804 1-16
+app/api/lib/modules/admission/validator/cancel-admission-validator.ts
+  074518265b161804 1-42
+app/(protected)/admissions/_components/admissions-table.tsx
+  074518265b161804 1-175
+app/db/schema/patient-vital-sign.ts
+  074518265b161804 1-9,12,19-53
+app/db/drizzle/0044_seed_inpatient_permissions.sql
+  074518265b161804 1-25
+app/(protected)/inpatient-masters/beds/_utils/bed-form-schema.ts
+  074518265b161804 1-19
+docs/adr/0035-admission-lifecycle-and-discharge-disposition-are-fixed-sets.md
+  074518265b161804 1-13
+app/db/drizzle/0046_seed_admission_types_for_existing_tenants.sql
+  074518265b161804 1-25
+app/api/lib/modules/admission/validator/admit-patient-validator.ts
+  074518265b161804 1-175
+app/api/lib/modules/admission/repository/admission-repository.ts
+  074518265b161804 1-695
+app/api/lib/modules/bed/validator/create-bed-validator.ts
+  074518265b161804 1-51
+app/api/v1/beds/[id]/types.ts
+  074518265b161804 1-19
+app/api/lib/modules/bed/validator/update-bed-validator.ts
+  074518265b161804 1-88
+app/api/v1/beds/board/types.ts
+  074518265b161804 1-5
+app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema.unit.tests.ts
+  074518265b161804 50-62
+app/api/lib/modules/bed/validator/bed-reference-validator.ts
+  074518265b161804 1-37
+app/(protected)/admissions/_components/_sheets/admit-patient-sheet.tsx
+  074518265b161804 1-3,5-446,448-509
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "032506f5f77a14cd19cebb71ce697e95342e2105",
+  "prompts": {
+    "074518265b161804": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8e2219b4-ba4c-497c-8fe5-238872c381d9",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 10347,
+      "total_deletions": 573,
+      "accepted_lines": 10272,
+      "overriden_lines": 25
+    },
+    "225dfa28518475a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d63a4abb-0aad-4b83-9aac-cfcad244d860",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "70c93f2dabd16321": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a42eff1-af26-4f37-9bac-7bcd86d59a62",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 79,
+      "overriden_lines": 1
+    },
+    "c865739078e5e665": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "050cc829-e9ac-41f8-8366-2d1051e0d5ff",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 33,
+      "overriden_lines": 0
+    }
+  }
+}
