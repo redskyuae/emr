@@ -342,7 +342,16 @@ function DoctorField({
   onChange: (value: string) => void;
   error?: string;
 }) {
-  const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebouncedValue(search, { wait: 300 });
+  // Search server-side so tenants with more Doctors than one page can still reach
+  // every active Doctor, not just the first page.
+  const doctorsQuery = useDoctorsQuery({
+    page: 1,
+    limit: 20,
+    status: 'active',
+    query: debouncedSearch || undefined,
+  });
   const doctors = doctorsQuery.data?.data ?? [];
 
   return (
@@ -353,6 +362,13 @@ function DoctorField({
           *
         </span>
       </FieldLabel>
+      <Input
+        placeholder="Search by name…"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        aria-label="Search doctors"
+        className="mb-2"
+      />
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger id="admit-doctor" aria-required className="w-full">
           <SelectValue placeholder="Select a Doctor" />
@@ -365,6 +381,9 @@ function DoctorField({
           ))}
         </SelectContent>
       </Select>
+      {doctors.length === 0 && !doctorsQuery.isLoading ? (
+        <p className="text-muted-foreground text-xs">No active Doctors match.</p>
+      ) : null}
       {error ? <FieldError>{error}</FieldError> : null}
     </Field>
   );

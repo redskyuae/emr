@@ -375,6 +375,22 @@ describe('Admission repository', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('should not update a closed admission even within the same tenant', async () => {
+    const created = await admissionRepository.admitPatient(admitData(tenantA, fixturesA));
+    const id = created.success ? created.data.id : 0;
+
+    await admissionRepository.dischargeAdmission(id, tenantA, 'ROUTINE', undefined);
+
+    await expect(
+      admissionRepository.updateAdmission(id, tenantA, { admissionReason: 'Edited after close' })
+    ).resolves.toBeUndefined();
+
+    await expect(admissionRepository.getAdmissionById(id, tenantA)).resolves.toMatchObject({
+      status: 'DISCHARGED',
+      admissionReason: null,
+    });
+  });
+
   it('should soft delete an active admission and free its bed', async () => {
     const created = await admissionRepository.admitPatient(admitData(tenantA, fixturesA));
     const id = created.success ? created.data.id : 0;

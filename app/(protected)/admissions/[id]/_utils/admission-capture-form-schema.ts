@@ -11,19 +11,38 @@ const optionalNumber = (label: string, min: number, max: number) =>
       `${label} must be between ${min} and ${max}.`
     );
 
+const VITAL_MEASUREMENT_KEYS = [
+  'heightCm',
+  'weightKg',
+  'systolic',
+  'diastolic',
+  'pulseBpm',
+  'respRate',
+  'temperatureC',
+  'spo2',
+  'painScore',
+] as const;
+
 // BMI is intentionally absent: the server computes it from height and weight.
-export const admissionVitalsFormSchema = z.object({
-  heightCm: optionalNumber('Height', 0, 300),
-  weightKg: optionalNumber('Weight', 0, 700),
-  systolic: optionalNumber('Systolic', 0, 400),
-  diastolic: optionalNumber('Diastolic', 0, 400),
-  pulseBpm: optionalNumber('Pulse', 0, 400),
-  respRate: optionalNumber('Respiratory rate', 0, 200),
-  temperatureC: optionalNumber('Temperature', 20, 45),
-  spo2: optionalNumber('SpO₂', 0, 100),
-  painScore: optionalNumber('Pain score', 0, 10),
-  notes: z.string().trim(),
-});
+export const admissionVitalsFormSchema = z
+  .object({
+    heightCm: optionalNumber('Height', 0, 300),
+    weightKg: optionalNumber('Weight', 0, 700),
+    systolic: optionalNumber('Systolic', 0, 400),
+    diastolic: optionalNumber('Diastolic', 0, 400),
+    pulseBpm: optionalNumber('Pulse', 0, 400),
+    respRate: optionalNumber('Respiratory rate', 0, 200),
+    temperatureC: optionalNumber('Temperature', 20, 45),
+    spo2: optionalNumber('SpO₂', 0, 100),
+    painScore: optionalNumber('Pain score', 0, 10),
+    notes: z.string().trim(),
+  })
+  // The API rejects a reading with no measurement; surface that inline instead of
+  // sending a request guaranteed to fail server-side.
+  .refine((data) => VITAL_MEASUREMENT_KEYS.some((key) => data[key].trim() !== ''), {
+    message: 'Record at least one measurement.',
+    path: ['systolic'],
+  });
 
 export const admissionNoteFormSchema = z
   .object({

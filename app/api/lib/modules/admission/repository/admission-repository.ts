@@ -615,11 +615,15 @@ async function updateAdmission(
       expectedDischargeDate: data.expectedDischargeDate ?? null,
       modifiedOn: new Date(),
     })
+    // Guard against a concurrent discharge/cancel that closes the Admission after
+    // the validator saw it ADMITTED: a closed Admission is an immutable historical
+    // record (ADR 0035), so a racing edit must not mutate it.
     .where(
       and(
         eq(admissionTable.id, id),
         eq(admissionTable.tenantId, tenantId),
-        eq(admissionTable.isDeleted, false)
+        eq(admissionTable.isDeleted, false),
+        eq(admissionTable.status, 'ADMITTED')
       )
     )
     .returning({ id: admissionTable.id });

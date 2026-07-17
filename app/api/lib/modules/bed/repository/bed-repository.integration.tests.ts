@@ -162,6 +162,55 @@ describe('Bed repository', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('should not update a Bed that has become occupied since it was read', async () => {
+    // Simulate the race: the Bed is OCCUPIED by the time the write lands, so the
+    // update must match nothing and leave the occupied Bed untouched.
+    const created = await createBed(tenantA, 'ICU-OCC', wardA.id, {
+      status: 'OCCUPIED' as CreateBedData['status'],
+    });
+
+    await expect(
+      bedRepository.updateBed(created!.id, {
+        tenantId: tenantA,
+        bedNumber: 'ICU-OCC-MOVED',
+        wardId: wardA2.id,
+        status: 'AVAILABLE',
+      })
+    ).resolves.toBeUndefined();
+
+    await expect(bedRepository.getBedById(created!.id, tenantA)).resolves.toMatchObject({
+      bedNumber: 'ICU-OCC',
+      wardId: wardA.id,
+      status: 'OCCUPIED',
+    });
+  });
+
+  it('should not resolve a soft-deleted Room on Bed reads', async () => {
+    const roomType = await roomTypeRepository.createRoomType({
+      tenantId: tenantA,
+      name: 'Private',
+      code: 'PVT',
+      color: '#2563EB',
+      dailyRate: 5000,
+      description: undefined,
+    });
+    const room = await roomRepository.createRoom({
+      tenantId: tenantA,
+      roomNumber: '401-A',
+      roomTypeId: roomType.id,
+      status: 'AVAILABLE',
+      bedCount: 1,
+    });
+    const bed = await createBed(tenantA, 'ICU-ROOM', wardA.id, { roomId: room!.id });
+
+    await roomRepository.deleteRoom(room!.id, tenantA);
+
+    await expect(bedRepository.getBedById(bed!.id, tenantA)).resolves.toMatchObject({
+      roomId: room!.id,
+      room: null,
+    });
+  });
+
   it('should enforce case-insensitive bed number uniqueness within a ward', async () => {
     await createBed(tenantA, 'ICU-08', wardA.id);
 

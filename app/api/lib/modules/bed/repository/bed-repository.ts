@@ -39,7 +39,11 @@ const wardJoin = () =>
     )
     .leftJoin(
       roomTable,
-      and(eq(roomTable.id, bedTable.roomId), eq(roomTable.tenantId, bedTable.tenantId))
+      and(
+        eq(roomTable.id, bedTable.roomId),
+        eq(roomTable.tenantId, bedTable.tenantId),
+        eq(roomTable.isDeleted, false)
+      )
     );
 
 function bedValues(data: CreateBedData | UpdateBedData) {
@@ -65,8 +69,16 @@ async function updateBed(id: number, data: UpdateBedData): Promise<Bed | undefin
   const [updatedBed] = await db
     .update(bedTable)
     .set({ ...bedValues(data), modifiedOn: new Date() })
+    // Guard against a concurrent admit/transfer that occupies the Bed after the
+    // validator read it as free: an OCCUPIED Bed is system-managed (ADR 0033) and
+    // must not be re-homed, renumbered, or restatused by a racing update.
     .where(
-      and(eq(bedTable.id, id), eq(bedTable.tenantId, data.tenantId), eq(bedTable.isDeleted, false))
+      and(
+        eq(bedTable.id, id),
+        eq(bedTable.tenantId, data.tenantId),
+        eq(bedTable.isDeleted, false),
+        ne(bedTable.status, 'OCCUPIED')
+      )
     )
     .returning({ id: bedTable.id });
 
@@ -202,7 +214,11 @@ async function getBedBoard(tenantId: string): Promise<BedBoardRow[]> {
     )
     .leftJoin(
       roomTable,
-      and(eq(roomTable.id, bedTable.roomId), eq(roomTable.tenantId, bedTable.tenantId))
+      and(
+        eq(roomTable.id, bedTable.roomId),
+        eq(roomTable.tenantId, bedTable.tenantId),
+        eq(roomTable.isDeleted, false)
+      )
     )
     .leftJoin(
       admissionTable,
@@ -213,7 +229,13 @@ async function getBedBoard(tenantId: string): Promise<BedBoardRow[]> {
         eq(admissionTable.isDeleted, false)
       )
     )
-    .leftJoin(patientTable, eq(patientTable.id, admissionTable.patientId))
+    .leftJoin(
+      patientTable,
+      and(
+        eq(patientTable.id, admissionTable.patientId),
+        eq(patientTable.tenantId, admissionTable.tenantId)
+      )
+    )
     .where(and(eq(bedTable.tenantId, tenantId), eq(bedTable.isDeleted, false)))
     .orderBy(asc(wardTable.name), asc(bedTable.bedNumber), asc(bedTable.id));
 }
