@@ -356,6 +356,37 @@ const permissionGroups = [
       ['cancel', 'Cancel an Admission.'],
     ],
   },
+  {
+    module: 'billing-masters',
+    resource: 'charge-item',
+    actions: [
+      ['read', 'View Charge Items.'],
+      ['create', 'Create Charge Items.'],
+      ['update', 'Update Charge Items.'],
+      ['delete', 'Delete Charge Items.'],
+    ],
+  },
+  {
+    module: 'billing',
+    resource: 'invoice',
+    actions: [
+      ['read', 'View Invoices.'],
+      ['create', 'Create Invoices.'],
+      ['update', 'Update Draft Invoice details.'],
+      ['delete', 'Delete Draft or Void Invoices.'],
+      ['finalize', 'Finalize a Draft Invoice.'],
+      ['void', 'Void an Invoice without Payments.'],
+      ['generate-charges', 'Generate Bed-Day Charges for an Admission Invoice.'],
+    ],
+  },
+  {
+    module: 'billing',
+    resource: 'payment',
+    actions: [
+      ['read', 'View Payments recorded against Invoices.'],
+      ['record', 'Record Payments against Invoices.'],
+    ],
+  },
 ] satisfies PermissionGroup[];
 
 export const permissionSeedData: PermissionSeed[] = permissionGroups.flatMap((group) =>

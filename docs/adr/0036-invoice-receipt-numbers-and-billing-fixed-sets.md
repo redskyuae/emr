@@ -1,0 +1,7 @@
+# Invoice / Receipt Numbers Are Tenant-Scoped Sequences; Billing Categories Are Fixed Sets
+
+Invoice Number and Receipt Number are Tenant-scoped generated sequences (`INV-1001…`, `RCP-1001…`), following the reasoning in ADR 0028 (Visit Number) and ADR 0032 (Admission Number): a bill and a receipt need a stable, human-readable, gap-tolerant identifier that is unique within a Tenant and never derived from the row `id`. Each is backed by its own counter table keyed by `tenant_id` (`invoice_number_counter`, `receipt_number_counter`), incremented inside the same transaction that inserts the Invoice or Payment. A partial unique index on `(tenant_id, lower(number))` is the race backstop, mapped to a clean conflict error by the command.
+
+Charge Item Category is a fixed system-defined set — `CONSULTATION`, `PROCEDURE`, `INVESTIGATION`, `BED`, `CONSUMABLE`, `OTHER` — stored as a checked column rather than a Tenant Master. The category drives filtering and reserves integration points for future modules (Pharmacy → `CONSUMABLE`, Lab → `INVESTIGATION`); it carries no Tenant-editable behaviour, so a Master table would be ceremony without benefit. Should a Tenant ever need its own classification, the AppointmentStatus category pattern is the migration path.
+
+Payment Method is likewise a fixed system set — `CASH`, `CARD`, `UPI`, `BANK_TRANSFER`, `CHEQUE`, `OTHER`. It deliberately omits insurance: the current system is cash/self-pay only (see ADR 0037 scope), and adding a payer would be a domain change, not a new enum value.

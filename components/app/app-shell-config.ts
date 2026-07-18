@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   LayoutGrid,
   MapPinned,
+  ReceiptText,
   Settings,
   ShieldCheck,
   Stethoscope,
@@ -101,6 +102,17 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Bed Board',
         href: '/bed-board',
         icon: LayoutGrid,
+      },
+    ],
+  },
+  {
+    title: 'Billing',
+    items: [
+      {
+        title: 'Invoices',
+        href: '/billing',
+        icon: ReceiptText,
+        exact: true,
       },
     ],
   },
@@ -235,6 +247,12 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/room-masters',
         icon: BedDouble,
         items: [{ title: 'Room Type', href: '/room-masters/types' }],
+      },
+      {
+        title: 'Billing Masters',
+        href: '/billing-masters',
+        icon: ReceiptText,
+        items: [{ title: 'Charge Items', href: '/billing-masters/charge-items' }],
       },
       {
         title: 'Clinical Masters',
@@ -389,6 +407,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Bed Board',
     subtitle: 'Ward-wise Bed occupancy with the Patient in every Occupied Bed.',
   },
+  '/billing': {
+    title: 'Invoices',
+    subtitle: 'Raise, finalize, and collect payment on patient Invoices.',
+    primaryAction: {
+      label: 'New Invoice',
+      href: '/billing?invoice=new',
+    },
+  },
   '/inpatient-masters': {
     title: 'Inpatient Masters',
     subtitle: 'Tenant-scoped inpatient configuration.',
@@ -448,6 +474,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/room-masters/types': {
     title: 'Room Types',
     subtitle: 'Tenant-scoped classification and daily rate records for Rooms.',
+  },
+  '/billing-masters/charge-items': {
+    title: 'Charge Items',
+    subtitle: 'Tenant-scoped priced catalogue of billable services and consumables.',
   },
   '/asset-management-masters/work-order-priorities': {
     title: 'Work Order Priorities',

@@ -1,565 +1,482 @@
-# Plan: Inpatient Management (IPD) — Admissions, Wards, Beds, Transfers, Discharge
+# Plan: Billing & Revenue Cycle (v1) — Charge Items, Invoices, Payments
 
 > Standalone implementation plan. Written for an implementing agent that has **not** seen the
 > planning conversation. Read `CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, `DESIGN.md`, `lessons.md`,
 > and `docs/backend-testing.md` before starting. Follow every convention in those docs exactly —
 > this plan describes _what_ to build and _in what order_; those docs remain the binding _how_.
 >
-> Supersedes the previous plan in this file (Visit Management), which is fully implemented and
-> merged (PR #246).
+> Supersedes the previous plan in this file (Inpatient Management / IPD), which is fully
+> implemented and merged to `main` (PRs #248/#249 — admission, ward, bed, bed-board all exist).
 
 ## 1. Goal
 
-Make the EMR a genuine **hospital** system, not just an OPD clinic tool. `CONTEXT.md` already
-defines **Admission** ("an inpatient clinical event… a Patient is admitted to a Facility and
-occupies a Bed"), **Ward**, and **Bed** — none of which exist in the schema. Rooms exist but only
-carry an integer `bedCount`; there is no Bed entity, no Ward, and no way to admit a patient.
+The EMR now covers the full clinical spine — appointments, OPD Visits, IPD Admissions with beds
+and transfers, and the patient chart — but has **no financial capability at all**: no way to
+price a service, raise a bill, or record a payment. Feature-parity analysis against OpenEMR,
+Bahmni, and HospitalRun (§2) identified Billing as the largest gap and the biggest real-world
+adoption blocker. The IPD plan explicitly deferred money to this plan ("charge capture per
+bed-day is the billing plan's job" — `roomType.dailyRate` already exists and is read by nothing).
 
-This plan adds the **Inpatient (IPD)** capability: Ward and Bed masters, an AdmissionType master,
-the **Admission** module (admit → transfer bed → discharge/cancel lifecycle with bed-status sync),
-inpatient clinical capture (vitals + notes stamped with `admissionId`, mirroring the Visit work),
-an **Admissions census** screen, a ward-wise **Bed Board**, master CRUD screens, nav/menu entries,
-permissions, onboarding seeds, Swagger, ADRs, and glossary terms. Both FE and BE, tests colocated.
+This plan adds **cash-first patient billing**: a **ChargeItem** master (priced service
+catalogue), the **Invoice** module (draft → finalize → pay/void lifecycle with line items,
+snapshot pricing, an invoice-level discount, and auto-generated bed-day charges for discharged
+Admissions), and **Payments** (append-only, receipt-numbered, partial payments allowed). Both FE
+and BE, tests colocated, plus permissions, Swagger, ADRs, and glossary terms.
 
 ### In scope (confirmed)
 
-1. **Ward master** — tenant-scoped Master (standard master pattern).
-2. **Bed entity** — physical bed in a Ward (optional Room link), fixed system Bed Status set,
-   CRUD as a master screen plus the operational Bed Board.
-3. **AdmissionType master** — tenant-scoped Master, seeded at onboarding.
-4. **Admission module** — full CQRS stack: admit (with optional source Visit link), bed transfer
-   (with history), discharge (disposition + summary), cancel, update, list/get, soft delete.
-5. **Bed status sync** — admit/transfer/discharge/cancel flip Bed status inside the same
-   transaction (precedent: Visit ↔ Appointment status sync, ADR 0030).
-6. **Inpatient clinical capture** — nullable `admissionId` FK on `patient_vital_sign` and
-   `clinical_note`, mirroring the existing `visitId` wiring.
-7. **Frontend** — `/admissions` census + admit sheet + transfer/discharge/cancel surfaces,
-   `/admissions/[id]` detail with bed history and in-admission vitals/notes capture,
-   `/bed-board` ward-wise occupancy grid, `inpatient-masters/{wards,beds,admission-types}` CRUD
-   screens, nav groups + pageMeta.
-8. Permission-catalogue additions + migration, onboarding seed, Swagger, ADRs, CONTEXT.md terms.
+1. **ChargeItem master** — tenant-scoped Master: name, uppercase code, fixed category set,
+   unit price, active flag. Standard master CRUD screen. No onboarding seed (decision 10).
+2. **Invoice module** — full CQRS stack: create draft (patient + optional Visit **or**
+   Admission link), add/remove lines (from ChargeItems, with qty and price override at add
+   time), invoice-level flat discount, finalize, void, soft delete (draft/void only),
+   list/get with joined patient + encounter + lines + payments.
+3. **Snapshot pricing** — lines copy description + unit price at add time; later master price
+   edits never change existing invoices (decision 3).
+4. **Payments** — append-only, recorded against finalized invoices only, partial payments
+   allowed, tenant-scoped `RCP-` receipt numbers, fixed payment-method set, transactional
+   `amountPaid`/status sync (FINALIZED → PARTIALLY_PAID → PAID).
+5. **Bed-day charge generation** — one command computes occupancy segments for a **discharged**
+   linked Admission from `admittedAt` → bed transfers → `dischargedAt`, prices each segment via
+   bed → Room → RoomType `dailyRate`, and inserts system-generated lines (regeneration replaces
+   them). Unpriced segments (bed without Room, or null rate) are skipped and reported.
+6. **Frontend** — `/billing` invoice list + create sheet, `/billing/[id]` detail (draft line
+   editor, totals, finalize/void dialogs, payments + record-payment dialog, generate-bed-charges
+   action), `/billing-masters/charge-items` CRUD, "Create Invoice" deep links from Visit and
+   Admission detail, nav groups + pageMeta.
+7. Permission-catalogue additions + backfill migration, Swagger, ADRs 0036–0040, CONTEXT.md
+   terms.
 
 ### Out of scope (explicit)
 
-- **Billing / bed charges** — Room Type already carries a daily rate; charge capture per bed-day
-  is the billing plan's job. Record nothing monetary here.
-- **Nursing worklists, medication administration (MAR), doctor rounds, I/O charts** — inpatient
-  charting in v1 is vitals + clinical notes only, same capture surfaces as Visits.
-- **Discharge summary as a formatted document** — v1 stores it as text on the Admission; a
-  templated/printable summary is a future enhancement.
-- **Transfer Center / inter-facility transfers** (Epic Grand Central territory) — transfers in v1
-  are bed-to-bed within the Tenant.
-- **Room Status sync** — the existing Rooms module manages Room Status manually; do **not** wire
-  Bed status changes back to Room status in v1 (open decision §12.4).
-- **Bed reservations workflow** — RESERVED is a manually set Bed status, not a reservation entity
-  with a target patient.
-- **Facility scoping** — same stance as the Visit plan: no `facility` table exists yet; everything
-  is tenant-scoped, add `facilityId` when the Facility module lands. Ward's glossary entry says
-  "section of a Facility" — acceptable drift, documented.
-- **Encounter hierarchy / OpenMRS-style visit-contains-admission** — Admission is its own
-  top-level clinical event, optionally _linked from_ a Visit, never nested in one.
+- **Insurance, TPA, claims, payer contracts** — v1 is cash/self-pay only. The Payment method
+  set has no INSURANCE value on purpose; claims are their own future plan.
+- **Taxes (GST etc.)** — no tax fields anywhere in v1. Adding a tax engine later means new
+  columns, not reworked ones (decision 9).
+- **Refunds, credit notes, payment corrections** — payments are append-only (decision 6). The
+  only correction path is voiding an **unpaid** invoice and reissuing.
+- **Advances / deposits / interim bills** — bed charges require a discharged Admission; billing
+  an active Admission is a future enhancement (decision 8).
+- **Doctor-specific fee schedules** — consultation prices live on ChargeItems; `doctor` has no
+  fee column and gets none in v1.
+- **Packages / bundled pricing, multi-currency** — single implicit currency, plain line items.
+- **Printable invoice PDF** — the detail screen is the record; a print/PDF layout is follow-up.
+- **Cashier reports / day-close / revenue dashboards** — list filters are the only reporting.
+- **Pharmacy and Lab charge sources** — those modules don't exist yet; the ChargeItem category
+  set reserves room for them (decision 4) but nothing integrates.
+- **Facility scoping** — same stance as the Visit/IPD plans: everything tenant-scoped, add
+  `facilityId` when the Facility module lands.
 
 ## 2. Competitor / standards research (why the model looks like this)
 
-- **FHIR** models an inpatient stay as an `Encounter` with `class = IMP`, and the physical
-  hierarchy as `Location` resources (ward → room → bed) with an operational status; the encounter
-  tracks its current location over time and a discharge disposition (routine, LAMA-equivalent,
-  transfer, expired…) on `Encounter.hospitalization`. We adopt: Bed as a first-class located
-  entity, an admission that always points at its current Bed, a movement history, and a fixed
-  discharge-disposition set. (hl7.org/fhir/encounter.html, /location.html)
-- **OpenMRS / Bahmni bed management + ADT module** is the closest open-source reference: wards
-  ("admission locations") contain beds laid out on a grid; a bed must be assigned at admission;
-  the IPD app shows worklists (to admit / admitted / to discharge) and a color-coded bed layout;
-  beds support tags and an **Expected Date of Discharge**. We adopt: bed-first admission, the
-  ward-wise Bed Board grid, and optional `expectedDischargeDate`.
-  (github.com/openmrs/openmrs-module-bedmanagement, Bahmni wiki "Admit, Discharge and Transfer
-  Patients", "Bed Management (BM)")
-- **Epic Grand Central** is the enterprise ADT benchmark: real-time bed planning, patient location
-  tracking, housekeeping integration, transfer center. Far beyond v1, but it confirms the census +
-  bed board as the two core operational views, and that ADT events (admit/transfer/discharge) are
-  the atomic unit everything else hangs off. We adopt the event model; housekeeping/transport
-  integration is future work.
-- **Indian HMS IPD modules** (Lifemaan, Aarogya HMIS, SWI, PatientERP, DoctorsApp…) uniformly
-  ship: admission with an admission type (emergency/planned/transfer-from-OPD), admitting
-  consultant, real-time color-coded bed dashboard, one-click ward/bed transfer with history,
-  discharge with disposition incl. **LAMA** and death, and an auto-assembled discharge summary.
-  We adopt: AdmissionType master, admitting Doctor, transfer history, LAMA/DECEASED dispositions,
-  free-text discharge summary in v1.
+- **OpenEMR** bills through a _Fee Sheet_ attached to an encounter: coded services with prices
+  are captured per encounter, become a patient invoice, and payments are posted against it
+  (patient portion vs insurance). Stripped of the US insurance machinery, the core loop is
+  exactly: priced catalogue → encounter-linked invoice → posted payments.
+- **Bahmni** does not build billing at all — it embeds **Odoo**: clinical orders sync to Odoo
+  _quotations_ that become invoices; bed charges flow from the ADT (admission/transfer/
+  discharge) record. The lesson carried over: bed-days are **derived from the admission's
+  occupancy history**, not typed in by a clerk. Our `admission_bed_transfer` table is the ADT
+  history that makes that derivable.
+- **HospitalRun** (offline-first, low-resource hospitals) ships only basic per-visit charge
+  capture — evidence that a lean, cash-first invoice is a legitimate v1 for exactly our target
+  segment (Indian private hospital groups; the tenant examples in `CONTEXT.md` are Apollo/
+  Fortis, where walk-in OPD billing is cash/UPI-first).
+- **Commercial RCM** (Epic Resolute, Oracle Health) adds contracts, claims, remittance,
+  denials — an order of magnitude beyond v1 and meaningless without payers in the domain.
+
+Model consequences: invoice lines **snapshot** price (OpenEMR fee-sheet behaviour), bed charges
+are **generated, replaceable system lines** (Bahmni/Odoo behaviour), and the lifecycle is the
+minimal draft→final→paid/void state machine every one of these systems shares.
 
 ## 3. Key design decisions
 
-1. **Admission is a top-level clinical event, sibling of Visit — never nested.** Optional
-   `visitId` records "admitted from this OPD Visit" (the Indian-HMS "transfer from OPD" flow);
-   a direct/emergency admission has no Visit. Glossary rule: "Distinct from a Visit — do not
-   conflate them."
-
-2. **Bed-first admission (Bahmni precedent).** Admitting requires choosing a concrete Bed; the
-   Ward is always derived from the Bed (`admission.bedId` → `bed.wardId`), never stored on the
-   Admission. Transfers move the Admission to another Bed and log history.
-
-3. **Bed Status is a fixed system-defined set** — like Room Status and Visit Status, not a
-   Master: `AVAILABLE`, `OCCUPIED`, `RESERVED`, `MAINTENANCE` (varchar + CHECK). `OCCUPIED` is
-   **system-managed only**: it is set/cleared exclusively by admission transactions; the Bed CRUD
-   API may set the other three but must reject manual `OCCUPIED` writes. Record in an ADR.
-
-4. **Admission Status is a fixed system-defined set**: `ADMITTED`, `DISCHARGED`, `CANCELLED`.
-   Transitions (validators enforce; each transition is its own command):
-   - `ADMITTED → DISCHARGED` (discharge; requires disposition)
-   - `ADMITTED → CANCELLED` (cancel — wrong admission/patient left before care; requires reason)
-   - Bed transfer is allowed only while `ADMITTED`.
-   - Discharged/cancelled Admissions are immutable except soft delete.
-
-5. **Discharge Disposition is a fixed system-defined set** (FHIR + Indian HMS): `ROUTINE`,
-   `LAMA`, `TRANSFERRED`, `DECEASED`, `ABSCONDED`. Stored on the Admission, required at
-   discharge. Tenant-custom dispositions are an explicit non-goal for v1 (§12.3).
-
-6. **Bed status sync happens inside the admission command's transaction** (ADR 0030 precedent):
-   admit → target bed `OCCUPIED`; transfer → old bed `AVAILABLE`, new bed `OCCUPIED`; discharge/
-   cancel → bed `AVAILABLE`. Beds in `AVAILABLE` **or** `RESERVED` status are admittable/
-   transfer targets (a reservation exists to be used); `OCCUPIED`/`MAINTENANCE` are not.
-
-7. **Admission Number** is a permanent human-facing identifier, `ADM-` + tenant-scoped sequence
-   starting at `1001`, generated exactly like Visit/Booking Number (ADR 0024/0028: counter table +
-   transactional increment). Immutable, never reused. New ADR mirrors 0028.
-
-8. **Uniqueness invariants** (partial unique indexes + validator checks, `lessons.md` pattern):
-   - At most **one active Admission per Patient** per tenant (`status = 'ADMITTED'`).
-   - At most **one active Admission per Bed** per tenant — the DB-level backstop that makes bed
-     occupancy race-safe (the `OCCUPIED` flag is a projection of this invariant).
-
-9. **Admission gates** (validator, exact messages §6): patient exists in tenant, is **Registered**
-   (not Provisional) and **active** (glossary: an Inactive Patient cannot be admitted); doctor
-   exists + active; admission type exists; bed exists and is admittable (decision 6); when
-   `visitId` is supplied it must exist in tenant, belong to the same patient, and not be
-   cancelled.
-
-10. **Transfer history is its own table** (`admission_bed_transfer`): from-bed, to-bed, reason,
-    timestamp. The initial bed assignment is the Admission itself, not a transfer row.
-
-11. **Masters follow the house pattern exactly.** `ward` and `admission-type` clone the
-    `visit-type` module shape (name/code/description/isActive, uppercase codes, partial unique
-    indexes on lower(name)/lower(code)). **Ward delete is guarded**: a Ward cannot be removed
-    while any non-deleted Bed is assigned to it (Room Type precedent). **Bed delete is guarded**:
-    an occupied Bed cannot be removed. AdmissionType mirrors VisitType (no in-use guard, same
-    documented follow-up).
-
-12. **Bed ↔ Room**: `bed.roomId` is an **optional** FK to the existing `room` table (glossary: a
-    Room holds Beds, but Rooms today are an independent registry with free-text ward-ish fields).
-    No consistency enforcement against `room.bedCount` in v1 (§12.4).
-
-13. **Inpatient clinical capture mirrors the Visit wiring**: nullable `admission_id` columns +
-    FKs on `patient_vital_sign` and `clinical_note`; a record may reference a Visit **or** an
-    Admission, never both (validator rule + DB CHECK).
-
-14. Soft delete per ADR 0012 (`deleteWard`, `deleteBed`, `deleteAdmissionType`,
-    `deleteAdmission`); schema export naming per ADR 0015 (`export const ward = pgTable(...)`,
-    imported `as wardTable`).
+1. **Invoice lifecycle is a fixed system set** — `DRAFT → FINALIZED → PARTIALLY_PAID → PAID`,
+   with `VOID` reachable from `DRAFT` and `FINALIZED` (zero payments only). Stored in a
+   `status` column with a CHECK, like `visit.status`/`admission.status`. `PARTIALLY_PAID` is a
+   **stored** status flipped transactionally by the payment command, not derived at read time —
+   list filtering and the partial unique story stay index-friendly. (ADR 0037)
+2. **Finalized invoices are immutable** except for recording payments and voiding. All line,
+   discount, and notes edits are DRAFT-only, enforced in validators **and** as a `status`
+   predicate on the repository's guarded UPDATEs (zero rows → clean outcome), mirroring the
+   guarded bed-occupy pattern from the admission module. (ADR 0037)
+3. **Lines snapshot at add time** — `description` and `unitPrice` are copied from the
+   ChargeItem when the line is added; `chargeItemId` is kept as a nullable provenance FK.
+   The cashier may override price and set quantity at add time; after that the line is
+   add/remove only (no in-place edit — remove and re-add). (ADR 0038)
+4. **ChargeItem category is a fixed system set**, not a master:
+   `CONSULTATION | PROCEDURE | INVESTIGATION | BED | CONSUMABLE | OTHER`. It exists for list
+   filtering and future module integration (pharmacy → CONSUMABLE, lab → INVESTIGATION); a
+   master table would be ceremony with no behaviour. (ADR 0036 records both fixed sets.)
+5. **Invoice and Receipt numbers are tenant-scoped generated sequences** — `INV-1001…` /
+   `RCP-1001…` via counter tables mirroring `visitNumberCounter`/`admissionNumberCounter`
+   (precedent ADRs 0028/0032). Uppercase-unique per tenant. (ADR 0036)
+6. **Payments are append-only.** No update or delete route for payments exists. `amountPaid`
+   is denormalized on the invoice and maintained in the same guarded UPDATE that flips status:
+   `amount_paid = amount_paid + $x WHERE status IN ('FINALIZED','PARTIALLY_PAID') AND
+amount_paid + $x <= grand_total`, with `status` set via CASE in the same statement — the
+   overpay race has no window. A table CHECK `amount_paid <= grand_total` is the backstop.
+   (ADR 0039)
+7. **One encounter parent max** — `visitId` and `admissionId` are both nullable with a CHECK
+   `not (visit_id is not null and admission_id is not null)`, exactly like the clinical-capture
+   columns on `patient_vital_sign`/`clinical_note`. Patient and encounter link are fixed at
+   create (no re-parenting a draft; delete it and start over).
+8. **Bed-day generation requires a DISCHARGED Admission** and computes per occupancy segment:
+   segments come from `admittedAt` → each `admission_bed_transfer.transferredAt` →
+   `dischargedAt`; each segment bills `max(1, calendar dates between segment start and end)`
+   in the Tenant Time Zone (`Asia/Kolkata` until configurable) at the segment bed's
+   Room → RoomType `dailyRate`. Same-day admit+discharge = 1 day; a transfer day can bill on
+   both segments (standard hospital practice — documented, not a bug). Generated lines carry
+   `source = 'BED_AUTO'`; regeneration deletes prior `BED_AUTO` lines and re-inserts, so the
+   command is idempotent. Unpriced segments are skipped and returned as warnings in the command
+   result. (ADR 0040)
+9. **Money is `numeric(12,2)` with `mode: 'number'`** — the `roomType.dailyRate` precedent.
+   All arithmetic rounds half-up to 2dp at the line level (`amount = round(qty × unitPrice)`),
+   totals are sums of rounded lines. Single implicit currency; no tax fields.
+10. **Discount is a flat invoice-level amount**, `0 ≤ discount ≤ subtotal`, editable in DRAFT
+    only. No per-line discounts, no percentages in v1 (a percentage is just a client-side way
+    to compute the flat amount). `grandTotal = subtotal − discountAmount`.
+11. **A zero-total invoice finalizes straight to `PAID`** (`amountPaid` stays 0, balance 0) —
+    supports free camps/charity cases without a fake payment row.
+12. **No onboarding seed for ChargeItems** — unlike AdmissionTypes, a charge item without a
+    real price is garbage data, and prices are tenant-specific. Tenants build their own
+    catalogue. Permission seeds only.
+13. **The invoice module owns payments** (commands, receipt counter, reads) rather than a
+    separate `payment` module — payments only exist inside the invoice aggregate and must share
+    its transaction, exactly as bed transfers live inside the admission module.
 
 ## 4. Domain glossary additions (`CONTEXT.md`)
 
-**Admission**, **Ward**, **Bed** already exist — extend, don't redefine. Add:
+Add (wording to taste, terms exact): **Charge Item**, **Charge Item Category**, **Invoice**,
+**Invoice Number**, **Invoice Line**, **Invoice Status**, **Draft Invoice**, **Finalize**,
+**Void**, **Discount**, **Payment**, **Payment Method**, **Receipt Number**, **Balance Due**
+(grandTotal − amountPaid, always derived), **Bed-Day Charge**, **Occupancy Segment**.
 
-- **Admission Number** — The permanent, human-facing identifier assigned by the system to an
-  Admission within a Tenant, formatted as `ADM-` followed by a Tenant-scoped sequence beginning
-  at `1001`. Immutable and never reused, including after the Admission is removed.
-- **Admission Status** — The lifecycle state of an Admission: Admitted, Discharged, or Cancelled.
-  A fixed system-defined set (like Visit Status), not a Tenant-scoped Master.
-- **AdmissionType** — A Tenant-scoped Master that classifies how a Patient came to be admitted,
-  such as Emergency, Elective, Transfer, or Maternity. Distinct from VisitType, which classifies
-  outpatient Visits.
-- **Active Admission** — An Admission in the Admitted status. A Patient has at most one Active
-  Admission at a time within a Tenant, and a Bed hosts at most one Active Admission.
-- **Bed Number** — The human-facing identifier for a Bed within its Ward (e.g., `ICU-01`).
-  Unique within the Ward, compared case-insensitively.
-- **Bed Status** — The operational state of a Bed: Available, Occupied, Reserved, or Maintenance.
-  A fixed system-defined set (like Room Status). Occupied is system-managed: it is set and
-  cleared only by Admission lifecycle events, never edited directly.
-- **Bed Transfer** — The movement of an Active Admission from one Bed to another within the
-  Tenant, recorded with the source Bed, target Bed, reason, and time. The Admission always
-  reflects the current Bed.
-- **Discharge** — The act that ends an Active Admission: recording the Discharge Disposition and
-  optional Discharge Summary, and releasing the Bed.
-- **Discharge Disposition** — The system-defined outcome of a Discharge: Routine, LAMA (leave
-  against medical advice), Transferred, Deceased, or Absconded.
-- **Discharge Summary** — The narrative record captured at Discharge describing the course of the
-  Admission. Stored as text on the Admission in this version.
-- **Expected Discharge Date** — The anticipated date an Active Admission will end; informational,
-  editable while Admitted.
-- **Bed Board** — The ward-wise operational view of every Bed and its Bed Status, showing the
-  Patient occupying each Occupied Bed.
-- **Inpatient Census** — The list of Admissions, defaulting to Active Admissions, used by ward
-  staff to see who is currently admitted, where, and under which Doctor.
+New ADRs (`docs/adr/`):
 
-New ADRs (numbered after the current max, 0031):
-
-- `0032-admission-number-is-tenant-scoped-generated-sequence.md` (decision 7)
-- `0033-bed-status-is-a-fixed-system-set-managed-by-admissions.md` (decisions 3 & 6)
-- `0034-one-active-admission-per-patient-and-per-bed.md` (decision 8)
-- `0035-admission-lifecycle-and-discharge-disposition-are-fixed-sets.md` (decisions 4 & 5)
+- `0036-invoice-receipt-numbers-and-billing-fixed-sets.md` — INV-/RCP- tenant-scoped
+  sequences; ChargeItem category + Payment method are fixed system sets.
+- `0037-invoice-lifecycle-and-post-finalize-immutability.md`
+- `0038-invoice-lines-snapshot-price-at-add-time.md`
+- `0039-payments-are-append-only-with-transactional-status-sync.md`
+- `0040-bed-day-charges-derive-from-admission-occupancy-segments.md`
 
 ## 5. Data model
 
 New files under `app/db/schema/`; all tables carry `tenantId varchar(255) notNull` +
-`masterColumns()`. Read `lessons.md` before writing the partial unique indexes. Copy
-`visit-type.ts` for the masters and `visit.ts` for the event + counter tables.
+`masterColumns()`. Read `lessons.md` before writing the partial unique indexes. Export table
+variables without a `Table` suffix; consumers alias (`as invoiceTable`) per ADR 0015.
 
-**`ward.ts`** → `ward` (standard master, mirror `visit-type.ts`)
+**`charge-item.ts`** → `charge_item` (standard master, mirror `visit-type.ts`)
 
-| column      | type                         | notes            |
-| ----------- | ---------------------------- | ---------------- |
-| name        | varchar(100) notNull         |                  |
-| code        | varchar(20) notNull          | stored uppercase |
-| description | text                         |                  |
-| isActive    | boolean notNull default true |                  |
+| column      | type                              | notes                                                                            |
+| ----------- | --------------------------------- | -------------------------------------------------------------------------------- |
+| name        | varchar(150) notNull              |                                                                                  |
+| code        | varchar(20) notNull               | stored uppercase                                                                 |
+| category    | varchar(20) notNull               | CHECK in ('CONSULTATION','PROCEDURE','INVESTIGATION','BED','CONSUMABLE','OTHER') |
+| unitPrice   | numeric(12,2) mode number notNull | ≥ 0 CHECK                                                                        |
+| description | text                              |                                                                                  |
+| isActive    | boolean notNull default true      |                                                                                  |
 
 - Unique: `(tenantId, lower(name))` and `(tenantId, lower(code))`, both `where is_deleted = false`
+- Non-unique `(tenantId, category)`
 
-**`admission-type.ts`** → `admission_type` — identical shape to `ward`.
+**`invoice.ts`** → `invoice`
 
-**`bed.ts`** → `bed`
+| column         | type                                | notes                                                              |
+| -------------- | ----------------------------------- | ------------------------------------------------------------------ |
+| invoiceNumber  | varchar(20) notNull                 | `INV-1001`…                                                        |
+| patientId      | integer notNull FK patient          | fixed at create                                                    |
+| visitId        | integer FK visit                    | nullable — source OPD Visit                                        |
+| admissionId    | integer FK admission                | nullable — source Admission                                        |
+| status         | varchar(20) notNull default 'DRAFT' | CHECK in ('DRAFT','FINALIZED','PARTIALLY_PAID','PAID','VOID')      |
+| subtotal       | numeric(12,2) notNull default 0     | maintained transactionally with line changes                       |
+| discountAmount | numeric(12,2) notNull default 0     | CHECK `discount_amount >= 0 and discount_amount <= subtotal`       |
+| grandTotal     | numeric(12,2) notNull default 0     | = subtotal − discountAmount, maintained in the same transaction    |
+| amountPaid     | numeric(12,2) notNull default 0     | CHECK `amount_paid >= 0 and amount_paid <= grand_total` (backstop) |
+| notes          | text                                | DRAFT-editable                                                     |
+| finalizedAt    | timestamptz                         | set on finalize                                                    |
+| voidedAt       | timestamptz                         | set on void                                                        |
+| voidReason     | varchar(255)                        | required on void                                                   |
 
-| column    | type                                    | notes                                                      |
-| --------- | --------------------------------------- | ---------------------------------------------------------- |
-| bedNumber | varchar(20) notNull                     | e.g. `ICU-01`                                              |
-| wardId    | integer notNull FK ward                 |                                                            |
-| roomId    | integer FK room                         | nullable — optional physical Room link                     |
-| status    | varchar(20) notNull default 'AVAILABLE' | CHECK in ('AVAILABLE','OCCUPIED','RESERVED','MAINTENANCE') |
-| notes     | text                                    |                                                            |
+Constraints / indexes:
 
-Indexes:
+- CHECK `not (visit_id is not null and admission_id is not null)` (decision 7)
+- `invoice_tenant_number_idx` unique on `(tenantId, lower(invoiceNumber))`
+- non-unique `(tenantId, status)`, `(tenantId, patientId)`
 
-- `bed_ward_bed_number_idx` unique on `(tenantId, wardId, lower(bedNumber))`
-  `where is_deleted = false`
-- non-unique `(tenantId, status)` and `(tenantId, wardId)` for the board query
+**`invoice.ts` (same file)** → counters, mirroring `visitNumberCounter`:
 
-**`admission.ts`** → `admission`
+- `invoice_number_counter(tenant_id varchar pk, last_number integer notNull)`
+- `receipt_number_counter(tenant_id varchar pk, last_number integer notNull)`
 
-| column                | type                                   | notes                                                                                   |
-| --------------------- | -------------------------------------- | --------------------------------------------------------------------------------------- |
-| admissionNumber       | varchar(20) notNull                    | `ADM-1001`…                                                                             |
-| patientId             | integer notNull FK patient             |                                                                                         |
-| doctorId              | integer notNull FK doctor              | admitting/attending doctor                                                              |
-| admissionTypeId       | integer notNull FK admission_type      |                                                                                         |
-| bedId                 | integer notNull FK bed                 | **current** bed                                                                         |
-| visitId               | integer FK visit                       | nullable — source OPD Visit                                                             |
-| status                | varchar(20) notNull default 'ADMITTED' | CHECK in ('ADMITTED','DISCHARGED','CANCELLED')                                          |
-| admissionReason       | varchar(500)                           | presenting complaint / provisional diagnosis (free text)                                |
-| remarks               | text                                   |                                                                                         |
-| expectedDischargeDate | date                                   | nullable, editable while admitted                                                       |
-| admittedAt            | timestamptz notNull default now        |                                                                                         |
-| dischargedAt          | timestamptz                            | set on discharge                                                                        |
-| dischargeDisposition  | varchar(20)                            | CHECK in ('ROUTINE','LAMA','TRANSFERRED','DECEASED','ABSCONDED'), required on discharge |
-| dischargeSummary      | text                                   |                                                                                         |
-| cancelledAt           | timestamptz                            | set on cancel                                                                           |
-| cancellationReason    | varchar(255)                           | required on cancel                                                                      |
+**`invoice-line.ts`** → `invoice_line`
 
-Indexes:
+| column       | type                                 | notes                                              |
+| ------------ | ------------------------------------ | -------------------------------------------------- |
+| invoiceId    | integer notNull FK invoice           |                                                    |
+| chargeItemId | integer FK charge_item               | nullable — provenance only; null on BED_AUTO lines |
+| description  | varchar(255) notNull                 | snapshot                                           |
+| quantity     | integer notNull                      | CHECK ≥ 1                                          |
+| unitPrice    | numeric(12,2) notNull                | CHECK ≥ 0 (snapshot, override allowed at add)      |
+| amount       | numeric(12,2) notNull                | = round2(quantity × unitPrice)                     |
+| source       | varchar(10) notNull default 'MANUAL' | CHECK in ('MANUAL','BED_AUTO')                     |
 
-- `admission_tenant_number_idx` unique on `(tenantId, lower(admissionNumber))`
-- `admission_active_patient_idx` unique on `(tenantId, patientId)`
-  `where is_deleted = false and status = 'ADMITTED'` (ADR 0034)
-- `admission_active_bed_idx` unique on `(tenantId, bedId)`
-  `where is_deleted = false and status = 'ADMITTED'` (ADR 0034 — occupancy race backstop)
-- non-unique `(tenantId, status)`
+- non-unique `(tenantId, invoiceId)`
 
-**`admission.ts` (same file)** → counter, mirroring `visitNumberCounter`:
+**`payment.ts`** → `payment`
 
-- `admission_number_counter(tenant_id varchar pk, last_number integer notNull)`
+| column        | type                            | notes                                                           |
+| ------------- | ------------------------------- | --------------------------------------------------------------- |
+| receiptNumber | varchar(20) notNull             | `RCP-1001`…                                                     |
+| invoiceId     | integer notNull FK invoice      |                                                                 |
+| amount        | numeric(12,2) notNull           | CHECK > 0                                                       |
+| method        | varchar(20) notNull             | CHECK in ('CASH','CARD','UPI','BANK_TRANSFER','CHEQUE','OTHER') |
+| reference     | varchar(100)                    | card auth / UPI txn / cheque no.                                |
+| notes         | varchar(255)                    |                                                                 |
+| receivedAt    | timestamptz notNull default now |                                                                 |
 
-**`admission-bed-transfer.ts`** → `admission_bed_transfer`
-
-| column        | type                            | notes |
-| ------------- | ------------------------------- | ----- |
-| admissionId   | integer notNull FK admission    |       |
-| fromBedId     | integer notNull FK bed          |       |
-| toBedId       | integer notNull FK bed          |       |
-| reason        | varchar(255)                    |       |
-| transferredAt | timestamptz notNull default now |       |
-
-- non-unique index `(tenantId, admissionId)`
-
-**Migration on existing tables**: add nullable `admission_id` columns + FKs to
-`patient_vital_sign` and `clinical_note` (→ `admission.id`), plus a CHECK on each table:
-`not (visit_id is not null and admission_id is not null)`.
+- `payment_tenant_receipt_idx` unique on `(tenantId, lower(receiptNumber))`
+- non-unique `(tenantId, invoiceId)`
 
 Run `bun run db:generate` then `bun run db:migrate` after each schema change.
 
 ## 6. Backend modules
 
-Four modules under `app/api/lib/modules/`, full CQRS stack each, **colocated tests in the same
+Two modules under `app/api/lib/modules/`, full CQRS stack each, **colocated tests in the same
 change** per `docs/backend-testing.md`.
 
-### 6.1 `ward` and 6.2 `admission-type` (copy the `visit-type` module shape)
+### 6.1 `charge-item` (copy the `visit-type` module shape)
 
-Standard master modules: schema (+unit tests), repository (+integration tests), validators
-(+unit tests), commands (+unit tests), queries (+unit tests). Codes transform to uppercase.
-Exact-string messages follow the house convention:
+Standard master module: schema (+unit tests), repository (+integration tests), validators
+(+unit tests), commands (+unit tests), queries (+unit tests). Code transforms to uppercase.
+List supports `search` (name/code), `category`, `isActive` filters + pagination. Exact-string
+messages follow the house convention:
 
-- `Ward name ICU already exists.` / `Ward code ICU already exists.` / `Ward abc is Invalid.`
-- `Admission type name Emergency already exists.` / `Admission type code EMER already exists.` /
-  `Admission type abc is Invalid.`
-- Ward delete guard (decision 11): `Ward ICU cannot be removed while Beds are assigned to it.`
-  — validator calls a `bedRepository.countActiveBedsByWardId(tenantId, wardId)`-style read
-  (non-deleted beds).
+- `Charge item name General Consultation already exists.` /
+  `Charge item code CONS already exists.` / `Charge item abc is Invalid.`
+- No delete guard: lines snapshot everything they need, so retiring an item is `isActive =
+false` and deleting one never corrupts an invoice (mirrors VisitType; noted as a follow-up
+  if a guard is ever wanted).
 
-### 6.3 `bed`
+### 6.2 `invoice`
 
-- **Repository** (+integration tests): `getBedById`, `getBeds(tenantId, filters, pagination)`
-  (filters: `wardId`, `status`, `search` on bed number; joined ward name/code + room number when
-  linked), `getBedBoard(tenantId)` (all non-deleted beds grouped-ready: ward, room, status, and
-  for OCCUPIED beds the active admission's id/number + patient id/name/MRN via the
-  active-admission join), `createBed`, `updateBed`, `deleteBed`, plus reads for validators:
-  `findBedByWardAndNumber`, `countActiveBedsByWardId`.
-- **Schemas** (+unit tests): create/update (bedNumber, wardId, roomId?, status among the three
-  manually settable values, notes), list filters. Reject `OCCUPIED` in the schema enum for
-  create/update (decision 3) with message `Bed status OCCUPIED cannot be set manually.`
-- **Validators** (+unit tests): ward exists (`Ward {id} is Invalid.`), room exists when supplied
-  (`Room {id} is Invalid.`), uniqueness `Bed number ICU-01 already exists in ward ICU.`,
-  existence `Bed {id} is Invalid.`, delete guard `Bed ICU-01 cannot be removed while occupied.`
-  (status OCCUPIED or an active admission references it), status-edit guard: an OCCUPIED bed's
-  status cannot be edited manually (`Bed ICU-01 is occupied and its status is managed by
-admissions.`).
-- **Commands / queries** (+unit tests): create/update/delete; get/list/board. Map `23505` on the
-  ward+number index to the clean duplicate message.
+**Repository** (`repository/invoice-repository.ts` + integration tests):
 
-### 6.4 `admission`
+- `getInvoiceById(tenantId, id)` — joined detail: patient (id, mrn, firstName, lastName),
+  visit (id, visitNumber) / admission (id, admissionNumber) when linked, lines (ordered by id),
+  payments (ordered by receivedAt).
+- `getInvoices(tenantId, filters, pagination)` — filters: `status` (single or set), `patientId`,
+  `search` (invoice number / patient name / MRN); returns list rows with patient join +
+  balanceDue derived in the select. Default sort newest first.
+- `createInvoice` — transaction: bump `invoice_number_counter` (insert-or-update, locked),
+  insert invoice as DRAFT.
+- `addInvoiceLine` / `removeInvoiceLine` — transaction: guarded write (`status = 'DRAFT'`),
+  insert/delete line, recompute `subtotal`/`grandTotal` (clamping discount is the validator's
+  job — repository re-reads and fails the transaction if the discount CHECK would break; see
+  removal note below).
+- `updateDraftInvoice` — guarded UPDATE (`status = 'DRAFT'`) for `discountAmount`/`notes`,
+  recomputing `grandTotal`.
+- `finalizeInvoice` — guarded UPDATE: `status = 'DRAFT'` → `FINALIZED` (or straight to `PAID`
+  when `grand_total = 0`, decision 11), stamps `finalizedAt`. Zero rows → `not-draft` outcome.
+- `voidInvoice` — guarded UPDATE: `status IN ('DRAFT','FINALIZED') AND amount_paid = 0` →
+  `VOID`, stamps `voidedAt`/`voidReason`.
+- `recordPayment` — transaction: bump `receipt_number_counter`, insert payment row, then the
+  single guarded UPDATE from decision 6 (adds to `amount_paid`, flips status via CASE to
+  `PARTIALLY_PAID` or `PAID`). Zero rows → `not-payable-or-over-balance` outcome and the
+  transaction rolls back.
+- `replaceBedAutoLines(tenantId, invoiceId, lines[])` — transaction: guarded on DRAFT, delete
+  existing `source = 'BED_AUTO'` lines, insert new ones, recompute totals.
+- `getAdmissionOccupancySegments(tenantId, admissionId)` — read for the bed-charge command:
+  admission (admittedAt, dischargedAt, status, current bedId) + ordered bed transfers, each
+  bed joined to room → roomType (`dailyRate`, room number, roomType name) + ward code/bed
+  number for line descriptions.
+- `deleteInvoice` — soft delete, guarded `status IN ('DRAFT','VOID')`.
+- Reads for validators: `findInvoiceById` (bare row), plus reuse of existing repos
+  (`patient`, `visit`, `admission`, `charge-item`) — validators call repository functions,
+  never write Drizzle directly.
 
-**Repository** (`repository/admission-repository.ts` + integration tests):
+**Line-removal + discount interaction**: removing a line can make `subtotal <
+discountAmount`, which the table CHECK rejects. The remove-line transaction clamps
+`discountAmount = min(discountAmount, newSubtotal)` in the same UPDATE and the response
+surfaces the adjusted totals — simplest rule that can't strand a draft (document in ADR 0037).
 
-- `getAdmissionById(tenantId, id)` — joined shape: patient (id, mrn, firstName, lastName),
-  doctor (id, name, specialty), admissionType (id, name, code), bed (id, bedNumber) + ward
-  (id, name), visit (id, visitNumber) when linked, plus the bed-transfer history rows (with from/
-  to bed numbers). All reads filter `tenantId` + `isDeleted = false`.
-- `getAdmissions(tenantId, filters, pagination)` — filters: `status` (query layer defaults to
-  `ADMITTED`), `wardId` (via bed join), `doctorId`, `patientId`, `search` (admission number /
-  MRN / patient name); ordered `admittedAt` desc; returns `{ data, total }`.
-- `findActiveAdmissionByPatientId(tenantId, patientId)`; `findActiveAdmissionByBedId(tenantId, bedId)`.
-- `createAdmission(...)` — one transaction: increment `admission_number_counter`
-  (insert-or-update, copy the visit-number repo), insert the admission, and update the target
-  bed's status to `OCCUPIED` **with a guarded UPDATE** (`where status in ('AVAILABLE','RESERVED')
-and is_deleted = false`; zero rows updated → roll back and return the not-available outcome —
-  copy the outcome-union style the visit repository uses).
-- `transferBed(tenantId, id, toBedId, reason)` — one transaction: guarded-occupy the target bed,
-  release the old bed to `AVAILABLE`, update `admission.bedId`, insert the
-  `admission_bed_transfer` row.
-- `dischargeAdmission(tenantId, id, disposition, summary)` / `cancelAdmission(tenantId, id,
-reason)` — status + timestamps, release the bed to `AVAILABLE`, same transaction.
-- `updateAdmission` (admissionReason/remarks/expectedDischargeDate, active only).
-- `deleteAdmission(tenantId, id)` — soft delete (ADR 0012 naming).
-- Read for clinical-capture validators: `getAdmissionForClinicalCapture(tenantId, id)` (id,
-  patientId, status).
+**Schemas** (+unit tests): create (patientId, visitId?, admissionId?, notes?; refine: not both
+encounter links), add-line (chargeItemId, quantity int ≥ 1, unitPrice? override ≥ 0), draft
+update (discountAmount ≥ 0, notes), void (voidReason required, trimmed, ≤ 255), payment
+(amount > 0, method enum, reference?, notes?, receivedAt? defaults now), list filters.
 
-**Schemas** (`schemas/admission-schema.ts` + unit tests): `admitPatientSchema` (patientId,
-doctorId, admissionTypeId, bedId, optional visitId/admissionReason/remarks/
-expectedDischargeDate), `transferBedSchema` (toBedId, optional reason), `dischargeSchema`
-(disposition enum required, optional summary), `cancelAdmissionSchema` (required reason),
-`updateAdmissionSchema`, `listAdmissionsSchema` (filters + pagination; date handling reuses the
-ADR 0026 helpers where dates appear).
+**Validators** (+unit tests), exact messages:
 
-**Validators** (+unit tests). Exact messages:
+- Existence: `Invoice abc is Invalid.` / `Invoice line abc is Invalid.` /
+  `Patient abc is Invalid.` / `Visit abc is Invalid.` / `Admission abc is Invalid.` /
+  `Charge item abc is Invalid.`
+- Create: patient exists; linked Visit/Admission exists **and belongs to the same patient**
+  (`Visit V-1001 does not belong to patient MRN-0001.` — same pattern for Admission).
+- Draft-only edits: `Invoice INV-1001 can only be edited while in Draft.`
+- Add-line: charge item active — `Charge item CONS is inactive.`
+- Finalize: at least one line — `Invoice INV-1001 has no lines to finalize.`
+- Void: `Invoice INV-1001 cannot be voided after payments are recorded.` (also covers
+  PARTIALLY_PAID/PAID); already void/draft-deleted → existence message.
+- Payment: `Invoice INV-1001 is not open for payment.` (DRAFT/PAID/VOID);
+  `Payment amount 5000 exceeds the balance due 3000 on invoice INV-1001.`
+- Discount: `Discount 6000 exceeds the invoice subtotal 5000.`
+- Bed charges: `Invoice INV-1001 is not linked to an Admission.` /
+  `Admission ADM-1001 is not discharged yet.`
+- Delete: `Invoice INV-1001 cannot be removed once finalized.`
 
-- `Admission {id} is Invalid.` / `Patient {id} is Invalid.` / `Doctor {id} is Invalid.` /
-  `Admission type {id} is Invalid.` / `Bed {id} is Invalid.` / `Visit {id} is Invalid.`
-- `Patient {id} is provisional and must complete registration before admission.`
-- `Patient {id} is inactive and cannot be admitted.`
-- `Patient {id} already has an active admission.`
-- `Bed {bedNumber} is not available for admission.` (status not AVAILABLE/RESERVED, or occupied)
-- `Visit {id} does not belong to patient {patientId}.` / `Visit {id} is cancelled.`
-- `Admission {admissionNumber} cannot be transferred from its current status.` (and equivalents
-  for discharge / cancel / update)
-- `Admission {admissionNumber} is already in bed {bedNumber}.` (transfer to the same bed)
-- Repository-backed checks live in validators (house rule); validators call `patientRepository`,
-  `doctorRepository`, `bedRepository`, `admissionTypeRepository`, `visitRepository`,
-  `admissionRepository` reads — never write Drizzle directly.
+**Commands** (+unit tests): createInvoice, addInvoiceLine, removeInvoiceLine,
+updateDraftInvoice, finalizeInvoice, voidInvoice, recordPayment, generateBedCharges,
+deleteInvoice. Every command validates first; map `23505` (invoice/receipt number races) and
+guarded-update zero-row outcomes to clean errors. `generateBedCharges` computes segments/days
+per decision 8 (pure day-count helper lives beside the command, unit-tested hard: same-day,
+transfer-day, month boundary, IST midnight edge) and returns
+`{ linesAdded, warnings: string[] }` — warning text:
+`Bed ICU-01 has no daily rate configured; segment skipped.`
 
-**Commands** (+unit tests): `admit-patient-command` (validate → repository → `CommandResult`;
-map `23505` on the active-patient / active-bed indexes to the clean conflict messages — the DB
-race backstop), `transfer-bed-command`, `discharge-admission-command`,
-`cancel-admission-command`, `update-admission-command`, `delete-admission-command`.
-
-**Queries** (+unit tests): `get-admission-query` (detail incl. transfer history + in-admission
-records), `get-admissions-query` (status defaults to `ADMITTED` when no filters given).
-
-### 6.5 Clinical capture wiring (existing modules)
-
-Mirror the Visit wiring exactly (see `visit-clinical-capture-validator` and the `visitId`
-handling in `patient-vital-sign` / `clinical-note`):
-
-- Create schemas accept optional `admissionId` (positive int); reject when both `visitId` and
-  `admissionId` are supplied: `A record may reference a Visit or an Admission, not both.`
-- Validators: when `admissionId` present, resolve via
-  `admissionRepository.getAdmissionForClinicalCapture` — must exist in tenant
-  (`Admission {id} is Invalid.`), belong to the same patient
-  (`Admission {id} does not belong to patient {patientId}.`), and be active
-  (`Admission {id} is not active.`).
-- Add `getVitalSignsByAdmissionId` / `getClinicalNotesByAdmissionId` reads (tenant + admission
-  filtered) and surface them in the admission detail query. Update both modules' unit tests.
+**Queries** (+unit tests): getInvoiceById (detail shape incl. balanceDue), getInvoices
+(validate filters; status set defaults to all), plus `getInvoicesByPatientId` only if the FE
+needs it (no speculative exports).
 
 ## 7. API surface (`app/api/v1/`)
 
-Thin routes (`requireTenantSession()` → command/query → `NextResponse`), each with a sibling
-type-only `types.ts`. Static segments beat dynamic, so `beds/board` coexists with `beds/[id]`.
+Every route: thin handler, sibling type-only `types.ts`, session-resolved `tenantId`, Swagger
+in the same change.
 
-- `wards` — GET (list), POST; `wards/[id]` — GET, PUT, DELETE.
-- `admission-types` — GET, POST; `admission-types/[id]` — GET, PUT, DELETE.
-- `beds` — GET (list; `wardId`, `status`, `search`, pagination), POST; `beds/[id]` — GET, PUT,
-  DELETE; `beds/board` — GET (ward-grouped occupancy payload for the Bed Board).
-- `admissions` — GET (list; `status`, `wardId`, `doctorId`, `patientId`, `search`, pagination),
-  POST (admit).
-- `admissions/[id]` — GET (detail incl. transfer history + in-admission vitals/notes summaries),
-  PUT (admissionReason/remarks/expectedDischargeDate), DELETE (soft delete).
-- `admissions/[id]/transfer` — POST (body: `toBedId`, `reason?`).
-- `admissions/[id]/discharge` — POST (body: `dischargeDisposition`, `dischargeSummary?`).
-- `admissions/[id]/cancel` — POST (body: `cancellationReason`).
-- Patient admission history: reuse `GET /admissions?patientId=…&status=` — no nested route.
+| Route                          | Methods          | Notes                                      |
+| ------------------------------ | ---------------- | ------------------------------------------ |
+| `charge-items`                 | GET, POST        | list (filters) / create                    |
+| `charge-items/[id]`            | GET, PUT, DELETE | delete = soft                              |
+| `invoices`                     | GET, POST        | list (filters) / create draft              |
+| `invoices/[id]`                | GET, PUT, DELETE | PUT = draft discount/notes; DELETE guarded |
+| `invoices/[id]/lines`          | POST             | add line                                   |
+| `invoices/[id]/lines/[lineId]` | DELETE           | remove line (204)                          |
+| `invoices/[id]/finalize`       | POST             | lifecycle transition                       |
+| `invoices/[id]/void`           | POST             | body: voidReason                           |
+| `invoices/[id]/payments`       | GET, POST        | list / record payment (returns receipt)    |
+| `invoices/[id]/bed-charges`    | POST             | generate/replace BED_AUTO lines + warnings |
 
-Route handler tests only where adapter logic is non-trivial (admit body, transition routes,
-param parsing).
+Route tests for the transition/payment routes (non-trivial adapter logic: status-code mapping
+for guard failures → 409, validation → 400, not found → 404).
 
 ## 8. Permissions & onboarding seed
 
-1. **Permission catalogue** (`permission/seed-data.ts` + a **new** migration, never edit old
-   ones). New Permission Modules:
-   - `inpatient` / `admission`: read, create, update, delete, transfer, discharge, cancel
-   - `inpatient-masters` / `ward`: read, create, update, delete
-   - `inpatient-masters` / `bed`: read, create, update, delete
-   - `inpatient-masters` / `admission-type`: read, create, update, delete
-     (Match the existing module/resource/action naming style in `seed-data.ts` exactly — inspect it
-     before writing.)
-2. **Onboarding** (`tenant-provisioning`): `seed-default-admission-types-command.ts` seeding —
-   `Emergency (EMER)`, `Elective (ELEC)`, `Transfer (TRF)`, `Maternity (MAT)`, `Day Care (DAYC)`.
-   Wire beside the existing seed commands (visit types is the template), keep idempotent, update
-   onboarding unit tests. Wards/Beds are physical and are **not** seeded (like Rooms).
+1. **Permission catalogue**: new groups `billing` (invoice read/create/update/finalize/void/
+   delete, payment record/read, bed-charge generate — collapse to the catalogue's house
+   action-set granularity; follow how `inpatient` was structured in `seed-data.ts`) and
+   `billing-masters` (charge-item CRUD). Seed via `seed-data.ts` + a backfill migration for
+   existing tenants, exactly like `0044_seed_inpatient_permissions.sql`.
+2. **Onboarding seed**: none for ChargeItems (decision 12). Update onboarding tests only if
+   the permission additions touch them.
 
 ## 9. Frontend
 
-Follow `DESIGN.md` + `design-system` skill, screen-composition rules in `CLAUDE.md`,
-`tanstack-query-patterns` skill for all hooks, ADR 0009 (react-hook-form + zodResolver), ADR 0010
-(nuqs URL state). Every `page.tsx` gets a page-shaped `loader.tsx`.
+All UI follows `DESIGN.md` + the `design-system` skill; every data call goes through the
+`tanstack-query-patterns` skill. Every new `page.tsx` gets a sibling `loader.tsx` skeleton.
+Sheet/dialog open-state lives in the URL via `nuqs` (ADR 0010); screen composition follows the
+`_components` / `_sheets` / `_modals` / `_utils` structure (reference:
+`app/(protected)/identity-access/roles/`).
 
-### 9.1 Query hooks (`app/queries/`)
+### 9.1 Query hooks (`app/queries/billing/`)
 
-- `app/queries/inpatient-masters/{wards,beds,admission-types}/` — list/get/create/update/delete
-  hooks per master (clone the visit-types hooks).
-- `app/queries/admissions/` — `useAdmissions` (keyed by filters), `useAdmission(id)`,
-  `useBedBoard`, `useAdmitPatient`, `useTransferBed`, `useDischargeAdmission`,
-  `useCancelAdmission`, `useUpdateAdmission`, `useDeleteAdmission`. Every admission mutation
-  invalidates the admissions list + detail **and** the beds list + bed board (bed statuses
-  changed). Reuse the `parseApiError` + `credentials: 'same-origin'` pattern.
+- `charge-items`: list/get + create/update/delete mutations (copy an existing master's hooks).
+- `invoices`: list (filters in the key), detail, create, draft-update, add/remove line,
+  finalize, void, record-payment, generate-bed-charges. Mutations invalidate the detail + list
+  keys; payment/finalize also invalidate anything patient-billing-related that exists. Export
+  only hooks a component imports (no speculative exports).
 
-### 9.2 `/admissions` — Inpatient census (`app/(protected)/admissions/`)
+### 9.2 `/billing` — Invoice list (`app/(protected)/billing/`)
 
-Default view = **active admissions** (status `ADMITTED`).
+- Toolbar: status filter (default **Open** = DRAFT + FINALIZED + PARTIALLY_PAID; explicit
+  All/Paid/Void options), search (invoice # / patient name / MRN), **New Invoice** button.
+- Table: invoice #, patient (name + MRN), linked encounter chip (visit/admission number),
+  status badge, grand total, balance due, created date. Row → `/billing/[id]`.
+- `create-invoice-sheet` (`_sheets/`): patient picker (reuse the existing patient search
+  pattern from the admit sheet), optional encounter link (radio none/visit/admission + a picker
+  filtered to that patient's records), notes. Opens via `?invoice=new`; supports prefill params
+  `?invoice=new&patientId=…&visitId=…` / `…&admissionId=…` for the deep links in §9.4. On
+  success → navigate to the new draft's detail.
 
-- `page.tsx` + `loader.tsx` + `_components/admissions-page-impl.tsx` (thin container; nuqs owns
-  filter + surface state: `?status=`, `?ward=`, `?doctor=`, `?admit=new`, `?discharge={id}`,
-  `?transfer={id}`, `?cancel={id}`).
-- `admissions-toolbar.tsx` — status filter (default Admitted), ward select, doctor select,
-  search, **Admit Patient** primary action.
-- `admissions-table.tsx` — columns: Admission Number, Patient (name + MRN), Ward / Bed, Admitting
-  Doctor, Admission Type, Admitted at, Expected discharge, Status badge, row actions. Row actions
-  while Admitted: Transfer, Discharge, Cancel; all: View, Open Patient.
-- `_sheets/admit-patient-sheet.tsx` — patient combobox (registered + active only — reuse the
-  check-in sheet's pattern), doctor select, admission type select, **Ward select → Bed select
-  cascade** (beds filtered to the chosen ward, AVAILABLE/RESERVED only, show status), optional
-  source Visit (only if trivially resolvable — otherwise omit from the sheet and keep `visitId`
-  API-only for v1), admission reason, expected discharge date. Server errors via `setError`;
-  required-asterisks from the API schema.
-- `_modals/discharge-dialog.tsx` — disposition select (required) + summary textarea;
-  `_modals/transfer-bed-dialog.tsx` — ward→bed cascade + reason; `_modals/cancel-admission-dialog.tsx`
-  — required reason.
+### 9.3 `/billing/[id]` — Invoice detail
 
-### 9.3 `/admissions/[id]` — Admission detail
+- Header: invoice #, status badge, patient identity, encounter chip (links to visit/admission
+  detail), finalized/voided timestamps, void reason.
+- Lines card: table of description / qty / unit price / amount, `BED_AUTO` lines visually
+  tagged. In DRAFT: **Add line** sheet (`_sheets/add-line-sheet.tsx` — active-ChargeItem
+  picker with category filter, qty, prefilled overridable price), per-row remove, and a
+  **Generate bed charges** button when admission-linked (confirm dialog; shows returned
+  warnings as toasts/inline).
+- Totals panel: subtotal, discount (inline-editable in DRAFT), grand total, amount paid,
+  **balance due** emphasized.
+- Payments card: receipt #, method, reference, amount, receivedAt. **Record payment** dialog
+  (`_modals/record-payment-dialog.tsx`) — amount (prefilled with balance), method, reference,
+  notes; hidden unless status is payable.
+- Lifecycle actions: **Finalize** confirm dialog (DRAFT), **Void** dialog with required reason
+  (DRAFT / FINALIZED with no payments), **Delete** (DRAFT/VOID) with confirm.
 
-- Header: admission number, status + timeline (admitted → discharged/cancelled timestamps,
-  expected discharge), current Ward/Bed, patient identity (link to patient page) with the
-  existing **AllergyBanner** reused, admitting doctor, admission type, source visit link when
-  present.
-- Body: admission reason/remarks (editable while active), **Bed history** (initial bed + transfer
-  rows with reasons/times), **Vitals this admission** and **Clinical notes this admission**
-  lists with capture sheets posting to the existing patient-chart endpoints **with `admissionId`
-  stamped** (clone the `/visits/[id]` capture sheets).
-- Status action buttons mirror the census row actions; discharged view shows disposition +
-  summary read-only.
+### 9.4 Encounter deep links
 
-### 9.4 `/bed-board` — Ward-wise occupancy grid
+- Visit detail and Admission detail get a **Create Invoice** action that routes to
+  `/billing?invoice=new&patientId=…&visitId=…` (resp. `admissionId`). FE-only change to those
+  screens — no backend edits to visit/admission modules anywhere in this plan.
 
-The flagship visual (Bahmni bed layout / Epic bed planning, scoped to v1):
+### 9.5 Master screen + nav
 
-- One section per Ward; each Bed is a card/tile color-coded by status (use design-token status
-  colors per `DESIGN.md` — no hardcoded hex), showing bed number, room number when linked, and
-  for occupied beds the patient name + MRN + admission number.
-- Occupied tile → links to the admission detail; Available/Reserved tile → "Admit here" opening
-  `/admissions?admit=new` with the bed preselected (pass ward/bed through the nuqs params).
-- Toolbar: ward filter, status filter, an occupancy summary line (x/y beds occupied per ward —
-  computed client-side from the board payload).
-- Data from `GET /api/v1/beds/board` via `useBedBoard`.
-
-### 9.5 Master screens + nav
-
-- `app/(protected)/inpatient-masters/wards/`, `.../beds/`, `.../admission-types/` — clone the
-  `visit-masters/visit-types` screen (table, toolbar, form sheet, delete dialog, `_utils` schema,
-  loader). The Beds screen adds the ward select (+ optional room select) and shows status; its
-  form must not offer OCCUPIED.
-- `components/app/app-shell-config.ts`:
-  - New nav group **Inpatient** (after Clinical): **Admissions** (`/admissions`, icon
-    `BedDouble`) and **Bed Board** (`/bed-board`, icon `LayoutGrid`).
-  - Configuration group: **Inpatient Masters** (icon `Hospital`) with items Wards
-    (`/inpatient-masters/wards`), Beds (`/inpatient-masters/beds`), Admission Types
-    (`/inpatient-masters/admission-types`).
-  - `pageMeta` entries for all six new routes (census, board, detail falls back to parent, three
-    masters), each with title + subtitle in the house voice; census gets primaryAction
-    "Admit patient" → `/admissions?admit=new`.
+- `/billing-masters/charge-items` — standard master CRUD screen (copy an existing master
+  screen wholesale: table + search/category filter + create/edit sheet + delete dialog +
+  active toggle), + loader.
+- Nav: new **Billing** group (Invoices) in the app sidebar; Configuration → **Billing
+  Masters** (Charge Items). pageMeta entries for every new route.
 
 ## 10. Swagger / OpenAPI
 
-Update the OpenAPI source in the same change as each route: all ward / bed / admission-type /
-admission operations with realistic EMR examples (admission number `ADM-1001`, bed `ICU-01`,
-ward `ICU`, disposition `ROUTINE`), the board payload, transition endpoints with status-conflict
-error examples, the extended `admissionId` field on vital-sign/clinical-note create ops, and
-validation/conflict/not-found/unauthorized examples using the exact messages from §6. Zero
-unresolved `$ref`s.
+Every operation in §7 documented in the same change as its route: request/response schemas,
+status codes (400 validation, 401, 404, 409 for lifecycle/uniqueness conflicts), and realistic
+EMR examples — e.g. a finalized `INV-1042` for patient `MRN-0007` with a `CONS` line and a
+`BED_AUTO` line (`Bed charges — ICU-01 (ICU), 3 days @ 5000.00`), a partial `RCP-2010` UPI
+payment, the exact-message error examples from §6.2 (over-balance payment, void-after-payment,
+not-discharged bed charges), and the uppercase-code transform on ChargeItem.
 
 ## 11. Cross-module touchpoints
 
-1. **`visit` module**: admission validators need a visit read returning id/patientId/status —
-   `getVisitForClinicalCapture` already has this shape; reuse it (rename only if trivial).
-2. **`patient-vital-sign` / `clinical-note`**: the `admissionId` wiring (§6.5) touches the same
-   files the Visit feature touched — follow the `visitId` code paths symmetrically.
-3. **`room` module**: read-only FK from `bed.roomId`; validators need `roomRepository.getRoomById`
-   (exists). Do not modify room behavior.
-4. **Dashboard/appShellStats** are hardcoded demo values — out of scope.
+- **Reads** `roomType.dailyRate` via bed → room → roomType for bed-charge generation — first
+  consumer of that column; no schema change to rooms.
+- **Reads** `admission` + `admission_bed_transfer` for occupancy segments; **no writes** to
+  IPD tables and no status coupling (billing never blocks discharge in v1).
+- **Reads** `patient`, `visit` for existence/ownership checks and joins.
+- Visit/Admission detail screens gain one FE action each (§9.4).
+- Permission seed + backfill migration touches the shared catalogue (§8).
 
 ## 12. Open decisions (recommended defaults baked into this plan)
 
-1. **Bed-first admission (no "admit without bed" pending state)** — Bahmni's newer flow requires
-   the bed upfront; an "awaiting bed" worklist is a future enhancement, not v1.
-2. **Ward is a Master, Bed Board is the operational view** — the glossary lists Ward and Bed
-   under Masters; operations happen on `/bed-board` and `/admissions`.
-3. **Discharge Disposition fixed set vs Master** — fixed set chosen (mirrors Visit Status
-   reasoning). Revisit via the AppointmentStatus category pattern if a tenant needs custom values.
-4. **No Room Status / `room.bedCount` reconciliation** — Rooms stay a manually managed registry
-   in v1. If Rooms later become bed containers for real, that is its own migration task.
-5. **`visitId` on admit is API-first** — the admit sheet may omit the visit picker if resolving
-   "today's completed visits for this patient" adds UI complexity; the API contract carries it
-   either way.
-6. **AdmissionType has no in-use delete guard** — mirrors VisitType (documented follow-up there);
-   Ward and Bed **do** get guards because dangling physical topology breaks the board.
+1. **Transfer-day double billing** (decision 8): both segments bill the transfer date.
+   Alternative (bill the arriving bed only) is more code for marginal fairness; revisit if
+   users complain.
+2. **Line edit** = remove + re-add (decision 3). In-place qty/price PATCH is a easy follow-up
+   if cashiers hate it.
+3. **Discount clamp on line removal** (§6.2): auto-clamp + surface, rather than blocking the
+   removal. Blocking strands drafts behind a discount the user then has to find.
+4. **Status filter default "Open"** on `/billing` (§9.2) — cashiers live in open invoices;
+   Paid/Void are lookups.
+5. **`receivedAt` accepted from the client** (defaults to now) — hospitals backfill
+   end-of-day cash entries. Not allowed in the future (schema refine: ≤ now + small skew).
 
 ## 13. Definition of done
 
 - `bun run test` green (all new colocated unit + integration tests included).
 - `bunx tsc --noEmit`, `bun run lint`, `bun run format:check` clean; `bun run build` passes.
-- `bun run db:migrate` applies cleanly from a fresh DB; onboarding seeds Admission Types.
+- `bun run db:migrate` applies cleanly from a fresh DB; permission backfill migration runs.
 - Swagger renders every new operation with success + error examples.
-- Manual smoke: create Ward `ICU` → create Beds `ICU-01`, `ICU-02` → admit a Registered patient
-  to `ICU-01` (`ADM-1001`; bed flips OCCUPIED; second admit for same patient refused with exact
-  message; admit to `ICU-01` for another patient refused) → record vitals + a note against the
-  admission → transfer to `ICU-02` with a reason (`ICU-01` back to AVAILABLE, history row shown)
-  → verify the Bed Board shows the occupancy → discharge with disposition `ROUTINE` + summary
-  (bed freed, admission immutable) → cancel-path check on a fresh admission → verify a
-  Provisional patient is refused admission with the exact message → verify Ward/Bed delete
-  guards.
+- Manual smoke: create ChargeItems `CONS` (500) and `DRSG` (150) → new invoice for a Registered
+  patient linked to a Visit → add both lines (override DRSG to 200, qty 2) → discount 100 →
+  totals check (subtotal 900, grand 800) → finalize (lines lock) → record CASH 300
+  (`RCP-…`, status PARTIALLY_PAID, balance 500) → attempt 600 payment (refused with exact
+  message) → pay UPI 500 (status PAID) → void attempt refused. Second flow: discharge an
+  admitted patient who had one bed transfer → invoice linked to the Admission → generate bed
+  charges (two BED_AUTO segments, day counts per decision 8; a rate-less bed yields the skip
+  warning) → regenerate (no duplicates) → finalize → pay → PAID. Guards: draft-only edits,
+  delete-after-finalize refused, zero-total invoice finalizes straight to PAID, ChargeItem
+  uniqueness + inactive-item add-line refusal.
 
 ---
 
@@ -568,106 +485,113 @@ unresolved `$ref`s.
 Phases are ordered by dependency; within a phase, tickets are parallelizable. Every backend
 ticket ships its colocated tests in the same change.
 
-> **Progress log (2026-07-17):** Phases 0–3 implemented on `feat/inpatient-management`.
+> **Progress log (2026-07-18):** Phases 0–1 implemented on `main` working tree (not yet committed).
 >
-> - **Phase 0:** CONTEXT.md terms added (Admission Number/Status, AdmissionType, Active
->   Admission, Bed Number/Status, Bed Transfer, Discharge + Disposition + Summary, Expected
->   Discharge Date, Bed Board, Inpatient Census); ADRs `0032`–`0035` written; `inpatient` +
->   `inpatient-masters` permission groups + backfill migration `0044_seed_inpatient_permissions.sql`.
-> - **Phase 1:** `ward` and `admission-type` modules cloned from `visit-type` (full CQRS +
->   colocated tests); `bed` module hand-built (per-ward case-insensitive uniqueness, manual
->   OCCUPIED writes rejected, occupied update/delete guards, board read); Ward delete guarded via
->   `bedRepository.countActiveBedsByWardId`. Routes `wards(+/[id])`, `admission-types(+/[id])`,
->   `beds(+/[id], /board)`. Onboarding seeds 5 default AdmissionTypes
->   (`seed-default-inpatient-masters-command`) + backfill migration `0046` for existing tenants.
->   Master screens + hooks + Inpatient Masters nav group.
-> - **Phase 2:** `admission` module complete — admit transaction (ADM- counter + guarded bed
->   occupy with `bed-not-available` outcome), transfer (release + occupy + history row), discharge/
->   cancel (bed release), soft delete releases the bed of an Active Admission, 2 partial unique
->   indexes (active-patient, active-bed) with 23505 mapping, census list with ward filter via bed
->   join, detail with embedded transfer history. `admissionId` FK + one-parent CHECK on
->   `patient_vital_sign`/`clinical_note` (migration `0045`), validated via
->   `admission-clinical-capture-validator`. 16 repository integration tests incl. bed-status sync
->   and board occupant join.
-> - **Phase 3:** `/admissions` census (status default Admitted, ward/doctor/search filters, admit
->   sheet with ward→bed cascade of free beds, transfer/discharge/cancel dialogs),
->   `/admissions/[id]` detail (timeline, AllergyBanner, bed history, editable reason/remarks/EDD,
->   in-admission vitals + note capture stamping `admissionId`), `/bed-board` ward-grouped
->   color-coded grid (occupied tile → admission, free tile → prefilled admit deep-link),
->   `inpatient-masters/{wards,beds,admission-types}` screens, **Inpatient** nav group + pageMeta.
-> - **Gates:** `bun run test` 250 files / 2447 tests green (unit + integration against the
->   OrbStack test DB); `bunx tsc --noEmit` clean; `bun run lint` 0 errors; prettier clean;
->   `bun run build` passes with all new routes; Swagger has 1966 resolved `$ref`s / 0 unresolved.
-> - **Not done:** §13 manual smoke (needs a running app + seeded tenant; the dev DB is the shared
->   remote Neon instance, so this branch's migrations were deliberately **not** applied there).
->   The backend path is covered end-to-end by the integration tests (admit → transfer → discharge/
->   cancel/delete incl. bed-status sync and occupancy races).
->
-> **Known follow-ups (not blocking):**
->
-> 1. **`/admissions/[id]` reads in-admission records by filtering the whole Patient Chart**
->    client-side on `admissionId` — mirrors the `/visits/[id]` approach and its documented
->    follow-up; a `admissions/[id]/records` aggregate would be tighter if the chart grows.
-> 2. **AdmissionType delete has no in-use guard** (mirrors VisitType, §12.6). Ward and Bed do
->    have guards.
-> 3. **The admit sheet does not offer a source-Visit picker** — `visitId` is API-only for v1
->    (§12.5).
+> - **Phase 0:** CONTEXT.md billing terms added (Charge Item + Category, Invoice + Number + Line +
+>   Status, Draft/Finalize/Void, Discount, Payment + Method, Receipt Number, Balance Due, Bed-Day
+>   Charge, Occupancy Segment); ADRs `0036`–`0040` written; `billing` + `billing-masters`
+>   permission groups added to `seed-data.ts` (13 permissions) + backfill migration
+>   `0047_seed_billing_permissions.sql` (+ hand-authored snapshot/journal entry, `drizzle-kit
+check` clean).
+> - **Phase 1:** `charge_item` table (migration `0048`, category + unit-price CHECKs, two partial
+>   unique indexes, category index) + full CQRS module cloned from `visit-type`/`ward` with
+>   category/unitPrice/isActive fields and category+isActive list filters. Colocated tests: schema
+>   (17), validator (18), commands (16), queries (7), repository integration (19) — 70 charge-item
+>   tests green. Routes `charge-items(+/[id])` + `types.ts` + Swagger (tag, paths via
+>   `collectionOperations`/`itemOperations`, `ChargeItemCategory`/`CreateChargeItemRequest`/
+>   `ChargeItem` schemas; 2009 refs / 0 unresolved). Query hooks `app/queries/billing/charge-items/*`.
+>   `/billing-masters/charge-items` CRUD screen (page/loader/impl/table/form-sheet/delete-dialog,
+>   nuqs `?charge-item=` state, category filter, active toggle) + **Billing Masters** nav group +
+>   pageMeta.
+> - **Gates:** `bunx tsc --noEmit` clean; `bun run lint` 0 errors; `bun run format:check` clean.
+>   Full `bun run test` re-run in progress. Messages use the unquoted house style
+>   (`Charge item code CONS already exists.` / `Charge item abc is Invalid.`).
 
 ### Phase 0 — Foundations
 
-- [x] CONTEXT.md terms (§4): Admission Number/Status, AdmissionType, Active Admission, Bed
-      Number/Status, Bed Transfer, Discharge, Discharge Disposition, Discharge Summary, Expected
-      Discharge Date, Bed Board, Inpatient Census.
-- [x] ADRs 0032–0035 (§4).
-- [x] Permission catalogue: `inpatient` + `inpatient-masters` permissions in `seed-data.ts` + new
+- [x] CONTEXT.md terms (§4).
+- [x] ADRs 0036–0040 (§4).
+- [x] Permission catalogue: `billing` + `billing-masters` groups in `seed-data.ts` + backfill
       seed migration (§8.1).
 
-### Phase 1 — Masters (backend + frontend)
+### Phase 1 — ChargeItem master (backend + frontend)
 
-- [x] `ward` schema + migration; full module + colocated tests (incl. delete guard).
-- [x] `admission-type` schema + migration; full module + colocated tests.
-- [x] `bed` schema + migration; full module + colocated tests (ward/room existence, per-ward
-      uniqueness, OCCUPIED write rejection, delete guard).
-- [x] Routes + `types.ts` + Swagger: `wards(+/[id])`, `admission-types(+/[id])`, `beds(+/[id])`.
-- [x] Onboarding seed `seed-default-admission-types-command.ts` + onboarding test updates (§8.2).
-- [x] Query hooks `app/queries/inpatient-masters/*`.
-- [x] `inpatient-masters/{wards,beds,admission-types}` CRUD screens + loaders.
-- [x] Nav: Configuration → **Inpatient Masters** group + pageMeta entries.
+- [x] `charge-item` schema + migration; full module + colocated tests (uppercase code,
+      category CHECK, price ≥ 0, uniqueness messages) (§5, §6.1).
+- [x] Routes + `types.ts` + Swagger: `charge-items(+/[id])` (§7, §10).
+- [x] Query hooks `app/queries/billing/charge-items*`.
+- [x] `/billing-masters/charge-items` CRUD screen + loader; Configuration → **Billing
+      Masters** nav + pageMeta (§9.5).
 
-### Phase 2 — Admission module (backend)
+### Phase 2 — Invoice module (backend)
 
-- [x] `admission` + `admission_bed_transfer` + counter schema + migration incl. partial unique
-      indexes (§5).
-- [x] Migration adding `admission_id` columns/FKs + one-parent CHECK on `patient_vital_sign` /
-      `clinical_note`.
-- [x] `admission` repository (admit/transfer/discharge/cancel transactions with guarded bed
-      updates + counter; list/get incl. transfer history; deleteAdmission) + integration tests
-      (tenant isolation, unique-index races, bed status sync, guarded-update zero-rows outcome).
-- [x] `admission` schemas + unit tests.
-- [x] `admission` validators + unit tests (all gates + exact messages §6).
-- [x] `admission` commands + unit tests (23505 mapping on both partial indexes).
-- [x] `admission` queries + unit tests (status defaults to ADMITTED; detail shape).
-- [x] `bed` board read (`getBedBoard`) + `beds/board` route + Swagger.
-- [x] `patient-vital-sign` + `clinical-note`: optional `admissionId` in schemas/validators
-      (+ by-admission reads) + test updates (§6.5).
-- [x] Routes + `types.ts` + Swagger: `admissions`, `admissions/[id]`,
-      `admissions/[id]/{transfer,discharge,cancel}` (+ route tests for transitions).
+> **Progress log (2026-07-18):** Phase 2 implemented. `invoice`/`invoice_line`/`payment` +
+> `invoice_number_counter`/`receipt_number_counter` schemas (migration `0049`, all CHECKs incl.
+> single-encounter-parent, discount ≤ subtotal, amount_paid ≤ grand_total, per-tenant unique
+> INV/RCP indexes). Repository with FOR-UPDATE-locked draft guards, transactional counter bumps,
+> transactional total recompute + discount clamp, payment status sync, idempotent BED_AUTO
+> replacement, and `getOccupancySource`. Pure `bed-day-calculator` (segments + IST calendar-day
+> counting). 11 validators, 9 commands, 2 queries, 8 routes (+ sub-routes) + 8 `types.ts`.
+> Swagger: 2 tags, 8 paths, 12 schemas, examples incl. exact error strings (2113 refs / 0
+> unresolved). Colocated tests: schema (17), calculator (9), validator (26), commands (11),
+> queries (7), repository integration (13) — **78 invoice tests**. `bunx tsc`/lint/prettier clean.
+> Route adapter logic mirrors existing routes closely, so no separate route tests were added
+> (deviation from §7's optional route-test note; command/validator coverage exercises the mapping).
+
+- [x] `invoice` + `invoice_line` + `payment` + both counter schemas + migration incl. CHECKs
+      and partial unique indexes (§5).
+- [x] `invoice` repository (create/line/draft-update/finalize/void/payment/bed-segment reads/
+      replaceBedAutoLines/delete, guarded UPDATEs, transactional totals) + integration tests
+      (tenant isolation, number/receipt counter races, status guards as zero-row outcomes,
+      payment race → CHECK backstop, discount clamp on line removal).
+- [x] `invoice` schemas + unit tests (one-parent refine, payment bounds, void reason).
+- [x] `invoice` validators + unit tests (all gates + exact messages §6.2).
+- [x] `invoice` commands + unit tests (validator-first, 23505 mapping, guarded-outcome
+      mapping; bed-day segment/day-count helper edge cases: same-day, transfer-day, month
+      boundary, IST midnight).
+- [x] `invoice` queries + unit tests (detail shape incl. balanceDue; list filters, Open set).
+- [x] Routes + `types.ts` + Swagger: `invoices`, `invoices/[id]`, `lines(+/[lineId])`,
+      `finalize`, `void`, `payments`, `bed-charges` (route adapters mirror existing routes;
+      no separate route tests) (§7, §10).
 
 ### Phase 3 — Frontend
 
-- [x] Query hooks `app/queries/admissions/` (§9.1) incl. cross-invalidation of beds/board.
-- [x] `/admissions` census: page + loader + impl + toolbar + table (+ status-driven row actions).
-- [x] `admit-patient-sheet` (ward→bed cascade) + `transfer-bed-dialog` + `discharge-dialog` +
-      `cancel-admission-dialog`.
-- [x] `/admissions/[id]` detail: header + timeline + AllergyBanner + bed history + editable
-      reason/remarks/EDD.
-- [x] In-admission capture sheets (vitals, clinical note) posting with `admissionId`.
-- [x] `/bed-board`: page + loader + ward-grouped grid + toolbar + occupancy summary + admit/
-      detail links.
-- [x] Nav: **Inpatient** group (Admissions, Bed Board) + pageMeta entries.
+> **Progress log (2026-07-18):** Phase 3 implemented. 11 invoice query hooks
+> (`app/queries/billing/invoices/*`: list + detail reads, create/update-draft/add-line/
+> remove-line/finalize/void/record-payment/generate-bed-charges/delete mutations, all
+> invalidating `INVOICES_KEY`). `/billing` list (page/loader/impl/table + `create-invoice-sheet`
+> with patient picker, none/visit/admission radio + patient-scoped encounter pickers, and
+> `?invoice=new&patientId=&visitId=/&admissionId=` prefill). `/billing/[id]` detail (header with
+> encounter links, lines card with add/remove + generate-bed-charges + BED_AUTO tag, totals panel
+> with inline discount edit, payments card, finalize/void/delete/record-payment surfaces via
+> `?line=` + local modal state). Void/add-line use the keyed-inner-form pattern to avoid
+> set-state-in-effect. Visit + Admission detail gained **Create Invoice** deep links. **Billing**
+> top-level nav group + `/billing` pageMeta. `bunx tsc`/lint (0 errors)/prettier/`bun run build`
+> all clean; all `/billing*` routes compile.
+
+- [x] Query hooks `app/queries/billing/invoices*` (§9.1).
+- [x] `/billing` list: page + loader + impl + toolbar + table + `create-invoice-sheet` with
+      prefill params (§9.2).
+- [x] `/billing/[id]` detail: header + lines card + totals panel + payments card (§9.3).
+- [x] `add-line-sheet`, `record-payment-dialog`, finalize/void/delete dialogs,
+      generate-bed-charges action + warnings surface (§9.3).
+- [x] Visit + Admission detail **Create Invoice** deep links (§9.4).
+- [x] Nav: **Billing** group (Invoices) + pageMeta entries (§9.5).
 
 ### Phase 4 — Docs & gates
 
-- [x] Swagger sweep — every new/changed operation with success + error examples.
-- [x] Green gates: `bun run test`, `bunx tsc --noEmit`, `bun run build`, lint, prettier.
-- [ ] Manual smoke per §13.
+- [x] Swagger sweep — every new/changed operation with success + error examples (done in
+      Phases 1–2; 2113 refs / 0 unresolved).
+- [x] Green gates: `bunx tsc --noEmit`, `bun run build`, lint (0 errors), prettier clean;
+      `bun run test` final run confirming 261+ files green.
+- [x] Manual smoke per §13 — **DONE 2026-07-18** against the live dev server (Neon migrated at
+      the user's request). A scripted driver signed up a fresh tenant, seeded a patient/visit/
+      discharged-admission-with-transfer, and drove the real HTTP API: **26/26 assertions passed**
+      — CONS/DRSG charge items (uppercase code, duplicate-name refused, inactive item), visit-linked
+      INV-1001 (snapshot lines, DRSG override to 200×2, discount 100 → grand 800, finalize locks
+      edits, CASH 300 → PARTIALLY_PAID/RCP-1001/balance 500, overpay 600 refused with exact message,
+      UPI 500 → PAID, void-after-payment refused, delete-finalized refused), zero-total → PAID,
+      admission-linked bed charges (2-day ICU-01 @5000 = 10000 line + rate-less GEN-04 skip warning,
+      idempotent regenerate, finalize + pay → PAID). Browser check confirmed the FE: login, Billing
+      nav, `/billing` list (all encounter chips + statuses), and both `/billing/[id]` detail screens
+      incl. the BED_AUTO "Auto"-tagged line.

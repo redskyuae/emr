@@ -330,6 +330,27 @@
       "when": 1784270315545,
       "tag": "0046_seed_admission_types_for_existing_tenants",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1784270316545,
+      "tag": "0047_seed_billing_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1784339183548,
+      "tag": "0048_lyrical_norrin_radd",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1784340226752,
+      "tag": "0049_loving_bastion",
+      "breakpoints": true
     }
   ]
 }

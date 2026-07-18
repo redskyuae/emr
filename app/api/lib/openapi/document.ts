@@ -1931,6 +1931,76 @@ const workOrderConflict = {
   },
 };
 
+const invoiceResponseExample = {
+  id: 42,
+  tenantId: 'org_apollo',
+  invoiceNumber: 'INV-1042',
+  status: 'FINALIZED',
+  subtotal: 15500,
+  discountAmount: 500,
+  grandTotal: 15000,
+  amountPaid: 5000,
+  balanceDue: 10000,
+  notes: null,
+  finalizedAt: '2026-07-18T09:30:00.000Z',
+  voidedAt: null,
+  voidReason: null,
+  createdOn: '2026-07-18T09:00:00.000Z',
+  modifiedOn: '2026-07-18T09:30:00.000Z',
+  patient: { id: 7, mrn: 'MRN-0007', firstName: 'Asha', lastName: 'Rao' },
+  visit: null,
+  admission: { id: 9, admissionNumber: 'ADM-1001' },
+  lines: [
+    {
+      id: 1,
+      invoiceId: 42,
+      chargeItemId: 3,
+      description: 'General Consultation',
+      quantity: 1,
+      unitPrice: 500,
+      amount: 500,
+      source: 'MANUAL',
+    },
+    {
+      id: 2,
+      invoiceId: 42,
+      chargeItemId: null,
+      description: 'Bed charges — ICU-01 (ICU), 3 days @ 5000.00',
+      quantity: 3,
+      unitPrice: 5000,
+      amount: 15000,
+      source: 'BED_AUTO',
+    },
+  ],
+  payments: [
+    {
+      id: 1,
+      invoiceId: 42,
+      receiptNumber: 'RCP-2010',
+      amount: 5000,
+      method: 'UPI',
+      reference: 'UPI-8842013',
+      notes: null,
+      receivedAt: '2026-07-18T09:31:00.000Z',
+    },
+  ],
+};
+
+const invoiceListItemExample = {
+  id: 42,
+  invoiceNumber: 'INV-1042',
+  status: 'FINALIZED',
+  grandTotal: 15000,
+  amountPaid: 5000,
+  balanceDue: 10000,
+  createdOn: '2026-07-18T09:00:00.000Z',
+  patient: { id: 7, mrn: 'MRN-0007', firstName: 'Asha', lastName: 'Rao' },
+  visit: null,
+  admission: { id: 9, admissionNumber: 'ADM-1001' },
+};
+
+const paymentResponseExample = invoiceResponseExample.payments[0];
+
 export const openApiDocument = {
   openapi: '3.1.0',
   info: {
@@ -1983,6 +2053,19 @@ export const openApiDocument = {
     {
       name: 'Admission',
       description: 'Tenant-scoped inpatient Admission, transfer, and discharge APIs.',
+    },
+    {
+      name: 'Charge Item',
+      description: 'Tenant-scoped Charge Item (billable service) Master APIs.',
+    },
+    {
+      name: 'Invoice',
+      description:
+        'Tenant-scoped Invoice lifecycle, line items, discounts, and Bed-Day Charge generation APIs.',
+    },
+    {
+      name: 'Payment',
+      description: 'Tenant-scoped, append-only Payment recording APIs against Invoices.',
     },
     { name: 'Specialty', description: 'Tenant-scoped Specialty Master APIs.' },
     { name: 'Doctor', description: 'Tenant-scoped Doctor registry and lifecycle APIs.' },
@@ -4048,6 +4131,440 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
+    '/api/v1/charge-items': collectionOperations({
+      tag: 'Charge Item',
+      entity: 'Charge Item',
+      summaryEntity: 'Charge Items',
+      schemaName: 'ChargeItem',
+      createSchemaName: 'CreateChargeItemRequest',
+      example: {
+        name: 'General Consultation',
+        code: 'CONS',
+        category: 'CONSULTATION',
+        unitPrice: 500,
+        description: 'Standard outpatient consultation fee',
+        isActive: true,
+      },
+      security: [{ cookieAuth: [] }],
+      listErrorResponses: authenticatedListErrorResponses,
+      mutationErrorResponses: {
+        ...authenticatedErrorResponses,
+        '409': {
+          description: 'The Charge Item name or code already exists in the Tenant.',
+          content: jsonContent(schemaRef('ValidationError'), {
+            message: 'Charge item code CONS already exists.',
+            errors: ['Charge item code CONS already exists.'],
+          }),
+        },
+      },
+      extraListParameters: [
+        {
+          name: 'category',
+          in: 'query',
+          required: false,
+          description: 'Filter to one Charge Item Category.',
+          schema: schemaRef('ChargeItemCategory'),
+        },
+        {
+          name: 'isActive',
+          in: 'query',
+          required: false,
+          description: 'Filter by active flag. Omit for all Charge Items.',
+          schema: { type: 'boolean' },
+        },
+      ],
+    }),
+    '/api/v1/charge-items/{id}': itemOperations({
+      tag: 'Charge Item',
+      entity: 'Charge Item',
+      schemaName: 'ChargeItem',
+      updateSchemaName: 'UpdateChargeItemRequest',
+      example: {
+        name: 'General Consultation',
+        code: 'CONS',
+        category: 'CONSULTATION',
+        unitPrice: 500,
+        description: 'Standard outpatient consultation fee',
+        isActive: true,
+      },
+      parameters: [numberIdPathParameter('Charge Item')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: {
+        ...authenticatedErrorResponses,
+        '409': {
+          description: 'The new name or code already exists in the Tenant.',
+          content: jsonContent(schemaRef('ValidationError'), {
+            message: 'Charge item name General Consultation already exists.',
+            errors: ['Charge item name General Consultation already exists.'],
+          }),
+        },
+      },
+    }),
+    '/api/v1/invoices': {
+      get: {
+        tags: ['Invoice'],
+        summary: 'List Invoices',
+        description:
+          'Returns a paginated list of Invoices in the active Tenant, newest first. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          ...listParameters,
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            description:
+              'Filter by one or more Invoice Statuses (comma-separated). Example: DRAFT,FINALIZED,PARTIALLY_PAID for open Invoices.',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'patientId',
+            in: 'query',
+            required: false,
+            description: 'Filter to one Patient.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+        ],
+        responses: {
+          ...authenticatedListErrorResponses,
+          '200': {
+            description: 'Paginated Invoice list.',
+            content: jsonContent(paginatedSchema('InvoiceListItem'), {
+              data: [invoiceListItemExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+        },
+      },
+      post: {
+        tags: ['Invoice'],
+        summary: 'Create Invoice',
+        description:
+          'Creates a Draft Invoice for a Patient, optionally linked to a Visit or an Admission (not both). The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateInvoiceRequest', {
+          patientId: 7,
+          admissionId: 9,
+          notes: 'Inpatient episode billing',
+        }),
+        responses: {
+          ...authenticatedErrorResponses,
+          '201': {
+            description: 'Draft Invoice created.',
+            content: jsonContent(dataEnvelopeSchema('Invoice'), {
+              data: {
+                ...invoiceResponseExample,
+                status: 'DRAFT',
+                subtotal: 0,
+                discountAmount: 0,
+                grandTotal: 0,
+                amountPaid: 0,
+                balanceDue: 0,
+                finalizedAt: null,
+                lines: [],
+                payments: [],
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid body, or the Visit/Admission does not belong to the Patient.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'An Invoice can link to a Visit or an Admission, not both.',
+              errors: ['An Invoice can link to a Visit or an Admission, not both.'],
+            }),
+          },
+          '409': {
+            description: 'The linked encounter does not belong to the Patient.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit V-1001 does not belong to patient MRN-0007.',
+              errors: ['Visit V-1001 does not belong to patient MRN-0007.'],
+            }),
+          },
+        },
+      },
+    },
+    '/api/v1/invoices/{id}': {
+      get: {
+        tags: ['Invoice'],
+        summary: 'Get Invoice',
+        description: 'Returns one Invoice with its lines and payments resolved.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        responses: {
+          ...authenticatedErrorResponses,
+          '200': {
+            description: 'Invoice found.',
+            content: jsonContent(dataEnvelopeSchema('Invoice'), { data: invoiceResponseExample }),
+          },
+        },
+      },
+      put: {
+        tags: ['Invoice'],
+        summary: 'Update Draft Invoice',
+        description:
+          'Updates the flat Discount and notes on a Draft Invoice. Only Draft Invoices may be edited.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        requestBody: requestBody('UpdateDraftInvoiceRequest', {
+          discountAmount: 500,
+          notes: 'Concession approved by front office',
+        }),
+        responses: {
+          ...authenticatedErrorResponses,
+          '200': {
+            description: 'Draft Invoice updated.',
+            content: jsonContent(dataEnvelopeSchema('Invoice'), { data: invoiceResponseExample }),
+          },
+          '409': {
+            description: 'The Invoice is not a Draft, or the Discount exceeds the subtotal.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Discount 6000 exceeds the invoice subtotal 5000.',
+              errors: ['Discount 6000 exceeds the invoice subtotal 5000.'],
+            }),
+          },
+        },
+      },
+      delete: {
+        tags: ['Invoice'],
+        summary: 'Delete Invoice',
+        description: 'Soft-deletes a Draft or Void Invoice. Finalized Invoices cannot be removed.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        responses: {
+          ...authenticatedErrorResponses,
+          '204': { description: 'Invoice deleted.' },
+          '409': {
+            description: 'The Invoice has been finalized and cannot be removed.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Invoice INV-1042 cannot be removed once finalized.',
+              errors: ['Invoice INV-1042 cannot be removed once finalized.'],
+            }),
+          },
+        },
+      },
+    },
+    '/api/v1/invoices/{id}/lines': {
+      post: {
+        tags: ['Invoice'],
+        summary: 'Add Invoice Line',
+        description:
+          'Adds a line to a Draft Invoice from a Charge Item. The line snapshots the Charge Item description and unit price; an optional price override may be supplied. Recomputes the Invoice totals.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        requestBody: requestBody('AddInvoiceLineRequest', {
+          chargeItemId: 3,
+          quantity: 1,
+          unitPrice: 500,
+        }),
+        responses: {
+          ...authenticatedErrorResponses,
+          '201': {
+            description: 'Line added; the updated Invoice is returned.',
+            content: jsonContent(dataEnvelopeSchema('Invoice'), { data: invoiceResponseExample }),
+          },
+          '409': {
+            description: 'The Invoice is not a Draft, or the Charge Item is inactive.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Charge item CONS is inactive.',
+              errors: ['Charge item CONS is inactive.'],
+            }),
+          },
+        },
+      },
+    },
+    '/api/v1/invoices/{id}/lines/{lineId}': {
+      delete: {
+        tags: ['Invoice'],
+        summary: 'Remove Invoice Line',
+        description:
+          'Removes a line from a Draft Invoice and recomputes totals, clamping the Discount down if the subtotal drops below it.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Invoice'),
+          namedNumberPathParameter('lineId', 'Invoice Line'),
+        ],
+        responses: {
+          ...authenticatedErrorResponses,
+          '204': { description: 'Line removed.' },
+          '409': {
+            description: 'The Invoice is not a Draft.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Invoice INV-1042 can only be edited while in Draft.',
+              errors: ['Invoice INV-1042 can only be edited while in Draft.'],
+            }),
+          },
+        },
+      },
+    },
+    '/api/v1/invoices/{id}/finalize': {
+      post: {
+        tags: ['Invoice'],
+        summary: 'Finalize Invoice',
+        description:
+          'Closes a Draft Invoice for editing, moving it to FINALIZED (or straight to PAID when the grand total is zero). Requires at least one line.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        responses: {
+          ...authenticatedErrorResponses,
+          '200': {
+            description: 'Invoice finalized.',
+            content: jsonContent(dataEnvelopeSchema('Invoice'), { data: invoiceResponseExample }),
+          },
+          '409': {
+            description: 'The Invoice is not a Draft, or it has no lines to finalize.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Invoice INV-1042 has no lines to finalize.',
+              errors: ['Invoice INV-1042 has no lines to finalize.'],
+            }),
+          },
+        },
+      },
+    },
+    '/api/v1/invoices/{id}/void': {
+      post: {
+        tags: ['Invoice'],
+        summary: 'Void Invoice',
+        description:
+          'Voids a Draft or Finalized Invoice that carries no Payments. Requires a reason.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        requestBody: requestBody('VoidInvoiceRequest', { voidReason: 'Duplicate bill' }),
+        responses: {
+          ...authenticatedErrorResponses,
+          '200': {
+            description: 'Invoice voided.',
+            content: jsonContent(dataEnvelopeSchema('Invoice'), {
+              data: {
+                ...invoiceResponseExample,
+                status: 'VOID',
+                voidedAt: '2026-07-18T10:00:00.000Z',
+                voidReason: 'Duplicate bill',
+                amountPaid: 0,
+                balanceDue: 15000,
+                payments: [],
+              },
+            }),
+          },
+          '409': {
+            description: 'The Invoice already carries Payments and cannot be voided.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Invoice INV-1042 cannot be voided after payments are recorded.',
+              errors: ['Invoice INV-1042 cannot be voided after payments are recorded.'],
+            }),
+          },
+        },
+      },
+    },
+    '/api/v1/invoices/{id}/payments': {
+      get: {
+        tags: ['Payment'],
+        summary: 'List Payments',
+        description: 'Returns the Payments recorded against one Invoice, oldest first.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        responses: {
+          ...authenticatedErrorResponses,
+          '200': {
+            description: 'Payments for the Invoice.',
+            content: jsonContent(
+              {
+                type: 'object',
+                properties: { data: { type: 'array', items: schemaRef('Payment') } },
+              },
+              { data: [paymentResponseExample] }
+            ),
+          },
+        },
+      },
+      post: {
+        tags: ['Payment'],
+        summary: 'Record Payment',
+        description:
+          'Records an append-only Payment against a Finalized (or Partially Paid) Invoice. Partial Payments are allowed; the Payment can never exceed the balance due. Flips the Invoice status to PARTIALLY_PAID or PAID.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        requestBody: requestBody('RecordPaymentRequest', {
+          amount: 5000,
+          method: 'UPI',
+          reference: 'UPI-8842013',
+        }),
+        responses: {
+          ...authenticatedErrorResponses,
+          '201': {
+            description: 'Payment recorded; the updated Invoice and the receipt are returned.',
+            content: jsonContent(
+              {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      invoice: schemaRef('Invoice'),
+                      payment: schemaRef('Payment'),
+                    },
+                  },
+                },
+              },
+              { data: { invoice: invoiceResponseExample, payment: paymentResponseExample } }
+            ),
+          },
+          '409': {
+            description:
+              'The Invoice is not open for payment, or the amount exceeds the balance due.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Payment amount 5000 exceeds the balance due 3000 on invoice INV-1042.',
+              errors: ['Payment amount 5000 exceeds the balance due 3000 on invoice INV-1042.'],
+            }),
+          },
+        },
+      },
+    },
+    '/api/v1/invoices/{id}/bed-charges': {
+      post: {
+        tags: ['Invoice'],
+        summary: 'Generate Bed-Day Charges',
+        description:
+          'Derives Bed-Day Charge lines from the linked discharged Admission’s occupancy history and replaces any existing BED_AUTO lines on the Draft Invoice. Segments whose Bed has no daily rate are skipped and reported as warnings.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Invoice')],
+        responses: {
+          ...authenticatedErrorResponses,
+          '200': {
+            description: 'Bed-Day Charges generated; the updated Invoice, count, and warnings.',
+            content: jsonContent(
+              {
+                type: 'object',
+                properties: {
+                  data: {
+                    type: 'object',
+                    properties: {
+                      invoice: schemaRef('Invoice'),
+                      linesAdded: { type: 'integer', minimum: 0 },
+                      warnings: { type: 'array', items: { type: 'string' } },
+                    },
+                  },
+                },
+              },
+              {
+                data: {
+                  invoice: invoiceResponseExample,
+                  linesAdded: 1,
+                  warnings: ['Bed GEN-04 has no daily rate configured; segment skipped.'],
+                },
+              }
+            ),
+          },
+          '409': {
+            description:
+              'The Invoice is not a Draft, is not linked to an Admission, or the Admission is not discharged.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Admission ADM-1001 is not discharged yet.',
+              errors: ['Admission ADM-1001 is not discharged yet.'],
+            }),
+          },
+        },
+      },
+    },
     '/api/v1/beds': {
       get: {
         tags: ['Bed'],
@@ -7051,6 +7568,313 @@ export const openApiDocument = {
       CreateAdmissionTypeRequest: appointmentMasterCreateSchema('Admission Type', true),
       UpdateAdmissionTypeRequest: appointmentMasterCreateSchema('Admission Type', true),
       AdmissionType: appointmentMasterSchema('CreateAdmissionTypeRequest'),
+      ChargeItemCategory: {
+        type: 'string',
+        enum: ['CONSULTATION', 'PROCEDURE', 'INVESTIGATION', 'BED', 'CONSUMABLE', 'OTHER'],
+        description: 'Fixed classification of a Charge Item.',
+      },
+      CreateChargeItemRequest: {
+        type: 'object',
+        required: ['name', 'code', 'category', 'unitPrice'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 150 },
+          code: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            description: 'Charge Item code. The API normalizes this value to uppercase.',
+          },
+          category: schemaRef('ChargeItemCategory'),
+          unitPrice: {
+            type: 'number',
+            minimum: 0,
+            description: 'Unit price in the Tenant currency, rounded to two decimals.',
+          },
+          description: { type: ['string', 'null'], description: 'Charge Item description.' },
+          isActive: {
+            type: 'boolean',
+            default: true,
+            description: 'Whether the Charge Item is available for new Invoice Lines.',
+          },
+        },
+      },
+      UpdateChargeItemRequest: { $ref: '#/components/schemas/CreateChargeItemRequest' },
+      ChargeItem: {
+        allOf: [
+          schemaRef('CreateChargeItemRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'name',
+              'code',
+              'category',
+              'unitPrice',
+              'isActive',
+              'description',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              description: { type: ['string', 'null'] },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      InvoiceStatus: {
+        type: 'string',
+        enum: ['DRAFT', 'FINALIZED', 'PARTIALLY_PAID', 'PAID', 'VOID'],
+        description: 'Lifecycle state of an Invoice. A fixed system-defined set.',
+      },
+      InvoiceLineSource: {
+        type: 'string',
+        enum: ['MANUAL', 'BED_AUTO'],
+        description:
+          'How the line was created: MANUAL (added by a cashier) or BED_AUTO (generated Bed-Day Charge).',
+      },
+      PaymentMethod: {
+        type: 'string',
+        enum: ['CASH', 'CARD', 'UPI', 'BANK_TRANSFER', 'CHEQUE', 'OTHER'],
+        description: 'Tender used for a Payment. A fixed system-defined set; excludes insurance.',
+      },
+      InvoiceLine: {
+        type: 'object',
+        required: [
+          'id',
+          'invoiceId',
+          'chargeItemId',
+          'description',
+          'quantity',
+          'unitPrice',
+          'amount',
+          'source',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          invoiceId: { type: 'integer', minimum: 1 },
+          chargeItemId: {
+            type: ['integer', 'null'],
+            description: 'Provenance Charge Item; null on generated Bed-Day Charge lines.',
+          },
+          description: { type: 'string', description: 'Snapshot taken when the line was added.' },
+          quantity: { type: 'integer', minimum: 1 },
+          unitPrice: { type: 'number', minimum: 0 },
+          amount: {
+            type: 'number',
+            minimum: 0,
+            description: 'quantity × unitPrice, rounded to 2dp.',
+          },
+          source: schemaRef('InvoiceLineSource'),
+        },
+      },
+      Payment: {
+        type: 'object',
+        required: [
+          'id',
+          'invoiceId',
+          'receiptNumber',
+          'amount',
+          'method',
+          'reference',
+          'notes',
+          'receivedAt',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          invoiceId: { type: 'integer', minimum: 1 },
+          receiptNumber: {
+            type: 'string',
+            description: 'Tenant-scoped receipt number, e.g. RCP-2010.',
+          },
+          amount: { type: 'number', exclusiveMinimum: 0 },
+          method: schemaRef('PaymentMethod'),
+          reference: { type: ['string', 'null'] },
+          notes: { type: ['string', 'null'] },
+          receivedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      InvoicePatientSummary: {
+        type: 'object',
+        required: ['id', 'mrn', 'firstName', 'lastName'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          mrn: { type: 'string' },
+          firstName: { type: 'string' },
+          lastName: { type: 'string' },
+        },
+      },
+      InvoiceVisitSummary: {
+        type: ['object', 'null'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          visitNumber: { type: 'string' },
+        },
+      },
+      InvoiceAdmissionSummary: {
+        type: ['object', 'null'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          admissionNumber: { type: 'string' },
+        },
+      },
+      Invoice: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'invoiceNumber',
+          'status',
+          'subtotal',
+          'discountAmount',
+          'grandTotal',
+          'amountPaid',
+          'balanceDue',
+          'notes',
+          'finalizedAt',
+          'voidedAt',
+          'voidReason',
+          'createdOn',
+          'modifiedOn',
+          'patient',
+          'visit',
+          'admission',
+          'lines',
+          'payments',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          invoiceNumber: {
+            type: 'string',
+            description: 'Tenant-scoped invoice number, e.g. INV-1042.',
+          },
+          status: schemaRef('InvoiceStatus'),
+          subtotal: { type: 'number', minimum: 0, description: 'Sum of line amounts.' },
+          discountAmount: {
+            type: 'number',
+            minimum: 0,
+            description: 'Flat invoice-level discount.',
+          },
+          grandTotal: { type: 'number', minimum: 0, description: 'subtotal − discountAmount.' },
+          amountPaid: { type: 'number', minimum: 0 },
+          balanceDue: { type: 'number', description: 'grandTotal − amountPaid. Always derived.' },
+          notes: { type: ['string', 'null'] },
+          finalizedAt: { type: ['string', 'null'], format: 'date-time' },
+          voidedAt: { type: ['string', 'null'], format: 'date-time' },
+          voidReason: { type: ['string', 'null'] },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+          patient: schemaRef('InvoicePatientSummary'),
+          visit: schemaRef('InvoiceVisitSummary'),
+          admission: schemaRef('InvoiceAdmissionSummary'),
+          lines: { type: 'array', items: schemaRef('InvoiceLine') },
+          payments: { type: 'array', items: schemaRef('Payment') },
+        },
+      },
+      InvoiceListItem: {
+        type: 'object',
+        required: [
+          'id',
+          'invoiceNumber',
+          'status',
+          'grandTotal',
+          'amountPaid',
+          'balanceDue',
+          'createdOn',
+          'patient',
+          'visit',
+          'admission',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          invoiceNumber: { type: 'string' },
+          status: schemaRef('InvoiceStatus'),
+          grandTotal: { type: 'number', minimum: 0 },
+          amountPaid: { type: 'number', minimum: 0 },
+          balanceDue: { type: 'number' },
+          createdOn: { type: 'string', format: 'date-time' },
+          patient: schemaRef('InvoicePatientSummary'),
+          visit: schemaRef('InvoiceVisitSummary'),
+          admission: schemaRef('InvoiceAdmissionSummary'),
+        },
+      },
+      CreateInvoiceRequest: {
+        type: 'object',
+        required: ['patientId'],
+        properties: {
+          patientId: { type: 'integer', minimum: 1 },
+          visitId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description: 'Optional source Visit. Mutually exclusive with admissionId.',
+          },
+          admissionId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description: 'Optional source Admission. Mutually exclusive with visitId.',
+          },
+          notes: { type: ['string', 'null'] },
+        },
+      },
+      UpdateDraftInvoiceRequest: {
+        type: 'object',
+        properties: {
+          discountAmount: {
+            type: 'number',
+            minimum: 0,
+            description: 'Flat discount, at most the subtotal. Defaults to 0.',
+          },
+          notes: { type: ['string', 'null'] },
+        },
+      },
+      AddInvoiceLineRequest: {
+        type: 'object',
+        required: ['chargeItemId', 'quantity'],
+        properties: {
+          chargeItemId: { type: 'integer', minimum: 1 },
+          quantity: { type: 'integer', minimum: 1 },
+          unitPrice: {
+            type: 'number',
+            minimum: 0,
+            description: 'Optional price override. Defaults to the Charge Item unit price.',
+          },
+        },
+      },
+      VoidInvoiceRequest: {
+        type: 'object',
+        required: ['voidReason'],
+        properties: {
+          voidReason: { type: 'string', minLength: 1, maxLength: 255 },
+        },
+      },
+      RecordPaymentRequest: {
+        type: 'object',
+        required: ['amount', 'method'],
+        properties: {
+          amount: { type: 'number', exclusiveMinimum: 0 },
+          method: schemaRef('PaymentMethod'),
+          reference: { type: ['string', 'null'], maxLength: 100 },
+          notes: { type: ['string', 'null'], maxLength: 255 },
+          receivedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            description: 'Optional; defaults to now. May not be in the future.',
+          },
+        },
+      },
       BedStatus: {
         type: 'string',
         enum: ['AVAILABLE', 'OCCUPIED', 'RESERVED', 'MAINTENANCE'],
