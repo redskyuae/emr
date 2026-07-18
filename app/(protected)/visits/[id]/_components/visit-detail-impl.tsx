@@ -3,7 +3,16 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import Link from 'next/link';
-import { Activity, CheckCircle2, NotebookPen, PlayCircle, Save, User, XCircle } from 'lucide-react';
+import {
+  Activity,
+  CheckCircle2,
+  NotebookPen,
+  PlayCircle,
+  ReceiptText,
+  Save,
+  User,
+  XCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { AllergyBanner } from '@/app/(protected)/patients/[id]/_components/_chart/allergy-banner';
@@ -145,6 +154,14 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                     Cancel
                   </Button>
                 ) : null}
+                <Button asChild variant="outline">
+                  <Link
+                    href={`/billing?invoice=new&patientId=${visit.patient.id}&visitId=${visit.id}`}
+                  >
+                    <ReceiptText className="size-4" />
+                    Create Invoice
+                  </Link>
+                </Button>
               </div>
             </div>
 

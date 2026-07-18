@@ -9,6 +9,7 @@ import {
   BedDouble,
   LogOut,
   NotebookPen,
+  ReceiptText,
   Save,
   User,
   XCircle,
@@ -143,6 +144,14 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                     </Button>
                   </>
                 ) : null}
+                <Button asChild variant="outline">
+                  <Link
+                    href={`/billing?invoice=new&patientId=${admission.patient.id}&admissionId=${admission.id}`}
+                  >
+                    <ReceiptText className="size-4" />
+                    Create Invoice
+                  </Link>
+                </Button>
               </div>
             </div>
 
