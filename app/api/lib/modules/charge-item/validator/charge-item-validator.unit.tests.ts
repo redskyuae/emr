@@ -130,6 +130,26 @@ describe('ChargeItem validators', () => {
         data: { id: 7, payload: { name: 'General Consultation', code: 'CONS' } },
       });
     });
+
+    it('should preserve the existing isActive value when the update payload omits it', async () => {
+      repo.getChargeItemById.mockResolvedValue({ ...existing, isActive: false });
+
+      const result = await validateUpdateChargeItem('1', validPayload, 'tenant-1');
+
+      expect(result).toMatchObject({ success: true, data: { payload: { isActive: false } } });
+    });
+
+    it('should apply an explicit isActive value from the update payload', async () => {
+      repo.getChargeItemById.mockResolvedValue({ ...existing, isActive: false });
+
+      const result = await validateUpdateChargeItem(
+        '1',
+        { ...validPayload, isActive: true },
+        'tenant-1'
+      );
+
+      expect(result).toMatchObject({ success: true, data: { payload: { isActive: true } } });
+    });
   });
 
   describe('validateDeleteChargeItem', () => {

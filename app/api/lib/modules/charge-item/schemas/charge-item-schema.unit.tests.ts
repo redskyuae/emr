@@ -68,6 +68,15 @@ describe('ChargeItem schema', () => {
     ).toContain('Charge item unit price must be zero or more');
   });
 
+  it('should reject a blank or null unit price as required, not coerce it to zero', () => {
+    expect(
+      errorsOf(createChargeItemSchema.safeParse({ ...validPayload, unitPrice: '' }))
+    ).toContain('Charge item unit price is required');
+    expect(
+      errorsOf(createChargeItemSchema.safeParse({ ...validPayload, unitPrice: null }))
+    ).toContain('Charge item unit price is required');
+  });
+
   it('should uppercase code and trim name on successful parse', () => {
     expect(
       createChargeItemSchema.parse({
@@ -105,6 +114,11 @@ describe('ChargeItem schema', () => {
     expect(updateChargeItemSchema.parse({ ...validPayload, code: 'cons' })).toMatchObject({
       code: 'CONS',
     });
+  });
+
+  it('should leave isActive undefined on update when omitted, unlike create which defaults it', () => {
+    expect(updateChargeItemSchema.parse(validPayload).isActive).toBeUndefined();
+    expect(createChargeItemSchema.parse(validPayload).isActive).toBe(true);
   });
 
   it('should validate id is a positive integer and tenant id is non-empty', () => {

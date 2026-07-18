@@ -65,7 +65,10 @@ export async function validateUpdateChargeItem(
     success: true,
     data: {
       id: idResult.data,
-      payload: payloadResult.data,
+      payload: {
+        ...payloadResult.data,
+        isActive: payloadResult.data.isActive ?? existingChargeItem.isActive,
+      },
     },
   };
 }

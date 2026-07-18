@@ -278,5 +278,29 @@ describe('Invoice commands', () => {
         expect.objectContaining({ quantity: 1 }),
       ]);
     });
+
+    it('should skip and warn on a segment whose amount would exceed the numeric(12,2) column max', async () => {
+      // 101 days at the Room Type's own max daily rate (99,999,999.99) overflows
+      // numeric(12,2) even though the rate itself is a valid, in-range value.
+      repo.getOccupancySource.mockResolvedValue({
+        admittedAt: new Date('2026-01-01T04:00:00Z'),
+        dischargedAt: new Date('2026-04-12T04:00:00Z'),
+        status: 'DISCHARGED',
+        currentBedId: 5,
+        transfers: [],
+        beds: [{ bedId: 5, bedNumber: 'ICU-01', wardCode: 'ICU', dailyRate: 99_999_999.99 }],
+      });
+      repo.replaceBedAutoLines.mockResolvedValue({ outcome: 'updated', data: invoice });
+
+      const result = await generateBedChargesCommand('1', 'tenant-1');
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+      expect(result.data.linesAdded).toBe(0);
+      expect(result.data.warnings).toEqual([
+        'Bed ICU-01 charge for 101 days exceeds the maximum allowed amount; segment skipped.',
+      ]);
+      expect(repo.replaceBedAutoLines).toHaveBeenCalledWith('tenant-1', 1, []);
+    });
   });
 });

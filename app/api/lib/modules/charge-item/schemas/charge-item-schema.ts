@@ -24,11 +24,17 @@ const chargeItemCategorySchema = z.enum(CHARGE_ITEM_CATEGORIES, {
   error: `Charge item category must be one of ${CHARGE_ITEM_CATEGORIES.join(', ')}`,
 });
 
-const chargeItemUnitPriceSchema = z.coerce
-  .number({ error: 'Charge item unit price is required' })
-  .nonnegative('Charge item unit price must be zero or more')
-  .max(9_999_999_999, 'Charge item unit price is too large')
-  .transform((value) => Math.round(value * 100) / 100);
+// A blank string coerces to 0 via plain Number('') === 0, which would let a
+// required price silently pass validation as free — treat blank/null the same
+// as absent so the "is required" error fires instead of a $0 Charge Item.
+const chargeItemUnitPriceSchema = z.preprocess(
+  (value) => (value === null || value === '' ? undefined : value),
+  z.coerce
+    .number({ error: 'Charge item unit price is required' })
+    .nonnegative('Charge item unit price must be zero or more')
+    .max(9_999_999_999, 'Charge item unit price is too large')
+    .transform((value) => Math.round(value * 100) / 100)
+);
 
 const chargeItemDescriptionSchema = z
   .string()
@@ -63,7 +69,14 @@ export const createChargeItemSchema = z.object({
   isActive: chargeItemIsActiveSchema,
 });
 
-export const updateChargeItemSchema = createChargeItemSchema;
+// Unlike create, isActive has no default here: omitting it on update means
+// "leave the current Active state as-is," not "reactivate." Defaulting it to
+// true (as create does) would silently reactivate a deliberately-retired
+// Charge Item for any client that only means to edit name/code/price.
+// The validator fills the omitted value from the existing row.
+export const updateChargeItemSchema = createChargeItemSchema.extend({
+  isActive: z.boolean().optional(),
+});
 
 export type ChargeItemCategory = (typeof CHARGE_ITEM_CATEGORIES)[number];
 export type ChargeItemIdInput = z.infer<typeof chargeItemIdSchema>;

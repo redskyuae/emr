@@ -7,7 +7,7 @@ import {
   type BedAutoLine,
   type OccupancyBed,
 } from '../repository/invoice-repository';
-import { type Invoice, roundMoney } from '../schemas/invoice-schema';
+import { type Invoice, MAX_MONEY_AMOUNT, roundMoney } from '../schemas/invoice-schema';
 import { validateGenerateBedCharges } from '../validator/generate-bed-charges-validator';
 import {
   computeOccupancySegments,
@@ -69,11 +69,24 @@ export async function generateBedChargesCommand(
       continue;
     }
 
+    const amount = roundMoney(days * bed.dailyRate);
+
+    // A long segment at a high daily rate can still exceed the numeric(12,2)
+    // column even though the rate itself is a valid Room Type value — skip and
+    // warn rather than let replaceBedAutoLines fail on a DB overflow (same
+    // skip-and-warn shape as the no-rate case, ADR 0040).
+    if (amount > MAX_MONEY_AMOUNT) {
+      warnings.push(
+        `Bed ${bed.bedNumber} charge for ${days} days exceeds the maximum allowed amount; segment skipped.`
+      );
+      continue;
+    }
+
     lines.push({
       description: `Bed charges — ${bed.bedNumber} (${bed.wardCode}), ${days} day${days === 1 ? '' : 's'} @ ${bed.dailyRate.toFixed(2)}`,
       quantity: days,
       unitPrice: bed.dailyRate,
-      amount: roundMoney(days * bed.dailyRate),
+      amount,
     });
   }
 
