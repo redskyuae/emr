@@ -121,6 +121,12 @@ describe('Invoice schema', () => {
         method: 'UPI',
       });
     });
+
+    it('should reject a sub-cent amount that rounds to zero instead of inserting a zero payment', () => {
+      expect(errorsOf(recordPaymentSchema.safeParse({ amount: 0.001, method: 'CASH' }))).toContain(
+        'Payment amount must be greater than zero'
+      );
+    });
   });
 
   describe('invoiceIdSchema', () => {

@@ -12,6 +12,13 @@ export function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+// Every money column is numeric(12,2): 10 integer digits + 2 decimal digits.
+// quantity and unitPrice are each schema-bounded individually, but their
+// product (the line amount) is not — a large-but-valid quantity times a
+// large-but-valid price can still exceed this and raise a raw Postgres
+// numeric-overflow error instead of a clean validation error.
+export const MAX_MONEY_AMOUNT = 9_999_999_999.99;
+
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
@@ -94,7 +101,11 @@ export const recordPaymentSchema = z.object({
     .number({ error: 'Payment amount is required' })
     .positive('Payment amount must be greater than zero')
     .max(9_999_999_999, 'Payment amount is too large')
-    .transform(roundMoney),
+    .transform(roundMoney)
+    // A sub-cent amount (e.g. 0.001) passes .positive() before rounding, then
+    // rounds to 0 — re-check post-transform so it fails validation cleanly
+    // instead of tripping the DB's payment_amount_check as an uncaught 500.
+    .refine((value) => value > 0, { error: 'Payment amount must be greater than zero' }),
   method: z.enum(PAYMENT_METHODS, {
     error: `Payment method must be one of ${PAYMENT_METHODS.join(', ')}`,
   }),

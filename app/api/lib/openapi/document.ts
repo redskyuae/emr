@@ -4302,7 +4302,7 @@ export const openApiDocument = {
         tags: ['Invoice'],
         summary: 'Update Draft Invoice',
         description:
-          'Updates the flat Discount and notes on a Draft Invoice. Only Draft Invoices may be edited.',
+          'Replaces the flat Discount and notes on a Draft Invoice in full — the same full-replace semantics as every other update endpoint in this API (e.g. Ward, Charge Item). Send the current value for a field to leave it unchanged; an omitted discountAmount resets to 0 and omitted/blank notes clear. Only Draft Invoices may be edited.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Invoice')],
         requestBody: requestBody('UpdateDraftInvoiceRequest', {
@@ -7835,9 +7835,14 @@ export const openApiDocument = {
           discountAmount: {
             type: 'number',
             minimum: 0,
-            description: 'Flat discount, at most the subtotal. Defaults to 0.',
+            description:
+              'Flat discount, at most the subtotal. This is a full-replace field: omitting it resets the Discount to 0, it does not preserve the current value.',
           },
-          notes: { type: ['string', 'null'] },
+          notes: {
+            type: ['string', 'null'],
+            description:
+              'Full-replace field: omitting it (or sending null/empty) clears any existing notes, it does not preserve the current value.',
+          },
         },
       },
       AddInvoiceLineRequest: {

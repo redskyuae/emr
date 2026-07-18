@@ -54,7 +54,11 @@ describe('bed-day calculator', () => {
       ]);
     });
 
-    it('should split the stay at each transfer, billing both sides of the transfer day', () => {
+    it('should split a multi-day stay at the transfer with no double-billed night', () => {
+      // admit Mar10, transfer Mar11, discharge Mar13: 3 nights total (10, 11, 12).
+      // Each night is billed to exactly one Bed — the departing segment's count
+      // stops at the transfer instant and the arriving segment's count starts
+      // there, so they partition the stay rather than overlap on Mar11.
       const admittedAt = istDate('2026-03-10T09:00:00');
       const transferAt = istDate('2026-03-11T14:00:00');
       const dischargedAt = istDate('2026-03-13T09:00:00');
@@ -70,8 +74,32 @@ describe('bed-day calculator', () => {
         { bedId: 5, start: admittedAt, end: transferAt },
         { bedId: 9, start: transferAt, end: dischargedAt },
       ]);
-      expect(countBillableDays(segments[0].start, segments[0].end, IST)).toBe(1);
-      expect(countBillableDays(segments[1].start, segments[1].end, IST)).toBe(2);
+      const departingDays = countBillableDays(segments[0].start, segments[0].end, IST);
+      const arrivingDays = countBillableDays(segments[1].start, segments[1].end, IST);
+      expect(departingDays).toBe(1);
+      expect(arrivingDays).toBe(2);
+      expect(departingDays + arrivingDays).toBe(3);
+    });
+
+    it('should bill the same calendar day to both Beds only for a same-day transfer (ADR 0040)', () => {
+      // Admit, transfer, and discharge all within one calendar day: both
+      // segments are zero-length and each floors up to 1 day, so — unlike the
+      // multi-day case above — the one shared day is billed on both Beds.
+      const admittedAt = istDate('2026-03-10T09:00:00');
+      const transferAt = istDate('2026-03-10T14:00:00');
+      const dischargedAt = istDate('2026-03-10T18:00:00');
+
+      const segments = computeOccupancySegments({
+        admittedAt,
+        dischargedAt,
+        currentBedId: 9,
+        transfers: [{ fromBedId: 5, toBedId: 9, transferredAt: transferAt }],
+      });
+
+      const departingDays = countBillableDays(segments[0].start, segments[0].end, IST);
+      const arrivingDays = countBillableDays(segments[1].start, segments[1].end, IST);
+      expect(departingDays).toBe(1);
+      expect(arrivingDays).toBe(1);
     });
 
     it('should order unsorted transfers by time before segmenting', () => {

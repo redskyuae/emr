@@ -873,6 +873,11 @@ async function getOccupancySource(
     ]),
   ];
 
+  // Every joined table is matched on tenantId in addition to id, not just id:
+  // a Bed's wardId/roomId are plain FKs with no DB-level tenant-match
+  // constraint, so an id-only join would silently accept a cross-tenant Ward,
+  // Room, or RoomType if one were ever mis-associated (CLAUDE.md's no-exceptions
+  // tenant-filter rule; mirrors the same join style in admissionJoins).
   const beds = await db
     .select({
       bedId: bedTable.id,
@@ -881,9 +886,21 @@ async function getOccupancySource(
       dailyRate: roomTypeTable.dailyRate,
     })
     .from(bedTable)
-    .innerJoin(wardTable, eq(wardTable.id, bedTable.wardId))
-    .leftJoin(roomTable, eq(roomTable.id, bedTable.roomId))
-    .leftJoin(roomTypeTable, eq(roomTypeTable.id, roomTable.roomTypeId))
+    .innerJoin(
+      wardTable,
+      and(eq(wardTable.id, bedTable.wardId), eq(wardTable.tenantId, bedTable.tenantId))
+    )
+    .leftJoin(
+      roomTable,
+      and(eq(roomTable.id, bedTable.roomId), eq(roomTable.tenantId, bedTable.tenantId))
+    )
+    .leftJoin(
+      roomTypeTable,
+      and(
+        eq(roomTypeTable.id, roomTable.roomTypeId),
+        eq(roomTypeTable.tenantId, roomTable.tenantId)
+      )
+    )
     .where(and(eq(bedTable.tenantId, tenantId), inArray(bedTable.id, bedIds)));
 
   return {

@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { admissionRepository } from '@/app/api/lib/modules/admission/repository/admission-repository';
@@ -188,6 +189,28 @@ describe('Invoice validators', () => {
       );
 
       expect(result).toMatchObject({ success: true, data: { unitPrice: 250 } });
+    });
+
+    it('should reject a quantity/price combination whose amount exceeds the numeric(12,2) column max', async () => {
+      chargeItemRepo.getChargeItemById.mockResolvedValue({
+        id: 1,
+        code: 'CONS',
+        name: 'Consultation',
+        unitPrice: 500,
+        isActive: true,
+      } as never);
+
+      const result = await validateAddInvoiceLine(
+        '1',
+        { chargeItemId: 1, quantity: 100_000, unitPrice: 999_999 },
+        'tenant-1'
+      );
+
+      expect(result).toMatchObject({
+        success: false,
+        status: StatusCodes.BAD_REQUEST,
+        errors: ['Line amount 99999900000 exceeds the maximum allowed amount 9999999999.99.'],
+      });
     });
   });
 

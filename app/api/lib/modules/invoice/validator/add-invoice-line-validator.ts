@@ -4,7 +4,12 @@ import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { chargeItemRepository } from '@/app/api/lib/modules/charge-item/repository/charge-item-repository';
 import { invoiceRepository } from '../repository/invoice-repository';
-import { addInvoiceLineSchema, invoiceIdSchema } from '../schemas/invoice-schema';
+import {
+  addInvoiceLineSchema,
+  invoiceIdSchema,
+  MAX_MONEY_AMOUNT,
+  roundMoney,
+} from '../schemas/invoice-schema';
 
 export type ValidatedAddInvoiceLine = {
   invoiceId: number;
@@ -71,14 +76,26 @@ export async function validateAddInvoiceLine(
     };
   }
 
+  const quantity = payloadResult.data.quantity;
+  const unitPrice = payloadResult.data.unitPrice ?? chargeItem.unitPrice;
+  const amount = roundMoney(quantity * unitPrice);
+
+  if (amount > MAX_MONEY_AMOUNT) {
+    return {
+      success: false,
+      errors: [`Line amount ${amount} exceeds the maximum allowed amount ${MAX_MONEY_AMOUNT}.`],
+      status: StatusCodes.BAD_REQUEST,
+    };
+  }
+
   return {
     success: true,
     data: {
       invoiceId: idResult.data,
       chargeItemId: chargeItem.id,
       description: chargeItem.name,
-      quantity: payloadResult.data.quantity,
-      unitPrice: payloadResult.data.unitPrice ?? chargeItem.unitPrice,
+      quantity,
+      unitPrice,
     },
   };
 }
