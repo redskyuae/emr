@@ -1,0 +1,47 @@
+app/api/lib/modules/invoice/repository/invoice-repository.integration.tests.ts
+  bfbad0896f2e4876 239-270
+app/api/lib/modules/invoice/commands/record-payment-command.ts
+  bfbad0896f2e4876 4,26-46
+app/(protected)/billing/[id]/_components/invoice-detail-impl.tsx
+  bfbad0896f2e4876 16,26,94,131-135
+app/api/lib/modules/invoice/commands/generate-bed-charges-command.ts
+  bfbad0896f2e4876 107-114
+app/api/lib/modules/invoice/commands/update-draft-invoice-command.ts
+  bfbad0896f2e4876 34-41
+app/(protected)/billing/[id]/_components/invoice-lines-card.tsx
+  bfbad0896f2e4876 33-34
+app/api/lib/modules/charge-item/schemas/charge-item-schema.unit.tests.ts
+  bfbad0896f2e4876 71,75-76
+app/api/lib/modules/invoice/repository/invoice-repository.ts
+  bfbad0896f2e4876 29,314-324,360-365,371,386-390,404-405,445,483-504,507,547-563,566,582-585,589,596-609,616-617,619,675-689,842,893-908
+app/api/lib/modules/invoice/commands/add-invoice-line-command.ts
+  bfbad0896f2e4876 34-41
+app/api/lib/modules/invoice/commands/invoice-commands.unit.tests.ts
+  bfbad0896f2e4876 122-133,213-231
+app/api/lib/modules/invoice/commands/finalize-invoice-command.ts
+  bfbad0896f2e4876 43-50
+app/api/lib/modules/invoice/commands/remove-invoice-line-command.ts
+  bfbad0896f2e4876 38-45
+app/(protected)/billing/[id]/_components/_modals/generate-bed-charges-dialog.tsx
+  bfbad0896f2e4876 1-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "7e420cda5121b5cf69f3d192084c31bff26faa0c",
+  "prompts": {
+    "bfbad0896f2e4876": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e40a619c-206a-4882-a867-d569fec56c02",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 348,
+      "total_deletions": 72,
+      "accepted_lines": 336,
+      "overriden_lines": 0
+    }
+  }
+}
