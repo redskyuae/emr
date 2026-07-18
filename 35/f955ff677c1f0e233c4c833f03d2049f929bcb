@@ -1,0 +1,35 @@
+app/api/lib/modules/invoice/commands/generate-bed-charges-command.ts
+  bfbad0896f2e4876 4,12-15,53-57,63
+docs/adr/0040-bed-day-charges-derive-from-admission-occupancy-segments.md
+  bfbad0896f2e4876 7
+app/api/lib/modules/invoice/repository/invoice-repository.ts
+  bfbad0896f2e4876 550-551,568-584
+app/api/lib/modules/invoice/commands/finalize-invoice-command.ts
+  bfbad0896f2e4876 35-42
+app/api/lib/modules/invoice/commands/invoice-commands.unit.tests.ts
+  bfbad0896f2e4876 4,38-40,49,144-154,209,238-278
+app/api/lib/modules/invoice/commands/bed-day-calculator.ts
+  bfbad0896f2e4876 3-4
+app/api/lib/modules/invoice/repository/invoice-repository.integration.tests.ts
+  bfbad0896f2e4876 215-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "35f955ff677c1f0e233c4c833f03d2049f929bcb",
+  "prompts": {
+    "bfbad0896f2e4876": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e40a619c-206a-4882-a867-d569fec56c02",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 128,
+      "total_deletions": 5,
+      "accepted_lines": 127,
+      "overriden_lines": 0
+    }
+  }
+}
