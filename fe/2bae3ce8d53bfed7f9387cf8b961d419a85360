@@ -1,0 +1,277 @@
+app/api/lib/modules/invoice/schemas/invoice-schema.ts
+  bfbad0896f2e4876 1-219
+app/api/lib/modules/invoice/commands/remove-invoice-line-command.ts
+  bfbad0896f2e4876 1-39
+app/api/lib/modules/invoice/commands/void-invoice-command.ts
+  bfbad0896f2e4876 1-32,34-40
+app/(protected)/billing-masters/charge-items/_components/charge-items-page-impl.tsx
+  bfbad0896f2e4876 1-221
+app/api/lib/modules/invoice/commands/invoice-commands.unit.tests.ts
+  bfbad0896f2e4876 1-222
+app/api/lib/modules/invoice/queries/invoice-queries.unit.tests.ts
+  bfbad0896f2e4876 1-94
+app/api/lib/modules/charge-item/schemas/charge-item-schema.unit.tests.ts
+  bfbad0896f2e4876 1-75,77-117
+app/api/lib/modules/charge-item/commands/delete-charge-item-command.ts
+  bfbad0896f2e4876 1-36
+app/api/lib/modules/invoice/validator/invoice-validator.unit.tests.ts
+  bfbad0896f2e4876 1-389
+app/queries/billing/invoices/useRecordPayment.ts
+  bfbad0896f2e4876 1-52
+app/api/lib/modules/charge-item/schemas/charge-item-schema.ts
+  bfbad0896f2e4876 1-96
+app/api/v1/invoices/[id]/payments/types.ts
+  bfbad0896f2e4876 1-20
+app/api/lib/modules/invoice/validator/finalize-invoice-validator.ts
+  bfbad0896f2e4876 1-57
+app/(protected)/billing/loader.tsx
+  bfbad0896f2e4876 1-42
+app/api/lib/modules/charge-item/validator/get-charge-item-by-id-validator.ts
+  bfbad0896f2e4876 1-38
+app/queries/billing/invoices/useUpdateDraftInvoice.ts
+  bfbad0896f2e4876 1-5,7-49
+app/queries/billing/invoices/useInvoices.ts
+  bfbad0896f2e4876 1-53
+app/queries/billing/invoices/useInvoice.ts
+  bfbad0896f2e4876 1-32
+app/(protected)/billing-masters/charge-items/_components/_modals/delete-charge-item-dialog.tsx
+  bfbad0896f2e4876 1-70
+app/api/v1/invoices/[id]/payments/route.ts
+  bfbad0896f2e4876 1-94
+app/api/lib/modules/invoice/commands/update-draft-invoice-command.ts
+  bfbad0896f2e4876 1-35
+app/api/lib/modules/charge-item/queries/charge-item-queries.unit.tests.ts
+  bfbad0896f2e4876 1-106
+app/(protected)/billing/[id]/_components/_modals/delete-invoice-dialog.tsx
+  bfbad0896f2e4876 1-67
+app/(protected)/billing/[id]/_components/invoice-lines-card.tsx
+  bfbad0896f2e4876 1-106
+app/queries/billing/charge-items/useUpdateChargeItem.ts
+  bfbad0896f2e4876 1-52
+app/api/lib/modules/invoice/schemas/invoice-schema.unit.tests.ts
+  bfbad0896f2e4876 1-133
+app/(protected)/billing/[id]/_utils/record-payment-form-schema.ts
+  bfbad0896f2e4876 1-18
+app/db/schema/charge-item.ts
+  bfbad0896f2e4876 1-56
+app/api/lib/modules/invoice/validator/remove-invoice-line-validator.ts
+  bfbad0896f2e4876 1-46
+app/api/lib/modules/invoice/validator/record-payment-validator.ts
+  bfbad0896f2e4876 1-67
+app/(protected)/billing/[id]/_components/_modals/record-payment-dialog.tsx
+  bfbad0896f2e4876 1-173
+app/(protected)/billing-masters/charge-items/loader.tsx
+  bfbad0896f2e4876 1-70
+docs/adr/0039-payments-are-append-only-with-transactional-status-sync.md
+  bfbad0896f2e4876 1-4,6-19
+app/api/lib/modules/invoice/queries/get-invoices-query.ts
+  bfbad0896f2e4876 1-39
+app/queries/billing/charge-items/useCreateChargeItem.ts
+  bfbad0896f2e4876 1-7,9-44
+app/api/lib/modules/invoice/commands/add-invoice-line-command.ts
+  bfbad0896f2e4876 1-35
+app/api/lib/modules/invoice/commands/finalize-invoice-command.ts
+  bfbad0896f2e4876 1-36
+app/api/v1/charge-items/types.ts
+  bfbad0896f2e4876 1-28
+app/api/lib/modules/charge-item/validator/delete-charge-item-validator.ts
+  bfbad0896f2e4876 1-38
+app/api/v1/invoices/[id]/bed-charges/route.ts
+  bfbad0896f2e4876 1-50
+docs/adr/0036-invoice-receipt-numbers-and-billing-fixed-sets.md
+  bfbad0896f2e4876 1-7
+app/api/v1/invoices/[id]/finalize/types.ts
+  bfbad0896f2e4876 1-5
+app/api/lib/openapi/document.ts
+  bfbad0896f2e4876 1934-2003,2057-2058,2060-2069,4134-4228,4230-4250,4252-4293,4295-4312,4314-4333,4335-4359,4361-4383,4385-4386,4388-4407,4409-4432,4434-4465,4467-4471,4473-4491,4493-4530,4532-4567,7571-7658,7660-7673,7675-7688,7690-7695,7697-7758,7763-7768,7770-7877
+app/(protected)/billing-masters/charge-items/page.tsx
+  bfbad0896f2e4876 1-5
+app/api/v1/invoices/[id]/lines/route.ts
+  bfbad0896f2e4876 1-64
+app/(protected)/billing/[id]/page.tsx
+  bfbad0896f2e4876 1-13
+app/db/schema/invoice-line.ts
+  bfbad0896f2e4876 1-37
+app/(protected)/billing/[id]/_components/_sheets/add-line-sheet.tsx
+  bfbad0896f2e4876 1-206
+app/api/lib/modules/charge-item/commands/create-charge-item-command.ts
+  bfbad0896f2e4876 1-37
+app/api/lib/modules/charge-item/validator/update-charge-item-validator.ts
+  bfbad0896f2e4876 1-71
+app/api/lib/modules/invoice/validator/void-invoice-validator.ts
+  bfbad0896f2e4876 1-53
+app/(protected)/billing/[id]/loader.tsx
+  bfbad0896f2e4876 1-23
+app/(protected)/billing-masters/charge-items/_components/charge-item-table.tsx
+  bfbad0896f2e4876 1-116
+app/(protected)/billing/_utils/invoice-display.ts
+  bfbad0896f2e4876 1-55
+app/api/lib/modules/invoice/commands/delete-invoice-command.ts
+  bfbad0896f2e4876 1-36
+app/api/lib/modules/invoice/validator/get-invoices-validator.ts
+  bfbad0896f2e4876 1-50
+app/(protected)/billing-masters/charge-items/_utils/charge-item-category.ts
+  bfbad0896f2e4876 1-27
+docs/adr/0038-invoice-lines-snapshot-price-at-add-time.md
+  bfbad0896f2e4876 1-11
+app/api/lib/modules/invoice/validator/delete-invoice-validator.ts
+  bfbad0896f2e4876 1-49
+app/api/v1/invoices/[id]/bed-charges/types.ts
+  bfbad0896f2e4876 1-9
+app/(protected)/billing/[id]/_components/invoice-detail-impl.tsx
+  bfbad0896f2e4876 1-147
+docs/adr/0040-bed-day-charges-derive-from-admission-occupancy-segments.md
+  bfbad0896f2e4876 1-14
+app/queries/billing/invoices/useAddInvoiceLine.ts
+  bfbad0896f2e4876 1-52
+app/queries/billing/charge-items/useDeleteChargeItem.ts
+  bfbad0896f2e4876 1-33
+app/api/lib/modules/invoice/commands/record-payment-command.ts
+  bfbad0896f2e4876 1-51
+app/(protected)/billing/_utils/create-invoice-form-schema.ts
+  bfbad0896f2e4876 1-22
+app/api/lib/modules/invoice/commands/generate-bed-charges-command.ts
+  bfbad0896f2e4876 1-35,37-88
+app/queries/billing/invoices/useRemoveInvoiceLine.ts
+  bfbad0896f2e4876 1-41
+app/queries/billing/invoices/useVoidInvoice.ts
+  bfbad0896f2e4876 1-7,9-49
+app/(protected)/billing/_components/billing-page-impl.tsx
+  bfbad0896f2e4876 1-205
+app/api/v1/invoices/types.ts
+  bfbad0896f2e4876 1-31
+app/(protected)/billing-masters/charge-items/_components/_sheets/charge-item-form-sheet.tsx
+  bfbad0896f2e4876 1-265,267-308
+app/(protected)/billing/_components/invoice-table.tsx
+  bfbad0896f2e4876 1-89
+app/api/lib/modules/invoice/validator/create-invoice-validator.ts
+  bfbad0896f2e4876 1-27,29-38,40-66,68-75
+app/api/lib/modules/permission/seed-data.ts
+  bfbad0896f2e4876 359-389
+CONTEXT.md
+  bfbad0896f2e4876 277-340
+app/api/lib/modules/invoice/commands/bed-day-calculator.unit.tests.ts
+  bfbad0896f2e4876 1-97
+app/api/v1/charge-items/[id]/route.ts
+  bfbad0896f2e4876 1-122
+app/db/schema/invoice.ts
+  bfbad0896f2e4876 1-20,22-90
+app/api/lib/modules/charge-item/validator/charge-item-validator.unit.tests.ts
+  bfbad0896f2e4876 1-66,68-222
+app/api/lib/modules/invoice/repository/invoice-repository.integration.tests.ts
+  bfbad0896f2e4876 1-356,358-370,372-396,398-413,415-426,428-434
+app/(protected)/billing/[id]/_components/_modals/void-invoice-dialog.tsx
+  bfbad0896f2e4876 1-105
+app/api/lib/modules/invoice/repository/invoice-repository.ts
+  bfbad0896f2e4876 1-193,196-264,267-647,649-930
+app/queries/billing/invoices/useGenerateBedCharges.ts
+  bfbad0896f2e4876 1-39
+app/api/lib/modules/charge-item/validator/charge-item-uniqueness-validator.ts
+  bfbad0896f2e4876 1-68
+app/api/lib/modules/invoice/repository/invoice-number.ts
+  bfbad0896f2e4876 1-7
+app/api/v1/charge-items/route.ts
+  bfbad0896f2e4876 1-133
+app/api/v1/invoices/[id]/finalize/route.ts
+  bfbad0896f2e4876 1-50
+app/(protected)/billing/[id]/_components/_modals/finalize-invoice-dialog.tsx
+  bfbad0896f2e4876 1-65
+app/(protected)/billing/[id]/_components/invoice-header.tsx
+  bfbad0896f2e4876 1-8,10-59
+app/api/v1/invoices/[id]/void/route.ts
+  bfbad0896f2e4876 1-61
+app/api/lib/modules/charge-item/queries/get-charge-items-query.ts
+  bfbad0896f2e4876 1-39
+app/api/lib/modules/invoice/commands/create-invoice-command.ts
+  bfbad0896f2e4876 1-35
+app/queries/billing/invoices/useDeleteInvoice.ts
+  bfbad0896f2e4876 1-33
+app/api/lib/modules/invoice/validator/get-invoice-by-id-validator.ts
+  bfbad0896f2e4876 1-32
+app/(protected)/billing/[id]/_components/invoice-payments-card.tsx
+  bfbad0896f2e4876 1-61
+app/api/lib/modules/invoice/commands/bed-day-calculator.ts
+  bfbad0896f2e4876 1-82
+app/api/v1/invoices/[id]/void/types.ts
+  bfbad0896f2e4876 1-9
+docs/adr/0037-invoice-lifecycle-and-post-finalize-immutability.md
+  bfbad0896f2e4876 1-15
+plans.md
+  bfbad0896f2e4876 1,8-9,13-18,20-24,28-48,52-68,73-76,78-90,94-146,150-153,155,157-162,167-168,170,172,174-179,182-186,188-215,217-229,231-240,246,249,251-260,262-339,343-360,364-370,374-378,380,382-429,433-438,442-448,452-462,468,470-479,488,490-508,512-514,517-524,526,528-555,559-579,583-597
+app/api/lib/modules/charge-item/queries/get-charge-item-by-id-query.ts
+  bfbad0896f2e4876 1-32
+app/api/v1/invoices/route.ts
+  bfbad0896f2e4876 1-120
+app/(protected)/billing/[id]/_components/invoice-totals-panel.tsx
+  bfbad0896f2e4876 1-110
+app/api/lib/modules/charge-item/validator/create-charge-item-validator.ts
+  bfbad0896f2e4876 1-30
+app/api/lib/modules/charge-item/validator/get-charge-items-validator.ts
+  bfbad0896f2e4876 1-44
+app/api/lib/modules/charge-item/commands/charge-item-commands.unit.tests.ts
+  bfbad0896f2e4876 1-176
+app/api/v1/invoices/[id]/lines/[lineId]/route.ts
+  bfbad0896f2e4876 1-49
+app/api/v1/invoices/[id]/route.ts
+  bfbad0896f2e4876 1-122
+components/app/app-shell-config.ts
+  bfbad0896f2e4876 19,109-118,252-256,410-417,478-481
+app/(protected)/billing-masters/charge-items/_utils/charge-item-form-schema.ts
+  bfbad0896f2e4876 1-29
+app/queries/billing/charge-items/useChargeItems.ts
+  bfbad0896f2e4876 1-53
+app/db/drizzle/0047_seed_billing_permissions.sql
+  bfbad0896f2e4876 1-19
+app/(protected)/admissions/[id]/_components/admission-detail-impl.tsx
+  bfbad0896f2e4876 12,147-154
+app/(protected)/billing/page.tsx
+  bfbad0896f2e4876 1-5
+app/(protected)/billing/_components/_sheets/create-invoice-sheet.tsx
+  bfbad0896f2e4876 1-391
+app/db/schema/payment.ts
+  bfbad0896f2e4876 1-17,19-51
+app/api/lib/modules/invoice/validator/add-invoice-line-validator.ts
+  bfbad0896f2e4876 1-84
+app/queries/billing/invoices/useCreateInvoice.ts
+  bfbad0896f2e4876 1-41
+app/(protected)/visits/[id]/_components/visit-detail-impl.tsx
+  bfbad0896f2e4876 11,14,157-164
+app/api/lib/modules/charge-item/commands/update-charge-item-command.ts
+  bfbad0896f2e4876 1-50
+app/(protected)/billing/[id]/_utils/add-line-form-schema.ts
+  bfbad0896f2e4876 1-20
+app/api/v1/invoices/[id]/lines/types.ts
+  bfbad0896f2e4876 1-11
+app/api/lib/modules/invoice/validator/generate-bed-charges-validator.ts
+  bfbad0896f2e4876 1-87
+app/api/lib/modules/charge-item/repository/charge-item-repository.ts
+  bfbad0896f2e4876 1-195
+app/api/lib/modules/invoice/validator/update-draft-invoice-validator.ts
+  bfbad0896f2e4876 1-64
+app/queries/billing/invoices/useFinalizeInvoice.ts
+  bfbad0896f2e4876 1-39
+app/api/lib/modules/charge-item/repository/charge-item-repository.integration.tests.ts
+  bfbad0896f2e4876 1-135,137-147,149-225
+app/api/lib/modules/invoice/queries/get-invoice-by-id-query.ts
+  bfbad0896f2e4876 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "fe2bae3ce8d53bfed7f9387cf8b961d419a85360",
+  "prompts": {
+    "bfbad0896f2e4876": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e40a619c-206a-4882-a867-d569fec56c02",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 11724,
+      "total_deletions": 815,
+      "accepted_lines": 11563,
+      "overriden_lines": 38
+    }
+  }
+}
