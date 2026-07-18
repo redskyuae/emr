@@ -1,18 +1,13 @@
 import { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { Geist_Mono, Public_Sans, Schibsted_Grotesk } from 'next/font/google';
+import { Geist_Mono, Urbanist } from 'next/font/google';
 
 import { QueryProvider } from '@/components/providers/query-provider';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
-const publicSans = Public_Sans({
-  variable: '--font-public-sans',
-  subsets: ['latin'],
-});
-
-const schibstedGrotesk = Schibsted_Grotesk({
-  variable: '--font-schibsted-grotesk',
+const urbanist = Urbanist({
+  variable: '--font-urbanist',
   subsets: ['latin'],
 });
 
@@ -41,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${publicSans.variable} ${schibstedGrotesk.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${urbanist.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <QueryProvider>
