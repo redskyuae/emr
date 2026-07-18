@@ -1,0 +1,33 @@
+app/api/lib/modules/charge-item/schemas/charge-item-schema.ts
+  bfbad0896f2e4876 27-36,72-79
+app/api/lib/modules/invoice/commands/generate-bed-charges-command.ts
+  bfbad0896f2e4876 10,72-84,89
+app/api/lib/modules/charge-item/schemas/charge-item-schema.unit.tests.ts
+  bfbad0896f2e4876 71-79,119-123
+app/api/lib/modules/charge-item/validator/charge-item-validator.unit.tests.ts
+  bfbad0896f2e4876 133-152
+app/api/lib/modules/charge-item/validator/update-charge-item-validator.ts
+  bfbad0896f2e4876 68-71
+app/api/lib/modules/invoice/commands/invoice-commands.unit.tests.ts
+  bfbad0896f2e4876 281-304
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "9e92b23684e50849775c3a658191411472870d67",
+  "prompts": {
+    "bfbad0896f2e4876": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e40a619c-206a-4882-a867-d569fec56c02",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 96,
+      "total_deletions": 9,
+      "accepted_lines": 95,
+      "overriden_lines": 0
+    }
+  }
+}
