@@ -1,0 +1,25 @@
+app/layout.tsx
+  3faa2b5036cb96f8 3,9-10,39
+app/globals.css
+  3faa2b5036cb96f8 11,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "38d03ac2e9799ed58917bc9876067c3adb73f78e",
+  "prompts": {
+    "3faa2b5036cb96f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "554e3bba-8bc0-4206-9424-5d0c6333559d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 11,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
