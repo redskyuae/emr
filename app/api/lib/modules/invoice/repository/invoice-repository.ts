@@ -547,7 +547,8 @@ async function updateDraftInvoice(
 export type FinalizeInvoiceResult =
   | { outcome: 'finalized'; data: Invoice }
   | { outcome: 'not-found' }
-  | { outcome: 'not-draft'; data: Invoice };
+  | { outcome: 'not-draft'; data: Invoice }
+  | { outcome: 'no-lines'; data: Invoice };
 
 async function finalizeInvoice(
   tenantId: string,
@@ -562,6 +563,25 @@ async function finalizeInvoice(
 
     if (lock.state === 'not-draft') {
       return { outcome: 'not-draft', data: await reloadOrThrow(tx, tenantId, invoiceId) };
+    }
+
+    // Re-checked under the Invoice's row lock: the validator's own check reads
+    // an unlocked snapshot, so a concurrent line removal between that read and
+    // this transaction could otherwise finalize a truly line-less Invoice
+    // straight to PAID (distinct from the zero-priced-line PAID path, ADR 0037).
+    const [{ lineCount }] = await tx
+      .select({ lineCount: count() })
+      .from(invoiceLineTable)
+      .where(
+        and(
+          eq(invoiceLineTable.tenantId, tenantId),
+          eq(invoiceLineTable.invoiceId, invoiceId),
+          eq(invoiceLineTable.isDeleted, false)
+        )
+      );
+
+    if (lineCount === 0) {
+      return { outcome: 'no-lines', data: await reloadOrThrow(tx, tenantId, invoiceId) };
     }
 
     await recomputeDraftTotals(tx, tenantId, invoiceId, lock.discountAmount);

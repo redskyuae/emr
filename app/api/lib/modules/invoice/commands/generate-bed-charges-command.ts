@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 
 import type { CommandResult } from '@/app/api/lib/utils/types';
+import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
 import {
   invoiceRepository,
   type BedAutoLine,
@@ -8,7 +9,11 @@ import {
 } from '../repository/invoice-repository';
 import { type Invoice, roundMoney } from '../schemas/invoice-schema';
 import { validateGenerateBedCharges } from '../validator/generate-bed-charges-validator';
-import { computeOccupancySegments, countBillableDays } from './bed-day-calculator';
+import {
+  computeOccupancySegments,
+  countBillableDays,
+  DEFAULT_TENANT_TIME_ZONE,
+} from './bed-day-calculator';
 
 export type GenerateBedChargesData = {
   invoice: Invoice;
@@ -45,12 +50,17 @@ export async function generateBedChargesCommand(
     transfers: source.transfers,
   });
 
+  // Bed-day boundaries are calendar days in the Tenant's own operational clock
+  // (ADR 0026), the same resolution the Visit and Appointment modules use.
+  const tenant = await tenantRepository.getTenantById(validTenantId);
+  const timeZone = tenant?.timeZone ?? DEFAULT_TENANT_TIME_ZONE;
+
   const lines: BedAutoLine[] = [];
   const warnings: string[] = [];
 
   for (const segment of segments) {
     const bed = bedsById.get(segment.bedId);
-    const days = countBillableDays(segment.start, segment.end);
+    const days = countBillableDays(segment.start, segment.end, timeZone);
 
     if (!bed || bed.dailyRate === null) {
       warnings.push(

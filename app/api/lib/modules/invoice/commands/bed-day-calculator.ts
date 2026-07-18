@@ -1,6 +1,7 @@
 // Pure bed-day charge maths (ADR 0040). No DB access, no framework — exercised
 // hard by unit tests for same-day, transfer-day, month-boundary and TZ-midnight
-// edges. The Tenant Time Zone is Asia/Kolkata until it becomes configurable.
+// edges. Callers resolve the Tenant's configured Time Zone (ADR 0026) and pass
+// it in; this default only covers callers/tests that don't.
 export const DEFAULT_TENANT_TIME_ZONE = 'Asia/Kolkata';
 
 export type OccupancyTransfer = {

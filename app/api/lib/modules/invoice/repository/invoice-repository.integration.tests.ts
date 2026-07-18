@@ -212,6 +212,30 @@ describe('Invoice repository', () => {
     expect(finalized.data.balanceDue).toBe(0);
   });
 
+  it('should refuse to finalize a draft left with zero lines, even without the validator pre-check', async () => {
+    // Reproduces the race the validator's own (unlocked) line-count read cannot
+    // close: a line is removed after validation passes but before the finalize
+    // transaction acquires its row lock. Calling the repository directly here
+    // (skipping validateFinalizeInvoice) simulates exactly that window and
+    // proves the transactional guard inside finalizeInvoice is the real backstop.
+    const invoice = await seedDraftInvoice(tenantA);
+    const chargeItemId = await seedChargeItem(tenantA, 'CONS', 500);
+    const withLine = await invoiceRepository.addInvoiceLine(tenantA, invoice.id, {
+      chargeItemId,
+      description: 'Consultation',
+      quantity: 1,
+      unitPrice: 500,
+    });
+    if (withLine.outcome !== 'updated') throw new Error('expected updated');
+
+    await invoiceRepository.removeInvoiceLine(tenantA, invoice.id, withLine.data.lines[0].id);
+
+    const finalized = await invoiceRepository.finalizeInvoice(tenantA, invoice.id);
+    expect(finalized.outcome).toBe('no-lines');
+    if (finalized.outcome !== 'no-lines') return;
+    expect(finalized.data.status).toBe('DRAFT');
+  });
+
   it('should record partial then full payments with RCP numbers and status sync', async () => {
     const invoice = await seedDraftInvoice(tenantA);
     const chargeItemId = await seedChargeItem(tenantA, 'CONS', 800);

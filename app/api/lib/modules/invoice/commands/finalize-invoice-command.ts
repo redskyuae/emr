@@ -32,5 +32,13 @@ export async function finalizeInvoiceCommand(
     };
   }
 
+  if (result.outcome === 'no-lines') {
+    return {
+      success: false,
+      errors: [`Invoice ${result.data.invoiceNumber} has no lines to finalize.`],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
   return { success: true, data: result.data };
 }

@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
 import { invoiceRepository } from '../repository/invoice-repository';
 import { validateAddInvoiceLine } from '../validator/add-invoice-line-validator';
 import { validateCreateInvoice } from '../validator/create-invoice-validator';
@@ -34,6 +35,9 @@ vi.mock('../validator/record-payment-validator', () => ({ validateRecordPayment:
 vi.mock('../validator/generate-bed-charges-validator', () => ({
   validateGenerateBedCharges: vi.fn(),
 }));
+vi.mock('@/app/api/lib/modules/tenant/repository/tenant-repository', () => ({
+  tenantRepository: { getTenantById: vi.fn() },
+}));
 
 const repo = vi.mocked(invoiceRepository);
 const validateCreate = vi.mocked(validateCreateInvoice);
@@ -42,6 +46,7 @@ const validateFinalize = vi.mocked(validateFinalizeInvoice);
 const validateVoid = vi.mocked(validateVoidInvoice);
 const validatePayment = vi.mocked(validateRecordPayment);
 const validateBedCharges = vi.mocked(validateGenerateBedCharges);
+const tenantRepo = vi.mocked(tenantRepository);
 
 const invoice = { id: 1, invoiceNumber: 'INV-1001', status: 'DRAFT' } as never;
 
@@ -136,6 +141,17 @@ describe('Invoice commands', () => {
         data: invoice,
       });
     });
+
+    it('should map the repository race-guard no-lines outcome to the same conflict as the validator check', async () => {
+      validateFinalize.mockResolvedValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
+      repo.finalizeInvoice.mockResolvedValue({ outcome: 'no-lines', data: invoice });
+
+      await expect(finalizeInvoiceCommand('1', 'tenant-1')).resolves.toEqual({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Invoice INV-1001 has no lines to finalize.'],
+      });
+    });
   });
 
   describe('voidInvoiceCommand', () => {
@@ -190,6 +206,7 @@ describe('Invoice commands', () => {
         success: true,
         data: { invoiceId: 1, admissionId: 9, tenantId: 'tenant-1' },
       });
+      tenantRepo.getTenantById.mockResolvedValue({ timeZone: 'Asia/Kolkata' } as never);
     });
 
     it('should price each occupancy segment and skip beds with no rate', async () => {
@@ -216,6 +233,49 @@ describe('Invoice commands', () => {
       ]);
       expect(repo.replaceBedAutoLines).toHaveBeenCalledWith('tenant-1', 1, [
         expect.objectContaining({ quantity: 2, unitPrice: 5000, amount: 10000 }),
+      ]);
+    });
+
+    it("should price segments using the Tenant's configured time zone, not the Asia/Kolkata default", async () => {
+      // This span straddles midnight differently depending on the interpreting
+      // zone: UTC counts 2 calendar days, Asia/Kolkata (+5:30) counts only 1.
+      // A day count of 2 here only appears if the Tenant's actual "UTC" setting
+      // reached the calculator instead of the module's Kolkata default.
+      repo.getOccupancySource.mockResolvedValue({
+        admittedAt: new Date('2026-03-10T22:00:00Z'),
+        dischargedAt: new Date('2026-03-12T01:00:00Z'),
+        status: 'DISCHARGED',
+        currentBedId: 5,
+        transfers: [],
+        beds: [{ bedId: 5, bedNumber: 'GEN-01', wardCode: 'GEN', dailyRate: 1000 }],
+      });
+      repo.replaceBedAutoLines.mockResolvedValue({ outcome: 'updated', data: invoice });
+      tenantRepo.getTenantById.mockResolvedValue({ timeZone: 'UTC' } as never);
+
+      await generateBedChargesCommand('1', 'tenant-1');
+
+      expect(tenantRepo.getTenantById).toHaveBeenCalledWith('tenant-1');
+      expect(repo.replaceBedAutoLines).toHaveBeenCalledWith('tenant-1', 1, [
+        expect.objectContaining({ quantity: 2, unitPrice: 1000, amount: 2000 }),
+      ]);
+    });
+
+    it('should fall back to the default time zone when the Tenant cannot be read', async () => {
+      repo.getOccupancySource.mockResolvedValue({
+        admittedAt: new Date('2026-03-10T22:00:00Z'),
+        dischargedAt: new Date('2026-03-12T01:00:00Z'),
+        status: 'DISCHARGED',
+        currentBedId: 5,
+        transfers: [],
+        beds: [{ bedId: 5, bedNumber: 'GEN-01', wardCode: 'GEN', dailyRate: 1000 }],
+      });
+      repo.replaceBedAutoLines.mockResolvedValue({ outcome: 'updated', data: invoice });
+      tenantRepo.getTenantById.mockResolvedValue(undefined);
+
+      await generateBedChargesCommand('1', 'tenant-1');
+
+      expect(repo.replaceBedAutoLines).toHaveBeenCalledWith('tenant-1', 1, [
+        expect.objectContaining({ quantity: 1 }),
       ]);
     });
   });
