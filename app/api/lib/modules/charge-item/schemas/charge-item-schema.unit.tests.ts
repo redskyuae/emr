@@ -68,9 +68,12 @@ describe('ChargeItem schema', () => {
     ).toContain('Charge item unit price must be zero or more');
   });
 
-  it('should reject a blank or null unit price as required, not coerce it to zero', () => {
+  it('should reject a blank, whitespace-only, or null unit price as required, not coerce it to zero', () => {
     expect(
       errorsOf(createChargeItemSchema.safeParse({ ...validPayload, unitPrice: '' }))
+    ).toContain('Charge item unit price is required');
+    expect(
+      errorsOf(createChargeItemSchema.safeParse({ ...validPayload, unitPrice: '   ' }))
     ).toContain('Charge item unit price is required');
     expect(
       errorsOf(createChargeItemSchema.safeParse({ ...validPayload, unitPrice: null }))

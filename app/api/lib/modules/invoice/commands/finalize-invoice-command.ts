@@ -40,5 +40,13 @@ export async function finalizeInvoiceCommand(
     };
   }
 
+  if (result.outcome === 'amount-too-large') {
+    return {
+      success: false,
+      errors: ['Invoice total would exceed the maximum allowed amount.'],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
   return { success: true, data: result.data };
 }

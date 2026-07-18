@@ -236,6 +236,38 @@ describe('Invoice repository', () => {
     expect(finalized.data.status).toBe('DRAFT');
   });
 
+  it('should refuse and roll back a line add whose new sum would overflow numeric(12,2)', async () => {
+    // Each Charge Item's own price is individually schema-bounded (well under
+    // the column max), but nothing bounds the *sum* of several valid lines —
+    // this reproduces a Draft already near the cap taking one more valid line.
+    const invoice = await seedDraftInvoice(tenantA);
+    const nearCapItem = await seedChargeItem(tenantA, 'BIG', 9_999_999_999);
+    const firstLine = await invoiceRepository.addInvoiceLine(tenantA, invoice.id, {
+      chargeItemId: nearCapItem,
+      description: 'Near-cap line',
+      quantity: 1,
+      unitPrice: 9_999_999_999,
+    });
+    if (firstLine.outcome !== 'updated') throw new Error('expected updated');
+    expect(firstLine.data.subtotal).toBe(9_999_999_999);
+
+    const smallItem = await seedChargeItem(tenantA, 'SMALL', 10);
+    const secondLine = await invoiceRepository.addInvoiceLine(tenantA, invoice.id, {
+      chargeItemId: smallItem,
+      description: 'Tips it over',
+      quantity: 1,
+      unitPrice: 10,
+    });
+
+    expect(secondLine.outcome).toBe('amount-too-large');
+
+    // The whole transaction (including the second line's insert) rolled back:
+    // the Draft still shows exactly the first line and its original subtotal.
+    const reloaded = await invoiceRepository.getInvoiceById(tenantA, invoice.id);
+    expect(reloaded?.lines).toHaveLength(1);
+    expect(reloaded?.subtotal).toBe(9_999_999_999);
+  });
+
   it('should record partial then full payments with RCP numbers and status sync', async () => {
     const invoice = await seedDraftInvoice(tenantA);
     const chargeItemId = await seedChargeItem(tenantA, 'CONS', 800);

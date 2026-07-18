@@ -7,13 +7,13 @@ import { toast } from 'sonner';
 
 import type { InvoiceLine } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { useGenerateBedCharges } from '@/app/queries/billing/invoices/useGenerateBedCharges';
 import { useInvoiceQuery } from '@/app/queries/billing/invoices/useInvoice';
 import { useRemoveInvoiceLine } from '@/app/queries/billing/invoices/useRemoveInvoiceLine';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { DeleteInvoiceDialog } from './_modals/delete-invoice-dialog';
 import { FinalizeInvoiceDialog } from './_modals/finalize-invoice-dialog';
+import { GenerateBedChargesDialog } from './_modals/generate-bed-charges-dialog';
 import { RecordPaymentDialog } from './_modals/record-payment-dialog';
 import { VoidInvoiceDialog } from './_modals/void-invoice-dialog';
 import { AddLineSheet } from './_sheets/add-line-sheet';
@@ -23,14 +23,13 @@ import { InvoicePaymentsCard } from './invoice-payments-card';
 import { InvoiceTotalsPanel } from './invoice-totals-panel';
 import InvoiceDetailLoader from '../loader';
 
-type ActiveModal = 'finalize' | 'void' | 'delete' | 'payment' | null;
+type ActiveModal = 'finalize' | 'void' | 'delete' | 'payment' | 'generate-bed-charges' | null;
 
 export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
   const invoiceQuery = useInvoiceQuery(invoiceId);
   const [lineParam, setLineParam] = useQueryState('line');
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const removeMutation = useRemoveInvoiceLine();
-  const generateMutation = useGenerateBedCharges();
 
   if (invoiceQuery.isLoading) {
     return <InvoiceDetailLoader />;
@@ -56,18 +55,6 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
     try {
       await removeMutation.mutateAsync({ id: invoice.id, lineId: line.id });
       toast.success('Line removed.');
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    }
-  }
-
-  async function handleGenerateBedCharges() {
-    try {
-      const result = await generateMutation.mutateAsync(invoice.id);
-      toast.success(`Generated ${result.data.linesAdded} bed-day line(s).`);
-      for (const warning of result.data.warnings) {
-        toast.warning(warning);
-      }
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -104,9 +91,8 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
             invoice={invoice}
             onAddLine={() => void setLineParam('new')}
             onRemoveLine={(line) => void handleRemoveLine(line)}
-            onGenerateBedCharges={() => void handleGenerateBedCharges()}
+            onGenerateBedCharges={() => setActiveModal('generate-bed-charges')}
             isRemoving={removeMutation.isPending}
-            isGenerating={generateMutation.isPending}
           />
           <InvoicePaymentsCard
             invoice={invoice}
@@ -140,6 +126,11 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
       <RecordPaymentDialog
         invoice={invoice}
         open={activeModal === 'payment'}
+        onClose={() => setActiveModal(null)}
+      />
+      <GenerateBedChargesDialog
+        invoice={invoice}
+        open={activeModal === 'generate-bed-charges'}
         onClose={() => setActiveModal(null)}
       />
     </div>

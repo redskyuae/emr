@@ -14,14 +14,12 @@ export function InvoiceLinesCard({
   onRemoveLine,
   onGenerateBedCharges,
   isRemoving,
-  isGenerating,
 }: {
   invoice: Invoice;
   onAddLine: () => void;
   onRemoveLine: (line: InvoiceLine) => void;
   onGenerateBedCharges: () => void;
   isRemoving: boolean;
-  isGenerating: boolean;
 }) {
   const isDraft = invoice.status === 'DRAFT';
 
@@ -32,14 +30,8 @@ export function InvoiceLinesCard({
         {isDraft ? (
           <div className="flex gap-2">
             {invoice.admission ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onGenerateBedCharges}
-                disabled={isGenerating}
-              >
-                {isGenerating ? 'Generating…' : 'Generate bed charges'}
+              <Button type="button" variant="outline" size="sm" onClick={onGenerateBedCharges}>
+                Generate bed charges
               </Button>
             ) : null}
             <Button type="button" size="sm" onClick={onAddLine}>

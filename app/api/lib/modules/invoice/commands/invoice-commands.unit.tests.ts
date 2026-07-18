@@ -119,6 +119,18 @@ describe('Invoice commands', () => {
         data: invoice,
       });
     });
+
+    it('should map an amount-too-large outcome to a clean conflict', async () => {
+      repo.addInvoiceLine.mockResolvedValue({ outcome: 'amount-too-large' });
+
+      const result = await addInvoiceLineCommand('1', 'tenant-1', {});
+
+      expect(result).toMatchObject({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Invoice total would exceed the maximum allowed amount.'],
+      });
+    });
   });
 
   describe('finalizeInvoiceCommand', () => {
@@ -197,6 +209,25 @@ describe('Invoice commands', () => {
         success: true,
         data: { invoice, payment },
       });
+    });
+
+    it('should map a receipt-number 23505 race to a clean conflict', async () => {
+      repo.recordPayment.mockRejectedValue({
+        cause: { code: '23505', constraint: 'payment_tenant_receipt_idx' },
+      });
+
+      await expect(recordPaymentCommand('1', 'tenant-1', {})).resolves.toEqual({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Receipt Number allocation conflicted. Please retry.'],
+      });
+    });
+
+    it('should rethrow unrelated repository errors', async () => {
+      const error = new Error('database down');
+      repo.recordPayment.mockRejectedValue(error);
+
+      await expect(recordPaymentCommand('1', 'tenant-1', {})).rejects.toThrow(error);
     });
   });
 

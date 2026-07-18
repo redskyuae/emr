@@ -28,7 +28,8 @@ const chargeItemCategorySchema = z.enum(CHARGE_ITEM_CATEGORIES, {
 // required price silently pass validation as free — treat blank/null the same
 // as absent so the "is required" error fires instead of a $0 Charge Item.
 const chargeItemUnitPriceSchema = z.preprocess(
-  (value) => (value === null || value === '' ? undefined : value),
+  (value) =>
+    value === null || (typeof value === 'string' && value.trim() === '') ? undefined : value,
   z.coerce
     .number({ error: 'Charge item unit price is required' })
     .nonnegative('Charge item unit price must be zero or more')

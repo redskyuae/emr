@@ -26,6 +26,7 @@ import {
   type InvoiceStatus,
   type Payment,
   type PaymentMethod,
+  MAX_MONEY_AMOUNT,
   roundMoney,
 } from '../schemas/invoice-schema';
 import { formatInvoiceNumber, formatReceiptNumber } from './invoice-number';
@@ -310,6 +311,17 @@ async function findInvoiceById(tenantId: string, id: number): Promise<InvoiceRow
   return row ? { ...row, status: row.status as InvoiceStatus } : undefined;
 }
 
+// Thrown inside a transaction to force a full rollback (including whatever
+// line insert/delete already happened) when recomputeDraftTotals finds the
+// new sum would overflow numeric(12,2); callers catch this outside their
+// db.transaction(...) call and map it to a clean 'amount-too-large' outcome.
+class AmountTooLargeError extends Error {
+  constructor() {
+    super('Invoice total exceeds the maximum allowed amount');
+    this.name = 'AmountTooLargeError';
+  }
+}
+
 // Locks the Invoice row so a mutation and its total recompute serialize against
 // any concurrent edit, then reports whether the caller may proceed on a Draft.
 async function lockDraft(
@@ -345,12 +357,18 @@ async function lockDraft(
 
 // Sums the Draft's live lines and rewrites subtotal/grandTotal, clamping the
 // Discount down if a line removal dropped the subtotal below it (ADR 0037).
+// A single line is already capped at MAX_MONEY_AMOUNT at insert time (see
+// validateAddInvoiceLine / generateBedChargesCommand), but the *sum* of
+// several individually-valid lines is not — throwing here (instead of just
+// skipping the write) rolls back whatever line insert/delete the caller
+// already made in this same transaction, so the Draft never ends up with a
+// line that isn't reflected in its own totals.
 async function recomputeDraftTotals(
   tx: Transaction,
   tenantId: string,
   id: number,
   currentDiscount: number
-) {
+): Promise<void> {
   const [{ subtotal }] = await tx
     .select({
       subtotal: sql<number>`coalesce(sum(${invoiceLineTable.amount}), 0)`.mapWith(Number),
@@ -365,6 +383,11 @@ async function recomputeDraftTotals(
     );
 
   const roundedSubtotal = roundMoney(subtotal);
+
+  if (roundedSubtotal > MAX_MONEY_AMOUNT) {
+    throw new AmountTooLargeError();
+  }
+
   const discountAmount = Math.min(currentDiscount, roundedSubtotal);
   const grandTotal = roundMoney(roundedSubtotal - discountAmount);
 
@@ -378,7 +401,8 @@ export type DraftMutationResult =
   | { outcome: 'updated'; data: Invoice }
   | { outcome: 'not-found' }
   | { outcome: 'not-draft'; data: Invoice }
-  | { outcome: 'line-not-found'; data: Invoice };
+  | { outcome: 'line-not-found'; data: Invoice }
+  | { outcome: 'amount-too-large' };
 
 async function reloadOrThrow(tx: Transaction, tenantId: string, id: number): Promise<Invoice> {
   const invoice = await assembleInvoice(tx, tenantId, id);
@@ -418,7 +442,7 @@ async function createInvoice(data: CreateInvoiceData): Promise<Invoice> {
   });
 }
 
-async function addInvoiceLine(
+async function runAddInvoiceLineTransaction(
   tenantId: string,
   invoiceId: number,
   line: {
@@ -456,7 +480,31 @@ async function addInvoiceLine(
   });
 }
 
-async function removeInvoiceLine(
+async function addInvoiceLine(
+  tenantId: string,
+  invoiceId: number,
+  line: {
+    chargeItemId: number;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+  }
+): Promise<DraftMutationResult> {
+  try {
+    return await runAddInvoiceLineTransaction(tenantId, invoiceId, line);
+  } catch (error) {
+    if (error instanceof AmountTooLargeError) {
+      // Each line is individually capped at MAX_MONEY_AMOUNT, but the *sum*
+      // isn't — an existing Draft already near the cap can still overflow
+      // when one more (individually valid) line is added.
+      return { outcome: 'amount-too-large' };
+    }
+
+    throw error;
+  }
+}
+
+async function runRemoveInvoiceLineTransaction(
   tenantId: string,
   invoiceId: number,
   lineId: number
@@ -496,7 +544,26 @@ async function removeInvoiceLine(
   });
 }
 
-async function updateDraftInvoice(
+async function removeInvoiceLine(
+  tenantId: string,
+  invoiceId: number,
+  lineId: number
+): Promise<DraftMutationResult> {
+  try {
+    return await runRemoveInvoiceLineTransaction(tenantId, invoiceId, lineId);
+  } catch (error) {
+    // Removing a line only ever shrinks the sum, so recomputeDraftTotals
+    // cannot actually throw here — caught for type-safety symmetry with the
+    // other callers of the same shared helper, not a reachable path.
+    if (error instanceof AmountTooLargeError) {
+      return { outcome: 'amount-too-large' };
+    }
+
+    throw error;
+  }
+}
+
+async function runUpdateDraftInvoiceTransaction(
   tenantId: string,
   invoiceId: number,
   data: { discountAmount: number; notes?: string }
@@ -512,45 +579,44 @@ async function updateDraftInvoice(
       return { outcome: 'not-draft', data: await reloadOrThrow(tx, tenantId, invoiceId) };
     }
 
-    const [{ subtotal }] = await tx
-      .select({
-        subtotal: sql<number>`coalesce(sum(${invoiceLineTable.amount}), 0)`.mapWith(Number),
-      })
-      .from(invoiceLineTable)
-      .where(
-        and(
-          eq(invoiceLineTable.tenantId, tenantId),
-          eq(invoiceLineTable.invoiceId, invoiceId),
-          eq(invoiceLineTable.isDeleted, false)
-        )
-      );
-
-    const roundedSubtotal = roundMoney(subtotal);
-    const discountAmount = Math.min(roundMoney(data.discountAmount), roundedSubtotal);
-    const grandTotal = roundMoney(roundedSubtotal - discountAmount);
+    // Delegates the subtotal/discount/grandTotal write to the same guarded
+    // helper every other mutation uses, then layers the notes write on top —
+    // two UPDATEs in one transaction, not a duplicated overflow check.
+    await recomputeDraftTotals(tx, tenantId, invoiceId, roundMoney(data.discountAmount));
 
     await tx
       .update(invoiceTable)
-      .set({
-        subtotal: roundedSubtotal,
-        discountAmount,
-        grandTotal,
-        notes: data.notes ?? null,
-        modifiedOn: new Date(),
-      })
+      .set({ notes: data.notes ?? null, modifiedOn: new Date() })
       .where(and(eq(invoiceTable.id, invoiceId), eq(invoiceTable.tenantId, tenantId)));
 
     return { outcome: 'updated', data: await reloadOrThrow(tx, tenantId, invoiceId) };
   });
 }
 
+async function updateDraftInvoice(
+  tenantId: string,
+  invoiceId: number,
+  data: { discountAmount: number; notes?: string }
+): Promise<DraftMutationResult> {
+  try {
+    return await runUpdateDraftInvoiceTransaction(tenantId, invoiceId, data);
+  } catch (error) {
+    if (error instanceof AmountTooLargeError) {
+      return { outcome: 'amount-too-large' };
+    }
+
+    throw error;
+  }
+}
+
 export type FinalizeInvoiceResult =
   | { outcome: 'finalized'; data: Invoice }
   | { outcome: 'not-found' }
   | { outcome: 'not-draft'; data: Invoice }
-  | { outcome: 'no-lines'; data: Invoice };
+  | { outcome: 'no-lines'; data: Invoice }
+  | { outcome: 'amount-too-large' };
 
-async function finalizeInvoice(
+async function runFinalizeInvoiceTransaction(
   tenantId: string,
   invoiceId: number
 ): Promise<FinalizeInvoiceResult> {
@@ -604,6 +670,21 @@ async function finalizeInvoice(
 
     return { outcome: 'finalized', data: await reloadOrThrow(tx, tenantId, invoiceId) };
   });
+}
+
+async function finalizeInvoice(
+  tenantId: string,
+  invoiceId: number
+): Promise<FinalizeInvoiceResult> {
+  try {
+    return await runFinalizeInvoiceTransaction(tenantId, invoiceId);
+  } catch (error) {
+    if (error instanceof AmountTooLargeError) {
+      return { outcome: 'amount-too-large' };
+    }
+
+    throw error;
+  }
 }
 
 export type VoidInvoiceResult =
@@ -758,7 +839,7 @@ export type BedAutoLine = {
   amount: number;
 };
 
-async function replaceBedAutoLines(
+async function runReplaceBedAutoLinesTransaction(
   tenantId: string,
   invoiceId: number,
   lines: BedAutoLine[]
@@ -807,6 +888,22 @@ async function replaceBedAutoLines(
 
     return { outcome: 'updated', data: await reloadOrThrow(tx, tenantId, invoiceId) };
   });
+}
+
+async function replaceBedAutoLines(
+  tenantId: string,
+  invoiceId: number,
+  lines: BedAutoLine[]
+): Promise<DraftMutationResult> {
+  try {
+    return await runReplaceBedAutoLinesTransaction(tenantId, invoiceId, lines);
+  } catch (error) {
+    if (error instanceof AmountTooLargeError) {
+      return { outcome: 'amount-too-large' };
+    }
+
+    throw error;
+  }
 }
 
 export type OccupancyBed = {
