@@ -189,7 +189,7 @@ export function MarketingAnimations({ children }: { children: ReactNode }) {
           }),
       });
 
-      // Web fonts (Schibsted Grotesk / Public Sans) load after this runs and
+      // Web fonts (Urbanist / Geist Mono) load after this runs and
       // change heading/text heights, which shifts every element below the fold.
       // Recompute ScrollTrigger start positions once fonts settle so reveal
       // triggers can't get stranded past their fire point (cards stuck hidden).

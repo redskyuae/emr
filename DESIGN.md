@@ -34,9 +34,13 @@ A full dark theme exists under `.dark` (navy-tinted darks, lighter blue primary)
 
 | Role     | Font                                       | Tailwind                              |
 | -------- | ------------------------------------------ | ------------------------------------- |
-| Headings | Schibsted Grotesk                          | `font-heading` (automatic on `h1–h4`) |
-| Body/UI  | Public Sans                                | `font-sans` (default)                 |
+| Headings | Urbanist                                   | `font-heading` (automatic on `h1–h4`) |
+| Body/UI  | Urbanist                                   | `font-sans` (default)                 |
 | Data     | Geist Mono — codes, IDs, timestamps, slugs | `font-mono`                           |
+
+Urbanist is the single global sans: headings and body share the family, so hierarchy comes from
+weight and size rather than a second typeface. (It replaced Schibsted Grotesk headings + Public Sans
+body.)
 
 Loaded in `app/layout.tsx` via `next/font`. Do not introduce other fonts.
 
@@ -100,7 +104,7 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 2. **One accent at a time.** Primary blue marks the single most important action per view. Secondary actions are `outline`/`ghost`.
 3. **Depth over decoration.** Hierarchy comes from elevation, spacing, and type weight — not from colored boxes and heavy borders.
 4. **Small radii, crisp edges.** This is a tool, not a toy.
-5. **Type does the talking.** Schibsted Grotesk headings carry personality; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).
+5. **Type does the talking.** Urbanist headings carry personality through weight and size; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).
 6. **Density with breathing room.** Clinical screens may be dense (tables, schedules) but always on the 8px grid with clear group separation.
 
 ## UX principles (EMR-specific)

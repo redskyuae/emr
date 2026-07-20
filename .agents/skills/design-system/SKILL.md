@@ -17,7 +17,7 @@ This project has a committed design system: **Microsoft Fluent-inspired, built o
 
 - **Tokens only.** `bg-primary`, `text-muted-foreground`, `shadow-fluent-8` — never raw hex/oklch in components. Theme changes happen in `app/globals.css`, nowhere else.
 - **Don't fork `components/ui/`.** Layout tweaks go through `className`; theme tweaks go through tokens. Domain composites go in `components/{brand,marketing,auth,...}/`.
-- **Fonts are fixed**: Schibsted Grotesk (headings, automatic on h1–h4), Public Sans (body), Geist Mono (codes/IDs/timestamps). Do not add fonts.
+- **Fonts are fixed**: Urbanist (headings — automatic on h1–h4 — and body), Geist Mono (codes/IDs/timestamps). Do not add fonts.
 - **Elevation = hierarchy.** Use the `shadow-fluent-*` ramp from DESIGN.md; the more modal the element, the higher the shadow.
 - **Motion**: GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`. Ease `power3.out`, ≤ 0.9s, scroll reveals fire once, and **always** bail out under `prefers-reduced-motion`. No continuous motion inside the clinical app.
 - **Both themes.** Every screen must hold up in light and dark (`.dark`).
