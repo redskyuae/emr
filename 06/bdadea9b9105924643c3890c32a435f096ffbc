@@ -1,0 +1,27 @@
+components/marketing/marketing-animations.tsx
+  1eb620918e6c9b53 192
+.agents/skills/design-system/SKILL.md
+  1eb620918e6c9b53 20
+DESIGN.md
+  1eb620918e6c9b53 37-38,41-43,107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "06bdadea9b9105924643c3890c32a435f096ffbc",
+  "prompts": {
+    "1eb620918e6c9b53": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "68738069-1d59-4dd8-8c29-9b51a20d0732",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 5,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    }
+  }
+}
