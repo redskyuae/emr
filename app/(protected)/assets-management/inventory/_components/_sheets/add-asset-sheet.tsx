@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Controller, useForm, type UseFormSetError } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Plus, Save } from 'lucide-react';
 import { toast } from 'sonner';
@@ -52,31 +52,6 @@ const EMPTY_DEFAULTS: AddAssetFormValues = {
   nextServiceDate: '',
   calibrationDate: '',
 };
-
-function applyServerErrorsToFields(
-  errors: string[],
-  setError: UseFormSetError<AddAssetFormValues>
-): string[] {
-  const unmatched: string[] = [];
-
-  for (const message of errors) {
-    if (/serial number/i.test(message)) {
-      setError('serialNumber', { type: 'server', message });
-    } else if (/\bcategory\b/i.test(message)) {
-      setError('categoryId', { type: 'server', message });
-    } else if (/\bstatus\b/i.test(message)) {
-      setError('statusId', { type: 'server', message });
-    } else if (/\bcondition\b/i.test(message)) {
-      setError('conditionId', { type: 'server', message });
-    } else if (/\bname\b/i.test(message)) {
-      setError('name', { type: 'server', message });
-    } else {
-      unmatched.push(message);
-    }
-  }
-
-  return unmatched;
-}
 
 type AddAssetSheetProps = {
   open: boolean;
@@ -141,8 +116,7 @@ function AddAssetSheetBody({ onClose }: { onClose: () => void }) {
       toast.success('Asset created.');
       onClose();
     } catch (error) {
-      const unmatched = applyServerErrorsToFields(getApiErrors(error), form.setError);
-      setServerErrors(unmatched);
+      setServerErrors(getApiErrors(error));
       toast.error(getApiErrorMessage(error));
     }
   });
