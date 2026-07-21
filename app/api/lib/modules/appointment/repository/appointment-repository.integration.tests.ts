@@ -268,4 +268,99 @@ describe('Appointment repository', () => {
       ).resolves.toBeUndefined();
     });
   });
+
+  describe('getAppointments', () => {
+    it('should list Appointments for one tenant ordered by earliest slot time on a date', async () => {
+      const fixtures = await createFixtures();
+      const later = await appointmentRepository.createAppointment(
+        appointmentData(fixtures, { slotTimes: ['09:30'], remarks: 'Later slot' })
+      );
+      const earlier = await appointmentRepository.createAppointment(
+        appointmentData(fixtures, { slotTimes: ['09:00'], remarks: 'Earlier slot' })
+      );
+      if (!later.success || !earlier.success) throw new Error('appointment creation failed');
+
+      const result = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        slotDate: '2099-12-31',
+      });
+
+      expect(result).toMatchObject({
+        total: 2,
+        data: [
+          { id: earlier.data.id, slotDate: '31-12-2099', slots: [{ slotTime: '09:00' }] },
+          { id: later.data.id, slotDate: '31-12-2099', slots: [{ slotTime: '09:30' }] },
+        ],
+      });
+    });
+
+    it('should filter Appointments by doctor, patient, status, and search text', async () => {
+      const fixtures = await createFixtures();
+      const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+      if (!created.success) throw new Error('appointment creation failed');
+
+      const byDoctor = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        doctorId: fixtures.doctorId,
+      });
+      const byPatient = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        patientId: fixtures.patient.id,
+      });
+      const byStatus = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        appointmentStatusId: created.data.appointmentStatus.id,
+      });
+      const byBookingNumber = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        query: created.data.bookingNumber.toLowerCase(),
+      });
+      const byPatientName = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        query: 'asha',
+      });
+      const noMatch = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        query: 'nobody',
+      });
+
+      expect(byDoctor.total).toBe(1);
+      expect(byPatient.total).toBe(1);
+      expect(byStatus.total).toBe(1);
+      expect(byBookingNumber.total).toBe(1);
+      expect(byPatientName.total).toBe(1);
+      expect(noMatch).toMatchObject({ total: 0, data: [] });
+    });
+
+    it('should not list Appointments belonging to another tenant', async () => {
+      const fixtures = await createFixtures();
+      const other = await createFixtures();
+      await appointmentRepository.createAppointment(appointmentData(fixtures));
+
+      await expect(
+        appointmentRepository.getAppointments({ tenantId: other.tenantId })
+      ).resolves.toMatchObject({ total: 0, data: [] });
+    });
+
+    it('should paginate Appointments', async () => {
+      const fixtures = await createFixtures();
+      await appointmentRepository.createAppointment(
+        appointmentData(fixtures, { slotTimes: ['09:00'] })
+      );
+      await appointmentRepository.createAppointment(
+        appointmentData(fixtures, { slotTimes: ['09:15'] })
+      );
+
+      const page = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        slotDate: '2099-12-31',
+        page: 2,
+        limit: 1,
+      });
+
+      expect(page.total).toBe(2);
+      expect(page.data).toHaveLength(1);
+      expect(page.data[0]?.slots[0]?.slotTime).toBe('09:15');
+    });
+  });
 });

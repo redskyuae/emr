@@ -145,9 +145,21 @@ export const bookingNumberSchema = z
   .min(1, 'Booking Number cannot be empty')
   .max(20, 'Booking Number must be at most 20 characters');
 
+export const listAppointmentsSchema = z.object({
+  slotDate: slotDateSchema.optional(),
+  doctorId: positiveIdSchema('Doctor ID').optional(),
+  patientId: positiveIdSchema('Patient ID').optional(),
+  appointmentStatusId: positiveIdSchema('Appointment status ID').optional(),
+  query: z.string().trim().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional(),
+});
+
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
+export type ListAppointmentsInput = z.infer<typeof listAppointmentsSchema>;
 export type CreateAppointmentData = CreateAppointmentInput & { tenantId: string };
 export type ValidatedCreateAppointmentData = CreateAppointmentData & { timeZone: string };
+export type AppointmentListParams = ListAppointmentsInput & { tenantId: string };
 
 export type AppointmentReferenceSummary = {
   id: number;

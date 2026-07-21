@@ -1,5 +1,8 @@
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { CreatePatientInput } from '@/app/api/lib/modules/patient/schemas/patient-schema';
+import type { Paginated } from '@/app/api/lib/utils/types';
+
+export type ListAppointmentsResponse = Paginated<Appointment>;
 
 export type CreateAppointmentRequest = {
   doctorId: number;

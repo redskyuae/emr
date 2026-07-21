@@ -3588,6 +3588,59 @@ export const openApiDocument = {
       },
     },
     '/api/v1/appointments': {
+      get: {
+        tags: ['Appointment'],
+        summary: 'List Appointments',
+        description:
+          "Lists Appointments in the active Tenant. With no slotDate or patientId filter, the list defaults to today's schedule in the Tenant Time Zone and is ordered by earliest reserved DoctorSlot; Patient-specific history suppresses that default.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'slotDate',
+            in: 'query',
+            required: false,
+            description:
+              'Tenant-local Appointment date in DD-MM-YYYY format. Defaults to today unless patientId is supplied.',
+            schema: { type: 'string', example: '16-07-2026' },
+          },
+          {
+            name: 'doctorId',
+            in: 'query',
+            required: false,
+            description: 'Filter to one Doctor schedule.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'patientId',
+            in: 'query',
+            required: false,
+            description:
+              "Filter to one Patient's Appointment history. Suppresses the today default.",
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'appointmentStatusId',
+            in: 'query',
+            required: false,
+            description: 'Filter by one tenant-scoped AppointmentStatus.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+          parameterRef('Page'),
+          parameterRef('Limit'),
+          parameterRef('Query'),
+          parameterRef('Search'),
+        ],
+        responses: {
+          '200': {
+            description: 'Appointment schedule.',
+            content: jsonContent(paginatedSchema('Appointment'), {
+              data: [appointmentExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          ...authenticatedListErrorResponses,
+        },
+      },
       post: {
         tags: ['Appointment'],
         summary: 'Create Appointment',
