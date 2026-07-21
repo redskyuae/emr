@@ -18,11 +18,15 @@ import type {
 } from '../schemas/patient-schema';
 import { formatPatientMrn } from './patient-mrn';
 
-type PatientRow = Omit<Patient, 'gender' | 'bloodGroup' | 'maritalStatus' | 'govtIdType'> & {
+type PatientRow = Omit<
+  Patient,
+  'gender' | 'bloodGroup' | 'maritalStatus' | 'preferredPaymentMethod' | 'govtIdType'
+> & {
   gender: string | null;
   bloodGroup: string | null;
   govtIdType: string | null;
   maritalStatus: string | null;
+  preferredPaymentMethod: string | null;
 };
 
 function toPatient(row: PatientRow): Patient {
@@ -32,6 +36,7 @@ function toPatient(row: PatientRow): Patient {
     bloodGroup: row.bloodGroup as Patient['bloodGroup'],
     govtIdType: row.govtIdType as Patient['govtIdType'],
     maritalStatus: row.maritalStatus as Patient['maritalStatus'],
+    preferredPaymentMethod: row.preferredPaymentMethod as Patient['preferredPaymentMethod'],
   };
 }
 
@@ -63,6 +68,7 @@ const patientColumns = {
   govtIdNumber: patientTable.govtIdNumber,
   maritalStatus: patientTable.maritalStatus,
   nationalityId: patientTable.nationalityId,
+  preferredPaymentMethod: patientTable.preferredPaymentMethod,
   alternatePhone: patientTable.alternatePhone,
   emergencyContactName: patientTable.emergencyContactName,
   emergencyContactPhone: patientTable.emergencyContactPhone,
@@ -127,6 +133,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     govtIdNumber: data.govtIdNumber ?? null,
     maritalStatus: data.maritalStatus ?? null,
     nationalityId: data.nationalityId ?? null,
+    preferredPaymentMethod: data.preferredPaymentMethod ?? null,
     alternatePhone: data.alternatePhone ?? null,
     emergencyContactName: data.emergencyContactName ?? null,
     emergencyContactPhone: data.emergencyContactPhone ?? null,

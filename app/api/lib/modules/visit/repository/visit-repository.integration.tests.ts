@@ -15,6 +15,7 @@ import { patient as patientTable } from '@/app/db/schema/patient';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
+import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
 import type { ValidatedCheckInVisitData } from '../schemas/visit-schema';
 import { visitRepository } from './visit-repository';
 
@@ -194,6 +195,28 @@ describe('Visit repository', () => {
           appointment: null,
         },
       });
+    });
+
+    it('should attach documents supplied at check-in to the created visit', async () => {
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, {
+          documents: [
+            {
+              fileName: 'referral.pdf',
+              fileUrl: 'https://blob.vercel-storage.com/x/referral-abc.pdf',
+              contentType: 'application/pdf',
+              fileSize: 2048,
+            },
+          ],
+        })
+      );
+
+      expect(result.success).toBe(true);
+      if (!result.success) return;
+
+      await expect(visitDocumentRepository.listByVisit(tenantA, result.data.id)).resolves.toEqual([
+        expect.objectContaining({ fileName: 'referral.pdf' }),
+      ]);
     });
 
     it('should embed the patient, doctor and visit type in the created visit', async () => {

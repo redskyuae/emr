@@ -688,6 +688,25 @@ const visitExample = {
   modifiedOn: '2026-07-16T04:30:00.000Z',
 };
 
+const uploadedVisitDocumentExample = {
+  fileName: 'referral.pdf',
+  fileUrl:
+    'https://abc123.public.blob.vercel-storage.com/tenants/org_apollo/visit-documents/referral-x1y2.pdf',
+  contentType: 'application/pdf',
+  fileSize: 20480,
+};
+
+const visitDocumentExample = {
+  id: 88,
+  visitId: 501,
+  fileName: 'referral.pdf',
+  fileUrl:
+    'https://abc123.public.blob.vercel-storage.com/tenants/org_apollo/visit-documents/referral-x1y2.pdf',
+  contentType: 'application/pdf',
+  fileSize: 20480,
+  createdOn: '2026-07-16T04:31:00.000Z',
+};
+
 const specialtyExample = {
   id: 7,
   tenantId: 'org_apollo',
@@ -1635,6 +1654,7 @@ const patientRequestExample = {
   dateOfBirth: '1990-05-14',
   bloodGroup: 'B+',
   maritalStatus: 'married',
+  preferredPaymentMethod: 'insurance',
   phone: '+91-9876543210',
   alternatePhone: '+91-9123456780',
   email: 'asha.rao@example.com',
@@ -4049,6 +4069,132 @@ export const openApiDocument = {
             content: jsonContent(schemaRef('ValidationError'), {
               message: 'Visit VST-1001 cannot be cancelled from its current status.',
               errors: ['Visit VST-1001 cannot be cancelled from its current status.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/documents': {
+      post: {
+        tags: ['Visit'],
+        summary: 'Upload a Visit document to Blob',
+        description:
+          'Uploads a single file to Blob storage and returns its URL and metadata. This does not persist anything against a Visit — send the returned metadata in a Check-in payload (documents[]) or to POST /api/v1/visits/{id}/documents. Accepts a PDF or an image (PNG, JPEG, WEBP, GIF, TIFF) up to 4.5MB.',
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                required: ['file'],
+                properties: {
+                  file: { type: 'string', format: 'binary', description: 'The file to upload.' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'File uploaded to Blob.',
+            content: jsonContent(dataEnvelopeSchema('VisitDocumentMetadata'), {
+              data: uploadedVisitDocumentExample,
+            }),
+          },
+          '400': {
+            description: 'The file is missing, empty, too large, or an unsupported type.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'File must be a PDF or an image (PNG, JPEG, WEBP, GIF, TIFF)',
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/documents': {
+      get: {
+        tags: ['Visit'],
+        summary: 'List Visit documents',
+        description: 'Lists the documents attached to a Visit in the active Tenant.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Documents attached to the Visit.',
+            content: jsonContent(dataEnvelopeArraySchema('VisitDocument'), {
+              data: [visitDocumentExample],
+            }),
+          },
+          ...authenticatedErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Visit'],
+        summary: 'Attach a document to a Visit',
+        description:
+          'Persists a document (already uploaded via POST /api/v1/visits/documents) against an Active Visit. A Completed or Cancelled Visit cannot be edited.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('VisitDocumentMetadata', uploadedVisitDocumentExample),
+        responses: {
+          '201': {
+            description: 'Document attached to the Visit.',
+            content: jsonContent(dataEnvelopeSchema('VisitDocument'), {
+              data: visitDocumentExample,
+            }),
+          },
+          '400': responseRef('ValidationFailed'),
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': responseRef('NotFound'),
+          '409': {
+            description: 'The Visit is Completed or Cancelled.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 is closed and cannot be edited.',
+              errors: ['Visit VST-1001 is closed and cannot be edited.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/documents/{documentId}': {
+      delete: {
+        tags: ['Visit'],
+        summary: 'Delete a Visit document',
+        description:
+          'Removes a document from an Active Visit and deletes the underlying Blob file. A Completed or Cancelled Visit cannot be edited.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Visit'),
+          {
+            name: 'documentId',
+            in: 'path',
+            required: true,
+            description: 'Identifier of the document to delete.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+        ],
+        responses: {
+          '204': { description: 'Document deleted.' },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'The Visit or document was not found.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Document not found',
+              errors: ['Document not found'],
+            }),
+          },
+          '409': {
+            description: 'The Visit is Completed or Cancelled.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 is closed and cannot be edited.',
+              errors: ['Visit VST-1001 is closed and cannot be edited.'],
             }),
           },
           '500': responseRef('InternalServerError'),
@@ -7453,6 +7599,13 @@ export const openApiDocument = {
           },
           chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
           remarks: { type: ['string', 'null'] },
+          documents: {
+            type: 'array',
+            maxItems: 20,
+            description:
+              'Optional documents already uploaded to Blob (via POST /api/v1/visits/documents), attached to the Visit as it is created.',
+            items: schemaRef('VisitDocumentMetadata'),
+          },
         },
       },
       UpdateVisitRequest: {
@@ -7503,6 +7656,43 @@ export const openApiDocument = {
         properties: {
           id: { type: 'integer', minimum: 1 },
           bookingNumber: { type: 'string', example: 'APT-1042' },
+        },
+      },
+      VisitDocumentMetadata: {
+        type: 'object',
+        required: ['fileName', 'fileUrl', 'contentType', 'fileSize'],
+        description:
+          'Metadata for a file already uploaded to Blob. Returned by the upload endpoint and sent back to persist the document against a Visit.',
+        properties: {
+          fileName: { type: 'string', maxLength: 255, example: 'referral.pdf' },
+          fileUrl: {
+            type: 'string',
+            format: 'uri',
+            maxLength: 2048,
+            description: 'Public Blob URL returned by the upload endpoint.',
+            example:
+              'https://abc123.public.blob.vercel-storage.com/tenants/org_apollo/visit-documents/referral-x1y2.pdf',
+          },
+          contentType: { type: 'string', maxLength: 150, example: 'application/pdf' },
+          fileSize: {
+            type: 'integer',
+            minimum: 1,
+            description: 'File size in bytes. At most 4.5MB.',
+            example: 20480,
+          },
+        },
+      },
+      VisitDocument: {
+        type: 'object',
+        required: ['id', 'visitId', 'fileName', 'fileUrl', 'contentType', 'fileSize', 'createdOn'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          visitId: { type: 'integer', minimum: 1 },
+          fileName: { type: 'string', example: 'referral.pdf' },
+          fileUrl: { type: 'string', format: 'uri' },
+          contentType: { type: 'string', example: 'application/pdf' },
+          fileSize: { type: 'integer', minimum: 1, example: 20480 },
+          createdOn: { type: 'string', format: 'date-time' },
         },
       },
       Visit: {
@@ -9202,6 +9392,12 @@ export const openApiDocument = {
             type: 'string',
             enum: ['single', 'married', 'divorced', 'widowed', 'other'],
           },
+          preferredPaymentMethod: {
+            type: 'string',
+            enum: ['cash', 'insurance', 'self-pay', 'corporate'],
+            description:
+              'Default payment means for front-desk registration. A convenience hint only — actual insurance coverage is captured per Visit.',
+          },
           phone: { type: 'string', minLength: 1, maxLength: 20 },
           alternatePhone: { type: 'string', maxLength: 20 },
           email: { type: 'string', format: 'email', maxLength: 255 },
@@ -9249,6 +9445,7 @@ export const openApiDocument = {
           'registrationStatus',
           'bloodGroup',
           'maritalStatus',
+          'preferredPaymentMethod',
           'phone',
           'alternatePhone',
           'email',
@@ -9312,6 +9509,12 @@ export const openApiDocument = {
           maritalStatus: {
             oneOf: [
               { type: 'string', enum: ['single', 'married', 'divorced', 'widowed', 'other'] },
+              { type: 'null' },
+            ],
+          },
+          preferredPaymentMethod: {
+            oneOf: [
+              { type: 'string', enum: ['cash', 'insurance', 'self-pay', 'corporate'] },
               { type: 'null' },
             ],
           },

@@ -4,7 +4,15 @@ import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, CalendarCheck, CheckCircle2, Loader2, UserPlus } from 'lucide-react';
+import {
+  AlertCircle,
+  CalendarCheck,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  UserPlus,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { CheckInVisitRequest } from '@/app/api/v1/visits/types';
@@ -35,12 +43,14 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { formatFileSize } from '../../_utils/format-file-size';
 import {
   appointmentCheckInFormSchema,
   walkInCheckInFormSchema,
   type AppointmentCheckInFormValues,
   type WalkInCheckInFormValues,
 } from '../../_utils/check-in-form-schema';
+import { VisitDocumentUploadButton, type UploadedVisitDocument } from '../visit-document-upload';
 
 type CheckInMode = 'appointment' | 'walk-in';
 
@@ -78,6 +88,7 @@ export function CheckInSheet({ open, onClose }: { open: boolean; onClose: () => 
 function CheckInSheetBody({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<CheckInMode>('appointment');
   const [serverErrors, setServerErrors] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<UploadedVisitDocument[]>([]);
 
   const visitTypesQuery = useVisitTypesQuery({ limit: 100 });
   const visitTypes = visitTypesQuery.data?.data ?? [];
@@ -126,6 +137,7 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
       visitTypeId: Number(values.visitTypeId),
       chiefComplaint: values.chiefComplaint || undefined,
       remarks: values.remarks || undefined,
+      documents: documents.length > 0 ? documents : undefined,
     });
   });
 
@@ -136,6 +148,7 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
       visitTypeId: Number(values.visitTypeId),
       chiefComplaint: values.chiefComplaint || undefined,
       remarks: values.remarks || undefined,
+      documents: documents.length > 0 ? documents : undefined,
     });
   });
 
@@ -230,7 +243,7 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
                 />
 
                 <Field>
-                  <FieldLabel htmlFor="appointment-chief-complaint">Chief complaint</FieldLabel>
+                  <FieldLabel htmlFor="appointment-chief-complaint">Purpose of visit</FieldLabel>
                   <Textarea
                     id="appointment-chief-complaint"
                     rows={2}
@@ -303,7 +316,7 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
                 />
 
                 <Field>
-                  <FieldLabel htmlFor="walk-in-chief-complaint">Chief complaint</FieldLabel>
+                  <FieldLabel htmlFor="walk-in-chief-complaint">Purpose of visit</FieldLabel>
                   <Textarea
                     id="walk-in-chief-complaint"
                     rows={2}
@@ -323,6 +336,14 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
             </form>
           </TabsContent>
         </Tabs>
+
+        <div className="mt-4 border-t pt-4">
+          <CheckInDocumentsField
+            documents={documents}
+            onChange={setDocuments}
+            disabled={isSaving}
+          />
+        </div>
       </div>
 
       <SheetFooter className="flex-row justify-end gap-2 border-t p-4">
@@ -339,6 +360,61 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
         </Button>
       </SheetFooter>
     </>
+  );
+}
+
+function CheckInDocumentsField({
+  documents,
+  onChange,
+  disabled,
+}: {
+  documents: UploadedVisitDocument[];
+  onChange: (documents: UploadedVisitDocument[]) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Field>
+      <FieldLabel>Documents</FieldLabel>
+      <p className="text-muted-foreground text-xs">
+        Attach referrals, prior reports, or scans — PDF or image, up to 4.5MB each. Optional.
+      </p>
+
+      {documents.length > 0 ? (
+        <ul className="mt-1 space-y-1">
+          {documents.map((document, index) => (
+            <li
+              key={document.fileUrl}
+              className="bg-muted/40 flex items-center gap-2 rounded-md border p-2 text-sm"
+            >
+              <FileText className="text-muted-foreground size-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">{document.fileName}</span>
+              <span className="text-muted-foreground shrink-0 text-xs">
+                {formatFileSize(document.fileSize)}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-6 shrink-0"
+                aria-label={`Remove ${document.fileName}`}
+                disabled={disabled}
+                onClick={() => onChange(documents.filter((_, position) => position !== index))}
+              >
+                <X className="size-4" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className="mt-1">
+        <VisitDocumentUploadButton
+          disabled={disabled}
+          label="Add document"
+          onUploaded={(document) => onChange([...documents, document])}
+        />
+      </div>
+    </Field>
   );
 }
 

@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function PatientRegistrationLoader() {
   return (
     <div className="space-y-6" aria-label="Loading page">
-      {[0, 1, 2, 3, 4].map((section) => (
+      {[0, 1, 2, 3, 4, 5].map((section) => (
         <div key={section} className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
           <Skeleton className="h-5 w-40" />
           <div className="grid gap-4 sm:grid-cols-3">

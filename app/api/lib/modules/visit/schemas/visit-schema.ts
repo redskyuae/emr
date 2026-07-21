@@ -1,6 +1,15 @@
 import { z } from 'zod';
 
+import {
+  visitDocumentMetadataSchema,
+  type VisitDocumentMetadata,
+} from '../../visit-document/schemas/visit-document-schema';
+
 export const VISIT_STATUSES = ['CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED'] as const;
+
+// A Visit may be checked in with documents already attached (referrals, prior
+// reports). Uploads happen first; only their Blob metadata rides the payload.
+export const MAX_CHECK_IN_DOCUMENTS = 20;
 
 export type VisitStatus = (typeof VISIT_STATUSES)[number];
 
@@ -88,6 +97,10 @@ export const checkInVisitSchema = z
     visitTypeId: positiveIdSchema('Visit type ID'),
     chiefComplaint: chiefComplaintSchema,
     remarks: remarksSchema,
+    documents: z
+      .array(visitDocumentMetadataSchema)
+      .max(MAX_CHECK_IN_DOCUMENTS, `At most ${MAX_CHECK_IN_DOCUMENTS} documents can be attached`)
+      .optional(),
   })
   .superRefine((data, context) => {
     const hasAppointment = data.appointmentId !== undefined;
@@ -150,6 +163,7 @@ export type ValidatedCheckInVisitData = {
   chiefComplaint?: string;
   remarks?: string;
   visitDate: string;
+  documents?: VisitDocumentMetadata[];
 };
 
 export type VisitListParams = ListVisitsInput & { tenantId: string };

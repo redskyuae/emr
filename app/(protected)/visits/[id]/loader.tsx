@@ -50,6 +50,14 @@ export default function VisitDetailPageLoader() {
           </div>
         ))}
       </div>
+
+      <div className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="h-9 w-full" />
+      </div>
     </div>
   );
 }

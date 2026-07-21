@@ -19,6 +19,7 @@ import {
   getPatientGenderLabel,
   getPatientGovtIdTypeLabel,
   getPatientMaritalStatusLabel,
+  getPatientPaymentMethodLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -253,6 +254,22 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                 value={patient.govtIdType ? getPatientGovtIdTypeLabel(patient.govtIdType) : null}
               />
               <DetailField label="Government ID number" value={patient.govtIdNumber} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Billing</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-3">
+              <DetailField
+                label="Preferred payment method"
+                value={
+                  patient.preferredPaymentMethod
+                    ? getPatientPaymentMethodLabel(patient.preferredPaymentMethod)
+                    : null
+                }
+              />
             </CardContent>
           </Card>
 

@@ -13,6 +13,7 @@ import {
 } from '@/app/db/schema/visit';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
+import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
 import { AppointmentStatusNotConfiguredError } from '../errors/appointment-status-not-configured-error';
 import {
   formatVisitDate,
@@ -337,6 +338,10 @@ async function runCheckInVisitTransaction(
         remarks: data.remarks ?? null,
       })
       .returning({ id: visitTable.id });
+
+    if (data.documents && data.documents.length > 0) {
+      await visitDocumentRepository.insertMany(tx, data.tenantId, createdVisit.id, data.documents);
+    }
 
     if (data.appointmentId !== undefined) {
       const synced = await syncAppointmentStatus(

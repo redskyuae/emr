@@ -1,0 +1,1 @@
+ALTER TABLE "patient" ADD COLUMN "preferred_payment_method" varchar(20);

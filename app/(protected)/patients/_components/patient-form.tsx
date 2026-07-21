@@ -31,6 +31,7 @@ import {
   PATIENT_GENDER_OPTIONS,
   PATIENT_GOVT_ID_TYPE_OPTIONS,
   PATIENT_MARITAL_STATUS_OPTIONS,
+  PATIENT_PAYMENT_METHOD_OPTIONS,
 } from '../_utils/patient-value-sets';
 
 const NONE = 'none';
@@ -614,6 +615,51 @@ function IdentifiersSection({ control }: { control: Control<PatientFormValues> }
   );
 }
 
+function BillingSection({ control }: { control: Control<PatientFormValues> }) {
+  return (
+    <Card className="shadow-fluent-2">
+      <CardHeader>
+        <CardTitle>Billing</CardTitle>
+        <CardDescription>
+          How this Patient usually settles charges. A default hint for front-desk registration —
+          insurance coverage details are captured per Visit.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Controller
+            control={control}
+            name="preferredPaymentMethod"
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="patient-preferred-payment-method">
+                  Preferred payment method
+                </FieldLabel>
+                <Select
+                  value={field.value || NONE}
+                  onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                >
+                  <SelectTrigger id="patient-preferred-payment-method" className="w-full">
+                    <SelectValue placeholder="Not specified" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Not specified</SelectItem>
+                    {PATIENT_PAYMENT_METHOD_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function EmergencyContactSection({ control }: { control: Control<PatientFormValues> }) {
   return (
     <Card className="shadow-fluent-2">
@@ -737,6 +783,7 @@ export function PatientForm({
       <ContactSection control={form.control} />
       <AddressSection control={form.control} setValue={form.setValue} />
       <IdentifiersSection control={form.control} />
+      <BillingSection control={form.control} />
       <EmergencyContactSection control={form.control} />
 
       <div className="flex justify-end gap-2">

@@ -47,6 +47,7 @@ const patient = {
   dateOfBirth: '1990-05-14',
   bloodGroup: null,
   maritalStatus: null,
+  preferredPaymentMethod: null,
   phone: '9876543210',
   registrationStatus: 'registered' as const,
   alternatePhone: null,

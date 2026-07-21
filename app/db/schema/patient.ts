@@ -29,6 +29,7 @@ export const patient = pgTable(
       .default('registered'),
     bloodGroup: varchar('blood_group', { length: 5 }),
     maritalStatus: varchar('marital_status', { length: 20 }),
+    preferredPaymentMethod: varchar('preferred_payment_method', { length: 20 }),
     phone: varchar({ length: 20 }).notNull(),
     alternatePhone: varchar('alternate_phone', { length: 20 }),
     email: varchar({ length: 255 }),
