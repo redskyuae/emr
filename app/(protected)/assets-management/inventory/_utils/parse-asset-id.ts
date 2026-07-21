@@ -1,4 +1,3 @@
-
 export function parseAssetIdParam(id: string): number | null {
   if (!/^\d+$/.test(id)) {
     return null;
