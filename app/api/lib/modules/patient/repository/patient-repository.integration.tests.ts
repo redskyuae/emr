@@ -72,6 +72,33 @@ describe('Patient repository', () => {
     expect(updated?.mrn).toBe(created.mrn);
   });
 
+  it('should persist and read back the preferred payment method', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, { preferredPaymentMethod: 'insurance' })
+    );
+
+    expect(created.preferredPaymentMethod).toBe('insurance');
+
+    const fetched = await patientRepository.getPatientById(created.id, tenantA);
+    expect(fetched?.preferredPaymentMethod).toBe('insurance');
+  });
+
+  it('should default the preferred payment method to null when omitted', async () => {
+    const created = await patientRepository.createPatient(patientData(tenantA));
+
+    expect(created.preferredPaymentMethod).toBeNull();
+  });
+
+  it('should clear the preferred payment method on update when omitted', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, { preferredPaymentMethod: 'corporate' })
+    );
+
+    const updated = await patientRepository.updatePatient(created.id, patientData(tenantA));
+
+    expect(updated?.preferredPaymentMethod).toBeNull();
+  });
+
   it('should not update a patient belonging to another tenant', async () => {
     const created = await patientRepository.createPatient(patientData(tenantA));
 

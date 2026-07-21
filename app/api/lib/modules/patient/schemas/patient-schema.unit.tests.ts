@@ -50,6 +50,29 @@ describe('Patient schema', () => {
     ).toContain('Patient marital status is invalid');
   });
 
+  it('should reject an invalid preferred payment method', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, preferredPaymentMethod: 'crypto' }))
+    ).toContain('Patient preferred payment method is invalid');
+  });
+
+  it('should accept each supported preferred payment method', () => {
+    for (const method of ['cash', 'insurance', 'self-pay', 'corporate']) {
+      const result = createPatientSchema.safeParse({
+        ...validPayload,
+        preferredPaymentMethod: method,
+      });
+      expect(result.success).toBe(true);
+      expect(result.data?.preferredPaymentMethod).toBe(method);
+    }
+  });
+
+  it('should treat a blank preferred payment method as omitted', () => {
+    const result = createPatientSchema.safeParse({ ...validPayload, preferredPaymentMethod: '  ' });
+    expect(result.success).toBe(true);
+    expect(result.data?.preferredPaymentMethod).toBeUndefined();
+  });
+
   it('should reject a future date of birth', () => {
     expect(
       errorsOf(createPatientSchema.safeParse({ ...validPayload, dateOfBirth: '3000-01-01' }))

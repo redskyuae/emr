@@ -11,6 +11,7 @@ export type SavePatientRequest = {
   dateOfBirth: string;
   bloodGroup?: string;
   maritalStatus?: string;
+  preferredPaymentMethod?: string;
   phone: string;
   alternatePhone?: string;
   email?: string;

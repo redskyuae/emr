@@ -33,6 +33,7 @@ import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog
 import { isActiveVisit, visitStatusPresentation } from '../../_utils/visit-status';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
+import { VisitDocumentsCard } from './visit-documents-card';
 import { VisitStatusTimeline } from './visit-status-timeline';
 
 export function VisitDetailImpl({ visitId }: { visitId: number }) {
@@ -181,7 +182,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           </CardHeader>
           <CardContent className="space-y-3">
             <Field>
-              <FieldLabel htmlFor="visit-chief-complaint">Chief complaint</FieldLabel>
+              <FieldLabel htmlFor="visit-chief-complaint">Purpose of visit</FieldLabel>
               <Textarea
                 id="visit-chief-complaint"
                 rows={2}
@@ -308,6 +309,8 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
             </CardContent>
           </Card>
         </div>
+
+        <VisitDocumentsCard visitId={visit.id} active={active} />
       </div>
 
       <RecordVitalsSheet

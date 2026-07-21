@@ -55,6 +55,7 @@ const existing = {
   dateOfBirth: '1990-05-14',
   bloodGroup: null,
   maritalStatus: null,
+  preferredPaymentMethod: null,
   phone: '9876543210',
   alternatePhone: null,
   email: null,

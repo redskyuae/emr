@@ -4,6 +4,7 @@ const PATIENT_GENDERS = ['male', 'female', 'other', 'unknown'] as const;
 const PATIENT_BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 const PATIENT_MARITAL_STATUSES = ['single', 'married', 'divorced', 'widowed', 'other'] as const;
 const PATIENT_GOVT_ID_TYPES = ['passport', 'national-id', 'driving-license', 'other'] as const;
+const PATIENT_PAYMENT_METHODS = ['cash', 'insurance', 'self-pay', 'corporate'] as const;
 const PATIENT_REGISTRATION_STATUSES = ['provisional', 'registered'] as const;
 
 const tenantIdSchema = z
@@ -93,6 +94,9 @@ const maritalStatusSchema = z.enum(PATIENT_MARITAL_STATUSES, {
 const govtIdTypeSchema = z.enum(PATIENT_GOVT_ID_TYPES, {
   error: 'Patient government ID type is invalid',
 });
+const paymentMethodSchema = z.enum(PATIENT_PAYMENT_METHODS, {
+  error: 'Patient preferred payment method is invalid',
+});
 
 export const patientIdSchema = z.coerce
   .number({ error: 'Patient ID is required' })
@@ -112,6 +116,7 @@ const patientPayloadSchema = z
     dateOfBirth: dateOfBirthSchema,
     bloodGroup: optionalTrimmedValue(bloodGroupSchema),
     maritalStatus: optionalTrimmedValue(maritalStatusSchema),
+    preferredPaymentMethod: optionalTrimmedValue(paymentMethodSchema),
     phone: patientPhoneSchema('phone'),
     alternatePhone: optionalTrimmedValue(patientPhoneSchema('alternate phone')),
     email: optionalTrimmedValue(patientEmailSchema),
@@ -163,6 +168,7 @@ export type PatientGender = (typeof PATIENT_GENDERS)[number];
 export type PatientBloodGroup = (typeof PATIENT_BLOOD_GROUPS)[number];
 export type PatientMaritalStatus = (typeof PATIENT_MARITAL_STATUSES)[number];
 export type PatientGovtIdType = (typeof PATIENT_GOVT_ID_TYPES)[number];
+export type PatientPaymentMethod = (typeof PATIENT_PAYMENT_METHODS)[number];
 export type PatientRegistrationStatus = (typeof PATIENT_REGISTRATION_STATUSES)[number];
 
 export type PatientIdInput = z.infer<typeof patientIdSchema>;
@@ -194,6 +200,7 @@ export type Patient = {
   dateOfBirth: string | null;
   bloodGroup: PatientBloodGroup | null;
   maritalStatus: PatientMaritalStatus | null;
+  preferredPaymentMethod: PatientPaymentMethod | null;
   phone: string;
   alternatePhone: string | null;
   email: string | null;

@@ -98,6 +98,42 @@ describe('Visit schema', () => {
         )
       ).toContain('Chief complaint must be at most 500 characters');
     });
+
+    it('should accept attached document metadata', () => {
+      const parsed = checkInVisitSchema.parse({
+        appointmentId: 5,
+        visitTypeId: 2,
+        documents: [
+          {
+            fileName: 'referral.pdf',
+            fileUrl: 'https://blob.vercel-storage.com/x/referral-abc.pdf',
+            contentType: 'application/pdf',
+            fileSize: 2048,
+          },
+        ],
+      });
+
+      expect(parsed.documents).toHaveLength(1);
+    });
+
+    it('should reject a document with an invalid URL', () => {
+      expect(
+        errorsOf(
+          checkInVisitSchema.safeParse({
+            appointmentId: 5,
+            visitTypeId: 2,
+            documents: [
+              {
+                fileName: 'referral.pdf',
+                fileUrl: 'not-a-url',
+                contentType: 'application/pdf',
+                fileSize: 2048,
+              },
+            ],
+          })
+        )
+      ).toContain('File URL must be a valid URL');
+    });
   });
 
   describe('cancelVisitSchema', () => {

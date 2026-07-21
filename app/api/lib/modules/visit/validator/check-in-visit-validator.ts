@@ -191,6 +191,7 @@ export async function validateCheckInVisit(
       chiefComplaint: data.chiefComplaint,
       remarks: data.remarks,
       visitDate,
+      documents: data.documents,
     },
   };
 }

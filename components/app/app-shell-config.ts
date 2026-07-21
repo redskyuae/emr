@@ -83,6 +83,11 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/appointments/new',
         icon: CalendarPlus,
       },
+    ],
+  },
+  {
+    title: 'Outpatient',
+    items: [
       {
         title: 'Visits',
         href: '/visits',

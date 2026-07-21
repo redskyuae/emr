@@ -5,6 +5,7 @@ import {
   PATIENT_GENDERS,
   PATIENT_GOVT_ID_TYPES,
   PATIENT_MARITAL_STATUSES,
+  PATIENT_PAYMENT_METHODS,
 } from './patient-value-sets';
 
 function isNotFutureDate(value: string) {
@@ -54,6 +55,7 @@ export const patientFormSchema = z
       .refine(isNotFutureDate, 'Date of birth must not be in the future.'),
     bloodGroup: z.enum(PATIENT_BLOOD_GROUPS).optional().or(z.literal('')),
     maritalStatus: z.enum(PATIENT_MARITAL_STATUSES).optional().or(z.literal('')),
+    preferredPaymentMethod: z.enum(PATIENT_PAYMENT_METHODS).optional().or(z.literal('')),
     phone: requiredPhoneField('Phone'),
     alternatePhone: optionalPhoneField('Alternate phone'),
     email: z

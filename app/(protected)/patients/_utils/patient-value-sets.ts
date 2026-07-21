@@ -16,6 +16,7 @@ export const PATIENT_GOVT_ID_TYPES = [
   'driving-license',
   'other',
 ] as const;
+export const PATIENT_PAYMENT_METHODS = ['cash', 'insurance', 'self-pay', 'corporate'] as const;
 
 const GENDER_LABELS: Record<(typeof PATIENT_GENDERS)[number], string> = {
   male: 'Male',
@@ -39,6 +40,13 @@ const GOVT_ID_TYPE_LABELS: Record<(typeof PATIENT_GOVT_ID_TYPES)[number], string
   other: 'Other',
 };
 
+const PAYMENT_METHOD_LABELS: Record<(typeof PATIENT_PAYMENT_METHODS)[number], string> = {
+  cash: 'Cash',
+  insurance: 'Insurance',
+  'self-pay': 'Self-pay',
+  corporate: 'Corporate',
+};
+
 export const PATIENT_GENDER_OPTIONS = PATIENT_GENDERS.map((value) => ({
   value,
   label: GENDER_LABELS[value],
@@ -54,6 +62,11 @@ export const PATIENT_GOVT_ID_TYPE_OPTIONS = PATIENT_GOVT_ID_TYPES.map((value) =>
   label: GOVT_ID_TYPE_LABELS[value],
 }));
 
+export const PATIENT_PAYMENT_METHOD_OPTIONS = PATIENT_PAYMENT_METHODS.map((value) => ({
+  value,
+  label: PAYMENT_METHOD_LABELS[value],
+}));
+
 export function getPatientGenderLabel(gender: string) {
   return GENDER_LABELS[gender as (typeof PATIENT_GENDERS)[number]] ?? gender;
 }
@@ -67,4 +80,11 @@ export function getPatientMaritalStatusLabel(maritalStatus: string) {
 
 export function getPatientGovtIdTypeLabel(govtIdType: string) {
   return GOVT_ID_TYPE_LABELS[govtIdType as (typeof PATIENT_GOVT_ID_TYPES)[number]] ?? govtIdType;
+}
+
+export function getPatientPaymentMethodLabel(paymentMethod: string) {
+  return (
+    PAYMENT_METHOD_LABELS[paymentMethod as (typeof PATIENT_PAYMENT_METHODS)[number]] ??
+    paymentMethod
+  );
 }
