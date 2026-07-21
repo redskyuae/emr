@@ -1,0 +1,162 @@
+app/api/lib/storage/visit-document-storage.ts
+  b4ddafad097368ab 1-47
+.env.example
+  b4ddafad097368ab 5
+app/api/lib/modules/patient/repository/patient-repository.integration.tests.ts
+  af9d65187f4252eb 75-101
+app/api/v1/visits/[id]/documents/route.ts
+  b4ddafad097368ab 1-95
+app/api/lib/modules/visit-document/validator/delete-visit-document-validator.ts
+  b4ddafad097368ab 1-74
+app/api/lib/openapi/document.ts
+  b4ddafad097368ab 691-709,4078-4203,7602-7608,7661-7697
+  af9d65187f4252eb 1657,9395-9400,9448,9515-9520
+app/api/lib/modules/visit-document/queries/visit-document-queries.unit.tests.ts
+  b4ddafad097368ab 1-47
+app/queries/visits/useDeleteVisitDocument.ts
+  b4ddafad097368ab 1-45
+components/app/app-shell-config.ts
+  e8f12d0dcd42e6bf 86-90
+app/(protected)/visits/_utils/format-file-size.ts
+  b4ddafad097368ab 1-14
+app/api/v1/visits/types.ts
+  b4ddafad097368ab 1,9-10,19
+app/api/lib/modules/patient/schemas/patient-schema.unit.tests.ts
+  af9d65187f4252eb 53-75
+app/api/lib/modules/patient/queries/patient-queries.unit.tests.ts
+  af9d65187f4252eb 26
+app/api/lib/modules/patient/repository/patient-repository.ts
+  af9d65187f4252eb 21-23,29,39,71,136
+app/(protected)/patients/new/loader.tsx
+  af9d65187f4252eb 6
+app/api/lib/modules/visit/repository/visit-repository.integration.tests.ts
+  b4ddafad097368ab 18,200-217,219-221
+app/(protected)/visits/_components/visit-document-upload.tsx
+  b4ddafad097368ab 1-78
+app/api/v1/visits/[id]/documents/[documentId]/types.ts
+  b4ddafad097368ab 1-2
+app/api/lib/modules/visit-document/repository/visit-document-repository.ts
+  b4ddafad097368ab 1-117
+app/api/lib/modules/patient/commands/patient-commands.unit.tests.ts
+  af9d65187f4252eb 50
+app/(protected)/patients/_utils/patient-form-values.ts
+  af9d65187f4252eb 14,43,73
+app/api/lib/modules/visit-document/schemas/visit-document-schema.unit.tests.ts
+  b4ddafad097368ab 1-2,4-70
+app/queries/visits/useUploadVisitDocument.ts
+  b4ddafad097368ab 1-35
+app/api/lib/modules/visit/schemas/visit-schema.unit.tests.ts
+  b4ddafad097368ab 101-136
+app/(protected)/visits/[id]/_components/visit-detail-impl.tsx
+  b4ddafad097368ab 36,185,312-313
+app/api/v1/visits/documents/types.ts
+  b4ddafad097368ab 1-8
+app/api/lib/modules/visit-document/schemas/visit-document-schema.ts
+  b4ddafad097368ab 1-84
+app/api/v1/visits/[id]/documents/[documentId]/route.ts
+  b4ddafad097368ab 1-50
+app/queries/visits/useVisitDocuments.ts
+  b4ddafad097368ab 1-31
+app/api/lib/modules/patient/validator/patient-validator.unit.tests.ts
+  af9d65187f4252eb 58
+app/db/schema/patient.ts
+  af9d65187f4252eb 32
+app/api/lib/modules/visit/repository/visit-repository.ts
+  b4ddafad097368ab 16,342-345
+app/api/lib/modules/visit-document/validator/visit-document-validator.unit.tests.ts
+  b4ddafad097368ab 1-153
+app/api/v1/visits/documents/route.ts
+  b4ddafad097368ab 1-80
+app/api/lib/modules/visit/schemas/visit-schema.ts
+  b4ddafad097368ab 3-7,10-12,100-103,166
+app/(protected)/visits/[id]/_components/_modals/delete-visit-document-dialog.tsx
+  b4ddafad097368ab 1-82
+app/api/lib/modules/visit-document/repository/visit-document-repository.integration.tests.ts
+  b4ddafad097368ab 1-185
+app/api/lib/modules/visit-document/validator/add-visit-document-validator.ts
+  b4ddafad097368ab 1-67
+app/(protected)/visits/_components/_sheets/check-in-sheet.tsx
+  b4ddafad097368ab 11,13,46,91,140,151,246,319,339-346,366-420
+app/api/lib/modules/visit-document/commands/delete-visit-document-command.ts
+  b4ddafad097368ab 1-33
+app/(protected)/patients/_utils/patient-form-schema.ts
+  af9d65187f4252eb 8,58
+app/api/lib/modules/visit/validator/check-in-visit-validator.ts
+  b4ddafad097368ab 194
+app/api/lib/modules/visit-document/commands/add-visit-document-command.ts
+  b4ddafad097368ab 1-20
+app/(protected)/visits/[id]/loader.tsx
+  b4ddafad097368ab 53-60
+app/(protected)/patients/_utils/patient-value-sets.ts
+  af9d65187f4252eb 19,43-49,65-69,84-90
+app/api/lib/modules/visit-document/commands/visit-document-commands.unit.tests.ts
+  b4ddafad097368ab 1-40,42-66,72-80,82-109
+app/api/lib/modules/patient/schemas/patient-schema.ts
+  af9d65187f4252eb 7,97-99,119,171,203
+app/(protected)/patients/[id]/_components/patient-detail-impl.tsx
+  af9d65187f4252eb 22,262-275
+app/api/v1/patients/types.ts
+  af9d65187f4252eb 14
+app/(protected)/patients/[id]/edit/loader.tsx
+  af9d65187f4252eb 8
+app/(protected)/patients/_components/patient-form.tsx
+  af9d65187f4252eb 34,618-662,786
+app/(protected)/visits/[id]/_components/visit-documents-card.tsx
+  b4ddafad097368ab 1-38,40-90
+app/api/lib/modules/visit-document/validator/list-visit-documents-validator.ts
+  b4ddafad097368ab 1-43
+app/queries/visits/useAddVisitDocument.ts
+  b4ddafad097368ab 1-53
+app/api/lib/modules/visit-document/queries/list-visit-documents-query.ts
+  b4ddafad097368ab 1-22
+app/db/schema/visit-document.ts
+  b4ddafad097368ab 1-30
+app/api/v1/visits/[id]/documents/types.ts
+  b4ddafad097368ab 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "87d8c73a0cffea282253a9eee592cf6337c22e73",
+  "prompts": {
+    "af9d65187f4252eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b4875e7f-6f12-463c-9f3e-e90bf4b17fb5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 174,
+      "total_deletions": 3,
+      "accepted_lines": 174,
+      "overriden_lines": 0
+    },
+    "b4ddafad097368ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0adced08-aebe-4b40-9aab-cc7593281dbd",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 2148,
+      "total_deletions": 17,
+      "accepted_lines": 2126,
+      "overriden_lines": 7
+    },
+    "e8f12d0dcd42e6bf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e5209e35-3805-456f-ab49-66623d9a5565",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 0,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
