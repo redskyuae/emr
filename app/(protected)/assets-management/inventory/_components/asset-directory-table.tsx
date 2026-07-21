@@ -1,6 +1,7 @@
 'use client';
 
-import { AlertCircle, Boxes, Search } from 'lucide-react';
+import { Fragment, useState } from 'react';
+import { AlertCircle, Boxes, ChevronRight, Search } from 'lucide-react';
 
 import type { Asset, AssetMasterSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
@@ -26,6 +27,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { AssetDetailRow } from './asset-detail-row';
+
+const COLUMN_COUNT = 8;
 
 type AssetDirectoryTableProps = {
   assets: Asset[];
@@ -125,6 +129,8 @@ export function AssetDirectoryTable({
   page,
   onPageChange,
 }: AssetDirectoryTableProps) {
+  const [expandedAssetId, setExpandedAssetId] = useState<number | null>(null);
+
   if (isError) {
     return (
       <Alert variant="destructive">
@@ -174,35 +180,58 @@ export function AssetDirectoryTable({
             <TableHead>Assigned to</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Next service</TableHead>
-            <TableHead className="pr-4">Value</TableHead>
+            <TableHead>Value</TableHead>
+            <TableHead className="pr-4 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {assets.map((asset) => (
-            <TableRow key={asset.id}>
-              <TableCell className="py-3 pl-4">
-                <AssetIdentity asset={asset} />
-              </TableCell>
-              <TableCell>
-                <CategoryLabel category={asset.category} />
-              </TableCell>
-              <TableCell className="text-muted-foreground min-w-52">
-                {asset.location || '—'}
-              </TableCell>
-              <TableCell>
-                <AssignedTo asset={asset} />
-              </TableCell>
-              <TableCell>
-                <StatusBadge status={asset.status} />
-              </TableCell>
-              <TableCell className="text-muted-foreground font-mono text-xs">
-                {asset.nextServiceDate || '—'}
-              </TableCell>
-              <TableCell className="pr-4 font-medium tabular-nums">
-                {formatAssetValue(asset.currentValue)}
-              </TableCell>
-            </TableRow>
-          ))}
+          {assets.map((asset) => {
+            const isExpanded = expandedAssetId === asset.id;
+
+            return (
+              <Fragment key={asset.id}>
+                <TableRow>
+                  <TableCell className="py-3 pl-4">
+                    <AssetIdentity asset={asset} />
+                  </TableCell>
+                  <TableCell>
+                    <CategoryLabel category={asset.category} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground min-w-52">
+                    {asset.location || '—'}
+                  </TableCell>
+                  <TableCell>
+                    <AssignedTo asset={asset} />
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={asset.status} />
+                  </TableCell>
+                  <TableCell className="text-muted-foreground font-mono text-xs">
+                    {asset.nextServiceDate || '—'}
+                  </TableCell>
+                  <TableCell className="font-medium tabular-nums">
+                    {formatAssetValue(asset.currentValue)}
+                  </TableCell>
+                  <TableCell className="pr-4 text-right">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={isExpanded ? `Collapse ${asset.name}` : `Expand ${asset.name}`}
+                      aria-expanded={isExpanded}
+                      onClick={() => setExpandedAssetId(isExpanded ? null : asset.id)}
+                    >
+                      <ChevronRight
+                        className={cn('size-4 transition-transform', isExpanded && 'rotate-90')}
+                        aria-hidden="true"
+                      />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                {isExpanded ? <AssetDetailRow assetId={asset.id} colSpan={COLUMN_COUNT} /> : null}
+              </Fragment>
+            );
+          })}
         </TableBody>
       </Table>
 
@@ -239,10 +268,61 @@ export function AssetDirectoryTable({
 
 function AssetDirectoryTableSkeleton() {
   return (
-    <div className="space-y-2 p-4">
-      {[0, 1, 2, 3, 4, 5].map((item) => (
-        <Skeleton key={item} className="h-12 w-full" />
-      ))}
-    </div>
+    <Table className="min-w-max">
+      <TableHeader>
+        <TableRow>
+          <TableHead className="pl-4">Asset</TableHead>
+          <TableHead>Category</TableHead>
+          <TableHead>Location</TableHead>
+          <TableHead>Assigned to</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Next service</TableHead>
+          <TableHead>Value</TableHead>
+          <TableHead className="pr-4 text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from({ length: 6 }, (_, i) => (
+          <TableRow key={i}>
+            <TableCell className="py-3 pl-4">
+              <div className="flex min-w-64 items-center gap-3">
+                <Skeleton className="size-10 shrink-0 rounded-md" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div className="flex min-w-40 items-center gap-2">
+                <Skeleton className="size-2.5 shrink-0 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </TableCell>
+            <TableCell className="min-w-52">
+              <Skeleton className="h-4 w-32" />
+            </TableCell>
+            <TableCell>
+              <div className="min-w-36 space-y-1.5">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-20" />
+            </TableCell>
+            <TableCell>
+              <Skeleton className="h-4 w-16" />
+            </TableCell>
+            <TableCell className="pr-4">
+              <Skeleton className="ml-auto size-8 rounded-md" />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }

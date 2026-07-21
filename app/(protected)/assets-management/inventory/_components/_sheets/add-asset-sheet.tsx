@@ -129,7 +129,7 @@ function AddAssetSheetBody({ onClose }: { onClose: () => void }) {
             <Plus className="size-4" />
           </span>
           <div className="min-w-0 space-y-1">
-            <SheetTitle className="truncate text-xl">Add asset</SheetTitle>
+            <SheetTitle className="truncate text-xl">Add Asset</SheetTitle>
             <SheetDescription>Register tracked equipment for the active Facility.</SheetDescription>
           </div>
         </div>

@@ -129,7 +129,7 @@ export function InventoryToolbar({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center 2xl:ml-auto 2xl:justify-end">
         <Button type="button" className="w-full sm:w-auto" onClick={onAddAsset}>
           <Plus className="size-4" />
-          <span>Add asset</span>
+          <span>Add Asset</span>
         </Button>
       </div>
     </div>
