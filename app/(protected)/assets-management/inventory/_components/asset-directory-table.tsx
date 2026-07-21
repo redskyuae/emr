@@ -1,7 +1,8 @@
 'use client';
 
-import { Fragment, useState } from 'react';
-import { AlertCircle, Boxes, ChevronRight, Search } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { AlertCircle, Boxes, Eye, Search } from 'lucide-react';
 
 import type { Asset, AssetMasterSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
@@ -27,9 +28,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { AssetDetailRow } from './asset-detail-row';
-
-const COLUMN_COUNT = 8;
 
 type AssetDirectoryTableProps = {
   assets: Asset[];
@@ -129,7 +127,7 @@ export function AssetDirectoryTable({
   page,
   onPageChange,
 }: AssetDirectoryTableProps) {
-  const [expandedAssetId, setExpandedAssetId] = useState<number | null>(null);
+  const router = useRouter();
 
   if (isError) {
     return (
@@ -185,53 +183,43 @@ export function AssetDirectoryTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {assets.map((asset) => {
-            const isExpanded = expandedAssetId === asset.id;
-
-            return (
-              <Fragment key={asset.id}>
-                <TableRow>
-                  <TableCell className="py-3 pl-4">
-                    <AssetIdentity asset={asset} />
-                  </TableCell>
-                  <TableCell>
-                    <CategoryLabel category={asset.category} />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground min-w-52">
-                    {asset.location || '—'}
-                  </TableCell>
-                  <TableCell>
-                    <AssignedTo asset={asset} />
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={asset.status} />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground font-mono text-xs">
-                    {asset.nextServiceDate || '—'}
-                  </TableCell>
-                  <TableCell className="font-medium tabular-nums">
-                    {formatAssetValue(asset.currentValue)}
-                  </TableCell>
-                  <TableCell className="pr-4 text-right">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={isExpanded ? `Collapse ${asset.name}` : `Expand ${asset.name}`}
-                      aria-expanded={isExpanded}
-                      onClick={() => setExpandedAssetId(isExpanded ? null : asset.id)}
-                    >
-                      <ChevronRight
-                        className={cn('size-4 transition-transform', isExpanded && 'rotate-90')}
-                        aria-hidden="true"
-                      />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-                {isExpanded ? <AssetDetailRow assetId={asset.id} colSpan={COLUMN_COUNT} /> : null}
-              </Fragment>
-            );
-          })}
+          {assets.map((asset) => (
+            <TableRow
+              key={asset.id}
+              className="cursor-pointer"
+              onClick={() => router.push(`/assets-management/inventory/${asset.id}`)}
+            >
+              <TableCell className="py-3 pl-4">
+                <AssetIdentity asset={asset} />
+              </TableCell>
+              <TableCell>
+                <CategoryLabel category={asset.category} />
+              </TableCell>
+              <TableCell className="text-muted-foreground min-w-52">
+                {asset.location || '—'}
+              </TableCell>
+              <TableCell>
+                <AssignedTo asset={asset} />
+              </TableCell>
+              <TableCell>
+                <StatusBadge status={asset.status} />
+              </TableCell>
+              <TableCell className="text-muted-foreground font-mono text-xs">
+                {asset.nextServiceDate || '—'}
+              </TableCell>
+              <TableCell className="font-medium tabular-nums">
+                {formatAssetValue(asset.currentValue)}
+              </TableCell>
+              <TableCell className="pr-4 text-right" onClick={(event) => event.stopPropagation()}>
+                <Button type="button" variant="outline" size="sm" asChild>
+                  <Link href={`/assets-management/inventory/${asset.id}`}>
+                    <Eye className="size-4" aria-hidden="true" />
+                    View
+                  </Link>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
 
@@ -318,7 +306,7 @@ function AssetDirectoryTableSkeleton() {
               <Skeleton className="h-4 w-16" />
             </TableCell>
             <TableCell className="pr-4">
-              <Skeleton className="ml-auto size-8 rounded-md" />
+              <Skeleton className="ml-auto h-8 w-16 rounded-md" />
             </TableCell>
           </TableRow>
         ))}

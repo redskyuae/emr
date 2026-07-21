@@ -83,7 +83,7 @@ export default function InventoryLoader() {
                     <Skeleton className="h-4 w-16" />
                   </TableCell>
                   <TableCell className="pr-4">
-                    <Skeleton className="ml-auto size-8 rounded-md" />
+                    <Skeleton className="ml-auto h-8 w-16 rounded-md" />
                   </TableCell>
                 </TableRow>
               ))}
