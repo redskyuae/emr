@@ -155,63 +155,65 @@ export function AppointmentsPageImpl() {
         </Alert>
       ) : null}
 
-      {appointmentsQuery.isLoading ? (
-        <AppointmentsTableSkeleton />
-      ) : appointments.length === 0 ? (
-        <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CalendarClock />
-            </EmptyMedia>
-            <EmptyTitle>No Appointments for {slotDate}</EmptyTitle>
-            <EmptyDescription>
-              Book an Appointment to reserve consecutive DoctorSlots for a Patient.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button type="button" asChild>
-              <Link href="/appointments/new">
-                <Plus className="size-4" />
-                Book Appointment
-              </Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
-      ) : (
-        <>
-          <AppointmentsTable appointments={appointments} />
+      {!appointmentsQuery.isError ? (
+        appointmentsQuery.isLoading ? (
+          <AppointmentsTableSkeleton />
+        ) : appointments.length === 0 ? (
+          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CalendarClock />
+              </EmptyMedia>
+              <EmptyTitle>No Appointments for {slotDate}</EmptyTitle>
+              <EmptyDescription>
+                Book an Appointment to reserve consecutive DoctorSlots for a Patient.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button type="button" asChild>
+                <Link href="/appointments/new">
+                  <Plus className="size-4" />
+                  Book Appointment
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
+        ) : (
+          <>
+            <AppointmentsTable appointments={appointments} />
 
-          {totalPages > 1 ? (
-            <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-              <p className="text-muted-foreground text-sm">
-                Showing {rangeStart}&ndash;{rangeEnd} of {total}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                >
-                  <ChevronLeft className="size-4" />
-                  Previous
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((current) => current + 1)}
-                >
-                  Next
-                  <ChevronRight className="size-4" />
-                </Button>
+            {totalPages > 1 ? (
+              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                <p className="text-muted-foreground text-sm">
+                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  >
+                    <ChevronLeft className="size-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((current) => current + 1)}
+                  >
+                    Next
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : null}
-        </>
-      )}
+            ) : null}
+          </>
+        )
+      ) : null}
     </div>
   );
 }
