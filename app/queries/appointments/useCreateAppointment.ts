@@ -13,6 +13,7 @@ import type {
 import { ApiError } from '@/app/queries/api-error';
 import { doctorSlotsQueryKey } from '@/app/queries/appointments/useDoctorSlots';
 import { patientsBaseKey } from '@/app/queries/patients/usePatients';
+import { appointmentsBaseKey } from './useAppointments';
 
 type AppointmentErrorBody = {
   message?: unknown;
@@ -34,8 +35,6 @@ export class AppointmentApiError extends ApiError {
     this.patientMatches = patientMatches;
   }
 }
-
-export const appointmentsBaseKey = ['appointments'] as const;
 
 function getStringErrors(value: unknown) {
   if (!Array.isArray(value)) {

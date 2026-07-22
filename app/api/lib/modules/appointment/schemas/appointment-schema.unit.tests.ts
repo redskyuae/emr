@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAppointmentSchema } from './appointment-schema';
+import { createAppointmentSchema, listAppointmentsSchema } from './appointment-schema';
 
 const validPayload = {
   doctorId: 1,
@@ -74,5 +74,32 @@ describe('Appointment schema', () => {
     expect(errorsOf({ ...validPayload, remarks: 'a'.repeat(1001) })).toContain(
       'Remarks must be at most 1000 characters'
     );
+  });
+
+  describe('listAppointmentsSchema', () => {
+    it('should normalize DD-MM-YYYY slot date filters to ISO dates', () => {
+      expect(listAppointmentsSchema.parse({ slotDate: '16-07-2026' }).slotDate).toBe('2026-07-16');
+    });
+
+    it('should reject invalid date and id filters', () => {
+      const result = listAppointmentsSchema.safeParse({ slotDate: '2026-07-16', doctorId: '0' });
+
+      expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+        'Slot date must be in DD-MM-YYYY format',
+        'Doctor ID must be positive',
+      ]);
+    });
+
+    it('should trim query and coerce paging filters', () => {
+      expect(listAppointmentsSchema.parse({ query: ' APT-1001 ', page: '2', limit: '5' })).toEqual({
+        query: 'APT-1001',
+        page: 2,
+        limit: 5,
+      });
+    });
+
+    it('should allow an empty filter set', () => {
+      expect(listAppointmentsSchema.parse({})).toEqual({});
+    });
   });
 });

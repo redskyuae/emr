@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import {
@@ -25,6 +25,7 @@ import { formatPatientMrn } from '../../patient/repository/patient-mrn';
 import { formatAppointmentBookingNumber } from './appointment-booking-number';
 import type {
   Appointment,
+  AppointmentListParams,
   PotentialPatientMatch,
   ValidatedCreateAppointmentData,
 } from '../schemas/appointment-schema';
@@ -33,6 +34,12 @@ import { isFutureSlotSelection, isValidSlotSelection } from '../schemas/appointm
 
 type SelectExecutor = Pick<typeof db, 'select'>;
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type AppointmentRow = Omit<Appointment, 'slotDate' | 'appointmentStatus' | 'slots'> & {
+  slotDate: string;
+  appointmentStatus: Omit<Appointment['appointmentStatus'], 'category'> & {
+    category: string;
+  };
+};
 
 export type AppointmentSlotBookingContext = {
   rotaName: string;
@@ -136,6 +143,57 @@ function appointmentJoins(executor: SelectExecutor = db) {
     );
 }
 
+function toAppointment(row: AppointmentRow, slots: Appointment['slots']): Appointment {
+  return {
+    ...row,
+    slots,
+    slotDate: formatAppointmentDate(row.slotDate),
+    appointmentStatus: {
+      ...row.appointmentStatus,
+      category:
+        row.appointmentStatus.category.toLowerCase() as Appointment['appointmentStatus']['category'],
+    },
+  };
+}
+
+async function getAppointmentSlots(
+  appointmentIds: number[],
+  tenantId: string,
+  executor: SelectExecutor = db
+) {
+  if (appointmentIds.length === 0) {
+    return new Map<number, Appointment['slots']>();
+  }
+
+  const rows = await executor
+    .select({
+      appointmentId: appointmentSlotReservationTable.appointmentId,
+      slotTime: appointmentSlotReservationTable.slotTime,
+    })
+    .from(appointmentSlotReservationTable)
+    .where(
+      and(
+        eq(appointmentSlotReservationTable.tenantId, tenantId),
+        eq(appointmentSlotReservationTable.isDeleted, false),
+        inArray(appointmentSlotReservationTable.appointmentId, appointmentIds)
+      )
+    )
+    .orderBy(
+      appointmentSlotReservationTable.appointmentId,
+      appointmentSlotReservationTable.slotTime
+    );
+
+  const slotsByAppointment = new Map<number, Appointment['slots']>();
+
+  for (const row of rows) {
+    const slots = slotsByAppointment.get(row.appointmentId) ?? [];
+    slots.push({ slotTime: row.slotTime, status: 'Booked' });
+    slotsByAppointment.set(row.appointmentId, slots);
+  }
+
+  return slotsByAppointment;
+}
+
 async function getAppointmentById(
   id: number,
   tenantId: string,
@@ -155,27 +213,88 @@ async function getAppointmentById(
     return undefined;
   }
 
-  const slots = await executor
-    .select({ slotTime: appointmentSlotReservationTable.slotTime })
-    .from(appointmentSlotReservationTable)
-    .where(
-      and(
-        eq(appointmentSlotReservationTable.appointmentId, id),
-        eq(appointmentSlotReservationTable.tenantId, tenantId),
-        eq(appointmentSlotReservationTable.isDeleted, false)
+  const slotsByAppointment = await getAppointmentSlots([id], tenantId, executor);
+
+  return toAppointment(row as AppointmentRow, slotsByAppointment.get(id) ?? []);
+}
+
+async function getAppointments({
+  page = 1,
+  limit = 10,
+  query,
+  tenantId,
+  doctorId,
+  patientId,
+  slotDate,
+  appointmentStatusId,
+}: AppointmentListParams) {
+  const offset = (page - 1) * limit;
+  const trimmedQuery = query?.trim();
+  const searchCondition = trimmedQuery
+    ? or(
+        ilike(appointmentTable.bookingNumber, `%${trimmedQuery}%`),
+        ilike(patientTable.mrn, `%${trimmedQuery}%`),
+        ilike(patientTable.firstName, `%${trimmedQuery}%`),
+        ilike(patientTable.lastName, `%${trimmedQuery}%`),
+        ilike(userTable.name, `%${trimmedQuery}%`)
       )
-    )
-    .orderBy(appointmentSlotReservationTable.slotTime);
+    : undefined;
+  const whereClause = and(
+    eq(appointmentTable.tenantId, tenantId),
+    eq(appointmentTable.isDeleted, false),
+    slotDate ? eq(appointmentTable.slotDate, slotDate) : undefined,
+    doctorId ? eq(appointmentTable.doctorId, doctorId) : undefined,
+    patientId ? eq(appointmentTable.patientId, patientId) : undefined,
+    appointmentStatusId ? eq(appointmentTable.appointmentStatusId, appointmentStatusId) : undefined,
+    searchCondition
+  );
+  const earliestSlotTime = sql<string>`(
+    select min(${appointmentSlotReservationTable.slotTime})
+    from ${appointmentSlotReservationTable}
+    where ${appointmentSlotReservationTable.appointmentId} = ${appointmentTable.id}
+      and ${appointmentSlotReservationTable.tenantId} = ${appointmentTable.tenantId}
+      and ${appointmentSlotReservationTable.isDeleted} = false
+  )`;
+  const ordering = slotDate
+    ? [asc(appointmentTable.slotDate), asc(earliestSlotTime), asc(appointmentTable.id)]
+    : [desc(appointmentTable.slotDate), asc(earliestSlotTime), desc(appointmentTable.id)];
+
+  const [rows, [{ total }]] = await Promise.all([
+    appointmentJoins()
+      .where(whereClause)
+      .orderBy(...ordering)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ total: count() })
+      .from(appointmentTable)
+      .innerJoin(
+        patientTable,
+        and(
+          eq(patientTable.id, appointmentTable.patientId),
+          eq(patientTable.tenantId, appointmentTable.tenantId),
+          eq(patientTable.isDeleted, false)
+        )
+      )
+      .innerJoin(
+        doctorTable,
+        and(
+          eq(doctorTable.id, appointmentTable.doctorId),
+          eq(doctorTable.tenantId, appointmentTable.tenantId),
+          eq(doctorTable.isDeleted, false)
+        )
+      )
+      .innerJoin(userTable, eq(userTable.id, doctorTable.userId))
+      .where(whereClause),
+  ]);
+  const appointmentIds = rows.map((row) => row.id);
+  const slotsByAppointment = await getAppointmentSlots(appointmentIds, tenantId);
 
   return {
-    ...row,
-    slotDate: formatAppointmentDate(row.slotDate),
-    appointmentStatus: {
-      ...row.appointmentStatus,
-      category:
-        row.appointmentStatus.category.toLowerCase() as Appointment['appointmentStatus']['category'],
-    },
-    slots: slots.map((slot) => ({ ...slot, status: 'Booked' as const })),
+    total,
+    data: rows.map((row) =>
+      toAppointment(row as AppointmentRow, slotsByAppointment.get(row.id) ?? [])
+    ),
   };
 }
 
@@ -574,6 +693,7 @@ async function createAppointment(
 }
 
 export const appointmentRepository = {
+  getAppointments,
   createAppointment,
   getAppointmentById,
   getReservedSlotTimes,
