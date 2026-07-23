@@ -4,14 +4,7 @@ import { useMemo, useState } from 'react';
 import { AlertTriangle, CalendarClock, CheckCircle2, Search, Wrench } from 'lucide-react';
 
 import { NewWorkOrderSheet } from '@/app/(protected)/assets-management/maintenance/_components/new-work-order-sheet';
-import {
-  workOrderPriorityBadgeMap,
-  workOrders,
-  workOrderStatusBadgeMap,
-  type BadgeToneConfig,
-  type WorkOrder,
-  type WorkOrderType,
-} from '@/app/(protected)/assets-management/mock-data';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import { formatCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
+import { BadgeToneConfig, WorkOrder, workOrderPriorityBadgeMap, workOrders, workOrderStatusBadgeMap, WorkOrderType } from '../mock-data';
 
 type TypeFilter = WorkOrderType | 'all';
 

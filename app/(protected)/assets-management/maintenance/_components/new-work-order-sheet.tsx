@@ -1,11 +1,6 @@
 import { Plus } from 'lucide-react';
 
-import {
-  assets,
-  type WorkOrderPriority,
-  type WorkOrderStatus,
-  type WorkOrderType,
-} from '@/app/(protected)/assets-management/mock-data';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +22,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { assets, WorkOrderPriority, WorkOrderStatus, WorkOrderType } from '../../mock-data';
 
 const typeOptions: { label: string; value: WorkOrderType }[] = [
   { label: 'Preventive', value: 'Preventive' },
