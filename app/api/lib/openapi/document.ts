@@ -5624,7 +5624,7 @@ export const openApiDocument = {
             description: 'No such Appointment in the active Tenant.',
             content: jsonContent(schemaRef('NotFoundError'), {
               message: 'Appointment not found',
-              errors: ['Appointment 4242 is Invalid.'],
+              errors: ['Appointment not found'],
             }),
           },
           '401': responseRef('Unauthorized'),

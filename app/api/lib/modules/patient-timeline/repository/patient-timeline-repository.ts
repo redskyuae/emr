@@ -138,7 +138,7 @@ function bedTransferBranch({ tenantId, patientId }: Scope): Branch {
         adm.id as parent_id
       from admission_bed_transfer t
       join admission adm on adm.id = t.admission_id and adm.tenant_id = t.tenant_id
-      join bed b on b.id = t.to_bed_id
+      join bed b on b.id = t.to_bed_id and b.tenant_id = t.tenant_id
       where t.tenant_id = ${tenantId}
         and adm.patient_id = ${patientId}
         and t.is_deleted = false
@@ -247,7 +247,7 @@ function clinicalNoteBranch({ tenantId, patientId }: Scope): Branch {
         null::integer as detail_count,
         null::integer as parent_id
       from clinical_note cn
-      join clinical_note_type cnt on cnt.id = cn.note_type_id
+      join clinical_note_type cnt on cnt.id = cn.note_type_id and cnt.tenant_id = cn.tenant_id
       where cn.tenant_id = ${tenantId}
         and cn.patient_id = ${patientId}
         and cn.is_deleted = false

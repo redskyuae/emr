@@ -21,11 +21,7 @@ export async function getAppointmentByIdQuery(
   );
 
   if (!appointment) {
-    return {
-      success: false,
-      errors: [`Appointment ${validationResult.data.id} is Invalid.`],
-      status: StatusCodes.NOT_FOUND,
-    };
+    return { success: false, errors: ['Appointment not found'], status: StatusCodes.NOT_FOUND };
   }
 
   return { success: true, data: appointment };

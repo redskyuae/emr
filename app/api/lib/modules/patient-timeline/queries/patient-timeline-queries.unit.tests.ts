@@ -210,6 +210,30 @@ describe('PatientTimeline queries', () => {
     });
   });
 
+  it('should fall back to a zero parent id on a row the inner joins make impossible', async () => {
+    // parentId comes from an inner join on a NOT NULL foreign key, so a null here
+    // cannot occur; the fallback exists only because the shared UNION projection
+    // types the column nullable. Pinned so the behaviour is a decision, not a
+    // surprise, if the projection ever changes.
+    timelineRepo.getPatientTimeline.mockResolvedValue([
+      row({
+        sourceType: 'PAYMENT',
+        eventType: 'PAYMENT_RECEIVED',
+        amount: '5000.00',
+        parentId: null,
+        doctorName: null,
+      }),
+    ]);
+
+    const result = await getPatientTimelineQuery('7', 'tenant-1');
+
+    if (!result.success) {
+      throw new Error('expected success');
+    }
+
+    expect(result.data.data[0]).toMatchObject({ sourceType: 'PAYMENT', parentId: 0 });
+  });
+
   it('should carry the collapse count on a document event', async () => {
     timelineRepo.getPatientTimeline.mockResolvedValue([
       row({

@@ -57,16 +57,19 @@ function getDocumentsTitle(event: TimelineEvent): string {
   return `${event.detailCount} documents uploaded`;
 }
 
+// Rendered without a currency symbol, matching every other money display in the
+// app (billing's formatMoney, formatUnitPrice, formatDailyRate). Nothing in the
+// system records a billing currency per Tenant, so naming one here would be this
+// screen inventing a fact the data does not carry.
 export function formatTimelineAmount(amount: number | null): string | null {
   if (amount === null) {
     return null;
   }
 
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return amount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 // The Doctor is shown as context — the record's Doctor — never as the actor who

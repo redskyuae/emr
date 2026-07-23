@@ -187,7 +187,7 @@ describe('getAppointmentByIdQuery', () => {
     expect(result).toMatchObject({
       success: false,
       status: StatusCodes.NOT_FOUND,
-      errors: ['Appointment 5 is Invalid.'],
+      errors: ['Appointment not found'],
     });
   });
 });
