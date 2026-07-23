@@ -1,0 +1,39 @@
+app/api/lib/modules/appointment/queries/get-appointment-by-id-query.ts
+  5ba701d3054c9839 24
+docs/adr/0041-patient-timeline-events-derive-from-transition-columns.md
+  5ba701d3054c9839 13
+app/(protected)/appointments/_components/detail-field.tsx
+  5ba701d3054c9839 2-10
+app/(protected)/appointments/_components/_sheets/appointment-detail-sheet.tsx
+  5ba701d3054c9839 15
+app/api/lib/modules/patient-timeline/queries/patient-timeline-queries.unit.tests.ts
+  5ba701d3054c9839 213-236
+app/api/lib/modules/appointment/queries/appointment-queries.unit.tests.ts
+  5ba701d3054c9839 190
+app/api/lib/modules/patient-timeline/repository/patient-timeline-repository.ts
+  5ba701d3054c9839 141,250
+app/api/lib/openapi/document.ts
+  5ba701d3054c9839 5627
+app/(protected)/patients/[id]/_utils/timeline-presentation.ts
+  5ba701d3054c9839 60-63,69-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "781fd99048839de0edc5f42f14cc02be992e748f",
+  "prompts": {
+    "5ba701d3054c9839": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ae29c049-5324-4d7c-838c-4eb48a31195e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 55,
+      "total_deletions": 26,
+      "accepted_lines": 48,
+      "overriden_lines": 1
+    }
+  }
+}
