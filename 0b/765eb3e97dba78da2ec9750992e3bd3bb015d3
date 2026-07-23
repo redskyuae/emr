@@ -1,0 +1,39 @@
+docs/adr/0041-patient-timeline-events-derive-from-transition-columns.md
+  5ba701d3054c9839 7
+app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema.unit.tests.ts
+  5ba701d3054c9839 103,120,126,141-145,152,161,170,177-180
+app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema.ts
+  5ba701d3054c9839 81-84,89-95,99,115,138-144,163,171-173,185
+app/api/lib/modules/patient-timeline/queries/get-patient-timeline-query.ts
+  5ba701d3054c9839 101-102
+app/api/lib/modules/patient-timeline/validator/patient-timeline-validator.unit.tests.ts
+  5ba701d3054c9839 100
+app/api/lib/modules/patient-timeline/queries/patient-timeline-queries.unit.tests.ts
+  5ba701d3054c9839 35,110-119,131,136-153
+app/api/lib/modules/patient-timeline/repository/patient-timeline-repository.ts
+  5ba701d3054c9839 333-336,338,344
+app/api/lib/openapi/document.ts
+  5ba701d3054c9839 5579
+app/api/lib/modules/patient-timeline/repository/patient-timeline-repository.integration.tests.ts
+  5ba701d3054c9839 3,260-261,266,724-758
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "0b765eb3e97dba78da2ec9750992e3bd3bb015d3",
+  "prompts": {
+    "5ba701d3054c9839": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ae29c049-5324-4d7c-838c-4eb48a31195e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 132,
+      "total_deletions": 29,
+      "accepted_lines": 130,
+      "overriden_lines": 0
+    }
+  }
+}
