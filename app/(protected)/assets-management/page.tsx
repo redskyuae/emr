@@ -1,16 +1,6 @@
 import Link from 'next/link';
 import { AlertTriangle, ArrowRight, Banknote, Boxes, ClipboardList, Wrench } from 'lucide-react';
 
-import {
-  assetCategories,
-  assets,
-  formatAedCompact,
-  workOrderPriorityBadgeMap,
-  workOrders,
-  workOrderStatusBadgeMap,
-  type AssetCategory,
-  type WorkOrder,
-} from '@/app/(protected)/assets-management/mock-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +20,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import {
+  assetCategories,
+  AssetCategory,
+  assets,
+  formatAedCompact,
+  WorkOrder,
+  workOrderPriorityBadgeMap,
+  workOrders,
+  workOrderStatusBadgeMap,
+} from './mock-data';
 
 const totalAssetValue = assets.reduce((total, asset) => total + asset.value, 0);
 const outOfServiceCount = assets.filter(
