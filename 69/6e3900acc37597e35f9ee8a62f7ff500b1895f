@@ -1,0 +1,43 @@
+app/api/lib/modules/patient-timeline/queries/patient-timeline-queries.unit.tests.ts
+  5ba701d3054c9839 120-121,124-143
+app/api/lib/modules/patient-timeline/validator/patient-timeline-validator.unit.tests.ts
+  5ba701d3054c9839 101-106,112-119
+app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema.unit.tests.ts
+  5ba701d3054c9839 101-102,125-126,132,141-150,158,164-168,170-172
+app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema.ts
+  5ba701d3054c9839 81-84,86-87,104-109,125,129,141-144,149-154
+app/api/lib/modules/patient/repository/patient-repository.integration.tests.ts
+  5ba701d3054c9839 153-184
+app/api/lib/modules/patient-timeline/repository/patient-timeline-repository.ts
+  5ba701d3054c9839 329-332,334,351
+app/api/lib/modules/patient-timeline/queries/get-patient-timeline-query.ts
+  5ba701d3054c9839 99-100
+docs/adr/0041-patient-timeline-events-derive-from-transition-columns.md
+  5ba701d3054c9839 7
+app/api/lib/modules/patient/repository/patient-repository.ts
+  5ba701d3054c9839 247-258
+app/api/lib/modules/patient-timeline/repository/patient-timeline-repository.integration.tests.ts
+  5ba701d3054c9839 30,260-269,644,680,714,716-717,723-746,777,781
+app/api/lib/openapi/document.ts
+  5ba701d3054c9839 5578-5579
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "696e3900acc37597e35f9ee8a62f7ff500b1895f",
+  "prompts": {
+    "5ba701d3054c9839": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ae29c049-5324-4d7c-838c-4eb48a31195e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 193,
+      "total_deletions": 55,
+      "accepted_lines": 188,
+      "overriden_lines": 2
+    }
+  }
+}
