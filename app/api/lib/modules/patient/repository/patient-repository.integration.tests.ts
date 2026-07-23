@@ -1,5 +1,8 @@
+import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
+import { db } from '@/app/db';
+import { patient as patientTable } from '@/app/db/schema/patient';
 import type { CreatePatientData } from '../schemas/patient-schema';
 import { patientRepository } from './patient-repository';
 
@@ -115,6 +118,36 @@ describe('Patient repository', () => {
 
     const reactivated = await patientRepository.setPatientActive(created.id, tenantA, true);
     expect(reactivated?.isActive).toBe(true);
+  });
+
+  it('should stamp deactivatedAt and reactivatedAt as the lifecycle transitions happen', async () => {
+    const created = await patientRepository.createPatient(patientData(tenantA));
+
+    async function lifecycleTimestamps() {
+      const [row] = await db
+        .select({
+          deactivatedAt: patientTable.deactivatedAt,
+          reactivatedAt: patientTable.reactivatedAt,
+        })
+        .from(patientTable)
+        .where(and(eq(patientTable.id, created.id), eq(patientTable.tenantId, tenantA)));
+
+      return row;
+    }
+
+    expect(await lifecycleTimestamps()).toEqual({ deactivatedAt: null, reactivatedAt: null });
+
+    await patientRepository.setPatientActive(created.id, tenantA, false);
+    const afterDeactivate = await lifecycleTimestamps();
+    expect(afterDeactivate.deactivatedAt).toBeInstanceOf(Date);
+    expect(afterDeactivate.reactivatedAt).toBeNull();
+
+    await patientRepository.setPatientActive(created.id, tenantA, true);
+    const afterReactivate = await lifecycleTimestamps();
+    expect(afterReactivate.reactivatedAt).toBeInstanceOf(Date);
+    // Deactivation is not erased by a later reactivation — both transitions
+    // remain on the Patient Timeline.
+    expect(afterReactivate.deactivatedAt).toEqual(afterDeactivate.deactivatedAt);
   });
 
   it('should enforce case-insensitive uniqueness on active government IDs per tenant', async () => {

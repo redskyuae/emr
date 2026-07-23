@@ -76,6 +76,7 @@ export const admission = pgTable(
       .on(table.tenantId, table.bedId)
       .where(sql`${table.isDeleted} = false and ${table.status} = 'ADMITTED'`),
     tenantStatusIdx: index('admission_tenant_status_idx').on(table.tenantId, table.status),
+    tenantPatientIdx: index('admission_tenant_patient_idx').on(table.tenantId, table.patientId),
   })
 );
 

@@ -477,3 +477,15 @@ The system-defined lifecycle meaning assigned to a Work Order Status: Open, In P
 ## System Work Order Status
 
 A Work Order Status provided to every Tenant for one Work Order Status Category. Its stable code identifies the system status; a Tenant may customize its display details, but cannot change its code or remove it.
+
+## Patient Timeline
+
+The reverse-chronological record of everything that happened to one Patient across the Tenant, merging operational, financial, and document activity into a single feed. Distinct from the Patient Chart, which presents longitudinal clinical records grouped by kind rather than ordered by time.
+
+## Timeline Event
+
+A single lifecycle transition that appears on the Patient Timeline, such as a Visit being checked in, an Admission being discharged, or an Invoice being finalized. One record yields one Timeline Event per transition it has undergone — a Visit that was checked in, seen, and completed contributes three Timeline Events, not one. A Timeline Event is derived at read time from the transition timestamps already stored on the underlying record; it is never independently persisted or edited.
+
+## Timeline Event Source
+
+The kind of record a Timeline Event was derived from: Appointment, Visit, Admission, Bed Transfer, Invoice, Payment, Visit Document, Clinical Note, or Patient. Distinct from Visit Status or Admission Status, which are lifecycle states of one record rather than a classification of feed entries.

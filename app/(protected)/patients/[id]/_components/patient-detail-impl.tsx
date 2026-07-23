@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useQueryState } from 'nuqs';
 import {
   ArrowLeft,
   MoreVertical,
@@ -42,8 +43,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 import { PatientChartSection } from './_chart/patient-chart-section';
+import { PatientTimelineSection } from './_timeline/patient-timeline-section';
 import { DeactivatePatientDialog } from './_modals/deactivate-patient-dialog';
 import { DeletePatientDialog } from './_modals/delete-patient-dialog';
+
+const PATIENT_TABS = ['overview', 'chart', 'timeline'] as const;
+
+type PatientTab = (typeof PATIENT_TABS)[number];
+
+function parsePatientTab(value: string | null): PatientTab {
+  return PATIENT_TABS.includes(value as PatientTab) ? (value as PatientTab) : 'overview';
+}
 
 function DetailField({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -83,6 +93,9 @@ function PatientDetailSkeleton() {
 
 export function PatientDetailImpl({ patientId }: { patientId: number }) {
   const patientQuery = usePatientQuery(patientId);
+  // The tab lives in the URL so that returning from a Timeline link lands back on
+  // the Timeline rather than Overview, and so a view is shareable (ADR 0010).
+  const [tabParam, setTabParam] = useQueryState('tab');
   const [patientPendingLifecycleChange, setPatientPendingLifecycleChange] =
     useState<Patient | null>(null);
   const [patientPendingDelete, setPatientPendingDelete] = useState<Patient | null>(null);
@@ -189,10 +202,15 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs
+        value={parsePatientTab(tabParam)}
+        onValueChange={(value) => void setTabParam(value === 'overview' ? null : value)}
+        className="w-full"
+      >
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="chart">Chart</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
@@ -287,6 +305,10 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
 
         <TabsContent value="chart" className="mt-4">
           <PatientChartSection patientId={patient.id} />
+        </TabsContent>
+
+        <TabsContent value="timeline" className="mt-4">
+          <PatientTimelineSection patientId={patient.id} />
         </TabsContent>
       </Tabs>
 

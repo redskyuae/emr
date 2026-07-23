@@ -5,10 +5,15 @@ import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
 import type { Appointment } from '../schemas/appointment-schema';
 import { getAppointmentByBookingNumberQuery } from './get-appointment-by-booking-number-query';
+import { getAppointmentByIdQuery } from './get-appointment-by-id-query';
 import { getAppointmentsQuery } from './get-appointments-query';
 
 vi.mock('../repository/appointment-repository', () => ({
-  appointmentRepository: { getAppointments: vi.fn(), getAppointmentByBookingNumber: vi.fn() },
+  appointmentRepository: {
+    getAppointments: vi.fn(),
+    getAppointmentById: vi.fn(),
+    getAppointmentByBookingNumber: vi.fn(),
+  },
 }));
 vi.mock('../../tenant/repository/tenant-repository', () => ({
   tenantRepository: { getTenantById: vi.fn() },
@@ -25,6 +30,7 @@ describe('Appointment queries', () => {
     vi.setSystemTime(new Date('2026-07-16T04:30:00Z'));
     repo.getAppointments.mockResolvedValue({ data: [appointment], total: 1 });
     repo.getAppointmentByBookingNumber.mockResolvedValue(appointment);
+    repo.getAppointmentById.mockResolvedValue(appointment);
     tenantRepo.getTenantById.mockResolvedValue({
       id: 'tenant-1',
       timeZone: 'Asia/Kolkata',
@@ -149,6 +155,39 @@ describe('Appointment queries', () => {
         data: [appointment],
         total: 1,
       });
+    });
+  });
+});
+
+describe('getAppointmentByIdQuery', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    repo.getAppointmentById.mockResolvedValue(appointment);
+  });
+
+  it('should return the appointment for a valid id', async () => {
+    const result = await getAppointmentByIdQuery('5', 'tenant-1');
+
+    expect(result).toEqual({ success: true, data: appointment });
+    expect(repo.getAppointmentById).toHaveBeenCalledWith(5, 'tenant-1');
+  });
+
+  it('should not call the repository when the id is invalid', async () => {
+    const result = await getAppointmentByIdQuery('abc', 'tenant-1');
+
+    expect(result).toMatchObject({ success: false, errors: ['Appointment abc is Invalid.'] });
+    expect(repo.getAppointmentById).not.toHaveBeenCalled();
+  });
+
+  it('should return not-found when the appointment does not exist in the tenant', async () => {
+    repo.getAppointmentById.mockResolvedValue(undefined);
+
+    const result = await getAppointmentByIdQuery('5', 'tenant-1');
+
+    expect(result).toMatchObject({
+      success: false,
+      status: StatusCodes.NOT_FOUND,
+      errors: ['Appointment 5 is Invalid.'],
     });
   });
 });

@@ -365,6 +365,13 @@
       "when": 1784604920570,
       "tag": "0051_simple_rocket_raccoon",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1784771656035,
+      "tag": "0052_moaning_shen",
+      "breakpoints": true
     }
   ]
 }

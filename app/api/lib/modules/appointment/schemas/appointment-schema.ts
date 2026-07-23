@@ -204,3 +204,8 @@ export type Appointment = {
     slotTime: string;
   }>;
 };
+
+export const appointmentIdSchema = z.coerce
+  .number({ error: 'Appointment ID is required' })
+  .int('Appointment ID must be an integer')
+  .positive('Appointment ID must be positive');

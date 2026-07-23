@@ -236,9 +236,17 @@ async function setPatientActive(
   tenantId: string,
   isActive: boolean
 ): Promise<Patient | undefined> {
+  const now = new Date();
+
   const [updatedPatient] = await db
     .update(patientTable)
-    .set({ isActive, modifiedOn: new Date() })
+    .set({
+      isActive,
+      modifiedOn: now,
+      // Stamp the transition instant so the Patient Timeline can place it;
+      // modifiedOn alone is clobbered by any later edit (ADR 0041).
+      ...(isActive ? { reactivatedAt: now } : { deactivatedAt: now }),
+    })
     .where(
       and(
         eq(patientTable.id, id),

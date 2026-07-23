@@ -85,6 +85,17 @@ const paginatedSchema = (itemSchemaName: string) => ({
   },
 });
 
+// Feeds page by cursor rather than page number, so they carry an opaque
+// nextCursor instead of PaginationMeta (ADR 0041).
+const cursorPaginatedSchema = (itemSchemaName: string) => ({
+  type: 'object',
+  required: ['data', 'meta'],
+  properties: {
+    data: { type: 'array', items: schemaRef(itemSchemaName) },
+    meta: schemaRef('CursorPaginationMeta'),
+  },
+});
+
 const dataEnvelopeSchema = (schemaName: string) => ({
   type: 'object',
   required: ['data'],
@@ -5476,6 +5487,151 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/patients/{id}/timeline': {
+      get: {
+        tags: ['Patient'],
+        summary: 'Get Patient Timeline',
+        description:
+          'Returns one page of the Patient Timeline — the reverse-chronological feed of Timeline Events for a single Patient in the active Tenant. A Timeline Event is one lifecycle transition, not one record: a Visit that was checked in, seen and completed yields three Timeline Events. Events are derived at read time from transition timestamps on the source records and are never stored, so a transition whose timestamp is absent does not appear. Occurrence instants are returned as UTC; the client renders them in its own time zone. Paging is by opaque cursor rather than page number, because the feed receives new events at the top and offsets would repeat rows across pages. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Patient'),
+          {
+            name: 'feed',
+            in: 'query',
+            required: false,
+            description:
+              'Filters the feed to one category of Timeline Event Source. `encounters` covers Appointment, Visit, Admission and Bed Transfer; `billing` covers Invoice and Payment; `records` covers Visit Document and Clinical Note. Patient lifecycle events appear only under `all`.',
+            schema: {
+              type: 'string',
+              enum: ['all', 'billing', 'records', 'encounters'],
+              default: 'all',
+            },
+          },
+          {
+            name: 'cursor',
+            in: 'query',
+            required: false,
+            description:
+              'Opaque cursor from a previous response’s `meta.nextCursor`. Names a position in the merged ordering; do not construct or parse it. Omit for the first page.',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            description: 'Maximum Timeline Events to return.',
+            schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'One page of Timeline Events, newest first.',
+            content: jsonContent(cursorPaginatedSchema('TimelineEvent'), {
+              data: [
+                {
+                  sourceId: 1233,
+                  sourceType: 'PAYMENT',
+                  eventType: 'PAYMENT_RECEIVED',
+                  occurredAt: '2026-07-21T08:12:44.512Z',
+                  reference: 'RCP-1001',
+                  amount: 5000,
+                  detail: 'UPI',
+                  parentId: 842,
+                },
+                {
+                  sourceId: 842,
+                  sourceType: 'INVOICE',
+                  eventType: 'INVOICE_FINALIZED',
+                  occurredAt: '2026-07-21T07:55:02.104Z',
+                  reference: 'INV-1233',
+                  amount: 8000,
+                },
+                {
+                  sourceId: 1042,
+                  sourceType: 'VISIT',
+                  eventType: 'VISIT_COMPLETED',
+                  occurredAt: '2026-07-21T06:40:19.780Z',
+                  reference: 'VST-1042',
+                  doctorName: 'Dr. Meera Rao',
+                },
+                {
+                  sourceId: 1042,
+                  sourceType: 'VISIT_DOCUMENT',
+                  eventType: 'DOCUMENTS_UPLOADED',
+                  occurredAt: '2026-07-21T05:18:03.221Z',
+                  reference: 'VST-1042',
+                  detail: null,
+                  detailCount: 6,
+                },
+                {
+                  sourceId: 512,
+                  sourceType: 'APPOINTMENT',
+                  eventType: 'APPOINTMENT_BOOKED',
+                  occurredAt: '2026-07-18T04:02:11.907Z',
+                  reference: 'APT-1042',
+                  detail: '2026-08-15',
+                  doctorName: 'Dr. Meera Rao',
+                },
+              ],
+              meta: {
+                nextCursor: 'MjAyNi0wNy0xOFQwNDowMjoxMS45MDdafEFQUE9JTlRNRU5UfDUxMg',
+              },
+            }),
+          },
+          '400': {
+            description: 'The cursor, feed, or limit was rejected.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Cursor is Invalid.'],
+            }),
+          },
+          '404': {
+            description: 'No such Patient in the active Tenant.',
+            content: jsonContent(schemaRef('NotFoundError'), {
+              message: 'Patient not found',
+              errors: ['Patient not found'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/appointments/{id}': {
+      get: {
+        tags: ['Appointment'],
+        summary: 'Get Appointment',
+        description:
+          'Returns one Appointment in the active Tenant with its embedded Patient, Doctor, AppointmentMode, AppointmentType, AppointmentReason, AppointmentStatus and reserved slots. Backs the Appointment detail Sheet that Booking entries on the Patient Timeline deep-link into. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Appointment')],
+        responses: {
+          '200': {
+            description: 'Appointment.',
+            content: jsonContent(dataEnvelopeSchema('Appointment'), { data: appointmentExample }),
+          },
+          '400': {
+            description: 'The Appointment identifier was not a positive integer.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Appointment abc is Invalid.'],
+            }),
+          },
+          '404': {
+            description: 'No such Appointment in the active Tenant.',
+            content: jsonContent(schemaRef('NotFoundError'), {
+              message: 'Appointment not found',
+              errors: ['Appointment 4242 is Invalid.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/work-orders': {
       get: {
         tags: ['Work Order'],
@@ -6742,6 +6898,114 @@ export const openApiDocument = {
           pageNumber: { type: 'integer', minimum: 1 },
           pageSize: { type: 'integer', minimum: 1, maximum: 999 },
           totalPages: { type: 'integer', minimum: 0 },
+        },
+      },
+      CursorPaginationMeta: {
+        type: 'object',
+        required: ['nextCursor'],
+        description:
+          'Keyset paging metadata for a feed. There is no total or page count — a cursor names a position in the ordering, not an offset.',
+        properties: {
+          nextCursor: {
+            type: ['string', 'null'],
+            description:
+              'Opaque cursor for the next page, or null when the end of the feed has been reached. Pass it back unchanged as the `cursor` query parameter.',
+          },
+        },
+      },
+      TimelineEvent: {
+        type: 'object',
+        required: ['sourceId', 'sourceType', 'eventType', 'occurredAt', 'reference'],
+        description:
+          'One lifecycle transition on the Patient Timeline. Derived at read time from the source record and never stored, so it has no identifier of its own. Fields beyond the required set vary by Timeline Event Source: Visit and Admission carry doctorName, Invoice and Payment carry amount, Visit Document carries detailCount, and Payment and Bed Transfer carry parentId.',
+        properties: {
+          sourceId: {
+            type: 'integer',
+            description:
+              'Identifier of the record this event links to. For VISIT_DOCUMENT this is the Visit, because document events are collapsed per Visit rather than emitted per file.',
+            examples: [1042],
+          },
+          sourceType: {
+            type: 'string',
+            description: 'Timeline Event Source — the kind of record the event was derived from.',
+            enum: [
+              'PATIENT',
+              'PAYMENT',
+              'INVOICE',
+              'VISIT',
+              'ADMISSION',
+              'APPOINTMENT',
+              'BED_TRANSFER',
+              'CLINICAL_NOTE',
+              'VISIT_DOCUMENT',
+            ],
+          },
+          eventType: {
+            type: 'string',
+            description: 'The specific transition that occurred.',
+            enum: [
+              'VISIT_CANCELLED',
+              'VISIT_COMPLETED',
+              'VISIT_CHECKED_IN',
+              'INVOICE_VOIDED',
+              'BED_TRANSFERRED',
+              'PAYMENT_RECEIVED',
+              'INVOICE_FINALIZED',
+              'PATIENT_REGISTERED',
+              'DOCUMENTS_UPLOADED',
+              'APPOINTMENT_BOOKED',
+              'PATIENT_DEACTIVATED',
+              'PATIENT_REACTIVATED',
+              'ADMISSION_ADMITTED',
+              'ADMISSION_CANCELLED',
+              'ADMISSION_DISCHARGED',
+              'CLINICAL_NOTE_SIGNED',
+              'APPOINTMENT_CANCELLED',
+              'VISIT_IN_CONSULTATION',
+            ],
+          },
+          occurredAt: {
+            type: 'string',
+            format: 'date-time',
+            description:
+              'UTC instant the transition occurred. Rendered by the client in its own time zone; no tenant-local date is sent.',
+            examples: ['2026-07-21T06:40:19.780Z'],
+          },
+          reference: {
+            type: ['string', 'null'],
+            description:
+              'Human-facing number of the source or its parent — Visit Number, Admission Number, Invoice Number, Receipt Number, or Booking Number. Null for Patient and Clinical Note events, which have none.',
+            examples: ['VST-1042'],
+          },
+          doctorName: {
+            type: ['string', 'null'],
+            description:
+              'The Doctor on the record, shown as context. This is not an actor: it is the Doctor the encounter is with, not whoever performed the transition.',
+            examples: ['Dr. Meera Rao'],
+          },
+          amount: {
+            type: ['number', 'null'],
+            description: 'Invoice grand total or Payment amount.',
+            examples: [8000],
+          },
+          detail: {
+            type: ['string', 'null'],
+            description:
+              'Source-specific context: destination bed number for a transfer, payment method, Clinical Note type, Appointment slot date, or the file name when a Visit has exactly one document.',
+            examples: ['UPI'],
+          },
+          detailCount: {
+            type: ['integer', 'null'],
+            description:
+              'Number of documents collapsed into a VISIT_DOCUMENT event. Null for every other source.',
+            examples: [6],
+          },
+          parentId: {
+            type: ['integer', 'null'],
+            description:
+              'Owning record when the link target differs from the source: the Invoice for a Payment, the Admission for a Bed Transfer.',
+            examples: [842],
+          },
         },
       },
       ValidationError: {

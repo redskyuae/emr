@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, integer, pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  date,
+  integer,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 import { country as countryTable } from './country';
 import { masterColumns } from './helpers';
@@ -48,6 +57,11 @@ export const patient = pgTable(
     emergencyContactRelationship: varchar('emergency_contact_relationship', { length: 50 }),
     emergencyContactPhone: varchar('emergency_contact_phone', { length: 20 }),
     isActive: boolean('is_active').notNull().default(true),
+    // Deactivation/reactivation instants for the Patient Timeline. isActive
+    // alone records only the current state; modifiedOn is clobbered by any
+    // unrelated edit, so it is not a usable proxy (ADR 0041).
+    deactivatedAt: timestamp('deactivated_at', { withTimezone: true }),
+    reactivatedAt: timestamp('reactivated_at', { withTimezone: true }),
     isDeleted,
     createdOn,
     modifiedOn,

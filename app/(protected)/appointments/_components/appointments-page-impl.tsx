@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select';
 import { toDateInputValue, toDisplayDate, todayDisplayDate } from '../_utils/appointment-date';
 import { AppointmentsTable, AppointmentsTableSkeleton } from './appointments-table';
+import { AppointmentDetailSheet } from './_sheets/appointment-detail-sheet';
 
 const PAGE_SIZE = 20;
 const ALL_FILTER = 'all';
@@ -40,6 +41,8 @@ export function AppointmentsPageImpl() {
   const [dateParam, setDateParam] = useQueryState('date');
   const [doctorParam, setDoctorParam] = useQueryState('doctor');
   const [statusParam, setStatusParam] = useQueryState('status');
+  // Deep-link target for Booking entries on the Patient Timeline (ADR 0010).
+  const [appointmentParam, setAppointmentParam] = useQueryState('appointment');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
@@ -48,6 +51,8 @@ export function AppointmentsPageImpl() {
   const doctorId = doctorParam && doctorParam !== ALL_FILTER ? Number(doctorParam) : undefined;
   const appointmentStatusId =
     statusParam && statusParam !== ALL_FILTER ? Number(statusParam) : undefined;
+  const selectedAppointmentId =
+    appointmentParam && /^\d+$/.test(appointmentParam) ? Number(appointmentParam) : null;
 
   const appointmentsQuery = useAppointmentsQuery({
     slotDate,
@@ -214,6 +219,11 @@ export function AppointmentsPageImpl() {
           </>
         )
       ) : null}
+
+      <AppointmentDetailSheet
+        appointmentId={selectedAppointmentId}
+        onClose={() => void setAppointmentParam(null)}
+      />
     </div>
   );
 }

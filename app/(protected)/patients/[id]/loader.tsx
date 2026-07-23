@@ -13,6 +13,7 @@ export default function PatientDetailLoader() {
       <div className="flex gap-2">
         <Skeleton className="h-9 w-24" />
         <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-9 w-24" />
       </div>
 
       {[0, 1, 2, 3, 4].map((section) => (
