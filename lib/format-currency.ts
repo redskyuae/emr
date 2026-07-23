@@ -12,9 +12,13 @@ export function formatAedCompact(value: number): string {
   }
 
   if (absoluteValue >= 1_000) {
-    const formatted = Math.round(value / 1_000).toLocaleString('en-US');
+    const roundedThousands = Math.round(value / 1_000);
 
-    return `AED ${formatted}K`;
+    if (Math.abs(roundedThousands) >= 1_000) {
+      return formatAedCompact(roundedThousands * 1_000);
+    }
+
+    return `AED ${roundedThousands.toLocaleString('en-US')}K`;
   }
 
   return `AED ${value.toLocaleString('en-US')}`;
