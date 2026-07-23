@@ -1,0 +1,112 @@
+app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema.ts
+  0b5951a555418bc8 1-177
+app/(protected)/patients/[id]/_components/_timeline/patient-timeline-section.tsx
+  0b5951a555418bc8 1-124
+app/db/schema/visit.ts
+  0b5951a555418bc8 80
+app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema.unit.tests.ts
+  0b5951a555418bc8 1-144
+app/(protected)/patients/[id]/_components/_timeline/timeline-day-group.tsx
+  0b5951a555418bc8 1-32
+app/db/schema/appointment.ts
+  0b5951a555418bc8 2-10,55-58,69
+app/db/schema/clinical-note.ts
+  0b5951a555418bc8 2,44
+app/api/lib/modules/appointment/queries/appointment-queries.unit.tests.ts
+  0b5951a555418bc8 8,14-15,33
+app/api/lib/modules/patient/repository/patient-repository.ts
+  0b5951a555418bc8 239-240,243-249
+app/db/schema/admission.ts
+  0b5951a555418bc8 79
+app/api/lib/modules/patient/repository/patient-repository.integration.tests.ts
+  0b5951a555418bc8 1,4-5,123-152
+app/api/lib/modules/appointment/validator/get-appointment-by-id-validator.ts
+  0b5951a555418bc8 1-32
+app/(protected)/patients/[id]/_utils/timeline-presentation.ts
+  0b5951a555418bc8 1-185
+app/api/v1/patients/[id]/timeline/types.ts
+  0b5951a555418bc8 1-4
+app/api/v1/appointments/[id]/types.ts
+  0b5951a555418bc8 1-5
+app/(protected)/patients/[id]/_components/patient-detail-impl.tsx
+  0b5951a555418bc8 5,46,50-56,96-98,205-209,213,309-312
+app/api/lib/modules/appointment/queries/get-appointment-by-id-query.ts
+  0b5951a555418bc8 1-32
+app/api/lib/modules/appointment/validator/get-appointment-by-id-validator.unit.tests.ts
+  0b5951a555418bc8 1-27
+app/(protected)/patients/[id]/_components/_timeline/timeline-entry.tsx
+  0b5951a555418bc8 1-49,51-101
+docs/adr/0041-patient-timeline-events-derive-from-transition-columns.md
+  0b5951a555418bc8 1-11,13-15,17-20
+app/(protected)/appointments/_components/appointments-page-impl.tsx
+  0b5951a555418bc8 35,44-45,54-55,222-226
+app/api/lib/modules/patient-timeline/queries/get-patient-timeline-query.ts
+  0b5951a555418bc8 1-112
+app/db/schema/patient.ts
+  0b5951a555418bc8 2-10,60-64
+app/api/lib/openapi/document.ts
+  0b5951a555418bc8 88-98,5490-5583,5585-5590,5592-5616,5618-5623,5625-5634,6903-7010
+app/(protected)/patients/[id]/_components/_timeline/timeline-filter-chips.tsx
+  0b5951a555418bc8 1-36
+app/(protected)/patients/[id]/_components/_timeline/timeline-load-more.tsx
+  0b5951a555418bc8 1-79
+app/api/lib/modules/patient-timeline/queries/patient-timeline-queries.unit.tests.ts
+  0b5951a555418bc8 1-4,6-215
+app/api/lib/utils/types.ts
+  0b5951a555418bc8 24-33
+app/queries/patients/timeline/usePatientTimeline.ts
+  0b5951a555418bc8 1-84
+app/queries/appointments/useAppointment.ts
+  0b5951a555418bc8 1-33
+app/api/v1/patients/[id]/timeline/route.ts
+  0b5951a555418bc8 1-43
+app/api/lib/modules/patient-timeline/validator/get-patient-timeline-validator.ts
+  0b5951a555418bc8 1-94
+app/api/lib/modules/patient-timeline/repository/patient-timeline-repository.ts
+  0b5951a555418bc8 1-358
+app/api/lib/modules/patient-timeline/validator/patient-timeline-validator.unit.tests.ts
+  0b5951a555418bc8 1-118
+app/api/lib/modules/patient-timeline/repository/patient-timeline-repository.integration.tests.ts
+  0b5951a555418bc8 1-315,317-347,349-433,435-562,564-613,615-779
+app/api/v1/appointments/[id]/route.ts
+  0b5951a555418bc8 1-38
+plans.md
+  0b5951a555418bc8 1,8-9,13-17,19-22,26-34,38-254,256,258-490,496-497,499-502,504-524,526-537,539-544,548-558,560-571
+app/(protected)/appointments/_components/_sheets/appointment-detail-sheet.tsx
+  0b5951a555418bc8 1-91
+app/(protected)/patients/[id]/loader.tsx
+  0b5951a555418bc8 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "63048656d5d147547f9973129d168c50d7f9bf03",
+  "prompts": {
+    "0b5951a555418bc8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6975120c-14d9-4097-b22f-190bbc7c1442",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 4090,
+      "total_deletions": 764,
+      "accepted_lines": 3934,
+      "overriden_lines": 13
+    },
+    "7ac724422e1b6f9c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab912a11-508c-4ca8-a644-1c2ccc061e8a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 223,
+      "total_deletions": 17,
+      "accepted_lines": 194,
+      "overriden_lines": 0
+    }
+  }
+}
