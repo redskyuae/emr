@@ -244,8 +244,18 @@ async function setPatientActive(
       isActive,
       modifiedOn: now,
       // Stamp the transition instant so the Patient Timeline can place it;
-      // modifiedOn alone is clobbered by any later edit (ADR 0041).
-      ...(isActive ? { reactivatedAt: now } : { deactivatedAt: now }),
+      // modifiedOn alone is clobbered by any later edit (ADR 0041). The CASE keeps
+      // the stamp honest: these endpoints are idempotent, so deactivating an
+      // already-inactive Patient must not manufacture a second transition and drag
+      // the existing Timeline Event forward. In an UPDATE ... SET the right-hand
+      // reference reads the pre-update value, which is the flag we are flipping.
+      ...(isActive
+        ? {
+            reactivatedAt: sql`case when ${patientTable.isActive} = false then ${now.toISOString()}::timestamptz else ${patientTable.reactivatedAt} end`,
+          }
+        : {
+            deactivatedAt: sql`case when ${patientTable.isActive} = true then ${now.toISOString()}::timestamptz else ${patientTable.deactivatedAt} end`,
+          }),
     })
     .where(
       and(

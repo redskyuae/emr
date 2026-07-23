@@ -98,9 +98,10 @@ describe('Patient timeline schema', () => {
 
   describe('timeline cursor', () => {
     const cursor = {
+      sourceId: 1042,
+      eventType: 'VISIT_COMPLETED' as const,
       occurredAt: new Date('2026-07-20T09:15:00.000Z'),
       sourceType: 'VISIT' as const,
-      sourceId: 1042,
     };
 
     it('should round-trip a cursor through encode and decode', () => {
@@ -121,24 +122,54 @@ describe('Patient timeline schema', () => {
       expect(decodeTimelineCursor(raw)).toBeNull();
     });
 
-    it('should reject a cursor with an unparseable timestamp', () => {
-      const raw = Buffer.from('not-a-date|VISIT|1042', 'utf8').toString('base64url');
+    it('should reject a cursor that omits the event type', () => {
+      const raw = Buffer.from('2026-07-20T09:15:00.000Z|VISIT|1042', 'utf8').toString('base64url');
 
       expect(decodeTimelineCursor(raw)).toBeNull();
     });
 
-    it('should reject a cursor naming an unknown source', () => {
-      const raw = Buffer.from('2026-07-20T09:15:00.000Z|LAB_ORDER|1042', 'utf8').toString(
+    it('should reject a cursor with an unparseable timestamp', () => {
+      const raw = Buffer.from('not-a-date|VISIT|1042|VISIT_COMPLETED', 'utf8').toString(
         'base64url'
       );
 
       expect(decodeTimelineCursor(raw)).toBeNull();
     });
 
-    it('should reject a cursor with a non-positive source id', () => {
-      const raw = Buffer.from('2026-07-20T09:15:00.000Z|VISIT|0', 'utf8').toString('base64url');
+    it('should reject a cursor naming an unknown source', () => {
+      const raw = Buffer.from(
+        '2026-07-20T09:15:00.000Z|LAB_ORDER|1042|VISIT_COMPLETED',
+        'utf8'
+      ).toString('base64url');
 
       expect(decodeTimelineCursor(raw)).toBeNull();
+    });
+
+    it('should reject a cursor naming an unknown event type', () => {
+      const raw = Buffer.from(
+        '2026-07-20T09:15:00.000Z|VISIT|1042|VISIT_REOPENED',
+        'utf8'
+      ).toString('base64url');
+
+      expect(decodeTimelineCursor(raw)).toBeNull();
+    });
+
+    it('should reject a cursor with a non-positive source id', () => {
+      const raw = Buffer.from('2026-07-20T09:15:00.000Z|VISIT|0|VISIT_COMPLETED', 'utf8').toString(
+        'base64url'
+      );
+
+      expect(decodeTimelineCursor(raw)).toBeNull();
+    });
+
+    it('should distinguish two transitions of one record that share an instant', () => {
+      const checkedIn = encodeTimelineCursor({ ...cursor, eventType: 'VISIT_CHECKED_IN' });
+      const inConsultation = encodeTimelineCursor({
+        ...cursor,
+        eventType: 'VISIT_IN_CONSULTATION',
+      });
+
+      expect(checkedIn).not.toBe(inConsultation);
     });
   });
 });

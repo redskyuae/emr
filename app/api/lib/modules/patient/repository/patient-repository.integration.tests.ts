@@ -150,6 +150,38 @@ describe('Patient repository', () => {
     expect(afterReactivate.deactivatedAt).toEqual(afterDeactivate.deactivatedAt);
   });
 
+  it('should not restamp a lifecycle instant when the patient is already in the requested state', async () => {
+    const created = await patientRepository.createPatient(patientData(tenantA));
+
+    async function lifecycleTimestamps() {
+      const [row] = await db
+        .select({
+          deactivatedAt: patientTable.deactivatedAt,
+          reactivatedAt: patientTable.reactivatedAt,
+        })
+        .from(patientTable)
+        .where(and(eq(patientTable.id, created.id), eq(patientTable.tenantId, tenantA)));
+
+      return row;
+    }
+
+    await patientRepository.setPatientActive(created.id, tenantA, false);
+    const afterFirstDeactivate = await lifecycleTimestamps();
+
+    // Deactivating an already-inactive Patient is a no-op transition: re-stamping
+    // would drag the existing Timeline Event forward to a moment nothing happened.
+    await patientRepository.setPatientActive(created.id, tenantA, false);
+
+    expect((await lifecycleTimestamps()).deactivatedAt).toEqual(afterFirstDeactivate.deactivatedAt);
+
+    await patientRepository.setPatientActive(created.id, tenantA, true);
+    const afterFirstReactivate = await lifecycleTimestamps();
+
+    await patientRepository.setPatientActive(created.id, tenantA, true);
+
+    expect((await lifecycleTimestamps()).reactivatedAt).toEqual(afterFirstReactivate.reactivatedAt);
+  });
+
   it('should enforce case-insensitive uniqueness on active government IDs per tenant', async () => {
     await patientRepository.createPatient(
       patientData(tenantA, { govtIdType: 'passport', govtIdNumber: 'X1234567' })

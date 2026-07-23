@@ -78,10 +78,15 @@ export const patientTimelineLimitSchema = z.coerce
   .max(TIMELINE_MAX_LIMIT, `Limit cannot exceed ${TIMELINE_MAX_LIMIT}`)
   .default(TIMELINE_DEFAULT_LIMIT);
 
+// `eventType` is part of the key, not decoration: two transitions of one record can
+// land on the same stored instant (a Visit checked in and moved into consultation
+// together), and without it those rows share an identical key — the strict `<`
+// predicate would drop one of them for good at a page boundary.
 export type TimelineCursor = {
+  sourceId: number;
+  eventType: TimelineEventType;
   occurredAt: Date;
   sourceType: TimelineSource;
-  sourceId: number;
 };
 
 export type PatientTimelineParams = {
@@ -96,7 +101,12 @@ export type PatientTimelineParams = {
 // which is what makes the feed immune to rows shifting as new events arrive at
 // the top (ADR 0041). Never parse it in the UI.
 export function encodeTimelineCursor(cursor: TimelineCursor): string {
-  const raw = `${cursor.occurredAt.toISOString()}|${cursor.sourceType}|${cursor.sourceId}`;
+  const raw = [
+    cursor.occurredAt.toISOString(),
+    cursor.sourceType,
+    cursor.sourceId,
+    cursor.eventType,
+  ].join('|');
 
   return Buffer.from(raw, 'utf8').toString('base64url');
 }
@@ -112,11 +122,11 @@ export function decodeTimelineCursor(value: string): TimelineCursor | null {
 
   const parts = raw.split('|');
 
-  if (parts.length !== 3) {
+  if (parts.length !== 4) {
     return null;
   }
 
-  const [occurredAtPart, sourcePart, sourceIdPart] = parts;
+  const [occurredAtPart, sourcePart, sourceIdPart, eventTypePart] = parts;
   const occurredAt = new Date(occurredAtPart);
   const sourceId = Number(sourceIdPart);
 
@@ -128,11 +138,20 @@ export function decodeTimelineCursor(value: string): TimelineCursor | null {
     return null;
   }
 
+  if (!TIMELINE_EVENT_TYPES.includes(eventTypePart as TimelineEventType)) {
+    return null;
+  }
+
   if (!Number.isInteger(sourceId) || sourceId <= 0) {
     return null;
   }
 
-  return { occurredAt, sourceType: sourcePart as TimelineSource, sourceId };
+  return {
+    sourceId,
+    eventType: eventTypePart as TimelineEventType,
+    occurredAt,
+    sourceType: sourcePart as TimelineSource,
+  };
 }
 
 // The flat, nullable-padded row every UNION ALL branch projects. Display strings

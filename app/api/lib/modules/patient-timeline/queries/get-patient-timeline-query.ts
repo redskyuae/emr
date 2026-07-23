@@ -96,9 +96,10 @@ export async function getPatientTimelineQuery(
   const nextCursor =
     hasNextPage && lastRow
       ? encodeTimelineCursor({
+          sourceId: lastRow.sourceId,
+          eventType: lastRow.eventType,
           occurredAt: new Date(lastRow.occurredAt),
           sourceType: lastRow.sourceType,
-          sourceId: lastRow.sourceId,
         })
       : null;
 

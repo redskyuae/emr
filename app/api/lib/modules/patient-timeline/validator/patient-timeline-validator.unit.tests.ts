@@ -98,13 +98,25 @@ describe('PatientTimeline validator', () => {
 
   it('should decode a well-formed cursor', async () => {
     const occurredAt = new Date('2026-07-20T09:15:00.000Z');
-    const cursor = encodeTimelineCursor({ occurredAt, sourceType: 'VISIT', sourceId: 1042 });
+    const cursor = encodeTimelineCursor({
+      sourceId: 1042,
+      eventType: 'VISIT_COMPLETED',
+      occurredAt,
+      sourceType: 'VISIT',
+    });
 
     const result = await validateGetPatientTimeline('7', 'tenant-1', { cursor });
 
     expect(result).toMatchObject({
       success: true,
-      data: { cursor: { occurredAt, sourceType: 'VISIT', sourceId: 1042 } },
+      data: {
+        cursor: {
+          sourceId: 1042,
+          eventType: 'VISIT_COMPLETED',
+          occurredAt,
+          sourceType: 'VISIT',
+        },
+      },
     });
   });
 

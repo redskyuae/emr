@@ -326,8 +326,12 @@ async function getPatientTimeline({
   // The cursor names a position in the merged ordering, so rows arriving above it
   // cannot shift what the next page returns (ADR 0041). Fetching limit + 1 tells
   // us whether another page exists without a second count query.
+  // `event_type` completes the key: two transitions of the same record can share an
+  // instant, and without it the pair is one indistinguishable key that the strict
+  // `<` predicate would skip past at a page boundary. The tuple must list the same
+  // columns, in the same order, as the ORDER BY below.
   const cursorFilter = cursor
-    ? sql`where (e.occurred_at, e.source_type, e.source_id) < (${cursor.occurredAt.toISOString()}::timestamptz, ${cursor.sourceType}, ${cursor.sourceId})`
+    ? sql`where (e.occurred_at, e.source_type, e.source_id, e.event_type) < (${cursor.occurredAt.toISOString()}::timestamptz, ${cursor.sourceType}, ${cursor.sourceId}, ${cursor.eventType})`
     : sql``;
 
   const statement = sql`
@@ -344,7 +348,7 @@ async function getPatientTimeline({
       e.parent_id as "parentId"
     from (${unioned}) as e
     ${cursorFilter}
-    order by e.occurred_at desc, e.source_type desc, e.source_id desc
+    order by e.occurred_at desc, e.source_type desc, e.source_id desc, e.event_type desc
     limit ${limit + 1}
   `;
 

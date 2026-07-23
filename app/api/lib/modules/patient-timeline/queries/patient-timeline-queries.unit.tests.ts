@@ -117,9 +117,30 @@ describe('PatientTimeline queries', () => {
     }
 
     expect(decodeTimelineCursor(result.data.meta.nextCursor)).toEqual({
+      sourceId: 2,
+      eventType: 'VISIT_COMPLETED',
       occurredAt: new Date('2026-07-19T08:00:00.000Z'),
       sourceType: 'VISIT',
-      sourceId: 2,
+    });
+  });
+
+  it('should key the cursor on the event type so co-timed transitions stay distinct', async () => {
+    validate.mockResolvedValue(validationSuccess(1));
+    const sharedInstant = new Date('2026-07-20T09:15:00.000Z');
+    timelineRepo.getPatientTimeline.mockResolvedValue([
+      row({ sourceId: 5, eventType: 'VISIT_IN_CONSULTATION', occurredAt: sharedInstant }),
+      row({ sourceId: 5, eventType: 'VISIT_CHECKED_IN', occurredAt: sharedInstant }),
+    ]);
+
+    const result = await getPatientTimelineQuery('7', 'tenant-1');
+
+    if (!result.success || !result.data.meta.nextCursor) {
+      throw new Error('expected a next cursor');
+    }
+
+    expect(decodeTimelineCursor(result.data.meta.nextCursor)).toMatchObject({
+      sourceId: 5,
+      eventType: 'VISIT_IN_CONSULTATION',
     });
   });
 

@@ -27,6 +27,7 @@ import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import { ward as wardTable } from '@/app/db/schema/ward';
 import {
   encodeTimelineCursor,
+  type TimelineCursor,
   type PatientTimelineParams,
   type TimelineEventRow,
 } from '../schemas/patient-timeline-schema';
@@ -254,6 +255,16 @@ async function timelineFor(
     patientId,
     ...overrides,
   });
+}
+
+// The cursor names the full ordering key, event type included — see ADR 0041.
+function cursorFor(event: TimelineEventRow): TimelineCursor {
+  return {
+    sourceId: event.sourceId,
+    eventType: event.eventType,
+    occurredAt: new Date(event.occurredAt),
+    sourceType: event.sourceType,
+  };
 }
 
 describe('PatientTimeline repository', () => {
@@ -630,12 +641,7 @@ describe('PatientTimeline repository', () => {
         break;
       }
 
-      const last = pageRows[pageRows.length - 1];
-      cursor = {
-        occurredAt: new Date(last.occurredAt),
-        sourceType: last.sourceType,
-        sourceId: last.sourceId,
-      };
+      cursor = cursorFor(pageRows[pageRows.length - 1]);
     }
 
     expect(collected).toHaveLength(all.length);
@@ -671,14 +677,7 @@ describe('PatientTimeline repository', () => {
       receivedAt: at('2026-07-22T13:00:00Z'),
     });
 
-    const secondPage = await timelineFor(patientId, {
-      limit,
-      cursor: {
-        occurredAt: new Date(last.occurredAt),
-        sourceType: last.sourceType,
-        sourceId: last.sourceId,
-      },
-    });
+    const secondPage = await timelineFor(patientId, { limit, cursor: cursorFor(last) });
 
     const firstKeys = firstPage.map((event) => `${event.eventType}#${event.sourceId}`);
     const secondKeys = secondPage.map((event) => `${event.eventType}#${event.sourceId}`);
@@ -712,19 +711,39 @@ describe('PatientTimeline repository', () => {
 
     expect(collided).toHaveLength(2);
 
-    const afterFirst = await timelineFor(patientId, {
-      cursor: {
-        occurredAt: new Date(collided[0].occurredAt),
-        sourceType: collided[0].sourceType,
-        sourceId: collided[0].sourceId,
-      },
-    });
+    const afterFirst = await timelineFor(patientId, { cursor: cursorFor(collided[0]) });
 
-    // The tie-break on (source_type, source_id) means the second colliding row is
-    // returned exactly once rather than skipped or repeated.
+    // The tie-break on (source_type, source_id, event_type) means the second
+    // colliding row is returned exactly once rather than skipped or repeated.
     expect(afterFirst.map((event) => `${event.eventType}#${event.sourceId}`)).toContain(
       `${collided[1].eventType}#${collided[1].sourceId}`
     );
+  });
+
+  it('should keep both transitions of one record that share an instant across a page boundary', async () => {
+    const patientId = await createPatient(tenantA);
+    const doctorId = await createDoctor(tenantA);
+    const visitTypeId = await createVisitType(tenantA);
+    // Checked in and moved into consultation at the same stored instant: every
+    // column of the ordering key except the event type collides.
+    const sharedInstant = at('2026-07-20T09:00:00Z');
+
+    await createVisit(tenantA, patientId, doctorId, visitTypeId, {
+      checkedInAt: sharedInstant,
+      consultationStartedAt: sharedInstant,
+    });
+
+    const all = await timelineFor(patientId);
+    const collided = all.filter(
+      (event) => new Date(event.occurredAt).getTime() === sharedInstant.getTime()
+    );
+
+    expect(collided).toHaveLength(2);
+    expect(collided[0].sourceId).toBe(collided[1].sourceId);
+
+    const afterFirst = await timelineFor(patientId, { cursor: cursorFor(collided[0]) });
+
+    expect(afterFirst.map((event) => event.eventType)).toContain(collided[1].eventType);
   });
 
   it('should fetch one row beyond the limit so the caller can detect a further page', async () => {
@@ -755,21 +774,11 @@ describe('PatientTimeline repository', () => {
 
     const all = await timelineFor(patientId);
     const first = all[0];
-    const encoded = encodeTimelineCursor({
-      occurredAt: new Date(first.occurredAt),
-      sourceType: first.sourceType,
-      sourceId: first.sourceId,
-    });
+    const encoded = encodeTimelineCursor(cursorFor(first));
 
     expect(typeof encoded).toBe('string');
 
-    const rest = await timelineFor(patientId, {
-      cursor: {
-        occurredAt: new Date(first.occurredAt),
-        sourceType: first.sourceType,
-        sourceId: first.sourceId,
-      },
-    });
+    const rest = await timelineFor(patientId, { cursor: cursorFor(first) });
 
     expect(rest).toHaveLength(all.length - 1);
     expect(rest.map((event) => event.sourceId)).toEqual(
