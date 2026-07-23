@@ -330,13 +330,18 @@ async function getPatientTimeline({
   // instant, and without it the pair is one indistinguishable key that the strict
   // `<` predicate would skip past at a page boundary. The tuple must list the same
   // columns, in the same order, as the ORDER BY below.
+  //
+  // The instant arrives as microsecond-precision text and is cast back here, never
+  // round-tripped through a JS Date — a Date holds only milliseconds, so it would
+  // round the boundary down and skip every event inside the truncated microsecond.
   const cursorFilter = cursor
-    ? sql`where (e.occurred_at, e.source_type, e.source_id, e.event_type) < (${cursor.occurredAt.toISOString()}::timestamptz, ${cursor.sourceType}, ${cursor.sourceId}, ${cursor.eventType})`
+    ? sql`where (e.occurred_at, e.source_type, e.source_id, e.event_type) < (${cursor.occurredAt}::timestamptz, ${cursor.sourceType}, ${cursor.sourceId}, ${cursor.eventType})`
     : sql``;
 
   const statement = sql`
     select
       e.occurred_at as "occurredAt",
+      to_char(e.occurred_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as "occurredAtKey",
       e.source_type as "sourceType",
       e.source_id as "sourceId",
       e.event_type as "eventType",

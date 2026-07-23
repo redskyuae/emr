@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
@@ -257,12 +257,13 @@ async function timelineFor(
   });
 }
 
-// The cursor names the full ordering key, event type included — see ADR 0041.
+// The cursor names the full ordering key, event type included, and takes its
+// instant from the lossless projection rather than the truncated Date — ADR 0041.
 function cursorFor(event: TimelineEventRow): TimelineCursor {
   return {
     sourceId: event.sourceId,
     eventType: event.eventType,
-    occurredAt: new Date(event.occurredAt),
+    occurredAt: event.occurredAtKey,
     sourceType: event.sourceType,
   };
 }
@@ -718,6 +719,41 @@ describe('PatientTimeline repository', () => {
     expect(afterFirst.map((event) => `${event.eventType}#${event.sourceId}`)).toContain(
       `${collided[1].eventType}#${collided[1].sourceId}`
     );
+  });
+
+  it('should keep an event whose instant differs from the page boundary only in microseconds', async () => {
+    const patientId = await createPatient(tenantA);
+    const doctorId = await createDoctor(tenantA);
+    const visitTypeId = await createVisitType(tenantA);
+    const visit = await createVisit(tenantA, patientId, doctorId, visitTypeId, {
+      checkedInAt: at('2026-07-20T09:00:00Z'),
+      completedAt: at('2026-07-20T09:00:00Z'),
+    });
+
+    // Both land in the same millisecond, apart only in microseconds — which is
+    // what `defaultNow()` produces in production and what a JS Date cannot hold.
+    await db.execute(
+      sql`update visit
+          set checked_in_at = '2026-07-20T09:00:00.123100Z'::timestamptz,
+              completed_at  = '2026-07-20T09:00:00.123900Z'::timestamptz
+          where id = ${visit.id}`
+    );
+
+    const all = await timelineFor(patientId, { feed: 'encounters' });
+    const [newest, older] = all;
+
+    expect(newest.eventType).toBe('VISIT_COMPLETED');
+    expect(newest.occurredAtKey).toBe('2026-07-20T09:00:00.123900Z');
+    expect(older.occurredAtKey).toBe('2026-07-20T09:00:00.123100Z');
+
+    const afterNewest = await timelineFor(patientId, {
+      feed: 'encounters',
+      cursor: cursorFor(newest),
+    });
+
+    // A millisecond-truncated cursor would resume from .123000 and drop the
+    // .123100 event entirely, since it sorts above the rounded boundary.
+    expect(afterNewest.map((event) => event.eventType)).toContain('VISIT_CHECKED_IN');
   });
 
   it('should keep both transitions of one record that share an instant across a page boundary', async () => {

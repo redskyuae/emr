@@ -78,14 +78,25 @@ export const patientTimelineLimitSchema = z.coerce
   .max(TIMELINE_MAX_LIMIT, `Limit cannot exceed ${TIMELINE_MAX_LIMIT}`)
   .default(TIMELINE_DEFAULT_LIMIT);
 
+// The exact text form the cursor carries its instant in: ISO-8601 UTC with all six
+// microsecond digits.
+const CURSOR_INSTANT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/;
+
 // `eventType` is part of the key, not decoration: two transitions of one record can
 // land on the same stored instant (a Visit checked in and moved into consultation
 // together), and without it those rows share an identical key — the strict `<`
 // predicate would drop one of them for good at a page boundary.
+//
+// `occurredAt` is a string, not a Date, and that is also load-bearing. Postgres
+// stores `timestamptz` to microseconds and `defaultNow()` actually populates them,
+// but a JS Date only holds milliseconds — so round-tripping the instant through a
+// Date truncates it downward. A page ending on 09:00:00.123900 would resume from
+// 09:00:00.123000 and silently skip every event in between. The repository projects
+// this string straight from SQL so no JS type ever sees the value.
 export type TimelineCursor = {
   sourceId: number;
   eventType: TimelineEventType;
-  occurredAt: Date;
+  occurredAt: string;
   sourceType: TimelineSource;
 };
 
@@ -101,12 +112,7 @@ export type PatientTimelineParams = {
 // which is what makes the feed immune to rows shifting as new events arrive at
 // the top (ADR 0041). Never parse it in the UI.
 export function encodeTimelineCursor(cursor: TimelineCursor): string {
-  const raw = [
-    cursor.occurredAt.toISOString(),
-    cursor.sourceType,
-    cursor.sourceId,
-    cursor.eventType,
-  ].join('|');
+  const raw = [cursor.occurredAt, cursor.sourceType, cursor.sourceId, cursor.eventType].join('|');
 
   return Buffer.from(raw, 'utf8').toString('base64url');
 }
@@ -127,10 +133,15 @@ export function decodeTimelineCursor(value: string): TimelineCursor | null {
   }
 
   const [occurredAtPart, sourcePart, sourceIdPart, eventTypePart] = parts;
-  const occurredAt = new Date(occurredAtPart);
   const sourceId = Number(sourceIdPart);
 
-  if (Number.isNaN(occurredAt.getTime())) {
+  // Shape-checked rather than Date-parsed: a millisecond-precision instant parses
+  // perfectly well and would then quietly page from the wrong position.
+  if (!CURSOR_INSTANT_PATTERN.test(occurredAtPart)) {
+    return null;
+  }
+
+  if (Number.isNaN(new Date(occurredAtPart).getTime())) {
     return null;
   }
 
@@ -149,7 +160,7 @@ export function decodeTimelineCursor(value: string): TimelineCursor | null {
   return {
     sourceId,
     eventType: eventTypePart as TimelineEventType,
-    occurredAt,
+    occurredAt: occurredAtPart,
     sourceType: sourcePart as TimelineSource,
   };
 }
@@ -157,6 +168,9 @@ export function decodeTimelineCursor(value: string): TimelineCursor | null {
 // The flat, nullable-padded row every UNION ALL branch projects. Display strings
 // are never built in SQL — the query layer maps this into TimelineEvent and the
 // UI owns all wording (ADR 0041).
+// `occurredAt` is the display instant and loses microseconds on its way through the
+// driver's Date; `occurredAtKey` is the same instant projected losslessly as text,
+// and is the only thing a cursor may be built from.
 export type TimelineEventRow = {
   amount: string | null;
   detail: string | null;
@@ -168,6 +182,7 @@ export type TimelineEventRow = {
   doctorName: string | null;
   sourceType: TimelineSource;
   detailCount: number | null;
+  occurredAtKey: string;
 };
 
 type TimelineEventBase = {

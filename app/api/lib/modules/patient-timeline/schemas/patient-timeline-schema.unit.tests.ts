@@ -100,7 +100,7 @@ describe('Patient timeline schema', () => {
     const cursor = {
       sourceId: 1042,
       eventType: 'VISIT_COMPLETED' as const,
-      occurredAt: new Date('2026-07-20T09:15:00.000Z'),
+      occurredAt: '2026-07-20T09:15:00.123900Z',
       sourceType: 'VISIT' as const,
     };
 
@@ -117,13 +117,15 @@ describe('Patient timeline schema', () => {
     });
 
     it('should reject a cursor with the wrong number of parts', () => {
-      const raw = Buffer.from('2026-07-20T09:15:00.000Z|VISIT', 'utf8').toString('base64url');
+      const raw = Buffer.from('2026-07-20T09:15:00.123900Z|VISIT', 'utf8').toString('base64url');
 
       expect(decodeTimelineCursor(raw)).toBeNull();
     });
 
     it('should reject a cursor that omits the event type', () => {
-      const raw = Buffer.from('2026-07-20T09:15:00.000Z|VISIT|1042', 'utf8').toString('base64url');
+      const raw = Buffer.from('2026-07-20T09:15:00.123900Z|VISIT|1042', 'utf8').toString(
+        'base64url'
+      );
 
       expect(decodeTimelineCursor(raw)).toBeNull();
     });
@@ -136,9 +138,18 @@ describe('Patient timeline schema', () => {
       expect(decodeTimelineCursor(raw)).toBeNull();
     });
 
+    it('should reject a millisecond-precision instant that would page from a rounded position', () => {
+      const raw = Buffer.from(
+        '2026-07-20T09:15:00.123Z|VISIT|1042|VISIT_COMPLETED',
+        'utf8'
+      ).toString('base64url');
+
+      expect(decodeTimelineCursor(raw)).toBeNull();
+    });
+
     it('should reject a cursor naming an unknown source', () => {
       const raw = Buffer.from(
-        '2026-07-20T09:15:00.000Z|LAB_ORDER|1042|VISIT_COMPLETED',
+        '2026-07-20T09:15:00.123900Z|LAB_ORDER|1042|VISIT_COMPLETED',
         'utf8'
       ).toString('base64url');
 
@@ -147,7 +158,7 @@ describe('Patient timeline schema', () => {
 
     it('should reject a cursor naming an unknown event type', () => {
       const raw = Buffer.from(
-        '2026-07-20T09:15:00.000Z|VISIT|1042|VISIT_REOPENED',
+        '2026-07-20T09:15:00.123900Z|VISIT|1042|VISIT_REOPENED',
         'utf8'
       ).toString('base64url');
 
@@ -155,11 +166,18 @@ describe('Patient timeline schema', () => {
     });
 
     it('should reject a cursor with a non-positive source id', () => {
-      const raw = Buffer.from('2026-07-20T09:15:00.000Z|VISIT|0|VISIT_COMPLETED', 'utf8').toString(
-        'base64url'
-      );
+      const raw = Buffer.from(
+        '2026-07-20T09:15:00.123900Z|VISIT|0|VISIT_COMPLETED',
+        'utf8'
+      ).toString('base64url');
 
       expect(decodeTimelineCursor(raw)).toBeNull();
+    });
+
+    it('should preserve every microsecond digit through a round trip', () => {
+      const decoded = decodeTimelineCursor(encodeTimelineCursor(cursor));
+
+      expect(decoded?.occurredAt).toBe('2026-07-20T09:15:00.123900Z');
     });
 
     it('should distinguish two transitions of one record that share an instant', () => {

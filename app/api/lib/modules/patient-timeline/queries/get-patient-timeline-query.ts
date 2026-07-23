@@ -98,7 +98,8 @@ export async function getPatientTimelineQuery(
       ? encodeTimelineCursor({
           sourceId: lastRow.sourceId,
           eventType: lastRow.eventType,
-          occurredAt: new Date(lastRow.occurredAt),
+          // The lossless projection, not `occurredAt` — see TimelineCursor.
+          occurredAt: lastRow.occurredAtKey,
           sourceType: lastRow.sourceType,
         })
       : null;

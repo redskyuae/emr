@@ -32,6 +32,7 @@ function row(overrides: Partial<TimelineEventRow> = {}): TimelineEventRow {
     doctorName: 'Dr. Rao',
     sourceType: 'VISIT',
     detailCount: null,
+    occurredAtKey: '2026-07-20T09:15:00.123900Z',
     ...overrides,
   };
 }
@@ -106,8 +107,16 @@ describe('PatientTimeline queries', () => {
     validate.mockResolvedValue(validationSuccess(2));
     timelineRepo.getPatientTimeline.mockResolvedValue([
       row({ sourceId: 1 }),
-      row({ sourceId: 2, occurredAt: new Date('2026-07-19T08:00:00.000Z') }),
-      row({ sourceId: 3, occurredAt: new Date('2026-07-18T08:00:00.000Z') }),
+      row({
+        sourceId: 2,
+        occurredAt: new Date('2026-07-19T08:00:00.000Z'),
+        occurredAtKey: '2026-07-19T08:00:00.000000Z',
+      }),
+      row({
+        sourceId: 3,
+        occurredAt: new Date('2026-07-18T08:00:00.000Z'),
+        occurredAtKey: '2026-07-18T08:00:00.000000Z',
+      }),
     ]);
 
     const result = await getPatientTimelineQuery('7', 'tenant-1');
@@ -119,9 +128,29 @@ describe('PatientTimeline queries', () => {
     expect(decodeTimelineCursor(result.data.meta.nextCursor)).toEqual({
       sourceId: 2,
       eventType: 'VISIT_COMPLETED',
-      occurredAt: new Date('2026-07-19T08:00:00.000Z'),
+      occurredAt: '2026-07-19T08:00:00.000000Z',
       sourceType: 'VISIT',
     });
+  });
+
+  it('should build the cursor from the lossless instant rather than the truncated one', async () => {
+    validate.mockResolvedValue(validationSuccess(1));
+    timelineRepo.getPatientTimeline.mockResolvedValue([
+      // What the driver hands back has already lost the microseconds; only the
+      // projected key still carries them.
+      row({ occurredAt: new Date('2026-07-20T09:15:00.123Z') }),
+      row({ sourceId: 2 }),
+    ]);
+
+    const result = await getPatientTimelineQuery('7', 'tenant-1');
+
+    if (!result.success || !result.data.meta.nextCursor) {
+      throw new Error('expected a next cursor');
+    }
+
+    expect(decodeTimelineCursor(result.data.meta.nextCursor)?.occurredAt).toBe(
+      '2026-07-20T09:15:00.123900Z'
+    );
   });
 
   it('should key the cursor on the event type so co-timed transitions stay distinct', async () => {

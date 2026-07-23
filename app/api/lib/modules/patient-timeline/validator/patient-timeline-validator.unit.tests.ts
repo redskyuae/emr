@@ -97,7 +97,7 @@ describe('PatientTimeline validator', () => {
   });
 
   it('should decode a well-formed cursor', async () => {
-    const occurredAt = new Date('2026-07-20T09:15:00.000Z');
+    const occurredAt = '2026-07-20T09:15:00.123900Z';
     const cursor = encodeTimelineCursor({
       sourceId: 1042,
       eventType: 'VISIT_COMPLETED',
