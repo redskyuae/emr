@@ -7,7 +7,7 @@ import { AlertCircle, Boxes, Eye, Search } from 'lucide-react';
 import type { Asset, AssetMasterSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { formatAedCompact } from '@/app/(protected)/assets-management/mock-data';
+import { formatAedCompact } from '@/lib/format-currency';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,13 +51,13 @@ function formatAssetValue(value: number | null) {
 
 function CategoryLabel({ category }: { category: AssetMasterSummary }) {
   return (
-    <div className="flex min-w-40 items-center gap-2">
+    <div className="flex min-w-0 items-center gap-2">
       <span
         className="size-2.5 shrink-0 rounded-full"
         style={{ backgroundColor: category.color }}
         aria-hidden="true"
       />
-      <span className="font-medium">{category.name}</span>
+      <span className="truncate font-medium">{category.name}</span>
     </div>
   );
 }
@@ -77,7 +77,7 @@ function StatusBadge({ status }: { status: AssetMasterSummary }) {
 
 function AssetIdentity({ asset }: { asset: Asset }) {
   return (
-    <div className="flex min-w-64 items-center gap-3">
+    <div className="flex min-w-0 items-center gap-3">
       <span
         className="flex size-10 shrink-0 items-center justify-center rounded-md"
         style={{ backgroundColor: asset.category.color + '1a', color: asset.category.color }}
@@ -107,10 +107,10 @@ function AssignedTo({ asset }: { asset: Asset }) {
   }
 
   return (
-    <div className="min-w-36 space-y-1">
-      <p className="font-medium">{asset.custodian}</p>
+    <div className="min-w-0 space-y-1">
+      <p className="truncate font-medium">{asset.custodian}</p>
       {asset.department ? (
-        <p className="text-muted-foreground text-xs">{asset.department}</p>
+        <p className="text-muted-foreground truncate text-xs">{asset.department}</p>
       ) : null}
     </div>
   );
@@ -169,17 +169,17 @@ export function AssetDirectoryTable({
 
   return (
     <>
-      <Table className={cn('min-w-max', isFetching && 'opacity-70 transition-opacity')}>
+      <Table className={cn('table-fixed', isFetching && 'opacity-70 transition-opacity')}>
         <TableHeader>
           <TableRow>
-            <TableHead className="pl-4">Asset</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Assigned to</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Next service</TableHead>
-            <TableHead>Value</TableHead>
-            <TableHead className="pr-4 text-right">Actions</TableHead>
+            <TableHead className="w-[24%] pl-4">Asset</TableHead>
+            <TableHead className="w-[12%]">Category</TableHead>
+            <TableHead className="w-[16%]">Location</TableHead>
+            <TableHead className="w-[14%]">Assigned to</TableHead>
+            <TableHead className="w-[10%]">Status</TableHead>
+            <TableHead className="w-[9%]">Next service</TableHead>
+            <TableHead className="w-[8%]">Value</TableHead>
+            <TableHead className="w-[7%] pr-4 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -195,7 +195,7 @@ export function AssetDirectoryTable({
               <TableCell>
                 <CategoryLabel category={asset.category} />
               </TableCell>
-              <TableCell className="text-muted-foreground min-w-52">
+              <TableCell className="text-muted-foreground truncate">
                 {asset.location || '—'}
               </TableCell>
               <TableCell>
@@ -204,10 +204,10 @@ export function AssetDirectoryTable({
               <TableCell>
                 <StatusBadge status={asset.status} />
               </TableCell>
-              <TableCell className="text-muted-foreground font-mono text-xs">
+              <TableCell className="text-muted-foreground truncate font-mono text-xs">
                 {asset.nextServiceDate || '—'}
               </TableCell>
-              <TableCell className="font-medium tabular-nums">
+              <TableCell className="truncate font-medium tabular-nums">
                 {formatAssetValue(asset.currentValue)}
               </TableCell>
               <TableCell className="pr-4 text-right" onClick={(event) => event.stopPropagation()}>
@@ -256,24 +256,24 @@ export function AssetDirectoryTable({
 
 function AssetDirectoryTableSkeleton() {
   return (
-    <Table className="min-w-max">
+    <Table className="table-fixed">
       <TableHeader>
         <TableRow>
-          <TableHead className="pl-4">Asset</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Location</TableHead>
-          <TableHead>Assigned to</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Next service</TableHead>
-          <TableHead>Value</TableHead>
-          <TableHead className="pr-4 text-right">Actions</TableHead>
+          <TableHead className="w-[24%] pl-4">Asset</TableHead>
+          <TableHead className="w-[12%]">Category</TableHead>
+          <TableHead className="w-[16%]">Location</TableHead>
+          <TableHead className="w-[14%]">Assigned to</TableHead>
+          <TableHead className="w-[10%]">Status</TableHead>
+          <TableHead className="w-[9%]">Next service</TableHead>
+          <TableHead className="w-[8%]">Value</TableHead>
+          <TableHead className="w-[7%] pr-4 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {Array.from({ length: 6 }, (_, i) => (
           <TableRow key={i}>
             <TableCell className="py-3 pl-4">
-              <div className="flex min-w-64 items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <Skeleton className="size-10 shrink-0 rounded-md" />
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <Skeleton className="h-4 w-32" />
@@ -282,16 +282,16 @@ function AssetDirectoryTableSkeleton() {
               </div>
             </TableCell>
             <TableCell>
-              <div className="flex min-w-40 items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <Skeleton className="size-2.5 shrink-0 rounded-full" />
                 <Skeleton className="h-4 w-24" />
               </div>
             </TableCell>
-            <TableCell className="min-w-52">
+            <TableCell>
               <Skeleton className="h-4 w-32" />
             </TableCell>
             <TableCell>
-              <div className="min-w-36 space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-3 w-16" />
               </div>

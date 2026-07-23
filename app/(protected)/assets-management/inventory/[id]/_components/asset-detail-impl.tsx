@@ -5,7 +5,7 @@ import { ArrowLeft, Boxes } from 'lucide-react';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetQuery } from '@/app/queries/assets-management/useAsset';
-import { formatAedCompact } from '@/app/(protected)/assets-management/mock-data';
+import { formatAedCompact } from '@/lib/format-currency';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

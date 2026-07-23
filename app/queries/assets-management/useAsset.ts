@@ -19,11 +19,10 @@ async function fetchAsset(id: number): Promise<GetAssetResponse> {
   return response.json() as Promise<GetAssetResponse>;
 }
 
-export function useAssetQuery(id: number | null) {
+export function useAssetQuery(id: number) {
   return useQuery({
-    queryKey: id === null ? ['asset', 'none'] : assetQueryKey(id),
-    queryFn: () => fetchAsset(id ?? 0),
-    enabled: id !== null,
+    queryKey: assetQueryKey(id),
+    queryFn: () => fetchAsset(id),
     select: (response) => response.data,
   });
 }

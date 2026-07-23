@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
-const optionalText = (max: number, label: string) =>
+const optionalTextField = (label: string, max: number) =>
   z.string().trim().max(max, `${label} must be at most ${max} characters.`);
 
-const optionalMoney = (label: string) =>
+const optionalMoneyField = (label: string) =>
   z
     .string()
     .trim()
@@ -34,16 +34,16 @@ export const addAssetFormSchema = z.object({
     .min(1, 'Status is required.')
     .refine((value) => /^\d+$/.test(value), 'Status is required.'),
   conditionId: z.string().trim(),
-  manufacturer: optionalText(150, 'Manufacturer'),
-  model: optionalText(150, 'Model'),
-  facility: optionalText(150, 'Facility'),
-  department: optionalText(150, 'Department'),
-  location: optionalText(200, 'Location'),
-  custodian: optionalText(150, 'Custodian'),
+  manufacturer: optionalTextField('Manufacturer', 150),
+  model: optionalTextField('Model', 150),
+  facility: optionalTextField('Facility', 150),
+  department: optionalTextField('Department', 150),
+  location: optionalTextField('Location', 200),
+  custodian: optionalTextField('Custodian', 150),
   purchaseDate: z.string(),
   warrantyExpiry: z.string(),
-  cost: optionalMoney('Cost'),
-  currentValue: optionalMoney('Current value'),
+  cost: optionalMoneyField('Cost'),
+  currentValue: optionalMoneyField('Current value'),
   lastServiceDate: z.string(),
   nextServiceDate: z.string(),
   calibrationDate: z.string(),

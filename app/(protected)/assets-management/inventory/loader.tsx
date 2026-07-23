@@ -33,24 +33,24 @@ export default function InventoryLoader() {
             </div>
           </div>
 
-          <Table className="min-w-max">
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-4">Asset</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Assigned to</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Next service</TableHead>
-                <TableHead>Value</TableHead>
-                <TableHead className="pr-4 text-right">Actions</TableHead>
+                <TableHead className="w-[24%] pl-4">Asset</TableHead>
+                <TableHead className="w-[12%]">Category</TableHead>
+                <TableHead className="w-[16%]">Location</TableHead>
+                <TableHead className="w-[14%]">Assigned to</TableHead>
+                <TableHead className="w-[10%]">Status</TableHead>
+                <TableHead className="w-[9%]">Next service</TableHead>
+                <TableHead className="w-[8%]">Value</TableHead>
+                <TableHead className="w-[7%] pr-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Array.from({ length: 6 }, (_, i) => (
                 <TableRow key={i}>
                   <TableCell className="py-3 pl-4">
-                    <div className="flex min-w-64 items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <Skeleton className="size-10 shrink-0 rounded-md" />
                       <div className="min-w-0 flex-1 space-y-1.5">
                         <Skeleton className="h-4 w-32" />
@@ -59,16 +59,16 @@ export default function InventoryLoader() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex min-w-40 items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <Skeleton className="size-2.5 shrink-0 rounded-full" />
                       <Skeleton className="h-4 w-24" />
                     </div>
                   </TableCell>
-                  <TableCell className="min-w-52">
+                  <TableCell>
                     <Skeleton className="h-4 w-32" />
                   </TableCell>
                   <TableCell>
-                    <div className="min-w-36 space-y-1.5">
+                    <div className="min-w-0 space-y-1.5">
                       <Skeleton className="h-4 w-24" />
                       <Skeleton className="h-3 w-16" />
                     </div>
