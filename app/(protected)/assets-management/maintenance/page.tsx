@@ -19,7 +19,14 @@ import {
 } from '@/components/ui/table';
 import { formatCount } from '@/lib/format-count';
 import { cn } from '@/lib/utils';
-import { BadgeToneConfig, WorkOrder, workOrderPriorityBadgeMap, workOrders, workOrderStatusBadgeMap, WorkOrderType } from '../mock-data';
+import {
+  BadgeToneConfig,
+  WorkOrder,
+  workOrderPriorityBadgeMap,
+  workOrders,
+  workOrderStatusBadgeMap,
+  WorkOrderType,
+} from '../mock-data';
 
 type TypeFilter = WorkOrderType | 'all';
 
