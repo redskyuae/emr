@@ -1,0 +1,95 @@
+app/api/v1/patients/types.ts
+  0f3bdf048e879e9d 6-18,40-41
+app/(protected)/patients/_components/identity-documents-field-array.tsx
+  0f3bdf048e879e9d 1-28,30-225
+app/(protected)/patients/[id]/_components/patient-detail-impl.tsx
+  0f3bdf048e879e9d 20,45,271-280
+app/api/lib/modules/patient/validator/update-patient-validator.ts
+  0f3bdf048e879e9d 11,13,62,64,76-88
+app/(protected)/patients/[id]/edit/loader.tsx
+  0f3bdf048e879e9d 16-24
+app/api/lib/modules/patient/repository/patient-repository.integration.tests.ts
+  0f3bdf048e879e9d 5,13-22,197-198,201,205,207,212,216-217,220,224-225,228,232,234,238,242,248,251-289,292-347
+app/api/lib/modules/patient/validator/patient-identity-document-validator.unit.tests.ts
+  0f3bdf048e879e9d 1-113
+app/db/schema/patient.ts
+  0f3bdf048e879e9d 54-57,81-88
+package.json
+  0f3bdf048e879e9d 17
+app/api/lib/modules/patient/repository/patient-identity-document-repository.ts
+  0f3bdf048e879e9d 1-205
+app/api/lib/modules/appointment/schemas/appointment-schema.ts
+  0f3bdf048e879e9d 92-95
+app/api/lib/modules/patient/schemas/patient-schema.ts
+  0f3bdf048e879e9d 6-13,106-202,243-244,267,278-279,291-302,332-333
+app/api/lib/modules/patient/validator/create-patient-validator.ts
+  0f3bdf048e879e9d 4,27,29
+docs/adr/0043-identity-documents-are-nested-in-the-patient-payload.md
+  0f3bdf048e879e9d 1-14
+app/api/lib/modules/patient/validator/patient-emirates-id-validator.ts
+  0f3bdf048e879e9d 1-67
+app/db/schema/patient-identity-document.ts
+  0f3bdf048e879e9d 1-49
+app/(protected)/patients/[id]/loader.tsx
+  0f3bdf048e879e9d 19,22-35
+app/api/lib/modules/patient/repository/patient-repository.ts
+  0f3bdf048e879e9d 18-19,21-22,27,35,38,63,127,156-209,228-236,250-251,258,264-277,281,364-368,375-376,396-401,403-404,408-409,411,413,415,421,437
+app/(protected)/patients/new/loader.tsx
+  0f3bdf048e879e9d 14-22
+app/(protected)/patients/_utils/patient-form-schema.ts
+  0f3bdf048e879e9d 4,7,46-81,113-122,132-160
+plans.md
+  0f3bdf048e879e9d 1,8-10,14-16,18-21,23-25,27-28,30,32,34-35,37-38,40,42-54,56,58-67,69-70,72-74,76,78,80-83,85-86,88,90,92-100,102,104,106-107,109,111-113,115,117,119,121-125,127-128,130-131,133,135-138,140-141,145,147,149-245,247,249-380
+app/api/v1/patients/[id]/types.ts
+  0f3bdf048e879e9d 2,28-29
+CONTEXT.md
+  0f3bdf048e879e9d 157-164
+app/(protected)/patients/_utils/patient-value-sets.ts
+  0f3bdf048e879e9d 13-15,18,39-41,45,67-71,90-127
+app/db/seeds/index.ts
+  0f3bdf048e879e9d 1-30
+app/api/lib/modules/patient/commands/update-patient-command.ts
+  0f3bdf048e879e9d 6
+app/api/lib/modules/patient/commands/patient-commands.unit.tests.ts
+  0f3bdf048e879e9d 106,109,112,117
+app/api/lib/modules/appointment/repository/appointment-repository.ts
+  0f3bdf048e879e9d 384-387,393,411-418,488,647
+app/api/lib/openapi/document.ts
+  0f3bdf048e879e9d 1681-1694,1706-1727,1855-1856,1859-1863,1866-1880,1909,1914-1915,1917-1918,5952,5992,9014,9016-9018,9747-9808,9852,9854-9856,9858-9859,9861-9862,9902-9903,9974-9977,9979-9981
+app/(protected)/patients/_utils/patient-form-values.ts
+  0f3bdf048e879e9d 5,28-29,57-68,97-109
+app/(protected)/patients/[id]/_components/identity-documents-table.tsx
+  0f3bdf048e879e9d 1-22,24-70
+app/api/lib/modules/appointment/validator/create-appointment-validator.ts
+  0f3bdf048e879e9d 10,125,127,129,135-136,148-152,161-163
+docs/adr/0042-emirates-id-is-a-dedicated-patient-attribute.md
+  0f3bdf048e879e9d 1-4,6,8-10,12-17
+app/api/lib/modules/patient/commands/create-patient-command.ts
+  0f3bdf048e879e9d 7
+app/api/lib/modules/patient/validator/validate-patient-identity-documents.ts
+  0f3bdf048e879e9d 1-53
+app/(protected)/patients/_components/patient-form-fields.tsx
+  0f3bdf048e879e9d 1-75
+app/(protected)/patients/_components/patient-form.tsx
+  0f3bdf048e879e9d 18,30,36,568,571-575,577-583,585-587,594,596-601,603-604,749-750,753-754
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "0746e3f717657b3efd722cd3719ca0e0fde235d8",
+  "prompts": {
+    "0f3bdf048e879e9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bbd1e630-d3d7-46c3-9b79-98fd74ada1e5",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>",
+      "messages": [],
+      "total_additions": 2180,
+      "total_deletions": 776,
+      "accepted_lines": 2112,
+      "overriden_lines": 9
+    }
+  }
+}
