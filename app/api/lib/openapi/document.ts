@@ -1678,8 +1678,20 @@ const patientRequestExample = {
   nationalityId: 1,
   languageId: 2,
   religionId: 3,
-  govtIdType: 'passport',
-  govtIdNumber: 'N1234567',
+  emiratesId: '784199012345671',
+  identityDocuments: [
+    {
+      documentType: 'passport',
+      documentNumber: 'N1234567',
+      issuingCountryId: 1,
+      expiryDate: '2029-04-11',
+    },
+    {
+      documentType: 'residence-visa',
+      documentNumber: 'RV-2026-778812',
+      expiryDate: '2027-01-15',
+    },
+  ],
   emergencyContactName: 'Kiran Rao',
   emergencyContactRelationship: 'Spouse',
   emergencyContactPhone: '+91-9988776655',
@@ -1691,6 +1703,28 @@ const patientExample = {
   mrn: 'MRN-1042',
   ...patientRequestExample,
   registrationStatus: 'registered',
+  // Responses echo each document's id — the nested full replace diffs on it
+  // rather than rewriting the collection (ADR 0043).
+  identityDocuments: [
+    {
+      id: 91,
+      documentType: 'passport',
+      documentNumber: 'N1234567',
+      issuingCountryId: 1,
+      issuingCountry: { id: 1, name: 'India', code: 'IN' },
+      expiryDate: '2029-04-11',
+      label: null,
+    },
+    {
+      id: 92,
+      documentType: 'residence-visa',
+      documentNumber: 'RV-2026-778812',
+      issuingCountryId: null,
+      issuingCountry: null,
+      expiryDate: '2027-01-15',
+      label: null,
+    },
+  ],
   state: { id: 5, name: 'Karnataka' },
   country: { id: 1, name: 'India', code: 'IN' },
   nationality: { id: 1, name: 'Indian' },
@@ -1818,11 +1852,32 @@ const patientValidationFailed = {
             errors: ['Date of birth must not be in the future'],
           },
         },
-        govtIdPairing: {
-          summary: 'Government ID type and number not provided together',
+        invalidEmiratesId: {
+          summary: 'Emirates ID is not 15 digits beginning with 784',
           value: {
             message: 'Validation failed',
-            errors: ['Patient government ID type and number must be provided together'],
+            errors: ['Patient Emirates ID must be 15 digits beginning with 784'],
+          },
+        },
+        passportMissingExpiry: {
+          summary: 'Passport submitted without the required expiry date',
+          value: {
+            message: 'Validation failed',
+            errors: ['Identity document expiry date is required'],
+          },
+        },
+        invalidIdentityDocumentType: {
+          summary: 'emirates-id is not a valid Identity Document type',
+          value: {
+            message: 'Validation failed',
+            errors: ['Identity document type is invalid'],
+          },
+        },
+        unownedIdentityDocument: {
+          summary: 'Identity document id does not belong to this Patient',
+          value: {
+            message: 'Validation failed',
+            errors: ['Identity document 91 was not found for this Patient.'],
           },
         },
         invalidId: {
@@ -1851,16 +1906,16 @@ const patientNotFound = {
 
 const patientConflict = {
   description:
-    'Patient government ID already exists in the active Tenant, or a referenced State, Country, Nationality, Language, or Religion is invalid.',
+    'Patient Emirates ID already exists in the active Tenant, or a referenced State, Country, Nationality, Language, or Religion is invalid. Identity Documents are deliberately not unique — two countries may legitimately issue the same passport number.',
   content: {
     'application/json': {
       schema: schemaRef('ConflictError'),
       examples: {
-        duplicateGovtId: {
-          summary: 'Duplicate government ID',
+        duplicateEmiratesId: {
+          summary: 'Duplicate Emirates ID — the Patient already has a chart',
           value: {
-            message: 'Patient government ID N1234567 already exists.',
-            errors: ['Patient government ID N1234567 already exists.'],
+            message: 'Patient Emirates ID 784199012345671 already exists.',
+            errors: ['Patient Emirates ID 784199012345671 already exists.'],
           },
         },
         invalidReference: {
@@ -5894,7 +5949,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Register Patient',
         description:
-          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. govtIdType and govtIdNumber must be provided together and are unique per Tenant when present.',
+          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. emiratesId is optional (foreign nationals will not have one), is stored digit-normalised, and is unique per Tenant when present. identityDocuments replaces the whole collection; required fields vary by documentType.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreatePatientRequest', patientRequestExample),
         responses: {
@@ -5934,7 +5989,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Update Patient',
         description:
-          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference and government ID rules are the same as registration.',
+          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference and Emirates ID rules are the same as registration. identityDocuments replaces the whole collection: documents sent with an id are updated, documents sent without one are added, and any existing document omitted from the array is removed.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Patient')],
         requestBody: requestBody('UpdatePatientRequest', patientRequestExample),
@@ -8956,12 +9011,12 @@ export const openApiDocument = {
           nationalityId: { type: 'integer', minimum: 1 },
           languageId: { type: 'integer', minimum: 1, description: 'Preferred Language.' },
           religionId: { type: 'integer', minimum: 1 },
-          govtIdType: {
+          emiratesId: {
             type: 'string',
-            enum: ['passport', 'national-id', 'driving-license', 'other'],
-            description: 'Must be provided together with govtIdNumber.',
+            description:
+              'Optional. 15 digits beginning with 784; dashes and spaces are stripped before storage. Identity Documents are deliberately not captured at booking — a booking is usually a phone call.',
+            example: '784199012345671',
           },
-          govtIdNumber: { type: 'string', maxLength: 50 },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
           emergencyContactPhone: { type: 'string', maxLength: 20 },
@@ -9689,6 +9744,68 @@ export const openApiDocument = {
           code: { type: 'string' },
         },
       },
+      SavePatientIdentityDocumentRequest: {
+        type: 'object',
+        description:
+          'One Identity Document. Which fields are required depends on documentType: passport requires issuingCountryId and expiryDate; national-id requires issuingCountryId; residence-visa requires expiryDate and accepts no issuingCountryId (it is always UAE); driving-license and other require neither. emirates-id is NOT a valid documentType — the Emirates ID is its own Patient field.',
+        required: ['documentType', 'documentNumber'],
+        properties: {
+          id: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Identifies an existing document to update. Omit to add a new one. Must belong to this Patient in this Tenant.',
+          },
+          documentType: {
+            type: 'string',
+            enum: ['passport', 'national-id', 'residence-visa', 'driving-license', 'other'],
+          },
+          documentNumber: { type: 'string', maxLength: 50 },
+          issuingCountryId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Required for passport and national-id. Passport numbers are unique only within their issuing country, so this is what makes a passport number meaningful.',
+          },
+          expiryDate: {
+            type: 'string',
+            format: 'date',
+            description: 'Required for passport and residence-visa.',
+            example: '2029-04-11',
+          },
+          label: {
+            type: 'string',
+            maxLength: 100,
+            description: 'Free text. Only accepted when documentType is other.',
+          },
+        },
+      },
+      PatientIdentityDocument: {
+        type: 'object',
+        required: [
+          'id',
+          'label',
+          'expiryDate',
+          'documentType',
+          'documentNumber',
+          'issuingCountry',
+          'issuingCountryId',
+        ],
+        properties: {
+          id: { type: 'integer' },
+          documentType: {
+            type: 'string',
+            enum: ['passport', 'national-id', 'residence-visa', 'driving-license', 'other'],
+          },
+          documentNumber: { type: 'string' },
+          issuingCountryId: { type: ['integer', 'null'] },
+          issuingCountry: {
+            oneOf: [schemaRef('PatientCountrySummary'), { type: 'null' }],
+          },
+          expiryDate: { type: ['string', 'null'], format: 'date' },
+          label: { type: ['string', 'null'] },
+        },
+      },
       CreatePatientRequest: {
         type: 'object',
         required: ['firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
@@ -9732,16 +9849,17 @@ export const openApiDocument = {
           nationalityId: { type: 'integer', minimum: 1 },
           languageId: { type: 'integer', minimum: 1, description: 'Preferred Language.' },
           religionId: { type: 'integer', minimum: 1 },
-          govtIdType: {
+          emiratesId: {
             type: 'string',
-            enum: ['passport', 'national-id', 'driving-license', 'other'],
-            description: 'Must be provided together with govtIdNumber.',
-          },
-          govtIdNumber: {
-            type: 'string',
-            maxLength: 50,
             description:
-              'Government ID number. Unique per Tenant (case-insensitive) together with govtIdType.',
+              'Optional — foreign nationals treated without UAE residency will not have one. 15 digits beginning with 784; dashes and spaces are stripped before storage. Unique per Tenant among active Patients. The check digit is deliberately not validated.',
+            example: '784199012345671',
+          },
+          identityDocuments: {
+            type: 'array',
+            description:
+              'Replaces the whole collection. Omit or send [] to clear it. Include a document id to update an existing row; omit the id to add a new one. A Patient may hold several documents of the same type — a dual national holds two valid passports.',
+            items: schemaRef('SavePatientIdentityDocumentRequest'),
           },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
@@ -9781,8 +9899,8 @@ export const openApiDocument = {
           'language',
           'religionId',
           'religion',
-          'govtIdType',
-          'govtIdNumber',
+          'emiratesId',
+          'identityDocuments',
           'emergencyContactName',
           'emergencyContactRelationship',
           'emergencyContactPhone',
@@ -9853,13 +9971,15 @@ export const openApiDocument = {
           language: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
           religionId: { type: ['integer', 'null'], minimum: 1 },
           religion: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
-          govtIdType: {
-            oneOf: [
-              { type: 'string', enum: ['passport', 'national-id', 'driving-license', 'other'] },
-              { type: 'null' },
-            ],
+          emiratesId: {
+            type: ['string', 'null'],
+            maxLength: 15,
+            description: 'Digit-normalised. Clients format it as 784-1990-1234567-1 for display.',
           },
-          govtIdNumber: { type: ['string', 'null'], maxLength: 50 },
+          identityDocuments: {
+            type: 'array',
+            items: schemaRef('PatientIdentityDocument'),
+          },
           emergencyContactName: { type: ['string', 'null'], maxLength: 150 },
           emergencyContactRelationship: { type: ['string', 'null'], maxLength: 50 },
           emergencyContactPhone: { type: ['string', 'null'], maxLength: 20 },

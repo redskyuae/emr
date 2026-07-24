@@ -1,4 +1,5 @@
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
+import type { SavePatientIdentityDocumentRequest } from '../types';
 
 export type GetPatientResponse = {
   data: Patient;
@@ -24,8 +25,8 @@ export type UpdatePatientRequest = {
   nationalityId?: number;
   languageId?: number;
   religionId?: number;
-  govtIdType?: string;
-  govtIdNumber?: string;
+  emiratesId?: string;
+  identityDocuments?: SavePatientIdentityDocumentRequest[];
   emergencyContactName?: string;
   emergencyContactRelationship?: string;
   emergencyContactPhone?: string;

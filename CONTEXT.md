@@ -154,6 +154,14 @@ A Patient who has been deactivated without being removed from the system. The Pa
 
 The human-facing identifier for a Patient within a Tenant, assigned by the system when the Patient record is first created and never chosen by the user. A Patient keeps the same Medical Record Number across all of the Tenant's Facilities and registration states, and a Medical Record Number is never reused. Commonly abbreviated MRN.
 
+## Emirates ID
+
+The identity document issued by the United Arab Emirates to every citizen and resident, recorded on a Patient as their primary national identifier. A Patient has at most one Emirates ID, and it is optional — visitors and foreign nationals treated without UAE residency will not have one. The number is issued once per person and persists for life; renewing the card reissues the document, not the number. Two active Patients within a Tenant may never share an Emirates ID. Distinct from the Medical Record Number, which the Tenant issues and controls; the Emirates ID is issued by the state and merely recorded.
+
+## Identity Document
+
+A government-issued document recorded on a Patient to evidence their identity, such as a passport, residence visa, national identity card, or driving licence. A Patient may hold any number of Identity Documents, including several of the same kind — a dual national legitimately holds two valid passports. Each carries the details that make it meaningful, such as the country that issued it and the date it expires. Identity Documents are recorded as supporting evidence and are not required to be unique across Patients: two countries may legitimately issue the same passport number. The Emirates ID is a UAE identity document but is recorded as its own Patient attribute rather than as an Identity Document, so that it has exactly one home.
+
 ## Emergency Contact
 
 The person to reach on a Patient's behalf in urgent situations, recorded during Patient Registration with their relationship to the Patient. An Emergency Contact is contact information only — not a Patient, not Staff, and not a system user.

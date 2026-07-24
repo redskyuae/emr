@@ -2,12 +2,24 @@ import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
+import { country as countryTable } from '@/app/db/schema/country';
 import { patient as patientTable } from '@/app/db/schema/patient';
 import type { CreatePatientData } from '../schemas/patient-schema';
 import { patientRepository } from './patient-repository';
 
 const tenantA = 'tenant-a-test';
 const tenantB = 'tenant-b-test';
+
+// Integration setup truncates every table before each test, so a passport's
+// issuing country has to be seeded by the test that needs it.
+async function createCountry() {
+  const [created] = await db
+    .insert(countryTable)
+    .values({ name: 'India', code: 'IN' })
+    .returning({ id: countryTable.id });
+
+  return created.id;
+}
 
 function patientData(
   tenantId: string,
@@ -182,57 +194,157 @@ describe('Patient repository', () => {
     expect((await lifecycleTimestamps()).reactivatedAt).toEqual(afterFirstReactivate.reactivatedAt);
   });
 
-  it('should enforce case-insensitive uniqueness on active government IDs per tenant', async () => {
-    await patientRepository.createPatient(
-      patientData(tenantA, { govtIdType: 'passport', govtIdNumber: 'X1234567' })
-    );
+  it('should enforce uniqueness on active Emirates IDs per tenant', async () => {
+    await patientRepository.createPatient(patientData(tenantA, { emiratesId: '784199012345671' }));
 
     await expect(
-      patientRepository.createPatient(
-        patientData(tenantA, { govtIdType: 'passport', govtIdNumber: 'x1234567' })
-      )
+      patientRepository.createPatient(patientData(tenantA, { emiratesId: '784199012345671' }))
     ).rejects.toMatchObject({ cause: expect.objectContaining({ code: '23505' }) });
   });
 
-  it('should allow the same government ID again once the original patient is soft-deleted', async () => {
+  it('should allow the same Emirates ID again once the original patient is soft-deleted', async () => {
     const created = await patientRepository.createPatient(
-      patientData(tenantA, { govtIdType: 'passport', govtIdNumber: 'X7654321' })
+      patientData(tenantA, { emiratesId: '784198800112233' })
     );
     await patientRepository.deletePatient(created.id, tenantA);
 
     await expect(
-      patientRepository.createPatient(
-        patientData(tenantA, { govtIdType: 'passport', govtIdNumber: 'X7654321' })
-      )
+      patientRepository.createPatient(patientData(tenantA, { emiratesId: '784198800112233' }))
     ).resolves.toBeDefined();
   });
 
-  it('should allow the same government ID across different tenants', async () => {
-    await patientRepository.createPatient(
-      patientData(tenantA, { govtIdType: 'passport', govtIdNumber: 'X9999999' })
-    );
+  it('should allow the same Emirates ID across different tenants', async () => {
+    await patientRepository.createPatient(patientData(tenantA, { emiratesId: '784197755443322' }));
 
     await expect(
-      patientRepository.createPatient(
-        patientData(tenantB, { govtIdType: 'passport', govtIdNumber: 'X9999999' })
-      )
+      patientRepository.createPatient(patientData(tenantB, { emiratesId: '784197755443322' }))
     ).resolves.toBeDefined();
   });
 
-  it('should find an active patient by government ID excluding a given patient', async () => {
+  it('should allow many patients with no Emirates ID', async () => {
+    await patientRepository.createPatient(patientData(tenantA, { emiratesId: undefined }));
+
+    await expect(
+      patientRepository.createPatient(patientData(tenantA, { emiratesId: undefined }))
+    ).resolves.toBeDefined();
+  });
+
+  it('should find an active patient by Emirates ID excluding a given patient', async () => {
     const created = await patientRepository.createPatient(
-      patientData(tenantA, { govtIdType: 'passport', govtIdNumber: 'X1111111' })
+      patientData(tenantA, { emiratesId: '784199911112222' })
     );
 
     await expect(
-      patientRepository.findActiveByGovtId(tenantA, 'passport', 'X1111111')
+      patientRepository.findActiveByEmiratesId(tenantA, '784199911112222')
     ).resolves.toMatchObject({ id: created.id });
 
     await expect(
-      patientRepository.findActiveByGovtId(tenantA, 'passport', 'X1111111', {
+      patientRepository.findActiveByEmiratesId(tenantA, '784199911112222', {
         excludeId: created.id,
       })
     ).resolves.toBeUndefined();
+  });
+
+  it('should store identity documents and allow several of the same type', async () => {
+    const countryId = await createCountry();
+
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        identityDocuments: [
+          {
+            documentType: 'passport',
+            documentNumber: 'J8369854',
+            issuingCountryId: countryId,
+            expiryDate: '2029-04-11',
+          },
+          {
+            documentType: 'passport',
+            documentNumber: '533291847',
+            issuingCountryId: countryId,
+            expiryDate: '2031-08-02',
+          },
+        ],
+      })
+    );
+
+    expect(created.identityDocuments).toHaveLength(2);
+    expect(created.identityDocuments.map((document) => document.documentNumber)).toEqual([
+      'J8369854',
+      '533291847',
+    ]);
+  });
+
+  it('should not leak identity documents across tenants', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        identityDocuments: [
+          { documentType: 'residence-visa', documentNumber: 'RV-1', expiryDate: '2027-01-15' },
+        ],
+      })
+    );
+
+    await expect(patientRepository.getPatientById(created.id, tenantB)).resolves.toBeUndefined();
+  });
+
+  it('should update matched documents, insert new ones and soft-delete omitted ones', async () => {
+    const countryId = await createCountry();
+
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        identityDocuments: [
+          {
+            documentType: 'passport',
+            documentNumber: 'OLD-1',
+            issuingCountryId: countryId,
+            expiryDate: '2028-01-01',
+          },
+          { documentType: 'residence-visa', documentNumber: 'RV-9', expiryDate: '2027-01-15' },
+        ],
+      })
+    );
+
+    const [passport, visa] = created.identityDocuments;
+
+    const updated = await patientRepository.updatePatient(
+      created.id,
+      patientData(tenantA, {
+        identityDocuments: [
+          // kept and edited
+          {
+            id: passport.id,
+            documentType: 'passport',
+            documentNumber: 'NEW-1',
+            issuingCountryId: countryId,
+            expiryDate: '2030-01-01',
+          },
+          // added
+          { documentType: 'driving-license', documentNumber: 'DL-5' },
+        ],
+      })
+    );
+
+    const numbers = updated?.identityDocuments.map((document) => document.documentNumber) ?? [];
+
+    expect(numbers).toContain('NEW-1');
+    expect(numbers).toContain('DL-5');
+    // the visa was omitted from the payload, so it is soft-deleted
+    expect(numbers).not.toContain('RV-9');
+    // the kept document retained its row rather than being tombstoned and reinserted
+    expect(updated?.identityDocuments.some((document) => document.id === passport.id)).toBe(true);
+    expect(visa.id).toBeDefined();
+  });
+
+  it('should match a dashed Emirates ID query against the digit-normalised value', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, { emiratesId: '784199012349999' })
+    );
+
+    const { data } = await patientRepository.getPatients({
+      tenantId: tenantA,
+      query: '784-1990-1234-9999',
+    });
+
+    expect(data.map((patient) => patient.id)).toContain(created.id);
   });
 
   it('should search across name, MRN and phone', async () => {

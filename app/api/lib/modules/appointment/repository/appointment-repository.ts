@@ -381,11 +381,16 @@ async function getSlotBookingContext(
   return rows[0];
 }
 
+// Matches on name + phone together, OR on Emirates ID alone. An Emirates ID is
+// a singleton by law, so a hit on it identifies the patient regardless of the
+// name given — which closes the gap where "Mohammed Ali" booking from his
+// wife's phone sails past a name+phone check into a second chart.
 async function findPotentialPatientMatches(
   tenantId: string,
   firstName: string,
   lastName: string,
   phone: string,
+  emiratesId?: string,
   executor: SelectExecutor = db
 ): Promise<PotentialPatientMatch[]> {
   return executor
@@ -403,9 +408,14 @@ async function findPotentialPatientMatches(
       and(
         eq(patientTable.tenantId, tenantId),
         eq(patientTable.isDeleted, false),
-        sql`lower(trim(${patientTable.firstName})) = ${firstName.trim().toLowerCase()}`,
-        sql`lower(trim(${patientTable.lastName})) = ${lastName.trim().toLowerCase()}`,
-        sql`trim(${patientTable.phone}) = ${phone.trim()}`
+        or(
+          and(
+            sql`lower(trim(${patientTable.firstName})) = ${firstName.trim().toLowerCase()}`,
+            sql`lower(trim(${patientTable.lastName})) = ${lastName.trim().toLowerCase()}`,
+            sql`trim(${patientTable.phone}) = ${phone.trim()}`
+          ),
+          emiratesId ? eq(patientTable.emiratesId, emiratesId) : undefined
+        )
       )
     );
 }
@@ -475,8 +485,7 @@ async function createProvisionalPatient(tx: Transaction, data: ValidatedCreateAp
       nationalityId: provisionalPatient.nationalityId ?? null,
       languageId: provisionalPatient.languageId ?? null,
       religionId: provisionalPatient.religionId ?? null,
-      govtIdType: provisionalPatient.govtIdType ?? null,
-      govtIdNumber: provisionalPatient.govtIdNumber ?? null,
+      emiratesId: provisionalPatient.emiratesId ?? null,
       emergencyContactName: provisionalPatient.emergencyContactName ?? null,
       emergencyContactRelationship: provisionalPatient.emergencyContactRelationship ?? null,
       emergencyContactPhone: provisionalPatient.emergencyContactPhone ?? null,
@@ -635,6 +644,7 @@ async function createAppointment(
         provisionalPatient.firstName,
         provisionalPatient.lastName,
         provisionalPatient.phone,
+        provisionalPatient.emiratesId,
         tx
       );
 

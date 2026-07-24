@@ -3,6 +3,19 @@ import type { Paginated } from '@/app/api/lib/utils/types';
 
 export type ListPatientsResponse = Paginated<Patient>;
 
+// The raw JSON a client may send for one Identity Document. `id` identifies an
+// existing document to update; absent means a new one. Which of the remaining
+// fields are required depends on `documentType` — see the discriminated union
+// in patient-schema.ts and ADR 0043.
+export type SavePatientIdentityDocumentRequest = {
+  id?: number;
+  documentType: string;
+  documentNumber: string;
+  issuingCountryId?: number;
+  expiryDate?: string;
+  label?: string;
+};
+
 export type SavePatientRequest = {
   firstName: string;
   middleName?: string;
@@ -24,8 +37,8 @@ export type SavePatientRequest = {
   nationalityId?: number;
   languageId?: number;
   religionId?: number;
-  govtIdType?: string;
-  govtIdNumber?: string;
+  emiratesId?: string;
+  identityDocuments?: SavePatientIdentityDocumentRequest[];
   emergencyContactName?: string;
   emergencyContactRelationship?: string;
   emergencyContactPhone?: string;

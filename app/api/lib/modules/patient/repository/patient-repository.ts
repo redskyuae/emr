@@ -15,26 +15,29 @@ import type {
   CreatePatientData,
   PatientListParams,
   UpdatePatientData,
+  PatientIdentityDocument,
+  PatientIdentityDocumentInput,
 } from '../schemas/patient-schema';
+import { normaliseEmiratesId } from '../schemas/patient-schema';
+import { patientIdentityDocumentRepository } from './patient-identity-document-repository';
 import { formatPatientMrn } from './patient-mrn';
 
 type PatientRow = Omit<
   Patient,
-  'gender' | 'bloodGroup' | 'maritalStatus' | 'preferredPaymentMethod' | 'govtIdType'
+  'gender' | 'bloodGroup' | 'maritalStatus' | 'preferredPaymentMethod' | 'identityDocuments'
 > & {
   gender: string | null;
   bloodGroup: string | null;
-  govtIdType: string | null;
   maritalStatus: string | null;
   preferredPaymentMethod: string | null;
 };
 
-function toPatient(row: PatientRow): Patient {
+function toPatient(row: PatientRow, identityDocuments: PatientIdentityDocument[] = []): Patient {
   return {
     ...row,
+    identityDocuments,
     gender: row.gender as Patient['gender'],
     bloodGroup: row.bloodGroup as Patient['bloodGroup'],
-    govtIdType: row.govtIdType as Patient['govtIdType'],
     maritalStatus: row.maritalStatus as Patient['maritalStatus'],
     preferredPaymentMethod: row.preferredPaymentMethod as Patient['preferredPaymentMethod'],
   };
@@ -57,7 +60,7 @@ const patientColumns = {
   firstName: patientTable.firstName,
   modifiedOn: patientTable.modifiedOn,
   postalCode: patientTable.postalCode,
-  govtIdType: patientTable.govtIdType,
+  emiratesId: patientTable.emiratesId,
   bloodGroup: patientTable.bloodGroup,
   middleName: patientTable.middleName,
   languageId: patientTable.languageId,
@@ -65,7 +68,6 @@ const patientColumns = {
   dateOfBirth: patientTable.dateOfBirth,
   addressLine1: patientTable.addressLine1,
   addressLine2: patientTable.addressLine2,
-  govtIdNumber: patientTable.govtIdNumber,
   maritalStatus: patientTable.maritalStatus,
   nationalityId: patientTable.nationalityId,
   preferredPaymentMethod: patientTable.preferredPaymentMethod,
@@ -122,7 +124,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     countryId: data.countryId ?? null,
     firstName: data.firstName,
     postalCode: data.postalCode ?? null,
-    govtIdType: data.govtIdType ?? null,
+    emiratesId: data.emiratesId ?? null,
     bloodGroup: data.bloodGroup ?? null,
     middleName: data.middleName ?? null,
     languageId: data.languageId ?? null,
@@ -130,7 +132,6 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     dateOfBirth: data.dateOfBirth,
     addressLine1: data.addressLine1 ?? null,
     addressLine2: data.addressLine2 ?? null,
-    govtIdNumber: data.govtIdNumber ?? null,
     maritalStatus: data.maritalStatus ?? null,
     nationalityId: data.nationalityId ?? null,
     preferredPaymentMethod: data.preferredPaymentMethod ?? null,
@@ -152,7 +153,60 @@ async function getPatientById(id: number, tenantId: string): Promise<Patient | u
     )
     .limit(1);
 
-  return patient ? toPatient(patient) : undefined;
+  if (!patient) {
+    return undefined;
+  }
+
+  const documentsByPatient = await patientIdentityDocumentRepository.listByPatientIds(tenantId, [
+    patient.id,
+  ]);
+
+  return toPatient(patient, documentsByPatient.get(patient.id) ?? []);
+}
+
+// Applies the nested full replace by diffing on document id rather than
+// rewriting the collection: rows whose id matched are updated, rows arriving
+// without an id are inserted, and rows absent from the payload are soft-deleted.
+// A delete-all-and-reinsert would tombstone an unchanged passport every time an
+// unrelated field is edited, and reset its createdOn forever (ADR 0043).
+async function replaceIdentityDocuments(
+  tenantId: string,
+  patientId: number,
+  documents: PatientIdentityDocumentInput[],
+  executor: Parameters<typeof patientIdentityDocumentRepository.insertMany>[3]
+) {
+  const existingIds = await patientIdentityDocumentRepository.listIdsForPatient(
+    tenantId,
+    patientId,
+    executor
+  );
+
+  const submittedIds = new Set(
+    documents.map((document) => document.id).filter((id): id is number => id !== undefined)
+  );
+
+  const newDocuments = documents.filter((document) => document.id === undefined);
+  const removedIds = existingIds.filter((id) => !submittedIds.has(id));
+
+  for (const document of documents) {
+    if (document.id !== undefined) {
+      await patientIdentityDocumentRepository.updateOne(
+        tenantId,
+        patientId,
+        document.id,
+        document,
+        executor
+      );
+    }
+  }
+
+  await patientIdentityDocumentRepository.insertMany(tenantId, patientId, newDocuments, executor);
+  await patientIdentityDocumentRepository.deleteIdentityDocuments(
+    tenantId,
+    patientId,
+    removedIds,
+    executor
+  );
 }
 
 async function createPatient(data: CreatePatientData): Promise<Patient> {
@@ -171,6 +225,15 @@ async function createPatient(data: CreatePatientData): Promise<Patient> {
       .values({ ...patientValues(data), mrn: formatPatientMrn(counter.lastNumber) })
       .returning({ id: patientTable.id });
 
+    // Same transaction as the patient row: a failed document write must not
+    // leave a half-saved patient behind.
+    await patientIdentityDocumentRepository.insertMany(
+      data.tenantId,
+      createdPatient.id,
+      data.identityDocuments ?? [],
+      tx
+    );
+
     return createdPatient.id;
   });
 
@@ -184,23 +247,38 @@ async function createPatient(data: CreatePatientData): Promise<Patient> {
 }
 
 async function updatePatient(id: number, data: UpdatePatientData): Promise<Patient | undefined> {
-  const [updatedPatient] = await db
-    .update(patientTable)
-    .set({ ...patientValues(data), modifiedOn: new Date() })
-    .where(
-      and(
-        eq(patientTable.id, id),
-        eq(patientTable.tenantId, data.tenantId),
-        eq(patientTable.isDeleted, false)
+  const updatedId = await db.transaction(async (tx) => {
+    const [updatedPatient] = await tx
+      .update(patientTable)
+      .set({ ...patientValues(data), modifiedOn: new Date() })
+      .where(
+        and(
+          eq(patientTable.id, id),
+          eq(patientTable.tenantId, data.tenantId),
+          eq(patientTable.isDeleted, false)
+        )
       )
-    )
-    .returning({ id: patientTable.id });
+      .returning({ id: patientTable.id });
 
-  if (!updatedPatient) {
+    if (!updatedPatient) {
+      return undefined;
+    }
+
+    await replaceIdentityDocuments(
+      data.tenantId,
+      updatedPatient.id,
+      data.identityDocuments ?? [],
+      tx
+    );
+
+    return updatedPatient.id;
+  });
+
+  if (updatedId === undefined) {
     return undefined;
   }
 
-  return getPatientById(updatedPatient.id, data.tenantId);
+  return getPatientById(updatedId, data.tenantId);
 }
 
 async function deletePatient(id: number, tenantId: string): Promise<Patient | undefined> {
@@ -283,13 +361,19 @@ async function getPatients({
 }: PatientListParams): Promise<{ data: Patient[]; total: number }> {
   const offset = (page - 1) * limit;
   const trimmedQuery = query?.trim();
+  // Emirates IDs are stored digit-normalised but the card is printed with
+  // dashes, so the query has to be normalised too. Guarded on the result being
+  // non-empty: an unguarded strip turns a name search for O'Brien into '',
+  // which would match every patient in the tenant (ADR 0042).
+  const normalisedQuery = trimmedQuery ? normaliseEmiratesId(trimmedQuery) : '';
   const searchCondition = trimmedQuery
     ? or(
         ilike(patientTable.firstName, `%${trimmedQuery}%`),
         ilike(patientTable.middleName, `%${trimmedQuery}%`),
         ilike(patientTable.lastName, `%${trimmedQuery}%`),
         ilike(patientTable.mrn, `%${trimmedQuery}%`),
-        ilike(patientTable.phone, `%${trimmedQuery}%`)
+        ilike(patientTable.phone, `%${trimmedQuery}%`),
+        normalisedQuery === '' ? undefined : ilike(patientTable.emiratesId, `%${normalisedQuery}%`)
       )
     : undefined;
   const whereClause = and(
@@ -309,28 +393,32 @@ async function getPatients({
     db.select({ total: count() }).from(patientTable).where(whereClause),
   ]);
 
-  return { data: data.map(toPatient), total };
+  // One batched read for the whole page, never one query per row.
+  const documentsByPatient = await patientIdentityDocumentRepository.listByPatientIds(
+    tenantId,
+    data.map((patient) => patient.id)
+  );
+
+  return {
+    data: data.map((patient) => toPatient(patient, documentsByPatient.get(patient.id) ?? [])),
+    total,
+  };
 }
 
-async function findActiveByGovtId(
+// No lower() needed — the stored value is digits only.
+async function findActiveByEmiratesId(
   tenantId: string,
-  govtIdType: string,
-  govtIdNumber: string,
+  emiratesId: string,
   { excludeId }: { excludeId?: number } = {}
-): Promise<{ id: number; govtIdType: string | null; govtIdNumber: string | null } | undefined> {
+): Promise<{ id: number; emiratesId: string | null } | undefined> {
   const [patient] = await db
-    .select({
-      id: patientTable.id,
-      govtIdType: patientTable.govtIdType,
-      govtIdNumber: patientTable.govtIdNumber,
-    })
+    .select({ id: patientTable.id, emiratesId: patientTable.emiratesId })
     .from(patientTable)
     .where(
       and(
         eq(patientTable.tenantId, tenantId),
         eq(patientTable.isDeleted, false),
-        eq(patientTable.govtIdType, govtIdType),
-        sql`lower(${patientTable.govtIdNumber}) = ${govtIdNumber.toLowerCase()}`,
+        eq(patientTable.emiratesId, emiratesId),
         excludeId ? ne(patientTable.id, excludeId) : undefined
       )
     )
@@ -346,5 +434,5 @@ export const patientRepository = {
   deletePatient,
   getPatientById,
   setPatientActive,
-  findActiveByGovtId,
+  findActiveByEmiratesId,
 };

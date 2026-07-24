@@ -17,8 +17,8 @@ import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-sche
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import {
+  formatEmiratesId,
   getPatientGenderLabel,
-  getPatientGovtIdTypeLabel,
   getPatientMaritalStatusLabel,
   getPatientPaymentMethodLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
@@ -42,6 +42,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
+import { IdentityDocumentsTable } from './identity-documents-table';
 import { PatientChartSection } from './_chart/patient-chart-section';
 import { PatientTimelineSection } from './_timeline/patient-timeline-section';
 import { DeactivatePatientDialog } from './_modals/deactivate-patient-dialog';
@@ -267,11 +268,16 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
               <DetailField label="Nationality" value={patient.nationality?.name} />
               <DetailField label="Preferred language" value={patient.language?.name} />
               <DetailField label="Religion" value={patient.religion?.name} />
-              <DetailField
-                label="Government ID type"
-                value={patient.govtIdType ? getPatientGovtIdTypeLabel(patient.govtIdType) : null}
-              />
-              <DetailField label="Government ID number" value={patient.govtIdNumber} />
+              <DetailField label="Emirates ID" value={formatEmiratesId(patient.emiratesId)} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Identity documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <IdentityDocumentsTable documents={patient.identityDocuments} />
             </CardContent>
           </Card>
 

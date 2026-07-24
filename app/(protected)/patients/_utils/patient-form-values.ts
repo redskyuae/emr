@@ -2,6 +2,7 @@ import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-sche
 import type { SavePatientRequest } from '@/app/api/v1/patients/types';
 
 import type { PatientFormValues } from './patient-form-schema';
+import { formatEmiratesId, normaliseEmiratesId } from './patient-value-sets';
 
 export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   firstName: '',
@@ -24,8 +25,8 @@ export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   nationalityId: undefined,
   languageId: undefined,
   religionId: undefined,
-  govtIdType: '',
-  govtIdNumber: '',
+  emiratesId: '',
+  identityDocuments: [],
   emergencyContactName: '',
   emergencyContactRelationship: '',
   emergencyContactPhone: '',
@@ -53,8 +54,18 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     nationalityId: patient.nationalityId ?? undefined,
     languageId: patient.languageId ?? undefined,
     religionId: patient.religionId ?? undefined,
-    govtIdType: patient.govtIdType ?? '',
-    govtIdNumber: patient.govtIdNumber ?? '',
+    // Shown in the dashed form the card is printed with; normalised again on save.
+    emiratesId: formatEmiratesId(patient.emiratesId) ?? '',
+    // The id round-trips so the server can diff the replace rather than
+    // tombstoning and reinserting unchanged documents (ADR 0043).
+    identityDocuments: patient.identityDocuments.map((document) => ({
+      id: document.id,
+      documentType: document.documentType,
+      documentNumber: document.documentNumber,
+      issuingCountryId: document.issuingCountryId ?? undefined,
+      expiryDate: document.expiryDate ?? '',
+      label: document.label ?? '',
+    })),
     emergencyContactName: patient.emergencyContactName ?? '',
     emergencyContactRelationship: patient.emergencyContactRelationship ?? '',
     emergencyContactPhone: patient.emergencyContactPhone ?? '',
@@ -83,8 +94,19 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     nationalityId: values.nationalityId,
     languageId: values.languageId,
     religionId: values.religionId,
-    govtIdType: values.govtIdType || undefined,
-    govtIdNumber: values.govtIdNumber || undefined,
+    emiratesId: values.emiratesId ? normaliseEmiratesId(values.emiratesId) : undefined,
+    identityDocuments: values.identityDocuments.map((document) => ({
+      id: document.id,
+      documentType: document.documentType,
+      documentNumber: document.documentNumber,
+      // The API's discriminated union is .strict(), so fields that do not apply
+      // to the chosen type must be omitted rather than sent as null.
+      ...(document.issuingCountryId !== undefined && document.documentType !== 'residence-visa'
+        ? { issuingCountryId: document.issuingCountryId }
+        : {}),
+      ...(document.expiryDate ? { expiryDate: document.expiryDate } : {}),
+      ...(document.documentType === 'other' && document.label ? { label: document.label } : {}),
+    })),
     emergencyContactName: values.emergencyContactName || undefined,
     emergencyContactRelationship: values.emergencyContactRelationship || undefined,
     emergencyContactPhone: values.emergencyContactPhone || undefined,
