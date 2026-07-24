@@ -1,0 +1,2 @@
+ALTER TABLE "patient" ADD COLUMN "emirates_id" varchar(15);--> statement-breakpoint
+CREATE UNIQUE INDEX "patient_tenant_emirates_id_idx" ON "patient" USING btree ("tenant_id","emirates_id") WHERE "patient"."is_deleted" = false and "patient"."emirates_id" is not null;

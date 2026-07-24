@@ -11,14 +11,14 @@ import { validateCreatePatient } from './create-patient-validator';
 import { validateGetPatientById } from './get-patient-by-id-validator';
 import { validateGetPatients } from './get-patients-validator';
 import { validatePatientExists } from './patient-existence-validator';
-import { validatePatientGovtIdUniqueness } from './patient-govt-id-validator';
+import { validatePatientEmiratesIdUniqueness } from './patient-emirates-id-validator';
 import { validatePatientReferences } from './patient-reference-validator';
 import { validateUpdatePatient } from './update-patient-validator';
 
 vi.mock('../repository/patient-repository', () => ({
   patientRepository: {
     getPatientById: vi.fn(),
-    findActiveByGovtId: vi.fn(),
+    findActiveByEmiratesId: vi.fn(),
   },
 }));
 vi.mock('../../country/repository/country-repository', () => ({
@@ -73,8 +73,8 @@ const existing = {
   language: null,
   religionId: null,
   religion: null,
-  govtIdType: null,
-  govtIdNumber: null,
+  emiratesId: null,
+  identityDocuments: [],
   emergencyContactName: null,
   emergencyContactRelationship: null,
   emergencyContactPhone: null,
@@ -145,31 +145,26 @@ describe('Patient reference validator', () => {
   });
 });
 
-describe('Patient government ID uniqueness validator', () => {
+describe('Patient Emirates ID uniqueness validator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should skip the uniqueness check when no government ID is provided', async () => {
-    await validatePatientGovtIdUniqueness({ tenantId: 'tenant-1' });
-    expect(repo.findActiveByGovtId).not.toHaveBeenCalled();
+  it('should skip the uniqueness check when no Emirates ID is provided', async () => {
+    await validatePatientEmiratesIdUniqueness({ tenantId: 'tenant-1' });
+    expect(repo.findActiveByEmiratesId).not.toHaveBeenCalled();
   });
 
-  it('should return conflict when the government ID already exists for the tenant', async () => {
-    repo.findActiveByGovtId.mockResolvedValue({
-      id: 2,
-      govtIdType: 'passport',
-      govtIdNumber: 'X1',
-    });
-    const result = await validatePatientGovtIdUniqueness({
+  it('should return conflict when the Emirates ID already exists for the tenant', async () => {
+    repo.findActiveByEmiratesId.mockResolvedValue({ id: 2, emiratesId: '784199012345671' });
+    const result = await validatePatientEmiratesIdUniqueness({
       tenantId: 'tenant-1',
-      govtIdType: 'passport',
-      govtIdNumber: 'X1',
+      emiratesId: '784199012345671',
     });
     expect(result).toMatchObject({
       success: false,
       status: StatusCodes.CONFLICT,
-      errors: ['Patient government ID X1 already exists.'],
+      errors: ['Patient Emirates ID 784199012345671 already exists.'],
     });
   });
 });
@@ -177,13 +172,13 @@ describe('Patient government ID uniqueness validator', () => {
 describe('Patient create validator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    repo.findActiveByGovtId.mockResolvedValue(undefined);
+    repo.findActiveByEmiratesId.mockResolvedValue(undefined);
   });
 
   it('should not call reference or uniqueness checks when schema parsing fails', async () => {
     await validateCreatePatient({}, 'tenant-1');
     expect(country.getCountryById).not.toHaveBeenCalled();
-    expect(repo.findActiveByGovtId).not.toHaveBeenCalled();
+    expect(repo.findActiveByEmiratesId).not.toHaveBeenCalled();
   });
 
   it('should return success for a valid payload', async () => {
@@ -197,14 +192,10 @@ describe('Patient create validator', () => {
     expect(result).toMatchObject({ success: false, status: StatusCodes.CONFLICT });
   });
 
-  it('should propagate government ID conflicts', async () => {
-    repo.findActiveByGovtId.mockResolvedValue({
-      id: 2,
-      govtIdType: 'passport',
-      govtIdNumber: 'X1',
-    });
+  it('should propagate Emirates ID conflicts', async () => {
+    repo.findActiveByEmiratesId.mockResolvedValue({ id: 2, emiratesId: '784199012345671' });
     const result = await validateCreatePatient(
-      { ...validPayload, govtIdType: 'passport', govtIdNumber: 'X1' },
+      { ...validPayload, emiratesId: '784199012345671' },
       'tenant-1'
     );
     expect(result).toMatchObject({ success: false, status: StatusCodes.CONFLICT });
@@ -215,7 +206,7 @@ describe('Patient update validator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     repo.getPatientById.mockResolvedValue(existing);
-    repo.findActiveByGovtId.mockResolvedValue(undefined);
+    repo.findActiveByEmiratesId.mockResolvedValue(undefined);
   });
 
   it('should return not found when the patient does not exist', async () => {
@@ -224,13 +215,12 @@ describe('Patient update validator', () => {
     expect(result).toMatchObject({ success: false, status: StatusCodes.NOT_FOUND });
   });
 
-  it('should pass excludeId to the government ID uniqueness check', async () => {
+  it('should pass excludeId to the Emirates ID uniqueness check', async () => {
     await validateUpdatePatient('1', 'tenant-1', {
       ...validPayload,
-      govtIdType: 'passport',
-      govtIdNumber: 'X1',
+      emiratesId: '784199012345671',
     });
-    expect(repo.findActiveByGovtId).toHaveBeenCalledWith('tenant-1', 'passport', 'X1', {
+    expect(repo.findActiveByEmiratesId).toHaveBeenCalledWith('tenant-1', '784199012345671', {
       excludeId: 1,
     });
   });

@@ -10,9 +10,12 @@ export const PATIENT_MARITAL_STATUSES = [
   'widowed',
   'other',
 ] as const;
-export const PATIENT_GOVT_ID_TYPES = [
+// Excludes 'emirates-id' deliberately — the Emirates ID is its own Patient
+// field, not an Identity Document, so it has exactly one home (ADR 0042).
+export const PATIENT_IDENTITY_DOCUMENT_TYPES = [
   'passport',
   'national-id',
+  'residence-visa',
   'driving-license',
   'other',
 ] as const;
@@ -33,9 +36,13 @@ const MARITAL_STATUS_LABELS: Record<(typeof PATIENT_MARITAL_STATUSES)[number], s
   other: 'Other',
 };
 
-const GOVT_ID_TYPE_LABELS: Record<(typeof PATIENT_GOVT_ID_TYPES)[number], string> = {
+const IDENTITY_DOCUMENT_TYPE_LABELS: Record<
+  (typeof PATIENT_IDENTITY_DOCUMENT_TYPES)[number],
+  string
+> = {
   passport: 'Passport',
   'national-id': 'National ID',
+  'residence-visa': 'Residence visa',
   'driving-license': 'Driving license',
   other: 'Other',
 };
@@ -57,10 +64,12 @@ export const PATIENT_MARITAL_STATUS_OPTIONS = PATIENT_MARITAL_STATUSES.map((valu
   label: MARITAL_STATUS_LABELS[value],
 }));
 
-export const PATIENT_GOVT_ID_TYPE_OPTIONS = PATIENT_GOVT_ID_TYPES.map((value) => ({
-  value,
-  label: GOVT_ID_TYPE_LABELS[value],
-}));
+export const PATIENT_IDENTITY_DOCUMENT_TYPE_OPTIONS = PATIENT_IDENTITY_DOCUMENT_TYPES.map(
+  (value) => ({
+    value,
+    label: IDENTITY_DOCUMENT_TYPE_LABELS[value],
+  })
+);
 
 export const PATIENT_PAYMENT_METHOD_OPTIONS = PATIENT_PAYMENT_METHODS.map((value) => ({
   value,
@@ -78,8 +87,44 @@ export function getPatientMaritalStatusLabel(maritalStatus: string) {
   );
 }
 
-export function getPatientGovtIdTypeLabel(govtIdType: string) {
-  return GOVT_ID_TYPE_LABELS[govtIdType as (typeof PATIENT_GOVT_ID_TYPES)[number]] ?? govtIdType;
+export function getPatientIdentityDocumentTypeLabel(documentType: string) {
+  return (
+    IDENTITY_DOCUMENT_TYPE_LABELS[
+      documentType as (typeof PATIENT_IDENTITY_DOCUMENT_TYPES)[number]
+    ] ?? documentType
+  );
+}
+
+// The card is printed 784-1990-1234567-1 but the API stores digits only, so the
+// UI normalises on the way in and formats on the way out (ADR 0042).
+export function normaliseEmiratesId(value: string) {
+  return value.replace(/\D/g, '');
+}
+
+export function formatEmiratesId(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const digits = normaliseEmiratesId(value);
+
+  if (digits.length !== 15) {
+    return value;
+  }
+
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 14)}-${digits.slice(14)}`;
+}
+
+// Documents with no expiry date (a driving licence, say) are never "expired".
+export function isIdentityDocumentExpired(expiryDate: string | null) {
+  if (!expiryDate) {
+    return false;
+  }
+
+  const today = new Date();
+  const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  return expiryDate < todayIso;
 }
 
 export function getPatientPaymentMethodLabel(paymentMethod: string) {

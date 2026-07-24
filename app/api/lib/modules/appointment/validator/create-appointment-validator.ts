@@ -7,7 +7,7 @@ import { appointmentReasonRepository } from '../../appointment-reason/repository
 import { appointmentStatusRepository } from '../../appointment-status/repository/appointment-status-repository';
 import { appointmentTypeRepository } from '../../appointment-type/repository/appointment-type-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
-import { validatePatientGovtIdUniqueness } from '../../patient/validator/patient-govt-id-validator';
+import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
@@ -122,18 +122,18 @@ export async function validateCreateAppointment(
   }
 
   if (data.provisionalPatient) {
-    const [referenceResult, govtIdResult, patientMatches] = await Promise.all([
+    const [referenceResult, emiratesIdResult, patientMatches] = await Promise.all([
       validatePatientReferences(data.provisionalPatient),
-      validatePatientGovtIdUniqueness({
+      validatePatientEmiratesIdUniqueness({
         tenantId: validatedTenantId,
-        govtIdType: data.provisionalPatient.govtIdType,
-        govtIdNumber: data.provisionalPatient.govtIdNumber,
+        emiratesId: data.provisionalPatient.emiratesId,
       }),
       appointmentRepository.findPotentialPatientMatches(
         validatedTenantId,
         data.provisionalPatient.firstName,
         data.provisionalPatient.lastName,
-        data.provisionalPatient.phone
+        data.provisionalPatient.phone,
+        data.provisionalPatient.emiratesId
       ),
     ]);
 
@@ -145,10 +145,11 @@ export async function validateCreateAppointment(
       };
     }
 
-    if (!govtIdResult.success) {
-      return { success: false, errors: govtIdResult.errors, status: govtIdResult.status };
-    }
-
+    // Checked before the uniqueness result on purpose. An Emirates ID that
+    // already exists means the patient has a chart, so the caller should see
+    // candidates to book against rather than a bare conflict — matching the
+    // Patient Reconciliation rule that matching identifies candidates but never
+    // links or merges automatically. The uniqueness check below is the backstop.
     if (patientMatches.length > 0) {
       return {
         success: false,
@@ -156,6 +157,10 @@ export async function validateCreateAppointment(
         status: StatusCodes.CONFLICT,
         patientMatches,
       };
+    }
+
+    if (!emiratesIdResult.success) {
+      return { success: false, errors: emiratesIdResult.errors, status: emiratesIdResult.status };
     }
   }
 

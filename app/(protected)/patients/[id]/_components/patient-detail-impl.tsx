@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useQueryState } from 'nuqs';
 import {
   ArrowLeft,
   MoreVertical,
@@ -16,8 +17,8 @@ import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-sche
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import {
+  formatEmiratesId,
   getPatientGenderLabel,
-  getPatientGovtIdTypeLabel,
   getPatientMaritalStatusLabel,
   getPatientPaymentMethodLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
@@ -41,9 +42,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
+import { IdentityDocumentsTable } from './identity-documents-table';
 import { PatientChartSection } from './_chart/patient-chart-section';
+import { PatientTimelineSection } from './_timeline/patient-timeline-section';
 import { DeactivatePatientDialog } from './_modals/deactivate-patient-dialog';
 import { DeletePatientDialog } from './_modals/delete-patient-dialog';
+
+const PATIENT_TABS = ['overview', 'chart', 'timeline'] as const;
+
+type PatientTab = (typeof PATIENT_TABS)[number];
+
+function parsePatientTab(value: string | null): PatientTab {
+  return PATIENT_TABS.includes(value as PatientTab) ? (value as PatientTab) : 'overview';
+}
 
 function DetailField({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -83,6 +94,9 @@ function PatientDetailSkeleton() {
 
 export function PatientDetailImpl({ patientId }: { patientId: number }) {
   const patientQuery = usePatientQuery(patientId);
+  // The tab lives in the URL so that returning from a Timeline link lands back on
+  // the Timeline rather than Overview, and so a view is shareable (ADR 0010).
+  const [tabParam, setTabParam] = useQueryState('tab');
   const [patientPendingLifecycleChange, setPatientPendingLifecycleChange] =
     useState<Patient | null>(null);
   const [patientPendingDelete, setPatientPendingDelete] = useState<Patient | null>(null);
@@ -189,10 +203,15 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs
+        value={parsePatientTab(tabParam)}
+        onValueChange={(value) => void setTabParam(value === 'overview' ? null : value)}
+        className="w-full"
+      >
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="chart">Chart</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
@@ -249,11 +268,16 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
               <DetailField label="Nationality" value={patient.nationality?.name} />
               <DetailField label="Preferred language" value={patient.language?.name} />
               <DetailField label="Religion" value={patient.religion?.name} />
-              <DetailField
-                label="Government ID type"
-                value={patient.govtIdType ? getPatientGovtIdTypeLabel(patient.govtIdType) : null}
-              />
-              <DetailField label="Government ID number" value={patient.govtIdNumber} />
+              <DetailField label="Emirates ID" value={formatEmiratesId(patient.emiratesId)} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Identity documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <IdentityDocumentsTable documents={patient.identityDocuments} />
             </CardContent>
           </Card>
 
@@ -287,6 +311,10 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
 
         <TabsContent value="chart" className="mt-4">
           <PatientChartSection patientId={patient.id} />
+        </TabsContent>
+
+        <TabsContent value="timeline" className="mt-4">
+          <PatientTimelineSection patientId={patient.id} />
         </TabsContent>
       </Tabs>
 

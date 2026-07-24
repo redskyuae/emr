@@ -85,6 +85,17 @@ const paginatedSchema = (itemSchemaName: string) => ({
   },
 });
 
+// Feeds page by cursor rather than page number, so they carry an opaque
+// nextCursor instead of PaginationMeta (ADR 0041).
+const cursorPaginatedSchema = (itemSchemaName: string) => ({
+  type: 'object',
+  required: ['data', 'meta'],
+  properties: {
+    data: { type: 'array', items: schemaRef(itemSchemaName) },
+    meta: schemaRef('CursorPaginationMeta'),
+  },
+});
+
 const dataEnvelopeSchema = (schemaName: string) => ({
   type: 'object',
   required: ['data'],
@@ -1667,8 +1678,20 @@ const patientRequestExample = {
   nationalityId: 1,
   languageId: 2,
   religionId: 3,
-  govtIdType: 'passport',
-  govtIdNumber: 'N1234567',
+  emiratesId: '784199012345671',
+  identityDocuments: [
+    {
+      documentType: 'passport',
+      documentNumber: 'N1234567',
+      issuingCountryId: 1,
+      expiryDate: '2029-04-11',
+    },
+    {
+      documentType: 'residence-visa',
+      documentNumber: 'RV-2026-778812',
+      expiryDate: '2027-01-15',
+    },
+  ],
   emergencyContactName: 'Kiran Rao',
   emergencyContactRelationship: 'Spouse',
   emergencyContactPhone: '+91-9988776655',
@@ -1680,6 +1703,28 @@ const patientExample = {
   mrn: 'MRN-1042',
   ...patientRequestExample,
   registrationStatus: 'registered',
+  // Responses echo each document's id — the nested full replace diffs on it
+  // rather than rewriting the collection (ADR 0043).
+  identityDocuments: [
+    {
+      id: 91,
+      documentType: 'passport',
+      documentNumber: 'N1234567',
+      issuingCountryId: 1,
+      issuingCountry: { id: 1, name: 'India', code: 'IN' },
+      expiryDate: '2029-04-11',
+      label: null,
+    },
+    {
+      id: 92,
+      documentType: 'residence-visa',
+      documentNumber: 'RV-2026-778812',
+      issuingCountryId: null,
+      issuingCountry: null,
+      expiryDate: '2027-01-15',
+      label: null,
+    },
+  ],
   state: { id: 5, name: 'Karnataka' },
   country: { id: 1, name: 'India', code: 'IN' },
   nationality: { id: 1, name: 'Indian' },
@@ -1807,11 +1852,32 @@ const patientValidationFailed = {
             errors: ['Date of birth must not be in the future'],
           },
         },
-        govtIdPairing: {
-          summary: 'Government ID type and number not provided together',
+        invalidEmiratesId: {
+          summary: 'Emirates ID is not 15 digits beginning with 784',
           value: {
             message: 'Validation failed',
-            errors: ['Patient government ID type and number must be provided together'],
+            errors: ['Patient Emirates ID must be 15 digits beginning with 784'],
+          },
+        },
+        passportMissingExpiry: {
+          summary: 'Passport submitted without the required expiry date',
+          value: {
+            message: 'Validation failed',
+            errors: ['Identity document expiry date is required'],
+          },
+        },
+        invalidIdentityDocumentType: {
+          summary: 'emirates-id is not a valid Identity Document type',
+          value: {
+            message: 'Validation failed',
+            errors: ['Identity document type is invalid'],
+          },
+        },
+        unownedIdentityDocument: {
+          summary: 'Identity document id does not belong to this Patient',
+          value: {
+            message: 'Validation failed',
+            errors: ['Identity document 91 was not found for this Patient.'],
           },
         },
         invalidId: {
@@ -1840,16 +1906,16 @@ const patientNotFound = {
 
 const patientConflict = {
   description:
-    'Patient government ID already exists in the active Tenant, or a referenced State, Country, Nationality, Language, or Religion is invalid.',
+    'Patient Emirates ID already exists in the active Tenant, or a referenced State, Country, Nationality, Language, or Religion is invalid. Identity Documents are deliberately not unique — two countries may legitimately issue the same passport number.',
   content: {
     'application/json': {
       schema: schemaRef('ConflictError'),
       examples: {
-        duplicateGovtId: {
-          summary: 'Duplicate government ID',
+        duplicateEmiratesId: {
+          summary: 'Duplicate Emirates ID — the Patient already has a chart',
           value: {
-            message: 'Patient government ID N1234567 already exists.',
-            errors: ['Patient government ID N1234567 already exists.'],
+            message: 'Patient Emirates ID 784199012345671 already exists.',
+            errors: ['Patient Emirates ID 784199012345671 already exists.'],
           },
         },
         invalidReference: {
@@ -5476,6 +5542,152 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/patients/{id}/timeline': {
+      get: {
+        tags: ['Patient'],
+        summary: 'Get Patient Timeline',
+        description:
+          'Returns one page of the Patient Timeline — the reverse-chronological feed of Timeline Events for a single Patient in the active Tenant. A Timeline Event is one lifecycle transition, not one record: a Visit that was checked in, seen and completed yields three Timeline Events. Events are derived at read time from transition timestamps on the source records and are never stored, so a transition whose timestamp is absent does not appear. Occurrence instants are returned as UTC; the client renders them in its own time zone. Paging is by opaque cursor rather than page number, because the feed receives new events at the top and offsets would repeat rows across pages. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Patient'),
+          {
+            name: 'feed',
+            in: 'query',
+            required: false,
+            description:
+              'Filters the feed to one category of Timeline Event Source. `encounters` covers Appointment, Visit, Admission and Bed Transfer; `billing` covers Invoice and Payment; `records` covers Visit Document and Clinical Note. Patient lifecycle events appear only under `all`.',
+            schema: {
+              type: 'string',
+              enum: ['all', 'billing', 'records', 'encounters'],
+              default: 'all',
+            },
+          },
+          {
+            name: 'cursor',
+            in: 'query',
+            required: false,
+            description:
+              'Opaque cursor from a previous response’s `meta.nextCursor`. Names a position in the merged ordering; do not construct or parse it. Omit for the first page.',
+            schema: { type: 'string' },
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            description: 'Maximum Timeline Events to return.',
+            schema: { type: 'integer', minimum: 1, maximum: 50, default: 20 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'One page of Timeline Events, newest first.',
+            content: jsonContent(cursorPaginatedSchema('TimelineEvent'), {
+              data: [
+                {
+                  sourceId: 1233,
+                  sourceType: 'PAYMENT',
+                  eventType: 'PAYMENT_RECEIVED',
+                  occurredAt: '2026-07-21T08:12:44.512Z',
+                  reference: 'RCP-1001',
+                  amount: 5000,
+                  detail: 'UPI',
+                  parentId: 842,
+                },
+                {
+                  sourceId: 842,
+                  sourceType: 'INVOICE',
+                  eventType: 'INVOICE_FINALIZED',
+                  occurredAt: '2026-07-21T07:55:02.104Z',
+                  reference: 'INV-1233',
+                  amount: 8000,
+                },
+                {
+                  sourceId: 1042,
+                  sourceType: 'VISIT',
+                  eventType: 'VISIT_COMPLETED',
+                  occurredAt: '2026-07-21T06:40:19.780Z',
+                  reference: 'VST-1042',
+                  doctorName: 'Dr. Meera Rao',
+                },
+                {
+                  sourceId: 1042,
+                  sourceType: 'VISIT_DOCUMENT',
+                  eventType: 'DOCUMENTS_UPLOADED',
+                  occurredAt: '2026-07-21T05:18:03.221Z',
+                  reference: 'VST-1042',
+                  detail: null,
+                  detailCount: 6,
+                },
+                {
+                  sourceId: 512,
+                  sourceType: 'APPOINTMENT',
+                  eventType: 'APPOINTMENT_BOOKED',
+                  occurredAt: '2026-07-18T04:02:11.907Z',
+                  reference: 'APT-1042',
+                  detail: '2026-08-15',
+                  doctorName: 'Dr. Meera Rao',
+                },
+              ],
+              meta: {
+                nextCursor:
+                  'MjAyNi0wNy0xOFQwNDowMjoxMS45MDczNDFafEFQUE9JTlRNRU5UfDUxMnxBUFBPSU5UTUVOVF9CT09LRUQ',
+              },
+            }),
+          },
+          '400': {
+            description: 'The cursor, feed, or limit was rejected.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Cursor is Invalid.'],
+            }),
+          },
+          '404': {
+            description: 'No such Patient in the active Tenant.',
+            content: jsonContent(schemaRef('NotFoundError'), {
+              message: 'Patient not found',
+              errors: ['Patient not found'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/appointments/{id}': {
+      get: {
+        tags: ['Appointment'],
+        summary: 'Get Appointment',
+        description:
+          'Returns one Appointment in the active Tenant with its embedded Patient, Doctor, AppointmentMode, AppointmentType, AppointmentReason, AppointmentStatus and reserved slots. Backs the Appointment detail Sheet that Booking entries on the Patient Timeline deep-link into. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Appointment')],
+        responses: {
+          '200': {
+            description: 'Appointment.',
+            content: jsonContent(dataEnvelopeSchema('Appointment'), { data: appointmentExample }),
+          },
+          '400': {
+            description: 'The Appointment identifier was not a positive integer.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Appointment abc is Invalid.'],
+            }),
+          },
+          '404': {
+            description: 'No such Appointment in the active Tenant.',
+            content: jsonContent(schemaRef('NotFoundError'), {
+              message: 'Appointment not found',
+              errors: ['Appointment not found'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/work-orders': {
       get: {
         tags: ['Work Order'],
@@ -5737,7 +5949,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Register Patient',
         description:
-          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. govtIdType and govtIdNumber must be provided together and are unique per Tenant when present.',
+          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. emiratesId is optional (foreign nationals will not have one), is stored digit-normalised, and is unique per Tenant when present. identityDocuments replaces the whole collection; required fields vary by documentType.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreatePatientRequest', patientRequestExample),
         responses: {
@@ -5777,7 +5989,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Update Patient',
         description:
-          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference and government ID rules are the same as registration.',
+          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference and Emirates ID rules are the same as registration. identityDocuments replaces the whole collection: documents sent with an id are updated, documents sent without one are added, and any existing document omitted from the array is removed.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Patient')],
         requestBody: requestBody('UpdatePatientRequest', patientRequestExample),
@@ -6742,6 +6954,114 @@ export const openApiDocument = {
           pageNumber: { type: 'integer', minimum: 1 },
           pageSize: { type: 'integer', minimum: 1, maximum: 999 },
           totalPages: { type: 'integer', minimum: 0 },
+        },
+      },
+      CursorPaginationMeta: {
+        type: 'object',
+        required: ['nextCursor'],
+        description:
+          'Keyset paging metadata for a feed. There is no total or page count — a cursor names a position in the ordering, not an offset.',
+        properties: {
+          nextCursor: {
+            type: ['string', 'null'],
+            description:
+              'Opaque cursor for the next page, or null when the end of the feed has been reached. Pass it back unchanged as the `cursor` query parameter.',
+          },
+        },
+      },
+      TimelineEvent: {
+        type: 'object',
+        required: ['sourceId', 'sourceType', 'eventType', 'occurredAt', 'reference'],
+        description:
+          'One lifecycle transition on the Patient Timeline. Derived at read time from the source record and never stored, so it has no identifier of its own. Fields beyond the required set vary by Timeline Event Source: Visit and Admission carry doctorName, Invoice and Payment carry amount, Visit Document carries detailCount, and Payment and Bed Transfer carry parentId.',
+        properties: {
+          sourceId: {
+            type: 'integer',
+            description:
+              'Identifier of the record this event links to. For VISIT_DOCUMENT this is the Visit, because document events are collapsed per Visit rather than emitted per file.',
+            examples: [1042],
+          },
+          sourceType: {
+            type: 'string',
+            description: 'Timeline Event Source — the kind of record the event was derived from.',
+            enum: [
+              'PATIENT',
+              'PAYMENT',
+              'INVOICE',
+              'VISIT',
+              'ADMISSION',
+              'APPOINTMENT',
+              'BED_TRANSFER',
+              'CLINICAL_NOTE',
+              'VISIT_DOCUMENT',
+            ],
+          },
+          eventType: {
+            type: 'string',
+            description: 'The specific transition that occurred.',
+            enum: [
+              'VISIT_CANCELLED',
+              'VISIT_COMPLETED',
+              'VISIT_CHECKED_IN',
+              'INVOICE_VOIDED',
+              'BED_TRANSFERRED',
+              'PAYMENT_RECEIVED',
+              'INVOICE_FINALIZED',
+              'PATIENT_REGISTERED',
+              'DOCUMENTS_UPLOADED',
+              'APPOINTMENT_BOOKED',
+              'PATIENT_DEACTIVATED',
+              'PATIENT_REACTIVATED',
+              'ADMISSION_ADMITTED',
+              'ADMISSION_CANCELLED',
+              'ADMISSION_DISCHARGED',
+              'CLINICAL_NOTE_SIGNED',
+              'APPOINTMENT_CANCELLED',
+              'VISIT_IN_CONSULTATION',
+            ],
+          },
+          occurredAt: {
+            type: 'string',
+            format: 'date-time',
+            description:
+              'UTC instant the transition occurred. Rendered by the client in its own time zone; no tenant-local date is sent.',
+            examples: ['2026-07-21T06:40:19.780Z'],
+          },
+          reference: {
+            type: ['string', 'null'],
+            description:
+              'Human-facing number of the source or its parent — Visit Number, Admission Number, Invoice Number, Receipt Number, or Booking Number. Null for Patient and Clinical Note events, which have none.',
+            examples: ['VST-1042'],
+          },
+          doctorName: {
+            type: ['string', 'null'],
+            description:
+              'The Doctor on the record, shown as context. This is not an actor: it is the Doctor the encounter is with, not whoever performed the transition.',
+            examples: ['Dr. Meera Rao'],
+          },
+          amount: {
+            type: ['number', 'null'],
+            description: 'Invoice grand total or Payment amount.',
+            examples: [8000],
+          },
+          detail: {
+            type: ['string', 'null'],
+            description:
+              'Source-specific context: destination bed number for a transfer, payment method, Clinical Note type, Appointment slot date, or the file name when a Visit has exactly one document.',
+            examples: ['UPI'],
+          },
+          detailCount: {
+            type: ['integer', 'null'],
+            description:
+              'Number of documents collapsed into a VISIT_DOCUMENT event. Null for every other source.',
+            examples: [6],
+          },
+          parentId: {
+            type: ['integer', 'null'],
+            description:
+              'Owning record when the link target differs from the source: the Invoice for a Payment, the Admission for a Bed Transfer.',
+            examples: [842],
+          },
         },
       },
       ValidationError: {
@@ -8691,12 +9011,12 @@ export const openApiDocument = {
           nationalityId: { type: 'integer', minimum: 1 },
           languageId: { type: 'integer', minimum: 1, description: 'Preferred Language.' },
           religionId: { type: 'integer', minimum: 1 },
-          govtIdType: {
+          emiratesId: {
             type: 'string',
-            enum: ['passport', 'national-id', 'driving-license', 'other'],
-            description: 'Must be provided together with govtIdNumber.',
+            description:
+              'Optional. 15 digits beginning with 784; dashes and spaces are stripped before storage. Identity Documents are deliberately not captured at booking — a booking is usually a phone call.',
+            example: '784199012345671',
           },
-          govtIdNumber: { type: 'string', maxLength: 50 },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
           emergencyContactPhone: { type: 'string', maxLength: 20 },
@@ -9424,6 +9744,68 @@ export const openApiDocument = {
           code: { type: 'string' },
         },
       },
+      SavePatientIdentityDocumentRequest: {
+        type: 'object',
+        description:
+          'One Identity Document. Which fields are required depends on documentType: passport requires issuingCountryId and expiryDate; national-id requires issuingCountryId; residence-visa requires expiryDate and accepts no issuingCountryId (it is always UAE); driving-license and other require neither. emirates-id is NOT a valid documentType — the Emirates ID is its own Patient field.',
+        required: ['documentType', 'documentNumber'],
+        properties: {
+          id: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Identifies an existing document to update. Omit to add a new one. Must belong to this Patient in this Tenant.',
+          },
+          documentType: {
+            type: 'string',
+            enum: ['passport', 'national-id', 'residence-visa', 'driving-license', 'other'],
+          },
+          documentNumber: { type: 'string', maxLength: 50 },
+          issuingCountryId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Required for passport and national-id. Passport numbers are unique only within their issuing country, so this is what makes a passport number meaningful.',
+          },
+          expiryDate: {
+            type: 'string',
+            format: 'date',
+            description: 'Required for passport and residence-visa.',
+            example: '2029-04-11',
+          },
+          label: {
+            type: 'string',
+            maxLength: 100,
+            description: 'Free text. Only accepted when documentType is other.',
+          },
+        },
+      },
+      PatientIdentityDocument: {
+        type: 'object',
+        required: [
+          'id',
+          'label',
+          'expiryDate',
+          'documentType',
+          'documentNumber',
+          'issuingCountry',
+          'issuingCountryId',
+        ],
+        properties: {
+          id: { type: 'integer' },
+          documentType: {
+            type: 'string',
+            enum: ['passport', 'national-id', 'residence-visa', 'driving-license', 'other'],
+          },
+          documentNumber: { type: 'string' },
+          issuingCountryId: { type: ['integer', 'null'] },
+          issuingCountry: {
+            oneOf: [schemaRef('PatientCountrySummary'), { type: 'null' }],
+          },
+          expiryDate: { type: ['string', 'null'], format: 'date' },
+          label: { type: ['string', 'null'] },
+        },
+      },
       CreatePatientRequest: {
         type: 'object',
         required: ['firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
@@ -9467,16 +9849,17 @@ export const openApiDocument = {
           nationalityId: { type: 'integer', minimum: 1 },
           languageId: { type: 'integer', minimum: 1, description: 'Preferred Language.' },
           religionId: { type: 'integer', minimum: 1 },
-          govtIdType: {
+          emiratesId: {
             type: 'string',
-            enum: ['passport', 'national-id', 'driving-license', 'other'],
-            description: 'Must be provided together with govtIdNumber.',
-          },
-          govtIdNumber: {
-            type: 'string',
-            maxLength: 50,
             description:
-              'Government ID number. Unique per Tenant (case-insensitive) together with govtIdType.',
+              'Optional — foreign nationals treated without UAE residency will not have one. 15 digits beginning with 784; dashes and spaces are stripped before storage. Unique per Tenant among active Patients. The check digit is deliberately not validated.',
+            example: '784199012345671',
+          },
+          identityDocuments: {
+            type: 'array',
+            description:
+              'Replaces the whole collection. Omit or send [] to clear it. Include a document id to update an existing row; omit the id to add a new one. A Patient may hold several documents of the same type — a dual national holds two valid passports.',
+            items: schemaRef('SavePatientIdentityDocumentRequest'),
           },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
@@ -9516,8 +9899,8 @@ export const openApiDocument = {
           'language',
           'religionId',
           'religion',
-          'govtIdType',
-          'govtIdNumber',
+          'emiratesId',
+          'identityDocuments',
           'emergencyContactName',
           'emergencyContactRelationship',
           'emergencyContactPhone',
@@ -9588,13 +9971,15 @@ export const openApiDocument = {
           language: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
           religionId: { type: ['integer', 'null'], minimum: 1 },
           religion: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
-          govtIdType: {
-            oneOf: [
-              { type: 'string', enum: ['passport', 'national-id', 'driving-license', 'other'] },
-              { type: 'null' },
-            ],
+          emiratesId: {
+            type: ['string', 'null'],
+            maxLength: 15,
+            description: 'Digit-normalised. Clients format it as 784-1990-1234567-1 for display.',
           },
-          govtIdNumber: { type: ['string', 'null'], maxLength: 50 },
+          identityDocuments: {
+            type: 'array',
+            items: schemaRef('PatientIdentityDocument'),
+          },
           emergencyContactName: { type: ['string', 'null'], maxLength: 150 },
           emergencyContactRelationship: { type: ['string', 'null'], maxLength: 50 },
           emergencyContactPhone: { type: ['string', 'null'], maxLength: 20 },

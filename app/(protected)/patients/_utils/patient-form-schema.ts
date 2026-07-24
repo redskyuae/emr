@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
 import {
+  normaliseEmiratesId,
   PATIENT_BLOOD_GROUPS,
   PATIENT_GENDERS,
-  PATIENT_GOVT_ID_TYPES,
+  PATIENT_IDENTITY_DOCUMENT_TYPES,
   PATIENT_MARITAL_STATUSES,
   PATIENT_PAYMENT_METHODS,
 } from './patient-value-sets';
@@ -42,6 +43,42 @@ const requiredPhoneField = (label: string) =>
 const optionalPhoneField = (label: string) =>
   z.string().trim().max(20, `${label} must be at most 20 characters.`).optional().or(z.literal(''));
 
+// Flat rather than a discriminated union: useFieldArray needs a stable row
+// shape as the user switches type mid-edit. The per-type rules the API enforces
+// through its discriminated union are mirrored in the superRefine below.
+const identityDocumentFormSchema = z.object({
+  id: z.number().int().positive().optional(),
+  documentType: z.enum(PATIENT_IDENTITY_DOCUMENT_TYPES),
+  documentNumber: z
+    .string()
+    .trim()
+    .min(1, 'Document number is required.')
+    .max(50, 'Document number must be at most 50 characters.'),
+  issuingCountryId: z.number().int().positive().optional(),
+  expiryDate: z.string().trim().optional().or(z.literal('')),
+  label: optionalNameField('Label', 100),
+});
+
+// Mirrors the API contract exactly; the form's asterisks are driven from here.
+const IDENTITY_DOCUMENT_REQUIRED_FIELDS: Record<
+  (typeof PATIENT_IDENTITY_DOCUMENT_TYPES)[number],
+  { issuingCountryId: boolean; expiryDate: boolean }
+> = {
+  passport: { issuingCountryId: true, expiryDate: true },
+  'national-id': { issuingCountryId: true, expiryDate: false },
+  'residence-visa': { issuingCountryId: false, expiryDate: true },
+  'driving-license': { issuingCountryId: false, expiryDate: false },
+  other: { issuingCountryId: false, expiryDate: false },
+};
+
+export function getIdentityDocumentRequiredFields(documentType: string) {
+  return (
+    IDENTITY_DOCUMENT_REQUIRED_FIELDS[
+      documentType as (typeof PATIENT_IDENTITY_DOCUMENT_TYPES)[number]
+    ] ?? { issuingCountryId: false, expiryDate: false }
+  );
+}
+
 export const patientFormSchema = z
   .object({
     firstName: requiredNameField('First name'),
@@ -73,8 +110,16 @@ export const patientFormSchema = z
     nationalityId: z.number().int().positive().optional(),
     languageId: z.number().int().positive().optional(),
     religionId: z.number().int().positive().optional(),
-    govtIdType: z.enum(PATIENT_GOVT_ID_TYPES).optional().or(z.literal('')),
-    govtIdNumber: optionalNameField('Government ID number', 50),
+    emiratesId: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value === '' || /^784\d{12}$/.test(normaliseEmiratesId(value)),
+        'Emirates ID must be 15 digits beginning with 784.'
+      )
+      .optional()
+      .or(z.literal('')),
+    identityDocuments: z.array(identityDocumentFormSchema),
     emergencyContactName: optionalNameField('Emergency contact name', 150),
     emergencyContactRelationship: optionalNameField('Emergency contact relationship', 50),
     emergencyContactPhone: optionalPhoneField('Emergency contact phone'),
@@ -84,11 +129,35 @@ export const patientFormSchema = z
       ctx.addIssue({ code: 'custom', message: 'Gender is required.', path: ['gender'] });
     }
 
-    if (Boolean(data.govtIdType) !== Boolean(data.govtIdNumber)) {
-      const message = 'Government ID type and number must be provided together.';
-      ctx.addIssue({ code: 'custom', message, path: ['govtIdNumber'] });
-      ctx.addIssue({ code: 'custom', message, path: ['govtIdType'] });
-    }
+    data.identityDocuments.forEach((document, index) => {
+      const required = getIdentityDocumentRequiredFields(document.documentType);
+
+      if (required.issuingCountryId && document.issuingCountryId === undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Issuing country is required for this document type.',
+          path: ['identityDocuments', index, 'issuingCountryId'],
+        });
+      }
+
+      if (required.expiryDate && !document.expiryDate) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Expiry date is required for this document type.',
+          path: ['identityDocuments', index, 'expiryDate'],
+        });
+      }
+
+      // A residence visa is always issued by the UAE, so the API rejects an
+      // issuing country outright rather than ignoring it.
+      if (document.documentType === 'residence-visa' && document.issuingCountryId !== undefined) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'A residence visa is always issued by the UAE.',
+          path: ['identityDocuments', index, 'issuingCountryId'],
+        });
+      }
+    });
 
     if (data.stateId !== undefined && data.countryId === undefined) {
       ctx.addIssue({

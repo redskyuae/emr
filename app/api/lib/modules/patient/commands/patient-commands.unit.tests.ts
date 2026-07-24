@@ -66,8 +66,8 @@ const patient = {
   language: null,
   religionId: null,
   religion: null,
-  govtIdType: null,
-  govtIdNumber: null,
+  emiratesId: null,
+  identityDocuments: [],
   emergencyContactName: null,
   emergencyContactRelationship: null,
   emergencyContactPhone: null,
@@ -103,18 +103,18 @@ describe('Patient commands', () => {
     expect(repo.createPatient).toHaveBeenCalledWith({ ...createInput, tenantId: 'tenant-1' });
   });
 
-  it('should map a duplicate government ID constraint on create to a conflict error', async () => {
+  it('should map a duplicate Emirates ID constraint on create to a conflict error', async () => {
     validateCreate.mockResolvedValue({
       success: true,
-      data: { ...createInput, govtIdType: 'passport', govtIdNumber: 'X1' },
+      data: { ...createInput, emiratesId: '784199012345671' },
     });
     repo.createPatient.mockRejectedValue({
-      cause: { code: '23505', constraint: 'patient_tenant_govt_id_idx' },
+      cause: { code: '23505', constraint: 'patient_tenant_emirates_id_idx' },
     });
     await expect(createPatientCommand({}, 'tenant-1')).resolves.toEqual({
       success: false,
       status: StatusCodes.CONFLICT,
-      errors: ['Patient government ID X1 already exists.'],
+      errors: ['Patient Emirates ID 784199012345671 already exists.'],
     });
   });
 

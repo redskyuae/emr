@@ -77,6 +77,7 @@ export const visit = pgTable(
       .on(table.tenantId, table.doctorId, table.visitDate, table.queueToken)
       .where(sql`${table.isDeleted} = false`),
     tenantVisitDateIdx: index('visit_tenant_visit_date_idx').on(table.tenantId, table.visitDate),
+    tenantPatientIdx: index('visit_tenant_patient_idx').on(table.tenantId, table.patientId),
   })
 );
 

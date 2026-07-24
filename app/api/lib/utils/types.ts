@@ -21,3 +21,13 @@ export type Paginated<T> = {
     totalPages: number;
   };
 };
+
+// Keyset pagination for reverse-chronological feeds, where new entries arrive at
+// the top and offsets would duplicate rows across pages. Tables use Paginated;
+// feeds use CursorPaginated (ADR 0041).
+export type CursorPaginated<T> = {
+  data: T[];
+  meta: {
+    nextCursor: string | null;
+  };
+};

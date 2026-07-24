@@ -98,38 +98,150 @@ describe('Patient schema', () => {
     ).toContain('Patient email must be valid');
   });
 
-  it('should require government ID number when government ID type is provided', () => {
-    expect(
-      errorsOf(createPatientSchema.safeParse({ ...validPayload, govtIdType: 'passport' }))
-    ).toContain('Patient government ID type and number must be provided together');
+  it('should normalise every spelling of an Emirates ID to the same digits', () => {
+    for (const input of ['784-1990-1234567-1', '784 1990 1234567 1', '784199012345671']) {
+      const result = createPatientSchema.safeParse({ ...validPayload, emiratesId: input });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.emiratesId).toBe('784199012345671');
+      }
+    }
   });
 
-  it('should require government ID type when government ID number is provided', () => {
-    expect(
-      errorsOf(createPatientSchema.safeParse({ ...validPayload, govtIdNumber: 'X1234567' }))
-    ).toContain('Patient government ID type and number must be provided together');
+  it('should reject an Emirates ID that is not 15 digits beginning with 784', () => {
+    for (const input of ['7841990123456', '123199012345671', '784-1990-1234567-12']) {
+      expect(
+        errorsOf(createPatientSchema.safeParse({ ...validPayload, emiratesId: input }))
+      ).toContain('Patient Emirates ID must be 15 digits beginning with 784');
+    }
   });
 
-  it('should accept government ID type and number provided together', () => {
+  it('should treat an empty Emirates ID as absent', () => {
+    const result = createPatientSchema.safeParse({ ...validPayload, emiratesId: '' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.emiratesId).toBeUndefined();
+    }
+  });
+
+  it('should reject emirates-id as an identity document type', () => {
+    // The Emirates ID has exactly one home; allowing it here would let the two
+    // drift and give "does this patient have an Emirates ID?" two answers.
     expect(
       createPatientSchema.safeParse({
         ...validPayload,
-        govtIdType: 'passport',
-        govtIdNumber: 'X1234567',
+        identityDocuments: [{ documentType: 'emirates-id', documentNumber: '784199012345671' }],
+      }).success
+    ).toBe(false);
+  });
+
+  it('should require issuing country and expiry date for a passport', () => {
+    expect(
+      createPatientSchema.safeParse({
+        ...validPayload,
+        identityDocuments: [{ documentType: 'passport', documentNumber: 'J8369854' }],
+      }).success
+    ).toBe(false);
+
+    expect(
+      createPatientSchema.safeParse({
+        ...validPayload,
+        identityDocuments: [
+          {
+            documentType: 'passport',
+            documentNumber: 'J8369854',
+            issuingCountryId: 1,
+            expiryDate: '2029-04-11',
+          },
+        ],
       }).success
     ).toBe(true);
   });
 
-  it('should reject an invalid government ID type', () => {
+  it('should require an expiry date but reject an issuing country for a residence visa', () => {
     expect(
-      errorsOf(
-        createPatientSchema.safeParse({
-          ...validPayload,
-          govtIdType: 'social-security',
-          govtIdNumber: '123',
-        })
-      )
-    ).toContain('Patient government ID type is invalid');
+      createPatientSchema.safeParse({
+        ...validPayload,
+        identityDocuments: [{ documentType: 'residence-visa', documentNumber: 'RV-1' }],
+      }).success
+    ).toBe(false);
+
+    expect(
+      createPatientSchema.safeParse({
+        ...validPayload,
+        identityDocuments: [
+          {
+            documentType: 'residence-visa',
+            documentNumber: 'RV-1',
+            expiryDate: '2027-01-15',
+            issuingCountryId: 1,
+          },
+        ],
+      }).success
+    ).toBe(false);
+
+    expect(
+      createPatientSchema.safeParse({
+        ...validPayload,
+        identityDocuments: [
+          { documentType: 'residence-visa', documentNumber: 'RV-1', expiryDate: '2027-01-15' },
+        ],
+      }).success
+    ).toBe(true);
+  });
+
+  it('should accept a driving licence with neither issuing country nor expiry', () => {
+    expect(
+      createPatientSchema.safeParse({
+        ...validPayload,
+        identityDocuments: [{ documentType: 'driving-license', documentNumber: 'DL-5' }],
+      }).success
+    ).toBe(true);
+  });
+
+  it('should accept several documents of the same type for one patient', () => {
+    // A dual national legitimately holds two valid passports.
+    expect(
+      createPatientSchema.safeParse({
+        ...validPayload,
+        identityDocuments: [
+          {
+            documentType: 'passport',
+            documentNumber: 'J8369854',
+            issuingCountryId: 1,
+            expiryDate: '2029-04-11',
+          },
+          {
+            documentType: 'passport',
+            documentNumber: '533291847',
+            issuingCountryId: 2,
+            expiryDate: '2031-08-02',
+          },
+        ],
+      }).success
+    ).toBe(true);
+  });
+
+  it('should accept a document id so the replace can be diffed', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      identityDocuments: [{ id: 91, documentType: 'driving-license', documentNumber: 'DL-5' }],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.identityDocuments?.[0].id).toBe(91);
+    }
+  });
+
+  it('should reject a label on any document type other than other', () => {
+    expect(
+      createPatientSchema.safeParse({
+        ...validPayload,
+        identityDocuments: [
+          { documentType: 'driving-license', documentNumber: 'DL-5', label: 'Nope' },
+        ],
+      }).success
+    ).toBe(false);
   });
 
   it('should require country ID when state ID is provided', () => {

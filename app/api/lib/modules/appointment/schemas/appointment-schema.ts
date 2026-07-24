@@ -89,17 +89,15 @@ const provisionalPatientSchema = z
     nationalityId: patientShape.nationalityId,
     languageId: patientShape.languageId,
     religionId: patientShape.religionId,
-    govtIdType: patientShape.govtIdType,
-    govtIdNumber: patientShape.govtIdNumber,
+    // Emirates ID only — no identity documents. A booking is usually a phone
+    // call, and nobody reads out a passport's issuing country and expiry date
+    // down the phone. Documents belong at registration or check-in (ADR 0042).
+    emiratesId: patientShape.emiratesId,
     emergencyContactName: patientShape.emergencyContactName,
     emergencyContactRelationship: patientShape.emergencyContactRelationship,
     emergencyContactPhone: patientShape.emergencyContactPhone,
   })
   .strict()
-  .refine((data) => (data.govtIdType === undefined) === (data.govtIdNumber === undefined), {
-    message: 'Patient government ID type and number must be provided together',
-    path: ['govtIdNumber'],
-  })
   .refine((data) => data.stateId === undefined || data.countryId !== undefined, {
     message: 'Patient country ID is required when state ID is provided',
     path: ['countryId'],
@@ -204,3 +202,8 @@ export type Appointment = {
     slotTime: string;
   }>;
 };
+
+export const appointmentIdSchema = z.coerce
+  .number({ error: 'Appointment ID is required' })
+  .int('Appointment ID must be an integer')
+  .positive('Appointment ID must be positive');

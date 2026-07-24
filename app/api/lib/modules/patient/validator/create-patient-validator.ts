@@ -1,7 +1,7 @@
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { createPatientSchema, type CreatePatientInput } from '../schemas/patient-schema';
-import { validatePatientGovtIdUniqueness } from './patient-govt-id-validator';
+import { validatePatientEmiratesIdUniqueness } from './patient-emirates-id-validator';
 import { validatePatientReferences } from './patient-reference-validator';
 
 export async function validateCreatePatient(
@@ -24,10 +24,9 @@ export async function validateCreatePatient(
     };
   }
 
-  const uniquenessResult = await validatePatientGovtIdUniqueness({
+  const uniquenessResult = await validatePatientEmiratesIdUniqueness({
     tenantId,
-    govtIdType: payloadResult.data.govtIdType,
-    govtIdNumber: payloadResult.data.govtIdNumber,
+    emiratesId: payloadResult.data.emiratesId,
   });
 
   if (!uniquenessResult.success) {

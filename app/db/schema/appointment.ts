@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { date, integer, pgTable, text, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import {
+  date,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 import { appointmentCancelledReason as appointmentCancelledReasonTable } from './appointment-cancelled-reason';
 import { appointmentMode as appointmentModeTable } from './appointment-mode';
@@ -43,6 +52,10 @@ export const appointment = pgTable(
     slotDate: date('slot_date').notNull(),
     rotaName: varchar('rota_name', { length: 100 }).notNull(),
     remarks: text(),
+    // Set when the Appointment moves to a cancelled AppointmentStatus. Rows
+    // predating the Patient Timeline hold null and yield no cancelled event
+    // rather than a wrong one derived from modifiedOn (ADR 0041).
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     isDeleted,
     createdOn,
     modifiedOn,
@@ -53,6 +66,7 @@ export const appointment = pgTable(
       table.tenantId,
       sql`lower(${table.bookingNumber})`
     ),
+    tenantPatientIdx: index('appointment_tenant_patient_idx').on(table.tenantId, table.patientId),
   })
 );
 

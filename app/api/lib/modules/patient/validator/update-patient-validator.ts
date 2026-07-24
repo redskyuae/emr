@@ -8,8 +8,9 @@ import {
   type UpdatePatientInput,
   updatePatientSchema,
 } from '../schemas/patient-schema';
-import { validatePatientGovtIdUniqueness } from './patient-govt-id-validator';
+import { validatePatientEmiratesIdUniqueness } from './patient-emirates-id-validator';
 import { validatePatientReferences } from './patient-reference-validator';
+import { validatePatientIdentityDocumentOwnership } from './validate-patient-identity-documents';
 
 export type UpdatePatientParams = {
   id: number;
@@ -58,10 +59,9 @@ export async function validateUpdatePatient(
     };
   }
 
-  const uniquenessResult = await validatePatientGovtIdUniqueness({
+  const uniquenessResult = await validatePatientEmiratesIdUniqueness({
     tenantId,
-    govtIdType: payloadResult.data.govtIdType,
-    govtIdNumber: payloadResult.data.govtIdNumber,
+    emiratesId: payloadResult.data.emiratesId,
     excludeId: idResult.data,
   });
 
@@ -70,6 +70,22 @@ export async function validateUpdatePatient(
       success: false,
       errors: uniquenessResult.errors,
       status: uniquenessResult.status,
+    };
+  }
+
+  // Every client-supplied document id must be proven to belong to this Patient
+  // in this Tenant before the command updates it (ADR 0043).
+  const ownershipResult = await validatePatientIdentityDocumentOwnership({
+    tenantId,
+    patientId: idResult.data,
+    identityDocuments: payloadResult.data.identityDocuments,
+  });
+
+  if (!ownershipResult.success) {
+    return {
+      success: false,
+      errors: ownershipResult.errors,
+      status: ownershipResult.status,
     };
   }
 

@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { patientRepository } from '../repository/patient-repository';
 import type { Patient } from '../schemas/patient-schema';
-import { getPatientUniqueConstraintErrors } from '../validator/patient-govt-id-validator';
+import { getPatientUniqueConstraintErrors } from '../validator/patient-emirates-id-validator';
 import { validateUpdatePatient } from '../validator/update-patient-validator';
 
 export async function updatePatientCommand(

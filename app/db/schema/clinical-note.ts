@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, integer, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { check, index, integer, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 
 import { admission as admissionTable } from './admission';
 import { clinicalNoteType as clinicalNoteTypeTable } from './clinical-note-type';
@@ -41,5 +41,6 @@ export const clinicalNote = pgTable(
       'clinical_note_single_parent_check',
       sql`not (${table.visitId} is not null and ${table.admissionId} is not null)`
     ),
+    tenantPatientIdx: index('clinical_note_tenant_patient_idx').on(table.tenantId, table.patientId),
   })
 );

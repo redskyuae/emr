@@ -15,7 +15,7 @@ import { useStatesQuery } from '@/app/queries/global-references/useStates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -27,12 +27,13 @@ import {
 
 import { patientFormSchema, type PatientFormValues } from '../_utils/patient-form-schema';
 import {
+  formatEmiratesId,
   PATIENT_BLOOD_GROUPS,
   PATIENT_GENDER_OPTIONS,
-  PATIENT_GOVT_ID_TYPE_OPTIONS,
   PATIENT_MARITAL_STATUS_OPTIONS,
   PATIENT_PAYMENT_METHOD_OPTIONS,
 } from '../_utils/patient-value-sets';
+import { IdentityDocumentsFieldArray } from './identity-documents-field-array';
 
 const NONE = 'none';
 
@@ -564,50 +565,43 @@ function IdentifiersSection({ control }: { control: Control<PatientFormValues> }
           <div className="grid gap-4 sm:grid-cols-2">
             <Controller
               control={control}
-              name="govtIdType"
+              name="emiratesId"
               render={({ field, fieldState }) => (
                 <Field>
-                  <FieldLabel htmlFor="patient-govt-id-type">Government ID type</FieldLabel>
-                  <Select
-                    value={field.value || NONE}
-                    onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
-                  >
-                    <SelectTrigger
-                      id="patient-govt-id-type"
-                      className="w-full"
-                      aria-invalid={fieldState.invalid}
-                    >
-                      <SelectValue placeholder="Not specified" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={NONE}>Not specified</SelectItem>
-                      {PATIENT_GOVT_ID_TYPE_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FieldLabel htmlFor="patient-emirates-id">Emirates ID</FieldLabel>
+                  <Input
+                    id="patient-emirates-id"
+                    inputMode="numeric"
+                    placeholder="784-1990-1234567-1"
+                    aria-invalid={fieldState.invalid}
+                    {...field}
+                    // Reformat to the printed form once the user leaves the
+                    // field; any spelling is accepted on the way in.
+                    onBlur={(event) => {
+                      field.onChange(formatEmiratesId(event.target.value) ?? '');
+                      field.onBlur();
+                    }}
+                  />
+                  <FieldDescription>
+                    Optional — visitors and foreign nationals will not have one.
+                  </FieldDescription>
                   {fieldState.error ? (
                     <p className="text-destructive text-xs">{fieldState.error.message}</p>
                   ) : null}
                 </Field>
               )}
             />
+          </div>
 
-            <Controller
-              control={control}
-              name="govtIdNumber"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor="patient-govt-id-number">Government ID number</FieldLabel>
-                  <Input id="patient-govt-id-number" {...field} aria-invalid={fieldState.invalid} />
-                  {fieldState.error ? (
-                    <p className="text-destructive text-xs">{fieldState.error.message}</p>
-                  ) : null}
-                </Field>
-              )}
-            />
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-medium">Identity documents</h3>
+              <p className="text-muted-foreground text-xs">
+                Passports, residence visas, and other government documents. A Patient may hold more
+                than one of the same type.
+              </p>
+            </div>
+            <IdentityDocumentsFieldArray control={control} />
           </div>
         </FieldGroup>
       </CardContent>
@@ -752,12 +746,12 @@ export function PatientForm({
       await onSave(values);
     } catch (error) {
       const errors = getApiErrors(error);
-      const govtIdConflict = errors.find((message) =>
-        message.toLowerCase().includes('government id')
+      const emiratesIdConflict = errors.find((message) =>
+        message.toLowerCase().includes('emirates id')
       );
 
-      if (govtIdConflict) {
-        form.setError('govtIdNumber', { message: govtIdConflict });
+      if (emiratesIdConflict) {
+        form.setError('emiratesId', { message: emiratesIdConflict });
       } else {
         setServerErrors(errors);
       }

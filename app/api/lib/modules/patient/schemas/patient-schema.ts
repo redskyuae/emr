@@ -3,7 +3,15 @@ import { z } from 'zod';
 const PATIENT_GENDERS = ['male', 'female', 'other', 'unknown'] as const;
 const PATIENT_BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 const PATIENT_MARITAL_STATUSES = ['single', 'married', 'divorced', 'widowed', 'other'] as const;
-const PATIENT_GOVT_ID_TYPES = ['passport', 'national-id', 'driving-license', 'other'] as const;
+// Deliberately excludes 'emirates-id'. The Emirates ID is a singleton by law
+// and lives in its own column on patient, so it has exactly one home (ADR 0042).
+const PATIENT_IDENTITY_DOCUMENT_TYPES = [
+  'passport',
+  'national-id',
+  'residence-visa',
+  'driving-license',
+  'other',
+] as const;
 const PATIENT_PAYMENT_METHODS = ['cash', 'insurance', 'self-pay', 'corporate'] as const;
 const PATIENT_REGISTRATION_STATUSES = ['provisional', 'registered'] as const;
 
@@ -91,12 +99,107 @@ const bloodGroupSchema = z.enum(PATIENT_BLOOD_GROUPS, { error: 'Patient blood gr
 const maritalStatusSchema = z.enum(PATIENT_MARITAL_STATUSES, {
   error: 'Patient marital status is invalid',
 });
-const govtIdTypeSchema = z.enum(PATIENT_GOVT_ID_TYPES, {
-  error: 'Patient government ID type is invalid',
-});
 const paymentMethodSchema = z.enum(PATIENT_PAYMENT_METHODS, {
   error: 'Patient preferred payment method is invalid',
 });
+
+// The card is printed 784-1990-1234567-1; only the digits are stored. Without
+// this, three spellings of one ID all pass the unique index as three patients.
+export function normaliseEmiratesId(value: string) {
+  return value.replace(/\D/g, '');
+}
+
+// Shape only — never the check digit. The ICP has not published the algorithm,
+// and a false rejection turns away a patient holding a valid card (ADR 0042).
+const emiratesIdSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    const digits = normaliseEmiratesId(value);
+    return digits === '' ? undefined : digits;
+  },
+  z
+    .string()
+    .regex(/^784\d{12}$/, 'Patient Emirates ID must be 15 digits beginning with 784')
+    .optional()
+);
+
+const identityDocumentNumberSchema = z
+  .string({ error: 'Identity document number is required' })
+  .trim()
+  .min(1, 'Identity document number cannot be empty')
+  .max(50, 'Identity document number must be at most 50 characters');
+
+const identityDocumentExpirySchema = z
+  .string({ error: 'Identity document expiry date is required' })
+  .trim()
+  .refine(isValidDateOnly, 'Identity document expiry date must be a valid date');
+
+const identityDocumentIdSchema = z.coerce
+  .number()
+  .int('Identity document ID must be an integer')
+  .positive('Identity document ID must be positive')
+  .optional();
+
+// A discriminated union rather than all-optional columns: the required metadata
+// genuinely differs per type, and only the type knows which fields mean anything.
+// Passport requires an issuing country because passport numbers are unique only
+// within the country that issued them.
+const identityDocumentSchema = z.discriminatedUnion(
+  'documentType',
+  [
+    z
+      .object({
+        id: identityDocumentIdSchema,
+        documentType: z.literal('passport'),
+        documentNumber: identityDocumentNumberSchema,
+        issuingCountryId: requiredMasterIdSchema('passport issuing country ID'),
+        expiryDate: identityDocumentExpirySchema,
+      })
+      .strict(),
+    z
+      .object({
+        id: identityDocumentIdSchema,
+        documentType: z.literal('national-id'),
+        documentNumber: identityDocumentNumberSchema,
+        issuingCountryId: requiredMasterIdSchema('national ID issuing country ID'),
+        expiryDate: optionalTrimmedValue(identityDocumentExpirySchema),
+      })
+      .strict(),
+    z
+      .object({
+        id: identityDocumentIdSchema,
+        documentType: z.literal('residence-visa'),
+        documentNumber: identityDocumentNumberSchema,
+        expiryDate: identityDocumentExpirySchema,
+      })
+      .strict(),
+    z
+      .object({
+        id: identityDocumentIdSchema,
+        documentType: z.literal('driving-license'),
+        documentNumber: identityDocumentNumberSchema,
+        issuingCountryId: optionalMasterIdSchema('driving license issuing country ID'),
+        expiryDate: optionalTrimmedValue(identityDocumentExpirySchema),
+      })
+      .strict(),
+    z
+      .object({
+        id: identityDocumentIdSchema,
+        documentType: z.literal('other'),
+        documentNumber: identityDocumentNumberSchema,
+        issuingCountryId: optionalMasterIdSchema('identity document issuing country ID'),
+        expiryDate: optionalTrimmedValue(identityDocumentExpirySchema),
+        label: optionalTrimmedValue(
+          z.string().trim().max(100, 'Identity document label must be at most 100 characters')
+        ),
+      })
+      .strict(),
+  ],
+  { error: 'Identity document type is invalid' }
+);
 
 export const patientIdSchema = z.coerce
   .number({ error: 'Patient ID is required' })
@@ -137,10 +240,8 @@ const patientPayloadSchema = z
     nationalityId: optionalMasterIdSchema('nationality ID'),
     languageId: optionalMasterIdSchema('language ID'),
     religionId: optionalMasterIdSchema('religion ID'),
-    govtIdType: optionalTrimmedValue(govtIdTypeSchema),
-    govtIdNumber: optionalTrimmedValue(
-      z.string().trim().max(50, 'Patient government ID number must be at most 50 characters')
-    ),
+    emiratesId: emiratesIdSchema,
+    identityDocuments: z.array(identityDocumentSchema).optional(),
     emergencyContactName: optionalTrimmedValue(
       z.string().trim().max(150, 'Patient emergency contact name must be at most 150 characters')
     ),
@@ -151,10 +252,6 @@ const patientPayloadSchema = z
         .max(50, 'Patient emergency contact relationship must be at most 50 characters')
     ),
     emergencyContactPhone: optionalTrimmedValue(patientPhoneSchema('emergency contact phone')),
-  })
-  .refine((data) => (data.govtIdType === undefined) === (data.govtIdNumber === undefined), {
-    message: 'Patient government ID type and number must be provided together',
-    path: ['govtIdNumber'],
   })
   .refine((data) => data.stateId === undefined || data.countryId !== undefined, {
     message: 'Patient country ID is required when state ID is provided',
@@ -167,7 +264,7 @@ export const updatePatientSchema = patientPayloadSchema;
 export type PatientGender = (typeof PATIENT_GENDERS)[number];
 export type PatientBloodGroup = (typeof PATIENT_BLOOD_GROUPS)[number];
 export type PatientMaritalStatus = (typeof PATIENT_MARITAL_STATUSES)[number];
-export type PatientGovtIdType = (typeof PATIENT_GOVT_ID_TYPES)[number];
+export type PatientIdentityDocumentType = (typeof PATIENT_IDENTITY_DOCUMENT_TYPES)[number];
 export type PatientPaymentMethod = (typeof PATIENT_PAYMENT_METHODS)[number];
 export type PatientRegistrationStatus = (typeof PATIENT_REGISTRATION_STATUSES)[number];
 
@@ -178,6 +275,8 @@ export type UpdatePatientInput = z.infer<typeof updatePatientSchema>;
 export type CreatePatientData = CreatePatientInput & { tenantId: string };
 export type UpdatePatientData = UpdatePatientInput & { tenantId: string };
 
+export type PatientIdentityDocumentInput = z.infer<typeof identityDocumentSchema>;
+
 export type PatientReferenceSummary = {
   id: number;
   name: string;
@@ -187,6 +286,18 @@ export type PatientCountrySummary = {
   id: number;
   name: string;
   code: string;
+};
+
+// Flat with nullable fields, matching the stored row — the per-type rules in
+// the discriminated union govern requests, not responses.
+export type PatientIdentityDocument = {
+  id: number;
+  documentType: PatientIdentityDocumentType;
+  documentNumber: string;
+  issuingCountryId: number | null;
+  issuingCountry: PatientCountrySummary | null;
+  expiryDate: string | null;
+  label: string | null;
 };
 
 export type Patient = {
@@ -218,8 +329,8 @@ export type Patient = {
   language: PatientReferenceSummary | null;
   religionId: number | null;
   religion: PatientReferenceSummary | null;
-  govtIdType: PatientGovtIdType | null;
-  govtIdNumber: string | null;
+  emiratesId: string | null;
+  identityDocuments: PatientIdentityDocument[];
   emergencyContactName: string | null;
   emergencyContactRelationship: string | null;
   emergencyContactPhone: string | null;

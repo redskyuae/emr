@@ -13,6 +13,15 @@ export default function PatientEditLoader() {
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-9 w-full" />
           </div>
+          {/* The Identifiers card carries the Emirates ID row and the repeatable
+              Identity Documents list, so it is taller than the others. */}
+          {section === 3 ? (
+            <>
+              <Skeleton className="h-9 w-full sm:w-1/2" />
+              <Skeleton className="h-28 w-full" />
+              <Skeleton className="h-9 w-48" />
+            </>
+          ) : null}
         </div>
       ))}
     </div>

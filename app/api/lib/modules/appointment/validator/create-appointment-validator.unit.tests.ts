@@ -6,7 +6,7 @@ import { appointmentReasonRepository } from '../../appointment-reason/repository
 import { appointmentStatusRepository } from '../../appointment-status/repository/appointment-status-repository';
 import { appointmentTypeRepository } from '../../appointment-type/repository/appointment-type-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
-import { validatePatientGovtIdUniqueness } from '../../patient/validator/patient-govt-id-validator';
+import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
@@ -27,8 +27,8 @@ vi.mock('../../appointment-type/repository/appointment-type-repository', () => (
 vi.mock('../../patient/repository/patient-repository', () => ({
   patientRepository: { getPatientById: vi.fn() },
 }));
-vi.mock('../../patient/validator/patient-govt-id-validator', () => ({
-  validatePatientGovtIdUniqueness: vi.fn(),
+vi.mock('../../patient/validator/patient-emirates-id-validator', () => ({
+  validatePatientEmiratesIdUniqueness: vi.fn(),
 }));
 vi.mock('../../patient/validator/patient-reference-validator', () => ({
   validatePatientReferences: vi.fn(),
@@ -52,7 +52,7 @@ const statusRepo = vi.mocked(appointmentStatusRepository);
 const patientRepo = vi.mocked(patientRepository);
 const appointmentRepo = vi.mocked(appointmentRepository);
 const validateReferences = vi.mocked(validatePatientReferences);
-const validateGovtId = vi.mocked(validatePatientGovtIdUniqueness);
+const validateEmiratesId = vi.mocked(validatePatientEmiratesIdUniqueness);
 
 const payload = {
   doctorId: 1,
@@ -88,7 +88,7 @@ describe('validateCreateAppointment', () => {
     appointmentRepo.getReservedSlotTimes.mockResolvedValue([]);
     patientRepo.getPatientById.mockResolvedValue(activePatient as never);
     validateReferences.mockResolvedValue({ success: true, data: undefined });
-    validateGovtId.mockResolvedValue({ success: true, data: undefined });
+    validateEmiratesId.mockResolvedValue({ success: true, data: undefined });
     appointmentRepo.findPotentialPatientMatches.mockResolvedValue([]);
   });
 

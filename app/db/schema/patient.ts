@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, integer, pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  date,
+  integer,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 import { country as countryTable } from './country';
 import { masterColumns } from './helpers';
@@ -42,12 +51,19 @@ export const patient = pgTable(
     nationalityId: integer('nationality_id').references(() => nationalityTable.id),
     languageId: integer('language_id').references(() => languageTable.id),
     religionId: integer('religion_id').references(() => religionTable.id),
-    govtIdType: varchar('govt_id_type', { length: 30 }),
-    govtIdNumber: varchar('govt_id_number', { length: 50 }),
+    // Stored digit-normalised (784199012345671), never in the dashed form the
+    // card is printed with — three spellings of one ID would otherwise insert
+    // as three patients past the unique index below (ADR 0042).
+    emiratesId: varchar('emirates_id', { length: 15 }),
     emergencyContactName: varchar('emergency_contact_name', { length: 150 }),
     emergencyContactRelationship: varchar('emergency_contact_relationship', { length: 50 }),
     emergencyContactPhone: varchar('emergency_contact_phone', { length: 20 }),
     isActive: boolean('is_active').notNull().default(true),
+    // Deactivation/reactivation instants for the Patient Timeline. isActive
+    // alone records only the current state; modifiedOn is clobbered by any
+    // unrelated edit, so it is not a usable proxy (ADR 0041).
+    deactivatedAt: timestamp('deactivated_at', { withTimezone: true }),
+    reactivatedAt: timestamp('reactivated_at', { withTimezone: true }),
     isDeleted,
     createdOn,
     modifiedOn,
@@ -62,9 +78,14 @@ export const patient = pgTable(
       table.tenantId,
       sql`lower(${table.mrn})`
     ),
-    tenantGovtIdUniqueIdx: uniqueIndex('patient_tenant_govt_id_idx')
-      .on(table.tenantId, table.govtIdType, sql`lower(${table.govtIdNumber})`)
-      .where(sql`${table.isDeleted} = false and ${table.govtIdNumber} is not null`),
+    // An Emirates ID is issued once per person and persists for life, so two
+    // active Patients sharing one is never legitimate. Identity Documents get
+    // no equivalent index on purpose — passport numbers are unique only within
+    // their issuing country (ADR 0042). Partial on isDeleted so a soft-deleted
+    // Patient does not permanently burn the number (lessons.md).
+    tenantEmiratesIdUniqueIdx: uniqueIndex('patient_tenant_emirates_id_idx')
+      .on(table.tenantId, table.emiratesId)
+      .where(sql`${table.isDeleted} = false and ${table.emiratesId} is not null`),
   })
 );
 

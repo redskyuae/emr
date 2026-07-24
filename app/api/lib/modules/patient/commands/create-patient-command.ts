@@ -4,7 +4,7 @@ import type { CommandResult } from '@/app/api/lib/utils/types';
 import { patientRepository } from '../repository/patient-repository';
 import type { Patient } from '../schemas/patient-schema';
 import { validateCreatePatient } from '../validator/create-patient-validator';
-import { getPatientUniqueConstraintErrors } from '../validator/patient-govt-id-validator';
+import { getPatientUniqueConstraintErrors } from '../validator/patient-emirates-id-validator';
 
 export async function createPatientCommand(
   payload: unknown,

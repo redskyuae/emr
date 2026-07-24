@@ -154,6 +154,14 @@ A Patient who has been deactivated without being removed from the system. The Pa
 
 The human-facing identifier for a Patient within a Tenant, assigned by the system when the Patient record is first created and never chosen by the user. A Patient keeps the same Medical Record Number across all of the Tenant's Facilities and registration states, and a Medical Record Number is never reused. Commonly abbreviated MRN.
 
+## Emirates ID
+
+The identity document issued by the United Arab Emirates to every citizen and resident, recorded on a Patient as their primary national identifier. A Patient has at most one Emirates ID, and it is optional — visitors and foreign nationals treated without UAE residency will not have one. The number is issued once per person and persists for life; renewing the card reissues the document, not the number. Two active Patients within a Tenant may never share an Emirates ID. Distinct from the Medical Record Number, which the Tenant issues and controls; the Emirates ID is issued by the state and merely recorded.
+
+## Identity Document
+
+A government-issued document recorded on a Patient to evidence their identity, such as a passport, residence visa, national identity card, or driving licence. A Patient may hold any number of Identity Documents, including several of the same kind — a dual national legitimately holds two valid passports. Each carries the details that make it meaningful, such as the country that issued it and the date it expires. Identity Documents are recorded as supporting evidence and are not required to be unique across Patients: two countries may legitimately issue the same passport number. The Emirates ID is a UAE identity document but is recorded as its own Patient attribute rather than as an Identity Document, so that it has exactly one home.
+
 ## Emergency Contact
 
 The person to reach on a Patient's behalf in urgent situations, recorded during Patient Registration with their relationship to the Patient. An Emergency Contact is contact information only — not a Patient, not Staff, and not a system user.
@@ -477,3 +485,15 @@ The system-defined lifecycle meaning assigned to a Work Order Status: Open, In P
 ## System Work Order Status
 
 A Work Order Status provided to every Tenant for one Work Order Status Category. Its stable code identifies the system status; a Tenant may customize its display details, but cannot change its code or remove it.
+
+## Patient Timeline
+
+The reverse-chronological record of everything that happened to one Patient across the Tenant, merging operational, financial, and document activity into a single feed. Distinct from the Patient Chart, which presents longitudinal clinical records grouped by kind rather than ordered by time.
+
+## Timeline Event
+
+A single lifecycle transition that appears on the Patient Timeline, such as a Visit being checked in, an Admission being discharged, or an Invoice being finalized. One record yields one Timeline Event per transition it has undergone — a Visit that was checked in, seen, and completed contributes three Timeline Events, not one. A Timeline Event is derived at read time from the transition timestamps already stored on the underlying record; it is never independently persisted or edited.
+
+## Timeline Event Source
+
+The kind of record a Timeline Event was derived from: Appointment, Visit, Admission, Bed Transfer, Invoice, Payment, Visit Document, Clinical Note, or Patient. Distinct from Visit Status or Admission Status, which are lifecycle states of one record rather than a classification of feed entries.
