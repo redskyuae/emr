@@ -1,9 +1,7 @@
 import Link from 'next/link';
-import { AlertCircle, ArrowRight, Boxes } from 'lucide-react';
+import { ArrowRight, Boxes } from 'lucide-react';
 
 import type { AssetCategoryCount } from '@/app/api/lib/modules/asset/schemas/asset-schema';
-import { getApiErrorMessage } from '@/app/queries/api-error';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,13 +18,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Skeleton } from '@/components/ui/skeleton';
 
 type CategoryDistributionProps = {
-  byCategory: AssetCategoryCount[] | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  error: unknown;
+  byCategory: AssetCategoryCount[];
 };
 
 function CategoryDistributionRow({
@@ -61,13 +55,8 @@ function CategoryDistributionRow({
   );
 }
 
-export function CategoryDistribution({
-  byCategory,
-  isLoading,
-  isError,
-  error,
-}: CategoryDistributionProps) {
-  const maxCount = Math.max(...(byCategory ?? []).map((category) => category.count), 1);
+export function CategoryDistribution({ byCategory }: CategoryDistributionProps) {
+  const maxCount = Math.max(...byCategory.map((category) => category.count), 1);
 
   return (
     <Card className="shadow-fluent-2">
@@ -86,19 +75,7 @@ export function CategoryDistribution({
         </CardAction>
       </CardHeader>
       <CardContent className="space-y-5 p-4">
-        {isError ? (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Could not load Asset categories</AlertTitle>
-            <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
-          </Alert>
-        ) : isLoading || !byCategory ? (
-          <div className="space-y-5">
-            {[0, 1, 2, 3].map((item) => (
-              <Skeleton key={item} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : byCategory.length === 0 ? (
+        {byCategory.length === 0 ? (
           <Empty className="min-h-40 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
@@ -65,8 +65,15 @@ function compareDueDate(a: WorkOrder, b: WorkOrder) {
   return a.dueDate.localeCompare(b.dueDate);
 }
 
+const ATTENTION_DISPLAY_LIMIT = 10;
+
 function selectAttentionWorkOrders(workOrders: WorkOrder[]) {
-  return workOrders.filter(isAttentionWorkOrder);
+  const attentionWorkOrders = workOrders.filter(isAttentionWorkOrder).sort(compareDueDate);
+
+  return {
+    items: attentionWorkOrders.slice(0, ATTENTION_DISPLAY_LIMIT),
+    total: attentionWorkOrders.length,
+  };
 }
 
 function selectUpcomingMaintenanceWorkOrders(workOrders: WorkOrder[]) {
@@ -79,16 +86,16 @@ function selectUpcomingMaintenanceWorkOrders(workOrders: WorkOrder[]) {
     .slice(0, 5);
 }
 
-export function useAttentionWorkOrdersQuery(params: WorkOrdersParams) {
-  return useQuery({
+export function useAttentionWorkOrders(params: WorkOrdersParams) {
+  return useSuspenseQuery({
     queryKey: workOrdersParamQueryKey(params),
     queryFn: () => fetchAllWorkOrders(params),
     select: selectAttentionWorkOrders,
   });
 }
 
-export function useUpcomingMaintenanceWorkOrdersQuery(params: WorkOrdersParams) {
-  return useQuery({
+export function useUpcomingMaintenanceWorkOrders(params: WorkOrdersParams) {
+  return useSuspenseQuery({
     queryKey: workOrdersParamQueryKey(params),
     queryFn: () => fetchAllWorkOrders(params),
     select: selectUpcomingMaintenanceWorkOrders,

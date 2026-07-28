@@ -1,9 +1,7 @@
 import Link from 'next/link';
-import { AlertCircle, ArrowRight, Wrench } from 'lucide-react';
+import { ArrowRight, Wrench } from 'lucide-react';
 
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
-import { getApiErrorMessage } from '@/app/queries/api-error';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +19,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -32,10 +29,7 @@ import {
 } from '@/components/ui/table';
 
 type UpcomingMaintenanceTableProps = {
-  workOrders: WorkOrder[] | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  error: unknown;
+  workOrders: WorkOrder[];
 };
 
 function MasterBadge({ name, color }: { name: string; color: string }) {
@@ -51,12 +45,7 @@ function MasterBadge({ name, color }: { name: string; color: string }) {
   );
 }
 
-export function UpcomingMaintenanceTable({
-  workOrders,
-  isLoading,
-  isError,
-  error,
-}: UpcomingMaintenanceTableProps) {
+export function UpcomingMaintenanceTable({ workOrders }: UpcomingMaintenanceTableProps) {
   return (
     <Card className="shadow-fluent-2">
       <CardHeader className="border-b">
@@ -74,19 +63,7 @@ export function UpcomingMaintenanceTable({
         </CardAction>
       </CardHeader>
       <CardContent className="p-0">
-        {isError ? (
-          <Alert variant="destructive" className="m-4">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Could not load Work Orders</AlertTitle>
-            <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
-          </Alert>
-        ) : isLoading || !workOrders ? (
-          <div className="space-y-2 p-4">
-            {[0, 1, 2, 3, 4].map((item) => (
-              <Skeleton key={item} className="h-10 w-full" />
-            ))}
-          </div>
-        ) : workOrders.length === 0 ? (
+        {workOrders.length === 0 ? (
           <Empty className="min-h-40 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">

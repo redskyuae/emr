@@ -1,9 +1,16 @@
-import { AlertCircle, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
+import { AlertTriangle, ArrowRight } from 'lucide-react';
 
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
-import { getApiErrorMessage } from '@/app/queries/api-error';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
@@ -11,14 +18,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 type AttentionPanelProps = {
-  workOrders: WorkOrder[] | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  error: unknown;
+  workOrders: WorkOrder[];
+  totalCount: number;
 };
 
 function AttentionRow({ workOrder }: { workOrder: WorkOrder }) {
@@ -54,7 +58,9 @@ function AttentionRow({ workOrder }: { workOrder: WorkOrder }) {
   );
 }
 
-export function AttentionPanel({ workOrders, isLoading, isError, error }: AttentionPanelProps) {
+export function AttentionPanel({ workOrders, totalCount }: AttentionPanelProps) {
+  const remainingCount = totalCount - workOrders.length;
+
   return (
     <Card className="shadow-fluent-2">
       <CardHeader className="border-b">
@@ -62,21 +68,19 @@ export function AttentionPanel({ workOrders, isLoading, isError, error }: Attent
           <CardTitle>Attention required</CardTitle>
           <CardDescription>Overdue &amp; critical items</CardDescription>
         </div>
+        {remainingCount > 0 ? (
+          <CardAction>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/assets-management/maintenance">
+                <span>View {remainingCount} more</span>
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </Button>
+          </CardAction>
+        ) : null}
       </CardHeader>
       <CardContent className="divide-y p-0">
-        {isError ? (
-          <Alert variant="destructive" className="m-4">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Could not load Work Orders</AlertTitle>
-            <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
-          </Alert>
-        ) : isLoading || !workOrders ? (
-          <div className="space-y-3 p-4">
-            {[0, 1, 2].map((item) => (
-              <Skeleton key={item} className="h-14 w-full" />
-            ))}
-          </div>
-        ) : workOrders.length === 0 ? (
+        {workOrders.length === 0 ? (
           <Empty className="min-h-40 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">

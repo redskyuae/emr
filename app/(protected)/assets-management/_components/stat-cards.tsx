@@ -1,11 +1,8 @@
-import { AlertCircle, Banknote, Boxes, ClipboardList, Wrench, type LucideIcon } from 'lucide-react';
+import { Banknote, Boxes, ClipboardList, Wrench, type LucideIcon } from 'lucide-react';
 
 import type { AssetSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { WorkOrderSummary } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
-import { getApiErrorMessage } from '@/app/queries/api-error';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { formatAedCompact } from '@/lib/format-currency';
 
 type Stat = {
@@ -15,34 +12,11 @@ type Stat = {
 };
 
 type StatCardsProps = {
-  assetSummary: AssetSummary | undefined;
-  workOrderSummary: WorkOrderSummary | undefined;
-  isLoading: boolean;
-  isError: boolean;
-  error: unknown;
+  assetSummary: AssetSummary;
+  workOrderSummary: WorkOrderSummary;
 };
 
-export function StatCards({
-  assetSummary,
-  workOrderSummary,
-  isLoading,
-  isError,
-  error,
-}: StatCardsProps) {
-  if (isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="size-4" />
-        <AlertTitle>Could not load Asset overview stats</AlertTitle>
-        <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
-      </Alert>
-    );
-  }
-
-  if (isLoading || !assetSummary || !workOrderSummary) {
-    return <StatCardsSkeleton />;
-  }
-
+export function StatCards({ assetSummary, workOrderSummary }: StatCardsProps) {
   const stats: Stat[] = [
     {
       label: 'Total assets',
@@ -81,16 +55,6 @@ export function StatCards({
             <p className="text-3xl leading-none font-semibold tabular-nums">{stat.value}</p>
           </CardContent>
         </Card>
-      ))}
-    </section>
-  );
-}
-
-function StatCardsSkeleton() {
-  return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {[0, 1, 2, 3].map((item) => (
-        <Skeleton key={item} className="h-32 w-full" />
       ))}
     </section>
   );
