@@ -11,6 +11,8 @@ type WorkOrdersParams = {
   limit?: number;
 };
 
+export const ALL_WORK_ORDERS_PARAMS: WorkOrdersParams = { limit: 999 };
+
 const workOrdersQueryKey = ['work-orders'] as const;
 
 const workOrdersParamQueryKey = (params: WorkOrdersParams) =>

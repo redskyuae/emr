@@ -1,6 +1,14 @@
+'use client';
+
+import { Suspense } from 'react';
 import Link from 'next/link';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 
+import {
+  ALL_WORK_ORDERS_PARAMS,
+  attentionWorkOrdersQueryOptions,
+} from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +26,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { WidgetErrorBoundary } from './widget-error-boundary';
 
 type AttentionPanelProps = {
   workOrders: WorkOrder[];
@@ -95,5 +105,39 @@ export function AttentionPanel({ workOrders, totalCount }: AttentionPanelProps) 
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export function AttentionPanelSkeleton() {
+  return (
+    <Card className="shadow-fluent-2">
+      <CardHeader className="border-b">
+        <div>
+          <CardTitle>Attention required</CardTitle>
+          <CardDescription>Overdue &amp; critical items</CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3 p-4">
+        {[0, 1, 2].map((item) => (
+          <Skeleton key={item} className="h-14 w-full" />
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AttentionPanelContainer() {
+  const { data } = useSuspenseQuery(attentionWorkOrdersQueryOptions(ALL_WORK_ORDERS_PARAMS));
+
+  return <AttentionPanel workOrders={data.items} totalCount={data.total} />;
+}
+
+export function AttentionPanelWidget() {
+  return (
+    <WidgetErrorBoundary title="Could not load Work Orders">
+      <Suspense fallback={<AttentionPanelSkeleton />}>
+        <AttentionPanelContainer />
+      </Suspense>
+    </WidgetErrorBoundary>
   );
 }

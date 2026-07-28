@@ -1,6 +1,11 @@
+'use client';
+
+import { Suspense } from 'react';
 import Link from 'next/link';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { ArrowRight, Boxes } from 'lucide-react';
 
+import { assetSummaryQueryOptions } from '@/app/queries/assets-management/assets-overview/useAssetSummary';
 import type { AssetCategoryCount } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +23,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
+import { WidgetErrorBoundary } from './widget-error-boundary';
 
 type CategoryDistributionProps = {
   byCategory: AssetCategoryCount[];
@@ -98,5 +105,47 @@ export function CategoryDistribution({ byCategory }: CategoryDistributionProps) 
         )}
       </CardContent>
     </Card>
+  );
+}
+
+export function CategoryDistributionSkeleton() {
+  return (
+    <Card className="shadow-fluent-2">
+      <CardHeader className="border-b">
+        <div>
+          <CardTitle>Assets by category</CardTitle>
+          <CardDescription>Distribution across the estate</CardDescription>
+        </div>
+        <CardAction>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/assets-management/inventory">
+              <span>Inventory</span>
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="space-y-5 p-4">
+        {[0, 1, 2, 3].map((item) => (
+          <Skeleton key={item} className="h-10 w-full" />
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CategoryDistributionContainer() {
+  const { data: assetSummary } = useSuspenseQuery(assetSummaryQueryOptions);
+
+  return <CategoryDistribution byCategory={assetSummary.byCategory} />;
+}
+
+export function CategoryDistributionWidget() {
+  return (
+    <WidgetErrorBoundary title="Could not load Asset categories">
+      <Suspense fallback={<CategoryDistributionSkeleton />}>
+        <CategoryDistributionContainer />
+      </Suspense>
+    </WidgetErrorBoundary>
   );
 }

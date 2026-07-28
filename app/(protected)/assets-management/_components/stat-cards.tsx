@@ -1,9 +1,17 @@
+'use client';
+
+import { Suspense } from 'react';
+import { useSuspenseQueries } from '@tanstack/react-query';
 import { Banknote, Boxes, ClipboardList, Wrench, type LucideIcon } from 'lucide-react';
 
+import { assetSummaryQueryOptions } from '@/app/queries/assets-management/assets-overview/useAssetSummary';
+import { workOrderSummaryQueryOptions } from '@/app/queries/assets-management/assets-overview/useWorkOrderSummary';
 import type { AssetSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { WorkOrderSummary } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatAedCompact } from '@/lib/format-currency';
+import { WidgetErrorBoundary } from './widget-error-boundary';
 
 type Stat = {
   label: string;
@@ -57,5 +65,33 @@ export function StatCards({ assetSummary, workOrderSummary }: StatCardsProps) {
         </Card>
       ))}
     </section>
+  );
+}
+
+export function StatCardsSkeleton() {
+  return (
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {[0, 1, 2, 3].map((item) => (
+        <Skeleton key={item} className="h-32 w-full" />
+      ))}
+    </section>
+  );
+}
+
+function StatCardsContainer() {
+  const [{ data: assetSummary }, { data: workOrderSummary }] = useSuspenseQueries({
+    queries: [assetSummaryQueryOptions, workOrderSummaryQueryOptions],
+  });
+
+  return <StatCards assetSummary={assetSummary} workOrderSummary={workOrderSummary} />;
+}
+
+export function StatCardsWidget() {
+  return (
+    <WidgetErrorBoundary title="Could not load Asset overview stats">
+      <Suspense fallback={<StatCardsSkeleton />}>
+        <StatCardsContainer />
+      </Suspense>
+    </WidgetErrorBoundary>
   );
 }
