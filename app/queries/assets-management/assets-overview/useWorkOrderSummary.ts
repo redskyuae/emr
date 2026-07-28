@@ -1,6 +1,6 @@
 'use client';
 
-import { queryOptions } from '@tanstack/react-query';
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { GetWorkOrderSummaryResponse } from '@/app/api/v1/work-orders/summary/types';
@@ -24,3 +24,7 @@ export const workOrderSummaryQueryOptions = queryOptions({
   queryFn: fetchWorkOrderSummary,
   select: (response: GetWorkOrderSummaryResponse) => response.data,
 });
+
+export function useSuspenseWorkOrderSummary() {
+  return useSuspenseQuery(workOrderSummaryQueryOptions);
+}

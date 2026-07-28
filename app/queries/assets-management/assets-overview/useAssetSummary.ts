@@ -1,6 +1,6 @@
 'use client';
 
-import { queryOptions } from '@tanstack/react-query';
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { GetAssetSummaryResponse } from '@/app/api/v1/assets/summary/types';
@@ -24,3 +24,7 @@ export const assetSummaryQueryOptions = queryOptions({
   queryFn: fetchAssetSummary,
   select: (response: GetAssetSummaryResponse) => response.data,
 });
+
+export function useSuspenseAssetSummary() {
+  return useSuspenseQuery(assetSummaryQueryOptions);
+}

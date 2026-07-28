@@ -2,12 +2,11 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { ArrowRight, Wrench } from 'lucide-react';
 
 import {
   ALL_WORK_ORDERS_PARAMS,
-  upcomingMaintenanceWorkOrdersQueryOptions,
+  useSuspenseUpcomingMaintenanceWorkOrders,
 } from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Badge } from '@/components/ui/badge';
@@ -153,9 +152,7 @@ export function UpcomingMaintenanceTableSkeleton() {
 }
 
 function UpcomingMaintenanceTableContainer() {
-  const { data } = useSuspenseQuery(
-    upcomingMaintenanceWorkOrdersQueryOptions(ALL_WORK_ORDERS_PARAMS)
-  );
+  const { data } = useSuspenseUpcomingMaintenanceWorkOrders(ALL_WORK_ORDERS_PARAMS);
 
   return <UpcomingMaintenanceTable workOrders={data} />;
 }

@@ -2,10 +2,9 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { ArrowRight, Boxes } from 'lucide-react';
 
-import { assetSummaryQueryOptions } from '@/app/queries/assets-management/assets-overview/useAssetSummary';
+import { useSuspenseAssetSummary } from '@/app/queries/assets-management/assets-overview/useAssetSummary';
 import type { AssetCategoryCount } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import { Button } from '@/components/ui/button';
 import {
@@ -135,7 +134,7 @@ export function CategoryDistributionSkeleton() {
 }
 
 function CategoryDistributionContainer() {
-  const { data: assetSummary } = useSuspenseQuery(assetSummaryQueryOptions);
+  const { data: assetSummary } = useSuspenseAssetSummary();
 
   return <CategoryDistribution byCategory={assetSummary.byCategory} />;
 }

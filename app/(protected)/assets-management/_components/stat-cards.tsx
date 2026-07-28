@@ -1,11 +1,9 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useSuspenseQueries } from '@tanstack/react-query';
 import { Banknote, Boxes, ClipboardList, Wrench, type LucideIcon } from 'lucide-react';
 
-import { assetSummaryQueryOptions } from '@/app/queries/assets-management/assets-overview/useAssetSummary';
-import { workOrderSummaryQueryOptions } from '@/app/queries/assets-management/assets-overview/useWorkOrderSummary';
+import { useSuspenseAssetOverviewStats } from '@/app/queries/assets-management/assets-overview/useAssetOverviewStats';
 import type { AssetSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { WorkOrderSummary } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Card, CardContent } from '@/components/ui/card';
@@ -79,9 +77,7 @@ export function StatCardsSkeleton() {
 }
 
 function StatCardsContainer() {
-  const [{ data: assetSummary }, { data: workOrderSummary }] = useSuspenseQueries({
-    queries: [assetSummaryQueryOptions, workOrderSummaryQueryOptions],
-  });
+  const { assetSummary, workOrderSummary } = useSuspenseAssetOverviewStats();
 
   return <StatCards assetSummary={assetSummary} workOrderSummary={workOrderSummary} />;
 }

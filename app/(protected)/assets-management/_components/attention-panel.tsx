@@ -2,12 +2,11 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 
 import {
   ALL_WORK_ORDERS_PARAMS,
-  attentionWorkOrdersQueryOptions,
+  useSuspenseAttentionWorkOrders,
 } from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Button } from '@/components/ui/button';
@@ -127,7 +126,7 @@ export function AttentionPanelSkeleton() {
 }
 
 function AttentionPanelContainer() {
-  const { data } = useSuspenseQuery(attentionWorkOrdersQueryOptions(ALL_WORK_ORDERS_PARAMS));
+  const { data } = useSuspenseAttentionWorkOrders(ALL_WORK_ORDERS_PARAMS);
 
   return <AttentionPanel workOrders={data.items} totalCount={data.total} />;
 }
