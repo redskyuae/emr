@@ -1,6 +1,6 @@
 'use client';
 
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
@@ -86,18 +86,16 @@ function selectUpcomingMaintenanceWorkOrders(workOrders: WorkOrder[]) {
     .slice(0, 5);
 }
 
-export function useAttentionWorkOrders(params: WorkOrdersParams) {
-  return useSuspenseQuery({
+export const attentionWorkOrdersQueryOptions = (params: WorkOrdersParams) =>
+  queryOptions({
     queryKey: workOrdersParamQueryKey(params),
     queryFn: () => fetchAllWorkOrders(params),
     select: selectAttentionWorkOrders,
   });
-}
 
-export function useUpcomingMaintenanceWorkOrders(params: WorkOrdersParams) {
-  return useSuspenseQuery({
+export const upcomingMaintenanceWorkOrdersQueryOptions = (params: WorkOrdersParams) =>
+  queryOptions({
     queryKey: workOrdersParamQueryKey(params),
     queryFn: () => fetchAllWorkOrders(params),
     select: selectUpcomingMaintenanceWorkOrders,
   });
-}

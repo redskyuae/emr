@@ -1,6 +1,6 @@
 'use client';
 
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { GetAssetSummaryResponse } from '@/app/api/v1/assets/summary/types';
@@ -19,10 +19,8 @@ async function fetchAssetSummary(): Promise<GetAssetSummaryResponse> {
   return response.json() as Promise<GetAssetSummaryResponse>;
 }
 
-export function useAssetSummary() {
-  return useSuspenseQuery({
-    queryKey: assetSummaryQueryKey,
-    queryFn: fetchAssetSummary,
-    select: (response) => response.data,
-  });
-}
+export const assetSummaryQueryOptions = queryOptions({
+  queryKey: assetSummaryQueryKey,
+  queryFn: fetchAssetSummary,
+  select: (response: GetAssetSummaryResponse) => response.data,
+});
