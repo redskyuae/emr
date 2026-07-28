@@ -1,7 +1,7 @@
 import { AttentionPanelSkeleton } from './_components/attention-panel';
 import { CategoryDistributionSkeleton } from './_components/category-distribution';
 import { StatCardsSkeleton } from './_components/stat-cards';
-import { UpcomingMaintenanceTableSkeleton } from './_components/upcoming-maintenance-table';
+import { UpcomingMaintenanceTableSkeleton } from './_components/upcoming-maintenance-table-skeleton';
 
 export default function PageLoader() {
   return (

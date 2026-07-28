@@ -9,19 +9,18 @@ import { Button } from '@/components/ui/button';
 
 type WidgetErrorFallbackProps = {
   title: string;
+  error: Error;
+  onRetry: () => void;
 };
 
-function WidgetErrorFallback(
-  { title }: WidgetErrorFallbackProps,
-  { error, unstable_retry }: ErrorInfo
-) {
+function WidgetErrorFallback({ title, error, onRetry }: WidgetErrorFallbackProps) {
   return (
     <Alert variant="destructive">
       <AlertCircle className="size-4" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription className="flex flex-col items-start gap-3">
         <span>{getApiErrorMessage(error)}</span>
-        <Button type="button" variant="outline" size="sm" onClick={() => unstable_retry()}>
+        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
           Try again
         </Button>
       </AlertDescription>
@@ -29,4 +28,8 @@ function WidgetErrorFallback(
   );
 }
 
-export const WidgetErrorBoundary = unstable_catchError(WidgetErrorFallback);
+export const WidgetErrorBoundary = unstable_catchError(
+  ({ title }: { title: string }, { error, unstable_retry }: ErrorInfo) => (
+    <WidgetErrorFallback title={title} error={error} onRetry={unstable_retry} />
+  )
+);

@@ -1,7 +1,7 @@
 import { AttentionPanelWidget } from './attention-panel';
 import { CategoryDistributionWidget } from './category-distribution';
 import { StatCardsWidget } from './stat-cards';
-import { UpcomingMaintenanceTableWidget } from './upcoming-maintenance-table';
+import { UpcomingMaintenanceTableWidget } from './upcoming-maintenance-table-widget';
 
 export function OverviewPageImpl() {
   return (

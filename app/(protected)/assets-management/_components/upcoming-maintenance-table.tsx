@@ -1,13 +1,6 @@
-'use client';
-
-import { Suspense } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Wrench } from 'lucide-react';
 
-import {
-  ALL_WORK_ORDERS_PARAMS,
-  useSuspenseUpcomingMaintenanceWorkOrders,
-} from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,7 +19,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -35,7 +27,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { WidgetErrorBoundary } from './widget-error-boundary';
 
 type UpcomingMaintenanceTableProps = {
   workOrders: WorkOrder[];
@@ -122,47 +113,5 @@ export function UpcomingMaintenanceTable({ workOrders }: UpcomingMaintenanceTabl
         )}
       </CardContent>
     </Card>
-  );
-}
-
-export function UpcomingMaintenanceTableSkeleton() {
-  return (
-    <Card className="shadow-fluent-2">
-      <CardHeader className="border-b">
-        <div>
-          <CardTitle>Upcoming maintenance</CardTitle>
-          <CardDescription>Scheduled &amp; in-progress work orders</CardDescription>
-        </div>
-        <CardAction>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/assets-management/maintenance">
-              <span>All work orders</span>
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="space-y-2 p-4">
-        {[0, 1, 2, 3, 4].map((item) => (
-          <Skeleton key={item} className="h-10 w-full" />
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
-function UpcomingMaintenanceTableContainer() {
-  const { data } = useSuspenseUpcomingMaintenanceWorkOrders(ALL_WORK_ORDERS_PARAMS);
-
-  return <UpcomingMaintenanceTable workOrders={data} />;
-}
-
-export function UpcomingMaintenanceTableWidget() {
-  return (
-    <WidgetErrorBoundary title="Could not load Work Orders">
-      <Suspense fallback={<UpcomingMaintenanceTableSkeleton />}>
-        <UpcomingMaintenanceTableContainer />
-      </Suspense>
-    </WidgetErrorBoundary>
   );
 }

@@ -1,5 +1,3 @@
-'use client';
-
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
@@ -88,24 +86,22 @@ function selectUpcomingMaintenanceWorkOrders(workOrders: WorkOrder[]) {
     .slice(0, 5);
 }
 
-const attentionWorkOrdersQueryOptions = (params: WorkOrdersParams) =>
-  queryOptions({
-    queryKey: workOrdersParamQueryKey(params),
-    queryFn: () => fetchAllWorkOrders(params),
-    select: selectAttentionWorkOrders,
-  });
-
-const upcomingMaintenanceWorkOrdersQueryOptions = (params: WorkOrdersParams) =>
-  queryOptions({
-    queryKey: workOrdersParamQueryKey(params),
-    queryFn: () => fetchAllWorkOrders(params),
-    select: selectUpcomingMaintenanceWorkOrders,
-  });
-
 export function useSuspenseAttentionWorkOrders(params: WorkOrdersParams) {
-  return useSuspenseQuery(attentionWorkOrdersQueryOptions(params));
+  return useSuspenseQuery(
+    queryOptions({
+      queryKey: workOrdersParamQueryKey(params),
+      queryFn: () => fetchAllWorkOrders(params),
+      select: selectAttentionWorkOrders,
+    })
+  );
 }
 
 export function useSuspenseUpcomingMaintenanceWorkOrders(params: WorkOrdersParams) {
-  return useSuspenseQuery(upcomingMaintenanceWorkOrdersQueryOptions(params));
+  return useSuspenseQuery(
+    queryOptions({
+      queryKey: workOrdersParamQueryKey(params),
+      queryFn: () => fetchAllWorkOrders(params),
+      select: selectUpcomingMaintenanceWorkOrders,
+    })
+  );
 }
