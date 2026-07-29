@@ -84,6 +84,12 @@ describe('WorkOrderStatus schema', () => {
     ).toBeUndefined();
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(createWorkOrderStatusSchema.safeParse({ ...valid, description: 'a'.repeat(501) }))
+    ).toContain('Work order status description must be at most 500 characters');
+  });
+
   it('should validate work order status id is positive integer', () => {
     expect(workOrderStatusIdSchema.safeParse('1').success).toBe(true);
     expect(workOrderStatusIdSchema.safeParse('0').success).toBe(false);
@@ -93,5 +99,33 @@ describe('WorkOrderStatus schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(workOrderStatusTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(workOrderStatusTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(
+        createWorkOrderStatusSchema.safeParse({
+          name: 'In.Person',
+          code: 'INP',
+          color: '#16A34A',
+          category: 'OPEN',
+        })
+      )
+    ).toContain(
+      'Work order status name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createWorkOrderStatusSchema.safeParse({
+          name: 'In Person',
+          code: 'IN.P',
+          color: '#16A34A',
+          category: 'OPEN',
+        })
+      )
+    ).toContain(
+      'Work order status code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "doctor_rota_tenant_time_range_idx" ON "doctor_rota" USING btree ("tenant_id","from_time","to_time") WHERE "doctor_rota"."is_deleted" = false;

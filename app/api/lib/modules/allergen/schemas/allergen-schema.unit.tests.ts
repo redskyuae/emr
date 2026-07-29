@@ -66,4 +66,18 @@ describe('Allergen schema', () => {
     expect(allergenTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(allergenTenantIdSchema.safeParse('   ').success).toBe(false);
   });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(createAllergenSchema.safeParse({ name: 'In.Person', code: 'INP', category: 'drug' }))
+    ).toContain(
+      'Allergen name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createAllergenSchema.safeParse({ name: 'In Person', code: 'IN.P', category: 'drug' })
+      )
+    ).toContain('Allergen code must contain only letters, numbers, hyphens, and underscores.');
+  });
 });

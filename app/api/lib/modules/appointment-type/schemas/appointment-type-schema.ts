@@ -1,35 +1,34 @@
 import { z } from 'zod';
+import {
+  simpleMasterCodeSchema,
+  simpleMasterDescriptionSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const appointmentTypeNameSchema = z
-  .string({ error: 'Appointment type name is required' })
-  .trim()
-  .min(1, 'Appointment type name cannot be empty')
-  .max(100, 'Appointment type name must be at most 100 characters');
+const appointmentTypeNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Appointment type name',
+  maxMessage: 'Appointment type name must be at most 100 characters',
+  emptyMessage: 'Appointment type name cannot be empty',
+  requiredMessage: 'Appointment type name is required',
+});
 
-const appointmentTypeCodeSchema = z
-  .string({ error: 'Appointment type code is required' })
-  .trim()
-  .min(1, 'Appointment type code cannot be empty')
-  .max(10, 'Appointment type code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+const appointmentTypeCodeSchema = simpleMasterCodeSchema({
+  max: 10,
+  fieldName: 'Appointment type code',
+  maxMessage: 'Appointment type code must be at most 10 characters',
+  emptyMessage: 'Appointment type code cannot be empty',
+  requiredMessage: 'Appointment type code is required',
+});
 
-const appointmentTypeDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .nullable()
-  .transform((description) => {
-    if (description === null || description === '') {
-      return undefined;
-    }
-
-    return description;
-  });
+const appointmentTypeDescriptionSchema = simpleMasterDescriptionSchema({
+  maxMessage: 'Appointment type description must be at most 500 characters',
+});
 
 export const appointmentTypeIdSchema = z.coerce
   .number({ error: 'Appointment type ID is required' })

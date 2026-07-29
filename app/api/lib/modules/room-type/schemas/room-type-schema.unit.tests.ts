@@ -8,6 +8,9 @@ const validRoomType = {
   color: '#2563EB',
 };
 
+const errorsOf = (result: ReturnType<typeof createRoomTypeSchema.safeParse>) =>
+  result.error?.issues.map((issue) => issue.message) ?? [];
+
 describe('RoomType schema', () => {
   it('should trim the name, uppercase the code, and drop a blank description', () => {
     const result = createRoomTypeSchema.safeParse({
@@ -89,9 +92,29 @@ describe('RoomType schema', () => {
     expect(messages).toContain('Room type daily rate must be non-negative');
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(createRoomTypeSchema.safeParse({ ...validRoomType, description: 'a'.repeat(501) }))
+    ).toContain('Room type description must be at most 500 characters');
+  });
+
   it('should coerce a numeric id and reject a non-positive one', () => {
     expect(roomTypeIdSchema.safeParse('7')).toMatchObject({ success: true, data: 7 });
     expect(roomTypeIdSchema.safeParse('0').success).toBe(false);
     expect(roomTypeIdSchema.safeParse('abc').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(createRoomTypeSchema.safeParse({ name: 'In.Person', code: 'INP', color: '#2563EB' }))
+    ).toContain(
+      'Room type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createRoomTypeSchema.safeParse({ name: 'In Person', code: 'IN.P', color: '#2563EB' })
+      )
+    ).toContain('Room type code must contain only letters, numbers, hyphens, and underscores.');
   });
 });

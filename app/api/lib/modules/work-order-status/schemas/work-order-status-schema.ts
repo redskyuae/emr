@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  simpleMasterCodeSchema,
+  simpleMasterDescriptionSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 export const WORK_ORDER_STATUS_CATEGORIES = [
   'OPEN',
@@ -13,18 +18,21 @@ const tenantIdSchema = z
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const workOrderStatusNameSchema = z
-  .string({ error: 'Work order status name is required' })
-  .trim()
-  .min(1, 'Work order status name cannot be empty')
-  .max(100, 'Work order status name must be at most 100 characters');
+const workOrderStatusNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Work order status name',
+  maxMessage: 'Work order status name must be at most 100 characters',
+  emptyMessage: 'Work order status name cannot be empty',
+  requiredMessage: 'Work order status name is required',
+});
 
-const workOrderStatusCodeSchema = z
-  .string({ error: 'Work order status code is required' })
-  .trim()
-  .min(1, 'Work order status code cannot be empty')
-  .max(10, 'Work order status code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+const workOrderStatusCodeSchema = simpleMasterCodeSchema({
+  max: 10,
+  fieldName: 'Work order status code',
+  maxMessage: 'Work order status code must be at most 10 characters',
+  emptyMessage: 'Work order status code cannot be empty',
+  requiredMessage: 'Work order status code is required',
+});
 
 const workOrderStatusCategorySchema = z.enum(WORK_ORDER_STATUS_CATEGORIES, {
   error:
@@ -36,11 +44,9 @@ const workOrderStatusColorSchema = z
   .trim()
   .regex(/^#[0-9A-Fa-f]{6}$/, 'Work order status color must be a hex value like #16A34A.');
 
-const workOrderStatusDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+const workOrderStatusDescriptionSchema = simpleMasterDescriptionSchema({
+  maxMessage: 'Work order status description must be at most 500 characters',
+});
 
 export const workOrderStatusIdSchema = z.coerce
   .number({ error: 'Work order status ID is required' })

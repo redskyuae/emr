@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  nullableToOptionalSimpleMasterDescriptionSchema,
+  simpleMasterCodeSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 import { CHARGE_ITEM_CATEGORIES } from '@/app/db/schema/charge-item';
 
@@ -7,18 +12,21 @@ const tenantIdSchema = z
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const chargeItemNameSchema = z
-  .string({ error: 'Charge item name is required' })
-  .trim()
-  .min(1, 'Charge item name cannot be empty')
-  .max(150, 'Charge item name must be at most 150 characters');
+const chargeItemNameSchema = simpleMasterNameSchema({
+  max: 150,
+  fieldName: 'Charge item name',
+  maxMessage: 'Charge item name must be at most 150 characters',
+  emptyMessage: 'Charge item name cannot be empty',
+  requiredMessage: 'Charge item name is required',
+});
 
-const chargeItemCodeSchema = z
-  .string({ error: 'Charge item code is required' })
-  .trim()
-  .min(1, 'Charge item code cannot be empty')
-  .max(20, 'Charge item code must be at most 20 characters')
-  .transform((code) => code.toUpperCase());
+const chargeItemCodeSchema = simpleMasterCodeSchema({
+  max: 20,
+  fieldName: 'Charge item code',
+  maxMessage: 'Charge item code must be at most 20 characters',
+  emptyMessage: 'Charge item code cannot be empty',
+  requiredMessage: 'Charge item code is required',
+});
 
 const chargeItemCategorySchema = z.enum(CHARGE_ITEM_CATEGORIES, {
   error: `Charge item category must be one of ${CHARGE_ITEM_CATEGORIES.join(', ')}`,
@@ -37,18 +45,9 @@ const chargeItemUnitPriceSchema = z.preprocess(
     .transform((value) => Math.round(value * 100) / 100)
 );
 
-const chargeItemDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .nullable()
-  .transform((description) => {
-    if (description === null || description === '') {
-      return undefined;
-    }
-
-    return description;
-  });
+const chargeItemDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
+  maxMessage: 'Charge item description must be at most 500 characters',
+});
 
 const chargeItemIsActiveSchema = z.boolean().optional().default(true);
 

@@ -138,7 +138,7 @@ export function RoleFormSheet({
     (mode === 'edit' && rolePermissionsQuery.isLoading && !rolePermissionsQuery.data);
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const description = values.description.trim();
+    const description = values.description?.trim() || undefined;
     const permissionIds = values.permissionIds;
     setServerErrors([]);
 

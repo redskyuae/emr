@@ -1,35 +1,34 @@
 import { z } from 'zod';
+import {
+  simpleMasterCodeSchema,
+  simpleMasterDescriptionSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const appointmentCancelledReasonNameSchema = z
-  .string({ error: 'Appointment cancelled reason name is required' })
-  .trim()
-  .min(1, 'Appointment cancelled reason name cannot be empty')
-  .max(100, 'Appointment cancelled reason name must be at most 100 characters');
+const appointmentCancelledReasonNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Appointment cancelled reason name',
+  maxMessage: 'Appointment cancelled reason name must be at most 100 characters',
+  emptyMessage: 'Appointment cancelled reason name cannot be empty',
+  requiredMessage: 'Appointment cancelled reason name is required',
+});
 
-const appointmentCancelledReasonCodeSchema = z
-  .string({ error: 'Appointment cancelled reason code is required' })
-  .trim()
-  .min(1, 'Appointment cancelled reason code cannot be empty')
-  .max(10, 'Appointment cancelled reason code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+const appointmentCancelledReasonCodeSchema = simpleMasterCodeSchema({
+  max: 10,
+  fieldName: 'Appointment cancelled reason code',
+  maxMessage: 'Appointment cancelled reason code must be at most 10 characters',
+  emptyMessage: 'Appointment cancelled reason code cannot be empty',
+  requiredMessage: 'Appointment cancelled reason code is required',
+});
 
-const appointmentCancelledReasonDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .nullable()
-  .transform((description) => {
-    if (description === null || description === '') {
-      return undefined;
-    }
-
-    return description;
-  });
+const appointmentCancelledReasonDescriptionSchema = simpleMasterDescriptionSchema({
+  maxMessage: 'Appointment cancelled reason description must be at most 500 characters',
+});
 
 export const appointmentCancelledReasonIdSchema = z.coerce
   .number({ error: 'Appointment cancelled reason ID is required' })

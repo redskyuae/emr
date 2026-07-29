@@ -83,6 +83,18 @@ describe('AppointmentCancelledReason schema', () => {
     ).toBeUndefined();
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createAppointmentCancelledReasonSchema.safeParse({
+          name: 'Patient Request',
+          code: 'PAT',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Appointment cancelled reason description must be at most 500 characters');
+  });
+
   it('should validate appointment cancelled reason id is positive integer', () => {
     expect(appointmentCancelledReasonIdSchema.safeParse('1').success).toBe(true);
     expect(appointmentCancelledReasonIdSchema.safeParse('0').success).toBe(false);
@@ -92,5 +104,21 @@ describe('AppointmentCancelledReason schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(appointmentCancelledReasonTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(appointmentCancelledReasonTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(createAppointmentCancelledReasonSchema.safeParse({ name: 'In.Person', code: 'INP' }))
+    ).toContain(
+      'Appointment cancelled reason name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createAppointmentCancelledReasonSchema.safeParse({ name: 'In Person', code: 'IN.P' })
+      )
+    ).toContain(
+      'Appointment cancelled reason code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

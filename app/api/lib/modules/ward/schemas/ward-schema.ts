@@ -1,35 +1,34 @@
 import { z } from 'zod';
+import {
+  nullableToOptionalSimpleMasterDescriptionSchema,
+  simpleMasterCodeSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const wardNameSchema = z
-  .string({ error: 'Ward name is required' })
-  .trim()
-  .min(1, 'Ward name cannot be empty')
-  .max(100, 'Ward name must be at most 100 characters');
+const wardNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Ward name',
+  maxMessage: 'Ward name must be at most 100 characters',
+  emptyMessage: 'Ward name cannot be empty',
+  requiredMessage: 'Ward name is required',
+});
 
-const wardCodeSchema = z
-  .string({ error: 'Ward code is required' })
-  .trim()
-  .min(1, 'Ward code cannot be empty')
-  .max(10, 'Ward code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+const wardCodeSchema = simpleMasterCodeSchema({
+  max: 10,
+  fieldName: 'Ward code',
+  maxMessage: 'Ward code must be at most 10 characters',
+  emptyMessage: 'Ward code cannot be empty',
+  requiredMessage: 'Ward code is required',
+});
 
-const wardDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .nullable()
-  .transform((description) => {
-    if (description === null || description === '') {
-      return undefined;
-    }
-
-    return description;
-  });
+const wardDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
+  maxMessage: 'Ward description must be at most 500 characters',
+});
 
 export const wardIdSchema = z.coerce
   .number({ error: 'Ward ID is required' })

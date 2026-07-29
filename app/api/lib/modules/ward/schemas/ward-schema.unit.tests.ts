@@ -79,6 +79,18 @@ describe('Ward schema', () => {
     });
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createWardSchema.safeParse({
+          name: 'General Ward',
+          code: 'GEN',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Ward description must be at most 500 characters');
+  });
+
   it('should validate id is a positive integer and tenant id is non-empty', () => {
     expect(wardIdSchema.safeParse('0').success).toBe(false);
     expect(wardIdSchema.safeParse('-1').success).toBe(false);
@@ -87,5 +99,15 @@ describe('Ward schema', () => {
     expect(wardIdSchema.parse('7')).toBe(7);
     expect(wardTenantIdSchema.safeParse('   ').success).toBe(false);
     expect(wardTenantIdSchema.parse(' tenant-1 ')).toBe('tenant-1');
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(errorsOf(createWardSchema.safeParse({ name: 'In.Person', code: 'INP' }))).toContain(
+      'Ward name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(errorsOf(createWardSchema.safeParse({ name: 'In Person', code: 'IN.P' }))).toContain(
+      'Ward code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

@@ -131,6 +131,17 @@ describe('DoctorRota commands', () => {
     });
   });
 
+  it('should map Postgres unique constraint 23505 for time range index to conflict error', async () => {
+    repo.createDoctorRota.mockRejectedValue({
+      cause: { code: '23505', constraint: 'doctor_rota_tenant_time_range_idx' },
+    });
+    await expect(createDoctorRotaCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Doctor rota already exists for the selected time range.'],
+    });
+  });
+
   it('should rethrow unknown repository errors', async () => {
     const error = new Error('database down');
     repo.createDoctorRota.mockRejectedValue(error);

@@ -68,4 +68,28 @@ describe('createSpecialtySchema', () => {
       errors: ['Specialty abc is Invalid.'],
     });
   });
+
+  it('should return validation error when description exceeds 500 characters', () => {
+    const result = createSpecialtySchema.safeParse({
+      name: 'Cardiology',
+      code: 'CARD',
+      description: 'a'.repeat(501),
+    });
+
+    expect(result.error?.issues.map((issue) => issue.message)).toContain(
+      'Specialty description must be at most 500 characters'
+    );
+  });
+
+  it('should reject unsupported characters in specialty name and code', () => {
+    const invalidName = createSpecialtySchema.safeParse({ name: 'Cardiology.' });
+    const invalidCode = createSpecialtySchema.safeParse({ name: 'Cardiology', code: 'CAR.D' });
+
+    expect(invalidName.error?.issues.map((issue) => issue.message)).toContain(
+      'Specialty name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+    expect(invalidCode.error?.issues.map((issue) => issue.message)).toContain(
+      'Specialty code must contain only letters, numbers, hyphens, and underscores.'
+    );
+  });
 });

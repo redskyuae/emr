@@ -154,9 +154,33 @@ async function findActiveByName(
   return doctorRota;
 }
 
+async function findActiveByTimeRange(
+  tenantId: string,
+  fromTime: string,
+  toTime: string,
+  { excludeId }: { excludeId?: number } = {}
+): Promise<DoctorRota | undefined> {
+  const [doctorRota] = await db
+    .select(doctorRotaColumns)
+    .from(doctorRotaTable)
+    .where(
+      and(
+        eq(doctorRotaTable.tenantId, tenantId),
+        eq(doctorRotaTable.isDeleted, false),
+        eq(doctorRotaTable.toTime, toTime),
+        eq(doctorRotaTable.fromTime, fromTime),
+        excludeId ? ne(doctorRotaTable.id, excludeId) : undefined
+      )
+    )
+    .limit(1);
+
+  return doctorRota;
+}
+
 export const doctorRotaRepository = {
   findActiveByName,
   getDoctorRotas,
+  findActiveByTimeRange,
   createDoctorRota,
   updateDoctorRota,
   deleteDoctorRota,

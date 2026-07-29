@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  simpleMasterCodeSchema,
+  simpleMasterDescriptionSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 export const APPOINTMENT_STATUS_CATEGORIES = [
   'SCHEDULED',
@@ -14,24 +19,25 @@ const tenantIdSchema = z
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const appointmentStatusNameSchema = z
-  .string({ error: 'Appointment status name is required' })
-  .trim()
-  .min(1, 'Appointment status name cannot be empty')
-  .max(100, 'Appointment status name must be at most 100 characters');
+const appointmentStatusNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Appointment status name',
+  maxMessage: 'Appointment status name must be at most 100 characters',
+  emptyMessage: 'Appointment status name cannot be empty',
+  requiredMessage: 'Appointment status name is required',
+});
 
-const appointmentStatusCodeSchema = z
-  .string({ error: 'Appointment status code is required' })
-  .trim()
-  .min(1, 'Appointment status code cannot be empty')
-  .max(10, 'Appointment status code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+const appointmentStatusCodeSchema = simpleMasterCodeSchema({
+  max: 10,
+  fieldName: 'Appointment status code',
+  maxMessage: 'Appointment status code must be at most 10 characters',
+  emptyMessage: 'Appointment status code cannot be empty',
+  requiredMessage: 'Appointment status code is required',
+});
 
-const appointmentStatusDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+const appointmentStatusDescriptionSchema = simpleMasterDescriptionSchema({
+  maxMessage: 'Appointment status description must be at most 500 characters',
+});
 
 const appointmentStatusCategorySchema = z.enum(APPOINTMENT_STATUS_CATEGORIES, {
   error:

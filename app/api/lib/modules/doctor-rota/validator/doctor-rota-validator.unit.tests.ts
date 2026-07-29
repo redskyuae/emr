@@ -11,6 +11,7 @@ import { validateUpdateDoctorRota } from './update-doctor-rota-validator';
 vi.mock('../repository/doctor-rota-repository', () => ({
   doctorRotaRepository: {
     findActiveByName: vi.fn(),
+    findActiveByTimeRange: vi.fn(),
     getDoctorRotaById: vi.fn(),
   },
 }));
@@ -31,6 +32,7 @@ describe('DoctorRota validators', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     repo.findActiveByName.mockResolvedValue(undefined);
+    repo.findActiveByTimeRange.mockResolvedValue(undefined);
     repo.getDoctorRotaById.mockResolvedValue(existing);
   });
 
@@ -45,6 +47,7 @@ describe('DoctorRota validators', () => {
   it('should not call uniqueness repository checks when schema validation fails', async () => {
     await validateCreateDoctorRota({}, 'tenant-1');
     expect(repo.findActiveByName).not.toHaveBeenCalled();
+    expect(repo.findActiveByTimeRange).not.toHaveBeenCalled();
   });
 
   it('should return conflict when active doctor rota name already exists for tenant', async () => {
@@ -60,6 +63,19 @@ describe('DoctorRota validators', () => {
     });
   });
 
+  it('should return conflict when active doctor rota time range already exists for tenant', async () => {
+    repo.findActiveByTimeRange.mockResolvedValue(existing);
+    const result = await validateCreateDoctorRota(
+      { name: 'Clinic Rota', fromTime: '09:00', toTime: '13:00' },
+      'tenant-1'
+    );
+    expect(result).toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Doctor rota already exists for the selected time range.'],
+    });
+  });
+
   it('should pass exclude id during update uniqueness checks', async () => {
     await validateUpdateDoctorRota(
       '7',
@@ -67,6 +83,9 @@ describe('DoctorRota validators', () => {
       'tenant-1'
     );
     expect(repo.findActiveByName).toHaveBeenCalledWith('tenant-1', 'Afternoon Rota', {
+      excludeId: 7,
+    });
+    expect(repo.findActiveByTimeRange).toHaveBeenCalledWith('tenant-1', '13:00', '17:00', {
       excludeId: 7,
     });
   });
@@ -86,6 +105,7 @@ describe('DoctorRota validators', () => {
     });
     expect(repo.getDoctorRotaById).not.toHaveBeenCalled();
     expect(repo.findActiveByName).not.toHaveBeenCalled();
+    expect(repo.findActiveByTimeRange).not.toHaveBeenCalled();
   });
 
   it('should return conflict when update name already exists and preserve conflict status', async () => {
@@ -99,6 +119,20 @@ describe('DoctorRota validators', () => {
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ["Doctor rota name 'Morning Rota' already exists."],
+    });
+  });
+
+  it('should return conflict when update time range already exists and preserve conflict status', async () => {
+    repo.findActiveByTimeRange.mockResolvedValue(existing);
+    const result = await validateUpdateDoctorRota(
+      '1',
+      { name: 'Clinic Rota', fromTime: '09:00', toTime: '13:00' },
+      'tenant-1'
+    );
+    expect(result).toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Doctor rota already exists for the selected time range.'],
     });
   });
 

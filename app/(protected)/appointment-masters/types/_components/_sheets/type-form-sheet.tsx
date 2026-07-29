@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 export type TypeFormValues = {
   name: string;
   code: string;
-  description?: string | null;
+  description?: string;
 };
 
 export function TypeFormSheet({

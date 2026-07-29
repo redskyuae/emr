@@ -97,6 +97,19 @@ describe('AssetCategory schema', () => {
     ).toBeUndefined();
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createAssetCategorySchema.safeParse({
+          name: 'Medical Equipment',
+          code: 'MED',
+          color: '#2563EB',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Asset category description must be at most 500 characters');
+  });
+
   it('should validate asset category id is positive integer', () => {
     expect(assetCategoryIdSchema.safeParse('1').success).toBe(true);
     expect(assetCategoryIdSchema.safeParse('0').success).toBe(false);
@@ -106,5 +119,23 @@ describe('AssetCategory schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(assetCategoryTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(assetCategoryTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(
+        createAssetCategorySchema.safeParse({ name: 'In.Person', code: 'INP', color: '#2563EB' })
+      )
+    ).toContain(
+      'Asset category name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createAssetCategorySchema.safeParse({ name: 'In Person', code: 'IN.P', color: '#2563EB' })
+      )
+    ).toContain(
+      'Asset category code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

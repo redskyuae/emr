@@ -71,6 +71,18 @@ describe('AppointmentReason schema', () => {
     ).toBeUndefined();
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createAppointmentReasonSchema.safeParse({
+          name: 'Checkup',
+          code: 'CHK',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Appointment reason description must be at most 500 characters');
+  });
+
   it('should validate appointment reason id is positive integer', () => {
     expect(appointmentReasonIdSchema.safeParse('1').success).toBe(true);
     expect(appointmentReasonIdSchema.safeParse('0').success).toBe(false);
@@ -80,5 +92,19 @@ describe('AppointmentReason schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(appointmentReasonTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(appointmentReasonTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(createAppointmentReasonSchema.safeParse({ name: 'In.Person', code: 'INP' }))
+    ).toContain(
+      'Appointment reason name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(createAppointmentReasonSchema.safeParse({ name: 'In Person', code: 'IN.P' }))
+    ).toContain(
+      'Appointment reason code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

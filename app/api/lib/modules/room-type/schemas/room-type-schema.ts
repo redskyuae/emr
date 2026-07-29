@@ -1,22 +1,30 @@
 import { z } from 'zod';
+import {
+  simpleMasterCodeSchema,
+  simpleMasterDescriptionSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const roomTypeNameSchema = z
-  .string({ error: 'Room type name is required' })
-  .trim()
-  .min(1, 'Room type name cannot be empty')
-  .max(100, 'Room type name must be at most 100 characters');
+const roomTypeNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Room type name',
+  maxMessage: 'Room type name must be at most 100 characters',
+  emptyMessage: 'Room type name cannot be empty',
+  requiredMessage: 'Room type name is required',
+});
 
-const roomTypeCodeSchema = z
-  .string({ error: 'Room type code is required' })
-  .trim()
-  .min(1, 'Room type code cannot be empty')
-  .max(10, 'Room type code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+const roomTypeCodeSchema = simpleMasterCodeSchema({
+  max: 10,
+  fieldName: 'Room type code',
+  maxMessage: 'Room type code must be at most 10 characters',
+  emptyMessage: 'Room type code cannot be empty',
+  requiredMessage: 'Room type code is required',
+});
 
 const roomTypeColorSchema = z
   .string({ error: 'Room type color is required' })
@@ -32,11 +40,9 @@ const roomTypeDailyRateSchema = z.preprocess(
     .optional()
 );
 
-const roomTypeDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+const roomTypeDescriptionSchema = simpleMasterDescriptionSchema({
+  maxMessage: 'Room type description must be at most 500 characters',
+});
 
 export const roomTypeIdSchema = z.coerce
   .number({ error: 'Room type ID is required' })

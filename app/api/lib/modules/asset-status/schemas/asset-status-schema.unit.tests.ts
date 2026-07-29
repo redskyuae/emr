@@ -97,6 +97,19 @@ describe('AssetStatus schema', () => {
     ).toBeUndefined();
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createAssetStatusSchema.safeParse({
+          name: 'Active',
+          code: 'ACT',
+          color: '#16A34A',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Asset status description must be at most 500 characters');
+  });
+
   it('should validate asset status id is positive integer', () => {
     expect(assetStatusIdSchema.safeParse('1').success).toBe(true);
     expect(assetStatusIdSchema.safeParse('0').success).toBe(false);
@@ -106,5 +119,21 @@ describe('AssetStatus schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(assetStatusTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(assetStatusTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(
+        createAssetStatusSchema.safeParse({ name: 'In.Person', code: 'INP', color: '#16A34A' })
+      )
+    ).toContain(
+      'Asset status name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createAssetStatusSchema.safeParse({ name: 'In Person', code: 'IN.P', color: '#16A34A' })
+      )
+    ).toContain('Asset status code must contain only letters, numbers, hyphens, and underscores.');
   });
 });

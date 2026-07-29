@@ -15,7 +15,9 @@ export async function validateCreateDoctorRota(
 
   const uniquenessResult = await validateDoctorRotaUniqueness({
     name: result.data.name,
+    toTime: result.data.toTime,
     tenantId,
+    fromTime: result.data.fromTime,
   });
 
   if (!uniquenessResult.success) {

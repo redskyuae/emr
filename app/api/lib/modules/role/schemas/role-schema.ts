@@ -1,32 +1,34 @@
 import { z } from 'zod';
+import {
+  nullableSimpleMasterDescriptionSchema,
+  simpleMasterCodeSchema,
+  simpleMasterDescriptionSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
-const roleNameSchema = z
-  .string({ error: 'Role name is required' })
-  .trim()
-  .min(1, 'Role name cannot be empty')
-  .max(100, 'Role name must be at most 100 characters');
+const roleNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Role name',
+  maxMessage: 'Role name must be at most 100 characters',
+  emptyMessage: 'Role name cannot be empty',
+  requiredMessage: 'Role name is required',
+});
 
-const roleCodeSchema = z
-  .string({ error: 'Role code is required' })
-  .trim()
-  .min(1, 'Role code cannot be empty')
-  .max(50, 'Role code must be at most 50 characters')
-  .transform((code) => code.toUpperCase());
+const roleCodeSchema = simpleMasterCodeSchema({
+  max: 50,
+  fieldName: 'Role code',
+  maxMessage: 'Role code must be at most 50 characters',
+  emptyMessage: 'Role code cannot be empty',
+  requiredMessage: 'Role code is required',
+});
 
-const roleDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+const roleDescriptionSchema = simpleMasterDescriptionSchema({
+  maxMessage: 'Role description must be at most 500 characters',
+});
 
-const nullableRoleDescriptionSchema = z.preprocess((value) => {
-  if (typeof value !== 'string') {
-    return value;
-  }
-
-  const trimmed = value.trim();
-  return trimmed === '' ? null : trimmed;
-}, z.string().nullable().optional());
+const nullableRoleDescriptionSchema = nullableSimpleMasterDescriptionSchema({
+  maxMessage: 'Role description must be at most 500 characters',
+});
 
 export const roleIdSchema = z.coerce
   .number({ error: 'Role ID is required' })

@@ -1,35 +1,34 @@
 import { z } from 'zod';
+import {
+  nullableToOptionalSimpleMasterDescriptionSchema,
+  simpleMasterCodeSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const visitTypeNameSchema = z
-  .string({ error: 'Visit type name is required' })
-  .trim()
-  .min(1, 'Visit type name cannot be empty')
-  .max(100, 'Visit type name must be at most 100 characters');
+const visitTypeNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Visit type name',
+  maxMessage: 'Visit type name must be at most 100 characters',
+  emptyMessage: 'Visit type name cannot be empty',
+  requiredMessage: 'Visit type name is required',
+});
 
-const visitTypeCodeSchema = z
-  .string({ error: 'Visit type code is required' })
-  .trim()
-  .min(1, 'Visit type code cannot be empty')
-  .max(10, 'Visit type code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+const visitTypeCodeSchema = simpleMasterCodeSchema({
+  max: 10,
+  fieldName: 'Visit type code',
+  maxMessage: 'Visit type code must be at most 10 characters',
+  emptyMessage: 'Visit type code cannot be empty',
+  requiredMessage: 'Visit type code is required',
+});
 
-const visitTypeDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .nullable()
-  .transform((description) => {
-    if (description === null || description === '') {
-      return undefined;
-    }
-
-    return description;
-  });
+const visitTypeDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
+  maxMessage: 'Visit type description must be at most 500 characters',
+});
 
 export const visitTypeIdSchema = z.coerce
   .number({ error: 'Visit type ID is required' })

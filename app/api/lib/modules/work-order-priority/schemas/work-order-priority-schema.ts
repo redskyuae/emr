@@ -1,33 +1,39 @@
 import { z } from 'zod';
+import {
+  simpleMasterCodeSchema,
+  simpleMasterDescriptionSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const workOrderPriorityNameSchema = z
-  .string({ error: 'Work order priority name is required' })
-  .trim()
-  .min(1, 'Work order priority name cannot be empty')
-  .max(100, 'Work order priority name must be at most 100 characters');
+const workOrderPriorityNameSchema = simpleMasterNameSchema({
+  max: 100,
+  fieldName: 'Work order priority name',
+  maxMessage: 'Work order priority name must be at most 100 characters',
+  emptyMessage: 'Work order priority name cannot be empty',
+  requiredMessage: 'Work order priority name is required',
+});
 
-const workOrderPriorityCodeSchema = z
-  .string({ error: 'Work order priority code is required' })
-  .trim()
-  .min(1, 'Work order priority code cannot be empty')
-  .max(10, 'Work order priority code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+const workOrderPriorityCodeSchema = simpleMasterCodeSchema({
+  max: 10,
+  fieldName: 'Work order priority code',
+  maxMessage: 'Work order priority code must be at most 10 characters',
+  emptyMessage: 'Work order priority code cannot be empty',
+  requiredMessage: 'Work order priority code is required',
+});
 
 const workOrderPriorityColorSchema = z
   .string({ error: 'Work order priority color is required' })
   .trim()
   .regex(/^#[0-9A-Fa-f]{6}$/, 'Work order priority color must be a hex value like #16A34A.');
 
-const workOrderPriorityDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+const workOrderPriorityDescriptionSchema = simpleMasterDescriptionSchema({
+  maxMessage: 'Work order priority description must be at most 500 characters',
+});
 
 export const workOrderPriorityIdSchema = z.coerce
   .number({ error: 'Work order priority ID is required' })

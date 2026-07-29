@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  simpleMasterCodeSchema,
+  simpleMasterNameSchema,
+} from '@/lib/validation/simple-master-fields';
 
 const ALLERGEN_CATEGORIES = ['drug', 'food', 'environmental', 'other'] as const;
 
@@ -7,18 +11,21 @@ const tenantIdSchema = z
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const allergenNameSchema = z
-  .string({ error: 'Allergen name is required' })
-  .trim()
-  .min(1, 'Allergen name cannot be empty')
-  .max(150, 'Allergen name must be at most 150 characters');
+const allergenNameSchema = simpleMasterNameSchema({
+  max: 150,
+  fieldName: 'Allergen name',
+  maxMessage: 'Allergen name must be at most 150 characters',
+  emptyMessage: 'Allergen name cannot be empty',
+  requiredMessage: 'Allergen name is required',
+});
 
-const allergenCodeSchema = z
-  .string({ error: 'Allergen code is required' })
-  .trim()
-  .min(1, 'Allergen code cannot be empty')
-  .max(20, 'Allergen code must be at most 20 characters')
-  .transform((code) => code.toUpperCase());
+const allergenCodeSchema = simpleMasterCodeSchema({
+  max: 20,
+  fieldName: 'Allergen code',
+  maxMessage: 'Allergen code must be at most 20 characters',
+  emptyMessage: 'Allergen code cannot be empty',
+  requiredMessage: 'Allergen code is required',
+});
 
 const allergenCategorySchema = z.enum(ALLERGEN_CATEGORIES, {
   error: 'Allergen category is invalid',
