@@ -1,0 +1,67 @@
+app/api/lib/modules/country/commands/create-country-command.ts
+  s_f02026c618937c::t_2b7af165390289 4,6-9,18,20-25,32-35,37
+app/api/lib/modules/country/commands/update-country-command.ts
+  s_f02026c618937c::t_a097ee3ccf0343 4,7-10,37-40,42-47,66-69,71
+app/api/lib/modules/country/validator/country-uniqueness-validator.ts
+  s_f02026c618937c::t_f2250dc5a3a4b0 1-66
+app/api/lib/modules/country/validator/country-validator.unit.tests.ts
+  s_f02026c618937c::t_85cee5b8ac2dbb 3-4,49-82
+app/api/lib/modules/language/commands/create-language-command.ts
+  s_f02026c618937c::t_4963f9b6e1f6d9 6-9,18,20-25,32-35,37
+app/api/lib/modules/language/commands/update-language-command.ts
+  s_f02026c618937c::t_f9250d55bc4c37 7-10,37-40,42-47,66-69,71
+app/api/lib/modules/language/validator/language-uniqueness-validator.ts
+  s_f02026c618937c::t_58d3105727f37e 1-66
+app/api/lib/modules/language/validator/language-validator.unit.tests.ts
+  s_f02026c618937c::t_13500fc2815f89 3-4,49-82
+app/api/lib/modules/nationality/validator/nationality-validator.unit.tests.ts
+  s_f02026c618937c::t_12ea4c10927b4c 3-4,49-88
+app/api/lib/modules/religion/commands/create-religion-command.ts
+  s_f02026c618937c::t_686d07f26c3b8c 4,6-9,18,20-25,32-35,37
+app/api/lib/modules/religion/commands/update-religion-command.ts
+  s_f02026c618937c::t_1e81841d465544 4,7-10,37-40,42-47,66-69,71
+app/api/lib/modules/religion/validator/religion-uniqueness-validator.ts
+  s_f02026c618937c::t_2b4081cb946231 1-66
+app/api/lib/modules/religion/validator/religion-validator.unit.tests.ts
+  s_f02026c618937c::t_99f6a4a7fc40a9 3-4,49-82
+app/api/lib/modules/state/validator/state-validator.unit.tests.ts
+  s_f02026c618937c::t_051818c5d55183 3,47-80
+app/api/lib/modules/country/commands/country-commands.unit.tests.ts
+  s_f02026c618937c::t_21e3167e61ae48 78-81,89-97
+app/api/lib/modules/language/commands/language-commands.unit.tests.ts
+  s_f02026c618937c::t_ef3e7614c983c0 78-81,89-97
+app/api/lib/modules/nationality/commands/create-nationality-command.ts
+  s_f02026c618937c::t_01a2b4495498da 6-9,20,22-27,34-37,39
+app/api/lib/modules/nationality/commands/nationality-commands.unit.tests.ts
+  s_f02026c618937c::t_aff241c9c1f07e 55,66,78-81,89-97
+app/api/lib/modules/nationality/commands/update-nationality-command.ts
+  s_f02026c618937c::t_2b15e1a0d3ca33 7-10,39-42,44-49,68-74,76
+app/api/lib/modules/nationality/validator/nationality-uniqueness-validator.ts
+  s_f02026c618937c::t_09ff6d806bbbc5 1-66
+app/api/lib/modules/religion/commands/religion-commands.unit.tests.ts
+  s_f02026c618937c::t_931bf51a53eacd 78-81,89-97
+app/api/lib/modules/state/commands/create-state-command.ts
+  s_f02026c618937c::t_585ced2137b0a9 7-10,19,21-27,29,31-37,39,52-55,58
+app/api/lib/modules/state/commands/state-commands.unit.tests.ts
+  s_f02026c618937c::t_295896e8447409 90-103,115-118
+app/api/lib/modules/state/commands/update-state-command.ts
+  s_f02026c618937c::t_aa7a66db4598d5 8-11,49-52,54,57-58,78-81,83
+app/api/lib/modules/state/validator/state-uniqueness-validator.ts
+  s_f02026c618937c::t_fd4617b2325ec0 1-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "c4fd68b6ff056e19e83a34d98dca562f89b8786d",
+  "prompts": {},
+  "sessions": {
+    "s_f02026c618937c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8dbbec98-7e6a-4f6e-b5bb-c045f7143c82",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Arun Selva Kumar <arun@joinassembly.com>"
+    }
+  }
+}
