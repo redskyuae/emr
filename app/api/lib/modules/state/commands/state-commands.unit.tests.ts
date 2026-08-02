@@ -87,7 +87,20 @@ describe('State commands', () => {
     expect(stateRepo.createState).toHaveBeenCalledWith(payload);
   });
 
-  it('should map a unique constraint 23505 on create to a conflict error', async () => {
+  it('should map a Drizzle-wrapped 23505 on create to a conflict error', async () => {
+    stateRepo.createState.mockRejectedValue(
+      new Error('insert failed', {
+        cause: { code: '23505', constraint: 'state_name_country_idx' },
+      })
+    );
+    await expect(createStateCommand(payload)).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['State name Maharashtra already exists for the selected country.'],
+    });
+  });
+
+  it('should map an unwrapped 23505 on create to a conflict error', async () => {
     stateRepo.createState.mockRejectedValue({
       code: '23505',
       constraint: 'state_name_country_idx',
@@ -99,13 +112,10 @@ describe('State commands', () => {
     });
   });
 
-  it('should wrap unknown create errors as internal errors', async () => {
-    stateRepo.createState.mockRejectedValue(new Error('database down'));
-    await expect(createStateCommand(payload)).resolves.toEqual({
-      success: false,
-      status: StatusCodes.INTERNAL_SERVER_ERROR,
-      errors: ['database down'],
-    });
+  it('should rethrow unknown create errors rather than leaking the database message', async () => {
+    const error = new Error('database down');
+    stateRepo.createState.mockRejectedValue(error);
+    await expect(createStateCommand(payload)).rejects.toThrow(error);
   });
 
   it('should return invalid-id error when updating with a bad id', async () => {

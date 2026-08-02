@@ -4,6 +4,10 @@ import type { Nationality } from '../schemas/nationality-schema';
 import { nationalityRepository } from '../repository/nationality-repository';
 import { validateNationalityId } from '../validator/nationality-id-validator';
 import { validateUpdateNationality } from '../validator/update-nationality-validator';
+import {
+  getNationalityUniqueConstraintErrors,
+  validateNationalityUniqueness,
+} from '../validator/nationality-uniqueness-validator';
 
 export async function updateNationalityCommand(
   id: unknown,
@@ -32,27 +36,17 @@ export async function updateNationalityCommand(
     };
   }
 
-  const [existingName, existingCode] = await Promise.all([
-    nationalityRepository.findActiveByName(payloadValidationResult.data.name, {
-      excludeId: idValidationResult.data,
-    }),
-    nationalityRepository.findActiveByCode(payloadValidationResult.data.code, {
-      excludeId: idValidationResult.data,
-    }),
-  ]);
+  const uniquenessResult = await validateNationalityUniqueness({
+    ...payloadValidationResult.data,
+    excludeId: idValidationResult.data,
+  });
 
-  const errors: string[] = [];
-
-  if (existingName) {
-    errors.push(`Nationality name ${payloadValidationResult.data.name} already exists.`);
-  }
-
-  if (existingCode) {
-    errors.push(`Nationality code ${payloadValidationResult.data.code} already exists.`);
-  }
-
-  if (errors.length > 0) {
-    return { success: false, errors, status: StatusCodes.CONFLICT };
+  if (!uniquenessResult.success) {
+    return {
+      success: false,
+      errors: uniquenessResult.errors,
+      status: uniquenessResult.status ?? StatusCodes.CONFLICT,
+    };
   }
 
   try {
@@ -71,23 +65,15 @@ export async function updateNationalityCommand(
 
     return { success: true, data: updatedNationality };
   } catch (error) {
-    const err = error as Record<string, unknown>;
-    if (err.code === '23505') {
-      const constraintErrors: string[] = [];
-      if (err.constraint === 'nationality_name_idx') {
-        constraintErrors.push(
-          `Nationality name ${payloadValidationResult.data.name} already exists.`
-        );
-      }
-      if (err.constraint === 'nationality_code_idx') {
-        constraintErrors.push(
-          `Nationality code ${payloadValidationResult.data.code} already exists.`
-        );
-      }
-      if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
-      }
+    const constraintErrors = getNationalityUniqueConstraintErrors(
+      error,
+      payloadValidationResult.data
+    );
+
+    if (constraintErrors.length > 0) {
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
+
     throw error;
   }
 }

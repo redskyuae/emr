@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { getNationalityUniqueConstraintErrors } from './nationality-uniqueness-validator';
+
 import { validateNationalityId } from './nationality-id-validator';
 import { validateCreateNationality } from './create-nationality-validator';
 import { validateUpdateNationality } from './update-nationality-validator';
@@ -42,5 +44,45 @@ describe('Nationality validators', () => {
       success: false,
       errors: ['NationalityId abc is Invalid'],
     });
+  });
+});
+
+describe('getNationalityUniqueConstraintErrors', () => {
+  const input = { name: 'Indian', code: 'IND' };
+
+  it('should map a Drizzle-wrapped name constraint violation to the duplicate name error', () => {
+    const wrapped = new Error('insert failed', {
+      cause: { code: '23505', constraint: 'nationality_name_idx' },
+    });
+
+    expect(getNationalityUniqueConstraintErrors(wrapped, input)).toEqual([
+      'Nationality name Indian already exists.',
+    ]);
+  });
+
+  it('should map an unwrapped code constraint violation to the duplicate code error', () => {
+    expect(
+      getNationalityUniqueConstraintErrors(
+        { code: '23505', constraint: 'nationality_code_idx' },
+        input
+      )
+    ).toEqual(['Nationality code IND already exists.']);
+  });
+
+  it('should return no errors for a unique violation on an unrelated constraint', () => {
+    expect(
+      getNationalityUniqueConstraintErrors(
+        { code: '23505', constraint: 'nationality_other_idx' },
+        input
+      )
+    ).toEqual([]);
+  });
+
+  it('should return no errors for a database error that is not a unique violation', () => {
+    expect(getNationalityUniqueConstraintErrors({ cause: { code: '23503' } }, input)).toEqual([]);
+  });
+
+  it('should return no errors for a non-database error', () => {
+    expect(getNationalityUniqueConstraintErrors(new Error('database down'), input)).toEqual([]);
   });
 });

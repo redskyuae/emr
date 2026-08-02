@@ -1,9 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
-import { religionRepository } from '../repository/religion-repository';
 import type { Religion } from '../schemas/religion-schema';
+import { religionRepository } from '../repository/religion-repository';
 import { validateReligionId } from '../validator/religion-id-validator';
 import { validateUpdateReligion } from '../validator/update-religion-validator';
+import {
+  getReligionUniqueConstraintErrors,
+  validateReligionUniqueness,
+} from '../validator/religion-uniqueness-validator';
 
 export async function updateReligionCommand(
   id: unknown,
@@ -30,27 +34,17 @@ export async function updateReligionCommand(
     };
   }
 
-  const [existingName, existingCode] = await Promise.all([
-    religionRepository.findActiveByName(payloadValidationResult.data.name, {
-      excludeId: idValidationResult.data,
-    }),
-    religionRepository.findActiveByCode(payloadValidationResult.data.code, {
-      excludeId: idValidationResult.data,
-    }),
-  ]);
+  const uniquenessResult = await validateReligionUniqueness({
+    ...payloadValidationResult.data,
+    excludeId: idValidationResult.data,
+  });
 
-  const errors: string[] = [];
-
-  if (existingName) {
-    errors.push(`Religion name ${payloadValidationResult.data.name} already exists.`);
-  }
-
-  if (existingCode) {
-    errors.push(`Religion code ${payloadValidationResult.data.code} already exists.`);
-  }
-
-  if (errors.length > 0) {
-    return { errors, success: false, status: StatusCodes.CONFLICT };
+  if (!uniquenessResult.success) {
+    return {
+      success: false,
+      errors: uniquenessResult.errors,
+      status: uniquenessResult.status ?? StatusCodes.CONFLICT,
+    };
   }
 
   try {
@@ -69,19 +63,12 @@ export async function updateReligionCommand(
 
     return { success: true, data: updatedReligion };
   } catch (error) {
-    const err = error as Record<string, unknown>;
-    if (err.code === '23505') {
-      const constraintErrors: string[] = [];
-      if (err.constraint === 'religion_name_idx') {
-        constraintErrors.push(`Religion name ${payloadValidationResult.data.name} already exists.`);
-      }
-      if (err.constraint === 'religion_code_idx') {
-        constraintErrors.push(`Religion code ${payloadValidationResult.data.code} already exists.`);
-      }
-      if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
-      }
+    const constraintErrors = getReligionUniqueConstraintErrors(error, payloadValidationResult.data);
+
+    if (constraintErrors.length > 0) {
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
+
     throw error;
   }
 }

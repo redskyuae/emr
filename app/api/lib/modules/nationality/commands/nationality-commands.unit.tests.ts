@@ -52,7 +52,7 @@ describe('Nationality commands', () => {
     expect(result).toEqual({
       success: false,
       status: StatusCodes.CONFLICT,
-      errors: ['Nationality name Indian already exists'],
+      errors: ['Nationality name Indian already exists.'],
     });
     expect(repo.createNationality).not.toHaveBeenCalled();
   });
@@ -63,7 +63,7 @@ describe('Nationality commands', () => {
     expect(result).toEqual({
       success: false,
       status: StatusCodes.CONFLICT,
-      errors: ['Nationality code IND already exists'],
+      errors: ['Nationality code IND already exists.'],
     });
   });
 
@@ -75,12 +75,23 @@ describe('Nationality commands', () => {
     expect(repo.createNationality).toHaveBeenCalledWith({ name: 'Indian', code: 'IND' });
   });
 
-  it('should map a unique constraint 23505 on create to a conflict error', async () => {
-    repo.createNationality.mockRejectedValue({ code: '23505', constraint: 'nationality_name_idx' });
+  it('should map a Drizzle-wrapped 23505 on create to a conflict error', async () => {
+    repo.createNationality.mockRejectedValue(
+      new Error('insert failed', { cause: { code: '23505', constraint: 'nationality_name_idx' } })
+    );
     await expect(createNationalityCommand({ name: 'Indian', code: 'IND' })).resolves.toEqual({
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['Nationality name Indian already exists.'],
+    });
+  });
+
+  it('should map an unwrapped 23505 on create to a conflict error', async () => {
+    repo.createNationality.mockRejectedValue({ code: '23505', constraint: 'nationality_code_idx' });
+    await expect(createNationalityCommand({ name: 'Indian', code: 'IND' })).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Nationality code IND already exists.'],
     });
   });
 

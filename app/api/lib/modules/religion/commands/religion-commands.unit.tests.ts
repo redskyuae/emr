@@ -75,12 +75,23 @@ describe('Religion commands', () => {
     expect(repo.createReligion).toHaveBeenCalledWith({ name: 'Hindu', code: 'HIN' });
   });
 
-  it('should map a unique constraint 23505 on create to a conflict error', async () => {
-    repo.createReligion.mockRejectedValue({ code: '23505', constraint: 'religion_name_idx' });
+  it('should map a Drizzle-wrapped 23505 on create to a conflict error', async () => {
+    repo.createReligion.mockRejectedValue(
+      new Error('insert failed', { cause: { code: '23505', constraint: 'religion_name_idx' } })
+    );
     await expect(createReligionCommand({ name: 'Hindu', code: 'HIN' })).resolves.toEqual({
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['Religion name Hindu already exists.'],
+    });
+  });
+
+  it('should map an unwrapped 23505 on create to a conflict error', async () => {
+    repo.createReligion.mockRejectedValue({ code: '23505', constraint: 'religion_code_idx' });
+    await expect(createReligionCommand({ name: 'Hindu', code: 'HIN' })).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Religion code HIN already exists.'],
     });
   });
 

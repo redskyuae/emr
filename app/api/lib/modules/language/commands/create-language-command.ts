@@ -3,6 +3,10 @@ import type { CommandResult } from '@/app/api/lib/utils/types';
 import type { Language } from '../schemas/language-schema';
 import { languageRepository } from '../repository/language-repository';
 import { validateCreateLanguage } from '../validator/create-language-validator';
+import {
+  getLanguageUniqueConstraintErrors,
+  validateLanguageUniqueness,
+} from '../validator/language-uniqueness-validator';
 
 export async function createLanguageCommand(payload: unknown): Promise<CommandResult<Language>> {
   const validationResult = validateCreateLanguage(payload);
@@ -11,42 +15,26 @@ export async function createLanguageCommand(payload: unknown): Promise<CommandRe
     return { success: false, errors: validationResult.errors };
   }
 
-  const [existingName, existingCode] = await Promise.all([
-    languageRepository.findActiveByName(validationResult.data.name),
-    languageRepository.findActiveByCode(validationResult.data.code),
-  ]);
+  const uniquenessResult = await validateLanguageUniqueness(validationResult.data);
 
-  const errors: string[] = [];
-
-  if (existingName) {
-    errors.push(`Language name ${validationResult.data.name} already exists.`);
-  }
-
-  if (existingCode) {
-    errors.push(`Language code ${validationResult.data.code} already exists.`);
-  }
-
-  if (errors.length > 0) {
-    return { success: false, errors, status: StatusCodes.CONFLICT };
+  if (!uniquenessResult.success) {
+    return {
+      success: false,
+      errors: uniquenessResult.errors,
+      status: uniquenessResult.status ?? StatusCodes.CONFLICT,
+    };
   }
 
   try {
     const createdLanguage = await languageRepository.createLanguage(validationResult.data);
     return { success: true, data: createdLanguage };
   } catch (error) {
-    const err = error as Record<string, unknown>;
-    if (err.code === '23505') {
-      const constraintErrors: string[] = [];
-      if (err.constraint === 'language_name_idx') {
-        constraintErrors.push(`Language name ${validationResult.data.name} already exists.`);
-      }
-      if (err.constraint === 'language_code_idx') {
-        constraintErrors.push(`Language code ${validationResult.data.code} already exists.`);
-      }
-      if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
-      }
+    const constraintErrors = getLanguageUniqueConstraintErrors(error, validationResult.data);
+
+    if (constraintErrors.length > 0) {
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
+
     throw error;
   }
 }

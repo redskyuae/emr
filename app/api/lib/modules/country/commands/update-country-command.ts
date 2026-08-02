@@ -1,9 +1,13 @@
 import { StatusCodes } from 'http-status-codes';
 import type { CommandResult } from '@/app/api/lib/utils/types';
-import { countryRepository } from '../repository/country-repository';
 import type { Country } from '../schemas/country-schema';
+import { countryRepository } from '../repository/country-repository';
 import { validateCountryId } from '../validator/country-id-validator';
 import { validateUpdateCountry } from '../validator/update-country-validator';
+import {
+  getCountryUniqueConstraintErrors,
+  validateCountryUniqueness,
+} from '../validator/country-uniqueness-validator';
 
 export async function updateCountryCommand(
   id: unknown,
@@ -30,27 +34,17 @@ export async function updateCountryCommand(
     };
   }
 
-  const [existingName, existingCode] = await Promise.all([
-    countryRepository.findActiveByName(payloadValidationResult.data.name, {
-      excludeId: idValidationResult.data,
-    }),
-    countryRepository.findActiveByCode(payloadValidationResult.data.code, {
-      excludeId: idValidationResult.data,
-    }),
-  ]);
+  const uniquenessResult = await validateCountryUniqueness({
+    ...payloadValidationResult.data,
+    excludeId: idValidationResult.data,
+  });
 
-  const errors: string[] = [];
-
-  if (existingName) {
-    errors.push(`Country name ${payloadValidationResult.data.name} already exists.`);
-  }
-
-  if (existingCode) {
-    errors.push(`Country code ${payloadValidationResult.data.code} already exists.`);
-  }
-
-  if (errors.length > 0) {
-    return { success: false, errors, status: StatusCodes.CONFLICT };
+  if (!uniquenessResult.success) {
+    return {
+      success: false,
+      errors: uniquenessResult.errors,
+      status: uniquenessResult.status ?? StatusCodes.CONFLICT,
+    };
   }
 
   try {
@@ -69,19 +63,12 @@ export async function updateCountryCommand(
 
     return { success: true, data: updatedCountry };
   } catch (error) {
-    const err = error as Record<string, unknown>;
-    if (err.code === '23505') {
-      const constraintErrors: string[] = [];
-      if (err.constraint === 'country_name_idx') {
-        constraintErrors.push(`Country name ${payloadValidationResult.data.name} already exists.`);
-      }
-      if (err.constraint === 'country_code_idx') {
-        constraintErrors.push(`Country code ${payloadValidationResult.data.code} already exists.`);
-      }
-      if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
-      }
+    const constraintErrors = getCountryUniqueConstraintErrors(error, payloadValidationResult.data);
+
+    if (constraintErrors.length > 0) {
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
+
     throw error;
   }
 }

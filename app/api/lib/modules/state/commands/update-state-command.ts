@@ -5,6 +5,10 @@ import { stateRepository } from '../repository/state-repository';
 import type { State } from '../schemas/state-schema';
 import { validateStateId } from '../validator/state-id-validator';
 import { validateUpdateState } from '../validator/update-state-validator';
+import {
+  getStateUniqueConstraintErrors,
+  validateStateUniqueness,
+} from '../validator/state-uniqueness-validator';
 
 export async function updateStateCommand(
   id: unknown,
@@ -42,19 +46,16 @@ export async function updateStateCommand(
     };
   }
 
-  const duplicateState = await stateRepository.findActiveByNameAndCountry(
-    payloadValidationResult.data.name,
-    payloadValidationResult.data.countryId,
-    { excludeId: idValidationResult.data }
-  );
+  const uniquenessResult = await validateStateUniqueness({
+    ...payloadValidationResult.data,
+    excludeId: idValidationResult.data,
+  });
 
-  if (duplicateState) {
+  if (!uniquenessResult.success) {
     return {
       success: false,
-      errors: [
-        `State name ${payloadValidationResult.data.name} already exists for the selected country.`,
-      ],
-      status: StatusCodes.CONFLICT,
+      errors: uniquenessResult.errors,
+      status: uniquenessResult.status ?? StatusCodes.CONFLICT,
     };
   }
 
@@ -74,16 +75,12 @@ export async function updateStateCommand(
 
     return { success: true, data: updatedState };
   } catch (error) {
-    const err = error as Record<string, unknown>;
-    if (err.code === '23505' && err.constraint === 'state_name_country_idx') {
-      return {
-        success: false,
-        errors: [
-          `State name ${payloadValidationResult.data.name} already exists for the selected country.`,
-        ],
-        status: StatusCodes.CONFLICT,
-      };
+    const constraintErrors = getStateUniqueConstraintErrors(error, payloadValidationResult.data);
+
+    if (constraintErrors.length > 0) {
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
+
     throw error;
   }
 }

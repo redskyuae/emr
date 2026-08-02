@@ -75,12 +75,23 @@ describe('Language commands', () => {
     expect(repo.createLanguage).toHaveBeenCalledWith({ name: 'English', code: 'EN' });
   });
 
-  it('should map a unique constraint 23505 on create to a conflict error', async () => {
-    repo.createLanguage.mockRejectedValue({ code: '23505', constraint: 'language_name_idx' });
+  it('should map a Drizzle-wrapped 23505 on create to a conflict error', async () => {
+    repo.createLanguage.mockRejectedValue(
+      new Error('insert failed', { cause: { code: '23505', constraint: 'language_name_idx' } })
+    );
     await expect(createLanguageCommand({ name: 'English', code: 'EN' })).resolves.toEqual({
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['Language name English already exists.'],
+    });
+  });
+
+  it('should map an unwrapped 23505 on create to a conflict error', async () => {
+    repo.createLanguage.mockRejectedValue({ code: '23505', constraint: 'language_code_idx' });
+    await expect(createLanguageCommand({ name: 'English', code: 'EN' })).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Language code EN already exists.'],
     });
   });
 

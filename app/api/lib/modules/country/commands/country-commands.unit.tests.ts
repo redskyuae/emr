@@ -75,12 +75,23 @@ describe('Country commands', () => {
     expect(repo.createCountry).toHaveBeenCalledWith({ name: 'India', code: 'IND' });
   });
 
-  it('should map a unique constraint 23505 on create to a conflict error', async () => {
-    repo.createCountry.mockRejectedValue({ code: '23505', constraint: 'country_name_idx' });
+  it('should map a Drizzle-wrapped 23505 on create to a conflict error', async () => {
+    repo.createCountry.mockRejectedValue(
+      new Error('insert failed', { cause: { code: '23505', constraint: 'country_name_idx' } })
+    );
     await expect(createCountryCommand({ name: 'India', code: 'IND' })).resolves.toEqual({
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['Country name India already exists.'],
+    });
+  });
+
+  it('should map an unwrapped 23505 on create to a conflict error', async () => {
+    repo.createCountry.mockRejectedValue({ code: '23505', constraint: 'country_code_idx' });
+    await expect(createCountryCommand({ name: 'India', code: 'IND' })).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Country code IND already exists.'],
     });
   });
 

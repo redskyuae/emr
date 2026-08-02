@@ -4,6 +4,10 @@ import type { Language } from '../schemas/language-schema';
 import { languageRepository } from '../repository/language-repository';
 import { validateLanguageId } from '../validator/language-id-validator';
 import { validateUpdateLanguage } from '../validator/update-language-validator';
+import {
+  getLanguageUniqueConstraintErrors,
+  validateLanguageUniqueness,
+} from '../validator/language-uniqueness-validator';
 
 export async function updateLanguageCommand(
   id: unknown,
@@ -30,27 +34,17 @@ export async function updateLanguageCommand(
     };
   }
 
-  const [existingName, existingCode] = await Promise.all([
-    languageRepository.findActiveByName(payloadValidationResult.data.name, {
-      excludeId: idValidationResult.data,
-    }),
-    languageRepository.findActiveByCode(payloadValidationResult.data.code, {
-      excludeId: idValidationResult.data,
-    }),
-  ]);
+  const uniquenessResult = await validateLanguageUniqueness({
+    ...payloadValidationResult.data,
+    excludeId: idValidationResult.data,
+  });
 
-  const errors: string[] = [];
-
-  if (existingName) {
-    errors.push(`Language name ${payloadValidationResult.data.name} already exists.`);
-  }
-
-  if (existingCode) {
-    errors.push(`Language code ${payloadValidationResult.data.code} already exists.`);
-  }
-
-  if (errors.length > 0) {
-    return { success: false, errors, status: StatusCodes.CONFLICT };
+  if (!uniquenessResult.success) {
+    return {
+      success: false,
+      errors: uniquenessResult.errors,
+      status: uniquenessResult.status ?? StatusCodes.CONFLICT,
+    };
   }
 
   try {
@@ -69,19 +63,12 @@ export async function updateLanguageCommand(
 
     return { success: true, data: updatedLanguage };
   } catch (error) {
-    const err = error as Record<string, unknown>;
-    if (err.code === '23505') {
-      const constraintErrors: string[] = [];
-      if (err.constraint === 'language_name_idx') {
-        constraintErrors.push(`Language name ${payloadValidationResult.data.name} already exists.`);
-      }
-      if (err.constraint === 'language_code_idx') {
-        constraintErrors.push(`Language code ${payloadValidationResult.data.code} already exists.`);
-      }
-      if (constraintErrors.length > 0) {
-        return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
-      }
+    const constraintErrors = getLanguageUniqueConstraintErrors(error, payloadValidationResult.data);
+
+    if (constraintErrors.length > 0) {
+      return { success: false, errors: constraintErrors, status: StatusCodes.CONFLICT };
     }
+
     throw error;
   }
 }
