@@ -181,15 +181,15 @@ describe('DoctorRota repository', () => {
 
   it('should search LIKE wildcard characters as literals', async () => {
     await createRota(tenantA, '100% Rota');
-    await createRota(tenantA, '100X Rota');
+    await createRota(tenantA, '100X Rota', '13:00', '17:00');
     const result = await doctorRotaRepository.getDoctorRotas({ tenantId: tenantA, query: '%' });
     expect(result.data.map((rota) => rota.name)).toEqual(['100% Rota']);
   });
 
   it('should paginate list results and return total', async () => {
-    await createRota(tenantA, 'Alpha');
-    await createRota(tenantA, 'Bravo');
-    await createRota(tenantA, 'Charlie');
+    await createRota(tenantA, 'Alpha', '09:00', '13:00');
+    await createRota(tenantA, 'Bravo', '13:00', '17:00');
+    await createRota(tenantA, 'Charlie', '17:00', '21:00');
     const result = await doctorRotaRepository.getDoctorRotas({
       tenantId: tenantA,
       page: 2,
