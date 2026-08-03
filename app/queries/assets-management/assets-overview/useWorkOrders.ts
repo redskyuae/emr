@@ -4,26 +4,11 @@ import { parseApiError } from '@/app/queries/api-error';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import type { ListWorkOrdersResponse } from '@/app/api/v1/work-orders/types';
 
-type WorkOrdersParams = {
-  query?: string;
-  limit?: number;
-};
+const ATTENTION_DISPLAY_LIMIT = 10;
+const UPCOMING_MAINTENANCE_DISPLAY_LIMIT = 5;
 
-export const ALL_WORK_ORDERS_PARAMS: WorkOrdersParams = { limit: 999 };
-
-const workOrdersQueryKey = ['work-orders'] as const;
-
-const workOrdersParamQueryKey = (params: WorkOrdersParams) =>
-  [...workOrdersQueryKey, params] as const;
-
-async function fetchWorkOrdersPage(
-  params: WorkOrdersParams & { page: number }
-): Promise<ListWorkOrdersResponse> {
-  const searchParams = new URLSearchParams();
-
-  searchParams.set('page', String(params.page));
-  searchParams.set('limit', String(params.limit ?? 999));
-  if (params.query) searchParams.set('query', params.query);
+async function fetchRecentWorkOrders(limit: number): Promise<WorkOrder[]> {
+  const searchParams = new URLSearchParams({ page: '1', limit: String(limit) });
 
   const response = await fetch(`/api/v1/work-orders?${searchParams.toString()}`, {
     credentials: 'same-origin',
@@ -33,19 +18,8 @@ async function fetchWorkOrdersPage(
     throw await parseApiError(response, 'Could not load Work Orders');
   }
 
-  return response.json() as Promise<ListWorkOrdersResponse>;
-}
-
-async function fetchAllWorkOrders(params: WorkOrdersParams): Promise<WorkOrder[]> {
-  const firstPage = await fetchWorkOrdersPage({ ...params, page: 1 });
-  const workOrders = [...firstPage.data];
-
-  for (let page = 2; page <= firstPage.meta.totalPages; page += 1) {
-    const nextPage = await fetchWorkOrdersPage({ ...params, page });
-    workOrders.push(...nextPage.data);
-  }
-
-  return workOrders;
+  const result = (await response.json()) as ListWorkOrdersResponse;
+  return result.data;
 }
 
 function isAttentionWorkOrder(workOrder: WorkOrder) {
@@ -65,15 +39,8 @@ function compareDueDate(a: WorkOrder, b: WorkOrder) {
   return a.dueDate.localeCompare(b.dueDate);
 }
 
-const ATTENTION_DISPLAY_LIMIT = 10;
-
 function selectAttentionWorkOrders(workOrders: WorkOrder[]) {
-  const attentionWorkOrders = workOrders.filter(isAttentionWorkOrder).sort(compareDueDate);
-
-  return {
-    items: attentionWorkOrders.slice(0, ATTENTION_DISPLAY_LIMIT),
-    total: attentionWorkOrders.length,
-  };
+  return workOrders.filter(isAttentionWorkOrder).sort(compareDueDate);
 }
 
 function selectUpcomingMaintenanceWorkOrders(workOrders: WorkOrder[]) {
@@ -82,25 +49,24 @@ function selectUpcomingMaintenanceWorkOrders(workOrders: WorkOrder[]) {
       (workOrder) =>
         workOrder.status.category === 'SCHEDULED' || workOrder.status.category === 'IN_PROGRESS'
     )
-    .sort(compareDueDate)
-    .slice(0, 5);
+    .sort(compareDueDate);
 }
 
-export function useSuspenseAttentionWorkOrders(params: WorkOrdersParams) {
+export function useSuspenseAttentionWorkOrders() {
   return useSuspenseQuery(
     queryOptions({
-      queryKey: workOrdersParamQueryKey(params),
-      queryFn: () => fetchAllWorkOrders(params),
+      queryKey: ['work-orders', 'attention', ATTENTION_DISPLAY_LIMIT] as const,
+      queryFn: () => fetchRecentWorkOrders(ATTENTION_DISPLAY_LIMIT),
       select: selectAttentionWorkOrders,
     })
   );
 }
 
-export function useSuspenseUpcomingMaintenanceWorkOrders(params: WorkOrdersParams) {
+export function useSuspenseUpcomingMaintenanceWorkOrders() {
   return useSuspenseQuery(
     queryOptions({
-      queryKey: workOrdersParamQueryKey(params),
-      queryFn: () => fetchAllWorkOrders(params),
+      queryKey: ['work-orders', 'upcoming-maintenance', UPCOMING_MAINTENANCE_DISPLAY_LIMIT] as const,
+      queryFn: () => fetchRecentWorkOrders(UPCOMING_MAINTENANCE_DISPLAY_LIMIT),
       select: selectUpcomingMaintenanceWorkOrders,
     })
   );

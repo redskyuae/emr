@@ -1,4 +1,3 @@
-'use client';
 
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 

@@ -4,10 +4,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 
-import {
-  ALL_WORK_ORDERS_PARAMS,
-  useSuspenseAttentionWorkOrders,
-} from '@/app/queries/assets-management/assets-overview/useWorkOrders';
+import { useSuspenseAttentionWorkOrders } from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,7 +28,6 @@ import { WidgetErrorBoundary } from './widget-error-boundary';
 
 type AttentionPanelProps = {
   workOrders: WorkOrder[];
-  totalCount: number;
 };
 
 function AttentionRow({ workOrder }: { workOrder: WorkOrder }) {
@@ -67,9 +63,7 @@ function AttentionRow({ workOrder }: { workOrder: WorkOrder }) {
   );
 }
 
-export function AttentionPanel({ workOrders, totalCount }: AttentionPanelProps) {
-  const remainingCount = totalCount - workOrders.length;
-
+export function AttentionPanel({ workOrders }: AttentionPanelProps) {
   return (
     <Card className="shadow-fluent-2">
       <CardHeader className="border-b">
@@ -77,16 +71,14 @@ export function AttentionPanel({ workOrders, totalCount }: AttentionPanelProps) 
           <CardTitle>Attention required</CardTitle>
           <CardDescription>Overdue &amp; critical items</CardDescription>
         </div>
-        {remainingCount > 0 ? (
-          <CardAction>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/assets-management/maintenance">
-                <span>View {remainingCount} more</span>
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </Button>
-          </CardAction>
-        ) : null}
+        <CardAction>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/assets-management/maintenance">
+              <span>All work orders</span>
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent className="divide-y p-0">
         {workOrders.length === 0 ? (
@@ -126,9 +118,9 @@ export function AttentionPanelSkeleton() {
 }
 
 function AttentionPanelContainer() {
-  const { data } = useSuspenseAttentionWorkOrders(ALL_WORK_ORDERS_PARAMS);
+  const { data } = useSuspenseAttentionWorkOrders();
 
-  return <AttentionPanel workOrders={data.items} totalCount={data.total} />;
+  return <AttentionPanel workOrders={data} />;
 }
 
 export function AttentionPanelWidget() {

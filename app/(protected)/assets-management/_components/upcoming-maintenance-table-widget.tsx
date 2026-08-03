@@ -2,16 +2,13 @@
 
 import { Suspense } from 'react';
 
-import {
-  ALL_WORK_ORDERS_PARAMS,
-  useSuspenseUpcomingMaintenanceWorkOrders,
-} from '@/app/queries/assets-management/assets-overview/useWorkOrders';
+import { useSuspenseUpcomingMaintenanceWorkOrders } from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import { UpcomingMaintenanceTable } from './upcoming-maintenance-table';
 import { UpcomingMaintenanceTableSkeleton } from './upcoming-maintenance-table-skeleton';
 import { WidgetErrorBoundary } from './widget-error-boundary';
 
 function UpcomingMaintenanceTableContainer() {
-  const { data } = useSuspenseUpcomingMaintenanceWorkOrders(ALL_WORK_ORDERS_PARAMS);
+  const { data } = useSuspenseUpcomingMaintenanceWorkOrders();
 
   return <UpcomingMaintenanceTable workOrders={data} />;
 }
