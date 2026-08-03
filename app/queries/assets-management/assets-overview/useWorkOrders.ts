@@ -65,7 +65,11 @@ export function useSuspenseAttentionWorkOrders() {
 export function useSuspenseUpcomingMaintenanceWorkOrders() {
   return useSuspenseQuery(
     queryOptions({
-      queryKey: ['work-orders', 'upcoming-maintenance', UPCOMING_MAINTENANCE_DISPLAY_LIMIT] as const,
+      queryKey: [
+        'work-orders',
+        'upcoming-maintenance',
+        UPCOMING_MAINTENANCE_DISPLAY_LIMIT,
+      ] as const,
       queryFn: () => fetchRecentWorkOrders(UPCOMING_MAINTENANCE_DISPLAY_LIMIT),
       select: selectUpcomingMaintenanceWorkOrders,
     })

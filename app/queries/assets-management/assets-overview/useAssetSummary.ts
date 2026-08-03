@@ -1,4 +1,3 @@
-
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
