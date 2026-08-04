@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { simpleMasterNameSchema } from '@/lib/validation/simple-master-fields';
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -8,13 +7,15 @@ const tenantIdSchema = z
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const doctorRotaNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Doctor rota name',
-  maxMessage: 'Doctor rota name must be at most 100 characters',
-  emptyMessage: 'Doctor rota name cannot be empty',
-  requiredMessage: 'Doctor rota name is required',
-});
+const doctorRotaNameSchema = z
+  .string({ error: 'Doctor rota name is required' })
+  .trim()
+  .min(1, 'Doctor rota name cannot be empty')
+  .max(100, 'Doctor rota name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Doctor rota name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const doctorRotaTimeSchema = (fieldName: string) =>
   z

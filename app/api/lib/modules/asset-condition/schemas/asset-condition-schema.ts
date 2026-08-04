@@ -1,39 +1,42 @@
 import { z } from 'zod';
-import {
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const assetConditionNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Asset condition name',
-  maxMessage: 'Asset condition name must be at most 100 characters',
-  emptyMessage: 'Asset condition name cannot be empty',
-  requiredMessage: 'Asset condition name is required',
-});
+const assetConditionNameSchema = z
+  .string({ error: 'Asset condition name is required' })
+  .trim()
+  .min(1, 'Asset condition name cannot be empty')
+  .max(100, 'Asset condition name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Asset condition name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const assetConditionCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Asset condition code',
-  maxMessage: 'Asset condition code must be at most 10 characters',
-  emptyMessage: 'Asset condition code cannot be empty',
-  requiredMessage: 'Asset condition code is required',
-});
+const assetConditionCodeSchema = z
+  .string({ error: 'Asset condition code is required' })
+  .trim()
+  .min(1, 'Asset condition code cannot be empty')
+  .max(10, 'Asset condition code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Asset condition code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
 const assetConditionColorSchema = z
   .string({ error: 'Asset condition color is required' })
   .trim()
   .regex(/^#[0-9A-Fa-f]{6}$/, 'Asset condition color must be a hex value like #16A34A.');
 
-const assetConditionDescriptionSchema = simpleMasterDescriptionSchema({
-  maxMessage: 'Asset condition description must be at most 500 characters',
-});
+const assetConditionDescriptionSchema = z
+  .string()
+  .trim()
+  .max(500, 'Asset condition description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const assetConditionIdSchema = z.coerce
   .number({ error: 'Asset condition ID is required' })

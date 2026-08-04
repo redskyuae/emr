@@ -1,34 +1,41 @@
 import { z } from 'zod';
-import {
-  nullableToOptionalSimpleMasterDescriptionSchema,
-  simpleMasterCodeSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const wardNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Ward name',
-  maxMessage: 'Ward name must be at most 100 characters',
-  emptyMessage: 'Ward name cannot be empty',
-  requiredMessage: 'Ward name is required',
-});
+const wardNameSchema = z
+  .string({ error: 'Ward name is required' })
+  .trim()
+  .min(1, 'Ward name cannot be empty')
+  .max(100, 'Ward name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Ward name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const wardCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Ward code',
-  maxMessage: 'Ward code must be at most 10 characters',
-  emptyMessage: 'Ward code cannot be empty',
-  requiredMessage: 'Ward code is required',
-});
+const wardCodeSchema = z
+  .string({ error: 'Ward code is required' })
+  .trim()
+  .min(1, 'Ward code cannot be empty')
+  .max(10, 'Ward code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Ward code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
-const wardDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
-  maxMessage: 'Ward description must be at most 500 characters',
-});
+const wardDescriptionSchema = z
+  .union([z.string().trim().max(500, 'Ward description must be at most 500 characters'), z.null()])
+  .transform((value) => {
+    if (value === null) {
+      return undefined;
+    }
+
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 export const wardIdSchema = z.coerce
   .number({ error: 'Ward ID is required' })

@@ -1,34 +1,44 @@
 import { z } from 'zod';
-import {
-  nullableToOptionalSimpleMasterDescriptionSchema,
-  simpleMasterCodeSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const appointmentTypeNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Appointment type name',
-  maxMessage: 'Appointment type name must be at most 100 characters',
-  emptyMessage: 'Appointment type name cannot be empty',
-  requiredMessage: 'Appointment type name is required',
-});
+const appointmentTypeNameSchema = z
+  .string({ error: 'Appointment type name is required' })
+  .trim()
+  .min(1, 'Appointment type name cannot be empty')
+  .max(100, 'Appointment type name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Appointment type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const appointmentTypeCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Appointment type code',
-  maxMessage: 'Appointment type code must be at most 10 characters',
-  emptyMessage: 'Appointment type code cannot be empty',
-  requiredMessage: 'Appointment type code is required',
-});
+const appointmentTypeCodeSchema = z
+  .string({ error: 'Appointment type code is required' })
+  .trim()
+  .min(1, 'Appointment type code cannot be empty')
+  .max(10, 'Appointment type code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Appointment type code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
-const appointmentTypeDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
-  maxMessage: 'Appointment type description must be at most 500 characters',
-});
+const appointmentTypeDescriptionSchema = z
+  .union([
+    z.string().trim().max(500, 'Appointment type description must be at most 500 characters'),
+    z.null(),
+  ])
+  .transform((value) => {
+    if (value === null) {
+      return undefined;
+    }
+
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 export const appointmentTypeIdSchema = z.coerce
   .number({ error: 'Appointment type ID is required' })

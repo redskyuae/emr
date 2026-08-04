@@ -1,39 +1,42 @@
 import { z } from 'zod';
-import {
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const assetCategoryNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Asset category name',
-  maxMessage: 'Asset category name must be at most 100 characters',
-  emptyMessage: 'Asset category name cannot be empty',
-  requiredMessage: 'Asset category name is required',
-});
+const assetCategoryNameSchema = z
+  .string({ error: 'Asset category name is required' })
+  .trim()
+  .min(1, 'Asset category name cannot be empty')
+  .max(100, 'Asset category name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Asset category name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const assetCategoryCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Asset category code',
-  maxMessage: 'Asset category code must be at most 10 characters',
-  emptyMessage: 'Asset category code cannot be empty',
-  requiredMessage: 'Asset category code is required',
-});
+const assetCategoryCodeSchema = z
+  .string({ error: 'Asset category code is required' })
+  .trim()
+  .min(1, 'Asset category code cannot be empty')
+  .max(10, 'Asset category code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Asset category code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
 const assetCategoryColorSchema = z
   .string({ error: 'Asset category color is required' })
   .trim()
   .regex(/^#[0-9A-Fa-f]{6}$/, 'Asset category color must be a hex value like #2563EB.');
 
-const assetCategoryDescriptionSchema = simpleMasterDescriptionSchema({
-  maxMessage: 'Asset category description must be at most 500 characters',
-});
+const assetCategoryDescriptionSchema = z
+  .string()
+  .trim()
+  .max(500, 'Asset category description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const assetCategoryIdSchema = z.coerce
   .number({ error: 'Asset category ID is required' })

@@ -1,36 +1,47 @@
 import { z } from 'zod';
-import {
-  nullableToOptionalSimpleMasterDescriptionSchema,
-  simpleMasterCodeSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const appointmentCancelledReasonNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Appointment cancelled reason name',
-  maxMessage: 'Appointment cancelled reason name must be at most 100 characters',
-  emptyMessage: 'Appointment cancelled reason name cannot be empty',
-  requiredMessage: 'Appointment cancelled reason name is required',
-});
+const appointmentCancelledReasonNameSchema = z
+  .string({ error: 'Appointment cancelled reason name is required' })
+  .trim()
+  .min(1, 'Appointment cancelled reason name cannot be empty')
+  .max(100, 'Appointment cancelled reason name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Appointment cancelled reason name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const appointmentCancelledReasonCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Appointment cancelled reason code',
-  maxMessage: 'Appointment cancelled reason code must be at most 10 characters',
-  emptyMessage: 'Appointment cancelled reason code cannot be empty',
-  requiredMessage: 'Appointment cancelled reason code is required',
-});
+const appointmentCancelledReasonCodeSchema = z
+  .string({ error: 'Appointment cancelled reason code is required' })
+  .trim()
+  .min(1, 'Appointment cancelled reason code cannot be empty')
+  .max(10, 'Appointment cancelled reason code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Appointment cancelled reason code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
-const appointmentCancelledReasonDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema(
-  {
-    maxMessage: 'Appointment cancelled reason description must be at most 500 characters',
-  }
-);
+const appointmentCancelledReasonDescriptionSchema = z
+  .union([
+    z
+      .string()
+      .trim()
+      .max(500, 'Appointment cancelled reason description must be at most 500 characters'),
+    z.null(),
+  ])
+  .transform((value) => {
+    if (value === null) {
+      return undefined;
+    }
+
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 export const appointmentCancelledReasonIdSchema = z.coerce
   .number({ error: 'Appointment cancelled reason ID is required' })

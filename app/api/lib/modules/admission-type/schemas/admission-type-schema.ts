@@ -1,34 +1,44 @@
 import { z } from 'zod';
-import {
-  nullableToOptionalSimpleMasterDescriptionSchema,
-  simpleMasterCodeSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const admissionTypeNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Admission type name',
-  maxMessage: 'Admission type name must be at most 100 characters',
-  emptyMessage: 'Admission type name cannot be empty',
-  requiredMessage: 'Admission type name is required',
-});
+const admissionTypeNameSchema = z
+  .string({ error: 'Admission type name is required' })
+  .trim()
+  .min(1, 'Admission type name cannot be empty')
+  .max(100, 'Admission type name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Admission type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const admissionTypeCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Admission type code',
-  maxMessage: 'Admission type code must be at most 10 characters',
-  emptyMessage: 'Admission type code cannot be empty',
-  requiredMessage: 'Admission type code is required',
-});
+const admissionTypeCodeSchema = z
+  .string({ error: 'Admission type code is required' })
+  .trim()
+  .min(1, 'Admission type code cannot be empty')
+  .max(10, 'Admission type code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Admission type code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
-const admissionTypeDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
-  maxMessage: 'Admission type description must be at most 500 characters',
-});
+const admissionTypeDescriptionSchema = z
+  .union([
+    z.string().trim().max(500, 'Admission type description must be at most 500 characters'),
+    z.null(),
+  ])
+  .transform((value) => {
+    if (value === null) {
+      return undefined;
+    }
+
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 export const admissionTypeIdSchema = z.coerce
   .number({ error: 'Admission type ID is required' })

@@ -1,9 +1,4 @@
 import { z } from 'zod';
-import {
-  nullableToOptionalSimpleMasterDescriptionSchema,
-  simpleMasterCodeSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 import { CHARGE_ITEM_CATEGORIES } from '@/app/db/schema/charge-item';
 
@@ -12,21 +7,26 @@ const tenantIdSchema = z
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const chargeItemNameSchema = simpleMasterNameSchema({
-  max: 150,
-  fieldName: 'Charge item name',
-  maxMessage: 'Charge item name must be at most 150 characters',
-  emptyMessage: 'Charge item name cannot be empty',
-  requiredMessage: 'Charge item name is required',
-});
+const chargeItemNameSchema = z
+  .string({ error: 'Charge item name is required' })
+  .trim()
+  .min(1, 'Charge item name cannot be empty')
+  .max(150, 'Charge item name must be at most 150 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Charge item name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const chargeItemCodeSchema = simpleMasterCodeSchema({
-  max: 20,
-  fieldName: 'Charge item code',
-  maxMessage: 'Charge item code must be at most 20 characters',
-  emptyMessage: 'Charge item code cannot be empty',
-  requiredMessage: 'Charge item code is required',
-});
+const chargeItemCodeSchema = z
+  .string({ error: 'Charge item code is required' })
+  .trim()
+  .min(1, 'Charge item code cannot be empty')
+  .max(20, 'Charge item code must be at most 20 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Charge item code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
 const chargeItemCategorySchema = z.enum(CHARGE_ITEM_CATEGORIES, {
   error: `Charge item category must be one of ${CHARGE_ITEM_CATEGORIES.join(', ')}`,
@@ -45,9 +45,19 @@ const chargeItemUnitPriceSchema = z.preprocess(
     .transform((value) => Math.round(value * 100) / 100)
 );
 
-const chargeItemDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
-  maxMessage: 'Charge item description must be at most 500 characters',
-});
+const chargeItemDescriptionSchema = z
+  .union([
+    z.string().trim().max(500, 'Charge item description must be at most 500 characters'),
+    z.null(),
+  ])
+  .transform((value) => {
+    if (value === null) {
+      return undefined;
+    }
+
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 const chargeItemIsActiveSchema = z.boolean().optional().default(true);
 

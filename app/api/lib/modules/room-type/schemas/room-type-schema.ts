@@ -1,30 +1,30 @@
 import { z } from 'zod';
-import {
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const roomTypeNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Room type name',
-  maxMessage: 'Room type name must be at most 100 characters',
-  emptyMessage: 'Room type name cannot be empty',
-  requiredMessage: 'Room type name is required',
-});
+const roomTypeNameSchema = z
+  .string({ error: 'Room type name is required' })
+  .trim()
+  .min(1, 'Room type name cannot be empty')
+  .max(100, 'Room type name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Room type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const roomTypeCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Room type code',
-  maxMessage: 'Room type code must be at most 10 characters',
-  emptyMessage: 'Room type code cannot be empty',
-  requiredMessage: 'Room type code is required',
-});
+const roomTypeCodeSchema = z
+  .string({ error: 'Room type code is required' })
+  .trim()
+  .min(1, 'Room type code cannot be empty')
+  .max(10, 'Room type code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Room type code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
 const roomTypeColorSchema = z
   .string({ error: 'Room type color is required' })
@@ -40,9 +40,12 @@ const roomTypeDailyRateSchema = z.preprocess(
     .optional()
 );
 
-const roomTypeDescriptionSchema = simpleMasterDescriptionSchema({
-  maxMessage: 'Room type description must be at most 500 characters',
-});
+const roomTypeDescriptionSchema = z
+  .string()
+  .trim()
+  .max(500, 'Room type description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const roomTypeIdSchema = z.coerce
   .number({ error: 'Room type ID is required' })

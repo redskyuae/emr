@@ -1,39 +1,42 @@
 import { z } from 'zod';
-import {
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const workOrderPriorityNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Work order priority name',
-  maxMessage: 'Work order priority name must be at most 100 characters',
-  emptyMessage: 'Work order priority name cannot be empty',
-  requiredMessage: 'Work order priority name is required',
-});
+const workOrderPriorityNameSchema = z
+  .string({ error: 'Work order priority name is required' })
+  .trim()
+  .min(1, 'Work order priority name cannot be empty')
+  .max(100, 'Work order priority name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Work order priority name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const workOrderPriorityCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Work order priority code',
-  maxMessage: 'Work order priority code must be at most 10 characters',
-  emptyMessage: 'Work order priority code cannot be empty',
-  requiredMessage: 'Work order priority code is required',
-});
+const workOrderPriorityCodeSchema = z
+  .string({ error: 'Work order priority code is required' })
+  .trim()
+  .min(1, 'Work order priority code cannot be empty')
+  .max(10, 'Work order priority code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Work order priority code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
 const workOrderPriorityColorSchema = z
   .string({ error: 'Work order priority color is required' })
   .trim()
   .regex(/^#[0-9A-Fa-f]{6}$/, 'Work order priority color must be a hex value like #16A34A.');
 
-const workOrderPriorityDescriptionSchema = simpleMasterDescriptionSchema({
-  maxMessage: 'Work order priority description must be at most 500 characters',
-});
+const workOrderPriorityDescriptionSchema = z
+  .string()
+  .trim()
+  .max(500, 'Work order priority description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const workOrderPriorityIdSchema = z.coerce
   .number({ error: 'Work order priority ID is required' })

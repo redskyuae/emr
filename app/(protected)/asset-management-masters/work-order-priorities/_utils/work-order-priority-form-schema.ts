@@ -1,27 +1,32 @@
 import { z } from 'zod';
-import {
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 export const workOrderPriorityFormSchema = z.object({
-  name: simpleMasterNameSchema({
-    max: 100,
-    fieldName: 'Name',
-    maxMessage: 'Name must be at most 100 characters.',
-    emptyMessage: 'Name is required.',
-  }),
-  code: simpleMasterCodeSchema({
-    max: 10,
-    fieldName: 'Code',
-    maxMessage: 'Code must be at most 10 characters.',
-    emptyMessage: 'Code is required.',
-  }),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Name is required.')
+    .max(100, 'Name must be at most 100 characters.')
+    .regex(
+      /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+      'Name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    ),
+  code: z
+    .string()
+    .trim()
+    .min(1, 'Code is required.')
+    .max(10, 'Code must be at most 10 characters.')
+    .regex(
+      /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+      'Code must contain only letters, numbers, hyphens, and underscores.'
+    )
+    .transform((code) => code.toUpperCase()),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be a hex value like #16A34A.'),
-  description: simpleMasterDescriptionSchema({
-    maxMessage: 'Description must be at most 500 characters.',
-  }),
+  description: z
+    .string()
+    .trim()
+    .max(500, 'Description must be at most 500 characters.')
+    .transform((description) => (description === '' ? undefined : description))
+    .optional(),
 });
 
 export type WorkOrderPriorityFormValues = z.infer<typeof workOrderPriorityFormSchema>;

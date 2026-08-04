@@ -1,28 +1,33 @@
 import { z } from 'zod';
-import {
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 // Client-side mirror of the create/update VisitType contract. Both operations
 // require name and code, so both fields carry a required asterisk.
 export const visitTypeFormSchema = z.object({
-  name: simpleMasterNameSchema({
-    max: 100,
-    fieldName: 'Visit type name',
-    maxMessage: 'Visit type name must be at most 100 characters.',
-    emptyMessage: 'Visit type name is required.',
-  }),
-  code: simpleMasterCodeSchema({
-    max: 10,
-    fieldName: 'Visit type code',
-    maxMessage: 'Visit type code must be at most 10 characters.',
-    emptyMessage: 'Visit type code is required.',
-  }),
-  description: simpleMasterDescriptionSchema({
-    maxMessage: 'Visit type description must be at most 500 characters.',
-  }),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Visit type name is required.')
+    .max(100, 'Visit type name must be at most 100 characters.')
+    .regex(
+      /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+      'Visit type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    ),
+  code: z
+    .string()
+    .trim()
+    .min(1, 'Visit type code is required.')
+    .max(10, 'Visit type code must be at most 10 characters.')
+    .regex(
+      /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+      'Visit type code must contain only letters, numbers, hyphens, and underscores.'
+    )
+    .transform((code) => code.toUpperCase()),
+  description: z
+    .string()
+    .trim()
+    .max(500, 'Visit type description must be at most 500 characters.')
+    .transform((description) => (description === '' ? undefined : description))
+    .optional(),
 });
 
 export type VisitTypeFormValues = z.infer<typeof visitTypeFormSchema>;

@@ -1,26 +1,31 @@
 import { z } from 'zod';
-import {
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 export const roleFormSchema = z.object({
-  name: simpleMasterNameSchema({
-    max: 100,
-    fieldName: 'Role name',
-    maxMessage: 'Role name must be at most 100 characters.',
-    emptyMessage: 'Role name is required.',
-  }),
-  code: simpleMasterCodeSchema({
-    max: 50,
-    fieldName: 'Role code',
-    maxMessage: 'Role code must be at most 50 characters.',
-    emptyMessage: 'Role code is required.',
-  }),
-  description: simpleMasterDescriptionSchema({
-    maxMessage: 'Role description must be at most 500 characters.',
-  }),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Role name is required.')
+    .max(100, 'Role name must be at most 100 characters.')
+    .regex(
+      /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+      'Role name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    ),
+  code: z
+    .string()
+    .trim()
+    .min(1, 'Role code is required.')
+    .max(50, 'Role code must be at most 50 characters.')
+    .regex(
+      /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+      'Role code must contain only letters, numbers, hyphens, and underscores.'
+    )
+    .transform((code) => code.toUpperCase()),
+  description: z
+    .string()
+    .trim()
+    .max(500, 'Role description must be at most 500 characters.')
+    .transform((description) => (description === '' ? undefined : description))
+    .optional(),
   permissionIds: z.array(z.number()),
 });
 

@@ -1,9 +1,4 @@
 import { z } from 'zod';
-import {
-  nullableToOptionalSimpleMasterDescriptionSchema,
-  simpleMasterCodeSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 export const APPOINTMENT_STATUS_CATEGORIES = [
   'SCHEDULED',
@@ -19,25 +14,40 @@ const tenantIdSchema = z
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const appointmentStatusNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Appointment status name',
-  maxMessage: 'Appointment status name must be at most 100 characters',
-  emptyMessage: 'Appointment status name cannot be empty',
-  requiredMessage: 'Appointment status name is required',
-});
+const appointmentStatusNameSchema = z
+  .string({ error: 'Appointment status name is required' })
+  .trim()
+  .min(1, 'Appointment status name cannot be empty')
+  .max(100, 'Appointment status name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Appointment status name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const appointmentStatusCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Appointment status code',
-  maxMessage: 'Appointment status code must be at most 10 characters',
-  emptyMessage: 'Appointment status code cannot be empty',
-  requiredMessage: 'Appointment status code is required',
-});
+const appointmentStatusCodeSchema = z
+  .string({ error: 'Appointment status code is required' })
+  .trim()
+  .min(1, 'Appointment status code cannot be empty')
+  .max(10, 'Appointment status code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Appointment status code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
-const appointmentStatusDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
-  maxMessage: 'Appointment status description must be at most 500 characters',
-});
+const appointmentStatusDescriptionSchema = z
+  .union([
+    z.string().trim().max(500, 'Appointment status description must be at most 500 characters'),
+    z.null(),
+  ])
+  .transform((value) => {
+    if (value === null) {
+      return undefined;
+    }
+
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 const appointmentStatusCategorySchema = z.enum(APPOINTMENT_STATUS_CATEGORIES, {
   error:

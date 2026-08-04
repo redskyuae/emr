@@ -1,39 +1,42 @@
 import { z } from 'zod';
-import {
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
-const workOrderTypeNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Work order type name',
-  maxMessage: 'Work order type name must be at most 100 characters',
-  emptyMessage: 'Work order type name cannot be empty',
-  requiredMessage: 'Work order type name is required',
-});
+const workOrderTypeNameSchema = z
+  .string({ error: 'Work order type name is required' })
+  .trim()
+  .min(1, 'Work order type name cannot be empty')
+  .max(100, 'Work order type name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Work order type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const workOrderTypeCodeSchema = simpleMasterCodeSchema({
-  max: 10,
-  fieldName: 'Work order type code',
-  maxMessage: 'Work order type code must be at most 10 characters',
-  emptyMessage: 'Work order type code cannot be empty',
-  requiredMessage: 'Work order type code is required',
-});
+const workOrderTypeCodeSchema = z
+  .string({ error: 'Work order type code is required' })
+  .trim()
+  .min(1, 'Work order type code cannot be empty')
+  .max(10, 'Work order type code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Work order type code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
 const workOrderTypeColorSchema = z
   .string({ error: 'Work order type color is required' })
   .trim()
   .regex(/^#[0-9A-Fa-f]{6}$/, 'Work order type color must be a hex value like #16A34A.');
 
-const workOrderTypeDescriptionSchema = simpleMasterDescriptionSchema({
-  maxMessage: 'Work order type description must be at most 500 characters',
-});
+const workOrderTypeDescriptionSchema = z
+  .string()
+  .trim()
+  .max(500, 'Work order type description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const workOrderTypeIdSchema = z.coerce
   .number({ error: 'Work order type ID is required' })

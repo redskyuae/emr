@@ -1,34 +1,40 @@
 import { z } from 'zod';
-import {
-  nullableSimpleMasterDescriptionSchema,
-  simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
-  simpleMasterNameSchema,
-} from '@/lib/validation/simple-master-fields';
 
-const roleNameSchema = simpleMasterNameSchema({
-  max: 100,
-  fieldName: 'Role name',
-  maxMessage: 'Role name must be at most 100 characters',
-  emptyMessage: 'Role name cannot be empty',
-  requiredMessage: 'Role name is required',
-});
+const roleNameSchema = z
+  .string({ error: 'Role name is required' })
+  .trim()
+  .min(1, 'Role name cannot be empty')
+  .max(100, 'Role name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Role name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
-const roleCodeSchema = simpleMasterCodeSchema({
-  max: 50,
-  fieldName: 'Role code',
-  maxMessage: 'Role code must be at most 50 characters',
-  emptyMessage: 'Role code cannot be empty',
-  requiredMessage: 'Role code is required',
-});
+const roleCodeSchema = z
+  .string({ error: 'Role code is required' })
+  .trim()
+  .min(1, 'Role code cannot be empty')
+  .max(50, 'Role code must be at most 50 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Role code must contain only letters, numbers, hyphens, and underscores.'
+  )
+  .transform((code) => code.toUpperCase());
 
-const roleDescriptionSchema = simpleMasterDescriptionSchema({
-  maxMessage: 'Role description must be at most 500 characters',
-});
+const roleDescriptionSchema = z
+  .string()
+  .trim()
+  .max(500, 'Role description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
-const nullableRoleDescriptionSchema = nullableSimpleMasterDescriptionSchema({
-  maxMessage: 'Role description must be at most 500 characters',
-});
+const nullableRoleDescriptionSchema = z
+  .union([
+    z.string().trim().max(500, 'Role description must be at most 500 characters'),
+    z.null(),
+  ])
+  .transform((description) => (description === '' ? null : description))
+  .optional();
 
 export const roleIdSchema = z.coerce
   .number({ error: 'Role ID is required' })
