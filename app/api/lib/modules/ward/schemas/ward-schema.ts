@@ -9,27 +9,33 @@ const wardNameSchema = z
   .string({ error: 'Ward name is required' })
   .trim()
   .min(1, 'Ward name cannot be empty')
-  .max(100, 'Ward name must be at most 100 characters');
+  .max(100, 'Ward name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Ward name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const wardCodeSchema = z
   .string({ error: 'Ward code is required' })
   .trim()
   .min(1, 'Ward code cannot be empty')
   .max(10, 'Ward code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Ward code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const wardDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .nullable()
-  .transform((description) => {
-    if (description === null || description === '') {
+  .union([z.string().trim().max(500, 'Ward description must be at most 500 characters'), z.null()])
+  .transform((value) => {
+    if (value === null) {
       return undefined;
     }
 
-    return description;
-  });
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 export const wardIdSchema = z.coerce
   .number({ error: 'Ward ID is required' })

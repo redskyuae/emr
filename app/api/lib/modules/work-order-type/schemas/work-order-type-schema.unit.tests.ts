@@ -97,6 +97,19 @@ describe('WorkOrderType schema', () => {
     ).toBeUndefined();
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createWorkOrderTypeSchema.safeParse({
+          name: 'Maintenance',
+          code: 'MNT',
+          color: '#16A34A',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Work order type description must be at most 500 characters');
+  });
+
   it('should validate work order type id is positive integer', () => {
     expect(workOrderTypeIdSchema.safeParse('1').success).toBe(true);
     expect(workOrderTypeIdSchema.safeParse('0').success).toBe(false);
@@ -106,5 +119,23 @@ describe('WorkOrderType schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(workOrderTypeTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(workOrderTypeTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(
+        createWorkOrderTypeSchema.safeParse({ name: 'In.Person', code: 'INP', color: '#16A34A' })
+      )
+    ).toContain(
+      'Work order type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createWorkOrderTypeSchema.safeParse({ name: 'In Person', code: 'IN.P', color: '#16A34A' })
+      )
+    ).toContain(
+      'Work order type code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

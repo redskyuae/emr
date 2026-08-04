@@ -101,6 +101,19 @@ describe('WorkOrderPriority schema', () => {
     ).toBeUndefined();
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createWorkOrderPrioritySchema.safeParse({
+          name: 'High',
+          code: 'HIGH',
+          color: '#16A34A',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Work order priority description must be at most 500 characters');
+  });
+
   it('should validate work order priority id is positive integer', () => {
     expect(workOrderPriorityIdSchema.safeParse('1').success).toBe(true);
     expect(workOrderPriorityIdSchema.safeParse('0').success).toBe(false);
@@ -110,5 +123,31 @@ describe('WorkOrderPriority schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(workOrderPriorityTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(workOrderPriorityTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(
+        createWorkOrderPrioritySchema.safeParse({
+          name: 'In.Person',
+          code: 'INP',
+          color: '#16A34A',
+        })
+      )
+    ).toContain(
+      'Work order priority name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createWorkOrderPrioritySchema.safeParse({
+          name: 'In Person',
+          code: 'IN.P',
+          color: '#16A34A',
+        })
+      )
+    ).toContain(
+      'Work order priority code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

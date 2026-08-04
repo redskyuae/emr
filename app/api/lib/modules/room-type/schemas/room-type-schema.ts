@@ -9,13 +9,21 @@ const roomTypeNameSchema = z
   .string({ error: 'Room type name is required' })
   .trim()
   .min(1, 'Room type name cannot be empty')
-  .max(100, 'Room type name must be at most 100 characters');
+  .max(100, 'Room type name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Room type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const roomTypeCodeSchema = z
   .string({ error: 'Room type code is required' })
   .trim()
   .min(1, 'Room type code cannot be empty')
   .max(10, 'Room type code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Room type code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const roomTypeColorSchema = z
@@ -35,8 +43,9 @@ const roomTypeDailyRateSchema = z.preprocess(
 const roomTypeDescriptionSchema = z
   .string()
   .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+  .max(500, 'Room type description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const roomTypeIdSchema = z.coerce
   .number({ error: 'Room type ID is required' })

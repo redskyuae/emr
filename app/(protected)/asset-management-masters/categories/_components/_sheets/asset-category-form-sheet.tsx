@@ -99,7 +99,7 @@ export function AssetCategoryFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
-          description: values.description.trim() || undefined,
+          description: values.description?.trim() || undefined,
         });
         toast.success('Asset Category created.');
         onClose();
@@ -116,7 +116,7 @@ export function AssetCategoryFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
-          description: values.description.trim() || undefined,
+          description: values.description?.trim() || undefined,
         },
       });
       toast.success('Asset Category updated.');

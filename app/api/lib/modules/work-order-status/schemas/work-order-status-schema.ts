@@ -17,13 +17,21 @@ const workOrderStatusNameSchema = z
   .string({ error: 'Work order status name is required' })
   .trim()
   .min(1, 'Work order status name cannot be empty')
-  .max(100, 'Work order status name must be at most 100 characters');
+  .max(100, 'Work order status name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Work order status name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const workOrderStatusCodeSchema = z
   .string({ error: 'Work order status code is required' })
   .trim()
   .min(1, 'Work order status code cannot be empty')
   .max(10, 'Work order status code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Work order status code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const workOrderStatusCategorySchema = z.enum(WORK_ORDER_STATUS_CATEGORIES, {
@@ -39,8 +47,9 @@ const workOrderStatusColorSchema = z
 const workOrderStatusDescriptionSchema = z
   .string()
   .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+  .max(500, 'Work order status description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const workOrderStatusIdSchema = z.coerce
   .number({ error: 'Work order status ID is required' })

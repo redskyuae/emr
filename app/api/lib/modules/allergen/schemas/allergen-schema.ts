@@ -11,13 +11,21 @@ const allergenNameSchema = z
   .string({ error: 'Allergen name is required' })
   .trim()
   .min(1, 'Allergen name cannot be empty')
-  .max(150, 'Allergen name must be at most 150 characters');
+  .max(150, 'Allergen name must be at most 150 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Allergen name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const allergenCodeSchema = z
   .string({ error: 'Allergen code is required' })
   .trim()
   .min(1, 'Allergen code cannot be empty')
   .max(20, 'Allergen code must be at most 20 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Allergen code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const allergenCategorySchema = z.enum(ALLERGEN_CATEGORIES, {

@@ -9,13 +9,21 @@ const assetStatusNameSchema = z
   .string({ error: 'Asset status name is required' })
   .trim()
   .min(1, 'Asset status name cannot be empty')
-  .max(100, 'Asset status name must be at most 100 characters');
+  .max(100, 'Asset status name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Asset status name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const assetStatusCodeSchema = z
   .string({ error: 'Asset status code is required' })
   .trim()
   .min(1, 'Asset status code cannot be empty')
   .max(10, 'Asset status code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Asset status code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const assetStatusColorSchema = z
@@ -26,8 +34,9 @@ const assetStatusColorSchema = z
 const assetStatusDescriptionSchema = z
   .string()
   .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+  .max(500, 'Asset status description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const assetStatusIdSchema = z.coerce
   .number({ error: 'Asset status ID is required' })

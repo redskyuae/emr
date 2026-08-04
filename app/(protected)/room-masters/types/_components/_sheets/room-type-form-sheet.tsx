@@ -100,7 +100,7 @@ export function RoomTypeFormSheet({
       code: values.code,
       color: values.color,
       dailyRate: values.dailyRate === '' ? undefined : Number(values.dailyRate),
-      description: values.description.trim(),
+      description: values.description?.trim() || undefined,
     };
 
     try {

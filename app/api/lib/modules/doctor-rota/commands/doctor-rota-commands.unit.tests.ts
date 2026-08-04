@@ -68,6 +68,24 @@ describe('DoctorRota commands', () => {
     expect(repo.createDoctorRota).not.toHaveBeenCalled();
   });
 
+  it('should return structured create validation failure when uniqueness validation fails', async () => {
+    validateCreate.mockResolvedValue({
+      success: false,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      errors: ['Doctor rota uniqueness validation failed.'],
+    });
+    const result = await createDoctorRotaCommand(
+      { name: 'Morning Rota', fromTime: '09:00', toTime: '13:00' },
+      'tenant-1'
+    );
+    expect(result).toEqual({
+      success: false,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      errors: ['Doctor rota uniqueness validation failed.'],
+    });
+    expect(repo.createDoctorRota).not.toHaveBeenCalled();
+  });
+
   it('should call repository with parsed validation data plus tenant id on success', async () => {
     await createDoctorRotaCommand({}, 'tenant-1');
     expect(repo.createDoctorRota).toHaveBeenCalledWith({
@@ -128,6 +146,22 @@ describe('DoctorRota commands', () => {
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ["Doctor rota name 'Morning Rota' already exists."],
+    });
+  });
+
+  it('should map Postgres unique constraint 23505 for time range index to conflict error', async () => {
+    repo.createDoctorRota.mockRejectedValue({
+      cause: { code: '23505', constraint: 'doctor_rota_tenant_time_range_idx' },
+    });
+    await expect(
+      createDoctorRotaCommand(
+        { name: 'Morning Rota', fromTime: '09:00', toTime: '13:00' },
+        'tenant-1'
+      )
+    ).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Doctor rota already exists for the selected time range.'],
     });
   });
 

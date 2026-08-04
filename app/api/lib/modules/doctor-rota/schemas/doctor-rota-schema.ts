@@ -11,7 +11,11 @@ const doctorRotaNameSchema = z
   .string({ error: 'Doctor rota name is required' })
   .trim()
   .min(1, 'Doctor rota name cannot be empty')
-  .max(100, 'Doctor rota name must be at most 100 characters');
+  .max(100, 'Doctor rota name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Doctor rota name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const doctorRotaTimeSchema = (fieldName: string) =>
   z

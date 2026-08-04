@@ -9,13 +9,21 @@ const workOrderTypeNameSchema = z
   .string({ error: 'Work order type name is required' })
   .trim()
   .min(1, 'Work order type name cannot be empty')
-  .max(100, 'Work order type name must be at most 100 characters');
+  .max(100, 'Work order type name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Work order type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const workOrderTypeCodeSchema = z
   .string({ error: 'Work order type code is required' })
   .trim()
   .min(1, 'Work order type code cannot be empty')
   .max(10, 'Work order type code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Work order type code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const workOrderTypeColorSchema = z
@@ -26,8 +34,9 @@ const workOrderTypeColorSchema = z
 const workOrderTypeDescriptionSchema = z
   .string()
   .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+  .max(500, 'Work order type description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const workOrderTypeIdSchema = z.coerce
   .number({ error: 'Work order type ID is required' })

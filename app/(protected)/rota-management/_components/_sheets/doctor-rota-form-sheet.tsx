@@ -40,6 +40,8 @@ function applyServerErrorsToFields(
   for (const message of errors) {
     if (/\bname\b/i.test(message)) {
       setError('name', { type: 'server', message });
+    } else if (/\btime range\b/i.test(message)) {
+      setError('toTime', { type: 'server', message });
     } else if (/\bfrom time\b/i.test(message)) {
       setError('fromTime', { type: 'server', message });
     } else if (/\bto time\b/i.test(message)) {

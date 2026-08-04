@@ -71,6 +71,18 @@ describe('AppointmentMode schema', () => {
     ).toBeUndefined();
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createAppointmentModeSchema.safeParse({
+          name: 'In Person',
+          code: 'IP',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Appointment mode description must be at most 500 characters');
+  });
+
   it('should validate appointment mode id is positive integer', () => {
     expect(appointmentModeIdSchema.safeParse('1').success).toBe(true);
     expect(appointmentModeIdSchema.safeParse('0').success).toBe(false);
@@ -80,5 +92,32 @@ describe('AppointmentMode schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(appointmentModeTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(appointmentModeTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(createAppointmentModeSchema.safeParse({ name: 'In.Person', code: 'INP' }))
+    ).toContain(
+      'Appointment mode name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(createAppointmentModeSchema.safeParse({ name: 'In Person', code: 'IN.P' }))
+    ).toContain(
+      'Appointment mode code must contain only letters, numbers, hyphens, and underscores.'
+    );
+  });
+
+  it('should reject numeric and alphanumeric appointment mode names', () => {
+    expect(
+      errorsOf(createAppointmentModeSchema.safeParse({ name: 'Home123', code: 'HOME' }))
+    ).toContain(
+      'Appointment mode name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+    expect(
+      errorsOf(createAppointmentModeSchema.safeParse({ name: '12345', code: 'NUM' }))
+    ).toContain(
+      'Appointment mode name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
   });
 });

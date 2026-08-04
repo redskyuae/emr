@@ -18,20 +18,36 @@ const appointmentStatusNameSchema = z
   .string({ error: 'Appointment status name is required' })
   .trim()
   .min(1, 'Appointment status name cannot be empty')
-  .max(100, 'Appointment status name must be at most 100 characters');
+  .max(100, 'Appointment status name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Appointment status name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const appointmentStatusCodeSchema = z
   .string({ error: 'Appointment status code is required' })
   .trim()
   .min(1, 'Appointment status code cannot be empty')
   .max(10, 'Appointment status code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Appointment status code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const appointmentStatusDescriptionSchema = z
-  .string()
-  .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+  .union([
+    z.string().trim().max(500, 'Appointment status description must be at most 500 characters'),
+    z.null(),
+  ])
+  .transform((value) => {
+    if (value === null) {
+      return undefined;
+    }
+
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 const appointmentStatusCategorySchema = z.enum(APPOINTMENT_STATUS_CATEGORIES, {
   error:

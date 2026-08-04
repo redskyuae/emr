@@ -81,6 +81,18 @@ describe('AdmissionType schema', () => {
     });
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createAdmissionTypeSchema.safeParse({
+          name: 'Emergency',
+          code: 'EMER',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Admission type description must be at most 500 characters');
+  });
+
   it('should validate id is a positive integer and tenant id is non-empty', () => {
     expect(admissionTypeIdSchema.safeParse('0').success).toBe(false);
     expect(admissionTypeIdSchema.safeParse('-1').success).toBe(false);
@@ -89,5 +101,19 @@ describe('AdmissionType schema', () => {
     expect(admissionTypeIdSchema.parse('7')).toBe(7);
     expect(admissionTypeTenantIdSchema.safeParse('   ').success).toBe(false);
     expect(admissionTypeTenantIdSchema.parse(' tenant-1 ')).toBe('tenant-1');
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(createAdmissionTypeSchema.safeParse({ name: 'In.Person', code: 'INP' }))
+    ).toContain(
+      'Admission type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(createAdmissionTypeSchema.safeParse({ name: 'In Person', code: 'IN.P' }))
+    ).toContain(
+      'Admission type code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

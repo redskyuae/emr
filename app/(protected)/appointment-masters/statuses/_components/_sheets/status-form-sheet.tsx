@@ -28,7 +28,7 @@ export type StatusFormValues = {
   name: string;
   code: string;
   category: AppointmentStatusCategory;
-  description?: string;
+  description?: string | null;
 };
 
 const STATUS_CATEGORY_OPTIONS: { value: AppointmentStatusCategory; label: string }[] = [

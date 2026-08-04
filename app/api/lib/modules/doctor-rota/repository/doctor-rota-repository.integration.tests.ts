@@ -111,12 +111,10 @@ describe('DoctorRota repository', () => {
     });
   });
 
-  it('should allow same time range with different names for the same tenant', async () => {
+  it('should enforce unique active time range per tenant', async () => {
     await createRota(tenantA, 'Morning Rota');
-    await expect(createRota(tenantA, 'Clinic Rota')).resolves.toMatchObject({
-      tenantId: tenantA,
-      fromTime: '09:00',
-      toTime: '13:00',
+    await expect(createRota(tenantA, 'Clinic Rota')).rejects.toMatchObject({
+      cause: { code: '23505', constraint: 'doctor_rota_tenant_time_range_idx' },
     });
   });
 
@@ -127,12 +125,43 @@ describe('DoctorRota repository', () => {
     });
   });
 
+  it('should allow same time range across different tenants', async () => {
+    await createRota(tenantA, 'Morning Rota');
+    await expect(createRota(tenantB, 'Clinic Rota')).resolves.toMatchObject({
+      tenantId: tenantB,
+      fromTime: '09:00',
+      toTime: '13:00',
+    });
+  });
+
   it('should allow reusing name after the previous row is soft-deleted, proving partial unique indexes work', async () => {
     const created = await createRota(tenantA, 'Morning Rota');
     await doctorRotaRepository.deleteDoctorRota(created.id, tenantA);
     await expect(createRota(tenantA, 'morning rota')).resolves.toMatchObject({
       name: 'morning rota',
     });
+  });
+
+  it('should allow reusing time range after the previous row is soft-deleted', async () => {
+    const created = await createRota(tenantA, 'Morning Rota');
+    await doctorRotaRepository.deleteDoctorRota(created.id, tenantA);
+    await expect(createRota(tenantA, 'Clinic Rota')).resolves.toMatchObject({
+      name: 'Clinic Rota',
+      fromTime: '09:00',
+      toTime: '13:00',
+    });
+  });
+
+  it('should find active doctor rota by time range and honor exclude id', async () => {
+    const created = await createRota(tenantA, 'Morning Rota');
+    await expect(
+      doctorRotaRepository.findActiveByTimeRange(tenantA, '09:00', '13:00')
+    ).resolves.toMatchObject({ id: created.id });
+    await expect(
+      doctorRotaRepository.findActiveByTimeRange(tenantA, '09:00', '13:00', {
+        excludeId: created.id,
+      })
+    ).resolves.toBeUndefined();
   });
 
   it('should search by name and time window', async () => {
@@ -152,15 +181,15 @@ describe('DoctorRota repository', () => {
 
   it('should search LIKE wildcard characters as literals', async () => {
     await createRota(tenantA, '100% Rota');
-    await createRota(tenantA, '100X Rota');
+    await createRota(tenantA, '100X Rota', '13:00', '17:00');
     const result = await doctorRotaRepository.getDoctorRotas({ tenantId: tenantA, query: '%' });
     expect(result.data.map((rota) => rota.name)).toEqual(['100% Rota']);
   });
 
   it('should paginate list results and return total', async () => {
-    await createRota(tenantA, 'Alpha');
-    await createRota(tenantA, 'Bravo');
-    await createRota(tenantA, 'Charlie');
+    await createRota(tenantA, 'Alpha', '09:00', '13:00');
+    await createRota(tenantA, 'Bravo', '13:00', '17:00');
+    await createRota(tenantA, 'Charlie', '17:00', '21:00');
     const result = await doctorRotaRepository.getDoctorRotas({
       tenantId: tenantA,
       page: 2,

@@ -100,7 +100,7 @@ A Staff member with a clinical specialty who sees Patients. A Doctor is always a
 
 ## DoctorRota
 
-A Tenant-scoped reusable scheduling template that defines a named time window during which Doctors may be scheduled. A DoctorRota is not tied to one Doctor until a Doctor Schedule assigns it; its name identifies the template, and multiple DoctorRotas may cover the same time window when they represent different scheduling purposes.
+A Tenant-scoped reusable scheduling template that defines a named time window during which Doctors may be scheduled. A DoctorRota is not tied to one Doctor until a Doctor Schedule assigns it; its name identifies the template. Within a Tenant, one active DoctorRota may exist for a given exact time window.
 
 ## DoctorSchedule
 

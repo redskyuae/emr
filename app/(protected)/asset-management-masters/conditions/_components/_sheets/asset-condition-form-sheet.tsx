@@ -99,7 +99,7 @@ export function AssetConditionFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
-          description: values.description.trim() || undefined,
+          description: values.description?.trim() || undefined,
         });
         toast.success('Asset Condition created.');
         onClose();
@@ -116,7 +116,7 @@ export function AssetConditionFormSheet({
           name: values.name,
           code: values.code,
           color: values.color,
-          description: values.description.trim() || undefined,
+          description: values.description?.trim() || undefined,
         },
       });
       toast.success('Asset Condition updated.');

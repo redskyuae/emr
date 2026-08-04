@@ -48,7 +48,9 @@ export async function validateUpdateDoctorRota(
 
   const uniquenessResult = await validateDoctorRotaUniqueness({
     name: payloadResult.data.name,
+    toTime: payloadResult.data.toTime,
     tenantId,
+    fromTime: payloadResult.data.fromTime,
     excludeId: idResult.data,
   });
 

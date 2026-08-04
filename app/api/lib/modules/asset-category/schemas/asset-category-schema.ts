@@ -9,13 +9,21 @@ const assetCategoryNameSchema = z
   .string({ error: 'Asset category name is required' })
   .trim()
   .min(1, 'Asset category name cannot be empty')
-  .max(100, 'Asset category name must be at most 100 characters');
+  .max(100, 'Asset category name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Asset category name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const assetCategoryCodeSchema = z
   .string({ error: 'Asset category code is required' })
   .trim()
   .min(1, 'Asset category code cannot be empty')
   .max(10, 'Asset category code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Asset category code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const assetCategoryColorSchema = z
@@ -26,8 +34,9 @@ const assetCategoryColorSchema = z
 const assetCategoryDescriptionSchema = z
   .string()
   .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+  .max(500, 'Asset category description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const assetCategoryIdSchema = z.coerce
   .number({ error: 'Asset category ID is required' })

@@ -124,11 +124,43 @@ describe('ChargeItem schema', () => {
     expect(createChargeItemSchema.parse(validPayload).isActive).toBe(true);
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(createChargeItemSchema.safeParse({ ...validPayload, description: 'a'.repeat(501) }))
+    ).toContain('Charge item description must be at most 500 characters');
+  });
+
   it('should validate id is a positive integer and tenant id is non-empty', () => {
     expect(chargeItemIdSchema.safeParse('0').success).toBe(false);
     expect(chargeItemIdSchema.safeParse('abc').success).toBe(false);
     expect(chargeItemIdSchema.parse('7')).toBe(7);
     expect(chargeItemTenantIdSchema.safeParse('   ').success).toBe(false);
     expect(chargeItemTenantIdSchema.parse(' tenant-1 ')).toBe('tenant-1');
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(
+        createChargeItemSchema.safeParse({
+          name: 'In.Person',
+          code: 'INP',
+          category: 'CONSULTATION',
+          unitPrice: 500,
+        })
+      )
+    ).toContain(
+      'Charge item name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createChargeItemSchema.safeParse({
+          name: 'In Person',
+          code: 'IN.P',
+          category: 'CONSULTATION',
+          unitPrice: 500,
+        })
+      )
+    ).toContain('Charge item code must contain only letters, numbers, hyphens, and underscores.');
   });
 });

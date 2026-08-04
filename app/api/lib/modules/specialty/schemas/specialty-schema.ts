@@ -9,7 +9,11 @@ const specialtyNameSchema = z
   .string({ error: 'Specialty name is required' })
   .trim()
   .min(1, 'Specialty name cannot be empty')
-  .max(100, 'Specialty name must be at most 100 characters');
+  .max(100, 'Specialty name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Specialty name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const specialtyCodeSchema = z.preprocess(
   (value) => {
@@ -27,22 +31,27 @@ const specialtyCodeSchema = z.preprocess(
   z
     .string()
     .max(10, 'Specialty code must be at most 10 characters')
+    .regex(
+      /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+      'Specialty code must contain only letters, numbers, hyphens, and underscores.'
+    )
     .transform((code) => code.toUpperCase())
     .optional()
 );
 
-const specialtyDescriptionSchema = z.preprocess((value) => {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
+const specialtyDescriptionSchema = z
+  .union([
+    z.string().trim().max(500, 'Specialty description must be at most 500 characters'),
+    z.null(),
+  ])
+  .transform((value) => {
+    if (value === null) {
+      return undefined;
+    }
 
-  if (typeof value !== 'string') {
-    return value;
-  }
-
-  const description = value.trim();
-  return description === '' ? undefined : description;
-}, z.string().optional());
+    return value === '' ? undefined : value;
+  })
+  .optional();
 
 export const specialtyIdSchema = z.coerce
   .number({ error: 'Specialty ID is required' })

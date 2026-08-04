@@ -452,6 +452,22 @@ const stringCodeProperty = (description: string) => ({
   description,
 });
 
+const simpleMasterNameProperty = (maxLength = 100) => ({
+  type: 'string',
+  minLength: 1,
+  maxLength,
+  description:
+    'Must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.',
+});
+
+const simpleMasterCodeProperty = (description: string, maxLength = 10) => ({
+  type: 'string',
+  minLength: 1,
+  maxLength,
+  pattern: '^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$',
+  description: `${description} It may contain only letters, numbers, hyphens, and underscores.`,
+});
+
 const namedCodeCreateSchema = (entityName: string) => ({
   type: 'object',
   required: ['name', 'code'],
@@ -480,11 +496,13 @@ const appointmentMasterCreateSchema = (entityName: string, nullableDescription =
   type: 'object',
   required: ['name', 'code'],
   properties: {
-    name: { type: 'string', minLength: 1, maxLength: 100 },
-    code: stringCodeProperty(`${entityName} code. The API normalizes this value to uppercase.`),
+    name: simpleMasterNameProperty(),
+    code: simpleMasterCodeProperty(
+      `${entityName} code. The API normalizes this value to uppercase.`
+    ),
     description: nullableDescription
-      ? { type: ['string', 'null'], description: `${entityName} description.` }
-      : { type: 'string', description: `${entityName} description.` },
+      ? { type: ['string', 'null'], maxLength: 500, description: `${entityName} description.` }
+      : { type: 'string', maxLength: 500, description: `${entityName} description.` },
   },
 });
 
@@ -501,7 +519,7 @@ const appointmentMasterSchema = (createSchemaName: string) => ({
           minLength: 1,
           description: 'Tenant identifier resolved from the active authenticated Session.',
         },
-        description: { type: ['string', 'null'] },
+        description: { type: ['string', 'null'], maxLength: 500 },
         createdOn: { type: 'string', format: 'date-time' },
         modifiedOn: { type: 'string', format: 'date-time' },
       },
@@ -513,6 +531,36 @@ const doctorRotaRequestExample = {
   name: 'Morning Rota',
   fromTime: '09:00',
   toTime: '13:00',
+};
+
+const doctorRotaConflict = {
+  description: 'Doctor Rota name or exact time range already exists in the active Tenant.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateName: {
+          summary: 'Duplicate Doctor Rota name',
+          value: {
+            message: "Doctor rota name 'Morning Rota' already exists.",
+            errors: ["Doctor rota name 'Morning Rota' already exists."],
+          },
+        },
+        duplicateTimeRange: {
+          summary: 'Duplicate Doctor Rota time range',
+          value: {
+            message: 'Doctor rota already exists for the selected time range.',
+            errors: ['Doctor rota already exists for the selected time range.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const doctorRotaMutationErrorResponses = {
+  ...authenticatedErrorResponses,
+  '409': doctorRotaConflict,
 };
 
 const doctorScheduleRequestExample = {
@@ -3519,7 +3567,7 @@ export const openApiDocument = {
       example: doctorRotaRequestExample,
       security: [{ cookieAuth: [] }],
       listErrorResponses: authenticatedListErrorResponses,
-      mutationErrorResponses: authenticatedErrorResponses,
+      mutationErrorResponses: doctorRotaMutationErrorResponses,
     }),
     '/api/v1/doctor-rotas/{id}': itemOperations({
       tag: 'Doctor Rota',
@@ -3529,7 +3577,7 @@ export const openApiDocument = {
       example: doctorRotaRequestExample,
       parameters: [numberIdPathParameter('Doctor Rota')],
       security: [{ cookieAuth: [] }],
-      operationErrorResponses: authenticatedErrorResponses,
+      operationErrorResponses: doctorRotaMutationErrorResponses,
     }),
     '/api/v1/doctor-schedules': {
       get: {
@@ -7506,14 +7554,12 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: {
-            type: 'string',
-            minLength: 1,
-            maxLength: 50,
-            description: 'Tenant-scoped Role code. The API normalizes this value to uppercase.',
-          },
-          description: { type: 'string' },
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
+            'Tenant-scoped Role code. The API normalizes this value to uppercase.',
+            50
+          ),
+          description: { type: 'string', maxLength: 500 },
         },
       },
       UpdateRoleRequest: {
@@ -7521,8 +7567,8 @@ export const openApiDocument = {
         minProperties: 1,
         description: 'Role code is intentionally not accepted by this endpoint.',
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          description: { type: ['string', 'null'] },
+          name: simpleMasterNameProperty(),
+          description: { type: ['string', 'null'], maxLength: 500 },
         },
       },
       Role: {
@@ -7545,7 +7591,7 @@ export const openApiDocument = {
             properties: {
               id: { type: 'integer', minimum: 1 },
               tenantId: { type: 'string', minLength: 1 },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               isSystem: {
                 type: 'boolean',
                 description:
@@ -7619,7 +7665,7 @@ export const openApiDocument = {
             maxLength: 100,
             description: 'Canonical Permission key in <resource>:<action> format.',
           },
-          description: { type: ['string', 'null'] },
+          description: { type: ['string', 'null'], maxLength: 500 },
         },
       },
       AssignUserRolesRequest: {
@@ -7662,7 +7708,7 @@ export const openApiDocument = {
               'revoke',
             ],
           },
-          description: { type: ['string', 'null'] },
+          description: { type: ['string', 'null'], maxLength: 500 },
         },
       },
       PermissionCatalogue: {
@@ -7717,7 +7763,7 @@ export const openApiDocument = {
             maxLength: 100,
             description: 'Canonical Permission key in <resource>:<action> format.',
           },
-          description: { type: ['string', 'null'] },
+          description: { type: ['string', 'null'], maxLength: 500 },
           isActive: { type: 'boolean' },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
@@ -7739,12 +7785,13 @@ export const openApiDocument = {
         type: 'object',
         required: ['name'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
+          name: simpleMasterNameProperty(),
           code: {
             type: ['string', 'null'],
             maxLength: 10,
+            pattern: '^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$',
             description:
-              'Optional Tenant-scoped Specialty code. Non-empty values are trimmed and normalized to uppercase; null, blank, and omitted values are stored as null.',
+              'Optional Tenant-scoped Specialty code. Non-empty values may contain only letters, numbers, hyphens, and underscores; they are trimmed and normalized to uppercase. Null, blank, and omitted values are stored as null.',
           },
           description: {
             type: ['string', 'null'],
@@ -7784,7 +7831,7 @@ export const openApiDocument = {
                 description: 'Tenant identifier resolved from the authenticated Session.',
               },
               code: { type: ['string', 'null'], maxLength: 10 },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -8140,20 +8187,22 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'category', 'unitPrice'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 150 },
-          code: {
-            type: 'string',
-            minLength: 1,
-            maxLength: 20,
-            description: 'Charge Item code. The API normalizes this value to uppercase.',
-          },
+          name: simpleMasterNameProperty(150),
+          code: simpleMasterCodeProperty(
+            'Charge Item code. The API normalizes this value to uppercase.',
+            20
+          ),
           category: schemaRef('ChargeItemCategory'),
           unitPrice: {
             type: 'number',
             minimum: 0,
             description: 'Unit price in the Tenant currency, rounded to two decimals.',
           },
-          description: { type: ['string', 'null'], description: 'Charge Item description.' },
+          description: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description: 'Charge Item description.',
+          },
           isActive: {
             type: 'boolean',
             default: true,
@@ -8186,7 +8235,7 @@ export const openApiDocument = {
                 minLength: 1,
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -8764,7 +8813,7 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'fromTime', 'toTime'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
+          name: simpleMasterNameProperty(),
           fromTime: {
             type: 'string',
             pattern: '^([01]\\d|2[0-3]):[0-5]\\d$',
@@ -8926,8 +8975,8 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'category'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: stringCodeProperty(
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
             'Appointment Status code. The API normalizes this value to uppercase.'
           ),
           category: {
@@ -8936,7 +8985,11 @@ export const openApiDocument = {
             description:
               'Lifecycle category used by the backend. The protected Scheduled system status is selected automatically by Appointment creation.',
           },
-          description: { type: ['string', 'null'], description: 'Appointment Status description.' },
+          description: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description: 'Appointment Status description.',
+          },
         },
       },
       UpdateAppointmentStatusRequest: schemaRef('CreateAppointmentStatusRequest'),
@@ -8967,7 +9020,7 @@ export const openApiDocument = {
                 type: 'boolean',
                 description: 'True for protected system lifecycle statuses seeded for the Tenant.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -9223,13 +9276,11 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'category'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 150 },
-          code: {
-            type: 'string',
-            minLength: 1,
-            maxLength: 20,
-            description: 'Allergen code. The API normalizes this value to uppercase.',
-          },
+          name: simpleMasterNameProperty(150),
+          code: simpleMasterCodeProperty(
+            'Allergen code. The API normalizes this value to uppercase.',
+            20
+          ),
           category: {
             type: 'string',
             enum: ['drug', 'food', 'environmental', 'other'],
@@ -9261,14 +9312,16 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: {
-            type: 'string',
-            minLength: 1,
-            maxLength: 20,
-            description: 'Clinical note type code. The API normalizes this value to uppercase.',
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
+            'Clinical note type code. The API normalizes this value to uppercase.',
+            20
+          ),
+          description: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description: 'Clinical note type description.',
           },
-          description: { type: ['string', 'null'], description: 'Clinical note type description.' },
         },
       },
       UpdateClinicalNoteTypeRequest: schemaRef('CreateClinicalNoteTypeRequest'),
@@ -9285,7 +9338,7 @@ export const openApiDocument = {
                 minLength: 1,
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -10184,8 +10237,8 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'color'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: stringCodeProperty(
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
             'Asset Category code. The API normalizes this value to uppercase.'
           ),
           color: {
@@ -10193,7 +10246,11 @@ export const openApiDocument = {
             pattern: '^#[0-9A-Fa-f]{6}$',
             description: 'Asset Category display color as a #RRGGBB hex value.',
           },
-          description: { type: 'string', description: 'Asset Category description.' },
+          description: {
+            type: 'string',
+            maxLength: 500,
+            description: 'Asset Category description.',
+          },
         },
       },
       UpdateAssetCategoryRequest: schemaRef('CreateAssetCategoryRequest'),
@@ -10219,7 +10276,7 @@ export const openApiDocument = {
                 minLength: 1,
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -10230,8 +10287,8 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'color'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: stringCodeProperty(
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
             'Asset Status code. The API normalizes this value to uppercase.'
           ),
           color: {
@@ -10239,7 +10296,7 @@ export const openApiDocument = {
             pattern: '^#[0-9A-Fa-f]{6}$',
             description: 'Asset Status display color as a #RRGGBB hex value.',
           },
-          description: { type: 'string', description: 'Asset Status description.' },
+          description: { type: 'string', maxLength: 500, description: 'Asset Status description.' },
         },
       },
       UpdateAssetStatusRequest: schemaRef('CreateAssetStatusRequest'),
@@ -10265,7 +10322,7 @@ export const openApiDocument = {
                 minLength: 1,
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -10276,8 +10333,8 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'color'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: stringCodeProperty(
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
             'Asset Condition code. The API normalizes this value to uppercase.'
           ),
           color: {
@@ -10285,7 +10342,11 @@ export const openApiDocument = {
             pattern: '^#[0-9A-Fa-f]{6}$',
             description: 'Asset Condition display color as a #RRGGBB hex value.',
           },
-          description: { type: 'string', description: 'Asset Condition description.' },
+          description: {
+            type: 'string',
+            maxLength: 500,
+            description: 'Asset Condition description.',
+          },
         },
       },
       UpdateAssetConditionRequest: schemaRef('CreateAssetConditionRequest'),
@@ -10311,7 +10372,7 @@ export const openApiDocument = {
                 minLength: 1,
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -10327,8 +10388,10 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'color'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: stringCodeProperty('Room Type code. The API normalizes this value to uppercase.'),
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
+            'Room Type code. The API normalizes this value to uppercase.'
+          ),
           color: {
             type: 'string',
             pattern: '^#[0-9A-Fa-f]{6}$',
@@ -10341,7 +10404,11 @@ export const openApiDocument = {
             description:
               'Daily tariff for a Room of this Room Type, in the Tenant Reporting Currency. Omit when the Tenant does not price this Room Type.',
           },
-          description: { type: ['string', 'null'], description: 'Room Type description.' },
+          description: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description: 'Room Type description.',
+          },
         },
       },
       UpdateRoomTypeRequest: schemaRef('CreateRoomTypeRequest'),
@@ -10369,7 +10436,7 @@ export const openApiDocument = {
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
               dailyRate: { type: ['number', 'null'] },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -10507,8 +10574,8 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'color'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: stringCodeProperty(
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
             'Work Order Type code. The API normalizes this value to uppercase.'
           ),
           color: {
@@ -10516,7 +10583,11 @@ export const openApiDocument = {
             pattern: '^#[0-9A-Fa-f]{6}$',
             description: 'Work Order Type display color as a #RRGGBB hex value.',
           },
-          description: { type: 'string', description: 'Work Order Type description.' },
+          description: {
+            type: 'string',
+            maxLength: 500,
+            description: 'Work Order Type description.',
+          },
         },
       },
       UpdateWorkOrderTypeRequest: schemaRef('CreateWorkOrderTypeRequest'),
@@ -10542,7 +10613,7 @@ export const openApiDocument = {
                 minLength: 1,
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -10553,8 +10624,8 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'color'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: stringCodeProperty(
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
             'Work Order Priority code. The API normalizes this value to uppercase.'
           ),
           color: {
@@ -10562,7 +10633,11 @@ export const openApiDocument = {
             pattern: '^#[0-9A-Fa-f]{6}$',
             description: 'Work Order Priority display color as a #RRGGBB hex value.',
           },
-          description: { type: 'string', description: 'Work Order Priority description.' },
+          description: {
+            type: 'string',
+            maxLength: 500,
+            description: 'Work Order Priority description.',
+          },
         },
       },
       UpdateWorkOrderPriorityRequest: schemaRef('CreateWorkOrderPriorityRequest'),
@@ -10588,7 +10663,7 @@ export const openApiDocument = {
                 minLength: 1,
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -10599,8 +10674,8 @@ export const openApiDocument = {
         type: 'object',
         required: ['name', 'code', 'category', 'color'],
         properties: {
-          name: { type: 'string', minLength: 1, maxLength: 100 },
-          code: stringCodeProperty(
+          name: simpleMasterNameProperty(),
+          code: simpleMasterCodeProperty(
             'Work Order Status code. The API normalizes this value to uppercase.'
           ),
           category: {
@@ -10614,7 +10689,11 @@ export const openApiDocument = {
             pattern: '^#[0-9A-Fa-f]{6}$',
             description: 'Work Order Status display color as a #RRGGBB hex value.',
           },
-          description: { type: 'string', description: 'Work Order Status description.' },
+          description: {
+            type: 'string',
+            maxLength: 500,
+            description: 'Work Order Status description.',
+          },
         },
       },
       UpdateWorkOrderStatusRequest: schemaRef('CreateWorkOrderStatusRequest'),
@@ -10642,7 +10721,7 @@ export const openApiDocument = {
                 minLength: 1,
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
-              description: { type: ['string', 'null'] },
+              description: { type: ['string', 'null'], maxLength: 500 },
               isSystem: {
                 type: 'boolean',
                 readOnly: true,

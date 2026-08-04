@@ -71,6 +71,25 @@ describe('AppointmentType schema', () => {
     ).toBeUndefined();
   });
 
+  it('should transform null description to undefined', () => {
+    expect(
+      createAppointmentTypeSchema.parse({ name: 'In Person', code: 'IP', description: null })
+        .description
+    ).toBeUndefined();
+  });
+
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createAppointmentTypeSchema.safeParse({
+          name: 'Consultation',
+          code: 'CONS',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Appointment type description must be at most 500 characters');
+  });
+
   it('should validate appointment type id is positive integer', () => {
     expect(appointmentTypeIdSchema.safeParse('1').success).toBe(true);
     expect(appointmentTypeIdSchema.safeParse('0').success).toBe(false);
@@ -80,5 +99,19 @@ describe('AppointmentType schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(appointmentTypeTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(appointmentTypeTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(createAppointmentTypeSchema.safeParse({ name: 'In.Person', code: 'INP' }))
+    ).toContain(
+      'Appointment type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(createAppointmentTypeSchema.safeParse({ name: 'In Person', code: 'IN.P' }))
+    ).toContain(
+      'Appointment type code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

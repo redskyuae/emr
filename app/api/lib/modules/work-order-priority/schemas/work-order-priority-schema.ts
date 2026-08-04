@@ -9,13 +9,21 @@ const workOrderPriorityNameSchema = z
   .string({ error: 'Work order priority name is required' })
   .trim()
   .min(1, 'Work order priority name cannot be empty')
-  .max(100, 'Work order priority name must be at most 100 characters');
+  .max(100, 'Work order priority name must be at most 100 characters')
+  .regex(
+    /^(?=.*\p{L})[\p{L} ,&'()/-]+$/u,
+    'Work order priority name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+  );
 
 const workOrderPriorityCodeSchema = z
   .string({ error: 'Work order priority code is required' })
   .trim()
   .min(1, 'Work order priority code cannot be empty')
   .max(10, 'Work order priority code must be at most 10 characters')
+  .regex(
+    /^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$/,
+    'Work order priority code must contain only letters, numbers, hyphens, and underscores.'
+  )
   .transform((code) => code.toUpperCase());
 
 const workOrderPriorityColorSchema = z
@@ -26,8 +34,9 @@ const workOrderPriorityColorSchema = z
 const workOrderPriorityDescriptionSchema = z
   .string()
   .trim()
-  .optional()
-  .transform((description) => (description === '' ? undefined : description));
+  .max(500, 'Work order priority description must be at most 500 characters')
+  .transform((description) => (description === '' ? undefined : description))
+  .optional();
 
 export const workOrderPriorityIdSchema = z.coerce
   .number({ error: 'Work order priority ID is required' })

@@ -171,14 +171,18 @@ export function VisitTypeFormSheet({
                 )}
               </Field>
 
-              <Field>
+              <Field data-invalid={Boolean(errors.description)}>
                 <FieldLabel htmlFor="visit-type-description">Description</FieldLabel>
                 <Textarea
                   id="visit-type-description"
+                  maxLength={500}
                   rows={3}
+                  data-invalid={Boolean(errors.description)}
+                  aria-invalid={Boolean(errors.description)}
                   placeholder="Standard outpatient consultation"
                   {...register('description')}
                 />
+                {errors.description ? <FieldError>{errors.description.message}</FieldError> : null}
               </Field>
             </FieldGroup>
           </div>

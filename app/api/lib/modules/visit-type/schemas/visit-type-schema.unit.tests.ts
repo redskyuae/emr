@@ -81,6 +81,18 @@ describe('VisitType schema', () => {
     });
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createVisitTypeSchema.safeParse({
+          name: 'OPD Consultation',
+          code: 'OPD',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Visit type description must be at most 500 characters');
+  });
+
   it('should validate id is a positive integer and tenant id is non-empty', () => {
     expect(visitTypeIdSchema.safeParse('0').success).toBe(false);
     expect(visitTypeIdSchema.safeParse('-1').success).toBe(false);
@@ -89,5 +101,15 @@ describe('VisitType schema', () => {
     expect(visitTypeIdSchema.parse('7')).toBe(7);
     expect(visitTypeTenantIdSchema.safeParse('   ').success).toBe(false);
     expect(visitTypeTenantIdSchema.parse(' tenant-1 ')).toBe('tenant-1');
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(errorsOf(createVisitTypeSchema.safeParse({ name: 'In.Person', code: 'INP' }))).toContain(
+      'Visit type name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(createVisitTypeSchema.safeParse({ name: 'In Person', code: 'IN.P' }))
+    ).toContain('Visit type code must contain only letters, numbers, hyphens, and underscores.');
   });
 });

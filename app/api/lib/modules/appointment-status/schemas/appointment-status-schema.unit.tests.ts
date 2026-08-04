@@ -80,6 +80,30 @@ describe('AppointmentStatus schema', () => {
     ).toBeUndefined();
   });
 
+  it('should transform null description to undefined', () => {
+    expect(
+      createAppointmentStatusSchema.parse({
+        name: 'Scheduled',
+        code: 'SCH',
+        category: 'SCHEDULED',
+        description: null,
+      }).description
+    ).toBeUndefined();
+  });
+
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      errorsOf(
+        createAppointmentStatusSchema.safeParse({
+          name: 'Scheduled',
+          code: 'SCH',
+          category: 'SCHEDULED',
+          description: 'a'.repeat(501),
+        })
+      )
+    ).toContain('Appointment status description must be at most 500 characters');
+  });
+
   it('should validate category is a known lifecycle category', () => {
     expect(
       errorsOf(
@@ -103,5 +127,31 @@ describe('AppointmentStatus schema', () => {
   it('should validate tenant id is non-empty string', () => {
     expect(appointmentStatusTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(appointmentStatusTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in name and code', () => {
+    expect(
+      errorsOf(
+        createAppointmentStatusSchema.safeParse({
+          name: 'In.Person',
+          code: 'INP',
+          category: 'SCHEDULED',
+        })
+      )
+    ).toContain(
+      'Appointment status name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+
+    expect(
+      errorsOf(
+        createAppointmentStatusSchema.safeParse({
+          name: 'In Person',
+          code: 'IN.P',
+          category: 'SCHEDULED',
+        })
+      )
+    ).toContain(
+      'Appointment status code must contain only letters, numbers, hyphens, and underscores.'
+    );
   });
 });

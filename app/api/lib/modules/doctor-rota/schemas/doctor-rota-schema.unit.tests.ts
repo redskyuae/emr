@@ -36,6 +36,34 @@ describe('DoctorRota schema', () => {
     ).toContain('Doctor rota name must be at most 100 characters');
   });
 
+  it('should return validation error when name contains unsupported characters', () => {
+    expect(
+      errorsOf(
+        createDoctorRotaSchema.safeParse({
+          name: 'Morning.Rota',
+          fromTime: '09:00',
+          toTime: '13:00',
+        })
+      )
+    ).toContain(
+      'Doctor rota name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+  });
+
+  it('should return validation error when name contains numbers', () => {
+    expect(
+      errorsOf(
+        createDoctorRotaSchema.safeParse({
+          name: 'Morning Rota 1',
+          fromTime: '09:00',
+          toTime: '13:00',
+        })
+      )
+    ).toContain(
+      'Doctor rota name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+  });
+
   it('should return validation error when from time is missing', () => {
     expect(
       errorsOf(createDoctorRotaSchema.safeParse({ name: 'Morning', toTime: '13:00' }))

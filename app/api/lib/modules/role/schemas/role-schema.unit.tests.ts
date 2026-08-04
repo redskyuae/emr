@@ -58,10 +58,35 @@ describe('Role schema', () => {
     expect(updateRoleSchema.safeParse({ name: 'Manager', code: 'MGR' }).success).toBe(false);
   });
 
+  it('should return validation error when description exceeds 500 characters', () => {
+    expect(
+      createErrors(
+        createRoleSchema.safeParse({ name: 'Manager', code: 'MGR', description: 'a'.repeat(501) })
+      )
+    ).toContain('Role description must be at most 500 characters');
+    expect(updateErrors(updateRoleSchema.safeParse({ description: 'a'.repeat(501) }))).toContain(
+      'Role description must be at most 500 characters'
+    );
+  });
+
   it('should validate role id and tenant id', () => {
     expect(roleIdSchema.safeParse('1').success).toBe(true);
     expect(roleIdSchema.safeParse('0').success).toBe(false);
     expect(roleTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(roleTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  it('should reject unsupported characters in role name and code', () => {
+    expect(
+      createErrors(createRoleSchema.safeParse({ name: 'Ward.Manager', code: 'WARD_MGR' }))
+    ).toContain(
+      'Role name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
+    expect(
+      createErrors(createRoleSchema.safeParse({ name: 'Ward Manager', code: 'WARD.MGR' }))
+    ).toContain('Role code must contain only letters, numbers, hyphens, and underscores.');
+    expect(updateErrors(updateRoleSchema.safeParse({ name: 'Ward.Manager' }))).toContain(
+      'Role name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
+    );
   });
 });

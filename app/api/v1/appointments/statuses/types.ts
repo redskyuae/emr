@@ -7,7 +7,7 @@ export type SaveAppointmentStatusRequest = {
   name: string;
   code: string;
   category: string;
-  description?: string;
+  description?: string | null;
 };
 
 export type SaveAppointmentStatusResponse = {

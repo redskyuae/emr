@@ -23,5 +23,8 @@ export const doctorRota = pgTable(
     tenantNameUniqueIdx: uniqueIndex('doctor_rota_tenant_name_idx')
       .on(table.tenantId, sql`lower(${table.name})`)
       .where(sql`${table.isDeleted} = false`),
+    tenantTimeRangeUniqueIdx: uniqueIndex('doctor_rota_tenant_time_range_idx')
+      .on(table.tenantId, table.fromTime, table.toTime)
+      .where(sql`${table.isDeleted} = false`),
   })
 );
