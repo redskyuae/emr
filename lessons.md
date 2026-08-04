@@ -71,23 +71,3 @@ A second, related trap: a repository finder/soft-delete (`getXById`, `findActive
 ## The Solution
 
 Name backend test files `*.unit.tests.ts` / `*.integration.tests.ts` exactly, and gate "done" on both `bun run test` **and** `bunx tsc --noEmit`. Annotate finders/soft-deletes that callers guard with `if (!row)` as `Promise<Entity | undefined>` so the production type matches reality. Full per-layer coverage, worked examples, and the shared mocking patterns live in [`docs/backend-testing.md`](docs/backend-testing.md).
-
-# Simple Master Field Validation Is Shared
-
-## The Problem
-
-App Masters and adjacent simple master screens all collect similar Name, Code, and Description fields. Fixing only one screen, such as Appointment Mode, leaves the same invalid input path open elsewhere. Repeated ad-hoc Zod rules also drift: one module may reject dots while another still allows them, or one frontend form may cap Description while the API remains unbounded.
-
-## The Solution
-
-Use `lib/validation/simple-master-fields.ts` for simple master Name, Code, and Description validation on both backend schemas and route-local frontend form schemas. Name fields accept letters plus approved spacing/punctuation, but not numbers or dots. Code fields may include letters, numbers, hyphens, and underscores and are normalized to uppercase. Description fields are optional, normalize blank/null input consistently, and cap at 500 characters.
-
-# DoctorRota Time Windows Are Unique Per Tenant
-
-## The Problem
-
-DoctorRota names are human labels, but scheduling availability is keyed by the time window exposed to booking flows. Allowing two active DoctorRotas in the same Tenant with identical `fromTime` and `toTime` creates duplicate scheduling templates that look distinct by name but compete for the same availability window.
-
-## The Solution
-
-Treat the exact DoctorRota time window as unique among active DoctorRotas within a Tenant. Validate duplicates before writes, and keep a partial unique index on `(tenant_id, from_time, to_time)` where `is_deleted = false` so concurrent creates cannot bypass the validator. Reuse remains allowed after soft delete and across different Tenants.

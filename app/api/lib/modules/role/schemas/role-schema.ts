@@ -29,10 +29,7 @@ const roleDescriptionSchema = z
   .optional();
 
 const nullableRoleDescriptionSchema = z
-  .union([
-    z.string().trim().max(500, 'Role description must be at most 500 characters'),
-    z.null(),
-  ])
+  .union([z.string().trim().max(500, 'Role description must be at most 500 characters'), z.null()])
   .transform((description) => (description === '' ? null : description))
   .optional();
 
