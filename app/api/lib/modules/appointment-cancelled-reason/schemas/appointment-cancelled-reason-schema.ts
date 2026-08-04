@@ -26,9 +26,11 @@ const appointmentCancelledReasonCodeSchema = simpleMasterCodeSchema({
   requiredMessage: 'Appointment cancelled reason code is required',
 });
 
-const appointmentCancelledReasonDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
-  maxMessage: 'Appointment cancelled reason description must be at most 500 characters',
-});
+const appointmentCancelledReasonDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema(
+  {
+    maxMessage: 'Appointment cancelled reason description must be at most 500 characters',
+  }
+);
 
 export const appointmentCancelledReasonIdSchema = z.coerce
   .number({ error: 'Appointment cancelled reason ID is required' })
