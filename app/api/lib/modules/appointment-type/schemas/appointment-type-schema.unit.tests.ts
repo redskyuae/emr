@@ -71,6 +71,13 @@ describe('AppointmentType schema', () => {
     ).toBeUndefined();
   });
 
+  it('should transform null description to undefined', () => {
+    expect(
+      createAppointmentTypeSchema.parse({ name: 'In Person', code: 'IP', description: null })
+        .description
+    ).toBeUndefined();
+  });
+
   it('should return validation error when description exceeds 500 characters', () => {
     expect(
       errorsOf(

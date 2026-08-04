@@ -5,6 +5,7 @@ import { doctorRotaRepository } from '../repository/doctor-rota-repository';
 
 const DOCTOR_ROTA_NAME_EXISTS = "Doctor rota name '{value}' already exists.";
 const DOCTOR_ROTA_TIME_RANGE_EXISTS = 'Doctor rota already exists for the selected time range.';
+const DOCTOR_ROTA_UNIQUENESS_VALIDATION_FAILED = 'Doctor rota uniqueness validation failed.';
 
 type DoctorRotaUniquenessInput = {
   name: string;
@@ -25,10 +26,21 @@ export async function validateDoctorRotaUniqueness({
   fromTime,
   excludeId,
 }: DoctorRotaUniquenessInput): Promise<ValidationResult<void>> {
-  const [existingName, existingTimeRange] = await Promise.all([
-    doctorRotaRepository.findActiveByName(tenantId, name, { excludeId }),
-    doctorRotaRepository.findActiveByTimeRange(tenantId, fromTime, toTime, { excludeId }),
-  ]);
+  let existingName;
+  let existingTimeRange;
+
+  try {
+    [existingName, existingTimeRange] = await Promise.all([
+      doctorRotaRepository.findActiveByName(tenantId, name, { excludeId }),
+      doctorRotaRepository.findActiveByTimeRange(tenantId, fromTime, toTime, { excludeId }),
+    ]);
+  } catch {
+    return {
+      success: false,
+      errors: [DOCTOR_ROTA_UNIQUENESS_VALIDATION_FAILED],
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    };
+  }
 
   const errors: string[] = [];
 

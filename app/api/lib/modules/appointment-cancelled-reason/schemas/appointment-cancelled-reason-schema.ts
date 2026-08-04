@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
+  nullableToOptionalSimpleMasterDescriptionSchema,
   simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
   simpleMasterNameSchema,
 } from '@/lib/validation/simple-master-fields';
 
@@ -26,7 +26,7 @@ const appointmentCancelledReasonCodeSchema = simpleMasterCodeSchema({
   requiredMessage: 'Appointment cancelled reason code is required',
 });
 
-const appointmentCancelledReasonDescriptionSchema = simpleMasterDescriptionSchema({
+const appointmentCancelledReasonDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
   maxMessage: 'Appointment cancelled reason description must be at most 500 characters',
 });
 

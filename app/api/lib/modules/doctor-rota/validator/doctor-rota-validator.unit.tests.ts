@@ -76,6 +76,32 @@ describe('DoctorRota validators', () => {
     });
   });
 
+  it('should return internal error when doctor rota name uniqueness lookup fails', async () => {
+    repo.findActiveByName.mockRejectedValue(new Error('database down'));
+    const result = await validateCreateDoctorRota(
+      { name: 'Morning Rota', fromTime: '09:00', toTime: '13:00' },
+      'tenant-1'
+    );
+    expect(result).toEqual({
+      success: false,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      errors: ['Doctor rota uniqueness validation failed.'],
+    });
+  });
+
+  it('should return internal error when doctor rota time-range uniqueness lookup fails', async () => {
+    repo.findActiveByTimeRange.mockRejectedValue(new Error('database down'));
+    const result = await validateCreateDoctorRota(
+      { name: 'Morning Rota', fromTime: '09:00', toTime: '13:00' },
+      'tenant-1'
+    );
+    expect(result).toEqual({
+      success: false,
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      errors: ['Doctor rota uniqueness validation failed.'],
+    });
+  });
+
   it('should pass exclude id during update uniqueness checks', async () => {
     await validateUpdateDoctorRota(
       '7',

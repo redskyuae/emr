@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
+  nullableToOptionalSimpleMasterDescriptionSchema,
   simpleMasterCodeSchema,
-  simpleMasterDescriptionSchema,
   simpleMasterNameSchema,
 } from '@/lib/validation/simple-master-fields';
 
@@ -26,7 +26,7 @@ const appointmentTypeCodeSchema = simpleMasterCodeSchema({
   requiredMessage: 'Appointment type code is required',
 });
 
-const appointmentTypeDescriptionSchema = simpleMasterDescriptionSchema({
+const appointmentTypeDescriptionSchema = nullableToOptionalSimpleMasterDescriptionSchema({
   maxMessage: 'Appointment type description must be at most 500 characters',
 });
 

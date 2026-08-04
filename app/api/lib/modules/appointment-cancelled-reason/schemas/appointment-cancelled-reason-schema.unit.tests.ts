@@ -83,6 +83,16 @@ describe('AppointmentCancelledReason schema', () => {
     ).toBeUndefined();
   });
 
+  it('should transform null description to undefined', () => {
+    expect(
+      createAppointmentCancelledReasonSchema.parse({
+        name: 'Cancelled',
+        code: 'CX',
+        description: null,
+      }).description
+    ).toBeUndefined();
+  });
+
   it('should return validation error when description exceeds 500 characters', () => {
     expect(
       errorsOf(
