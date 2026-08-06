@@ -39,25 +39,13 @@ function compareDueDate(a: WorkOrder, b: WorkOrder) {
   return a.dueDate.localeCompare(b.dueDate);
 }
 
-function selectAttentionWorkOrders(workOrders: WorkOrder[]) {
-  return workOrders.filter(isAttentionWorkOrder).sort(compareDueDate);
-}
-
-function selectUpcomingMaintenanceWorkOrders(workOrders: WorkOrder[]) {
-  return workOrders
-    .filter(
-      (workOrder) =>
-        workOrder.status.category === 'SCHEDULED' || workOrder.status.category === 'IN_PROGRESS'
-    )
-    .sort(compareDueDate);
-}
-
 export function useSuspenseAttentionWorkOrders() {
   return useSuspenseQuery(
     queryOptions({
       queryKey: ['work-orders', 'attention', ATTENTION_DISPLAY_LIMIT] as const,
       queryFn: () => fetchRecentWorkOrders(ATTENTION_DISPLAY_LIMIT),
-      select: selectAttentionWorkOrders,
+      select: (workOrders: WorkOrder[]) =>
+        workOrders.filter(isAttentionWorkOrder).sort(compareDueDate),
     })
   );
 }
@@ -71,7 +59,14 @@ export function useSuspenseUpcomingMaintenanceWorkOrders() {
         UPCOMING_MAINTENANCE_DISPLAY_LIMIT,
       ] as const,
       queryFn: () => fetchRecentWorkOrders(UPCOMING_MAINTENANCE_DISPLAY_LIMIT),
-      select: selectUpcomingMaintenanceWorkOrders,
+      select: (workOrders: WorkOrder[]) =>
+        workOrders
+          .filter(
+            (workOrder) =>
+              workOrder.status.category === 'SCHEDULED' ||
+              workOrder.status.category === 'IN_PROGRESS'
+          )
+          .sort(compareDueDate),
     })
   );
 }
