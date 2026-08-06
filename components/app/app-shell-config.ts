@@ -493,6 +493,46 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     title: 'Global References',
     subtitle: 'Shared reference data used across Tenants.',
   },
+  '/global-references/languages': {
+    title: 'Languages',
+    subtitle: 'Shared Language Global References used in Patient demographics.',
+    primaryAction: {
+      label: 'Add Language',
+      href: '/global-references/languages?language=new',
+    },
+  },
+  '/global-references/nationalities': {
+    title: 'Nationalities',
+    subtitle: 'Shared Nationality Global References used during Patient Registration.',
+    primaryAction: {
+      label: 'Add Nationality',
+      href: '/global-references/nationalities?nationality=new',
+    },
+  },
+  '/global-references/religions': {
+    title: 'Religions',
+    subtitle: 'Shared Religion Global References used in Patient demographics.',
+    primaryAction: {
+      label: 'Add Religion',
+      href: '/global-references/religions?religion=new',
+    },
+  },
+  '/global-references/countries': {
+    title: 'Countries',
+    subtitle: 'Shared Country Global References used for addresses and identity context.',
+    primaryAction: {
+      label: 'Add Country',
+      href: '/global-references/countries?country=new',
+    },
+  },
+  '/global-references/states': {
+    title: 'States',
+    subtitle: 'Shared State Global References grouped under Countries.',
+    primaryAction: {
+      label: 'Add State',
+      href: '/global-references/states?state=new',
+    },
+  },
   '/clinical-masters/diagnosis-codes': {
     title: 'Diagnosis Codes',
     subtitle: 'Tenant-scoped ICD-10 diagnosis catalogue used across clinical records.',

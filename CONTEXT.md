@@ -32,6 +32,30 @@ The second phase of Tenant Provisioning, in which a newly created Tenant receive
 
 A single physical location operated by a Tenant — a hospital, clinic, diagnostic center, or day-care unit. Has a `facilityType` attribute (HOSPITAL, CLINIC, LAB, etc.). Staff and clinical events are always scoped to a Facility within a Tenant.
 
+## Global Reference
+
+Shared reference data used across Tenants for demographic and geographic classification. Global References are distinct from Tenant-scoped Masters, which each Tenant configures independently.
+
+## Language
+
+A Global Reference representing a human language that may be recorded on a Patient.
+
+## Nationality
+
+A Global Reference representing a person's nationality for demographic registration.
+
+## Religion
+
+A Global Reference representing a religion that may be recorded on a Patient.
+
+## Country
+
+A Global Reference representing a country used in addresses and identity-document context.
+
+## State
+
+A Global Reference representing a subdivision of a Country, used in address context.
+
 ## Tenant Owner
 
 The top-level user for a Tenant. The creator of a Tenant always becomes the Tenant Owner. A Tenant Owner has Tenant Admin authority for that Tenant, is not necessarily Staff, and is not itself a Role.
