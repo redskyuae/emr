@@ -5,6 +5,7 @@ import {
   date,
   integer,
   pgTable,
+  text,
   timestamp,
   uniqueIndex,
   varchar,
@@ -55,6 +56,12 @@ export const patient = pgTable(
     // card is printed with — three spellings of one ID would otherwise insert
     // as three patients past the unique index below (ADR 0042).
     emiratesId: varchar('emirates_id', { length: 15 }),
+    photoUrl: text('photo_url'),
+    patientIdentificationCategory: varchar('patient_identification_category', { length: 60 }),
+    uid: varchar({ length: 30 }),
+    isVip: boolean('is_vip').notNull().default(false),
+    smsConsent: boolean('sms_consent').notNull().default(false),
+    isMedicalTourist: boolean('is_medical_tourist').notNull().default(false),
     emergencyContactName: varchar('emergency_contact_name', { length: 150 }),
     emergencyContactRelationship: varchar('emergency_contact_relationship', { length: 50 }),
     emergencyContactPhone: varchar('emergency_contact_phone', { length: 20 }),
