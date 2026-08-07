@@ -1727,6 +1727,10 @@ const patientRequestExample = {
   languageId: 2,
   religionId: 3,
   emiratesId: '784199012345671',
+  photoUrl: 'https://example.com/patient-photos/emirates-id-784199012345671.jpg',
+  isVip: false,
+  smsConsent: true,
+  isMedicalTourist: false,
   identityDocuments: [
     {
       documentType: 'passport',
@@ -1750,6 +1754,8 @@ const patientExample = {
   tenantId: 'org_apollo',
   mrn: 'MRN-1042',
   ...patientRequestExample,
+  uid: null,
+  patientIdentificationCategory: null,
   registrationStatus: 'registered',
   // Responses echo each document's id — the nested full replace diffs on it
   // rather than rewriting the collection (ADR 0043).
@@ -1905,6 +1911,20 @@ const patientValidationFailed = {
           value: {
             message: 'Validation failed',
             errors: ['Patient Emirates ID must be 15 digits beginning with 784'],
+          },
+        },
+        missingIdentificationCategory: {
+          summary: 'Emirates ID absent without Patient Identification Category',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient Identification Category is required when Emirates ID is absent'],
+          },
+        },
+        medicalTouristMissingUid: {
+          summary: 'Medical Tourist submitted without UID',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient UID is required for Medical Tourist'],
           },
         },
         passportMissingExpiry: {
@@ -5997,7 +6017,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Register Patient',
         description:
-          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. emiratesId is optional (foreign nationals will not have one), is stored digit-normalised, and is unique per Tenant when present. identityDocuments replaces the whole collection; required fields vary by documentType.',
+          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. Send either emiratesId or patientIdentificationCategory. emiratesId is stored digit-normalised and is unique per Tenant when present; no-card surrogate default identifiers are UI-only and are not stored as emiratesId. photoUrl may be sent only when it was returned by an Emirates ID read. Medical Tourist registration requires no emiratesId, a uid, and a passport Identity Document. identityDocuments replaces the whole collection; required fields vary by documentType.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreatePatientRequest', patientRequestExample),
         responses: {
@@ -6037,7 +6057,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Update Patient',
         description:
-          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference and Emirates ID rules are the same as registration. identityDocuments replaces the whole collection: documents sent with an id are updated, documents sent without one are added, and any existing document omitted from the array is removed.',
+          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference, Emirates ID, no-card Patient Identification Category, UID, Patient photo, and Medical Tourist rules are the same as registration. identityDocuments replaces the whole collection: documents sent with an id are updated, documents sent without one are added, and any existing document omitted from the array is removed.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Patient')],
         requestBody: requestBody('UpdatePatientRequest', patientRequestExample),
@@ -9905,8 +9925,44 @@ export const openApiDocument = {
           emiratesId: {
             type: 'string',
             description:
-              'Optional — foreign nationals treated without UAE residency will not have one. 15 digits beginning with 784; dashes and spaces are stripped before storage. Unique per Tenant among active Patients. The check digit is deliberately not validated.',
+              '15 digits beginning with 784; dashes and spaces are stripped before storage. Unique per Tenant among active Patients. Required unless patientIdentificationCategory is provided for no-card registration. The check digit is deliberately not validated.',
             example: '784199012345671',
+          },
+          photoUrl: {
+            type: 'string',
+            description:
+              'Optional Patient photo returned by Emirates ID read. Accepts an HTTP(S) URL or image data URL and is saved only when emiratesId is present.',
+            example: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==',
+          },
+          patientIdentificationCategory: {
+            type: 'string',
+            enum: [
+              'uae-national-without-card',
+              'national-without-card',
+              'expatriate-resident-without-card',
+              'non-expatriate-resident-without-card',
+              'unknown-status-without-card',
+            ],
+            description:
+              'Required when Emirates ID is absent. The UI may show the mapped no-card default identifier, but that surrogate value is not stored as emiratesId.',
+          },
+          uid: {
+            type: 'string',
+            maxLength: 30,
+            description:
+              'UAE immigration Unified Identification Number. Required for Medical Tourist registration.',
+          },
+          isVip: { type: 'boolean', default: false },
+          smsConsent: {
+            type: 'boolean',
+            default: false,
+            description: 'Whether SMS notifications may be sent to the Patient mobile number.',
+          },
+          isMedicalTourist: {
+            type: 'boolean',
+            default: false,
+            description:
+              'When true, Emirates ID must be absent, uid is required, and identityDocuments must include a passport.',
           },
           identityDocuments: {
             type: 'array',
@@ -9953,6 +10009,12 @@ export const openApiDocument = {
           'religionId',
           'religion',
           'emiratesId',
+          'photoUrl',
+          'patientIdentificationCategory',
+          'uid',
+          'isVip',
+          'smsConsent',
+          'isMedicalTourist',
           'identityDocuments',
           'emergencyContactName',
           'emergencyContactRelationship',
@@ -10029,6 +10091,30 @@ export const openApiDocument = {
             maxLength: 15,
             description: 'Digit-normalised. Clients format it as 784-1990-1234567-1 for display.',
           },
+          photoUrl: {
+            type: ['string', 'null'],
+            description:
+              'Patient photo captured from Emirates ID read. Null when no Emirates ID photo was available or when the Patient is registered without Emirates ID.',
+          },
+          patientIdentificationCategory: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: [
+                  'uae-national-without-card',
+                  'national-without-card',
+                  'expatriate-resident-without-card',
+                  'non-expatriate-resident-without-card',
+                  'unknown-status-without-card',
+                ],
+              },
+              { type: 'null' },
+            ],
+          },
+          uid: { type: ['string', 'null'], maxLength: 30 },
+          isVip: { type: 'boolean' },
+          smsConsent: { type: 'boolean' },
+          isMedicalTourist: { type: 'boolean' },
           identityDocuments: {
             type: 'array',
             items: schemaRef('PatientIdentityDocument'),

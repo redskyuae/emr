@@ -26,6 +26,12 @@ export type UpdatePatientRequest = {
   languageId?: number;
   religionId?: number;
   emiratesId?: string;
+  photoUrl?: string;
+  patientIdentificationCategory?: string;
+  uid?: string;
+  isVip?: boolean;
+  smsConsent?: boolean;
+  isMedicalTourist?: boolean;
   identityDocuments?: SavePatientIdentityDocumentRequest[];
   emergencyContactName?: string;
   emergencyContactRelationship?: string;

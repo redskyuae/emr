@@ -5,8 +5,10 @@ import {
   PATIENT_BLOOD_GROUPS,
   PATIENT_GENDERS,
   PATIENT_IDENTITY_DOCUMENT_TYPES,
+  PATIENT_IDENTIFICATION_CATEGORIES,
   PATIENT_MARITAL_STATUSES,
   PATIENT_PAYMENT_METHODS,
+  PATIENT_TITLES,
 } from './patient-value-sets';
 
 function isNotFutureDate(value: string) {
@@ -16,6 +18,19 @@ function isNotFutureDate(value: string) {
   today.setHours(0, 0, 0, 0);
 
   return date <= today;
+}
+
+function isPatientPhotoUrl(value: string) {
+  if (/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(value)) {
+    return true;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 const requiredNameField = (label: string) =>
@@ -81,6 +96,7 @@ export function getIdentityDocumentRequiredFields(documentType: string) {
 
 export const patientFormSchema = z
   .object({
+    title: z.enum(PATIENT_TITLES).or(z.literal('')),
     firstName: requiredNameField('First name'),
     middleName: optionalNameField('Middle name', 100),
     lastName: requiredNameField('Last name'),
@@ -110,6 +126,17 @@ export const patientFormSchema = z
     nationalityId: z.number().int().positive().optional(),
     languageId: z.number().int().positive().optional(),
     religionId: z.number().int().positive().optional(),
+    hasEmiratesId: z.boolean(),
+    photoUrl: z
+      .string()
+      .trim()
+      .max(1_500_000, 'Patient photo must be at most 1.5MB.')
+      .refine(
+        (value) => value === '' || isPatientPhotoUrl(value),
+        'Patient photo must be an HTTP(S) URL or image data URL from Emirates ID read.'
+      )
+      .optional()
+      .or(z.literal('')),
     emiratesId: z
       .string()
       .trim()
@@ -119,6 +146,15 @@ export const patientFormSchema = z
       )
       .optional()
       .or(z.literal('')),
+    patientIdentificationCategory: z
+      .enum(PATIENT_IDENTIFICATION_CATEGORIES)
+      .optional()
+      .or(z.literal('')),
+    passportNumber: optionalNameField('Passport number', 50),
+    uid: optionalNameField('UID', 30),
+    isVip: z.boolean(),
+    smsConsent: z.boolean(),
+    isMedicalTourist: z.boolean(),
     identityDocuments: z.array(identityDocumentFormSchema),
     emergencyContactName: optionalNameField('Emergency contact name', 150),
     emergencyContactRelationship: optionalNameField('Emergency contact relationship', 50),
@@ -127,6 +163,46 @@ export const patientFormSchema = z
   .superRefine((data, ctx) => {
     if (data.gender === '') {
       ctx.addIssue({ code: 'custom', message: 'Gender is required.', path: ['gender'] });
+    }
+
+    if (data.hasEmiratesId && !data.emiratesId) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Emirates ID is required.',
+        path: ['emiratesId'],
+      });
+    }
+
+    if (!data.hasEmiratesId && !data.patientIdentificationCategory) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Patient Identification Category is required.',
+        path: ['patientIdentificationCategory'],
+      });
+    }
+
+    if (!data.hasEmiratesId && data.photoUrl) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Patient photo can only be saved with Emirates ID.',
+        path: ['photoUrl'],
+      });
+    }
+
+    if (data.isMedicalTourist && data.hasEmiratesId) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Medical Tourist cannot have Emirates ID.',
+        path: ['hasEmiratesId'],
+      });
+    }
+
+    if (data.isMedicalTourist && !data.uid) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'UID is required for Medical Tourist.',
+        path: ['uid'],
+      });
     }
 
     data.identityDocuments.forEach((document, index) => {

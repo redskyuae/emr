@@ -16,6 +16,7 @@ const validPayload = {
   gender: 'female',
   dateOfBirth: '1990-05-14',
   phone: '9876543210',
+  emiratesId: '784199012345671',
 };
 
 describe('Patient schema', () => {
@@ -117,11 +118,131 @@ describe('Patient schema', () => {
   });
 
   it('should treat an empty Emirates ID as absent', () => {
-    const result = createPatientSchema.safeParse({ ...validPayload, emiratesId: '' });
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      emiratesId: '',
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.emiratesId).toBeUndefined();
     }
+  });
+
+  it('should accept a Patient photo returned by Emirates ID read', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      photoUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.photoUrl).toBe('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==');
+    }
+  });
+
+  it('should reject a Patient photo when Emirates ID is absent', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          emiratesId: '',
+          photoUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==',
+          patientIdentificationCategory: 'unknown-status-without-card',
+        })
+      )
+    ).toContain('Patient photo can only be saved with Emirates ID');
+  });
+
+  it('should reject unsupported Patient photo values', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, photoUrl: 'javascript:alert(1)' }))
+    ).toContain('Patient photo must be an HTTP(S) URL or image data URL from Emirates ID read');
+  });
+
+  it('should require Patient Identification Category when Emirates ID is absent', () => {
+    const payloadWithoutEmiratesId = { ...validPayload, emiratesId: undefined };
+
+    expect(errorsOf(createPatientSchema.safeParse(payloadWithoutEmiratesId))).toContain(
+      'Patient Identification Category is required when Emirates ID is absent'
+    );
+  });
+
+  it('should accept each supported Patient Identification Category without an Emirates ID', () => {
+    for (const category of [
+      'uae-national-without-card',
+      'national-without-card',
+      'expatriate-resident-without-card',
+      'non-expatriate-resident-without-card',
+      'unknown-status-without-card',
+    ]) {
+      const result = createPatientSchema.safeParse({
+        ...validPayload,
+        emiratesId: '',
+        patientIdentificationCategory: category,
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.patientIdentificationCategory).toBe(category);
+        expect(result.data.emiratesId).toBeUndefined();
+      }
+    }
+  });
+
+  it('should reject an invalid Patient Identification Category', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          emiratesId: '',
+          patientIdentificationCategory: 'tourist',
+        })
+      )
+    ).toContain('Patient Identification Category is invalid');
+  });
+
+  it('should require UID and a passport when Patient is a Medical Tourist', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          emiratesId: '',
+          isMedicalTourist: true,
+          patientIdentificationCategory: 'unknown-status-without-card',
+        })
+      )
+    ).toEqual(
+      expect.arrayContaining([
+        'Patient UID is required for Medical Tourist',
+        'Passport is required for Medical Tourist',
+      ])
+    );
+  });
+
+  it('should reject Medical Tourist registration with an Emirates ID', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, isMedicalTourist: true }))
+    ).toContain('Medical Tourist cannot have Emirates ID');
+  });
+
+  it('should accept Medical Tourist registration with UID and passport', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      emiratesId: '',
+      uid: '123456789',
+      isMedicalTourist: true,
+      patientIdentificationCategory: 'unknown-status-without-card',
+      identityDocuments: [
+        {
+          documentType: 'passport',
+          documentNumber: 'J8369854',
+          issuingCountryId: 1,
+          expiryDate: '2029-04-11',
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
   });
 
   it('should reject emirates-id as an identity document type', () => {

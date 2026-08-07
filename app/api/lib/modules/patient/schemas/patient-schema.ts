@@ -3,6 +3,13 @@ import { z } from 'zod';
 const PATIENT_GENDERS = ['male', 'female', 'other', 'unknown'] as const;
 const PATIENT_BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 const PATIENT_MARITAL_STATUSES = ['single', 'married', 'divorced', 'widowed', 'other'] as const;
+const PATIENT_IDENTIFICATION_CATEGORIES = [
+  'uae-national-without-card',
+  'national-without-card',
+  'expatriate-resident-without-card',
+  'non-expatriate-resident-without-card',
+  'unknown-status-without-card',
+] as const;
 // Deliberately excludes 'emirates-id'. The Emirates ID is a singleton by law
 // and lives in its own column on patient, so it has exactly one home (ADR 0042).
 const PATIENT_IDENTITY_DOCUMENT_TYPES = [
@@ -99,9 +106,25 @@ const bloodGroupSchema = z.enum(PATIENT_BLOOD_GROUPS, { error: 'Patient blood gr
 const maritalStatusSchema = z.enum(PATIENT_MARITAL_STATUSES, {
   error: 'Patient marital status is invalid',
 });
+const patientIdentificationCategorySchema = z.enum(PATIENT_IDENTIFICATION_CATEGORIES, {
+  error: 'Patient Identification Category is invalid',
+});
 const paymentMethodSchema = z.enum(PATIENT_PAYMENT_METHODS, {
   error: 'Patient preferred payment method is invalid',
 });
+
+function isPatientPhotoUrl(value: string) {
+  if (/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(value)) {
+    return true;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
 
 // The card is printed 784-1990-1234567-1; only the digits are stored. Without
 // this, three spellings of one ID all pass the unique index as three patients.
@@ -201,6 +224,10 @@ const identityDocumentSchema = z.discriminatedUnion(
   { error: 'Identity document type is invalid' }
 );
 
+function hasPassport(identityDocuments: PatientIdentityDocumentInput[] | undefined) {
+  return (identityDocuments ?? []).some((document) => document.documentType === 'passport');
+}
+
 export const patientIdSchema = z.coerce
   .number({ error: 'Patient ID is required' })
   .int('Patient ID must be an integer')
@@ -241,6 +268,23 @@ const patientPayloadSchema = z
     languageId: optionalMasterIdSchema('language ID'),
     religionId: optionalMasterIdSchema('religion ID'),
     emiratesId: emiratesIdSchema,
+    photoUrl: optionalTrimmedValue(
+      z
+        .string()
+        .trim()
+        .max(1_500_000, 'Patient photo must be at most 1.5MB')
+        .refine(
+          isPatientPhotoUrl,
+          'Patient photo must be an HTTP(S) URL or image data URL from Emirates ID read'
+        )
+    ),
+    patientIdentificationCategory: optionalTrimmedValue(patientIdentificationCategorySchema),
+    uid: optionalTrimmedValue(
+      z.string().trim().max(30, 'Patient UID must be at most 30 characters')
+    ),
+    isVip: z.boolean().optional(),
+    smsConsent: z.boolean().optional(),
+    isMedicalTourist: z.boolean().optional(),
     identityDocuments: z.array(identityDocumentSchema).optional(),
     emergencyContactName: optionalTrimmedValue(
       z.string().trim().max(150, 'Patient emergency contact name must be at most 150 characters')
@@ -256,6 +300,47 @@ const patientPayloadSchema = z
   .refine((data) => data.stateId === undefined || data.countryId !== undefined, {
     message: 'Patient country ID is required when state ID is provided',
     path: ['countryId'],
+  })
+  .superRefine((data, ctx) => {
+    if (data.emiratesId === undefined && data.patientIdentificationCategory === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Patient Identification Category is required when Emirates ID is absent',
+        path: ['patientIdentificationCategory'],
+      });
+    }
+
+    if (data.photoUrl !== undefined && data.emiratesId === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Patient photo can only be saved with Emirates ID',
+        path: ['photoUrl'],
+      });
+    }
+
+    if (data.isMedicalTourist && data.emiratesId !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Medical Tourist cannot have Emirates ID',
+        path: ['emiratesId'],
+      });
+    }
+
+    if (data.isMedicalTourist && data.uid === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Patient UID is required for Medical Tourist',
+        path: ['uid'],
+      });
+    }
+
+    if (data.isMedicalTourist && !hasPassport(data.identityDocuments)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Passport is required for Medical Tourist',
+        path: ['identityDocuments'],
+      });
+    }
   });
 
 export const createPatientSchema = patientPayloadSchema;
@@ -264,6 +349,7 @@ export const updatePatientSchema = patientPayloadSchema;
 export type PatientGender = (typeof PATIENT_GENDERS)[number];
 export type PatientBloodGroup = (typeof PATIENT_BLOOD_GROUPS)[number];
 export type PatientMaritalStatus = (typeof PATIENT_MARITAL_STATUSES)[number];
+export type PatientIdentificationCategory = (typeof PATIENT_IDENTIFICATION_CATEGORIES)[number];
 export type PatientIdentityDocumentType = (typeof PATIENT_IDENTITY_DOCUMENT_TYPES)[number];
 export type PatientPaymentMethod = (typeof PATIENT_PAYMENT_METHODS)[number];
 export type PatientRegistrationStatus = (typeof PATIENT_REGISTRATION_STATUSES)[number];
@@ -330,6 +416,12 @@ export type Patient = {
   religionId: number | null;
   religion: PatientReferenceSummary | null;
   emiratesId: string | null;
+  photoUrl: string | null;
+  patientIdentificationCategory: PatientIdentificationCategory | null;
+  uid: string | null;
+  isVip: boolean;
+  smsConsent: boolean;
+  isMedicalTourist: boolean;
   identityDocuments: PatientIdentityDocument[];
   emergencyContactName: string | null;
   emergencyContactRelationship: string | null;

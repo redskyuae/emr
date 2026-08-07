@@ -74,6 +74,12 @@ const existing = {
   religionId: null,
   religion: null,
   emiratesId: null,
+  photoUrl: null,
+  patientIdentificationCategory: null,
+  uid: null,
+  isVip: false,
+  smsConsent: false,
+  isMedicalTourist: false,
   identityDocuments: [],
   emergencyContactName: null,
   emergencyContactRelationship: null,
@@ -89,6 +95,7 @@ const validPayload = {
   gender: 'female',
   dateOfBirth: '1990-05-14',
   phone: '9876543210',
+  emiratesId: '784199012345671',
 };
 
 describe('Patient reference validator', () => {

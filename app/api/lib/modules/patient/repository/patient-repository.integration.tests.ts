@@ -104,6 +104,67 @@ describe('Patient repository', () => {
     expect(created.preferredPaymentMethod).toBeNull();
   });
 
+  it('should persist no-card identification and registration flags', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        uid: '123456789',
+        isVip: true,
+        smsConsent: true,
+        isMedicalTourist: true,
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(created).toMatchObject({
+      uid: '123456789',
+      isVip: true,
+      emiratesId: null,
+      smsConsent: true,
+      isMedicalTourist: true,
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+
+    const fetched = await patientRepository.getPatientById(created.id, tenantA);
+    expect(fetched).toMatchObject({
+      uid: '123456789',
+      isVip: true,
+      smsConsent: true,
+      isMedicalTourist: true,
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+  });
+
+  it('should clear Patient Identification Category when Emirates ID is present', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        emiratesId: '784199012345671',
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(created.patientIdentificationCategory).toBeNull();
+  });
+
+  it('should persist an Emirates ID read photo and clear it when Emirates ID is absent', async () => {
+    const photoUrl = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==';
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, { emiratesId: '784199012345671', photoUrl })
+    );
+
+    expect(created.photoUrl).toBe(photoUrl);
+
+    const updated = await patientRepository.updatePatient(
+      created.id,
+      patientData(tenantA, {
+        photoUrl,
+        emiratesId: undefined,
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(updated?.photoUrl).toBeNull();
+  });
+
   it('should clear the preferred payment method on update when omitted', async () => {
     const created = await patientRepository.createPatient(
       patientData(tenantA, { preferredPaymentMethod: 'corporate' })

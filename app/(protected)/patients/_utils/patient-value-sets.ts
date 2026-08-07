@@ -2,6 +2,7 @@
 // Kept here — not fetched — because these are fixed enums, not Global References.
 
 export const PATIENT_GENDERS = ['male', 'female', 'other', 'unknown'] as const;
+export const PATIENT_TITLES = ['mr', 'mrs', 'miss', 'baby', 'master', 'ms', 'dr'] as const;
 export const PATIENT_BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 export const PATIENT_MARITAL_STATUSES = [
   'single',
@@ -9,6 +10,13 @@ export const PATIENT_MARITAL_STATUSES = [
   'divorced',
   'widowed',
   'other',
+] as const;
+export const PATIENT_IDENTIFICATION_CATEGORIES = [
+  'uae-national-without-card',
+  'national-without-card',
+  'expatriate-resident-without-card',
+  'non-expatriate-resident-without-card',
+  'unknown-status-without-card',
 ] as const;
 // Excludes 'emirates-id' deliberately — the Emirates ID is its own Patient
 // field, not an Identity Document, so it has exactly one home (ADR 0042).
@@ -28,12 +36,44 @@ const GENDER_LABELS: Record<(typeof PATIENT_GENDERS)[number], string> = {
   unknown: 'Unknown',
 };
 
+const TITLE_LABELS: Record<(typeof PATIENT_TITLES)[number], string> = {
+  mr: 'Mr',
+  ms: 'Ms',
+  dr: 'Dr',
+  mrs: 'Mrs',
+  miss: 'Miss',
+  baby: 'Baby',
+  master: 'Master',
+};
+
 const MARITAL_STATUS_LABELS: Record<(typeof PATIENT_MARITAL_STATUSES)[number], string> = {
   single: 'Single',
   married: 'Married',
   divorced: 'Divorced',
   widowed: 'Widowed',
   other: 'Other',
+};
+
+const IDENTIFICATION_CATEGORY_LABELS: Record<
+  (typeof PATIENT_IDENTIFICATION_CATEGORIES)[number],
+  string
+> = {
+  'uae-national-without-card': 'UAE National Without Card',
+  'national-without-card': 'National Without Card',
+  'expatriate-resident-without-card': 'Expatriate Resident Without Card',
+  'non-expatriate-resident-without-card': 'Non-Expatriate Resident Without Card',
+  'unknown-status-without-card': 'Unknown Status Without Card',
+};
+
+const IDENTIFICATION_CATEGORY_DEFAULT_IDS: Record<
+  (typeof PATIENT_IDENTIFICATION_CATEGORIES)[number],
+  string
+> = {
+  'uae-national-without-card': '000-0000-0000000-0',
+  'national-without-card': '000-0000-0000000-0',
+  'expatriate-resident-without-card': '111-1111-1111111-1',
+  'non-expatriate-resident-without-card': '222-2222-2222222-2',
+  'unknown-status-without-card': '999-9999-9999999-9',
 };
 
 const IDENTITY_DOCUMENT_TYPE_LABELS: Record<
@@ -59,10 +99,23 @@ export const PATIENT_GENDER_OPTIONS = PATIENT_GENDERS.map((value) => ({
   label: GENDER_LABELS[value],
 }));
 
+export const PATIENT_TITLE_OPTIONS = PATIENT_TITLES.map((value) => ({
+  value,
+  label: TITLE_LABELS[value],
+}));
+
 export const PATIENT_MARITAL_STATUS_OPTIONS = PATIENT_MARITAL_STATUSES.map((value) => ({
   value,
   label: MARITAL_STATUS_LABELS[value],
 }));
+
+export const PATIENT_IDENTIFICATION_CATEGORY_OPTIONS = PATIENT_IDENTIFICATION_CATEGORIES.map(
+  (value) => ({
+    value,
+    label: IDENTIFICATION_CATEGORY_LABELS[value],
+    defaultIdentifier: IDENTIFICATION_CATEGORY_DEFAULT_IDS[value],
+  })
+);
 
 export const PATIENT_IDENTITY_DOCUMENT_TYPE_OPTIONS = PATIENT_IDENTITY_DOCUMENT_TYPES.map(
   (value) => ({
@@ -92,6 +145,22 @@ export function getPatientIdentityDocumentTypeLabel(documentType: string) {
     IDENTITY_DOCUMENT_TYPE_LABELS[
       documentType as (typeof PATIENT_IDENTITY_DOCUMENT_TYPES)[number]
     ] ?? documentType
+  );
+}
+
+export function getPatientIdentificationCategoryLabel(category: string) {
+  return (
+    IDENTIFICATION_CATEGORY_LABELS[
+      category as (typeof PATIENT_IDENTIFICATION_CATEGORIES)[number]
+    ] ?? category
+  );
+}
+
+export function getPatientIdentificationCategoryDefaultId(category: string) {
+  return (
+    IDENTIFICATION_CATEGORY_DEFAULT_IDS[
+      category as (typeof PATIENT_IDENTIFICATION_CATEGORIES)[number]
+    ] ?? null
   );
 }
 

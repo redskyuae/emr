@@ -24,12 +24,18 @@ import { formatPatientMrn } from './patient-mrn';
 
 type PatientRow = Omit<
   Patient,
-  'gender' | 'bloodGroup' | 'maritalStatus' | 'preferredPaymentMethod' | 'identityDocuments'
+  | 'gender'
+  | 'bloodGroup'
+  | 'maritalStatus'
+  | 'preferredPaymentMethod'
+  | 'identityDocuments'
+  | 'patientIdentificationCategory'
 > & {
   gender: string | null;
   bloodGroup: string | null;
   maritalStatus: string | null;
   preferredPaymentMethod: string | null;
+  patientIdentificationCategory: string | null;
 };
 
 function toPatient(row: PatientRow, identityDocuments: PatientIdentityDocument[] = []): Patient {
@@ -40,6 +46,8 @@ function toPatient(row: PatientRow, identityDocuments: PatientIdentityDocument[]
     bloodGroup: row.bloodGroup as Patient['bloodGroup'],
     maritalStatus: row.maritalStatus as Patient['maritalStatus'],
     preferredPaymentMethod: row.preferredPaymentMethod as Patient['preferredPaymentMethod'],
+    patientIdentificationCategory:
+      row.patientIdentificationCategory as Patient['patientIdentificationCategory'],
   };
 }
 
@@ -61,7 +69,11 @@ const patientColumns = {
   modifiedOn: patientTable.modifiedOn,
   postalCode: patientTable.postalCode,
   emiratesId: patientTable.emiratesId,
+  photoUrl: patientTable.photoUrl,
+  isVip: patientTable.isVip,
+  uid: patientTable.uid,
   bloodGroup: patientTable.bloodGroup,
+  smsConsent: patientTable.smsConsent,
   middleName: patientTable.middleName,
   languageId: patientTable.languageId,
   religionId: patientTable.religionId,
@@ -70,8 +82,10 @@ const patientColumns = {
   addressLine2: patientTable.addressLine2,
   maritalStatus: patientTable.maritalStatus,
   nationalityId: patientTable.nationalityId,
+  isMedicalTourist: patientTable.isMedicalTourist,
   preferredPaymentMethod: patientTable.preferredPaymentMethod,
   alternatePhone: patientTable.alternatePhone,
+  patientIdentificationCategory: patientTable.patientIdentificationCategory,
   emergencyContactName: patientTable.emergencyContactName,
   emergencyContactPhone: patientTable.emergencyContactPhone,
   emergencyContactRelationship: patientTable.emergencyContactRelationship,
@@ -125,7 +139,11 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     firstName: data.firstName,
     postalCode: data.postalCode ?? null,
     emiratesId: data.emiratesId ?? null,
+    photoUrl: data.emiratesId ? (data.photoUrl ?? null) : null,
+    isVip: data.isVip ?? false,
+    uid: data.uid ?? null,
     bloodGroup: data.bloodGroup ?? null,
+    smsConsent: data.smsConsent ?? false,
     middleName: data.middleName ?? null,
     languageId: data.languageId ?? null,
     religionId: data.religionId ?? null,
@@ -134,8 +152,12 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     addressLine2: data.addressLine2 ?? null,
     maritalStatus: data.maritalStatus ?? null,
     nationalityId: data.nationalityId ?? null,
+    isMedicalTourist: data.isMedicalTourist ?? false,
     preferredPaymentMethod: data.preferredPaymentMethod ?? null,
     alternatePhone: data.alternatePhone ?? null,
+    patientIdentificationCategory: data.emiratesId
+      ? null
+      : (data.patientIdentificationCategory ?? null),
     emergencyContactName: data.emergencyContactName ?? null,
     emergencyContactPhone: data.emergencyContactPhone ?? null,
     emergencyContactRelationship: data.emergencyContactRelationship ?? null,
