@@ -8,21 +8,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Flag,
-  Globe2,
-  Landmark,
-  Languages,
   LayoutGrid,
   LayoutList,
-  MapPinned,
   Plus,
   Search,
   Table as TableIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { useCountriesQuery } from '@/app/queries/global-references/useCountries';
 import {
   type GlobalReferenceEntity,
+  useDeleteGlobalReference,
   useGlobalReferenceItemQuery,
   useGlobalReferenceListQuery,
 } from '@/app/queries/global-references/useGlobalReferencesManagement';
@@ -38,23 +35,15 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { GlobalReferenceDeleteDialog } from './_modals/global-reference-delete-dialog';
-import { GlobalReferenceFormSheet } from './_sheets/global-reference-form-sheet';
-import { type GlobalReferenceScreenKey, globalReferenceScreens } from './global-reference-config';
-import { ViewSkeleton } from './global-reference-skeletons';
+import { NationalityDeleteDialog } from './_modals/delete-nationality-dialog';
+import { NationalityFormSheet } from './_sheets/nationality-form-sheet';
+import { ViewSkeleton } from './nationality-skeletons';
 import {
-  GlobalReferenceCardView,
-  GlobalReferenceListView,
-  GlobalReferenceTableView,
-} from './global-reference-views';
+  NationalityCardView,
+  NationalityListView,
+  NationalityTableView,
+} from './nationality-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
 
@@ -68,115 +57,79 @@ function getNumericParam(value: string | null) {
   return Number(value);
 }
 
-function StateCountryFilter({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const countriesQuery = useCountriesQuery();
-  const countries = countriesQuery.data ?? [];
-
-  return (
-    <Select
-      value={value}
-      onValueChange={onChange}
-      disabled={countriesQuery.isLoading || countries.length === 0}
-    >
-      <SelectTrigger className="bg-background h-9 w-full lg:w-52" aria-label="Filter by Country">
-        <SelectValue
-          placeholder={countriesQuery.isLoading ? 'Loading Countries...' : 'All Countries'}
-        />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">All Countries</SelectItem>
-        {countries.map((country) => (
-          <SelectItem key={country.id} value={String(country.id)}>
-            {country.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-export function GlobalReferencePageImpl({ screen }: { screen: GlobalReferenceScreenKey }) {
-  const config = globalReferenceScreens[screen];
-  const deleteParamName = `${config.queryParam}Delete`;
-  const [recordParam, setRecordParam] = useQueryState(config.queryParam);
-  const [deleteRecordParam, setDeleteRecordParam] = useQueryState(deleteParamName);
+export function NationalitiesPageImpl() {
+  const [recordParam, setRecordParam] = useQueryState('nationality');
+  const [deleteRecordParam, setDeleteRecordParam] = useQueryState('nationalityDelete');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const [searchTerm, setSearchTerm] = useState('');
-  const [countryFilter, setCountryFilter] = useState('all');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
+  const deleteMutation = useDeleteGlobalReference();
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
   const deleteRecordId = getNumericParam(deleteRecordParam);
-  const countryId =
-    config.hasCountry && countryFilter !== 'all' ? Number(countryFilter) : undefined;
 
-  const listQuery = useGlobalReferenceListQuery(config.resource, {
+  const nationalitiesQuery = useGlobalReferenceListQuery('nationalities', {
     page,
-    countryId,
     limit: PAGE_SIZE,
     query: debouncedSearch || undefined,
   });
 
-  const records = listQuery.data?.data ?? [];
-  const meta = listQuery.data?.meta;
+  const nationalities = nationalitiesQuery.data?.data ?? [];
+  const meta = nationalitiesQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
   const total = meta?.total ?? 0;
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  const editingRecordFromList =
+  const editingNationalityFromList =
     editingRecordId !== null
-      ? (records.find((record) => record.id === editingRecordId) ?? null)
+      ? (nationalities.find((nationality) => nationality.id === editingRecordId) ?? null)
       : null;
-  const deleteRecordFromList =
+  const deleteNationalityFromList =
     deleteRecordId !== null
-      ? (records.find((record) => record.id === deleteRecordId) ?? null)
+      ? (nationalities.find((nationality) => nationality.id === deleteRecordId) ?? null)
       : null;
 
-  const shouldFetchEditingRecord =
-    editingRecordId !== null && !listQuery.isLoading && editingRecordFromList === null;
-  const editingRecordQuery = useGlobalReferenceItemQuery(
-    config.resource,
-    shouldFetchEditingRecord ? editingRecordId : null
+  const shouldFetchEditingNationality =
+    editingRecordId !== null &&
+    !nationalitiesQuery.isLoading &&
+    editingNationalityFromList === null;
+  const editingNationalityQuery = useGlobalReferenceItemQuery(
+    'nationalities',
+    shouldFetchEditingNationality ? editingRecordId : null
   );
-  const editingRecord = editingRecordFromList ?? editingRecordQuery.data ?? null;
+  const editingNationality = editingNationalityFromList ?? editingNationalityQuery.data ?? null;
 
-  const shouldFetchDeleteRecord =
-    deleteRecordId !== null && !listQuery.isLoading && deleteRecordFromList === null;
-  const deleteRecordQuery = useGlobalReferenceItemQuery(
-    config.resource,
-    shouldFetchDeleteRecord ? deleteRecordId : null
+  const shouldFetchDeleteNationality =
+    deleteRecordId !== null && !nationalitiesQuery.isLoading && deleteNationalityFromList === null;
+  const deleteNationalityQuery = useGlobalReferenceItemQuery(
+    'nationalities',
+    shouldFetchDeleteNationality ? deleteRecordId : null
   );
-  const deleteRecord = deleteRecordFromList ?? deleteRecordQuery.data ?? null;
+  const deleteNationality = deleteNationalityFromList ?? deleteNationalityQuery.data ?? null;
 
   const recordResolving =
     editingRecordId !== null &&
-    editingRecord === null &&
-    (listQuery.isLoading || editingRecordQuery.isFetching);
+    editingNationality === null &&
+    (nationalitiesQuery.isLoading || editingNationalityQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingRecord !== null));
+    isCreating || (editingRecordId !== null && (recordResolving || editingNationality !== null));
 
   const deleteRecordResolving =
     deleteRecordId !== null &&
-    deleteRecord === null &&
-    (listQuery.isLoading || deleteRecordQuery.isFetching);
+    deleteNationality === null &&
+    (nationalitiesQuery.isLoading || deleteNationalityQuery.isFetching);
   const deleteDialogOpen =
-    deleteRecordId !== null && (deleteRecordResolving || deleteRecord !== null);
+    deleteRecordId !== null && (deleteRecordResolving || deleteNationality !== null);
 
-  function openEdit(record: GlobalReferenceEntity) {
-    void setRecordParam(String(record.id));
+  function openEdit(nationality: GlobalReferenceEntity) {
+    void setRecordParam(String(nationality.id));
   }
 
-  function openDelete(record: GlobalReferenceEntity) {
-    void setDeleteRecordParam(String(record.id));
+  function openDelete(nationality: GlobalReferenceEntity) {
+    void setDeleteRecordParam(String(nationality.id));
   }
 
   function updateSearchTerm(value: string) {
@@ -184,9 +137,18 @@ export function GlobalReferencePageImpl({ screen }: { screen: GlobalReferenceScr
     setPage(1);
   }
 
-  function updateCountryFilter(value: string) {
-    setCountryFilter(value);
-    setPage(1);
+  async function confirmDelete() {
+    if (!deleteNationality) {
+      return;
+    }
+
+    try {
+      await deleteMutation.mutateAsync({ resource: 'nationalities', id: deleteNationality.id });
+      toast.success('Nationality deleted.');
+      void setDeleteRecordParam(null);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error));
+    }
   }
 
   return (
@@ -226,59 +188,49 @@ export function GlobalReferencePageImpl({ screen }: { screen: GlobalReferenceScr
                 type="search"
                 value={searchTerm}
                 onChange={(event) => updateSearchTerm(event.target.value)}
-                placeholder={config.searchPlaceholder}
-                aria-label={`Search ${config.lowerPlural}`}
+                placeholder="Search nationalities..."
+                aria-label="Search nationalities"
               />
             </InputGroup>
-
-            {config.hasCountry ? (
-              <StateCountryFilter value={countryFilter} onChange={updateCountryFilter} />
-            ) : null}
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
               <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
                 <Plus className="size-4" />
-                {config.addButtonLabel}
+                Add Nationality
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {listQuery.isError ? (
+        {nationalitiesQuery.isError ? (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
-            <AlertTitle>Could not load {config.pluralTitle}</AlertTitle>
-            <AlertDescription>{getApiErrorMessage(listQuery.error)}</AlertDescription>
+            <AlertTitle>Could not load Nationalities</AlertTitle>
+            <AlertDescription>{getApiErrorMessage(nationalitiesQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {listQuery.isLoading ? (
-          <ViewSkeleton
-            layout={viewLayout}
-            hasCode={config.hasCode}
-            hasCountry={config.hasCountry}
-          />
-        ) : records.length === 0 && !debouncedSearch ? (
+        {nationalitiesQuery.isLoading ? (
+          <ViewSkeleton layout={viewLayout} />
+        ) : nationalities.length === 0 && !debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                {config.resource === 'languages' ? <Languages /> : null}
-                {config.resource === 'nationalities' ? <Flag /> : null}
-                {config.resource === 'religions' ? <Landmark /> : null}
-                {config.resource === 'countries' ? <Globe2 /> : null}
-                {config.resource === 'states' ? <MapPinned /> : null}
+                <Flag />
               </EmptyMedia>
-              <EmptyTitle>{config.emptyTitle}</EmptyTitle>
-              <EmptyDescription>{config.emptyDescription}</EmptyDescription>
+              <EmptyTitle>No Nationalities yet</EmptyTitle>
+              <EmptyDescription>
+                Create Nationalities used during Patient Registration.
+              </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button type="button" onClick={() => void setRecordParam('new')}>
                 <Plus className="size-4" />
-                {config.addButtonLabel}
+                Add Nationality
               </Button>
             </EmptyContent>
           </Empty>
-        ) : records.length === 0 && debouncedSearch ? (
+        ) : nationalities.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -286,31 +238,27 @@ export function GlobalReferencePageImpl({ screen }: { screen: GlobalReferenceScr
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
-                No {config.pluralTitle} match &ldquo;{debouncedSearch}&rdquo;. Try a different
-                search term.
+                No Nationalities match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <GlobalReferenceTableView
-                records={records}
-                config={config}
+              <NationalityTableView
+                nationalities={nationalities}
                 onEdit={openEdit}
                 onDelete={openDelete}
               />
             ) : viewLayout === 'card' ? (
-              <GlobalReferenceCardView
-                records={records}
-                config={config}
+              <NationalityCardView
+                nationalities={nationalities}
                 onEdit={openEdit}
                 onDelete={openDelete}
               />
             ) : (
-              <GlobalReferenceListView
-                records={records}
-                config={config}
+              <NationalityListView
+                nationalities={nationalities}
                 onEdit={openEdit}
                 onDelete={openDelete}
               />
@@ -349,22 +297,20 @@ export function GlobalReferencePageImpl({ screen }: { screen: GlobalReferenceScr
         )}
       </div>
 
-      <GlobalReferenceFormSheet
+      <NationalityFormSheet
         open={sheetOpen}
         mode={isCreating ? 'new' : 'edit'}
         recordId={editingRecordId}
-        record={editingRecord}
-        config={config}
+        record={editingNationality}
         isResolving={recordResolving}
         onClose={() => void setRecordParam(null)}
       />
 
-      <GlobalReferenceDeleteDialog
-        open={deleteDialogOpen}
-        record={deleteRecord}
-        config={config}
-        isResolving={deleteRecordResolving}
-        onClose={() => void setDeleteRecordParam(null)}
+      <NationalityDeleteDialog
+        nationality={deleteDialogOpen ? deleteNationality : null}
+        isDeleting={deleteMutation.isPending || deleteRecordResolving}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => void setDeleteRecordParam(null)}
       />
     </>
   );

@@ -11,7 +11,7 @@ import {
 
 type ViewLayout = 'table' | 'card' | 'list';
 
-function TableSkeleton({ hasCode, hasCountry }: { hasCode: boolean; hasCountry: boolean }) {
+function TableSkeleton() {
   return (
     <Card className="shadow-fluent-2">
       <CardContent className="p-0">
@@ -20,8 +20,7 @@ function TableSkeleton({ hasCode, hasCountry }: { hasCode: boolean; hasCountry: 
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Name</TableHead>
-                {hasCode ? <TableHead>Code</TableHead> : null}
-                {hasCountry ? <TableHead>Country</TableHead> : null}
+                <TableHead>Code</TableHead>
                 <TableHead>Modified on</TableHead>
                 <TableHead className="pr-4 text-right">Actions</TableHead>
               </TableRow>
@@ -32,16 +31,9 @@ function TableSkeleton({ hasCode, hasCountry }: { hasCode: boolean; hasCountry: 
                   <TableCell className="pl-4">
                     <Skeleton className="h-5 w-32" />
                   </TableCell>
-                  {hasCode ? (
-                    <TableCell>
-                      <Skeleton className="h-5 w-16" />
-                    </TableCell>
-                  ) : null}
-                  {hasCountry ? (
-                    <TableCell>
-                      <Skeleton className="h-5 w-36" />
-                    </TableCell>
-                  ) : null}
+                  <TableCell>
+                    <Skeleton className="h-5 w-16" />
+                  </TableCell>
                   <TableCell>
                     <Skeleton className="h-5 w-28" />
                   </TableCell>
@@ -99,16 +91,8 @@ function ListViewSkeleton() {
   );
 }
 
-export function ViewSkeleton({
-  layout,
-  hasCode,
-  hasCountry,
-}: {
-  layout: ViewLayout;
-  hasCode: boolean;
-  hasCountry: boolean;
-}) {
+export function ViewSkeleton({ layout }: { layout: ViewLayout }) {
   if (layout === 'card') return <CardViewSkeleton />;
   if (layout === 'list') return <ListViewSkeleton />;
-  return <TableSkeleton hasCode={hasCode} hasCountry={hasCountry} />;
+  return <TableSkeleton />;
 }

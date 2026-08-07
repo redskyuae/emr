@@ -1,5 +1,5 @@
-import { GlobalReferencePageImpl } from '@/app/(protected)/global-references/_components/global-reference-page-impl';
+import { CountriesPageImpl } from './_components/countries-page-impl';
 
 export default function CountriesPage() {
-  return <GlobalReferencePageImpl screen="countries" />;
+  return <CountriesPageImpl />;
 }

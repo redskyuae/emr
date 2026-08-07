@@ -34,23 +34,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { GlobalReferenceScreenConfig } from '../global-reference-config';
-import {
-  createGlobalReferenceFormSchema,
-  type GlobalReferenceFormValues,
-} from '../global-reference-form-schema';
+import { stateFormSchema, type StateFormValues } from '../../_utils/state-form-schema';
 
-const EMPTY_DEFAULTS: GlobalReferenceFormValues = {
+const EMPTY_DEFAULTS: StateFormValues = {
   name: '',
-  code: '',
   countryId: '',
 };
-
-function hasCode(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { code: string } {
-  return 'code' in record;
-}
 
 function hasCountryId(
   record: GlobalReferenceEntity
@@ -58,12 +47,11 @@ function hasCountryId(
   return 'countryId' in record;
 }
 
-export function GlobalReferenceFormSheet({
+export function StateFormSheet({
   open,
   mode,
   recordId,
   record,
-  config,
   isResolving,
   onClose,
 }: {
@@ -71,7 +59,6 @@ export function GlobalReferenceFormSheet({
   mode: 'new' | 'edit';
   recordId: number | null;
   record: GlobalReferenceEntity | null;
-  config: GlobalReferenceScreenConfig;
   isResolving: boolean;
   onClose: () => void;
 }) {
@@ -81,12 +68,10 @@ export function GlobalReferenceFormSheet({
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const initializedKeyRef = useRef<string | null>(null);
 
-  const form = useForm<GlobalReferenceFormValues>({
+  const form = useForm<StateFormValues>({
     mode: 'onTouched',
     defaultValues: EMPTY_DEFAULTS,
-    resolver: zodResolver(
-      createGlobalReferenceFormSchema(config.hasCountry ? 'state' : 'name-code')
-    ),
+    resolver: zodResolver(stateFormSchema),
   });
 
   const countries = countriesQuery.data ?? [];
@@ -94,10 +79,7 @@ export function GlobalReferenceFormSheet({
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const sessionKey = isCreating ? 'new' : recordId === null ? null : String(recordId);
   const hasNoCountries =
-    config.hasCountry &&
-    !countriesQuery.isLoading &&
-    !countriesQuery.isError &&
-    countries.length === 0;
+    !countriesQuery.isLoading && !countriesQuery.isError && countries.length === 0;
 
   useEffect(() => {
     if (!open) {
@@ -117,7 +99,6 @@ export function GlobalReferenceFormSheet({
     setServerErrors([]);
     form.reset({
       name: record?.name ?? '',
-      code: record && hasCode(record) ? record.code : '',
       countryId: record && hasCountryId(record) ? String(record.countryId) : '',
     });
   }, [open, sessionKey, isResolving, record, form]);
@@ -125,20 +106,15 @@ export function GlobalReferenceFormSheet({
   const onSubmit = form.handleSubmit(async (values) => {
     setServerErrors([]);
 
-    const request: CreateGlobalReferenceVariables['request'] = config.hasCountry
-      ? {
-          name: values.name,
-          countryId: Number(values.countryId ?? ''),
-        }
-      : {
-          name: values.name,
-          code: values.code ?? '',
-        };
+    const request: CreateGlobalReferenceVariables['request'] = {
+      name: values.name,
+      countryId: Number(values.countryId),
+    };
 
     try {
       if (isCreating) {
-        await createMutation.mutateAsync({ resource: config.resource, request });
-        toast.success(`${config.singularTitle} created.`);
+        await createMutation.mutateAsync({ resource: 'states', request });
+        toast.success('State created.');
         onClose();
         return;
       }
@@ -149,10 +125,10 @@ export function GlobalReferenceFormSheet({
 
       await updateMutation.mutateAsync({
         id: recordId,
-        resource: config.resource,
+        resource: 'states',
         request: request as UpdateGlobalReferenceVariables['request'],
       });
-      toast.success(`${config.singularTitle} updated.`);
+      toast.success('State updated.');
       onClose();
     } catch (error) {
       setServerErrors(getApiErrors(error));
@@ -160,12 +136,8 @@ export function GlobalReferenceFormSheet({
     }
   });
 
-  const sheetTitle = isCreating
-    ? config.addButtonLabel
-    : `Edit ${record?.name ?? config.singularTitle}`;
-  const sheetDescription = isCreating
-    ? `Create a new ${config.singularTitle} Global Reference.`
-    : `Update the ${config.singularTitle} Global Reference details.`;
+  const sheetTitle = isCreating ? 'Add State' : `Edit ${record?.name ?? 'State'}`;
+  const sheetDescription = isCreating ? 'Create a new State.' : 'Update the State details.';
 
   return (
     <Sheet open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
@@ -182,14 +154,14 @@ export function GlobalReferenceFormSheet({
         {isResolving ? (
           <div className="flex-1 p-4">
             <div className="space-y-4">
-              {Array.from({ length: config.hasCountry ? 2 : 3 }, (_, i) => (
+              {Array.from({ length: 2 }, (_, i) => (
                 <div key={i} className="bg-muted h-10 animate-pulse rounded-md" />
               ))}
             </div>
           </div>
         ) : (
           <form
-            id={`${config.queryParam}-form`}
+            id="state-form"
             onSubmit={onSubmit}
             className="flex flex-1 flex-col overflow-hidden"
           >
@@ -208,7 +180,7 @@ export function GlobalReferenceFormSheet({
                 </Alert>
               ) : null}
 
-              {config.hasCountry && countriesQuery.isError ? (
+              {countriesQuery.isError ? (
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="size-4" />
                   <AlertTitle>Could not load Countries</AlertTitle>
@@ -228,18 +200,18 @@ export function GlobalReferenceFormSheet({
                   name="name"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor={`${config.queryParam}-name`}>
+                      <FieldLabel htmlFor="state-name">
                         Name{' '}
                         <span aria-hidden="true" className="text-destructive">
                           *
                         </span>
                       </FieldLabel>
                       <Input
-                        id={`${config.queryParam}-name`}
+                        id="state-name"
                         {...field}
                         disabled={isSaving}
                         maxLength={100}
-                        placeholder={config.namePlaceholder}
+                        placeholder="e.g. Tamil Nadu"
                         aria-required="true"
                         aria-invalid={fieldState.invalid}
                       />
@@ -248,79 +220,46 @@ export function GlobalReferenceFormSheet({
                   )}
                 />
 
-                {config.hasCode ? (
-                  <Controller
-                    control={form.control}
-                    name="code"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor={`${config.queryParam}-code`}>
-                          Code{' '}
-                          <span aria-hidden="true" className="text-destructive">
-                            *
-                          </span>
-                        </FieldLabel>
-                        <Input
-                          id={`${config.queryParam}-code`}
-                          {...field}
-                          onChange={(event) => field.onChange(event.target.value.toUpperCase())}
-                          disabled={isSaving}
-                          maxLength={10}
-                          placeholder={config.codePlaceholder}
-                          className="font-mono"
+                <Controller
+                  control={form.control}
+                  name="countryId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="state-country">
+                        Country{' '}
+                        <span aria-hidden="true" className="text-destructive">
+                          *
+                        </span>
+                      </FieldLabel>
+                      <Select
+                        value={field.value ?? ''}
+                        onValueChange={field.onChange}
+                        disabled={isSaving || countriesQuery.isLoading || hasNoCountries}
+                      >
+                        <SelectTrigger
+                          id="state-country"
+                          className="w-full"
                           aria-required="true"
                           aria-invalid={fieldState.invalid}
-                        />
-                        <FieldError errors={[fieldState.error]} />
-                      </Field>
-                    )}
-                  />
-                ) : null}
-
-                {config.hasCountry ? (
-                  <Controller
-                    control={form.control}
-                    name="countryId"
-                    render={({ field, fieldState }) => (
-                      <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor={`${config.queryParam}-country`}>
-                          Country{' '}
-                          <span aria-hidden="true" className="text-destructive">
-                            *
-                          </span>
-                        </FieldLabel>
-                        <Select
-                          value={field.value ?? ''}
-                          onValueChange={field.onChange}
-                          disabled={isSaving || countriesQuery.isLoading || hasNoCountries}
                         >
-                          <SelectTrigger
-                            id={`${config.queryParam}-country`}
-                            className="w-full"
-                            aria-required="true"
-                            aria-invalid={fieldState.invalid}
-                          >
-                            <SelectValue
-                              placeholder={
-                                countriesQuery.isLoading
-                                  ? 'Loading Countries...'
-                                  : 'Select a Country'
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {countries.map((country) => (
-                              <SelectItem key={country.id} value={String(country.id)}>
-                                {country.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FieldError errors={[fieldState.error]} />
-                      </Field>
-                    )}
-                  />
-                ) : null}
+                          <SelectValue
+                            placeholder={
+                              countriesQuery.isLoading ? 'Loading Countries...' : 'Select a Country'
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countries.map((country) => (
+                            <SelectItem key={country.id} value={String(country.id)}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  )}
+                />
               </FieldGroup>
             </div>
 

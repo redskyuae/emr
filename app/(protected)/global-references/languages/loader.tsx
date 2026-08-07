@@ -1,10 +1,10 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LanguagesPageLoader() {
-  return <GlobalReferenceLoader />;
+  return <LanguageLoader />;
 }
 
-function GlobalReferenceLoader() {
+function LanguageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
       <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">

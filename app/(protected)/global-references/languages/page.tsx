@@ -1,5 +1,5 @@
-import { GlobalReferencePageImpl } from '@/app/(protected)/global-references/_components/global-reference-page-impl';
+import { LanguagesPageImpl } from './_components/languages-page-impl';
 
 export default function LanguagesPage() {
-  return <GlobalReferencePageImpl screen="languages" />;
+  return <LanguagesPageImpl />;
 }

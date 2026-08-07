@@ -13,7 +13,6 @@ import type {
   SaveCountryResponse,
 } from '@/app/api/v1/countries/types';
 import type {
-  DeleteCountryResponse,
   GetCountryResponse,
   UpdateCountryRequest,
   UpdateCountryResponse,
@@ -24,7 +23,6 @@ import type {
   SaveLanguageResponse,
 } from '@/app/api/v1/languages/types';
 import type {
-  DeleteLanguageResponse,
   GetLanguageResponse,
   UpdateLanguageRequest,
   UpdateLanguageResponse,
@@ -35,7 +33,6 @@ import type {
   SaveNationalityResponse,
 } from '@/app/api/v1/nationalities/types';
 import type {
-  DeleteNationalityResponse,
   GetNationalityResponse,
   UpdateNationalityRequest,
   UpdateNationalityResponse,
@@ -46,7 +43,6 @@ import type {
   SaveReligionResponse,
 } from '@/app/api/v1/religions/types';
 import type {
-  DeleteReligionResponse,
   GetReligionResponse,
   UpdateReligionRequest,
   UpdateReligionResponse,
@@ -57,7 +53,6 @@ import type {
   SaveStateResponse,
 } from '@/app/api/v1/states/types';
 import type {
-  DeleteStateResponse,
   GetStateResponse,
   UpdateStateRequest,
   UpdateStateResponse,
@@ -107,13 +102,6 @@ type GlobalReferenceUpdateResponse =
   | UpdateLanguageResponse
   | UpdateReligionResponse
   | UpdateNationalityResponse;
-
-type GlobalReferenceDeleteResponse =
-  | DeleteStateResponse
-  | DeleteCountryResponse
-  | DeleteLanguageResponse
-  | DeleteReligionResponse
-  | DeleteNationalityResponse;
 
 export type GlobalReferenceEntity = GlobalReferenceListResponse['data'][number];
 
@@ -245,7 +233,7 @@ async function updateGlobalReference({
 async function deleteGlobalReference({
   id,
   resource,
-}: DeleteGlobalReferenceVariables): Promise<GlobalReferenceDeleteResponse> {
+}: DeleteGlobalReferenceVariables): Promise<void> {
   const response = await fetch(`/api/v1/${resource}/${id}`, {
     method: 'DELETE',
     credentials: 'same-origin',
