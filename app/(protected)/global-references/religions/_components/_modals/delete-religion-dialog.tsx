@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 
-import type { GlobalReferenceEntity } from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { Religion } from '@/app/queries/global-references/religions/useReligions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ export function ReligionDeleteDialog({
   onCancel,
   onConfirm,
 }: {
-  religion: GlobalReferenceEntity | null;
+  religion: Religion | null;
   isDeleting: boolean;
   onCancel: () => void;
   onConfirm: () => void;

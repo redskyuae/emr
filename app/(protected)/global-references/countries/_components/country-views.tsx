@@ -1,6 +1,6 @@
 import { Globe2, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
-import type { GlobalReferenceEntity } from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { Country } from '@/app/queries/global-references/countries/useCountries';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -18,9 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-function hasCode(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { code: string } {
+function hasCode(record: Country): record is Country & { code: string } {
   return 'code' in record;
 }
 
@@ -51,9 +49,9 @@ function CountryActionsMenu({
   onEdit,
   onDelete,
 }: {
-  country: GlobalReferenceEntity;
-  onEdit: (country: GlobalReferenceEntity) => void;
-  onDelete: (country: GlobalReferenceEntity) => void;
+  country: Country;
+  onEdit: (country: Country) => void;
+  onDelete: (country: Country) => void;
 }) {
   return (
     <DropdownMenu>
@@ -86,9 +84,9 @@ export function CountryTableView({
   onEdit,
   onDelete,
 }: {
-  countries: GlobalReferenceEntity[];
-  onEdit: (country: GlobalReferenceEntity) => void;
-  onDelete: (country: GlobalReferenceEntity) => void;
+  countries: Country[];
+  onEdit: (country: Country) => void;
+  onDelete: (country: Country) => void;
 }) {
   return (
     <Card className="shadow-fluent-2">
@@ -131,9 +129,9 @@ export function CountryCardView({
   onEdit,
   onDelete,
 }: {
-  countries: GlobalReferenceEntity[];
-  onEdit: (country: GlobalReferenceEntity) => void;
-  onDelete: (country: GlobalReferenceEntity) => void;
+  countries: Country[];
+  onEdit: (country: Country) => void;
+  onDelete: (country: Country) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -180,9 +178,9 @@ export function CountryListView({
   onEdit,
   onDelete,
 }: {
-  countries: GlobalReferenceEntity[];
-  onEdit: (country: GlobalReferenceEntity) => void;
-  onDelete: (country: GlobalReferenceEntity) => void;
+  countries: Country[];
+  onEdit: (country: Country) => void;
+  onDelete: (country: Country) => void;
 }) {
   return (
     <div className="space-y-3">

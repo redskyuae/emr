@@ -18,11 +18,11 @@ import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import {
-  type GlobalReferenceEntity,
-  useDeleteGlobalReference,
-  useGlobalReferenceItemQuery,
-  useGlobalReferenceListQuery,
-} from '@/app/queries/global-references/useGlobalReferencesManagement';
+  type Country,
+  useCountriesQuery,
+} from '@/app/queries/global-references/countries/useCountries';
+import { useCountryQuery } from '@/app/queries/global-references/countries/useCountry';
+import { useDeleteCountry } from '@/app/queries/global-references/countries/useDeleteCountry';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -60,13 +60,13 @@ export function CountriesPageImpl() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
-  const deleteMutation = useDeleteGlobalReference();
+  const deleteMutation = useDeleteCountry();
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
   const deleteRecordId = getNumericParam(deleteRecordParam);
 
-  const countriesQuery = useGlobalReferenceListQuery('countries', {
+  const countriesQuery = useCountriesQuery({
     page,
     limit: PAGE_SIZE,
     query: debouncedSearch || undefined,
@@ -90,18 +90,12 @@ export function CountriesPageImpl() {
 
   const shouldFetchEditingCountry =
     editingRecordId !== null && !countriesQuery.isLoading && editingCountryFromList === null;
-  const editingCountryQuery = useGlobalReferenceItemQuery(
-    'countries',
-    shouldFetchEditingCountry ? editingRecordId : null
-  );
+  const editingCountryQuery = useCountryQuery(shouldFetchEditingCountry ? editingRecordId : null);
   const editingCountry = editingCountryFromList ?? editingCountryQuery.data ?? null;
 
   const shouldFetchDeleteCountry =
     deleteRecordId !== null && !countriesQuery.isLoading && deleteCountryFromList === null;
-  const deleteCountryQuery = useGlobalReferenceItemQuery(
-    'countries',
-    shouldFetchDeleteCountry ? deleteRecordId : null
-  );
+  const deleteCountryQuery = useCountryQuery(shouldFetchDeleteCountry ? deleteRecordId : null);
   const deleteCountry = deleteCountryFromList ?? deleteCountryQuery.data ?? null;
 
   const recordResolving =
@@ -118,11 +112,11 @@ export function CountriesPageImpl() {
   const deleteDialogOpen =
     deleteRecordId !== null && (deleteRecordResolving || deleteCountry !== null);
 
-  function openEdit(country: GlobalReferenceEntity) {
+  function openEdit(country: Country) {
     void setRecordParam(String(country.id));
   }
 
-  function openDelete(country: GlobalReferenceEntity) {
+  function openDelete(country: Country) {
     void setDeleteRecordParam(String(country.id));
   }
 
@@ -137,7 +131,7 @@ export function CountriesPageImpl() {
     }
 
     try {
-      await deleteMutation.mutateAsync({ resource: 'countries', id: deleteCountry.id });
+      await deleteMutation.mutateAsync(deleteCountry.id);
       toast.success('Country deleted.');
       void setDeleteRecordParam(null);
     } catch (error) {

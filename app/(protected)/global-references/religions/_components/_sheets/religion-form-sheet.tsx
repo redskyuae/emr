@@ -7,13 +7,10 @@ import { AlertCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
-import {
-  type CreateGlobalReferenceVariables,
-  type GlobalReferenceEntity,
-  type UpdateGlobalReferenceVariables,
-  useCreateGlobalReference,
-  useUpdateGlobalReference,
-} from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { SaveReligionRequest } from '@/app/api/v1/religions/types';
+import { type Religion } from '@/app/queries/global-references/religions/useReligions';
+import { useCreateReligion } from '@/app/queries/global-references/religions/useCreateReligion';
+import { useUpdateReligion } from '@/app/queries/global-references/religions/useUpdateReligion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -33,9 +30,7 @@ const EMPTY_DEFAULTS: ReligionFormValues = {
   code: '',
 };
 
-function hasCode(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { code: string } {
+function hasCode(record: Religion): record is Religion & { code: string } {
   return 'code' in record;
 }
 
@@ -50,12 +45,12 @@ export function ReligionFormSheet({
   open: boolean;
   mode: 'new' | 'edit';
   recordId: number | null;
-  record: GlobalReferenceEntity | null;
+  record: Religion | null;
   isResolving: boolean;
   onClose: () => void;
 }) {
-  const createMutation = useCreateGlobalReference();
-  const updateMutation = useUpdateGlobalReference();
+  const createMutation = useCreateReligion();
+  const updateMutation = useUpdateReligion();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const initializedKeyRef = useRef<string | null>(null);
 
@@ -94,14 +89,14 @@ export function ReligionFormSheet({
   const onSubmit = form.handleSubmit(async (values) => {
     setServerErrors([]);
 
-    const request: CreateGlobalReferenceVariables['request'] = {
+    const request: SaveReligionRequest = {
       name: values.name,
       code: values.code,
     };
 
     try {
       if (isCreating) {
-        await createMutation.mutateAsync({ resource: 'religions', request });
+        await createMutation.mutateAsync(request);
         toast.success('Religion created.');
         onClose();
         return;
@@ -113,8 +108,7 @@ export function ReligionFormSheet({
 
       await updateMutation.mutateAsync({
         id: recordId,
-        resource: 'religions',
-        request: request as UpdateGlobalReferenceVariables['request'],
+        request,
       });
       toast.success('Religion updated.');
       onClose();

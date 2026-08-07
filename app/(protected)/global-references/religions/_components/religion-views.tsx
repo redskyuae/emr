@@ -1,6 +1,6 @@
 import { Landmark, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
-import type { GlobalReferenceEntity } from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { Religion } from '@/app/queries/global-references/religions/useReligions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -18,9 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-function hasCode(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { code: string } {
+function hasCode(record: Religion): record is Religion & { code: string } {
   return 'code' in record;
 }
 
@@ -51,9 +49,9 @@ function ReligionActionsMenu({
   onEdit,
   onDelete,
 }: {
-  religion: GlobalReferenceEntity;
-  onEdit: (religion: GlobalReferenceEntity) => void;
-  onDelete: (religion: GlobalReferenceEntity) => void;
+  religion: Religion;
+  onEdit: (religion: Religion) => void;
+  onDelete: (religion: Religion) => void;
 }) {
   return (
     <DropdownMenu>
@@ -86,9 +84,9 @@ export function ReligionTableView({
   onEdit,
   onDelete,
 }: {
-  religions: GlobalReferenceEntity[];
-  onEdit: (religion: GlobalReferenceEntity) => void;
-  onDelete: (religion: GlobalReferenceEntity) => void;
+  religions: Religion[];
+  onEdit: (religion: Religion) => void;
+  onDelete: (religion: Religion) => void;
 }) {
   return (
     <Card className="shadow-fluent-2">
@@ -131,9 +129,9 @@ export function ReligionCardView({
   onEdit,
   onDelete,
 }: {
-  religions: GlobalReferenceEntity[];
-  onEdit: (religion: GlobalReferenceEntity) => void;
-  onDelete: (religion: GlobalReferenceEntity) => void;
+  religions: Religion[];
+  onEdit: (religion: Religion) => void;
+  onDelete: (religion: Religion) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -180,9 +178,9 @@ export function ReligionListView({
   onEdit,
   onDelete,
 }: {
-  religions: GlobalReferenceEntity[];
-  onEdit: (religion: GlobalReferenceEntity) => void;
-  onDelete: (religion: GlobalReferenceEntity) => void;
+  religions: Religion[];
+  onEdit: (religion: Religion) => void;
+  onDelete: (religion: Religion) => void;
 }) {
   return (
     <div className="space-y-3">

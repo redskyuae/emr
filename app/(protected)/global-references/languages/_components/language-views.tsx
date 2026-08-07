@@ -1,6 +1,6 @@
 import { Languages, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
-import type { GlobalReferenceEntity } from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { Language } from '@/app/queries/global-references/languages/useLanguages';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -18,9 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-function hasCode(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { code: string } {
+function hasCode(record: Language): record is Language & { code: string } {
   return 'code' in record;
 }
 
@@ -51,9 +49,9 @@ function LanguageActionsMenu({
   onEdit,
   onDelete,
 }: {
-  language: GlobalReferenceEntity;
-  onEdit: (language: GlobalReferenceEntity) => void;
-  onDelete: (language: GlobalReferenceEntity) => void;
+  language: Language;
+  onEdit: (language: Language) => void;
+  onDelete: (language: Language) => void;
 }) {
   return (
     <DropdownMenu>
@@ -86,9 +84,9 @@ export function LanguageTableView({
   onEdit,
   onDelete,
 }: {
-  languages: GlobalReferenceEntity[];
-  onEdit: (language: GlobalReferenceEntity) => void;
-  onDelete: (language: GlobalReferenceEntity) => void;
+  languages: Language[];
+  onEdit: (language: Language) => void;
+  onDelete: (language: Language) => void;
 }) {
   return (
     <Card className="shadow-fluent-2">
@@ -131,9 +129,9 @@ export function LanguageCardView({
   onEdit,
   onDelete,
 }: {
-  languages: GlobalReferenceEntity[];
-  onEdit: (language: GlobalReferenceEntity) => void;
-  onDelete: (language: GlobalReferenceEntity) => void;
+  languages: Language[];
+  onEdit: (language: Language) => void;
+  onDelete: (language: Language) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -180,9 +178,9 @@ export function LanguageListView({
   onEdit,
   onDelete,
 }: {
-  languages: GlobalReferenceEntity[];
-  onEdit: (language: GlobalReferenceEntity) => void;
-  onDelete: (language: GlobalReferenceEntity) => void;
+  languages: Language[];
+  onEdit: (language: Language) => void;
+  onDelete: (language: Language) => void;
 }) {
   return (
     <div className="space-y-3">

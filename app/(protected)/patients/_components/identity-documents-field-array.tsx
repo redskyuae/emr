@@ -3,7 +3,7 @@
 import { Controller, type Control, useFieldArray } from 'react-hook-form';
 import { Plus, Trash2 } from 'lucide-react';
 
-import { useCountriesQuery } from '@/app/queries/global-references/useCountries';
+import { useCountryOptionsQuery } from '@/app/queries/global-references/countries/useCountries';
 import { Button } from '@/components/ui/button';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,7 @@ import { MasterSelect, RequiredMark } from './patient-form-fields';
 // pair of fields. Rows carry their server id in form state (never rendered) so
 // the nested full replace can diff rather than rewrite (ADR 0043).
 export function IdentityDocumentsFieldArray({ control }: { control: Control<PatientFormValues> }) {
-  const countriesQuery = useCountriesQuery();
+  const countriesQuery = useCountryOptionsQuery();
   const { fields, append, remove } = useFieldArray({ control, name: 'identityDocuments' });
 
   return (

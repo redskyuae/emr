@@ -18,11 +18,11 @@ import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import {
-  type GlobalReferenceEntity,
-  useDeleteGlobalReference,
-  useGlobalReferenceItemQuery,
-  useGlobalReferenceListQuery,
-} from '@/app/queries/global-references/useGlobalReferencesManagement';
+  type Religion,
+  useReligionsQuery,
+} from '@/app/queries/global-references/religions/useReligions';
+import { useReligionQuery } from '@/app/queries/global-references/religions/useReligion';
+import { useDeleteReligion } from '@/app/queries/global-references/religions/useDeleteReligion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -60,13 +60,13 @@ export function ReligionsPageImpl() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
-  const deleteMutation = useDeleteGlobalReference();
+  const deleteMutation = useDeleteReligion();
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
   const deleteRecordId = getNumericParam(deleteRecordParam);
 
-  const religionsQuery = useGlobalReferenceListQuery('religions', {
+  const religionsQuery = useReligionsQuery({
     page,
     limit: PAGE_SIZE,
     query: debouncedSearch || undefined,
@@ -90,18 +90,14 @@ export function ReligionsPageImpl() {
 
   const shouldFetchEditingReligion =
     editingRecordId !== null && !religionsQuery.isLoading && editingReligionFromList === null;
-  const editingReligionQuery = useGlobalReferenceItemQuery(
-    'religions',
+  const editingReligionQuery = useReligionQuery(
     shouldFetchEditingReligion ? editingRecordId : null
   );
   const editingReligion = editingReligionFromList ?? editingReligionQuery.data ?? null;
 
   const shouldFetchDeleteReligion =
     deleteRecordId !== null && !religionsQuery.isLoading && deleteReligionFromList === null;
-  const deleteReligionQuery = useGlobalReferenceItemQuery(
-    'religions',
-    shouldFetchDeleteReligion ? deleteRecordId : null
-  );
+  const deleteReligionQuery = useReligionQuery(shouldFetchDeleteReligion ? deleteRecordId : null);
   const deleteReligion = deleteReligionFromList ?? deleteReligionQuery.data ?? null;
 
   const recordResolving =
@@ -118,11 +114,11 @@ export function ReligionsPageImpl() {
   const deleteDialogOpen =
     deleteRecordId !== null && (deleteRecordResolving || deleteReligion !== null);
 
-  function openEdit(religion: GlobalReferenceEntity) {
+  function openEdit(religion: Religion) {
     void setRecordParam(String(religion.id));
   }
 
-  function openDelete(religion: GlobalReferenceEntity) {
+  function openDelete(religion: Religion) {
     void setDeleteRecordParam(String(religion.id));
   }
 
@@ -137,7 +133,7 @@ export function ReligionsPageImpl() {
     }
 
     try {
-      await deleteMutation.mutateAsync({ resource: 'religions', id: deleteReligion.id });
+      await deleteMutation.mutateAsync(deleteReligion.id);
       toast.success('Religion deleted.');
       void setDeleteRecordParam(null);
     } catch (error) {

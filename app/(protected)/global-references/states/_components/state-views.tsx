@@ -1,6 +1,6 @@
 import { MapPinned, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
-import type { GlobalReferenceEntity } from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { State } from '@/app/queries/global-references/states/useStates';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -18,9 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-function hasCountry(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { country: { name: string; code: string } } {
+function hasCountry(record: State): record is State & { country: { name: string; code: string } } {
   return 'country' in record;
 }
 
@@ -51,9 +49,9 @@ function StateActionsMenu({
   onEdit,
   onDelete,
 }: {
-  state: GlobalReferenceEntity;
-  onEdit: (state: GlobalReferenceEntity) => void;
-  onDelete: (state: GlobalReferenceEntity) => void;
+  state: State;
+  onEdit: (state: State) => void;
+  onDelete: (state: State) => void;
 }) {
   return (
     <DropdownMenu>
@@ -86,9 +84,9 @@ export function StateTableView({
   onEdit,
   onDelete,
 }: {
-  states: GlobalReferenceEntity[];
-  onEdit: (state: GlobalReferenceEntity) => void;
-  onDelete: (state: GlobalReferenceEntity) => void;
+  states: State[];
+  onEdit: (state: State) => void;
+  onDelete: (state: State) => void;
 }) {
   return (
     <Card className="shadow-fluent-2">
@@ -140,9 +138,9 @@ export function StateCardView({
   onEdit,
   onDelete,
 }: {
-  states: GlobalReferenceEntity[];
-  onEdit: (state: GlobalReferenceEntity) => void;
-  onDelete: (state: GlobalReferenceEntity) => void;
+  states: State[];
+  onEdit: (state: State) => void;
+  onDelete: (state: State) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -189,9 +187,9 @@ export function StateListView({
   onEdit,
   onDelete,
 }: {
-  states: GlobalReferenceEntity[];
-  onEdit: (state: GlobalReferenceEntity) => void;
-  onDelete: (state: GlobalReferenceEntity) => void;
+  states: State[];
+  onEdit: (state: State) => void;
+  onDelete: (state: State) => void;
 }) {
   return (
     <div className="space-y-3">

@@ -17,13 +17,10 @@ import {
 import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { useCountriesQuery } from '@/app/queries/global-references/useCountries';
-import {
-  type GlobalReferenceEntity,
-  useDeleteGlobalReference,
-  useGlobalReferenceItemQuery,
-  useGlobalReferenceListQuery,
-} from '@/app/queries/global-references/useGlobalReferencesManagement';
+import { useCountryOptionsQuery } from '@/app/queries/global-references/countries/useCountries';
+import { type State, useStatesQuery } from '@/app/queries/global-references/states/useStates';
+import { useStateQuery } from '@/app/queries/global-references/states/useState';
+import { useDeleteState } from '@/app/queries/global-references/states/useDeleteState';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -68,7 +65,7 @@ function StateCountryFilter({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const countriesQuery = useCountriesQuery();
+  const countriesQuery = useCountryOptionsQuery();
   const countries = countriesQuery.data ?? [];
 
   return (
@@ -102,14 +99,14 @@ export function StatesPageImpl() {
   const [countryFilter, setCountryFilter] = useState('all');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
-  const deleteMutation = useDeleteGlobalReference();
+  const deleteMutation = useDeleteState();
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
   const deleteRecordId = getNumericParam(deleteRecordParam);
   const countryId = countryFilter !== 'all' ? Number(countryFilter) : undefined;
 
-  const statesQuery = useGlobalReferenceListQuery('states', {
+  const statesQuery = useStatesQuery({
     page,
     countryId,
     limit: PAGE_SIZE,
@@ -132,18 +129,12 @@ export function StatesPageImpl() {
 
   const shouldFetchEditingState =
     editingRecordId !== null && !statesQuery.isLoading && editingStateFromList === null;
-  const editingStateQuery = useGlobalReferenceItemQuery(
-    'states',
-    shouldFetchEditingState ? editingRecordId : null
-  );
+  const editingStateQuery = useStateQuery(shouldFetchEditingState ? editingRecordId : null);
   const editingState = editingStateFromList ?? editingStateQuery.data ?? null;
 
   const shouldFetchDeleteState =
     deleteRecordId !== null && !statesQuery.isLoading && deleteStateFromList === null;
-  const deleteStateQuery = useGlobalReferenceItemQuery(
-    'states',
-    shouldFetchDeleteState ? deleteRecordId : null
-  );
+  const deleteStateQuery = useStateQuery(shouldFetchDeleteState ? deleteRecordId : null);
   const deleteState = deleteStateFromList ?? deleteStateQuery.data ?? null;
 
   const recordResolving =
@@ -160,11 +151,11 @@ export function StatesPageImpl() {
   const deleteDialogOpen =
     deleteRecordId !== null && (deleteRecordResolving || deleteState !== null);
 
-  function openEdit(state: GlobalReferenceEntity) {
+  function openEdit(state: State) {
     void setRecordParam(String(state.id));
   }
 
-  function openDelete(state: GlobalReferenceEntity) {
+  function openDelete(state: State) {
     void setDeleteRecordParam(String(state.id));
   }
 
@@ -184,7 +175,7 @@ export function StatesPageImpl() {
     }
 
     try {
-      await deleteMutation.mutateAsync({ resource: 'states', id: deleteState.id });
+      await deleteMutation.mutateAsync(deleteState.id);
       toast.success('State deleted.');
       void setDeleteRecordParam(null);
     } catch (error) {

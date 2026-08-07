@@ -1,6 +1,6 @@
 import { Flag, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 
-import type { GlobalReferenceEntity } from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { Nationality } from '@/app/queries/global-references/nationalities/useNationalities';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -18,9 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-function hasCode(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { code: string } {
+function hasCode(record: Nationality): record is Nationality & { code: string } {
   return 'code' in record;
 }
 
@@ -51,9 +49,9 @@ function NationalityActionsMenu({
   onEdit,
   onDelete,
 }: {
-  nationality: GlobalReferenceEntity;
-  onEdit: (nationality: GlobalReferenceEntity) => void;
-  onDelete: (nationality: GlobalReferenceEntity) => void;
+  nationality: Nationality;
+  onEdit: (nationality: Nationality) => void;
+  onDelete: (nationality: Nationality) => void;
 }) {
   return (
     <DropdownMenu>
@@ -86,9 +84,9 @@ export function NationalityTableView({
   onEdit,
   onDelete,
 }: {
-  nationalities: GlobalReferenceEntity[];
-  onEdit: (nationality: GlobalReferenceEntity) => void;
-  onDelete: (nationality: GlobalReferenceEntity) => void;
+  nationalities: Nationality[];
+  onEdit: (nationality: Nationality) => void;
+  onDelete: (nationality: Nationality) => void;
 }) {
   return (
     <Card className="shadow-fluent-2">
@@ -135,9 +133,9 @@ export function NationalityCardView({
   onEdit,
   onDelete,
 }: {
-  nationalities: GlobalReferenceEntity[];
-  onEdit: (nationality: GlobalReferenceEntity) => void;
-  onDelete: (nationality: GlobalReferenceEntity) => void;
+  nationalities: Nationality[];
+  onEdit: (nationality: Nationality) => void;
+  onDelete: (nationality: Nationality) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -185,9 +183,9 @@ export function NationalityListView({
   onEdit,
   onDelete,
 }: {
-  nationalities: GlobalReferenceEntity[];
-  onEdit: (nationality: GlobalReferenceEntity) => void;
-  onDelete: (nationality: GlobalReferenceEntity) => void;
+  nationalities: Nationality[];
+  onEdit: (nationality: Nationality) => void;
+  onDelete: (nationality: Nationality) => void;
 }) {
   return (
     <div className="space-y-3">

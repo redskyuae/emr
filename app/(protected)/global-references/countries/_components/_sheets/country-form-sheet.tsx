@@ -7,13 +7,10 @@ import { AlertCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
-import {
-  type CreateGlobalReferenceVariables,
-  type GlobalReferenceEntity,
-  type UpdateGlobalReferenceVariables,
-  useCreateGlobalReference,
-  useUpdateGlobalReference,
-} from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { SaveCountryRequest } from '@/app/api/v1/countries/types';
+import { type Country } from '@/app/queries/global-references/countries/useCountries';
+import { useCreateCountry } from '@/app/queries/global-references/countries/useCreateCountry';
+import { useUpdateCountry } from '@/app/queries/global-references/countries/useUpdateCountry';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -33,9 +30,7 @@ const EMPTY_DEFAULTS: CountryFormValues = {
   code: '',
 };
 
-function hasCode(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { code: string } {
+function hasCode(record: Country): record is Country & { code: string } {
   return 'code' in record;
 }
 
@@ -50,12 +45,12 @@ export function CountryFormSheet({
   open: boolean;
   mode: 'new' | 'edit';
   recordId: number | null;
-  record: GlobalReferenceEntity | null;
+  record: Country | null;
   isResolving: boolean;
   onClose: () => void;
 }) {
-  const createMutation = useCreateGlobalReference();
-  const updateMutation = useUpdateGlobalReference();
+  const createMutation = useCreateCountry();
+  const updateMutation = useUpdateCountry();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const initializedKeyRef = useRef<string | null>(null);
 
@@ -94,14 +89,14 @@ export function CountryFormSheet({
   const onSubmit = form.handleSubmit(async (values) => {
     setServerErrors([]);
 
-    const request: CreateGlobalReferenceVariables['request'] = {
+    const request: SaveCountryRequest = {
       name: values.name,
       code: values.code,
     };
 
     try {
       if (isCreating) {
-        await createMutation.mutateAsync({ resource: 'countries', request });
+        await createMutation.mutateAsync(request);
         toast.success('Country created.');
         onClose();
         return;
@@ -113,8 +108,7 @@ export function CountryFormSheet({
 
       await updateMutation.mutateAsync({
         id: recordId,
-        resource: 'countries',
-        request: request as UpdateGlobalReferenceVariables['request'],
+        request,
       });
       toast.success('Country updated.');
       onClose();

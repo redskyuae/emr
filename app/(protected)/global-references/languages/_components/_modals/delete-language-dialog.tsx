@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 
-import type { GlobalReferenceEntity } from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { Language } from '@/app/queries/global-references/languages/useLanguages';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ export function LanguageDeleteDialog({
   onCancel,
   onConfirm,
 }: {
-  language: GlobalReferenceEntity | null;
+  language: Language | null;
   isDeleting: boolean;
   onCancel: () => void;
   onConfirm: () => void;

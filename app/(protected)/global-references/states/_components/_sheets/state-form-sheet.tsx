@@ -7,14 +7,11 @@ import { AlertCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
-import { useCountriesQuery } from '@/app/queries/global-references/useCountries';
-import {
-  type CreateGlobalReferenceVariables,
-  type GlobalReferenceEntity,
-  type UpdateGlobalReferenceVariables,
-  useCreateGlobalReference,
-  useUpdateGlobalReference,
-} from '@/app/queries/global-references/useGlobalReferencesManagement';
+import { useCountryOptionsQuery } from '@/app/queries/global-references/countries/useCountries';
+import type { SaveStateRequest } from '@/app/api/v1/states/types';
+import { type State } from '@/app/queries/global-references/states/useStates';
+import { useCreateState } from '@/app/queries/global-references/states/useCreateState';
+import { useUpdateState } from '@/app/queries/global-references/states/useUpdateState';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -41,9 +38,7 @@ const EMPTY_DEFAULTS: StateFormValues = {
   countryId: '',
 };
 
-function hasCountryId(
-  record: GlobalReferenceEntity
-): record is GlobalReferenceEntity & { countryId: number } {
+function hasCountryId(record: State): record is State & { countryId: number } {
   return 'countryId' in record;
 }
 
@@ -58,13 +53,13 @@ export function StateFormSheet({
   open: boolean;
   mode: 'new' | 'edit';
   recordId: number | null;
-  record: GlobalReferenceEntity | null;
+  record: State | null;
   isResolving: boolean;
   onClose: () => void;
 }) {
-  const createMutation = useCreateGlobalReference();
-  const updateMutation = useUpdateGlobalReference();
-  const countriesQuery = useCountriesQuery();
+  const createMutation = useCreateState();
+  const updateMutation = useUpdateState();
+  const countriesQuery = useCountryOptionsQuery();
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const initializedKeyRef = useRef<string | null>(null);
 
@@ -106,14 +101,14 @@ export function StateFormSheet({
   const onSubmit = form.handleSubmit(async (values) => {
     setServerErrors([]);
 
-    const request: CreateGlobalReferenceVariables['request'] = {
+    const request: SaveStateRequest = {
       name: values.name,
       countryId: Number(values.countryId),
     };
 
     try {
       if (isCreating) {
-        await createMutation.mutateAsync({ resource: 'states', request });
+        await createMutation.mutateAsync(request);
         toast.success('State created.');
         onClose();
         return;
@@ -125,8 +120,7 @@ export function StateFormSheet({
 
       await updateMutation.mutateAsync({
         id: recordId,
-        resource: 'states',
-        request: request as UpdateGlobalReferenceVariables['request'],
+        request,
       });
       toast.success('State updated.');
       onClose();

@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 
-import type { GlobalReferenceEntity } from '@/app/queries/global-references/useGlobalReferencesManagement';
+import type { Country } from '@/app/queries/global-references/countries/useCountries';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ export function CountryDeleteDialog({
   onCancel,
   onConfirm,
 }: {
-  country: GlobalReferenceEntity | null;
+  country: Country | null;
   isDeleting: boolean;
   onCancel: () => void;
   onConfirm: () => void;

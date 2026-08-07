@@ -18,11 +18,11 @@ import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import {
-  type GlobalReferenceEntity,
-  useDeleteGlobalReference,
-  useGlobalReferenceItemQuery,
-  useGlobalReferenceListQuery,
-} from '@/app/queries/global-references/useGlobalReferencesManagement';
+  type Language,
+  useLanguagesQuery,
+} from '@/app/queries/global-references/languages/useLanguages';
+import { useLanguageQuery } from '@/app/queries/global-references/languages/useLanguage';
+import { useDeleteLanguage } from '@/app/queries/global-references/languages/useDeleteLanguage';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -60,13 +60,13 @@ export function LanguagesPageImpl() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
-  const deleteMutation = useDeleteGlobalReference();
+  const deleteMutation = useDeleteLanguage();
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
   const deleteRecordId = getNumericParam(deleteRecordParam);
 
-  const languagesQuery = useGlobalReferenceListQuery('languages', {
+  const languagesQuery = useLanguagesQuery({
     page,
     limit: PAGE_SIZE,
     query: debouncedSearch || undefined,
@@ -90,18 +90,14 @@ export function LanguagesPageImpl() {
 
   const shouldFetchEditingLanguage =
     editingRecordId !== null && !languagesQuery.isLoading && editingLanguageFromList === null;
-  const editingLanguageQuery = useGlobalReferenceItemQuery(
-    'languages',
+  const editingLanguageQuery = useLanguageQuery(
     shouldFetchEditingLanguage ? editingRecordId : null
   );
   const editingLanguage = editingLanguageFromList ?? editingLanguageQuery.data ?? null;
 
   const shouldFetchDeleteLanguage =
     deleteRecordId !== null && !languagesQuery.isLoading && deleteLanguageFromList === null;
-  const deleteLanguageQuery = useGlobalReferenceItemQuery(
-    'languages',
-    shouldFetchDeleteLanguage ? deleteRecordId : null
-  );
+  const deleteLanguageQuery = useLanguageQuery(shouldFetchDeleteLanguage ? deleteRecordId : null);
   const deleteLanguage = deleteLanguageFromList ?? deleteLanguageQuery.data ?? null;
 
   const recordResolving =
@@ -118,11 +114,11 @@ export function LanguagesPageImpl() {
   const deleteDialogOpen =
     deleteRecordId !== null && (deleteRecordResolving || deleteLanguage !== null);
 
-  function openEdit(language: GlobalReferenceEntity) {
+  function openEdit(language: Language) {
     void setRecordParam(String(language.id));
   }
 
-  function openDelete(language: GlobalReferenceEntity) {
+  function openDelete(language: Language) {
     void setDeleteRecordParam(String(language.id));
   }
 
@@ -137,7 +133,7 @@ export function LanguagesPageImpl() {
     }
 
     try {
-      await deleteMutation.mutateAsync({ resource: 'languages', id: deleteLanguage.id });
+      await deleteMutation.mutateAsync(deleteLanguage.id);
       toast.success('Language deleted.');
       void setDeleteRecordParam(null);
     } catch (error) {
