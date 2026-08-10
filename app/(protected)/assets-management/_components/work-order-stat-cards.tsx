@@ -32,10 +32,6 @@ export function WorkOrderStatCards({ workOrderSummary }: WorkOrderStatCardsProps
   );
 }
 
-export function WorkOrderStatCardsSkeleton() {
-  return <Skeleton className="h-32 w-full" />;
-}
-
 function WorkOrderStatCardsContainer() {
   const { data: workOrderSummary } = useSuspenseWorkOrderSummary();
 
@@ -45,7 +41,7 @@ function WorkOrderStatCardsContainer() {
 export function WorkOrderStatCardsWidget() {
   return (
     <WidgetErrorBoundary title="Could not load Work Order stats">
-      <Suspense fallback={<WorkOrderStatCardsSkeleton />}>
+      <Suspense fallback={<Skeleton className="h-32 w-full" />}>
         <WorkOrderStatCardsContainer />
       </Suspense>
     </WidgetErrorBoundary>
