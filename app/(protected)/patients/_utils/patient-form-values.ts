@@ -26,6 +26,8 @@ export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   nationalityId: undefined,
   languageId: undefined,
   religionId: undefined,
+  race: '',
+  ethnicGroup: '',
   hasEmiratesId: true,
   photoUrl: '',
   emiratesId: '',
@@ -38,6 +40,7 @@ export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   identityDocuments: [],
   emergencyContactName: '',
   emergencyContactRelationship: '',
+  emergencyContactGender: '',
   emergencyContactPhone: '',
 };
 
@@ -66,6 +69,8 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     nationalityId: patient.nationalityId ?? undefined,
     languageId: patient.languageId ?? undefined,
     religionId: patient.religionId ?? undefined,
+    race: patient.race ?? '',
+    ethnicGroup: patient.ethnicGroup ?? '',
     hasEmiratesId: Boolean(patient.emiratesId),
     photoUrl: patient.photoUrl ?? '',
     // Shown in the dashed form the card is printed with; normalised again on save.
@@ -88,6 +93,7 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     })),
     emergencyContactName: patient.emergencyContactName ?? '',
     emergencyContactRelationship: patient.emergencyContactRelationship ?? '',
+    emergencyContactGender: patient.emergencyContactGender ?? '',
     emergencyContactPhone: patient.emergencyContactPhone ?? '',
   };
 }
@@ -114,6 +120,8 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     nationalityId: values.nationalityId,
     languageId: values.languageId,
     religionId: values.religionId,
+    race: values.race || undefined,
+    ethnicGroup: values.ethnicGroup || undefined,
     emiratesId:
       values.hasEmiratesId && values.emiratesId
         ? normaliseEmiratesId(values.emiratesId)
@@ -141,6 +149,7 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     })),
     emergencyContactName: values.emergencyContactName || undefined,
     emergencyContactRelationship: values.emergencyContactRelationship || undefined,
+    emergencyContactGender: values.emergencyContactGender || undefined,
     emergencyContactPhone: values.emergencyContactPhone || undefined,
   };
 }

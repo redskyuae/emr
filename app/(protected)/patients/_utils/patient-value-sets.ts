@@ -28,6 +28,26 @@ export const PATIENT_IDENTITY_DOCUMENT_TYPES = [
   'other',
 ] as const;
 export const PATIENT_PAYMENT_METHODS = ['cash', 'insurance', 'self-pay', 'corporate'] as const;
+export const PATIENT_RACES = [
+  'arab',
+  'asian',
+  'black',
+  'white',
+  'mixed',
+  'other',
+  'unknown',
+] as const;
+export const PATIENT_ETHNIC_GROUPS = [
+  'emirati',
+  'gcc-national',
+  'arab',
+  'south-asian',
+  'southeast-asian',
+  'african',
+  'european',
+  'other',
+  'unknown',
+] as const;
 
 const GENDER_LABELS: Record<(typeof PATIENT_GENDERS)[number], string> = {
   male: 'Male',
@@ -94,6 +114,28 @@ const PAYMENT_METHOD_LABELS: Record<(typeof PATIENT_PAYMENT_METHODS)[number], st
   corporate: 'Corporate',
 };
 
+const RACE_LABELS: Record<(typeof PATIENT_RACES)[number], string> = {
+  arab: 'Arab',
+  asian: 'Asian',
+  black: 'Black',
+  white: 'White',
+  mixed: 'Mixed',
+  other: 'Other',
+  unknown: 'Unknown',
+};
+
+const ETHNIC_GROUP_LABELS: Record<(typeof PATIENT_ETHNIC_GROUPS)[number], string> = {
+  emirati: 'Emirati',
+  'gcc-national': 'GCC national',
+  arab: 'Arab',
+  'south-asian': 'South Asian',
+  'southeast-asian': 'Southeast Asian',
+  african: 'African',
+  european: 'European',
+  other: 'Other',
+  unknown: 'Unknown',
+};
+
 export const PATIENT_GENDER_OPTIONS = PATIENT_GENDERS.map((value) => ({
   value,
   label: GENDER_LABELS[value],
@@ -129,6 +171,16 @@ export const PATIENT_PAYMENT_METHOD_OPTIONS = PATIENT_PAYMENT_METHODS.map((value
   label: PAYMENT_METHOD_LABELS[value],
 }));
 
+export const PATIENT_RACE_OPTIONS = PATIENT_RACES.map((value) => ({
+  value,
+  label: RACE_LABELS[value],
+}));
+
+export const PATIENT_ETHNIC_GROUP_OPTIONS = PATIENT_ETHNIC_GROUPS.map((value) => ({
+  value,
+  label: ETHNIC_GROUP_LABELS[value],
+}));
+
 export function getPatientGenderLabel(gender: string) {
   return GENDER_LABELS[gender as (typeof PATIENT_GENDERS)[number]] ?? gender;
 }
@@ -154,6 +206,14 @@ export function getPatientIdentificationCategoryLabel(category: string) {
       category as (typeof PATIENT_IDENTIFICATION_CATEGORIES)[number]
     ] ?? category
   );
+}
+
+export function getPatientRaceLabel(race: string) {
+  return RACE_LABELS[race as (typeof PATIENT_RACES)[number]] ?? race;
+}
+
+export function getPatientEthnicGroupLabel(ethnicGroup: string) {
+  return ETHNIC_GROUP_LABELS[ethnicGroup as (typeof PATIENT_ETHNIC_GROUPS)[number]] ?? ethnicGroup;
 }
 
 export function getPatientIdentificationCategoryDefaultId(category: string) {

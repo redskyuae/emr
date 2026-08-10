@@ -30,12 +30,18 @@ type PatientRow = Omit<
   | 'preferredPaymentMethod'
   | 'identityDocuments'
   | 'patientIdentificationCategory'
+  | 'race'
+  | 'ethnicGroup'
+  | 'emergencyContactGender'
 > & {
+  race: string | null;
   gender: string | null;
   bloodGroup: string | null;
+  ethnicGroup: string | null;
   maritalStatus: string | null;
   preferredPaymentMethod: string | null;
   patientIdentificationCategory: string | null;
+  emergencyContactGender: string | null;
 };
 
 function toPatient(row: PatientRow, identityDocuments: PatientIdentityDocument[] = []): Patient {
@@ -44,10 +50,13 @@ function toPatient(row: PatientRow, identityDocuments: PatientIdentityDocument[]
     identityDocuments,
     gender: row.gender as Patient['gender'],
     bloodGroup: row.bloodGroup as Patient['bloodGroup'],
+    race: row.race as Patient['race'],
+    ethnicGroup: row.ethnicGroup as Patient['ethnicGroup'],
     maritalStatus: row.maritalStatus as Patient['maritalStatus'],
     preferredPaymentMethod: row.preferredPaymentMethod as Patient['preferredPaymentMethod'],
     patientIdentificationCategory:
       row.patientIdentificationCategory as Patient['patientIdentificationCategory'],
+    emergencyContactGender: row.emergencyContactGender as Patient['emergencyContactGender'],
   };
 }
 
@@ -57,6 +66,7 @@ const patientColumns = {
   city: patientTable.city,
   email: patientTable.email,
   phone: patientTable.phone,
+  race: patientTable.race,
   gender: patientTable.gender,
   stateId: patientTable.stateId,
   tenantId: patientTable.tenantId,
@@ -77,6 +87,7 @@ const patientColumns = {
   middleName: patientTable.middleName,
   languageId: patientTable.languageId,
   religionId: patientTable.religionId,
+  ethnicGroup: patientTable.ethnicGroup,
   dateOfBirth: patientTable.dateOfBirth,
   addressLine1: patientTable.addressLine1,
   addressLine2: patientTable.addressLine2,
@@ -87,6 +98,7 @@ const patientColumns = {
   alternatePhone: patientTable.alternatePhone,
   patientIdentificationCategory: patientTable.patientIdentificationCategory,
   emergencyContactName: patientTable.emergencyContactName,
+  emergencyContactGender: patientTable.emergencyContactGender,
   emergencyContactPhone: patientTable.emergencyContactPhone,
   emergencyContactRelationship: patientTable.emergencyContactRelationship,
   state: { id: stateTable.id, name: stateTable.name },
@@ -130,6 +142,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     city: data.city ?? null,
     email: data.email ?? null,
     phone: data.phone,
+    race: data.race ?? null,
     gender: data.gender,
     registrationStatus: 'registered' as const,
     tenantId: data.tenantId,
@@ -147,6 +160,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     middleName: data.middleName ?? null,
     languageId: data.languageId ?? null,
     religionId: data.religionId ?? null,
+    ethnicGroup: data.ethnicGroup ?? null,
     dateOfBirth: data.dateOfBirth,
     addressLine1: data.addressLine1 ?? null,
     addressLine2: data.addressLine2 ?? null,
@@ -159,6 +173,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
       ? null
       : (data.patientIdentificationCategory ?? null),
     emergencyContactName: data.emergencyContactName ?? null,
+    emergencyContactGender: data.emergencyContactGender ?? null,
     emergencyContactPhone: data.emergencyContactPhone ?? null,
     emergencyContactRelationship: data.emergencyContactRelationship ?? null,
   };
