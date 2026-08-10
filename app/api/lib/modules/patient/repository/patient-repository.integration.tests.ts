@@ -104,6 +104,33 @@ describe('Patient repository', () => {
     expect(created.preferredPaymentMethod).toBeNull();
   });
 
+  it('should persist Race, Ethnic Group and Next of Kin Gender', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        race: 'asian',
+        ethnicGroup: 'south-asian',
+        emergencyContactName: 'Kiran Rao',
+        emergencyContactGender: 'male',
+        emergencyContactRelationship: 'Spouse',
+      })
+    );
+
+    expect(created).toMatchObject({
+      race: 'asian',
+      ethnicGroup: 'south-asian',
+      emergencyContactName: 'Kiran Rao',
+      emergencyContactGender: 'male',
+      emergencyContactRelationship: 'Spouse',
+    });
+
+    const fetched = await patientRepository.getPatientById(created.id, tenantA);
+    expect(fetched).toMatchObject({
+      race: 'asian',
+      ethnicGroup: 'south-asian',
+      emergencyContactGender: 'male',
+    });
+  });
+
   it('should persist no-card identification and registration flags', async () => {
     const created = await patientRepository.createPatient(
       patientData(tenantA, {

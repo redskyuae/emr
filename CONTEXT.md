@@ -204,11 +204,11 @@ A Patient who travels to receive care outside their usual country of residence. 
 
 ## Race
 
-A Global Reference representing a broad demographic classification recorded during Patient Registration. Distinct from Ethnic Group, which captures a more specific community or ancestry grouping.
+A fixed Patient Registration value set representing a broad demographic classification. Distinct from Ethnic Group, which captures a more specific community or ancestry grouping.
 
 ## Ethnic Group
 
-A Global Reference representing a Patient's more specific community or ancestry grouping, recorded as demographic information. Distinct from Race, which is broader.
+A fixed Patient Registration value set representing a Patient's more specific community or ancestry grouping. Distinct from Race, which is broader.
 
 ## VIP Patient
 
@@ -224,7 +224,7 @@ A non-diagnostic intake flag recorded during Patient Registration to note predef
 
 ## Emergency Contact
 
-The person to reach on a Patient's behalf in urgent situations, recorded during Patient Registration with their relationship to the Patient. An Emergency Contact is contact information only — not a Patient, not Staff, and not a system user.
+The person to reach on a Patient's behalf in urgent situations, recorded during Patient Registration with their relationship to the Patient. User-facing copy may say "Next of Kin", but Emergency Contact is the persisted concept. An Emergency Contact is contact information only — not a Patient, not Staff, and not a system user.
 
 ## Appointment
 

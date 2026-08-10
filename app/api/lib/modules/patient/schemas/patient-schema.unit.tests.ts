@@ -57,6 +57,41 @@ describe('Patient schema', () => {
     ).toContain('Patient preferred payment method is invalid');
   });
 
+  it('should accept supported Race and Ethnic Group values', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      race: 'asian',
+      ethnicGroup: 'south-asian',
+      emergencyContactGender: 'female',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.race).toBe('asian');
+      expect(result.data.ethnicGroup).toBe('south-asian');
+      expect(result.data.emergencyContactGender).toBe('female');
+    }
+  });
+
+  it('should reject invalid Race, Ethnic Group and Next of Kin Gender values', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          race: 'martian',
+          ethnicGroup: 'moon-base',
+          emergencyContactGender: 'robot',
+        })
+      )
+    ).toEqual(
+      expect.arrayContaining([
+        'Patient race is invalid',
+        'Patient ethnic group is invalid',
+        'Patient gender is invalid',
+      ])
+    );
+  });
+
   it('should accept each supported preferred payment method', () => {
     for (const method of ['cash', 'insurance', 'self-pay', 'corporate']) {
       const result = createPatientSchema.safeParse({

@@ -21,6 +21,18 @@ const PATIENT_IDENTITY_DOCUMENT_TYPES = [
 ] as const;
 const PATIENT_PAYMENT_METHODS = ['cash', 'insurance', 'self-pay', 'corporate'] as const;
 const PATIENT_REGISTRATION_STATUSES = ['provisional', 'registered'] as const;
+const PATIENT_RACES = ['arab', 'asian', 'black', 'white', 'mixed', 'other', 'unknown'] as const;
+const PATIENT_ETHNIC_GROUPS = [
+  'emirati',
+  'gcc-national',
+  'arab',
+  'south-asian',
+  'southeast-asian',
+  'african',
+  'european',
+  'other',
+  'unknown',
+] as const;
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
@@ -111,6 +123,10 @@ const patientIdentificationCategorySchema = z.enum(PATIENT_IDENTIFICATION_CATEGO
 });
 const paymentMethodSchema = z.enum(PATIENT_PAYMENT_METHODS, {
   error: 'Patient preferred payment method is invalid',
+});
+const raceSchema = z.enum(PATIENT_RACES, { error: 'Patient race is invalid' });
+const ethnicGroupSchema = z.enum(PATIENT_ETHNIC_GROUPS, {
+  error: 'Patient ethnic group is invalid',
 });
 
 function isPatientPhotoUrl(value: string) {
@@ -267,6 +283,8 @@ const patientPayloadSchema = z
     nationalityId: optionalMasterIdSchema('nationality ID'),
     languageId: optionalMasterIdSchema('language ID'),
     religionId: optionalMasterIdSchema('religion ID'),
+    race: optionalTrimmedValue(raceSchema),
+    ethnicGroup: optionalTrimmedValue(ethnicGroupSchema),
     emiratesId: emiratesIdSchema,
     photoUrl: optionalTrimmedValue(
       z
@@ -287,15 +305,13 @@ const patientPayloadSchema = z
     isMedicalTourist: z.boolean().optional(),
     identityDocuments: z.array(identityDocumentSchema).optional(),
     emergencyContactName: optionalTrimmedValue(
-      z.string().trim().max(150, 'Patient emergency contact name must be at most 150 characters')
+      z.string().trim().max(150, 'Patient Next of Kin must be at most 150 characters')
     ),
     emergencyContactRelationship: optionalTrimmedValue(
-      z
-        .string()
-        .trim()
-        .max(50, 'Patient emergency contact relationship must be at most 50 characters')
+      z.string().trim().max(50, 'Patient Next of Kin Relationship must be at most 50 characters')
     ),
-    emergencyContactPhone: optionalTrimmedValue(patientPhoneSchema('emergency contact phone')),
+    emergencyContactGender: optionalTrimmedValue(genderSchema),
+    emergencyContactPhone: optionalTrimmedValue(patientPhoneSchema('Next of Kin phone')),
   })
   .refine((data) => data.stateId === undefined || data.countryId !== undefined, {
     message: 'Patient country ID is required when state ID is provided',
@@ -353,6 +369,8 @@ export type PatientIdentificationCategory = (typeof PATIENT_IDENTIFICATION_CATEG
 export type PatientIdentityDocumentType = (typeof PATIENT_IDENTITY_DOCUMENT_TYPES)[number];
 export type PatientPaymentMethod = (typeof PATIENT_PAYMENT_METHODS)[number];
 export type PatientRegistrationStatus = (typeof PATIENT_REGISTRATION_STATUSES)[number];
+export type PatientRace = (typeof PATIENT_RACES)[number];
+export type PatientEthnicGroup = (typeof PATIENT_ETHNIC_GROUPS)[number];
 
 export type PatientIdInput = z.infer<typeof patientIdSchema>;
 export type PatientTenantIdInput = z.infer<typeof patientTenantIdSchema>;
@@ -415,6 +433,8 @@ export type Patient = {
   language: PatientReferenceSummary | null;
   religionId: number | null;
   religion: PatientReferenceSummary | null;
+  race: PatientRace | null;
+  ethnicGroup: PatientEthnicGroup | null;
   emiratesId: string | null;
   photoUrl: string | null;
   patientIdentificationCategory: PatientIdentificationCategory | null;
@@ -425,6 +445,7 @@ export type Patient = {
   identityDocuments: PatientIdentityDocument[];
   emergencyContactName: string | null;
   emergencyContactRelationship: string | null;
+  emergencyContactGender: PatientGender | null;
   emergencyContactPhone: string | null;
   isActive: boolean;
   registrationStatus: PatientRegistrationStatus;

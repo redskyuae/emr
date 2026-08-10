@@ -25,6 +25,8 @@ export type UpdatePatientRequest = {
   nationalityId?: number;
   languageId?: number;
   religionId?: number;
+  race?: string;
+  ethnicGroup?: string;
   emiratesId?: string;
   photoUrl?: string;
   patientIdentificationCategory?: string;
@@ -35,6 +37,7 @@ export type UpdatePatientRequest = {
   identityDocuments?: SavePatientIdentityDocumentRequest[];
   emergencyContactName?: string;
   emergencyContactRelationship?: string;
+  emergencyContactGender?: string;
   emergencyContactPhone?: string;
 };
 

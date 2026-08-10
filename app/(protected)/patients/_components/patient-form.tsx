@@ -35,6 +35,8 @@ import {
   PATIENT_GENDER_OPTIONS,
   PATIENT_IDENTIFICATION_CATEGORY_OPTIONS,
   PATIENT_MARITAL_STATUS_OPTIONS,
+  PATIENT_ETHNIC_GROUP_OPTIONS,
+  PATIENT_RACE_OPTIONS,
   PATIENT_TITLE_OPTIONS,
 } from '../_utils/patient-value-sets';
 import { IdentityDocumentsFieldArray } from './identity-documents-field-array';
@@ -375,7 +377,7 @@ function DemographicsSection({ control }: { control: Control<PatientFormValues> 
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
             <Controller
               control={control}
               name="nationalityId"
@@ -418,6 +420,58 @@ function DemographicsSection({ control }: { control: Control<PatientFormValues> 
                   options={religionsQuery.data ?? []}
                   loading={religionsQuery.isLoading}
                 />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="race"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="patient-race">Race</FieldLabel>
+                  <Select
+                    value={field.value || NONE}
+                    onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                  >
+                    <SelectTrigger id="patient-race" className="w-full">
+                      <SelectValue placeholder="Not specified" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>Not specified</SelectItem>
+                      {PATIENT_RACE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="ethnicGroup"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="patient-ethnic-group">Ethnic Group</FieldLabel>
+                  <Select
+                    value={field.value || NONE}
+                    onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                  >
+                    <SelectTrigger id="patient-ethnic-group" className="w-full">
+                      <SelectValue placeholder="Not specified" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>Not specified</SelectItem>
+                      {PATIENT_ETHNIC_GROUP_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
               )}
             />
           </div>
@@ -889,21 +943,21 @@ function IdentifiersSection({
   );
 }
 
-function EmergencyContactSection({ control }: { control: Control<PatientFormValues> }) {
+function NextOfKinSection({ control }: { control: Control<PatientFormValues> }) {
   return (
     <Card className="shadow-fluent-2">
       <CardHeader>
-        <CardTitle>Emergency contact</CardTitle>
+        <CardTitle>Next of Kin</CardTitle>
         <CardDescription>The person to reach on this Patient&apos;s behalf.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Controller
             control={control}
             name="emergencyContactName"
             render={({ field, fieldState }) => (
               <Field>
-                <FieldLabel htmlFor="patient-ec-name">Name</FieldLabel>
+                <FieldLabel htmlFor="patient-ec-name">Next of Kin</FieldLabel>
                 <Input id="patient-ec-name" {...field} aria-invalid={fieldState.invalid} />
                 {fieldState.error ? (
                   <p className="text-destructive text-xs">{fieldState.error.message}</p>
@@ -917,7 +971,7 @@ function EmergencyContactSection({ control }: { control: Control<PatientFormValu
             name="emergencyContactRelationship"
             render={({ field, fieldState }) => (
               <Field>
-                <FieldLabel htmlFor="patient-ec-relationship">Relationship</FieldLabel>
+                <FieldLabel htmlFor="patient-ec-relationship">Next of Kin Relationship</FieldLabel>
                 <Input id="patient-ec-relationship" {...field} aria-invalid={fieldState.invalid} />
                 {fieldState.error ? (
                   <p className="text-destructive text-xs">{fieldState.error.message}</p>
@@ -928,10 +982,36 @@ function EmergencyContactSection({ control }: { control: Control<PatientFormValu
 
           <Controller
             control={control}
+            name="emergencyContactGender"
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="patient-ec-gender">Next of Kin Gender</FieldLabel>
+                <Select
+                  value={field.value || NONE}
+                  onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                >
+                  <SelectTrigger id="patient-ec-gender" className="w-full">
+                    <SelectValue placeholder="Not specified" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Not specified</SelectItem>
+                    {PATIENT_GENDER_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+          />
+
+          <Controller
+            control={control}
             name="emergencyContactPhone"
             render={({ field, fieldState }) => (
               <Field>
-                <FieldLabel htmlFor="patient-ec-phone">Phone</FieldLabel>
+                <FieldLabel htmlFor="patient-ec-phone">Next of Kin Phone</FieldLabel>
                 <Input
                   id="patient-ec-phone"
                   type="tel"
@@ -1022,7 +1102,7 @@ export function PatientForm({
       <DemographicsSection control={form.control} />
       <ContactSection control={form.control} />
       <AddressSection control={form.control} setValue={form.setValue} />
-      <EmergencyContactSection control={form.control} />
+      <NextOfKinSection control={form.control} />
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>

@@ -9,6 +9,8 @@ import {
   PATIENT_MARITAL_STATUSES,
   PATIENT_PAYMENT_METHODS,
   PATIENT_TITLES,
+  PATIENT_ETHNIC_GROUPS,
+  PATIENT_RACES,
 } from './patient-value-sets';
 
 function isNotFutureDate(value: string) {
@@ -126,6 +128,8 @@ export const patientFormSchema = z
     nationalityId: z.number().int().positive().optional(),
     languageId: z.number().int().positive().optional(),
     religionId: z.number().int().positive().optional(),
+    race: z.enum(PATIENT_RACES).optional().or(z.literal('')),
+    ethnicGroup: z.enum(PATIENT_ETHNIC_GROUPS).optional().or(z.literal('')),
     hasEmiratesId: z.boolean(),
     photoUrl: z
       .string()
@@ -156,9 +160,10 @@ export const patientFormSchema = z
     smsConsent: z.boolean(),
     isMedicalTourist: z.boolean(),
     identityDocuments: z.array(identityDocumentFormSchema),
-    emergencyContactName: optionalNameField('Emergency contact name', 150),
-    emergencyContactRelationship: optionalNameField('Emergency contact relationship', 50),
-    emergencyContactPhone: optionalPhoneField('Emergency contact phone'),
+    emergencyContactName: optionalNameField('Next of Kin', 150),
+    emergencyContactRelationship: optionalNameField('Next of Kin Relationship', 50),
+    emergencyContactGender: z.enum(PATIENT_GENDERS).optional().or(z.literal('')),
+    emergencyContactPhone: optionalPhoneField('Next of Kin Phone'),
   })
   .superRefine((data, ctx) => {
     if (data.gender === '') {

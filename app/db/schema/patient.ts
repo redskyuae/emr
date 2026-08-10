@@ -52,6 +52,8 @@ export const patient = pgTable(
     nationalityId: integer('nationality_id').references(() => nationalityTable.id),
     languageId: integer('language_id').references(() => languageTable.id),
     religionId: integer('religion_id').references(() => religionTable.id),
+    race: varchar({ length: 20 }),
+    ethnicGroup: varchar('ethnic_group', { length: 30 }),
     // Stored digit-normalised (784199012345671), never in the dashed form the
     // card is printed with — three spellings of one ID would otherwise insert
     // as three patients past the unique index below (ADR 0042).
@@ -64,6 +66,7 @@ export const patient = pgTable(
     isMedicalTourist: boolean('is_medical_tourist').notNull().default(false),
     emergencyContactName: varchar('emergency_contact_name', { length: 150 }),
     emergencyContactRelationship: varchar('emergency_contact_relationship', { length: 50 }),
+    emergencyContactGender: varchar('emergency_contact_gender', { length: 20 }),
     emergencyContactPhone: varchar('emergency_contact_phone', { length: 20 }),
     isActive: boolean('is_active').notNull().default(true),
     // Deactivation/reactivation instants for the Patient Timeline. isActive

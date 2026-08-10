@@ -20,9 +20,11 @@ import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import {
   formatEmiratesId,
   getPatientGenderLabel,
+  getPatientEthnicGroupLabel,
   getPatientIdentificationCategoryLabel,
   getPatientMaritalStatusLabel,
   getPatientPaymentMethodLabel,
+  getPatientRaceLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -284,6 +286,16 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                 <DetailField label="Nationality" value={patient.nationality?.name} />
                 <DetailField label="Preferred language" value={patient.language?.name} />
                 <DetailField label="Religion" value={patient.religion?.name} />
+                <DetailField
+                  label="Race"
+                  value={patient.race ? getPatientRaceLabel(patient.race) : null}
+                />
+                <DetailField
+                  label="Ethnic Group"
+                  value={
+                    patient.ethnicGroup ? getPatientEthnicGroupLabel(patient.ethnicGroup) : null
+                  }
+                />
                 <DetailField label="VIP" value={patient.isVip ? 'Yes' : 'No'} />
                 <DetailField
                   label="Medical Tourist"
@@ -370,12 +382,23 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
 
           <Card className="shadow-fluent-2">
             <CardHeader>
-              <CardTitle>Emergency contact</CardTitle>
+              <CardTitle>Next of Kin</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-3">
-              <DetailField label="Name" value={patient.emergencyContactName} />
-              <DetailField label="Relationship" value={patient.emergencyContactRelationship} />
-              <DetailField label="Phone" value={patient.emergencyContactPhone} />
+            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <DetailField label="Next of Kin" value={patient.emergencyContactName} />
+              <DetailField
+                label="Next of Kin Relationship"
+                value={patient.emergencyContactRelationship}
+              />
+              <DetailField
+                label="Next of Kin Gender"
+                value={
+                  patient.emergencyContactGender
+                    ? getPatientGenderLabel(patient.emergencyContactGender)
+                    : null
+                }
+              />
+              <DetailField label="Next of Kin Phone" value={patient.emergencyContactPhone} />
             </CardContent>
           </Card>
         </TabsContent>

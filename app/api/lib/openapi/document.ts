@@ -1726,6 +1726,8 @@ const patientRequestExample = {
   nationalityId: 1,
   languageId: 2,
   religionId: 3,
+  race: 'asian',
+  ethnicGroup: 'south-asian',
   emiratesId: '784199012345671',
   photoUrl: 'https://example.com/patient-photos/emirates-id-784199012345671.jpg',
   isVip: false,
@@ -1746,6 +1748,7 @@ const patientRequestExample = {
   ],
   emergencyContactName: 'Kiran Rao',
   emergencyContactRelationship: 'Spouse',
+  emergencyContactGender: 'male',
   emergencyContactPhone: '+91-9988776655',
 };
 
@@ -9084,6 +9087,24 @@ export const openApiDocument = {
           nationalityId: { type: 'integer', minimum: 1 },
           languageId: { type: 'integer', minimum: 1, description: 'Preferred Language.' },
           religionId: { type: 'integer', minimum: 1 },
+          race: {
+            type: 'string',
+            enum: ['arab', 'asian', 'black', 'white', 'mixed', 'other', 'unknown'],
+          },
+          ethnicGroup: {
+            type: 'string',
+            enum: [
+              'emirati',
+              'gcc-national',
+              'arab',
+              'south-asian',
+              'southeast-asian',
+              'african',
+              'european',
+              'other',
+              'unknown',
+            ],
+          },
           emiratesId: {
             type: 'string',
             description:
@@ -9092,6 +9113,11 @@ export const openApiDocument = {
           },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
+          emergencyContactGender: {
+            type: 'string',
+            enum: ['male', 'female', 'other', 'unknown'],
+            description: 'Next of Kin Gender in Patient Registration UI.',
+          },
           emergencyContactPhone: { type: 'string', maxLength: 20 },
         },
       },
@@ -10008,6 +10034,8 @@ export const openApiDocument = {
           'language',
           'religionId',
           'religion',
+          'race',
+          'ethnicGroup',
           'emiratesId',
           'photoUrl',
           'patientIdentificationCategory',
@@ -10018,6 +10046,7 @@ export const openApiDocument = {
           'identityDocuments',
           'emergencyContactName',
           'emergencyContactRelationship',
+          'emergencyContactGender',
           'emergencyContactPhone',
           'isActive',
           'createdOn',
@@ -10086,6 +10115,34 @@ export const openApiDocument = {
           language: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
           religionId: { type: ['integer', 'null'], minimum: 1 },
           religion: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
+          race: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: ['arab', 'asian', 'black', 'white', 'mixed', 'other', 'unknown'],
+              },
+              { type: 'null' },
+            ],
+          },
+          ethnicGroup: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: [
+                  'emirati',
+                  'gcc-national',
+                  'arab',
+                  'south-asian',
+                  'southeast-asian',
+                  'african',
+                  'european',
+                  'other',
+                  'unknown',
+                ],
+              },
+              { type: 'null' },
+            ],
+          },
           emiratesId: {
             type: ['string', 'null'],
             maxLength: 15,
@@ -10121,6 +10178,12 @@ export const openApiDocument = {
           },
           emergencyContactName: { type: ['string', 'null'], maxLength: 150 },
           emergencyContactRelationship: { type: ['string', 'null'], maxLength: 50 },
+          emergencyContactGender: {
+            oneOf: [
+              { type: 'string', enum: ['male', 'female', 'other', 'unknown'] },
+              { type: 'null' },
+            ],
+          },
           emergencyContactPhone: { type: ['string', 'null'], maxLength: 20 },
           isActive: { type: 'boolean' },
           createdOn: { type: 'string', format: 'date-time' },
