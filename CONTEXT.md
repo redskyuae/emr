@@ -432,7 +432,7 @@ A Global Reference representing a country used in Patient addresses and other ge
 
 ## State
 
-A Global Reference representing a state, province, or union territory within a Country, used in Patient addresses. A State always belongs to exactly one Country.
+A Global Reference representing a state, province, union territory, or emirate within a Country, used in Patient addresses. A State always belongs to exactly one Country.
 
 ## Department
 
