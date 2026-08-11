@@ -6,6 +6,7 @@ export type GetPatientResponse = {
 };
 
 export type UpdatePatientRequest = {
+  title: string;
   firstName: string;
   middleName?: string;
   lastName: string;
@@ -30,6 +31,7 @@ export type UpdatePatientRequest = {
   emiratesId?: string;
   photoUrl?: string;
   patientIdentificationCategory?: string;
+  passportNumber?: string;
   uid?: string;
   isVip?: boolean;
   smsConsent?: boolean;

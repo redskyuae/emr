@@ -1706,6 +1706,7 @@ const assetErrorResponses = {
 };
 
 const patientRequestExample = {
+  title: 'mrs',
   firstName: 'Asha',
   middleName: 'Kiran',
   lastName: 'Rao',
@@ -1759,6 +1760,7 @@ const patientExample = {
   ...patientRequestExample,
   uid: null,
   patientIdentificationCategory: null,
+  passportNumber: null,
   registrationStatus: 'registered',
   // Responses echo each document's id — the nested full replace diffs on it
   // rather than rewriting the collection (ADR 0043).
@@ -6020,7 +6022,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Register Patient',
         description:
-          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. Send either emiratesId or patientIdentificationCategory. emiratesId is stored digit-normalised and is unique per Tenant when present; no-card surrogate default identifiers are UI-only and are not stored as emiratesId. photoUrl may be sent only when it was returned by an Emirates ID read. Medical Tourist registration requires no emiratesId, a uid, and a passport Identity Document. identityDocuments replaces the whole collection; required fields vary by documentType.',
+          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. Send either emiratesId or patientIdentificationCategory. emiratesId is stored digit-normalised and is unique per Tenant when present; no-card surrogate default identifiers are UI-only and are not stored as emiratesId. photoUrl may be sent only when it was returned by an Emirates ID read. Medical Tourist registration requires no emiratesId and a uid; passportNumber is optional. identityDocuments replaces the whole collection; required fields vary by documentType.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreatePatientRequest', patientRequestExample),
         responses: {
@@ -6060,7 +6062,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Update Patient',
         description:
-          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference, Emirates ID, no-card Patient Identification Category, UID, Patient photo, and Medical Tourist rules are the same as registration. identityDocuments replaces the whole collection: documents sent with an id are updated, documents sent without one are added, and any existing document omitted from the array is removed.',
+          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference, Emirates ID, no-card Patient Identification Category, UID, Passport Number, Patient photo, and Medical Tourist rules are the same as registration. identityDocuments replaces the whole collection: documents sent with an id are updated, documents sent without one are added, and any existing document omitted from the array is removed.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Patient')],
         requestBody: requestBody('UpdatePatientRequest', patientRequestExample),
@@ -9907,8 +9909,13 @@ export const openApiDocument = {
       },
       CreatePatientRequest: {
         type: 'object',
-        required: ['firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
+        required: ['title', 'firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
         properties: {
+          title: {
+            type: 'string',
+            enum: ['mr', 'mrs', 'miss', 'baby', 'master', 'ms', 'dr'],
+            description: 'Mandatory Patient title captured during Patient Registration.',
+          },
           firstName: { type: 'string', minLength: 1, maxLength: 100 },
           middleName: { type: 'string', maxLength: 100 },
           lastName: { type: 'string', minLength: 1, maxLength: 100 },
@@ -9972,6 +9979,12 @@ export const openApiDocument = {
             description:
               'Required when Emirates ID is absent. The UI may show the mapped no-card default identifier, but that surrogate value is not stored as emiratesId.',
           },
+          passportNumber: {
+            type: 'string',
+            maxLength: 50,
+            description:
+              'Optional Passport Number captured directly on the Patient. This is separate from repeatable Identity Documents.',
+          },
           uid: {
             type: 'string',
             maxLength: 30,
@@ -9988,7 +10001,7 @@ export const openApiDocument = {
             type: 'boolean',
             default: false,
             description:
-              'When true, Emirates ID must be absent, uid is required, and identityDocuments must include a passport.',
+              'When true, Emirates ID must be absent and uid is required. Passport Number and Identity Documents remain optional.',
           },
           identityDocuments: {
             type: 'array',
@@ -10008,6 +10021,7 @@ export const openApiDocument = {
           'id',
           'tenantId',
           'mrn',
+          'title',
           'firstName',
           'middleName',
           'lastName',
@@ -10039,6 +10053,7 @@ export const openApiDocument = {
           'emiratesId',
           'photoUrl',
           'patientIdentificationCategory',
+          'passportNumber',
           'uid',
           'isVip',
           'smsConsent',
@@ -10063,6 +10078,12 @@ export const openApiDocument = {
             type: 'string',
             description:
               'Server-generated Medical Record Number, e.g. MRN-1042. Immutable after registration.',
+          },
+          title: {
+            oneOf: [
+              { type: 'string', enum: ['mr', 'mrs', 'miss', 'baby', 'master', 'ms', 'dr'] },
+              { type: 'null' },
+            ],
           },
           firstName: { type: 'string', minLength: 1, maxLength: 100 },
           middleName: { type: ['string', 'null'], maxLength: 100 },
@@ -10168,6 +10189,7 @@ export const openApiDocument = {
               { type: 'null' },
             ],
           },
+          passportNumber: { type: ['string', 'null'], maxLength: 50 },
           uid: { type: ['string', 'null'], maxLength: 30 },
           isVip: { type: 'boolean' },
           smsConsent: { type: 'boolean' },

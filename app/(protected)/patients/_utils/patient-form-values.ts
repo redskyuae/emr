@@ -46,7 +46,7 @@ export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
 
 export function patientToFormValues(patient: Patient): PatientFormValues {
   return {
-    title: '',
+    title: patient.title ?? '',
     firstName: patient.firstName,
     middleName: patient.middleName ?? '',
     lastName: patient.lastName,
@@ -74,7 +74,7 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     // Shown in the dashed form the card is printed with; normalised again on save.
     emiratesId: formatEmiratesId(patient.emiratesId) ?? '',
     patientIdentificationCategory: patient.patientIdentificationCategory ?? '',
-    passportNumber: '',
+    passportNumber: patient.passportNumber ?? '',
     uid: patient.uid ?? '',
     isVip: patient.isVip,
     smsConsent: patient.smsConsent,
@@ -98,6 +98,7 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
 
 export function patientFormValuesToRequest(values: PatientFormValues): SavePatientRequest {
   return {
+    title: values.title,
     firstName: values.firstName,
     middleName: values.middleName || undefined,
     lastName: values.lastName,
@@ -129,6 +130,7 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
       !values.hasEmiratesId && values.patientIdentificationCategory
         ? values.patientIdentificationCategory
         : undefined,
+    passportNumber: values.passportNumber || undefined,
     uid: values.uid || undefined,
     isVip: values.isVip,
     smsConsent: values.smsConsent,

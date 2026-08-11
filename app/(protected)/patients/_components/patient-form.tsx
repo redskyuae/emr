@@ -36,6 +36,7 @@ import {
   PATIENT_IDENTIFICATION_CATEGORY_OPTIONS,
   PATIENT_MARITAL_STATUS_OPTIONS,
   PATIENT_ETHNIC_GROUP_OPTIONS,
+  PATIENT_NEXT_OF_KIN_RELATIONSHIP_OPTIONS,
   PATIENT_RACE_OPTIONS,
   PATIENT_TITLE_OPTIONS,
 } from '../_utils/patient-value-sets';
@@ -611,20 +612,6 @@ function AddressSection({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Controller
               control={control}
-              name="city"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor="patient-city">City</FieldLabel>
-                  <Input id="patient-city" {...field} aria-invalid={fieldState.invalid} />
-                  {fieldState.error ? (
-                    <p className="text-destructive text-xs">{fieldState.error.message}</p>
-                  ) : null}
-                </Field>
-              )}
-            />
-
-            <Controller
-              control={control}
               name="countryId"
               render={({ field, fieldState }) => (
                 <div>
@@ -667,6 +654,20 @@ function AddressSection({
                     <p className="text-destructive text-xs">{fieldState.error.message}</p>
                   ) : null}
                 </div>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="city"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor="patient-city">City</FieldLabel>
+                  <Input id="patient-city" {...field} aria-invalid={fieldState.invalid} />
+                  {fieldState.error ? (
+                    <p className="text-destructive text-xs">{fieldState.error.message}</p>
+                  ) : null}
+                </Field>
               )}
             />
 
@@ -770,7 +771,7 @@ function IdentifiersSection({
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
             {hasEmiratesId ? (
-              <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+              <div className="grid max-w-md grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                 <Controller
                   control={control}
                   name="emiratesId"
@@ -801,14 +802,18 @@ function IdentifiersSection({
                   )}
                 />
 
-                <div className="flex items-end">
-                  <Button type="button" variant="outline" disabled>
+                <div className="pt-6">
+                  <Button type="button" variant="outline" className="w-16" disabled>
                     Read
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div
+                className={
+                  isMedicalTourist ? 'grid gap-4 sm:grid-cols-3' : 'grid gap-4 sm:grid-cols-2'
+                }
+              >
                 <Controller
                   control={control}
                   name="patientIdentificationCategory"
@@ -972,7 +977,32 @@ function NextOfKinSection({ control }: { control: Control<PatientFormValues> }) 
             render={({ field, fieldState }) => (
               <Field>
                 <FieldLabel htmlFor="patient-ec-relationship">Next of Kin Relationship</FieldLabel>
-                <Input id="patient-ec-relationship" {...field} aria-invalid={fieldState.invalid} />
+                <Select
+                  value={field.value || NONE}
+                  onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                >
+                  <SelectTrigger
+                    id="patient-ec-relationship"
+                    className="w-full"
+                    aria-invalid={fieldState.invalid}
+                  >
+                    <SelectValue placeholder="Not specified" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Not specified</SelectItem>
+                    {field.value &&
+                    !PATIENT_NEXT_OF_KIN_RELATIONSHIP_OPTIONS.some(
+                      (option) => option.value === field.value
+                    ) ? (
+                      <SelectItem value={field.value}>{field.value}</SelectItem>
+                    ) : null}
+                    {PATIENT_NEXT_OF_KIN_RELATIONSHIP_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {fieldState.error ? (
                   <p className="text-destructive text-xs">{fieldState.error.message}</p>
                 ) : null}
@@ -1057,7 +1087,7 @@ export function PatientForm({
   const onSubmit = form.handleSubmit(async (values) => {
     setServerErrors([]);
 
-    if (mode === 'create' && !values.title) {
+    if (!values.title) {
       form.setError('title', { message: 'Title is required.' }, { shouldFocus: true });
       return;
     }

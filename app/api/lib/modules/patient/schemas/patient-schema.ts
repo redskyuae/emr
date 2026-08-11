@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const PATIENT_GENDERS = ['male', 'female', 'other', 'unknown'] as const;
+const PATIENT_TITLES = ['mr', 'mrs', 'miss', 'baby', 'master', 'ms', 'dr'] as const;
 const PATIENT_BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 const PATIENT_MARITAL_STATUSES = ['single', 'married', 'divorced', 'widowed', 'other'] as const;
 const PATIENT_IDENTIFICATION_CATEGORIES = [
@@ -114,6 +115,7 @@ const patientEmailSchema = z
   .email('Patient email must be valid');
 
 const genderSchema = z.enum(PATIENT_GENDERS, { error: 'Patient gender is invalid' });
+const titleSchema = z.enum(PATIENT_TITLES, { error: 'Patient title is invalid' });
 const bloodGroupSchema = z.enum(PATIENT_BLOOD_GROUPS, { error: 'Patient blood group is invalid' });
 const maritalStatusSchema = z.enum(PATIENT_MARITAL_STATUSES, {
   error: 'Patient marital status is invalid',
@@ -240,10 +242,6 @@ const identityDocumentSchema = z.discriminatedUnion(
   { error: 'Identity document type is invalid' }
 );
 
-function hasPassport(identityDocuments: PatientIdentityDocumentInput[] | undefined) {
-  return (identityDocuments ?? []).some((document) => document.documentType === 'passport');
-}
-
 export const patientIdSchema = z.coerce
   .number({ error: 'Patient ID is required' })
   .int('Patient ID must be an integer')
@@ -253,6 +251,7 @@ export const patientTenantIdSchema = tenantIdSchema;
 
 const patientPayloadSchema = z
   .object({
+    title: titleSchema,
     firstName: patientNameSchema('first name'),
     middleName: optionalTrimmedValue(
       z.string().trim().max(100, 'Patient middle name must be at most 100 characters')
@@ -297,6 +296,9 @@ const patientPayloadSchema = z
         )
     ),
     patientIdentificationCategory: optionalTrimmedValue(patientIdentificationCategorySchema),
+    passportNumber: optionalTrimmedValue(
+      z.string().trim().max(50, 'Patient passport number must be at most 50 characters')
+    ),
     uid: optionalTrimmedValue(
       z.string().trim().max(30, 'Patient UID must be at most 30 characters')
     ),
@@ -349,20 +351,13 @@ const patientPayloadSchema = z
         path: ['uid'],
       });
     }
-
-    if (data.isMedicalTourist && !hasPassport(data.identityDocuments)) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Passport is required for Medical Tourist',
-        path: ['identityDocuments'],
-      });
-    }
   });
 
 export const createPatientSchema = patientPayloadSchema;
 export const updatePatientSchema = patientPayloadSchema;
 
 export type PatientGender = (typeof PATIENT_GENDERS)[number];
+export type PatientTitle = (typeof PATIENT_TITLES)[number];
 export type PatientBloodGroup = (typeof PATIENT_BLOOD_GROUPS)[number];
 export type PatientMaritalStatus = (typeof PATIENT_MARITAL_STATUSES)[number];
 export type PatientIdentificationCategory = (typeof PATIENT_IDENTIFICATION_CATEGORIES)[number];
@@ -408,6 +403,7 @@ export type Patient = {
   id: number;
   tenantId: string;
   mrn: string;
+  title: PatientTitle | null;
   firstName: string;
   middleName: string | null;
   lastName: string;
@@ -438,6 +434,7 @@ export type Patient = {
   emiratesId: string | null;
   photoUrl: string | null;
   patientIdentificationCategory: PatientIdentificationCategory | null;
+  passportNumber: string | null;
   uid: string | null;
   isVip: boolean;
   smsConsent: boolean;

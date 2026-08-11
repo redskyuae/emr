@@ -11,6 +11,7 @@ const errorsOf = (result: ReturnType<typeof createPatientSchema.safeParse>) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
 
 const validPayload = {
+  title: 'mrs',
   firstName: 'Asha',
   lastName: 'Rao',
   gender: 'female',
@@ -20,10 +21,11 @@ const validPayload = {
 };
 
 describe('Patient schema', () => {
-  it('should require first name, last name, gender, date of birth and phone', () => {
+  it('should require title, first name, last name, gender, date of birth and phone', () => {
     const errors = errorsOf(createPatientSchema.safeParse({}));
     expect(errors).toEqual(
       expect.arrayContaining([
+        'Patient title is invalid',
         'Patient first name is required',
         'Patient last name is required',
         'Patient gender is invalid',
@@ -31,6 +33,12 @@ describe('Patient schema', () => {
         'Patient phone is required',
       ])
     );
+  });
+
+  it('should reject an invalid title', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, title: 'captain' }))
+    ).toContain('Patient title is invalid');
   });
 
   it('should reject an invalid gender', () => {
@@ -195,6 +203,22 @@ describe('Patient schema', () => {
     ).toContain('Patient photo must be an HTTP(S) URL or image data URL from Emirates ID read');
   });
 
+  it('should trim optional passport number and reject overlong values', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      passportNumber: ' P9876543 ',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.passportNumber).toBe('P9876543');
+    }
+
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, passportNumber: 'P'.repeat(51) }))
+    ).toContain('Patient passport number must be at most 50 characters');
+  });
+
   it('should require Patient Identification Category when Emirates ID is absent', () => {
     const payloadWithoutEmiratesId = { ...validPayload, emiratesId: undefined };
 
@@ -236,7 +260,7 @@ describe('Patient schema', () => {
     ).toContain('Patient Identification Category is invalid');
   });
 
-  it('should require UID and a passport when Patient is a Medical Tourist', () => {
+  it('should require UID when Patient is a Medical Tourist', () => {
     expect(
       errorsOf(
         createPatientSchema.safeParse({
@@ -246,12 +270,7 @@ describe('Patient schema', () => {
           patientIdentificationCategory: 'unknown-status-without-card',
         })
       )
-    ).toEqual(
-      expect.arrayContaining([
-        'Patient UID is required for Medical Tourist',
-        'Passport is required for Medical Tourist',
-      ])
-    );
+    ).toContain('Patient UID is required for Medical Tourist');
   });
 
   it('should reject Medical Tourist registration with an Emirates ID', () => {
@@ -260,24 +279,20 @@ describe('Patient schema', () => {
     ).toContain('Medical Tourist cannot have Emirates ID');
   });
 
-  it('should accept Medical Tourist registration with UID and passport', () => {
+  it('should accept Medical Tourist registration with UID and optional passport number', () => {
     const result = createPatientSchema.safeParse({
       ...validPayload,
       emiratesId: '',
       uid: '123456789',
+      passportNumber: 'P9876543',
       isMedicalTourist: true,
       patientIdentificationCategory: 'unknown-status-without-card',
-      identityDocuments: [
-        {
-          documentType: 'passport',
-          documentNumber: 'J8369854',
-          issuingCountryId: 1,
-          expiryDate: '2029-04-11',
-        },
-      ],
     });
 
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.passportNumber).toBe('P9876543');
+    }
   });
 
   it('should reject emirates-id as an identity document type', () => {

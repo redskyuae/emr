@@ -25,6 +25,7 @@ import {
   getPatientMaritalStatusLabel,
   getPatientPaymentMethodLabel,
   getPatientRaceLabel,
+  getPatientTitleLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -283,6 +284,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                   }
                 />
                 <DetailField label="UID" value={patient.uid} />
+                <DetailField label="Passport number" value={patient.passportNumber} />
                 <DetailField label="Nationality" value={patient.nationality?.name} />
                 <DetailField label="Preferred language" value={patient.language?.name} />
                 <DetailField label="Religion" value={patient.religion?.name} />
@@ -324,6 +326,10 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
               <CardTitle>Demographics</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              <DetailField
+                label="Title"
+                value={patient.title ? getPatientTitleLabel(patient.title) : null}
+              />
               <DetailField
                 label="Gender"
                 value={patient.gender ? getPatientGenderLabel(patient.gender) : null}

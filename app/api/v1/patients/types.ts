@@ -17,6 +17,7 @@ export type SavePatientIdentityDocumentRequest = {
 };
 
 export type SavePatientRequest = {
+  title: string;
   firstName: string;
   middleName?: string;
   lastName: string;
@@ -42,6 +43,7 @@ export type SavePatientRequest = {
   emiratesId?: string;
   photoUrl?: string;
   patientIdentificationCategory?: string;
+  passportNumber?: string;
   uid?: string;
   isVip?: boolean;
   smsConsent?: boolean;

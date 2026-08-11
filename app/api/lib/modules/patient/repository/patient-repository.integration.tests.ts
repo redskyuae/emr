@@ -27,6 +27,7 @@ function patientData(
 ): CreatePatientData {
   return {
     tenantId,
+    title: 'mrs',
     firstName: 'Asha',
     lastName: 'Rao',
     gender: 'female',
@@ -128,6 +129,24 @@ describe('Patient repository', () => {
       race: 'asian',
       ethnicGroup: 'south-asian',
       emergencyContactGender: 'male',
+    });
+  });
+
+  it('should persist Title and Passport Number', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        title: 'mr',
+        passportNumber: 'P9876543',
+      })
+    );
+
+    expect(created.title).toBe('mr');
+    expect(created.passportNumber).toBe('P9876543');
+
+    const fetched = await patientRepository.getPatientById(created.id, tenantA);
+    expect(fetched).toMatchObject({
+      title: 'mr',
+      passportNumber: 'P9876543',
     });
   });
 
