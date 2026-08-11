@@ -59,25 +59,20 @@ function getNumericParam(value: string | null) {
 }
 
 function StateCountryFilter({
+  countries,
+  isLoading,
   value,
   onChange,
 }: {
+  countries: { id: number; name: string }[];
+  isLoading: boolean;
   value: string;
   onChange: (value: string) => void;
 }) {
-  const countriesQuery = useCountryOptionsQuery();
-  const countries = countriesQuery.data ?? [];
-
   return (
-    <Select
-      value={value}
-      onValueChange={onChange}
-      disabled={countriesQuery.isLoading || countries.length === 0}
-    >
+    <Select value={value} onValueChange={onChange} disabled={isLoading || countries.length === 0}>
       <SelectTrigger className="bg-background h-9 w-full lg:w-52" aria-label="Filter by Country">
-        <SelectValue
-          placeholder={countriesQuery.isLoading ? 'Loading Countries...' : 'All Countries'}
-        />
+        <SelectValue placeholder={isLoading ? 'Loading Countries...' : 'All Countries'} />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">All Countries</SelectItem>
@@ -100,11 +95,16 @@ export function StatesPageImpl() {
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
   const deleteMutation = useDeleteState();
+  const countriesQuery = useCountryOptionsQuery();
+  const countries = countriesQuery.data ?? [];
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
   const deleteRecordId = getNumericParam(deleteRecordParam);
   const countryId = countryFilter !== 'all' ? Number(countryFilter) : undefined;
+  const selectedCountry = countries.find((country) => country.id === countryId) ?? null;
+  const selectedCountryName = selectedCountry?.name ?? `Country ${countryFilter}`;
+  const hasActiveFilter = Boolean(debouncedSearch) || countryFilter !== 'all';
 
   const statesQuery = useStatesQuery({
     page,
@@ -224,7 +224,12 @@ export function StatesPageImpl() {
                 aria-label="Search states"
               />
             </InputGroup>
-            <StateCountryFilter value={countryFilter} onChange={updateCountryFilter} />
+            <StateCountryFilter
+              countries={countries}
+              isLoading={countriesQuery.isLoading}
+              value={countryFilter}
+              onChange={updateCountryFilter}
+            />
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
               <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
@@ -245,7 +250,7 @@ export function StatesPageImpl() {
 
         {statesQuery.isLoading ? (
           <ViewSkeleton layout={viewLayout} />
-        ) : states.length === 0 && !debouncedSearch ? (
+        ) : states.length === 0 && !hasActiveFilter ? (
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -263,7 +268,7 @@ export function StatesPageImpl() {
               </Button>
             </EmptyContent>
           </Empty>
-        ) : states.length === 0 && debouncedSearch ? (
+        ) : states.length === 0 && hasActiveFilter ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -271,7 +276,19 @@ export function StatesPageImpl() {
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
-                No States match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
+                {debouncedSearch && countryFilter !== 'all' ? (
+                  <>
+                    No States match &ldquo;{debouncedSearch}&rdquo; in Country &ldquo;
+                    {selectedCountryName}&rdquo;. Try a different search term or Country.
+                  </>
+                ) : debouncedSearch ? (
+                  <>No States match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.</>
+                ) : (
+                  <>
+                    No States found for Country &ldquo;{selectedCountryName}&rdquo;. Try a different
+                    Country or clear the filter.
+                  </>
+                )}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

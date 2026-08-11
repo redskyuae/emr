@@ -46,6 +46,7 @@ import {
 } from './nationality-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
+type GlobalReferenceEntity = Nationality;
 
 const PAGE_SIZE = 10;
 
@@ -59,8 +60,8 @@ function getNumericParam(value: string | null) {
 
 export function NationalitiesPageImpl() {
   const [recordParam, setRecordParam] = useQueryState('nationality');
-  const [deleteRecordParam, setDeleteRecordParam] = useQueryState('nationalityDelete');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
+  const [deleteRecord, setDeleteRecord] = useState<GlobalReferenceEntity | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
@@ -68,7 +69,6 @@ export function NationalitiesPageImpl() {
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
-  const deleteRecordId = getNumericParam(deleteRecordParam);
 
   const nationalitiesQuery = useNationalitiesQuery({
     page,
@@ -87,10 +87,6 @@ export function NationalitiesPageImpl() {
     editingRecordId !== null
       ? (nationalities.find((nationality) => nationality.id === editingRecordId) ?? null)
       : null;
-  const deleteNationalityFromList =
-    deleteRecordId !== null
-      ? (nationalities.find((nationality) => nationality.id === deleteRecordId) ?? null)
-      : null;
 
   const shouldFetchEditingNationality =
     editingRecordId !== null &&
@@ -101,13 +97,6 @@ export function NationalitiesPageImpl() {
   );
   const editingNationality = editingNationalityFromList ?? editingNationalityQuery.data ?? null;
 
-  const shouldFetchDeleteNationality =
-    deleteRecordId !== null && !nationalitiesQuery.isLoading && deleteNationalityFromList === null;
-  const deleteNationalityQuery = useNationalityQuery(
-    shouldFetchDeleteNationality ? deleteRecordId : null
-  );
-  const deleteNationality = deleteNationalityFromList ?? deleteNationalityQuery.data ?? null;
-
   const recordResolving =
     editingRecordId !== null &&
     editingNationality === null &&
@@ -115,19 +104,12 @@ export function NationalitiesPageImpl() {
   const sheetOpen =
     isCreating || (editingRecordId !== null && (recordResolving || editingNationality !== null));
 
-  const deleteRecordResolving =
-    deleteRecordId !== null &&
-    deleteNationality === null &&
-    (nationalitiesQuery.isLoading || deleteNationalityQuery.isFetching);
-  const deleteDialogOpen =
-    deleteRecordId !== null && (deleteRecordResolving || deleteNationality !== null);
-
   function openEdit(nationality: Nationality) {
     void setRecordParam(String(nationality.id));
   }
 
   function openDelete(nationality: Nationality) {
-    void setDeleteRecordParam(String(nationality.id));
+    setDeleteRecord(nationality);
   }
 
   function updateSearchTerm(value: string) {
@@ -136,14 +118,14 @@ export function NationalitiesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteNationality) {
+    if (!deleteRecord) {
       return;
     }
 
     try {
-      await deleteMutation.mutateAsync(deleteNationality.id);
+      await deleteMutation.mutateAsync(deleteRecord.id);
       toast.success('Nationality deleted.');
-      void setDeleteRecordParam(null);
+      setDeleteRecord(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -305,10 +287,10 @@ export function NationalitiesPageImpl() {
       />
 
       <NationalityDeleteDialog
-        nationality={deleteDialogOpen ? deleteNationality : null}
-        isDeleting={deleteMutation.isPending || deleteRecordResolving}
+        nationality={deleteRecord}
+        isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
-        onCancel={() => void setDeleteRecordParam(null)}
+        onCancel={() => setDeleteRecord(null)}
       />
     </>
   );

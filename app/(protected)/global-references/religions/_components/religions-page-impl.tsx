@@ -42,6 +42,7 @@ import { ViewSkeleton } from './religion-skeletons';
 import { ReligionCardView, ReligionListView, ReligionTableView } from './religion-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
+type GlobalReferenceEntity = Religion;
 
 const PAGE_SIZE = 10;
 
@@ -55,8 +56,8 @@ function getNumericParam(value: string | null) {
 
 export function ReligionsPageImpl() {
   const [recordParam, setRecordParam] = useQueryState('religion');
-  const [deleteRecordParam, setDeleteRecordParam] = useQueryState('religionDelete');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
+  const [deleteRecord, setDeleteRecord] = useState<GlobalReferenceEntity | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
@@ -64,7 +65,6 @@ export function ReligionsPageImpl() {
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
-  const deleteRecordId = getNumericParam(deleteRecordParam);
 
   const religionsQuery = useReligionsQuery({
     page,
@@ -83,10 +83,6 @@ export function ReligionsPageImpl() {
     editingRecordId !== null
       ? (religions.find((religion) => religion.id === editingRecordId) ?? null)
       : null;
-  const deleteReligionFromList =
-    deleteRecordId !== null
-      ? (religions.find((religion) => religion.id === deleteRecordId) ?? null)
-      : null;
 
   const shouldFetchEditingReligion =
     editingRecordId !== null && !religionsQuery.isLoading && editingReligionFromList === null;
@@ -95,11 +91,6 @@ export function ReligionsPageImpl() {
   );
   const editingReligion = editingReligionFromList ?? editingReligionQuery.data ?? null;
 
-  const shouldFetchDeleteReligion =
-    deleteRecordId !== null && !religionsQuery.isLoading && deleteReligionFromList === null;
-  const deleteReligionQuery = useReligionQuery(shouldFetchDeleteReligion ? deleteRecordId : null);
-  const deleteReligion = deleteReligionFromList ?? deleteReligionQuery.data ?? null;
-
   const recordResolving =
     editingRecordId !== null &&
     editingReligion === null &&
@@ -107,19 +98,12 @@ export function ReligionsPageImpl() {
   const sheetOpen =
     isCreating || (editingRecordId !== null && (recordResolving || editingReligion !== null));
 
-  const deleteRecordResolving =
-    deleteRecordId !== null &&
-    deleteReligion === null &&
-    (religionsQuery.isLoading || deleteReligionQuery.isFetching);
-  const deleteDialogOpen =
-    deleteRecordId !== null && (deleteRecordResolving || deleteReligion !== null);
-
   function openEdit(religion: Religion) {
     void setRecordParam(String(religion.id));
   }
 
   function openDelete(religion: Religion) {
-    void setDeleteRecordParam(String(religion.id));
+    setDeleteRecord(religion);
   }
 
   function updateSearchTerm(value: string) {
@@ -128,14 +112,22 @@ export function ReligionsPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteReligion) {
+    if (!deleteRecord) {
       return;
     }
 
+    const nextTotal = Math.max(0, total - 1);
+    const nextTotalPages = Math.ceil(nextTotal / PAGE_SIZE);
+    const nextPage = Math.max(1, Math.min(page, nextTotalPages));
+    const shouldAdjustPage = page > 1 && religions.length === 1 && nextPage !== page;
+
     try {
-      await deleteMutation.mutateAsync(deleteReligion.id);
+      await deleteMutation.mutateAsync(deleteRecord.id);
       toast.success('Religion deleted.');
-      void setDeleteRecordParam(null);
+      if (shouldAdjustPage) {
+        setPage(nextPage);
+      }
+      setDeleteRecord(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -285,10 +277,10 @@ export function ReligionsPageImpl() {
       />
 
       <ReligionDeleteDialog
-        religion={deleteDialogOpen ? deleteReligion : null}
-        isDeleting={deleteMutation.isPending || deleteRecordResolving}
+        religion={deleteRecord}
+        isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
-        onCancel={() => void setDeleteRecordParam(null)}
+        onCancel={() => setDeleteRecord(null)}
       />
     </>
   );

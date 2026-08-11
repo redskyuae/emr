@@ -41,6 +41,33 @@ async function fetchLanguages(params: LanguagesParams): Promise<ListLanguagesRes
   return response.json() as Promise<ListLanguagesResponse>;
 }
 
+async function fetchLanguageOptions(): Promise<ListLanguagesResponse> {
+  const firstPage = await fetchLanguages({ page: 1, limit: REFERENCE_PAGE_LIMIT });
+  const remainingPages = Array.from(
+    { length: Math.max(0, firstPage.meta.totalPages - 1) },
+    (_, index) => index + 2
+  );
+
+  if (remainingPages.length === 0) {
+    return firstPage;
+  }
+
+  const pages = await Promise.all(
+    remainingPages.map((page) => fetchLanguages({ page, limit: REFERENCE_PAGE_LIMIT }))
+  );
+  const data = [firstPage, ...pages].flatMap((page) => page.data);
+
+  return {
+    data,
+    meta: {
+      total: firstPage.meta.total,
+      totalPages: data.length > 0 ? 1 : 0,
+      pageSize: data.length,
+      pageNumber: 1,
+    },
+  };
+}
+
 function transformLanguagesResponse(response: ListLanguagesResponse) {
   return response.data;
 }
@@ -55,7 +82,7 @@ export function useLanguagesQuery(params: LanguagesParams) {
 export function useLanguageOptionsQuery() {
   return useQuery({
     queryKey: languageOptionsQueryKey,
-    queryFn: () => fetchLanguages({ limit: REFERENCE_PAGE_LIMIT }),
+    queryFn: fetchLanguageOptions,
     select: transformLanguagesResponse,
   });
 }

@@ -42,6 +42,7 @@ import { ViewSkeleton } from './language-skeletons';
 import { LanguageCardView, LanguageListView, LanguageTableView } from './language-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
+type GlobalReferenceEntity = Language;
 
 const PAGE_SIZE = 10;
 
@@ -55,8 +56,8 @@ function getNumericParam(value: string | null) {
 
 export function LanguagesPageImpl() {
   const [recordParam, setRecordParam] = useQueryState('language');
-  const [deleteRecordParam, setDeleteRecordParam] = useQueryState('languageDelete');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
+  const [deleteRecord, setDeleteRecord] = useState<GlobalReferenceEntity | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
@@ -64,7 +65,6 @@ export function LanguagesPageImpl() {
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
-  const deleteRecordId = getNumericParam(deleteRecordParam);
 
   const languagesQuery = useLanguagesQuery({
     page,
@@ -83,10 +83,6 @@ export function LanguagesPageImpl() {
     editingRecordId !== null
       ? (languages.find((language) => language.id === editingRecordId) ?? null)
       : null;
-  const deleteLanguageFromList =
-    deleteRecordId !== null
-      ? (languages.find((language) => language.id === deleteRecordId) ?? null)
-      : null;
 
   const shouldFetchEditingLanguage =
     editingRecordId !== null && !languagesQuery.isLoading && editingLanguageFromList === null;
@@ -95,11 +91,6 @@ export function LanguagesPageImpl() {
   );
   const editingLanguage = editingLanguageFromList ?? editingLanguageQuery.data ?? null;
 
-  const shouldFetchDeleteLanguage =
-    deleteRecordId !== null && !languagesQuery.isLoading && deleteLanguageFromList === null;
-  const deleteLanguageQuery = useLanguageQuery(shouldFetchDeleteLanguage ? deleteRecordId : null);
-  const deleteLanguage = deleteLanguageFromList ?? deleteLanguageQuery.data ?? null;
-
   const recordResolving =
     editingRecordId !== null &&
     editingLanguage === null &&
@@ -107,19 +98,12 @@ export function LanguagesPageImpl() {
   const sheetOpen =
     isCreating || (editingRecordId !== null && (recordResolving || editingLanguage !== null));
 
-  const deleteRecordResolving =
-    deleteRecordId !== null &&
-    deleteLanguage === null &&
-    (languagesQuery.isLoading || deleteLanguageQuery.isFetching);
-  const deleteDialogOpen =
-    deleteRecordId !== null && (deleteRecordResolving || deleteLanguage !== null);
-
   function openEdit(language: Language) {
     void setRecordParam(String(language.id));
   }
 
   function openDelete(language: Language) {
-    void setDeleteRecordParam(String(language.id));
+    setDeleteRecord(language);
   }
 
   function updateSearchTerm(value: string) {
@@ -128,14 +112,14 @@ export function LanguagesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteLanguage) {
+    if (!deleteRecord) {
       return;
     }
 
     try {
-      await deleteMutation.mutateAsync(deleteLanguage.id);
+      await deleteMutation.mutateAsync(deleteRecord.id);
       toast.success('Language deleted.');
-      void setDeleteRecordParam(null);
+      setDeleteRecord(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -285,10 +269,10 @@ export function LanguagesPageImpl() {
       />
 
       <LanguageDeleteDialog
-        language={deleteDialogOpen ? deleteLanguage : null}
-        isDeleting={deleteMutation.isPending || deleteRecordResolving}
+        language={deleteRecord}
+        isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
-        onCancel={() => void setDeleteRecordParam(null)}
+        onCancel={() => setDeleteRecord(null)}
       />
     </>
   );

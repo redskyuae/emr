@@ -42,6 +42,7 @@ import { ViewSkeleton } from './country-skeletons';
 import { CountryCardView, CountryListView, CountryTableView } from './country-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
+type GlobalReferenceEntity = Country;
 
 const PAGE_SIZE = 10;
 
@@ -55,8 +56,8 @@ function getNumericParam(value: string | null) {
 
 export function CountriesPageImpl() {
   const [recordParam, setRecordParam] = useQueryState('country');
-  const [deleteRecordParam, setDeleteRecordParam] = useQueryState('countryDelete');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
+  const [deleteRecord, setDeleteRecord] = useState<GlobalReferenceEntity | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
@@ -64,7 +65,6 @@ export function CountriesPageImpl() {
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
-  const deleteRecordId = getNumericParam(deleteRecordParam);
 
   const countriesQuery = useCountriesQuery({
     page,
@@ -83,20 +83,11 @@ export function CountriesPageImpl() {
     editingRecordId !== null
       ? (countries.find((country) => country.id === editingRecordId) ?? null)
       : null;
-  const deleteCountryFromList =
-    deleteRecordId !== null
-      ? (countries.find((country) => country.id === deleteRecordId) ?? null)
-      : null;
 
   const shouldFetchEditingCountry =
     editingRecordId !== null && !countriesQuery.isLoading && editingCountryFromList === null;
   const editingCountryQuery = useCountryQuery(shouldFetchEditingCountry ? editingRecordId : null);
   const editingCountry = editingCountryFromList ?? editingCountryQuery.data ?? null;
-
-  const shouldFetchDeleteCountry =
-    deleteRecordId !== null && !countriesQuery.isLoading && deleteCountryFromList === null;
-  const deleteCountryQuery = useCountryQuery(shouldFetchDeleteCountry ? deleteRecordId : null);
-  const deleteCountry = deleteCountryFromList ?? deleteCountryQuery.data ?? null;
 
   const recordResolving =
     editingRecordId !== null &&
@@ -105,19 +96,12 @@ export function CountriesPageImpl() {
   const sheetOpen =
     isCreating || (editingRecordId !== null && (recordResolving || editingCountry !== null));
 
-  const deleteRecordResolving =
-    deleteRecordId !== null &&
-    deleteCountry === null &&
-    (countriesQuery.isLoading || deleteCountryQuery.isFetching);
-  const deleteDialogOpen =
-    deleteRecordId !== null && (deleteRecordResolving || deleteCountry !== null);
-
   function openEdit(country: Country) {
     void setRecordParam(String(country.id));
   }
 
   function openDelete(country: Country) {
-    void setDeleteRecordParam(String(country.id));
+    setDeleteRecord(country);
   }
 
   function updateSearchTerm(value: string) {
@@ -126,14 +110,14 @@ export function CountriesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteCountry) {
+    if (!deleteRecord) {
       return;
     }
 
     try {
-      await deleteMutation.mutateAsync(deleteCountry.id);
+      await deleteMutation.mutateAsync(deleteRecord.id);
       toast.success('Country deleted.');
-      void setDeleteRecordParam(null);
+      setDeleteRecord(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -283,10 +267,10 @@ export function CountriesPageImpl() {
       />
 
       <CountryDeleteDialog
-        country={deleteDialogOpen ? deleteCountry : null}
-        isDeleting={deleteMutation.isPending || deleteRecordResolving}
+        country={deleteRecord}
+        isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
-        onCancel={() => void setDeleteRecordParam(null)}
+        onCancel={() => setDeleteRecord(null)}
       />
     </>
   );
