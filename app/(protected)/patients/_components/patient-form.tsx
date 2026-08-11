@@ -7,11 +7,11 @@ import { AlertCircle, Save, UserRoundPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
-import { useCountriesQuery } from '@/app/queries/global-references/useCountries';
-import { useLanguagesQuery } from '@/app/queries/global-references/useLanguages';
-import { useNationalitiesQuery } from '@/app/queries/global-references/useNationalities';
-import { useReligionsQuery } from '@/app/queries/global-references/useReligions';
-import { useStatesQuery } from '@/app/queries/global-references/useStates';
+import { useCountryOptionsQuery } from '@/app/queries/global-references/countries/useCountries';
+import { useLanguageOptionsQuery } from '@/app/queries/global-references/languages/useLanguages';
+import { useNationalityOptionsQuery } from '@/app/queries/global-references/nationalities/useNationalities';
+import { useReligionOptionsQuery } from '@/app/queries/global-references/religions/useReligions';
+import { useStateOptionsQuery } from '@/app/queries/global-references/states/useStates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -373,11 +373,11 @@ function AddressSection({
   control: Control<PatientFormValues>;
   setValue: UseFormSetValue<PatientFormValues>;
 }) {
-  const countriesQuery = useCountriesQuery();
+  const countriesQuery = useCountryOptionsQuery();
   const countries = countriesQuery.data ?? [];
 
   const countryId = useWatch({ control, name: 'countryId' });
-  const statesQuery = useStatesQuery(countryId ?? null);
+  const statesQuery = useStateOptionsQuery(countryId ?? null);
   const states = statesQuery.data ?? [];
 
   return (
@@ -501,9 +501,9 @@ function AddressSection({
 }
 
 function IdentifiersSection({ control }: { control: Control<PatientFormValues> }) {
-  const nationalitiesQuery = useNationalitiesQuery();
-  const languagesQuery = useLanguagesQuery();
-  const religionsQuery = useReligionsQuery();
+  const nationalitiesQuery = useNationalityOptionsQuery();
+  const languagesQuery = useLanguageOptionsQuery();
+  const religionsQuery = useReligionOptionsQuery();
 
   return (
     <Card className="shadow-fluent-2">
