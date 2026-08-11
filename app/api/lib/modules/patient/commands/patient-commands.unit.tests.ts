@@ -29,6 +29,7 @@ const validateUpdate = vi.mocked(validateUpdatePatient);
 const validateExists = vi.mocked(validatePatientExists);
 
 const createInput = {
+  title: 'mrs' as const,
   firstName: 'Asha',
   lastName: 'Rao',
   gender: 'female' as const,
@@ -40,6 +41,7 @@ const patient = {
   id: 1,
   tenantId: 'tenant-1',
   mrn: 'MRN-1001',
+  title: 'mrs' as const,
   firstName: 'Asha',
   middleName: null,
   lastName: 'Rao',
@@ -71,6 +73,7 @@ const patient = {
   emiratesId: null,
   photoUrl: null,
   patientIdentificationCategory: null,
+  passportNumber: null,
   uid: null,
   isVip: false,
   smsConsent: false,

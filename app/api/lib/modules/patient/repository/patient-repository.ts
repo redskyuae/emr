@@ -25,6 +25,7 @@ import { formatPatientMrn } from './patient-mrn';
 type PatientRow = Omit<
   Patient,
   | 'gender'
+  | 'title'
   | 'bloodGroup'
   | 'maritalStatus'
   | 'preferredPaymentMethod'
@@ -36,6 +37,7 @@ type PatientRow = Omit<
 > & {
   race: string | null;
   gender: string | null;
+  title: string | null;
   bloodGroup: string | null;
   ethnicGroup: string | null;
   maritalStatus: string | null;
@@ -49,6 +51,7 @@ function toPatient(row: PatientRow, identityDocuments: PatientIdentityDocument[]
     ...row,
     identityDocuments,
     gender: row.gender as Patient['gender'],
+    title: row.title as Patient['title'],
     bloodGroup: row.bloodGroup as Patient['bloodGroup'],
     race: row.race as Patient['race'],
     ethnicGroup: row.ethnicGroup as Patient['ethnicGroup'],
@@ -67,6 +70,7 @@ const patientColumns = {
   email: patientTable.email,
   phone: patientTable.phone,
   race: patientTable.race,
+  title: patientTable.title,
   gender: patientTable.gender,
   stateId: patientTable.stateId,
   tenantId: patientTable.tenantId,
@@ -82,6 +86,7 @@ const patientColumns = {
   photoUrl: patientTable.photoUrl,
   isVip: patientTable.isVip,
   uid: patientTable.uid,
+  passportNumber: patientTable.passportNumber,
   bloodGroup: patientTable.bloodGroup,
   smsConsent: patientTable.smsConsent,
   middleName: patientTable.middleName,
@@ -143,6 +148,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     email: data.email ?? null,
     phone: data.phone,
     race: data.race ?? null,
+    title: data.title,
     gender: data.gender,
     registrationStatus: 'registered' as const,
     tenantId: data.tenantId,
@@ -155,6 +161,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     photoUrl: data.emiratesId ? (data.photoUrl ?? null) : null,
     isVip: data.isVip ?? false,
     uid: data.uid ?? null,
+    passportNumber: data.passportNumber ?? null,
     bloodGroup: data.bloodGroup ?? null,
     smsConsent: data.smsConsent ?? false,
     middleName: data.middleName ?? null,

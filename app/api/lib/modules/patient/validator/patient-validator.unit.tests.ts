@@ -48,6 +48,7 @@ const existing = {
   id: 1,
   tenantId: 'tenant-1',
   mrn: 'MRN-1001',
+  title: 'mrs',
   firstName: 'Asha',
   middleName: null,
   lastName: 'Rao',
@@ -78,6 +79,7 @@ const existing = {
   emiratesId: null,
   photoUrl: null,
   patientIdentificationCategory: null,
+  passportNumber: null,
   uid: null,
   isVip: false,
   smsConsent: false,
@@ -93,6 +95,7 @@ const existing = {
 } as never;
 
 const validPayload = {
+  title: 'mrs',
   firstName: 'Asha',
   lastName: 'Rao',
   gender: 'female',

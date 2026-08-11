@@ -18,6 +18,18 @@ export const PATIENT_IDENTIFICATION_CATEGORIES = [
   'non-expatriate-resident-without-card',
   'unknown-status-without-card',
 ] as const;
+export const PATIENT_NEXT_OF_KIN_RELATIONSHIPS = [
+  'Father',
+  'Mother',
+  'Spouse',
+  'Son',
+  'Daughter',
+  'Brother',
+  'Sister',
+  'Guardian',
+  'Friend',
+  'Other',
+] as const;
 // Excludes 'emirates-id' deliberately — the Emirates ID is its own Patient
 // field, not an Identity Document, so it has exactly one home (ADR 0042).
 export const PATIENT_IDENTITY_DOCUMENT_TYPES = [
@@ -181,8 +193,19 @@ export const PATIENT_ETHNIC_GROUP_OPTIONS = PATIENT_ETHNIC_GROUPS.map((value) =>
   label: ETHNIC_GROUP_LABELS[value],
 }));
 
+export const PATIENT_NEXT_OF_KIN_RELATIONSHIP_OPTIONS = PATIENT_NEXT_OF_KIN_RELATIONSHIPS.map(
+  (value) => ({
+    value,
+    label: value,
+  })
+);
+
 export function getPatientGenderLabel(gender: string) {
   return GENDER_LABELS[gender as (typeof PATIENT_GENDERS)[number]] ?? gender;
+}
+
+export function getPatientTitleLabel(title: string) {
+  return TITLE_LABELS[title as (typeof PATIENT_TITLES)[number]] ?? title;
 }
 
 export function getPatientMaritalStatusLabel(maritalStatus: string) {
