@@ -46,7 +46,6 @@ import {
 } from './nationality-views';
 
 type ViewLayout = 'table' | 'card' | 'list';
-type GlobalReferenceEntity = Nationality;
 
 const PAGE_SIZE = 10;
 
@@ -60,8 +59,8 @@ function getNumericParam(value: string | null) {
 
 export function NationalitiesPageImpl() {
   const [recordParam, setRecordParam] = useQueryState('nationality');
+  const [deleteRecordParam, setDeleteRecordParam] = useQueryState('nationalityDelete');
   const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
-  const [deleteRecord, setDeleteRecord] = useState<GlobalReferenceEntity | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
@@ -69,6 +68,7 @@ export function NationalitiesPageImpl() {
 
   const isCreating = recordParam === 'new';
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
+  const deleteRecordId = getNumericParam(deleteRecordParam);
 
   const nationalitiesQuery = useNationalitiesQuery({
     page,
@@ -86,6 +86,10 @@ export function NationalitiesPageImpl() {
   const editingNationalityFromList =
     editingRecordId !== null
       ? (nationalities.find((nationality) => nationality.id === editingRecordId) ?? null)
+      : null;
+  const deleteNationality =
+    deleteRecordId !== null
+      ? (nationalities.find((nationality) => nationality.id === deleteRecordId) ?? null)
       : null;
 
   const shouldFetchEditingNationality =
@@ -109,7 +113,7 @@ export function NationalitiesPageImpl() {
   }
 
   function openDelete(nationality: Nationality) {
-    setDeleteRecord(nationality);
+    void setDeleteRecordParam(String(nationality.id));
   }
 
   function updateSearchTerm(value: string) {
@@ -118,14 +122,14 @@ export function NationalitiesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteRecord) {
+    if (!deleteNationality) {
       return;
     }
 
     try {
-      await deleteMutation.mutateAsync(deleteRecord.id);
+      await deleteMutation.mutateAsync(deleteNationality.id);
       toast.success('Nationality deleted.');
-      setDeleteRecord(null);
+      void setDeleteRecordParam(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -287,10 +291,10 @@ export function NationalitiesPageImpl() {
       />
 
       <NationalityDeleteDialog
-        nationality={deleteRecord}
+        nationality={deleteNationality}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
-        onCancel={() => setDeleteRecord(null)}
+        onCancel={() => void setDeleteRecordParam(null)}
       />
     </>
   );
