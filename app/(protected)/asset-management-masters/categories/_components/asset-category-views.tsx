@@ -145,7 +145,9 @@ export function AssetCategoryCardView({
                 <CategoryColorSwatch color={category.color} />
               </div>
               {category.description ? (
-                <p className="text-muted-foreground mt-0.5 text-sm max-w-xs truncate">{category.description}</p>
+                <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
+                  {category.description}
+                </p>
               ) : null}
             </div>
 

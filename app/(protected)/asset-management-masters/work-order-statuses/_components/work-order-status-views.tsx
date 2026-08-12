@@ -178,7 +178,9 @@ export function WorkOrderStatusCardView({
                 <StatusColorSwatch color={status.color} />
               </div>
               {status.description ? (
-                <p className="text-muted-foreground mt-1.5 text-sm max-w-xs truncate">{status.description}</p>
+                <p className="text-muted-foreground mt-1.5 max-w-xs truncate text-sm">
+                  {status.description}
+                </p>
               ) : null}
             </div>
 

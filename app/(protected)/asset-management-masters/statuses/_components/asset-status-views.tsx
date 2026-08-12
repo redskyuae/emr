@@ -144,7 +144,9 @@ export function AssetStatusCardView({
                 <StatusColorSwatch color={status.color} />
               </div>
               {status.description ? (
-                <p className="text-muted-foreground mt-0.5 text-sm max-w-xs truncate">{status.description}</p>
+                <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
+                  {status.description}
+                </p>
               ) : null}
             </div>
 

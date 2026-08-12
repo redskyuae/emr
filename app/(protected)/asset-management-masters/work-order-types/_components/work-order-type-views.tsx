@@ -145,7 +145,9 @@ export function WorkOrderTypeCardView({
                 <TypeColorSwatch color={type.color} />
               </div>
               {type.description ? (
-                <p className="text-muted-foreground mt-0.5 text-sm max-w-xs truncate">{type.description}</p>
+                <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
+                  {type.description}
+                </p>
               ) : null}
             </div>
 

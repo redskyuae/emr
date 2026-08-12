@@ -145,7 +145,9 @@ export function WorkOrderPriorityCardView({
                 <PriorityColorSwatch color={priority.color} />
               </div>
               {priority.description ? (
-                <p className="text-muted-foreground mt-0.5 text-sm max-w-xs truncate">{priority.description}</p>
+                <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
+                  {priority.description}
+                </p>
               ) : null}
             </div>
 
