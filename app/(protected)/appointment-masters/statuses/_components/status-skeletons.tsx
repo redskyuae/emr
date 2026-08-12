@@ -64,7 +64,7 @@ function CardViewSkeleton() {
             <Skeleton className="h-5 w-36" />
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-5 w-28" />
-            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full max-w-xs" />
             <div className="flex gap-2 pt-1">
               <Skeleton className="h-8 w-14" />
               <Skeleton className="h-8 w-16" />
@@ -87,7 +87,7 @@ function ListViewSkeleton() {
               <Skeleton className="h-5 w-36" />
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-5 w-24" />
-              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-full max-w-xs" />
             </div>
             <Skeleton className="h-8 w-8 shrink-0" />
           </CardContent>
