@@ -104,7 +104,7 @@ export function WorkOrderTypeTableView({
                   <TableCell>
                     <TypeColorSwatch color={type.color} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground truncate">
+                  <TableCell className="text-muted-foreground max-w-xs truncate">
                     {type.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
@@ -145,7 +145,7 @@ export function WorkOrderTypeCardView({
                 <TypeColorSwatch color={type.color} />
               </div>
               {type.description ? (
-                <p className="text-muted-foreground mt-0.5 text-sm">{type.description}</p>
+                <p className="text-muted-foreground mt-0.5 text-sm max-w-xs truncate">{type.description}</p>
               ) : null}
             </div>
 
@@ -200,8 +200,8 @@ export function WorkOrderTypeListView({
               </div>
               <TypeColorSwatch color={type.color} />
               {type.description ? (
-                <div className="min-w-0">
-                  <span className="text-muted-foreground truncate">{type.description}</span>
+                <div className="max-w-sm min-w-0 truncate">
+                  <span className="text-muted-foreground">{type.description}</span>
                 </div>
               ) : null}
             </div>

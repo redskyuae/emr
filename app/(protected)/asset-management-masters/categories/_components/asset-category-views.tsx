@@ -145,7 +145,7 @@ export function AssetCategoryCardView({
                 <CategoryColorSwatch color={category.color} />
               </div>
               {category.description ? (
-                <p className="text-muted-foreground mt-0.5 text-sm">{category.description}</p>
+                <p className="text-muted-foreground mt-0.5 text-sm max-w-xs truncate">{category.description}</p>
               ) : null}
             </div>
 
@@ -200,8 +200,8 @@ export function AssetCategoryListView({
               </div>
               <CategoryColorSwatch color={category.color} />
               {category.description ? (
-                <div className="min-w-0">
-                  <span className="text-muted-foreground truncate">{category.description}</span>
+                <div className="max-w-sm min-w-0 truncate">
+                  <span className="text-muted-foreground">{category.description}</span>
                 </div>
               ) : null}
             </div>

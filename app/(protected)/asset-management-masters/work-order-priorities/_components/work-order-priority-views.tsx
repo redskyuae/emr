@@ -145,7 +145,7 @@ export function WorkOrderPriorityCardView({
                 <PriorityColorSwatch color={priority.color} />
               </div>
               {priority.description ? (
-                <p className="text-muted-foreground mt-0.5 text-sm">{priority.description}</p>
+                <p className="text-muted-foreground mt-0.5 text-sm max-w-xs truncate">{priority.description}</p>
               ) : null}
             </div>
 
@@ -200,8 +200,8 @@ export function WorkOrderPriorityListView({
               </div>
               <PriorityColorSwatch color={priority.color} />
               {priority.description ? (
-                <div className="min-w-0">
-                  <span className="text-muted-foreground truncate">{priority.description}</span>
+                <div className="max-w-sm min-w-0 truncate">
+                  <span className="text-muted-foreground">{priority.description}</span>
                 </div>
               ) : null}
             </div>

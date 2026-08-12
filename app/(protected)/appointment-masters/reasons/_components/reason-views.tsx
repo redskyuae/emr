@@ -124,7 +124,7 @@ export function ReasonCardView({
               <p className="text-muted-foreground mt-0.5 text-sm">
                 Appointment Reason Code: <span className="font-mono">{reason.code}</span>
               </p>
-              <p className="text-muted-foreground mt-0.5 text-sm">
+              <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
                 Appointment Reason Description: <span>{reason.description || '—'}</span>
               </p>
             </div>
@@ -178,9 +178,9 @@ export function ReasonListView({
                 <span className="text-muted-foreground">Appointment Reason Code: </span>
                 <span className="font-mono">{reason.code}</span>
               </div>
-              <div className="min-w-0">
+              <div className="max-w-sm min-w-0 truncate">
                 <span className="text-muted-foreground">Appointment Reason Description: </span>
-                <span className="truncate">{reason.description || '—'}</span>
+                <span>{reason.description || '—'}</span>
               </div>
             </div>
 
