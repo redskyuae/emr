@@ -167,6 +167,10 @@ export const patientFormSchema = z
     emergencyContactPhone: optionalPhoneField('Next of Kin Phone'),
   })
   .superRefine((data, ctx) => {
+    if (data.title === '') {
+      ctx.addIssue({ code: 'custom', message: 'Title is required.', path: ['title'] });
+    }
+
     if (data.gender === '') {
       ctx.addIssue({ code: 'custom', message: 'Gender is required.', path: ['gender'] });
     }

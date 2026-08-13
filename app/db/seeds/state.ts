@@ -4,7 +4,7 @@ import { db } from '../index';
 import { country as countryTable } from '../schema/country';
 import { state as stateTable } from '../schema/state';
 
-export const stateSeedData = [
+const stateSeedData = [
   {
     countryCode: 'IN',
     countryName: 'India',

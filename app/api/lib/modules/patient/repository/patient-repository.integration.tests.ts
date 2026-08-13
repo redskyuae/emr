@@ -205,6 +205,20 @@ describe('Patient repository', () => {
     expect(created.patientIdentificationCategory).toBeNull();
   });
 
+  it('should clear Patient Identification Category on update when Emirates ID is present', async () => {
+    const created = await patientRepository.createPatient(patientData(tenantA));
+
+    const updated = await patientRepository.updatePatient(
+      created.id,
+      patientData(tenantA, {
+        emiratesId: '784199012345672',
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(updated?.patientIdentificationCategory).toBeNull();
+  });
+
   it('should persist an Emirates ID read photo and clear it when Emirates ID is absent', async () => {
     const photoUrl = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==';
     const created = await patientRepository.createPatient(

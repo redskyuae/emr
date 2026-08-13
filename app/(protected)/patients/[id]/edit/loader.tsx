@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PatientEditLoader() {
   return (
-    <div className="space-y-6" aria-label="Loading page">
+    <div className="space-y-6" aria-label="Loading Patient form">
       <Skeleton className="h-8 w-32" />
 
       {[0, 1, 2, 3, 4].map((section) => (
