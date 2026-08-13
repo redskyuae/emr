@@ -18,7 +18,7 @@ import type {
   PatientIdentityDocument,
   PatientIdentityDocumentInput,
 } from '../schemas/patient-schema';
-import { normaliseEmiratesId } from '../schemas/patient-schema';
+import { isRealEmiratesId, normaliseEmiratesId } from '../schemas/patient-schema';
 import { patientIdentityDocumentRepository } from './patient-identity-document-repository';
 import { formatPatientMrn } from './patient-mrn';
 
@@ -143,6 +143,8 @@ function patientJoins() {
 }
 
 function patientValues(data: CreatePatientData | UpdatePatientData) {
+  const hasRealEmiratesId = isRealEmiratesId(data.emiratesId);
+
   return {
     city: data.city ?? null,
     email: data.email ?? null,
@@ -158,7 +160,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     firstName: data.firstName,
     postalCode: data.postalCode ?? null,
     emiratesId: data.emiratesId ?? null,
-    photoUrl: data.emiratesId ? (data.photoUrl ?? null) : null,
+    photoUrl: hasRealEmiratesId ? (data.photoUrl ?? null) : null,
     isVip: data.isVip ?? false,
     uid: data.uid ?? null,
     passportNumber: data.passportNumber ?? null,
@@ -176,7 +178,7 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     isMedicalTourist: data.isMedicalTourist ?? false,
     preferredPaymentMethod: data.preferredPaymentMethod ?? null,
     alternatePhone: data.alternatePhone ?? null,
-    patientIdentificationCategory: data.emiratesId
+    patientIdentificationCategory: hasRealEmiratesId
       ? null
       : (data.patientIdentificationCategory ?? null),
     emergencyContactName: data.emergencyContactName ?? null,
