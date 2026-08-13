@@ -90,14 +90,14 @@ export const patient = pgTable(
       table.tenantId,
       sql`lower(${table.mrn})`
     ),
-    // An Emirates ID is issued once per person and persists for life, so two
-    // active Patients sharing one is never legitimate. Identity Documents get
-    // no equivalent index on purpose — passport numbers are unique only within
-    // their issuing country (ADR 0042). Partial on isDeleted so a soft-deleted
-    // Patient does not permanently burn the number (lessons.md).
+    // Real Emirates IDs are issued once per person and persist for life, so two
+    // active Patients sharing one is never legitimate. No-card fallback IDs come
+    // from Patient Identification Category and are intentionally reusable.
     tenantEmiratesIdUniqueIdx: uniqueIndex('patient_tenant_emirates_id_idx')
       .on(table.tenantId, table.emiratesId)
-      .where(sql`${table.isDeleted} = false and ${table.emiratesId} is not null`),
+      .where(
+        sql`${table.isDeleted} = false and ${table.emiratesId} is not null and ${table.emiratesId} like '784%'`
+      ),
   })
 );
 

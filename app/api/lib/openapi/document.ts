@@ -1912,10 +1912,12 @@ const patientValidationFailed = {
           },
         },
         invalidEmiratesId: {
-          summary: 'Emirates ID is not 15 digits beginning with 784',
+          summary: 'Emirates ID is neither a real ID nor a category default',
           value: {
             message: 'Validation failed',
-            errors: ['Patient Emirates ID must be 15 digits beginning with 784'],
+            errors: [
+              'Patient Emirates ID must be 15 digits beginning with 784 or match Patient Identification Category default',
+            ],
           },
         },
         missingIdentificationCategory: {
@@ -6022,7 +6024,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Register Patient',
         description:
-          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. Send either emiratesId or patientIdentificationCategory. emiratesId is stored digit-normalised and is unique per Tenant when present; no-card surrogate default identifiers are UI-only and are not stored as emiratesId. photoUrl may be sent only when it was returned by an Emirates ID read. Medical Tourist registration requires no emiratesId and a uid; passportNumber is optional. identityDocuments replaces the whole collection; required fields vary by documentType.',
+          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. Send a real emiratesId beginning with 784, or send patientIdentificationCategory with its mapped fallback emiratesId. emiratesId is stored digit-normalised; real 784 Emirates IDs are unique per Tenant among active Patients, while category fallback IDs are reusable. photoUrl may be sent only when it was returned by an Emirates ID read for a real 784 Emirates ID. Medical Tourist registration uses a category fallback Emirates ID and requires a uid; passportNumber is optional. identityDocuments replaces the whole collection; required fields vary by documentType.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreatePatientRequest', patientRequestExample),
         responses: {
@@ -9958,7 +9960,7 @@ export const openApiDocument = {
           emiratesId: {
             type: 'string',
             description:
-              '15 digits beginning with 784; dashes and spaces are stripped before storage. Unique per Tenant among active Patients. Required unless patientIdentificationCategory is provided for no-card registration. The check digit is deliberately not validated.',
+              'Real Emirates ID: 15 digits beginning with 784. No-card registration: the mapped Patient Identification Category fallback ID, such as 999999999999999. Dashes and spaces are stripped before storage. Real 784 IDs are unique per Tenant among active Patients; fallback IDs are reusable. The real-card check digit is deliberately not validated.',
             example: '784199012345671',
           },
           photoUrl: {
@@ -9977,7 +9979,7 @@ export const openApiDocument = {
               'unknown-status-without-card',
             ],
             description:
-              'Required when Emirates ID is absent. The UI may show the mapped no-card default identifier, but that surrogate value is not stored as emiratesId.',
+              'Required when the Patient does not have a real 784 Emirates ID. The selected category determines the reusable fallback emiratesId submitted by the registration UI.',
           },
           passportNumber: {
             type: 'string',

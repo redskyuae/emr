@@ -736,6 +736,7 @@ function IdentifiersSection({
                     field.onChange(checked);
                     if (checked) {
                       setValue('uid', '');
+                      setValue('emiratesId', '');
                       setValue('passportNumber', '');
                       setValue('isMedicalTourist', false);
                       setValue('patientIdentificationCategory', '');
@@ -819,23 +820,37 @@ function IdentifiersSection({
                   name="patientIdentificationCategory"
                   render={({ field, fieldState }) => (
                     <Field>
-                      <FieldLabel htmlFor="patient-identification-category">
-                        Patient Identification Category
+                      <FieldLabel htmlFor="patient-emirates-id-category">
+                        Emirates ID
                         <RequiredMark />
                       </FieldLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={(next) => {
+                          field.onChange(next);
+                          setValue(
+                            'emiratesId',
+                            getPatientIdentificationCategoryDefaultId(next) ?? '',
+                            {
+                              shouldDirty: true,
+                              shouldTouch: true,
+                              shouldValidate: true,
+                            }
+                          );
+                        }}
+                      >
                         <SelectTrigger
-                          id="patient-identification-category"
+                          id="patient-emirates-id-category"
                           className="w-full"
                           aria-required
                           aria-invalid={fieldState.invalid}
                         >
-                          <SelectValue placeholder="Select category" />
+                          <SelectValue placeholder="Select identifier category" />
                         </SelectTrigger>
                         <SelectContent>
                           {PATIENT_IDENTIFICATION_CATEGORY_OPTIONS.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                              {option.defaultIdentifier} - {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1101,7 +1116,10 @@ export function PatientForm({
       );
 
       if (emiratesIdConflict) {
-        form.setError('emiratesId', { message: emiratesIdConflict });
+        form.setError(
+          form.getValues('hasEmiratesId') ? 'emiratesId' : 'patientIdentificationCategory',
+          { message: emiratesIdConflict }
+        );
       } else {
         setServerErrors(errors);
       }

@@ -2,7 +2,7 @@ import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-sche
 import type { SavePatientRequest } from '@/app/api/v1/patients/types';
 
 import type { PatientFormValues } from './patient-form-schema';
-import { formatEmiratesId, normaliseEmiratesId } from './patient-value-sets';
+import { formatEmiratesId, isRealEmiratesId, normaliseEmiratesId } from './patient-value-sets';
 
 export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   title: '',
@@ -69,7 +69,7 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     religionId: patient.religionId ?? undefined,
     race: patient.race ?? '',
     ethnicGroup: patient.ethnicGroup ?? '',
-    hasEmiratesId: Boolean(patient.emiratesId),
+    hasEmiratesId: isRealEmiratesId(patient.emiratesId),
     photoUrl: patient.photoUrl ?? '',
     // Shown in the dashed form the card is printed with; normalised again on save.
     emiratesId: formatEmiratesId(patient.emiratesId) ?? '',
@@ -121,10 +121,7 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     religionId: values.religionId,
     race: values.race || undefined,
     ethnicGroup: values.ethnicGroup || undefined,
-    emiratesId:
-      values.hasEmiratesId && values.emiratesId
-        ? normaliseEmiratesId(values.emiratesId)
-        : undefined,
+    emiratesId: values.emiratesId ? normaliseEmiratesId(values.emiratesId) : undefined,
     photoUrl: values.hasEmiratesId && values.photoUrl ? values.photoUrl : undefined,
     patientIdentificationCategory:
       !values.hasEmiratesId && values.patientIdentificationCategory

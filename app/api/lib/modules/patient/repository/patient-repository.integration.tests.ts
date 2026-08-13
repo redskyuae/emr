@@ -180,6 +180,20 @@ describe('Patient repository', () => {
     });
   });
 
+  it('should persist the category-backed fallback Emirates ID for no-card registration', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        emiratesId: '999999999999999',
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(created).toMatchObject({
+      emiratesId: '999999999999999',
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+  });
+
   it('should clear Patient Identification Category when Emirates ID is present', async () => {
     const created = await patientRepository.createPatient(
       patientData(tenantA, {
@@ -334,6 +348,24 @@ describe('Patient repository', () => {
     await expect(
       patientRepository.createPatient(patientData(tenantA, { emiratesId: undefined }))
     ).resolves.toBeDefined();
+  });
+
+  it('should allow many patients with the same category-backed fallback Emirates ID', async () => {
+    await patientRepository.createPatient(
+      patientData(tenantA, {
+        emiratesId: '999999999999999',
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    await expect(
+      patientRepository.createPatient(
+        patientData(tenantA, {
+          emiratesId: '999999999999999',
+          patientIdentificationCategory: 'unknown-status-without-card',
+        })
+      )
+    ).resolves.toMatchObject({ emiratesId: '999999999999999' });
   });
 
   it('should find an active patient by Emirates ID excluding a given patient', async () => {

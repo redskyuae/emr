@@ -180,7 +180,7 @@ The human-facing identifier for a Patient within a Tenant, assigned by the syste
 
 ## Emirates ID
 
-The identity document issued by the United Arab Emirates to every citizen and resident, recorded on a Patient as their primary national identifier. A Patient has at most one Emirates ID, and it is optional — visitors and foreign nationals treated without UAE residency will not have one. The number is issued once per person and persists for life; renewing the card reissues the document, not the number. Two active Patients within a Tenant may never share an Emirates ID. Distinct from the Medical Record Number, which the Tenant issues and controls; the Emirates ID is issued by the state and merely recorded.
+The identity document issued by the United Arab Emirates to every citizen and resident, recorded on a Patient as their primary national identifier. Patient Registration always captures an Emirates ID value: either the real UAE-issued number or the reusable fallback identifier mapped from the Patient Identification Category when the Patient does not have a real Emirates ID. The real number is issued once per person and persists for life; renewing the card reissues the document, not the number. Two active Patients within a Tenant may never share a real Emirates ID beginning with `784`; category fallback identifiers are deliberately reusable. Distinct from the Medical Record Number, which the Tenant issues and controls.
 
 ## Patient Photo
 
@@ -188,7 +188,7 @@ A Patient image captured from Emirates ID read integration during Patient Regist
 
 ## Patient Identification Category
 
-A category recorded during Patient Registration when the Patient does not have an Emirates ID, describing why registration proceeds without that identifier. It is distinct from Emirates ID and from Identity Document type; avoid "Emirates ID Type" for this concept.
+A category recorded during Patient Registration when the Patient does not have a real Emirates ID, describing why registration proceeds with a fallback Emirates ID value. It is distinct from Identity Document type; avoid "Emirates ID Type" for this concept.
 
 ## Unified Identification Number
 

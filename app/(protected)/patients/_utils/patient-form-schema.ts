@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   normaliseEmiratesId,
+  getPatientIdentificationCategoryDefaultId,
   PATIENT_BLOOD_GROUPS,
   PATIENT_GENDERS,
   PATIENT_TITLES,
@@ -145,8 +146,8 @@ export const patientFormSchema = z
       .string()
       .trim()
       .refine(
-        (value) => value === '' || /^784\d{12}$/.test(normaliseEmiratesId(value)),
-        'Emirates ID must be 15 digits beginning with 784.'
+        (value) => value === '' || /^\d{15}$/.test(normaliseEmiratesId(value)),
+        'Emirates ID must be 15 digits.'
       )
       .optional()
       .or(z.literal('')),
@@ -170,10 +171,26 @@ export const patientFormSchema = z
       ctx.addIssue({ code: 'custom', message: 'Gender is required.', path: ['gender'] });
     }
 
-    if (data.hasEmiratesId && !data.emiratesId) {
+    const normalisedEmiratesId = data.emiratesId ? normaliseEmiratesId(data.emiratesId) : '';
+    const categoryDefaultId = data.patientIdentificationCategory
+      ? getPatientIdentificationCategoryDefaultId(data.patientIdentificationCategory)
+      : null;
+    const normalisedCategoryDefaultId = categoryDefaultId
+      ? normaliseEmiratesId(categoryDefaultId)
+      : null;
+
+    if (data.hasEmiratesId && !normalisedEmiratesId) {
       ctx.addIssue({
         code: 'custom',
         message: 'Emirates ID is required.',
+        path: ['emiratesId'],
+      });
+    }
+
+    if (data.hasEmiratesId && normalisedEmiratesId && !/^784\d{12}$/.test(normalisedEmiratesId)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Emirates ID must be 15 digits beginning with 784.',
         path: ['emiratesId'],
       });
     }
@@ -182,6 +199,18 @@ export const patientFormSchema = z
       ctx.addIssue({
         code: 'custom',
         message: 'Patient Identification Category is required.',
+        path: ['patientIdentificationCategory'],
+      });
+    }
+
+    if (
+      !data.hasEmiratesId &&
+      data.patientIdentificationCategory &&
+      normalisedEmiratesId !== normalisedCategoryDefaultId
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Emirates ID must match the selected Patient Identification Category.',
         path: ['patientIdentificationCategory'],
       });
     }

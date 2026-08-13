@@ -168,6 +168,15 @@ describe('Patient Emirates ID uniqueness validator', () => {
     expect(repo.findActiveByEmiratesId).not.toHaveBeenCalled();
   });
 
+  it('should skip the uniqueness check for a category-backed fallback Emirates ID', async () => {
+    await validatePatientEmiratesIdUniqueness({
+      tenantId: 'tenant-1',
+      emiratesId: '999999999999999',
+    });
+
+    expect(repo.findActiveByEmiratesId).not.toHaveBeenCalled();
+  });
+
   it('should return conflict when the Emirates ID already exists for the tenant', async () => {
     repo.findActiveByEmiratesId.mockResolvedValue({ id: 2, emiratesId: '784199012345671' });
     const result = await validatePatientEmiratesIdUniqueness({

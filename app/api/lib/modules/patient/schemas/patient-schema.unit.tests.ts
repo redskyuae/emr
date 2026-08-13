@@ -153,11 +153,45 @@ describe('Patient schema', () => {
   });
 
   it('should reject an Emirates ID that is not 15 digits beginning with 784', () => {
-    for (const input of ['7841990123456', '123199012345671', '784-1990-1234567-12']) {
+    for (const input of ['7841990123456', '784-1990-1234567-12']) {
       expect(
         errorsOf(createPatientSchema.safeParse({ ...validPayload, emiratesId: input }))
-      ).toContain('Patient Emirates ID must be 15 digits beginning with 784');
+      ).toContain('Patient Emirates ID must be 15 digits');
     }
+
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, emiratesId: '123199012345671' }))
+    ).toContain(
+      'Patient Emirates ID must be 15 digits beginning with 784 or match Patient Identification Category default'
+    );
+  });
+
+  it('should accept the mapped default Emirates ID for a Patient Identification Category', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      emiratesId: '999-9999-9999999-9',
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.emiratesId).toBe('999999999999999');
+      expect(result.data.patientIdentificationCategory).toBe('unknown-status-without-card');
+    }
+  });
+
+  it('should reject a default Emirates ID that does not match the Patient Identification Category', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          emiratesId: '222-2222-2222222-2',
+          patientIdentificationCategory: 'unknown-status-without-card',
+        })
+      )
+    ).toContain(
+      'Patient Emirates ID must be 15 digits beginning with 784 or match Patient Identification Category default'
+    );
   });
 
   it('should treat an empty Emirates ID as absent', () => {

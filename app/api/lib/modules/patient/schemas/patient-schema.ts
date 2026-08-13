@@ -11,6 +11,16 @@ const PATIENT_IDENTIFICATION_CATEGORIES = [
   'non-expatriate-resident-without-card',
   'unknown-status-without-card',
 ] as const;
+const PATIENT_IDENTIFICATION_CATEGORY_DEFAULT_IDS: Record<
+  (typeof PATIENT_IDENTIFICATION_CATEGORIES)[number],
+  string
+> = {
+  'uae-national-without-card': '000000000000000',
+  'national-without-card': '000000000000000',
+  'expatriate-resident-without-card': '111111111111111',
+  'non-expatriate-resident-without-card': '222222222222222',
+  'unknown-status-without-card': '999999999999999',
+};
 // Deliberately excludes 'emirates-id'. The Emirates ID is a singleton by law
 // and lives in its own column on patient, so it has exactly one home (ADR 0042).
 const PATIENT_IDENTITY_DOCUMENT_TYPES = [
@@ -150,6 +160,16 @@ export function normaliseEmiratesId(value: string) {
   return value.replace(/\D/g, '');
 }
 
+export function getPatientIdentificationCategoryDefaultEmiratesId(
+  category: PatientIdentificationCategory
+) {
+  return PATIENT_IDENTIFICATION_CATEGORY_DEFAULT_IDS[category];
+}
+
+export function isRealEmiratesId(value: string | null | undefined) {
+  return /^784\d{12}$/.test(normaliseEmiratesId(value ?? ''));
+}
+
 // Shape only — never the check digit. The ICP has not published the algorithm,
 // and a false rejection turns away a patient holding a valid card (ADR 0042).
 const emiratesIdSchema = z.preprocess(
@@ -163,7 +183,7 @@ const emiratesIdSchema = z.preprocess(
   },
   z
     .string()
-    .regex(/^784\d{12}$/, 'Patient Emirates ID must be 15 digits beginning with 784')
+    .regex(/^\d{15}$/, 'Patient Emirates ID must be 15 digits')
     .optional()
 );
 
@@ -320,6 +340,23 @@ const patientPayloadSchema = z
     path: ['countryId'],
   })
   .superRefine((data, ctx) => {
+    const hasRealEmiratesId = isRealEmiratesId(data.emiratesId);
+    const expectedCategoryDefaultId =
+      data.patientIdentificationCategory === undefined
+        ? undefined
+        : getPatientIdentificationCategoryDefaultEmiratesId(data.patientIdentificationCategory);
+    const hasCategoryDefaultEmiratesId =
+      data.emiratesId !== undefined && data.emiratesId === expectedCategoryDefaultId;
+
+    if (data.emiratesId !== undefined && !hasRealEmiratesId && !hasCategoryDefaultEmiratesId) {
+      ctx.addIssue({
+        code: 'custom',
+        message:
+          'Patient Emirates ID must be 15 digits beginning with 784 or match Patient Identification Category default',
+        path: ['emiratesId'],
+      });
+    }
+
     if (data.emiratesId === undefined && data.patientIdentificationCategory === undefined) {
       ctx.addIssue({
         code: 'custom',
@@ -328,7 +365,7 @@ const patientPayloadSchema = z
       });
     }
 
-    if (data.photoUrl !== undefined && data.emiratesId === undefined) {
+    if (data.photoUrl !== undefined && !hasRealEmiratesId) {
       ctx.addIssue({
         code: 'custom',
         message: 'Patient photo can only be saved with Emirates ID',
@@ -336,7 +373,7 @@ const patientPayloadSchema = z
       });
     }
 
-    if (data.isMedicalTourist && data.emiratesId !== undefined) {
+    if (data.isMedicalTourist && hasRealEmiratesId) {
       ctx.addIssue({
         code: 'custom',
         message: 'Medical Tourist cannot have Emirates ID',

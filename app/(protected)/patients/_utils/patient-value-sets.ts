@@ -247,6 +247,10 @@ export function getPatientIdentificationCategoryDefaultId(category: string) {
   );
 }
 
+export function isRealEmiratesId(value: string | null | undefined) {
+  return /^784\d{12}$/.test(normaliseEmiratesId(value ?? ''));
+}
+
 // The card is printed 784-1990-1234567-1 but the API stores digits only, so the
 // UI normalises on the way in and formats on the way out (ADR 0042).
 export function normaliseEmiratesId(value: string) {
