@@ -1449,9 +1449,12 @@ describe('Appointment repository', () => {
       appointmentData(fixtures, {
         patientId: undefined,
         provisionalPatient: {
+          race: 'asian',
           firstName: 'Priya',
           lastName: 'Menon',
+          ethnicGroup: 'south-asian',
           phone: '9000000001',
+          emergencyContactGender: 'female',
         },
         slotTimes: ['09:30'],
       })
@@ -1468,6 +1471,26 @@ describe('Appointment repository', () => {
           registrationStatus: 'provisional',
         },
       },
+    });
+
+    if (!result.success) {
+      throw new Error('Expected provisional patient appointment creation to succeed');
+    }
+
+    const [patient] = await db
+      .select({
+        race: patientTable.race,
+        ethnicGroup: patientTable.ethnicGroup,
+        emergencyContactGender: patientTable.emergencyContactGender,
+      })
+      .from(patientTable)
+      .where(eq(patientTable.id, result.data.patient.id))
+      .limit(1);
+
+    expect(patient).toEqual({
+      race: 'asian',
+      ethnicGroup: 'south-asian',
+      emergencyContactGender: 'female',
     });
   });
 

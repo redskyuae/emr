@@ -189,7 +189,7 @@ function DemographicsSection({ control }: { control: Control<PatientFormValues> 
                     <SelectTrigger
                       id="patient-title"
                       className="w-full"
-                      aria-required
+                      aria-required={true}
                       aria-invalid={fieldState.invalid}
                     >
                       <SelectValue placeholder="Select title" />
@@ -1103,11 +1103,6 @@ export function PatientForm({
 
   const onSubmit = form.handleSubmit(async (values) => {
     setServerErrors([]);
-
-    if (!values.title) {
-      form.setError('title', { message: 'Title is required.' }, { shouldFocus: true });
-      return;
-    }
 
     try {
       await onSave(values);
