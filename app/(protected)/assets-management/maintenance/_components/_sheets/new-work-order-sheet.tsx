@@ -8,13 +8,14 @@ import { useQueryState } from 'nuqs';
 import { AlertCircle, Plus, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
+import type { Asset } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { CreateWorkOrderRequest } from '@/app/api/v1/work-orders/types';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
+import { useWorkOrderPrioritiesQuery } from '@/app/queries/asset-masters/work-order-priorities/useWorkOrderPriorities';
+import { useWorkOrderStatusesQuery } from '@/app/queries/asset-masters/work-order-statuses/useWorkOrderStatuses';
+import { useWorkOrderTypesQuery } from '@/app/queries/asset-masters/work-order-types/useWorkOrderTypes';
 import { useAssetsQuery } from '@/app/queries/assets-management/useAssets';
 import { useCreateWorkOrder } from '@/app/queries/assets-management/work-orders/useCreateWorkOrder';
-import { useWorkOrderPrioritiesQuery } from '@/app/queries/assets-management/work-orders/useWorkOrderPriorities';
-import { useWorkOrderStatusesQuery } from '@/app/queries/assets-management/work-orders/useWorkOrderStatuses';
-import { useWorkOrderTypesQuery } from '@/app/queries/assets-management/work-orders/useWorkOrderTypes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -50,6 +51,40 @@ const EMPTY_DEFAULTS: NewWorkOrderFormValues = {
   note: '',
 };
 
+function ReferenceDataAlert({
+  isError,
+  isEmpty,
+  error,
+  resourceLabel,
+}: {
+  isError: boolean;
+  isEmpty: boolean;
+  error: unknown;
+  resourceLabel: string;
+}) {
+  if (isError) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="size-4" />
+        <AlertTitle>Could not load {resourceLabel}</AlertTitle>
+        <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <Alert className="mb-4">
+        <AlertCircle className="size-4" />
+        <AlertTitle>No {resourceLabel} configured</AlertTitle>
+        <AlertDescription>Configure {resourceLabel} before raising a Work Order.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  return null;
+}
+
 export function NewWorkOrderSheet({ open }: { open: boolean }) {
   const [, setWorkOrderParam] = useQueryState('work-order');
 
@@ -75,11 +110,44 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
   const prioritiesQuery = useWorkOrderPrioritiesQuery({ limit: 999 });
   const statusesQuery = useWorkOrderStatusesQuery({ limit: 999 });
   const [serverErrors, setServerErrors] = useState<string[]>([]);
+  const [assetSearch, setAssetSearch] = useState('');
+  const [debouncedAssetSearch] = useDebouncedValue(assetSearch, { wait: 300 });
+  const assetsQuery = useAssetsQuery({
+    page: 1,
+    limit: 20,
+    query: debouncedAssetSearch || undefined,
+  });
 
   const types = typesQuery.data?.data ?? [];
   const priorities = prioritiesQuery.data?.data ?? [];
   const statuses = statusesQuery.data?.data ?? [];
+  const assets = assetsQuery.data?.data ?? [];
   const isSaving = createMutation.isPending;
+
+  const hasNoTypes = !typesQuery.isLoading && !typesQuery.isError && types.length === 0;
+  const hasNoPriorities =
+    !prioritiesQuery.isLoading && !prioritiesQuery.isError && priorities.length === 0;
+  const hasNoStatuses = !statusesQuery.isLoading && !statusesQuery.isError && statuses.length === 0;
+  const hasNoAssetsAtAll =
+    !assetsQuery.isLoading && !assetsQuery.isError && assets.length === 0 && !debouncedAssetSearch;
+  const hasNoAssetSearchResults =
+    !assetsQuery.isLoading &&
+    !assetsQuery.isError &&
+    assets.length === 0 &&
+    Boolean(debouncedAssetSearch);
+
+  const referenceDataUnavailable =
+    typesQuery.isLoading ||
+    typesQuery.isError ||
+    hasNoTypes ||
+    prioritiesQuery.isLoading ||
+    prioritiesQuery.isError ||
+    hasNoPriorities ||
+    statusesQuery.isLoading ||
+    statusesQuery.isError ||
+    hasNoStatuses ||
+    assetsQuery.isError ||
+    hasNoAssetsAtAll;
 
   const form = useForm<NewWorkOrderFormValues>({
     mode: 'onTouched',
@@ -169,6 +237,19 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                 </p>
               </div>
 
+              <ReferenceDataAlert
+                isError={typesQuery.isError}
+                isEmpty={hasNoTypes}
+                error={typesQuery.error}
+                resourceLabel="Work Order Types"
+              />
+              <ReferenceDataAlert
+                isError={prioritiesQuery.isError}
+                isEmpty={hasNoPriorities}
+                error={prioritiesQuery.error}
+                resourceLabel="Work Order Priorities"
+              />
+
               <FieldGroup className="grid gap-3 sm:grid-cols-2">
                 <Controller
                   control={control}
@@ -179,6 +260,14 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                       onChange={field.onChange}
                       disabled={isSaving}
                       error={fieldState.error?.message}
+                      search={assetSearch}
+                      onSearchChange={setAssetSearch}
+                      assets={assets}
+                      isLoading={assetsQuery.isLoading}
+                      isError={assetsQuery.isError}
+                      queryError={assetsQuery.error}
+                      hasNoAssetsAtAll={hasNoAssetsAtAll}
+                      hasNoSearchResults={hasNoAssetSearchResults}
                     />
                   )}
                 />
@@ -197,7 +286,9 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isSaving}
+                        disabled={
+                          isSaving || typesQuery.isLoading || typesQuery.isError || hasNoTypes
+                        }
                       >
                         <SelectTrigger
                           id="work-order-type"
@@ -205,7 +296,9 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                           aria-required="true"
                           aria-invalid={fieldState.invalid}
                         >
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue
+                            placeholder={typesQuery.isLoading ? 'Loading Types…' : 'Select type'}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {types.map((type) => (
@@ -239,7 +332,12 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isSaving}
+                        disabled={
+                          isSaving ||
+                          prioritiesQuery.isLoading ||
+                          prioritiesQuery.isError ||
+                          hasNoPriorities
+                        }
                       >
                         <SelectTrigger
                           id="work-order-priority"
@@ -247,7 +345,11 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                           aria-required="true"
                           aria-invalid={fieldState.invalid}
                         >
-                          <SelectValue placeholder="Select priority" />
+                          <SelectValue
+                            placeholder={
+                              prioritiesQuery.isLoading ? 'Loading Priorities…' : 'Select priority'
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {priorities.map((priority) => (
@@ -276,6 +378,13 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                   Assign ownership and planned dates for the work.
                 </p>
               </div>
+
+              <ReferenceDataAlert
+                isError={statusesQuery.isError}
+                isEmpty={hasNoStatuses}
+                error={statusesQuery.error}
+                resourceLabel="Work Order Statuses"
+              />
 
               <FieldGroup className="grid gap-3 sm:grid-cols-2">
                 <Controller
@@ -311,7 +420,12 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isSaving}
+                        disabled={
+                          isSaving ||
+                          statusesQuery.isLoading ||
+                          statusesQuery.isError ||
+                          hasNoStatuses
+                        }
                       >
                         <SelectTrigger
                           id="work-order-status"
@@ -319,7 +433,11 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
                           aria-required="true"
                           aria-invalid={fieldState.invalid}
                         >
-                          <SelectValue placeholder="Select status" />
+                          <SelectValue
+                            placeholder={
+                              statusesQuery.isLoading ? 'Loading Statuses…' : 'Select status'
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {statuses.map((status) => (
@@ -385,7 +503,12 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
           <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button type="submit" form="new-work-order-form" disabled={isSaving} aria-busy={isSaving}>
+          <Button
+            type="submit"
+            form="new-work-order-form"
+            disabled={isSaving || referenceDataUnavailable}
+            aria-busy={isSaving}
+          >
             <Save className="size-4" />
             Save work order
           </Button>
@@ -400,16 +523,29 @@ function AssetField({
   onChange,
   disabled,
   error,
+  search,
+  onSearchChange,
+  assets,
+  isLoading,
+  isError,
+  queryError,
+  hasNoAssetsAtAll,
+  hasNoSearchResults,
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled: boolean;
   error?: string;
+  search: string;
+  onSearchChange: (value: string) => void;
+  assets: Asset[];
+  isLoading: boolean;
+  isError: boolean;
+  queryError: unknown;
+  hasNoAssetsAtAll: boolean;
+  hasNoSearchResults: boolean;
 }) {
-  const [search, setSearch] = useState('');
-  const [debouncedSearch] = useDebouncedValue(search, { wait: 300 });
-  const assetsQuery = useAssetsQuery({ page: 1, limit: 20, query: debouncedSearch || undefined });
-  const assets = assetsQuery.data?.data ?? [];
+  const selectDisabled = disabled || isLoading || isError || hasNoAssetsAtAll;
 
   return (
     <Field data-invalid={Boolean(error)}>
@@ -421,20 +557,35 @@ function AssetField({
       </FieldLabel>
       <Input
         value={search}
-        onChange={(event) => setSearch(event.target.value)}
+        onChange={(event) => onSearchChange(event.target.value)}
         placeholder="Search Assets…"
         aria-label="Search Assets"
         disabled={disabled}
         className="mb-2"
       />
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
+
+      {isError ? (
+        <Alert variant="destructive" className="mb-2">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Could not load Assets</AlertTitle>
+          <AlertDescription>{getApiErrorMessage(queryError)}</AlertDescription>
+        </Alert>
+      ) : hasNoAssetsAtAll ? (
+        <Alert className="mb-2">
+          <AlertCircle className="size-4" />
+          <AlertTitle>No Assets configured</AlertTitle>
+          <AlertDescription>Add an Asset before raising a Work Order.</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <Select value={value} onValueChange={onChange} disabled={selectDisabled}>
         <SelectTrigger
           id="work-order-asset"
           className="w-full"
           aria-required="true"
           aria-invalid={Boolean(error)}
         >
-          <SelectValue placeholder="Select Asset" />
+          <SelectValue placeholder={isLoading ? 'Loading Assets…' : 'Select Asset'} />
         </SelectTrigger>
         <SelectContent>
           {assets.map((asset) => (
@@ -446,6 +597,9 @@ function AssetField({
           ))}
         </SelectContent>
       </Select>
+      {hasNoSearchResults ? (
+        <p className="text-muted-foreground text-xs">No Assets match your search.</p>
+      ) : null}
       {error ? <FieldError>{error}</FieldError> : null}
     </Field>
   );

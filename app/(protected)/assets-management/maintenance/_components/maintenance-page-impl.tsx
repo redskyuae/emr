@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 
-import { useWorkOrderTypesQuery } from '@/app/queries/assets-management/work-orders/useWorkOrderTypes';
+import { useWorkOrderTypesQuery } from '@/app/queries/asset-masters/work-order-types/useWorkOrderTypes';
 import { useWorkOrdersQuery } from '@/app/queries/assets-management/work-orders/useWorkOrders';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCount } from '@/lib/format-count';
@@ -46,10 +46,16 @@ export function MaintenancePageImpl() {
       return;
     }
 
-    if (meta?.totalPages && page > meta.totalPages) {
-      void setPage(meta.totalPages);
+    if (!meta) {
+      return;
     }
-  }, [meta?.totalPages, page, pageParam, setPage]);
+
+    const lastPage = meta.totalPages > 0 ? meta.totalPages : 1;
+
+    if (page > lastPage) {
+      void setPage(lastPage);
+    }
+  }, [meta, page, pageParam, setPage]);
 
   function goToFirstPage() {
     void setPage(1);

@@ -41,16 +41,35 @@ type WorkOrderQueueTableProps = {
   onPageChange: (next: number) => void;
 };
 
-function formatWorkOrderDate(value: Date | string | null) {
-  if (!value) {
-    return '—';
-  }
-
+function formatCreatedOn(value: Date | string) {
   const parsed = new Date(value);
 
   if (Number.isNaN(parsed.getTime())) {
     return '—';
   }
+
+  return parsed.toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+/** dueDate is a date-only `YYYY-MM-DD` value; build the Date from its parts so
+ * the displayed day never shifts across a UTC-vs-local boundary. */
+function formatDueDate(value: string | null) {
+  if (!value) {
+    return '—';
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return '—';
+  }
+
+  const [, year, month, day] = match;
+  const parsed = new Date(Number(year), Number(month) - 1, Number(day));
 
   return parsed.toLocaleDateString(undefined, {
     day: '2-digit',
@@ -168,10 +187,10 @@ export function WorkOrderQueueTable({
                 {workOrder.technician || '—'}
               </TableCell>
               <TableCell className="text-muted-foreground font-mono text-xs">
-                {formatWorkOrderDate(workOrder.createdOn)}
+                {formatCreatedOn(workOrder.createdOn)}
               </TableCell>
               <TableCell className="text-muted-foreground font-mono text-xs">
-                {formatWorkOrderDate(workOrder.dueDate)}
+                {formatDueDate(workOrder.dueDate)}
               </TableCell>
               <TableCell className="pr-4">
                 <MasterBadge master={workOrder.status} />

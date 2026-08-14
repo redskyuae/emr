@@ -12,7 +12,7 @@ type WorkOrdersParams = {
 
 export const workOrdersQueryKey = ['work-orders'] as const;
 
-export const workOrdersParamQueryKey = (params: WorkOrdersParams) =>
+const workOrdersParamQueryKey = (params: WorkOrdersParams) =>
   [...workOrdersQueryKey, params] as const;
 
 async function fetchWorkOrders(params: WorkOrdersParams): Promise<ListWorkOrdersResponse> {
