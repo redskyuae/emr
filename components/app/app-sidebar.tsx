@@ -1,11 +1,17 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
-import { appNavGroups, isNavItemActive, type AppNavItem } from '@/components/app/app-shell-config';
+import {
+  appNavGroups,
+  getVisibleNavGroups,
+  isNavItemActive,
+  type AppNavItem,
+} from '@/components/app/app-shell-config';
 import { SignOutButton } from '@/components/app/sign-out-button';
 import { LogoMark } from '@/components/brand/logo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -123,6 +129,11 @@ function getInitials(name: string, email: string) {
 export function AppSidebar() {
   const { data: currentUser, isLoading } = useCurrentUserQuery();
 
+  const visibleNavGroups = useMemo(
+    () => getVisibleNavGroups(appNavGroups, currentUser?.permissions ?? []),
+    [currentUser?.permissions]
+  );
+
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
       <SidebarHeader className="gap-3 p-3">
@@ -167,7 +178,7 @@ export function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent>
-        {appNavGroups.map((group) => (
+        {visibleNavGroups.map((group) => (
           <SidebarGroup key={group.title}>
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
