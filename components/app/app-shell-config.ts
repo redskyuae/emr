@@ -32,9 +32,6 @@ export type AppNavItem = {
   icon: LucideIcon;
   badge?: string;
   exact?: boolean;
-  // Permission required to see this item. Omitted = visible to every authenticated
-  // Tenant member (either intentionally unrestricted, or the Permission Catalogue
-  // doesn't cover this module yet).
   permission?: string;
   items?: {
     title: string;
@@ -685,10 +682,6 @@ function filterNavItem(item: AppNavItem, permissionSet: Set<string>): AppNavItem
   return items.length > 0 ? { ...item, items } : null;
 }
 
-// Filters `appNavGroups` down to what a member with `permissions` may see. An item
-// with no `permission` is always visible (either intentionally unrestricted, or the
-// Permission Catalogue doesn't cover that module yet). A group item with `items` is
-// visible if at least one of its sub-items is visible; empty groups are dropped.
 export function getVisibleNavGroups(groups: AppNavGroup[], permissions: string[]): AppNavGroup[] {
   const permissionSet = new Set(permissions);
 
