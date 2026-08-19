@@ -168,7 +168,6 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Sessions',
         href: '/identity-access/sessions',
         icon: FileClock,
-        permission: 'session:read',
       },
     ],
   },
