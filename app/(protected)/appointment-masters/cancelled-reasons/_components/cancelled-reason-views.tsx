@@ -129,7 +129,7 @@ export function CancelledReasonCardView({
               <p className="text-muted-foreground mt-0.5 text-sm">
                 Code: <span className="font-mono">{reason.code}</span>
               </p>
-              <p className="text-muted-foreground mt-0.5 text-sm">
+              <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
                 Description: <span>{reason.description || '—'}</span>
               </p>
             </div>
@@ -183,9 +183,9 @@ export function CancelledReasonListView({
                 <span className="text-muted-foreground">Code: </span>
                 <span className="font-mono">{reason.code}</span>
               </div>
-              <div className="min-w-0">
+              <div className="max-w-sm min-w-0 truncate">
                 <span className="text-muted-foreground">Description: </span>
-                <span className="truncate">{reason.description || '—'}</span>
+                <span>{reason.description || '—'}</span>
               </div>
             </div>
 

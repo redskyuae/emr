@@ -124,7 +124,7 @@ export function ModeCardView({
               <p className="text-muted-foreground mt-0.5 text-sm">
                 Appointment Mode Code: <span className="font-mono">{mode.code}</span>
               </p>
-              <p className="text-muted-foreground mt-0.5 text-sm">
+              <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
                 Appointment Mode Description: <span>{mode.description || '—'}</span>
               </p>
             </div>
@@ -178,9 +178,9 @@ export function ModeListView({
                 <span className="text-muted-foreground">Appointment Mode Code: </span>
                 <span className="font-mono">{mode.code}</span>
               </div>
-              <div className="min-w-0">
+              <div className="max-w-sm min-w-0 truncate">
                 <span className="text-muted-foreground">Appointment Mode Description: </span>
-                <span className="truncate">{mode.description || '—'}</span>
+                <span>{mode.description || '—'}</span>
               </div>
             </div>
 

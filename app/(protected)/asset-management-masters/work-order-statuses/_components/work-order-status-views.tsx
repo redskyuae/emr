@@ -133,7 +133,7 @@ export function WorkOrderStatusTableView({
                   <TableCell>
                     <StatusColorSwatch color={status.color} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground truncate">
+                  <TableCell className="text-muted-foreground max-w-xs truncate">
                     {status.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
@@ -178,7 +178,9 @@ export function WorkOrderStatusCardView({
                 <StatusColorSwatch color={status.color} />
               </div>
               {status.description ? (
-                <p className="text-muted-foreground mt-1.5 text-sm">{status.description}</p>
+                <p className="text-muted-foreground mt-1.5 max-w-xs truncate text-sm">
+                  {status.description}
+                </p>
               ) : null}
             </div>
 
@@ -239,8 +241,8 @@ export function WorkOrderStatusListView({
               <CategoryBadge category={status.category} />
               <StatusColorSwatch color={status.color} />
               {status.description ? (
-                <div className="min-w-0">
-                  <span className="text-muted-foreground truncate">{status.description}</span>
+                <div className="max-w-sm min-w-0 truncate">
+                  <span className="text-muted-foreground">{status.description}</span>
                 </div>
               ) : null}
             </div>

@@ -153,7 +153,7 @@ export function StatusCardView({
               <div className="mt-2">
                 <StatusBadges status={status} />
               </div>
-              <p className="text-muted-foreground mt-0.5 text-sm">
+              <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
                 Appointment Status Description: <span>{status.description || '—'}</span>
               </p>
             </div>
@@ -208,9 +208,9 @@ export function StatusListView({
                 <span className="font-mono">{status.code}</span>
               </div>
               <StatusBadges status={status} />
-              <div className="min-w-0">
+              <div className="max-w-sm min-w-0 truncate">
                 <span className="text-muted-foreground">Appointment Status Description: </span>
-                <span className="truncate">{status.description || '—'}</span>
+                <span>{status.description || '—'}</span>
               </div>
             </div>
 

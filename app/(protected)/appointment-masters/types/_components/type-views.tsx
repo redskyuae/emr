@@ -136,7 +136,7 @@ export function TypeCardView({
               <p className="text-muted-foreground mt-0.5 text-sm">
                 Appointment Type Code: <span className="font-mono">{type.code}</span>
               </p>
-              <p className="text-muted-foreground mt-0.5 text-sm">
+              <p className="text-muted-foreground mt-0.5 max-w-xs truncate text-sm">
                 Appointment Type Description: <span>{type.description || '—'}</span>
               </p>
               <p className="text-muted-foreground mt-0.5 text-sm">
@@ -193,9 +193,9 @@ export function TypeListView({
                 <span className="text-muted-foreground">Appointment Type Code: </span>
                 <span className="font-mono">{type.code}</span>
               </div>
-              <div className="min-w-0">
+              <div className="max-w-sm min-w-0 truncate">
                 <span className="text-muted-foreground">Appointment Type Description: </span>
-                <span className="truncate">{type.description || '—'}</span>
+                <span>{type.description || '—'}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">Modified on: </span>

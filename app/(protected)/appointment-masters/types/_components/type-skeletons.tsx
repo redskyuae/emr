@@ -63,7 +63,7 @@ function CardViewSkeleton() {
             <Skeleton className="size-10 rounded-full" />
             <Skeleton className="h-5 w-36" />
             <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full max-w-xs" />
             <Skeleton className="h-4 w-24" />
             <div className="flex gap-2 pt-1">
               <Skeleton className="h-8 w-14" />
@@ -86,7 +86,7 @@ function ListViewSkeleton() {
             <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-6">
               <Skeleton className="h-5 w-36" />
               <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-full max-w-xs" />
               <Skeleton className="h-4 w-24" />
             </div>
             <Skeleton className="h-8 w-8 shrink-0" />
