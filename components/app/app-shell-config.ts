@@ -557,6 +557,14 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/visits': {
     title: 'Visits',
     subtitle: "Today's outpatient queue. Check Patients in from an Appointment or as a Walk-in.",
+    primaryAction: {
+      label: 'Create Visit',
+      href: '/visits/new',
+    },
+  },
+  '/visits/new': {
+    title: 'Create Visit',
+    subtitle: 'Review Patient, Appointment, card, and Visit details in one workspace.',
   },
   '/admissions': {
     title: 'Admissions',

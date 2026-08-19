@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Controller, type Control, type UseFormSetValue, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save, UserRound, UserRoundPlus } from 'lucide-react';
+import { AlertCircle, ArrowRight, Save, UserRound, UserRoundPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -1084,6 +1084,8 @@ type PatientFormProps = {
   onSave: (values: PatientFormValues) => Promise<void>;
   isSaving: boolean;
   onCancel: () => void;
+  submitAction?: 'save' | 'next';
+  submitLabel?: string;
 };
 
 export function PatientForm({
@@ -1093,6 +1095,8 @@ export function PatientForm({
   onSave,
   isSaving,
   onCancel,
+  submitAction = 'save',
+  submitLabel,
 }: PatientFormProps) {
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const form = useForm<PatientFormValues>({
@@ -1154,8 +1158,14 @@ export function PatientForm({
           Cancel
         </Button>
         <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
-          {mode === 'create' ? <UserRoundPlus className="size-4" /> : <Save className="size-4" />}
-          {mode === 'create' ? 'Register patient' : 'Save changes'}
+          {submitAction === 'next' ? (
+            <ArrowRight className="size-4" />
+          ) : mode === 'create' ? (
+            <UserRoundPlus className="size-4" />
+          ) : (
+            <Save className="size-4" />
+          )}
+          {submitLabel ?? (mode === 'create' ? 'Register patient' : 'Save changes')}
         </Button>
       </div>
     </form>
