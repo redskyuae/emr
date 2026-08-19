@@ -222,8 +222,16 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/appointment-masters',
         icon: CalendarClock,
         items: [
-          { title: 'Mode', href: '/appointment-masters/modes', permission: 'appointment-mode:read' },
-          { title: 'Type', href: '/appointment-masters/types', permission: 'appointment-type:read' },
+          {
+            title: 'Mode',
+            href: '/appointment-masters/modes',
+            permission: 'appointment-mode:read',
+          },
+          {
+            title: 'Type',
+            href: '/appointment-masters/types',
+            permission: 'appointment-type:read',
+          },
           {
             title: 'Status',
             href: '/appointment-masters/statuses',
@@ -246,7 +254,11 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/visit-masters',
         icon: ClipboardList,
         items: [
-          { title: 'Visit Type', href: '/visit-masters/visit-types', permission: 'visit-type:read' },
+          {
+            title: 'Visit Type',
+            href: '/visit-masters/visit-types',
+            permission: 'visit-type:read',
+          },
         ],
       },
       {
@@ -286,7 +298,11 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/billing-masters',
         icon: ReceiptText,
         items: [
-          { title: 'Charge Items', href: '/billing-masters/charge-items', permission: 'charge-item:read' },
+          {
+            title: 'Charge Items',
+            href: '/billing-masters/charge-items',
+            permission: 'charge-item:read',
+          },
         ],
       },
       {
