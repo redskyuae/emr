@@ -40,7 +40,9 @@ export default async function AppLayout({
           <AppSidebar />
           <SidebarInset>
             <AppTopbar />
-            <div className="flex flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">{children}</div>
+            <div className="flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+              {children}
+            </div>
           </SidebarInset>
         </SidebarProvider>
       </TooltipProvider>
