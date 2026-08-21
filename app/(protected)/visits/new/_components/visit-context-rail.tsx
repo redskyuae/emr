@@ -1,12 +1,13 @@
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
-import { CalendarClock, CreditCard, FileText, UserRound } from 'lucide-react';
+import { CalendarClock, CreditCard, FileText, History, UserRound } from 'lucide-react';
 
 import {
   formatEmiratesId,
   getPatientGenderLabel,
   getPatientPaymentMethodLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
+import type { DemoRecentVisit } from '@/app/(protected)/visits/new/_utils/demo-visit-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,6 +141,39 @@ export function PaymentContextCard({ patient }: { patient: Patient | null }) {
           }
         />
         <Detail label="Coverage card" value={null} />
+      </CardContent>
+    </Card>
+  );
+}
+
+export function RecentVisitsCard({ visits }: { visits: DemoRecentVisit[] }) {
+  return (
+    <Card className="shadow-fluent-2">
+      <CardHeader className="border-b">
+        <CardTitle className="flex items-center gap-2">
+          <History className="text-primary size-4" />
+          Recent visits
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {visits.length === 0 ? (
+          <div className="bg-muted/40 text-muted-foreground rounded-lg border p-4 text-sm">
+            No previous Visits recorded for this Patient.
+          </div>
+        ) : (
+          visits.slice(0, 5).map((visit) => (
+            <div key={visit.id} className="space-y-1 rounded-lg border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-mono text-sm font-medium">{visit.date}</p>
+                <Badge variant="outline">{visit.status}</Badge>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                {visit.department} &middot; {visit.clinician}
+              </p>
+              <p className="text-muted-foreground text-xs">{visit.visitModeLabel}</p>
+            </div>
+          ))
+        )}
       </CardContent>
     </Card>
   );

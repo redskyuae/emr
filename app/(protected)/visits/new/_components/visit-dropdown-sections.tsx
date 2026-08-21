@@ -1,7 +1,6 @@
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
-import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { CalendarCheck, CreditCard, Stethoscope, Upload, UserRoundPlus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,7 @@ export type CreateVisitUiValues = {
   doctorId: string;
   patientType: string;
   visitModeId: string;
+  adminSource: string;
   chiefComplaint: string;
   remarks: string;
   visitClassification: string;
@@ -41,15 +41,24 @@ export type CreateVisitUiValues = {
 type SelectOption = { value: string; label: string };
 
 const PATIENT_CLASS_OPTIONS: SelectOption[] = [
-  { value: 'outpatient', label: 'Outpatient' },
-  { value: 'pre-admit', label: 'Pre-admit' },
-  { value: 'recurring', label: 'Recurring Patient' },
+  { value: 'emergency', label: 'Emergency' },
+  { value: 'in-patient', label: 'InPatient' },
+  { value: 'out-patient', label: 'OutPatient' },
+  { value: 'pre-admit', label: 'PreAdmit' },
+  { value: 'recurring-patient', label: 'Recurring patient' },
   { value: 'obstetrics', label: 'Obstetrics' },
-  { value: 'commercial', label: 'Commercial Account' },
-  { value: 'not-applicable', label: 'Not Applicable' },
+  { value: 'commercial-account', label: 'Commercial account' },
+  { value: 'not-applicable', label: 'Not applicable' },
 ];
 
-const DEPARTMENT_OPTIONS: SelectOption[] = [
+const VISIT_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'op', label: 'OP (Out Patient)' },
+  { value: 'wp', label: 'WP (Walking Patient)' },
+  { value: 'ip', label: 'IP (In Patient)' },
+  { value: 'procedure-diagnostic', label: 'Procedure/Diagnostic Visit' },
+];
+
+export const DEPARTMENT_OPTIONS: SelectOption[] = [
   { value: 'general-medicine', label: 'General Medicine' },
   { value: 'cardiology', label: 'Cardiology' },
   { value: 'paediatrics', label: 'Paediatrics' },
@@ -57,11 +66,31 @@ const DEPARTMENT_OPTIONS: SelectOption[] = [
   { value: 'ent', label: 'ENT' },
 ];
 
-const PATIENT_TYPE_OPTIONS: SelectOption[] = [
-  { value: 'new', label: 'New Patient' },
-  { value: 'existing', label: 'Existing Patient' },
-  { value: 'follow-up', label: 'Follow-up' },
-  { value: 'referred', label: 'Referred Patient' },
+const ADMIN_SOURCE_OPTIONS: SelectOption[] = [
+  { value: 'walk-in', label: 'Walk-in' },
+  { value: 'referral', label: 'Referral' },
+  { value: 'online', label: 'Online Booking' },
+  { value: 'call-center', label: 'Call Center' },
+  { value: 'insurance-tie-up', label: 'Insurance Tie-up' },
+  { value: 'corporate-tie-up', label: 'Corporate Tie-up' },
+];
+
+export const PATIENT_TYPE_OPTIONS: SelectOption[] = [
+  { value: 'established', label: 'Established' },
+  { value: 'new-patient', label: 'New Patient' },
+  { value: 'emergency', label: 'Emergency' },
+];
+
+export const VISIT_MODE_OPTIONS: SelectOption[] = [
+  { value: 'primary-visit', label: 'Primary Visit' },
+  { value: 'major-visit', label: 'Major Visit' },
+  { value: 'new-visit', label: 'New Visit' },
+  { value: 'referral-visit', label: 'Referral Visit' },
+  { value: 'follow-up-visit', label: 'Follow-up Visit' },
+  { value: 'follow-up-without-consultation', label: 'Follow-up Without Consultation' },
+  { value: 'procedure-visit', label: 'Procedure Visit' },
+  { value: 'top-up-visit', label: 'Top-up Visit' },
+  { value: 'top-up-primary-visit', label: 'Top-up Primary Visit' },
 ];
 
 const CLASSIFICATION_OPTIONS: SelectOption[] = [
@@ -242,16 +271,12 @@ export function VisitSourceSection({
 export function VisitDetailsSection({
   values,
   doctors,
-  visitTypes,
-  visitModes,
   selectedAppointment,
   dependenciesLoading,
   onChange,
 }: {
   values: CreateVisitUiValues;
   doctors: Doctor[];
-  visitTypes: VisitType[];
-  visitModes: Array<{ id: number; name: string; code: string }>;
   selectedAppointment: Appointment | null;
   dependenciesLoading: boolean;
   onChange: <K extends keyof CreateVisitUiValues>(key: K, value: CreateVisitUiValues[K]) => void;
@@ -282,18 +307,8 @@ export function VisitDetailsSection({
               id="visit-type"
               label="Visit type"
               value={values.visitTypeId}
-              placeholder={
-                dependenciesLoading
-                  ? 'Loading Visit Types...'
-                  : visitTypes.length === 0
-                    ? 'No Visit Types available'
-                    : 'Select a Visit type'
-              }
-              disabled={dependenciesLoading}
-              options={visitTypes.map((visitType) => ({
-                value: String(visitType.id),
-                label: `${visitType.name} (${visitType.code})`,
-              }))}
+              placeholder="Select a Visit type"
+              options={VISIT_TYPE_OPTIONS}
               onChange={(value) => onChange('visitTypeId', value)}
               required
             />
@@ -336,19 +351,17 @@ export function VisitDetailsSection({
               id="visit-mode"
               label="Visit mode"
               value={values.visitModeId}
-              placeholder={
-                dependenciesLoading
-                  ? 'Loading Visit Modes...'
-                  : visitModes.length === 0
-                    ? 'No Visit Modes available'
-                    : 'Select a Visit mode'
-              }
-              disabled={dependenciesLoading}
-              options={visitModes.map((mode) => ({
-                value: String(mode.id),
-                label: `${mode.name} (${mode.code})`,
-              }))}
+              placeholder="Select a Visit mode"
+              options={VISIT_MODE_OPTIONS}
               onChange={(value) => onChange('visitModeId', value)}
+            />
+            <UiSelect
+              id="admin-source"
+              label="Admin source"
+              value={values.adminSource}
+              placeholder="Select an Admin source"
+              options={ADMIN_SOURCE_OPTIONS}
+              onChange={(value) => onChange('adminSource', value)}
             />
           </div>
 

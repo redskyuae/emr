@@ -38,7 +38,7 @@ export default function CreateVisitLoader() {
         </div>
 
         <div className="space-y-4">
-          {[0, 1, 2].map((section) => (
+          {[0, 1, 2, 3].map((section) => (
             <div key={section} className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
               <Skeleton className="h-5 w-36" />
               <Skeleton className="h-16 w-full" />

@@ -3,12 +3,11 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { AlertCircle, ArrowLeft, CheckCircle2, RefreshCcw, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { useAppointmentModesQuery } from '@/app/queries/appointment-masters/useAppointmentModes';
 import { useAppointmentsQuery } from '@/app/queries/appointments/useAppointments';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { usePatientQuery, usePatientsQuery } from '@/app/queries/patients/usePatients';
-import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,18 +16,48 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 import {
+  DEMO_PATIENT,
+  DEMO_PATIENT_ID,
+  getRecentVisitsForPatient,
+  isWithinFreeRevisitWindow,
+  resolveVisitDefaultsForDepartment,
+} from '../_utils/demo-visit-data';
+import { PreInvoiceSheet } from './_sheets/pre-invoice-sheet';
+import {
   AppointmentContextCard,
   DocumentsCard,
   PatientContextCard,
   PaymentContextCard,
+  RecentVisitsCard,
 } from './visit-context-rail';
 import {
   CardInformationSection,
+  DEPARTMENT_OPTIONS,
+  PATIENT_TYPE_OPTIONS,
+  VISIT_MODE_OPTIONS,
   VisitDetailsSection,
   VisitSourceSection,
   type CreateVisitUiValues,
 } from './visit-dropdown-sections';
 import { PatientRegistrationSection } from './patient-registration-section';
+
+function applyRecentVisitDefaults(
+  nextValues: CreateVisitUiValues,
+  clinicianValue: string,
+  patient: { id: number } | null
+): CreateVisitUiValues {
+  if (!nextValues.department || !clinicianValue || !patient) {
+    return nextValues;
+  }
+  const departmentLabel =
+    DEPARTMENT_OPTIONS.find((option) => option.value === nextValues.department)?.label ?? '';
+  const defaults = resolveVisitDefaultsForDepartment(patient.id, departmentLabel);
+  return {
+    ...nextValues,
+    patientType: defaults.patientType,
+    visitModeId: defaults.visitMode,
+  };
+}
 
 function todayDisplayDate() {
   const today = new Date();
@@ -41,12 +70,13 @@ const INITIAL_VALUES: CreateVisitUiValues = {
   mode: 'appointment',
   appointmentId: '',
   patientId: '',
-  patientClass: 'outpatient',
-  visitTypeId: '',
+  patientClass: 'out-patient',
+  visitTypeId: 'op',
   department: '',
   doctorId: '',
-  patientType: 'existing',
+  patientType: 'established',
   visitModeId: '',
+  adminSource: '',
   chiefComplaint: '',
   remarks: '',
   visitClassification: 'cash',
@@ -106,6 +136,7 @@ function CreateVisitProgress({ step }: { step: CreateVisitStep }) {
 export function CreateVisitPageImpl() {
   const [values, setValues] = useState<CreateVisitUiValues>(INITIAL_VALUES);
   const [step, setStep] = useState<CreateVisitStep>('patient');
+  const [preInvoiceOpen, setPreInvoiceOpen] = useState(false);
 
   const appointmentsQuery = useAppointmentsQuery({
     slotDate: todayDisplayDate(),
@@ -114,14 +145,10 @@ export function CreateVisitPageImpl() {
   });
   const patientsQuery = usePatientsQuery({ page: 1, limit: 100, isActive: true });
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
-  const visitTypesQuery = useVisitTypesQuery({ page: 1, limit: 100 });
-  const visitModesQuery = useAppointmentModesQuery({ page: 1, limit: 100 });
 
   const appointments = appointmentsQuery.data?.data ?? [];
-  const patients = patientsQuery.data?.data ?? [];
+  const patients = [DEMO_PATIENT, ...(patientsQuery.data?.data ?? [])];
   const doctors = doctorsQuery.data?.data ?? [];
-  const visitTypes = visitTypesQuery.data?.data ?? [];
-  const visitModes = visitModesQuery.data?.data ?? [];
 
   const selectedAppointment =
     values.mode === 'appointment'
@@ -129,33 +156,56 @@ export function CreateVisitPageImpl() {
         null)
       : null;
   const selectedPatientId = (selectedAppointment?.patient.id ?? Number(values.patientId)) || null;
-  const patientQuery = usePatientQuery(selectedPatientId);
-  const selectedPatient = patientQuery.data ?? null;
+  const isDemoPatient = selectedPatientId === DEMO_PATIENT_ID;
+  const patientQuery = usePatientQuery(isDemoPatient ? null : selectedPatientId);
+  const selectedPatient = isDemoPatient ? DEMO_PATIENT : (patientQuery.data ?? null);
 
   function changeValue<K extends keyof CreateVisitUiValues>(key: K, value: CreateVisitUiValues[K]) {
-    setValues((current) => ({ ...current, [key]: value }));
+    setValues((current) => {
+      const next = { ...current, [key]: value };
+      if (key !== 'department' && key !== 'doctorId') {
+        return next;
+      }
+      const clinicianValue = selectedAppointment ? String(selectedAppointment.doctor.id) : next.doctorId;
+      return applyRecentVisitDefaults(next, clinicianValue, selectedPatient);
+    });
   }
 
   const hasDependencyError =
-    appointmentsQuery.isError ||
-    patientsQuery.isError ||
-    doctorsQuery.isError ||
-    visitTypesQuery.isError ||
-    visitModesQuery.isError;
+    appointmentsQuery.isError || patientsQuery.isError || doctorsQuery.isError;
 
   async function retryDependencies() {
     await Promise.all([
       appointmentsQuery.refetch(),
       patientsQuery.refetch(),
       doctorsQuery.refetch(),
-      visitTypesQuery.refetch(),
-      visitModesQuery.refetch(),
     ]);
   }
 
   function resetVisit() {
     setValues(INITIAL_VALUES);
     setStep('patient');
+  }
+
+  const clinicianName = selectedAppointment
+    ? selectedAppointment.doctor.name
+    : (doctors.find((doctor) => String(doctor.id) === values.doctorId)?.name ?? '');
+  const departmentLabel =
+    DEPARTMENT_OPTIONS.find((option) => option.value === values.department)?.label ?? '';
+  const visitModeLabel =
+    VISIT_MODE_OPTIONS.find((option) => option.value === values.visitModeId)?.label ??
+    'Not selected';
+  const patientTypeLabel =
+    PATIENT_TYPE_OPTIONS.find((option) => option.value === values.patientType)?.label ??
+    'Not selected';
+  const isFreeRevisit = selectedPatient
+    ? isWithinFreeRevisitWindow(selectedPatient.id, departmentLabel)
+    : false;
+
+  function confirmCreateVisit() {
+    setPreInvoiceOpen(false);
+    toast.success(`Visit created for ${selectedPatient?.firstName} ${selectedPatient?.lastName}.`);
+    resetVisit();
   }
 
   return (
@@ -204,8 +254,9 @@ export function CreateVisitPageImpl() {
               />
               <PatientRegistrationSection
                 patient={selectedPatient}
-                loading={patientQuery.isLoading}
-                error={patientQuery.isError ? patientQuery.error : null}
+                loading={!isDemoPatient && patientQuery.isLoading}
+                error={!isDemoPatient && patientQuery.isError ? patientQuery.error : null}
+                isDemo={isDemoPatient}
                 onRetry={() => void patientQuery.refetch()}
                 onContinue={() => setStep('visit')}
               />
@@ -224,12 +275,8 @@ export function CreateVisitPageImpl() {
               <VisitDetailsSection
                 values={values}
                 doctors={doctors}
-                visitTypes={visitTypes}
-                visitModes={visitModes}
                 selectedAppointment={selectedAppointment}
-                dependenciesLoading={
-                  doctorsQuery.isLoading || visitTypesQuery.isLoading || visitModesQuery.isLoading
-                }
+                dependenciesLoading={doctorsQuery.isLoading}
                 onChange={changeValue}
               />
               <CardInformationSection values={values} onChange={changeValue} />
@@ -238,10 +285,16 @@ export function CreateVisitPageImpl() {
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-20">
-          <PatientContextCard patient={selectedPatient} loading={patientQuery.isLoading} />
+          <PatientContextCard
+            patient={selectedPatient}
+            loading={!isDemoPatient && patientQuery.isLoading}
+          />
           <AppointmentContextCard appointment={selectedAppointment} />
           {step === 'visit' ? (
             <>
+              <RecentVisitsCard
+                visits={selectedPatient ? getRecentVisitsForPatient(selectedPatient.id) : []}
+              />
               <PaymentContextCard patient={selectedPatient} />
               <DocumentsCard />
             </>
@@ -264,13 +317,35 @@ export function CreateVisitPageImpl() {
                 <RotateCcw className="size-4" />
                 Reset
               </Button>
-              <Button type="button" disabled={!selectedPatient}>
+              <Button
+                type="button"
+                disabled={!selectedPatient}
+                onClick={() => setPreInvoiceOpen(true)}
+              >
                 <CheckCircle2 className="size-4" />
                 Create Visit
               </Button>
             </div>
           </CardContent>
         </Card>
+      ) : null}
+
+      {selectedPatient ? (
+        <PreInvoiceSheet
+          open={preInvoiceOpen}
+          patientName={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
+          mrn={selectedPatient.mrn}
+          dob={selectedPatient.dateOfBirth ?? ''}
+          nationality={selectedPatient.nationality?.name ?? ''}
+          patientTypeLabel={patientTypeLabel}
+          clinicianName={clinicianName}
+          departmentLabel={departmentLabel}
+          visitModeLabel={visitModeLabel}
+          visitModeId={values.visitModeId}
+          isFreeRevisit={isFreeRevisit}
+          onOpenChange={setPreInvoiceOpen}
+          onConfirm={confirmCreateVisit}
+        />
       ) : null}
     </div>
   );
