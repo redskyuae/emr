@@ -692,7 +692,9 @@ function filterNavItem(item: AppNavItem, grantedResources: Set<string>): AppNavI
     return item;
   }
 
-  const items = item.items.filter((subItem) => hasNavPermission(subItem.permission, grantedResources));
+  const items = item.items.filter((subItem) =>
+    hasNavPermission(subItem.permission, grantedResources)
+  );
 
   return items.length > 0 ? { ...item, items } : null;
 }
