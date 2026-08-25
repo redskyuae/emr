@@ -32,6 +32,11 @@ export type AppNavItem = {
   icon: LucideIcon;
   badge?: string;
   exact?: boolean;
+  // Resource name (the part before ":" in a permission, e.g. "visit" for "visit:read")
+  // required to see this item — visible if the user holds any "<resource>:*"
+  // permission. Omitted = visible to every authenticated Tenant member (either
+  // intentionally unrestricted, or the Permission Catalogue doesn't cover this
+  // module yet).
   permission?: string;
   items?: {
     title: string;
@@ -73,7 +78,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Patients',
         href: '/patients',
         icon: UsersRound,
-        permission: 'patient:read',
+        permission: 'patient',
       },
       {
         title: 'Appointments',
@@ -95,7 +100,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Visits',
         href: '/visits',
         icon: ClipboardList,
-        permission: 'visit:read',
+        permission: 'visit',
       },
     ],
   },
@@ -106,13 +111,13 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Admissions',
         href: '/admissions',
         icon: BedDouble,
-        permission: 'admission:read',
+        permission: 'admission',
       },
       {
         title: 'Bed Board',
         href: '/bed-board',
         icon: LayoutGrid,
-        permission: 'bed:read',
+        permission: 'bed',
       },
     ],
   },
@@ -124,7 +129,7 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/billing',
         icon: ReceiptText,
         exact: true,
-        permission: 'invoice:read',
+        permission: 'invoice',
       },
     ],
   },
@@ -140,7 +145,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Doctors',
         href: '/doctors',
         icon: Stethoscope,
-        permission: 'doctor:read',
+        permission: 'doctor',
       },
       {
         title: 'Doctor Schedules',
@@ -156,13 +161,13 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Users',
         href: '/identity-access/users',
         icon: UsersRound,
-        permission: 'staff:read',
+        permission: 'staff',
       },
       {
         title: 'Roles & Permissions',
         href: '/identity-access/roles',
         icon: ShieldCheck,
-        permission: 'role:read',
+        permission: 'role',
       },
       {
         title: 'Sessions',
@@ -209,7 +214,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Tenant Profile',
         href: '/tenant-profile',
         icon: Building2,
-        permission: 'tenant:read',
+        permission: 'tenant',
       },
       {
         title: 'Rota Management',
@@ -224,27 +229,27 @@ export const appNavGroups: AppNavGroup[] = [
           {
             title: 'Mode',
             href: '/appointment-masters/modes',
-            permission: 'appointment-mode:read',
+            permission: 'appointment-mode',
           },
           {
             title: 'Type',
             href: '/appointment-masters/types',
-            permission: 'appointment-type:read',
+            permission: 'appointment-type',
           },
           {
             title: 'Status',
             href: '/appointment-masters/statuses',
-            permission: 'appointment-status:read',
+            permission: 'appointment-status',
           },
           {
             title: 'Reason',
             href: '/appointment-masters/reasons',
-            permission: 'appointment-reason:read',
+            permission: 'appointment-reason',
           },
           {
             title: 'Cancelled Reason',
             href: '/appointment-masters/cancelled-reasons',
-            permission: 'appointment-cancelled-reason:read',
+            permission: 'appointment-cancelled-reason',
           },
         ],
       },
@@ -256,7 +261,7 @@ export const appNavGroups: AppNavGroup[] = [
           {
             title: 'Visit Type',
             href: '/visit-masters/visit-types',
-            permission: 'visit-type:read',
+            permission: 'visit-type',
           },
         ],
       },
@@ -265,12 +270,12 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/inpatient-masters',
         icon: Hospital,
         items: [
-          { title: 'Wards', href: '/inpatient-masters/wards', permission: 'ward:read' },
-          { title: 'Beds', href: '/inpatient-masters/beds', permission: 'bed:read' },
+          { title: 'Wards', href: '/inpatient-masters/wards', permission: 'ward' },
+          { title: 'Beds', href: '/inpatient-masters/beds', permission: 'bed' },
           {
             title: 'Admission Types',
             href: '/inpatient-masters/admission-types',
-            permission: 'admission-type:read',
+            permission: 'admission-type',
           },
         ],
       },
@@ -300,7 +305,7 @@ export const appNavGroups: AppNavGroup[] = [
           {
             title: 'Charge Items',
             href: '/billing-masters/charge-items',
-            permission: 'charge-item:read',
+            permission: 'charge-item',
           },
         ],
       },
@@ -312,13 +317,13 @@ export const appNavGroups: AppNavGroup[] = [
           {
             title: 'Diagnosis Codes',
             href: '/clinical-masters/diagnosis-codes',
-            permission: 'diagnosis-code:read',
+            permission: 'diagnosis-code',
           },
-          { title: 'Allergens', href: '/clinical-masters/allergens', permission: 'allergen:read' },
+          { title: 'Allergens', href: '/clinical-masters/allergens', permission: 'allergen' },
           {
             title: 'Note Types',
             href: '/clinical-masters/note-types',
-            permission: 'clinical-note-type:read',
+            permission: 'clinical-note-type',
           },
         ],
       },
@@ -327,15 +332,15 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/global-references',
         icon: Globe2,
         items: [
-          { title: 'Languages', href: '/global-references/languages', permission: 'language:read' },
+          { title: 'Languages', href: '/global-references/languages', permission: 'language' },
           {
             title: 'Nationalities',
             href: '/global-references/nationalities',
-            permission: 'nationality:read',
+            permission: 'nationality',
           },
-          { title: 'Religions', href: '/global-references/religions', permission: 'religion:read' },
-          { title: 'Countries', href: '/global-references/countries', permission: 'country:read' },
-          { title: 'States', href: '/global-references/states', permission: 'state:read' },
+          { title: 'Religions', href: '/global-references/religions', permission: 'religion' },
+          { title: 'Countries', href: '/global-references/countries', permission: 'country' },
+          { title: 'States', href: '/global-references/states', permission: 'state' },
         ],
       },
       {
@@ -679,12 +684,12 @@ export function isNavItemActive(
   return item.items?.some((subItem) => isNavItemActive(currentPath, subItem)) ?? false;
 }
 
-function hasNavPermission(permission: string | undefined, permissionSet: Set<string>): boolean {
-  return !permission || permissionSet.has(permission);
+function hasNavPermission(resource: string | undefined, grantedResources: Set<string>): boolean {
+  return !resource || grantedResources.has(resource);
 }
 
-function filterNavItem(item: AppNavItem, permissionSet: Set<string>): AppNavItem | null {
-  if (!hasNavPermission(item.permission, permissionSet)) {
+function filterNavItem(item: AppNavItem, grantedResources: Set<string>): AppNavItem | null {
+  if (!hasNavPermission(item.permission, grantedResources)) {
     return null;
   }
 
@@ -692,19 +697,27 @@ function filterNavItem(item: AppNavItem, permissionSet: Set<string>): AppNavItem
     return item;
   }
 
-  const items = item.items.filter((subItem) => hasNavPermission(subItem.permission, permissionSet));
+  const items = item.items.filter((subItem) => hasNavPermission(subItem.permission, grantedResources));
 
   return items.length > 0 ? { ...item, items } : null;
 }
 
+// Filters `appNavGroups` down to what a member with `permissions` (the full
+// "resource:action" strings from `/me`) may see. Each nav item's `permission` is a bare
+// resource name (e.g. "visit"), matched against any granted "<resource>:*" permission —
+// so holding just `visit:read` is enough to reveal a "visit"-gated item, regardless of
+// which actions were granted. An item with no `permission` is always visible (either
+// intentionally unrestricted, or the Permission Catalogue doesn't cover that module
+// yet). A group item with `items` is visible if at least one of its sub-items is
+// visible; empty groups are dropped.
 export function getVisibleNavGroups(groups: AppNavGroup[], permissions: string[]): AppNavGroup[] {
-  const permissionSet = new Set(permissions);
+  const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
 
   return groups
     .map((group) => ({
       ...group,
       items: group.items
-        .map((item) => filterNavItem(item, permissionSet))
+        .map((item) => filterNavItem(item, grantedResources))
         .filter((item): item is AppNavItem => item !== null),
     }))
     .filter((group) => group.items.length > 0);
