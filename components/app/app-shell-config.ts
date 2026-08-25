@@ -32,10 +32,12 @@ export type AppNavItem = {
   icon: LucideIcon;
   badge?: string;
   exact?: boolean;
+  permission?: string;
   items?: {
     title: string;
     href: string;
     badge?: string;
+    permission?: string;
   }[];
 };
 
@@ -71,6 +73,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Patients',
         href: '/patients',
         icon: UsersRound,
+        permission: 'patient',
       },
       {
         title: 'Appointments',
@@ -92,6 +95,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Visits',
         href: '/visits',
         icon: ClipboardList,
+        permission: 'visit',
       },
     ],
   },
@@ -102,11 +106,13 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Admissions',
         href: '/admissions',
         icon: BedDouble,
+        permission: 'admission',
       },
       {
         title: 'Bed Board',
         href: '/bed-board',
         icon: LayoutGrid,
+        permission: 'bed',
       },
     ],
   },
@@ -118,6 +124,7 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/billing',
         icon: ReceiptText,
         exact: true,
+        permission: 'invoice',
       },
     ],
   },
@@ -133,6 +140,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Doctors',
         href: '/doctors',
         icon: Stethoscope,
+        permission: 'doctor',
       },
       {
         title: 'Doctor Schedules',
@@ -148,11 +156,13 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Users',
         href: '/identity-access/users',
         icon: UsersRound,
+        permission: 'staff',
       },
       {
         title: 'Roles & Permissions',
         href: '/identity-access/roles',
         icon: ShieldCheck,
+        permission: 'role',
       },
       {
         title: 'Sessions',
@@ -199,6 +209,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Tenant Profile',
         href: '/tenant-profile',
         icon: Building2,
+        permission: 'tenant',
       },
       {
         title: 'Rota Management',
@@ -210,13 +221,30 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/appointment-masters',
         icon: CalendarClock,
         items: [
-          { title: 'Mode', href: '/appointment-masters/modes' },
-          { title: 'Type', href: '/appointment-masters/types' },
-          { title: 'Status', href: '/appointment-masters/statuses' },
-          { title: 'Reason', href: '/appointment-masters/reasons' },
+          {
+            title: 'Mode',
+            href: '/appointment-masters/modes',
+            permission: 'appointment-mode',
+          },
+          {
+            title: 'Type',
+            href: '/appointment-masters/types',
+            permission: 'appointment-type',
+          },
+          {
+            title: 'Status',
+            href: '/appointment-masters/statuses',
+            permission: 'appointment-status',
+          },
+          {
+            title: 'Reason',
+            href: '/appointment-masters/reasons',
+            permission: 'appointment-reason',
+          },
           {
             title: 'Cancelled Reason',
             href: '/appointment-masters/cancelled-reasons',
+            permission: 'appointment-cancelled-reason',
           },
         ],
       },
@@ -224,16 +252,26 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Visit Masters',
         href: '/visit-masters',
         icon: ClipboardList,
-        items: [{ title: 'Visit Type', href: '/visit-masters/visit-types' }],
+        items: [
+          {
+            title: 'Visit Type',
+            href: '/visit-masters/visit-types',
+            permission: 'visit-type',
+          },
+        ],
       },
       {
         title: 'Inpatient Masters',
         href: '/inpatient-masters',
         icon: Hospital,
         items: [
-          { title: 'Wards', href: '/inpatient-masters/wards' },
-          { title: 'Beds', href: '/inpatient-masters/beds' },
-          { title: 'Admission Types', href: '/inpatient-masters/admission-types' },
+          { title: 'Wards', href: '/inpatient-masters/wards', permission: 'ward' },
+          { title: 'Beds', href: '/inpatient-masters/beds', permission: 'bed' },
+          {
+            title: 'Admission Types',
+            href: '/inpatient-masters/admission-types',
+            permission: 'admission-type',
+          },
         ],
       },
       {
@@ -258,16 +296,30 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Billing Masters',
         href: '/billing-masters',
         icon: ReceiptText,
-        items: [{ title: 'Charge Items', href: '/billing-masters/charge-items' }],
+        items: [
+          {
+            title: 'Charge Items',
+            href: '/billing-masters/charge-items',
+            permission: 'charge-item',
+          },
+        ],
       },
       {
         title: 'Clinical Masters',
         href: '/clinical-masters',
         icon: ClipboardList,
         items: [
-          { title: 'Diagnosis Codes', href: '/clinical-masters/diagnosis-codes' },
-          { title: 'Allergens', href: '/clinical-masters/allergens' },
-          { title: 'Note Types', href: '/clinical-masters/note-types' },
+          {
+            title: 'Diagnosis Codes',
+            href: '/clinical-masters/diagnosis-codes',
+            permission: 'diagnosis-code',
+          },
+          { title: 'Allergens', href: '/clinical-masters/allergens', permission: 'allergen' },
+          {
+            title: 'Note Types',
+            href: '/clinical-masters/note-types',
+            permission: 'clinical-note-type',
+          },
         ],
       },
       {
@@ -275,11 +327,15 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/global-references',
         icon: Globe2,
         items: [
-          { title: 'Languages', href: '/global-references/languages' },
-          { title: 'Nationalities', href: '/global-references/nationalities' },
-          { title: 'Religions', href: '/global-references/religions' },
-          { title: 'Countries', href: '/global-references/countries' },
-          { title: 'States', href: '/global-references/states' },
+          { title: 'Languages', href: '/global-references/languages', permission: 'language' },
+          {
+            title: 'Nationalities',
+            href: '/global-references/nationalities',
+            permission: 'nationality',
+          },
+          { title: 'Religions', href: '/global-references/religions', permission: 'religion' },
+          { title: 'Countries', href: '/global-references/countries', permission: 'country' },
+          { title: 'States', href: '/global-references/states', permission: 'state' },
         ],
       },
       {
@@ -621,6 +677,39 @@ export function isNavItemActive(
   }
 
   return item.items?.some((subItem) => isNavItemActive(currentPath, subItem)) ?? false;
+}
+
+function hasNavPermission(resource: string | undefined, grantedResources: Set<string>): boolean {
+  return !resource || grantedResources.has(resource);
+}
+
+function filterNavItem(item: AppNavItem, grantedResources: Set<string>): AppNavItem | null {
+  if (!hasNavPermission(item.permission, grantedResources)) {
+    return null;
+  }
+
+  if (!item.items?.length) {
+    return item;
+  }
+
+  const items = item.items.filter((subItem) =>
+    hasNavPermission(subItem.permission, grantedResources)
+  );
+
+  return items.length > 0 ? { ...item, items } : null;
+}
+
+export function getVisibleNavGroups(groups: AppNavGroup[], permissions: string[]): AppNavGroup[] {
+  const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
+
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items
+        .map((item) => filterNavItem(item, grantedResources))
+        .filter((item): item is AppNavItem => item !== null),
+    }))
+    .filter((group) => group.items.length > 0);
 }
 
 export function getAppPageMeta(pathname: string): AppPageMeta {
