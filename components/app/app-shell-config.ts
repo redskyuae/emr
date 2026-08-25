@@ -32,11 +32,6 @@ export type AppNavItem = {
   icon: LucideIcon;
   badge?: string;
   exact?: boolean;
-  // Resource name (the part before ":" in a permission, e.g. "visit" for "visit:read")
-  // required to see this item — visible if the user holds any "<resource>:*"
-  // permission. Omitted = visible to every authenticated Tenant member (either
-  // intentionally unrestricted, or the Permission Catalogue doesn't cover this
-  // module yet).
   permission?: string;
   items?: {
     title: string;
@@ -702,14 +697,6 @@ function filterNavItem(item: AppNavItem, grantedResources: Set<string>): AppNavI
   return items.length > 0 ? { ...item, items } : null;
 }
 
-// Filters `appNavGroups` down to what a member with `permissions` (the full
-// "resource:action" strings from `/me`) may see. Each nav item's `permission` is a bare
-// resource name (e.g. "visit"), matched against any granted "<resource>:*" permission —
-// so holding just `visit:read` is enough to reveal a "visit"-gated item, regardless of
-// which actions were granted. An item with no `permission` is always visible (either
-// intentionally unrestricted, or the Permission Catalogue doesn't cover that module
-// yet). A group item with `items` is visible if at least one of its sub-items is
-// visible; empty groups are dropped.
 export function getVisibleNavGroups(groups: AppNavGroup[], permissions: string[]): AppNavGroup[] {
   const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
 
