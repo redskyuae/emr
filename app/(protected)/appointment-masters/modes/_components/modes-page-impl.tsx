@@ -24,6 +24,7 @@ import { useAppointmentModesQuery } from '@/app/queries/appointment-masters/useA
 import { useCreateAppointmentMode } from '@/app/queries/appointment-masters/useCreateAppointmentMode';
 import { useDeleteAppointmentMode } from '@/app/queries/appointment-masters/useDeleteAppointmentMode';
 import { useUpdateAppointmentMode } from '@/app/queries/appointment-masters/useUpdateAppointmentMode';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -74,6 +75,10 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
   const updateMutation = useUpdateAppointmentMode();
   const deleteMutation = useDeleteAppointmentMode();
 
+  const { data: canCreate } = useHasPermission('appointment-mode:create');
+  const { data: canUpdate } = useHasPermission('appointment-mode:update');
+  const { data: canDelete } = useHasPermission('appointment-mode:delete');
+
   const modes = modesQuery.data?.data ?? [];
   const meta = modesQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
@@ -84,14 +89,14 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
-    if (!initialCreateOpen || initialCreateHandledRef.current) {
+    if (!initialCreateOpen || initialCreateHandledRef.current || !canCreate) {
       return;
     }
 
     initialCreateHandledRef.current = true;
     openAddSheet();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialCreateOpen]);
+  }, [initialCreateOpen, canCreate]);
 
   const previousDebouncedRef = useRef(debouncedSearch);
   if (previousDebouncedRef.current !== debouncedSearch) {
@@ -215,12 +220,14 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Mode
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Mode
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -246,12 +253,14 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
                 this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Mode
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Mode
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : modes.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -269,11 +278,29 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <ModeTableView modes={modes} onEdit={openEditSheet} onDelete={setModePendingDelete} />
+              <ModeTableView
+                modes={modes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEditSheet}
+                onDelete={setModePendingDelete}
+              />
             ) : viewLayout === 'card' ? (
-              <ModeCardView modes={modes} onEdit={openEditSheet} onDelete={setModePendingDelete} />
+              <ModeCardView
+                modes={modes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEditSheet}
+                onDelete={setModePendingDelete}
+              />
             ) : (
-              <ModeListView modes={modes} onEdit={openEditSheet} onDelete={setModePendingDelete} />
+              <ModeListView
+                modes={modes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEditSheet}
+                onDelete={setModePendingDelete}
+              />
             )}
 
             {totalPages > 0 ? (
