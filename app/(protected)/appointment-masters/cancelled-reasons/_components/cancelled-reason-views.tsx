@@ -28,13 +28,21 @@ function CancelledReasonIcon() {
 
 function CancelledReasonActionsMenu({
   reason,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   reason: AppointmentCancelledReason;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (reason: AppointmentCancelledReason) => void;
   onDelete: (reason: AppointmentCancelledReason) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -48,14 +56,18 @@ function CancelledReasonActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(reason)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(reason)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(reason)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(reason)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -63,10 +75,14 @@ function CancelledReasonActionsMenu({
 
 export function CancelledReasonTableView({
   reasons,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   reasons: AppointmentCancelledReason[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (reason: AppointmentCancelledReason) => void;
   onDelete: (reason: AppointmentCancelledReason) => void;
 }) {
@@ -94,6 +110,8 @@ export function CancelledReasonTableView({
                   <TableCell className="pr-4 text-right">
                     <CancelledReasonActionsMenu
                       reason={reason}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
                       onEdit={onEdit}
                       onDelete={onDelete}
                     />
@@ -110,10 +128,14 @@ export function CancelledReasonTableView({
 
 export function CancelledReasonCardView({
   reasons,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   reasons: AppointmentCancelledReason[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (reason: AppointmentCancelledReason) => void;
   onDelete: (reason: AppointmentCancelledReason) => void;
 }) {
@@ -134,22 +156,28 @@ export function CancelledReasonCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(reason)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(reason)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(reason)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(reason)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -159,10 +187,14 @@ export function CancelledReasonCardView({
 
 export function CancelledReasonListView({
   reasons,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   reasons: AppointmentCancelledReason[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (reason: AppointmentCancelledReason) => void;
   onDelete: (reason: AppointmentCancelledReason) => void;
 }) {
@@ -190,7 +222,13 @@ export function CancelledReasonListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <CancelledReasonActionsMenu reason={reason} onEdit={onEdit} onDelete={onDelete} />
+              <CancelledReasonActionsMenu
+                reason={reason}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

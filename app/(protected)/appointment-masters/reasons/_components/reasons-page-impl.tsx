@@ -23,6 +23,7 @@ import { useAppointmentReasonQuery } from '@/app/queries/appointment-masters/rea
 import { useAppointmentReasonsQuery } from '@/app/queries/appointment-masters/reasons/useAppointmentReasons';
 import { useCreateAppointmentReason } from '@/app/queries/appointment-masters/reasons/useCreateAppointmentReason';
 import { useUpdateAppointmentReason } from '@/app/queries/appointment-masters/reasons/useUpdateAppointmentReason';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -71,6 +72,10 @@ export function ReasonsPageImpl() {
   const createMutation = useCreateAppointmentReason();
   const updateMutation = useUpdateAppointmentReason();
 
+  const { data: canCreate } = useHasPermission('appointment-reason:create');
+  const { data: canUpdate } = useHasPermission('appointment-reason:update');
+  const { data: canDelete } = useHasPermission('appointment-reason:delete');
+
   const reasons = reasonsQuery.data?.data ?? [];
   const meta = reasonsQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
@@ -79,7 +84,7 @@ export function ReasonsPageImpl() {
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  const isCreating = reasonParam === 'new';
+  const isCreating = reasonParam === 'new' && canCreate;
   const editingReasonId =
     reasonParam !== null && reasonParam !== 'new' && /^\d+$/.test(reasonParam)
       ? Number(reasonParam)
@@ -89,9 +94,6 @@ export function ReasonsPageImpl() {
       ? (reasons.find((reason) => reason.id === editingReasonId) ?? null)
       : null;
 
-  // The current page's `reasons` may not include the target id (it lives on a
-  // different page or is filtered out by the active search), so fall back to
-  // fetching it directly by id once the list has loaded and it isn't there.
   const shouldFetchEditingReason =
     editingReasonId !== null && !reasonsQuery.isLoading && editingReasonFromList === null;
   const editingReasonQuery = useAppointmentReasonQuery(
@@ -231,12 +233,14 @@ export function ReasonsPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Reason
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Reason
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -262,12 +266,14 @@ export function ReasonsPageImpl() {
                 Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Reason
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Reason
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : reasons.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -287,18 +293,24 @@ export function ReasonsPageImpl() {
             {viewLayout === 'table' ? (
               <ReasonTableView
                 reasons={reasons}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setReasonPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <ReasonCardView
                 reasons={reasons}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setReasonPendingDelete}
               />
             ) : (
               <ReasonListView
                 reasons={reasons}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setReasonPendingDelete}
               />
