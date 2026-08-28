@@ -93,7 +93,7 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
 
     initialCreateHandledRef.current = true;
     openAddSheet();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialCreateOpen, canCreate]);
 
   const previousDebouncedRef = useRef(debouncedSearch);
