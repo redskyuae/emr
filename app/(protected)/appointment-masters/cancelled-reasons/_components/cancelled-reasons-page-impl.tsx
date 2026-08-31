@@ -18,6 +18,7 @@ import type { AppointmentCancelledReason } from '@/app/api/lib/modules/appointme
 import { ApiError, getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentCancelledReasonQuery } from '@/app/queries/appointment-masters/cancelled-reasons/useAppointmentCancelledReason';
 import { useAppointmentCancelledReasonsQuery } from '@/app/queries/appointment-masters/cancelled-reasons/useAppointmentCancelledReasons';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -61,6 +62,10 @@ export function CancelledReasonsPageImpl() {
     limit: PAGE_SIZE,
   });
 
+  const { data: canCreate } = useHasPermission('appointment-cancelled-reason:create');
+  const { data: canUpdate } = useHasPermission('appointment-cancelled-reason:update');
+  const { data: canDelete } = useHasPermission('appointment-cancelled-reason:delete');
+
   const reasons = reasonsQuery.data?.data ?? [];
   const meta = reasonsQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
@@ -68,7 +73,7 @@ export function CancelledReasonsPageImpl() {
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  const isCreating = reasonParam === 'new';
+  const isCreating = reasonParam === 'new' && canCreate;
   const editingReasonId =
     reasonParam !== null && reasonParam !== 'new' && /^\d+$/.test(reasonParam)
       ? Number(reasonParam)
@@ -169,12 +174,14 @@ export function CancelledReasonsPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Cancelled Reason
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Cancelled Reason
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -200,12 +207,14 @@ export function CancelledReasonsPageImpl() {
                 this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Cancelled Reason
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Cancelled Reason
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : reasons.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -225,18 +234,24 @@ export function CancelledReasonsPageImpl() {
             {viewLayout === 'table' ? (
               <CancelledReasonTableView
                 reasons={reasons}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setReasonPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <CancelledReasonCardView
                 reasons={reasons}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setReasonPendingDelete}
               />
             ) : (
               <CancelledReasonListView
                 reasons={reasons}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setReasonPendingDelete}
               />

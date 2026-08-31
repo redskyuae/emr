@@ -27,13 +27,21 @@ function ModeIcon() {
 
 function ModeActionsMenu({
   mode,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   mode: AppointmentMode;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (mode: AppointmentMode) => void;
   onDelete: (mode: AppointmentMode) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -47,14 +55,18 @@ function ModeActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(mode)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(mode)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(mode)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(mode)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -62,10 +74,14 @@ function ModeActionsMenu({
 
 export function ModeTableView({
   modes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   modes: AppointmentMode[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (mode: AppointmentMode) => void;
   onDelete: (mode: AppointmentMode) => void;
 }) {
@@ -91,7 +107,13 @@ export function ModeTableView({
                     {mode.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <ModeActionsMenu mode={mode} onEdit={onEdit} onDelete={onDelete} />
+                    <ModeActionsMenu
+                      mode={mode}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -105,10 +127,14 @@ export function ModeTableView({
 
 export function ModeCardView({
   modes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   modes: AppointmentMode[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (mode: AppointmentMode) => void;
   onDelete: (mode: AppointmentMode) => void;
 }) {
@@ -129,22 +155,28 @@ export function ModeCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(mode)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(mode)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(mode)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(mode)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -154,10 +186,14 @@ export function ModeCardView({
 
 export function ModeListView({
   modes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   modes: AppointmentMode[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (mode: AppointmentMode) => void;
   onDelete: (mode: AppointmentMode) => void;
 }) {
@@ -185,7 +221,13 @@ export function ModeListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <ModeActionsMenu mode={mode} onEdit={onEdit} onDelete={onDelete} />
+              <ModeActionsMenu
+                mode={mode}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

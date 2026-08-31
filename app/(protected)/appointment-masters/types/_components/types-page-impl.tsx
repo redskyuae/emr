@@ -24,6 +24,7 @@ import { useAppointmentTypesQuery } from '@/app/queries/appointment-masters/type
 import { useCreateAppointmentType } from '@/app/queries/appointment-masters/types/useCreateAppointmentType';
 import { useDeleteAppointmentType } from '@/app/queries/appointment-masters/types/useDeleteAppointmentType';
 import { useUpdateAppointmentType } from '@/app/queries/appointment-masters/types/useUpdateAppointmentType';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -74,6 +75,10 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
   const updateMutation = useUpdateAppointmentType();
   const deleteMutation = useDeleteAppointmentType();
 
+  const { data: canCreate } = useHasPermission('appointment-type:create');
+  const { data: canUpdate } = useHasPermission('appointment-type:update');
+  const { data: canDelete } = useHasPermission('appointment-type:delete');
+
   const types = typesQuery.data?.data ?? [];
   const meta = typesQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
@@ -84,13 +89,14 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
-    if (!initialCreateOpen || initialCreateHandledRef.current) {
+    if (!initialCreateOpen || initialCreateHandledRef.current || !canCreate) {
       return;
     }
 
     initialCreateHandledRef.current = true;
     openAddSheet();
-  }, [initialCreateOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCreateOpen, canCreate]);
 
   const previousDebouncedRef = useRef(debouncedSearch);
   if (previousDebouncedRef.current !== debouncedSearch) {
@@ -214,12 +220,14 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Type
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Type
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -245,12 +253,14 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
                 Appointments in this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Type
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Type
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : types.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -268,11 +278,29 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <TypeTableView types={types} onEdit={openEditSheet} onDelete={setTypePendingDelete} />
+              <TypeTableView
+                types={types}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEditSheet}
+                onDelete={setTypePendingDelete}
+              />
             ) : viewLayout === 'card' ? (
-              <TypeCardView types={types} onEdit={openEditSheet} onDelete={setTypePendingDelete} />
+              <TypeCardView
+                types={types}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEditSheet}
+                onDelete={setTypePendingDelete}
+              />
             ) : (
-              <TypeListView types={types} onEdit={openEditSheet} onDelete={setTypePendingDelete} />
+              <TypeListView
+                types={types}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEditSheet}
+                onDelete={setTypePendingDelete}
+              />
             )}
 
             {totalPages > 0 ? (

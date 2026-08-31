@@ -35,13 +35,21 @@ function formatDate(date: Date | string) {
 
 function TypeActionsMenu({
   type,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   type: AppointmentType;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (type: AppointmentType) => void;
   onDelete: (type: AppointmentType) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -55,14 +63,18 @@ function TypeActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(type)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(type)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(type)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(type)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -70,10 +82,14 @@ function TypeActionsMenu({
 
 export function TypeTableView({
   types,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   types: AppointmentType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (type: AppointmentType) => void;
   onDelete: (type: AppointmentType) => void;
 }) {
@@ -103,7 +119,13 @@ export function TypeTableView({
                     {formatDate(type.modifiedOn)}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <TypeActionsMenu type={type} onEdit={onEdit} onDelete={onDelete} />
+                    <TypeActionsMenu
+                      type={type}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -117,10 +139,14 @@ export function TypeTableView({
 
 export function TypeCardView({
   types,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   types: AppointmentType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (type: AppointmentType) => void;
   onDelete: (type: AppointmentType) => void;
 }) {
@@ -144,22 +170,28 @@ export function TypeCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(type)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(type)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(type)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(type)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -169,10 +201,14 @@ export function TypeCardView({
 
 export function TypeListView({
   types,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   types: AppointmentType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (type: AppointmentType) => void;
   onDelete: (type: AppointmentType) => void;
 }) {
@@ -204,7 +240,13 @@ export function TypeListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <TypeActionsMenu type={type} onEdit={onEdit} onDelete={onDelete} />
+              <TypeActionsMenu
+                type={type}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

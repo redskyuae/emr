@@ -27,13 +27,21 @@ function ReasonIcon() {
 
 function ReasonActionsMenu({
   reason,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   reason: AppointmentReason;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (reason: AppointmentReason) => void;
   onDelete: (reason: AppointmentReason) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -47,14 +55,18 @@ function ReasonActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(reason)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(reason)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(reason)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(reason)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -62,10 +74,14 @@ function ReasonActionsMenu({
 
 export function ReasonTableView({
   reasons,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   reasons: AppointmentReason[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (reason: AppointmentReason) => void;
   onDelete: (reason: AppointmentReason) => void;
 }) {
@@ -91,7 +107,13 @@ export function ReasonTableView({
                     {reason.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <ReasonActionsMenu reason={reason} onEdit={onEdit} onDelete={onDelete} />
+                    <ReasonActionsMenu
+                      reason={reason}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -105,10 +127,14 @@ export function ReasonTableView({
 
 export function ReasonCardView({
   reasons,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   reasons: AppointmentReason[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (reason: AppointmentReason) => void;
   onDelete: (reason: AppointmentReason) => void;
 }) {
@@ -129,22 +155,28 @@ export function ReasonCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(reason)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(reason)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(reason)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(reason)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -154,10 +186,14 @@ export function ReasonCardView({
 
 export function ReasonListView({
   reasons,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   reasons: AppointmentReason[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (reason: AppointmentReason) => void;
   onDelete: (reason: AppointmentReason) => void;
 }) {
@@ -185,7 +221,13 @@ export function ReasonListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <ReasonActionsMenu reason={reason} onEdit={onEdit} onDelete={onDelete} />
+              <ReasonActionsMenu
+                reason={reason}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

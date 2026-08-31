@@ -23,6 +23,7 @@ import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
 import { useCreateAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useCreateAppointmentStatus';
 import { useUpdateAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useUpdateAppointmentStatus';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -72,6 +73,10 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
   const createMutation = useCreateAppointmentStatus();
   const updateMutation = useUpdateAppointmentStatus();
 
+  const { data: canCreate } = useHasPermission('appointment-status:create');
+  const { data: canUpdate } = useHasPermission('appointment-status:update');
+  const { data: canDelete } = useHasPermission('appointment-status:delete');
+
   const statuses = statusesQuery.data?.data ?? [];
   const meta = statusesQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
@@ -82,13 +87,14 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
-    if (!initialCreateOpen || initialCreateHandledRef.current) {
+    if (!initialCreateOpen || initialCreateHandledRef.current || !canCreate) {
       return;
     }
 
     initialCreateHandledRef.current = true;
     openAddSheet();
-  }, [initialCreateOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCreateOpen, canCreate]);
 
   const previousDebouncedRef = useRef(debouncedSearch);
   if (previousDebouncedRef.current !== debouncedSearch) {
@@ -206,12 +212,14 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Status
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Status
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -237,12 +245,14 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
                 Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Appointment Status
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Appointment Status
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : statuses.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -262,18 +272,24 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
             {viewLayout === 'table' ? (
               <StatusTableView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setStatusPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <StatusCardView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setStatusPendingDelete}
               />
             ) : (
               <StatusListView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setStatusPendingDelete}
               />

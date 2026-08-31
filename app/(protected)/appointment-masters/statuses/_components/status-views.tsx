@@ -49,13 +49,21 @@ function StatusBadges({ status }: { status: AppointmentStatus }) {
 
 function StatusActionsMenu({
   status,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   status: AppointmentStatus;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (status: AppointmentStatus) => void;
   onDelete: (status: AppointmentStatus) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -69,14 +77,18 @@ function StatusActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(status)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(status)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(status)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(status)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -84,10 +96,14 @@ function StatusActionsMenu({
 
 export function StatusTableView({
   statuses,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   statuses: AppointmentStatus[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (status: AppointmentStatus) => void;
   onDelete: (status: AppointmentStatus) => void;
 }) {
@@ -117,7 +133,13 @@ export function StatusTableView({
                     {status.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <StatusActionsMenu status={status} onEdit={onEdit} onDelete={onDelete} />
+                    <StatusActionsMenu
+                      status={status}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -131,10 +153,14 @@ export function StatusTableView({
 
 export function StatusCardView({
   statuses,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   statuses: AppointmentStatus[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (status: AppointmentStatus) => void;
   onDelete: (status: AppointmentStatus) => void;
 }) {
@@ -158,22 +184,28 @@ export function StatusCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(status)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(status)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(status)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(status)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -183,10 +215,14 @@ export function StatusCardView({
 
 export function StatusListView({
   statuses,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   statuses: AppointmentStatus[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (status: AppointmentStatus) => void;
   onDelete: (status: AppointmentStatus) => void;
 }) {
@@ -215,7 +251,13 @@ export function StatusListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <StatusActionsMenu status={status} onEdit={onEdit} onDelete={onDelete} />
+              <StatusActionsMenu
+                status={status}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>
