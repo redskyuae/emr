@@ -2,11 +2,16 @@ import { z } from 'zod';
 
 import {
   normaliseEmiratesId,
+  getPatientIdentificationCategoryDefaultId,
   PATIENT_BLOOD_GROUPS,
   PATIENT_GENDERS,
+  PATIENT_TITLES,
   PATIENT_IDENTITY_DOCUMENT_TYPES,
+  PATIENT_IDENTIFICATION_CATEGORIES,
   PATIENT_MARITAL_STATUSES,
   PATIENT_PAYMENT_METHODS,
+  PATIENT_ETHNIC_GROUPS,
+  PATIENT_RACES,
 } from './patient-value-sets';
 
 function isNotFutureDate(value: string) {
@@ -16,6 +21,19 @@ function isNotFutureDate(value: string) {
   today.setHours(0, 0, 0, 0);
 
   return date <= today;
+}
+
+function isPatientPhotoUrl(value: string) {
+  if (/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(value)) {
+    return true;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 const requiredNameField = (label: string) =>
@@ -81,6 +99,7 @@ export function getIdentityDocumentRequiredFields(documentType: string) {
 
 export const patientFormSchema = z
   .object({
+    title: z.enum(PATIENT_TITLES).or(z.literal('')),
     firstName: requiredNameField('First name'),
     middleName: optionalNameField('Middle name', 100),
     lastName: requiredNameField('Last name'),
@@ -110,23 +129,118 @@ export const patientFormSchema = z
     nationalityId: z.number().int().positive().optional(),
     languageId: z.number().int().positive().optional(),
     religionId: z.number().int().positive().optional(),
+    race: z.enum(PATIENT_RACES).optional().or(z.literal('')),
+    ethnicGroup: z.enum(PATIENT_ETHNIC_GROUPS).optional().or(z.literal('')),
+    hasEmiratesId: z.boolean(),
+    photoUrl: z
+      .string()
+      .trim()
+      .max(1_500_000, 'Patient photo must be at most 1.5MB.')
+      .refine(
+        (value) => value === '' || isPatientPhotoUrl(value),
+        'Patient photo must be an HTTP(S) URL or image data URL from Emirates ID read.'
+      )
+      .optional()
+      .or(z.literal('')),
     emiratesId: z
       .string()
       .trim()
       .refine(
-        (value) => value === '' || /^784\d{12}$/.test(normaliseEmiratesId(value)),
-        'Emirates ID must be 15 digits beginning with 784.'
+        (value) => value === '' || /^\d{15}$/.test(normaliseEmiratesId(value)),
+        'Emirates ID must be 15 digits.'
       )
       .optional()
       .or(z.literal('')),
+    patientIdentificationCategory: z
+      .enum(PATIENT_IDENTIFICATION_CATEGORIES)
+      .optional()
+      .or(z.literal('')),
+    passportNumber: optionalNameField('Passport number', 50),
+    uid: optionalNameField('UID', 30),
+    isVip: z.boolean(),
+    smsConsent: z.boolean(),
+    isMedicalTourist: z.boolean(),
     identityDocuments: z.array(identityDocumentFormSchema),
-    emergencyContactName: optionalNameField('Emergency contact name', 150),
-    emergencyContactRelationship: optionalNameField('Emergency contact relationship', 50),
-    emergencyContactPhone: optionalPhoneField('Emergency contact phone'),
+    emergencyContactName: optionalNameField('Next of Kin', 150),
+    emergencyContactRelationship: optionalNameField('Next of Kin Relationship', 50),
+    emergencyContactGender: z.enum(PATIENT_GENDERS).optional().or(z.literal('')),
+    emergencyContactPhone: optionalPhoneField('Next of Kin Phone'),
   })
   .superRefine((data, ctx) => {
+    if (data.title === '') {
+      ctx.addIssue({ code: 'custom', message: 'Title is required.', path: ['title'] });
+    }
+
     if (data.gender === '') {
       ctx.addIssue({ code: 'custom', message: 'Gender is required.', path: ['gender'] });
+    }
+
+    const normalisedEmiratesId = data.emiratesId ? normaliseEmiratesId(data.emiratesId) : '';
+    const categoryDefaultId = data.patientIdentificationCategory
+      ? getPatientIdentificationCategoryDefaultId(data.patientIdentificationCategory)
+      : null;
+    const normalisedCategoryDefaultId = categoryDefaultId
+      ? normaliseEmiratesId(categoryDefaultId)
+      : null;
+
+    if (data.hasEmiratesId && !normalisedEmiratesId) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Emirates ID is required.',
+        path: ['emiratesId'],
+      });
+    }
+
+    if (data.hasEmiratesId && normalisedEmiratesId && !/^784\d{12}$/.test(normalisedEmiratesId)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Emirates ID must be 15 digits beginning with 784.',
+        path: ['emiratesId'],
+      });
+    }
+
+    if (!data.hasEmiratesId && !data.patientIdentificationCategory) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Patient Identification Category is required.',
+        path: ['patientIdentificationCategory'],
+      });
+    }
+
+    if (
+      !data.hasEmiratesId &&
+      data.patientIdentificationCategory &&
+      normalisedEmiratesId !== normalisedCategoryDefaultId
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Emirates ID must match the selected Patient Identification Category.',
+        path: ['patientIdentificationCategory'],
+      });
+    }
+
+    if (!data.hasEmiratesId && data.photoUrl) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Patient photo can only be saved with Emirates ID.',
+        path: ['photoUrl'],
+      });
+    }
+
+    if (data.isMedicalTourist && data.hasEmiratesId) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Medical Tourist cannot have Emirates ID.',
+        path: ['hasEmiratesId'],
+      });
+    }
+
+    if (data.isMedicalTourist && !data.uid) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'UID is required for Medical Tourist.',
+        path: ['uid'],
+      });
     }
 
     data.identityDocuments.forEach((document, index) => {

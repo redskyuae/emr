@@ -20,6 +20,7 @@ const tenantB = 'tenant-b-test';
 async function createPatient(tenantId: string) {
   return patientRepository.createPatient({
     tenantId,
+    title: 'ms',
     firstName: 'Ada',
     lastName: 'Lovelace',
     gender: 'female',

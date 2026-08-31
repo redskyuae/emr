@@ -49,6 +49,29 @@ describe('Appointment schema', () => {
     });
   });
 
+  it('should accept provisional patient demographic fields documented by the OpenAPI contract', () => {
+    expect(
+      createAppointmentSchema.parse({
+        ...validPayload,
+        patientId: undefined,
+        provisionalPatient: {
+          race: 'asian',
+          firstName: 'Asha',
+          lastName: 'Rao',
+          ethnicGroup: 'south-asian',
+          phone: '9876543210',
+          emergencyContactGender: 'female',
+        },
+      })
+    ).toMatchObject({
+      provisionalPatient: {
+        race: 'asian',
+        ethnicGroup: 'south-asian',
+        emergencyContactGender: 'female',
+      },
+    });
+  });
+
   it('should reject non-DD-MM-YYYY slot date and non-HH:mm slot time', () => {
     expect(errorsOf({ ...validPayload, slotDate: '2099-12-31' })).toContain(
       'Slot date must be in DD-MM-YYYY format'

@@ -1706,6 +1706,7 @@ const assetErrorResponses = {
 };
 
 const patientRequestExample = {
+  title: 'mrs',
   firstName: 'Asha',
   middleName: 'Kiran',
   lastName: 'Rao',
@@ -1726,7 +1727,13 @@ const patientRequestExample = {
   nationalityId: 1,
   languageId: 2,
   religionId: 3,
+  race: 'asian',
+  ethnicGroup: 'south-asian',
   emiratesId: '784199012345671',
+  photoUrl: 'https://example.com/patient-photos/emirates-id-784199012345671.jpg',
+  isVip: false,
+  smsConsent: true,
+  isMedicalTourist: false,
   identityDocuments: [
     {
       documentType: 'passport',
@@ -1742,6 +1749,7 @@ const patientRequestExample = {
   ],
   emergencyContactName: 'Kiran Rao',
   emergencyContactRelationship: 'Spouse',
+  emergencyContactGender: 'male',
   emergencyContactPhone: '+91-9988776655',
 };
 
@@ -1750,6 +1758,9 @@ const patientExample = {
   tenantId: 'org_apollo',
   mrn: 'MRN-1042',
   ...patientRequestExample,
+  uid: null,
+  patientIdentificationCategory: null,
+  passportNumber: null,
   registrationStatus: 'registered',
   // Responses echo each document's id — the nested full replace diffs on it
   // rather than rewriting the collection (ADR 0043).
@@ -1901,10 +1912,26 @@ const patientValidationFailed = {
           },
         },
         invalidEmiratesId: {
-          summary: 'Emirates ID is not 15 digits beginning with 784',
+          summary: 'Emirates ID is neither a real ID nor a category default',
           value: {
             message: 'Validation failed',
-            errors: ['Patient Emirates ID must be 15 digits beginning with 784'],
+            errors: [
+              'Patient Emirates ID must be 15 digits beginning with 784 or match Patient Identification Category default',
+            ],
+          },
+        },
+        missingIdentificationCategory: {
+          summary: 'Emirates ID absent without Patient Identification Category',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient Identification Category is required when Emirates ID is absent'],
+          },
+        },
+        medicalTouristMissingUid: {
+          summary: 'Medical Tourist submitted without UID',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient UID is required for Medical Tourist'],
           },
         },
         passportMissingExpiry: {
@@ -5997,7 +6024,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Register Patient',
         description:
-          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. emiratesId is optional (foreign nationals will not have one), is stored digit-normalised, and is unique per Tenant when present. identityDocuments replaces the whole collection; required fields vary by documentType.',
+          'Registers a new Patient (Patient Registration) in the active Tenant. The tenantId is resolved from the active authenticated Session. The server allocates the Medical Record Number (MRN); clients never send it. stateId, countryId, nationalityId, languageId, and religionId must reference existing records; stateId requires countryId and the State must belong to that Country. Send a real emiratesId beginning with 784, or send patientIdentificationCategory with its mapped fallback emiratesId. emiratesId is stored digit-normalised; real 784 Emirates IDs are unique per Tenant among active Patients, while category fallback IDs are reusable. photoUrl may be sent only when it was returned by an Emirates ID read for a real 784 Emirates ID. Medical Tourist registration uses a category fallback Emirates ID and requires a uid; passportNumber is optional. identityDocuments replaces the whole collection; required fields vary by documentType.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreatePatientRequest', patientRequestExample),
         responses: {
@@ -6037,7 +6064,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Update Patient',
         description:
-          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference and Emirates ID rules are the same as registration. identityDocuments replaces the whole collection: documents sent with an id are updated, documents sent without one are added, and any existing document omitted from the array is removed.',
+          'Fully replaces the editable Patient fields in the active Tenant. The Medical Record Number (MRN) is immutable and is not part of the request body. Reference, Emirates ID, no-card Patient Identification Category, UID, Passport Number, Patient photo, and Medical Tourist rules are the same as registration. identityDocuments replaces the whole collection: documents sent with an id are updated, documents sent without one are added, and any existing document omitted from the array is removed.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Patient')],
         requestBody: requestBody('UpdatePatientRequest', patientRequestExample),
@@ -9064,6 +9091,24 @@ export const openApiDocument = {
           nationalityId: { type: 'integer', minimum: 1 },
           languageId: { type: 'integer', minimum: 1, description: 'Preferred Language.' },
           religionId: { type: 'integer', minimum: 1 },
+          race: {
+            type: 'string',
+            enum: ['arab', 'asian', 'black', 'white', 'mixed', 'other', 'unknown'],
+          },
+          ethnicGroup: {
+            type: 'string',
+            enum: [
+              'emirati',
+              'gcc-national',
+              'arab',
+              'south-asian',
+              'southeast-asian',
+              'african',
+              'european',
+              'other',
+              'unknown',
+            ],
+          },
           emiratesId: {
             type: 'string',
             description:
@@ -9072,6 +9117,11 @@ export const openApiDocument = {
           },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
+          emergencyContactGender: {
+            type: 'string',
+            enum: ['male', 'female', 'other', 'unknown'],
+            description: 'Next of Kin Gender in Patient Registration UI.',
+          },
           emergencyContactPhone: { type: 'string', maxLength: 20 },
         },
       },
@@ -9861,8 +9911,13 @@ export const openApiDocument = {
       },
       CreatePatientRequest: {
         type: 'object',
-        required: ['firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
+        required: ['title', 'firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
         properties: {
+          title: {
+            type: 'string',
+            enum: ['mr', 'mrs', 'miss', 'baby', 'master', 'ms', 'dr'],
+            description: 'Mandatory Patient title captured during Patient Registration.',
+          },
           firstName: { type: 'string', minLength: 1, maxLength: 100 },
           middleName: { type: 'string', maxLength: 100 },
           lastName: { type: 'string', minLength: 1, maxLength: 100 },
@@ -9905,8 +9960,50 @@ export const openApiDocument = {
           emiratesId: {
             type: 'string',
             description:
-              'Optional — foreign nationals treated without UAE residency will not have one. 15 digits beginning with 784; dashes and spaces are stripped before storage. Unique per Tenant among active Patients. The check digit is deliberately not validated.',
+              'Real Emirates ID: 15 digits beginning with 784. No-card registration: the mapped Patient Identification Category fallback ID, such as 999999999999999. Dashes and spaces are stripped before storage. Real 784 IDs are unique per Tenant among active Patients; fallback IDs are reusable. The real-card check digit is deliberately not validated.',
             example: '784199012345671',
+          },
+          photoUrl: {
+            type: 'string',
+            description:
+              'Optional Patient photo returned by Emirates ID read. Accepts an HTTP(S) URL or image data URL and is saved only when emiratesId is present.',
+            example: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==',
+          },
+          patientIdentificationCategory: {
+            type: 'string',
+            enum: [
+              'uae-national-without-card',
+              'national-without-card',
+              'expatriate-resident-without-card',
+              'non-expatriate-resident-without-card',
+              'unknown-status-without-card',
+            ],
+            description:
+              'Required when the Patient does not have a real 784 Emirates ID. The selected category determines the reusable fallback emiratesId submitted by the registration UI.',
+          },
+          passportNumber: {
+            type: 'string',
+            maxLength: 50,
+            description:
+              'Optional Passport Number captured directly on the Patient. This is separate from repeatable Identity Documents.',
+          },
+          uid: {
+            type: 'string',
+            maxLength: 30,
+            description:
+              'UAE immigration Unified Identification Number. Required for Medical Tourist registration.',
+          },
+          isVip: { type: 'boolean', default: false },
+          smsConsent: {
+            type: 'boolean',
+            default: false,
+            description: 'Whether SMS notifications may be sent to the Patient mobile number.',
+          },
+          isMedicalTourist: {
+            type: 'boolean',
+            default: false,
+            description:
+              'When true, Emirates ID must be absent and uid is required. Passport Number and Identity Documents remain optional.',
           },
           identityDocuments: {
             type: 'array',
@@ -9926,6 +10023,7 @@ export const openApiDocument = {
           'id',
           'tenantId',
           'mrn',
+          'title',
           'firstName',
           'middleName',
           'lastName',
@@ -9952,10 +10050,20 @@ export const openApiDocument = {
           'language',
           'religionId',
           'religion',
+          'race',
+          'ethnicGroup',
           'emiratesId',
+          'photoUrl',
+          'patientIdentificationCategory',
+          'passportNumber',
+          'uid',
+          'isVip',
+          'smsConsent',
+          'isMedicalTourist',
           'identityDocuments',
           'emergencyContactName',
           'emergencyContactRelationship',
+          'emergencyContactGender',
           'emergencyContactPhone',
           'isActive',
           'createdOn',
@@ -9972,6 +10080,12 @@ export const openApiDocument = {
             type: 'string',
             description:
               'Server-generated Medical Record Number, e.g. MRN-1042. Immutable after registration.',
+          },
+          title: {
+            oneOf: [
+              { type: 'string', enum: ['mr', 'mrs', 'miss', 'baby', 'master', 'ms', 'dr'] },
+              { type: 'null' },
+            ],
           },
           firstName: { type: 'string', minLength: 1, maxLength: 100 },
           middleName: { type: ['string', 'null'], maxLength: 100 },
@@ -10024,17 +10138,76 @@ export const openApiDocument = {
           language: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
           religionId: { type: ['integer', 'null'], minimum: 1 },
           religion: { oneOf: [schemaRef('PatientReferenceSummary'), { type: 'null' }] },
+          race: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: ['arab', 'asian', 'black', 'white', 'mixed', 'other', 'unknown'],
+              },
+              { type: 'null' },
+            ],
+          },
+          ethnicGroup: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: [
+                  'emirati',
+                  'gcc-national',
+                  'arab',
+                  'south-asian',
+                  'southeast-asian',
+                  'african',
+                  'european',
+                  'other',
+                  'unknown',
+                ],
+              },
+              { type: 'null' },
+            ],
+          },
           emiratesId: {
             type: ['string', 'null'],
             maxLength: 15,
             description: 'Digit-normalised. Clients format it as 784-1990-1234567-1 for display.',
           },
+          photoUrl: {
+            type: ['string', 'null'],
+            description:
+              'Patient photo captured from Emirates ID read. Null when no Emirates ID photo was available or when the Patient is registered without Emirates ID.',
+          },
+          patientIdentificationCategory: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: [
+                  'uae-national-without-card',
+                  'national-without-card',
+                  'expatriate-resident-without-card',
+                  'non-expatriate-resident-without-card',
+                  'unknown-status-without-card',
+                ],
+              },
+              { type: 'null' },
+            ],
+          },
+          passportNumber: { type: ['string', 'null'], maxLength: 50 },
+          uid: { type: ['string', 'null'], maxLength: 30 },
+          isVip: { type: 'boolean' },
+          smsConsent: { type: 'boolean' },
+          isMedicalTourist: { type: 'boolean' },
           identityDocuments: {
             type: 'array',
             items: schemaRef('PatientIdentityDocument'),
           },
           emergencyContactName: { type: ['string', 'null'], maxLength: 150 },
           emergencyContactRelationship: { type: ['string', 'null'], maxLength: 50 },
+          emergencyContactGender: {
+            oneOf: [
+              { type: 'string', enum: ['male', 'female', 'other', 'unknown'] },
+              { type: 'null' },
+            ],
+          },
           emergencyContactPhone: { type: ['string', 'null'], maxLength: 20 },
           isActive: { type: 'boolean' },
           createdOn: { type: 'string', format: 'date-time' },
