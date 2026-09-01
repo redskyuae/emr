@@ -27,13 +27,21 @@ function NoteTypeIcon() {
 
 function NoteTypeActionsMenu({
   noteType,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   noteType: ClinicalNoteType;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (noteType: ClinicalNoteType) => void;
   onDelete: (noteType: ClinicalNoteType) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -47,14 +55,18 @@ function NoteTypeActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(noteType)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(noteType)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(noteType)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(noteType)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -62,10 +74,14 @@ function NoteTypeActionsMenu({
 
 export function NoteTypeTableView({
   noteTypes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   noteTypes: ClinicalNoteType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (noteType: ClinicalNoteType) => void;
   onDelete: (noteType: ClinicalNoteType) => void;
 }) {
@@ -91,7 +107,13 @@ export function NoteTypeTableView({
                     {noteType.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <NoteTypeActionsMenu noteType={noteType} onEdit={onEdit} onDelete={onDelete} />
+                    <NoteTypeActionsMenu
+                      noteType={noteType}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -105,10 +127,14 @@ export function NoteTypeTableView({
 
 export function NoteTypeCardView({
   noteTypes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   noteTypes: ClinicalNoteType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (noteType: ClinicalNoteType) => void;
   onDelete: (noteType: ClinicalNoteType) => void;
 }) {
@@ -129,22 +155,28 @@ export function NoteTypeCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(noteType)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(noteType)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(noteType)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(noteType)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -154,10 +186,14 @@ export function NoteTypeCardView({
 
 export function NoteTypeListView({
   noteTypes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   noteTypes: ClinicalNoteType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (noteType: ClinicalNoteType) => void;
   onDelete: (noteType: ClinicalNoteType) => void;
 }) {
@@ -185,7 +221,13 @@ export function NoteTypeListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <NoteTypeActionsMenu noteType={noteType} onEdit={onEdit} onDelete={onDelete} />
+              <NoteTypeActionsMenu
+                noteType={noteType}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

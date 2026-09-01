@@ -23,6 +23,7 @@ import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes';
 import { useCreateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useCreateDiagnosisCode';
 import { useUpdateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useUpdateDiagnosisCode';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -80,6 +81,10 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
   const createMutation = useCreateDiagnosisCode();
   const updateMutation = useUpdateDiagnosisCode();
 
+  const { data: canCreate } = useHasPermission('diagnosis-code:create');
+  const { data: canUpdate } = useHasPermission('diagnosis-code:update');
+  const { data: canDelete } = useHasPermission('diagnosis-code:delete');
+
   const diagnosisCodes = diagnosisCodesQuery.data?.data ?? [];
   const meta = diagnosisCodesQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
@@ -90,13 +95,14 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
-    if (!initialCreateOpen || initialCreateHandledRef.current) {
+    if (!initialCreateOpen || initialCreateHandledRef.current || !canCreate) {
       return;
     }
 
     initialCreateHandledRef.current = true;
     openAddSheet();
-  }, [initialCreateOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCreateOpen, canCreate]);
 
   const previousDebouncedRef = useRef(debouncedSearch);
   if (previousDebouncedRef.current !== debouncedSearch) {
@@ -211,12 +217,14 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Diagnosis Code
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Diagnosis Code
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -241,12 +249,14 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
                 Add ICD-10 Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Diagnosis Code
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Diagnosis Code
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : diagnosisCodes.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -266,18 +276,24 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
             {viewLayout === 'table' ? (
               <DiagnosisCodeTableView
                 diagnosisCodes={diagnosisCodes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setDiagnosisCodePendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <DiagnosisCodeCardView
                 diagnosisCodes={diagnosisCodes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setDiagnosisCodePendingDelete}
               />
             ) : (
               <DiagnosisCodeListView
                 diagnosisCodes={diagnosisCodes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setDiagnosisCodePendingDelete}
               />

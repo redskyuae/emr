@@ -23,6 +23,7 @@ import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { useCreateClinicalNoteType } from '@/app/queries/clinical-masters/note-types/useCreateClinicalNoteType';
 import { useUpdateClinicalNoteType } from '@/app/queries/clinical-masters/note-types/useUpdateClinicalNoteType';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -72,6 +73,10 @@ export function NoteTypesPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
   const createMutation = useCreateClinicalNoteType();
   const updateMutation = useUpdateClinicalNoteType();
 
+  const { data: canCreate } = useHasPermission('clinical-note-type:create');
+  const { data: canUpdate } = useHasPermission('clinical-note-type:update');
+  const { data: canDelete } = useHasPermission('clinical-note-type:delete');
+
   const noteTypes = noteTypesQuery.data?.data ?? [];
   const meta = noteTypesQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
@@ -82,13 +87,14 @@ export function NoteTypesPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
-    if (!initialCreateOpen || initialCreateHandledRef.current) {
+    if (!initialCreateOpen || initialCreateHandledRef.current || !canCreate) {
       return;
     }
 
     initialCreateHandledRef.current = true;
     openAddSheet();
-  }, [initialCreateOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCreateOpen, canCreate]);
 
   const previousDebouncedRef = useRef(debouncedSearch);
   if (previousDebouncedRef.current !== debouncedSearch) {
@@ -203,12 +209,14 @@ export function NoteTypesPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Note Type
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Note Type
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -233,12 +241,14 @@ export function NoteTypesPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
                 Create Clinical Note Types to classify clinical notes in this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Note Type
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Note Type
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : noteTypes.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -258,18 +268,24 @@ export function NoteTypesPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
             {viewLayout === 'table' ? (
               <NoteTypeTableView
                 noteTypes={noteTypes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setNoteTypePendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <NoteTypeCardView
                 noteTypes={noteTypes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setNoteTypePendingDelete}
               />
             ) : (
               <NoteTypeListView
                 noteTypes={noteTypes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setNoteTypePendingDelete}
               />
