@@ -46,13 +46,21 @@ function ReligionIcon() {
 
 function ReligionActionsMenu({
   religion,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   religion: Religion;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (religion: Religion) => void;
   onDelete: (religion: Religion) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -66,14 +74,18 @@ function ReligionActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(religion)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(religion)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(religion)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(religion)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -81,10 +93,14 @@ function ReligionActionsMenu({
 
 export function ReligionTableView({
   religions,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   religions: Religion[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (religion: Religion) => void;
   onDelete: (religion: Religion) => void;
 }) {
@@ -112,7 +128,13 @@ export function ReligionTableView({
                     {formatModifiedOn(religion.modifiedOn)}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <ReligionActionsMenu religion={religion} onEdit={onEdit} onDelete={onDelete} />
+                    <ReligionActionsMenu
+                      religion={religion}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -126,10 +148,14 @@ export function ReligionTableView({
 
 export function ReligionCardView({
   religions,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   religions: Religion[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (religion: Religion) => void;
   onDelete: (religion: Religion) => void;
 }) {
@@ -150,22 +176,28 @@ export function ReligionCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(religion)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(religion)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(religion)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(religion)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -175,10 +207,14 @@ export function ReligionCardView({
 
 export function ReligionListView({
   religions,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   religions: Religion[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (religion: Religion) => void;
   onDelete: (religion: Religion) => void;
 }) {
@@ -204,7 +240,13 @@ export function ReligionListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <ReligionActionsMenu religion={religion} onEdit={onEdit} onDelete={onDelete} />
+              <ReligionActionsMenu
+                religion={religion}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

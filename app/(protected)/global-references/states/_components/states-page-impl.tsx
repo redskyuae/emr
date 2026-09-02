@@ -21,6 +21,7 @@ import { useCountryOptionsQuery } from '@/app/queries/global-references/countrie
 import { type State, useStatesQuery } from '@/app/queries/global-references/states/useStates';
 import { useStateQuery } from '@/app/queries/global-references/states/useState';
 import { useDeleteState } from '@/app/queries/global-references/states/useDeleteState';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -98,7 +99,11 @@ export function StatesPageImpl() {
   const countriesQuery = useCountryOptionsQuery();
   const countries = countriesQuery.data ?? [];
 
-  const isCreating = recordParam === 'new';
+  const { data: canCreate } = useHasPermission('state:create');
+  const { data: canUpdate } = useHasPermission('state:update');
+  const { data: canDelete } = useHasPermission('state:delete');
+
+  const isCreating = recordParam === 'new' && canCreate;
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
   const deleteRecordId = getNumericParam(deleteRecordParam);
   const countryId = countryFilter !== 'all' ? Number(countryFilter) : undefined;
@@ -231,12 +236,14 @@ export function StatesPageImpl() {
               onChange={updateCountryFilter}
             />
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add State
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add State
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -261,12 +268,14 @@ export function StatesPageImpl() {
                 Create States under Countries for address context.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add State
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add State
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : states.length === 0 && hasActiveFilter ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -295,11 +304,29 @@ export function StatesPageImpl() {
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <StateTableView states={states} onEdit={openEdit} onDelete={openDelete} />
+              <StateTableView
+                states={states}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             ) : viewLayout === 'card' ? (
-              <StateCardView states={states} onEdit={openEdit} onDelete={openDelete} />
+              <StateCardView
+                states={states}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             ) : (
-              <StateListView states={states} onEdit={openEdit} onDelete={openDelete} />
+              <StateListView
+                states={states}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             )}
 
             {totalPages > 0 ? (

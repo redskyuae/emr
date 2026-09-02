@@ -23,6 +23,7 @@ import {
 } from '@/app/queries/global-references/languages/useLanguages';
 import { useLanguageQuery } from '@/app/queries/global-references/languages/useLanguage';
 import { useDeleteLanguage } from '@/app/queries/global-references/languages/useDeleteLanguage';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,7 +64,11 @@ export function LanguagesPageImpl() {
   const [page, setPage] = useState(1);
   const deleteMutation = useDeleteLanguage();
 
-  const isCreating = recordParam === 'new';
+  const { data: canCreate } = useHasPermission('language:create');
+  const { data: canUpdate } = useHasPermission('language:update');
+  const { data: canDelete } = useHasPermission('language:delete');
+
+  const isCreating = recordParam === 'new' && canCreate;
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
 
   const languagesQuery = useLanguagesQuery({
@@ -167,12 +172,14 @@ export function LanguagesPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add Language
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add Language
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -197,12 +204,14 @@ export function LanguagesPageImpl() {
                 Create Languages used when recording Patient demographics.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add Language
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add Language
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : languages.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -219,11 +228,29 @@ export function LanguagesPageImpl() {
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <LanguageTableView languages={languages} onEdit={openEdit} onDelete={openDelete} />
+              <LanguageTableView
+                languages={languages}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             ) : viewLayout === 'card' ? (
-              <LanguageCardView languages={languages} onEdit={openEdit} onDelete={openDelete} />
+              <LanguageCardView
+                languages={languages}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             ) : (
-              <LanguageListView languages={languages} onEdit={openEdit} onDelete={openDelete} />
+              <LanguageListView
+                languages={languages}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             )}
 
             {totalPages > 0 ? (
