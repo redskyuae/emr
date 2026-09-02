@@ -101,7 +101,8 @@ export function LanguagesPageImpl() {
     editingLanguage === null &&
     (languagesQuery.isLoading || editingLanguageQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingLanguage !== null));
+    isCreating ||
+    (editingRecordId !== null && canUpdate && (recordResolving || editingLanguage !== null));
 
   function openEdit(language: Language) {
     void setRecordParam(String(language.id));
@@ -117,7 +118,7 @@ export function LanguagesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteRecord) {
+    if (!deleteRecord || !canDelete) {
       return;
     }
 
@@ -296,7 +297,7 @@ export function LanguagesPageImpl() {
       />
 
       <LanguageDeleteDialog
-        language={deleteRecord}
+        language={canDelete ? deleteRecord : null}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setDeleteRecord(null)}

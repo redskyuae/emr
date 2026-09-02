@@ -99,7 +99,8 @@ export function CountriesPageImpl() {
     editingCountry === null &&
     (countriesQuery.isLoading || editingCountryQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingCountry !== null));
+    isCreating ||
+    (editingRecordId !== null && canUpdate && (recordResolving || editingCountry !== null));
 
   function openEdit(country: Country) {
     void setRecordParam(String(country.id));
@@ -115,7 +116,7 @@ export function CountriesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteRecord) {
+    if (!deleteRecord || !canDelete) {
       return;
     }
 
@@ -294,7 +295,7 @@ export function CountriesPageImpl() {
       />
 
       <CountryDeleteDialog
-        country={deleteRecord}
+        country={canDelete ? deleteRecord : null}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setDeleteRecord(null)}

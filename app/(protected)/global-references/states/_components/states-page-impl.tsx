@@ -147,14 +147,15 @@ export function StatesPageImpl() {
     editingState === null &&
     (statesQuery.isLoading || editingStateQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingState !== null));
+    isCreating ||
+    (editingRecordId !== null && canUpdate && (recordResolving || editingState !== null));
 
   const deleteRecordResolving =
     deleteRecordId !== null &&
     deleteState === null &&
     (statesQuery.isLoading || deleteStateQuery.isFetching);
   const deleteDialogOpen =
-    deleteRecordId !== null && (deleteRecordResolving || deleteState !== null);
+    deleteRecordId !== null && canDelete && (deleteRecordResolving || deleteState !== null);
 
   function openEdit(state: State) {
     void setRecordParam(String(state.id));
@@ -175,7 +176,7 @@ export function StatesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteState) {
+    if (!deleteState || !canDelete) {
       return;
     }
 

@@ -101,7 +101,8 @@ export function ReligionsPageImpl() {
     editingReligion === null &&
     (religionsQuery.isLoading || editingReligionQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingReligion !== null));
+    isCreating ||
+    (editingRecordId !== null && canUpdate && (recordResolving || editingReligion !== null));
 
   function openEdit(religion: Religion) {
     void setRecordParam(String(religion.id));
@@ -117,7 +118,7 @@ export function ReligionsPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteRecord) {
+    if (!deleteRecord || !canDelete) {
       return;
     }
 
@@ -304,7 +305,7 @@ export function ReligionsPageImpl() {
       />
 
       <ReligionDeleteDialog
-        religion={deleteRecord}
+        religion={canDelete ? deleteRecord : null}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setDeleteRecord(null)}

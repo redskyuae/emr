@@ -93,7 +93,7 @@ export function NationalitiesPageImpl() {
       ? (nationalities.find((nationality) => nationality.id === editingRecordId) ?? null)
       : null;
   const deleteNationality =
-    deleteRecordId !== null
+    deleteRecordId !== null && canDelete
       ? (nationalities.find((nationality) => nationality.id === deleteRecordId) ?? null)
       : null;
 
@@ -111,7 +111,8 @@ export function NationalitiesPageImpl() {
     editingNationality === null &&
     (nationalitiesQuery.isLoading || editingNationalityQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingNationality !== null));
+    isCreating ||
+    (editingRecordId !== null && canUpdate && (recordResolving || editingNationality !== null));
 
   function openEdit(nationality: Nationality) {
     void setRecordParam(String(nationality.id));
@@ -127,7 +128,7 @@ export function NationalitiesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteNationality) {
+    if (!deleteNationality || !canDelete) {
       return;
     }
 
