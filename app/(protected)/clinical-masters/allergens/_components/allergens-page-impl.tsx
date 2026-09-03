@@ -23,6 +23,7 @@ import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
 import { useCreateAllergen } from '@/app/queries/clinical-masters/allergens/useCreateAllergen';
 import { useUpdateAllergen } from '@/app/queries/clinical-masters/allergens/useUpdateAllergen';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -72,6 +73,10 @@ export function AllergensPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
   const createMutation = useCreateAllergen();
   const updateMutation = useUpdateAllergen();
 
+  const { data: canCreate } = useHasPermission('allergen:create');
+  const { data: canUpdate } = useHasPermission('allergen:update');
+  const { data: canDelete } = useHasPermission('allergen:delete');
+
   const allergens = allergensQuery.data?.data ?? [];
   const meta = allergensQuery.data?.meta;
   const totalPages = meta?.totalPages ?? 0;
@@ -82,13 +87,14 @@ export function AllergensPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
-    if (!initialCreateOpen || initialCreateHandledRef.current) {
+    if (!initialCreateOpen || initialCreateHandledRef.current || !canCreate) {
       return;
     }
 
     initialCreateHandledRef.current = true;
     openAddSheet();
-  }, [initialCreateOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCreateOpen, canCreate]);
 
   const previousDebouncedRef = useRef(debouncedSearch);
   if (previousDebouncedRef.current !== debouncedSearch) {
@@ -199,12 +205,14 @@ export function AllergensPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Allergen
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Allergen
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -229,12 +237,14 @@ export function AllergensPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
                 Add Allergens to build this Tenant&apos;s allergen catalogue for Patient records.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Allergen
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Allergen
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : allergens.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -253,18 +263,24 @@ export function AllergensPageImpl({ initialCreateOpen }: { initialCreateOpen: bo
             {viewLayout === 'table' ? (
               <AllergenTableView
                 allergens={allergens}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setAllergenPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <AllergenCardView
                 allergens={allergens}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setAllergenPendingDelete}
               />
             ) : (
               <AllergenListView
                 allergens={allergens}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setAllergenPendingDelete}
               />

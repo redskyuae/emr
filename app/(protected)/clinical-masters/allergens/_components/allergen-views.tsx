@@ -46,13 +46,21 @@ function AllergenIcon() {
 
 function AllergenActionsMenu({
   allergen,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   allergen: Allergen;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (allergen: Allergen) => void;
   onDelete: (allergen: Allergen) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -66,14 +74,18 @@ function AllergenActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(allergen)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(allergen)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(allergen)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(allergen)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -81,10 +93,14 @@ function AllergenActionsMenu({
 
 export function AllergenTableView({
   allergens,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   allergens: Allergen[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (allergen: Allergen) => void;
   onDelete: (allergen: Allergen) => void;
 }) {
@@ -110,7 +126,13 @@ export function AllergenTableView({
                     <CategoryBadge category={allergen.category} />
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <AllergenActionsMenu allergen={allergen} onEdit={onEdit} onDelete={onDelete} />
+                    <AllergenActionsMenu
+                      allergen={allergen}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -124,10 +146,14 @@ export function AllergenTableView({
 
 export function AllergenCardView({
   allergens,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   allergens: Allergen[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (allergen: Allergen) => void;
   onDelete: (allergen: Allergen) => void;
 }) {
@@ -148,22 +174,28 @@ export function AllergenCardView({
               </div>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(allergen)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(allergen)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(allergen)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(allergen)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -173,10 +205,14 @@ export function AllergenCardView({
 
 export function AllergenListView({
   allergens,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   allergens: Allergen[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (allergen: Allergen) => void;
   onDelete: (allergen: Allergen) => void;
 }) {
@@ -203,7 +239,13 @@ export function AllergenListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <AllergenActionsMenu allergen={allergen} onEdit={onEdit} onDelete={onDelete} />
+              <AllergenActionsMenu
+                allergen={allergen}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

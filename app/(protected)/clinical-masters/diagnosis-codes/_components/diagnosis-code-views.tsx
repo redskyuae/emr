@@ -27,13 +27,21 @@ function DiagnosisCodeIcon() {
 
 function DiagnosisCodeActionsMenu({
   diagnosisCode,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   diagnosisCode: DiagnosisCode;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (diagnosisCode: DiagnosisCode) => void;
   onDelete: (diagnosisCode: DiagnosisCode) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -47,14 +55,18 @@ function DiagnosisCodeActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(diagnosisCode)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(diagnosisCode)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(diagnosisCode)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(diagnosisCode)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -62,10 +74,14 @@ function DiagnosisCodeActionsMenu({
 
 export function DiagnosisCodeTableView({
   diagnosisCodes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   diagnosisCodes: DiagnosisCode[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (diagnosisCode: DiagnosisCode) => void;
   onDelete: (diagnosisCode: DiagnosisCode) => void;
 }) {
@@ -95,6 +111,8 @@ export function DiagnosisCodeTableView({
                   <TableCell className="pr-4 text-right">
                     <DiagnosisCodeActionsMenu
                       diagnosisCode={diagnosisCode}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
                       onEdit={onEdit}
                       onDelete={onDelete}
                     />
@@ -111,10 +129,14 @@ export function DiagnosisCodeTableView({
 
 export function DiagnosisCodeCardView({
   diagnosisCodes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   diagnosisCodes: DiagnosisCode[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (diagnosisCode: DiagnosisCode) => void;
   onDelete: (diagnosisCode: DiagnosisCode) => void;
 }) {
@@ -135,22 +157,33 @@ export function DiagnosisCodeCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(diagnosisCode)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(diagnosisCode)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(diagnosisCode)}
+                  >
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(diagnosisCode)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -160,10 +193,14 @@ export function DiagnosisCodeCardView({
 
 export function DiagnosisCodeListView({
   diagnosisCodes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   diagnosisCodes: DiagnosisCode[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (diagnosisCode: DiagnosisCode) => void;
   onDelete: (diagnosisCode: DiagnosisCode) => void;
 }) {
@@ -195,6 +232,8 @@ export function DiagnosisCodeListView({
             <div className="shrink-0 pl-13 sm:pl-0">
               <DiagnosisCodeActionsMenu
                 diagnosisCode={diagnosisCode}
+                canEdit={canEdit}
+                canDelete={canDelete}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />
