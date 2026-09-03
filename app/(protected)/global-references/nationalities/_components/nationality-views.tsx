@@ -46,13 +46,21 @@ function NationalityIcon() {
 
 function NationalityActionsMenu({
   nationality,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   nationality: Nationality;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (nationality: Nationality) => void;
   onDelete: (nationality: Nationality) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -66,14 +74,18 @@ function NationalityActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(nationality)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(nationality)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(nationality)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(nationality)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -81,10 +93,14 @@ function NationalityActionsMenu({
 
 export function NationalityTableView({
   nationalities,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   nationalities: Nationality[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (nationality: Nationality) => void;
   onDelete: (nationality: Nationality) => void;
 }) {
@@ -114,6 +130,8 @@ export function NationalityTableView({
                   <TableCell className="pr-4 text-right">
                     <NationalityActionsMenu
                       nationality={nationality}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
                       onEdit={onEdit}
                       onDelete={onDelete}
                     />
@@ -130,10 +148,14 @@ export function NationalityTableView({
 
 export function NationalityCardView({
   nationalities,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   nationalities: Nationality[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (nationality: Nationality) => void;
   onDelete: (nationality: Nationality) => void;
 }) {
@@ -155,22 +177,33 @@ export function NationalityCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(nationality)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(nationality)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(nationality)}
+                  >
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(nationality)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -180,10 +213,14 @@ export function NationalityCardView({
 
 export function NationalityListView({
   nationalities,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   nationalities: Nationality[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (nationality: Nationality) => void;
   onDelete: (nationality: Nationality) => void;
 }) {
@@ -211,6 +248,8 @@ export function NationalityListView({
             <div className="shrink-0 pl-13 sm:pl-0">
               <NationalityActionsMenu
                 nationality={nationality}
+                canEdit={canEdit}
+                canDelete={canDelete}
                 onEdit={onEdit}
                 onDelete={onDelete}
               />
