@@ -8,6 +8,7 @@ import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } f
 import type { Ward } from '@/app/api/lib/modules/ward/schemas/ward-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,14 +47,16 @@ export function WardsPageImpl() {
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  // The sheet opens straight from the URL: ?ward=new creates, ?ward=<id>
-  // edits once the row resolves from already-loaded query data.
-  const isCreating = wardParam === 'new';
+  const { data: canCreate } = useHasPermission('ward:create');
+  const { data: canUpdate } = useHasPermission('ward:update');
+  const { data: canDelete } = useHasPermission('ward:delete');
+
+  const isCreating = wardParam === 'new' && canCreate;
   const editingId =
     wardParam !== null && wardParam !== 'new' && /^\d+$/.test(wardParam) ? Number(wardParam) : null;
   const editingWard =
     editingId !== null ? (wards.find((row) => row.id === editingId) ?? null) : null;
-  const sheetOpen = isCreating || (editingId !== null && editingWard !== null);
+  const sheetOpen = isCreating || (editingId !== null && canUpdate && editingWard !== null);
 
   function closeSheet() {
     void setWardParam(null);
@@ -80,12 +83,14 @@ export function WardsPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" onClick={() => void setWardParam('new')}>
-                <Plus className="size-4" />
-                Add Ward
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" onClick={() => void setWardParam('new')}>
+                  <Plus className="size-4" />
+                  Add Ward
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -111,12 +116,14 @@ export function WardsPageImpl() {
                 ICU, General Ward, or Maternity.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setWardParam('new')}>
-                <Plus className="size-4" />
-                Add Ward
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setWardParam('new')}>
+                  <Plus className="size-4" />
+                  Add Ward
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : wards.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -134,6 +141,8 @@ export function WardsPageImpl() {
           <>
             <WardTable
               wards={wards}
+              canEdit={canUpdate}
+              canDelete={canDelete}
               onEdit={(ward) => void setWardParam(String(ward.id))}
               onDelete={setWardPendingDelete}
             />
@@ -178,7 +187,10 @@ export function WardsPageImpl() {
         onClose={closeSheet}
       />
 
-      <DeleteWardDialog ward={wardPendingDelete} onClose={() => setWardPendingDelete(null)} />
+      <DeleteWardDialog
+        ward={canDelete ? wardPendingDelete : null}
+        onClose={() => setWardPendingDelete(null)}
+      />
     </>
   );
 }
