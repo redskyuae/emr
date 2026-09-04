@@ -12,6 +12,7 @@ import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useCompleteVisit } from '@/app/queries/visits/useCompleteVisit';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -73,6 +74,11 @@ export function VisitsPageImpl() {
 
   const startMutation = useStartConsultation();
   const completeMutation = useCompleteVisit();
+
+  const { data: canCreate } = useHasPermission('visit:create');
+  const { data: canStart } = useHasPermission('visit:start');
+  const { data: canComplete } = useHasPermission('visit:complete');
+  const { data: canCancel } = useHasPermission('visit:cancel');
 
   const visits = visitsQuery.data?.data ?? [];
   const meta = visitsQuery.data?.meta;
@@ -175,12 +181,14 @@ export function VisitsPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" onClick={() => void setCheckInParam('new')}>
-                <Plus className="size-4" />
-                Check in
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" onClick={() => void setCheckInParam('new')}>
+                  <Plus className="size-4" />
+                  Check in
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -206,18 +214,23 @@ export function VisitsPageImpl() {
                 a Walk-in.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setCheckInParam('new')}>
-                <Plus className="size-4" />
-                Check in
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setCheckInParam('new')}>
+                  <Plus className="size-4" />
+                  Check in
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : (
           <>
             <VisitsTable
               visits={visits}
               pendingVisitId={pendingVisitId as number | null}
+              canStart={canStart}
+              canComplete={canComplete}
+              canCancel={canCancel}
               onStart={(visit) => void handleStart(visit)}
               onComplete={(visit) => void handleComplete(visit)}
               onCancel={setVisitPendingCancel}
@@ -256,7 +269,10 @@ export function VisitsPageImpl() {
         )}
       </div>
 
-      <CheckInSheet open={checkInParam === 'new'} onClose={() => void setCheckInParam(null)} />
+      <CheckInSheet
+        open={checkInParam === 'new' && canCreate}
+        onClose={() => void setCheckInParam(null)}
+      />
 
       <CancelVisitDialog visit={visitPendingCancel} onClose={() => setVisitPendingCancel(null)} />
     </>

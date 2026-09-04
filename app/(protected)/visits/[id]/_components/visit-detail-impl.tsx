@@ -24,6 +24,7 @@ import { useCompleteVisit } from '@/app/queries/visits/useCompleteVisit';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
 import { useUpdateVisit } from '@/app/queries/visits/useUpdateVisit';
 import { useVisit } from '@/app/queries/visits/useVisit';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,8 +51,14 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const completeMutation = useCompleteVisit();
   const updateMutation = useUpdateVisit();
 
+  const { data: canUpdate } = useHasPermission('visit:update');
+  const { data: canStart } = useHasPermission('visit:start');
+  const { data: canComplete } = useHasPermission('visit:complete');
+  const { data: canCancel } = useHasPermission('visit:cancel');
+
   const status = visitStatusPresentation(visit.status);
   const active = isActiveVisit(visit.status);
+  const canEditDetails = active && canUpdate;
 
   const allergenName = (id: number) =>
     allergensQuery.data?.data.find((allergen) => allergen.id === id)?.name ?? 'Allergen';
@@ -129,7 +136,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {visit.status === 'CHECKED_IN' ? (
+                {visit.status === 'CHECKED_IN' && canStart ? (
                   <Button
                     type="button"
                     disabled={startMutation.isPending}
@@ -139,7 +146,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                     Start consultation
                   </Button>
                 ) : null}
-                {visit.status === 'IN_CONSULTATION' ? (
+                {visit.status === 'IN_CONSULTATION' && canComplete ? (
                   <Button
                     type="button"
                     disabled={completeMutation.isPending}
@@ -149,7 +156,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                     Complete Visit
                   </Button>
                 ) : null}
-                {active ? (
+                {active && canCancel ? (
                   <Button type="button" variant="outline" onClick={() => setCancelOpen(true)}>
                     <XCircle className="size-4" />
                     Cancel
@@ -186,7 +193,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
               <Textarea
                 id="visit-chief-complaint"
                 rows={2}
-                disabled={!active}
+                disabled={!canEditDetails}
                 value={chiefComplaint}
                 onChange={(event) => setChiefComplaint(event.target.value)}
               />
@@ -196,12 +203,12 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
               <Textarea
                 id="visit-remarks"
                 rows={2}
-                disabled={!active}
+                disabled={!canEditDetails}
                 value={remarks}
                 onChange={(event) => setRemarks(event.target.value)}
               />
             </Field>
-            {active ? (
+            {canEditDetails ? (
               <div className="flex justify-end">
                 <Button
                   type="button"
@@ -215,7 +222,9 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
               </div>
             ) : (
               <p className="text-muted-foreground text-sm">
-                This Visit is {status.label.toLowerCase()} and can no longer be edited.
+                {active
+                  ? 'You do not have permission to edit this Visit.'
+                  : `This Visit is ${status.label.toLowerCase()} and can no longer be edited.`}
               </p>
             )}
           </CardContent>
