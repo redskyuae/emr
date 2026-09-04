@@ -8,6 +8,7 @@ import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } f
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,16 +47,18 @@ export function VisitTypesPageImpl() {
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  // The sheet opens straight from the URL: ?visitType=new creates, ?visitType=<id>
-  // edits once the row resolves from already-loaded query data.
-  const isCreating = visitTypeParam === 'new';
+  const { data: canCreate } = useHasPermission('visit-type:create');
+  const { data: canUpdate } = useHasPermission('visit-type:update');
+  const { data: canDelete } = useHasPermission('visit-type:delete');
+
+  const isCreating = visitTypeParam === 'new' && canCreate;
   const editingId =
     visitTypeParam !== null && visitTypeParam !== 'new' && /^\d+$/.test(visitTypeParam)
       ? Number(visitTypeParam)
       : null;
   const editingVisitType =
     editingId !== null ? (visitTypes.find((row) => row.id === editingId) ?? null) : null;
-  const sheetOpen = isCreating || (editingId !== null && editingVisitType !== null);
+  const sheetOpen = isCreating || (editingId !== null && canUpdate && editingVisitType !== null);
 
   function closeSheet() {
     void setVisitTypeParam(null);
@@ -82,12 +85,14 @@ export function VisitTypesPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" onClick={() => void setVisitTypeParam('new')}>
-                <Plus className="size-4" />
-                Add Visit Type
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" onClick={() => void setVisitTypeParam('new')}>
+                  <Plus className="size-4" />
+                  Add Visit Type
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -113,12 +118,14 @@ export function VisitTypesPageImpl() {
                 Consultation or Follow-up.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setVisitTypeParam('new')}>
-                <Plus className="size-4" />
-                Add Visit Type
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setVisitTypeParam('new')}>
+                  <Plus className="size-4" />
+                  Add Visit Type
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : visitTypes.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -136,6 +143,8 @@ export function VisitTypesPageImpl() {
           <>
             <VisitTypeTable
               visitTypes={visitTypes}
+              canEdit={canUpdate}
+              canDelete={canDelete}
               onEdit={(visitType) => void setVisitTypeParam(String(visitType.id))}
               onDelete={setVisitTypePendingDelete}
             />
@@ -181,7 +190,7 @@ export function VisitTypesPageImpl() {
       />
 
       <DeleteVisitTypeDialog
-        visitType={visitTypePendingDelete}
+        visitType={canDelete ? visitTypePendingDelete : null}
         onClose={() => setVisitTypePendingDelete(null)}
       />
     </>

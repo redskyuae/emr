@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Bell, CircleHelp, Plus, Search } from 'lucide-react';
 
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { getAppPageMeta } from '@/components/app/app-shell-config';
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
@@ -16,6 +17,10 @@ export function AppTopbar() {
   const pathname = usePathname();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pageMeta = getAppPageMeta(pathname);
+  const { data: hasPrimaryActionPermission } = useHasPermission(
+    pageMeta.primaryAction?.permission ?? ''
+  );
+  const canUsePrimaryAction = !pageMeta.primaryAction?.permission || hasPrimaryActionPermission;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -91,7 +96,7 @@ export function AppTopbar() {
               <TooltipContent>Notifications</TooltipContent>
             </Tooltip>
 
-            {pageMeta.primaryAction ? (
+            {pageMeta.primaryAction && canUsePrimaryAction ? (
               <Button asChild className="ml-1">
                 <Link href={pageMeta.primaryAction.href}>
                   <Plus className="size-4" />

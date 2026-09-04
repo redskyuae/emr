@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, UsersRound } from 'lucide-react';
+import { ArrowLeft, UserRoundX, UsersRound } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PatientForm } from '@/app/(protected)/patients/_components/patient-form';
@@ -13,6 +13,7 @@ import {
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useUpdatePatient } from '@/app/queries/patients/useUpdatePatient';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -38,6 +39,24 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
   const router = useRouter();
   const patientQuery = usePatientQuery(patientId);
   const updatePatient = useUpdatePatient();
+  const { data: canUpdate } = useHasPermission('patient:update');
+
+  if (!canUpdate) {
+    return (
+      <div className="space-y-4">
+        <BackLink patientId={patientId} />
+        <Empty className="min-h-72">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <UserRoundX className="size-5" />
+            </EmptyMedia>
+            <EmptyTitle>You don&apos;t have permission to edit Patients.</EmptyTitle>
+            <EmptyDescription>Contact a Tenant Admin if you need access.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
 
   if (patientQuery.isLoading) {
     return (
