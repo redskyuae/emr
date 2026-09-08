@@ -22,16 +22,22 @@ function formatTime(value: Date | string) {
 
 export function VisitsTable({
   visits,
+  pendingVisitId,
+  canStart,
+  canComplete,
+  canCancel,
   onStart,
   onComplete,
   onCancel,
-  pendingVisitId,
 }: {
   visits: Visit[];
+  pendingVisitId: number | null;
+  canStart: boolean;
+  canComplete: boolean;
+  canCancel: boolean;
   onStart: (visit: Visit) => void;
   onComplete: (visit: Visit) => void;
   onCancel: (visit: Visit) => void;
-  pendingVisitId: number | null;
 }) {
   return (
     <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
@@ -91,7 +97,7 @@ export function VisitsTable({
                   </td>
                   <td className="p-3 pr-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {visit.status === 'CHECKED_IN' ? (
+                      {visit.status === 'CHECKED_IN' && canStart ? (
                         <Button
                           type="button"
                           size="sm"
@@ -103,7 +109,7 @@ export function VisitsTable({
                         </Button>
                       ) : null}
 
-                      {visit.status === 'IN_CONSULTATION' ? (
+                      {visit.status === 'IN_CONSULTATION' && canComplete ? (
                         <Button
                           type="button"
                           size="sm"
@@ -138,7 +144,7 @@ export function VisitsTable({
                               Open Patient
                             </Link>
                           </DropdownMenuItem>
-                          {isActiveVisit(visit.status) ? (
+                          {isActiveVisit(visit.status) && canCancel ? (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem

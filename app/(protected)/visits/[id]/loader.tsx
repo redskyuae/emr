@@ -14,7 +14,7 @@ export default function VisitDetailPageLoader() {
             <Skeleton className="h-4 w-72" />
             <Skeleton className="h-4 w-56" />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Skeleton className="h-9 w-40" />
             <Skeleton className="h-9 w-24" />
           </div>
