@@ -23,6 +23,7 @@ import {
 } from '@/app/queries/global-references/nationalities/useNationalities';
 import { useNationalityQuery } from '@/app/queries/global-references/nationalities/useNationality';
 import { useDeleteNationality } from '@/app/queries/global-references/nationalities/useDeleteNationality';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,7 +67,11 @@ export function NationalitiesPageImpl() {
   const [page, setPage] = useState(1);
   const deleteMutation = useDeleteNationality();
 
-  const isCreating = recordParam === 'new';
+  const { data: canCreate } = useHasPermission('nationality:create');
+  const { data: canUpdate } = useHasPermission('nationality:update');
+  const { data: canDelete } = useHasPermission('nationality:delete');
+
+  const isCreating = recordParam === 'new' && canCreate;
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
   const deleteRecordId = getNumericParam(deleteRecordParam);
 
@@ -88,7 +93,7 @@ export function NationalitiesPageImpl() {
       ? (nationalities.find((nationality) => nationality.id === editingRecordId) ?? null)
       : null;
   const deleteNationality =
-    deleteRecordId !== null
+    deleteRecordId !== null && canDelete
       ? (nationalities.find((nationality) => nationality.id === deleteRecordId) ?? null)
       : null;
 
@@ -106,7 +111,8 @@ export function NationalitiesPageImpl() {
     editingNationality === null &&
     (nationalitiesQuery.isLoading || editingNationalityQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingNationality !== null));
+    isCreating ||
+    (editingRecordId !== null && canUpdate && (recordResolving || editingNationality !== null));
 
   function openEdit(nationality: Nationality) {
     void setRecordParam(String(nationality.id));
@@ -122,7 +128,7 @@ export function NationalitiesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteNationality) {
+    if (!deleteNationality || !canDelete) {
       return;
     }
 
@@ -177,12 +183,14 @@ export function NationalitiesPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add Nationality
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add Nationality
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -207,12 +215,14 @@ export function NationalitiesPageImpl() {
                 Create Nationalities used during Patient Registration.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add Nationality
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add Nationality
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : nationalities.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -231,18 +241,24 @@ export function NationalitiesPageImpl() {
             {viewLayout === 'table' ? (
               <NationalityTableView
                 nationalities={nationalities}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEdit}
                 onDelete={openDelete}
               />
             ) : viewLayout === 'card' ? (
               <NationalityCardView
                 nationalities={nationalities}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEdit}
                 onDelete={openDelete}
               />
             ) : (
               <NationalityListView
                 nationalities={nationalities}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEdit}
                 onDelete={openDelete}
               />

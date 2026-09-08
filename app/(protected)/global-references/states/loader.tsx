@@ -7,7 +7,7 @@ export default function StatesPageLoader() {
         <Skeleton className="h-9 w-56" />
         <Skeleton className="h-9 w-full lg:max-w-sm" />
         <Skeleton className="h-9 w-full lg:w-52" />
-        <div className="flex gap-2 lg:ml-auto">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
           <Skeleton className="h-9 w-28" />
         </div>
       </div>

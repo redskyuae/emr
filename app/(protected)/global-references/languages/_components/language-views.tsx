@@ -46,13 +46,21 @@ function LanguageIcon() {
 
 function LanguageActionsMenu({
   language,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   language: Language;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (language: Language) => void;
   onDelete: (language: Language) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -66,14 +74,18 @@ function LanguageActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(language)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(language)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(language)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(language)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -81,10 +93,14 @@ function LanguageActionsMenu({
 
 export function LanguageTableView({
   languages,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   languages: Language[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (language: Language) => void;
   onDelete: (language: Language) => void;
 }) {
@@ -112,7 +128,13 @@ export function LanguageTableView({
                     {formatModifiedOn(language.modifiedOn)}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <LanguageActionsMenu language={language} onEdit={onEdit} onDelete={onDelete} />
+                    <LanguageActionsMenu
+                      language={language}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -126,10 +148,14 @@ export function LanguageTableView({
 
 export function LanguageCardView({
   languages,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   languages: Language[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (language: Language) => void;
   onDelete: (language: Language) => void;
 }) {
@@ -150,22 +176,28 @@ export function LanguageCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(language)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(language)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(language)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(language)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -175,10 +207,14 @@ export function LanguageCardView({
 
 export function LanguageListView({
   languages,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   languages: Language[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (language: Language) => void;
   onDelete: (language: Language) => void;
 }) {
@@ -204,7 +240,13 @@ export function LanguageListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <LanguageActionsMenu language={language} onEdit={onEdit} onDelete={onDelete} />
+              <LanguageActionsMenu
+                language={language}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

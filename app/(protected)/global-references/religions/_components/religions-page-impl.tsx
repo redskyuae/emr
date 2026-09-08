@@ -23,6 +23,7 @@ import {
 } from '@/app/queries/global-references/religions/useReligions';
 import { useReligionQuery } from '@/app/queries/global-references/religions/useReligion';
 import { useDeleteReligion } from '@/app/queries/global-references/religions/useDeleteReligion';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,7 +64,11 @@ export function ReligionsPageImpl() {
   const [page, setPage] = useState(1);
   const deleteMutation = useDeleteReligion();
 
-  const isCreating = recordParam === 'new';
+  const { data: canCreate } = useHasPermission('religion:create');
+  const { data: canUpdate } = useHasPermission('religion:update');
+  const { data: canDelete } = useHasPermission('religion:delete');
+
+  const isCreating = recordParam === 'new' && canCreate;
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
 
   const religionsQuery = useReligionsQuery({
@@ -96,7 +101,8 @@ export function ReligionsPageImpl() {
     editingReligion === null &&
     (religionsQuery.isLoading || editingReligionQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingReligion !== null));
+    isCreating ||
+    (editingRecordId !== null && canUpdate && (recordResolving || editingReligion !== null));
 
   function openEdit(religion: Religion) {
     void setRecordParam(String(religion.id));
@@ -112,7 +118,7 @@ export function ReligionsPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteRecord) {
+    if (!deleteRecord || !canDelete) {
       return;
     }
 
@@ -175,12 +181,14 @@ export function ReligionsPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add Religion
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add Religion
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -205,12 +213,14 @@ export function ReligionsPageImpl() {
                 Create Religions used when recording Patient demographics.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add Religion
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add Religion
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : religions.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -227,11 +237,29 @@ export function ReligionsPageImpl() {
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <ReligionTableView religions={religions} onEdit={openEdit} onDelete={openDelete} />
+              <ReligionTableView
+                religions={religions}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             ) : viewLayout === 'card' ? (
-              <ReligionCardView religions={religions} onEdit={openEdit} onDelete={openDelete} />
+              <ReligionCardView
+                religions={religions}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             ) : (
-              <ReligionListView religions={religions} onEdit={openEdit} onDelete={openDelete} />
+              <ReligionListView
+                religions={religions}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             )}
 
             {totalPages > 0 ? (
@@ -277,7 +305,7 @@ export function ReligionsPageImpl() {
       />
 
       <ReligionDeleteDialog
-        religion={deleteRecord}
+        religion={canDelete ? deleteRecord : null}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setDeleteRecord(null)}

@@ -23,6 +23,7 @@ import {
 } from '@/app/queries/global-references/countries/useCountries';
 import { useCountryQuery } from '@/app/queries/global-references/countries/useCountry';
 import { useDeleteCountry } from '@/app/queries/global-references/countries/useDeleteCountry';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,7 +64,11 @@ export function CountriesPageImpl() {
   const [page, setPage] = useState(1);
   const deleteMutation = useDeleteCountry();
 
-  const isCreating = recordParam === 'new';
+  const { data: canCreate } = useHasPermission('country:create');
+  const { data: canUpdate } = useHasPermission('country:update');
+  const { data: canDelete } = useHasPermission('country:delete');
+
+  const isCreating = recordParam === 'new' && canCreate;
   const editingRecordId = recordParam !== 'new' ? getNumericParam(recordParam) : null;
 
   const countriesQuery = useCountriesQuery({
@@ -94,7 +99,8 @@ export function CountriesPageImpl() {
     editingCountry === null &&
     (countriesQuery.isLoading || editingCountryQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRecordId !== null && (recordResolving || editingCountry !== null));
+    isCreating ||
+    (editingRecordId !== null && canUpdate && (recordResolving || editingCountry !== null));
 
   function openEdit(country: Country) {
     void setRecordParam(String(country.id));
@@ -110,7 +116,7 @@ export function CountriesPageImpl() {
   }
 
   async function confirmDelete() {
-    if (!deleteRecord) {
+    if (!deleteRecord || !canDelete) {
       return;
     }
 
@@ -165,12 +171,14 @@ export function CountriesPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add Country
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add Country
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -195,12 +203,14 @@ export function CountriesPageImpl() {
                 Create Countries used in address and identity-document context.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setRecordParam('new')}>
-                <Plus className="size-4" />
-                Add Country
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setRecordParam('new')}>
+                  <Plus className="size-4" />
+                  Add Country
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : countries.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -217,11 +227,29 @@ export function CountriesPageImpl() {
         ) : (
           <>
             {viewLayout === 'table' ? (
-              <CountryTableView countries={countries} onEdit={openEdit} onDelete={openDelete} />
+              <CountryTableView
+                countries={countries}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             ) : viewLayout === 'card' ? (
-              <CountryCardView countries={countries} onEdit={openEdit} onDelete={openDelete} />
+              <CountryCardView
+                countries={countries}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             ) : (
-              <CountryListView countries={countries} onEdit={openEdit} onDelete={openDelete} />
+              <CountryListView
+                countries={countries}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
             )}
 
             {totalPages > 0 ? (
@@ -267,7 +295,7 @@ export function CountriesPageImpl() {
       />
 
       <CountryDeleteDialog
-        country={deleteRecord}
+        country={canDelete ? deleteRecord : null}
         isDeleting={deleteMutation.isPending}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setDeleteRecord(null)}

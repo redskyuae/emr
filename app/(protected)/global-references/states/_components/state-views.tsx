@@ -46,13 +46,21 @@ function StateIcon() {
 
 function StateActionsMenu({
   state,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   state: State;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (state: State) => void;
   onDelete: (state: State) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -66,14 +74,18 @@ function StateActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(state)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(state)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(state)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(state)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -81,10 +93,14 @@ function StateActionsMenu({
 
 export function StateTableView({
   states,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   states: State[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (state: State) => void;
   onDelete: (state: State) => void;
 }) {
@@ -121,7 +137,13 @@ export function StateTableView({
                     {formatModifiedOn(state.modifiedOn)}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <StateActionsMenu state={state} onEdit={onEdit} onDelete={onDelete} />
+                    <StateActionsMenu
+                      state={state}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -135,10 +157,14 @@ export function StateTableView({
 
 export function StateCardView({
   states,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   states: State[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (state: State) => void;
   onDelete: (state: State) => void;
 }) {
@@ -159,22 +185,28 @@ export function StateCardView({
               </p>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(state)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(state)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(state)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(state)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -184,10 +216,14 @@ export function StateCardView({
 
 export function StateListView({
   states,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   states: State[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (state: State) => void;
   onDelete: (state: State) => void;
 }) {
@@ -213,7 +249,13 @@ export function StateListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <StateActionsMenu state={state} onEdit={onEdit} onDelete={onDelete} />
+              <StateActionsMenu
+                state={state}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>
