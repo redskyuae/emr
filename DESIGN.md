@@ -26,9 +26,26 @@ All tokens live in `app/globals.css` as CSS variables, mapped to Tailwind utilit
 | `--accent`                       | `oklch(0.948 0.02 248)`  | Light blue wash: hovers, selected items                          |
 | `--muted` / `--muted-foreground` | cool greys               | Secondary surfaces and text                                      |
 | `--border` / `--input`           | cool greys               | Hairlines; inputs slightly darker (Fluent visible-field borders) |
-| `--destructive`                  | red oklch                | Errors and destructive actions only                              |
+| `--destructive`                  | red oklch                | Errors, blocked states, and destructive actions                  |
 
 A full dark theme exists under `.dark` (navy-tinted darks, lighter blue primary). Every screen must work in both; never use raw `white`/`black` utilities for surfaces or text.
+
+### Functional and status colors
+
+Clinical booking uses semantic color to distinguish functionality and resource status:
+
+| Token           | Meaning                                                    |
+| --------------- | ---------------------------------------------------------- |
+| `--primary`     | Selection, the current step, and Consultation              |
+| `--procedure`   | Procedure and Treatment functionality                      |
+| `--success`     | Ready, available, verified, or completed                   |
+| `--warning`     | Pending work, cleaning, maintenance, and clinical warnings |
+| `--destructive` | Blocked or unavailable resources and errors                |
+
+These tokens have light and dark values in `app/globals.css`. Use restrained tinted backgrounds,
+borders, icons, and badges; reserve solid primary for the main action. Status text and an icon must
+accompany color. Selected resources use blue while their availability status remains labeled.
+Resource option cards use equal grid tracks and retain all details when text wraps.
 
 ### Typography
 
@@ -100,8 +117,8 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 
 ## UI principles (Fluent-inspired)
 
-1. **Light, calm, blue-accented.** Surfaces are near-white and cool-tinted; the deep blue primary is the only loud color. If a screen feels colorful, it's wrong.
-2. **One accent at a time.** Primary blue marks the single most important action per view. Secondary actions are `outline`/`ghost`.
+1. **Light, calm, blue-accented.** Surfaces are near-white and cool-tinted; deep blue primary anchors the main action. Functional and status colors add meaning through restrained tints.
+2. **One accent at a time.** Primary blue marks the single most important action per view. Secondary actions are `outline`/`ghost`. Functional and status colors may coexist when each communicates a distinct meaning.
 3. **Depth over decoration.** Hierarchy comes from elevation, spacing, and type weight — not from colored boxes and heavy borders.
 4. **Small radii, crisp edges.** This is a tool, not a toy.
 5. **Type does the talking.** Urbanist headings carry personality through weight and size; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, CalendarClock, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
+import { AlertCircle, Plus, Search } from 'lucide-react';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
@@ -13,14 +13,6 @@ import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
@@ -31,10 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toDateInputValue, toDisplayDate, todayDisplayDate } from '../_utils/appointment-date';
-import { AppointmentsTable, AppointmentsTableSkeleton } from './appointments-table';
+import { partitionAppointmentsByDayView } from '../_utils/appointment-groups';
+import { AppointmentDaySection, AppointmentDaySectionSkeleton } from './appointment-day-section';
 import { AppointmentDetailSheet } from './_sheets/appointment-detail-sheet';
 
-const PAGE_SIZE = 20;
+const DAY_VIEW_LIMIT = 999;
 const ALL_FILTER = 'all';
 
 export function AppointmentsPageImpl() {
@@ -45,7 +38,6 @@ export function AppointmentsPageImpl() {
   const [appointmentParam, setAppointmentParam] = useQueryState('appointment');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
-  const [page, setPage] = useState(1);
 
   const slotDate = dateParam ?? todayDisplayDate();
   const doctorId = doctorParam && doctorParam !== ALL_FILTER ? Number(doctorParam) : undefined;
@@ -59,18 +51,13 @@ export function AppointmentsPageImpl() {
     doctorId,
     appointmentStatusId,
     query: debouncedSearch || undefined,
-    page,
-    limit: PAGE_SIZE,
+    limit: DAY_VIEW_LIMIT,
   });
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
   const statusesQuery = useAppointmentStatusesQuery({ page: 1, limit: 999 });
 
   const appointments = appointmentsQuery.data?.data ?? [];
-  const meta = appointmentsQuery.data?.meta;
-  const total = meta?.total ?? 0;
-  const totalPages = meta?.totalPages ?? 0;
-  const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
-  const rangeEnd = Math.min(page * PAGE_SIZE, total);
+  const { upcoming, completed } = partitionAppointmentsByDayView(appointments);
 
   return (
     <div className="space-y-4">
@@ -82,7 +69,6 @@ export function AppointmentsPageImpl() {
             className="h-9 lg:w-44"
             value={toDateInputValue(slotDate)}
             onChange={(event) => {
-              setPage(1);
               void setDateParam(event.target.value ? toDisplayDate(event.target.value) : null);
             }}
           />
@@ -90,7 +76,6 @@ export function AppointmentsPageImpl() {
           <Select
             value={doctorParam ?? ALL_FILTER}
             onValueChange={(value) => {
-              setPage(1);
               void setDoctorParam(value === ALL_FILTER ? null : value);
             }}
           >
@@ -110,7 +95,6 @@ export function AppointmentsPageImpl() {
           <Select
             value={statusParam ?? ALL_FILTER}
             onValueChange={(value) => {
-              setPage(1);
               void setStatusParam(value === ALL_FILTER ? null : value);
             }}
           >
@@ -136,7 +120,6 @@ export function AppointmentsPageImpl() {
               value={searchTerm}
               onChange={(event) => {
                 setSearchTerm(event.target.value);
-                setPage(1);
               }}
               placeholder="Search booking, MRN, patient or doctor..."
               aria-label="Search appointments"
@@ -162,61 +145,29 @@ export function AppointmentsPageImpl() {
 
       {!appointmentsQuery.isError ? (
         appointmentsQuery.isLoading ? (
-          <AppointmentsTableSkeleton />
-        ) : appointments.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CalendarClock />
-              </EmptyMedia>
-              <EmptyTitle>No Appointments for {slotDate}</EmptyTitle>
-              <EmptyDescription>
-                Book an Appointment to reserve consecutive DoctorSlots for a Patient.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" asChild>
-                <Link href="/appointments/new">
-                  <Plus className="size-4" />
-                  Book Appointment
-                </Link>
-              </Button>
-            </EmptyContent>
-          </Empty>
+          <div className="space-y-6">
+            <AppointmentDaySectionSkeleton />
+            <AppointmentDaySectionSkeleton />
+          </div>
         ) : (
-          <>
-            <AppointmentsTable appointments={appointments} />
-
-            {totalPages > 1 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-          </>
+          <div className="space-y-6">
+            <AppointmentDaySection
+              id="upcoming-appointments"
+              kind="upcoming"
+              title="Upcoming Appointments"
+              appointments={upcoming}
+              description={`Scheduled, confirmed, and checked-in Appointments for ${slotDate}.`}
+              emptyDescription="No upcoming Appointments match the current filters."
+            />
+            <AppointmentDaySection
+              id="completed-appointments"
+              kind="completed"
+              title="Completed Appointments"
+              appointments={completed}
+              description={`Appointments completed on ${slotDate}.`}
+              emptyDescription="No completed Appointments match the current filters."
+            />
+          </div>
         )
       ) : null}
 
