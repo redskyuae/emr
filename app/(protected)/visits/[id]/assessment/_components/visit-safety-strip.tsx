@@ -27,7 +27,7 @@ export function VisitSafetyStrip({
   const allergyAlert = !visit.allergies.some((allergy) => allergy === 'No known allergies');
 
   return (
-    <Card className="shadow-fluent-4 h-20 overflow-hidden">
+    <Card className="shadow-fluent-4 h-20 gap-0 overflow-hidden py-0">
       <CardContent className="grid h-full grid-cols-[1.4fr_1fr_1fr] items-center gap-4 p-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-md">
