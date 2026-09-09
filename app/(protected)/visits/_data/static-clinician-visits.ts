@@ -138,6 +138,10 @@ export type StaticClinicianVisit = {
   assessment: StaticAssessment;
 };
 
+export type VisitBoardRow = StaticClinicianVisit & {
+  href: string;
+};
+
 const systems = [
   ['constitutional', 'Constitutional'],
   ['eyes', 'Eyes'],
@@ -400,7 +404,7 @@ export function getStaticClinicianVisit(id: number): StaticClinicianVisit | unde
   return staticClinicianVisits.find((visit) => visit.id === id);
 }
 
-export function toVisitBoardRows() {
+export function toVisitBoardRows(): VisitBoardRow[] {
   return staticClinicianVisits.map((visit) => ({
     ...visit,
     href: `/visits/${visit.id}/assessment`,
