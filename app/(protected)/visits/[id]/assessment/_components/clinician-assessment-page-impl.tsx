@@ -28,7 +28,7 @@ export function ClinicianAssessmentPageImpl({ visit }: { visit: StaticClinicianV
   return (
     <DesktopWorkspaceGuard>
       <main
-        className="grid h-[calc(100svh-7rem)] min-h-0 grid-rows-[5rem_minmax(0,1fr)_3.5rem] gap-2 overflow-hidden"
+        className="grid h-[calc(100svh-7.5rem)] min-h-0 grid-rows-[5rem_minmax(0,1fr)_3.5rem] gap-2 overflow-hidden"
         data-testid="clinician-cockpit"
       >
         <VisitSafetyStrip visit={visit} />
