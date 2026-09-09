@@ -20,11 +20,9 @@ export function BookingSummary({
         year: 'numeric',
       })
     : 'Choose a date';
-  const time = procedure
-    ? values.startTime
-      ? values.startTime + '–' + values.endTime
-      : 'Choose a time'
-    : values.slotTimes.join(', ') || 'Choose DoctorSlots';
+  const time = values.startTime
+    ? values.startTime + '–' + values.endTime
+    : 'Choose start and end time';
   return (
     <div
       aria-label="Booking summary"
@@ -35,9 +33,13 @@ export function BookingSummary({
         <span className="font-mono text-xs">{time}</span>
       </p>
       <p className="text-muted-foreground text-xs">
+        {doctorName || 'Choose a Doctor'}
         {procedure
-          ? (room?.name ?? 'Choose a Room') + ' · ' + (therapist?.name ?? 'Choose a Therapist')
-          : doctorName || 'Choose a Doctor'}
+          ? ' · ' +
+            (room?.name ?? 'Choose a Room') +
+            ' · ' +
+            (therapist?.name ?? 'Choose a Therapist')
+          : ''}
       </p>
     </div>
   );

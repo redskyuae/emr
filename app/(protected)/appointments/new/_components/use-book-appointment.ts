@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { getSlotTimes } from '../_utils/appointment-time';
 import {
   bookAppointmentFormSchema,
   type BookAppointmentFormValues,
@@ -189,12 +190,26 @@ export function useBookAppointment() {
     form.setValue('therapistId', '', { shouldDirty: true });
   }
   function changeSchedule() {
+    form.setValue('startTime', '', { shouldDirty: true });
+    form.setValue('endTime', '', { shouldDirty: true });
+    form.setValue('roomId', '', { shouldDirty: true });
+    form.setValue('therapistId', '', { shouldDirty: true });
+    if (!isProcedurePath) {
+      form.setValue('doctorRotaId', '');
+      form.setValue('slotTimes', []);
+    }
+  }
+
+  function changeTime(field: 'startTime' | 'endTime', value: string) {
+    form.setValue(field, value, { shouldDirty: true, shouldValidate: true });
+    form.setValue(
+      'slotTimes',
+      getSlotTimes(form.getValues('startTime'), form.getValues('endTime'), selectedRota.duration),
+      { shouldDirty: true }
+    );
     if (isProcedurePath) {
       form.setValue('roomId', '', { shouldDirty: true });
       form.setValue('therapistId', '', { shouldDirty: true });
-    } else {
-      form.setValue('doctorRotaId', '');
-      form.setValue('slotTimes', []);
     }
   }
 
@@ -206,27 +221,6 @@ export function useBookAppointment() {
     setConfirmation(null);
   }
 
-  function toggleSlot(time: string) {
-    const next = values.slotTimes?.includes(time)
-      ? values.slotTimes.filter((slot) => slot !== time)
-      : [...(values.slotTimes ?? []), time];
-    const ordered = selectedRota.slots
-      .filter((slot) => next.includes(slot.time))
-      .map((slot) => slot.time);
-    const indexes = selectedRota.slots
-      .map((slot, index) => (ordered.includes(slot.time) ? index : -1))
-      .filter((index) => index >= 0);
-    if (indexes.length > 1 && Math.max(...indexes) - Math.min(...indexes) + 1 !== indexes.length) {
-      form.setError('slotTimes', {
-        type: 'manual',
-        message: 'Selected DoctorSlots must be consecutive.',
-      });
-      return;
-    }
-    form.clearErrors('slotTimes');
-    form.setValue('slotTimes', ordered, { shouldDirty: true, shouldValidate: true });
-  }
-
   const firstStepFields: Array<keyof BookAppointmentFormValues> = [
     'patientId',
     'firstName',
@@ -234,6 +228,7 @@ export function useBookAppointment() {
     'phone',
     'email',
     'visitType',
+    'doctorId',
     ...(isProcedurePath ? (['treatmentId', 'sessionId'] as const) : []),
   ];
 
@@ -255,8 +250,8 @@ export function useBookAppointment() {
             : 'APT-1003';
       const detail =
         bookingPath === 'CONSULTATION'
-          ? `${selectedDoctor?.name ?? 'Doctor'} · ${submitted.slotDate} · ${submitted.slotTimes.join(', ')}`
-          : `${selectedSession?.procedure ?? selectedTreatment?.name ?? 'Treatment'} · ${selectedRoom?.name ?? 'Room'} · ${selectedTherapist?.name ?? 'Therapist'}`;
+          ? `${selectedDoctor?.name ?? 'Doctor'} · ${submitted.slotDate} · ${submitted.startTime}–${submitted.endTime}`
+          : `${selectedSession?.procedure ?? selectedTreatment?.name ?? 'Treatment'} · ${selectedDoctor?.name ?? 'Doctor'} · ${submitted.startTime}–${submitted.endTime}`;
       setConfirmation({ bookingNumber, path: bookingPath, patientName, detail });
       toast.success(`${bookingNumber} ready for review.`);
     },
@@ -295,8 +290,8 @@ export function useBookAppointment() {
     changeTreatment,
     changeSession,
     changeSchedule,
+    changeTime,
     resetBooking,
-    toggleSlot,
     continueToSchedule,
     onSubmit,
   };

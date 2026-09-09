@@ -106,10 +106,27 @@ export const bookAppointmentFormSchema = z
       }
     }
 
+    if (data.doctorId.trim() === '') {
+      context.addIssue({ code: 'custom', path: ['doctorId'], message: 'Doctor is required' });
+    }
+
+    if (data.startTime.trim() === '') {
+      context.addIssue({ code: 'custom', path: ['startTime'], message: 'Start time is required' });
+    }
+
+    if (data.endTime.trim() === '') {
+      context.addIssue({ code: 'custom', path: ['endTime'], message: 'End time is required' });
+    }
+
+    if (data.startTime && data.endTime && data.endTime <= data.startTime) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endTime'],
+        message: 'End time must be after start time',
+      });
+    }
+
     if (data.visitType === 'CONSULTATION') {
-      if (!/^\d+$/.test(data.doctorId)) {
-        context.addIssue({ code: 'custom', path: ['doctorId'], message: 'Doctor is required' });
-      }
       if (data.appointmentModeId.trim() === '') {
         context.addIssue({
           code: 'custom',
@@ -134,19 +151,11 @@ export const bookAppointmentFormSchema = z
         });
       }
 
-      if (data.doctorRotaId.trim() === '') {
+      if (data.doctorId !== 'not-applicable' && data.doctorRotaId.trim() === '') {
         context.addIssue({
           code: 'custom',
           path: ['doctorRotaId'],
           message: 'Doctor Rota is required',
-        });
-      }
-
-      if (data.slotTimes.length === 0) {
-        context.addIssue({
-          code: 'custom',
-          path: ['slotTimes'],
-          message: 'At least one DoctorSlot is required',
         });
       }
     }
@@ -154,8 +163,6 @@ export const bookAppointmentFormSchema = z
     if (data.visitType === 'PROCEDURE') {
       const requiredAyurvedaFields = [
         ['treatmentId', data.treatmentId, 'Treatment is required'],
-        ['startTime', data.startTime, 'Start time is required'],
-        ['endTime', data.endTime, 'End time is required'],
         ['roomId', data.roomId, 'Room is required'],
         ['therapistId', data.therapistId, 'Therapist is required'],
       ] as const;

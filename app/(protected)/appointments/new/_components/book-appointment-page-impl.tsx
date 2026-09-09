@@ -8,6 +8,7 @@ import {
   Check,
   Pencil,
   RotateCcw,
+  Stethoscope,
   UserRound,
   TriangleAlert,
 } from 'lucide-react';
@@ -18,7 +19,8 @@ import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
 
-import { AppointmentDetailsSection, SlotsSection } from './appointment-details-section';
+import { AppointmentDetailsSection } from './appointment-details-section';
+import { AppointmentScheduleSection } from './appointment-schedule-section';
 import {
   DEMO_DOCTORS,
   DEMO_FACILITY,
@@ -30,8 +32,8 @@ import {
 import { BookingPathSelector } from './booking-path-selector';
 import { BookingRemarks } from './booking-remarks';
 import { BookingSummary } from './booking-summary';
+import { DoctorSelectionSection } from './doctor-selection-section';
 import { PatientSection } from './patient-section';
-import { ProcedureSchedule } from './procedure-schedule';
 import { ResourceAllocationSection, ResourceStatus } from './resource-allocation-section';
 import { TreatmentSessionSection } from './treatment-session-section';
 import { useBookAppointment } from './use-book-appointment';
@@ -72,7 +74,7 @@ export function BookAppointmentPageImpl() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Book Appointment</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Choose a Patient and visit, then find the right time.
+            Select the Patient, Visit, clinician, and exact Appointment time.
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm">
@@ -175,6 +177,14 @@ export function BookAppointmentPageImpl() {
                 onChange={booking.changeVisitType}
               />
               <FieldError errors={[form.formState.errors.visitType]} />
+              {booking.visitType ? (
+                <DoctorSelectionSection
+                  control={form.control}
+                  doctors={DEMO_DOCTORS}
+                  doctorId={values.doctorId}
+                  onChange={booking.changeSchedule}
+                />
+              ) : null}
               {isProcedurePath ? (
                 <TreatmentSessionSection
                   control={form.control}
@@ -190,7 +200,7 @@ export function BookAppointmentPageImpl() {
                   <ArrowRight className="mt-0.5 size-4 shrink-0" />
                   <p>
                     {booking.visitType
-                      ? 'Next, choose a Doctor, date, and available DoctorSlots.'
+                      ? 'Continue to choose the date and exact Appointment time.'
                       : 'Choose a Visit Type to see what comes next.'}
                   </p>
                 </div>
@@ -218,6 +228,10 @@ export function BookAppointmentPageImpl() {
               >
                 {visitLabel}
               </Badge>
+              <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
+                <Stethoscope className="size-3.5" aria-hidden="true" />
+                {booking.selectedDoctor?.name ?? 'Doctor required'}
+              </span>
               {booking.selectedTreatment ? (
                 <span className="text-sm">
                   {booking.selectedTreatment.name}
@@ -230,23 +244,34 @@ export function BookAppointmentPageImpl() {
             </div>
             <div className="grid items-start gap-4 lg:grid-cols-2">
               <div className="min-w-0 space-y-4">
-                {isProcedurePath ? (
-                  <ProcedureSchedule
-                    control={form.control}
-                    session={booking.resourceSession}
-                    onScheduleChange={booking.changeSchedule}
-                    onEndTime={(value) => form.setValue('endTime', value, { shouldValidate: true })}
-                  />
-                ) : (
-                  <AppointmentDetailsSection
-                    control={form.control}
-                    doctors={DEMO_DOCTORS}
-                    modes={DEMO_MODES}
-                    types={DEMO_TYPES}
-                    reasons={DEMO_REASONS}
-                    onScheduleChange={booking.changeSchedule}
-                  />
-                )}
+                <AppointmentScheduleSection
+                  control={form.control}
+                  rotas={DEMO_ROTAS}
+                  rota={booking.selectedRota}
+                  doctorId={values.doctorId}
+                  slotDate={values.slotDate}
+                  startTime={values.startTime}
+                  endTime={values.endTime}
+                  selectedRotaId={values.doctorRotaId}
+                  procedure={isProcedurePath}
+                  recommendedDuration={
+                    booking.resourceSession
+                      ? booking.resourceSession.duration +
+                        booking.resourceSession.setupMinutes +
+                        booking.resourceSession.cleaningMinutes
+                      : 30
+                  }
+                  onContextChange={booking.changeSchedule}
+                  onRotaChange={(value) => {
+                    form.setValue('doctorRotaId', value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                    form.setValue('startTime', '', { shouldDirty: true });
+                    form.setValue('endTime', '', { shouldDirty: true });
+                  }}
+                  onTimeChange={booking.changeTime}
+                />
                 {selectedSession ? (
                   <Alert className="border-warning/25 bg-warning/5">
                     <TriangleAlert className="text-warning size-4" />
@@ -254,7 +279,6 @@ export function BookAppointmentPageImpl() {
                     <AlertDescription>{selectedSession.warning}</AlertDescription>
                   </Alert>
                 ) : null}
-                <BookingRemarks control={form.control} />
               </div>
               {isProcedurePath ? (
                 <div className="min-w-0 space-y-3">
@@ -280,24 +304,18 @@ export function BookAppointmentPageImpl() {
                     consentStatus={values.consentStatus}
                     approvalStatus={values.approvalStatus}
                   />
+                  <BookingRemarks control={form.control} />
                 </div>
               ) : (
-                <SlotsSection
-                  control={form.control}
-                  rotas={DEMO_ROTAS}
-                  rota={booking.selectedRota}
-                  selectedRotaId={values.doctorRotaId}
-                  canLoadSlots={Boolean(values.slotDate && values.doctorId)}
-                  selectedTimes={values.slotTimes}
-                  onToggle={booking.toggleSlot}
-                  onRotaChange={(value) => {
-                    form.setValue('doctorRotaId', value, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-                    form.setValue('slotTimes', []);
-                  }}
-                />
+                <div className="min-w-0 space-y-4">
+                  <AppointmentDetailsSection
+                    control={form.control}
+                    modes={DEMO_MODES}
+                    types={DEMO_TYPES}
+                    reasons={DEMO_REASONS}
+                  />
+                  <BookingRemarks control={form.control} />
+                </div>
               )}
             </div>
           </>

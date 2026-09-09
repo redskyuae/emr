@@ -1,6 +1,14 @@
 export type VisitType = 'CONSULTATION' | 'PROCEDURE';
 export type ReadinessStatus = 'READY' | 'PENDING' | 'NOT_REQUIRED' | 'BLOCKED';
 
+export type DemoVisit = {
+  id: string;
+  doctorName: string;
+  occurredAt: string;
+  visitType: 'Consultation' | 'Procedure' | 'Follow-up';
+  status: 'Checked In' | 'In Consultation' | 'Completed' | 'Cancelled';
+};
+
 export type DemoSession = {
   id: string;
   sessionNumber: number;
@@ -41,6 +49,7 @@ export type DemoPatient = {
   dateOfBirth: string;
   registrationStatus: 'Registered' | 'Provisional' | 'Inactive';
   treatments: DemoTreatment[];
+  visits: DemoVisit[];
   duplicateWarning?: string;
 };
 
@@ -87,6 +96,7 @@ export const DEMO_DOCTORS = [
   { id: 18, name: 'Dr. Meera Nair', specialty: 'Ayurveda' },
   { id: 24, name: 'Dr. Omar Khalid', specialty: 'General Medicine' },
   { id: 31, name: 'Dr. Anika Menon', specialty: 'Ayurveda' },
+  { id: 'not-applicable', name: 'N/A — no Doctor available', specialty: 'Unassigned' },
 ];
 
 export const DEMO_MODES = [
@@ -166,6 +176,36 @@ export const DEMO_PATIENTS: DemoPatient[] = [
     registrationStatus: 'Registered',
     duplicateWarning:
       'One possible match found on phone number. Identity verified against Emirates ID.',
+    visits: [
+      {
+        id: 'VIS-8421',
+        doctorName: 'Dr. Meera Nair',
+        occurredAt: '2026-08-29T10:15:00',
+        visitType: 'Procedure',
+        status: 'Completed',
+      },
+      {
+        id: 'VIS-8106',
+        doctorName: 'Dr. Anika Menon',
+        occurredAt: '2026-08-21T09:00:00',
+        visitType: 'Consultation',
+        status: 'Completed',
+      },
+      {
+        id: 'VIS-7742',
+        doctorName: 'Dr. Meera Nair',
+        occurredAt: '2026-07-30T14:30:00',
+        visitType: 'Follow-up',
+        status: 'Cancelled',
+      },
+      {
+        id: 'VIS-7319',
+        doctorName: 'Dr. Omar Khalid',
+        occurredAt: '2026-06-18T11:00:00',
+        visitType: 'Consultation',
+        status: 'Completed',
+      },
+    ],
     treatments: [
       {
         id: 300,
@@ -190,6 +230,15 @@ export const DEMO_PATIENTS: DemoPatient[] = [
     emiratesId: '784-1991-7654321-8',
     dateOfBirth: '1991-11-03',
     registrationStatus: 'Registered',
+    visits: [
+      {
+        id: 'VIS-8188',
+        doctorName: 'Dr. Omar Khalid',
+        occurredAt: '2026-08-23T16:00:00',
+        visitType: 'Consultation',
+        status: 'Completed',
+      },
+    ],
     treatments: [],
   },
   {
@@ -201,6 +250,7 @@ export const DEMO_PATIENTS: DemoPatient[] = [
     emiratesId: '784-1996-2345678-4',
     dateOfBirth: '1996-02-18',
     registrationStatus: 'Registered',
+    visits: [],
     treatments: [
       {
         id: 301,

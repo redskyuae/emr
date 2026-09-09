@@ -4,6 +4,7 @@ import { Check, Search, UserRound, UserRoundPlus } from 'lucide-react';
 import { Controller, useFormState, type Control } from 'react-hook-form';
 
 import { BookingStatusBadge } from './booking-status-badge';
+import { PatientVisitHistory } from './patient-visit-history';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
@@ -241,6 +242,7 @@ function IdentityCard({ patient }: { patient: DemoPatient }) {
         <IdentityItem label="Emirates ID" value={patient.emiratesId} mono />
         <IdentityItem label="Registration" value={patient.registrationStatus} />
       </div>
+      <PatientVisitHistory visits={patient.visits} />
       {patient.duplicateWarning ? (
         <Alert className="border-success/25 bg-success/5">
           <Check className="text-success size-4" />
