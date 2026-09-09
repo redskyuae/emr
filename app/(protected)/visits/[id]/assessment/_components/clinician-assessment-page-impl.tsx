@@ -1,16 +1,29 @@
 'use client';
 
-import { useReducer } from 'react';
+import { useReducer, useState } from 'react';
 import type { StaticClinicianVisit } from '../../../_data/static-clinician-visits';
-import { assessmentReducer, createAssessmentState } from '../_utils/assessment-state';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  assessmentReducer,
+  canCompleteAssessment,
+  createAssessmentState,
+} from '../_utils/assessment-state';
 import { AssessColumn } from './assess-column';
+import { AssessmentCommandBar } from './assessment-command-bar';
 import { DesktopWorkspaceGuard } from './desktop-workspace-guard';
 import { ExamineColumn } from './examine-column';
+import { PlanColumn } from './plan-column';
 import { VisitSafetyStrip } from './visit-safety-strip';
 
 export function ClinicianAssessmentPageImpl({ visit }: { visit: StaticClinicianVisit }) {
   const [state, dispatch] = useReducer(assessmentReducer, visit, createAssessmentState);
+  const [completionErrors, setCompletionErrors] = useState<string[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  function validateCompletion() {
+    const validation = canCompleteAssessment(state);
+    setCompletionErrors(validation.errors);
+    setConfirmOpen(validation.valid);
+  }
 
   return (
     <DesktopWorkspaceGuard>
@@ -23,18 +36,17 @@ export function ClinicianAssessmentPageImpl({ visit }: { visit: StaticClinicianV
         <div className="grid min-h-0 grid-cols-3 gap-2">
           <AssessColumn dispatch={dispatch} state={state} visit={visit} />
           <ExamineColumn dispatch={dispatch} state={state} />
-          <Card className="shadow-fluent-2 min-h-0 overflow-hidden">
-            <CardHeader className="h-12 border-b px-3 py-2">
-              <CardTitle className="text-sm">Plan</CardTitle>
-              <p className="text-muted-foreground text-[10px]">Diagnosis, treatment, and completion</p>
-            </CardHeader>
-            <CardContent className="p-2" />
-          </Card>
+          <PlanColumn dispatch={dispatch} state={state} />
         </div>
 
-        <div className="bg-card shadow-fluent-8 flex items-center rounded-lg border px-3 text-sm">
-          Complete workflow actions
-        </div>
+        <AssessmentCommandBar
+          confirmOpen={confirmOpen}
+          dispatch={dispatch}
+          errors={completionErrors}
+          onConfirmOpenChange={setConfirmOpen}
+          onValidate={validateCompletion}
+          state={state}
+        />
       </main>
     </DesktopWorkspaceGuard>
   );
