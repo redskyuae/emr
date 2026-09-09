@@ -714,6 +714,14 @@ export function getVisibleNavGroups(groups: AppNavGroup[], permissions: string[]
 
 export function getAppPageMeta(pathname: string): AppPageMeta {
   const currentPath = trimTrailingSlash(pathname);
+
+  if (/^\/visits\/\d+\/assessment$/.test(currentPath)) {
+    return {
+      title: 'Clinician assessment',
+      subtitle: 'Complete this Visit in the active Facility context.',
+    };
+  }
+
   const exactMeta = pageMetaByHref[currentPath];
 
   if (exactMeta) {
