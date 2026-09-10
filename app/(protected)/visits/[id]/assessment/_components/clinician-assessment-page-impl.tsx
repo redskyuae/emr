@@ -27,14 +27,15 @@ export function ClinicianAssessmentPageImpl({ visit }: { visit: StaticClinicianV
 
   return (
     <DesktopWorkspaceGuard>
-      <main
-        className="grid h-[calc(100svh-7.5rem)] min-h-0 grid-rows-[5rem_minmax(0,1fr)_3.5rem] gap-2 overflow-hidden"
+      <section
+        aria-label="Clinician Visit cockpit"
+        className="grid h-[calc(100svh-7.5rem)] min-h-0 grid-rows-[4rem_minmax(0,1fr)_3.5rem] gap-2 overflow-hidden"
         data-testid="clinician-cockpit"
       >
-        <VisitSafetyStrip visit={visit} />
+        <VisitSafetyStrip allergies={state.allergies} status={state.status} visit={visit} />
 
         <div className="grid min-h-0 grid-cols-3 gap-2">
-          <AssessColumn dispatch={dispatch} state={state} visit={visit} />
+          <AssessColumn dispatch={dispatch} state={state} />
           <ExamineColumn dispatch={dispatch} state={state} />
           <PlanColumn dispatch={dispatch} state={state} />
         </div>
@@ -47,7 +48,7 @@ export function ClinicianAssessmentPageImpl({ visit }: { visit: StaticClinicianV
           onValidate={validateCompletion}
           state={state}
         />
-      </main>
+      </section>
     </DesktopWorkspaceGuard>
   );
 }

@@ -1,9 +1,6 @@
 import { AlertTriangle, Clock3, MapPin, Stethoscope, UserRound } from 'lucide-react';
 
-import type {
-  StaticClinicianVisit,
-  VisitStatus,
-} from '../../../_data/static-clinician-visits';
+import type { StaticClinicianVisit, VisitStatus } from '../../../_data/static-clinician-visits';
 import { visitStatusPresentation } from '../../../_utils/visit-status';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,19 +15,22 @@ function formatTime(value: string) {
 export function VisitSafetyStrip({
   visit,
   status,
+  allergies,
 }: {
   visit: StaticClinicianVisit;
   status?: VisitStatus;
+  allergies?: string[];
 }) {
   const currentStatus = status ?? visit.status;
   const presentation = visitStatusPresentation(currentStatus);
-  const allergyAlert = !visit.allergies.some((allergy) => allergy === 'No known allergies');
+  const currentAllergies = allergies ?? visit.allergies;
+  const allergyAlert = !currentAllergies.some((allergy) => allergy === 'No known allergies');
 
   return (
-    <Card className="shadow-fluent-4 h-20 gap-0 overflow-hidden py-0">
-      <CardContent className="grid h-full grid-cols-[1.4fr_1fr_1fr] items-center gap-4 p-3">
+    <Card className="shadow-fluent-4 h-16 gap-0 overflow-hidden py-0">
+      <CardContent className="grid h-full grid-cols-[1.4fr_1fr_1fr] items-center gap-4 p-2">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-md">
+          <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-md">
             <UserRound className="size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -41,14 +41,14 @@ export function VisitSafetyStrip({
                 {visit.queueToken}
               </span>
             </div>
-            <p className="text-muted-foreground mt-1 font-mono text-xs">
+            <p className="text-muted-foreground mt-0.5 font-mono text-[10px]">
               {visit.patient.mrn} · {visit.patient.age}y · {visit.patient.sex} ·{' '}
               {visit.patient.nationality}
             </p>
           </div>
         </div>
 
-        <div className="space-y-1 text-xs">
+        <div className="space-y-0.5 text-[10px]">
           <div className="flex items-center gap-1.5">
             <MapPin className="text-muted-foreground size-3.5" aria-hidden="true" />
             <span className="font-medium">{visit.facility}</span>
@@ -78,7 +78,7 @@ export function VisitSafetyStrip({
           <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
           <div className="min-w-0">
             <p className="text-xs font-semibold">Allergies</p>
-            <p className="text-xs leading-tight">{visit.allergies.join(' · ')}</p>
+            <p className="text-xs leading-tight">{currentAllergies.join(' · ')}</p>
           </div>
         </div>
       </CardContent>

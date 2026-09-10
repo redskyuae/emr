@@ -12,9 +12,7 @@ const dispatch = () => undefined;
 
 describe('assessment workflow columns', () => {
   it('renders the complete Assess workflow', () => {
-    const markup = renderToStaticMarkup(
-      React.createElement(AssessColumn, { state, visit, dispatch })
-    );
+    const markup = renderToStaticMarkup(React.createElement(AssessColumn, { state, dispatch }));
 
     expect(markup).toContain('Vital Signs');
     expect(markup).toContain('History of Present Illness');
@@ -26,9 +24,7 @@ describe('assessment workflow columns', () => {
   });
 
   it('renders the complete Examine workflow and abnormal remarks', () => {
-    const markup = renderToStaticMarkup(
-      React.createElement(ExamineColumn, { state, dispatch })
-    );
+    const markup = renderToStaticMarkup(React.createElement(ExamineColumn, { state, dispatch }));
 
     expect(markup).toContain('Review of Systems');
     expect(markup).toContain('Physical Examination');

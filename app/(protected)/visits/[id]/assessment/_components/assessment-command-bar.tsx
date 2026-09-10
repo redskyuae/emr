@@ -38,6 +38,12 @@ export function AssessmentCommandBar({
   onConfirmOpenChange: (open: boolean) => void;
 }) {
   const completed = state.status === 'COMPLETED';
+  const savedTime = state.lastSavedAt
+    ? new Date(state.lastSavedAt).toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
 
   function saveDraft() {
     dispatch({ type: 'save-draft', savedAt: new Date().toISOString() });
@@ -65,10 +71,13 @@ export function AssessmentCommandBar({
               <CheckCircle2Icon aria-hidden="true" /> Visit completed
             </Badge>
           ) : (
-            <p className="text-muted-foreground truncate text-[10px]">
-              Static demo · changes stay in this browser session
-              {state.lastSavedAt ? ' · Draft saved' : ''}
-            </p>
+            <div className="flex min-w-0 items-center gap-2">
+              <Badge variant="outline">Workflow 5 / 5</Badge>
+              <p className="text-muted-foreground truncate text-[10px]">
+                Static demo · changes stay in this browser session
+                {savedTime ? ` · Last saved ${savedTime}` : ''}
+              </p>
+            </div>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">

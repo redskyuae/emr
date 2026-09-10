@@ -251,7 +251,8 @@ export const staticClinicianVisits: StaticClinicianVisit[] = [
           primary: true,
         },
       ],
-      advisedTreatment: 'Continue controller inhaler. Use reliever as needed. Hydration and steam inhalation advised.',
+      advisedTreatment:
+        'Continue controller inhaler. Use reliever as needed. Hydration and steam inhalation advised.',
       treatments: [
         {
           id: 'treatment-1',
