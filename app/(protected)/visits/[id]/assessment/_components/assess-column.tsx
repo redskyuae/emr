@@ -38,7 +38,7 @@ export function AssessColumn({
   return (
     <Card className="shadow-fluent-2 flex min-h-0 flex-col gap-0 overflow-hidden py-0">
       <CardHeader className="h-10 shrink-0 border-b px-3 py-1.5">
-        <CardTitle className="text-sm">Assess</CardTitle>
+        <CardTitle className="text-xs font-semibold">Assess</CardTitle>
         <p className="text-muted-foreground text-[10px]">Observations, complaint, and history</p>
       </CardHeader>
       <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] gap-1.5 p-2 [@media(max-height:900px)]:auto-rows-max [@media(max-height:900px)]:grid-rows-none [@media(max-height:900px)]:content-start [@media(max-height:900px)]:overflow-y-auto">
@@ -132,7 +132,7 @@ export function AssessColumn({
               ).map(([label, items, target]) => (
                 <div className="min-w-0" key={target}>
                   <div className="mb-0.5 flex items-center justify-between">
-                    <p className="text-destructive text-[8px] font-semibold">{label}</p>
+                    <p className="text-destructive text-[9px] font-semibold">{label}</p>
                     <Button
                       aria-label={`Add ${target}`}
                       className="size-5"
@@ -152,7 +152,7 @@ export function AssessColumn({
                       <div className="grid grid-cols-[1fr_auto] gap-0.5" key={`${target}-${index}`}>
                         <input
                           aria-label={`${target === 'allergy' ? 'Allergy' : 'Problem'} ${index + 1}`}
-                          className="border-input bg-background focus:border-ring h-5 min-w-0 rounded-sm border px-1 text-[8px] outline-none"
+                          className="border-input bg-background focus:border-ring h-5 min-w-0 rounded-sm border px-1 text-[10px] outline-none"
                           disabled={disabled}
                           onChange={(event) =>
                             dispatch({
