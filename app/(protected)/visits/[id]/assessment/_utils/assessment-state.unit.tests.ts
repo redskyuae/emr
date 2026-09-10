@@ -5,7 +5,11 @@ import {
   staticClinicianVisits,
   toVisitBoardRows,
 } from '../../../_data/static-clinician-visits';
-import { assessmentReducer, canCompleteAssessment, createAssessmentState } from './assessment-state';
+import {
+  assessmentReducer,
+  canCompleteAssessment,
+  createAssessmentState,
+} from './assessment-state';
 
 describe('static clinician Visits', () => {
   it('should expose exactly one active and one completed Visit', () => {
@@ -75,6 +79,108 @@ describe('assessmentReducer', () => {
 
     expect(added.prescriptions).toHaveLength(state.prescriptions.length + 1);
     expect(removed.prescriptions).toHaveLength(state.prescriptions.length);
+  });
+
+  it('should edit clinical row fields and allow a replacement primary diagnosis', () => {
+    const state = createAssessmentState(getStaticClinicianVisit(15730)!);
+    const added = assessmentReducer(state, { type: 'add-diagnosis' });
+    const id = added.diagnoses.at(-1)!.id;
+    const described = assessmentReducer(added, {
+      type: 'update-diagnosis',
+      id,
+      field: 'description',
+      value: 'Replacement diagnosis',
+    });
+    const primary = assessmentReducer(described, {
+      type: 'update-diagnosis',
+      id,
+      field: 'primary',
+      value: true,
+    });
+
+    expect(primary.diagnoses.find((row) => row.id === id)).toMatchObject({
+      description: 'Replacement diagnosis',
+      primary: true,
+    });
+  });
+
+  it('should edit vitals, prescription details, MDM, and Patient education', () => {
+    const state = createAssessmentState(getStaticClinicianVisit(15730)!);
+    const vital = assessmentReducer(state, {
+      type: 'update-vital',
+      field: 'pulse',
+      value: '90',
+    });
+    const prescription = assessmentReducer(vital, {
+      type: 'update-prescription',
+      id: vital.prescriptions[0].id,
+      field: 'refill',
+      value: '1',
+    });
+    const mdm = assessmentReducer(prescription, {
+      type: 'update-mdm',
+      field: 'risk',
+      value: 'High',
+    });
+    const education = assessmentReducer(mdm, {
+      type: 'toggle-education',
+      item: 'Warning signs',
+    });
+
+    expect(education.vitals.pulse).toBe('90');
+    expect(education.prescriptions[0].refill).toBe('1');
+    expect(education.mdm.risk).toBe('High');
+    expect(education.education).not.toContain('Warning signs');
+  });
+
+  it('should manually add, edit, and remove Problems and allergies', () => {
+    const state = createAssessmentState(getStaticClinicianVisit(15730)!);
+    const withProblem = assessmentReducer(state, { type: 'add-problem' });
+    const editedProblem = assessmentReducer(withProblem, {
+      type: 'update-problem',
+      index: withProblem.problems.length - 1,
+      value: 'I10 · Hypertension',
+    });
+    const withAllergy = assessmentReducer(editedProblem, { type: 'add-allergy' });
+    const editedAllergy = assessmentReducer(withAllergy, {
+      type: 'update-allergy',
+      index: withAllergy.allergies.length - 1,
+      value: 'Latex — contact rash',
+    });
+    const removed = assessmentReducer(editedAllergy, {
+      type: 'remove-problem',
+      index: editedAllergy.problems.length - 1,
+    });
+
+    expect(editedAllergy.problems).toContain('I10 · Hypertension');
+    expect(editedAllergy.allergies).toContain('Latex — contact rash');
+    expect(removed.problems).not.toContain('I10 · Hypertension');
+  });
+
+  it('should manually edit history, abnormal remarks, and Ayurveda findings', () => {
+    const state = createAssessmentState(getStaticClinicianVisit(15730)!);
+    const history = assessmentReducer(state, {
+      type: 'update-history-summary',
+      field: 'smoking',
+      value: 'Former smoker',
+    });
+    const finding = assessmentReducer(history, {
+      type: 'update-finding-remarks',
+      target: 'ros',
+      id: 'respiratory',
+      remarks: 'Productive cough',
+    });
+    const ayurveda = assessmentReducer(finding, {
+      type: 'update-ayurveda',
+      field: 'vikriti',
+      value: 'Kapha increased',
+    });
+
+    expect(ayurveda.historySummary.smoking).toBe('Former smoker');
+    expect(ayurveda.ros.find((item) => item.id === 'respiratory')?.remarks).toBe(
+      'Productive cough'
+    );
+    expect(ayurveda.ayurveda.vikriti).toBe('Kapha increased');
   });
 
   it('should require primary diagnosis and Discharge Disposition for completion', () => {

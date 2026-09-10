@@ -18,4 +18,24 @@ describe('VisitSafetyStrip', () => {
     expect(html).toContain('In Consultation');
     expect(html).toContain('Penicillin');
   });
+
+  it('should show the live completed status after local completion', () => {
+    const visit = getStaticClinicianVisit(15730)!;
+    const html = renderToStaticMarkup(
+      createElement(VisitSafetyStrip, { visit, status: 'COMPLETED' })
+    );
+
+    expect(html).toContain('Completed');
+    expect(html).not.toContain('In Consultation');
+  });
+
+  it('should show manually edited allergies in the safety alert', () => {
+    const visit = getStaticClinicianVisit(15730)!;
+    const html = renderToStaticMarkup(
+      createElement(VisitSafetyStrip, { allergies: ['Latex — rash'], visit })
+    );
+
+    expect(html).toContain('Latex — rash');
+    expect(html).not.toContain('Penicillin');
+  });
 });
