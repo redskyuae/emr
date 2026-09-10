@@ -79,7 +79,7 @@ export function PlanColumn({
         <CardTitle className="text-sm">Plan</CardTitle>
         <p className="text-muted-foreground text-[10px]">Decisions, orders, and completion</p>
       </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 grid-cols-2 grid-rows-[auto_auto_auto_minmax(0,1fr)] gap-1.5 p-2">
+      <CardContent className="grid min-h-0 flex-1 grid-cols-2 grid-rows-[auto_auto_auto_minmax(0,1fr)] gap-1.5 p-2 [@media(max-height:900px)]:auto-rows-max [@media(max-height:900px)]:grid-rows-none [@media(max-height:900px)]:content-start [@media(max-height:900px)]:overflow-y-auto">
         <CompactSection
           action={
             <AddButton

@@ -66,7 +66,7 @@ export function ExamineColumn({
           Patient report vs Doctor findings · ✓ Normal · ⚠ Abnormal
         </p>
       </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_auto_auto] content-between gap-1 p-2">
+      <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_auto_auto] content-between gap-1 p-2 [@media(max-height:900px)]:auto-rows-max [@media(max-height:900px)]:grid-rows-none [@media(max-height:900px)]:content-start [@media(max-height:900px)]:overflow-y-auto">
         <section className="rounded border">
           <SectionHeading
             action={markNormal('ros')}
