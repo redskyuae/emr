@@ -5,6 +5,7 @@ import { getStaticClinicianVisit } from '../../../_data/static-clinician-visits'
 import { createAssessmentState } from '../_utils/assessment-state';
 import { AssessColumn } from './assess-column';
 import { ExamineColumn } from './examine-column';
+import { PlanColumn } from './plan-column';
 
 const visit = getStaticClinicianVisit(15730)!;
 const state = createAssessmentState(visit);
@@ -33,5 +34,16 @@ describe('assessment workflow columns', () => {
     expect(markup).toContain('Prakriti');
     expect(markup).toContain('Vikriti');
     expect(markup).toContain('Ashtavidha');
+  });
+
+  it('allows each workflow column to scroll on short browser viewports', () => {
+    const columns = [AssessColumn, ExamineColumn, PlanColumn];
+
+    for (const Column of columns) {
+      const markup = renderToStaticMarkup(React.createElement(Column, { state, dispatch }));
+
+      expect(markup).toContain('[@media(max-height:900px)]:overflow-y-auto');
+      expect(markup).toContain('[@media(max-height:900px)]:auto-rows-max');
+    }
   });
 });

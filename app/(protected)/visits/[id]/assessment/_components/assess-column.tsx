@@ -41,7 +41,7 @@ export function AssessColumn({
         <CardTitle className="text-sm">Assess</CardTitle>
         <p className="text-muted-foreground text-[10px]">Observations, complaint, and history</p>
       </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] gap-1.5 p-2">
+      <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] gap-1.5 p-2 [@media(max-height:900px)]:auto-rows-max [@media(max-height:900px)]:grid-rows-none [@media(max-height:900px)]:content-start [@media(max-height:900px)]:overflow-y-auto">
         <section className="overflow-hidden rounded border">
           <SectionHeading title="Vital Signs" />
           <div className="grid grid-cols-3 gap-1 p-1.5">
@@ -66,7 +66,7 @@ export function AssessColumn({
 
         <section className="min-h-0 overflow-hidden rounded border">
           <SectionHeading title="History of Present Illness" />
-          <div className="grid h-[calc(100%-1.75rem)] min-h-0 grid-rows-[auto_auto_1fr] gap-1 p-1.5">
+          <div className="grid h-[calc(100%-1.75rem)] min-h-0 grid-rows-[auto_auto_1fr] gap-1 p-1.5 [@media(max-height:900px)]:h-auto">
             <label>
               <span className="sr-only">Chief complaint</span>
               <Input

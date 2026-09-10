@@ -16,7 +16,10 @@ export default function ClinicianAssessmentLoader() {
       </div>
       <div className="grid min-h-0 flex-1 grid-cols-3 gap-2">
         {Array.from({ length: 3 }, (_, index) => (
-          <div key={index} className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-3">
+          <div
+            key={index}
+            className="bg-card shadow-fluent-2 space-y-3 overflow-hidden rounded-lg border p-3 [@media(max-height:900px)]:overflow-y-auto"
+          >
             <Skeleton className="h-6 w-28" />
             {Array.from({ length: 6 }, (_, row) => (
               <Skeleton key={row} className="h-12 w-full" />
