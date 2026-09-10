@@ -34,7 +34,7 @@ function AddButton({
   return (
     <Button
       aria-label={`Add ${label}`}
-      className="h-5 px-1.5 text-[9px]"
+      className="h-5 px-1.5 text-[10px]"
       disabled={disabled}
       onClick={onClick}
       size="xs"
@@ -76,7 +76,7 @@ export function PlanColumn({
   return (
     <Card className="shadow-fluent-2 flex min-h-0 flex-col gap-0 overflow-hidden py-0">
       <CardHeader className="h-10 shrink-0 border-b px-3 py-1.5">
-        <CardTitle className="text-sm">Plan</CardTitle>
+        <CardTitle className="text-xs font-semibold">Plan</CardTitle>
         <p className="text-muted-foreground text-[10px]">Decisions, orders, and completion</p>
       </CardHeader>
       <CardContent className="grid min-h-0 flex-1 grid-cols-2 grid-rows-[auto_auto_auto_minmax(0,1fr)] gap-1.5 p-2 [@media(max-height:900px)]:auto-rows-max [@media(max-height:900px)]:grid-rows-none [@media(max-height:900px)]:content-start [@media(max-height:900px)]:overflow-y-auto">
@@ -96,7 +96,7 @@ export function PlanColumn({
             </span>
             <Textarea
               aria-label="Clinical Impression"
-              className="h-8 min-h-0 resize-none px-1.5 py-1 text-[9px] leading-3"
+              className="h-8 min-h-0 resize-none px-1.5 py-1 text-[10px] leading-3"
               disabled={disabled}
               onChange={(event) =>
                 dispatch({
@@ -132,7 +132,7 @@ export function PlanColumn({
             <span className="text-muted-foreground mb-0.5 block text-[9px]">Advised Treatment</span>
             <Textarea
               aria-label="Advised Treatment"
-              className="h-8 min-h-0 resize-none px-1.5 py-1 text-[9px] leading-3"
+              className="h-8 min-h-0 resize-none px-1.5 py-1 text-[10px] leading-3"
               disabled={disabled}
               onChange={(event) =>
                 dispatch({
@@ -197,10 +197,10 @@ export function PlanColumn({
         <CompactSection title="Medical Decision Making">
           <div className="grid grid-cols-[1fr_3.25rem] gap-1">
             <label>
-              <span className="text-muted-foreground block text-[7px]">Complexity</span>
+              <span className="text-muted-foreground block text-[9px]">Complexity</span>
               <Input
                 aria-label="MDM complexity"
-                className="h-5 rounded-sm px-1 text-[8px]"
+                className="h-5 rounded-sm px-1 text-[10px]"
                 disabled={disabled}
                 onChange={(event) =>
                   dispatch({
@@ -213,10 +213,10 @@ export function PlanColumn({
               />
             </label>
             <label>
-              <span className="text-muted-foreground block text-[7px]">Risk</span>
+              <span className="text-muted-foreground block text-[9px]">Risk</span>
               <select
                 aria-label="MDM risk"
-                className="border-input bg-background h-5 w-full rounded-sm border px-0.5 text-[8px]"
+                className="border-input bg-background h-5 w-full rounded-sm border px-0.5 text-[10px]"
                 disabled={disabled}
                 onChange={(event) =>
                   dispatch({ type: 'update-mdm', field: 'risk', value: event.target.value })
@@ -230,10 +230,10 @@ export function PlanColumn({
             </label>
           </div>
           <fieldset>
-            <legend className="text-muted-foreground text-[7px]">Data reviewed</legend>
+            <legend className="text-muted-foreground text-[9px]">Data reviewed</legend>
             <div className="flex flex-wrap gap-x-2 gap-y-0.5">
               {mdmDataOptions.map((item) => (
-                <label className="flex items-center gap-0.5 text-[8px]" key={item}>
+                <label className="flex items-center gap-0.5 text-[9px]" key={item}>
                   <input
                     checked={state.mdm.dataReviewed.includes(item)}
                     disabled={disabled}
@@ -250,7 +250,7 @@ export function PlanColumn({
         <CompactSection title="Addendum">
           <Textarea
             aria-label="Addendum"
-            className="h-12 min-h-0 resize-none px-1.5 py-1 text-[9px] leading-3"
+            className="h-12 min-h-0 resize-none px-1.5 py-1 text-[10px] leading-3"
             disabled={disabled}
             onChange={(event) =>
               dispatch({ type: 'update-field', field: 'addendum', value: event.target.value })
@@ -267,7 +267,7 @@ export function PlanColumn({
               <p className="text-muted-foreground mb-1 text-[9px]">Patient Education</p>
               <div className="grid grid-cols-2 gap-x-1 gap-y-0.5">
                 {educationOptions.map((item) => (
-                  <label className="flex items-center gap-1 text-[8px]" key={item}>
+                  <label className="flex items-center gap-1 text-[9px]" key={item}>
                     <input
                       checked={state.education.includes(item)}
                       disabled={disabled}
@@ -288,10 +288,10 @@ export function PlanColumn({
                 ] as const
               ).map(([label, field]) => (
                 <label key={field} className="grid grid-cols-[4.75rem_1fr] items-center gap-1">
-                  <span className="text-muted-foreground text-[7px]">{label}</span>
+                  <span className="text-muted-foreground text-[9px]">{label}</span>
                   <Input
                     aria-label={label}
-                    className="h-5 rounded-sm px-1 text-[8px]"
+                    className="h-5 rounded-sm px-1 text-[10px]"
                     disabled={disabled}
                     onChange={(event) =>
                       dispatch({ type: 'update-field', field, value: event.target.value })
@@ -307,7 +307,7 @@ export function PlanColumn({
               </span>
               <select
                 aria-label="Discharge Disposition"
-                className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-7 w-full rounded-md border px-1.5 text-[9px] outline-none focus-visible:ring-2 disabled:opacity-50"
+                className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-7 w-full rounded-md border px-1.5 text-[10px] outline-none focus-visible:ring-2 disabled:opacity-50"
                 disabled={disabled}
                 onChange={(event) =>
                   dispatch({
@@ -325,7 +325,7 @@ export function PlanColumn({
                 <option>Left against medical advice</option>
               </select>
               <Input
-                className="mt-1 h-7 px-1.5 text-[9px]"
+                className="mt-1 h-7 px-1.5 text-[10px]"
                 aria-label="Encounter end"
                 disabled={disabled}
                 onChange={(event) =>

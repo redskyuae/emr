@@ -29,7 +29,7 @@ export function ClinicianAssessmentPageImpl({ visit }: { visit: StaticClinicianV
     <DesktopWorkspaceGuard>
       <section
         aria-label="Clinician Visit cockpit"
-        className="grid h-[calc(100svh-7.5rem)] min-h-0 grid-rows-[4rem_minmax(0,1fr)_3.5rem] gap-2 overflow-hidden"
+        className="grid h-[calc(100svh-7.5rem)] min-h-0 grid-rows-[4rem_minmax(0,1fr)_3.5rem] gap-2 overflow-hidden [&_input]:!text-[10px] [&_select]:!text-[10px] [&_textarea]:!text-[10px]"
         data-testid="clinician-cockpit"
       >
         <VisitSafetyStrip allergies={state.allergies} status={state.status} visit={visit} />

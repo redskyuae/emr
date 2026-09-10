@@ -17,9 +17,9 @@ function MiniField({
 }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className={`min-w-0 ${className ?? ''}`}>
-      <span className="text-muted-foreground block text-[7px] leading-2">{label}</span>
+      <span className="text-muted-foreground block text-[9px] leading-2">{label}</span>
       <Input
-        className="h-5 max-w-full min-w-0 rounded-sm px-1 text-[8px]"
+        className="h-5 max-w-full min-w-0 rounded-sm px-1 text-[10px]"
         aria-label={label}
         {...props}
       />
@@ -39,7 +39,7 @@ function ToggleField({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-1 text-[8px] font-medium">
+    <label className="flex items-center gap-1 text-[9px] font-medium">
       <input
         checked={checked}
         disabled={disabled}

@@ -52,7 +52,7 @@ export function ExamineColumn({
       size="xs"
       type="button"
       variant="outline"
-      className="h-5 px-1.5 text-[9px]"
+      className="h-5 px-1.5 text-[10px]"
     >
       Mark all normal
     </Button>
@@ -61,8 +61,8 @@ export function ExamineColumn({
   return (
     <Card className="shadow-fluent-2 flex min-h-0 flex-col gap-0 overflow-hidden py-0">
       <CardHeader className="h-10 shrink-0 border-b px-3 py-1.5">
-        <CardTitle className="text-sm">Examine</CardTitle>
-        <p className="text-muted-foreground text-[9px]">
+        <CardTitle className="text-xs font-semibold">Examine</CardTitle>
+        <p className="text-muted-foreground text-[10px]">
           Patient report vs Doctor findings · ✓ Normal · ⚠ Abnormal
         </p>
       </CardHeader>
@@ -92,7 +92,7 @@ export function ExamineColumn({
 
         <section className="rounded border">
           <SectionHeading title="Ayurveda Assessment" />
-          <div className="grid grid-cols-3 gap-1 p-1 text-[8px]">
+          <div className="grid grid-cols-3 gap-1 p-1 text-[9px]">
             {Object.entries(state.ayurveda).map(([label, value]) => (
               <label className="bg-muted/40 min-w-0 rounded p-0.5" key={label}>
                 <span className="text-muted-foreground block leading-2">
@@ -100,7 +100,7 @@ export function ExamineColumn({
                 </span>
                 <textarea
                   aria-label={ayurvedaLabels[label as keyof typeof ayurvedaLabels]}
-                  className="focus:ring-ring h-4 w-full resize-none bg-transparent text-[7px] leading-2 font-medium outline-none focus:ring-1 disabled:opacity-70"
+                  className="focus:ring-ring h-4 w-full resize-none bg-transparent text-[10px] leading-2 font-medium outline-none focus:ring-1 disabled:opacity-70"
                   disabled={disabled}
                   onChange={(event) =>
                     dispatch({

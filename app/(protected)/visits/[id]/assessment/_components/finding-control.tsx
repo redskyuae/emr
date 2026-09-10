@@ -31,7 +31,7 @@ export function FindingControl({
           aria-label={`${finding.label}: Normal`}
           aria-pressed={finding.status === 'normal'}
           className={cn(
-            'rounded px-1 py-0.5 text-[8px] leading-none font-medium',
+            'rounded px-1 py-0.5 text-[10px] leading-none font-medium',
             finding.status === 'normal'
               ? 'bg-primary text-primary-foreground ring-primary ring-1'
               : 'text-muted-foreground hover:bg-muted'
@@ -49,7 +49,7 @@ export function FindingControl({
           aria-label={`${finding.label}: Abnormal`}
           aria-pressed={finding.status === 'abnormal'}
           className={cn(
-            'rounded px-1 py-0.5 text-[8px] leading-none font-medium',
+            'rounded px-1 py-0.5 text-[10px] leading-none font-medium',
             finding.status === 'abnormal'
               ? 'bg-destructive text-destructive-foreground ring-destructive ring-1'
               : 'text-muted-foreground hover:bg-muted'
@@ -67,7 +67,7 @@ export function FindingControl({
       {finding.status === 'abnormal' ? (
         <input
           aria-label={`${finding.label} abnormal remarks`}
-          className="text-destructive border-destructive/30 focus:border-destructive col-span-2 min-w-0 border-b bg-transparent text-[8px] leading-3 outline-none disabled:opacity-70"
+          className="text-destructive border-destructive/30 focus:border-destructive col-span-2 min-w-0 border-b bg-transparent text-[10px] leading-3 outline-none disabled:opacity-70"
           disabled={disabled}
           onChange={(event) =>
             dispatch({
