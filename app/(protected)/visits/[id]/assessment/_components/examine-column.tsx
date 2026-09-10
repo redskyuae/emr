@@ -18,7 +18,7 @@ function FindingsGrid({
   disabled: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-1 p-1.5">
+    <div className="grid grid-cols-2 gap-0.5 p-1">
       {findings.map((finding) => (
         <FindingControl
           disabled={disabled}
@@ -59,24 +59,29 @@ export function ExamineColumn({
   );
 
   return (
-    <Card className="shadow-fluent-2 flex min-h-0 flex-col overflow-hidden">
-      <CardHeader className="h-12 shrink-0 border-b px-3 py-2">
+    <Card className="shadow-fluent-2 flex min-h-0 flex-col gap-0 overflow-hidden py-0">
+      <CardHeader className="h-10 shrink-0 border-b px-3 py-1.5">
         <CardTitle className="text-sm">Examine</CardTitle>
-        <p className="text-muted-foreground text-[10px]">System review and clinical examination</p>
+        <p className="text-muted-foreground text-[9px]">
+          Patient report vs Doctor findings · ✓ Normal · ⚠ Abnormal
+        </p>
       </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_auto_auto] content-between gap-1.5 p-2">
-        <section className="overflow-hidden rounded border">
-          <SectionHeading action={markNormal('ros')} title="Review of Systems" />
-          <FindingsGrid
-            disabled={disabled}
-            dispatch={dispatch}
-            findings={state.ros}
-            target="ros"
+      <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_auto_auto] content-between gap-1 p-2">
+        <section className="rounded border">
+          <SectionHeading
+            action={markNormal('ros')}
+            context="Patient-reported symptoms"
+            title="Review of Systems"
           />
+          <FindingsGrid disabled={disabled} dispatch={dispatch} findings={state.ros} target="ros" />
         </section>
 
-        <section className="overflow-hidden rounded border">
-          <SectionHeading action={markNormal('exam')} title="Physical Examination" />
+        <section className="rounded border">
+          <SectionHeading
+            action={markNormal('exam')}
+            context="Doctor-observed signs"
+            title="Physical Examination"
+          />
           <FindingsGrid
             disabled={disabled}
             dispatch={dispatch}
@@ -85,20 +90,30 @@ export function ExamineColumn({
           />
         </section>
 
-        <section className="overflow-hidden rounded border">
+        <section className="rounded border">
           <SectionHeading title="Ayurveda Assessment" />
-          <dl className="grid grid-cols-3 gap-1 p-1.5 text-[9px]">
+          <div className="grid grid-cols-3 gap-1 p-1 text-[8px]">
             {Object.entries(state.ayurveda).map(([label, value]) => (
-              <div className="min-w-0 rounded bg-muted/40 p-1" key={label}>
-                <dt className="mb-0.5 text-muted-foreground">
+              <label className="bg-muted/40 min-w-0 rounded p-0.5" key={label}>
+                <span className="text-muted-foreground block leading-2">
                   {ayurvedaLabels[label as keyof typeof ayurvedaLabels]}
-                </dt>
-                <dd className="line-clamp-2 font-medium" title={value}>
-                  {value}
-                </dd>
-              </div>
+                </span>
+                <textarea
+                  aria-label={ayurvedaLabels[label as keyof typeof ayurvedaLabels]}
+                  className="focus:ring-ring h-4 w-full resize-none bg-transparent text-[7px] leading-2 font-medium outline-none focus:ring-1 disabled:opacity-70"
+                  disabled={disabled}
+                  onChange={(event) =>
+                    dispatch({
+                      type: 'update-ayurveda',
+                      field: label as keyof AssessmentState['ayurveda'],
+                      value: event.target.value,
+                    })
+                  }
+                  value={value}
+                />
+              </label>
             ))}
-          </dl>
+          </div>
         </section>
       </CardContent>
     </Card>

@@ -3,10 +3,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function ClinicianAssessmentLoader() {
   return (
     <div
-      className="grid h-[calc(100svh-7.5rem)] min-h-0 grid-rows-[5rem_minmax(0,1fr)_3.5rem] gap-2 overflow-hidden"
+      className="grid h-[calc(100svh-7.5rem)] min-h-0 grid-rows-[4rem_minmax(0,1fr)_3.5rem] gap-2 overflow-hidden"
       aria-label="Loading page"
     >
-      <div className="bg-card shadow-fluent-2 flex h-20 items-center gap-4 rounded-lg border p-3">
+      <div className="bg-card shadow-fluent-2 flex h-16 items-center gap-4 rounded-lg border p-3">
         <Skeleton className="size-11 rounded-md" />
         <div className="space-y-2">
           <Skeleton className="h-5 w-52" />

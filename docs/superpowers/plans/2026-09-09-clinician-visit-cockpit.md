@@ -44,8 +44,15 @@
 ```ts
 import { describe, expect, it } from 'vitest';
 
-import { getStaticClinicianVisit, staticClinicianVisits } from '../../../_data/static-clinician-visits';
-import { assessmentReducer, canCompleteAssessment, createAssessmentState } from './assessment-state';
+import {
+  getStaticClinicianVisit,
+  staticClinicianVisits,
+} from '../../../_data/static-clinician-visits';
+import {
+  assessmentReducer,
+  canCompleteAssessment,
+  createAssessmentState,
+} from './assessment-state';
 
 describe('static clinician Visits', () => {
   it('should expose exactly one active and one completed Visit', () => {
@@ -178,7 +185,9 @@ import { VisitsTable } from './visits-table';
 
 describe('VisitsTable', () => {
   it('should render two static Visits with consultation links', () => {
-    const html = renderToStaticMarkup(createElement(VisitsTable, { visits: staticClinicianVisits }));
+    const html = renderToStaticMarkup(
+      createElement(VisitsTable, { visits: staticClinicianVisits })
+    );
     expect(html).toContain('VST-15730');
     expect(html).toContain('VST-15731');
     expect(html).toContain('/visits/15730/assessment');
