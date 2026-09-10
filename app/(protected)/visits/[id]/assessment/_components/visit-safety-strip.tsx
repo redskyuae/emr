@@ -35,7 +35,7 @@ export function VisitSafetyStrip({
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base leading-none font-semibold">{visit.patient.name}</h2>
+              <h2 className="text-sm leading-none font-semibold">{visit.patient.name}</h2>
               <Badge variant={presentation.variant}>{presentation.label}</Badge>
               <span className="bg-primary/10 text-primary inline-flex size-6 items-center justify-center rounded text-xs font-semibold">
                 {visit.queueToken}
@@ -78,7 +78,7 @@ export function VisitSafetyStrip({
           <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
           <div className="min-w-0">
             <p className="text-xs font-semibold">Allergies</p>
-            <p className="text-xs leading-tight">{currentAllergies.join(' · ')}</p>
+            <p className="text-[10px] leading-tight">{currentAllergies.join(' · ')}</p>
           </div>
         </div>
       </CardContent>
