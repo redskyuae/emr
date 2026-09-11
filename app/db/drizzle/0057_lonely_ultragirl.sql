@@ -1,0 +1,1 @@
+ALTER TABLE "patient" ADD COLUMN "photo_url" text;

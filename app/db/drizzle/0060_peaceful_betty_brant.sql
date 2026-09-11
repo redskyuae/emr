@@ -1,0 +1,2 @@
+DROP INDEX "patient_tenant_emirates_id_idx";--> statement-breakpoint
+CREATE UNIQUE INDEX "patient_tenant_emirates_id_idx" ON "patient" USING btree ("tenant_id","emirates_id") WHERE "patient"."is_deleted" = false and "patient"."emirates_id" is not null and "patient"."emirates_id" like '784%';

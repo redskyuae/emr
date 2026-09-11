@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Controller, type Control, type UseFormSetValue, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save, UserRoundPlus } from 'lucide-react';
+import { AlertCircle, Save, UserRound, UserRoundPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -13,8 +13,10 @@ import { useNationalityOptionsQuery } from '@/app/queries/global-references/nati
 import { useReligionOptionsQuery } from '@/app/queries/global-references/religions/useReligions';
 import { useStateOptionsQuery } from '@/app/queries/global-references/states/useStates';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,10 +30,15 @@ import {
 import { patientFormSchema, type PatientFormValues } from '../_utils/patient-form-schema';
 import {
   formatEmiratesId,
+  getPatientIdentificationCategoryDefaultId,
   PATIENT_BLOOD_GROUPS,
   PATIENT_GENDER_OPTIONS,
+  PATIENT_IDENTIFICATION_CATEGORY_OPTIONS,
   PATIENT_MARITAL_STATUS_OPTIONS,
-  PATIENT_PAYMENT_METHOD_OPTIONS,
+  PATIENT_ETHNIC_GROUP_OPTIONS,
+  PATIENT_NEXT_OF_KIN_RELATIONSHIP_OPTIONS,
+  PATIENT_RACE_OPTIONS,
+  PATIENT_TITLE_OPTIONS,
 } from '../_utils/patient-value-sets';
 import { IdentityDocumentsFieldArray } from './identity-documents-field-array';
 
@@ -107,7 +114,59 @@ function MasterSelect({
   );
 }
 
+type CheckboxFieldProps = {
+  id: string;
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  description?: string;
+};
+
+function CheckboxField({ id, label, checked, onCheckedChange, description }: CheckboxFieldProps) {
+  return (
+    <Field className="rounded-md border p-3">
+      <div className="flex items-start gap-3">
+        <Checkbox
+          id={id}
+          checked={checked}
+          onCheckedChange={(next) => onCheckedChange(next === true)}
+        />
+        <div className="space-y-1">
+          <FieldLabel htmlFor={id}>{label}</FieldLabel>
+          {description ? <FieldDescription>{description}</FieldDescription> : null}
+        </div>
+      </div>
+    </Field>
+  );
+}
+
+function PatientPhotoPreview({ error, photoUrl }: { error?: string; photoUrl?: string }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-3 rounded-md border p-3">
+        <Avatar className="size-20 rounded-md">
+          {photoUrl ? (
+            <AvatarImage src={photoUrl} alt="Patient photo" className="rounded-md" />
+          ) : null}
+          <AvatarFallback className="rounded-md">
+            <UserRound className="text-muted-foreground size-7" aria-hidden="true" />
+          </AvatarFallback>
+        </Avatar>
+        <div className="space-y-1">
+          <FieldLabel>Patient photo</FieldLabel>
+          <FieldDescription>{photoUrl ? 'From Emirates ID read' : 'Not captured'}</FieldDescription>
+        </div>
+      </div>
+      {error ? <p className="text-destructive text-xs">{error}</p> : null}
+    </div>
+  );
+}
+
 function DemographicsSection({ control }: { control: Control<PatientFormValues> }) {
+  const nationalitiesQuery = useNationalityOptionsQuery();
+  const languagesQuery = useLanguageOptionsQuery();
+  const religionsQuery = useReligionOptionsQuery();
+
   return (
     <Card className="shadow-fluent-2">
       <CardHeader>
@@ -116,7 +175,40 @@ function DemographicsSection({ control }: { control: Control<PatientFormValues> 
       </CardHeader>
       <CardContent>
         <FieldGroup className="gap-4">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Controller
+              control={control}
+              name="title"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor="patient-title">
+                    Title
+                    <RequiredMark />
+                  </FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      id="patient-title"
+                      className="w-full"
+                      aria-required={true}
+                      aria-invalid={fieldState.invalid}
+                    >
+                      <SelectValue placeholder="Select title" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PATIENT_TITLE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.error ? (
+                    <p className="text-destructive text-xs">{fieldState.error.message}</p>
+                  ) : null}
+                </Field>
+              )}
+            />
+
             <Controller
               control={control}
               name="firstName"
@@ -285,6 +377,105 @@ function DemographicsSection({ control }: { control: Control<PatientFormValues> 
               )}
             />
           </div>
+
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <Controller
+              control={control}
+              name="nationalityId"
+              render={({ field }) => (
+                <MasterSelect
+                  id="patient-nationality"
+                  label="Nationality"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={nationalitiesQuery.data ?? []}
+                  loading={nationalitiesQuery.isLoading}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="languageId"
+              render={({ field }) => (
+                <MasterSelect
+                  id="patient-language"
+                  label="Preferred language"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={languagesQuery.data ?? []}
+                  loading={languagesQuery.isLoading}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="religionId"
+              render={({ field }) => (
+                <MasterSelect
+                  id="patient-religion"
+                  label="Religion"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={religionsQuery.data ?? []}
+                  loading={religionsQuery.isLoading}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="race"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="patient-race">Race</FieldLabel>
+                  <Select
+                    value={field.value || NONE}
+                    onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                  >
+                    <SelectTrigger id="patient-race" className="w-full">
+                      <SelectValue placeholder="Not specified" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>Not specified</SelectItem>
+                      {PATIENT_RACE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="ethnicGroup"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="patient-ethnic-group">Ethnic Group</FieldLabel>
+                  <Select
+                    value={field.value || NONE}
+                    onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                  >
+                    <SelectTrigger id="patient-ethnic-group" className="w-full">
+                      <SelectValue placeholder="Not specified" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>Not specified</SelectItem>
+                      {PATIENT_ETHNIC_GROUP_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+          </div>
         </FieldGroup>
       </CardContent>
     </Card>
@@ -421,20 +612,6 @@ function AddressSection({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Controller
               control={control}
-              name="city"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor="patient-city">City</FieldLabel>
-                  <Input id="patient-city" {...field} aria-invalid={fieldState.invalid} />
-                  {fieldState.error ? (
-                    <p className="text-destructive text-xs">{fieldState.error.message}</p>
-                  ) : null}
-                </Field>
-              )}
-            />
-
-            <Controller
-              control={control}
               name="countryId"
               render={({ field, fieldState }) => (
                 <div>
@@ -482,6 +659,20 @@ function AddressSection({
 
             <Controller
               control={control}
+              name="city"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel htmlFor="patient-city">City</FieldLabel>
+                  <Input id="patient-city" {...field} aria-invalid={fieldState.invalid} />
+                  {fieldState.error ? (
+                    <p className="text-destructive text-xs">{fieldState.error.message}</p>
+                  ) : null}
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={control}
               name="postalCode"
               render={({ field, fieldState }) => (
                 <Field>
@@ -500,10 +691,27 @@ function AddressSection({
   );
 }
 
-function IdentifiersSection({ control }: { control: Control<PatientFormValues> }) {
-  const nationalitiesQuery = useNationalityOptionsQuery();
-  const languagesQuery = useLanguageOptionsQuery();
-  const religionsQuery = useReligionOptionsQuery();
+function IdentifiersSection({
+  control,
+  setValue,
+  identityDocumentsError,
+  photoError,
+}: {
+  control: Control<PatientFormValues>;
+  setValue: UseFormSetValue<PatientFormValues>;
+  identityDocumentsError?: string;
+  photoError?: string;
+}) {
+  const hasEmiratesId = useWatch({ control, name: 'hasEmiratesId' });
+  const isMedicalTourist = useWatch({ control, name: 'isMedicalTourist' });
+  const photoUrl = useWatch({ control, name: 'photoUrl' });
+  const patientIdentificationCategory = useWatch({
+    control,
+    name: 'patientIdentificationCategory',
+  });
+  const defaultIdentifier = patientIdentificationCategory
+    ? getPatientIdentificationCategoryDefaultId(patientIdentificationCategory)
+    : null;
 
   return (
     <Card className="shadow-fluent-2">
@@ -515,80 +723,223 @@ function IdentifiersSection({ control }: { control: Control<PatientFormValues> }
       </CardHeader>
       <CardContent>
         <FieldGroup className="gap-4">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Controller
               control={control}
-              name="nationalityId"
+              name="hasEmiratesId"
               render={({ field }) => (
-                <MasterSelect
-                  id="patient-nationality"
-                  label="Nationality"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={nationalitiesQuery.data ?? []}
-                  loading={nationalitiesQuery.isLoading}
+                <CheckboxField
+                  id="patient-has-emirates-id"
+                  label="Has Emirates ID"
+                  checked={field.value}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                    if (checked) {
+                      setValue('uid', '');
+                      setValue('emiratesId', '');
+                      setValue('passportNumber', '');
+                      setValue('isMedicalTourist', false);
+                      setValue('patientIdentificationCategory', '');
+                    } else {
+                      setValue('emiratesId', '');
+                      setValue('photoUrl', '');
+                    }
+                  }}
                 />
               )}
             />
 
             <Controller
               control={control}
-              name="languageId"
+              name="isMedicalTourist"
               render={({ field }) => (
-                <MasterSelect
-                  id="patient-language"
-                  label="Preferred language"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={languagesQuery.data ?? []}
-                  loading={languagesQuery.isLoading}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="religionId"
-              render={({ field }) => (
-                <MasterSelect
-                  id="patient-religion"
-                  label="Religion"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={religionsQuery.data ?? []}
-                  loading={religionsQuery.isLoading}
+                <CheckboxField
+                  id="patient-is-medical-tourist"
+                  label="Medical Tourist"
+                  checked={field.value}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                    if (checked) {
+                      setValue('hasEmiratesId', false);
+                      setValue('emiratesId', '');
+                      setValue('photoUrl', '');
+                    }
+                  }}
                 />
               )}
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
+            {hasEmiratesId ? (
+              <div className="grid max-w-md grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                <Controller
+                  control={control}
+                  name="emiratesId"
+                  render={({ field, fieldState }) => (
+                    <Field>
+                      <FieldLabel htmlFor="patient-emirates-id">
+                        Emirates ID
+                        <RequiredMark />
+                      </FieldLabel>
+                      <Input
+                        id="patient-emirates-id"
+                        inputMode="numeric"
+                        placeholder="784-1990-1234567-1"
+                        aria-required
+                        aria-invalid={fieldState.invalid}
+                        {...field}
+                        // Reformat to the printed form once the user leaves the
+                        // field; any spelling is accepted on the way in.
+                        onBlur={(event) => {
+                          field.onChange(formatEmiratesId(event.target.value) ?? '');
+                          field.onBlur();
+                        }}
+                      />
+                      {fieldState.error ? (
+                        <p className="text-destructive text-xs">{fieldState.error.message}</p>
+                      ) : null}
+                    </Field>
+                  )}
+                />
+
+                <div className="pt-6">
+                  <Button type="button" variant="outline" className="w-16" disabled>
+                    Read
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={
+                  isMedicalTourist ? 'grid gap-4 sm:grid-cols-3' : 'grid gap-4 sm:grid-cols-2'
+                }
+              >
+                <Controller
+                  control={control}
+                  name="patientIdentificationCategory"
+                  render={({ field, fieldState }) => (
+                    <Field>
+                      <FieldLabel htmlFor="patient-emirates-id-category">
+                        Emirates ID
+                        <RequiredMark />
+                      </FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(next) => {
+                          field.onChange(next);
+                          setValue(
+                            'emiratesId',
+                            getPatientIdentificationCategoryDefaultId(next) ?? '',
+                            {
+                              shouldDirty: true,
+                              shouldTouch: true,
+                              shouldValidate: true,
+                            }
+                          );
+                        }}
+                      >
+                        <SelectTrigger
+                          id="patient-emirates-id-category"
+                          className="w-full"
+                          aria-required
+                          aria-invalid={fieldState.invalid}
+                        >
+                          <SelectValue placeholder="Select identifier category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PATIENT_IDENTIFICATION_CATEGORY_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.defaultIdentifier} - {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {defaultIdentifier ? (
+                        <FieldDescription>Default identifier: {defaultIdentifier}</FieldDescription>
+                      ) : null}
+                      {fieldState.error ? (
+                        <p className="text-destructive text-xs">{fieldState.error.message}</p>
+                      ) : null}
+                    </Field>
+                  )}
+                />
+
+                {isMedicalTourist ? (
+                  <>
+                    <Controller
+                      control={control}
+                      name="passportNumber"
+                      render={({ field, fieldState }) => (
+                        <Field>
+                          <FieldLabel htmlFor="patient-passport-number">Passport number</FieldLabel>
+                          <Input
+                            id="patient-passport-number"
+                            {...field}
+                            aria-invalid={fieldState.invalid}
+                          />
+                          {fieldState.error ? (
+                            <p className="text-destructive text-xs">{fieldState.error.message}</p>
+                          ) : null}
+                        </Field>
+                      )}
+                    />
+
+                    <Controller
+                      control={control}
+                      name="uid"
+                      render={({ field, fieldState }) => (
+                        <Field>
+                          <FieldLabel htmlFor="patient-uid">
+                            UID
+                            <RequiredMark />
+                          </FieldLabel>
+                          <Input
+                            id="patient-uid"
+                            {...field}
+                            aria-required
+                            aria-invalid={fieldState.invalid}
+                          />
+                          {fieldState.error ? (
+                            <p className="text-destructive text-xs">{fieldState.error.message}</p>
+                          ) : null}
+                        </Field>
+                      )}
+                    />
+                  </>
+                ) : null}
+              </div>
+            )}
+
+            {hasEmiratesId || photoUrl ? (
+              <PatientPhotoPreview error={photoError} photoUrl={photoUrl} />
+            ) : null}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
             <Controller
               control={control}
-              name="emiratesId"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel htmlFor="patient-emirates-id">Emirates ID</FieldLabel>
-                  <Input
-                    id="patient-emirates-id"
-                    inputMode="numeric"
-                    placeholder="784-1990-1234567-1"
-                    aria-invalid={fieldState.invalid}
-                    {...field}
-                    // Reformat to the printed form once the user leaves the
-                    // field; any spelling is accepted on the way in.
-                    onBlur={(event) => {
-                      field.onChange(formatEmiratesId(event.target.value) ?? '');
-                      field.onBlur();
-                    }}
-                  />
-                  <FieldDescription>
-                    Optional — visitors and foreign nationals will not have one.
-                  </FieldDescription>
-                  {fieldState.error ? (
-                    <p className="text-destructive text-xs">{fieldState.error.message}</p>
-                  ) : null}
-                </Field>
+              name="isVip"
+              render={({ field }) => (
+                <CheckboxField
+                  id="patient-is-vip"
+                  label="VIP"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="smsConsent"
+              render={({ field }) => (
+                <CheckboxField
+                  id="patient-sms-consent"
+                  label="Enable SMS"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
               )}
             />
           </div>
@@ -602,6 +953,9 @@ function IdentifiersSection({ control }: { control: Control<PatientFormValues> }
               </p>
             </div>
             <IdentityDocumentsFieldArray control={control} />
+            {identityDocumentsError ? (
+              <p className="text-destructive text-xs">{identityDocumentsError}</p>
+            ) : null}
           </div>
         </FieldGroup>
       </CardContent>
@@ -609,66 +963,21 @@ function IdentifiersSection({ control }: { control: Control<PatientFormValues> }
   );
 }
 
-function BillingSection({ control }: { control: Control<PatientFormValues> }) {
+function NextOfKinSection({ control }: { control: Control<PatientFormValues> }) {
   return (
     <Card className="shadow-fluent-2">
       <CardHeader>
-        <CardTitle>Billing</CardTitle>
-        <CardDescription>
-          How this Patient usually settles charges. A default hint for front-desk registration —
-          insurance coverage details are captured per Visit.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Controller
-            control={control}
-            name="preferredPaymentMethod"
-            render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="patient-preferred-payment-method">
-                  Preferred payment method
-                </FieldLabel>
-                <Select
-                  value={field.value || NONE}
-                  onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
-                >
-                  <SelectTrigger id="patient-preferred-payment-method" className="w-full">
-                    <SelectValue placeholder="Not specified" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>Not specified</SelectItem>
-                    {PATIENT_PAYMENT_METHOD_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            )}
-          />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function EmergencyContactSection({ control }: { control: Control<PatientFormValues> }) {
-  return (
-    <Card className="shadow-fluent-2">
-      <CardHeader>
-        <CardTitle>Emergency contact</CardTitle>
+        <CardTitle>Next of Kin</CardTitle>
         <CardDescription>The person to reach on this Patient&apos;s behalf.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Controller
             control={control}
             name="emergencyContactName"
             render={({ field, fieldState }) => (
               <Field>
-                <FieldLabel htmlFor="patient-ec-name">Name</FieldLabel>
+                <FieldLabel htmlFor="patient-ec-name">Next of Kin</FieldLabel>
                 <Input id="patient-ec-name" {...field} aria-invalid={fieldState.invalid} />
                 {fieldState.error ? (
                   <p className="text-destructive text-xs">{fieldState.error.message}</p>
@@ -682,8 +991,33 @@ function EmergencyContactSection({ control }: { control: Control<PatientFormValu
             name="emergencyContactRelationship"
             render={({ field, fieldState }) => (
               <Field>
-                <FieldLabel htmlFor="patient-ec-relationship">Relationship</FieldLabel>
-                <Input id="patient-ec-relationship" {...field} aria-invalid={fieldState.invalid} />
+                <FieldLabel htmlFor="patient-ec-relationship">Next of Kin Relationship</FieldLabel>
+                <Select
+                  value={field.value || NONE}
+                  onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                >
+                  <SelectTrigger
+                    id="patient-ec-relationship"
+                    className="w-full"
+                    aria-invalid={fieldState.invalid}
+                  >
+                    <SelectValue placeholder="Not specified" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Not specified</SelectItem>
+                    {field.value &&
+                    !PATIENT_NEXT_OF_KIN_RELATIONSHIP_OPTIONS.some(
+                      (option) => option.value === field.value
+                    ) ? (
+                      <SelectItem value={field.value}>{field.value}</SelectItem>
+                    ) : null}
+                    {PATIENT_NEXT_OF_KIN_RELATIONSHIP_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {fieldState.error ? (
                   <p className="text-destructive text-xs">{fieldState.error.message}</p>
                 ) : null}
@@ -693,10 +1027,36 @@ function EmergencyContactSection({ control }: { control: Control<PatientFormValu
 
           <Controller
             control={control}
+            name="emergencyContactGender"
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="patient-ec-gender">Next of Kin Gender</FieldLabel>
+                <Select
+                  value={field.value || NONE}
+                  onValueChange={(value) => field.onChange(value === NONE ? '' : value)}
+                >
+                  <SelectTrigger id="patient-ec-gender" className="w-full">
+                    <SelectValue placeholder="Not specified" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Not specified</SelectItem>
+                    {PATIENT_GENDER_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
+          />
+
+          <Controller
+            control={control}
             name="emergencyContactPhone"
             render={({ field, fieldState }) => (
               <Field>
-                <FieldLabel htmlFor="patient-ec-phone">Phone</FieldLabel>
+                <FieldLabel htmlFor="patient-ec-phone">Next of Kin Phone</FieldLabel>
                 <Input
                   id="patient-ec-phone"
                   type="tel"
@@ -751,7 +1111,10 @@ export function PatientForm({
       );
 
       if (emiratesIdConflict) {
-        form.setError('emiratesId', { message: emiratesIdConflict });
+        form.setError(
+          form.getValues('hasEmiratesId') ? 'emiratesId' : 'patientIdentificationCategory',
+          { message: emiratesIdConflict }
+        );
       } else {
         setServerErrors(errors);
       }
@@ -773,12 +1136,16 @@ export function PatientForm({
         </Card>
       ) : null}
 
+      <IdentifiersSection
+        control={form.control}
+        setValue={form.setValue}
+        identityDocumentsError={form.formState.errors.identityDocuments?.message}
+        photoError={form.formState.errors.photoUrl?.message}
+      />
       <DemographicsSection control={form.control} />
       <ContactSection control={form.control} />
       <AddressSection control={form.control} setValue={form.setValue} />
-      <IdentifiersSection control={form.control} />
-      <BillingSection control={form.control} />
-      <EmergencyContactSection control={form.control} />
+      <NextOfKinSection control={form.control} />
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>

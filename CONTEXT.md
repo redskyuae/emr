@@ -180,15 +180,51 @@ The human-facing identifier for a Patient within a Tenant, assigned by the syste
 
 ## Emirates ID
 
-The identity document issued by the United Arab Emirates to every citizen and resident, recorded on a Patient as their primary national identifier. A Patient has at most one Emirates ID, and it is optional — visitors and foreign nationals treated without UAE residency will not have one. The number is issued once per person and persists for life; renewing the card reissues the document, not the number. Two active Patients within a Tenant may never share an Emirates ID. Distinct from the Medical Record Number, which the Tenant issues and controls; the Emirates ID is issued by the state and merely recorded.
+The identity document issued by the United Arab Emirates to every citizen and resident, recorded on a Patient as their primary national identifier. Patient Registration always captures an Emirates ID value: either the real UAE-issued number or the reusable fallback identifier mapped from the Patient Identification Category when the Patient does not have a real Emirates ID. The real number is issued once per person and persists for life; renewing the card reissues the document, not the number. Two active Patients within a Tenant may never share a real Emirates ID beginning with `784`; category fallback identifiers are deliberately reusable. Distinct from the Medical Record Number, which the Tenant issues and controls.
+
+## Patient Photo
+
+A Patient image captured from Emirates ID read integration during Patient Registration. It is read-derived identity evidence, not a general staff-uploaded profile picture, and is cleared when a Patient is registered without an Emirates ID.
+
+## Patient Identification Category
+
+A category recorded during Patient Registration when the Patient does not have a real Emirates ID, describing why registration proceeds with a fallback Emirates ID value. It is distinct from Identity Document type; avoid "Emirates ID Type" for this concept.
+
+## Unified Identification Number
+
+The UAE immigration identifier recorded for a Patient who does not have an Emirates ID, commonly abbreviated UID. It is distinct from the Patient's Emirates ID, Medical Record Number, and passport number.
 
 ## Identity Document
 
 A government-issued document recorded on a Patient to evidence their identity, such as a passport, residence visa, national identity card, or driving licence. A Patient may hold any number of Identity Documents, including several of the same kind — a dual national legitimately holds two valid passports. Each carries the details that make it meaningful, such as the country that issued it and the date it expires. Identity Documents are recorded as supporting evidence and are not required to be unique across Patients: two countries may legitimately issue the same passport number. The Emirates ID is a UAE identity document but is recorded as its own Patient attribute rather than as an Identity Document, so that it has exactly one home.
 
+## Medical Tourist
+
+A Patient who travels to receive care outside their usual country of residence. Medical Tourist is a Patient registration flag, not a Patient type separate from Patient.
+
+## Race
+
+A fixed Patient Registration value set representing a broad demographic classification. Distinct from Ethnic Group, which captures a more specific community or ancestry grouping.
+
+## Ethnic Group
+
+A fixed Patient Registration value set representing a Patient's more specific community or ancestry grouping. Distinct from Race, which is broader.
+
+## VIP Patient
+
+A Patient marked for special handling or visibility during administrative and care workflows. VIP is a Patient registration flag, not a Patient type separate from Patient.
+
+## SMS Consent
+
+A Patient communication preference indicating that SMS notifications may be sent to the Patient's recorded mobile number. User-facing copy may say "Enable SMS", but SMS Consent is the canonical domain term.
+
+## Condition Presence
+
+A non-diagnostic intake flag recorded during Patient Registration to note predefined conditions reported or observed at registration. It is distinct from Patient Problem, which is part of the clinical chart.
+
 ## Emergency Contact
 
-The person to reach on a Patient's behalf in urgent situations, recorded during Patient Registration with their relationship to the Patient. An Emergency Contact is contact information only — not a Patient, not Staff, and not a system user.
+The person to reach on a Patient's behalf in urgent situations, recorded during Patient Registration with their relationship to the Patient. User-facing copy may say "Next of Kin", but Emergency Contact is the persisted concept. An Emergency Contact is contact information only — not a Patient, not Staff, and not a system user.
 
 ## Appointment
 
@@ -396,7 +432,7 @@ A Global Reference representing a country used in Patient addresses and other ge
 
 ## State
 
-A Global Reference representing a state, province, or union territory within a Country, used in Patient addresses. A State always belongs to exactly one Country.
+A Global Reference representing a state, province, union territory, or emirate within a Country, used in Patient addresses. A State always belongs to exactly one Country.
 
 ## Department
 

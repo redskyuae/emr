@@ -11,18 +11,21 @@ const errorsOf = (result: ReturnType<typeof createPatientSchema.safeParse>) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
 
 const validPayload = {
+  title: 'mrs',
   firstName: 'Asha',
   lastName: 'Rao',
   gender: 'female',
   dateOfBirth: '1990-05-14',
   phone: '9876543210',
+  emiratesId: '784199012345671',
 };
 
 describe('Patient schema', () => {
-  it('should require first name, last name, gender, date of birth and phone', () => {
+  it('should require title, first name, last name, gender, date of birth and phone', () => {
     const errors = errorsOf(createPatientSchema.safeParse({}));
     expect(errors).toEqual(
       expect.arrayContaining([
+        'Patient title is invalid',
         'Patient first name is required',
         'Patient last name is required',
         'Patient gender is invalid',
@@ -30,6 +33,12 @@ describe('Patient schema', () => {
         'Patient phone is required',
       ])
     );
+  });
+
+  it('should reject an invalid title', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, title: 'captain' }))
+    ).toContain('Patient title is invalid');
   });
 
   it('should reject an invalid gender', () => {
@@ -54,6 +63,41 @@ describe('Patient schema', () => {
     expect(
       errorsOf(createPatientSchema.safeParse({ ...validPayload, preferredPaymentMethod: 'crypto' }))
     ).toContain('Patient preferred payment method is invalid');
+  });
+
+  it('should accept supported Race and Ethnic Group values', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      race: 'asian',
+      ethnicGroup: 'south-asian',
+      emergencyContactGender: 'female',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.race).toBe('asian');
+      expect(result.data.ethnicGroup).toBe('south-asian');
+      expect(result.data.emergencyContactGender).toBe('female');
+    }
+  });
+
+  it('should reject invalid Race, Ethnic Group and Next of Kin Gender values', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          race: 'martian',
+          ethnicGroup: 'moon-base',
+          emergencyContactGender: 'robot',
+        })
+      )
+    ).toEqual(
+      expect.arrayContaining([
+        'Patient race is invalid',
+        'Patient ethnic group is invalid',
+        'Patient gender is invalid',
+      ])
+    );
   });
 
   it('should accept each supported preferred payment method', () => {
@@ -109,18 +153,179 @@ describe('Patient schema', () => {
   });
 
   it('should reject an Emirates ID that is not 15 digits beginning with 784', () => {
-    for (const input of ['7841990123456', '123199012345671', '784-1990-1234567-12']) {
+    for (const input of ['7841990123456', '784-1990-1234567-12']) {
       expect(
         errorsOf(createPatientSchema.safeParse({ ...validPayload, emiratesId: input }))
-      ).toContain('Patient Emirates ID must be 15 digits beginning with 784');
+      ).toContain('Patient Emirates ID must be 15 digits');
+    }
+
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, emiratesId: '123199012345671' }))
+    ).toContain(
+      'Patient Emirates ID must be 15 digits beginning with 784 or match Patient Identification Category default'
+    );
+  });
+
+  it('should accept the mapped default Emirates ID for a Patient Identification Category', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      emiratesId: '999-9999-9999999-9',
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.emiratesId).toBe('999999999999999');
+      expect(result.data.patientIdentificationCategory).toBe('unknown-status-without-card');
     }
   });
 
+  it('should reject a default Emirates ID that does not match the Patient Identification Category', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          emiratesId: '222-2222-2222222-2',
+          patientIdentificationCategory: 'unknown-status-without-card',
+        })
+      )
+    ).toContain(
+      'Patient Emirates ID must be 15 digits beginning with 784 or match Patient Identification Category default'
+    );
+  });
+
   it('should treat an empty Emirates ID as absent', () => {
-    const result = createPatientSchema.safeParse({ ...validPayload, emiratesId: '' });
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      emiratesId: '',
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.emiratesId).toBeUndefined();
+    }
+  });
+
+  it('should accept a Patient photo returned by Emirates ID read', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      photoUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.photoUrl).toBe('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==');
+    }
+  });
+
+  it('should reject a Patient photo when Emirates ID is absent', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          emiratesId: '',
+          photoUrl: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==',
+          patientIdentificationCategory: 'unknown-status-without-card',
+        })
+      )
+    ).toContain('Patient photo can only be saved with Emirates ID');
+  });
+
+  it('should reject unsupported Patient photo values', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, photoUrl: 'javascript:alert(1)' }))
+    ).toContain('Patient photo must be an HTTP(S) URL or image data URL from Emirates ID read');
+  });
+
+  it('should trim optional passport number and reject overlong values', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      passportNumber: ' P9876543 ',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.passportNumber).toBe('P9876543');
+    }
+
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, passportNumber: 'P'.repeat(51) }))
+    ).toContain('Patient passport number must be at most 50 characters');
+  });
+
+  it('should require Patient Identification Category when Emirates ID is absent', () => {
+    const payloadWithoutEmiratesId = { ...validPayload, emiratesId: undefined };
+
+    expect(errorsOf(createPatientSchema.safeParse(payloadWithoutEmiratesId))).toContain(
+      'Patient Identification Category is required when Emirates ID is absent'
+    );
+  });
+
+  it('should accept each supported Patient Identification Category without an Emirates ID', () => {
+    for (const category of [
+      'uae-national-without-card',
+      'national-without-card',
+      'expatriate-resident-without-card',
+      'non-expatriate-resident-without-card',
+      'unknown-status-without-card',
+    ]) {
+      const result = createPatientSchema.safeParse({
+        ...validPayload,
+        emiratesId: '',
+        patientIdentificationCategory: category,
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.patientIdentificationCategory).toBe(category);
+        expect(result.data.emiratesId).toBeUndefined();
+      }
+    }
+  });
+
+  it('should reject an invalid Patient Identification Category', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          emiratesId: '',
+          patientIdentificationCategory: 'tourist',
+        })
+      )
+    ).toContain('Patient Identification Category is invalid');
+  });
+
+  it('should require UID when Patient is a Medical Tourist', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({
+          ...validPayload,
+          emiratesId: '',
+          isMedicalTourist: true,
+          patientIdentificationCategory: 'unknown-status-without-card',
+        })
+      )
+    ).toContain('Patient UID is required for Medical Tourist');
+  });
+
+  it('should reject Medical Tourist registration with an Emirates ID', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, isMedicalTourist: true }))
+    ).toContain('Medical Tourist cannot have Emirates ID');
+  });
+
+  it('should accept Medical Tourist registration with UID and optional passport number', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      emiratesId: '',
+      uid: '123456789',
+      passportNumber: 'P9876543',
+      isMedicalTourist: true,
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.passportNumber).toBe('P9876543');
     }
   });
 

@@ -2,9 +2,10 @@ import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-sche
 import type { SavePatientRequest } from '@/app/api/v1/patients/types';
 
 import type { PatientFormValues } from './patient-form-schema';
-import { formatEmiratesId, normaliseEmiratesId } from './patient-value-sets';
+import { formatEmiratesId, isRealEmiratesId, normaliseEmiratesId } from './patient-value-sets';
 
 export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
+  title: '',
   firstName: '',
   middleName: '',
   lastName: '',
@@ -25,15 +26,27 @@ export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   nationalityId: undefined,
   languageId: undefined,
   religionId: undefined,
+  race: '',
+  ethnicGroup: '',
+  hasEmiratesId: true,
+  photoUrl: '',
   emiratesId: '',
+  patientIdentificationCategory: '',
+  passportNumber: '',
+  uid: '',
+  isVip: false,
+  smsConsent: false,
+  isMedicalTourist: false,
   identityDocuments: [],
   emergencyContactName: '',
   emergencyContactRelationship: '',
+  emergencyContactGender: '',
   emergencyContactPhone: '',
 };
 
 export function patientToFormValues(patient: Patient): PatientFormValues {
   return {
+    title: patient.title ?? '',
     firstName: patient.firstName,
     middleName: patient.middleName ?? '',
     lastName: patient.lastName,
@@ -54,8 +67,18 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     nationalityId: patient.nationalityId ?? undefined,
     languageId: patient.languageId ?? undefined,
     religionId: patient.religionId ?? undefined,
+    race: patient.race ?? '',
+    ethnicGroup: patient.ethnicGroup ?? '',
+    hasEmiratesId: isRealEmiratesId(patient.emiratesId),
+    photoUrl: patient.photoUrl ?? '',
     // Shown in the dashed form the card is printed with; normalised again on save.
     emiratesId: formatEmiratesId(patient.emiratesId) ?? '',
+    patientIdentificationCategory: patient.patientIdentificationCategory ?? '',
+    passportNumber: patient.passportNumber ?? '',
+    uid: patient.uid ?? '',
+    isVip: patient.isVip,
+    smsConsent: patient.smsConsent,
+    isMedicalTourist: patient.isMedicalTourist,
     // The id round-trips so the server can diff the replace rather than
     // tombstoning and reinserting unchanged documents (ADR 0043).
     identityDocuments: patient.identityDocuments.map((document) => ({
@@ -68,12 +91,14 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     })),
     emergencyContactName: patient.emergencyContactName ?? '',
     emergencyContactRelationship: patient.emergencyContactRelationship ?? '',
+    emergencyContactGender: patient.emergencyContactGender ?? '',
     emergencyContactPhone: patient.emergencyContactPhone ?? '',
   };
 }
 
 export function patientFormValuesToRequest(values: PatientFormValues): SavePatientRequest {
   return {
+    title: values.title,
     firstName: values.firstName,
     middleName: values.middleName || undefined,
     lastName: values.lastName,
@@ -94,7 +119,19 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     nationalityId: values.nationalityId,
     languageId: values.languageId,
     religionId: values.religionId,
+    race: values.race || undefined,
+    ethnicGroup: values.ethnicGroup || undefined,
     emiratesId: values.emiratesId ? normaliseEmiratesId(values.emiratesId) : undefined,
+    photoUrl: values.hasEmiratesId && values.photoUrl ? values.photoUrl : undefined,
+    patientIdentificationCategory:
+      !values.hasEmiratesId && values.patientIdentificationCategory
+        ? values.patientIdentificationCategory
+        : undefined,
+    passportNumber: values.passportNumber || undefined,
+    uid: values.uid || undefined,
+    isVip: values.isVip,
+    smsConsent: values.smsConsent,
+    isMedicalTourist: values.isMedicalTourist,
     identityDocuments: values.identityDocuments.map((document) => ({
       id: document.id,
       documentType: document.documentType,
@@ -109,6 +146,7 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     })),
     emergencyContactName: values.emergencyContactName || undefined,
     emergencyContactRelationship: values.emergencyContactRelationship || undefined,
+    emergencyContactGender: values.emergencyContactGender || undefined,
     emergencyContactPhone: values.emergencyContactPhone || undefined,
   };
 }

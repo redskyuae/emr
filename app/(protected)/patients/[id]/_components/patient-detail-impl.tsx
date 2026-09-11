@@ -8,6 +8,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  UserRound,
   UserRoundCheck,
   UserRoundX,
   UsersRound,
@@ -19,10 +20,15 @@ import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import {
   formatEmiratesId,
   getPatientGenderLabel,
+  getPatientEthnicGroupLabel,
+  getPatientIdentificationCategoryLabel,
   getPatientMaritalStatusLabel,
   getPatientPaymentMethodLabel,
+  getPatientRaceLabel,
+  getPatientTitleLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -67,6 +73,27 @@ function DetailField({ label, value }: { label: string; value: string | null | u
   );
 }
 
+function PatientPhotoPreview({ photoUrl }: { photoUrl: string | null }) {
+  return (
+    <div className="flex items-center gap-3 rounded-md border p-3">
+      <Avatar className="size-20 rounded-md">
+        {photoUrl ? (
+          <AvatarImage src={photoUrl} alt="Patient photo" className="rounded-md" />
+        ) : null}
+        <AvatarFallback className="rounded-md">
+          <UserRound className="text-muted-foreground size-7" aria-hidden="true" />
+        </AvatarFallback>
+      </Avatar>
+      <div className="space-y-1">
+        <p className="text-sm font-medium">Patient photo</p>
+        <p className="text-muted-foreground text-xs">
+          {photoUrl ? 'From Emirates ID read' : 'Not captured'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function getRegistrationStatusLabel(status: Patient['registrationStatus']) {
   return status === 'registered' ? 'Registered' : 'Provisional';
 }
@@ -78,14 +105,40 @@ function PatientDetailSkeleton() {
         <Skeleton className="h-6 w-48" />
         <Skeleton className="mt-2 h-4 w-32" />
       </div>
-      {[0, 1, 2, 3, 4].map((section) => (
+      {[0, 1, 2, 3, 4, 5, 6].map((section) => (
         <div key={section} className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
           <Skeleton className="h-5 w-40" />
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
+          {section === 1 ? (
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ) : (
+            <div className={section === 0 ? 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]' : ''}>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                {section === 0 ? (
+                  <>
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                  </>
+                ) : null}
+              </div>
+              {section === 0 ? (
+                <div className="flex items-center gap-3 rounded-md border p-3">
+                  <Skeleton className="size-20 rounded-md" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -217,9 +270,66 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
         <TabsContent value="overview" className="mt-4 space-y-4">
           <Card className="shadow-fluent-2">
             <CardHeader>
+              <CardTitle>Identifiers</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <DetailField label="Emirates ID" value={formatEmiratesId(patient.emiratesId)} />
+                <DetailField
+                  label="Patient Identification Category"
+                  value={
+                    patient.patientIdentificationCategory
+                      ? getPatientIdentificationCategoryLabel(patient.patientIdentificationCategory)
+                      : null
+                  }
+                />
+                <DetailField label="UID" value={patient.uid} />
+                <DetailField label="Passport number" value={patient.passportNumber} />
+                <DetailField label="Nationality" value={patient.nationality?.name} />
+                <DetailField label="Preferred language" value={patient.language?.name} />
+                <DetailField label="Religion" value={patient.religion?.name} />
+                <DetailField
+                  label="Race"
+                  value={patient.race ? getPatientRaceLabel(patient.race) : null}
+                />
+                <DetailField
+                  label="Ethnic Group"
+                  value={
+                    patient.ethnicGroup ? getPatientEthnicGroupLabel(patient.ethnicGroup) : null
+                  }
+                />
+                <DetailField label="VIP" value={patient.isVip ? 'Yes' : 'No'} />
+                <DetailField
+                  label="Medical Tourist"
+                  value={patient.isMedicalTourist ? 'Yes' : 'No'}
+                />
+                <DetailField
+                  label="SMS Consent"
+                  value={patient.smsConsent ? 'Enabled' : 'Disabled'}
+                />
+              </div>
+              <PatientPhotoPreview photoUrl={patient.photoUrl} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-fluent-2">
+            <CardHeader>
+              <CardTitle>Identity documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <IdentityDocumentsTable documents={patient.identityDocuments} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-fluent-2">
+            <CardHeader>
               <CardTitle>Demographics</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              <DetailField
+                label="Title"
+                value={patient.title ? getPatientTitleLabel(patient.title) : null}
+              />
               <DetailField
                 label="Gender"
                 value={patient.gender ? getPatientGenderLabel(patient.gender) : null}
@@ -262,27 +372,6 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
 
           <Card className="shadow-fluent-2">
             <CardHeader>
-              <CardTitle>Identifiers</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-3">
-              <DetailField label="Nationality" value={patient.nationality?.name} />
-              <DetailField label="Preferred language" value={patient.language?.name} />
-              <DetailField label="Religion" value={patient.religion?.name} />
-              <DetailField label="Emirates ID" value={formatEmiratesId(patient.emiratesId)} />
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-fluent-2">
-            <CardHeader>
-              <CardTitle>Identity documents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <IdentityDocumentsTable documents={patient.identityDocuments} />
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-fluent-2">
-            <CardHeader>
               <CardTitle>Billing</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-3">
@@ -299,12 +388,23 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
 
           <Card className="shadow-fluent-2">
             <CardHeader>
-              <CardTitle>Emergency contact</CardTitle>
+              <CardTitle>Next of Kin</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-3">
-              <DetailField label="Name" value={patient.emergencyContactName} />
-              <DetailField label="Relationship" value={patient.emergencyContactRelationship} />
-              <DetailField label="Phone" value={patient.emergencyContactPhone} />
+            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <DetailField label="Next of Kin" value={patient.emergencyContactName} />
+              <DetailField
+                label="Next of Kin Relationship"
+                value={patient.emergencyContactRelationship}
+              />
+              <DetailField
+                label="Next of Kin Gender"
+                value={
+                  patient.emergencyContactGender
+                    ? getPatientGenderLabel(patient.emergencyContactGender)
+                    : null
+                }
+              />
+              <DetailField label="Next of Kin Phone" value={patient.emergencyContactPhone} />
             </CardContent>
           </Card>
         </TabsContent>
