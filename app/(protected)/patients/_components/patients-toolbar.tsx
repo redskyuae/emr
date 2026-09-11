@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, UserRoundPlus } from 'lucide-react';
 
 import { PATIENT_GENDER_OPTIONS } from '@/app/(protected)/patients/_utils/patient-value-sets';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
@@ -37,6 +38,7 @@ export function PatientsToolbar({
 }: PatientsToolbarProps) {
   const [searchDraft, setSearchDraft] = useState(search);
   const [syncedSearch, setSyncedSearch] = useState(search);
+  const { data: canCreate } = useHasPermission('patient:create');
 
   // Keep the local draft in sync when the URL-backed value changes elsewhere
   // (e.g. cleared filters, back/forward navigation) by adjusting state during
@@ -104,12 +106,14 @@ export function PatientsToolbar({
           </SelectContent>
         </Select>
 
-        <Button type="button" asChild className="lg:ml-auto">
-          <Link href="/patients/new">
-            <UserRoundPlus className="size-4" />
-            Register patient
-          </Link>
-        </Button>
+        {canCreate ? (
+          <Button type="button" asChild className="lg:ml-auto">
+            <Link href="/patients/new">
+              <UserRoundPlus className="size-4" />
+              Register patient
+            </Link>
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

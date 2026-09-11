@@ -52,6 +52,7 @@ export type AppPageMeta = {
   primaryAction?: {
     label: string;
     href: string;
+    permission?: string;
   };
 };
 
@@ -363,6 +364,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Register patient',
       href: '/patients/new',
+      permission: 'patient:create',
     },
   },
   '/patients/new': {

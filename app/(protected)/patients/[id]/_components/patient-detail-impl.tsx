@@ -16,6 +16,7 @@ import {
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import {
   formatEmiratesId,
   getPatientGenderLabel,
@@ -101,6 +102,11 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
     useState<Patient | null>(null);
   const [patientPendingDelete, setPatientPendingDelete] = useState<Patient | null>(null);
 
+  const { data: canUpdate } = useHasPermission('patient:update');
+  const { data: canDeactivate } = useHasPermission('patient:deactivate');
+  const { data: canReactivate } = useHasPermission('patient:reactivate');
+  const { data: canDelete } = useHasPermission('patient:delete');
+
   if (patientQuery.isLoading) {
     return <PatientDetailSkeleton />;
   }
@@ -123,6 +129,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
   }
 
   const patient = patientQuery.data;
+  const canToggleActive = patient.isActive ? canDeactivate : canReactivate;
 
   return (
     <div className="space-y-4">
@@ -156,49 +163,55 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" asChild>
-              <Link href={`/patients/${patient.id}/edit`}>
-                <Pencil className="size-4" />
-                Edit
-              </Link>
-            </Button>
-
-            {patient.isActive ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setPatientPendingLifecycleChange(patient)}
-              >
-                <UserRoundX className="size-4" />
-                Deactivate
+            {canUpdate ? (
+              <Button type="button" variant="outline" asChild>
+                <Link href={`/patients/${patient.id}/edit`}>
+                  <Pencil className="size-4" />
+                  Edit
+                </Link>
               </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setPatientPendingLifecycleChange(patient)}
-              >
-                <UserRoundCheck className="size-4" />
-                Reactivate
-              </Button>
-            )}
+            ) : null}
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="ghost" size="icon" aria-label="More actions">
-                  <MoreVertical className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem
-                  variant="destructive"
-                  onSelect={() => setPatientPendingDelete(patient)}
+            {canToggleActive ? (
+              patient.isActive ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPatientPendingLifecycleChange(patient)}
                 >
-                  <Trash2 className="size-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <UserRoundX className="size-4" />
+                  Deactivate
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPatientPendingLifecycleChange(patient)}
+                >
+                  <UserRoundCheck className="size-4" />
+                  Reactivate
+                </Button>
+              )
+            ) : null}
+
+            {canDelete ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="ghost" size="icon" aria-label="More actions">
+                    <MoreVertical className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => setPatientPendingDelete(patient)}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
           </div>
         </CardContent>
       </Card>
@@ -319,11 +332,11 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
       </Tabs>
 
       <DeactivatePatientDialog
-        patient={patientPendingLifecycleChange}
+        patient={canToggleActive ? patientPendingLifecycleChange : null}
         onClose={() => setPatientPendingLifecycleChange(null)}
       />
       <DeletePatientDialog
-        patient={patientPendingDelete}
+        patient={canDelete ? patientPendingDelete : null}
         onClose={() => setPatientPendingDelete(null)}
       />
     </div>

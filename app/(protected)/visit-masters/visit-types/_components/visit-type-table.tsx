@@ -15,10 +15,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function VisitTypeTable({
   visitTypes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   visitTypes: VisitType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (visitType: VisitType) => void;
   onDelete: (visitType: VisitType) => void;
 }) {
@@ -43,27 +47,36 @@ export function VisitTypeTable({
                 </td>
                 <td className="text-muted-foreground p-3">{visitType.description ?? '—'}</td>
                 <td className="p-3 pr-4 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Actions for ${visitType.name}`}
-                      >
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onEdit(visitType)}>
-                        <Pencil className="size-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem variant="destructive" onSelect={() => onDelete(visitType)}>
-                        <Trash2 className="size-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canEdit || canDelete ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${visitType.name}`}
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEdit ? (
+                          <DropdownMenuItem onSelect={() => onEdit(visitType)}>
+                            <Pencil className="size-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        ) : null}
+                        {canDelete ? (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => onDelete(visitType)}
+                          >
+                            <Trash2 className="size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </td>
               </tr>
             ))}
