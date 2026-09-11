@@ -393,6 +393,13 @@
       "when": 1785341441165,
       "tag": "0055_perfect_mikhail_rasputin",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1789107838072,
+      "tag": "0056_seed_operational_permissions",
+      "breakpoints": true
     }
   ]
 }

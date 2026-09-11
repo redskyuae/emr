@@ -81,11 +81,13 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/appointments',
         icon: CalendarClock,
         exact: true,
+        permission: 'appointment',
       },
       {
         title: 'Book Appointment',
         href: '/appointments/new',
         icon: CalendarPlus,
+        permission: 'appointment',
       },
     ],
   },
@@ -136,6 +138,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Rooms',
         href: '/rooms',
         icon: BedDouble,
+        permission: 'room',
       },
       {
         title: 'Doctors',
@@ -147,6 +150,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Doctor Schedules',
         href: '/doctor-schedules',
         icon: CalendarClock,
+        permission: 'doctor-schedule',
       },
     ],
   },
@@ -169,6 +173,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Sessions',
         href: '/identity-access/sessions',
         icon: FileClock,
+        permission: 'session',
       },
     ],
   },
@@ -180,16 +185,19 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/assets-management',
         icon: LayoutDashboard,
         exact: true,
+        permission: 'asset',
       },
       {
         title: 'Inventory',
         href: '/assets-management/inventory',
         icon: Boxes,
+        permission: 'asset',
       },
       {
         title: 'Maintenance',
         href: '/assets-management/maintenance',
         icon: Wrench,
+        permission: 'work-order',
       },
     ],
   },
@@ -216,6 +224,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Rota Management',
         href: '/rota-management',
         icon: Clock3,
+        permission: 'doctor-rota',
       },
       {
         title: 'Appointment Masters',
@@ -280,18 +289,43 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/asset-management-masters',
         icon: Tag,
         items: [
-          { title: 'Categories', href: '/asset-management-masters/categories' },
-          { title: 'Status', href: '/asset-management-masters/statuses' },
-          { title: 'Work Order Type', href: '/asset-management-masters/work-order-types' },
-          { title: 'Work Order Priority', href: '/asset-management-masters/work-order-priorities' },
-          { title: 'Work Order Status', href: '/asset-management-masters/work-order-statuses' },
+          {
+            title: 'Categories',
+            href: '/asset-management-masters/categories',
+            permission: 'asset-category',
+          },
+          {
+            title: 'Conditions',
+            href: '/asset-management-masters/conditions',
+            permission: 'asset-condition',
+          },
+          {
+            title: 'Status',
+            href: '/asset-management-masters/statuses',
+            permission: 'asset-status',
+          },
+          {
+            title: 'Work Order Type',
+            href: '/asset-management-masters/work-order-types',
+            permission: 'work-order-type',
+          },
+          {
+            title: 'Work Order Priority',
+            href: '/asset-management-masters/work-order-priorities',
+            permission: 'work-order-priority',
+          },
+          {
+            title: 'Work Order Status',
+            href: '/asset-management-masters/work-order-statuses',
+            permission: 'work-order-status',
+          },
         ],
       },
       {
         title: 'Room Masters',
         href: '/room-masters',
         icon: BedDouble,
-        items: [{ title: 'Room Type', href: '/room-masters/types' }],
+        items: [{ title: 'Room Type', href: '/room-masters/types', permission: 'room-type' }],
       },
       {
         title: 'Billing Masters',
@@ -518,6 +552,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/asset-management-masters/categories': {
     title: 'Asset Categories',
     subtitle: 'Tenant-scoped classification records for Assets.',
+  },
+  '/asset-management-masters/conditions': {
+    title: 'Asset Conditions',
+    subtitle: 'Tenant-scoped physical condition records for Assets.',
   },
   '/asset-management-masters/statuses': {
     title: 'Asset Statuses',

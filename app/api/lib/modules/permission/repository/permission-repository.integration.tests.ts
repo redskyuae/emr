@@ -133,6 +133,115 @@ describe('Permission repository', () => {
     ]);
   });
 
+  it('should seed every Asset Management permission exposed by implemented APIs', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const permissions = await permissionRepository.getPermissions();
+    const assetResources = new Set([
+      'asset',
+      'asset-category',
+      'asset-condition',
+      'asset-status',
+      'work-order',
+      'work-order-priority',
+      'work-order-status',
+      'work-order-type',
+    ]);
+    const assetPermissions = permissions
+      .filter(({ resource }) => assetResources.has(resource))
+      .reduce<Record<string, { module: string; actions: string[] }>>(
+        (groupedPermissions, { module, resource, action }) => ({
+          ...groupedPermissions,
+          [resource]: {
+            module,
+            actions: [...(groupedPermissions[resource]?.actions ?? []), action],
+          },
+        }),
+        {}
+      );
+
+    expect(assetPermissions).toEqual({
+      asset: {
+        module: 'asset-management',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      'asset-category': {
+        module: 'asset-management-masters',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      'asset-condition': {
+        module: 'asset-management-masters',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      'asset-status': {
+        module: 'asset-management-masters',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      'work-order': {
+        module: 'asset-management',
+        actions: ['read', 'create'],
+      },
+      'work-order-priority': {
+        module: 'asset-management-masters',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      'work-order-status': {
+        module: 'asset-management-masters',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      'work-order-type': {
+        module: 'asset-management-masters',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+    });
+  });
+
+  it('should seed every unrepresented operational permission exposed by implemented APIs', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const permissions = await permissionRepository.getPermissions();
+    const operationalResources = new Set([
+      'appointment',
+      'doctor-rota',
+      'doctor-schedule',
+      'room',
+      'room-type',
+    ]);
+    const operationalPermissions = permissions
+      .filter(({ resource }) => operationalResources.has(resource))
+      .reduce<Record<string, { module: string; actions: string[] }>>(
+        (groupedPermissions, { module, resource, action }) => ({
+          ...groupedPermissions,
+          [resource]: {
+            module,
+            actions: [...(groupedPermissions[resource]?.actions ?? []), action],
+          },
+        }),
+        {}
+      );
+
+    expect(operationalPermissions).toEqual({
+      appointment: {
+        module: 'appointments',
+        actions: ['read', 'create'],
+      },
+      'doctor-rota': {
+        module: 'doctor-scheduling',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      'doctor-schedule': {
+        module: 'doctor-scheduling',
+        actions: ['read', 'create', 'update'],
+      },
+      room: {
+        module: 'room-management',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      'room-type': {
+        module: 'room-masters',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+    });
+  });
+
   it('should not return inactive permissions', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const permissions = await permissionRepository.getPermissions();

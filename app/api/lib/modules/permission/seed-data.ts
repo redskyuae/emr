@@ -88,6 +88,25 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'doctor-scheduling',
+    resource: 'doctor-rota',
+    actions: [
+      ['read', 'View Doctor Rotas.'],
+      ['create', 'Create Doctor Rotas.'],
+      ['update', 'Update Doctor Rota details.'],
+      ['delete', 'Delete Doctor Rotas.'],
+    ],
+  },
+  {
+    module: 'doctor-scheduling',
+    resource: 'doctor-schedule',
+    actions: [
+      ['read', 'View Doctor Schedules.'],
+      ['create', 'Create Doctor Schedules.'],
+      ['update', 'Update Doctor Schedule details.'],
+    ],
+  },
+  {
     module: 'clinical-masters',
     resource: 'specialty',
     actions: [
@@ -107,6 +126,14 @@ const permissionGroups = [
       ['delete', 'Delete Patients.'],
       ['deactivate', 'Deactivate Patients.'],
       ['reactivate', 'Reactivate Patients.'],
+    ],
+  },
+  {
+    module: 'appointments',
+    resource: 'appointment',
+    actions: [
+      ['read', 'View Appointments.'],
+      ['create', 'Book Appointments.'],
     ],
   },
   {
@@ -314,6 +341,26 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'room-masters',
+    resource: 'room-type',
+    actions: [
+      ['read', 'View Room Types.'],
+      ['create', 'Create Room Types.'],
+      ['update', 'Update Room Type details.'],
+      ['delete', 'Delete Room Types.'],
+    ],
+  },
+  {
+    module: 'room-management',
+    resource: 'room',
+    actions: [
+      ['read', 'View Rooms.'],
+      ['create', 'Create Rooms.'],
+      ['update', 'Update Room details.'],
+      ['delete', 'Delete Rooms.'],
+    ],
+  },
+  {
     module: 'inpatient-masters',
     resource: 'ward',
     actions: [
@@ -354,6 +401,84 @@ const permissionGroups = [
       ['transfer', 'Transfer an Admission to another Bed.'],
       ['discharge', 'Discharge an Admission.'],
       ['cancel', 'Cancel an Admission.'],
+    ],
+  },
+  {
+    module: 'asset-management',
+    resource: 'asset',
+    actions: [
+      ['read', 'View Assets.'],
+      ['create', 'Create Assets.'],
+      ['update', 'Update Asset details.'],
+      ['delete', 'Delete Assets.'],
+    ],
+  },
+  {
+    module: 'asset-management',
+    resource: 'work-order',
+    actions: [
+      ['read', 'View Work Orders.'],
+      ['create', 'Create Work Orders.'],
+    ],
+  },
+  {
+    module: 'asset-management-masters',
+    resource: 'asset-category',
+    actions: [
+      ['read', 'View Asset Categories.'],
+      ['create', 'Create Asset Categories.'],
+      ['update', 'Update Asset Category details.'],
+      ['delete', 'Delete Asset Categories.'],
+    ],
+  },
+  {
+    module: 'asset-management-masters',
+    resource: 'asset-condition',
+    actions: [
+      ['read', 'View Asset Conditions.'],
+      ['create', 'Create Asset Conditions.'],
+      ['update', 'Update Asset Condition details.'],
+      ['delete', 'Delete Asset Conditions.'],
+    ],
+  },
+  {
+    module: 'asset-management-masters',
+    resource: 'asset-status',
+    actions: [
+      ['read', 'View Asset Statuses.'],
+      ['create', 'Create Asset Statuses.'],
+      ['update', 'Update Asset Status details.'],
+      ['delete', 'Delete Asset Statuses.'],
+    ],
+  },
+  {
+    module: 'asset-management-masters',
+    resource: 'work-order-type',
+    actions: [
+      ['read', 'View Work Order Types.'],
+      ['create', 'Create Work Order Types.'],
+      ['update', 'Update Work Order Type details.'],
+      ['delete', 'Delete Work Order Types.'],
+    ],
+  },
+  {
+    module: 'asset-management-masters',
+    resource: 'work-order-priority',
+    actions: [
+      ['read', 'View Work Order Priorities.'],
+      ['create', 'Create Work Order Priorities.'],
+      ['update', 'Update Work Order Priority details.'],
+      ['delete', 'Delete Work Order Priorities.'],
+    ],
+  },
+  {
+    module: 'asset-management-masters',
+    resource: 'work-order-status',
+    actions: [
+      ['read', 'View Work Order Statuses.'],
+      ['create', 'Create Work Order Statuses.'],
+      ['update', 'Update Work Order Status details.'],
+      ['delete', 'Delete Work Order Statuses.'],
     ],
   },
   {
