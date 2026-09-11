@@ -15,10 +15,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function AdmissionTypeTable({
   admissionTypes,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   admissionTypes: AdmissionType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (admissionType: AdmissionType) => void;
   onDelete: (admissionType: AdmissionType) => void;
 }) {
@@ -43,30 +47,36 @@ export function AdmissionTypeTable({
                 </td>
                 <td className="text-muted-foreground p-3">{admissionType.description ?? '—'}</td>
                 <td className="p-3 pr-4 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Actions for ${admissionType.name}`}
-                      >
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onEdit(admissionType)}>
-                        <Pencil className="size-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onSelect={() => onDelete(admissionType)}
-                      >
-                        <Trash2 className="size-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canEdit || canDelete ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${admissionType.name}`}
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEdit ? (
+                          <DropdownMenuItem onSelect={() => onEdit(admissionType)}>
+                            <Pencil className="size-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        ) : null}
+                        {canDelete ? (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => onDelete(admissionType)}
+                          >
+                            <Trash2 className="size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </td>
               </tr>
             ))}

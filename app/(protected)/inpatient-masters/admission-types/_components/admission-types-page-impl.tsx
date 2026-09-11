@@ -8,6 +8,7 @@ import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } f
 import type { AdmissionType } from '@/app/api/lib/modules/admission-type/schemas/admission-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAdmissionTypesQuery } from '@/app/queries/inpatient-masters/admission-types/useAdmissionTypes';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -47,16 +48,21 @@ export function AdmissionTypesPageImpl() {
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
+  const { data: canCreate } = useHasPermission('admission-type:create');
+  const { data: canUpdate } = useHasPermission('admission-type:update');
+  const { data: canDelete } = useHasPermission('admission-type:delete');
+
   // The sheet opens straight from the URL: ?admissionType=new creates, ?admissionType=<id>
   // edits once the row resolves from already-loaded query data.
-  const isCreating = admissionTypeParam === 'new';
+  const isCreating = admissionTypeParam === 'new' && canCreate;
   const editingId =
     admissionTypeParam !== null && admissionTypeParam !== 'new' && /^\d+$/.test(admissionTypeParam)
       ? Number(admissionTypeParam)
       : null;
   const editingAdmissionType =
     editingId !== null ? (admissionTypes.find((row) => row.id === editingId) ?? null) : null;
-  const sheetOpen = isCreating || (editingId !== null && editingAdmissionType !== null);
+  const sheetOpen =
+    isCreating || (editingId !== null && canUpdate && editingAdmissionType !== null);
 
   function closeSheet() {
     void setAdmissionTypeParam(null);
@@ -83,12 +89,14 @@ export function AdmissionTypesPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" onClick={() => void setAdmissionTypeParam('new')}>
-                <Plus className="size-4" />
-                Add Admission Type
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" onClick={() => void setAdmissionTypeParam('new')}>
+                  <Plus className="size-4" />
+                  Add Admission Type
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -114,12 +122,14 @@ export function AdmissionTypesPageImpl() {
                 Emergency, Elective, or Transfer.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setAdmissionTypeParam('new')}>
-                <Plus className="size-4" />
-                Add Admission Type
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setAdmissionTypeParam('new')}>
+                  <Plus className="size-4" />
+                  Add Admission Type
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : admissionTypes.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -138,6 +148,8 @@ export function AdmissionTypesPageImpl() {
           <>
             <AdmissionTypeTable
               admissionTypes={admissionTypes}
+              canEdit={canUpdate}
+              canDelete={canDelete}
               onEdit={(admissionType) => void setAdmissionTypeParam(String(admissionType.id))}
               onDelete={setAdmissionTypePendingDelete}
             />
@@ -183,7 +195,7 @@ export function AdmissionTypesPageImpl() {
       />
 
       <DeleteAdmissionTypeDialog
-        admissionType={admissionTypePendingDelete}
+        admissionType={canDelete ? admissionTypePendingDelete : null}
         onClose={() => setAdmissionTypePendingDelete(null)}
       />
     </>

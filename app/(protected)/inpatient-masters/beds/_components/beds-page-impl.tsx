@@ -9,6 +9,7 @@ import type { Bed } from '@/app/api/lib/modules/bed/schemas/bed-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useBedsQuery } from '@/app/queries/inpatient-masters/beds/useBeds';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -60,13 +61,17 @@ export function BedsPageImpl() {
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
   const isFiltered = Boolean(debouncedSearch) || wardFilter !== ALL_WARDS;
 
+  const { data: canCreate } = useHasPermission('bed:create');
+  const { data: canUpdate } = useHasPermission('bed:update');
+  const { data: canDelete } = useHasPermission('bed:delete');
+
   // The sheet opens straight from the URL: ?bed=new creates, ?bed=<id> edits
   // once the row resolves from already-loaded query data.
-  const isCreating = bedParam === 'new';
+  const isCreating = bedParam === 'new' && canCreate;
   const editingId =
     bedParam !== null && bedParam !== 'new' && /^\d+$/.test(bedParam) ? Number(bedParam) : null;
   const editingBed = editingId !== null ? (beds.find((row) => row.id === editingId) ?? null) : null;
-  const sheetOpen = isCreating || (editingId !== null && editingBed !== null);
+  const sheetOpen = isCreating || (editingId !== null && canUpdate && editingBed !== null);
 
   function closeSheet() {
     void setBedParam(null);
@@ -113,12 +118,14 @@ export function BedsPageImpl() {
               </SelectContent>
             </Select>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" onClick={() => void setBedParam('new')}>
-                <Plus className="size-4" />
-                Add Bed
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" onClick={() => void setBedParam('new')}>
+                  <Plus className="size-4" />
+                  Add Bed
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -144,12 +151,14 @@ export function BedsPageImpl() {
                 exist.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setBedParam('new')}>
-                <Plus className="size-4" />
-                Add Bed
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setBedParam('new')}>
+                  <Plus className="size-4" />
+                  Add Bed
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : beds.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -167,6 +176,8 @@ export function BedsPageImpl() {
           <>
             <BedTable
               beds={beds}
+              canEdit={canUpdate}
+              canDelete={canDelete}
               onEdit={(bed) => void setBedParam(String(bed.id))}
               onDelete={setBedPendingDelete}
             />
@@ -211,7 +222,10 @@ export function BedsPageImpl() {
         onClose={closeSheet}
       />
 
-      <DeleteBedDialog bed={bedPendingDelete} onClose={() => setBedPendingDelete(null)} />
+      <DeleteBedDialog
+        bed={canDelete ? bedPendingDelete : null}
+        onClose={() => setBedPendingDelete(null)}
+      />
     </>
   );
 }

@@ -15,10 +15,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function WardTable({
   wards,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   wards: Ward[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (ward: Ward) => void;
   onDelete: (ward: Ward) => void;
 }) {
@@ -43,23 +47,29 @@ export function WardTable({
                 </td>
                 <td className="text-muted-foreground p-3">{ward.description ?? '—'}</td>
                 <td className="p-3 pr-4 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label={`Actions for ${ward.name}`}>
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onEdit(ward)}>
-                        <Pencil className="size-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem variant="destructive" onSelect={() => onDelete(ward)}>
-                        <Trash2 className="size-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canEdit || canDelete ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label={`Actions for ${ward.name}`}>
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEdit ? (
+                          <DropdownMenuItem onSelect={() => onEdit(ward)}>
+                            <Pencil className="size-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        ) : null}
+                        {canDelete ? (
+                          <DropdownMenuItem variant="destructive" onSelect={() => onDelete(ward)}>
+                            <Trash2 className="size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </td>
               </tr>
             ))}

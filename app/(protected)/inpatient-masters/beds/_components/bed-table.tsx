@@ -16,10 +16,14 @@ import { getBedStatusClassName, getBedStatusLabel } from '../_utils/bed-status';
 
 export function BedTable({
   beds,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   beds: Bed[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (bed: Bed) => void;
   onDelete: (bed: Bed) => void;
 }) {
@@ -52,27 +56,33 @@ export function BedTable({
                 </td>
                 <td className="text-muted-foreground max-w-56 truncate p-3">{bed.notes ?? '—'}</td>
                 <td className="p-3 pr-4 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Actions for ${bed.bedNumber}`}
-                      >
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onEdit(bed)}>
-                        <Pencil className="size-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem variant="destructive" onSelect={() => onDelete(bed)}>
-                        <Trash2 className="size-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canEdit || canDelete ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${bed.bedNumber}`}
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEdit ? (
+                          <DropdownMenuItem onSelect={() => onEdit(bed)}>
+                            <Pencil className="size-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        ) : null}
+                        {canDelete ? (
+                          <DropdownMenuItem variant="destructive" onSelect={() => onDelete(bed)}>
+                            <Trash2 className="size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </td>
               </tr>
             ))}
