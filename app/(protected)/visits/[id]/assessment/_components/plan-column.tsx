@@ -1,8 +1,11 @@
 import type { Dispatch, ReactNode } from 'react';
 import { PlusIcon } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 import type { AssessmentAction, AssessmentState } from '../_utils/assessment-state';
 import {
@@ -34,7 +37,6 @@ function AddButton({
   return (
     <Button
       aria-label={`Add ${label}`}
-      className="h-5 px-1.5 text-[10px]"
       disabled={disabled}
       onClick={onClick}
       size="xs"
@@ -47,210 +49,220 @@ function AddButton({
   );
 }
 
-function CompactSection({
+function WorkflowSection({
   title,
   action,
   children,
+  className,
 }: {
   title: string;
   action?: ReactNode;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="min-h-0 rounded border">
+    <section className={`overflow-hidden rounded-lg border ${className ?? ''}`}>
       <SectionHeading action={action} title={title} />
-      <div className="space-y-1 p-1.5">{children}</div>
+      <div className="space-y-3 p-4">{children}</div>
     </section>
   );
 }
 
-export function PlanColumn({
+function OrdersContent({
   state,
   dispatch,
+  disabled,
 }: {
   state: AssessmentState;
   dispatch: Dispatch<AssessmentAction>;
+  disabled: boolean;
 }) {
-  const disabled = state.status === 'COMPLETED';
-
   return (
-    <Card className="shadow-fluent-2 flex min-h-0 flex-col gap-0 overflow-hidden py-0">
-      <CardHeader className="h-10 shrink-0 border-b px-3 py-1.5">
-        <CardTitle className="text-xs font-semibold">Plan</CardTitle>
-        <p className="text-muted-foreground text-[10px]">Decisions, orders, and completion</p>
-      </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 grid-cols-2 grid-rows-[auto_auto_auto_minmax(0,1fr)] gap-1.5 p-2 [@media(max-height:900px)]:auto-rows-max [@media(max-height:900px)]:grid-rows-none [@media(max-height:900px)]:content-start [@media(max-height:900px)]:overflow-y-auto">
-        <CompactSection
-          action={
-            <AddButton
-              disabled={disabled}
-              label="diagnosis"
-              onClick={() => dispatch({ type: 'add-diagnosis' })}
-            />
-          }
-          title="Diagnosis"
-        >
+    <div className="space-y-4">
+      <WorkflowSection
+        action={
+          <AddButton
+            disabled={disabled}
+            label="diagnosis"
+            onClick={() => dispatch({ type: 'add-diagnosis' })}
+          />
+        }
+        title="Diagnosis"
+      >
+        <label>
+          <span className="mb-1 block text-sm font-medium">Clinical Impression</span>
+          <Textarea
+            aria-label="Clinical Impression"
+            className="min-h-20 resize-y"
+            disabled={disabled}
+            onChange={(event) =>
+              dispatch({
+                type: 'update-field',
+                field: 'clinicalImpression',
+                value: event.target.value,
+              })
+            }
+            value={state.clinicalImpression}
+          />
+        </label>
+        {state.diagnoses.map((diagnosis) => (
+          <DiagnosisEditor
+            disabled={disabled}
+            dispatch={dispatch}
+            key={diagnosis.id}
+            row={diagnosis}
+          />
+        ))}
+      </WorkflowSection>
+
+      <WorkflowSection
+        action={
+          <AddButton
+            disabled={disabled}
+            label="treatment"
+            onClick={() => dispatch({ type: 'add-treatment' })}
+          />
+        }
+        title="Treatment Plan"
+      >
+        <label>
+          <span className="mb-1 block text-sm font-medium">Advised Treatment</span>
+          <Textarea
+            aria-label="Advised Treatment"
+            className="min-h-20 resize-y"
+            disabled={disabled}
+            onChange={(event) =>
+              dispatch({
+                type: 'update-field',
+                field: 'advisedTreatment',
+                value: event.target.value,
+              })
+            }
+            value={state.advisedTreatment}
+          />
+        </label>
+        {state.treatments.map((treatment) => (
+          <TreatmentEditor
+            disabled={disabled}
+            dispatch={dispatch}
+            key={treatment.id}
+            row={treatment}
+          />
+        ))}
+      </WorkflowSection>
+
+      <WorkflowSection
+        action={
+          <AddButton
+            disabled={disabled}
+            label="OP Procedure"
+            onClick={() => dispatch({ type: 'add-procedure' })}
+          />
+        }
+        title="OP Procedure"
+      >
+        {state.procedures.map((procedure) => (
+          <ProcedureEditor
+            disabled={disabled}
+            dispatch={dispatch}
+            key={procedure.id}
+            row={procedure}
+          />
+        ))}
+      </WorkflowSection>
+
+      <WorkflowSection
+        action={
+          <AddButton
+            disabled={disabled}
+            label="prescription"
+            onClick={() => dispatch({ type: 'add-prescription' })}
+          />
+        }
+        title="Prescription"
+      >
+        {state.prescriptions.map((prescription) => (
+          <PrescriptionEditor
+            disabled={disabled}
+            dispatch={dispatch}
+            key={prescription.id}
+            row={prescription}
+          />
+        ))}
+      </WorkflowSection>
+    </div>
+  );
+}
+
+function CompletionContent({
+  state,
+  dispatch,
+  disabled,
+}: {
+  state: AssessmentState;
+  dispatch: Dispatch<AssessmentAction>;
+  disabled: boolean;
+}) {
+  return (
+    <div className="grid items-start gap-4 lg:grid-cols-2">
+      <WorkflowSection title="Medical Decision Making">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(10rem,1fr)]">
           <label>
-            <span className="text-muted-foreground mb-0.5 block text-[9px]">
-              Clinical Impression
-            </span>
-            <Textarea
-              aria-label="Clinical Impression"
-              className="h-8 min-h-0 resize-none px-1.5 py-1 text-[10px] leading-3"
+            <span className="mb-1 block text-sm font-medium">Complexity</span>
+            <Input
+              aria-label="MDM complexity"
               disabled={disabled}
               onChange={(event) =>
                 dispatch({
-                  type: 'update-field',
-                  field: 'clinicalImpression',
+                  type: 'update-mdm',
+                  field: 'problemComplexity',
                   value: event.target.value,
                 })
               }
-              value={state.clinicalImpression}
+              value={state.mdm.problemComplexity}
             />
           </label>
-          {state.diagnoses.map((diagnosis) => (
-            <DiagnosisEditor
-              disabled={disabled}
-              dispatch={dispatch}
-              key={diagnosis.id}
-              row={diagnosis}
-            />
-          ))}
-        </CompactSection>
-
-        <CompactSection
-          action={
-            <AddButton
-              disabled={disabled}
-              label="treatment"
-              onClick={() => dispatch({ type: 'add-treatment' })}
-            />
-          }
-          title="Treatment Plan"
-        >
           <label>
-            <span className="text-muted-foreground mb-0.5 block text-[9px]">Advised Treatment</span>
-            <Textarea
-              aria-label="Advised Treatment"
-              className="h-8 min-h-0 resize-none px-1.5 py-1 text-[10px] leading-3"
+            <span className="mb-1 block text-sm font-medium">Risk</span>
+            <NativeSelect
+              aria-label="MDM risk"
+              className="w-full"
               disabled={disabled}
               onChange={(event) =>
-                dispatch({
-                  type: 'update-field',
-                  field: 'advisedTreatment',
-                  value: event.target.value,
-                })
+                dispatch({ type: 'update-mdm', field: 'risk', value: event.target.value })
               }
-              value={state.advisedTreatment}
-            />
-          </label>
-          {state.treatments.map((treatment) => (
-            <TreatmentEditor
-              disabled={disabled}
-              dispatch={dispatch}
-              key={treatment.id}
-              row={treatment}
-            />
-          ))}
-        </CompactSection>
-
-        <CompactSection
-          action={
-            <AddButton
-              disabled={disabled}
-              label="OP Procedure"
-              onClick={() => dispatch({ type: 'add-procedure' })}
-            />
-          }
-          title="OP Procedure"
-        >
-          {state.procedures.map((procedure) => (
-            <ProcedureEditor
-              disabled={disabled}
-              dispatch={dispatch}
-              key={procedure.id}
-              row={procedure}
-            />
-          ))}
-        </CompactSection>
-
-        <CompactSection
-          action={
-            <AddButton
-              disabled={disabled}
-              label="prescription"
-              onClick={() => dispatch({ type: 'add-prescription' })}
-            />
-          }
-          title="Prescription"
-        >
-          {state.prescriptions.map((prescription) => (
-            <PrescriptionEditor
-              disabled={disabled}
-              dispatch={dispatch}
-              key={prescription.id}
-              row={prescription}
-            />
-          ))}
-        </CompactSection>
-
-        <CompactSection title="Medical Decision Making">
-          <div className="grid grid-cols-[1fr_3.25rem] gap-1">
-            <label>
-              <span className="text-muted-foreground block text-[9px]">Complexity</span>
-              <Input
-                aria-label="MDM complexity"
-                className="h-5 rounded-sm px-1 text-[10px]"
-                disabled={disabled}
-                onChange={(event) =>
-                  dispatch({
-                    type: 'update-mdm',
-                    field: 'problemComplexity',
-                    value: event.target.value,
-                  })
-                }
-                value={state.mdm.problemComplexity}
-              />
-            </label>
-            <label>
-              <span className="text-muted-foreground block text-[9px]">Risk</span>
-              <select
-                aria-label="MDM risk"
-                className="border-input bg-background h-5 w-full rounded-sm border px-0.5 text-[10px]"
-                disabled={disabled}
-                onChange={(event) =>
-                  dispatch({ type: 'update-mdm', field: 'risk', value: event.target.value })
-                }
-                value={state.mdm.risk}
-              >
-                {['Minimal', 'Low', 'Moderate', 'High'].map((risk) => (
-                  <option key={risk}>{risk}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <fieldset>
-            <legend className="text-muted-foreground text-[9px]">Data reviewed</legend>
-            <div className="flex flex-wrap gap-x-2 gap-y-0.5">
-              {mdmDataOptions.map((item) => (
-                <label className="flex items-center gap-0.5 text-[9px]" key={item}>
-                  <input
-                    checked={state.mdm.dataReviewed.includes(item)}
-                    disabled={disabled}
-                    onChange={() => dispatch({ type: 'toggle-mdm-data', item })}
-                    type="checkbox"
-                  />
-                  {item}
-                </label>
+              value={state.mdm.risk}
+            >
+              {['Minimal', 'Low', 'Moderate', 'High'].map((risk) => (
+                <NativeSelectOption key={risk}>{risk}</NativeSelectOption>
               ))}
-            </div>
-          </fieldset>
-        </CompactSection>
+            </NativeSelect>
+          </label>
+        </div>
 
-        <CompactSection title="Addendum">
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium">Data reviewed</legend>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {mdmDataOptions.map((item) => (
+              <label className="flex items-center gap-2 text-sm" key={item}>
+                <Checkbox
+                  checked={state.mdm.dataReviewed.includes(item)}
+                  disabled={disabled}
+                  onCheckedChange={() => dispatch({ type: 'toggle-mdm-data', item })}
+                />
+                {item}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      </WorkflowSection>
+
+      <WorkflowSection title="Addendum">
+        <label>
+          <span className="mb-1 block text-sm font-medium">Additional clinical note</span>
           <Textarea
             aria-label="Addendum"
-            className="h-12 min-h-0 resize-none px-1.5 py-1 text-[10px] leading-3"
+            className="min-h-32 resize-y"
             disabled={disabled}
             onChange={(event) =>
               dispatch({ type: 'update-field', field: 'addendum', value: event.target.value })
@@ -258,56 +270,57 @@ export function PlanColumn({
             placeholder="Optional note after assessment"
             value={state.addendum}
           />
-        </CompactSection>
+        </label>
+      </WorkflowSection>
 
-        <section className="col-span-2 min-h-0 overflow-hidden rounded border">
-          <SectionHeading title="Visit Completion" />
-          <div className="grid grid-cols-[0.8fr_1.35fr_1fr] gap-1.5 p-1.5">
-            <div className="min-w-0">
-              <p className="text-muted-foreground mb-1 text-[9px]">Patient Education</p>
-              <div className="grid grid-cols-2 gap-x-1 gap-y-0.5">
-                {educationOptions.map((item) => (
-                  <label className="flex items-center gap-1 text-[9px]" key={item}>
-                    <input
-                      checked={state.education.includes(item)}
-                      disabled={disabled}
-                      onChange={() => dispatch({ type: 'toggle-education', item })}
-                      type="checkbox"
-                    />
-                    {item}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="grid min-w-0 gap-0.5">
-              {(
-                [
-                  ['Presenting complaint', 'presentingComplaint'],
-                  ['Examination finding', 'examinationFinding'],
-                  ['Recommendation', 'recommendation'],
-                ] as const
-              ).map(([label, field]) => (
-                <label key={field} className="grid grid-cols-[4.75rem_1fr] items-center gap-1">
-                  <span className="text-muted-foreground text-[9px]">{label}</span>
-                  <Input
-                    aria-label={label}
-                    className="h-5 rounded-sm px-1 text-[10px]"
+      <WorkflowSection className="lg:col-span-2" title="Visit Completion">
+        <div className="grid items-start gap-5 lg:grid-cols-3">
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium">Patient Education</legend>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              {educationOptions.map((item) => (
+                <label className="flex items-center gap-2 text-sm" key={item}>
+                  <Checkbox
+                    checked={state.education.includes(item)}
                     disabled={disabled}
-                    onChange={(event) =>
-                      dispatch({ type: 'update-field', field, value: event.target.value })
-                    }
-                    value={state[field]}
+                    onCheckedChange={() => dispatch({ type: 'toggle-education', item })}
                   />
+                  {item}
                 </label>
               ))}
             </div>
-            <label className="min-w-0">
-              <span className="text-muted-foreground mb-0.5 block text-[9px]">
-                Discharge Disposition
-              </span>
-              <select
+          </fieldset>
+
+          <div className="grid gap-3">
+            {(
+              [
+                ['Presenting complaint', 'presentingComplaint'],
+                ['Examination finding', 'examinationFinding'],
+                ['Recommendation', 'recommendation'],
+              ] as const
+            ).map(([label, field]) => (
+              <label key={field}>
+                <span className="text-muted-foreground mb-1 block text-xs font-medium">
+                  {label}
+                </span>
+                <Input
+                  aria-label={label}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    dispatch({ type: 'update-field', field, value: event.target.value })
+                  }
+                  value={state[field]}
+                />
+              </label>
+            ))}
+          </div>
+
+          <div className="grid gap-3">
+            <label>
+              <span className="mb-1 block text-sm font-medium">Discharge Disposition</span>
+              <NativeSelect
                 aria-label="Discharge Disposition"
-                className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-7 w-full rounded-md border px-1.5 text-[10px] outline-none focus-visible:ring-2 disabled:opacity-50"
+                className="w-full"
                 disabled={disabled}
                 onChange={(event) =>
                   dispatch({
@@ -318,14 +331,16 @@ export function PlanColumn({
                 }
                 value={state.dischargeDisposition}
               >
-                <option value="">Select disposition</option>
-                <option>Home or self-care</option>
-                <option>Transfer to emergency</option>
-                <option>Admit as inpatient</option>
-                <option>Left against medical advice</option>
-              </select>
+                <NativeSelectOption value="">Select disposition</NativeSelectOption>
+                <NativeSelectOption>Home or self-care</NativeSelectOption>
+                <NativeSelectOption>Transfer to emergency</NativeSelectOption>
+                <NativeSelectOption>Admit as inpatient</NativeSelectOption>
+                <NativeSelectOption>Left against medical advice</NativeSelectOption>
+              </NativeSelect>
+            </label>
+            <label>
+              <span className="mb-1 block text-sm font-medium">Encounter end</span>
               <Input
-                className="mt-1 h-7 px-1.5 text-[10px]"
                 aria-label="Encounter end"
                 disabled={disabled}
                 onChange={(event) =>
@@ -339,7 +354,42 @@ export function PlanColumn({
               />
             </label>
           </div>
-        </section>
+        </div>
+      </WorkflowSection>
+    </div>
+  );
+}
+
+export function PlanColumn({
+  state,
+  dispatch,
+  view = 'orders',
+}: {
+  state: AssessmentState;
+  dispatch: Dispatch<AssessmentAction>;
+  view?: 'orders' | 'completion';
+}) {
+  const disabled = state.status === 'COMPLETED';
+  const completing = view === 'completion';
+
+  return (
+    <Card className="shadow-fluent-2 gap-0 py-0">
+      <CardHeader className="border-b py-4">
+        <CardTitle className="text-lg">
+          <h2>{completing ? 'Complete Visit' : 'Diagnosis & Orders'}</h2>
+        </CardTitle>
+        <CardDescription>
+          {completing
+            ? 'Review the Visit summary, Patient education, and discharge disposition.'
+            : 'Document the clinical impression, treatment, procedures, and prescriptions.'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-4">
+        {completing ? (
+          <CompletionContent disabled={disabled} dispatch={dispatch} state={state} />
+        ) : (
+          <OrdersContent disabled={disabled} dispatch={dispatch} state={state} />
+        )}
       </CardContent>
     </Card>
   );
