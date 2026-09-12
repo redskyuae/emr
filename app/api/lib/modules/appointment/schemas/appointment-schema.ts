@@ -5,6 +5,7 @@ import type { PatientRegistrationStatus } from '../../patient/schemas/patient-sc
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const bookingPathValues = ['CONSULTATION', 'PROCEDURE'] as const;
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
@@ -66,6 +67,12 @@ const slotTimeSchema = z
   .trim()
   .regex(timePattern, 'Slot time must be in HH:mm format');
 
+const appointmentTimeSchema = (fieldName: string) =>
+  z
+    .string({ error: `${fieldName} is required` })
+    .trim()
+    .regex(timePattern, `${fieldName} must be in HH:mm format`);
+
 const patientShape = createPatientSchema.shape;
 
 const provisionalPatientSchema = z
@@ -103,34 +110,63 @@ const provisionalPatientSchema = z
     path: ['countryId'],
   });
 
-export const createAppointmentSchema = z
+const commonAppointmentShape = {
+  patientId: positiveIdSchema('Patient ID').optional(),
+  provisionalPatient: provisionalPatientSchema.optional(),
+  slotDate: slotDateSchema,
+  remarks: z
+    .string()
+    .trim()
+    .max(1000, 'Remarks must be at most 1000 characters')
+    .optional()
+    .transform((remarks) => (remarks === '' ? undefined : remarks)),
+};
+
+const createConsultationAppointmentSchema = z
   .object({
+    ...commonAppointmentShape,
+    bookingPath: z.literal('CONSULTATION'),
     doctorId: positiveIdSchema('Doctor ID'),
     appointmentModeId: positiveIdSchema('Appointment mode ID'),
     appointmentTypeId: positiveIdSchema('Appointment type ID'),
     appointmentReasonId: positiveIdSchema('Appointment reason ID'),
-    patientId: positiveIdSchema('Patient ID').optional(),
-    provisionalPatient: provisionalPatientSchema.optional(),
-    slotDate: slotDateSchema,
     doctorRotaId: positiveIdSchema('Doctor rota ID'),
     slotTimes: z
       .array(slotTimeSchema, { error: 'Slot times are required' })
       .min(1, 'At least one slot time is required')
       .refine((times) => new Set(times).size === times.length, 'Slot times must be unique'),
-    remarks: z
-      .string()
-      .trim()
-      .max(1000, 'Remarks must be at most 1000 characters')
-      .optional()
-      .transform((remarks) => (remarks === '' ? undefined : remarks)),
   })
-  .strict()
+  .strict();
+
+const createProcedureAppointmentSchema = z
+  .object({
+    ...commonAppointmentShape,
+    bookingPath: z.literal('PROCEDURE'),
+    doctorId: positiveIdSchema('Doctor ID').optional(),
+    startTime: appointmentTimeSchema('Start time'),
+    endTime: appointmentTimeSchema('End time'),
+  })
+  .strict();
+
+export const createAppointmentSchema = z
+  .discriminatedUnion('bookingPath', [
+    createConsultationAppointmentSchema,
+    createProcedureAppointmentSchema,
+  ])
   .superRefine((data, context) => {
     if ((data.patientId === undefined) === (data.provisionalPatient === undefined)) {
       context.addIssue({
         code: 'custom',
         path: ['patientId'],
         message: 'Exactly one of patientId or provisionalPatient is required',
+      });
+    }
+
+    if (data.bookingPath === 'PROCEDURE' && data.endTime <= data.startTime) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endTime'],
+        message: 'End time must be after start time',
       });
     }
   });
@@ -154,6 +190,7 @@ export const listAppointmentsSchema = z.object({
 });
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
+export type BookingPath = (typeof bookingPathValues)[number];
 export type ListAppointmentsInput = z.infer<typeof listAppointmentsSchema>;
 export type CreateAppointmentData = CreateAppointmentInput & { tenantId: string };
 export type ValidatedCreateAppointmentData = CreateAppointmentData & { timeZone: string };

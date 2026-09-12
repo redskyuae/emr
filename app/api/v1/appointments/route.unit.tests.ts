@@ -27,6 +27,7 @@ const tenantSession = {
 };
 
 const payload = {
+  bookingPath: 'CONSULTATION',
   doctorId: 1,
   appointmentModeId: 2,
   appointmentTypeId: 3,
