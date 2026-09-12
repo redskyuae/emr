@@ -88,15 +88,25 @@ describe('createAppointmentCommand', () => {
   });
 
   it('should expose potential patient matches on conflict', async () => {
+    const registeredPatientMatch = {
+      id: 8,
+      mrn: 'MRN-1008',
+      firstName: 'Asha',
+      lastName: 'Rao',
+      phone: '9876543210',
+      isActive: true,
+      registrationStatus: 'registered' as const,
+    };
     const patientMatches = [
+      registeredPatientMatch,
       {
-        id: 8,
-        mrn: 'MRN-1008',
+        id: 9,
+        mrn: 'MRN-1009',
         firstName: 'Asha',
         lastName: 'Rao',
         phone: '9876543210',
         isActive: true,
-        registrationStatus: 'registered' as const,
+        registrationStatus: 'provisional' as const,
       },
     ];
     repo.createAppointment.mockResolvedValue({
@@ -109,7 +119,33 @@ describe('createAppointmentCommand', () => {
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['Potential Patient match found. Retry with patientId.'],
-      patientMatches,
+      patientMatches: [registeredPatientMatch],
+    });
+  });
+
+  it('should block transactional Provisional Patient matches without exposing them', async () => {
+    repo.createAppointment.mockResolvedValue({
+      success: false,
+      outcome: 'potential-patient-match',
+      patientMatches: [
+        {
+          id: 9,
+          mrn: 'MRN-1009',
+          firstName: 'Asha',
+          lastName: 'Rao',
+          phone: '9876543210',
+          isActive: true,
+          registrationStatus: 'provisional',
+        },
+      ],
+    });
+
+    await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: [
+        'Matching Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+      ],
     });
   });
 

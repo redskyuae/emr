@@ -16,11 +16,13 @@ export function AppointmentDetailsSection({
   modes,
   types,
   reasons,
+  disabled,
 }: {
   control: Control<BookAppointmentFormValues>;
   modes: Option[];
   types: Option[];
   reasons: Option[];
+  disabled?: boolean;
 }) {
   return (
     <Card className="shadow-fluent-2">
@@ -44,6 +46,7 @@ export function AppointmentDetailsSection({
             label="Appointment Mode"
             options={modes}
             placeholder="Select Mode"
+            disabled={disabled}
           />
           <SelectField
             control={control}
@@ -52,6 +55,7 @@ export function AppointmentDetailsSection({
             label="Appointment Type"
             options={types}
             placeholder="Select Type"
+            disabled={disabled}
           />
           <SelectField
             control={control}
@@ -60,6 +64,7 @@ export function AppointmentDetailsSection({
             label="Appointment Reason"
             options={reasons}
             placeholder="Select Reason"
+            disabled={disabled}
           />
         </div>
       </CardContent>
@@ -74,6 +79,7 @@ function SelectField({
   label,
   options,
   placeholder,
+  disabled,
 }: {
   control: Control<BookAppointmentFormValues>;
   name: keyof BookAppointmentFormValues;
@@ -81,6 +87,7 @@ function SelectField({
   label: string;
   options: Option[];
   placeholder: string;
+  disabled?: boolean;
 }) {
   return (
     <Field>
@@ -100,6 +107,7 @@ function SelectField({
               name={field.name}
               ref={field.ref}
               value={String(field.value ?? '')}
+              disabled={disabled}
               aria-required="true"
               aria-invalid={fieldState.invalid}
               className="w-full"

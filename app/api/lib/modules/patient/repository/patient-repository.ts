@@ -358,6 +358,7 @@ async function getPatients({
   query,
   gender,
   isActive,
+  registrationStatus,
 }: PatientListParams): Promise<{ data: Patient[]; total: number }> {
   const offset = (page - 1) * limit;
   const trimmedQuery = query?.trim();
@@ -381,6 +382,7 @@ async function getPatients({
     eq(patientTable.isDeleted, false),
     gender ? eq(patientTable.gender, gender) : undefined,
     isActive === undefined ? undefined : eq(patientTable.isActive, isActive),
+    registrationStatus ? eq(patientTable.registrationStatus, registrationStatus) : undefined,
     searchCondition
   );
 

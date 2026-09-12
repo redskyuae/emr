@@ -96,6 +96,7 @@ describe('Patient queries', () => {
       query: 'asha',
       gender: 'female',
       isActive: true,
+      registrationStatus: 'registered',
     });
     expect(repo.getPatients).toHaveBeenCalledWith({
       tenantId: 'tenant-1',
@@ -104,6 +105,7 @@ describe('Patient queries', () => {
       query: 'asha',
       gender: 'female',
       isActive: true,
+      registrationStatus: 'registered',
     });
   });
 

@@ -7,6 +7,7 @@ import {
   Building2,
   Check,
   Pencil,
+  RefreshCw,
   RotateCcw,
   Stethoscope,
   UserRound,
@@ -21,14 +22,7 @@ import { cn } from '@/lib/utils';
 
 import { AppointmentDetailsSection } from './appointment-details-section';
 import { AppointmentScheduleSection } from './appointment-schedule-section';
-import {
-  DEMO_DOCTORS,
-  DEMO_FACILITY,
-  DEMO_MODES,
-  DEMO_REASONS,
-  DEMO_ROTAS,
-  DEMO_TYPES,
-} from './book-appointment-demo-data';
+import { DEMO_FACILITY } from './book-appointment-demo-data';
 import { BookingPathSelector } from './booking-path-selector';
 import { BookingRemarks } from './booking-remarks';
 import { BookingSummary } from './booking-summary';
@@ -74,7 +68,7 @@ export function BookAppointmentPageImpl() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Book Appointment</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Select the Patient, Visit, clinician, and exact Appointment time.
+            Select the Patient, Booking Path, clinician, and exact Appointment time.
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm">
@@ -128,7 +122,7 @@ export function BookAppointmentPageImpl() {
         <Alert className="border-success/25 bg-success/5" role="status">
           <Check className="size-4" />
           <AlertTitle>
-            Booking ready for review ·{' '}
+            Appointment booked ·{' '}
             <span className="font-mono">{booking.confirmation.bookingNumber}</span>
           </AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
@@ -137,6 +131,32 @@ export function BookAppointmentPageImpl() {
             </span>
             <Button type="button" size="sm" variant="outline" onClick={booking.resetBooking}>
               <RotateCcw className="size-3.5" /> Start another booking
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {booking.submitError ? (
+        <Alert variant="destructive" role="alert">
+          <TriangleAlert className="size-4" />
+          <AlertTitle>Appointment not booked</AlertTitle>
+          <AlertDescription>{booking.submitError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {booking.visitType === 'CONSULTATION' && booking.consultationDependencyError ? (
+        <Alert variant="destructive" role="alert">
+          <TriangleAlert className="size-4" />
+          <AlertTitle>Consultation options could not be loaded</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+            <span>{booking.consultationDependencyError}</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={booking.retryConsultationDependencies}
+            >
+              <RefreshCw className="size-3.5" /> Retry
             </Button>
           </AlertDescription>
         </Alert>
@@ -162,13 +182,20 @@ export function BookAppointmentPageImpl() {
           <div className="grid items-start gap-4 lg:grid-cols-2">
             <PatientSection
               control={form.control}
-              patients={booking.filteredPatients}
+              patients={booking.patients}
               search={booking.patientSearch}
               onSearchChange={booking.setPatientSearch}
               selectedPatient={selectedPatient}
               onSelectPatient={booking.selectPatient}
               patientMode={booking.patientMode}
               onPatientModeChange={booking.changePatientMode}
+              visits={booking.patientVisits}
+              isSearchLoading={booking.isPatientSearchLoading}
+              searchError={booking.patientSearchError}
+              onRetrySearch={() => void booking.retryPatientSearch()}
+              isVisitsLoading={booking.isPatientVisitsLoading}
+              visitsError={booking.patientVisitsError}
+              onRetryVisits={() => void booking.retryPatientVisits()}
             />
             <div className="min-w-0 space-y-4">
               <BookingPathSelector
@@ -180,8 +207,9 @@ export function BookAppointmentPageImpl() {
               {booking.visitType ? (
                 <DoctorSelectionSection
                   control={form.control}
-                  doctors={DEMO_DOCTORS}
+                  doctors={booking.doctors}
                   doctorId={values.doctorId}
+                  disabled={!isProcedurePath && booking.consultationDependenciesLoading}
                   onChange={booking.changeSchedule}
                 />
               ) : null}
@@ -201,7 +229,7 @@ export function BookAppointmentPageImpl() {
                   <p>
                     {booking.visitType
                       ? 'Continue to choose the date and exact Appointment time.'
-                      : 'Choose a Visit Type to see what comes next.'}
+                      : 'Choose a Booking Path to see what comes next.'}
                   </p>
                 </div>
               )}
@@ -246,7 +274,7 @@ export function BookAppointmentPageImpl() {
               <div className="min-w-0 space-y-4">
                 <AppointmentScheduleSection
                   control={form.control}
-                  rotas={DEMO_ROTAS}
+                  rotas={booking.rotas}
                   rota={booking.selectedRota}
                   doctorId={values.doctorId}
                   slotDate={values.slotDate}
@@ -255,21 +283,19 @@ export function BookAppointmentPageImpl() {
                   selectedRotaId={values.doctorRotaId}
                   procedure={isProcedurePath}
                   recommendedDuration={
-                    booking.resourceSession
-                      ? booking.resourceSession.duration +
-                        booking.resourceSession.setupMinutes +
-                        booking.resourceSession.cleaningMinutes
-                      : 30
+                    isProcedurePath
+                      ? booking.resourceSession
+                        ? booking.resourceSession.duration +
+                          booking.resourceSession.setupMinutes +
+                          booking.resourceSession.cleaningMinutes
+                        : 30
+                      : (booking.selectedRota?.duration ?? 30)
                   }
+                  isLoading={!isProcedurePath && booking.isDoctorSlotsLoading}
+                  error={isProcedurePath ? null : booking.doctorSlotsError}
+                  onRetry={() => void booking.retryDoctorSlots()}
                   onContextChange={booking.changeSchedule}
-                  onRotaChange={(value) => {
-                    form.setValue('doctorRotaId', value, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-                    form.setValue('startTime', '', { shouldDirty: true });
-                    form.setValue('endTime', '', { shouldDirty: true });
-                  }}
+                  onRotaChange={booking.changeRota}
                   onTimeChange={booking.changeTime}
                 />
                 {selectedSession ? (
@@ -282,6 +308,14 @@ export function BookAppointmentPageImpl() {
               </div>
               {isProcedurePath ? (
                 <div className="min-w-0 space-y-3">
+                  <Alert className="border-warning/25 bg-warning/5">
+                    <TriangleAlert className="text-warning size-4" />
+                    <AlertTitle className="text-warning">Procedure booking coming soon</AlertTitle>
+                    <AlertDescription>
+                      You can review the static workflow, but Procedure appointments cannot be
+                      submitted yet.
+                    </AlertDescription>
+                  </Alert>
                   <ResourceAllocationSection
                     control={form.control}
                     rooms={booking.filteredRooms}
@@ -310,9 +344,10 @@ export function BookAppointmentPageImpl() {
                 <div className="min-w-0 space-y-4">
                   <AppointmentDetailsSection
                     control={form.control}
-                    modes={DEMO_MODES}
-                    types={DEMO_TYPES}
-                    reasons={DEMO_REASONS}
+                    modes={booking.appointmentModes}
+                    types={booking.appointmentTypes}
+                    reasons={booking.appointmentReasons}
+                    disabled={booking.consultationDependenciesLoading}
                   />
                   <BookingRemarks control={form.control} />
                 </div>
@@ -336,10 +371,14 @@ export function BookAppointmentPageImpl() {
             </>
           ) : (
             <p className="text-muted-foreground flex-1 text-sm">
-              Select a Patient and Visit Type to continue.
+              Select a Patient and Booking Path to continue.
             </p>
           )}
-          <Button type="submit" disabled={form.formState.isSubmitting} className="ml-auto">
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting || (step === 2 && isProcedurePath)}
+            className="ml-auto"
+          >
             {step === 1 ? (
               <>
                 Continue <ArrowRight className="size-4" />
@@ -347,7 +386,11 @@ export function BookAppointmentPageImpl() {
             ) : (
               <>
                 <Check className="size-4" />
-                {form.formState.isSubmitting ? 'Checking availability…' : 'Book ' + visitLabel}
+                {isProcedurePath
+                  ? 'Procedure booking coming soon'
+                  : form.formState.isSubmitting
+                    ? 'Booking Appointment…'
+                    : 'Book Consultation'}
               </>
             )}
           </Button>

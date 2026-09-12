@@ -11,6 +11,29 @@ export type DoctorSlotsFilters = {
 export const doctorSlotsQueryKey = (filters: DoctorSlotsFilters) =>
   ['doctor-slots', filters] as const;
 
+export type DoctorRotaOption = {
+  id: string;
+  name: string;
+  duration: number;
+  slots: Array<{ time: string; status: 'Available' | 'Booked' }>;
+};
+
+export function transformDoctorSlotsResponse(
+  response: ListDoctorSlotsResponse
+): DoctorRotaOption[] {
+  return response.data.flatMap((date) =>
+    date.rotas.map((rota) => ({
+      id: String(rota.doctorRotaId),
+      name: rota.rotaName,
+      duration: rota.duration,
+      slots: rota.slots.map((slot) => ({
+        time: slot.slotTime,
+        status: slot.slotStatus,
+      })),
+    }))
+  );
+}
+
 function buildDoctorSlotsParams(filters: { doctorId: number; slotDate: string }) {
   const params = new URLSearchParams();
   params.set('doctorId', String(filters.doctorId));
@@ -43,5 +66,6 @@ export function useDoctorSlotsQuery(filters: DoctorSlotsFilters) {
         slotDate: filters.slotDate,
         doctorId: filters.doctorId as number,
       }),
+    select: transformDoctorSlotsResponse,
   });
 }

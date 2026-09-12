@@ -119,6 +119,16 @@ export async function validateCreateAppointment(
         status: StatusCodes.CONFLICT,
       };
     }
+
+    if (patient.registrationStatus === 'provisional') {
+      return {
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: [
+          'Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+        ],
+      };
+    }
   }
 
   if (data.provisionalPatient) {
@@ -150,12 +160,26 @@ export async function validateCreateAppointment(
     // candidates to book against rather than a bare conflict — matching the
     // Patient Reconciliation rule that matching identifies candidates but never
     // links or merges automatically. The uniqueness check below is the backstop.
-    if (patientMatches.length > 0) {
+    const registeredPatientMatches = patientMatches.filter(
+      (patient) => patient.registrationStatus === 'registered'
+    );
+
+    if (registeredPatientMatches.length > 0) {
       return {
         success: false,
         errors: ['Potential Patient match found. Retry with patientId.'],
         status: StatusCodes.CONFLICT,
-        patientMatches,
+        patientMatches: registeredPatientMatches,
+      };
+    }
+
+    if (patientMatches.length > 0) {
+      return {
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: [
+          'Matching Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+        ],
       };
     }
 

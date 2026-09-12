@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { CalendarClock, Check } from 'lucide-react';
+import { CalendarClock, Check, LoaderCircle, RefreshCw } from 'lucide-react';
 import { Controller, useFormState, type Control } from 'react-hook-form';
 
 import { addMinutesToTime, getDurationMinutes } from '../_utils/appointment-time';
+import { getAvailableEndTimes, getAvailableStartTimes } from '../_utils/appointment-slot-options';
 import { BookingStatusBadge } from './booking-status-badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -15,8 +16,8 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
+import type { DoctorRotaOption } from '@/app/queries/appointments/useDoctorSlots';
 import type { BookAppointmentFormValues } from '../_utils/book-appointment-form-schema';
-import type { DemoRota } from './book-appointment-demo-data';
 
 type TimeOption = { time: string; status: 'Available' | 'Booked' };
 
@@ -51,13 +52,16 @@ export function AppointmentScheduleSection({
   selectedRotaId,
   procedure,
   recommendedDuration,
+  isLoading,
+  error,
+  onRetry,
   onContextChange,
   onRotaChange,
   onTimeChange,
 }: {
   control: Control<BookAppointmentFormValues>;
-  rotas: DemoRota[];
-  rota: DemoRota;
+  rotas: DoctorRotaOption[];
+  rota: DoctorRotaOption | null;
   doctorId: string;
   slotDate: string;
   startTime: string;
@@ -65,6 +69,9 @@ export function AppointmentScheduleSection({
   selectedRotaId: string;
   procedure: boolean;
   recommendedDuration: number;
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
   onContextChange: () => void;
   onRotaChange: (value: string) => void;
   onTimeChange: (field: 'startTime' | 'endTime', value: string) => void;
@@ -72,13 +79,32 @@ export function AppointmentScheduleSection({
   const { errors } = useFormState({ control, name: 'doctorRotaId' });
   const isUnassigned = doctorId === 'not-applicable';
   const canChooseTime = Boolean(
-    doctorId && slotDate && (procedure || isUnassigned || selectedRotaId)
+    doctorId && slotDate && (procedure || isUnassigned || (selectedRotaId && rota))
   );
-  const timeOptions = !procedure && !isUnassigned && selectedRotaId ? rota.slots : GENERIC_TIMES;
+  const timeOptions =
+    !procedure && !isUnassigned && selectedRotaId ? (rota?.slots ?? []) : GENERIC_TIMES;
   const duration = getDurationMinutes(startTime, endTime);
-  const quickDurations = Array.from(new Set([...DURATION_OPTIONS, recommendedDuration])).sort(
-    (left, right) => left - right
+  const consultationStartOptions = rota ? getAvailableStartTimes(rota) : [];
+  const consultationEndOptions = rota ? getAvailableEndTimes(rota, startTime) : [];
+  const startOptions = !procedure && !isUnassigned ? consultationStartOptions : TIME_OPTIONS;
+  const endOptions =
+    !procedure && !isUnassigned
+      ? consultationEndOptions
+      : TIME_OPTIONS.filter((time) => !startTime || time > startTime);
+  const availableDurations = consultationEndOptions.map((time) =>
+    getDurationMinutes(startTime, time)
   );
+  const quickDurations = Array.from(new Set([...DURATION_OPTIONS, recommendedDuration]))
+    .filter((minutes) =>
+      procedure || isUnassigned
+        ? true
+        : startTime
+          ? availableDurations.includes(minutes)
+          : rota
+            ? minutes % rota.duration === 0
+            : false
+    )
+    .sort((left, right) => left - right);
 
   function selectStart(time: string) {
     onTimeChange('startTime', time);
@@ -118,7 +144,7 @@ export function AppointmentScheduleSection({
             <RotaField
               rotas={rotas}
               value={selectedRotaId}
-              disabled={!slotDate}
+              disabled={!slotDate || isLoading}
               error={errors.doctorRotaId}
               onChange={onRotaChange}
             />
@@ -138,9 +164,22 @@ export function AppointmentScheduleSection({
             ) : null}
           </div>
 
-          {!canChooseTime ? (
+          {isLoading && doctorId && slotDate ? (
+            <div className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed p-4 text-sm">
+              <LoaderCircle className="size-4 animate-spin" /> Loading Doctor slots…
+            </div>
+          ) : error && doctorId && slotDate ? (
+            <div className="border-destructive/25 bg-destructive/5 rounded-lg border p-4 text-sm">
+              <p>{error}</p>
+              <Button type="button" size="sm" variant="outline" className="mt-2" onClick={onRetry}>
+                <RefreshCw className="size-3.5" /> Retry
+              </Button>
+            </div>
+          ) : !canChooseTime ? (
             <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
-              Choose a Date{!procedure && !isUnassigned ? ' and Doctor Rota' : ''}.
+              {doctorId && slotDate && !procedure && rotas.length === 0
+                ? 'No Doctor slots are available for this date.'
+                : `Choose a Date${!procedure && !isUnassigned ? ' and Doctor Rota' : ''}.`}
             </div>
           ) : (
             <>
@@ -179,7 +218,7 @@ export function AppointmentScheduleSection({
                   name="startTime"
                   id="appointment-start-time"
                   label="Start time"
-                  options={TIME_OPTIONS}
+                  options={startOptions}
                   onChange={selectStart}
                 />
                 <TimeField
@@ -187,7 +226,7 @@ export function AppointmentScheduleSection({
                   name="endTime"
                   id="appointment-end-time"
                   label="End time"
-                  options={TIME_OPTIONS.filter((time) => !startTime || time > startTime)}
+                  options={endOptions}
                   disabled={!startTime}
                   onChange={(value) => onTimeChange('endTime', value)}
                 />
@@ -287,7 +326,7 @@ function RotaField({
   error,
   onChange,
 }: {
-  rotas: DemoRota[];
+  rotas: DoctorRotaOption[];
   value: string;
   disabled: boolean;
   error: { message?: string } | undefined;

@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Search, UserRound, UserRoundPlus } from 'lucide-react';
+import { Check, LoaderCircle, RefreshCw, Search, UserRound, UserRoundPlus } from 'lucide-react';
 import { Controller, useFormState, type Control } from 'react-hook-form';
 
 import { BookingStatusBadge } from './booking-status-badge';
@@ -9,13 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
+import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { BookAppointmentFormValues } from '../_utils/book-appointment-form-schema';
-import type { DemoPatient } from './book-appointment-demo-data';
+import type { BookablePatient } from '../_utils/book-appointment-types';
 
 export function PatientSection({
   control,
@@ -26,15 +26,29 @@ export function PatientSection({
   onSelectPatient,
   patientMode,
   onPatientModeChange,
+  visits,
+  isSearchLoading,
+  searchError,
+  onRetrySearch,
+  isVisitsLoading,
+  visitsError,
+  onRetryVisits,
 }: {
   control: Control<BookAppointmentFormValues>;
-  patients: DemoPatient[];
+  patients: BookablePatient[];
   search: string;
   onSearchChange: (value: string) => void;
-  selectedPatient: DemoPatient | null;
-  onSelectPatient: (patient: DemoPatient) => void;
+  selectedPatient: BookablePatient | null;
+  onSelectPatient: (patient: BookablePatient) => void;
   patientMode: BookAppointmentFormValues['patientMode'];
   onPatientModeChange: (mode: BookAppointmentFormValues['patientMode']) => void;
+  visits: Visit[];
+  isSearchLoading: boolean;
+  searchError: string | null;
+  onRetrySearch: () => void;
+  isVisitsLoading: boolean;
+  visitsError: string | null;
+  onRetryVisits: () => void;
 }) {
   const { errors } = useFormState({ control, name: 'patientId' });
   const showResults =
@@ -149,11 +163,28 @@ export function PatientSection({
                             <Check className="size-3" /> Selected
                           </>
                         ) : (
-                          patient.registrationStatus
+                          'Registered'
                         )}
                       </Badge>
                     </Button>
                   ))
+                ) : isSearchLoading ? (
+                  <div className="text-muted-foreground flex items-center gap-2 rounded-lg border p-3 text-sm">
+                    <LoaderCircle className="size-4 animate-spin" /> Loading Registered Patients…
+                  </div>
+                ) : searchError ? (
+                  <div className="border-destructive/25 bg-destructive/5 rounded-lg border p-3 text-sm">
+                    <p>{searchError}</p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="mt-2"
+                      onClick={onRetrySearch}
+                    >
+                      <RefreshCw className="size-3.5" /> Retry
+                    </Button>
+                  </div>
                 ) : (
                   <div className="bg-muted/40 text-muted-foreground rounded-lg border p-4 text-sm">
                     No active Patients match this search.
@@ -161,7 +192,15 @@ export function PatientSection({
                 )}
               </div>
             ) : null}
-            {selectedPatient ? <IdentityCard patient={selectedPatient} /> : null}
+            {selectedPatient ? (
+              <IdentityCard
+                patient={selectedPatient}
+                visits={visits}
+                isVisitsLoading={isVisitsLoading}
+                visitsError={visitsError}
+                onRetryVisits={onRetryVisits}
+              />
+            ) : null}
           </>
         ) : (
           <ProvisionalPatientFields control={control} />
@@ -175,7 +214,8 @@ function ProvisionalPatientFields({ control }: { control: Control<BookAppointmen
   return (
     <div className="space-y-3">
       <div className="bg-muted/40 text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
-        Book before full Patient Registration. Complete registration before check-in.
+        This creates the Patient&apos;s initial Appointment. Complete or reconcile Patient
+        Registration before booking another Appointment.
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <ProvisionalField control={control} name="firstName" label="First name" required />
@@ -227,7 +267,19 @@ function ProvisionalField({
   );
 }
 
-function IdentityCard({ patient }: { patient: DemoPatient }) {
+function IdentityCard({
+  patient,
+  visits,
+  isVisitsLoading,
+  visitsError,
+  onRetryVisits,
+}: {
+  patient: BookablePatient;
+  visits: Visit[];
+  isVisitsLoading: boolean;
+  visitsError: string | null;
+  onRetryVisits: () => void;
+}) {
   return (
     <>
       <div className="flex items-center justify-between gap-2">
@@ -239,17 +291,15 @@ function IdentityCard({ patient }: { patient: DemoPatient }) {
       <div className="bg-muted/35 grid gap-3 rounded-lg border p-3 sm:grid-cols-2">
         <IdentityItem label="MRN" value={patient.mrn} mono />
         <IdentityItem label="Phone" value={patient.phone} />
-        <IdentityItem label="Emirates ID" value={patient.emiratesId} mono />
-        <IdentityItem label="Registration" value={patient.registrationStatus} />
+        <IdentityItem label="Emirates ID" value={patient.emiratesId ?? 'Not recorded'} mono />
+        <IdentityItem label="Registration" value="Registered" />
       </div>
-      <PatientVisitHistory visits={patient.visits} />
-      {patient.duplicateWarning ? (
-        <Alert className="border-success/25 bg-success/5">
-          <Check className="text-success size-4" />
-          <AlertTitle className="text-success">Identity check passed</AlertTitle>
-          <AlertDescription>{patient.duplicateWarning}</AlertDescription>
-        </Alert>
-      ) : null}
+      <PatientVisitHistory
+        visits={visits}
+        isLoading={isVisitsLoading}
+        error={visitsError}
+        onRetry={onRetryVisits}
+      />
     </>
   );
 }

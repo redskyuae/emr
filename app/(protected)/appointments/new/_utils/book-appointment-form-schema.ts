@@ -68,7 +68,7 @@ export const bookAppointmentFormSchema = z
       context.addIssue({
         code: 'custom',
         path: ['visitType'],
-        message: 'Visit Type is required',
+        message: 'Booking Path is required',
       });
     }
 
@@ -127,6 +127,14 @@ export const bookAppointmentFormSchema = z
     }
 
     if (data.visitType === 'CONSULTATION') {
+      if (data.doctorId === 'not-applicable') {
+        context.addIssue({
+          code: 'custom',
+          path: ['doctorId'],
+          message: 'A Doctor is required for a Consultation',
+        });
+      }
+
       if (data.appointmentModeId.trim() === '') {
         context.addIssue({
           code: 'custom',
@@ -151,7 +159,7 @@ export const bookAppointmentFormSchema = z
         });
       }
 
-      if (data.doctorId !== 'not-applicable' && data.doctorRotaId.trim() === '') {
+      if (data.doctorRotaId.trim() === '') {
         context.addIssue({
           code: 'custom',
           path: ['doctorRotaId'],

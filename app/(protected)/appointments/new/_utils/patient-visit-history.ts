@@ -1,9 +1,11 @@
 type VisitWithDate = {
-  occurredAt: string;
+  checkedInAt: string | Date;
 };
 
 export function getRecentVisits<T extends VisitWithDate>(visits: T[], limit = 3) {
   return [...visits]
-    .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))
+    .sort(
+      (left, right) => new Date(right.checkedInAt).getTime() - new Date(left.checkedInAt).getTime()
+    )
     .slice(0, limit);
 }

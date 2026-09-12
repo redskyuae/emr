@@ -15,11 +15,13 @@ export function DoctorSelectionSection({
   control,
   doctors,
   doctorId,
+  disabled,
   onChange,
 }: {
   control: Control<BookAppointmentFormValues>;
   doctors: DoctorOption[];
   doctorId: string;
+  disabled?: boolean;
   onChange: () => void;
 }) {
   return (
@@ -54,6 +56,7 @@ export function DoctorSelectionSection({
                 name={field.name}
                 ref={field.ref}
                 value={field.value}
+                disabled={disabled}
                 aria-required="true"
                 aria-invalid={fieldState.invalid}
                 className="w-full"

@@ -65,7 +65,7 @@ const payload = {
   slotTimes: ['09:00', '09:15'],
 };
 
-const activePatient = { id: 5, isActive: true };
+const activePatient = { id: 5, isActive: true, registrationStatus: 'registered' as const };
 
 describe('validateCreateAppointment', () => {
   beforeEach(() => {
@@ -150,7 +150,11 @@ describe('validateCreateAppointment', () => {
   });
 
   it('should reject inactive existing patients', async () => {
-    patientRepo.getPatientById.mockResolvedValue({ id: 5, isActive: false } as never);
+    patientRepo.getPatientById.mockResolvedValue({
+      id: 5,
+      isActive: false,
+      registrationStatus: 'registered',
+    } as never);
 
     await expect(validateCreateAppointment(payload, 'tenant-1')).resolves.toMatchObject({
       success: false,
@@ -159,16 +163,42 @@ describe('validateCreateAppointment', () => {
     });
   });
 
+  it('should reject an existing Provisional Patient before another Appointment', async () => {
+    patientRepo.getPatientById.mockResolvedValue({
+      id: 5,
+      isActive: true,
+      registrationStatus: 'provisional',
+    } as never);
+
+    await expect(validateCreateAppointment(payload, 'tenant-1')).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: [
+        'Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+      ],
+    });
+  });
+
   it('should return potential patient matches for provisional booking details', async () => {
+    const registeredPatientMatch = {
+      id: 9,
+      mrn: 'MRN-1009',
+      firstName: 'Asha',
+      lastName: 'Rao',
+      phone: '9876543210',
+      isActive: true,
+      registrationStatus: 'registered' as const,
+    };
     const patientMatches = [
+      registeredPatientMatch,
       {
-        id: 9,
-        mrn: 'MRN-1009',
+        id: 10,
+        mrn: 'MRN-1010',
         firstName: 'Asha',
         lastName: 'Rao',
         phone: '9876543210',
         isActive: true,
-        registrationStatus: 'registered' as const,
+        registrationStatus: 'provisional' as const,
       },
     ];
     appointmentRepo.findPotentialPatientMatches.mockResolvedValue(patientMatches);
@@ -185,7 +215,38 @@ describe('validateCreateAppointment', () => {
     ).resolves.toMatchObject({
       success: false,
       status: StatusCodes.CONFLICT,
-      patientMatches,
+      patientMatches: [registeredPatientMatch],
+    });
+  });
+
+  it('should block a matching Provisional Patient without returning a selectable match', async () => {
+    appointmentRepo.findPotentialPatientMatches.mockResolvedValue([
+      {
+        id: 9,
+        mrn: 'MRN-1009',
+        firstName: 'Asha',
+        lastName: 'Rao',
+        phone: '9876543210',
+        isActive: true,
+        registrationStatus: 'provisional',
+      },
+    ]);
+
+    await expect(
+      validateCreateAppointment(
+        {
+          ...payload,
+          patientId: undefined,
+          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+        },
+        'tenant-1'
+      )
+    ).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: [
+        'Matching Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+      ],
     });
   });
 });

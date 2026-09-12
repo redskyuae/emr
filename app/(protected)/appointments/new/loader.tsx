@@ -4,7 +4,7 @@ export default function BookAppointmentLoader() {
   return (
     <div
       className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col gap-4"
-      aria-label="Loading booking"
+      aria-label="Loading Book Appointment"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-2">
@@ -25,6 +25,7 @@ export default function BookAppointmentLoader() {
             <Skeleton className="h-8 w-full" />
           </div>
           <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-4 w-40" />
           {[0, 1, 2].map((item) => (
             <Skeleton key={item} className="h-16 w-full" />
           ))}

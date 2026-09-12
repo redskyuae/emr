@@ -33,11 +33,25 @@ export async function createAppointmentCommand(
     }
 
     if (result.outcome === 'potential-patient-match') {
+      const registeredPatientMatches = result.patientMatches.filter(
+        (patient) => patient.registrationStatus === 'registered'
+      );
+
+      if (registeredPatientMatches.length === 0) {
+        return {
+          success: false,
+          errors: [
+            'Matching Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+          ],
+          status: StatusCodes.CONFLICT,
+        };
+      }
+
       return {
         success: false,
         errors: ['Potential Patient match found. Retry with patientId.'],
         status: StatusCodes.CONFLICT,
-        patientMatches: result.patientMatches,
+        patientMatches: registeredPatientMatches,
       };
     }
 

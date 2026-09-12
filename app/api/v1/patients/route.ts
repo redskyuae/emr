@@ -4,7 +4,10 @@ import type { ListPatientsResponse, SavePatientResponse } from './types';
 
 import { createPatientCommand } from '@/app/api/lib/modules/patient/commands/create-patient-command';
 import { getPatientsQuery } from '@/app/api/lib/modules/patient/queries/get-patients-query';
-import type { PatientGender } from '@/app/api/lib/modules/patient/schemas/patient-schema';
+import type {
+  PatientGender,
+  PatientRegistrationStatus,
+} from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 
@@ -36,6 +39,16 @@ function parseActiveFilter(value: string | null): boolean | undefined {
   return undefined;
 }
 
+function parseRegistrationStatusFilter(
+  value: string | null
+): PatientRegistrationStatus | undefined {
+  if (value === 'provisional' || value === 'registered') {
+    return value;
+  }
+
+  return undefined;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const tenantSession = await requireTenantSession();
@@ -52,6 +65,9 @@ export async function GET(request: NextRequest) {
       undefined;
     const gender = parseGenderFilter(request.nextUrl.searchParams.get('gender'));
     const isActive = parseActiveFilter(request.nextUrl.searchParams.get('isActive'));
+    const registrationStatus = parseRegistrationStatusFilter(
+      request.nextUrl.searchParams.get('registrationStatus')
+    );
 
     const safePage = Math.max(1, Math.floor(page));
     const safeLimit = Math.min(999, Math.max(1, Math.floor(limit)));
@@ -63,6 +79,7 @@ export async function GET(request: NextRequest) {
       query,
       gender,
       isActive,
+      registrationStatus,
     });
 
     if (!queryResult.success) {

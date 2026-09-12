@@ -164,7 +164,7 @@ A Patient whose required identity, demographic, and contact information has comp
 
 ## Provisional Patient
 
-A Patient record created with first name, last name, and phone so an Appointment can be booked before full Patient Registration is completed. A Provisional Patient receives a permanent Medical Record Number immediately and may hold Appointments, but must be completed or reconciled before check-in or clinical care begins.
+A Patient record created with first name, last name, and phone so an initial Appointment can be booked before full Patient Registration is completed. A Provisional Patient receives a permanent Medical Record Number immediately, but an existing Provisional Patient is not selectable for another Appointment until completed or reconciled and cannot check in or begin clinical care.
 
 ## Patient Reconciliation
 
@@ -193,6 +193,12 @@ The person to reach on a Patient's behalf in urgent situations, recorded during 
 ## Appointment
 
 A scheduled period for a Patient to see a Doctor within a Tenant, reserving one or more consecutive DoctorSlots from the same DoctorRota on the same date. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
+
+## Booking Path
+
+The scheduling workflow selected while booking, currently Consultation or Procedure. A Booking Path determines which booking requirements apply but is distinct from VisitType and AppointmentType.
+
+_Avoid_: Visit Type when referring to the Book Appointment workflow selector
 
 ## Booking Number
 

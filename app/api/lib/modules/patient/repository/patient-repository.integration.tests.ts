@@ -390,4 +390,22 @@ describe('Patient repository', () => {
     expect(paged.data).toHaveLength(1);
     expect(paged.total).toBeGreaterThanOrEqual(3);
   });
+
+  it('should filter Patients by registration status', async () => {
+    const registered = await patientRepository.createPatient(patientData(tenantA));
+    const provisional = await patientRepository.createPatient(
+      patientData(tenantA, { phone: '9000000099' })
+    );
+    await db
+      .update(patientTable)
+      .set({ registrationStatus: 'provisional' })
+      .where(and(eq(patientTable.id, provisional.id), eq(patientTable.tenantId, tenantA)));
+
+    const result = await patientRepository.getPatients({
+      tenantId: tenantA,
+      registrationStatus: 'registered',
+    });
+
+    expect(result.data.map((patient) => patient.id)).toEqual([registered.id]);
+  });
 });

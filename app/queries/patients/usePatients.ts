@@ -3,7 +3,10 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { parseApiError } from '@/app/queries/api-error';
 import type { GetPatientResponse } from '@/app/api/v1/patients/[id]/types';
 import type { ListPatientsResponse } from '@/app/api/v1/patients/types';
-import type { PatientGender } from '@/app/api/lib/modules/patient/schemas/patient-schema';
+import type {
+  PatientGender,
+  PatientRegistrationStatus,
+} from '@/app/api/lib/modules/patient/schemas/patient-schema';
 
 export type PatientListFilters = {
   page: number;
@@ -11,6 +14,7 @@ export type PatientListFilters = {
   query?: string;
   gender?: PatientGender;
   isActive?: boolean;
+  registrationStatus?: PatientRegistrationStatus;
 };
 
 // Prefix key for invalidating every Patient query (list pages + details) after a write.
@@ -35,6 +39,10 @@ function buildPatientListParams(filters: PatientListFilters) {
 
   if (filters.isActive !== undefined) {
     params.set('isActive', String(filters.isActive));
+  }
+
+  if (filters.registrationStatus) {
+    params.set('registrationStatus', filters.registrationStatus);
   }
 
   return params.toString();

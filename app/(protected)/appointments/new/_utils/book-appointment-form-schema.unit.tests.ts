@@ -91,18 +91,25 @@ describe('booking path validation', () => {
       );
   });
 
-  it('should not require a Doctor Rota when Doctor is N/A', () => {
-    expect(
-      bookAppointmentFormSchema.safeParse({
-        ...procedure,
-        visitType: 'CONSULTATION',
-        doctorId: 'not-applicable',
-        doctorRotaId: '',
-        appointmentModeId: '1',
-        appointmentTypeId: '1',
-        appointmentReasonId: '3',
-      }).success
-    ).toBe(true);
+  it('should reject the N/A Doctor selection for a Consultation', () => {
+    const result = bookAppointmentFormSchema.safeParse({
+      ...procedure,
+      visitType: 'CONSULTATION',
+      doctorId: 'not-applicable',
+      doctorRotaId: '22',
+      appointmentModeId: '1',
+      appointmentTypeId: '1',
+      appointmentReasonId: '3',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          path: ['doctorId'],
+          message: 'A Doctor is required for a Consultation',
+        })
+      );
   });
 
   it('should require a Session for an existing Patient Procedure', () => {

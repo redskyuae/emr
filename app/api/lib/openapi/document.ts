@@ -3765,7 +3765,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Create Appointment',
         description:
-          'Creates an Appointment in the active Tenant. The server assigns bookingNumber, uses the protected system Scheduled Appointment Status, validates the Patient or creates a provisional Patient, snapshots rotaName, and reserves one or more consecutive DoctorSlots atomically. Clients send doctorId, not clinicianId; facility/location/regulatory and visitClassification are intentionally omitted until Visits/Facilities are integrated.',
+          'Creates an Appointment in the active Tenant. The server assigns bookingNumber, uses the protected system Scheduled Appointment Status, validates an active Registered Patient or creates a new Provisional Patient for this initial Appointment, snapshots rotaName, and reserves one or more consecutive DoctorSlots atomically. Existing Provisional Patients must complete or reconcile Patient Registration before another Appointment. Clients send doctorId, not clinicianId; facility/location/regulatory and Booking Path are intentionally omitted until Visits/Facilities are integrated.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreateAppointmentRequest', createAppointmentRequestExample),
         responses: {
@@ -3778,7 +3778,7 @@ export const openApiDocument = {
           '403': responseRef('Forbidden'),
           '409': {
             description:
-              'A referenced master is invalid, the Patient is inactive, a selected slot is no longer available, or provisional Patient details match an existing Patient.',
+              'A referenced master is invalid, the Patient is inactive or Provisional, a selected slot is no longer available, or new Provisional Patient details match an existing Patient. patientMatches contains only Registered Patient candidates; existing Provisional Patients are never returned as selectable matches.',
             content: jsonContent(schemaRef('AppointmentConflictError'), {
               message: 'Conflict',
               errors: ['Potential Patient match found. Retry with patientId.'],
@@ -5978,12 +5978,13 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'List Patients',
         description:
-          'Returns a paginated list of active Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, MRN, and phone. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
+          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, MRN, and phone. Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
         security: [{ cookieAuth: [] }],
         parameters: [
           ...listParameters,
           parameterRef('PatientGender'),
           parameterRef('PatientIsActive'),
+          parameterRef('PatientRegistrationStatus'),
         ],
         responses: {
           '200': {
@@ -6921,6 +6922,14 @@ export const openApiDocument = {
         required: false,
         description: 'Filters Patients by active status.',
         schema: { type: 'boolean' },
+      },
+      PatientRegistrationStatus: {
+        name: 'registrationStatus',
+        in: 'query',
+        required: false,
+        description:
+          'Filters Patients by registration state. Use registered for Appointment selection because existing Provisional Patients cannot be booked again.',
+        schema: { type: 'string', enum: ['provisional', 'registered'] },
       },
       WorkOrderTypeId: {
         name: 'typeId',
@@ -9102,7 +9111,7 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description:
-              'Existing active Patient identifier. Send exactly one of patientId or provisionalPatient.',
+              'Existing active Registered Patient identifier. Send exactly one of patientId or provisionalPatient.',
           },
           provisionalPatient: schemaRef('ProvisionalPatientInput'),
           slotDate: {

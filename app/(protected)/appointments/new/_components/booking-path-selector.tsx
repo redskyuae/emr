@@ -44,7 +44,7 @@ export function BookingPathSelector({
       <CardHeader className="border-b">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-lg">Visit Type</CardTitle>
+            <CardTitle className="text-lg">Booking Path</CardTitle>
           </div>
         </div>
       </CardHeader>
