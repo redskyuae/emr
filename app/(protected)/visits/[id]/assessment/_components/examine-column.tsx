@@ -1,6 +1,8 @@
 import type { Dispatch } from 'react';
+
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import type { ClinicalFinding } from '../../../_data/static-clinician-visits';
 import type { AssessmentAction, AssessmentState } from '../_utils/assessment-state';
 import { FindingControl } from './finding-control';
@@ -18,7 +20,7 @@ function FindingsGrid({
   disabled: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-0.5 p-1">
+    <div className="grid gap-2 p-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
       {findings.map((finding) => (
         <FindingControl
           disabled={disabled}
@@ -45,29 +47,34 @@ export function ExamineColumn({
     vikriti: 'Vikriti',
     ashtavidha: 'Ashtavidha',
   } as const;
-  const markNormal = (target: 'ros' | 'exam') => (
-    <Button
-      disabled={disabled}
-      onClick={() => dispatch({ type: 'mark-all-normal', target })}
-      size="xs"
-      type="button"
-      variant="outline"
-      className="h-5 px-1.5 text-[10px]"
-    >
-      Mark all normal
-    </Button>
-  );
+
+  function markNormal(target: 'ros' | 'exam') {
+    return (
+      <Button
+        disabled={disabled}
+        onClick={() => dispatch({ type: 'mark-all-normal', target })}
+        size="xs"
+        type="button"
+        variant="outline"
+      >
+        Mark all normal
+      </Button>
+    );
+  }
 
   return (
-    <Card className="shadow-fluent-2 flex min-h-0 flex-col gap-0 overflow-hidden py-0">
-      <CardHeader className="h-10 shrink-0 border-b px-3 py-1.5">
-        <CardTitle className="text-xs font-semibold">Examine</CardTitle>
-        <p className="text-muted-foreground text-[10px]">
-          Patient report vs Doctor findings · ✓ Normal · ⚠ Abnormal
-        </p>
+    <Card className="shadow-fluent-2 gap-0 py-0">
+      <CardHeader className="border-b py-4">
+        <CardTitle className="text-lg">
+          <h2>Examination</h2>
+        </CardTitle>
+        <CardDescription>
+          Review patient-reported symptoms separately from Doctor-observed findings.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_auto_auto] content-between gap-1 p-2 [@media(max-height:900px)]:auto-rows-max [@media(max-height:900px)]:grid-rows-none [@media(max-height:900px)]:content-start [@media(max-height:900px)]:overflow-y-auto">
-        <section className="rounded border">
+
+      <CardContent className="grid items-start gap-4 p-4 xl:grid-cols-2">
+        <section className="overflow-hidden rounded-lg border">
           <SectionHeading
             action={markNormal('ros')}
             context="Patient-reported symptoms"
@@ -76,7 +83,7 @@ export function ExamineColumn({
           <FindingsGrid disabled={disabled} dispatch={dispatch} findings={state.ros} target="ros" />
         </section>
 
-        <section className="rounded border">
+        <section className="overflow-hidden rounded-lg border">
           <SectionHeading
             action={markNormal('exam')}
             context="Doctor-observed signs"
@@ -90,17 +97,17 @@ export function ExamineColumn({
           />
         </section>
 
-        <section className="rounded border">
+        <section className="overflow-hidden rounded-lg border xl:col-span-2">
           <SectionHeading title="Ayurveda Assessment" />
-          <div className="grid grid-cols-3 gap-1 p-1 text-[9px]">
+          <div className="grid gap-3 p-4 md:grid-cols-3">
             {Object.entries(state.ayurveda).map(([label, value]) => (
-              <label className="bg-muted/40 min-w-0 rounded p-0.5" key={label}>
-                <span className="text-muted-foreground block leading-2">
+              <label className="min-w-0" key={label}>
+                <span className="mb-1 block text-sm font-medium">
                   {ayurvedaLabels[label as keyof typeof ayurvedaLabels]}
                 </span>
-                <textarea
+                <Textarea
                   aria-label={ayurvedaLabels[label as keyof typeof ayurvedaLabels]}
-                  className="focus:ring-ring h-4 w-full resize-none bg-transparent text-[10px] leading-2 font-medium outline-none focus:ring-1 disabled:opacity-70"
+                  className="min-h-20 resize-y"
                   disabled={disabled}
                   onChange={(event) =>
                     dispatch({
