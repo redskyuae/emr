@@ -17,6 +17,9 @@ describe('VisitSafetyStrip', () => {
     expect(html).toContain('Dr. Maya Iyer');
     expect(html).toContain('In Consultation');
     expect(html).toContain('Penicillin');
+    expect(html).toContain('sticky');
+    expect(html).toContain('<h2');
+    expect(html).not.toContain('<h1');
   });
 
   it('should show the live completed status after local completion', () => {

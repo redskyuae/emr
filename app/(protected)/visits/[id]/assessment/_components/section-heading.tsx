@@ -10,16 +10,10 @@ export function SectionHeading({
   action?: ReactNode;
 }) {
   return (
-    <div className="bg-muted/35 flex min-h-7 items-center justify-between gap-2 border-b px-2 py-1">
-      <div className="flex min-w-0 items-baseline gap-1.5">
-        <h3 className="text-foreground shrink-0 text-xs font-semibold tracking-wide uppercase">
-          {title}
-        </h3>
-        {context ? (
-          <span className="text-muted-foreground truncate text-[9px] font-medium tracking-normal normal-case">
-            · {context}
-          </span>
-        ) : null}
+    <div className="bg-muted/35 flex min-h-12 items-center justify-between gap-3 border-b px-4 py-2">
+      <div className="min-w-0">
+        <h3 className="text-foreground text-sm font-semibold">{title}</h3>
+        {context ? <p className="text-muted-foreground text-xs">{context}</p> : null}
       </div>
       {action}
     </div>

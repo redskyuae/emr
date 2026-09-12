@@ -1,5 +1,7 @@
 import type { Dispatch } from 'react';
 import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
   CheckCircle2Icon,
   ExternalLinkIcon,
   PrinterIcon,
@@ -21,12 +23,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { AssessmentAction, AssessmentState } from '../_utils/assessment-state';
+import { consultationSteps } from './consultation-progress';
 
 export function AssessmentCommandBar({
   state,
   dispatch,
   errors,
   onValidate,
+  currentStep,
+  stepCount,
+  onNext,
+  onPrevious,
   confirmOpen,
   onConfirmOpenChange,
 }: {
@@ -34,10 +41,16 @@ export function AssessmentCommandBar({
   dispatch: Dispatch<AssessmentAction>;
   errors: string[];
   onValidate: () => void;
+  currentStep: number;
+  stepCount: number;
+  onNext: () => void;
+  onPrevious: () => void;
   confirmOpen: boolean;
   onConfirmOpenChange: (open: boolean) => void;
 }) {
   const completed = state.status === 'COMPLETED';
+  const finalStep = currentStep === stepCount - 1;
+  const nextStep = consultationSteps[currentStep + 1];
   const savedTime = state.lastSavedAt
     ? new Date(state.lastSavedAt).toLocaleTimeString('en-IN', {
         hour: '2-digit',
@@ -57,14 +70,12 @@ export function AssessmentCommandBar({
 
   return (
     <>
-      <div className="bg-card shadow-fluent-8 flex min-w-0 items-center justify-between gap-2 rounded-lg border px-3">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="bg-card shadow-fluent-8 flex min-w-0 flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {errors.length ? (
-            <Alert className="h-8 w-auto min-w-0 grid-cols-[auto_1fr] py-1" variant="destructive">
+            <Alert className="w-full min-w-0 grid-cols-[auto_1fr] py-2" variant="destructive">
               <TriangleAlertIcon aria-hidden="true" />
-              <AlertDescription className="truncate text-[10px]">
-                {errors.join(' ')}
-              </AlertDescription>
+              <AlertDescription>{errors.join(' ')}</AlertDescription>
             </Alert>
           ) : completed ? (
             <Badge className="gap-1" variant="secondary">
@@ -72,15 +83,17 @@ export function AssessmentCommandBar({
             </Badge>
           ) : (
             <div className="flex min-w-0 items-center gap-2">
-              <Badge variant="outline">Workflow 5 / 5</Badge>
-              <p className="text-muted-foreground truncate text-[10px]">
+              <Badge variant="outline">
+                Step {currentStep + 1} of {stepCount}
+              </Badge>
+              <p className="text-muted-foreground text-xs">
                 Static demo · changes stay in this browser session
                 {savedTime ? ` · Last saved ${savedTime}` : ''}
               </p>
             </div>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto lg:shrink-0">
           <Button
             size="sm"
             type="button"
@@ -106,10 +119,23 @@ export function AssessmentCommandBar({
             <SaveIcon aria-hidden="true" />
             Save draft
           </Button>
-          <Button disabled={completed} size="sm" type="button" onClick={onValidate}>
-            <CheckCircle2Icon aria-hidden="true" />
-            Complete Visit
-          </Button>
+          {currentStep > 0 ? (
+            <Button onClick={onPrevious} size="sm" type="button" variant="outline">
+              <ArrowLeftIcon aria-hidden="true" />
+              Previous
+            </Button>
+          ) : null}
+          {finalStep ? (
+            <Button disabled={completed} size="sm" type="button" onClick={onValidate}>
+              <CheckCircle2Icon aria-hidden="true" />
+              Complete Visit
+            </Button>
+          ) : (
+            <Button onClick={onNext} size="sm" type="button">
+              Next: {nextStep?.label}
+              <ArrowRightIcon aria-hidden="true" />
+            </Button>
+          )}
         </div>
       </div>
 

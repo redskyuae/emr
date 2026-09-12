@@ -36,14 +36,14 @@ describe('assessment workflow columns', () => {
     expect(markup).toContain('Ashtavidha');
   });
 
-  it('allows each workflow column to scroll on short browser viewports', () => {
+  it('keeps consultation content in the natural page flow without nested scrolling', () => {
     const columns = [AssessColumn, ExamineColumn, PlanColumn];
 
     for (const Column of columns) {
       const markup = renderToStaticMarkup(React.createElement(Column, { state, dispatch }));
 
-      expect(markup).toContain('[@media(max-height:900px)]:overflow-y-auto');
-      expect(markup).toContain('[@media(max-height:900px)]:auto-rows-max');
+      expect(markup).not.toContain('overflow-y-auto');
+      expect(markup).not.toContain('max-height:900px');
     }
   });
 });

@@ -1,18 +1,19 @@
 import type { Dispatch } from 'react';
 import { PlusIcon, Trash2Icon } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { AssessmentAction, AssessmentState } from '../_utils/assessment-state';
 import { SectionHeading } from './section-heading';
 
 const vitalFields = [
-  ['temperature', 'Temp', '°C'],
-  ['systolic', 'BP sys', 'mmHg'],
-  ['diastolic', 'BP dia', 'mmHg'],
+  ['temperature', 'Temperature', '°C'],
+  ['systolic', 'Systolic BP', 'mmHg'],
+  ['diastolic', 'Diastolic BP', 'mmHg'],
   ['pulse', 'Pulse', 'bpm'],
-  ['respiratoryRate', 'Resp', '/min'],
+  ['respiratoryRate', 'Respiratory rate', '/min'],
   ['spo2', 'SpO₂', '%'],
   ['oxygen', 'Oxygen', ''],
   ['height', 'Height', 'cm'],
@@ -36,24 +37,28 @@ export function AssessColumn({
   const disabled = state.status === 'COMPLETED';
 
   return (
-    <Card className="shadow-fluent-2 flex min-h-0 flex-col gap-0 overflow-hidden py-0">
-      <CardHeader className="h-10 shrink-0 border-b px-3 py-1.5">
-        <CardTitle className="text-xs font-semibold">Assess</CardTitle>
-        <p className="text-muted-foreground text-[10px]">Observations, complaint, and history</p>
+    <Card className="shadow-fluent-2 gap-0 py-0">
+      <CardHeader className="border-b py-4">
+        <CardTitle className="text-lg">
+          <h2>Intake</h2>
+        </CardTitle>
+        <CardDescription>
+          Record observations, the presenting complaint, and history.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)_auto] gap-1.5 p-2 [@media(max-height:900px)]:auto-rows-max [@media(max-height:900px)]:grid-rows-none [@media(max-height:900px)]:content-start [@media(max-height:900px)]:overflow-y-auto">
-        <section className="overflow-hidden rounded border">
+
+      <CardContent className="space-y-4 p-4">
+        <section className="overflow-hidden rounded-lg border">
           <SectionHeading title="Vital Signs" />
-          <div className="grid grid-cols-3 gap-1 p-1.5">
+          <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-5">
             {vitalFields.map(([key, label, unit]) => (
               <label className="min-w-0" key={key}>
-                <span className="text-muted-foreground mb-0.5 block text-[9px] font-medium">
-                  {label} {unit && <span aria-hidden="true">· {unit}</span>}
+                <span className="text-muted-foreground mb-1 block text-xs font-medium">
+                  {label} {unit ? <span aria-hidden="true">· {unit}</span> : null}
                 </span>
                 <Input
-                  className="h-7 px-1.5 text-[10px]"
-                  disabled={disabled}
                   aria-label={`${label}${unit ? ` in ${unit}` : ''}`}
+                  disabled={disabled}
                   onChange={(event) =>
                     dispatch({ type: 'update-vital', field: key, value: event.target.value })
                   }
@@ -64,149 +69,167 @@ export function AssessColumn({
           </div>
         </section>
 
-        <section className="min-h-0 overflow-hidden rounded border">
-          <SectionHeading title="History of Present Illness" />
-          <div className="grid h-[calc(100%-1.75rem)] min-h-0 grid-rows-[auto_auto_1fr] gap-1 p-1.5 [@media(max-height:900px)]:h-auto">
-            <label>
-              <span className="sr-only">Chief complaint</span>
-              <Input
-                aria-label="Chief complaint"
-                className="h-7 px-2 text-[10px] font-medium"
-                disabled={disabled}
-                onChange={(event) =>
-                  dispatch({
-                    type: 'update-field',
-                    field: 'chiefComplaint',
-                    value: event.target.value,
-                  })
-                }
-                value={state.chiefComplaint}
-              />
-            </label>
-            <label>
-              <span className="sr-only">HPI narrative</span>
-              <Textarea
-                aria-label="HPI narrative"
-                className="h-12 min-h-0 resize-none px-2 py-1 text-[10px] leading-4"
-                disabled={disabled}
-                onChange={(event) =>
-                  dispatch({ type: 'update-field', field: 'hpi', value: event.target.value })
-                }
-                value={state.hpi}
-              />
-            </label>
-            <div className="grid min-h-0 grid-cols-2 content-start gap-x-2 gap-y-0.5 overflow-hidden text-[9px]">
-              {Object.entries(state.hpiMeta).map(([label, value]) => (
-                <label className="flex min-w-0 items-center gap-1" key={label}>
-                  <span className="text-muted-foreground shrink-0 capitalize">
-                    {label.replace(/([A-Z])/g, ' $1')}:
-                  </span>
-                  <input
-                    aria-label={`HPI ${label.replace(/([A-Z])/g, ' $1')}`}
-                    className="focus:border-ring min-w-0 flex-1 border-b border-transparent bg-transparent font-medium outline-none disabled:opacity-70"
-                    disabled={disabled}
-                    onChange={(event) =>
-                      dispatch({
-                        type: 'update-hpi-meta',
-                        field: label as keyof AssessmentState['hpiMeta'],
-                        value: event.target.value,
-                      })
-                    }
-                    value={value}
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-        </section>
+        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(20rem,1fr)]">
+          <section className="overflow-hidden rounded-lg border">
+            <SectionHeading title="History of Present Illness" />
+            <div className="space-y-4 p-4">
+              <label>
+                <span className="mb-1 block text-sm font-medium">Chief complaint</span>
+                <Input
+                  aria-label="Chief complaint"
+                  disabled={disabled}
+                  onChange={(event) =>
+                    dispatch({
+                      type: 'update-field',
+                      field: 'chiefComplaint',
+                      value: event.target.value,
+                    })
+                  }
+                  value={state.chiefComplaint}
+                />
+              </label>
 
-        <section className="overflow-hidden rounded border">
-          <SectionHeading title="Allergies & Problems" />
-          <div className="space-y-1 p-1.5">
-            <div className="grid grid-cols-2 gap-2">
-              {(
-                [
-                  ['Allergies', state.allergies, 'allergy'],
-                  ['Problems', state.problems, 'problem'],
-                ] as const
-              ).map(([label, items, target]) => (
-                <div className="min-w-0" key={target}>
-                  <div className="mb-0.5 flex items-center justify-between">
-                    <p className="text-destructive text-[9px] font-semibold">{label}</p>
-                    <Button
-                      aria-label={`Add ${target}`}
-                      className="size-5"
-                      disabled={disabled}
-                      onClick={() =>
-                        dispatch({ type: target === 'allergy' ? 'add-allergy' : 'add-problem' })
-                      }
-                      size="icon-xs"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <PlusIcon aria-hidden="true" />
-                    </Button>
-                  </div>
-                  <div className="grid gap-0.5">
-                    {items.map((item, index) => (
-                      <div className="grid grid-cols-[1fr_auto] gap-0.5" key={`${target}-${index}`}>
-                        <input
-                          aria-label={`${target === 'allergy' ? 'Allergy' : 'Problem'} ${index + 1}`}
-                          className="border-input bg-background focus:border-ring h-5 min-w-0 rounded-sm border px-1 text-[10px] outline-none"
-                          disabled={disabled}
-                          onChange={(event) =>
-                            dispatch({
-                              type: target === 'allergy' ? 'update-allergy' : 'update-problem',
-                              index,
-                              value: event.target.value,
-                            })
-                          }
-                          value={item}
-                        />
-                        <Button
-                          aria-label={`Remove ${target} ${index + 1}`}
-                          className="size-5"
-                          disabled={disabled}
-                          onClick={() =>
-                            dispatch({
-                              type: target === 'allergy' ? 'remove-allergy' : 'remove-problem',
-                              index,
-                            })
-                          }
-                          size="icon-xs"
-                          type="button"
-                          variant="ghost"
+              <label>
+                <span className="mb-1 block text-sm font-medium">HPI narrative</span>
+                <Textarea
+                  aria-label="HPI narrative"
+                  className="min-h-28 resize-y"
+                  disabled={disabled}
+                  onChange={(event) =>
+                    dispatch({ type: 'update-field', field: 'hpi', value: event.target.value })
+                  }
+                  value={state.hpi}
+                />
+              </label>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {Object.entries(state.hpiMeta).map(([label, value]) => {
+                  const displayLabel = label.replace(/([A-Z])/g, ' $1');
+
+                  return (
+                    <label className="min-w-0" key={label}>
+                      <span className="text-muted-foreground mb-1 block text-xs font-medium capitalize">
+                        {displayLabel}
+                      </span>
+                      <Input
+                        aria-label={`HPI ${displayLabel}`}
+                        disabled={disabled}
+                        onChange={(event) =>
+                          dispatch({
+                            type: 'update-hpi-meta',
+                            field: label as keyof AssessmentState['hpiMeta'],
+                            value: event.target.value,
+                          })
+                        }
+                        value={value}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          <section className="overflow-hidden rounded-lg border">
+            <SectionHeading title="Allergies & Problems" />
+            <div className="space-y-5 p-4">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+                {(
+                  [
+                    ['Allergies', state.allergies, 'allergy'],
+                    ['Problems', state.problems, 'problem'],
+                  ] as const
+                ).map(([label, items, target]) => (
+                  <div className="min-w-0" key={target}>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p
+                        className={
+                          target === 'allergy' ? 'text-destructive font-semibold' : 'font-semibold'
+                        }
+                      >
+                        {label}
+                      </p>
+                      <Button
+                        aria-label={`Add ${target}`}
+                        disabled={disabled}
+                        onClick={() =>
+                          dispatch({ type: target === 'allergy' ? 'add-allergy' : 'add-problem' })
+                        }
+                        size="xs"
+                        type="button"
+                        variant="outline"
+                      >
+                        <PlusIcon aria-hidden="true" />
+                        Add
+                      </Button>
+                    </div>
+                    <div className="grid gap-2">
+                      {items.map((item, index) => (
+                        <div
+                          className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"
+                          key={`${target}-${index}`}
                         >
-                          <Trash2Icon aria-hidden="true" />
-                        </Button>
-                      </div>
-                    ))}
+                          <Input
+                            aria-label={`${target === 'allergy' ? 'Allergy' : 'Problem'} ${index + 1}`}
+                            disabled={disabled}
+                            onChange={(event) =>
+                              dispatch({
+                                type: target === 'allergy' ? 'update-allergy' : 'update-problem',
+                                index,
+                                value: event.target.value,
+                              })
+                            }
+                            value={item}
+                          />
+                          <Button
+                            aria-label={`Remove ${target} ${index + 1}`}
+                            disabled={disabled}
+                            onClick={() =>
+                              dispatch({
+                                type: target === 'allergy' ? 'remove-allergy' : 'remove-problem',
+                                index,
+                              })
+                            }
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                          >
+                            <Trash2Icon aria-hidden="true" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              <div className="border-t pt-4">
+                <p className="mb-3 text-sm font-semibold">Relevant history</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {historyLabels.map(([key, label]) => (
+                    <label className="min-w-0" key={key}>
+                      <span className="text-muted-foreground mb-1 block text-xs font-medium">
+                        {label}
+                      </span>
+                      <Input
+                        aria-label={label}
+                        disabled={disabled}
+                        onChange={(event) =>
+                          dispatch({
+                            type: 'update-history-summary',
+                            field: key,
+                            value: event.target.value,
+                          })
+                        }
+                        value={state.historySummary[key]}
+                      />
+                    </label>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
-              {historyLabels.map(([key, label]) => (
-                <label className="flex min-w-0 items-center gap-1" key={key}>
-                  <span className="text-muted-foreground shrink-0">{label}:</span>
-                  <input
-                    aria-label={label}
-                    className="focus:border-ring min-w-0 flex-1 border-b border-transparent bg-transparent font-medium outline-none disabled:opacity-70"
-                    disabled={disabled}
-                    onChange={(event) =>
-                      dispatch({
-                        type: 'update-history-summary',
-                        field: key,
-                        value: event.target.value,
-                      })
-                    }
-                    value={state.historySummary[key]}
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </CardContent>
     </Card>
   );
