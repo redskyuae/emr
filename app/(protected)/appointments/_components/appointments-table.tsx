@@ -30,11 +30,17 @@ function formatSlotRange(appointment: Appointment) {
   return first === last ? first : `${first}-${last}`;
 }
 
-export function AppointmentsTable({ appointments }: { appointments: Appointment[] }) {
+export function AppointmentsTable({
+  appointments,
+  label = 'Appointments',
+}: {
+  appointments: Appointment[];
+  label?: string;
+}) {
   return (
     <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[960px] text-sm">
+        <table aria-label={label} className="w-full min-w-[960px] text-sm">
           <thead>
             <tr className="text-muted-foreground border-b text-left">
               <th className="p-3 pl-4 font-medium">Booking</th>

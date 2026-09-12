@@ -415,7 +415,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   },
   '/appointments/new': {
     title: 'Book Appointment',
-    subtitle: 'Reserve DoctorSlots and create an Appointment for this Tenant.',
+    subtitle: 'Schedule a Patient Visit with the right clinician, time, and resources.',
   },
   '/identity-access/users': {
     title: 'Users',
