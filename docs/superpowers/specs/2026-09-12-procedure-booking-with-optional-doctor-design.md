@@ -14,7 +14,7 @@ The existing `POST /api/v1/appointments` contract and Appointment database model
 `POST /api/v1/appointments` will accept a discriminated request keyed by the canonical `bookingPath` value:
 
 - `CONSULTATION` retains the existing Doctor, Doctor Rota, AppointmentMode, AppointmentType, AppointmentReason, and consecutive DoctorSlot requirements.
-- `PROCEDURE` accepts an optional active Doctor, requires no Doctor Rota or Appointment Details, and records a direct start/end time window.
+- `PROCEDURE` accepts an optional active Doctor as an assignment only, requires no Doctor Rota or Appointment Details, and records a direct start/end time window that is independent of the Doctor.
 
 Booking Path is persisted on the Appointment. `N/A` is a UI representation of a missing Doctor, not a fake Doctor record.
 
@@ -23,12 +23,12 @@ Booking Path is persisted on the Appointment. `N/A` is a UI representation of a 
 1. Select an existing Registered Patient or enter the initial Appointment details for a new Provisional Patient.
 2. Select the Procedure Booking Path.
 3. Select a Treatment and an explicit Session.
-4. Choose Doctor `N/A` or an active Doctor. `N/A` is selected by default. Active Doctor options come from the existing Doctors API.
-5. Choose an Appointment date and start time. Start times use the screen's temporary static scheduling options in 15-minute increments. The end time is calculated from the selected Session's Treatment, setup, and cleaning duration.
-6. Select a Room and Therapist from the existing temporary static dependencies.
+4. Choose Doctor `N/A` or an active Doctor. `N/A` is selected by default. Active Doctor options come from the existing Doctors API. This assignment does not affect the Procedure schedule.
+5. In the Procedure scheduling section, choose only the Appointment date and start time. Start times use the screen's temporary static scheduling options in 15-minute increments. The end time is calculated from the selected Session's Treatment, setup, and cleaning duration.
+6. Select only the Room and Therapist from the existing temporary static dependencies.
 7. Book the Appointment.
 
-The Procedure screen does not render Doctor Rota, Appointment Mode, Appointment Type, or Appointment Reason. Selecting a real Doctor does not trigger DoctorSchedule or DoctorRota validation for a Procedure in this iteration.
+The Procedure screen does not render Doctor Rota, Appointment Mode, Appointment Type, or Appointment Reason. Selecting a real Doctor never loads, filters, or validates DoctorSchedules, DoctorRotas, or DoctorSlots for a Procedure. Procedure date and time remain independent of the selected Doctor; the schedule is based only on the selected Session and the temporary Room and Therapist workflow.
 
 Room and Therapist remain required client-side selections. Their temporary identifiers are not sent to or persisted by the Appointment API until those resource APIs and reservation rules exist. Consequently, this iteration cannot enforce cross-user Room or Therapist booking conflicts.
 
@@ -77,7 +77,7 @@ The create request becomes a discriminated union with common Patient and remarks
 }
 ```
 
-For both paths, exactly one of `patientId` or `provisionalPatient` remains required. Procedure validation requires valid `HH:mm` times, `endTime` after `startTime`, and a future Tenant-local date/time. When `doctorId` is provided, it must identify an active Doctor in the active Tenant. Procedure creation does not read or reserve DoctorSlots.
+For both paths, exactly one of `patientId` or `provisionalPatient` remains required. Procedure validation requires valid `HH:mm` times, `endTime` after `startTime`, and a future Tenant-local date/time. When `doctorId` is provided, it must identify an active Doctor in the active Tenant, but the Doctor is validated only as an optional assignment. Procedure creation does not read or reserve DoctorSchedules, DoctorRotas, or DoctorSlots.
 
 The Appointment response adds `bookingPath`, `startTime`, and `endTime`. For Procedures, `doctor`, `appointmentMode`, `appointmentType`, `appointmentReason`, and `rotaName` may be `null`; `slots` is empty. Consumers display missing values as `N/A`.
 
@@ -91,7 +91,7 @@ The Appointment table gains:
 
 New Consultation records store their calculated start/end snapshot and continue creating Appointment Slot Reservations atomically. New Procedure records store the direct time window and create no Appointment Slot Reservations. Historical rows may retain null start/end values and continue deriving their visible times from existing Appointment Slot Reservations.
 
-The existing DoctorSlot uniqueness constraint remains unchanged and continues protecting Consultation bookings. This iteration intentionally adds no Doctor, Room, or Therapist conflict constraint for Procedures because Procedure scheduling is not based on DoctorRotas and resource selections are not yet persisted.
+The existing DoctorSlot uniqueness constraint remains unchanged and continues protecting Consultation bookings. This iteration intentionally adds no Doctor, Room, or Therapist conflict constraint for Procedures. Procedure scheduling is independent of the selected Doctor, and resource selections are not yet persisted.
 
 ## Read and Downstream Behavior
 
@@ -141,6 +141,6 @@ Final verification includes the unit suite, database-backed integration suite wh
 
 - Persisting Treatment, Session, Room, or Therapist on the Appointment.
 - Room or Therapist availability/conflict APIs.
-- Doctor Schedule or Doctor Rota validation for Procedures.
+- Loading, filtering, or validating Doctor Schedules, Doctor Rotas, or DoctorSlots for Procedures.
 - Assigning a Doctor during Check-in or editing the Doctor after booking.
 - Changing the Consultation workflow.
