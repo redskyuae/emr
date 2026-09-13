@@ -118,8 +118,8 @@ const commonAppointmentShape = {
     .string()
     .trim()
     .max(1000, 'Remarks must be at most 1000 characters')
-    .optional()
-    .transform((remarks) => (remarks === '' ? undefined : remarks)),
+    .transform((remarks) => (remarks === '' ? undefined : remarks))
+    .optional(),
 };
 
 const createConsultationAppointmentSchema = z
@@ -218,19 +218,22 @@ export type PotentialPatientMatch = AppointmentPatientSummary & {
 export type Appointment = {
   id: number;
   remarks: string | null;
-  rotaName: string;
+  rotaName: string | null;
   tenantId: string;
   slotDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  bookingPath: BookingPath;
   bookingNumber: string;
   createdOn: Date;
   doctor: {
     id: number;
     name: string;
-  };
+  } | null;
   patient: AppointmentPatientSummary;
-  appointmentMode: AppointmentReferenceSummary;
-  appointmentType: AppointmentReferenceSummary;
-  appointmentReason: AppointmentReferenceSummary;
+  appointmentMode: AppointmentReferenceSummary | null;
+  appointmentType: AppointmentReferenceSummary | null;
+  appointmentReason: AppointmentReferenceSummary | null;
   appointmentStatus: AppointmentReferenceSummary & {
     category: Lowercase<AppointmentStatusCategory>;
   };

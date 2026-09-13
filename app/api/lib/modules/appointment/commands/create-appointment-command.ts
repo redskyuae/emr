@@ -72,7 +72,14 @@ export async function createAppointmentCommand(
     }
 
     if (result.outcome === 'slot-past') {
-      return { success: false, errors: ['Selected Doctor slots must be in the future.'] };
+      return {
+        success: false,
+        errors: [
+          validationResult.data.bookingPath === 'PROCEDURE'
+            ? 'Procedure time must be in the future.'
+            : 'Selected Doctor slots must be in the future.',
+        ],
+      };
     }
 
     if (result.outcome === 'slot-invalid') {

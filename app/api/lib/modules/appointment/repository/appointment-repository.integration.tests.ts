@@ -117,9 +117,10 @@ async function createFixtures() {
 
 function appointmentData(
   fixtures: Awaited<ReturnType<typeof createFixtures>>,
-  overrides: Partial<ValidatedCreateAppointmentData> = {}
-): ValidatedCreateAppointmentData {
+  overrides: Partial<Extract<ValidatedCreateAppointmentData, { bookingPath: 'CONSULTATION' }>> = {}
+): Extract<ValidatedCreateAppointmentData, { bookingPath: 'CONSULTATION' }> {
   return {
+    bookingPath: 'CONSULTATION',
     tenantId: fixtures.tenantId,
     timeZone: 'Asia/Kolkata',
     doctorId: fixtures.doctorId,
@@ -154,6 +155,64 @@ describe('Appointment repository', () => {
           { slotTime: '09:00', status: 'Booked' },
           { slotTime: '09:15', status: 'Booked' },
         ],
+      },
+    });
+  });
+
+  it('should create a Procedure with Doctor N/A without reserving Doctor slots', async () => {
+    const fixtures = await createFixtures();
+
+    const result = await appointmentRepository.createAppointment({
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      patientId: fixtures.patient.id,
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '11:15',
+      remarks: undefined,
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        bookingPath: 'PROCEDURE',
+        doctor: null,
+        rotaName: null,
+        startTime: '10:00',
+        endTime: '11:15',
+        appointmentMode: null,
+        appointmentType: null,
+        appointmentReason: null,
+        slots: [],
+      },
+    });
+  });
+
+  it('should assign a Procedure Doctor without using a DoctorRota or reserving Doctor slots', async () => {
+    const fixtures = await createFixtures();
+
+    const result = await appointmentRepository.createAppointment({
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      patientId: fixtures.patient.id,
+      doctorId: fixtures.doctorId,
+      slotDate: '2099-12-31',
+      startTime: '12:00',
+      endTime: '13:00',
+      remarks: undefined,
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        bookingPath: 'PROCEDURE',
+        doctor: { id: fixtures.doctorId },
+        rotaName: null,
+        startTime: '12:00',
+        endTime: '13:00',
+        slots: [],
       },
     });
   });

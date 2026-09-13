@@ -211,6 +211,21 @@ describe('Visit validators', () => {
       });
     });
 
+    it('should reject an appointment without an assigned Doctor', async () => {
+      appointmentRepo.getAppointmentById.mockResolvedValue({
+        ...appointment,
+        doctor: null,
+      } as never);
+
+      await expect(
+        validateCheckInVisit({ appointmentId: 5, visitTypeId: 2 }, 'tenant-1')
+      ).resolves.toMatchObject({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['A Doctor must be assigned before this Appointment can be checked in.'],
+      });
+    });
+
     it('should reject a provisional patient', async () => {
       patientRepo.getPatientById.mockResolvedValue({
         ...registeredPatient,

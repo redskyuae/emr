@@ -17,6 +17,7 @@ const repo = vi.mocked(appointmentRepository);
 const validate = vi.mocked(validateCreateAppointment);
 
 const validatedData = {
+  bookingPath: 'CONSULTATION' as const,
   tenantId: 'tenant-1',
   timeZone: 'Asia/Kolkata',
   doctorId: 1,
@@ -35,6 +36,9 @@ const appointment: Appointment = {
   tenantId: 'tenant-1',
   bookingNumber: 'APT-1001',
   slotDate: '31-12-2099',
+  startTime: '09:00',
+  endTime: '09:30',
+  bookingPath: 'CONSULTATION',
   rotaName: 'Morning',
   remarks: null,
   createdOn: new Date(),
@@ -156,6 +160,28 @@ describe('createAppointmentCommand', () => {
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['One or more selected Doctor slots are no longer available.'],
+    });
+  });
+
+  it('should describe a past Procedure time without referring to Doctor slots', async () => {
+    validate.mockResolvedValue({
+      success: true,
+      data: {
+        bookingPath: 'PROCEDURE',
+        tenantId: 'tenant-1',
+        timeZone: 'Asia/Kolkata',
+        patientId: 5,
+        slotDate: '2099-12-31',
+        startTime: '09:00',
+        endTime: '10:00',
+        remarks: undefined,
+      },
+    });
+    repo.createAppointment.mockResolvedValue({ success: false, outcome: 'slot-past' });
+
+    await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      errors: ['Procedure time must be in the future.'],
     });
   });
 
