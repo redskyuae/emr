@@ -192,11 +192,11 @@ The person to reach on a Patient's behalf in urgent situations, recorded during 
 
 ## Appointment
 
-A scheduled period for a Patient to see a Doctor within a Tenant, reserving one or more consecutive DoctorSlots from the same DoctorRota on the same date. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
+A scheduled period for a Patient within a Tenant. A Consultation Appointment assigns a Doctor and reserves one or more consecutive DoctorSlots from the same DoctorRota. A Procedure Appointment records a direct start and end time, may optionally assign a Doctor, and does not consume a DoctorRota or DoctorSlots. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
 
 ## Booking Path
 
-The scheduling workflow selected while booking, currently Consultation or Procedure. A Booking Path determines which booking requirements apply but is distinct from VisitType and AppointmentType.
+The scheduling workflow selected while booking, currently Consultation or Procedure. A Consultation requires a Doctor, DoctorRota, DoctorSlots, AppointmentMode, AppointmentType, and AppointmentReason. A Procedure requires a direct date/time window and may assign an active Doctor or use N/A; that Doctor assignment is independent of scheduling. A Booking Path determines which booking requirements apply but is distinct from VisitType and AppointmentType.
 
 _Avoid_: Visit Type when referring to the Book Appointment workflow selector
 

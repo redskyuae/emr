@@ -20,7 +20,7 @@ Booking Path is persisted on the Appointment. `N/A` is a UI representation of a 
 
 ## Procedure Screen Workflow
 
-1. Select an existing Registered Patient or enter the initial Appointment details for a new Provisional Patient.
+1. Select an existing active Registered Patient. The Book Appointment screen does not show or select Provisional Patients and does not offer a Provisional Patient creation mode.
 2. Select the Procedure Booking Path.
 3. Select a Treatment and an explicit Session.
 4. Choose Doctor `N/A` or an active Doctor. `N/A` is selected by default. Active Doctor options come from the existing Doctors API. This assignment does not affect the Procedure schedule.
@@ -77,7 +77,7 @@ The create request becomes a discriminated union with common Patient and remarks
 }
 ```
 
-For both paths, exactly one of `patientId` or `provisionalPatient` remains required. Procedure validation requires valid `HH:mm` times, `endTime` after `startTime`, and a future Tenant-local date/time. When `doctorId` is provided, it must identify an active Doctor in the active Tenant, but the Doctor is validated only as an optional assignment. Procedure creation does not read or reserve DoctorSchedules, DoctorRotas, or DoctorSlots.
+For both paths, the existing public API continues to require exactly one of `patientId` or `provisionalPatient` for compatibility with non-screen callers. The Book Appointment screen sends only a selected Registered `patientId`. Procedure validation requires valid `HH:mm` times, `endTime` after `startTime`, and a future Tenant-local date/time. When `doctorId` is provided, it must identify an active Doctor in the active Tenant, but the Doctor is validated only as an optional assignment. Procedure creation does not read or reserve DoctorSchedules, DoctorRotas, or DoctorSlots.
 
 The Appointment response adds `bookingPath`, `startTime`, and `endTime`. For Procedures, `doctor`, `appointmentMode`, `appointmentType`, `appointmentReason`, and `rotaName` may be `null`; `slots` is empty. Consumers display missing values as `N/A`.
 

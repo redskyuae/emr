@@ -612,6 +612,7 @@ const doctorSlotsExample = [
 ];
 
 const createAppointmentRequestExample = {
+  bookingPath: 'CONSULTATION',
   doctorId: 42,
   appointmentModeId: 1,
   appointmentTypeId: 2,
@@ -623,9 +624,19 @@ const createAppointmentRequestExample = {
   remarks: 'Patient requested a morning appointment.',
 };
 
+const createProcedureAppointmentRequestExample = {
+  bookingPath: 'PROCEDURE',
+  patientId: 42,
+  slotDate: '31-12-2099',
+  startTime: '10:00',
+  endTime: '11:15',
+  remarks: 'Shirodhara session; Doctor not assigned.',
+};
+
 const appointmentExample = {
   id: 101,
   tenantId: 'org_apollo',
+  bookingPath: 'CONSULTATION',
   bookingNumber: 'APT-1001',
   patient: {
     id: 42,
@@ -641,6 +652,8 @@ const appointmentExample = {
   appointmentReason: { id: 3, name: 'Follow-up', code: 'FUP' },
   appointmentStatus: { id: 4, name: 'Scheduled', code: 'SCH', category: 'scheduled' },
   slotDate: '31-12-2099',
+  startTime: '09:00',
+  endTime: '09:30',
   rotaName: 'Morning Rota',
   slots: [
     { slotTime: '09:00', status: 'Booked' },
@@ -648,6 +661,33 @@ const appointmentExample = {
   ],
   remarks: 'Patient requested a morning appointment.',
   createdOn: '2099-12-01T04:30:00.000Z',
+};
+
+const procedureAppointmentExample = {
+  id: 102,
+  tenantId: 'org_apollo',
+  bookingPath: 'PROCEDURE',
+  bookingNumber: 'APT-1002',
+  patient: {
+    id: 42,
+    mrn: 'MRN-1042',
+    firstName: 'Asha',
+    lastName: 'Rao',
+    phone: '+91-9876543210',
+    registrationStatus: 'registered',
+  },
+  doctor: null,
+  appointmentMode: null,
+  appointmentType: null,
+  appointmentReason: null,
+  appointmentStatus: { id: 4, name: 'Scheduled', code: 'SCH', category: 'scheduled' },
+  slotDate: '31-12-2099',
+  startTime: '10:00',
+  endTime: '11:15',
+  rotaName: null,
+  slots: [],
+  remarks: 'Shirodhara session; Doctor not assigned.',
+  createdOn: '2099-12-01T04:35:00.000Z',
 };
 
 const admissionExample = {
@@ -3765,35 +3805,109 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Create Appointment',
         description:
-          'Creates an Appointment in the active Tenant. The server assigns bookingNumber, uses the protected system Scheduled Appointment Status, validates an active Registered Patient or creates a new Provisional Patient for this initial Appointment, snapshots rotaName, and reserves one or more consecutive DoctorSlots atomically. Existing Provisional Patients must complete or reconcile Patient Registration before another Appointment. Clients send doctorId, not clinicianId; facility/location/regulatory and Booking Path are intentionally omitted until Visits/Facilities are integrated.',
+          'Creates an Appointment in the active Tenant. Consultation Appointments require an active Doctor and atomically reserve consecutive DoctorSlots from one DoctorRota. Procedure Appointments use a direct start/end time and may optionally assign an active Doctor without consulting DoctorSchedule, DoctorRota, or DoctorSlots. The server assigns bookingNumber and the protected system Scheduled Appointment Status. Existing Provisional Patients must complete or reconcile Patient Registration before another Appointment.',
         security: [{ cookieAuth: [] }],
-        requestBody: requestBody('CreateAppointmentRequest', createAppointmentRequestExample),
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: schemaRef('CreateAppointmentRequest'),
+              examples: {
+                consultation: {
+                  summary: 'Consultation reserving consecutive DoctorSlots',
+                  value: createAppointmentRequestExample,
+                },
+                procedureDoctorNotAssigned: {
+                  summary: 'Procedure with Doctor N/A',
+                  value: createProcedureAppointmentRequestExample,
+                },
+              },
+            },
+          },
+        },
         responses: {
           '201': {
             description: 'Appointment created.',
-            content: jsonContent(dataEnvelopeSchema('Appointment'), { data: appointmentExample }),
+            content: {
+              'application/json': {
+                schema: dataEnvelopeSchema('Appointment'),
+                examples: {
+                  consultation: {
+                    summary: 'Consultation Appointment',
+                    value: { data: appointmentExample },
+                  },
+                  procedureDoctorNotAssigned: {
+                    summary: 'Procedure Appointment with Doctor N/A',
+                    value: { data: procedureAppointmentExample },
+                  },
+                },
+              },
+            },
           },
-          '400': responseRef('ValidationFailed'),
+          '400': {
+            description:
+              'The request shape or values are invalid, including a Procedure end time that is not after its start time.',
+            content: {
+              'application/json': {
+                schema: {
+                  oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')],
+                },
+                examples: {
+                  invalidProcedureTime: {
+                    summary: 'Invalid Procedure time window',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['End time must be after start time'],
+                    },
+                  },
+                },
+              },
+            },
+          },
           '401': responseRef('Unauthorized'),
           '403': responseRef('Forbidden'),
           '409': {
             description:
               'A referenced master is invalid, the Patient is inactive or Provisional, a selected slot is no longer available, or new Provisional Patient details match an existing Patient. patientMatches contains only Registered Patient candidates; existing Provisional Patients are never returned as selectable matches.',
-            content: jsonContent(schemaRef('AppointmentConflictError'), {
-              message: 'Conflict',
-              errors: ['Potential Patient match found. Retry with patientId.'],
-              patientMatches: [
-                {
-                  id: 42,
-                  mrn: 'MRN-1042',
-                  firstName: 'Asha',
-                  lastName: 'Rao',
-                  phone: '+91-9876543210',
-                  registrationStatus: 'registered',
-                  isActive: true,
+            content: {
+              'application/json': {
+                schema: schemaRef('AppointmentConflictError'),
+                examples: {
+                  invalidProcedureDoctor: {
+                    summary: 'Procedure Doctor is not valid in the active Tenant',
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Doctor 999 is Invalid.'],
+                    },
+                  },
+                  consultationSlotConflict: {
+                    summary: 'A Consultation DoctorSlot was booked concurrently',
+                    value: {
+                      message: 'Conflict',
+                      errors: ['One or more selected Doctor slots are no longer available.'],
+                    },
+                  },
+                  potentialPatientMatch: {
+                    summary: 'Provisional details match a Registered Patient',
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Potential Patient match found. Retry with patientId.'],
+                      patientMatches: [
+                        {
+                          id: 42,
+                          mrn: 'MRN-1042',
+                          firstName: 'Asha',
+                          lastName: 'Rao',
+                          phone: '+91-9876543210',
+                          registrationStatus: 'registered',
+                          isActive: true,
+                        },
+                      ],
+                    },
+                  },
                 },
-              ],
-            }),
+              },
+            },
           },
           '500': responseRef('InternalServerError'),
         },
@@ -9091,8 +9205,23 @@ export const openApiDocument = {
         },
       },
       CreateAppointmentRequest: {
+        oneOf: [
+          schemaRef('CreateConsultationAppointmentRequest'),
+          schemaRef('CreateProcedureAppointmentRequest'),
+        ],
+        discriminator: {
+          propertyName: 'bookingPath',
+          mapping: {
+            CONSULTATION: '#/components/schemas/CreateConsultationAppointmentRequest',
+            PROCEDURE: '#/components/schemas/CreateProcedureAppointmentRequest',
+          },
+        },
+      },
+      CreateConsultationAppointmentRequest: {
         type: 'object',
+        additionalProperties: false,
         required: [
+          'bookingPath',
           'doctorId',
           'appointmentModeId',
           'appointmentTypeId',
@@ -9101,8 +9230,8 @@ export const openApiDocument = {
           'doctorRotaId',
           'slotTimes',
         ],
-        additionalProperties: false,
         properties: {
+          bookingPath: { type: 'string', enum: ['CONSULTATION'] },
           doctorId: { type: 'integer', minimum: 1, description: 'Doctor identifier.' },
           appointmentModeId: { type: 'integer', minimum: 1 },
           appointmentTypeId: { type: 'integer', minimum: 1 },
@@ -9128,6 +9257,45 @@ export const openApiDocument = {
             items: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
             description:
               'Ordered HH:mm slot starts. All selected slots must be consecutive in the same DoctorRota.',
+          },
+          remarks: { type: 'string', maxLength: 1000 },
+        },
+        oneOf: [{ required: ['patientId'] }, { required: ['provisionalPatient'] }],
+      },
+      CreateProcedureAppointmentRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['bookingPath', 'slotDate', 'startTime', 'endTime'],
+        properties: {
+          bookingPath: { type: 'string', enum: ['PROCEDURE'] },
+          doctorId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional active Doctor assignment. It does not control Procedure scheduling.',
+          },
+          patientId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Existing active Registered Patient identifier. Send exactly one of patientId or provisionalPatient.',
+          },
+          provisionalPatient: schemaRef('ProvisionalPatientInput'),
+          slotDate: {
+            type: 'string',
+            pattern: '^\\d{2}-\\d{2}-\\d{4}$',
+            description: 'Procedure date in DD-MM-YYYY format.',
+            example: '31-12-2099',
+          },
+          startTime: {
+            type: 'string',
+            pattern: '^\\d{2}:\\d{2}$',
+            description: 'Direct Procedure start time in HH:mm format.',
+          },
+          endTime: {
+            type: 'string',
+            pattern: '^\\d{2}:\\d{2}$',
+            description: 'Direct Procedure end time in HH:mm format; must be after startTime.',
           },
           remarks: { type: 'string', maxLength: 1000 },
         },
@@ -9177,6 +9345,7 @@ export const openApiDocument = {
         required: [
           'id',
           'tenantId',
+          'bookingPath',
           'bookingNumber',
           'patient',
           'doctor',
@@ -9185,6 +9354,8 @@ export const openApiDocument = {
           'appointmentReason',
           'appointmentStatus',
           'slotDate',
+          'startTime',
+          'endTime',
           'rotaName',
           'slots',
           'remarks',
@@ -9193,16 +9364,28 @@ export const openApiDocument = {
         properties: {
           id: { type: 'integer', minimum: 1 },
           tenantId: { type: 'string' },
+          bookingPath: { type: 'string', enum: ['CONSULTATION', 'PROCEDURE'] },
           bookingNumber: { type: 'string', example: 'APT-1001' },
           patient: schemaRef('AppointmentPatientSummary'),
           doctor: {
-            type: 'object',
-            required: ['id', 'name'],
-            properties: { id: { type: 'integer', minimum: 1 }, name: { type: 'string' } },
+            oneOf: [
+              {
+                type: 'object',
+                required: ['id', 'name'],
+                properties: { id: { type: 'integer', minimum: 1 }, name: { type: 'string' } },
+              },
+              { type: 'null' },
+            ],
           },
-          appointmentMode: schemaRef('AppointmentReferenceSummary'),
-          appointmentType: schemaRef('AppointmentReferenceSummary'),
-          appointmentReason: schemaRef('AppointmentReferenceSummary'),
+          appointmentMode: {
+            oneOf: [schemaRef('AppointmentReferenceSummary'), { type: 'null' }],
+          },
+          appointmentType: {
+            oneOf: [schemaRef('AppointmentReferenceSummary'), { type: 'null' }],
+          },
+          appointmentReason: {
+            oneOf: [schemaRef('AppointmentReferenceSummary'), { type: 'null' }],
+          },
           appointmentStatus: {
             allOf: [
               schemaRef('AppointmentReferenceSummary'),
@@ -9226,7 +9409,9 @@ export const openApiDocument = {
             ],
           },
           slotDate: { type: 'string', pattern: '^\\d{2}-\\d{2}-\\d{4}$' },
-          rotaName: { type: 'string' },
+          startTime: { type: ['string', 'null'], pattern: '^\\d{2}:\\d{2}$' },
+          endTime: { type: ['string', 'null'], pattern: '^\\d{2}:\\d{2}$' },
+          rotaName: { type: ['string', 'null'] },
           slots: { type: 'array', items: schemaRef('AppointmentSlotBooking') },
           remarks: { type: ['string', 'null'] },
           createdOn: { type: 'string', format: 'date-time' },
