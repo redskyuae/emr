@@ -56,19 +56,25 @@ export function AppointmentDetailSheet({
             <>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{appointment.appointmentStatus.name}</Badge>
-                <Badge variant="outline">{appointment.appointmentType.name}</Badge>
+                <Badge variant="outline">
+                  {appointment.appointmentType?.name ?? appointment.bookingPath}
+                </Badge>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <DetailField label="Doctor" value={appointment.doctor.name} />
+                <DetailField label="Doctor" value={appointment.doctor?.name ?? 'N/A'} />
                 <DetailField label="Slot date" value={toDisplayDate(appointment.slotDate)} />
                 <DetailField
-                  label="Slot time"
-                  value={appointment.slots.map((slot) => slot.slotTime).join(', ')}
+                  label="Time"
+                  value={
+                    appointment.startTime && appointment.endTime
+                      ? `${appointment.startTime}–${appointment.endTime}`
+                      : appointment.slots.map((slot) => slot.slotTime).join(', ')
+                  }
                 />
-                <DetailField label="Rota" value={appointment.rotaName} />
-                <DetailField label="Mode" value={appointment.appointmentMode.name} />
-                <DetailField label="Reason" value={appointment.appointmentReason.name} />
+                <DetailField label="Rota" value={appointment.rotaName ?? 'N/A'} />
+                <DetailField label="Mode" value={appointment.appointmentMode?.name ?? 'N/A'} />
+                <DetailField label="Reason" value={appointment.appointmentReason?.name ?? 'N/A'} />
               </div>
 
               <DetailField label="Remarks" value={appointment.remarks} />

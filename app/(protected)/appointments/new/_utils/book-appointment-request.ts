@@ -10,34 +10,50 @@ export function toAppointmentSlotDate(value: string) {
 export function bookAppointmentFormValuesToRequest(
   values: BookAppointmentFormValues
 ): CreateAppointmentRequest {
-  const baseRequest = {
-    doctorId: Number(values.doctorId),
-    appointmentModeId: Number(values.appointmentModeId),
-    appointmentTypeId: Number(values.appointmentTypeId),
-    appointmentReasonId: Number(values.appointmentReasonId),
+  if (values.visitType === '') {
+    throw new Error('Booking Path is required');
+  }
+
+  const patient =
+    values.patientMode === 'existing'
+      ? { patientId: Number(values.patientId) }
+      : {
+          provisionalPatient: {
+            firstName: values.firstName,
+            lastName: values.lastName,
+            phone: values.phone,
+            middleName: values.middleName || undefined,
+            gender: values.gender || undefined,
+            dateOfBirth: values.dateOfBirth || undefined,
+            email: values.email || undefined,
+          },
+        };
+  const common = {
+    ...patient,
     slotDate: toAppointmentSlotDate(values.slotDate),
-    doctorRotaId: Number(values.doctorRotaId),
-    slotTimes: values.slotTimes,
     remarks: values.remarks || undefined,
   };
 
-  if (values.patientMode === 'existing') {
+  if (values.visitType === 'PROCEDURE') {
     return {
-      ...baseRequest,
-      patientId: Number(values.patientId),
+      ...common,
+      bookingPath: 'PROCEDURE',
+      ...(values.doctorId && values.doctorId !== 'not-applicable'
+        ? { doctorId: Number(values.doctorId) }
+        : {}),
+      startTime: values.startTime,
+      endTime: values.endTime,
     };
   }
 
   return {
-    ...baseRequest,
-    provisionalPatient: {
-      firstName: values.firstName,
-      lastName: values.lastName,
-      phone: values.phone,
-      middleName: values.middleName || undefined,
-      gender: values.gender || undefined,
-      dateOfBirth: values.dateOfBirth || undefined,
-      email: values.email || undefined,
-    },
+    ...common,
+    bookingPath: 'CONSULTATION',
+    doctorId: Number(values.doctorId),
+    appointmentModeId: Number(values.appointmentModeId),
+    appointmentTypeId: Number(values.appointmentTypeId),
+    appointmentReasonId: Number(values.appointmentReasonId),
+    doctorRotaId: Number(values.doctorRotaId),
+    slotTimes: values.slotTimes,
   };
 }

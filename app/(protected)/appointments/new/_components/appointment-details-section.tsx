@@ -32,8 +32,8 @@ export function AppointmentDetailsSection({
             <ClipboardList className="size-4" />
           </span>
           <div>
-            <CardTitle>Visit details</CardTitle>
-            <CardDescription>Classify the Consultation for reporting and workflow.</CardDescription>
+            <CardTitle>Appointment details</CardTitle>
+            <CardDescription>Classify the Appointment for reporting and workflow.</CardDescription>
           </div>
         </div>
       </CardHeader>

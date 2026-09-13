@@ -24,6 +24,7 @@ describe('Book Appointment request', () => {
     });
 
     expect(request).toEqual({
+      bookingPath: 'CONSULTATION',
       doctorId: 18,
       appointmentModeId: 2,
       appointmentTypeId: 3,
@@ -61,6 +62,7 @@ describe('Book Appointment request', () => {
     });
 
     expect(request).toEqual({
+      bookingPath: 'CONSULTATION',
       doctorId: 18,
       appointmentModeId: 2,
       appointmentTypeId: 3,
@@ -78,6 +80,59 @@ describe('Book Appointment request', () => {
         gender: undefined,
         dateOfBirth: undefined,
       },
+    });
+  });
+
+  it('should map a Procedure with Doctor N/A without Rota, Appointment Details, or UI dependencies', () => {
+    const request = bookAppointmentFormValuesToRequest({
+      ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
+      patientId: '12',
+      patientMode: 'existing',
+      visitType: 'PROCEDURE',
+      doctorId: 'not-applicable',
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '11:15',
+      treatmentId: '400',
+      sessionId: '400-1',
+      roomId: '7',
+      therapistId: '41',
+    });
+
+    expect(request).toEqual({
+      bookingPath: 'PROCEDURE',
+      patientId: 12,
+      slotDate: '31-12-2099',
+      startTime: '10:00',
+      endTime: '11:15',
+      remarks: undefined,
+    });
+  });
+
+  it('should send a selected Procedure Doctor only as an assignment', () => {
+    const request = bookAppointmentFormValuesToRequest({
+      ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
+      patientId: '12',
+      patientMode: 'existing',
+      visitType: 'PROCEDURE',
+      doctorId: '18',
+      slotDate: '2099-12-31',
+      startTime: '10:30',
+      endTime: '11:45',
+      treatmentId: '400',
+      sessionId: '400-1',
+      roomId: '7',
+      therapistId: '41',
+    });
+
+    expect(request).toEqual({
+      bookingPath: 'PROCEDURE',
+      patientId: 12,
+      doctorId: 18,
+      slotDate: '31-12-2099',
+      startTime: '10:30',
+      endTime: '11:45',
+      remarks: undefined,
     });
   });
 });

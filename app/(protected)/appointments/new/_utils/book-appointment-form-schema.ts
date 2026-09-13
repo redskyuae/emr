@@ -106,35 +106,19 @@ export const bookAppointmentFormSchema = z
       }
     }
 
-    if (data.doctorId.trim() === '') {
+    if (data.visitType === 'CONSULTATION' && data.doctorId.trim() === '') {
       context.addIssue({ code: 'custom', path: ['doctorId'], message: 'Doctor is required' });
     }
 
-    if (data.startTime.trim() === '') {
-      context.addIssue({ code: 'custom', path: ['startTime'], message: 'Start time is required' });
-    }
-
-    if (data.endTime.trim() === '') {
-      context.addIssue({ code: 'custom', path: ['endTime'], message: 'End time is required' });
-    }
-
-    if (data.startTime && data.endTime && data.endTime <= data.startTime) {
+    if (data.doctorId === 'not-applicable' && data.visitType === 'CONSULTATION') {
       context.addIssue({
         code: 'custom',
-        path: ['endTime'],
-        message: 'End time must be after start time',
+        path: ['doctorId'],
+        message: 'A Doctor is required for a Consultation',
       });
     }
 
     if (data.visitType === 'CONSULTATION') {
-      if (data.doctorId === 'not-applicable') {
-        context.addIssue({
-          code: 'custom',
-          path: ['doctorId'],
-          message: 'A Doctor is required for a Consultation',
-        });
-      }
-
       if (data.appointmentModeId.trim() === '') {
         context.addIssue({
           code: 'custom',
@@ -168,6 +152,22 @@ export const bookAppointmentFormSchema = z
       }
     }
 
+    if (data.startTime.trim() === '') {
+      context.addIssue({ code: 'custom', path: ['startTime'], message: 'Start time is required' });
+    }
+
+    if (data.endTime.trim() === '') {
+      context.addIssue({ code: 'custom', path: ['endTime'], message: 'End time is required' });
+    }
+
+    if (data.startTime && data.endTime && data.endTime <= data.startTime) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endTime'],
+        message: 'End time must be after start time',
+      });
+    }
+
     if (data.visitType === 'PROCEDURE') {
       const requiredAyurvedaFields = [
         ['treatmentId', data.treatmentId, 'Treatment is required'],
@@ -181,7 +181,7 @@ export const bookAppointmentFormSchema = z
         }
       }
 
-      if (data.patientMode === 'existing' && data.sessionId.trim() === '') {
+      if (data.sessionId.trim() === '') {
         context.addIssue({ code: 'custom', path: ['sessionId'], message: 'Session is required' });
       }
 

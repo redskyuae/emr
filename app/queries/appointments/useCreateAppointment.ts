@@ -113,7 +113,7 @@ export function useCreateAppointment() {
       void queryClient.invalidateQueries({ queryKey: patientsBaseKey });
       void queryClient.invalidateQueries({
         queryKey: doctorSlotsQueryKey({
-          doctorId: request.doctorId,
+          doctorId: request.bookingPath === 'CONSULTATION' ? request.doctorId : null,
           slotDate: response?.data
             ? toIsoSlotDate(response.data)
             : toIsoSlotDateFromRequest(request),

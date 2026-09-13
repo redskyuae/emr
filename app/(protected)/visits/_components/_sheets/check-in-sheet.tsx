@@ -429,7 +429,7 @@ function AppointmentPreview({
     bookingNumber: string;
     slotDate: string;
     patient: { firstName: string; lastName: string; mrn: string };
-    doctor: { name: string };
+    doctor: { name: string } | null;
     appointmentStatus: { name: string };
   } | null;
 }) {
@@ -462,7 +462,7 @@ function AppointmentPreview({
         {appointment.patient.firstName} {appointment.patient.lastName}
       </p>
       <p className="text-muted-foreground">
-        {appointment.patient.mrn} · {appointment.doctor.name}
+        {appointment.patient.mrn} · {appointment.doctor?.name ?? 'Doctor not assigned'}
       </p>
       <p className="text-muted-foreground">
         {appointment.slotDate} · {appointment.appointmentStatus.name}

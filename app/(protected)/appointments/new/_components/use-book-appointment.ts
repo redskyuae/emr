@@ -18,21 +18,18 @@ import { useDoctorSlotsQuery } from '@/app/queries/appointments/useDoctorSlots';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
 import { usePatientVisitsQuery } from '@/app/queries/visits/useVisits';
-import { getSlotTimes } from '../_utils/appointment-time';
+import { getProcedureEndTime, getSlotTimes } from '../_utils/appointment-time';
 import {
   bookAppointmentFormSchema,
   type BookAppointmentFormValues,
 } from '../_utils/book-appointment-form-schema';
-import { bookAppointmentFormValuesToRequest } from '../_utils/book-appointment-request';
-import type { BookablePatient } from '../_utils/book-appointment-types';
+import type { BookablePatient, BookingPath } from '../_utils/book-appointment-types';
+import { submitBookAppointment, type BookingConfirmation } from '../_utils/submit-book-appointment';
 import {
-  DEMO_DOCTORS,
   DEMO_FACILITY,
   DEMO_ROOMS,
-  DEMO_ROTAS,
   DEMO_TREATMENT_CATALOG,
   DEMO_THERAPISTS,
-  type VisitType,
 } from './book-appointment-demo-data';
 
 const initialValues: BookAppointmentFormValues = {
@@ -63,13 +60,6 @@ const initialValues: BookAppointmentFormValues = {
   consentStatus: 'READY',
   approvalStatus: 'NOT_REQUIRED',
   remarks: '',
-};
-
-type BookingConfirmation = {
-  bookingNumber: string;
-  path: VisitType;
-  patientName: string;
-  detail: string;
 };
 
 const masterListParams = { page: 1, limit: 999 };
@@ -111,16 +101,18 @@ export function useBookAppointment() {
   const typesQuery = useAppointmentTypesQuery(masterListParams);
   const reasonsQuery = useAppointmentReasonsQuery(masterListParams);
 
-  const consultationDoctors = (doctorsQuery.data?.data ?? []).map((doctor) => ({
+  const doctors = (doctorsQuery.data?.data ?? []).map((doctor) => ({
     id: doctor.id,
     name: doctor.name,
     specialty: doctor.specialtyName ?? 'Specialty not recorded',
   }));
-  const doctors = isProcedurePath ? DEMO_DOCTORS : consultationDoctors;
   const selectedDoctor = doctors.find((doctor) => String(doctor.id) === values.doctorId) ?? null;
-  const doctorId = !isProcedurePath && values.doctorId ? Number(values.doctorId) : null;
+  const doctorId =
+    !isProcedurePath && values.doctorId && values.doctorId !== 'not-applicable'
+      ? Number(values.doctorId)
+      : null;
   const doctorSlotsQuery = useDoctorSlotsQuery({ doctorId, slotDate: values.slotDate });
-  const rotas = isProcedurePath ? DEMO_ROTAS : (doctorSlotsQuery.data ?? []);
+  const rotas = doctorSlotsQuery.data ?? [];
   const selectedRota = rotas.find((rota) => rota.id === values.doctorRotaId) ?? null;
 
   const selectedPatientId = values.patientId ?? '';
@@ -144,9 +136,7 @@ export function useBookAppointment() {
   const selectedRoom = DEMO_ROOMS.find((room) => String(room.id) === values.roomId) ?? null;
   const selectedTherapist =
     DEMO_THERAPISTS.find((therapist) => String(therapist.id) === values.therapistId) ?? null;
-  const isProvisionalTreatment = isProcedurePath && patientMode === 'provisional';
-  const resourceSession =
-    selectedSession ?? (isProvisionalTreatment ? (selectedTreatment?.sessions[0] ?? null) : null);
+  const resourceSession = selectedSession;
   const filteredRooms = useMemo(
     () =>
       resourceSession
@@ -179,13 +169,15 @@ export function useBookAppointment() {
     form.setValue('slotTimes', [], { shouldDirty: true });
   }
 
-  function changeVisitType(next: VisitType) {
+  function changeVisitType(next: BookingPath) {
     if (next === visitType) return;
     form.setValue('visitType', next, { shouldDirty: true, shouldValidate: true });
     setConfirmation(null);
     setSubmitError(null);
     form.clearErrors();
-    form.setValue('doctorId', '', { shouldDirty: true });
+    form.setValue('doctorId', next === 'PROCEDURE' ? 'not-applicable' : '', {
+      shouldDirty: true,
+    });
     form.setValue('appointmentModeId', '', { shouldDirty: true });
     form.setValue('appointmentTypeId', '', { shouldDirty: true });
     form.setValue('appointmentReasonId', '', { shouldDirty: true });
@@ -243,6 +235,30 @@ export function useBookAppointment() {
     form.setValue('therapistId', '', { shouldDirty: true });
   }
 
+  function changeDoctor() {
+    setSubmitError(null);
+    if (!isProcedurePath) clearSchedule();
+  }
+
+  function changeProcedureDate() {
+    setSubmitError(null);
+    form.setValue('startTime', '', { shouldDirty: true });
+    form.setValue('endTime', '', { shouldDirty: true });
+    form.setValue('roomId', '', { shouldDirty: true });
+    form.setValue('therapistId', '', { shouldDirty: true });
+  }
+
+  function changeProcedureStartTime(value: string) {
+    setSubmitError(null);
+    form.setValue('startTime', value, { shouldDirty: true, shouldValidate: true });
+    form.setValue('endTime', getProcedureEndTime(value, selectedSession), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue('roomId', '', { shouldDirty: true });
+    form.setValue('therapistId', '', { shouldDirty: true });
+  }
+
   function changeSchedule() {
     setSubmitError(null);
     form.setValue('startTime', '', { shouldDirty: true });
@@ -250,9 +266,7 @@ export function useBookAppointment() {
     form.setValue('slotTimes', [], { shouldDirty: true });
     form.setValue('roomId', '', { shouldDirty: true });
     form.setValue('therapistId', '', { shouldDirty: true });
-    if (!isProcedurePath) {
-      form.setValue('doctorRotaId', '', { shouldDirty: true });
-    }
+    form.setValue('doctorRotaId', '', { shouldDirty: true });
   }
 
   function changeRota(value: string) {
@@ -278,10 +292,6 @@ export function useBookAppointment() {
       ),
       { shouldDirty: true }
     );
-    if (isProcedurePath) {
-      form.setValue('roomId', '', { shouldDirty: true });
-      form.setValue('therapistId', '', { shouldDirty: true });
-    }
   }
 
   function resetBooking() {
@@ -311,24 +321,16 @@ export function useBookAppointment() {
 
   const onSubmit = form.handleSubmit(
     async (submitted) => {
-      if (submitted.visitType === 'PROCEDURE') return;
-
       setSubmitError(null);
 
       try {
-        const response = await createAppointment.mutateAsync(
-          bookAppointmentFormValuesToRequest(submitted)
+        const bookingConfirmation = await submitBookAppointment(
+          submitted,
+          createAppointment.mutateAsync
         );
-        const appointment = response.data;
-        const firstSlot = appointment.slots[0]?.slotTime ?? submitted.startTime;
 
-        setConfirmation({
-          bookingNumber: appointment.bookingNumber,
-          path: 'CONSULTATION',
-          patientName: `${appointment.patient.firstName} ${appointment.patient.lastName}`,
-          detail: `${appointment.doctor.name} · ${appointment.slotDate} · ${firstSlot}–${submitted.endTime}`,
-        });
-        toast.success(`${appointment.bookingNumber} booked.`);
+        setConfirmation(bookingConfirmation);
+        toast.success(`${bookingConfirmation.bookingNumber} booked.`);
       } catch (error) {
         const message = getApiErrorMessage(error);
         setSubmitError(message);
@@ -366,9 +368,7 @@ export function useBookAppointment() {
 
   const dependencyErrors = [
     doctorsQuery.error,
-    modesQuery.error,
-    typesQuery.error,
-    reasonsQuery.error,
+    ...(isProcedurePath ? [] : [modesQuery.error, typesQuery.error, reasonsQuery.error]),
   ]
     .map(getErrorMessage)
     .filter((message): message is string => message !== null);
@@ -390,7 +390,6 @@ export function useBookAppointment() {
     selectedDoctor,
     selectedRota,
     isProcedurePath,
-    isProvisionalTreatment,
     resourceSession,
     patients: selectablePatients,
     patientVisits: patientVisitsQuery.data ?? [],
@@ -402,12 +401,11 @@ export function useBookAppointment() {
     appointmentModes: modesQuery.data?.data ?? [],
     appointmentTypes: typesQuery.data?.data ?? [],
     appointmentReasons: reasonsQuery.data?.data ?? [],
-    consultationDependenciesLoading:
+    bookingDependenciesLoading:
       doctorsQuery.isLoading ||
-      modesQuery.isLoading ||
-      typesQuery.isLoading ||
-      reasonsQuery.isLoading,
-    consultationDependencyError: dependencyErrors[0] ?? null,
+      (!isProcedurePath &&
+        (modesQuery.isLoading || typesQuery.isLoading || reasonsQuery.isLoading)),
+    bookingDependencyError: dependencyErrors[0] ?? null,
     rotas,
     isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
     doctorSlotsError: getErrorMessage(doctorSlotsQuery.error),
@@ -421,6 +419,9 @@ export function useBookAppointment() {
     changePatientMode,
     changeTreatment,
     changeSession,
+    changeDoctor,
+    changeProcedureDate,
+    changeProcedureStartTime,
     changeSchedule,
     changeRota,
     changeTime,
@@ -430,11 +431,13 @@ export function useBookAppointment() {
     retryPatientSearch: patientsQuery.refetch,
     retryPatientVisits: patientVisitsQuery.refetch,
     retryDoctorSlots: doctorSlotsQuery.refetch,
-    retryConsultationDependencies: () => {
+    retryBookingDependencies: () => {
       void doctorsQuery.refetch();
-      void modesQuery.refetch();
-      void typesQuery.refetch();
-      void reasonsQuery.refetch();
+      if (!isProcedurePath) {
+        void modesQuery.refetch();
+        void typesQuery.refetch();
+        void reasonsQuery.refetch();
+      }
     },
   };
 }

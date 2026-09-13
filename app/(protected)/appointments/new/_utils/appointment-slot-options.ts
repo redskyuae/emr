@@ -1,4 +1,4 @@
-import { addMinutesToTime } from './appointment-time';
+import { addMinutesToTime, getDurationMinutes } from './appointment-time';
 
 type SlotRota = {
   duration: number;
@@ -25,4 +25,25 @@ export function getAvailableEndTimes(rota: SlotRota, startTime: string) {
   }
 
   return endTimes;
+}
+
+export function getRotaScheduleOptions(rota: SlotRota, startTime: string) {
+  const endTimes = getAvailableEndTimes(rota, startTime);
+
+  return {
+    startTimes: getAvailableStartTimes(rota),
+    endTimes,
+    availableDurations: endTimes.map((time) => getDurationMinutes(startTime, time)),
+  };
+}
+
+export function getRecommendedEndTime(
+  rota: SlotRota,
+  startTime: string,
+  recommendedDuration: number
+) {
+  const endTimes = getAvailableEndTimes(rota, startTime);
+  const recommendedEndTime = addMinutesToTime(startTime, recommendedDuration);
+
+  return endTimes.includes(recommendedEndTime) ? recommendedEndTime : (endTimes[0] ?? '');
 }

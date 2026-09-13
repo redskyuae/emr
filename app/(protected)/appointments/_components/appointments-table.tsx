@@ -16,6 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { appointmentStatusVariant } from '../_utils/appointment-status';
 
 function formatSlotRange(appointment: Appointment) {
+  if (appointment.startTime && appointment.endTime) {
+    return `${appointment.startTime}-${appointment.endTime}`;
+  }
+
   if (appointment.slots.length === 0) {
     return 'No slots';
   }
@@ -58,7 +62,11 @@ export function AppointmentsTable({
               <tr key={appointment.id} className="hover:bg-muted/50 border-b last:border-b-0">
                 <td className="p-3 pl-4">
                   <p className="font-mono text-sm font-medium">{appointment.bookingNumber}</p>
-                  <p className="text-muted-foreground text-xs">{appointment.rotaName}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {appointment.bookingPath === 'PROCEDURE'
+                      ? 'Procedure'
+                      : (appointment.rotaName ?? 'Consultation')}
+                  </p>
                 </td>
                 <td className="p-3">
                   <p className="font-medium tabular-nums">{appointment.slotDate}</p>
@@ -77,12 +85,14 @@ export function AppointmentsTable({
                     {appointment.patient.mrn} / {appointment.patient.phone}
                   </p>
                 </td>
-                <td className="p-3">{appointment.doctor.name}</td>
+                <td className="p-3">{appointment.doctor?.name ?? 'N/A'}</td>
                 <td className="p-3">
-                  <Badge variant="secondary">{appointment.appointmentType.code}</Badge>
+                  <Badge variant="secondary">
+                    {appointment.appointmentType?.code ?? appointment.bookingPath}
+                  </Badge>
                 </td>
                 <td className="p-3">
-                  <Badge variant="outline">{appointment.appointmentMode.code}</Badge>
+                  <Badge variant="outline">{appointment.appointmentMode?.code ?? 'N/A'}</Badge>
                 </td>
                 <td className="p-3">
                   <Badge variant={appointmentStatusVariant(appointment.appointmentStatus.category)}>
