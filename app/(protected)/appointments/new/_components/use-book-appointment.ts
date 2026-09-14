@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
@@ -28,7 +29,10 @@ import {
   type BookAppointmentFormValues,
 } from '../_utils/book-appointment-form-schema';
 import type { BookablePatient, BookingPath } from '../_utils/book-appointment-types';
-import { submitBookAppointment, type BookingConfirmation } from '../_utils/submit-book-appointment';
+import {
+  submitBookAppointmentAndNavigate,
+  type BookingConfirmation,
+} from '../_utils/submit-book-appointment';
 import {
   DEMO_FACILITY,
   DEMO_ROOMS,
@@ -74,6 +78,7 @@ function getErrorMessage(error: unknown) {
 }
 
 export function useBookAppointment() {
+  const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [patientSearch, setPatientSearch] = useState('');
   const [debouncedPatientSearch] = useDebouncedValue(patientSearch.trim(), { wait: 300 });
@@ -347,13 +352,15 @@ export function useBookAppointment() {
       setSubmitError(null);
 
       try {
-        const bookingConfirmation = await submitBookAppointment(
+        await submitBookAppointmentAndNavigate(
           submitted,
-          createAppointment.mutateAsync
+          createAppointment.mutateAsync,
+          (bookingConfirmation) => {
+            setConfirmation(bookingConfirmation);
+            toast.success(`${bookingConfirmation.bookingNumber} booked.`);
+          },
+          router.push
         );
-
-        setConfirmation(bookingConfirmation);
-        toast.success(`${bookingConfirmation.bookingNumber} booked.`);
       } catch (error) {
         const message = getApiErrorMessage(error);
         setSubmitError(message);

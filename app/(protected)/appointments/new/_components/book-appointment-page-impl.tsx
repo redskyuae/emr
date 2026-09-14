@@ -38,9 +38,12 @@ export function BookAppointmentPageImpl() {
   const { form, values, step, selectedPatient, selectedSession, isProcedurePath } = booking;
   const stepHeading = useRef<HTMLHeadingElement>(null);
   const previousStep = useRef(step);
+  const isProvisionalPatient = booking.patientMode === 'provisional';
   const patientName = selectedPatient
     ? selectedPatient.firstName + ' ' + selectedPatient.lastName
-    : 'Patient not selected';
+    : isProvisionalPatient
+      ? `${values.firstName} ${values.lastName}`.trim()
+      : 'Patient not selected';
   const visitLabel = isProcedurePath ? 'Procedure' : 'Consultation';
 
   useEffect(() => {
@@ -171,8 +174,10 @@ export function BookAppointmentPageImpl() {
           <div className="grid items-start gap-4 lg:grid-cols-2">
             <PatientSection
               control={form.control}
+              patientMode={booking.patientMode}
               patients={booking.patients}
               search={booking.patientSearch}
+              onPatientModeChange={booking.changePatientMode}
               onSearchChange={booking.setPatientSearch}
               selectedPatient={selectedPatient}
               onSelectPatient={booking.selectPatient}
@@ -224,8 +229,10 @@ export function BookAppointmentPageImpl() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold break-words">{patientName}</p>
                 <p className="text-muted-foreground text-xs break-words">
-                  <span className="font-mono">{selectedPatient?.mrn ?? '—'}</span> ·{' '}
-                  {selectedPatient?.phone ?? '—'}
+                  <span className={selectedPatient?.mrn ? 'font-mono' : undefined}>
+                    {selectedPatient?.mrn ?? (isProvisionalPatient ? 'Provisional Patient' : '—')}
+                  </span>{' '}
+                  · {selectedPatient?.phone ?? (isProvisionalPatient ? values.phone : '—')}
                 </p>
               </div>
               <Badge

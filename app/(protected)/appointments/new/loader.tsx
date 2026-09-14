@@ -20,11 +20,12 @@ export default function BookAppointmentLoader() {
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
           <Skeleton className="h-10 w-48" />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <div className="grid gap-3 sm:grid-cols-2">
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-8 w-full" />
           </div>
+          <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-4 w-40" />
           {[0, 1, 2].map((item) => (
