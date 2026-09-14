@@ -40,13 +40,21 @@ function CategoryIcon({ color }: { color: string }) {
 
 function CategoryActionsMenu({
   category,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   category: AssetCategory;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (category: AssetCategory) => void;
   onDelete: (category: AssetCategory) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -60,14 +68,18 @@ function CategoryActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(category)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(category)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(category)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(category)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -75,10 +87,14 @@ function CategoryActionsMenu({
 
 export function AssetCategoryTableView({
   categories,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   categories: AssetCategory[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (category: AssetCategory) => void;
   onDelete: (category: AssetCategory) => void;
 }) {
@@ -108,7 +124,13 @@ export function AssetCategoryTableView({
                     {category.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <CategoryActionsMenu category={category} onEdit={onEdit} onDelete={onDelete} />
+                    <CategoryActionsMenu
+                      category={category}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -122,10 +144,14 @@ export function AssetCategoryTableView({
 
 export function AssetCategoryCardView({
   categories,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   categories: AssetCategory[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (category: AssetCategory) => void;
   onDelete: (category: AssetCategory) => void;
 }) {
@@ -151,22 +177,28 @@ export function AssetCategoryCardView({
               ) : null}
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(category)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(category)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(category)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(category)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -176,10 +208,14 @@ export function AssetCategoryCardView({
 
 export function AssetCategoryListView({
   categories,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   categories: AssetCategory[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (category: AssetCategory) => void;
   onDelete: (category: AssetCategory) => void;
 }) {
@@ -209,7 +245,13 @@ export function AssetCategoryListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <CategoryActionsMenu category={category} onEdit={onEdit} onDelete={onDelete} />
+              <CategoryActionsMenu
+                category={category}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

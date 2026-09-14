@@ -40,13 +40,21 @@ function PriorityIcon({ color }: { color: string }) {
 
 function PriorityActionsMenu({
   priority,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   priority: WorkOrderPriority;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (priority: WorkOrderPriority) => void;
   onDelete: (priority: WorkOrderPriority) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -60,14 +68,18 @@ function PriorityActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(priority)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(priority)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(priority)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(priority)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -75,10 +87,14 @@ function PriorityActionsMenu({
 
 export function WorkOrderPriorityTableView({
   priorities,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   priorities: WorkOrderPriority[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (priority: WorkOrderPriority) => void;
   onDelete: (priority: WorkOrderPriority) => void;
 }) {
@@ -108,7 +124,13 @@ export function WorkOrderPriorityTableView({
                     {priority.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <PriorityActionsMenu priority={priority} onEdit={onEdit} onDelete={onDelete} />
+                    <PriorityActionsMenu
+                      priority={priority}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -122,10 +144,14 @@ export function WorkOrderPriorityTableView({
 
 export function WorkOrderPriorityCardView({
   priorities,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   priorities: WorkOrderPriority[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (priority: WorkOrderPriority) => void;
   onDelete: (priority: WorkOrderPriority) => void;
 }) {
@@ -151,22 +177,28 @@ export function WorkOrderPriorityCardView({
               ) : null}
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(priority)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(priority)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(priority)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(priority)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -176,10 +208,14 @@ export function WorkOrderPriorityCardView({
 
 export function WorkOrderPriorityListView({
   priorities,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   priorities: WorkOrderPriority[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (priority: WorkOrderPriority) => void;
   onDelete: (priority: WorkOrderPriority) => void;
 }) {
@@ -209,7 +245,13 @@ export function WorkOrderPriorityListView({
             </div>
 
             <div className="shrink-0 pl-14 sm:pl-0">
-              <PriorityActionsMenu priority={priority} onEdit={onEdit} onDelete={onDelete} />
+              <PriorityActionsMenu
+                priority={priority}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>
