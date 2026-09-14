@@ -347,4 +347,5 @@ export type PatientListParams = {
   tenantId: string;
   gender?: PatientGender;
   isActive?: boolean;
+  registrationStatus?: PatientRegistrationStatus;
 };

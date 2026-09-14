@@ -400,6 +400,13 @@
       "when": 1789107838072,
       "tag": "0056_seed_operational_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1789271520866,
+      "tag": "0057_aspiring_mongoose",
+      "breakpoints": true
     }
   ]
 }

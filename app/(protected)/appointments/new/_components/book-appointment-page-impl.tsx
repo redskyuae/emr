@@ -7,6 +7,7 @@ import {
   Building2,
   Check,
   Pencil,
+  RefreshCw,
   RotateCcw,
   Stethoscope,
   UserRound,
@@ -21,44 +22,29 @@ import { cn } from '@/lib/utils';
 
 import { AppointmentDetailsSection } from './appointment-details-section';
 import { AppointmentScheduleSection } from './appointment-schedule-section';
-import {
-  DEMO_DOCTORS,
-  DEMO_FACILITY,
-  DEMO_MODES,
-  DEMO_REASONS,
-  DEMO_ROTAS,
-  DEMO_TYPES,
-} from './book-appointment-demo-data';
+import { DEMO_FACILITY } from './book-appointment-demo-data';
 import { BookingPathSelector } from './booking-path-selector';
 import { BookingRemarks } from './booking-remarks';
 import { BookingSummary } from './booking-summary';
 import { DoctorSelectionSection } from './doctor-selection-section';
 import { PatientSection } from './patient-section';
-import { ResourceAllocationSection, ResourceStatus } from './resource-allocation-section';
+import { ProcedureScheduleSection } from './procedure-schedule-section';
+import { ResourceAllocationSection } from './resource-allocation-section';
 import { TreatmentSessionSection } from './treatment-session-section';
 import { useBookAppointment } from './use-book-appointment';
 
 export function BookAppointmentPageImpl() {
   const booking = useBookAppointment();
-  const {
-    form,
-    values,
-    step,
-    selectedPatient,
-    selectedSession,
-    isProcedurePath,
-    isProvisionalTreatment,
-  } = booking;
+  const { form, values, step, selectedPatient, selectedSession, isProcedurePath } = booking;
   const stepHeading = useRef<HTMLHeadingElement>(null);
   const previousStep = useRef(step);
+  const isProvisionalPatient = booking.patientMode === 'provisional';
   const patientName = selectedPatient
     ? selectedPatient.firstName + ' ' + selectedPatient.lastName
-    : (values.firstName + ' ' + values.lastName).trim();
-  const visitLabel = isProcedurePath
-    ? isProvisionalTreatment
-      ? 'Treatment'
-      : 'Procedure'
-    : 'Consultation';
+    : isProvisionalPatient
+      ? `${values.firstName} ${values.lastName}`.trim()
+      : 'Patient not selected';
+  const visitLabel = isProcedurePath ? 'Procedure' : 'Consultation';
 
   useEffect(() => {
     if (previousStep.current !== step) {
@@ -74,7 +60,7 @@ export function BookAppointmentPageImpl() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Book Appointment</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Select the Patient, Visit, clinician, and exact Appointment time.
+            Select the Patient, Booking Path, and exact Appointment time.
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm">
@@ -128,7 +114,7 @@ export function BookAppointmentPageImpl() {
         <Alert className="border-success/25 bg-success/5" role="status">
           <Check className="size-4" />
           <AlertTitle>
-            Booking ready for review ·{' '}
+            Appointment booked ·{' '}
             <span className="font-mono">{booking.confirmation.bookingNumber}</span>
           </AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
@@ -137,6 +123,32 @@ export function BookAppointmentPageImpl() {
             </span>
             <Button type="button" size="sm" variant="outline" onClick={booking.resetBooking}>
               <RotateCcw className="size-3.5" /> Start another booking
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {booking.submitError ? (
+        <Alert variant="destructive" role="alert">
+          <TriangleAlert className="size-4" />
+          <AlertTitle>Appointment not booked</AlertTitle>
+          <AlertDescription>{booking.submitError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {booking.visitType && booking.bookingDependencyError ? (
+        <Alert variant="destructive" role="alert">
+          <TriangleAlert className="size-4" />
+          <AlertTitle>Booking options could not be loaded</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+            <span>{booking.bookingDependencyError}</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={booking.retryBookingDependencies}
+            >
+              <RefreshCw className="size-3.5" /> Retry
             </Button>
           </AlertDescription>
         </Alert>
@@ -162,27 +174,31 @@ export function BookAppointmentPageImpl() {
           <div className="grid items-start gap-4 lg:grid-cols-2">
             <PatientSection
               control={form.control}
-              patients={booking.filteredPatients}
+              patientMode={booking.patientMode}
+              patients={booking.patients}
               search={booking.patientSearch}
+              onPatientModeChange={booking.changePatientMode}
               onSearchChange={booking.setPatientSearch}
               selectedPatient={selectedPatient}
               onSelectPatient={booking.selectPatient}
-              patientMode={booking.patientMode}
-              onPatientModeChange={booking.changePatientMode}
+              visits={booking.patientVisits}
+              isSearchLoading={booking.isPatientSearchLoading}
+              searchError={booking.patientSearchError}
+              onRetrySearch={() => void booking.retryPatientSearch()}
+              isVisitsLoading={booking.isPatientVisitsLoading}
+              visitsError={booking.patientVisitsError}
+              onRetryVisits={() => void booking.retryPatientVisits()}
             />
             <div className="min-w-0 space-y-4">
-              <BookingPathSelector
-                value={booking.visitType}
-                patientMode={booking.patientMode}
-                onChange={booking.changeVisitType}
-              />
+              <BookingPathSelector value={booking.visitType} onChange={booking.changeVisitType} />
               <FieldError errors={[form.formState.errors.visitType]} />
               {booking.visitType ? (
                 <DoctorSelectionSection
                   control={form.control}
-                  doctors={DEMO_DOCTORS}
-                  doctorId={values.doctorId}
-                  onChange={booking.changeSchedule}
+                  doctors={booking.doctors}
+                  disabled={booking.bookingDependenciesLoading}
+                  allowNotApplicable={isProcedurePath}
+                  onChange={booking.changeDoctor}
                 />
               ) : null}
               {isProcedurePath ? (
@@ -191,7 +207,6 @@ export function BookAppointmentPageImpl() {
                   treatments={booking.treatmentOptions}
                   selectedTreatment={booking.selectedTreatment}
                   selectedSession={selectedSession}
-                  showSession={!isProvisionalTreatment}
                   onTreatmentChange={booking.changeTreatment}
                   onSessionChange={booking.changeSession}
                 />
@@ -201,7 +216,7 @@ export function BookAppointmentPageImpl() {
                   <p>
                     {booking.visitType
                       ? 'Continue to choose the date and exact Appointment time.'
-                      : 'Choose a Visit Type to see what comes next.'}
+                      : 'Choose a Booking Path to see what comes next.'}
                   </p>
                 </div>
               )}
@@ -214,8 +229,10 @@ export function BookAppointmentPageImpl() {
               <div className="min-w-0 flex-1">
                 <p className="font-semibold break-words">{patientName}</p>
                 <p className="text-muted-foreground text-xs break-words">
-                  <span className="font-mono">{selectedPatient?.mrn ?? 'Provisional Patient'}</span>{' '}
-                  · {selectedPatient?.phone ?? values.phone}
+                  <span className={selectedPatient?.mrn ? 'font-mono' : undefined}>
+                    {selectedPatient?.mrn ?? (isProvisionalPatient ? 'Provisional Patient' : '—')}
+                  </span>{' '}
+                  · {selectedPatient?.phone ?? (isProvisionalPatient ? values.phone : '—')}
                 </p>
               </div>
               <Badge
@@ -230,7 +247,7 @@ export function BookAppointmentPageImpl() {
               </Badge>
               <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
                 <Stethoscope className="size-3.5" aria-hidden="true" />
-                {booking.selectedDoctor?.name ?? 'Doctor required'}
+                {booking.selectedDoctor?.name ?? (isProcedurePath ? 'N/A' : 'Doctor required')}
               </span>
               {booking.selectedTreatment ? (
                 <span className="text-sm">
@@ -244,34 +261,34 @@ export function BookAppointmentPageImpl() {
             </div>
             <div className="grid items-start gap-4 lg:grid-cols-2">
               <div className="min-w-0 space-y-4">
-                <AppointmentScheduleSection
-                  control={form.control}
-                  rotas={DEMO_ROTAS}
-                  rota={booking.selectedRota}
-                  doctorId={values.doctorId}
-                  slotDate={values.slotDate}
-                  startTime={values.startTime}
-                  endTime={values.endTime}
-                  selectedRotaId={values.doctorRotaId}
-                  procedure={isProcedurePath}
-                  recommendedDuration={
-                    booking.resourceSession
-                      ? booking.resourceSession.duration +
-                        booking.resourceSession.setupMinutes +
-                        booking.resourceSession.cleaningMinutes
-                      : 30
-                  }
-                  onContextChange={booking.changeSchedule}
-                  onRotaChange={(value) => {
-                    form.setValue('doctorRotaId', value, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-                    form.setValue('startTime', '', { shouldDirty: true });
-                    form.setValue('endTime', '', { shouldDirty: true });
-                  }}
-                  onTimeChange={booking.changeTime}
-                />
+                {isProcedurePath ? (
+                  <ProcedureScheduleSection
+                    control={form.control}
+                    startTime={values.startTime}
+                    endTime={values.endTime}
+                    onDateChange={booking.changeProcedureDate}
+                    onEndTimeChange={booking.changeProcedureEndTime}
+                    onStartTimeChange={booking.changeProcedureStartTime}
+                  />
+                ) : (
+                  <AppointmentScheduleSection
+                    control={form.control}
+                    rotas={booking.rotas}
+                    rota={booking.selectedRota}
+                    doctorId={values.doctorId}
+                    slotDate={values.slotDate}
+                    startTime={values.startTime}
+                    endTime={values.endTime}
+                    selectedRotaId={values.doctorRotaId}
+                    recommendedDuration={booking.selectedRota?.duration ?? 30}
+                    isLoading={booking.isDoctorSlotsLoading}
+                    error={booking.doctorSlotsError}
+                    onRetry={() => void booking.retryDoctorSlots()}
+                    onContextChange={booking.changeSchedule}
+                    onRotaChange={booking.changeRota}
+                    onTimeChange={booking.changeTime}
+                  />
+                )}
                 {selectedSession ? (
                   <Alert className="border-warning/25 bg-warning/5">
                     <TriangleAlert className="text-warning size-4" />
@@ -280,43 +297,40 @@ export function BookAppointmentPageImpl() {
                   </Alert>
                 ) : null}
               </div>
-              {isProcedurePath ? (
-                <div className="min-w-0 space-y-3">
-                  <ResourceAllocationSection
-                    control={form.control}
-                    rooms={booking.filteredRooms}
-                    therapists={booking.filteredTherapists}
-                    session={booking.resourceSession}
-                    canAllocate={Boolean(values.slotDate && values.startTime && values.endTime)}
-                    selectedRoomId={values.roomId}
-                    selectedTherapistId={values.therapistId}
-                    onRoomChange={(value) =>
-                      form.setValue('roomId', value, { shouldDirty: true, shouldValidate: true })
-                    }
-                    onTherapistChange={(value) =>
-                      form.setValue('therapistId', value, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }
-                  />
-                  <ResourceStatus
-                    consentStatus={values.consentStatus}
-                    approvalStatus={values.approvalStatus}
-                  />
-                  <BookingRemarks control={form.control} />
-                </div>
-              ) : (
-                <div className="min-w-0 space-y-4">
+              <div className="min-w-0 space-y-4">
+                {!isProcedurePath ? (
                   <AppointmentDetailsSection
                     control={form.control}
-                    modes={DEMO_MODES}
-                    types={DEMO_TYPES}
-                    reasons={DEMO_REASONS}
+                    modes={booking.appointmentModes}
+                    types={booking.appointmentTypes}
+                    reasons={booking.appointmentReasons}
+                    disabled={booking.bookingDependenciesLoading}
                   />
-                  <BookingRemarks control={form.control} />
-                </div>
-              )}
+                ) : null}
+                {isProcedurePath ? (
+                  <>
+                    <ResourceAllocationSection
+                      control={form.control}
+                      rooms={booking.filteredRooms}
+                      therapists={booking.filteredTherapists}
+                      session={booking.resourceSession}
+                      canAllocate={Boolean(values.slotDate && values.startTime && values.endTime)}
+                      selectedRoomId={values.roomId}
+                      selectedTherapistId={values.therapistId}
+                      onRoomChange={(value) =>
+                        form.setValue('roomId', value, { shouldDirty: true, shouldValidate: true })
+                      }
+                      onTherapistChange={(value) =>
+                        form.setValue('therapistId', value, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }
+                    />
+                  </>
+                ) : null}
+                <BookingRemarks control={form.control} />
+              </div>
             </div>
           </>
         )}
@@ -331,15 +345,20 @@ export function BookAppointmentPageImpl() {
                 values={values}
                 room={booking.selectedRoom}
                 therapist={booking.selectedTherapist}
-                doctorName={booking.selectedDoctor?.name ?? ''}
+                doctorName={booking.selectedDoctor?.name ?? (isProcedurePath ? 'N/A' : '')}
               />
             </>
           ) : (
             <p className="text-muted-foreground flex-1 text-sm">
-              Select a Patient and Visit Type to continue.
+              Select a Patient and Booking Path to continue.
             </p>
           )}
-          <Button type="submit" disabled={form.formState.isSubmitting} className="ml-auto">
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting}
+            aria-busy={form.formState.isSubmitting}
+            className="ml-auto"
+          >
             {step === 1 ? (
               <>
                 Continue <ArrowRight className="size-4" />
@@ -347,7 +366,7 @@ export function BookAppointmentPageImpl() {
             ) : (
               <>
                 <Check className="size-4" />
-                {form.formState.isSubmitting ? 'Checking availability…' : 'Book ' + visitLabel}
+                {form.formState.isSubmitting ? 'Booking Appointment…' : `Book ${visitLabel}`}
               </>
             )}
           </Button>

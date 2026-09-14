@@ -1,6 +1,6 @@
 import type { ListQueryResult } from '@/app/api/lib/utils/types';
 import { patientRepository } from '../repository/patient-repository';
-import type { Patient, PatientGender } from '../schemas/patient-schema';
+import type { Patient, PatientGender, PatientRegistrationStatus } from '../schemas/patient-schema';
 import { validateGetPatients } from '../validator/get-patients-validator';
 
 export type GetPatientsParams = {
@@ -10,6 +10,7 @@ export type GetPatientsParams = {
   tenantId: unknown;
   gender?: PatientGender;
   isActive?: boolean;
+  registrationStatus?: PatientRegistrationStatus;
 };
 
 export async function getPatientsQuery({
@@ -19,6 +20,7 @@ export async function getPatientsQuery({
   query,
   gender,
   isActive,
+  registrationStatus,
 }: GetPatientsParams): Promise<ListQueryResult<Patient>> {
   const tenantIdValidationResult = validateGetPatients(tenantId);
 
@@ -33,6 +35,7 @@ export async function getPatientsQuery({
     query,
     gender,
     isActive,
+    registrationStatus,
   });
 
   return { success: true, data, total };

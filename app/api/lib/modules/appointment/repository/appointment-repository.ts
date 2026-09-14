@@ -49,12 +49,21 @@ export type AppointmentSlotBookingContext = {
   durationMinutes: number;
 };
 
+function addMinutesToTime(value: string, minutesToAdd: number) {
+  const [hours, minutes] = value.split(':').map(Number);
+  const totalMinutes = hours * 60 + minutes + minutesToAdd;
+  return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+}
+
 const appointmentColumns = {
   id: appointmentTable.id,
   remarks: appointmentTable.remarks,
   rotaName: appointmentTable.rotaName,
   tenantId: appointmentTable.tenantId,
   slotDate: appointmentTable.slotDate,
+  endTime: appointmentTable.endTime,
+  startTime: appointmentTable.startTime,
+  bookingPath: appointmentTable.bookingPath,
   bookingNumber: appointmentTable.bookingNumber,
   createdOn: appointmentTable.createdOn,
   doctor: {
@@ -104,7 +113,7 @@ function appointmentJoins(executor: SelectExecutor = db) {
         eq(patientTable.isDeleted, false)
       )
     )
-    .innerJoin(
+    .leftJoin(
       doctorTable,
       and(
         eq(doctorTable.id, appointmentTable.doctorId),
@@ -112,22 +121,22 @@ function appointmentJoins(executor: SelectExecutor = db) {
         eq(doctorTable.isDeleted, false)
       )
     )
-    .innerJoin(userTable, eq(userTable.id, doctorTable.userId))
-    .innerJoin(
+    .leftJoin(userTable, eq(userTable.id, doctorTable.userId))
+    .leftJoin(
       appointmentModeTable,
       and(
         eq(appointmentModeTable.id, appointmentTable.appointmentModeId),
         eq(appointmentModeTable.tenantId, appointmentTable.tenantId)
       )
     )
-    .innerJoin(
+    .leftJoin(
       appointmentTypeTable,
       and(
         eq(appointmentTypeTable.id, appointmentTable.appointmentTypeId),
         eq(appointmentTypeTable.tenantId, appointmentTable.tenantId)
       )
     )
-    .innerJoin(
+    .leftJoin(
       appointmentReasonTable,
       and(
         eq(appointmentReasonTable.id, appointmentTable.appointmentReasonId),
@@ -248,13 +257,13 @@ async function getAppointments({
     appointmentStatusId ? eq(appointmentTable.appointmentStatusId, appointmentStatusId) : undefined,
     searchCondition
   );
-  const earliestSlotTime = sql<string>`(
+  const earliestSlotTime = sql<string>`coalesce(${appointmentTable.startTime}, (
     select min(${appointmentSlotReservationTable.slotTime})
     from ${appointmentSlotReservationTable}
     where ${appointmentSlotReservationTable.appointmentId} = ${appointmentTable.id}
       and ${appointmentSlotReservationTable.tenantId} = ${appointmentTable.tenantId}
       and ${appointmentSlotReservationTable.isDeleted} = false
-  )`;
+  ))`;
   const ordering = slotDate
     ? [asc(appointmentTable.slotDate), asc(earliestSlotTime), asc(appointmentTable.id)]
     : [desc(appointmentTable.slotDate), asc(earliestSlotTime), desc(appointmentTable.id)];
@@ -276,7 +285,7 @@ async function getAppointments({
           eq(patientTable.isDeleted, false)
         )
       )
-      .innerJoin(
+      .leftJoin(
         doctorTable,
         and(
           eq(doctorTable.id, appointmentTable.doctorId),
@@ -284,7 +293,7 @@ async function getAppointments({
           eq(doctorTable.isDeleted, false)
         )
       )
-      .innerJoin(userTable, eq(userTable.id, doctorTable.userId))
+      .leftJoin(userTable, eq(userTable.id, doctorTable.userId))
       .where(whereClause),
   ]);
   const appointmentIds = rows.map((row) => row.id);
@@ -509,58 +518,77 @@ async function createAppointment(
 ): Promise<CreateAppointmentRepositoryResult> {
   return db.transaction(async (tx) => {
     const invalidReferences: string[] = [];
-    const slotContext = await getSlotBookingContext(
-      data.tenantId,
-      data.doctorId,
-      data.doctorRotaId,
-      data.slotDate,
-      tx,
-      true
-    );
+    let slotContext: AppointmentSlotBookingContext | undefined;
 
-    if (!slotContext) invalidReferences.push('Doctor slot');
+    if (data.bookingPath === 'CONSULTATION') {
+      slotContext = await getSlotBookingContext(
+        data.tenantId,
+        data.doctorId,
+        data.doctorRotaId,
+        data.slotDate,
+        tx,
+        true
+      );
 
-    const [mode] = await tx
-      .select({ id: appointmentModeTable.id })
-      .from(appointmentModeTable)
-      .where(
-        and(
-          eq(appointmentModeTable.id, data.appointmentModeId),
-          eq(appointmentModeTable.tenantId, data.tenantId),
-          eq(appointmentModeTable.isDeleted, false)
+      if (!slotContext) invalidReferences.push('Doctor slot');
+
+      const [mode] = await tx
+        .select({ id: appointmentModeTable.id })
+        .from(appointmentModeTable)
+        .where(
+          and(
+            eq(appointmentModeTable.id, data.appointmentModeId),
+            eq(appointmentModeTable.tenantId, data.tenantId),
+            eq(appointmentModeTable.isDeleted, false)
+          )
         )
-      )
-      .for('update')
-      .limit(1);
-    if (!mode) invalidReferences.push('Appointment mode');
+        .for('update')
+        .limit(1);
+      if (!mode) invalidReferences.push('Appointment mode');
 
-    const [type] = await tx
-      .select({ id: appointmentTypeTable.id })
-      .from(appointmentTypeTable)
-      .where(
-        and(
-          eq(appointmentTypeTable.id, data.appointmentTypeId),
-          eq(appointmentTypeTable.tenantId, data.tenantId),
-          eq(appointmentTypeTable.isDeleted, false)
+      const [type] = await tx
+        .select({ id: appointmentTypeTable.id })
+        .from(appointmentTypeTable)
+        .where(
+          and(
+            eq(appointmentTypeTable.id, data.appointmentTypeId),
+            eq(appointmentTypeTable.tenantId, data.tenantId),
+            eq(appointmentTypeTable.isDeleted, false)
+          )
         )
-      )
-      .for('update')
-      .limit(1);
-    if (!type) invalidReferences.push('Appointment type');
+        .for('update')
+        .limit(1);
+      if (!type) invalidReferences.push('Appointment type');
 
-    const [reason] = await tx
-      .select({ id: appointmentReasonTable.id })
-      .from(appointmentReasonTable)
-      .where(
-        and(
-          eq(appointmentReasonTable.id, data.appointmentReasonId),
-          eq(appointmentReasonTable.tenantId, data.tenantId),
-          eq(appointmentReasonTable.isDeleted, false)
+      const [reason] = await tx
+        .select({ id: appointmentReasonTable.id })
+        .from(appointmentReasonTable)
+        .where(
+          and(
+            eq(appointmentReasonTable.id, data.appointmentReasonId),
+            eq(appointmentReasonTable.tenantId, data.tenantId),
+            eq(appointmentReasonTable.isDeleted, false)
+          )
         )
-      )
-      .for('update')
-      .limit(1);
-    if (!reason) invalidReferences.push('Appointment reason');
+        .for('update')
+        .limit(1);
+      if (!reason) invalidReferences.push('Appointment reason');
+    } else if (data.doctorId !== undefined) {
+      const [doctor] = await tx
+        .select({ id: doctorTable.id })
+        .from(doctorTable)
+        .where(
+          and(
+            eq(doctorTable.id, data.doctorId),
+            eq(doctorTable.tenantId, data.tenantId),
+            eq(doctorTable.isActive, true),
+            eq(doctorTable.isDeleted, false)
+          )
+        )
+        .for('update')
+        .limit(1);
+      if (!doctor) invalidReferences.push('Doctor');
+    }
 
     const [scheduledStatus] = await tx
       .select({ id: appointmentStatusTable.id })
@@ -577,28 +605,32 @@ async function createAppointment(
       .limit(1);
     if (!scheduledStatus) invalidReferences.push('Scheduled appointment status');
 
-    if (invalidReferences.length > 0 || !slotContext || !scheduledStatus) {
+    if (invalidReferences.length > 0 || !scheduledStatus) {
       return { success: false, outcome: 'invalid-reference', invalidReferences };
     }
 
-    if (!isValidSlotSelection(slotContext, data.slotTimes)) {
-      return { success: false, outcome: 'slot-invalid' };
-    }
+    if (data.bookingPath === 'CONSULTATION') {
+      if (!slotContext || !isValidSlotSelection(slotContext, data.slotTimes)) {
+        return { success: false, outcome: 'slot-invalid' };
+      }
 
-    if (!isFutureSlotSelection(data.slotDate, data.slotTimes[0], data.timeZone)) {
+      if (!isFutureSlotSelection(data.slotDate, data.slotTimes[0], data.timeZone)) {
+        return { success: false, outcome: 'slot-past' };
+      }
+
+      const reserved = await getReservedSlotTimes(
+        data.tenantId,
+        data.doctorId,
+        data.slotDate,
+        data.slotTimes,
+        tx
+      );
+
+      if (reserved.length > 0) {
+        return { success: false, outcome: 'slot-unavailable' };
+      }
+    } else if (!isFutureSlotSelection(data.slotDate, data.startTime, data.timeZone)) {
       return { success: false, outcome: 'slot-past' };
-    }
-
-    const reserved = await getReservedSlotTimes(
-      data.tenantId,
-      data.doctorId,
-      data.slotDate,
-      data.slotTimes,
-      tx
-    );
-
-    if (reserved.length > 0) {
-      return { success: false, outcome: 'slot-unavailable' };
     }
 
     let patientId = data.patientId;
@@ -664,33 +696,43 @@ async function createAppointment(
       })
       .returning({ lastNumber: appointmentBookingNumberCounterTable.lastNumber });
 
+    const consultationEndTime =
+      data.bookingPath === 'CONSULTATION' && slotContext
+        ? addMinutesToTime(data.slotTimes.at(-1) ?? data.slotTimes[0], slotContext.durationMinutes)
+        : null;
     const [createdAppointment] = await tx
       .insert(appointmentTable)
       .values({
         tenantId: data.tenantId,
+        bookingPath: data.bookingPath,
         bookingNumber: formatAppointmentBookingNumber(counter.lastNumber),
         patientId,
         doctorId: data.doctorId,
-        appointmentModeId: data.appointmentModeId,
-        appointmentTypeId: data.appointmentTypeId,
-        appointmentReasonId: data.appointmentReasonId,
+        appointmentModeId: data.bookingPath === 'CONSULTATION' ? data.appointmentModeId : undefined,
+        appointmentTypeId: data.bookingPath === 'CONSULTATION' ? data.appointmentTypeId : undefined,
+        appointmentReasonId:
+          data.bookingPath === 'CONSULTATION' ? data.appointmentReasonId : undefined,
         appointmentStatusId: scheduledStatus.id,
         slotDate: data.slotDate,
-        rotaName: slotContext.rotaName,
+        startTime: data.bookingPath === 'CONSULTATION' ? data.slotTimes[0] : data.startTime,
+        endTime: data.bookingPath === 'CONSULTATION' ? consultationEndTime : data.endTime,
+        rotaName: data.bookingPath === 'CONSULTATION' ? slotContext?.rotaName : undefined,
         remarks: data.remarks ?? null,
       })
       .returning({ id: appointmentTable.id });
 
-    await tx.insert(appointmentSlotReservationTable).values(
-      data.slotTimes.map((slotTime) => ({
-        tenantId: data.tenantId,
-        appointmentId: createdAppointment.id,
-        doctorId: data.doctorId,
-        doctorRotaId: data.doctorRotaId,
-        slotDate: data.slotDate,
-        slotTime,
-      }))
-    );
+    if (data.bookingPath === 'CONSULTATION') {
+      await tx.insert(appointmentSlotReservationTable).values(
+        data.slotTimes.map((slotTime) => ({
+          tenantId: data.tenantId,
+          appointmentId: createdAppointment.id,
+          doctorId: data.doctorId,
+          doctorRotaId: data.doctorRotaId,
+          slotDate: data.slotDate,
+          slotTime,
+        }))
+      );
+    }
 
     const created = await getAppointmentById(createdAppointment.id, data.tenantId, tx);
 

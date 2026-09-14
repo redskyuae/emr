@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createAppointmentSchema, listAppointmentsSchema } from './appointment-schema';
 
 const validPayload = {
+  bookingPath: 'CONSULTATION',
   doctorId: 1,
   appointmentModeId: 2,
   appointmentTypeId: 3,
@@ -12,6 +13,14 @@ const validPayload = {
   doctorRotaId: 6,
   slotTimes: ['09:00', '09:15'],
   remarks: 'Follow-up',
+};
+
+const validProcedurePayload = {
+  bookingPath: 'PROCEDURE',
+  patientId: 5,
+  slotDate: '31-12-2099',
+  startTime: '10:00',
+  endTime: '11:15',
 };
 
 const errorsOf = (payload: unknown) =>
@@ -73,6 +82,35 @@ describe('Appointment schema', () => {
     ).toBeUndefined();
     expect(errorsOf({ ...validPayload, remarks: 'a'.repeat(1001) })).toContain(
       'Remarks must be at most 1000 characters'
+    );
+  });
+
+  it('should accept a Procedure without a Doctor, Doctor Rota, or Appointment Details', () => {
+    expect(createAppointmentSchema.parse(validProcedurePayload)).toEqual({
+      ...validProcedurePayload,
+      slotDate: '2099-12-31',
+    });
+  });
+
+  it('should accept an optional Doctor assignment for a Procedure', () => {
+    expect(createAppointmentSchema.parse({ ...validProcedurePayload, doctorId: 7 })).toMatchObject({
+      bookingPath: 'PROCEDURE',
+      doctorId: 7,
+    });
+  });
+
+  it('should reject invalid Procedure time windows', () => {
+    expect(errorsOf({ ...validProcedurePayload, startTime: '10' })).toContain(
+      'Start time must be in HH:mm format'
+    );
+    expect(errorsOf({ ...validProcedurePayload, endTime: '10:00' })).toContain(
+      'End time must be after start time'
+    );
+  });
+
+  it('should reject Consultation-only fields on a Procedure', () => {
+    expect(errorsOf({ ...validProcedurePayload, doctorRotaId: 6 })).toContain(
+      'Unrecognized key: "doctorRotaId"'
     );
   });
 

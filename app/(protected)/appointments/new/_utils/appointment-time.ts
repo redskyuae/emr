@@ -24,6 +24,52 @@ export function addMinutesToTime(startTime: string, duration: number) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
+export function getProcedureStartTimes() {
+  const times: string[] = [];
+
+  for (let minutes = 8 * 60; minutes <= 20 * 60; minutes += 15) {
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    times.push(`${String(hours).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`);
+  }
+
+  return times;
+}
+
+export function getProcedureEndTimes() {
+  const times: string[] = [];
+
+  for (let minutes = 8 * 60 + 15; minutes <= 23 * 60 + 45; minutes += 15) {
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    times.push(`${String(hours).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`);
+  }
+
+  return times;
+}
+
+export function getProcedureEndTime(
+  startTime: string,
+  session: { duration: number; setupMinutes: number; cleaningMinutes: number } | null
+) {
+  if (!startTime || !session) return '';
+
+  return addMinutesToTime(
+    startTime,
+    session.duration + session.setupMinutes + session.cleaningMinutes
+  );
+}
+
+export function getProcedureEndTimeForStartChange(
+  startTime: string,
+  currentEndTime: string,
+  session: { duration: number; setupMinutes: number; cleaningMinutes: number } | null
+) {
+  if (getDurationMinutes(startTime, currentEndTime) > 0) return currentEndTime;
+
+  return getProcedureEndTime(startTime, session);
+}
+
 export function getSlotTimes(startTime: string, endTime: string, interval: number) {
   const start = timeToMinutes(startTime);
   const end = timeToMinutes(endTime);

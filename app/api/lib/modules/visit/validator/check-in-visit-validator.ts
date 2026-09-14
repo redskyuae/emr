@@ -99,6 +99,14 @@ export async function validateCheckInVisit(
       };
     }
 
+    if (!appointment.doctor) {
+      return {
+        success: false,
+        errors: ['A Doctor must be assigned before this Appointment can be checked in.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
     const existingVisit = await visitRepository.findNonCancelledVisitByAppointmentId(
       validatedTenantId,
       data.appointmentId

@@ -14,13 +14,15 @@ type DoctorOption = { id: string | number; name: string; specialty: string };
 export function DoctorSelectionSection({
   control,
   doctors,
-  doctorId,
+  disabled,
+  allowNotApplicable,
   onChange,
 }: {
   control: Control<BookAppointmentFormValues>;
   doctors: DoctorOption[];
-  doctorId: string;
-  onChange: () => void;
+  disabled?: boolean;
+  allowNotApplicable?: boolean;
+  onChange: (value: string) => void;
 }) {
   return (
     <Card className="shadow-fluent-2">
@@ -32,7 +34,9 @@ export function DoctorSelectionSection({
           <div>
             <CardTitle>Doctor</CardTitle>
             <CardDescription>
-              Assign the clinician before choosing Treatment details.
+              {allowNotApplicable
+                ? 'Optionally assign a Doctor. This does not control the Procedure schedule.'
+                : 'Select the Doctor responsible for this Appointment.'}
             </CardDescription>
           </div>
         </div>
@@ -44,26 +48,35 @@ export function DoctorSelectionSection({
           render={({ field, fieldState }) => (
             <Field>
               <FieldLabel htmlFor="appointment-doctor">
-                Doctor{' '}
-                <span aria-hidden="true" className="text-destructive">
-                  *
-                </span>
+                Doctor
+                {!allowNotApplicable ? (
+                  <span aria-hidden="true" className="text-destructive">
+                    {' '}
+                    *
+                  </span>
+                ) : null}
               </FieldLabel>
               <NativeSelect
                 id="appointment-doctor"
                 name={field.name}
                 ref={field.ref}
                 value={field.value}
-                aria-required="true"
+                disabled={disabled}
+                aria-required={!allowNotApplicable}
                 aria-invalid={fieldState.invalid}
                 className="w-full"
                 onBlur={field.onBlur}
                 onChange={(event) => {
                   field.onChange(event);
-                  onChange();
+                  onChange(event.target.value);
                 }}
               >
-                <NativeSelectOption value="">Select Doctor</NativeSelectOption>
+                <NativeSelectOption value="">
+                  {allowNotApplicable ? 'Select Doctor or N/A' : 'Select Doctor'}
+                </NativeSelectOption>
+                {allowNotApplicable ? (
+                  <NativeSelectOption value="not-applicable">N/A</NativeSelectOption>
+                ) : null}
                 {doctors.map((doctor) => (
                   <NativeSelectOption key={doctor.id} value={String(doctor.id)}>
                     {doctor.name} · {doctor.specialty}
@@ -74,12 +87,6 @@ export function DoctorSelectionSection({
             </Field>
           )}
         />
-        {doctorId === 'not-applicable' ? (
-          <div className="border-warning/25 bg-warning/5 text-warning flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm">
-            <Stethoscope className="mt-0.5 size-4 shrink-0" />
-            <span>N/A selected. Continue when no Doctor is available in the list.</span>
-          </div>
-        ) : null}
       </CardContent>
     </Card>
   );

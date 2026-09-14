@@ -1,5 +1,7 @@
 # Appointments Always Reference Patients
 
+> The repeat-booking behavior for an existing Provisional Patient is partially superseded by [ADR 0044](./0044-existing-provisional-patients-require-registration-before-rebooking.md).
+
 Every Appointment must reference a Patient, including appointments booked by phone for a person who has not completed Patient Registration. In that workflow, the system creates a Provisional Patient with minimum identity and contact details; it does not make the Appointment's Patient optional or embed temporary caller details in the Appointment.
 
 This keeps scheduling history attached to a stable Patient identity and supports repeat bookings, duplicate detection, and later reconciliation. The rejected alternative—allowing an Appointment without a Patient—would create a second store of patient-like data and require later relinking throughout the Appointment lifecycle.
@@ -10,6 +12,6 @@ Appointment booking is the orchestration boundary for the phone-booking workflow
 
 Patient Registration Status is server-controlled. Normal Patient creation produces a Registered Patient, Appointment orchestration may produce a Provisional Patient, and a full valid update through the existing Patient update operation automatically completes registration. Clients cannot assign the registration state directly, and existing Patient records migrate as Registered Patients.
 
-Provisional Patients may hold multiple Appointments but are ineligible for check-in or Visit creation. Reception must complete their registration or reconcile them with an existing Registered Patient before clinical care begins.
+Provisional Patients are ineligible for check-in or Visit creation. Reception must complete their registration or reconcile them with an existing Registered Patient before clinical care begins. See ADR 0044 for the current rule governing another Appointment.
 
-Before creating a Provisional Patient, Appointment booking searches active Patients by normalized first name, last name, and phone. A possible match produces a conflict with minimal Patient summaries and requires an explicit retry using the selected `patientId`; the system never links or merges records automatically from demographic similarity. Only a no-match request may create a Provisional Patient and its Appointment.
+Before creating a Provisional Patient, Appointment booking searches active Patients by normalized first name, last name, and phone. The system never links or merges records automatically from demographic similarity. Only a no-match request may create a Provisional Patient and its Appointment; ADR 0044 defines how the booking workflow handles a match against an existing Provisional Patient.

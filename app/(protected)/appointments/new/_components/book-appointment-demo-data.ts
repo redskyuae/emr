@@ -1,14 +1,3 @@
-export type VisitType = 'CONSULTATION' | 'PROCEDURE';
-export type ReadinessStatus = 'READY' | 'PENDING' | 'NOT_REQUIRED' | 'BLOCKED';
-
-export type DemoVisit = {
-  id: string;
-  doctorName: string;
-  occurredAt: string;
-  visitType: 'Consultation' | 'Procedure' | 'Follow-up';
-  status: 'Checked In' | 'In Consultation' | 'Completed' | 'Cancelled';
-};
-
 export type DemoSession = {
   id: string;
   sessionNumber: number;
@@ -39,20 +28,6 @@ export type DemoTreatment = {
   availableToAssign?: boolean;
 };
 
-export type DemoPatient = {
-  id: number;
-  mrn: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  emiratesId: string;
-  dateOfBirth: string;
-  registrationStatus: 'Registered' | 'Provisional' | 'Inactive';
-  treatments: DemoTreatment[];
-  visits: DemoVisit[];
-  duplicateWarning?: string;
-};
-
 export type DemoRoom = {
   id: number;
   name: string;
@@ -75,13 +50,6 @@ export type DemoTherapist = {
   conflictReason?: string;
 };
 
-export type DemoRota = {
-  id: string;
-  name: string;
-  duration: number;
-  slots: { time: string; status: 'Available' | 'Booked' }[];
-};
-
 export const DEMO_FACILITY = {
   id: '4',
   name: 'Ayurvedtha Hospital',
@@ -89,32 +57,6 @@ export const DEMO_FACILITY = {
   authority: 'DHA / TCIM',
   timeZone: 'Asia/Dubai (GST)',
 };
-
-export const DEMO_DEFAULT_DATE = '2026-09-10';
-
-export const DEMO_DOCTORS = [
-  { id: 18, name: 'Dr. Meera Nair', specialty: 'Ayurveda' },
-  { id: 24, name: 'Dr. Omar Khalid', specialty: 'General Medicine' },
-  { id: 31, name: 'Dr. Anika Menon', specialty: 'Ayurveda' },
-  { id: 'not-applicable', name: 'N/A — no Doctor available', specialty: 'Unassigned' },
-];
-
-export const DEMO_MODES = [
-  { id: '1', name: 'In-person', code: 'IN_PERSON' },
-  { id: '2', name: 'Video consultation', code: 'VIDEO' },
-];
-
-export const DEMO_TYPES = [
-  { id: '1', name: 'New consultation', code: 'NEW' },
-  { id: '2', name: 'Procedure', code: 'PROC' },
-  { id: '3', name: 'Follow-up', code: 'FOLLOW_UP' },
-];
-
-export const DEMO_REASONS = [
-  { id: '1', name: 'Treatment session', code: 'TREATMENT' },
-  { id: '2', name: 'Review progress', code: 'REVIEW' },
-  { id: '3', name: 'General consultation', code: 'CONSULT' },
-];
 
 const abhyangaSessions: DemoSession[] = [
   {
@@ -161,110 +103,6 @@ const abhyangaSessions: DemoSession[] = [
     roomType: 'Panchakarma room',
     therapistSkill: 'Abhyanga',
     status: 'Scheduled',
-  },
-];
-
-export const DEMO_PATIENTS: DemoPatient[] = [
-  {
-    id: 1001,
-    mrn: 'MRN-004281',
-    firstName: 'Aisha',
-    lastName: 'Rahman',
-    phone: '+971 50 555 0182',
-    emiratesId: '784-1988-1234567-1',
-    dateOfBirth: '1988-04-12',
-    registrationStatus: 'Registered',
-    duplicateWarning:
-      'One possible match found on phone number. Identity verified against Emirates ID.',
-    visits: [
-      {
-        id: 'VIS-8421',
-        doctorName: 'Dr. Meera Nair',
-        occurredAt: '2026-08-29T10:15:00',
-        visitType: 'Procedure',
-        status: 'Completed',
-      },
-      {
-        id: 'VIS-8106',
-        doctorName: 'Dr. Anika Menon',
-        occurredAt: '2026-08-21T09:00:00',
-        visitType: 'Consultation',
-        status: 'Completed',
-      },
-      {
-        id: 'VIS-7742',
-        doctorName: 'Dr. Meera Nair',
-        occurredAt: '2026-07-30T14:30:00',
-        visitType: 'Follow-up',
-        status: 'Cancelled',
-      },
-      {
-        id: 'VIS-7319',
-        doctorName: 'Dr. Omar Khalid',
-        occurredAt: '2026-06-18T11:00:00',
-        visitType: 'Consultation',
-        status: 'Completed',
-      },
-    ],
-    treatments: [
-      {
-        id: 300,
-        name: 'Ayurvedic stress recovery programme',
-        code: 'TRT-0300',
-        responsibleDoctorId: 18,
-        startDate: '2026-08-21',
-        endDate: '2026-10-16',
-        status: 'Active',
-        plannedSessions: 8,
-        completedSessions: 2,
-        sessions: abhyangaSessions,
-      },
-    ],
-  },
-  {
-    id: 1002,
-    mrn: 'MRN-004319',
-    firstName: 'Sanjay',
-    lastName: 'Iyer',
-    phone: '+971 52 555 0109',
-    emiratesId: '784-1991-7654321-8',
-    dateOfBirth: '1991-11-03',
-    registrationStatus: 'Registered',
-    visits: [
-      {
-        id: 'VIS-8188',
-        doctorName: 'Dr. Omar Khalid',
-        occurredAt: '2026-08-23T16:00:00',
-        visitType: 'Consultation',
-        status: 'Completed',
-      },
-    ],
-    treatments: [],
-  },
-  {
-    id: 1003,
-    mrn: 'MRN-004406',
-    firstName: 'Noor',
-    lastName: 'Al Mansoori',
-    phone: '+971 55 555 0144',
-    emiratesId: '784-1996-2345678-4',
-    dateOfBirth: '1996-02-18',
-    registrationStatus: 'Registered',
-    visits: [],
-    treatments: [
-      {
-        id: 301,
-        name: 'Back pain supportive care',
-        code: 'TRT-0301',
-        responsibleDoctorId: 31,
-        startDate: '2026-07-01',
-        endDate: '2026-08-01',
-        status: 'Complete',
-        plannedSessions: 4,
-        completedSessions: 4,
-        sessions: [],
-      },
-    ],
   },
 ];
 
@@ -337,6 +175,14 @@ export const DEMO_ROOMS: DemoRoom[] = [
     status: 'Ready',
     conflictReason: 'Does not meet the Session room requirement.',
   },
+  {
+    id: 10,
+    name: 'Therapy Room 1',
+    roomType: 'Therapy room',
+    location: 'Wellness wing · Level 2',
+    capacity: 1,
+    status: 'Ready',
+  },
 ];
 
 export const DEMO_THERAPISTS: DemoTherapist[] = [
@@ -370,41 +216,5 @@ export const DEMO_THERAPISTS: DemoTherapist[] = [
     active: true,
     facility: 'Ayurvedtha Hospital',
     workload: '1 session today',
-    conflictReason: 'Skill does not match Abhyanga.',
-  },
-];
-
-export const DEMO_ROTAS: DemoRota[] = [
-  {
-    id: '22',
-    name: 'Morning OPD Rota',
-    duration: 15,
-    slots: [
-      { time: '09:00', status: 'Available' },
-      { time: '09:15', status: 'Available' },
-      { time: '09:30', status: 'Booked' },
-      { time: '09:45', status: 'Available' },
-      { time: '10:00', status: 'Available' },
-      { time: '10:15', status: 'Available' },
-      { time: '10:30', status: 'Booked' },
-      { time: '10:45', status: 'Available' },
-      { time: '11:00', status: 'Available' },
-      { time: '11:15', status: 'Available' },
-      { time: '11:30', status: 'Available' },
-      { time: '11:45', status: 'Available' },
-    ],
-  },
-  {
-    id: '23',
-    name: 'Afternoon OPD Rota',
-    duration: 15,
-    slots: [
-      { time: '14:00', status: 'Available' },
-      { time: '14:15', status: 'Available' },
-      { time: '14:30', status: 'Available' },
-      { time: '14:45', status: 'Available' },
-      { time: '15:00', status: 'Available' },
-      { time: '15:15', status: 'Booked' },
-    ],
   },
 ];

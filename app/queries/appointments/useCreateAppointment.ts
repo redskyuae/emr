@@ -108,23 +108,27 @@ export function useCreateAppointment() {
 
   return useMutation({
     mutationFn: createAppointment,
-    onSettled: (response) => {
+    onSettled: (response, _error, request) => {
       void queryClient.invalidateQueries({ queryKey: appointmentsBaseKey });
       void queryClient.invalidateQueries({ queryKey: patientsBaseKey });
-
-      if (response?.data) {
-        void queryClient.invalidateQueries({
-          queryKey: doctorSlotsQueryKey({
-            doctorId: response.data.doctor.id,
-            slotDate: toIsoSlotDate(response.data),
-          }),
-        });
-      }
+      void queryClient.invalidateQueries({
+        queryKey: doctorSlotsQueryKey({
+          doctorId: request.bookingPath === 'CONSULTATION' ? request.doctorId : null,
+          slotDate: response?.data
+            ? toIsoSlotDate(response.data)
+            : toIsoSlotDateFromRequest(request),
+        }),
+      });
     },
   });
 }
 
 function toIsoSlotDate(appointment: Appointment) {
   const [day, month, year] = appointment.slotDate.split('-');
+  return `${year}-${month}-${day}`;
+}
+
+function toIsoSlotDateFromRequest(request: CreateAppointmentRequest) {
+  const [day, month, year] = request.slotDate.split('-');
   return `${year}-${month}-${day}`;
 }

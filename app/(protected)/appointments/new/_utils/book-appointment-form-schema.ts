@@ -68,7 +68,7 @@ export const bookAppointmentFormSchema = z
       context.addIssue({
         code: 'custom',
         path: ['visitType'],
-        message: 'Visit Type is required',
+        message: 'Booking Path is required',
       });
     }
 
@@ -106,23 +106,15 @@ export const bookAppointmentFormSchema = z
       }
     }
 
-    if (data.doctorId.trim() === '') {
+    if (data.visitType === 'CONSULTATION' && data.doctorId.trim() === '') {
       context.addIssue({ code: 'custom', path: ['doctorId'], message: 'Doctor is required' });
     }
 
-    if (data.startTime.trim() === '') {
-      context.addIssue({ code: 'custom', path: ['startTime'], message: 'Start time is required' });
-    }
-
-    if (data.endTime.trim() === '') {
-      context.addIssue({ code: 'custom', path: ['endTime'], message: 'End time is required' });
-    }
-
-    if (data.startTime && data.endTime && data.endTime <= data.startTime) {
+    if (data.doctorId === 'not-applicable' && data.visitType === 'CONSULTATION') {
       context.addIssue({
         code: 'custom',
-        path: ['endTime'],
-        message: 'End time must be after start time',
+        path: ['doctorId'],
+        message: 'A Doctor is required for a Consultation',
       });
     }
 
@@ -151,13 +143,29 @@ export const bookAppointmentFormSchema = z
         });
       }
 
-      if (data.doctorId !== 'not-applicable' && data.doctorRotaId.trim() === '') {
+      if (data.doctorRotaId.trim() === '') {
         context.addIssue({
           code: 'custom',
           path: ['doctorRotaId'],
           message: 'Doctor Rota is required',
         });
       }
+    }
+
+    if (data.startTime.trim() === '') {
+      context.addIssue({ code: 'custom', path: ['startTime'], message: 'Start time is required' });
+    }
+
+    if (data.endTime.trim() === '') {
+      context.addIssue({ code: 'custom', path: ['endTime'], message: 'End time is required' });
+    }
+
+    if (data.startTime && data.endTime && data.endTime <= data.startTime) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endTime'],
+        message: 'End time must be after start time',
+      });
     }
 
     if (data.visitType === 'PROCEDURE') {
@@ -173,7 +181,7 @@ export const bookAppointmentFormSchema = z
         }
       }
 
-      if (data.patientMode === 'existing' && data.sessionId.trim() === '') {
+      if (data.sessionId.trim() === '') {
         context.addIssue({ code: 'custom', path: ['sessionId'], message: 'Session is required' });
       }
 

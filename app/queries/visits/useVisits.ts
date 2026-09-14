@@ -47,3 +47,18 @@ export function useVisitsQuery(params: VisitsParams) {
     queryFn: () => fetchVisits(params),
   });
 }
+
+function transformPatientVisitsResponse(response: ListVisitsResponse) {
+  return response.data;
+}
+
+export function usePatientVisitsQuery(patientId: number | null) {
+  const params = { patientId: patientId ?? -1, page: 1, limit: 3 };
+
+  return useQuery({
+    enabled: patientId !== null,
+    queryKey: visitsQueryKey(params),
+    queryFn: () => fetchVisits(params),
+    select: transformPatientVisitsResponse,
+  });
+}

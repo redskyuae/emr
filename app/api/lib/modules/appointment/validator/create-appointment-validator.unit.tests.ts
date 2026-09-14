@@ -5,6 +5,7 @@ import { appointmentModeRepository } from '../../appointment-mode/repository/app
 import { appointmentReasonRepository } from '../../appointment-reason/repository/appointment-reason-repository';
 import { appointmentStatusRepository } from '../../appointment-status/repository/appointment-status-repository';
 import { appointmentTypeRepository } from '../../appointment-type/repository/appointment-type-repository';
+import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
 import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
@@ -23,6 +24,9 @@ vi.mock('../../appointment-status/repository/appointment-status-repository', () 
 }));
 vi.mock('../../appointment-type/repository/appointment-type-repository', () => ({
   appointmentTypeRepository: { getAppointmentTypeById: vi.fn() },
+}));
+vi.mock('../../doctor/repository/doctor-repository', () => ({
+  doctorRepository: { getDoctorById: vi.fn() },
 }));
 vi.mock('../../patient/repository/patient-repository', () => ({
   patientRepository: { getPatientById: vi.fn() },
@@ -50,11 +54,13 @@ const typeRepo = vi.mocked(appointmentTypeRepository);
 const reasonRepo = vi.mocked(appointmentReasonRepository);
 const statusRepo = vi.mocked(appointmentStatusRepository);
 const patientRepo = vi.mocked(patientRepository);
+const doctorRepo = vi.mocked(doctorRepository);
 const appointmentRepo = vi.mocked(appointmentRepository);
 const validateReferences = vi.mocked(validatePatientReferences);
 const validateEmiratesId = vi.mocked(validatePatientEmiratesIdUniqueness);
 
 const payload = {
+  bookingPath: 'CONSULTATION',
   doctorId: 1,
   appointmentModeId: 2,
   appointmentTypeId: 3,
@@ -65,7 +71,15 @@ const payload = {
   slotTimes: ['09:00', '09:15'],
 };
 
-const activePatient = { id: 5, isActive: true };
+const procedurePayload = {
+  bookingPath: 'PROCEDURE',
+  patientId: 5,
+  slotDate: '31-12-2099',
+  startTime: '10:00',
+  endTime: '11:15',
+};
+
+const activePatient = { id: 5, isActive: true, registrationStatus: 'registered' as const };
 
 describe('validateCreateAppointment', () => {
   beforeEach(() => {
@@ -87,6 +101,7 @@ describe('validateCreateAppointment', () => {
     });
     appointmentRepo.getReservedSlotTimes.mockResolvedValue([]);
     patientRepo.getPatientById.mockResolvedValue(activePatient as never);
+    doctorRepo.getDoctorById.mockResolvedValue({ id: 1, isActive: true } as never);
     validateReferences.mockResolvedValue({ success: true, data: undefined });
     validateEmiratesId.mockResolvedValue({ success: true, data: undefined });
     appointmentRepo.findPotentialPatientMatches.mockResolvedValue([]);
@@ -126,6 +141,47 @@ describe('validateCreateAppointment', () => {
     });
   });
 
+  it('should validate a Procedure with Doctor N/A without reading scheduling repositories', async () => {
+    await expect(validateCreateAppointment(procedurePayload, 'tenant-1')).resolves.toEqual({
+      success: true,
+      data: {
+        ...procedurePayload,
+        slotDate: '2099-12-31',
+        tenantId: 'tenant-1',
+        timeZone: 'Asia/Kolkata',
+      },
+    });
+
+    expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
+    expect(modeRepo.getAppointmentModeById).not.toHaveBeenCalled();
+    expect(typeRepo.getAppointmentTypeById).not.toHaveBeenCalled();
+    expect(reasonRepo.getAppointmentReasonById).not.toHaveBeenCalled();
+    expect(appointmentRepo.getSlotBookingContext).not.toHaveBeenCalled();
+    expect(appointmentRepo.getReservedSlotTimes).not.toHaveBeenCalled();
+  });
+
+  it('should validate an active Procedure Doctor without reading scheduling repositories', async () => {
+    await expect(
+      validateCreateAppointment({ ...procedurePayload, doctorId: 1 }, 'tenant-1')
+    ).resolves.toMatchObject({ success: true });
+
+    expect(doctorRepo.getDoctorById).toHaveBeenCalledWith(1, 'tenant-1');
+    expect(appointmentRepo.getSlotBookingContext).not.toHaveBeenCalled();
+    expect(appointmentRepo.getReservedSlotTimes).not.toHaveBeenCalled();
+  });
+
+  it('should reject an inactive Procedure Doctor', async () => {
+    doctorRepo.getDoctorById.mockResolvedValue({ id: 1, isActive: false } as never);
+
+    await expect(
+      validateCreateAppointment({ ...procedurePayload, doctorId: 1 }, 'tenant-1')
+    ).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Doctor 1 is inactive and cannot be assigned to an Appointment.'],
+    });
+  });
+
   it('should reject non-consecutive slot selections before checking reservations', async () => {
     const result = await validateCreateAppointment(
       { ...payload, slotTimes: ['09:00', '09:30'] },
@@ -150,7 +206,11 @@ describe('validateCreateAppointment', () => {
   });
 
   it('should reject inactive existing patients', async () => {
-    patientRepo.getPatientById.mockResolvedValue({ id: 5, isActive: false } as never);
+    patientRepo.getPatientById.mockResolvedValue({
+      id: 5,
+      isActive: false,
+      registrationStatus: 'registered',
+    } as never);
 
     await expect(validateCreateAppointment(payload, 'tenant-1')).resolves.toMatchObject({
       success: false,
@@ -159,16 +219,42 @@ describe('validateCreateAppointment', () => {
     });
   });
 
+  it('should reject an existing Provisional Patient before another Appointment', async () => {
+    patientRepo.getPatientById.mockResolvedValue({
+      id: 5,
+      isActive: true,
+      registrationStatus: 'provisional',
+    } as never);
+
+    await expect(validateCreateAppointment(payload, 'tenant-1')).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: [
+        'Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+      ],
+    });
+  });
+
   it('should return potential patient matches for provisional booking details', async () => {
+    const registeredPatientMatch = {
+      id: 9,
+      mrn: 'MRN-1009',
+      firstName: 'Asha',
+      lastName: 'Rao',
+      phone: '9876543210',
+      isActive: true,
+      registrationStatus: 'registered' as const,
+    };
     const patientMatches = [
+      registeredPatientMatch,
       {
-        id: 9,
-        mrn: 'MRN-1009',
+        id: 10,
+        mrn: 'MRN-1010',
         firstName: 'Asha',
         lastName: 'Rao',
         phone: '9876543210',
         isActive: true,
-        registrationStatus: 'registered' as const,
+        registrationStatus: 'provisional' as const,
       },
     ];
     appointmentRepo.findPotentialPatientMatches.mockResolvedValue(patientMatches);
@@ -185,7 +271,38 @@ describe('validateCreateAppointment', () => {
     ).resolves.toMatchObject({
       success: false,
       status: StatusCodes.CONFLICT,
-      patientMatches,
+      patientMatches: [registeredPatientMatch],
+    });
+  });
+
+  it('should block a matching Provisional Patient without returning a selectable match', async () => {
+    appointmentRepo.findPotentialPatientMatches.mockResolvedValue([
+      {
+        id: 9,
+        mrn: 'MRN-1009',
+        firstName: 'Asha',
+        lastName: 'Rao',
+        phone: '9876543210',
+        isActive: true,
+        registrationStatus: 'provisional',
+      },
+    ]);
+
+    await expect(
+      validateCreateAppointment(
+        {
+          ...payload,
+          patientId: undefined,
+          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+        },
+        'tenant-1'
+      )
+    ).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: [
+        'Matching Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+      ],
     });
   });
 });

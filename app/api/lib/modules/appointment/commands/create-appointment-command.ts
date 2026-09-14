@@ -33,11 +33,25 @@ export async function createAppointmentCommand(
     }
 
     if (result.outcome === 'potential-patient-match') {
+      const registeredPatientMatches = result.patientMatches.filter(
+        (patient) => patient.registrationStatus === 'registered'
+      );
+
+      if (registeredPatientMatches.length === 0) {
+        return {
+          success: false,
+          errors: [
+            'Matching Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+          ],
+          status: StatusCodes.CONFLICT,
+        };
+      }
+
       return {
         success: false,
         errors: ['Potential Patient match found. Retry with patientId.'],
         status: StatusCodes.CONFLICT,
-        patientMatches: result.patientMatches,
+        patientMatches: registeredPatientMatches,
       };
     }
 
@@ -58,7 +72,14 @@ export async function createAppointmentCommand(
     }
 
     if (result.outcome === 'slot-past') {
-      return { success: false, errors: ['Selected Doctor slots must be in the future.'] };
+      return {
+        success: false,
+        errors: [
+          validationResult.data.bookingPath === 'PROCEDURE'
+            ? 'Procedure time must be in the future.'
+            : 'Selected Doctor slots must be in the future.',
+        ],
+      };
     }
 
     if (result.outcome === 'slot-invalid') {

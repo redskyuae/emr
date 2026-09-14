@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  check,
   date,
   index,
   integer,
@@ -27,22 +28,20 @@ export const appointment = pgTable(
   {
     id,
     tenantId: varchar('tenant_id', { length: 255 }).notNull(),
+    bookingPath: varchar('booking_path', { length: 20 })
+      .$type<'CONSULTATION' | 'PROCEDURE'>()
+      .notNull()
+      .default('CONSULTATION'),
     bookingNumber: varchar('booking_number', { length: 20 }).notNull(),
     patientId: integer('patient_id')
       .notNull()
       .references(() => patientTable.id),
-    doctorId: integer('doctor_id')
-      .notNull()
-      .references(() => doctorTable.id),
-    appointmentModeId: integer('appointment_mode_id')
-      .notNull()
-      .references(() => appointmentModeTable.id),
-    appointmentTypeId: integer('appointment_type_id')
-      .notNull()
-      .references(() => appointmentTypeTable.id),
-    appointmentReasonId: integer('appointment_reason_id')
-      .notNull()
-      .references(() => appointmentReasonTable.id),
+    doctorId: integer('doctor_id').references(() => doctorTable.id),
+    appointmentModeId: integer('appointment_mode_id').references(() => appointmentModeTable.id),
+    appointmentTypeId: integer('appointment_type_id').references(() => appointmentTypeTable.id),
+    appointmentReasonId: integer('appointment_reason_id').references(
+      () => appointmentReasonTable.id
+    ),
     appointmentStatusId: integer('appointment_status_id')
       .notNull()
       .references(() => appointmentStatusTable.id),
@@ -50,7 +49,9 @@ export const appointment = pgTable(
       () => appointmentCancelledReasonTable.id
     ),
     slotDate: date('slot_date').notNull(),
-    rotaName: varchar('rota_name', { length: 100 }).notNull(),
+    startTime: varchar('start_time', { length: 5 }),
+    endTime: varchar('end_time', { length: 5 }),
+    rotaName: varchar('rota_name', { length: 100 }),
     remarks: text(),
     // Set when the Appointment moves to a cancelled AppointmentStatus. Rows
     // predating the Patient Timeline hold null and yield no cancelled event
@@ -62,6 +63,30 @@ export const appointment = pgTable(
     deletedOn,
   },
   (table) => ({
+    bookingPathCheck: check(
+      'appointment_booking_path_check',
+      sql`${table.bookingPath} in ('CONSULTATION', 'PROCEDURE')`
+    ),
+    bookingPathFieldsCheck: check(
+      'appointment_booking_path_fields_check',
+      sql`(
+        ${table.bookingPath} = 'CONSULTATION'
+        and ${table.doctorId} is not null
+        and ${table.appointmentModeId} is not null
+        and ${table.appointmentTypeId} is not null
+        and ${table.appointmentReasonId} is not null
+        and ${table.rotaName} is not null
+      ) or (
+        ${table.bookingPath} = 'PROCEDURE'
+        and ${table.startTime} is not null
+        and ${table.endTime} is not null
+        and ${table.endTime} > ${table.startTime}
+        and ${table.appointmentModeId} is null
+        and ${table.appointmentTypeId} is null
+        and ${table.appointmentReasonId} is null
+        and ${table.rotaName} is null
+      )`
+    ),
     tenantBookingNumberUniqueIdx: uniqueIndex('appointment_tenant_booking_number_idx').on(
       table.tenantId,
       sql`lower(${table.bookingNumber})`

@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-import type { VisitType } from './book-appointment-demo-data';
+import type { BookingPath } from '../_utils/book-appointment-types';
 
 const paths: Array<{
-  value: VisitType;
+  value: BookingPath;
   title: string;
   description: string;
   icon: typeof CalendarClock;
@@ -29,22 +29,18 @@ const paths: Array<{
 export function BookingPathSelector({
   value,
   onChange,
-  patientMode,
   disabled,
 }: {
-  value: VisitType | '';
-  onChange: (value: VisitType) => void;
-  patientMode: 'existing' | 'provisional';
+  value: BookingPath | '';
+  onChange: (value: BookingPath) => void;
   disabled?: boolean;
 }) {
-  const treatmentOnly = patientMode === 'provisional';
-
   return (
     <Card className="shadow-fluent-2">
       <CardHeader className="border-b">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-lg">Visit Type</CardTitle>
+            <CardTitle className="text-lg">Booking Path</CardTitle>
           </div>
         </div>
       </CardHeader>
@@ -53,7 +49,6 @@ export function BookingPathSelector({
           {paths.map((path) => {
             const Icon = path.icon;
             const selected = value === path.value;
-            const title = path.value === 'PROCEDURE' && treatmentOnly ? 'Treatment' : path.title;
 
             return (
               <Button
@@ -85,7 +80,9 @@ export function BookingPathSelector({
                   <Icon className="size-4" />
                 </span>
                 <span className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2 font-medium">{title}</span>
+                  <span className="flex flex-wrap items-center gap-2 font-medium">
+                    {path.title}
+                  </span>
                 </span>
               </Button>
             );

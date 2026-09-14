@@ -1,0 +1,3 @@
+# Existing Provisional Patients Require Registration Before Rebooking
+
+An Appointment booking may atomically create a Provisional Patient and that Patient's initial Appointment, but an existing Provisional Patient is not selectable for another Appointment. Existing Patient search shows only active Registered Patients; when new provisional details match an existing Provisional Patient, booking stops and directs Staff to complete or reconcile Patient Registration instead of creating a duplicate, automatically reusing the match, or accepting its `patientId`. This partially supersedes ADR 0022's earlier decision to allow multiple Appointments for a Provisional Patient.

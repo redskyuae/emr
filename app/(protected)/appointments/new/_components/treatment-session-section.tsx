@@ -19,7 +19,6 @@ export function TreatmentSessionSection({
   treatments,
   selectedTreatment,
   selectedSession,
-  showSession,
   onTreatmentChange,
   onSessionChange,
 }: {
@@ -27,7 +26,6 @@ export function TreatmentSessionSection({
   treatments: DemoTreatment[];
   selectedTreatment: DemoTreatment | null;
   selectedSession: DemoSession | null;
-  showSession: boolean;
   onTreatmentChange: (value: string) => void;
   onSessionChange: (value: string) => void;
 }) {
@@ -40,13 +38,13 @@ export function TreatmentSessionSection({
             <ClipboardList className="size-4" />
           </span>
           <div>
-            <CardTitle>{showSession ? 'Treatment & Session' : 'Treatment'}</CardTitle>
+            <CardTitle>Treatment & Session</CardTitle>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <>
-          {showSession && treatments.every((treatment) => treatment.availableToAssign) ? (
+          {treatments.every((treatment) => treatment.availableToAssign) ? (
             <p className="text-muted-foreground text-xs">
               No assigned Treatment. Choose one below to begin.
             </p>
@@ -79,38 +77,36 @@ export function TreatmentSessionSection({
               <FieldError errors={[errors.treatmentId]} />
             </Field>
 
-            {showSession ? (
-              <Field>
-                <FieldLabel htmlFor="session">
-                  Session{' '}
-                  <span aria-hidden="true" className="text-destructive">
-                    {' '}
-                    *
-                  </span>
-                </FieldLabel>
-                <NativeSelect
-                  id="session"
-                  className="w-full"
-                  aria-invalid={Boolean(errors.sessionId)}
-                  value={selectedSession?.id ?? ''}
-                  disabled={!selectedTreatment}
-                  aria-required="true"
-                  onChange={(event) => onSessionChange(event.target.value)}
-                >
-                  <NativeSelectOption value="">Select Session</NativeSelectOption>
-                  {(selectedTreatment?.sessions ?? []).map((session) => (
-                    <NativeSelectOption key={session.id} value={session.id}>
-                      {session.label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-                <FieldError errors={[errors.sessionId]} />
-              </Field>
-            ) : null}
+            <Field>
+              <FieldLabel htmlFor="session">
+                Session{' '}
+                <span aria-hidden="true" className="text-destructive">
+                  {' '}
+                  *
+                </span>
+              </FieldLabel>
+              <NativeSelect
+                id="session"
+                className="w-full"
+                aria-invalid={Boolean(errors.sessionId)}
+                value={selectedSession?.id ?? ''}
+                disabled={!selectedTreatment}
+                aria-required="true"
+                onChange={(event) => onSessionChange(event.target.value)}
+              >
+                <NativeSelectOption value="">Select Session</NativeSelectOption>
+                {(selectedTreatment?.sessions ?? []).map((session) => (
+                  <NativeSelectOption key={session.id} value={session.id}>
+                    {session.label}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              <FieldError errors={[errors.sessionId]} />
+            </Field>
           </div>
           {selectedTreatment ? <TreatmentProgress treatment={selectedTreatment} /> : null}
 
-          {showSession && selectedTreatment && selectedTreatment.sessions.length === 0 ? (
+          {selectedTreatment && selectedTreatment.sessions.length === 0 ? (
             <Alert className="border-warning/25 bg-warning/5">
               <Info className="size-4" />
               <AlertTitle>No Session available</AlertTitle>
@@ -121,7 +117,7 @@ export function TreatmentSessionSection({
             </Alert>
           ) : null}
 
-          {showSession && selectedSession ? <SessionDetails session={selectedSession} /> : null}
+          {selectedSession ? <SessionDetails session={selectedSession} /> : null}
         </>
       </CardContent>
     </Card>
