@@ -16,7 +16,7 @@ export default function WorkOrderTypesPageLoader() {
         <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
           <Skeleton className="h-9 w-56" />
           <Skeleton className="h-9 w-full lg:max-w-sm" />
-          <div className="flex gap-2 lg:ml-auto">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
             <Skeleton className="h-9 w-44" />
           </div>
         </CardContent>
