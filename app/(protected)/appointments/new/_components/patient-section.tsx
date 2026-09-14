@@ -247,7 +247,7 @@ export function PatientSection({
                 control={control}
                 name="phone"
                 render={({ field }) => (
-                  <Field data-invalid={Boolean(errors.phone)} className="sm:col-span-2">
+                  <Field data-invalid={Boolean(errors.phone)}>
                     <FieldLabel htmlFor="provisional-patient-phone">
                       Phone number{' '}
                       <span aria-hidden="true" className="text-destructive">
@@ -270,20 +270,21 @@ export function PatientSection({
                 control={control}
                 name="email"
                 render={({ field }) => (
-                  <Field data-invalid={Boolean(errors.email)} className="sm:col-span-2">
+                  <Field data-invalid={Boolean(errors.email)}>
                     <FieldLabel htmlFor="provisional-patient-email">Email</FieldLabel>
                     <Input
                       {...field}
                       id="provisional-patient-email"
-                      type="email"
                       aria-invalid={Boolean(errors.email)}
                       autoComplete="email"
                       inputMode="email"
+                      type="email"
                     />
                     <FieldError errors={[errors.email]} />
                   </Field>
                 )}
               />
+
             </FieldGroup>
           </TabsContent>
         </Tabs>
