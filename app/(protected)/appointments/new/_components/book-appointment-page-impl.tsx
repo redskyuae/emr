@@ -260,6 +260,7 @@ export function BookAppointmentPageImpl() {
                     startTime={values.startTime}
                     endTime={values.endTime}
                     onDateChange={booking.changeProcedureDate}
+                    onEndTimeChange={booking.changeProcedureEndTime}
                     onStartTimeChange={booking.changeProcedureStartTime}
                   />
                 ) : (

@@ -18,7 +18,11 @@ import { useDoctorSlotsQuery } from '@/app/queries/appointments/useDoctorSlots';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
 import { usePatientVisitsQuery } from '@/app/queries/visits/useVisits';
-import { getProcedureEndTime, getSlotTimes } from '../_utils/appointment-time';
+import {
+  getProcedureEndTime,
+  getProcedureEndTimeForStartChange,
+  getSlotTimes,
+} from '../_utils/appointment-time';
 import {
   bookAppointmentFormSchema,
   type BookAppointmentFormValues,
@@ -79,6 +83,7 @@ export function useBookAppointment() {
   const [patientMatches, setPatientMatches] = useState<BookablePatient[]>([]);
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isProcedureEndTimeAdjusted, setProcedureEndTimeAdjusted] = useState(false);
   const form = useForm<BookAppointmentFormValues>({
     mode: 'onTouched',
     defaultValues: initialValues,
@@ -174,6 +179,7 @@ export function useBookAppointment() {
     form.setValue('visitType', next, { shouldDirty: true, shouldValidate: true });
     setConfirmation(null);
     setSubmitError(null);
+    setProcedureEndTimeAdjusted(false);
     form.clearErrors();
     form.setValue('doctorId', next === 'PROCEDURE' ? 'not-applicable' : '', {
       shouldDirty: true,
@@ -194,6 +200,7 @@ export function useBookAppointment() {
     setPatientMatches([]);
     setConfirmation(null);
     setSubmitError(null);
+    setProcedureEndTimeAdjusted(false);
     clearProcedureFields();
     clearSchedule();
   }
@@ -204,6 +211,7 @@ export function useBookAppointment() {
     form.clearErrors();
     setConfirmation(null);
     setSubmitError(null);
+    setProcedureEndTimeAdjusted(false);
     setPatientMatches([]);
     setSelectedPatientSnapshot(null);
     clearProcedureFields();
@@ -219,6 +227,7 @@ export function useBookAppointment() {
   }
 
   function changeTreatment(value: string) {
+    setProcedureEndTimeAdjusted(false);
     form.setValue('treatmentId', value, { shouldDirty: true, shouldValidate: true });
     form.setValue('startTime', '');
     form.setValue('endTime', '');
@@ -228,6 +237,7 @@ export function useBookAppointment() {
   }
 
   function changeSession(value: string) {
+    setProcedureEndTimeAdjusted(false);
     form.setValue('sessionId', value, { shouldDirty: true, shouldValidate: true });
     form.setValue('startTime', '');
     form.setValue('endTime', '');
@@ -242,6 +252,7 @@ export function useBookAppointment() {
 
   function changeProcedureDate() {
     setSubmitError(null);
+    setProcedureEndTimeAdjusted(false);
     form.setValue('startTime', '', { shouldDirty: true });
     form.setValue('endTime', '', { shouldDirty: true });
     form.setValue('roomId', '', { shouldDirty: true });
@@ -251,10 +262,21 @@ export function useBookAppointment() {
   function changeProcedureStartTime(value: string) {
     setSubmitError(null);
     form.setValue('startTime', value, { shouldDirty: true, shouldValidate: true });
-    form.setValue('endTime', getProcedureEndTime(value, selectedSession), {
+    const endTime = isProcedureEndTimeAdjusted
+      ? getProcedureEndTimeForStartChange(value, form.getValues('endTime'), selectedSession)
+      : getProcedureEndTime(value, selectedSession);
+    form.setValue('endTime', endTime, {
       shouldDirty: true,
       shouldValidate: true,
     });
+    form.setValue('roomId', '', { shouldDirty: true });
+    form.setValue('therapistId', '', { shouldDirty: true });
+  }
+
+  function changeProcedureEndTime(value: string) {
+    setSubmitError(null);
+    setProcedureEndTimeAdjusted(value !== '');
+    form.setValue('endTime', value, { shouldDirty: true, shouldValidate: true });
     form.setValue('roomId', '', { shouldDirty: true });
     form.setValue('therapistId', '', { shouldDirty: true });
   }
@@ -302,6 +324,7 @@ export function useBookAppointment() {
     setSelectedPatientSnapshot(null);
     setConfirmation(null);
     setSubmitError(null);
+    setProcedureEndTimeAdjusted(false);
   }
 
   const firstStepFields: Array<keyof BookAppointmentFormValues> = [
@@ -421,6 +444,7 @@ export function useBookAppointment() {
     changeSession,
     changeDoctor,
     changeProcedureDate,
+    changeProcedureEndTime,
     changeProcedureStartTime,
     changeSchedule,
     changeRota,

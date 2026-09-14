@@ -5,7 +5,11 @@ import { format } from 'date-fns';
 import { CalendarClock } from 'lucide-react';
 import { Controller, type Control } from 'react-hook-form';
 
-import { getDurationMinutes, getProcedureStartTimes } from '../_utils/appointment-time';
+import {
+  getDurationMinutes,
+  getProcedureEndTimes,
+  getProcedureStartTimes,
+} from '../_utils/appointment-time';
 import { BookingStatusBadge } from './booking-status-badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -18,18 +22,21 @@ import { cn } from '@/lib/utils';
 import type { BookAppointmentFormValues } from '../_utils/book-appointment-form-schema';
 
 const procedureStartTimes = getProcedureStartTimes();
+const procedureEndTimes = getProcedureEndTimes();
 
 export function ProcedureScheduleSection({
   control,
   startTime,
   endTime,
   onDateChange,
+  onEndTimeChange,
   onStartTimeChange,
 }: {
   control: Control<BookAppointmentFormValues>;
   startTime: string;
   endTime: string;
   onDateChange: () => void;
+  onEndTimeChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
 }) {
   const duration = getDurationMinutes(startTime, endTime);
@@ -93,24 +100,40 @@ export function ProcedureScheduleSection({
             name="endTime"
             render={({ field, fieldState }) => (
               <Field>
-                <FieldLabel htmlFor="procedure-end-time">End time</FieldLabel>
-                <div
+                <FieldLabel htmlFor="procedure-end-time">
+                  End time{' '}
+                  <span aria-hidden="true" className="text-destructive">
+                    *
+                  </span>
+                </FieldLabel>
+                <NativeSelect
                   id="procedure-end-time"
-                  className={cn(
-                    'border-input bg-muted/35 flex h-9 items-center rounded-md border px-3 font-mono text-sm',
-                    !field.value && 'text-muted-foreground'
-                  )}
-                  aria-live="polite"
+                  name={field.name}
+                  ref={field.ref}
+                  value={field.value}
+                  aria-required="true"
+                  aria-invalid={fieldState.invalid}
+                  className="w-full font-mono"
+                  onBlur={field.onBlur}
+                  onChange={(event) => onEndTimeChange(event.target.value)}
                 >
-                  {field.value || 'Calculated from Session'}
-                </div>
+                  <NativeSelectOption value="">Select time</NativeSelectOption>
+                  {procedureEndTimes
+                    .filter((time) => !startTime || time > startTime)
+                    .map((time) => (
+                      <NativeSelectOption key={time} value={time}>
+                        {time}
+                      </NativeSelectOption>
+                    ))}
+                </NativeSelect>
                 <FieldError errors={[fieldState.error]} />
               </Field>
             )}
           />
         </div>
         <p className="text-muted-foreground mt-3 text-xs">
-          The selected Session duration, including setup and cleaning, determines the end time. All
+          The selected Session provides the suggested end time, including setup and cleaning. You
+          can adjust either time in 15-minute increments; end time must be after start time. All
           times are shown in GST.
         </p>
       </CardContent>
