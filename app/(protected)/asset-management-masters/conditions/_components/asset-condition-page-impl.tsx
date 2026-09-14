@@ -18,6 +18,7 @@ import type { AssetCondition } from '@/app/api/lib/modules/asset-condition/schem
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetConditionQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetCondition';
 import { useAssetConditionsQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetConditions';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,7 +53,11 @@ export function AssetConditionPageImpl() {
   const [page, setPage] = useState(1);
   const [conditionPendingDelete, setConditionPendingDelete] = useState<AssetCondition | null>(null);
 
-  const isCreating = conditionParam === 'new';
+  const { data: canCreate } = useHasPermission('asset-condition:create');
+  const { data: canUpdate } = useHasPermission('asset-condition:update');
+  const { data: canDelete } = useHasPermission('asset-condition:delete');
+
+  const isCreating = conditionParam === 'new' && canCreate;
   const editingConditionId =
     conditionParam !== null && conditionParam !== 'new' && /^\d+$/.test(conditionParam)
       ? Number(conditionParam)
@@ -89,7 +94,7 @@ export function AssetConditionPageImpl() {
     (conditionsQuery.isLoading || editingConditionQuery.isFetching);
   const sheetOpen =
     isCreating ||
-    (editingConditionId !== null && (conditionResolving || editingCondition !== null));
+    (canUpdate && editingConditionId !== null && (conditionResolving || editingCondition !== null));
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -139,12 +144,14 @@ export function AssetConditionPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setConditionParam('new')}>
-                <Plus className="size-4" />
-                Add Asset Condition
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setConditionParam('new')}>
+                  <Plus className="size-4" />
+                  Add Asset Condition
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -170,12 +177,14 @@ export function AssetConditionPageImpl() {
                 this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setConditionParam('new')}>
-                <Plus className="size-4" />
-                Add Asset Condition
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setConditionParam('new')}>
+                  <Plus className="size-4" />
+                  Add Asset Condition
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : conditions.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -195,18 +204,24 @@ export function AssetConditionPageImpl() {
             {viewLayout === 'table' ? (
               <AssetConditionTableView
                 conditions={conditions}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(condition) => void setConditionParam(String(condition.id))}
                 onDelete={setConditionPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <AssetConditionCardView
                 conditions={conditions}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(condition) => void setConditionParam(String(condition.id))}
                 onDelete={setConditionPendingDelete}
               />
             ) : (
               <AssetConditionListView
                 conditions={conditions}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(condition) => void setConditionParam(String(condition.id))}
                 onDelete={setConditionPendingDelete}
               />
@@ -255,7 +270,7 @@ export function AssetConditionPageImpl() {
       />
 
       <AssetConditionDeleteDialog
-        condition={conditionPendingDelete}
+        condition={canDelete ? conditionPendingDelete : null}
         onClose={() => setConditionPendingDelete(null)}
         onDeleted={(deletedId) => {
           if (editingConditionId === deletedId) {

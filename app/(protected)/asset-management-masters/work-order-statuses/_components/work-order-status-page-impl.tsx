@@ -18,6 +18,7 @@ import type { WorkOrderStatus } from '@/app/api/lib/modules/work-order-status/sc
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWorkOrderStatusQuery } from '@/app/queries/asset-masters/work-order-statuses/useWorkOrderStatus';
 import { useWorkOrderStatusesQuery } from '@/app/queries/asset-masters/work-order-statuses/useWorkOrderStatuses';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,7 +53,11 @@ export function WorkOrderStatusPageImpl() {
   const [page, setPage] = useState(1);
   const [statusPendingDelete, setStatusPendingDelete] = useState<WorkOrderStatus | null>(null);
 
-  const isCreating = statusParam === 'new';
+  const { data: canCreate } = useHasPermission('work-order-status:create');
+  const { data: canUpdate } = useHasPermission('work-order-status:update');
+  const { data: canDelete } = useHasPermission('work-order-status:delete');
+
+  const isCreating = statusParam === 'new' && canCreate;
   const editingStatusId =
     statusParam !== null && statusParam !== 'new' && /^\d+$/.test(statusParam)
       ? Number(statusParam)
@@ -86,7 +91,8 @@ export function WorkOrderStatusPageImpl() {
     editingStatus === null &&
     (statusesQuery.isLoading || editingStatusQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingStatusId !== null && (statusResolving || editingStatus !== null));
+    isCreating ||
+    (canUpdate && editingStatusId !== null && (statusResolving || editingStatus !== null));
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -136,12 +142,14 @@ export function WorkOrderStatusPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setStatusParam('new')}>
-                <Plus className="size-4" />
-                Add Work Order Status
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setStatusParam('new')}>
+                  <Plus className="size-4" />
+                  Add Work Order Status
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -167,12 +175,14 @@ export function WorkOrderStatusPageImpl() {
                 Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setStatusParam('new')}>
-                <Plus className="size-4" />
-                Add Work Order Status
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setStatusParam('new')}>
+                  <Plus className="size-4" />
+                  Add Work Order Status
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : statuses.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -192,18 +202,24 @@ export function WorkOrderStatusPageImpl() {
             {viewLayout === 'table' ? (
               <WorkOrderStatusTableView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(status) => void setStatusParam(String(status.id))}
                 onDelete={setStatusPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <WorkOrderStatusCardView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(status) => void setStatusParam(String(status.id))}
                 onDelete={setStatusPendingDelete}
               />
             ) : (
               <WorkOrderStatusListView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(status) => void setStatusParam(String(status.id))}
                 onDelete={setStatusPendingDelete}
               />
@@ -252,7 +268,7 @@ export function WorkOrderStatusPageImpl() {
       />
 
       <WorkOrderStatusDeleteDialog
-        status={statusPendingDelete}
+        status={canDelete ? statusPendingDelete : null}
         onClose={() => setStatusPendingDelete(null)}
         onDeleted={(deletedId) => {
           if (editingStatusId === deletedId) {

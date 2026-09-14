@@ -40,13 +40,21 @@ function ConditionIcon({ color }: { color: string }) {
 
 function ConditionActionsMenu({
   condition,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   condition: AssetCondition;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (condition: AssetCondition) => void;
   onDelete: (condition: AssetCondition) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -60,14 +68,18 @@ function ConditionActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(condition)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(condition)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(condition)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(condition)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -75,10 +87,14 @@ function ConditionActionsMenu({
 
 export function AssetConditionTableView({
   conditions,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   conditions: AssetCondition[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (condition: AssetCondition) => void;
   onDelete: (condition: AssetCondition) => void;
 }) {
@@ -110,6 +126,8 @@ export function AssetConditionTableView({
                   <TableCell className="pr-4 text-right">
                     <ConditionActionsMenu
                       condition={condition}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
                       onEdit={onEdit}
                       onDelete={onDelete}
                     />
@@ -126,10 +144,14 @@ export function AssetConditionTableView({
 
 export function AssetConditionCardView({
   conditions,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   conditions: AssetCondition[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (condition: AssetCondition) => void;
   onDelete: (condition: AssetCondition) => void;
 }) {
@@ -153,22 +175,28 @@ export function AssetConditionCardView({
               ) : null}
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(condition)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(condition)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(condition)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(condition)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -178,10 +206,14 @@ export function AssetConditionCardView({
 
 export function AssetConditionListView({
   conditions,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   conditions: AssetCondition[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (condition: AssetCondition) => void;
   onDelete: (condition: AssetCondition) => void;
 }) {
@@ -211,7 +243,13 @@ export function AssetConditionListView({
             </div>
 
             <div className="shrink-0 pl-14 sm:pl-0">
-              <ConditionActionsMenu condition={condition} onEdit={onEdit} onDelete={onDelete} />
+              <ConditionActionsMenu
+                condition={condition}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

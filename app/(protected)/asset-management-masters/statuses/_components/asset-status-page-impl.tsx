@@ -17,6 +17,7 @@ import {
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetStatusQuery } from '@/app/queries/asset-masters/asset-statuses/useAssetStatus';
 import { useAssetStatusesQuery } from '@/app/queries/asset-masters/asset-statuses/useAssetStatuses';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,7 +52,11 @@ export function AssetStatusPageImpl() {
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
 
-  const isCreating = statusParam === 'new';
+  const { data: canCreate } = useHasPermission('asset-status:create');
+  const { data: canUpdate } = useHasPermission('asset-status:update');
+  const { data: canDelete } = useHasPermission('asset-status:delete');
+
+  const isCreating = statusParam === 'new' && canCreate;
   const editingStatusId =
     statusParam !== null && statusParam !== 'new' && /^\d+$/.test(statusParam)
       ? Number(statusParam)
@@ -94,7 +99,8 @@ export function AssetStatusPageImpl() {
     editingStatus === null &&
     (statusesQuery.isLoading || editingStatusQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingStatusId !== null && (statusResolving || editingStatus !== null));
+    isCreating ||
+    (canUpdate && editingStatusId !== null && (statusResolving || editingStatus !== null));
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -144,12 +150,14 @@ export function AssetStatusPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setStatusParam('new')}>
-                <Plus className="size-4" />
-                Add Asset Status
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setStatusParam('new')}>
+                  <Plus className="size-4" />
+                  Add Asset Status
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -175,12 +183,14 @@ export function AssetStatusPageImpl() {
                 assets in this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setStatusParam('new')}>
-                <Plus className="size-4" />
-                Add Asset Status
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setStatusParam('new')}>
+                  <Plus className="size-4" />
+                  Add Asset Status
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : statuses.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -200,18 +210,24 @@ export function AssetStatusPageImpl() {
             {viewLayout === 'table' ? (
               <AssetStatusTableView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(status) => void setStatusParam(String(status.id))}
                 onDelete={(status) => void setDeleteStatusParam(String(status.id))}
               />
             ) : viewLayout === 'card' ? (
               <AssetStatusCardView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(status) => void setStatusParam(String(status.id))}
                 onDelete={(status) => void setDeleteStatusParam(String(status.id))}
               />
             ) : (
               <AssetStatusListView
                 statuses={statuses}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(status) => void setStatusParam(String(status.id))}
                 onDelete={(status) => void setDeleteStatusParam(String(status.id))}
               />
@@ -260,7 +276,7 @@ export function AssetStatusPageImpl() {
       />
 
       <AssetStatusDeleteDialog
-        status={statusPendingDelete}
+        status={canDelete ? statusPendingDelete : null}
         onClose={() => void setDeleteStatusParam(null)}
         onDeleted={(deletedId) => {
           if (editingStatusId === deletedId) {
