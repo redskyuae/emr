@@ -284,7 +284,6 @@ export function PatientSection({
                   </Field>
                 )}
               />
-
             </FieldGroup>
           </TabsContent>
         </Tabs>
