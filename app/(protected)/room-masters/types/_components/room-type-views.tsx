@@ -21,6 +21,8 @@ import { formatDailyRate } from '../_utils/format-daily-rate';
 
 type RoomTypeViewProps = {
   roomTypes: RoomType[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (roomType: RoomType) => void;
   onDelete: (roomType: RoomType) => void;
 };
@@ -47,13 +49,21 @@ function RoomTypeIcon({ color }: { color: string }) {
 
 function RoomTypeActionsMenu({
   roomType,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   roomType: RoomType;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (roomType: RoomType) => void;
   onDelete: (roomType: RoomType) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -67,20 +77,30 @@ function RoomTypeActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(roomType)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(roomType)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(roomType)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(roomType)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export function RoomTypeTableView({ roomTypes, onEdit, onDelete }: RoomTypeViewProps) {
+export function RoomTypeTableView({
+  roomTypes,
+  canEdit,
+  canDelete,
+  onEdit,
+  onDelete,
+}: RoomTypeViewProps) {
   return (
     <Card className="shadow-fluent-2">
       <CardContent className="p-0">
@@ -111,7 +131,13 @@ export function RoomTypeTableView({ roomTypes, onEdit, onDelete }: RoomTypeViewP
                     {roomType.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <RoomTypeActionsMenu roomType={roomType} onEdit={onEdit} onDelete={onDelete} />
+                    <RoomTypeActionsMenu
+                      roomType={roomType}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -123,7 +149,13 @@ export function RoomTypeTableView({ roomTypes, onEdit, onDelete }: RoomTypeViewP
   );
 }
 
-export function RoomTypeCardView({ roomTypes, onEdit, onDelete }: RoomTypeViewProps) {
+export function RoomTypeCardView({
+  roomTypes,
+  canEdit,
+  canDelete,
+  onEdit,
+  onDelete,
+}: RoomTypeViewProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {roomTypes.map((roomType) => (
@@ -147,22 +179,28 @@ export function RoomTypeCardView({ roomTypes, onEdit, onDelete }: RoomTypeViewPr
               ) : null}
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(roomType)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(roomType)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(roomType)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(roomType)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -170,7 +208,13 @@ export function RoomTypeCardView({ roomTypes, onEdit, onDelete }: RoomTypeViewPr
   );
 }
 
-export function RoomTypeListView({ roomTypes, onEdit, onDelete }: RoomTypeViewProps) {
+export function RoomTypeListView({
+  roomTypes,
+  canEdit,
+  canDelete,
+  onEdit,
+  onDelete,
+}: RoomTypeViewProps) {
   return (
     <div className="space-y-3">
       {roomTypes.map((roomType) => (
@@ -200,7 +244,13 @@ export function RoomTypeListView({ roomTypes, onEdit, onDelete }: RoomTypeViewPr
             </div>
 
             <div className="shrink-0 pl-14 sm:pl-0">
-              <RoomTypeActionsMenu roomType={roomType} onEdit={onEdit} onDelete={onDelete} />
+              <RoomTypeActionsMenu
+                roomType={roomType}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

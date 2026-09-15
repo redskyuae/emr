@@ -41,13 +41,21 @@ function DoctorRotaStatus({ rota }: { rota: DoctorRota }) {
 
 function DoctorRotaActionsMenu({
   rota,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   rota: DoctorRota;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (rota: DoctorRota) => void;
   onDelete: (rota: DoctorRota) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -61,14 +69,18 @@ function DoctorRotaActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(rota)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(rota)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(rota)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(rota)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -76,10 +88,14 @@ function DoctorRotaActionsMenu({
 
 export function DoctorRotaTableView({
   rotas,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   rotas: DoctorRota[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (rota: DoctorRota) => void;
   onDelete: (rota: DoctorRota) => void;
 }) {
@@ -105,7 +121,13 @@ export function DoctorRotaTableView({
                     <DoctorRotaStatus rota={rota} />
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <DoctorRotaActionsMenu rota={rota} onEdit={onEdit} onDelete={onDelete} />
+                    <DoctorRotaActionsMenu
+                      rota={rota}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -119,10 +141,14 @@ export function DoctorRotaTableView({
 
 export function DoctorRotaCardView({
   rotas,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   rotas: DoctorRota[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (rota: DoctorRota) => void;
   onDelete: (rota: DoctorRota) => void;
 }) {
@@ -143,22 +169,28 @@ export function DoctorRotaCardView({
               </div>
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(rota)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(rota)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(rota)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(rota)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -168,10 +200,14 @@ export function DoctorRotaCardView({
 
 export function DoctorRotaListView({
   rotas,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   rotas: DoctorRota[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (rota: DoctorRota) => void;
   onDelete: (rota: DoctorRota) => void;
 }) {
@@ -196,7 +232,13 @@ export function DoctorRotaListView({
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
-              <DoctorRotaActionsMenu rota={rota} onEdit={onEdit} onDelete={onDelete} />
+              <DoctorRotaActionsMenu
+                rota={rota}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>
