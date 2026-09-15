@@ -17,6 +17,7 @@ import {
 
 import type { DoctorRota } from '@/app/api/lib/modules/doctor-rota/schemas/doctor-rota-schema';
 import { ApiError, getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorRotaQuery } from '@/app/queries/rota-management/useDoctorRota';
 import { useDoctorRotasQuery } from '@/app/queries/rota-management/useDoctorRotas';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -50,6 +51,10 @@ export function RotaManagementPageImpl() {
   const [page, setPage] = useState(1);
   const [rotaPendingDelete, setRotaPendingDelete] = useState<DoctorRota | null>(null);
 
+  const { data: canCreate } = useHasPermission('doctor-rota:create');
+  const { data: canUpdate } = useHasPermission('doctor-rota:update');
+  const { data: canDelete } = useHasPermission('doctor-rota:delete');
+
   const rotasQuery = useDoctorRotasQuery({
     query: debouncedSearch || undefined,
     page,
@@ -63,7 +68,7 @@ export function RotaManagementPageImpl() {
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
 
-  const isCreating = rotaParam === 'new';
+  const isCreating = rotaParam === 'new' && canCreate;
   const editingRotaId =
     rotaParam !== null && rotaParam !== 'new' && /^\d+$/.test(rotaParam) ? Number(rotaParam) : null;
   const editingRotaFromList =
@@ -87,7 +92,8 @@ export function RotaManagementPageImpl() {
 
   const sheetOpen =
     isCreating ||
-    (editingRotaId !== null &&
+    (canUpdate &&
+      editingRotaId !== null &&
       (editingRotaResolving || editingRota !== null || editingRotaLoadFailed));
 
   const previousDebouncedRef = useRef(debouncedSearch);
@@ -158,12 +164,14 @@ export function RotaManagementPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Doctor Rota
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Doctor Rota
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -188,12 +196,14 @@ export function RotaManagementPageImpl() {
                 Create reusable time-window templates before assigning Doctor schedules.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={openAddSheet}>
-                <Plus className="size-4" />
-                Add Doctor Rota
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={openAddSheet}>
+                  <Plus className="size-4" />
+                  Add Doctor Rota
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : rotas.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -212,18 +222,24 @@ export function RotaManagementPageImpl() {
             {viewLayout === 'table' ? (
               <DoctorRotaTableView
                 rotas={rotas}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setRotaPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <DoctorRotaCardView
                 rotas={rotas}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setRotaPendingDelete}
               />
             ) : (
               <DoctorRotaListView
                 rotas={rotas}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setRotaPendingDelete}
               />
@@ -272,7 +288,7 @@ export function RotaManagementPageImpl() {
       />
 
       <DeleteDoctorRotaDialog
-        rota={rotaPendingDelete}
+        rota={canDelete ? rotaPendingDelete : null}
         onClose={() => setRotaPendingDelete(null)}
         onDeleted={handleRotaDeleted}
       />
