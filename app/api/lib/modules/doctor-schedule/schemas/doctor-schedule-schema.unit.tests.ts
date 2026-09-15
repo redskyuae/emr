@@ -301,5 +301,29 @@ describe('DoctorSchedule schema', () => {
         'Slot date must be a valid date in DD-MM-YYYY or YYYY-MM-DD format',
       ])
     );
+
+    expect(
+      doctorSlotsParamsSchema.parse({
+        tenantId: 'tenant-1',
+        doctorId: '2',
+        slotDate: '2026-07-15',
+        reschedulingAppointmentId: '10',
+      })
+    ).toEqual({
+      tenantId: 'tenant-1',
+      doctorId: 2,
+      slotDate: '2026-07-15',
+      reschedulingAppointmentId: 10,
+    });
+    expect(
+      errorsOf(
+        doctorSlotsParamsSchema.safeParse({
+          tenantId: 'tenant-1',
+          doctorId: '2',
+          slotDate: '2026-07-15',
+          reschedulingAppointmentId: '0',
+        })
+      )
+    ).toContain('Rescheduling Appointment ID must be positive');
   });
 });

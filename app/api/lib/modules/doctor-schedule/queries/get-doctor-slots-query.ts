@@ -12,11 +12,12 @@ export async function getDoctorSlotsQuery(
     return { success: false, errors: validationResult.errors };
   }
 
-  const data = await doctorScheduleRepository.getDoctorSlots(
-    validationResult.data.tenantId,
-    validationResult.data.doctorId,
-    validationResult.data.slotDate
-  );
+  const { tenantId, doctorId, slotDate, reschedulingAppointmentId } = validationResult.data;
+  const data = reschedulingAppointmentId
+    ? await doctorScheduleRepository.getDoctorSlots(tenantId, doctorId, slotDate, {
+        excludeAppointmentId: reschedulingAppointmentId,
+      })
+    : await doctorScheduleRepository.getDoctorSlots(tenantId, doctorId, slotDate);
 
   return { success: true, data, total: data.length };
 }

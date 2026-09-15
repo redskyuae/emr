@@ -1,6 +1,9 @@
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
+import { appointment as appointmentTable } from '@/app/db/schema/appointment';
+import { appointmentCancelledReason as appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
 import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
 import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
@@ -14,6 +17,8 @@ import {
 } from '@/app/db/schema/doctor-schedule';
 import { patient as patientTable } from '@/app/db/schema/patient';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
+import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
+import { visitRepository } from '../../visit/repository/visit-repository';
 import type { ValidatedCreateAppointmentData } from '../schemas/appointment-schema';
 import { appointmentRepository } from './appointment-repository';
 
@@ -97,6 +102,43 @@ async function createFixtures() {
     category: 'SCHEDULED',
     isSystem: true,
   });
+  const [confirmedStatus] = await db
+    .insert(appointmentStatusTable)
+    .values({
+      tenantId,
+      name: 'Confirmed',
+      code: 'CNF',
+      category: 'CONFIRMED',
+      isSystem: true,
+    })
+    .returning({ id: appointmentStatusTable.id });
+  await db.insert(appointmentStatusTable).values({
+    tenantId,
+    name: 'Checked In',
+    code: 'CHK',
+    category: 'CHECKED_IN',
+    isSystem: true,
+  });
+  await db.insert(appointmentStatusTable).values({
+    tenantId,
+    name: 'Cancelled',
+    code: 'CAN',
+    category: 'CANCELLED',
+    isSystem: true,
+  });
+  const [cancellationReason] = await db
+    .insert(appointmentCancelledReasonTable)
+    .values({
+      tenantId,
+      name: 'Patient Request',
+      code: 'PATR',
+      description: 'Cancelled at the Patient request',
+    })
+    .returning({ id: appointmentCancelledReasonTable.id });
+  const [visitType] = await db
+    .insert(visitTypeTable)
+    .values({ tenantId, name: 'Outpatient', code: 'OPD' })
+    .returning({ id: visitTypeTable.id });
   const [patient] = await db
     .insert(patientTable)
     .values({
@@ -112,7 +154,18 @@ async function createFixtures() {
     })
     .returning({ id: patientTable.id, phone: patientTable.phone });
 
-  return { tenantId, doctorId: doctor.id, rotaId: rota.id, mode, type, reason, patient };
+  return {
+    tenantId,
+    doctorId: doctor.id,
+    rotaId: rota.id,
+    mode,
+    type,
+    reason,
+    visitType,
+    confirmedStatus,
+    cancellationReason,
+    patient,
+  };
 }
 
 function appointmentData(
@@ -137,6 +190,291 @@ function appointmentData(
 }
 
 describe('Appointment repository', () => {
+  it('should cancel an Appointment, release slots, and retain its historical reason', async () => {
+    const fixtures = await createFixtures();
+    const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    const result = await appointmentRepository.cancelAppointment({
+      id: created.data.id,
+      tenantId: fixtures.tenantId,
+      appointmentCancelledReasonId: fixtures.cancellationReason.id,
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        id: created.data.id,
+        bookingNumber: created.data.bookingNumber,
+        cancelledAt: expect.any(Date),
+        appointmentStatus: { category: 'cancelled' },
+        appointmentCancelledReason: {
+          id: fixtures.cancellationReason.id,
+          name: 'Patient Request',
+          code: 'PATR',
+        },
+        slots: [],
+      },
+    });
+    await expect(
+      appointmentRepository.getReservedSlotTimes(
+        fixtures.tenantId,
+        fixtures.doctorId,
+        '2099-12-31',
+        ['09:00', '09:15']
+      )
+    ).resolves.toEqual([]);
+
+    await db
+      .update(appointmentCancelledReasonTable)
+      .set({ isDeleted: true, deletedOn: new Date() })
+      .where(eq(appointmentCancelledReasonTable.id, fixtures.cancellationReason.id));
+    await expect(
+      appointmentRepository.getAppointmentById(created.data.id, fixtures.tenantId)
+    ).resolves.toMatchObject({
+      appointmentCancelledReason: { name: 'Patient Request' },
+    });
+    await expect(
+      appointmentRepository.cancelAppointment({
+        id: created.data.id,
+        tenantId: fixtures.tenantId,
+        appointmentCancelledReasonId: fixtures.cancellationReason.id,
+      })
+    ).resolves.toEqual({ success: false, outcome: 'ineligible' });
+  });
+
+  it('should not cancel an Appointment belonging to another Tenant', async () => {
+    const fixtures = await createFixtures();
+    const other = await createFixtures();
+    const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    await expect(
+      appointmentRepository.cancelAppointment({
+        id: created.data.id,
+        tenantId: other.tenantId,
+        appointmentCancelledReasonId: other.cancellationReason.id,
+      })
+    ).resolves.toEqual({ success: false, outcome: 'not-found' });
+  });
+
+  it('should cancel a Confirmed Appointment', async () => {
+    const fixtures = await createFixtures();
+    const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    await db
+      .update(appointmentTable)
+      .set({ appointmentStatusId: fixtures.confirmedStatus.id })
+      .where(eq(appointmentTable.id, created.data.id));
+
+    await expect(
+      appointmentRepository.cancelAppointment({
+        id: created.data.id,
+        tenantId: fixtures.tenantId,
+        appointmentCancelledReasonId: fixtures.cancellationReason.id,
+      })
+    ).resolves.toMatchObject({
+      success: true,
+      data: { appointmentStatus: { category: 'cancelled' } },
+    });
+  });
+
+  it('should preserve the Appointment and reservations when the reason belongs to another Tenant', async () => {
+    const fixtures = await createFixtures();
+    const other = await createFixtures();
+    const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    await expect(
+      appointmentRepository.cancelAppointment({
+        id: created.data.id,
+        tenantId: fixtures.tenantId,
+        appointmentCancelledReasonId: other.cancellationReason.id,
+      })
+    ).resolves.toEqual({ success: false, outcome: 'invalid-reason' });
+
+    await expect(
+      appointmentRepository.getAppointmentById(created.data.id, fixtures.tenantId)
+    ).resolves.toMatchObject({
+      cancelledAt: null,
+      appointmentCancelledReason: null,
+      appointmentStatus: { category: 'scheduled' },
+      slots: [{ slotTime: '09:00' }, { slotTime: '09:15' }],
+    });
+  });
+
+  it('should preserve the Appointment and reservations when its cancellation reason was deleted', async () => {
+    const fixtures = await createFixtures();
+    const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    await db
+      .update(appointmentCancelledReasonTable)
+      .set({ isDeleted: true, deletedOn: new Date() })
+      .where(eq(appointmentCancelledReasonTable.id, fixtures.cancellationReason.id));
+
+    await expect(
+      appointmentRepository.cancelAppointment({
+        id: created.data.id,
+        tenantId: fixtures.tenantId,
+        appointmentCancelledReasonId: fixtures.cancellationReason.id,
+      })
+    ).resolves.toEqual({ success: false, outcome: 'invalid-reason' });
+
+    await expect(
+      appointmentRepository.getAppointmentById(created.data.id, fixtures.tenantId)
+    ).resolves.toMatchObject({
+      cancelledAt: null,
+      appointmentCancelledReason: null,
+      appointmentStatus: { category: 'scheduled' },
+      slots: [{ slotTime: '09:00' }, { slotTime: '09:15' }],
+    });
+  });
+
+  it('should allow exactly one of cancellation and Check-in to commit', async () => {
+    const fixtures = await createFixtures();
+    const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    const [cancellation, checkIn] = await Promise.all([
+      appointmentRepository.cancelAppointment({
+        id: created.data.id,
+        tenantId: fixtures.tenantId,
+        appointmentCancelledReasonId: fixtures.cancellationReason.id,
+      }),
+      visitRepository.checkInVisit({
+        tenantId: fixtures.tenantId,
+        appointmentId: created.data.id,
+        patientId: fixtures.patient.id,
+        doctorId: fixtures.doctorId,
+        visitTypeId: fixtures.visitType.id,
+        visitDate: '2099-12-31',
+      }),
+    ]);
+
+    expect(Number(cancellation.success) + Number(checkIn.success)).toBe(1);
+
+    const appointment = await appointmentRepository.getAppointmentById(
+      created.data.id,
+      fixtures.tenantId
+    );
+
+    if (cancellation.success) {
+      expect(checkIn).toEqual({ success: false, outcome: 'appointment-ineligible' });
+      expect(appointment).toMatchObject({
+        cancelledAt: expect.any(Date),
+        appointmentStatus: { category: 'cancelled' },
+      });
+    } else {
+      expect(cancellation).toEqual({ success: false, outcome: 'ineligible' });
+      expect(checkIn).toMatchObject({ success: true });
+      expect(appointment).toMatchObject({
+        cancelledAt: null,
+        appointmentStatus: { category: 'checked_in' },
+      });
+    }
+  });
+
+  it('should reschedule a Consultation while preserving its identity and releasing old slots', async () => {
+    const fixtures = await createFixtures();
+    const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    const result = await appointmentRepository.rescheduleAppointment({
+      id: created.data.id,
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'CONSULTATION',
+      doctorId: fixtures.doctorId,
+      slotDate: '2099-12-31',
+      doctorRotaId: fixtures.rotaId,
+      slotTimes: ['09:30', '09:45'],
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        id: created.data.id,
+        bookingNumber: created.data.bookingNumber,
+        doctorRotaId: fixtures.rotaId,
+        startTime: '09:30',
+        endTime: '10:00',
+        appointmentStatus: { category: 'scheduled' },
+        slots: [
+          { slotTime: '09:30', status: 'Booked' },
+          { slotTime: '09:45', status: 'Booked' },
+        ],
+      },
+    });
+    await expect(
+      appointmentRepository.getReservedSlotTimes(
+        fixtures.tenantId,
+        fixtures.doctorId,
+        '2099-12-31',
+        ['09:00', '09:15']
+      )
+    ).resolves.toEqual([]);
+  });
+
+  it('should reschedule a Procedure without changing its Doctor assignment', async () => {
+    const fixtures = await createFixtures();
+    const created = await appointmentRepository.createAppointment({
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      patientId: fixtures.patient.id,
+      doctorId: fixtures.doctorId,
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '11:00',
+      remarks: undefined,
+    });
+    if (!created.success) throw new Error('appointment creation failed');
+
+    const result = await appointmentRepository.rescheduleAppointment({
+      id: created.data.id,
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      slotDate: '2099-12-31',
+      startTime: '12:00',
+      endTime: '13:15',
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        id: created.data.id,
+        bookingNumber: created.data.bookingNumber,
+        doctor: { id: fixtures.doctorId },
+        startTime: '12:00',
+        endTime: '13:15',
+        slots: [],
+      },
+    });
+  });
+
+  it('should not reschedule an Appointment belonging to another Tenant', async () => {
+    const fixtures = await createFixtures();
+    const other = await createFixtures();
+    const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    await expect(
+      appointmentRepository.rescheduleAppointment({
+        id: created.data.id,
+        tenantId: other.tenantId,
+        timeZone: 'Asia/Kolkata',
+        bookingPath: 'CONSULTATION',
+        doctorId: other.doctorId,
+        slotDate: '2099-12-31',
+        doctorRotaId: other.rotaId,
+        slotTimes: ['09:30'],
+      })
+    ).resolves.toEqual({ success: false, outcome: 'not-found' });
+  });
+
   it('should create an appointment for an existing patient with consecutive slots', async () => {
     const fixtures = await createFixtures();
 
@@ -146,6 +484,7 @@ describe('Appointment repository', () => {
       success: true,
       data: {
         bookingNumber: 'APT-1001',
+        doctorRotaId: fixtures.rotaId,
         slotDate: '31-12-2099',
         rotaName: 'Morning Rota',
         patient: { id: fixtures.patient.id, registrationStatus: 'registered' },

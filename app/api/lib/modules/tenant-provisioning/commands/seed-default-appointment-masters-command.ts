@@ -76,7 +76,11 @@ const DEFAULT_APPOINTMENT_REASONS = [
 const DEFAULT_APPOINTMENT_CANCELLED_REASONS = [
   { code: 'PATR', name: 'Patient Request', description: 'Cancelled at the Patient request' },
   { code: 'DOCU', name: 'Doctor Unavailable', description: 'Doctor is unavailable' },
-  { code: 'RSCH', name: 'Rescheduled', description: 'Appointment was rescheduled' },
+  {
+    code: 'RSCH',
+    name: 'Rebooked Elsewhere',
+    description: 'Appointment was replaced by another booking',
+  },
   { code: 'DUPL', name: 'Duplicate Booking', description: 'Duplicate appointment booking' },
   { code: 'OTHR', name: 'Other', description: 'Other cancellation reason' },
 ] as const;

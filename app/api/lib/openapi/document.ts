@@ -633,6 +633,25 @@ const createProcedureAppointmentRequestExample = {
   remarks: 'Shirodhara session; Doctor not assigned.',
 };
 
+const rescheduleConsultationAppointmentRequestExample = {
+  bookingPath: 'CONSULTATION',
+  doctorId: 42,
+  slotDate: '02-01-2100',
+  doctorRotaId: 1,
+  slotTimes: ['10:00', '10:15'],
+};
+
+const rescheduleProcedureAppointmentRequestExample = {
+  bookingPath: 'PROCEDURE',
+  slotDate: '02-01-2100',
+  startTime: '11:00',
+  endTime: '12:15',
+};
+
+const cancelAppointmentRequestExample = {
+  appointmentCancelledReasonId: 5,
+};
+
 const appointmentExample = {
   id: 101,
   tenantId: 'org_apollo',
@@ -650,11 +669,14 @@ const appointmentExample = {
   appointmentMode: { id: 1, name: 'In Person', code: 'INP' },
   appointmentType: { id: 2, name: 'Consultation', code: 'CONS' },
   appointmentReason: { id: 3, name: 'Follow-up', code: 'FUP' },
+  appointmentCancelledReason: null,
   appointmentStatus: { id: 4, name: 'Scheduled', code: 'SCH', category: 'scheduled' },
+  cancelledAt: null,
   slotDate: '31-12-2099',
   startTime: '09:00',
   endTime: '09:30',
   rotaName: 'Morning Rota',
+  doctorRotaId: 1,
   slots: [
     { slotTime: '09:00', status: 'Booked' },
     { slotTime: '09:15', status: 'Booked' },
@@ -680,14 +702,25 @@ const procedureAppointmentExample = {
   appointmentMode: null,
   appointmentType: null,
   appointmentReason: null,
+  appointmentCancelledReason: null,
   appointmentStatus: { id: 4, name: 'Scheduled', code: 'SCH', category: 'scheduled' },
+  cancelledAt: null,
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
   rotaName: null,
+  doctorRotaId: null,
   slots: [],
   remarks: 'Shirodhara session; Doctor not assigned.',
   createdOn: '2099-12-01T04:35:00.000Z',
+};
+
+const cancelledAppointmentExample = {
+  ...appointmentExample,
+  appointmentCancelledReason: { id: 5, name: 'Patient Request', code: 'PATR' },
+  appointmentStatus: { id: 9, name: 'Cancelled', code: 'CAN', category: 'cancelled' },
+  cancelledAt: '2099-12-20T06:45:00.000Z',
+  slots: [],
 };
 
 const admissionExample = {
@@ -3712,7 +3745,7 @@ export const openApiDocument = {
         tags: ['Doctor Schedule'],
         summary: 'List Doctor Slots',
         description:
-          'Generates available DoctorSlots for a Doctor on one date from active DoctorSchedules and assigned DoctorRotas.',
+          'Generates available DoctorSlots for a Doctor on one date from active DoctorSchedules and assigned DoctorRotas. During rescheduling, the target Appointment may be supplied so its own reservations remain selectable.',
         security: [{ cookieAuth: [] }],
         parameters: [
           {
@@ -3734,6 +3767,14 @@ export const openApiDocument = {
             },
             description:
               'Slot date. Existing schedule storage and responses use YYYY-MM-DD; legacy appointment booking clients may query with DD-MM-YYYY.',
+          },
+          {
+            name: 'reschedulingAppointmentId',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 1 },
+            description:
+              'Appointment currently being rescheduled. Its own active Slot Reservations are excluded from the booked-slot calculation.',
           },
         ],
         responses: {
@@ -5828,7 +5869,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Get Appointment',
         description:
-          'Returns one Appointment in the active Tenant with its embedded Patient, Doctor, AppointmentMode, AppointmentType, AppointmentReason, AppointmentStatus and reserved slots. Backs the Appointment detail Sheet that Booking entries on the Patient Timeline deep-link into. The tenantId is resolved from the active authenticated Session.',
+          'Returns one Appointment in the active Tenant with its embedded Patient, Doctor, AppointmentMode, AppointmentType, AppointmentReason, AppointmentStatus, cancellation history, and reserved slots. Backs the Appointment detail Sheet that Booking entries on the Patient Timeline deep-link into. The tenantId is resolved from the active authenticated Session.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Appointment')],
         responses: {
@@ -5852,6 +5893,140 @@ export const openApiDocument = {
           },
           '401': responseRef('Unauthorized'),
           '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/appointments/{id}/reschedule': {
+      post: {
+        tags: ['Appointment'],
+        summary: 'Reschedule Appointment',
+        description:
+          'Changes the schedule of a Scheduled or Confirmed Appointment in the active Tenant while preserving its Booking Number and non-scheduling details. Consultation rescheduling may change the Doctor and atomically replaces Slot Reservations. Procedure rescheduling changes only its direct date/time window. A successful reschedule returns the Appointment to the system Scheduled status.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Appointment')],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: schemaRef('RescheduleAppointmentRequest'),
+              examples: {
+                consultation: {
+                  summary: 'Move a Consultation to new DoctorSlots',
+                  value: rescheduleConsultationAppointmentRequestExample,
+                },
+                procedure: {
+                  summary: 'Move a Procedure time window',
+                  value: rescheduleProcedureAppointmentRequestExample,
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Appointment rescheduled.',
+            content: jsonContent(dataEnvelopeSchema('Appointment'), { data: appointmentExample }),
+          },
+          '400': {
+            description:
+              'The request is invalid, unchanged, in the past, or selects non-consecutive DoctorSlots.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['The Appointment schedule has not changed.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'No such Appointment exists in the active Tenant.',
+            content: jsonContent(schemaRef('NotFoundError'), {
+              message: 'Appointment not found',
+              errors: ['Appointment 101 was not found.'],
+            }),
+          },
+          '409': {
+            description:
+              'The Appointment is not eligible, the Booking Path changed, a scheduling reference is invalid, or a DoctorSlot was reserved concurrently.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ConflictError'),
+                examples: {
+                  ineligibleStatus: {
+                    value: {
+                      message: 'Only Scheduled or Confirmed Appointments can be rescheduled.',
+                      errors: ['Only Scheduled or Confirmed Appointments can be rescheduled.'],
+                    },
+                  },
+                  slotConflict: {
+                    value: {
+                      message: 'One or more selected Doctor slots are no longer available.',
+                      errors: ['One or more selected Doctor slots are no longer available.'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/appointments/{id}/cancel': {
+      post: {
+        tags: ['Appointment'],
+        summary: 'Cancel Appointment',
+        description:
+          'Irreversibly changes a Scheduled or Confirmed Appointment in the active Tenant to the system Cancelled status. The operation records an active Tenant Appointment Cancelled Reason and cancellation time while preserving the Booking Number and original schedule. Consultation Slot Reservations are released atomically. Repeated or concurrent cancellation attempts are rejected.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Appointment')],
+        requestBody: requestBody('CancelAppointmentRequest', cancelAppointmentRequestExample),
+        responses: {
+          '200': {
+            description: 'Appointment cancelled.',
+            content: jsonContent(dataEnvelopeSchema('Appointment'), {
+              data: cancelledAppointmentExample,
+            }),
+          },
+          '400': {
+            description: 'The request or identifier is invalid.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Appointment cancelled reason ID is required'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'No such Appointment exists in the active Tenant.',
+            content: jsonContent(schemaRef('NotFoundError'), {
+              message: 'Appointment not found',
+              errors: ['Appointment 101 was not found.'],
+            }),
+          },
+          '409': {
+            description:
+              'The Appointment is not Scheduled or Confirmed, the reason is unavailable, or the system Cancelled status is not configured.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ConflictError'),
+                examples: {
+                  ineligibleStatus: {
+                    value: {
+                      message: 'Only Scheduled or Confirmed Appointments can be cancelled.',
+                      errors: ['Only Scheduled or Confirmed Appointments can be cancelled.'],
+                    },
+                  },
+                  unavailableReason: {
+                    value: {
+                      message: 'Appointment Cancelled Reason is not available.',
+                      errors: ['Appointment Cancelled Reason is not available.'],
+                    },
+                  },
+                },
+              },
+            },
+          },
           '500': responseRef('InternalServerError'),
         },
       },
@@ -9217,6 +9392,68 @@ export const openApiDocument = {
           },
         },
       },
+      RescheduleAppointmentRequest: {
+        oneOf: [
+          schemaRef('RescheduleConsultationAppointmentRequest'),
+          schemaRef('RescheduleProcedureAppointmentRequest'),
+        ],
+        discriminator: {
+          propertyName: 'bookingPath',
+          mapping: {
+            CONSULTATION: '#/components/schemas/RescheduleConsultationAppointmentRequest',
+            PROCEDURE: '#/components/schemas/RescheduleProcedureAppointmentRequest',
+          },
+        },
+      },
+      CancelAppointmentRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['appointmentCancelledReasonId'],
+        properties: {
+          appointmentCancelledReasonId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Active Appointment Cancelled Reason identifier belonging to the active Tenant.',
+          },
+        },
+      },
+      RescheduleConsultationAppointmentRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['bookingPath', 'doctorId', 'slotDate', 'doctorRotaId', 'slotTimes'],
+        properties: {
+          bookingPath: { type: 'string', enum: ['CONSULTATION'] },
+          doctorId: { type: 'integer', minimum: 1 },
+          slotDate: {
+            type: 'string',
+            pattern: '^\\d{2}-\\d{2}-\\d{4}$',
+            example: '02-01-2100',
+          },
+          doctorRotaId: { type: 'integer', minimum: 1 },
+          slotTimes: {
+            type: 'array',
+            minItems: 1,
+            uniqueItems: true,
+            items: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+          },
+        },
+      },
+      RescheduleProcedureAppointmentRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['bookingPath', 'slotDate', 'startTime', 'endTime'],
+        properties: {
+          bookingPath: { type: 'string', enum: ['PROCEDURE'] },
+          slotDate: {
+            type: 'string',
+            pattern: '^\\d{2}-\\d{2}-\\d{4}$',
+            example: '02-01-2100',
+          },
+          startTime: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+          endTime: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+        },
+      },
       CreateConsultationAppointmentRequest: {
         type: 'object',
         additionalProperties: false,
@@ -9352,11 +9589,14 @@ export const openApiDocument = {
           'appointmentMode',
           'appointmentType',
           'appointmentReason',
+          'appointmentCancelledReason',
           'appointmentStatus',
+          'cancelledAt',
           'slotDate',
           'startTime',
           'endTime',
           'rotaName',
+          'doctorRotaId',
           'slots',
           'remarks',
           'createdOn',
@@ -9386,6 +9626,11 @@ export const openApiDocument = {
           appointmentReason: {
             oneOf: [schemaRef('AppointmentReferenceSummary'), { type: 'null' }],
           },
+          appointmentCancelledReason: {
+            oneOf: [schemaRef('AppointmentReferenceSummary'), { type: 'null' }],
+            description:
+              'Recorded cancellation reason. Historical values remain readable after the Master is removed.',
+          },
           appointmentStatus: {
             allOf: [
               schemaRef('AppointmentReferenceSummary'),
@@ -9412,6 +9657,8 @@ export const openApiDocument = {
           startTime: { type: ['string', 'null'], pattern: '^\\d{2}:\\d{2}$' },
           endTime: { type: ['string', 'null'], pattern: '^\\d{2}:\\d{2}$' },
           rotaName: { type: ['string', 'null'] },
+          doctorRotaId: { type: ['integer', 'null'], minimum: 1 },
+          cancelledAt: { type: ['string', 'null'], format: 'date-time' },
           slots: { type: 'array', items: schemaRef('AppointmentSlotBooking') },
           remarks: { type: ['string', 'null'] },
           createdOn: { type: 'string', format: 'date-time' },

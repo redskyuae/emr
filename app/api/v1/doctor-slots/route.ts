@@ -15,11 +15,14 @@ export async function GET(request: NextRequest) {
 
     const doctorId = request.nextUrl.searchParams.get('doctorId') ?? undefined;
     const slotDate = request.nextUrl.searchParams.get('slotDate') ?? undefined;
+    const reschedulingAppointmentId =
+      request.nextUrl.searchParams.get('reschedulingAppointmentId') ?? undefined;
 
     const queryResult = await getDoctorSlotsQuery({
       tenantId: tenantSession.tenantId,
       doctorId,
       slotDate,
+      ...(reschedulingAppointmentId ? { reschedulingAppointmentId } : {}),
     });
 
     if (!queryResult.success) {

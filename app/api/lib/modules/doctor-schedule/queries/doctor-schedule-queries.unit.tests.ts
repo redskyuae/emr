@@ -86,4 +86,22 @@ describe('DoctorSchedule queries', () => {
     });
     expect(repo.getDoctorSlots).toHaveBeenCalledWith('tenant-1', 2, '2026-07-15');
   });
+
+  it('should exclude the Appointment being rescheduled from booked DoctorSlots', async () => {
+    validateSlots.mockReturnValue({
+      success: true,
+      data: {
+        tenantId: 'tenant-1',
+        doctorId: 2,
+        slotDate: '2026-07-15',
+        reschedulingAppointmentId: 10,
+      },
+    });
+
+    await getDoctorSlotsQuery({});
+
+    expect(repo.getDoctorSlots).toHaveBeenCalledWith('tenant-1', 2, '2026-07-15', {
+      excludeAppointmentId: 10,
+    });
+  });
 });

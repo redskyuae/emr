@@ -6,11 +6,13 @@ export function BookingSummary({
   room,
   therapist,
   doctorName,
+  showProcedureResources = true,
 }: {
   values: BookAppointmentFormValues;
   room: DemoRoom | null;
   therapist: DemoTherapist | null;
   doctorName: string;
+  showProcedureResources?: boolean;
 }) {
   const procedure = values.visitType === 'PROCEDURE';
   const date = values.slotDate
@@ -34,7 +36,7 @@ export function BookingSummary({
       </p>
       <p className="text-muted-foreground text-xs">
         {doctorName || 'Choose a Doctor'}
-        {procedure
+        {procedure && showProcedureResources
           ? ' · ' +
             (room?.name ?? 'Choose a Room') +
             ' · ' +

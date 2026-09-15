@@ -253,6 +253,7 @@ export const doctorSlotsParamsSchema = z
     tenantId: tenantIdSchema,
     doctorId: positiveIdSchema('Doctor ID'),
     slotDate: compatibleSlotDateSchema,
+    reschedulingAppointmentId: positiveIdSchema('Rescheduling Appointment ID').optional(),
   })
   .strict();
 

@@ -108,6 +108,19 @@ describe('Visit commands', () => {
       });
     });
 
+    it('should map an Appointment that became ineligible during Check-in to a conflict', async () => {
+      repo.checkInVisit.mockResolvedValue({
+        success: false,
+        outcome: 'appointment-ineligible',
+      });
+
+      await expect(checkInVisitCommand({}, 'tenant-1')).resolves.toEqual({
+        success: false,
+        errors: ['Appointment is no longer eligible for Check-in.'],
+        status: StatusCodes.CONFLICT,
+      });
+    });
+
     it('should map the active-patient index race to the domain conflict message', async () => {
       repo.checkInVisit.mockRejectedValue({
         cause: { code: '23505', constraint: 'visit_active_patient_idx' },

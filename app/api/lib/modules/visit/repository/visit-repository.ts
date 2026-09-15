@@ -289,12 +289,47 @@ async function syncAppointmentStatus(
 }
 
 export type CheckInVisitRepositoryResult =
-  { success: true; data: Visit } | { success: false; outcome: 'appointment-status-not-configured' };
+  | { success: true; data: Visit }
+  | {
+      success: false;
+      outcome: 'appointment-ineligible' | 'appointment-status-not-configured';
+    };
 
 async function runCheckInVisitTransaction(
   data: ValidatedCheckInVisitData
 ): Promise<CheckInVisitRepositoryResult> {
   return db.transaction(async (tx) => {
+    if (data.appointmentId !== undefined) {
+      const [appointment] = await tx
+        .select({ statusCategory: appointmentStatusTable.category })
+        .from(appointmentTable)
+        .innerJoin(
+          appointmentStatusTable,
+          and(
+            eq(appointmentStatusTable.id, appointmentTable.appointmentStatusId),
+            eq(appointmentStatusTable.tenantId, appointmentTable.tenantId)
+          )
+        )
+        .where(
+          and(
+            eq(appointmentTable.id, data.appointmentId),
+            eq(appointmentTable.tenantId, data.tenantId),
+            eq(appointmentTable.isDeleted, false)
+          )
+        )
+        .for('update')
+        .limit(1);
+
+      // Validation happens before this transaction. Lock and re-check here so
+      // cancellation and Check-in cannot both commit for the same Appointment.
+      if (
+        !appointment ||
+        (appointment.statusCategory !== 'SCHEDULED' && appointment.statusCategory !== 'CONFIRMED')
+      ) {
+        return { success: false, outcome: 'appointment-ineligible' };
+      }
+    }
+
     const [numberCounter] = await tx
       .insert(visitNumberCounterTable)
       .values({ tenantId: data.tenantId, lastNumber: 1001 })

@@ -75,6 +75,18 @@ export function AppointmentDetailSheet({
                 <DetailField label="Rota" value={appointment.rotaName ?? 'N/A'} />
                 <DetailField label="Mode" value={appointment.appointmentMode?.name ?? 'N/A'} />
                 <DetailField label="Reason" value={appointment.appointmentReason?.name ?? 'N/A'} />
+                {appointment.appointmentCancelledReason ? (
+                  <DetailField
+                    label="Cancellation reason"
+                    value={appointment.appointmentCancelledReason.name}
+                  />
+                ) : null}
+                {appointment.cancelledAt ? (
+                  <DetailField
+                    label="Cancelled at"
+                    value={new Date(appointment.cancelledAt).toLocaleString()}
+                  />
+                ) : null}
               </div>
 
               <DetailField label="Remarks" value={appointment.remarks} />

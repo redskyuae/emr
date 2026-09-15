@@ -28,6 +28,8 @@ export function ProcedureScheduleSection({
   control,
   startTime,
   endTime,
+  usesSessionDuration = true,
+  timeZoneLabel = 'GST',
   onDateChange,
   onEndTimeChange,
   onStartTimeChange,
@@ -35,6 +37,8 @@ export function ProcedureScheduleSection({
   control: Control<BookAppointmentFormValues>;
   startTime: string;
   endTime: string;
+  usesSessionDuration?: boolean;
+  timeZoneLabel?: string;
   onDateChange: () => void;
   onEndTimeChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
@@ -132,9 +136,11 @@ export function ProcedureScheduleSection({
           />
         </div>
         <p className="text-muted-foreground mt-3 text-xs">
-          The selected Session provides the suggested end time, including setup and cleaning. You
-          can adjust either time in 15-minute increments; end time must be after start time. All
-          times are shown in GST.
+          {usesSessionDuration
+            ? 'The selected Session provides the suggested end time, including setup and cleaning. '
+            : ''}
+          You can adjust either time in 15-minute increments; end time must be after start time. All
+          times are shown in {timeZoneLabel}.
         </p>
       </CardContent>
     </Card>

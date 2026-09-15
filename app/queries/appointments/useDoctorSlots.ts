@@ -6,10 +6,12 @@ import { parseApiError } from '@/app/queries/api-error';
 export type DoctorSlotsFilters = {
   doctorId: number | null;
   slotDate: string;
+  reschedulingAppointmentId?: number;
 };
 
+export const doctorSlotsBaseKey = ['doctor-slots'] as const;
 export const doctorSlotsQueryKey = (filters: DoctorSlotsFilters) =>
-  ['doctor-slots', filters] as const;
+  [...doctorSlotsBaseKey, filters] as const;
 
 export type DoctorRotaOption = {
   id: string;
@@ -34,10 +36,17 @@ export function transformDoctorSlotsResponse(
   );
 }
 
-function buildDoctorSlotsParams(filters: { doctorId: number; slotDate: string }) {
+function buildDoctorSlotsParams(filters: {
+  doctorId: number;
+  slotDate: string;
+  reschedulingAppointmentId?: number;
+}) {
   const params = new URLSearchParams();
   params.set('doctorId', String(filters.doctorId));
   params.set('slotDate', filters.slotDate);
+  if (filters.reschedulingAppointmentId) {
+    params.set('reschedulingAppointmentId', String(filters.reschedulingAppointmentId));
+  }
 
   return params.toString();
 }
@@ -45,6 +54,7 @@ function buildDoctorSlotsParams(filters: { doctorId: number; slotDate: string })
 async function fetchDoctorSlots(filters: {
   doctorId: number;
   slotDate: string;
+  reschedulingAppointmentId?: number;
 }): Promise<ListDoctorSlotsResponse> {
   const response = await fetch(`/api/v1/doctor-slots?${buildDoctorSlotsParams(filters)}`, {
     credentials: 'same-origin',
@@ -65,6 +75,7 @@ export function useDoctorSlotsQuery(filters: DoctorSlotsFilters) {
       fetchDoctorSlots({
         slotDate: filters.slotDate,
         doctorId: filters.doctorId as number,
+        reschedulingAppointmentId: filters.reschedulingAppointmentId,
       }),
     select: transformDoctorSlotsResponse,
   });
