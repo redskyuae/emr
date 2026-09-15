@@ -39,8 +39,12 @@ type SelectExecutor = Pick<typeof db, 'select'>;
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type AppointmentRow = Omit<
   Appointment,
-  'doctorRotaId' | 'slotDate' | 'appointmentStatus' | 'slots'
+  'doctor' | 'doctorRotaId' | 'slotDate' | 'appointmentStatus' | 'slots'
 > & {
+  doctor: {
+    id: number | null;
+    name: string | null;
+  };
   slotDate: string;
   appointmentStatus: Omit<Appointment['appointmentStatus'], 'category'> & {
     category: string;
@@ -179,6 +183,10 @@ function toAppointment(row: AppointmentRow, reservations?: AppointmentReservatio
   return {
     ...row,
     slots: reservations?.slots ?? [],
+    doctor:
+      row.doctor.id === null || row.doctor.name === null
+        ? null
+        : { id: row.doctor.id, name: row.doctor.name },
     doctorRotaId: reservations?.doctorRotaId ?? null,
     slotDate: formatAppointmentDate(row.slotDate),
     appointmentStatus: {
