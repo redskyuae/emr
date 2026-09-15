@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Eye, MoreHorizontal, UserRound } from 'lucide-react';
+import { CalendarClock, CircleX, Eye, MoreHorizontal, UserRound } from 'lucide-react';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { canCancelAppointment } from '../_utils/appointment-cancellation';
 import { appointmentStatusVariant } from '../_utils/appointment-status';
 
 function formatSlotRange(appointment: Appointment) {
@@ -36,9 +37,11 @@ function formatSlotRange(appointment: Appointment) {
 
 export function AppointmentsTable({
   appointments,
+  onCancel,
   label = 'Appointments',
 }: {
   appointments: Appointment[];
+  onCancel: (appointment: Appointment) => void;
   label?: string;
 }) {
   return (
@@ -58,76 +61,106 @@ export function AppointmentsTable({
             </tr>
           </thead>
           <tbody>
-            {appointments.map((appointment) => (
-              <tr key={appointment.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                <td className="p-3 pl-4">
-                  <p className="font-mono text-sm font-medium">{appointment.bookingNumber}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {appointment.bookingPath === 'PROCEDURE'
-                      ? 'Procedure'
-                      : (appointment.rotaName ?? 'Consultation')}
-                  </p>
-                </td>
-                <td className="p-3">
-                  <p className="font-medium tabular-nums">{appointment.slotDate}</p>
-                  <p className="text-muted-foreground text-xs tabular-nums">
-                    {formatSlotRange(appointment)}
-                  </p>
-                </td>
-                <td className="p-3">
-                  <Link
-                    href={`/patients/${appointment.patient.id}`}
-                    className="font-medium hover:underline"
-                  >
-                    {appointment.patient.firstName} {appointment.patient.lastName}
-                  </Link>
-                  <p className="text-muted-foreground text-xs">
-                    {appointment.patient.mrn} / {appointment.patient.phone}
-                  </p>
-                </td>
-                <td className="p-3">{appointment.doctor?.name ?? 'N/A'}</td>
-                <td className="p-3">
-                  <Badge variant="secondary">
-                    {appointment.appointmentType?.code ?? appointment.bookingPath}
-                  </Badge>
-                </td>
-                <td className="p-3">
-                  <Badge variant="outline">{appointment.appointmentMode?.code ?? 'N/A'}</Badge>
-                </td>
-                <td className="p-3">
-                  <Badge variant={appointmentStatusVariant(appointment.appointmentStatus.category)}>
-                    {appointment.appointmentStatus.name}
-                  </Badge>
-                </td>
-                <td className="p-3 pr-4 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Actions for ${appointment.bookingNumber}`}
-                      >
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/patients/${appointment.patient.id}`}>
-                          <UserRound className="size-4" />
-                          Open Patient
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/visits?checkin=new">
-                          <Eye className="size-4" />
-                          Check-in desk
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
+            {appointments.map((appointment) => {
+              const canReschedule =
+                appointment.appointmentStatus.category === 'scheduled' ||
+                appointment.appointmentStatus.category === 'confirmed';
+              const canCancel = canCancelAppointment(appointment.appointmentStatus.category);
+
+              return (
+                <tr key={appointment.id} className="hover:bg-muted/50 border-b last:border-b-0">
+                  <td className="p-3 pl-4">
+                    <p className="font-mono text-sm font-medium">{appointment.bookingNumber}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {appointment.bookingPath === 'PROCEDURE'
+                        ? 'Procedure'
+                        : (appointment.rotaName ?? 'Consultation')}
+                    </p>
+                  </td>
+                  <td className="p-3">
+                    <p className="font-medium tabular-nums">{appointment.slotDate}</p>
+                    <p className="text-muted-foreground text-xs tabular-nums">
+                      {formatSlotRange(appointment)}
+                    </p>
+                  </td>
+                  <td className="p-3">
+                    <Link
+                      href={`/patients/${appointment.patient.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {appointment.patient.firstName} {appointment.patient.lastName}
+                    </Link>
+                    <p className="text-muted-foreground text-xs">
+                      {appointment.patient.mrn} / {appointment.patient.phone}
+                    </p>
+                  </td>
+                  <td className="p-3">{appointment.doctor?.name ?? 'N/A'}</td>
+                  <td className="p-3">
+                    <Badge variant="secondary">
+                      {appointment.appointmentType?.code ?? appointment.bookingPath}
+                    </Badge>
+                  </td>
+                  <td className="p-3">
+                    <Badge variant="outline">{appointment.appointmentMode?.code ?? 'N/A'}</Badge>
+                  </td>
+                  <td className="p-3">
+                    <Badge
+                      variant={appointmentStatusVariant(appointment.appointmentStatus.category)}
+                    >
+                      {appointment.appointmentStatus.name}
+                    </Badge>
+                  </td>
+                  <td className="p-3 pr-4 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${appointment.bookingNumber}`}
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canReschedule ? (
+                          <DropdownMenuItem asChild>
+                            <Link href={`/appointments/${appointment.id}/reschedule`}>
+                              <CalendarClock className="size-4" />
+                              Reschedule
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem disabled>
+                            <CalendarClock className="size-4" />
+                            Reschedule
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          disabled={!canCancel}
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => onCancel(appointment)}
+                        >
+                          <CircleX className="size-4" />
+                          Cancel Appointment
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/patients/${appointment.patient.id}`}>
+                            <UserRound className="size-4" />
+                            Open Patient
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/visits?checkin=new">
+                            <Eye className="size-4" />
+                            Check-in desk
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -146,6 +179,7 @@ export function AppointmentsTableSkeleton() {
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-5 w-20" />
           <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-5 w-20" />
           <Skeleton className="ml-auto h-8 w-10" />
         </div>
       ))}

@@ -31,6 +31,7 @@ export function AppointmentScheduleSection({
   endTime,
   selectedRotaId,
   recommendedDuration,
+  timeZoneLabel = 'GST',
   isLoading,
   error,
   onRetry,
@@ -47,6 +48,7 @@ export function AppointmentScheduleSection({
   endTime: string;
   selectedRotaId: string;
   recommendedDuration: number;
+  timeZoneLabel?: string;
   isLoading: boolean;
   error: string | null;
   onRetry: () => void;
@@ -113,7 +115,7 @@ export function AppointmentScheduleSection({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold">Appointment time</h3>
-              <p className="text-muted-foreground text-xs">All times shown in GST.</p>
+              <p className="text-muted-foreground text-xs">All times shown in {timeZoneLabel}.</p>
             </div>
             {canChooseTime ? (
               <BookingStatusBadge tone="success">

@@ -505,7 +505,8 @@ async function getDoctorSchedules({
 async function getDoctorSlots(
   tenantId: string,
   doctorId: number,
-  slotDate: string
+  slotDate: string,
+  { excludeAppointmentId }: { excludeAppointmentId?: number } = {}
 ): Promise<DoctorSlotDate[]> {
   const { data: schedules } = await getDoctorSchedules({
     limit: 999,
@@ -514,7 +515,13 @@ async function getDoctorSlots(
     toDate: slotDate,
     fromDate: slotDate,
   });
-  const reserved = await appointmentRepository.getReservedSlotTimes(tenantId, doctorId, slotDate);
+  const reserved = await appointmentRepository.getReservedSlotTimes(
+    tenantId,
+    doctorId,
+    slotDate,
+    undefined,
+    { excludeAppointmentId }
+  );
   const bookedSlotTimes = new Set(reserved.map((reservation) => reservation.slotTime));
 
   const rotas = schedules.flatMap((schedule) =>

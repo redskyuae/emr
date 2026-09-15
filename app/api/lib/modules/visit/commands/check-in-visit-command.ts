@@ -29,6 +29,14 @@ export async function checkInVisitCommand(
       return result;
     }
 
+    if (result.outcome === 'appointment-ineligible') {
+      return {
+        success: false,
+        errors: ['Appointment is no longer eligible for Check-in.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
     return {
       success: false,
       errors: ['Checked in appointment status is not configured.'],

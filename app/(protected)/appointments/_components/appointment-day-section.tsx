@@ -13,6 +13,7 @@ type AppointmentDaySectionProps = {
   description: string;
   emptyDescription: string;
   kind: 'upcoming' | 'completed';
+  onCancel: (appointment: Appointment) => void;
 };
 
 export function AppointmentDaySection({
@@ -22,6 +23,7 @@ export function AppointmentDaySection({
   appointments,
   description,
   emptyDescription,
+  onCancel,
 }: AppointmentDaySectionProps) {
   const Icon = kind === 'upcoming' ? CalendarClock : CircleCheck;
   const iconClassName = kind === 'upcoming' ? 'text-primary' : 'text-success';
@@ -48,7 +50,7 @@ export function AppointmentDaySection({
       </div>
 
       {appointments.length > 0 ? (
-        <AppointmentsTable appointments={appointments} label={title} />
+        <AppointmentsTable appointments={appointments} label={title} onCancel={onCancel} />
       ) : (
         <Card className="shadow-fluent-2">
           <CardContent className="p-4">

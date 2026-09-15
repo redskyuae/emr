@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import {
@@ -6,6 +6,7 @@ import {
   appointmentBookingNumberCounter as appointmentBookingNumberCounterTable,
   appointmentSlotReservation as appointmentSlotReservationTable,
 } from '@/app/db/schema/appointment';
+import { appointmentCancelledReason as appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
 import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
 import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
@@ -28,17 +29,30 @@ import type {
   AppointmentListParams,
   PotentialPatientMatch,
   ValidatedCreateAppointmentData,
+  ValidatedCancelAppointmentData,
+  ValidatedRescheduleAppointmentData,
 } from '../schemas/appointment-schema';
 import { formatAppointmentDate } from '../schemas/appointment-schema';
 import { isFutureSlotSelection, isValidSlotSelection } from '../schemas/appointment-slot';
 
 type SelectExecutor = Pick<typeof db, 'select'>;
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type AppointmentRow = Omit<Appointment, 'slotDate' | 'appointmentStatus' | 'slots'> & {
+type AppointmentRow = Omit<
+  Appointment,
+  'doctor' | 'doctorRotaId' | 'slotDate' | 'appointmentStatus' | 'slots'
+> & {
+  doctor: {
+    id: number | null;
+    name: string | null;
+  };
   slotDate: string;
   appointmentStatus: Omit<Appointment['appointmentStatus'], 'category'> & {
     category: string;
   };
+};
+type AppointmentReservations = {
+  doctorRotaId: number | null;
+  slots: Appointment['slots'];
 };
 
 export type AppointmentSlotBookingContext = {
@@ -57,6 +71,7 @@ function addMinutesToTime(value: string, minutesToAdd: number) {
 
 const appointmentColumns = {
   id: appointmentTable.id,
+  cancelledAt: appointmentTable.cancelledAt,
   remarks: appointmentTable.remarks,
   rotaName: appointmentTable.rotaName,
   tenantId: appointmentTable.tenantId,
@@ -92,6 +107,11 @@ const appointmentColumns = {
     id: appointmentReasonTable.id,
     name: appointmentReasonTable.name,
     code: appointmentReasonTable.code,
+  },
+  appointmentCancelledReason: {
+    id: appointmentCancelledReasonTable.id,
+    name: appointmentCancelledReasonTable.name,
+    code: appointmentCancelledReasonTable.code,
   },
   appointmentStatus: {
     id: appointmentStatusTable.id,
@@ -143,6 +163,13 @@ function appointmentJoins(executor: SelectExecutor = db) {
         eq(appointmentReasonTable.tenantId, appointmentTable.tenantId)
       )
     )
+    .leftJoin(
+      appointmentCancelledReasonTable,
+      and(
+        eq(appointmentCancelledReasonTable.id, appointmentTable.appointmentCancelledReasonId),
+        eq(appointmentCancelledReasonTable.tenantId, appointmentTable.tenantId)
+      )
+    )
     .innerJoin(
       appointmentStatusTable,
       and(
@@ -152,10 +179,15 @@ function appointmentJoins(executor: SelectExecutor = db) {
     );
 }
 
-function toAppointment(row: AppointmentRow, slots: Appointment['slots']): Appointment {
+function toAppointment(row: AppointmentRow, reservations?: AppointmentReservations): Appointment {
   return {
     ...row,
-    slots,
+    slots: reservations?.slots ?? [],
+    doctor:
+      row.doctor.id === null || row.doctor.name === null
+        ? null
+        : { id: row.doctor.id, name: row.doctor.name },
+    doctorRotaId: reservations?.doctorRotaId ?? null,
     slotDate: formatAppointmentDate(row.slotDate),
     appointmentStatus: {
       ...row.appointmentStatus,
@@ -171,12 +203,13 @@ async function getAppointmentSlots(
   executor: SelectExecutor = db
 ) {
   if (appointmentIds.length === 0) {
-    return new Map<number, Appointment['slots']>();
+    return new Map<number, AppointmentReservations>();
   }
 
   const rows = await executor
     .select({
       appointmentId: appointmentSlotReservationTable.appointmentId,
+      doctorRotaId: appointmentSlotReservationTable.doctorRotaId,
       slotTime: appointmentSlotReservationTable.slotTime,
     })
     .from(appointmentSlotReservationTable)
@@ -192,12 +225,15 @@ async function getAppointmentSlots(
       appointmentSlotReservationTable.slotTime
     );
 
-  const slotsByAppointment = new Map<number, Appointment['slots']>();
+  const slotsByAppointment = new Map<number, AppointmentReservations>();
 
   for (const row of rows) {
-    const slots = slotsByAppointment.get(row.appointmentId) ?? [];
-    slots.push({ slotTime: row.slotTime, status: 'Booked' });
-    slotsByAppointment.set(row.appointmentId, slots);
+    const reservations = slotsByAppointment.get(row.appointmentId) ?? {
+      doctorRotaId: row.doctorRotaId,
+      slots: [],
+    };
+    reservations.slots.push({ slotTime: row.slotTime, status: 'Booked' });
+    slotsByAppointment.set(row.appointmentId, reservations);
   }
 
   return slotsByAppointment;
@@ -224,7 +260,7 @@ async function getAppointmentById(
 
   const slotsByAppointment = await getAppointmentSlots([id], tenantId, executor);
 
-  return toAppointment(row as AppointmentRow, slotsByAppointment.get(id) ?? []);
+  return toAppointment(row as AppointmentRow, slotsByAppointment.get(id));
 }
 
 async function getAppointments({
@@ -301,9 +337,7 @@ async function getAppointments({
 
   return {
     total,
-    data: rows.map((row) =>
-      toAppointment(row as AppointmentRow, slotsByAppointment.get(row.id) ?? [])
-    ),
+    data: rows.map((row) => toAppointment(row as AppointmentRow, slotsByAppointment.get(row.id))),
   };
 }
 
@@ -434,7 +468,10 @@ async function getReservedSlotTimes(
   doctorId: number,
   slotDate: string,
   slotTimes?: string[],
-  executor: SelectExecutor = db
+  {
+    executor = db,
+    excludeAppointmentId,
+  }: { executor?: SelectExecutor; excludeAppointmentId?: number } = {}
 ) {
   if (slotTimes?.length === 0) {
     return [];
@@ -449,7 +486,10 @@ async function getReservedSlotTimes(
         eq(appointmentSlotReservationTable.doctorId, doctorId),
         eq(appointmentSlotReservationTable.slotDate, slotDate),
         eq(appointmentSlotReservationTable.isDeleted, false),
-        slotTimes ? inArray(appointmentSlotReservationTable.slotTime, slotTimes) : undefined
+        slotTimes ? inArray(appointmentSlotReservationTable.slotTime, slotTimes) : undefined,
+        excludeAppointmentId
+          ? ne(appointmentSlotReservationTable.appointmentId, excludeAppointmentId)
+          : undefined
       )
     );
 }
@@ -512,6 +552,28 @@ export type CreateAppointmentRepositoryResult =
   | { success: false; outcome: 'patient-inactive' }
   | { success: false; outcome: 'potential-patient-match'; patientMatches: PotentialPatientMatch[] }
   | { success: false; outcome: 'slot-invalid' | 'slot-unavailable' | 'slot-past' };
+
+export type RescheduleAppointmentRepositoryResult =
+  | { success: true; data: Appointment }
+  | {
+      success: false;
+      outcome:
+        | 'not-found'
+        | 'ineligible'
+        | 'no-change'
+        | 'booking-path-mismatch'
+        | 'invalid-reference'
+        | 'slot-invalid'
+        | 'slot-unavailable'
+        | 'slot-past';
+    };
+
+export type CancelAppointmentRepositoryResult =
+  | { success: true; data: Appointment }
+  | {
+      success: false;
+      outcome: 'not-found' | 'ineligible' | 'invalid-reason' | 'cancelled-status-not-configured';
+    };
 
 async function createAppointment(
   data: ValidatedCreateAppointmentData
@@ -623,7 +685,7 @@ async function createAppointment(
         data.doctorId,
         data.slotDate,
         data.slotTimes,
-        tx
+        { executor: tx }
       );
 
       if (reserved.length > 0) {
@@ -744,9 +806,294 @@ async function createAppointment(
   });
 }
 
+async function rescheduleAppointment(
+  data: ValidatedRescheduleAppointmentData
+): Promise<RescheduleAppointmentRepositoryResult> {
+  return db.transaction(async (tx) => {
+    const [currentRow] = await tx
+      .select({
+        id: appointmentTable.id,
+        slotDate: appointmentTable.slotDate,
+        endTime: appointmentTable.endTime,
+        startTime: appointmentTable.startTime,
+        doctorId: appointmentTable.doctorId,
+        bookingPath: appointmentTable.bookingPath,
+        statusCategory: appointmentStatusTable.category,
+      })
+      .from(appointmentTable)
+      .innerJoin(
+        appointmentStatusTable,
+        and(
+          eq(appointmentStatusTable.id, appointmentTable.appointmentStatusId),
+          eq(appointmentStatusTable.tenantId, appointmentTable.tenantId)
+        )
+      )
+      .where(
+        and(
+          eq(appointmentTable.id, data.id),
+          eq(appointmentTable.tenantId, data.tenantId),
+          eq(appointmentTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!currentRow) return { success: false, outcome: 'not-found' };
+    if (currentRow.statusCategory !== 'SCHEDULED' && currentRow.statusCategory !== 'CONFIRMED') {
+      return { success: false, outcome: 'ineligible' };
+    }
+    if (currentRow.bookingPath !== data.bookingPath) {
+      return { success: false, outcome: 'booking-path-mismatch' };
+    }
+
+    const [scheduledStatus] = await tx
+      .select({ id: appointmentStatusTable.id })
+      .from(appointmentStatusTable)
+      .where(
+        and(
+          eq(appointmentStatusTable.tenantId, data.tenantId),
+          eq(appointmentStatusTable.category, 'SCHEDULED'),
+          eq(appointmentStatusTable.isSystem, true),
+          eq(appointmentStatusTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!scheduledStatus) return { success: false, outcome: 'invalid-reference' };
+
+    const now = new Date();
+
+    if (data.bookingPath === 'PROCEDURE') {
+      if (
+        currentRow.slotDate === data.slotDate &&
+        currentRow.startTime === data.startTime &&
+        currentRow.endTime === data.endTime
+      ) {
+        return { success: false, outcome: 'no-change' };
+      }
+
+      if (!isFutureSlotSelection(data.slotDate, data.startTime, data.timeZone)) {
+        return { success: false, outcome: 'slot-past' };
+      }
+
+      await tx
+        .update(appointmentTable)
+        .set({
+          slotDate: data.slotDate,
+          endTime: data.endTime,
+          startTime: data.startTime,
+          modifiedOn: now,
+          appointmentStatusId: scheduledStatus.id,
+        })
+        .where(
+          and(
+            eq(appointmentTable.id, data.id),
+            eq(appointmentTable.tenantId, data.tenantId),
+            eq(appointmentTable.isDeleted, false)
+          )
+        );
+    } else {
+      const current = await getAppointmentById(data.id, data.tenantId, tx);
+
+      if (!current) return { success: false, outcome: 'not-found' };
+
+      if (
+        currentRow.slotDate === data.slotDate &&
+        currentRow.doctorId === data.doctorId &&
+        current.doctorRotaId === data.doctorRotaId &&
+        current.slots.map((slot) => slot.slotTime).join(',') === data.slotTimes.join(',')
+      ) {
+        return { success: false, outcome: 'no-change' };
+      }
+
+      const slotContext = await getSlotBookingContext(
+        data.tenantId,
+        data.doctorId,
+        data.doctorRotaId,
+        data.slotDate,
+        tx,
+        true
+      );
+
+      if (!slotContext) return { success: false, outcome: 'invalid-reference' };
+      if (!isValidSlotSelection(slotContext, data.slotTimes)) {
+        return { success: false, outcome: 'slot-invalid' };
+      }
+      if (!isFutureSlotSelection(data.slotDate, data.slotTimes[0], data.timeZone)) {
+        return { success: false, outcome: 'slot-past' };
+      }
+
+      const reserved = await getReservedSlotTimes(
+        data.tenantId,
+        data.doctorId,
+        data.slotDate,
+        data.slotTimes,
+        { executor: tx, excludeAppointmentId: data.id }
+      );
+
+      if (reserved.length > 0) return { success: false, outcome: 'slot-unavailable' };
+
+      await tx
+        .update(appointmentSlotReservationTable)
+        .set({ isDeleted: true, deletedOn: now, modifiedOn: now })
+        .where(
+          and(
+            eq(appointmentSlotReservationTable.appointmentId, data.id),
+            eq(appointmentSlotReservationTable.tenantId, data.tenantId),
+            eq(appointmentSlotReservationTable.isDeleted, false)
+          )
+        );
+
+      await tx.insert(appointmentSlotReservationTable).values(
+        data.slotTimes.map((slotTime) => ({
+          tenantId: data.tenantId,
+          appointmentId: data.id,
+          doctorId: data.doctorId,
+          doctorRotaId: data.doctorRotaId,
+          slotDate: data.slotDate,
+          slotTime,
+        }))
+      );
+
+      const endTime = addMinutesToTime(
+        data.slotTimes.at(-1) ?? data.slotTimes[0],
+        slotContext.durationMinutes
+      );
+
+      await tx
+        .update(appointmentTable)
+        .set({
+          endTime,
+          slotDate: data.slotDate,
+          doctorId: data.doctorId,
+          startTime: data.slotTimes[0],
+          rotaName: slotContext.rotaName,
+          modifiedOn: now,
+          appointmentStatusId: scheduledStatus.id,
+        })
+        .where(
+          and(
+            eq(appointmentTable.id, data.id),
+            eq(appointmentTable.tenantId, data.tenantId),
+            eq(appointmentTable.isDeleted, false)
+          )
+        );
+    }
+
+    const updated = await getAppointmentById(data.id, data.tenantId, tx);
+    if (!updated) throw new Error('Rescheduled Appointment could not be read');
+
+    return { success: true, data: updated };
+  });
+}
+
+async function cancelAppointment(
+  data: ValidatedCancelAppointmentData
+): Promise<CancelAppointmentRepositoryResult> {
+  return db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({
+        id: appointmentTable.id,
+        statusCategory: appointmentStatusTable.category,
+      })
+      .from(appointmentTable)
+      .innerJoin(
+        appointmentStatusTable,
+        and(
+          eq(appointmentStatusTable.id, appointmentTable.appointmentStatusId),
+          eq(appointmentStatusTable.tenantId, appointmentTable.tenantId)
+        )
+      )
+      .where(
+        and(
+          eq(appointmentTable.id, data.id),
+          eq(appointmentTable.tenantId, data.tenantId),
+          eq(appointmentTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!current) return { success: false, outcome: 'not-found' };
+    if (current.statusCategory !== 'SCHEDULED' && current.statusCategory !== 'CONFIRMED') {
+      return { success: false, outcome: 'ineligible' };
+    }
+
+    const [cancellationReason] = await tx
+      .select({ id: appointmentCancelledReasonTable.id })
+      .from(appointmentCancelledReasonTable)
+      .where(
+        and(
+          eq(appointmentCancelledReasonTable.id, data.appointmentCancelledReasonId),
+          eq(appointmentCancelledReasonTable.tenantId, data.tenantId),
+          eq(appointmentCancelledReasonTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!cancellationReason) return { success: false, outcome: 'invalid-reason' };
+
+    const [cancelledStatus] = await tx
+      .select({ id: appointmentStatusTable.id })
+      .from(appointmentStatusTable)
+      .where(
+        and(
+          eq(appointmentStatusTable.tenantId, data.tenantId),
+          eq(appointmentStatusTable.category, 'CANCELLED'),
+          eq(appointmentStatusTable.isSystem, true),
+          eq(appointmentStatusTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!cancelledStatus) {
+      return { success: false, outcome: 'cancelled-status-not-configured' };
+    }
+
+    const cancelledAt = new Date();
+
+    await tx
+      .update(appointmentSlotReservationTable)
+      .set({ isDeleted: true, deletedOn: cancelledAt, modifiedOn: cancelledAt })
+      .where(
+        and(
+          eq(appointmentSlotReservationTable.appointmentId, data.id),
+          eq(appointmentSlotReservationTable.tenantId, data.tenantId),
+          eq(appointmentSlotReservationTable.isDeleted, false)
+        )
+      );
+
+    await tx
+      .update(appointmentTable)
+      .set({
+        cancelledAt,
+        modifiedOn: cancelledAt,
+        appointmentStatusId: cancelledStatus.id,
+        appointmentCancelledReasonId: cancellationReason.id,
+      })
+      .where(
+        and(
+          eq(appointmentTable.id, data.id),
+          eq(appointmentTable.tenantId, data.tenantId),
+          eq(appointmentTable.isDeleted, false)
+        )
+      );
+
+    const cancelled = await getAppointmentById(data.id, data.tenantId, tx);
+    if (!cancelled) throw new Error('Cancelled Appointment could not be read');
+
+    return { success: true, data: cancelled };
+  });
+}
+
 export const appointmentRepository = {
+  cancelAppointment,
   getAppointments,
   createAppointment,
+  rescheduleAppointment,
   getAppointmentById,
   getReservedSlotTimes,
   getSlotBookingContext,
