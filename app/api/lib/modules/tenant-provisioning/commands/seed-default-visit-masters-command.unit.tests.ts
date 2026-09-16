@@ -13,7 +13,11 @@ describe('SeedDefaultVisitMasters command', () => {
   });
 
   it('should seed the default visit types for the validated tenant', async () => {
-    const result = await seedDefaultVisitMastersCommand(' tenant-a ', seedVisitTypes, seedTreatments);
+    const result = await seedDefaultVisitMastersCommand(
+      ' tenant-a ',
+      seedVisitTypes,
+      seedTreatments
+    );
 
     expect(result).toEqual({ success: true, data: undefined });
     expect(seedVisitTypes).toHaveBeenCalledWith(

@@ -181,13 +181,15 @@ describe('Visit schema', () => {
     });
 
     it('should require Treatment and Session together', () => {
-      expect(
-        errorsOf(updateVisitSchema.safeParse({ treatmentId: 400 }))
-      ).toContain('Treatment and Session must be provided together.');
+      expect(errorsOf(updateVisitSchema.safeParse({ treatmentId: 400 }))).toContain(
+        'Treatment and Session must be provided together.'
+      );
     });
 
     it('should accept a Treatment and Session pair', () => {
-      expect(updateVisitSchema.parse({ treatmentId: '400', treatmentSessionId: '401' })).toMatchObject({
+      expect(
+        updateVisitSchema.parse({ treatmentId: '400', treatmentSessionId: '401' })
+      ).toMatchObject({
         treatmentId: 400,
         treatmentSessionId: 401,
       });

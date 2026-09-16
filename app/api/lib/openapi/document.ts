@@ -8561,7 +8561,8 @@ export const openApiDocument = {
           treatmentId: {
             type: 'integer',
             minimum: 1,
-            description: 'Active Treatment identifier. Must be sent together with treatmentSessionId.',
+            description:
+              'Active Treatment identifier. Must be sent together with treatmentSessionId.',
           },
           treatmentSessionId: {
             type: 'integer',

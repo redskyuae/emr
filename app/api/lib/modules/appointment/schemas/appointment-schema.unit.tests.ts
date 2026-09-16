@@ -175,11 +175,13 @@ describe('Appointment schema', () => {
   });
 
   it('should require a Treatment and Session on a Procedure', () => {
-    const {
-      treatmentId: _treatmentId,
-      treatmentSessionId: _sessionId,
-      ...withoutTreatment
-    } = validProcedurePayload;
+    const withoutTreatment = {
+      bookingPath: validProcedurePayload.bookingPath,
+      patientId: validProcedurePayload.patientId,
+      slotDate: validProcedurePayload.slotDate,
+      startTime: validProcedurePayload.startTime,
+      endTime: validProcedurePayload.endTime,
+    };
 
     expect(errorsOf(withoutTreatment)).toEqual(
       expect.arrayContaining(['Treatment ID is required', 'Treatment session ID is required'])
