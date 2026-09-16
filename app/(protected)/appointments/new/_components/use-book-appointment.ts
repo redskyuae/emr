@@ -18,6 +18,7 @@ import {
 import { useDoctorSlotsQuery } from '@/app/queries/appointments/useDoctorSlots';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
+import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
 import { usePatientVisitsQuery } from '@/app/queries/visits/useVisits';
 import {
   getProcedureEndTime,
@@ -36,8 +37,8 @@ import {
 import {
   DEMO_FACILITY,
   DEMO_ROOMS,
-  DEMO_TREATMENT_CATALOG,
   DEMO_THERAPISTS,
+  toBookingTreatment,
 } from './book-appointment-demo-data';
 
 const initialValues: BookAppointmentFormValues = {
@@ -110,6 +111,7 @@ export function useBookAppointment() {
   const modesQuery = useAppointmentModesQuery(masterListParams);
   const typesQuery = useAppointmentTypesQuery(masterListParams);
   const reasonsQuery = useAppointmentReasonsQuery(masterListParams);
+  const treatmentsQuery = useTreatmentsQuery({ page: 1, limit: 999 });
 
   const doctors = (doctorsQuery.data?.data ?? []).map((doctor) => ({
     id: doctor.id,
@@ -138,7 +140,7 @@ export function useBookAppointment() {
       patients.findIndex((candidate) => candidate.id === patient.id) === index
   );
 
-  const treatmentOptions = DEMO_TREATMENT_CATALOG;
+  const treatmentOptions = (treatmentsQuery.data?.data ?? []).map(toBookingTreatment);
   const selectedTreatment =
     treatmentOptions.find((treatment) => String(treatment.id) === values.treatmentId) ?? null;
   const selectedSession =

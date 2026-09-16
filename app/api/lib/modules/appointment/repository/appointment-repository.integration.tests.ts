@@ -17,6 +17,10 @@ import {
 } from '@/app/db/schema/doctor-schedule';
 import { patient as patientTable } from '@/app/db/schema/patient';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
+import {
+  treatment as treatmentTable,
+  treatmentSession as treatmentSessionTable,
+} from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import { visitRepository } from '../../visit/repository/visit-repository';
 import type { ValidatedCreateAppointmentData } from '../schemas/appointment-schema';
@@ -154,6 +158,31 @@ async function createFixtures() {
     })
     .returning({ id: patientTable.id, phone: patientTable.phone });
 
+  const [treatment] = await db
+    .insert(treatmentTable)
+    .values({
+      tenantId,
+      name: 'Abhyanga wellness programme',
+      code: `TRT${sequence}`,
+      durationMinutes: 60,
+      setupMinutes: 10,
+      cleaningMinutes: 5,
+    })
+    .returning({ id: treatmentTable.id });
+  const [session] = await db
+    .insert(treatmentSessionTable)
+    .values({
+      tenantId,
+      treatmentId: treatment.id,
+      sessionNumber: 1,
+      label: 'Session 1 of 1 · Abhyanga',
+      procedure: 'Abhyanga',
+      durationMinutes: 60,
+      setupMinutes: 10,
+      cleaningMinutes: 5,
+    })
+    .returning({ id: treatmentSessionTable.id });
+
   return {
     tenantId,
     doctorId: doctor.id,
@@ -165,6 +194,8 @@ async function createFixtures() {
     confirmedStatus,
     cancellationReason,
     patient,
+    treatmentId: treatment.id,
+    treatmentSessionId: session.id,
   };
 }
 
@@ -428,6 +459,8 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '11:00',
+      treatmentId: fixtures.treatmentId,
+      treatmentSessionId: fixtures.treatmentSessionId,
       remarks: undefined,
     });
     if (!created.success) throw new Error('appointment creation failed');
@@ -509,6 +542,8 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '11:15',
+      treatmentId: fixtures.treatmentId,
+      treatmentSessionId: fixtures.treatmentSessionId,
       remarks: undefined,
     });
 
@@ -524,6 +559,8 @@ describe('Appointment repository', () => {
         appointmentType: null,
         appointmentReason: null,
         slots: [],
+        treatment: { id: fixtures.treatmentId, code: `TRT${sequence}` },
+        treatmentSession: { id: fixtures.treatmentSessionId, sessionNumber: 1 },
       },
     });
   });
@@ -540,6 +577,8 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '12:00',
       endTime: '13:00',
+      treatmentId: fixtures.treatmentId,
+      treatmentSessionId: fixtures.treatmentSessionId,
       remarks: undefined,
     });
 

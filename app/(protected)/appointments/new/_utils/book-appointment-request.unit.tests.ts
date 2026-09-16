@@ -56,7 +56,7 @@ describe('Book Appointment request', () => {
       startTime: '09:00',
       endTime: '09:15',
       treatmentId: '400',
-      sessionId: '400-1',
+      sessionId: '4001',
       roomId: '7',
       therapistId: '41',
     });
@@ -94,7 +94,7 @@ describe('Book Appointment request', () => {
       startTime: '10:00',
       endTime: '11:15',
       treatmentId: '400',
-      sessionId: '400-1',
+      sessionId: '4001',
       roomId: '7',
       therapistId: '41',
     });
@@ -105,6 +105,8 @@ describe('Book Appointment request', () => {
       slotDate: '31-12-2099',
       startTime: '10:00',
       endTime: '11:15',
+      treatmentId: 400,
+      treatmentSessionId: 4001,
       remarks: undefined,
     });
   });
@@ -120,7 +122,7 @@ describe('Book Appointment request', () => {
       startTime: '10:30',
       endTime: '11:45',
       treatmentId: '400',
-      sessionId: '400-1',
+      sessionId: '4001',
       roomId: '7',
       therapistId: '41',
     });
@@ -132,6 +134,8 @@ describe('Book Appointment request', () => {
       slotDate: '31-12-2099',
       startTime: '10:30',
       endTime: '11:45',
+      treatmentId: 400,
+      treatmentSessionId: 4001,
       remarks: undefined,
     });
   });

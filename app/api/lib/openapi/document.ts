@@ -630,6 +630,8 @@ const createProcedureAppointmentRequestExample = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  treatmentId: 400,
+  treatmentSessionId: 401,
   remarks: 'Shirodhara session; Doctor not assigned.',
 };
 
@@ -681,6 +683,8 @@ const appointmentExample = {
     { slotTime: '09:00', status: 'Booked' },
     { slotTime: '09:15', status: 'Booked' },
   ],
+  treatment: null,
+  treatmentSession: null,
   remarks: 'Patient requested a morning appointment.',
   createdOn: '2099-12-01T04:30:00.000Z',
 };
@@ -711,6 +715,18 @@ const procedureAppointmentExample = {
   rotaName: null,
   doctorRotaId: null,
   slots: [],
+  treatment: { id: 400, name: 'Shirodhara relaxation programme', code: 'TRT-0401' },
+  treatmentSession: {
+    id: 401,
+    label: 'Session 1 of 4 · Shirodhara',
+    procedure: 'Shirodhara',
+    sessionNumber: 1,
+    durationMinutes: 60,
+    setupMinutes: 10,
+    cleaningMinutes: 5,
+    roomType: 'Therapy room',
+    therapistSkill: 'Shirodhara',
+  },
   remarks: 'Shirodhara session; Doctor not assigned.',
   createdOn: '2099-12-01T04:35:00.000Z',
 };
@@ -809,6 +825,8 @@ const visitExample = {
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
   visitType: { id: 1, name: 'OPD Consultation', code: 'OPD' },
   appointment: { id: 101, bookingNumber: 'APT-1042' },
+  treatment: null,
+  treatmentSession: null,
   chiefComplaint: 'Fever for 3 days',
   remarks: null,
   checkedInAt: '2026-07-16T04:30:00.000Z',
@@ -2253,6 +2271,10 @@ export const openApiDocument = {
     { name: 'Appointment Mode', description: 'Appointment Mode Master APIs.' },
     { name: 'Appointment Status', description: 'Appointment Status Master APIs.' },
     { name: 'Visit Type', description: 'Visit Type Master APIs.' },
+    {
+      name: 'Treatment',
+      description: 'Tenant-scoped Treatment catalogue and Session APIs used for Procedure booking.',
+    },
     { name: 'Visit', description: 'Tenant-scoped Visit check-in, queue, and lifecycle APIs.' },
     { name: 'Ward', description: 'Ward Master APIs.' },
     { name: 'Bed', description: 'Tenant-scoped Bed registry and Bed Board APIs.' },
@@ -4178,7 +4200,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Check in a Patient for a Visit',
         description:
-          'Creates a Visit in the active Tenant. Send either appointmentId to fulfil an Appointment booked for today — the Patient and Doctor are taken from it and the Appointment moves to its Checked In status — or patientId and doctorId for a Walk-in Visit; sending both is invalid. The server assigns the Visit Number and the Queue Token (per Doctor, per Tenant-local day). The Patient must be a Registered Patient who is active, and must not already have an Active Visit.',
+          'Creates a Visit in the active Tenant. Send either appointmentId to fulfil an Appointment booked for today — the Patient is taken from it, the Doctor is taken from it when assigned, and the Appointment moves to its Checked In status — or patientId and doctorId for a Walk-in Visit; sending appointmentId together with patientId is invalid. A Procedure Appointment with no Doctor must include doctorId at Check-in because every Visit requires one. The server assigns the Visit Number and the Queue Token (per Doctor, per Tenant-local day). The Patient must be a Registered Patient who is active, and must not already have an Active Visit.',
         security: [{ cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -4189,6 +4211,15 @@ export const openApiDocument = {
                 fromAppointment: {
                   summary: 'Check in against a booked Appointment',
                   value: { appointmentId: 42, visitTypeId: 1, chiefComplaint: 'Fever for 3 days' },
+                },
+                fromDoctorlessProcedure: {
+                  summary: 'Check in a Procedure Appointment that has no Doctor',
+                  value: {
+                    appointmentId: 42,
+                    doctorId: 7,
+                    visitTypeId: 3,
+                    chiefComplaint: 'Abhyanga session 1 of 6',
+                  },
                 },
                 walkIn: {
                   summary: 'Walk-in Visit with no Appointment',
@@ -4529,6 +4560,49 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/treatments': appointmentMasterCollection({
+      tag: 'Treatment',
+      entity: 'Treatment',
+      schemaName: 'Treatment',
+      createSchemaName: 'CreateTreatmentRequest',
+      example: {
+        name: 'Abhyanga wellness programme',
+        code: 'TRT-0400',
+        durationMinutes: 60,
+        setupMinutes: 10,
+        cleaningMinutes: 5,
+        roomType: 'Panchakarma room',
+        therapistSkill: 'Abhyanga',
+        sessions: [
+          {
+            sessionNumber: 1,
+            label: 'Session 1 of 6 · Abhyanga + Swedana',
+            procedure: 'Abhyanga + Swedana',
+            durationMinutes: 60,
+            setupMinutes: 10,
+            cleaningMinutes: 5,
+          },
+        ],
+      },
+    }),
+    '/api/v1/treatments/{id}': itemOperations({
+      tag: 'Treatment',
+      entity: 'Treatment',
+      schemaName: 'Treatment',
+      updateSchemaName: 'UpdateTreatmentRequest',
+      example: {
+        name: 'Abhyanga wellness programme',
+        code: 'TRT-0400',
+        durationMinutes: 60,
+        setupMinutes: 10,
+        cleaningMinutes: 5,
+        roomType: 'Panchakarma room',
+        therapistSkill: 'Abhyanga',
+      },
+      parameters: [numberIdPathParameter('Treatment')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
     '/api/v1/visits/types': appointmentMasterCollection({
       tag: 'Visit Type',
       entity: 'Visit Type',
@@ -8288,6 +8362,152 @@ export const openApiDocument = {
       CreateVisitTypeRequest: appointmentMasterCreateSchema('Visit Type', true),
       UpdateVisitTypeRequest: appointmentMasterCreateSchema('Visit Type', true),
       VisitType: appointmentMasterSchema('CreateVisitTypeRequest'),
+      TreatmentSessionInput: {
+        type: 'object',
+        required: ['label', 'procedure', 'sessionNumber', 'durationMinutes'],
+        properties: {
+          label: { type: 'string', minLength: 1, maxLength: 200 },
+          procedure: { type: 'string', minLength: 1, maxLength: 200 },
+          sessionNumber: { type: 'integer', minimum: 1 },
+          durationMinutes: { type: 'integer', minimum: 1, maximum: 480 },
+          setupMinutes: { type: 'integer', minimum: 0, maximum: 480 },
+          cleaningMinutes: { type: 'integer', minimum: 0, maximum: 480 },
+          preparation: { type: 'string', maxLength: 1000 },
+          warning: { type: 'string', maxLength: 1000 },
+          equipment: { type: 'string', maxLength: 500 },
+          roomType: { type: 'string', maxLength: 100 },
+          therapistSkill: { type: 'string', maxLength: 100 },
+        },
+      },
+      TreatmentSession: {
+        type: 'object',
+        required: [
+          'id',
+          'treatmentId',
+          'sessionNumber',
+          'label',
+          'procedure',
+          'durationMinutes',
+          'setupMinutes',
+          'cleaningMinutes',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          treatmentId: { type: 'integer', minimum: 1 },
+          sessionNumber: { type: 'integer', minimum: 1 },
+          label: { type: 'string' },
+          procedure: { type: 'string' },
+          durationMinutes: { type: 'integer' },
+          setupMinutes: { type: 'integer' },
+          cleaningMinutes: { type: 'integer' },
+          preparation: { type: ['string', 'null'] },
+          warning: { type: ['string', 'null'] },
+          equipment: { type: ['string', 'null'] },
+          roomType: { type: ['string', 'null'] },
+          therapistSkill: { type: ['string', 'null'] },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      TreatmentSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
+      TreatmentSessionSummary: {
+        type: 'object',
+        required: [
+          'id',
+          'label',
+          'procedure',
+          'sessionNumber',
+          'durationMinutes',
+          'setupMinutes',
+          'cleaningMinutes',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          label: { type: 'string' },
+          procedure: { type: 'string' },
+          sessionNumber: { type: 'integer' },
+          durationMinutes: { type: 'integer' },
+          setupMinutes: { type: 'integer' },
+          cleaningMinutes: { type: 'integer' },
+          roomType: { type: ['string', 'null'] },
+          therapistSkill: { type: ['string', 'null'] },
+        },
+      },
+      CreateTreatmentRequest: {
+        type: 'object',
+        required: ['name', 'code', 'durationMinutes', 'sessions'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 200 },
+          code: simpleMasterCodeProperty(
+            'Treatment code. The API normalizes this value to uppercase.',
+            20
+          ),
+          description: { type: 'string', maxLength: 500 },
+          durationMinutes: { type: 'integer', minimum: 1, maximum: 480 },
+          setupMinutes: { type: 'integer', minimum: 0, maximum: 480 },
+          cleaningMinutes: { type: 'integer', minimum: 0, maximum: 480 },
+          roomType: { type: 'string', maxLength: 100 },
+          therapistSkill: { type: 'string', maxLength: 100 },
+          sessions: {
+            type: 'array',
+            minItems: 1,
+            items: schemaRef('TreatmentSessionInput'),
+          },
+        },
+      },
+      UpdateTreatmentRequest: {
+        type: 'object',
+        required: ['name', 'code', 'durationMinutes'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 200 },
+          code: simpleMasterCodeProperty(
+            'Treatment code. The API normalizes this value to uppercase.',
+            20
+          ),
+          description: { type: 'string', maxLength: 500 },
+          durationMinutes: { type: 'integer', minimum: 1, maximum: 480 },
+          setupMinutes: { type: 'integer', minimum: 0, maximum: 480 },
+          cleaningMinutes: { type: 'integer', minimum: 0, maximum: 480 },
+          roomType: { type: 'string', maxLength: 100 },
+          therapistSkill: { type: 'string', maxLength: 100 },
+        },
+      },
+      Treatment: {
+        type: 'object',
+        required: [
+          'id',
+          'name',
+          'code',
+          'durationMinutes',
+          'setupMinutes',
+          'cleaningMinutes',
+          'sessions',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+          description: { type: ['string', 'null'] },
+          durationMinutes: { type: 'integer' },
+          setupMinutes: { type: 'integer' },
+          cleaningMinutes: { type: 'integer' },
+          roomType: { type: ['string', 'null'] },
+          therapistSkill: { type: ['string', 'null'] },
+          sessions: { type: 'array', items: schemaRef('TreatmentSession') },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
       VisitStatus: {
         type: 'string',
         enum: ['CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED'],
@@ -8298,7 +8518,7 @@ export const openApiDocument = {
         type: 'object',
         required: ['visitTypeId'],
         description:
-          'Send exactly one of: appointmentId (Appointment check-in), or patientId together with doctorId (Walk-in Visit).',
+          'Send exactly one of: appointmentId (Appointment check-in, with optional doctorId when the Appointment has no Doctor), or patientId together with doctorId (Walk-in Visit).',
         properties: {
           visitTypeId: {
             type: 'integer',
@@ -8309,7 +8529,7 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description:
-              'Appointment being fulfilled. Must be scheduled for today in the Tenant Time Zone and be in a Scheduled or Confirmed status. The Patient and Doctor are taken from it.',
+              'Appointment being fulfilled. Must be scheduled for today in the Tenant Time Zone and be in a Scheduled or Confirmed status. The Patient is taken from it. The Doctor is taken from it when assigned.',
           },
           patientId: {
             type: 'integer',
@@ -8319,7 +8539,8 @@ export const openApiDocument = {
           doctorId: {
             type: 'integer',
             minimum: 1,
-            description: 'Walk-in only. Must be an active Doctor.',
+            description:
+              'Required for a Walk-in Visit. Required for Appointment check-in when the Appointment has no Doctor. Must be an active Doctor.',
           },
           chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
           remarks: { type: ['string', 'null'] },
@@ -8337,6 +8558,16 @@ export const openApiDocument = {
         properties: {
           chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
           remarks: { type: ['string', 'null'] },
+          treatmentId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Active Treatment identifier. Must be sent together with treatmentSessionId.',
+          },
+          treatmentSessionId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Active Treatment Session identifier belonging to the selected Treatment.',
+          },
         },
       },
       CancelVisitRequest: {
@@ -8464,6 +8695,14 @@ export const openApiDocument = {
           appointment: {
             oneOf: [schemaRef('VisitAppointmentSummary'), { type: 'null' }],
             description: 'The fulfilled Appointment, or null for a Walk-in Visit.',
+          },
+          treatment: {
+            oneOf: [schemaRef('TreatmentSummary'), { type: 'null' }],
+            description: 'Treatment assigned to this Visit, if any.',
+          },
+          treatmentSession: {
+            oneOf: [schemaRef('TreatmentSessionSummary'), { type: 'null' }],
+            description: 'Treatment Session conducted during this Visit, if any.',
           },
           chiefComplaint: { type: ['string', 'null'] },
           remarks: { type: ['string', 'null'] },
@@ -9502,7 +9741,14 @@ export const openApiDocument = {
       CreateProcedureAppointmentRequest: {
         type: 'object',
         additionalProperties: false,
-        required: ['bookingPath', 'slotDate', 'startTime', 'endTime'],
+        required: [
+          'bookingPath',
+          'slotDate',
+          'startTime',
+          'endTime',
+          'treatmentId',
+          'treatmentSessionId',
+        ],
         properties: {
           bookingPath: { type: 'string', enum: ['PROCEDURE'] },
           doctorId: {
@@ -9533,6 +9779,16 @@ export const openApiDocument = {
             type: 'string',
             pattern: '^\\d{2}:\\d{2}$',
             description: 'Direct Procedure end time in HH:mm format; must be after startTime.',
+          },
+          treatmentId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Active Treatment identifier in the active Tenant.',
+          },
+          treatmentSessionId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Active Session belonging to the selected Treatment.',
           },
           remarks: { type: 'string', maxLength: 1000 },
         },
@@ -9630,6 +9886,14 @@ export const openApiDocument = {
             oneOf: [schemaRef('AppointmentReferenceSummary'), { type: 'null' }],
             description:
               'Recorded cancellation reason. Historical values remain readable after the Master is removed.',
+          },
+          treatment: {
+            oneOf: [schemaRef('TreatmentSummary'), { type: 'null' }],
+            description: 'Treatment reserved by a Procedure Appointment.',
+          },
+          treatmentSession: {
+            oneOf: [schemaRef('TreatmentSessionSummary'), { type: 'null' }],
+            description: 'Session reserved by a Procedure Appointment.',
           },
           appointmentStatus: {
             allOf: [

@@ -139,7 +139,7 @@ Final verification includes the unit suite, database-backed integration suite wh
 
 ## Out of Scope
 
-- Persisting Treatment, Session, Room, or Therapist on the Appointment.
+- Persisting Room or Therapist on the Appointment. Treatment and Treatment Session are persisted.
 - Room or Therapist availability/conflict APIs.
 - Loading, filtering, or validating Doctor Schedules, Doctor Rotas, or DoctorSlots for Procedures.
 - Assigning a Doctor during Check-in or editing the Doctor after booking.

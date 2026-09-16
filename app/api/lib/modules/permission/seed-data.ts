@@ -319,6 +319,16 @@ const permissionGroups = [
   },
   {
     module: 'visits',
+    resource: 'treatment',
+    actions: [
+      ['read', 'View Treatments and their Sessions.'],
+      ['create', 'Create Treatments and Sessions.'],
+      ['update', 'Update Treatment details.'],
+      ['delete', 'Delete Treatments.'],
+    ],
+  },
+  {
+    module: 'visits',
     resource: 'visit-type',
     actions: [
       ['read', 'View VisitTypes.'],

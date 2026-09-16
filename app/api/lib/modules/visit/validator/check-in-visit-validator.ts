@@ -20,6 +20,31 @@ import {
 // rest are already checked in, done, cancelled, or a no-show.
 const CHECK_IN_ELIGIBLE_CATEGORIES = ['scheduled', 'confirmed'];
 
+async function resolveActiveDoctor(
+  doctorId: number,
+  tenantId: string
+): Promise<ValidationResult<number>> {
+  const doctor = await doctorRepository.getDoctorById(doctorId, tenantId);
+
+  if (!doctor) {
+    return {
+      success: false,
+      errors: [`Doctor ${doctorId} is Invalid.`],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
+  if (!doctor.isActive) {
+    return {
+      success: false,
+      errors: [`Doctor ${doctorId} is inactive and cannot be assigned a Visit.`],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
+  return { success: true, data: doctorId };
+}
+
 export async function validateCheckInVisit(
   payload: unknown,
   tenantId: unknown
@@ -66,6 +91,8 @@ export async function validateCheckInVisit(
 
   let patientId: number;
   let doctorId: number;
+  let treatmentId: number | undefined;
+  let treatmentSessionId: number | undefined;
 
   if (data.appointmentId !== undefined) {
     const appointment = await appointmentRepository.getAppointmentById(
@@ -100,11 +127,23 @@ export async function validateCheckInVisit(
     }
 
     if (!appointment.doctor) {
-      return {
-        success: false,
-        errors: ['A Doctor must be assigned before this Appointment can be checked in.'],
-        status: StatusCodes.CONFLICT,
-      };
+      if (data.doctorId === undefined) {
+        return {
+          success: false,
+          errors: ['A Doctor must be assigned before this Appointment can be checked in.'],
+          status: StatusCodes.CONFLICT,
+        };
+      }
+
+      const assignedDoctor = await resolveActiveDoctor(data.doctorId, validatedTenantId);
+
+      if (!assignedDoctor.success) {
+        return assignedDoctor;
+      }
+
+      doctorId = assignedDoctor.data;
+    } else {
+      doctorId = appointment.doctor.id;
     }
 
     const existingVisit = await visitRepository.findNonCancelledVisitByAppointmentId(
@@ -121,29 +160,18 @@ export async function validateCheckInVisit(
     }
 
     patientId = appointment.patient.id;
-    doctorId = appointment.doctor.id;
+    treatmentId = appointment.treatment?.id;
+    treatmentSessionId = appointment.treatmentSession?.id;
   } else {
     // The schema guarantees both are present when appointmentId is absent.
     patientId = data.patientId as number;
-    doctorId = data.doctorId as number;
+    const assignedDoctor = await resolveActiveDoctor(data.doctorId as number, validatedTenantId);
 
-    const doctor = await doctorRepository.getDoctorById(doctorId, validatedTenantId);
-
-    if (!doctor) {
-      return {
-        success: false,
-        errors: [`Doctor ${doctorId} is Invalid.`],
-        status: StatusCodes.CONFLICT,
-      };
+    if (!assignedDoctor.success) {
+      return assignedDoctor;
     }
 
-    if (!doctor.isActive) {
-      return {
-        success: false,
-        errors: [`Doctor ${doctorId} is inactive and cannot be assigned a Visit.`],
-        status: StatusCodes.CONFLICT,
-      };
-    }
+    doctorId = assignedDoctor.data;
   }
 
   const patient = await patientRepository.getPatientById(patientId, validatedTenantId);
@@ -196,6 +224,8 @@ export async function validateCheckInVisit(
       doctorId,
       visitTypeId: data.visitTypeId,
       appointmentId: data.appointmentId,
+      treatmentId,
+      treatmentSessionId,
       chiefComplaint: data.chiefComplaint,
       remarks: data.remarks,
       visitDate,

@@ -3,6 +3,10 @@ import { z } from 'zod';
 import { createPatientSchema } from '../../patient/schemas/patient-schema';
 import type { PatientRegistrationStatus } from '../../patient/schemas/patient-schema';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
+import type {
+  TreatmentSessionSummary,
+  TreatmentSummary,
+} from '../../treatment/schemas/treatment-schema';
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
 export const bookingPathValues = ['CONSULTATION', 'PROCEDURE'] as const;
@@ -145,6 +149,8 @@ const createProcedureAppointmentSchema = z
     doctorId: positiveIdSchema('Doctor ID').optional(),
     startTime: appointmentTimeSchema('Start time'),
     endTime: appointmentTimeSchema('End time'),
+    treatmentId: positiveIdSchema('Treatment ID'),
+    treatmentSessionId: positiveIdSchema('Treatment session ID'),
   })
   .strict();
 
@@ -294,6 +300,8 @@ export type Appointment = {
   appointmentStatus: AppointmentReferenceSummary & {
     category: Lowercase<AppointmentStatusCategory>;
   };
+  treatment: TreatmentSummary | null;
+  treatmentSession: TreatmentSessionSummary | null;
   slots: Array<{
     status: 'Booked';
     slotTime: string;

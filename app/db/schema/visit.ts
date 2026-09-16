@@ -16,6 +16,10 @@ import { appointment as appointmentTable } from './appointment';
 import { doctor as doctorTable } from './doctor';
 import { masterColumns } from './helpers';
 import { patient as patientTable } from './patient';
+import {
+  treatment as treatmentTable,
+  treatmentSession as treatmentSessionTable,
+} from './treatment';
 import { visitType as visitTypeTable } from './visit-type';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
@@ -36,6 +40,8 @@ export const visit = pgTable(
       .notNull()
       .references(() => visitTypeTable.id),
     appointmentId: integer('appointment_id').references(() => appointmentTable.id),
+    treatmentId: integer('treatment_id').references(() => treatmentTable.id),
+    treatmentSessionId: integer('treatment_session_id').references(() => treatmentSessionTable.id),
     status: varchar({ length: 20 }).notNull().default('CHECKED_IN'),
     visitDate: date('visit_date').notNull(),
     queueToken: integer('queue_token').notNull(),

@@ -4,6 +4,12 @@ import {
   visitDocumentMetadataSchema,
   type VisitDocumentMetadata,
 } from '../../visit-document/schemas/visit-document-schema';
+import {
+  treatmentIdSchema,
+  treatmentSessionIdSchema,
+  type TreatmentSessionSummary,
+  type TreatmentSummary,
+} from '../../treatment/schemas/treatment-schema';
 
 export const VISIT_STATUSES = ['CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED'] as const;
 
@@ -87,8 +93,9 @@ const remarksSchema = z
   .transform((value) => (value === null || value === '' ? undefined : value));
 
 // Check-in has two shapes: fulfil an Appointment, or a Walk-in that names the
-// Patient and Doctor directly. Supplying both is ambiguous about which Doctor
-// and Patient the Visit belongs to, so it is rejected rather than resolved.
+// Patient and Doctor directly. Supplying appointmentId together with patientId
+// is ambiguous about which Patient the Visit belongs to, so it is rejected.
+// A Doctorless Procedure Appointment may send doctorId with appointmentId.
 export const checkInVisitSchema = z
   .object({
     appointmentId: positiveIdSchema('Appointment ID').optional(),
@@ -104,7 +111,7 @@ export const checkInVisitSchema = z
   })
   .superRefine((data, context) => {
     const hasAppointment = data.appointmentId !== undefined;
-    const hasWalkIn = data.patientId !== undefined || data.doctorId !== undefined;
+    const hasWalkIn = data.patientId !== undefined;
 
     if (hasAppointment && hasWalkIn) {
       context.addIssue({
@@ -126,10 +133,31 @@ export const checkInVisitSchema = z
     }
   });
 
-export const updateVisitSchema = z.object({
-  chiefComplaint: chiefComplaintSchema,
-  remarks: remarksSchema,
-});
+const optionalPositiveId = (schema: typeof treatmentIdSchema) =>
+  schema
+    .optional()
+    .nullable()
+    .transform((value) => value ?? undefined);
+
+export const updateVisitSchema = z
+  .object({
+    chiefComplaint: chiefComplaintSchema,
+    remarks: remarksSchema,
+    treatmentId: optionalPositiveId(treatmentIdSchema),
+    treatmentSessionId: optionalPositiveId(treatmentSessionIdSchema),
+  })
+  .superRefine((data, context) => {
+    const hasTreatment = data.treatmentId !== undefined;
+    const hasSession = data.treatmentSessionId !== undefined;
+
+    if (hasTreatment !== hasSession) {
+      context.addIssue({
+        code: 'custom',
+        path: hasTreatment ? ['treatmentSessionId'] : ['treatmentId'],
+        message: 'Treatment and Session must be provided together.',
+      });
+    }
+  });
 
 export const cancelVisitSchema = z.object({
   cancellationReason: z
@@ -160,6 +188,8 @@ export type ValidatedCheckInVisitData = {
   doctorId: number;
   visitTypeId: number;
   appointmentId?: number;
+  treatmentId?: number;
+  treatmentSessionId?: number;
   chiefComplaint?: string;
   remarks?: string;
   visitDate: string;
@@ -212,4 +242,6 @@ export type Visit = {
   doctor: VisitDoctorSummary;
   visitType: VisitTypeSummary;
   appointment: VisitAppointmentSummary | null;
+  treatment: TreatmentSummary | null;
+  treatmentSession: TreatmentSessionSummary | null;
 };

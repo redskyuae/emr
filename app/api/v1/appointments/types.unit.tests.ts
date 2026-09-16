@@ -10,6 +10,8 @@ describe('CreateAppointmentRequest', () => {
       slotDate: '31-12-2099',
       startTime: '10:00',
       endTime: '11:15',
+      treatmentId: 400,
+      treatmentSessionId: 401,
     } satisfies CreateAppointmentRequest;
 
     expect(request.bookingPath).toBe('PROCEDURE');
@@ -28,6 +30,8 @@ describe('CreateAppointmentRequest', () => {
       slotDate: '31-12-2099',
       startTime: '10:00',
       endTime: '11:15',
+      treatmentId: 400,
+      treatmentSessionId: 401,
     } satisfies CreateAppointmentRequest;
 
     expect(request.bookingPath).toBe('PROCEDURE');

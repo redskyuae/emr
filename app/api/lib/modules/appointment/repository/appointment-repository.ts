@@ -22,6 +22,10 @@ import {
   patient as patientTable,
   patientMrnCounter as patientMrnCounterTable,
 } from '@/app/db/schema/patient';
+import {
+  treatment as treatmentTable,
+  treatmentSession as treatmentSessionTable,
+} from '@/app/db/schema/treatment';
 import { formatPatientMrn } from '../../patient/repository/patient-mrn';
 import { formatAppointmentBookingNumber } from './appointment-booking-number';
 import type {
@@ -39,7 +43,13 @@ type SelectExecutor = Pick<typeof db, 'select'>;
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type AppointmentRow = Omit<
   Appointment,
-  'doctor' | 'doctorRotaId' | 'slotDate' | 'appointmentStatus' | 'slots'
+  | 'doctor'
+  | 'doctorRotaId'
+  | 'slotDate'
+  | 'appointmentStatus'
+  | 'slots'
+  | 'treatment'
+  | 'treatmentSession'
 > & {
   doctor: {
     id: number | null;
@@ -49,6 +59,22 @@ type AppointmentRow = Omit<
   appointmentStatus: Omit<Appointment['appointmentStatus'], 'category'> & {
     category: string;
   };
+  treatment: {
+    id: number | null;
+    name: string | null;
+    code: string | null;
+  } | null;
+  treatmentSession: {
+    id: number | null;
+    label: string | null;
+    procedure: string | null;
+    sessionNumber: number | null;
+    durationMinutes: number | null;
+    setupMinutes: number | null;
+    cleaningMinutes: number | null;
+    roomType: string | null;
+    therapistSkill: string | null;
+  } | null;
 };
 type AppointmentReservations = {
   doctorRotaId: number | null;
@@ -119,6 +145,22 @@ const appointmentColumns = {
     code: appointmentStatusTable.code,
     category: appointmentStatusTable.category,
   },
+  treatment: {
+    id: treatmentTable.id,
+    name: treatmentTable.name,
+    code: treatmentTable.code,
+  },
+  treatmentSession: {
+    id: treatmentSessionTable.id,
+    label: treatmentSessionTable.label,
+    procedure: treatmentSessionTable.procedure,
+    sessionNumber: treatmentSessionTable.sessionNumber,
+    durationMinutes: treatmentSessionTable.durationMinutes,
+    setupMinutes: treatmentSessionTable.setupMinutes,
+    cleaningMinutes: treatmentSessionTable.cleaningMinutes,
+    roomType: treatmentSessionTable.roomType,
+    therapistSkill: treatmentSessionTable.therapistSkill,
+  },
 };
 
 function appointmentJoins(executor: SelectExecutor = db) {
@@ -176,6 +218,20 @@ function appointmentJoins(executor: SelectExecutor = db) {
         eq(appointmentStatusTable.id, appointmentTable.appointmentStatusId),
         eq(appointmentStatusTable.tenantId, appointmentTable.tenantId)
       )
+    )
+    .leftJoin(
+      treatmentTable,
+      and(
+        eq(treatmentTable.id, appointmentTable.treatmentId),
+        eq(treatmentTable.tenantId, appointmentTable.tenantId)
+      )
+    )
+    .leftJoin(
+      treatmentSessionTable,
+      and(
+        eq(treatmentSessionTable.id, appointmentTable.treatmentSessionId),
+        eq(treatmentSessionTable.tenantId, appointmentTable.tenantId)
+      )
     );
 }
 
@@ -187,6 +243,30 @@ function toAppointment(row: AppointmentRow, reservations?: AppointmentReservatio
       row.doctor.id === null || row.doctor.name === null
         ? null
         : { id: row.doctor.id, name: row.doctor.name },
+    treatment:
+      row.treatment?.id != null && row.treatment.name != null && row.treatment.code != null
+        ? { id: row.treatment.id, name: row.treatment.name, code: row.treatment.code }
+        : null,
+    treatmentSession:
+      row.treatmentSession?.id != null &&
+      row.treatmentSession.label != null &&
+      row.treatmentSession.procedure != null &&
+      row.treatmentSession.sessionNumber != null &&
+      row.treatmentSession.durationMinutes != null &&
+      row.treatmentSession.setupMinutes != null &&
+      row.treatmentSession.cleaningMinutes != null
+        ? {
+            id: row.treatmentSession.id,
+            label: row.treatmentSession.label,
+            procedure: row.treatmentSession.procedure,
+            sessionNumber: row.treatmentSession.sessionNumber,
+            durationMinutes: row.treatmentSession.durationMinutes,
+            setupMinutes: row.treatmentSession.setupMinutes,
+            cleaningMinutes: row.treatmentSession.cleaningMinutes,
+            roomType: row.treatmentSession.roomType,
+            therapistSkill: row.treatmentSession.therapistSkill,
+          }
+        : null,
     doctorRotaId: reservations?.doctorRotaId ?? null,
     slotDate: formatAppointmentDate(row.slotDate),
     appointmentStatus: {
@@ -780,6 +860,8 @@ async function createAppointment(
         endTime: data.bookingPath === 'CONSULTATION' ? consultationEndTime : data.endTime,
         rotaName: data.bookingPath === 'CONSULTATION' ? slotContext?.rotaName : undefined,
         remarks: data.remarks ?? null,
+        treatmentId: data.bookingPath === 'PROCEDURE' ? data.treatmentId : undefined,
+        treatmentSessionId: data.bookingPath === 'PROCEDURE' ? data.treatmentSessionId : undefined,
       })
       .returning({ id: appointmentTable.id });
 

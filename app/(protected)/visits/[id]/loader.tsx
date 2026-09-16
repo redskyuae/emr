@@ -36,6 +36,10 @@ export default function VisitDetailPageLoader() {
         <Skeleton className="h-5 w-28" />
         <Skeleton className="h-16 w-full" />
         <Skeleton className="h-16 w-full" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

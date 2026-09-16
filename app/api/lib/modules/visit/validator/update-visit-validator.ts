@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
+import { treatmentRepository } from '../../treatment/repository/treatment-repository';
 import { visitRepository } from '../repository/visit-repository';
 import { updateVisitSchema, visitIdSchema, type UpdateVisitInput } from '../schemas/visit-schema';
 
@@ -46,6 +47,31 @@ export async function validateUpdateVisit(
       errors: [`Visit ${existingVisit.visitNumber} is closed and cannot be edited.`],
       status: StatusCodes.CONFLICT,
     };
+  }
+
+  if (
+    payloadResult.data.treatmentId !== undefined &&
+    payloadResult.data.treatmentSessionId !== undefined
+  ) {
+    const [treatment, treatmentSession] = await Promise.all([
+      treatmentRepository.getTreatmentById(payloadResult.data.treatmentId, tenantId),
+      treatmentRepository.getTreatmentSessionById(payloadResult.data.treatmentSessionId, tenantId),
+    ]);
+    const errors: string[] = [];
+
+    if (!treatment) {
+      errors.push(`Treatment ${payloadResult.data.treatmentId} is Invalid.`);
+    }
+
+    if (!treatmentSession) {
+      errors.push(`Treatment session ${payloadResult.data.treatmentSessionId} is Invalid.`);
+    } else if (treatmentSession.treatmentId !== payloadResult.data.treatmentId) {
+      errors.push('Treatment session does not belong to the selected Treatment.');
+    }
+
+    if (errors.length > 0) {
+      return { success: false, errors, status: StatusCodes.CONFLICT };
+    }
   }
 
   return {

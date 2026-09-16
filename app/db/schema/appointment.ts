@@ -20,6 +20,10 @@ import { doctor as doctorTable } from './doctor';
 import { doctorRota as doctorRotaTable } from './doctor-rota';
 import { masterColumns } from './helpers';
 import { patient as patientTable } from './patient';
+import {
+  treatment as treatmentTable,
+  treatmentSession as treatmentSessionTable,
+} from './treatment';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
 
@@ -45,6 +49,8 @@ export const appointment = pgTable(
     appointmentStatusId: integer('appointment_status_id')
       .notNull()
       .references(() => appointmentStatusTable.id),
+    treatmentId: integer('treatment_id').references(() => treatmentTable.id),
+    treatmentSessionId: integer('treatment_session_id').references(() => treatmentSessionTable.id),
     appointmentCancelledReasonId: integer('appointment_cancelled_reason_id').references(
       () => appointmentCancelledReasonTable.id
     ),

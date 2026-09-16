@@ -45,6 +45,8 @@ const appointment: Appointment = {
   rotaName: 'Morning',
   remarks: null,
   createdOn: new Date(),
+  treatment: null,
+  treatmentSession: null,
   doctor: { id: 1, name: 'Dr. Meera' },
   patient: {
     id: 5,
@@ -177,6 +179,8 @@ describe('createAppointmentCommand', () => {
         slotDate: '2099-12-31',
         startTime: '09:00',
         endTime: '10:00',
+        treatmentId: 400,
+        treatmentSessionId: 401,
         remarks: undefined,
       },
     });

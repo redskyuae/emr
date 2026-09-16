@@ -10,6 +10,7 @@ import { patientRepository } from '../../patient/repository/patient-repository';
 import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
+import { treatmentRepository } from '../../treatment/repository/treatment-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
 import { validateCreateAppointment } from './create-appointment-validator';
 
@@ -47,6 +48,12 @@ vi.mock('../repository/appointment-repository', () => ({
     getSlotBookingContext: vi.fn(),
   },
 }));
+vi.mock('../../treatment/repository/treatment-repository', () => ({
+  treatmentRepository: {
+    getTreatmentById: vi.fn(),
+    getTreatmentSessionById: vi.fn(),
+  },
+}));
 
 const tenantRepo = vi.mocked(tenantRepository);
 const modeRepo = vi.mocked(appointmentModeRepository);
@@ -56,6 +63,7 @@ const statusRepo = vi.mocked(appointmentStatusRepository);
 const patientRepo = vi.mocked(patientRepository);
 const doctorRepo = vi.mocked(doctorRepository);
 const appointmentRepo = vi.mocked(appointmentRepository);
+const treatmentRepo = vi.mocked(treatmentRepository);
 const validateReferences = vi.mocked(validatePatientReferences);
 const validateEmiratesId = vi.mocked(validatePatientEmiratesIdUniqueness);
 
@@ -77,6 +85,8 @@ const procedurePayload = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  treatmentId: 400,
+  treatmentSessionId: 401,
 };
 
 const activePatient = { id: 5, isActive: true, registrationStatus: 'registered' as const };
@@ -102,6 +112,8 @@ describe('validateCreateAppointment', () => {
     appointmentRepo.getReservedSlotTimes.mockResolvedValue([]);
     patientRepo.getPatientById.mockResolvedValue(activePatient as never);
     doctorRepo.getDoctorById.mockResolvedValue({ id: 1, isActive: true } as never);
+    treatmentRepo.getTreatmentById.mockResolvedValue({ id: 400 } as never);
+    treatmentRepo.getTreatmentSessionById.mockResolvedValue({ id: 401, treatmentId: 400 } as never);
     validateReferences.mockResolvedValue({ success: true, data: undefined });
     validateEmiratesId.mockResolvedValue({ success: true, data: undefined });
     appointmentRepo.findPotentialPatientMatches.mockResolvedValue([]);

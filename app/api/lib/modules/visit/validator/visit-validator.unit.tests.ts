@@ -38,6 +38,12 @@ vi.mock('../../visit-type/repository/visit-type-repository', () => ({
 vi.mock('../../tenant/repository/tenant-repository', () => ({
   tenantRepository: { getTenantById: vi.fn() },
 }));
+vi.mock('../../treatment/repository/treatment-repository', () => ({
+  treatmentRepository: {
+    getTreatmentById: vi.fn(),
+    getTreatmentSessionById: vi.fn(),
+  },
+}));
 
 const visitRepo = vi.mocked(visitRepository);
 const appointmentRepo = vi.mocked(appointmentRepository);
@@ -97,6 +103,8 @@ describe('Visit validators', () => {
           doctorId: 3,
           visitTypeId: 2,
           appointmentId: 5,
+          treatmentId: undefined,
+          treatmentSessionId: undefined,
           chiefComplaint: undefined,
           remarks: undefined,
           visitDate: '2026-07-16',
@@ -223,6 +231,37 @@ describe('Visit validators', () => {
         success: false,
         status: StatusCodes.CONFLICT,
         errors: ['A Doctor must be assigned before this Appointment can be checked in.'],
+      });
+    });
+
+    it('should accept a doctor assignment when the appointment has none', async () => {
+      appointmentRepo.getAppointmentById.mockResolvedValue({
+        ...appointment,
+        doctor: null,
+      } as never);
+
+      await expect(
+        validateCheckInVisit({ appointmentId: 5, visitTypeId: 2, doctorId: 3 }, 'tenant-1')
+      ).resolves.toMatchObject({
+        success: true,
+        data: { patientId: 7, doctorId: 3, appointmentId: 5 },
+      });
+      expect(doctorRepo.getDoctorById).toHaveBeenCalledWith(3, 'tenant-1');
+    });
+
+    it('should reject an invalid doctor assignment on a doctorless appointment', async () => {
+      appointmentRepo.getAppointmentById.mockResolvedValue({
+        ...appointment,
+        doctor: null,
+      } as never);
+      doctorRepo.getDoctorById.mockResolvedValue(undefined);
+
+      await expect(
+        validateCheckInVisit({ appointmentId: 5, visitTypeId: 2, doctorId: 99 }, 'tenant-1')
+      ).resolves.toMatchObject({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Doctor 99 is Invalid.'],
       });
     });
 

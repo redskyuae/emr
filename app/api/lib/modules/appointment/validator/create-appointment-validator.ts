@@ -11,6 +11,7 @@ import { patientRepository } from '../../patient/repository/patient-repository';
 import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
+import { treatmentRepository } from '../../treatment/repository/treatment-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
 import {
   appointmentTenantIdSchema,
@@ -133,6 +134,25 @@ export async function validateCreateAppointment(
           status: StatusCodes.CONFLICT,
         };
       }
+    }
+
+    const [treatment, treatmentSession] = await Promise.all([
+      treatmentRepository.getTreatmentById(data.treatmentId, validatedTenantId),
+      treatmentRepository.getTreatmentSessionById(data.treatmentSessionId, validatedTenantId),
+    ]);
+
+    if (!treatment) {
+      errors.push(`Treatment ${data.treatmentId} is Invalid.`);
+    }
+
+    if (!treatmentSession) {
+      errors.push(`Treatment session ${data.treatmentSessionId} is Invalid.`);
+    } else if (treatmentSession.treatmentId !== data.treatmentId) {
+      errors.push('Treatment session does not belong to the selected Treatment.');
+    }
+
+    if (errors.length > 0) {
+      return { success: false, errors, status: StatusCodes.CONFLICT };
     }
   }
 

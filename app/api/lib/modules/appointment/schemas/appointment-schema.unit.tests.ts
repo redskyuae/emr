@@ -26,6 +26,8 @@ const validProcedurePayload = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  treatmentId: 400,
+  treatmentSessionId: 401,
 };
 
 const errorsOf = (payload: unknown) =>
@@ -169,6 +171,18 @@ describe('Appointment schema', () => {
     ).toBeUndefined();
     expect(errorsOf({ ...validPayload, remarks: 'a'.repeat(1001) })).toContain(
       'Remarks must be at most 1000 characters'
+    );
+  });
+
+  it('should require a Treatment and Session on a Procedure', () => {
+    const {
+      treatmentId: _treatmentId,
+      treatmentSessionId: _sessionId,
+      ...withoutTreatment
+    } = validProcedurePayload;
+
+    expect(errorsOf(withoutTreatment)).toEqual(
+      expect.arrayContaining(['Treatment ID is required', 'Treatment session ID is required'])
     );
   });
 
