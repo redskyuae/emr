@@ -26,6 +26,19 @@ export default function VisitsPageLoader() {
           </div>
         ))}
       </div>
+
+      <div className="bg-card shadow-fluent-2 ml-auto w-full max-w-lg space-y-3 rounded-lg border p-4">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-4 w-72 max-w-full" />
+        <Skeleton className="h-9 w-full" />
+        <Skeleton className="h-9 w-full" />
+        <Skeleton className="h-9 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <div className="flex justify-end gap-2">
+          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
     </div>
   );
 }

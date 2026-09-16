@@ -56,6 +56,8 @@ const appointment = {
     category: 'scheduled' as const,
   },
   slots: [],
+  treatment: null,
+  treatmentSession: null,
 };
 
 describe('validateRescheduleAppointment', () => {

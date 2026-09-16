@@ -17,6 +17,7 @@ import { clinicalNoteType as clinicalNoteTypeTable } from '@/app/db/schema/clini
 import { diagnosisCode as diagnosisCodeTable } from '@/app/db/schema/diagnosis-code';
 import { organization, user } from '@/app/db/schema/auth';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
+import { treatment as treatmentTable } from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import {
   workOrderCodeCounter as workOrderCodeCounterTable,
@@ -124,7 +125,7 @@ async function hasSeededClinicalMasters(tenantId: string) {
 }
 
 async function hasSeededVisitMasters(tenantId: string) {
-  return tableHasTenantRows(visitTypeTable, tenantId);
+  return hasSeededMasterTables([visitTypeTable, treatmentTable], tenantId);
 }
 
 async function hasSeededInpatientMasters(tenantId: string) {

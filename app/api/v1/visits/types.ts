@@ -6,8 +6,9 @@ export type ListVisitsResponse = Paginated<Visit>;
 
 /**
  * Check-in accepts exactly one of two shapes: `appointmentId` to fulfil an
- * Appointment, or `patientId` + `doctorId` for a Walk-in Visit. Documents already
- * uploaded to Blob may ride along and are attached to the created Visit.
+ * Appointment (optional `doctorId` when that Appointment has no Doctor), or
+ * `patientId` + `doctorId` for a Walk-in Visit. Documents already uploaded to
+ * Blob may ride along and are attached to the created Visit.
  */
 export type CheckInVisitRequest = {
   visitTypeId: number;

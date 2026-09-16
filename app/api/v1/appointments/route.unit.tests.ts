@@ -83,6 +83,8 @@ describe('Appointments route', () => {
         appointmentReason: { id: 4, name: 'Follow-up', code: 'FUP' },
         appointmentStatus: { id: 7, name: 'Scheduled', code: 'SCH', category: 'scheduled' },
         slots: [{ slotTime: '09:00', status: 'Booked' }],
+        treatment: null,
+        treatmentSession: null,
       },
     });
     getAppointments.mockResolvedValue({
@@ -116,6 +118,8 @@ describe('Appointments route', () => {
           appointmentReason: { id: 4, name: 'Follow-up', code: 'FUP' },
           appointmentStatus: { id: 7, name: 'Scheduled', code: 'SCH', category: 'scheduled' },
           slots: [{ slotTime: '09:00', status: 'Booked' }],
+          treatment: null,
+          treatmentSession: null,
         },
       ],
       total: 1,

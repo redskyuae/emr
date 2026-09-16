@@ -56,6 +56,7 @@ type CheckInMode = 'appointment' | 'walk-in';
 
 const APPOINTMENT_DEFAULTS: AppointmentCheckInFormValues = {
   bookingNumber: '',
+  doctorId: '',
   visitTypeId: '',
   chiefComplaint: '',
   remarks: '',
@@ -132,9 +133,15 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
       return;
     }
 
+    if (!appointment.doctor && values.doctorId.trim() === '') {
+      appointmentForm.setError('doctorId', { message: 'Doctor is required.' });
+      return;
+    }
+
     await submitCheckIn({
       appointmentId: appointment.id,
       visitTypeId: Number(values.visitTypeId),
+      doctorId: values.doctorId ? Number(values.doctorId) : undefined,
       chiefComplaint: values.chiefComplaint || undefined,
       remarks: values.remarks || undefined,
       documents: documents.length > 0 ? documents : undefined,
@@ -229,6 +236,21 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
                   />
                 ) : null}
 
+                {appointment && !appointment.doctor ? (
+                  <Controller
+                    control={appointmentForm.control}
+                    name="doctorId"
+                    render={({ field }) => (
+                      <DoctorField
+                        id="appointment-doctor"
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={appointmentForm.formState.errors.doctorId?.message}
+                      />
+                    )}
+                  />
+                ) : null}
+
                 <Controller
                   control={appointmentForm.control}
                   name="visitTypeId"
@@ -295,6 +317,7 @@ function CheckInSheetBody({ onClose }: { onClose: () => void }) {
                   name="doctorId"
                   render={({ field }) => (
                     <DoctorField
+                      id="walk-in-doctor"
                       value={field.value}
                       onChange={field.onChange}
                       error={walkInForm.formState.errors.doctorId?.message}
@@ -567,10 +590,12 @@ function PatientField({
 }
 
 function DoctorField({
+  id,
   value,
   onChange,
   error,
 }: {
+  id: string;
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -580,14 +605,14 @@ function DoctorField({
 
   return (
     <Field data-invalid={Boolean(error)}>
-      <FieldLabel htmlFor="walk-in-doctor">
+      <FieldLabel htmlFor={id}>
         Doctor{' '}
         <span aria-hidden className="text-destructive">
           *
         </span>
       </FieldLabel>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger id="walk-in-doctor" aria-required className="w-full">
+        <SelectTrigger id={id} aria-required className="w-full">
           <SelectValue placeholder="Select a Doctor" />
         </SelectTrigger>
         <SelectContent>

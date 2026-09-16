@@ -21,7 +21,7 @@ describe('submit Book Appointment', () => {
         startTime: '09:00',
         endTime: '09:30',
         treatmentId: '400',
-        sessionId: '400-1',
+        sessionId: '4001',
         roomId: '7',
         therapistId: '41',
       },
@@ -61,6 +61,8 @@ describe('submit Book Appointment', () => {
               category: 'scheduled',
             },
             slots: [],
+            treatment: null,
+            treatmentSession: null,
           },
         };
       },
@@ -85,7 +87,7 @@ describe('submit Book Appointment', () => {
         startTime: '09:00',
         endTime: '09:30',
         treatmentId: '400',
-        sessionId: '400-1',
+        sessionId: '4001',
         roomId: '7',
         therapistId: '41',
       },
@@ -126,6 +128,8 @@ describe('submit Book Appointment', () => {
               category: 'scheduled',
             },
             slots: [],
+            treatment: null,
+            treatmentSession: null,
           },
         };
       }
@@ -137,6 +141,8 @@ describe('submit Book Appointment', () => {
       slotDate: '31-12-2099',
       startTime: '09:00',
       endTime: '09:30',
+      treatmentId: 400,
+      treatmentSessionId: 4001,
       remarks: undefined,
     });
     expect(confirmation).toEqual({

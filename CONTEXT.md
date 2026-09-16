@@ -192,7 +192,7 @@ The person to reach on a Patient's behalf in urgent situations, recorded during 
 
 ## Appointment
 
-A scheduled period for a Patient within a Tenant. A Consultation Appointment assigns a Doctor and reserves one or more consecutive DoctorSlots from the same DoctorRota. A Procedure Appointment records a direct start and end time, may optionally assign a Doctor, and does not consume a DoctorRota or DoctorSlots. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
+A scheduled period for a Patient within a Tenant. A Consultation Appointment assigns a Doctor and reserves one or more consecutive DoctorSlots from the same DoctorRota. A Procedure Appointment records a direct start and end time, requires a Treatment and Treatment Session, may optionally assign a Doctor, and does not consume a DoctorRota or DoctorSlots. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
 
 ## Appointment Rescheduling
 
@@ -247,6 +247,14 @@ An outpatient clinical event. Occurs when a Patient attends a Facility for a con
 ## Queue Token
 
 A same-day ordering number assigned when a Patient checks in for a Visit. A Queue Token belongs to the arrival workflow and is not assigned when an Appointment is booked. Queue Tokens are numbered per Doctor per Tenant-local day in check-in order and are never reused within that day, including when the Visit is cancelled.
+
+## Treatment
+
+A Tenant-scoped Master that names a clinical protocol or programme a Patient may receive, such as Abhyanga + Swedana. A Treatment carries planned Session templates, duration, and resource requirements used when booking a Procedure Appointment. Distinct from Charge Item, which is the priced catalogue entry, and from VisitType, which classifies the Visit itself.
+
+## Treatment Session
+
+A numbered encounter template belonging to a Treatment (for example Session 1 of 6). Booking a Procedure Appointment selects one Treatment Session. Completing that Appointment as a Visit records the same Treatment and Session on the Visit so later Sessions of the same Treatment can be scheduled independently.
 
 ## VisitType
 

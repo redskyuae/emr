@@ -12,7 +12,7 @@ The Procedure workflow instead begins with a Treatment and explicit Session, the
 
 A Procedure Appointment records a direct Tenant-local date, start time, and end time. It does not select, validate, or reserve a DoctorRota or DoctorSlots, and it does not require AppointmentMode, AppointmentType, or AppointmentReason. A Procedure may optionally assign an active Doctor; choosing that Doctor is an assignment only and cannot filter, reset, or otherwise control the Procedure date/time.
 
-The Book Appointment screen calculates a Procedure's end time from the selected Session duration, including setup and cleaning. Treatment, Session, Room, and Therapist options are temporary static booking dependencies and are not persisted by the Appointment API until their domain integrations are available.
+The Book Appointment screen calculates a Procedure's end time from the selected Session duration, including setup and cleaning. Treatment and Treatment Session are persisted on the Procedure Appointment and copied onto the Visit at Check-in. Room and Therapist options remain temporary static booking dependencies until those resource APIs exist.
 
 Appointments without a Doctor cannot be checked in to a Visit. Staff must assign a Doctor before check-in because every Visit requires one.
 
@@ -26,7 +26,7 @@ This decision narrows ADR 0025: its DoctorSlot derivation, validation, and reser
 - Procedure creation can store Doctor `N/A` as a nullable Doctor reference without creating placeholder domain records.
 - Procedure Doctor assignment, date/time selection, and temporary Room/Therapist selection remain independent.
 - The shared Appointment API and read model contain path-specific nullable fields, guarded by database checks and the `bookingPath` discriminator.
-- This iteration does not prevent overlapping Procedure bookings for a Doctor, Room, or Therapist because Procedure resources are not yet persisted.
+- This iteration does not prevent overlapping Procedure bookings for a Doctor, Room, or Therapist because Room and Therapist are not yet persisted.
 - A Doctorless Procedure must receive a real Doctor assignment before Visit check-in.
 
 ## Rejected Alternatives

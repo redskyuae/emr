@@ -8,6 +8,7 @@ export const appointmentCheckInFormSchema = z.object({
     .trim()
     .min(1, 'Booking Number is required.')
     .max(20, 'Booking Number must be at most 20 characters.'),
+  doctorId: z.string(),
   visitTypeId: z.string().min(1, 'Visit type is required.'),
   chiefComplaint: z.string().trim().max(500, 'Chief complaint must be at most 500 characters.'),
   remarks: z.string().trim(),

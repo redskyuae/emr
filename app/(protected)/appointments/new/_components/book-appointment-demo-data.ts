@@ -38,6 +38,59 @@ export type DemoRoom = {
   conflictReason?: string;
 };
 
+export function toBookingTreatment(treatment: {
+  id: number;
+  name: string;
+  code: string;
+  durationMinutes: number;
+  setupMinutes: number;
+  cleaningMinutes: number;
+  roomType: string | null;
+  therapistSkill: string | null;
+  sessions: Array<{
+    id: number;
+    label: string;
+    procedure: string;
+    sessionNumber: number;
+    durationMinutes: number;
+    setupMinutes: number;
+    cleaningMinutes: number;
+    preparation: string | null;
+    warning: string | null;
+    equipment: string | null;
+    roomType: string | null;
+    therapistSkill: string | null;
+  }>;
+}): DemoTreatment {
+  return {
+    id: treatment.id,
+    name: treatment.name,
+    code: treatment.code,
+    responsibleDoctorId: 0,
+    startDate: 'Not started',
+    endDate: 'To be planned',
+    status: 'Active',
+    plannedSessions: treatment.sessions.length,
+    completedSessions: 0,
+    availableToAssign: true,
+    sessions: treatment.sessions.map((session) => ({
+      id: String(session.id),
+      sessionNumber: session.sessionNumber,
+      label: session.label,
+      procedure: session.procedure,
+      duration: session.durationMinutes,
+      setupMinutes: session.setupMinutes,
+      cleaningMinutes: session.cleaningMinutes,
+      preparation: session.preparation ?? '',
+      warning: session.warning ?? '',
+      equipment: session.equipment ?? '',
+      roomType: session.roomType ?? treatment.roomType ?? '',
+      therapistSkill: session.therapistSkill ?? treatment.therapistSkill ?? '',
+      status: 'Scheduled',
+    })),
+  };
+}
+
 export type DemoTherapist = {
   id: number;
   name: string;
@@ -133,14 +186,14 @@ export const DEMO_TREATMENT_CATALOG: DemoTreatment[] = [
     startDate: 'Not started',
     endDate: 'To be planned',
     status: 'Active',
-    plannedSessions: 4,
+    plannedSessions: 2,
     completedSessions: 0,
     availableToAssign: true,
     sessions: abhyangaSessions.slice(0, 2).map((session, index) => ({
       ...session,
       id: `401-${index + 1}`,
       sessionNumber: index + 1,
-      label: `Session ${index + 1} of 4 · Shirodhara`,
+      label: `Session ${index + 1} of 2 · Shirodhara`,
       procedure: 'Shirodhara',
       therapistSkill: 'Shirodhara',
       roomType: 'Therapy room',

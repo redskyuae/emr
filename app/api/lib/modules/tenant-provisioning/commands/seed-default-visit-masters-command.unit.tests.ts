@@ -4,14 +4,20 @@ import { seedDefaultVisitMastersCommand } from './seed-default-visit-masters-com
 
 describe('SeedDefaultVisitMasters command', () => {
   const seedVisitTypes = vi.fn();
+  const seedTreatments = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     seedVisitTypes.mockResolvedValue(undefined);
+    seedTreatments.mockResolvedValue(undefined);
   });
 
   it('should seed the default visit types for the validated tenant', async () => {
-    const result = await seedDefaultVisitMastersCommand(' tenant-a ', seedVisitTypes);
+    const result = await seedDefaultVisitMastersCommand(
+      ' tenant-a ',
+      seedVisitTypes,
+      seedTreatments
+    );
 
     expect(result).toEqual({ success: true, data: undefined });
     expect(seedVisitTypes).toHaveBeenCalledWith(
@@ -23,7 +29,7 @@ describe('SeedDefaultVisitMasters command', () => {
   });
 
   it('should seed every default visit type exactly once', async () => {
-    await seedDefaultVisitMastersCommand('tenant-a', seedVisitTypes);
+    await seedDefaultVisitMastersCommand('tenant-a', seedVisitTypes, seedTreatments);
 
     const [, seeds] = seedVisitTypes.mock.calls[0];
 
@@ -37,16 +43,17 @@ describe('SeedDefaultVisitMasters command', () => {
   });
 
   it('should reject an invalid tenant before seeding', async () => {
-    const result = await seedDefaultVisitMastersCommand('   ', seedVisitTypes);
+    const result = await seedDefaultVisitMastersCommand('   ', seedVisitTypes, seedTreatments);
 
     expect(result).toEqual({ success: false, errors: ['Tenant ID is required'] });
     expect(seedVisitTypes).not.toHaveBeenCalled();
+    expect(seedTreatments).not.toHaveBeenCalled();
   });
 
   it('should return a clean failure when seeding rejects', async () => {
     seedVisitTypes.mockRejectedValue(new Error('VisitType insert failed'));
 
-    const result = await seedDefaultVisitMastersCommand('tenant-a', seedVisitTypes);
+    const result = await seedDefaultVisitMastersCommand('tenant-a', seedVisitTypes, seedTreatments);
 
     expect(result).toEqual({ success: false, errors: ['Failed to seed default visit masters.'] });
   });

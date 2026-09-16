@@ -61,7 +61,15 @@ describe('Visit commands', () => {
     });
     validateUpdate.mockResolvedValue({
       success: true,
-      data: { id: 1, payload: { chiefComplaint: 'Fever', remarks: undefined } },
+      data: {
+        id: 1,
+        payload: {
+          chiefComplaint: 'Fever',
+          remarks: undefined,
+          treatmentId: undefined,
+          treatmentSessionId: undefined,
+        },
+      },
     });
     validateDelete.mockReturnValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
     repo.checkInVisit.mockResolvedValue({ success: true, data: visit });
@@ -322,6 +330,8 @@ describe('Visit commands', () => {
       expect(repo.updateVisit).toHaveBeenCalledWith(1, 'tenant-1', {
         chiefComplaint: 'Fever',
         remarks: undefined,
+        treatmentId: undefined,
+        treatmentSessionId: undefined,
       });
     });
   });

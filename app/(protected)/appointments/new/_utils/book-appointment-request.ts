@@ -43,6 +43,8 @@ export function bookAppointmentFormValuesToRequest(
         : {}),
       startTime: values.startTime,
       endTime: values.endTime,
+      treatmentId: Number(values.treatmentId),
+      treatmentSessionId: Number(values.sessionId),
     };
   }
 

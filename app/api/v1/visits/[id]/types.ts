@@ -7,6 +7,8 @@ export type GetVisitResponse = {
 export type UpdateVisitRequest = {
   chiefComplaint?: string | null;
   remarks?: string | null;
+  treatmentId?: number | null;
+  treatmentSessionId?: number | null;
 };
 
 export type UpdateVisitResponse = {

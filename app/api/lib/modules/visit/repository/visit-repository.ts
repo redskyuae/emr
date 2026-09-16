@@ -11,6 +11,10 @@ import {
   visitNumberCounter as visitNumberCounterTable,
   visitQueueTokenCounter as visitQueueTokenCounterTable,
 } from '@/app/db/schema/visit';
+import {
+  treatment as treatmentTable,
+  treatmentSession as treatmentSessionTable,
+} from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
 import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
@@ -65,6 +69,22 @@ const visitColumns = {
     id: appointmentTable.id,
     bookingNumber: appointmentTable.bookingNumber,
   },
+  treatment: {
+    id: treatmentTable.id,
+    name: treatmentTable.name,
+    code: treatmentTable.code,
+  },
+  treatmentSession: {
+    id: treatmentSessionTable.id,
+    label: treatmentSessionTable.label,
+    procedure: treatmentSessionTable.procedure,
+    sessionNumber: treatmentSessionTable.sessionNumber,
+    durationMinutes: treatmentSessionTable.durationMinutes,
+    setupMinutes: treatmentSessionTable.setupMinutes,
+    cleaningMinutes: treatmentSessionTable.cleaningMinutes,
+    roomType: treatmentSessionTable.roomType,
+    therapistSkill: treatmentSessionTable.therapistSkill,
+  },
 };
 
 // A Walk-in Visit has no Appointment, and Drizzle collapses the whole nested
@@ -73,7 +93,19 @@ type VisitRow = {
   status: string;
   visitDate: string;
   appointment: { id: number | null; bookingNumber: string | null } | null;
-} & Omit<Visit, 'status' | 'visitDate' | 'appointment'>;
+  treatment: { id: number | null; name: string | null; code: string | null } | null;
+  treatmentSession: {
+    id: number | null;
+    label: string | null;
+    procedure: string | null;
+    sessionNumber: number | null;
+    durationMinutes: number | null;
+    setupMinutes: number | null;
+    cleaningMinutes: number | null;
+    roomType: string | null;
+    therapistSkill: string | null;
+  } | null;
+} & Omit<Visit, 'status' | 'visitDate' | 'appointment' | 'treatment' | 'treatmentSession'>;
 
 function toVisit(row: VisitRow): Visit {
   return {
@@ -83,6 +115,30 @@ function toVisit(row: VisitRow): Visit {
     appointment:
       row.appointment?.id != null && row.appointment.bookingNumber != null
         ? { id: row.appointment.id, bookingNumber: row.appointment.bookingNumber }
+        : null,
+    treatment:
+      row.treatment?.id != null && row.treatment.name != null && row.treatment.code != null
+        ? { id: row.treatment.id, name: row.treatment.name, code: row.treatment.code }
+        : null,
+    treatmentSession:
+      row.treatmentSession?.id != null &&
+      row.treatmentSession.label != null &&
+      row.treatmentSession.procedure != null &&
+      row.treatmentSession.sessionNumber != null &&
+      row.treatmentSession.durationMinutes != null &&
+      row.treatmentSession.setupMinutes != null &&
+      row.treatmentSession.cleaningMinutes != null
+        ? {
+            id: row.treatmentSession.id,
+            label: row.treatmentSession.label,
+            procedure: row.treatmentSession.procedure,
+            sessionNumber: row.treatmentSession.sessionNumber,
+            durationMinutes: row.treatmentSession.durationMinutes,
+            setupMinutes: row.treatmentSession.setupMinutes,
+            cleaningMinutes: row.treatmentSession.cleaningMinutes,
+            roomType: row.treatmentSession.roomType,
+            therapistSkill: row.treatmentSession.therapistSkill,
+          }
         : null,
   };
 }
@@ -114,6 +170,20 @@ function visitJoins(executor: SelectExecutor = db) {
       and(
         eq(appointmentTable.id, visitTable.appointmentId),
         eq(appointmentTable.tenantId, visitTable.tenantId)
+      )
+    )
+    .leftJoin(
+      treatmentTable,
+      and(
+        eq(treatmentTable.id, visitTable.treatmentId),
+        eq(treatmentTable.tenantId, visitTable.tenantId)
+      )
+    )
+    .leftJoin(
+      treatmentSessionTable,
+      and(
+        eq(treatmentSessionTable.id, visitTable.treatmentSessionId),
+        eq(treatmentSessionTable.tenantId, visitTable.tenantId)
       )
     );
 }
@@ -261,7 +331,8 @@ async function syncAppointmentStatus(
   tx: Transaction,
   tenantId: string,
   appointmentId: number,
-  category: AppointmentStatusCategory
+  category: AppointmentStatusCategory,
+  extra: { doctorId?: number } = {}
 ) {
   const [systemStatus] = await tx
     .select({ id: appointmentStatusTable.id })
@@ -282,7 +353,11 @@ async function syncAppointmentStatus(
 
   await tx
     .update(appointmentTable)
-    .set({ appointmentStatusId: systemStatus.id, modifiedOn: new Date() })
+    .set({
+      appointmentStatusId: systemStatus.id,
+      modifiedOn: new Date(),
+      ...(extra.doctorId !== undefined ? { doctorId: extra.doctorId } : {}),
+    })
     .where(and(eq(appointmentTable.id, appointmentId), eq(appointmentTable.tenantId, tenantId)));
 
   return true;
@@ -299,9 +374,14 @@ async function runCheckInVisitTransaction(
   data: ValidatedCheckInVisitData
 ): Promise<CheckInVisitRepositoryResult> {
   return db.transaction(async (tx) => {
+    let lockedAppointmentDoctorId: number | null | undefined;
+
     if (data.appointmentId !== undefined) {
       const [appointment] = await tx
-        .select({ statusCategory: appointmentStatusTable.category })
+        .select({
+          doctorId: appointmentTable.doctorId,
+          statusCategory: appointmentStatusTable.category,
+        })
         .from(appointmentTable)
         .innerJoin(
           appointmentStatusTable,
@@ -328,6 +408,8 @@ async function runCheckInVisitTransaction(
       ) {
         return { success: false, outcome: 'appointment-ineligible' };
       }
+
+      lockedAppointmentDoctorId = appointment.doctorId;
     }
 
     const [numberCounter] = await tx
@@ -371,6 +453,8 @@ async function runCheckInVisitTransaction(
         queueToken: tokenCounter.lastNumber,
         chiefComplaint: data.chiefComplaint ?? null,
         remarks: data.remarks ?? null,
+        treatmentId: data.treatmentId ?? null,
+        treatmentSessionId: data.treatmentSessionId ?? null,
       })
       .returning({ id: visitTable.id });
 
@@ -383,7 +467,8 @@ async function runCheckInVisitTransaction(
         tx,
         data.tenantId,
         data.appointmentId,
-        'CHECKED_IN'
+        'CHECKED_IN',
+        lockedAppointmentDoctorId ? {} : { doctorId: data.doctorId }
       );
 
       if (!synced) {
@@ -552,7 +637,12 @@ async function cancelVisit(
 async function updateVisit(
   id: number,
   tenantId: string,
-  data: { chiefComplaint?: string; remarks?: string }
+  data: {
+    chiefComplaint?: string;
+    remarks?: string;
+    treatmentId?: number | null;
+    treatmentSessionId?: number | null;
+  }
 ): Promise<Visit | undefined> {
   const [updated] = await db
     .update(visitTable)
@@ -560,6 +650,12 @@ async function updateVisit(
       chiefComplaint: data.chiefComplaint ?? null,
       remarks: data.remarks ?? null,
       modifiedOn: new Date(),
+      ...(data.treatmentId !== undefined
+        ? {
+            treatmentId: data.treatmentId,
+            treatmentSessionId: data.treatmentSessionId,
+          }
+        : {}),
     })
     .where(
       and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false))
