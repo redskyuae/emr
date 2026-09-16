@@ -374,6 +374,8 @@ async function runCheckInVisitTransaction(
   data: ValidatedCheckInVisitData
 ): Promise<CheckInVisitRepositoryResult> {
   return db.transaction(async (tx) => {
+    let lockedAppointmentDoctorId: number | null | undefined;
+
     if (data.appointmentId !== undefined) {
       const [appointment] = await tx
         .select({
@@ -406,6 +408,8 @@ async function runCheckInVisitTransaction(
       ) {
         return { success: false, outcome: 'appointment-ineligible' };
       }
+
+      lockedAppointmentDoctorId = appointment.doctorId;
     }
 
     const [numberCounter] = await tx
@@ -464,7 +468,7 @@ async function runCheckInVisitTransaction(
         data.tenantId,
         data.appointmentId,
         'CHECKED_IN',
-        appointment.doctorId ? {} : { doctorId: data.doctorId }
+        lockedAppointmentDoctorId ? {} : { doctorId: data.doctorId }
       );
 
       if (!synced) {
