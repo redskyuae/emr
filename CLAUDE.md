@@ -20,7 +20,7 @@ API-first hospital management platform. A **Tenant** is a hospital group (e.g., 
 
 ## Frontend
 
-All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI, and use the `design-system` team skill. 
+All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI, and use the `design-system` team skill.
 
 Key facts:
 
