@@ -51,8 +51,8 @@ export function RotaManagementPageImpl() {
   const [page, setPage] = useState(1);
   const [rotaPendingDelete, setRotaPendingDelete] = useState<DoctorRota | null>(null);
 
-  const { data: canCreate } = useHasPermission('doctor-rota:create');
-  const { data: canUpdate } = useHasPermission('doctor-rota:update');
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('doctor-rota:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission('doctor-rota:update');
   const { data: canDelete } = useHasPermission('doctor-rota:delete');
 
   const rotasQuery = useDoctorRotasQuery({
@@ -95,6 +95,9 @@ export function RotaManagementPageImpl() {
     (canUpdate &&
       editingRotaId !== null &&
       (editingRotaResolving || editingRota !== null || editingRotaLoadFailed));
+  const rotaAccessDenied =
+    (rotaParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingRotaId !== null && !canUpdateLoading && !canUpdate);
 
   const previousDebouncedRef = useRef(debouncedSearch);
   useEffect(() => {
@@ -103,6 +106,13 @@ export function RotaManagementPageImpl() {
       setPage(1);
     }
   }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (rotaAccessDenied) {
+      void setRotaParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rotaAccessDenied]);
 
   function openAddSheet() {
     void setRotaParam('new');

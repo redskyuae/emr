@@ -50,8 +50,8 @@ export function RoomTypePageImpl() {
   const [page, setPage] = useState(1);
   const [roomTypePendingDelete, setRoomTypePendingDelete] = useState<RoomType | null>(null);
 
-  const { data: canCreate } = useHasPermission('room-type:create');
-  const { data: canUpdate } = useHasPermission('room-type:update');
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('room-type:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission('room-type:update');
   const { data: canDelete } = useHasPermission('room-type:delete');
 
   const isCreating = roomTypeParam === 'new' && canCreate;
@@ -94,14 +94,19 @@ export function RoomTypePageImpl() {
     (canUpdate && editingRoomTypeId !== null && (roomTypeResolving || editingRoomType !== null));
   const roomTypeNotFound =
     editingRoomTypeId !== null && !roomTypeResolving && editingRoomType === null;
+  const roomTypeAccessDenied =
+    (roomTypeParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingRoomTypeId !== null && !canUpdateLoading && !canUpdate);
 
   useEffect(() => {
     if (roomTypeNotFound) {
       toast.error('This Room Type no longer exists.');
       void setRoomTypeParam(null);
+    } else if (roomTypeAccessDenied) {
+      void setRoomTypeParam(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomTypeNotFound]);
+  }, [roomTypeNotFound, roomTypeAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
