@@ -133,24 +133,24 @@ export const checkInVisitSchema = z
     }
   });
 
-const optionalPositiveId = (schema: typeof treatmentIdSchema) =>
-  schema
-    .optional()
-    .nullable()
-    .transform((value) => value ?? undefined);
+const optionalClearableId = (schema: typeof treatmentIdSchema) =>
+  z.union([schema, z.null()]).optional();
 
 export const updateVisitSchema = z
   .object({
     chiefComplaint: chiefComplaintSchema,
     remarks: remarksSchema,
-    treatmentId: optionalPositiveId(treatmentIdSchema),
-    treatmentSessionId: optionalPositiveId(treatmentSessionIdSchema),
+    treatmentId: optionalClearableId(treatmentIdSchema),
+    treatmentSessionId: optionalClearableId(treatmentSessionIdSchema),
   })
   .superRefine((data, context) => {
     const hasTreatment = data.treatmentId !== undefined;
     const hasSession = data.treatmentSessionId !== undefined;
 
-    if (hasTreatment !== hasSession) {
+    if (
+      hasTreatment !== hasSession ||
+      (data.treatmentId === null) !== (data.treatmentSessionId === null)
+    ) {
       context.addIssue({
         code: 'custom',
         path: hasTreatment ? ['treatmentSessionId'] : ['treatmentId'],

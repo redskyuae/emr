@@ -49,10 +49,7 @@ export async function validateUpdateVisit(
     };
   }
 
-  if (
-    payloadResult.data.treatmentId !== undefined &&
-    payloadResult.data.treatmentSessionId !== undefined
-  ) {
+  if (payloadResult.data.treatmentId != null && payloadResult.data.treatmentSessionId != null) {
     const [treatment, treatmentSession] = await Promise.all([
       treatmentRepository.getTreatmentById(payloadResult.data.treatmentId, tenantId),
       treatmentRepository.getTreatmentSessionById(payloadResult.data.treatmentSessionId, tenantId),

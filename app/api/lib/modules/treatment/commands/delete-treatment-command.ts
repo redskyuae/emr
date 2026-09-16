@@ -9,7 +9,7 @@ export async function deleteTreatmentCommand(
   id: unknown,
   tenantId: unknown
 ): Promise<CommandResult<Treatment>> {
-  const validationResult = validateDeleteTreatment(id, tenantId);
+  const validationResult = await validateDeleteTreatment(id, tenantId);
 
   if (!validationResult.success) {
     return {

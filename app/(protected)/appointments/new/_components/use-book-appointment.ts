@@ -400,7 +400,9 @@ export function useBookAppointment() {
 
   const dependencyErrors = [
     doctorsQuery.error,
-    ...(isProcedurePath ? [] : [modesQuery.error, typesQuery.error, reasonsQuery.error]),
+    ...(isProcedurePath
+      ? [treatmentsQuery.error]
+      : [modesQuery.error, typesQuery.error, reasonsQuery.error]),
   ]
     .map(getErrorMessage)
     .filter((message): message is string => message !== null);
@@ -435,8 +437,9 @@ export function useBookAppointment() {
     appointmentReasons: reasonsQuery.data?.data ?? [],
     bookingDependenciesLoading:
       doctorsQuery.isLoading ||
-      (!isProcedurePath &&
-        (modesQuery.isLoading || typesQuery.isLoading || reasonsQuery.isLoading)),
+      (isProcedurePath
+        ? treatmentsQuery.isLoading
+        : modesQuery.isLoading || typesQuery.isLoading || reasonsQuery.isLoading),
     bookingDependencyError: dependencyErrors[0] ?? null,
     rotas,
     isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
@@ -466,7 +469,9 @@ export function useBookAppointment() {
     retryDoctorSlots: doctorSlotsQuery.refetch,
     retryBookingDependencies: () => {
       void doctorsQuery.refetch();
-      if (!isProcedurePath) {
+      if (isProcedurePath) {
+        void treatmentsQuery.refetch();
+      } else {
         void modesQuery.refetch();
         void typesQuery.refetch();
         void reasonsQuery.refetch();

@@ -14,6 +14,7 @@ vi.mock('../repository/treatment-repository', () => ({
     findActiveByName: vi.fn(),
     findActiveByCode: vi.fn(),
     getTreatmentById: vi.fn(),
+    isTreatmentInUse: vi.fn(),
   },
 }));
 
@@ -63,6 +64,7 @@ describe('Treatment validators', () => {
     repo.findActiveByName.mockResolvedValue(undefined);
     repo.findActiveByCode.mockResolvedValue(undefined);
     repo.getTreatmentById.mockResolvedValue(existing);
+    repo.isTreatmentInUse.mockResolvedValue(false);
   });
 
   describe('validateCreateTreatment', () => {
@@ -148,17 +150,28 @@ describe('Treatment validators', () => {
   });
 
   describe('validateDeleteTreatment', () => {
-    it('should return an invalid id error for a non-numeric id', () => {
-      expect(validateDeleteTreatment('abc', 'tenant-1')).toMatchObject({
+    it('should return an invalid id error for a non-numeric id', async () => {
+      await expect(validateDeleteTreatment('abc', 'tenant-1')).resolves.toMatchObject({
         success: false,
         errors: ['Treatment abc is Invalid.'],
       });
+      expect(repo.isTreatmentInUse).not.toHaveBeenCalled();
     });
 
-    it('should return the id and tenant id on success', () => {
-      expect(validateDeleteTreatment('1', 'tenant-1')).toEqual({
+    it('should return the id and tenant id on success', async () => {
+      await expect(validateDeleteTreatment('1', 'tenant-1')).resolves.toEqual({
         success: true,
         data: { id: 1, tenantId: 'tenant-1' },
+      });
+    });
+
+    it('should reject deleting a Treatment that is in use', async () => {
+      repo.isTreatmentInUse.mockResolvedValue(true);
+
+      await expect(validateDeleteTreatment('1', 'tenant-1')).resolves.toMatchObject({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Treatment cannot be deleted while it is in use.'],
       });
     });
   });

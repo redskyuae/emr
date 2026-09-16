@@ -331,7 +331,8 @@ async function syncAppointmentStatus(
   tx: Transaction,
   tenantId: string,
   appointmentId: number,
-  category: AppointmentStatusCategory
+  category: AppointmentStatusCategory,
+  extra: { doctorId?: number } = {}
 ) {
   const [systemStatus] = await tx
     .select({ id: appointmentStatusTable.id })
@@ -352,7 +353,11 @@ async function syncAppointmentStatus(
 
   await tx
     .update(appointmentTable)
-    .set({ appointmentStatusId: systemStatus.id, modifiedOn: new Date() })
+    .set({
+      appointmentStatusId: systemStatus.id,
+      modifiedOn: new Date(),
+      ...(extra.doctorId !== undefined ? { doctorId: extra.doctorId } : {}),
+    })
     .where(and(eq(appointmentTable.id, appointmentId), eq(appointmentTable.tenantId, tenantId)));
 
   return true;
@@ -371,7 +376,10 @@ async function runCheckInVisitTransaction(
   return db.transaction(async (tx) => {
     if (data.appointmentId !== undefined) {
       const [appointment] = await tx
-        .select({ statusCategory: appointmentStatusTable.category })
+        .select({
+          doctorId: appointmentTable.doctorId,
+          statusCategory: appointmentStatusTable.category,
+        })
         .from(appointmentTable)
         .innerJoin(
           appointmentStatusTable,
@@ -455,7 +463,8 @@ async function runCheckInVisitTransaction(
         tx,
         data.tenantId,
         data.appointmentId,
-        'CHECKED_IN'
+        'CHECKED_IN',
+        appointment.doctorId ? {} : { doctorId: data.doctorId }
       );
 
       if (!synced) {
@@ -627,8 +636,8 @@ async function updateVisit(
   data: {
     chiefComplaint?: string;
     remarks?: string;
-    treatmentId?: number;
-    treatmentSessionId?: number;
+    treatmentId?: number | null;
+    treatmentSessionId?: number | null;
   }
 ): Promise<Visit | undefined> {
   const [updated] = await db
@@ -636,9 +645,13 @@ async function updateVisit(
     .set({
       chiefComplaint: data.chiefComplaint ?? null,
       remarks: data.remarks ?? null,
-      treatmentId: data.treatmentId ?? null,
-      treatmentSessionId: data.treatmentSessionId ?? null,
       modifiedOn: new Date(),
+      ...(data.treatmentId !== undefined
+        ? {
+            treatmentId: data.treatmentId,
+            treatmentSessionId: data.treatmentSessionId,
+          }
+        : {}),
     })
     .where(
       and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false))

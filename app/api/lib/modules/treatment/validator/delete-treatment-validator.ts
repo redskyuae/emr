@@ -1,5 +1,8 @@
+import { StatusCodes } from 'http-status-codes';
+
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
+import { treatmentRepository } from '../repository/treatment-repository';
 import { treatmentIdSchema, treatmentTenantIdSchema } from '../schemas/treatment-schema';
 
 export type DeleteTreatmentInput = {
@@ -7,10 +10,13 @@ export type DeleteTreatmentInput = {
   tenantId: string;
 };
 
-export function validateDeleteTreatment(
+type TreatmentUsageReader = Pick<typeof treatmentRepository, 'isTreatmentInUse'>;
+
+export async function validateDeleteTreatment(
   id: unknown,
-  tenantId: unknown
-): ValidationResult<DeleteTreatmentInput> {
+  tenantId: unknown,
+  usage: TreatmentUsageReader = treatmentRepository
+): Promise<ValidationResult<DeleteTreatmentInput>> {
   const idResult = treatmentIdSchema.safeParse(id);
   const tenantIdResult = treatmentTenantIdSchema.safeParse(tenantId);
 
@@ -26,6 +32,14 @@ export function validateDeleteTreatment(
     }
 
     return { success: false, errors };
+  }
+
+  if (await usage.isTreatmentInUse(idResult.data, tenantIdResult.data)) {
+    return {
+      success: false,
+      errors: ['Treatment cannot be deleted while it is in use.'],
+      status: StatusCodes.CONFLICT,
+    };
   }
 
   return {

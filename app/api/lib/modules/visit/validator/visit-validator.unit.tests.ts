@@ -6,6 +6,7 @@ import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { visitTypeRepository } from '../../visit-type/repository/visit-type-repository';
+import { treatmentRepository } from '../../treatment/repository/treatment-repository';
 import { visitRepository } from '../repository/visit-repository';
 import { validateCancelVisit } from './cancel-visit-validator';
 import { validateCheckInVisit } from './check-in-visit-validator';
@@ -46,6 +47,7 @@ vi.mock('../../treatment/repository/treatment-repository', () => ({
 }));
 
 const visitRepo = vi.mocked(visitRepository);
+const treatmentRepo = vi.mocked(treatmentRepository);
 const appointmentRepo = vi.mocked(appointmentRepository);
 const patientRepo = vi.mocked(patientRepository);
 const doctorRepo = vi.mocked(doctorRepository);
@@ -412,6 +414,7 @@ describe('Visit validators', () => {
         success: true,
         data: { id: 1, payload: { chiefComplaint: 'Fever' } },
       });
+      expect(treatmentRepo.getTreatmentById).not.toHaveBeenCalled();
     });
   });
 

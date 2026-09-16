@@ -1,10 +1,12 @@
 import { and, asc, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
+import { appointment as appointmentTable } from '@/app/db/schema/appointment';
 import {
   treatment as treatmentTable,
   treatmentSession as treatmentSessionTable,
 } from '@/app/db/schema/treatment';
+import { visit as visitTable } from '@/app/db/schema/visit';
 import type {
   CreateTreatmentData,
   Treatment,
@@ -48,13 +50,18 @@ const sessionColumns = {
 };
 
 type TreatmentRow = Omit<Treatment, 'sessions'>;
+type Executor = Pick<typeof db, 'select' | 'insert' | 'update'>;
 
-async function getSessionsByTreatmentIds(treatmentIds: number[], tenantId: string) {
+async function getSessionsByTreatmentIds(
+  treatmentIds: number[],
+  tenantId: string,
+  executor: Executor = db
+) {
   if (treatmentIds.length === 0) {
     return new Map<number, TreatmentSession[]>();
   }
 
-  const rows = await db
+  const rows = await executor
     .select(sessionColumns)
     .from(treatmentSessionTable)
     .where(
@@ -81,8 +88,8 @@ function withSessions(row: TreatmentRow, sessions: TreatmentSession[] = []): Tre
   return { ...row, sessions };
 }
 
-async function insertSessions(data: CreateTreatmentData, treatmentId: number) {
-  await db.insert(treatmentSessionTable).values(
+async function insertSessions(executor: Executor, data: CreateTreatmentData, treatmentId: number) {
+  await executor.insert(treatmentSessionTable).values(
     data.sessions.map((session) => ({
       tenantId: data.tenantId,
       treatmentId,
@@ -102,24 +109,32 @@ async function insertSessions(data: CreateTreatmentData, treatmentId: number) {
 }
 
 async function createTreatment(data: CreateTreatmentData) {
-  const [createdTreatment] = await db
-    .insert(treatmentTable)
-    .values({
-      tenantId: data.tenantId,
-      name: data.name,
-      code: data.code,
-      description: data.description ?? null,
-      durationMinutes: data.durationMinutes,
-      setupMinutes: data.setupMinutes,
-      cleaningMinutes: data.cleaningMinutes,
-      roomType: data.roomType ?? null,
-      therapistSkill: data.therapistSkill ?? null,
-    })
-    .returning(treatmentColumns);
+  return db.transaction(async (tx) => {
+    const [createdTreatment] = await tx
+      .insert(treatmentTable)
+      .values({
+        tenantId: data.tenantId,
+        name: data.name,
+        code: data.code,
+        description: data.description ?? null,
+        durationMinutes: data.durationMinutes,
+        setupMinutes: data.setupMinutes,
+        cleaningMinutes: data.cleaningMinutes,
+        roomType: data.roomType ?? null,
+        therapistSkill: data.therapistSkill ?? null,
+      })
+      .returning(treatmentColumns);
 
-  await insertSessions(data, createdTreatment.id);
+    await insertSessions(tx, data, createdTreatment.id);
 
-  return getTreatmentById(createdTreatment.id, data.tenantId) as Promise<Treatment>;
+    const created = await getTreatmentById(createdTreatment.id, data.tenantId, tx);
+
+    if (!created) {
+      throw new Error('Created Treatment could not be read');
+    }
+
+    return created;
+  });
 }
 
 async function updateTreatment(
@@ -164,41 +179,79 @@ async function deleteTreatment(id: number, tenantId: string): Promise<Treatment 
 
   const deletedOn = new Date();
 
-  await db
-    .update(treatmentSessionTable)
-    .set({
-      isDeleted: true,
-      modifiedOn: deletedOn,
-      deletedOn,
-    })
-    .where(
-      and(
-        eq(treatmentSessionTable.treatmentId, id),
-        eq(treatmentSessionTable.tenantId, tenantId),
-        eq(treatmentSessionTable.isDeleted, false)
-      )
-    );
+  await db.transaction(async (tx) => {
+    await tx
+      .update(treatmentSessionTable)
+      .set({
+        isDeleted: true,
+        modifiedOn: deletedOn,
+        deletedOn,
+      })
+      .where(
+        and(
+          eq(treatmentSessionTable.treatmentId, id),
+          eq(treatmentSessionTable.tenantId, tenantId),
+          eq(treatmentSessionTable.isDeleted, false)
+        )
+      );
 
-  await db
-    .update(treatmentTable)
-    .set({
-      isDeleted: true,
-      modifiedOn: deletedOn,
-      deletedOn,
-    })
-    .where(
-      and(
-        eq(treatmentTable.id, id),
-        eq(treatmentTable.tenantId, tenantId),
-        eq(treatmentTable.isDeleted, false)
-      )
-    );
+    await tx
+      .update(treatmentTable)
+      .set({
+        isDeleted: true,
+        modifiedOn: deletedOn,
+        deletedOn,
+      })
+      .where(
+        and(
+          eq(treatmentTable.id, id),
+          eq(treatmentTable.tenantId, tenantId),
+          eq(treatmentTable.isDeleted, false)
+        )
+      );
+  });
 
   return existing;
 }
 
-async function getTreatmentById(id: number, tenantId: string): Promise<Treatment | undefined> {
-  const [treatment] = await db
+async function isTreatmentInUse(id: number, tenantId: string) {
+  const [appointment] = await db
+    .select({ id: appointmentTable.id })
+    .from(appointmentTable)
+    .where(
+      and(
+        eq(appointmentTable.tenantId, tenantId),
+        eq(appointmentTable.treatmentId, id),
+        eq(appointmentTable.isDeleted, false)
+      )
+    )
+    .limit(1);
+
+  if (appointment) {
+    return true;
+  }
+
+  const [visit] = await db
+    .select({ id: visitTable.id })
+    .from(visitTable)
+    .where(
+      and(
+        eq(visitTable.tenantId, tenantId),
+        eq(visitTable.treatmentId, id),
+        eq(visitTable.isDeleted, false)
+      )
+    )
+    .limit(1);
+
+  return Boolean(visit);
+}
+
+async function getTreatmentById(
+  id: number,
+  tenantId: string,
+  executor: Executor = db
+): Promise<Treatment | undefined> {
+  const [treatment] = await executor
     .select(treatmentColumns)
     .from(treatmentTable)
     .where(
@@ -214,7 +267,7 @@ async function getTreatmentById(id: number, tenantId: string): Promise<Treatment
     return undefined;
   }
 
-  const sessionsByTreatment = await getSessionsByTreatmentIds([id], tenantId);
+  const sessionsByTreatment = await getSessionsByTreatmentIds([id], tenantId, executor);
 
   return withSessions(treatment, sessionsByTreatment.get(id) ?? []);
 }
@@ -341,6 +394,7 @@ export const treatmentRepository = {
   getTreatments,
   findActiveByCode,
   findActiveByName,
+  isTreatmentInUse,
   createTreatment,
   updateTreatment,
   deleteTreatment,

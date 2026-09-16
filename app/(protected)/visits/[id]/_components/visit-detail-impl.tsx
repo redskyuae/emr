@@ -47,12 +47,19 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
   const treatmentsQuery = useTreatmentsQuery({ page: 1, limit: 999 });
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [chiefComplaint, setChiefComplaint] = useState(visit.chiefComplaint ?? '');
-  const [remarks, setRemarks] = useState(visit.remarks ?? '');
-  const [treatmentId, setTreatmentId] = useState(visit.treatment ? String(visit.treatment.id) : '');
-  const [treatmentSessionId, setTreatmentSessionId] = useState(
-    visit.treatmentSession ? String(visit.treatmentSession.id) : ''
-  );
+  const [detailsDraft, setDetailsDraft] = useState<{
+    remarks: string;
+    treatmentId: string;
+    chiefComplaint: string;
+    treatmentSessionId: string;
+  } | null>(null);
+  const details = detailsDraft ?? {
+    remarks: visit.remarks ?? '',
+    treatmentId: visit.treatment ? String(visit.treatment.id) : '',
+    chiefComplaint: visit.chiefComplaint ?? '',
+    treatmentSessionId: visit.treatmentSession ? String(visit.treatmentSession.id) : '',
+  };
+  const { remarks, treatmentId, chiefComplaint, treatmentSessionId } = details;
 
   const startMutation = useStartConsultation();
   const completeMutation = useCompleteVisit();
@@ -105,16 +112,25 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   }
 
   async function handleSaveDetails() {
+    const treatmentDirty =
+      treatmentId !== (visit.treatment ? String(visit.treatment.id) : '') ||
+      treatmentSessionId !== (visit.treatmentSession ? String(visit.treatmentSession.id) : '');
+
     try {
       await updateMutation.mutateAsync({
         id: visit.id,
         request: {
           chiefComplaint: chiefComplaint || undefined,
           remarks: remarks || undefined,
-          treatmentId: treatmentId ? Number(treatmentId) : undefined,
-          treatmentSessionId: treatmentSessionId ? Number(treatmentSessionId) : undefined,
+          ...(treatmentDirty
+            ? {
+                treatmentId: treatmentId ? Number(treatmentId) : null,
+                treatmentSessionId: treatmentSessionId ? Number(treatmentSessionId) : null,
+              }
+            : {}),
         },
       });
+      setDetailsDraft(null);
       toast.success('Visit updated.');
     } catch (error) {
       toast.error(getApiErrorMessage(error));
@@ -212,7 +228,9 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                 rows={2}
                 disabled={!canEditDetails}
                 value={chiefComplaint}
-                onChange={(event) => setChiefComplaint(event.target.value)}
+                onChange={(event) =>
+                  setDetailsDraft({ ...details, chiefComplaint: event.target.value })
+                }
               />
             </Field>
             <Field>
@@ -222,7 +240,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                 rows={2}
                 disabled={!canEditDetails}
                 value={remarks}
-                onChange={(event) => setRemarks(event.target.value)}
+                onChange={(event) => setDetailsDraft({ ...details, remarks: event.target.value })}
               />
             </Field>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -234,8 +252,11 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                     className="w-full"
                     value={treatmentId}
                     onChange={(event) => {
-                      setTreatmentId(event.target.value);
-                      setTreatmentSessionId('');
+                      setDetailsDraft({
+                        ...details,
+                        treatmentId: event.target.value,
+                        treatmentSessionId: '',
+                      });
                     }}
                   >
                     <NativeSelectOption value="">No Treatment</NativeSelectOption>
@@ -261,7 +282,9 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                     className="w-full"
                     value={treatmentSessionId}
                     disabled={!selectedTreatment}
-                    onChange={(event) => setTreatmentSessionId(event.target.value)}
+                    onChange={(event) =>
+                      setDetailsDraft({ ...details, treatmentSessionId: event.target.value })
+                    }
                   >
                     <NativeSelectOption value="">No Session</NativeSelectOption>
                     {(selectedTreatment?.sessions ?? []).map((session) => (

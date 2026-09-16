@@ -718,7 +718,7 @@ const procedureAppointmentExample = {
   treatment: { id: 400, name: 'Shirodhara relaxation programme', code: 'TRT-0401' },
   treatmentSession: {
     id: 401,
-    label: 'Session 1 of 4 · Shirodhara',
+    label: 'Session 1 of 2 · Shirodhara',
     procedure: 'Shirodhara',
     sessionNumber: 1,
     durationMinutes: 60,
@@ -8559,15 +8559,16 @@ export const openApiDocument = {
           chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
           remarks: { type: ['string', 'null'] },
           treatmentId: {
-            type: 'integer',
+            type: ['integer', 'null'],
             minimum: 1,
             description:
-              'Active Treatment identifier. Must be sent together with treatmentSessionId.',
+              'Active Treatment identifier. Omit to leave the existing value unchanged; send null together with treatmentSessionId to clear. Must be sent together with treatmentSessionId when present.',
           },
           treatmentSessionId: {
-            type: 'integer',
+            type: ['integer', 'null'],
             minimum: 1,
-            description: 'Active Treatment Session identifier belonging to the selected Treatment.',
+            description:
+              'Active Treatment Session identifier belonging to the selected Treatment. Omit to leave the existing value unchanged; send null together with treatmentId to clear.',
           },
         },
       },

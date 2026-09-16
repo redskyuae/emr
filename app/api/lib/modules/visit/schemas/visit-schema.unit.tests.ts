@@ -184,6 +184,9 @@ describe('Visit schema', () => {
       expect(errorsOf(updateVisitSchema.safeParse({ treatmentId: 400 }))).toContain(
         'Treatment and Session must be provided together.'
       );
+      expect(
+        errorsOf(updateVisitSchema.safeParse({ treatmentId: 400, treatmentSessionId: null }))
+      ).toContain('Treatment and Session must be provided together.');
     });
 
     it('should accept a Treatment and Session pair', () => {
@@ -193,6 +196,22 @@ describe('Visit schema', () => {
         treatmentId: 400,
         treatmentSessionId: 401,
       });
+    });
+
+    it('should accept an explicit clear of Treatment and Session', () => {
+      expect(
+        updateVisitSchema.parse({ treatmentId: null, treatmentSessionId: null })
+      ).toMatchObject({
+        treatmentId: null,
+        treatmentSessionId: null,
+      });
+    });
+
+    it('should omit Treatment fields when they are not sent', () => {
+      const parsed = updateVisitSchema.parse({ chiefComplaint: 'Fever' });
+
+      expect(parsed.treatmentId).toBeUndefined();
+      expect(parsed.treatmentSessionId).toBeUndefined();
     });
   });
 
