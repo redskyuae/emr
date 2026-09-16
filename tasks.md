@@ -93,4 +93,4 @@ Use `appointment-mode` as the reference implementation:
 - Subagents should update the status in this file as they progress
 - When a subagent completes their module, they should mark it ✅ DONE
 - The main agent monitors this file for completion
-- When all modules are ✅ DONE, the main agent reports completion
+- When all modules are ✅ DONE, the main agent reports completio
