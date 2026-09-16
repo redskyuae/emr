@@ -366,7 +366,7 @@ describe('Visit repository', () => {
 
       await expect(
         visitRepository.checkInVisit(checkInData(tenantA, fixturesA, { appointmentId }))
-      ).rejects.toThrow();
+      ).resolves.toEqual({ success: false, outcome: 'appointment-ineligible' });
     });
 
     it('should return the not-configured outcome and roll back when no system checked-in status exists', async () => {

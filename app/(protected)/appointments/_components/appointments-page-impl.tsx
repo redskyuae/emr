@@ -25,6 +25,7 @@ import {
 import { toDateInputValue, toDisplayDate, todayDisplayDate } from '../_utils/appointment-date';
 import { partitionAppointmentsByDayView } from '../_utils/appointment-groups';
 import { AppointmentDaySection, AppointmentDaySectionSkeleton } from './appointment-day-section';
+import { CancelAppointmentDialog } from './_modals/cancel-appointment-dialog';
 import { AppointmentDetailSheet } from './_sheets/appointment-detail-sheet';
 
 const DAY_VIEW_LIMIT = 999;
@@ -36,6 +37,7 @@ export function AppointmentsPageImpl() {
   const [statusParam, setStatusParam] = useQueryState('status');
   // Deep-link target for Booking entries on the Patient Timeline (ADR 0010).
   const [appointmentParam, setAppointmentParam] = useQueryState('appointment');
+  const [cancelParam, setCancelParam] = useQueryState('cancel');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
 
@@ -57,6 +59,10 @@ export function AppointmentsPageImpl() {
   const statusesQuery = useAppointmentStatusesQuery({ page: 1, limit: 999 });
 
   const appointments = appointmentsQuery.data?.data ?? [];
+  const cancellingAppointmentId =
+    cancelParam && /^\d+$/.test(cancelParam) ? Number(cancelParam) : null;
+  const cancellingAppointment =
+    appointments.find((appointment) => appointment.id === cancellingAppointmentId) ?? null;
   const { upcoming, completed } = partitionAppointmentsByDayView(appointments);
 
   return (
@@ -158,6 +164,7 @@ export function AppointmentsPageImpl() {
               appointments={upcoming}
               description={`Scheduled, confirmed, and checked-in Appointments for ${slotDate}.`}
               emptyDescription="No upcoming Appointments match the current filters."
+              onCancel={(appointment) => void setCancelParam(String(appointment.id))}
             />
             <AppointmentDaySection
               id="completed-appointments"
@@ -166,6 +173,7 @@ export function AppointmentsPageImpl() {
               appointments={completed}
               description={`Appointments completed on ${slotDate}.`}
               emptyDescription="No completed Appointments match the current filters."
+              onCancel={(appointment) => void setCancelParam(String(appointment.id))}
             />
           </div>
         )
@@ -175,6 +183,12 @@ export function AppointmentsPageImpl() {
         appointmentId={selectedAppointmentId}
         onClose={() => void setAppointmentParam(null)}
       />
+      {cancellingAppointment ? (
+        <CancelAppointmentDialog
+          appointment={cancellingAppointment}
+          onClose={() => void setCancelParam(null)}
+        />
+      ) : null}
     </div>
   );
 }

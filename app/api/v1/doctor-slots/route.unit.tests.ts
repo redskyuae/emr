@@ -52,6 +52,21 @@ describe('Doctor slots route', () => {
     });
   });
 
+  it('should forward the Appointment being rescheduled', async () => {
+    await GET(
+      new NextRequest(
+        'http://localhost/api/v1/doctor-slots?doctorId=7&slotDate=2026-07-15&reschedulingAppointmentId=10'
+      )
+    );
+
+    expect(getDoctorSlots).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+      doctorId: '7',
+      slotDate: '2026-07-15',
+      reschedulingAppointmentId: '10',
+    });
+  });
+
   it('should return an auth response without calling the slots query', async () => {
     requireSession.mockResolvedValue(
       NextResponse.json({ message: 'Unauthorized' }, { status: StatusCodes.UNAUTHORIZED })

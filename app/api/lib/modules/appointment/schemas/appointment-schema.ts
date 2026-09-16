@@ -148,6 +148,49 @@ const createProcedureAppointmentSchema = z
   })
   .strict();
 
+const rescheduleConsultationAppointmentSchema = z
+  .object({
+    bookingPath: z.literal('CONSULTATION'),
+    doctorId: positiveIdSchema('Doctor ID'),
+    slotDate: slotDateSchema,
+    doctorRotaId: positiveIdSchema('Doctor rota ID'),
+    slotTimes: z
+      .array(slotTimeSchema, { error: 'Slot times are required' })
+      .min(1, 'At least one slot time is required')
+      .refine((times) => new Set(times).size === times.length, 'Slot times must be unique'),
+  })
+  .strict();
+
+const rescheduleProcedureAppointmentSchema = z
+  .object({
+    bookingPath: z.literal('PROCEDURE'),
+    slotDate: slotDateSchema,
+    startTime: appointmentTimeSchema('Start time'),
+    endTime: appointmentTimeSchema('End time'),
+  })
+  .strict();
+
+export const rescheduleAppointmentSchema = z
+  .discriminatedUnion('bookingPath', [
+    rescheduleConsultationAppointmentSchema,
+    rescheduleProcedureAppointmentSchema,
+  ])
+  .superRefine((data, context) => {
+    if (data.bookingPath === 'PROCEDURE' && data.endTime <= data.startTime) {
+      context.addIssue({
+        code: 'custom',
+        path: ['endTime'],
+        message: 'End time must be after start time',
+      });
+    }
+  });
+
+export const cancelAppointmentSchema = z
+  .object({
+    appointmentCancelledReasonId: positiveIdSchema('Appointment cancelled reason ID'),
+  })
+  .strict();
+
 export const createAppointmentSchema = z
   .discriminatedUnion('bookingPath', [
     createConsultationAppointmentSchema,
@@ -190,6 +233,17 @@ export const listAppointmentsSchema = z.object({
 });
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
+export type CancelAppointmentInput = z.infer<typeof cancelAppointmentSchema>;
+export type RescheduleAppointmentInput = z.infer<typeof rescheduleAppointmentSchema>;
+export type ValidatedCancelAppointmentData = CancelAppointmentInput & {
+  id: number;
+  tenantId: string;
+};
+export type ValidatedRescheduleAppointmentData = RescheduleAppointmentInput & {
+  id: number;
+  tenantId: string;
+  timeZone: string;
+};
 export type BookingPath = (typeof bookingPathValues)[number];
 export type ListAppointmentsInput = z.infer<typeof listAppointmentsSchema>;
 export type CreateAppointmentData = CreateAppointmentInput & { tenantId: string };
@@ -217,8 +271,10 @@ export type PotentialPatientMatch = AppointmentPatientSummary & {
 
 export type Appointment = {
   id: number;
+  cancelledAt: Date | null;
   remarks: string | null;
   rotaName: string | null;
+  doctorRotaId: number | null;
   tenantId: string;
   slotDate: string;
   startTime: string | null;
@@ -234,6 +290,7 @@ export type Appointment = {
   appointmentMode: AppointmentReferenceSummary | null;
   appointmentType: AppointmentReferenceSummary | null;
   appointmentReason: AppointmentReferenceSummary | null;
+  appointmentCancelledReason: AppointmentReferenceSummary | null;
   appointmentStatus: AppointmentReferenceSummary & {
     category: Lowercase<AppointmentStatusCategory>;
   };

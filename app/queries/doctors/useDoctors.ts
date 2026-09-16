@@ -48,8 +48,9 @@ async function fetchDoctorList(filters: DoctorListFilters): Promise<ListDoctorsR
   return response.json() as Promise<ListDoctorsResponse>;
 }
 
-export function useDoctorsQuery(filters: DoctorListFilters) {
+export function useDoctorsQuery(filters: DoctorListFilters, options?: { enabled?: boolean }) {
   return useQuery({
+    enabled: options?.enabled,
     queryKey: doctorListQueryKey(filters),
     queryFn: () => fetchDoctorList(filters),
     placeholderData: keepPreviousData,

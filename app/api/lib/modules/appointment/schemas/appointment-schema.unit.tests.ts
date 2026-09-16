@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAppointmentSchema, listAppointmentsSchema } from './appointment-schema';
+import {
+  cancelAppointmentSchema,
+  createAppointmentSchema,
+  listAppointmentsSchema,
+  rescheduleAppointmentSchema,
+} from './appointment-schema';
 
 const validPayload = {
   bookingPath: 'CONSULTATION',
@@ -27,6 +32,88 @@ const errorsOf = (payload: unknown) =>
   createAppointmentSchema.safeParse(payload).error?.issues.map((issue) => issue.message) ?? [];
 
 describe('Appointment schema', () => {
+  it('should require and normalize an Appointment Cancelled Reason ID', () => {
+    expect(cancelAppointmentSchema.parse({ appointmentCancelledReasonId: '7' })).toEqual({
+      appointmentCancelledReasonId: 7,
+    });
+    expect(
+      cancelAppointmentSchema.safeParse({ appointmentCancelledReasonId: 0 }).error?.issues[0]
+        ?.message
+    ).toBe('Appointment cancelled reason ID must be positive');
+    expect(cancelAppointmentSchema.safeParse({}).success).toBe(false);
+    expect(
+      cancelAppointmentSchema.safeParse({ appointmentCancelledReasonId: 7, note: 'extra' }).success
+    ).toBe(false);
+  });
+
+  it('should normalize a Consultation reschedule request', () => {
+    expect(
+      rescheduleAppointmentSchema.parse({
+        bookingPath: 'CONSULTATION',
+        doctorId: 7,
+        slotDate: '31-12-2099',
+        doctorRotaId: 8,
+        slotTimes: ['10:00', '10:15'],
+      })
+    ).toEqual({
+      bookingPath: 'CONSULTATION',
+      doctorId: 7,
+      slotDate: '2099-12-31',
+      doctorRotaId: 8,
+      slotTimes: ['10:00', '10:15'],
+    });
+  });
+
+  it('should normalize a Procedure reschedule request without accepting a Doctor', () => {
+    expect(
+      rescheduleAppointmentSchema.parse({
+        bookingPath: 'PROCEDURE',
+        slotDate: '31-12-2099',
+        startTime: '11:00',
+        endTime: '12:15',
+      })
+    ).toEqual({
+      bookingPath: 'PROCEDURE',
+      slotDate: '2099-12-31',
+      startTime: '11:00',
+      endTime: '12:15',
+    });
+
+    expect(
+      rescheduleAppointmentSchema.safeParse({
+        bookingPath: 'PROCEDURE',
+        doctorId: 7,
+        slotDate: '31-12-2099',
+        startTime: '11:00',
+        endTime: '12:15',
+      }).success
+    ).toBe(false);
+  });
+
+  it('should reject invalid Procedure reschedule windows and duplicate Consultation slots', () => {
+    expect(
+      rescheduleAppointmentSchema
+        .safeParse({
+          bookingPath: 'PROCEDURE',
+          slotDate: '31-12-2099',
+          startTime: '12:00',
+          endTime: '11:00',
+        })
+        .error?.issues.map((issue) => issue.message)
+    ).toContain('End time must be after start time');
+    expect(
+      rescheduleAppointmentSchema
+        .safeParse({
+          bookingPath: 'CONSULTATION',
+          doctorId: 7,
+          slotDate: '31-12-2099',
+          doctorRotaId: 8,
+          slotTimes: ['10:00', '10:00'],
+        })
+        .error?.issues.map((issue) => issue.message)
+    ).toContain('Slot times must be unique');
+  });
+
   it('should normalize DD-MM-YYYY slot date to ISO date and preserve HH:mm slot times', () => {
     expect(createAppointmentSchema.parse(validPayload)).toMatchObject({
       slotDate: '2099-12-31',

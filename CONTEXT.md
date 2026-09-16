@@ -194,6 +194,14 @@ The person to reach on a Patient's behalf in urgent situations, recorded during 
 
 A scheduled period for a Patient within a Tenant. A Consultation Appointment assigns a Doctor and reserves one or more consecutive DoctorSlots from the same DoctorRota. A Procedure Appointment records a direct start and end time, may optionally assign a Doctor, and does not consume a DoctorRota or DoctorSlots. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
 
+## Appointment Rescheduling
+
+Changing the scheduled period of an existing Scheduled or Confirmed Appointment while preserving its Booking Number and non-scheduling booking details. Rescheduling requires a real scheduling change, may change a Consultation Appointment's Doctor and replaces its Slot Reservations, or changes a Procedure Appointment's direct time window without changing its independently assigned Doctor; it returns the Appointment to Scheduled for confirmation, and Checked-in, Completed, Cancelled, and No-show Appointments cannot be rescheduled. Cancelling the original Appointment and creating a replacement is rebooking, not rescheduling.
+
+## Appointment Cancellation
+
+The irreversible scheduling transition of a Scheduled or Confirmed Appointment to Cancelled while retaining its Booking Number and original scheduling details, recording when and why it was cancelled, and releasing its Appointment Slot Reservations. Once a Patient has Checked In, cancellation belongs to the Visit rather than the Appointment; Completed, Cancelled, and No-show Appointments cannot be cancelled.
+
 ## Booking Path
 
 The scheduling workflow selected while booking, currently Consultation or Procedure. A Consultation requires a Doctor, DoctorRota, DoctorSlots, AppointmentMode, AppointmentType, and AppointmentReason. A Procedure requires a direct date/time window and may assign an active Doctor or use N/A; that Doctor assignment is independent of scheduling. A Booking Path determines which booking requirements apply but is distinct from VisitType and AppointmentType.
@@ -230,7 +238,7 @@ A Tenant-scoped Master that defines why an Appointment is being booked, either a
 
 ## AppointmentCancelledReason
 
-A Tenant-scoped Master that defines why an Appointment was cancelled. Distinct from AppointmentStatus: the AppointmentStatus records the cancellation state, while AppointmentCancelledReason records the reason behind that transition.
+A Tenant-scoped Master that defines why an Appointment was cancelled. Distinct from AppointmentStatus: the AppointmentStatus records the cancellation state, while AppointmentCancelledReason records the reason behind that transition. Removing a reason prevents future selection but does not erase it from existing Appointment cancellation history.
 
 ## Visit
 

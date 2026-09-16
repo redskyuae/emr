@@ -150,5 +150,21 @@ describe('DoctorSchedule validators', () => {
       success: true,
       data: { tenantId: 'tenant-1', doctorId: 2, slotDate: '2026-07-15' },
     });
+    expect(
+      validateGetDoctorSlots({
+        tenantId: 'tenant-1',
+        doctorId: '2',
+        slotDate: '2026-07-15',
+        reschedulingAppointmentId: '10',
+      })
+    ).toEqual({
+      success: true,
+      data: {
+        tenantId: 'tenant-1',
+        doctorId: 2,
+        slotDate: '2026-07-15',
+        reschedulingAppointmentId: 10,
+      },
+    });
   });
 });
