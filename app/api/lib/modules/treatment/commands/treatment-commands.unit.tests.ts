@@ -88,7 +88,7 @@ describe('Treatment commands', () => {
         },
       },
     });
-    validateDelete.mockReturnValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
+    validateDelete.mockResolvedValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
     repo.createTreatment.mockResolvedValue(treatment);
     repo.updateTreatment.mockResolvedValue(treatment);
     repo.deleteTreatment.mockResolvedValue(treatment);
@@ -178,7 +178,7 @@ describe('Treatment commands', () => {
 
   describe('deleteTreatmentCommand', () => {
     it('should return validation failure and not write when the validator fails', async () => {
-      validateDelete.mockReturnValue({ success: false, errors: ['Treatment abc is Invalid.'] });
+      validateDelete.mockResolvedValue({ success: false, errors: ['Treatment abc is Invalid.'] });
 
       const result = await deleteTreatmentCommand('abc', 'tenant-1');
 
