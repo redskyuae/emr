@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -53,8 +53,10 @@ export function WorkOrderTypePageImpl() {
   const [page, setPage] = useState(1);
   const [typePendingDelete, setTypePendingDelete] = useState<WorkOrderType | null>(null);
 
-  const { data: canCreate } = useHasPermission('work-order-type:create');
-  const { data: canUpdate } = useHasPermission('work-order-type:update');
+  const { data: canCreate, isLoading: canCreateLoading } =
+    useHasPermission('work-order-type:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } =
+    useHasPermission('work-order-type:update');
   const { data: canDelete } = useHasPermission('work-order-type:delete');
 
   const isCreating = typeParam === 'new' && canCreate;
@@ -88,6 +90,17 @@ export function WorkOrderTypePageImpl() {
     (typesQuery.isLoading || editingTypeQuery.isFetching);
   const sheetOpen =
     isCreating || (canUpdate && editingTypeId !== null && (typeResolving || editingType !== null));
+
+  const typeAccessDenied =
+    (typeParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingTypeId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (typeAccessDenied) {
+      void setTypeParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {

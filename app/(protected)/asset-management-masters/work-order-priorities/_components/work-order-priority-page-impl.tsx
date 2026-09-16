@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -55,8 +55,12 @@ export function WorkOrderPriorityPageImpl() {
     null
   );
 
-  const { data: canCreate } = useHasPermission('work-order-priority:create');
-  const { data: canUpdate } = useHasPermission('work-order-priority:update');
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission(
+    'work-order-priority:create'
+  );
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission(
+    'work-order-priority:update'
+  );
   const { data: canDelete } = useHasPermission('work-order-priority:delete');
 
   const isCreating = priorityParam === 'new' && canCreate;
@@ -97,6 +101,17 @@ export function WorkOrderPriorityPageImpl() {
   const sheetOpen =
     isCreating ||
     (canUpdate && editingPriorityId !== null && (priorityResolving || editingPriority !== null));
+
+  const priorityAccessDenied =
+    (priorityParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingPriorityId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (priorityAccessDenied) {
+      void setPriorityParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priorityAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {

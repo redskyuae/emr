@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -53,8 +53,10 @@ export function AssetConditionPageImpl() {
   const [page, setPage] = useState(1);
   const [conditionPendingDelete, setConditionPendingDelete] = useState<AssetCondition | null>(null);
 
-  const { data: canCreate } = useHasPermission('asset-condition:create');
-  const { data: canUpdate } = useHasPermission('asset-condition:update');
+  const { data: canCreate, isLoading: canCreateLoading } =
+    useHasPermission('asset-condition:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } =
+    useHasPermission('asset-condition:update');
   const { data: canDelete } = useHasPermission('asset-condition:delete');
 
   const isCreating = conditionParam === 'new' && canCreate;
@@ -95,6 +97,17 @@ export function AssetConditionPageImpl() {
   const sheetOpen =
     isCreating ||
     (canUpdate && editingConditionId !== null && (conditionResolving || editingCondition !== null));
+
+  const conditionAccessDenied =
+    (conditionParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingConditionId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (conditionAccessDenied) {
+      void setConditionParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conditionAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {

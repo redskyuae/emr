@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -52,9 +52,9 @@ export function AssetStatusPageImpl() {
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
 
-  const { data: canCreate } = useHasPermission('asset-status:create');
-  const { data: canUpdate } = useHasPermission('asset-status:update');
-  const { data: canDelete } = useHasPermission('asset-status:delete');
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('asset-status:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission('asset-status:update');
+  const { data: canDelete, isLoading: canDeleteLoading } = useHasPermission('asset-status:delete');
 
   const isCreating = statusParam === 'new' && canCreate;
   const editingStatusId =
@@ -101,6 +101,25 @@ export function AssetStatusPageImpl() {
   const sheetOpen =
     isCreating ||
     (canUpdate && editingStatusId !== null && (statusResolving || editingStatus !== null));
+
+  const statusAccessDenied =
+    (statusParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingStatusId !== null && !canUpdateLoading && !canUpdate);
+  const deleteStatusAccessDenied = deleteStatusId !== null && !canDeleteLoading && !canDelete;
+
+  useEffect(() => {
+    if (statusAccessDenied) {
+      void setStatusParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusAccessDenied]);
+
+  useEffect(() => {
+    if (deleteStatusAccessDenied) {
+      void setDeleteStatusParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deleteStatusAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -53,8 +53,12 @@ export function WorkOrderStatusPageImpl() {
   const [page, setPage] = useState(1);
   const [statusPendingDelete, setStatusPendingDelete] = useState<WorkOrderStatus | null>(null);
 
-  const { data: canCreate } = useHasPermission('work-order-status:create');
-  const { data: canUpdate } = useHasPermission('work-order-status:update');
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission(
+    'work-order-status:create'
+  );
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission(
+    'work-order-status:update'
+  );
   const { data: canDelete } = useHasPermission('work-order-status:delete');
 
   const isCreating = statusParam === 'new' && canCreate;
@@ -93,6 +97,17 @@ export function WorkOrderStatusPageImpl() {
   const sheetOpen =
     isCreating ||
     (canUpdate && editingStatusId !== null && (statusResolving || editingStatus !== null));
+
+  const statusAccessDenied =
+    (statusParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingStatusId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (statusAccessDenied) {
+      void setStatusParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {

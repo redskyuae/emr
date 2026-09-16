@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -52,9 +52,12 @@ export function AssetCategoryPageImpl() {
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
 
-  const { data: canCreate } = useHasPermission('asset-category:create');
-  const { data: canUpdate } = useHasPermission('asset-category:update');
-  const { data: canDelete } = useHasPermission('asset-category:delete');
+  const { data: canCreate, isLoading: canCreateLoading } =
+    useHasPermission('asset-category:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } =
+    useHasPermission('asset-category:update');
+  const { data: canDelete, isLoading: canDeleteLoading } =
+    useHasPermission('asset-category:delete');
 
   const isCreating = categoryParam === 'new' && canCreate;
   const editingCategoryId =
@@ -118,6 +121,25 @@ export function AssetCategoryPageImpl() {
     canDelete &&
     deleteCategoryId !== null &&
     (deleteCategoryResolving || categoryPendingDelete !== null);
+
+  const categoryAccessDenied =
+    (categoryParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingCategoryId !== null && !canUpdateLoading && !canUpdate);
+  const deleteCategoryAccessDenied = deleteCategoryId !== null && !canDeleteLoading && !canDelete;
+
+  useEffect(() => {
+    if (categoryAccessDenied) {
+      void setCategoryParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryAccessDenied]);
+
+  useEffect(() => {
+    if (deleteCategoryAccessDenied) {
+      void setDeleteCategoryParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deleteCategoryAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
