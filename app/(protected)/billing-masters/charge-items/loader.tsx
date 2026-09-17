@@ -6,9 +6,6 @@ export default function ChargeItemsPageLoader() {
       <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
         <Skeleton className="h-9 w-full lg:max-w-sm" />
         <Skeleton className="h-9 w-full lg:w-48" />
-        <div className="flex gap-2 lg:ml-auto">
-          <Skeleton className="h-9 w-36" />
-        </div>
       </div>
 
       <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
