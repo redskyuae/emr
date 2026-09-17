@@ -423,6 +423,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Add user',
       href: '/identity-access/users?user=new',
+      permission: 'staff:create',
     },
   },
   '/identity-access/roles': {

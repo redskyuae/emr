@@ -5,7 +5,6 @@ export default function RolesPageLoader() {
     <div className="space-y-4" aria-label="Loading page">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Skeleton className="h-6 w-60 max-w-full" />
-        <Skeleton className="h-9 w-32" />
       </div>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

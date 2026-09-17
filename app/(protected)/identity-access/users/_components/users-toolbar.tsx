@@ -29,6 +29,7 @@ type UsersToolbarProps = {
   roles: RoleOption[];
   rolesLoading: boolean;
   onAddUser: () => void;
+  canCreate: boolean;
 };
 
 const ALL = 'all';
@@ -43,6 +44,7 @@ export function UsersToolbar({
   roles,
   rolesLoading,
   onAddUser,
+  canCreate,
 }: UsersToolbarProps) {
   const [searchDraft, setSearchDraft] = useState(search);
   const [syncedSearch, setSyncedSearch] = useState(search);
@@ -114,10 +116,12 @@ export function UsersToolbar({
           </SelectContent>
         </Select>
 
-        <Button type="button" onClick={onAddUser} className="lg:ml-auto">
-          <UserPlus className="size-4" />
-          Add user
-        </Button>
+        {canCreate ? (
+          <Button type="button" onClick={onAddUser} className="lg:ml-auto">
+            <UserPlus className="size-4" />
+            Add user
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

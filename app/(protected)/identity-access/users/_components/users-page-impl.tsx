@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 import type { StaffWithRoles } from '@/app/api/lib/modules/staff/schemas/staff-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useReactivateStaff } from '@/app/queries/identity-access/useReactivateStaff';
 import { useRolesQuery } from '@/app/queries/identity-access/useRoles';
 import { useStaffQuery } from '@/app/queries/identity-access/useStaff';
@@ -25,6 +26,11 @@ export function UsersPageImpl() {
   const [userParam, setUserParam] = useQueryState('user');
 
   const [staffPendingDeactivate, setStaffPendingDeactivate] = useState<StaffWithRoles | null>(null);
+
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('staff:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission('staff:update');
+  const { data: canDeactivate } = useHasPermission('staff:deactivate');
+  const { data: canReactivate } = useHasPermission('staff:reactivate');
 
   const rolesQuery = useRolesQuery();
   const roles = rolesQuery.data ?? [];
@@ -60,9 +66,20 @@ export function UsersPageImpl() {
     }
   }, [meta?.totalPages, page, pageParam, setPage]);
 
-  const isCreating = userParam === 'new';
+  const isCreating = userParam === 'new' && canCreate;
   const editingUserId = userParam && userParam !== 'new' ? userParam : null;
-  const sheetOpen = isCreating || editingUserId !== null;
+  const sheetOpen = isCreating || (canUpdate && editingUserId !== null);
+
+  const userAccessDenied =
+    (userParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingUserId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (userAccessDenied) {
+      void setUserParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userAccessDenied]);
 
   function goToFirstPage() {
     void setPage(1);
@@ -97,6 +114,7 @@ export function UsersPageImpl() {
           roles={roles}
           rolesLoading={rolesQuery.isLoading}
           onAddUser={() => void setUserParam('new')}
+          canCreate={canCreate}
         />
 
         <UsersTable
@@ -114,6 +132,9 @@ export function UsersPageImpl() {
           reactivatingId={
             reactivateMutation.isPending ? (reactivateMutation.variables ?? null) : null
           }
+          canEdit={canUpdate}
+          canDeactivate={canDeactivate}
+          canReactivate={canReactivate}
         />
       </div>
 
@@ -127,7 +148,7 @@ export function UsersPageImpl() {
       />
 
       <DeactivateUserDialog
-        staff={staffPendingDeactivate}
+        staff={canDeactivate ? staffPendingDeactivate : null}
         onClose={() => setStaffPendingDeactivate(null)}
         onDeactivated={(userId) => {
           if (editingUserId === userId) {

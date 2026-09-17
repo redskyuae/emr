@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { AlertTriangle, Search, ShieldOff } from 'lucide-react';
 
 import type { IamSession } from '@/app/(protected)/identity-access/sessions/_utils/sessions-mock';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +57,8 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [revokedSessionIds, setRevokedSessionIds] = useState<Set<string>>(() => new Set());
 
+  const { data: canRevoke } = useHasPermission('session:revoke');
+
   const filteredSessions = useMemo(
     () => sessions.filter((session) => sessionMatchesSearch(searchTerm, session)),
     [searchTerm, sessions]
@@ -102,39 +105,41 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
             </span>
           </div>
 
-          <div className="flex sm:justify-end lg:ml-auto">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={!canRevokeAll}
-                  className="w-full sm:w-auto"
-                >
-                  <ShieldOff className="size-4" />
-                  Revoke all
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="shadow-fluent-64">
-                <AlertDialogHeader>
-                  <AlertDialogMedia className="bg-destructive/10 text-destructive">
-                    <AlertTriangle className="size-5" />
-                  </AlertDialogMedia>
-                  <AlertDialogTitle>Revoke all active sessions?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This local mock action will mark every active Staff session as revoked in this
-                    view.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction variant="destructive" onClick={revokeAllSessions}>
+          {canRevoke ? (
+            <div className="flex sm:justify-end lg:ml-auto">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={!canRevokeAll}
+                    className="w-full sm:w-auto"
+                  >
+                    <ShieldOff className="size-4" />
                     Revoke all
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="shadow-fluent-64">
+                  <AlertDialogHeader>
+                    <AlertDialogMedia className="bg-destructive/10 text-destructive">
+                      <AlertTriangle className="size-5" />
+                    </AlertDialogMedia>
+                    <AlertDialogTitle>Revoke all active sessions?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This local mock action will mark every active Staff session as revoked in this
+                      view.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" onClick={revokeAllSessions}>
+                      Revoke all
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -199,7 +204,7 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
                       <TableCell className="pr-4 text-right">
                         {isRevoked ? (
                           <span className="text-muted-foreground text-sm font-medium">Revoked</span>
-                        ) : (
+                        ) : canRevoke ? (
                           <Button
                             type="button"
                             variant="destructive"
@@ -210,7 +215,7 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
                             <ShieldOff className="size-3.5" />
                             Revoke
                           </Button>
-                        )}
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   );

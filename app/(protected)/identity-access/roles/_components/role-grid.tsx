@@ -36,10 +36,14 @@ function RoleCard({
   role,
   onEdit,
   onDelete,
+  canEdit,
+  canDelete,
 }: {
   role: RoleWithStats;
   onEdit: (role: RoleWithStats) => void;
   onDelete: (role: RoleWithStats) => void;
+  canEdit: boolean;
+  canDelete: boolean;
 }) {
   return (
     <Card className="shadow-fluent-2 hover:shadow-fluent-8 transition-shadow">
@@ -76,11 +80,13 @@ function RoleCard({
             {formatCount(role.permissionAssignmentCount, 'permission')}
           </span>
           <div className="ml-auto flex items-center gap-1">
-            <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(role)}>
-              <Pencil className="size-3.5" />
-              Edit
-            </Button>
-            {!role.isSystem ? (
+            {canEdit ? (
+              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(role)}>
+                <Pencil className="size-3.5" />
+                Edit
+              </Button>
+            ) : null}
+            {!role.isSystem && (canEdit || canDelete) ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -93,11 +99,15 @@ function RoleCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem onClick={() => onEdit(role)}>Edit Role</DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onClick={() => onDelete(role)}>
-                    <Trash2 className="size-4" />
-                    Delete Role
-                  </DropdownMenuItem>
+                  {canEdit ? (
+                    <DropdownMenuItem onClick={() => onEdit(role)}>Edit Role</DropdownMenuItem>
+                  ) : null}
+                  {canDelete ? (
+                    <DropdownMenuItem variant="destructive" onClick={() => onDelete(role)}>
+                      <Trash2 className="size-4" />
+                      Delete Role
+                    </DropdownMenuItem>
+                  ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
@@ -114,12 +124,18 @@ export function RoleGrid({
   onCreate,
   onDelete,
   isLoading,
+  canCreate,
+  canEdit,
+  canDelete,
 }: {
   isLoading: boolean;
   onCreate: () => void;
   roles: RoleWithStats[];
   onEdit: (role: RoleWithStats) => void;
   onDelete: (role: RoleWithStats) => void;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
 }) {
   if (isLoading) {
     return <RoleGridSkeleton />;
@@ -137,12 +153,14 @@ export function RoleGrid({
             Create Roles to group Permission Assignments for Staff in this Tenant.
           </EmptyDescription>
         </EmptyHeader>
-        <EmptyContent>
-          <Button type="button" onClick={onCreate}>
-            <Plus className="size-4" />
-            Create Role
-          </Button>
-        </EmptyContent>
+        {canCreate ? (
+          <EmptyContent>
+            <Button type="button" onClick={onCreate}>
+              <Plus className="size-4" />
+              Create Role
+            </Button>
+          </EmptyContent>
+        ) : null}
       </Empty>
     );
   }
@@ -150,7 +168,14 @@ export function RoleGrid({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {roles.map((role) => (
-        <RoleCard key={role.id} role={role} onEdit={onEdit} onDelete={onDelete} />
+        <RoleCard
+          key={role.id}
+          role={role}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
       ))}
     </div>
   );

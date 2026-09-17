@@ -7,7 +7,6 @@ export default function UsersPageLoader() {
         <Skeleton className="h-9 w-full lg:max-w-sm" />
         <Skeleton className="h-9 w-full lg:w-48" />
         <Skeleton className="h-9 w-full lg:w-40" />
-        <Skeleton className="h-9 w-full lg:ml-auto lg:w-32" />
       </div>
 
       <div className="bg-card shadow-fluent-2 rounded-xl border">
