@@ -27,8 +27,16 @@ export function UsersPageImpl() {
 
   const [staffPendingDeactivate, setStaffPendingDeactivate] = useState<StaffWithRoles | null>(null);
 
-  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('staff:create');
-  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission('staff:update');
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('staff:create');
+  const {
+    data: canUpdate,
+    isLoading: canUpdateLoading,
+    isError: canUpdateError,
+  } = useHasPermission('staff:update');
   const { data: canDeactivate } = useHasPermission('staff:deactivate');
   const { data: canReactivate } = useHasPermission('staff:reactivate');
 
@@ -71,8 +79,8 @@ export function UsersPageImpl() {
   const sheetOpen = isCreating || (canUpdate && editingUserId !== null);
 
   const userAccessDenied =
-    (userParam === 'new' && !canCreateLoading && !canCreate) ||
-    (editingUserId !== null && !canUpdateLoading && !canUpdate);
+    (userParam === 'new' && !canCreateLoading && !canCreateError && !canCreate) ||
+    (editingUserId !== null && !canUpdateLoading && !canUpdateError && !canUpdate);
 
   useEffect(() => {
     if (userAccessDenied) {

@@ -59,5 +59,5 @@ export function useHasPermission(permissionName: string) {
     select: (response: MeResponse) => response.data.permissions.includes(permissionName),
   });
 
-  return { data: query.data ?? false, isLoading: query.isLoading };
+  return { data: query.data ?? false, isLoading: query.isLoading, isError: query.isError };
 }
