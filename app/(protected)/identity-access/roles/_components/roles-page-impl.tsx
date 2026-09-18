@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { AlertCircle, Plus } from 'lucide-react';
 
 import type { RoleWithStats } from '@/app/api/lib/modules/role/schemas/role-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import {
   useRolesQuery,
   useRolesSummaryQuery,
@@ -24,10 +25,14 @@ export function RolesPageImpl() {
   const rolesSummaryQuery = useRolesSummaryQuery();
   const [rolePendingDelete, setRolePendingDelete] = useState<RoleWithStats | null>(null);
 
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('role:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission('role:update');
+  const { data: canDelete } = useHasPermission('role:delete');
+
   const roles = rolesQuery.data ?? [];
   const roleSummary: RoleSummary = rolesSummaryQuery.data ?? { total: 0, system: 0, custom: 0 };
 
-  const isCreating = roleParam === 'new';
+  const isCreating = roleParam === 'new' && canCreate;
   const editingRoleId =
     roleParam !== null && roleParam !== 'new' && /^\d+$/.test(roleParam) ? Number(roleParam) : null;
   const editingRole =
@@ -40,8 +45,20 @@ export function RolesPageImpl() {
   // - ?role=<id> not found, or garbage -> stays closed (the stale param is
   //   harmless and gets overwritten by the next action)
   const sheetOpen =
-    isCreating || (editingRoleId !== null && (rolesQuery.isLoading || editingRole !== null));
+    isCreating ||
+    (canUpdate && editingRoleId !== null && (rolesQuery.isLoading || editingRole !== null));
   const roleResolving = sheetOpen && !isCreating && editingRole === null;
+
+  const roleAccessDenied =
+    (roleParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingRoleId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (roleAccessDenied) {
+      void setRoleParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roleAccessDenied]);
 
   return (
     <>
@@ -50,10 +67,12 @@ export function RolesPageImpl() {
           <p className="text-muted-foreground text-sm">
             {roleSummary.total} Roles · {roleSummary.system} system · {roleSummary.custom} custom
           </p>
-          <Button type="button" onClick={() => void setRoleParam('new')}>
-            <Plus className="size-4" />
-            Create Role
-          </Button>
+          {canCreate ? (
+            <Button type="button" onClick={() => void setRoleParam('new')}>
+              <Plus className="size-4" />
+              Create Role
+            </Button>
+          ) : null}
         </div>
 
         {rolesQuery.isError ? (
@@ -70,6 +89,9 @@ export function RolesPageImpl() {
           isLoading={rolesQuery.isLoading}
           onCreate={() => void setRoleParam('new')}
           onEdit={(role) => void setRoleParam(String(role.id))}
+          canCreate={canCreate}
+          canEdit={canUpdate}
+          canDelete={canDelete}
         />
       </div>
 
@@ -84,7 +106,7 @@ export function RolesPageImpl() {
       />
 
       <DeleteRoleDialog
-        role={rolePendingDelete}
+        role={canDelete ? rolePendingDelete : null}
         onClose={() => setRolePendingDelete(null)}
         onDeleted={(roleId) => {
           if (editingRoleId === roleId) {

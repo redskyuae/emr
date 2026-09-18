@@ -54,6 +54,9 @@ type UsersTableProps = {
   onDeactivate: (member: StaffWithRoles) => void;
   onReactivate: (member: StaffWithRoles) => void;
   reactivatingId: string | null;
+  canEdit: boolean;
+  canDeactivate: boolean;
+  canReactivate: boolean;
 };
 
 function getInitials(name: string) {
@@ -83,6 +86,9 @@ export function UsersTable({
   onDeactivate,
   onReactivate,
   reactivatingId,
+  canEdit,
+  canDeactivate,
+  canReactivate,
 }: UsersTableProps) {
   if (isError) {
     return (
@@ -166,46 +172,50 @@ export function UsersTable({
                     </TableCell>
                     <TableCell className="pr-4">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEdit(member)}
-                        >
-                          <Pencil className="size-3.5" />
-                          Edit
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`More actions for ${member.name}`}
-                            >
-                              <MoreVertical className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            {member.isActive ? (
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onSelect={() => onDeactivate(member)}
+                        {canEdit ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEdit(member)}
+                          >
+                            <Pencil className="size-3.5" />
+                            Edit
+                          </Button>
+                        ) : null}
+                        {(member.isActive ? canDeactivate : canReactivate) ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`More actions for ${member.name}`}
                               >
-                                <UserRoundX className="size-4" />
-                                Deactivate
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem
-                                disabled={reactivatingId === member.id}
-                                onSelect={() => onReactivate(member)}
-                              >
-                                <UserRoundCheck className="size-4" />
-                                Reactivate
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                <MoreVertical className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              {member.isActive ? (
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onSelect={() => onDeactivate(member)}
+                                >
+                                  <UserRoundX className="size-4" />
+                                  Deactivate
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  disabled={reactivatingId === member.id}
+                                  onSelect={() => onReactivate(member)}
+                                >
+                                  <UserRoundCheck className="size-4" />
+                                  Reactivate
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : null}
                       </div>
                     </TableCell>
                   </TableRow>
