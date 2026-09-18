@@ -5,6 +5,7 @@ import { parseAsInteger, useQueryState } from 'nuqs';
 import { AlertCircle } from 'lucide-react';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorSchedulesQuery } from '@/app/queries/doctor-schedules/useDoctorSchedules';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useDoctorRotasQuery } from '@/app/queries/rota-management/useDoctorRotas';
@@ -26,6 +27,17 @@ export function DoctorSchedulesPageImpl() {
   const [toDateParam, setToDateParam] = useQueryState('to', { defaultValue: '' });
   const [pageParam, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [scheduleParam, setScheduleParam] = useQueryState('schedule');
+
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('doctor-schedule:create');
+  const {
+    data: canUpdate,
+    isLoading: canUpdateLoading,
+    isError: canUpdateError,
+  } = useHasPermission('doctor-schedule:update');
 
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const parsedDoctorId = doctorParam ? Number(doctorParam) : Number.NaN;
@@ -60,7 +72,7 @@ export function DoctorSchedulesPageImpl() {
     }
   }, [meta?.totalPages, page, pageParam, setPage]);
 
-  const isCreating = scheduleParam === 'new';
+  const isCreating = scheduleParam === 'new' && canCreate;
   const editingScheduleId =
     scheduleParam !== null && scheduleParam !== 'new' && /^\d+$/.test(scheduleParam)
       ? Number(scheduleParam)
@@ -72,8 +84,21 @@ export function DoctorSchedulesPageImpl() {
 
   const sheetOpen =
     isCreating ||
-    (editingScheduleId !== null && (schedulesQuery.isLoading || editingSchedule !== null));
+    (canUpdate &&
+      editingScheduleId !== null &&
+      (schedulesQuery.isLoading || editingSchedule !== null));
   const scheduleResolving = sheetOpen && !isCreating && editingSchedule === null;
+
+  const scheduleAccessDenied =
+    (scheduleParam === 'new' && !canCreateLoading && !canCreateError && !canCreate) ||
+    (editingScheduleId !== null && !canUpdateLoading && !canUpdateError && !canUpdate);
+
+  useEffect(() => {
+    if (scheduleAccessDenied) {
+      void setScheduleParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheduleAccessDenied]);
 
   function goToFirstPage() {
     void setPage(1);
@@ -97,6 +122,7 @@ export function DoctorSchedulesPageImpl() {
           doctorsLoading={doctorsQuery.isLoading}
           onAddSchedule={() => void setScheduleParam('new')}
           onClearFilters={clearFilters}
+          canCreate={canCreate}
           onDoctorChange={(value) => {
             void setDoctorParam(value || null);
             goToFirstPage();
@@ -138,6 +164,7 @@ export function DoctorSchedulesPageImpl() {
           isFetching={schedulesQuery.isFetching}
           onPageChange={(next) => void setPage(next)}
           onEdit={(schedule) => void setScheduleParam(String(schedule.id))}
+          canEdit={canUpdate}
         />
       </div>
 

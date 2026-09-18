@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
   AlertCircle,
@@ -20,6 +20,7 @@ import type {
   DoctorStatusFilter,
 } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorQuery } from '@/app/queries/doctors/useDoctor';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useSpecialtiesQuery } from '@/app/queries/specialties/useSpecialties';
@@ -76,7 +77,20 @@ export function DoctorsPageImpl() {
     null
   );
 
-  const isCreating = doctorParam === 'new';
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('doctor:create');
+  const {
+    data: canUpdate,
+    isLoading: canUpdateLoading,
+    isError: canUpdateError,
+  } = useHasPermission('doctor:update');
+  const { data: canDeactivate } = useHasPermission('doctor:deactivate');
+  const { data: canReactivate } = useHasPermission('doctor:reactivate');
+
+  const isCreating = doctorParam === 'new' && canCreate;
   const editingDoctorId =
     doctorParam !== null && doctorParam !== 'new' && /^\d+$/.test(doctorParam)
       ? Number(doctorParam)
@@ -114,7 +128,19 @@ export function DoctorsPageImpl() {
     editingDoctor === null &&
     (doctorsQuery.isLoading || editingDoctorQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingDoctorId !== null && (doctorResolving || editingDoctor !== null));
+    isCreating ||
+    (canUpdate && editingDoctorId !== null && (doctorResolving || editingDoctor !== null));
+
+  const doctorAccessDenied =
+    (doctorParam === 'new' && !canCreateLoading && !canCreateError && !canCreate) ||
+    (editingDoctorId !== null && !canUpdateLoading && !canUpdateError && !canUpdate);
+
+  useEffect(() => {
+    if (doctorAccessDenied) {
+      void setDoctorParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctorAccessDenied]);
 
   const filterKey = `${debouncedSearch}|${statusFilter}|${specialtyFilter}`;
   const [previousFilterKey, setPreviousFilterKey] = useState(filterKey);
@@ -195,12 +221,14 @@ export function DoctorsPageImpl() {
               </SelectContent>
             </Select>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setDoctorParam('new')}>
-                <Plus className="size-4" />
-                Add Doctor
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setDoctorParam('new')}>
+                  <Plus className="size-4" />
+                  Add Doctor
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -233,12 +261,14 @@ export function DoctorsPageImpl() {
                 Add Doctors in this Tenant so Doctor Schedules and Appointments can use them.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setDoctorParam('new')}>
-                <Plus className="size-4" />
-                Add Doctor
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setDoctorParam('new')}>
+                  <Plus className="size-4" />
+                  Add Doctor
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : doctors.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -257,18 +287,27 @@ export function DoctorsPageImpl() {
             {viewLayout === 'table' ? (
               <DoctorTableView
                 doctors={doctors}
+                canEdit={canUpdate}
+                canDeactivate={canDeactivate}
+                canReactivate={canReactivate}
                 onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
                 onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
               />
             ) : viewLayout === 'card' ? (
               <DoctorCardView
                 doctors={doctors}
+                canEdit={canUpdate}
+                canDeactivate={canDeactivate}
+                canReactivate={canReactivate}
                 onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
                 onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
               />
             ) : (
               <DoctorListView
                 doctors={doctors}
+                canEdit={canUpdate}
+                canDeactivate={canDeactivate}
+                canReactivate={canReactivate}
                 onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
                 onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
               />
@@ -317,7 +356,12 @@ export function DoctorsPageImpl() {
       />
 
       <DoctorStatusDialog
-        pendingAction={pendingStatusAction}
+        pendingAction={
+          pendingStatusAction &&
+          (pendingStatusAction.action === 'deactivate' ? canDeactivate : canReactivate)
+            ? pendingStatusAction
+            : null
+        }
         onClose={() => setPendingStatusAction(null)}
       />
     </>
