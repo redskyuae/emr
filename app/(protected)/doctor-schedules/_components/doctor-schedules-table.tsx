@@ -39,6 +39,7 @@ type DoctorSchedulesTableProps = {
   meta: Paginated<DoctorSchedule>['meta'] | undefined;
   onEdit: (schedule: DoctorSchedule) => void;
   onPageChange: (next: number) => void;
+  canEdit: boolean;
 };
 
 function buildDoctorNameMap(doctors: Doctor[]) {
@@ -72,6 +73,7 @@ export function DoctorSchedulesTable({
   isLoading,
   isFetching,
   onPageChange,
+  canEdit,
 }: DoctorSchedulesTableProps) {
   if (isError) {
     return (
@@ -148,15 +150,17 @@ export function DoctorSchedulesTable({
                       </Badge>
                     </TableCell>
                     <TableCell className="pr-4 text-right">
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        aria-label={`Edit Doctor Schedule ${schedule.id}`}
-                        onClick={() => onEdit(schedule)}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
+                      {canEdit ? (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`Edit Doctor Schedule ${schedule.id}`}
+                          onClick={() => onEdit(schedule)}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}

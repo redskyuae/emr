@@ -27,6 +27,7 @@ type DoctorSchedulesToolbarProps = {
   onDoctorChange: (value: string) => void;
   onFromDateChange: (value: string) => void;
   onToDateChange: (value: string) => void;
+  canCreate: boolean;
 };
 
 export function DoctorSchedulesToolbar({
@@ -40,6 +41,7 @@ export function DoctorSchedulesToolbar({
   onDoctorChange,
   onToDateChange,
   onFromDateChange,
+  canCreate,
 }: DoctorSchedulesToolbarProps) {
   const hasFilters = Boolean(doctorValue || fromDateValue || toDateValue);
 
@@ -93,10 +95,12 @@ export function DoctorSchedulesToolbar({
             <RotateCcw className="size-4" />
             Reset
           </Button>
-          <Button type="button" onClick={onAddSchedule}>
-            <Plus className="size-4" />
-            New Doctor Schedule
-          </Button>
+          {canCreate ? (
+            <Button type="button" onClick={onAddSchedule}>
+              <Plus className="size-4" />
+              New Doctor Schedule
+            </Button>
+          ) : null}
         </div>
       </CardContent>
     </Card>

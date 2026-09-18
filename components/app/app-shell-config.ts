@@ -456,6 +456,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'New schedule',
       href: '/doctor-schedules?schedule=new',
+      permission: 'doctor-schedule:create',
     },
   },
   '/doctors': {
@@ -464,6 +465,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Add Doctor',
       href: '/doctors?doctor=new',
+      permission: 'doctor:create',
     },
   },
   '/audit-log': {
@@ -580,6 +582,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Add room',
       href: '/rooms?room=new',
+      permission: 'room:create',
     },
   },
   '/room-masters/types': {

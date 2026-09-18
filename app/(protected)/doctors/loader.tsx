@@ -18,9 +18,6 @@ export default function DoctorsPageLoader() {
           <Skeleton className="h-9 w-full lg:max-w-xs" />
           <Skeleton className="h-9 w-full lg:w-40" />
           <Skeleton className="h-9 w-full lg:w-48" />
-          <div className="flex gap-2 lg:ml-auto">
-            <Skeleton className="h-9 w-32" />
-          </div>
         </CardContent>
       </Card>
 
