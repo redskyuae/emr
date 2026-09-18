@@ -16,10 +16,14 @@ import { formatUnitPrice, getChargeItemCategoryLabel } from '../_utils/charge-it
 
 export function ChargeItemTable({
   chargeItems,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   chargeItems: ChargeItem[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (chargeItem: ChargeItem) => void;
   onDelete: (chargeItem: ChargeItem) => void;
 }) {
@@ -67,27 +71,36 @@ export function ChargeItemTable({
                   )}
                 </td>
                 <td className="p-3 pr-4 text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Actions for ${chargeItem.name}`}
-                      >
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onEdit(chargeItem)}>
-                        <Pencil className="size-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem variant="destructive" onSelect={() => onDelete(chargeItem)}>
-                        <Trash2 className="size-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canEdit || canDelete ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${chargeItem.name}`}
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {canEdit ? (
+                          <DropdownMenuItem onSelect={() => onEdit(chargeItem)}>
+                            <Pencil className="size-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        ) : null}
+                        {canDelete ? (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => onDelete(chargeItem)}
+                          >
+                            <Trash2 className="size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </td>
               </tr>
             ))}

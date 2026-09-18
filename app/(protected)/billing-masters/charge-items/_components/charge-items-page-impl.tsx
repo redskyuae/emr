@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { AlertCircle, ChevronLeft, ChevronRight, Plus, ReceiptText, Search } from 'lucide-react';
@@ -8,6 +8,7 @@ import { AlertCircle, ChevronLeft, ChevronRight, Plus, ReceiptText, Search } fro
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useChargeItemsQuery } from '@/app/queries/billing/charge-items/useChargeItems';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,6 +44,10 @@ export function ChargeItemsPageImpl() {
   const [page, setPage] = useState(1);
   const [chargeItemPendingDelete, setChargeItemPendingDelete] = useState<ChargeItem | null>(null);
 
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('charge-item:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission('charge-item:update');
+  const { data: canDelete } = useHasPermission('charge-item:delete');
+
   const chargeItemsQuery = useChargeItemsQuery({
     query: debouncedSearch || undefined,
     category: categoryFilter !== ALL_CATEGORIES ? categoryFilter : undefined,
@@ -60,14 +65,25 @@ export function ChargeItemsPageImpl() {
 
   // The sheet opens straight from the URL: ?charge-item=new creates,
   // ?charge-item=<id> edits once the row resolves from already-loaded query data.
-  const isCreating = chargeItemParam === 'new';
+  const isCreating = chargeItemParam === 'new' && canCreate;
   const editingId =
     chargeItemParam !== null && chargeItemParam !== 'new' && /^\d+$/.test(chargeItemParam)
       ? Number(chargeItemParam)
       : null;
   const editingChargeItem =
     editingId !== null ? (chargeItems.find((row) => row.id === editingId) ?? null) : null;
-  const sheetOpen = isCreating || (editingId !== null && editingChargeItem !== null);
+  const sheetOpen = isCreating || (canUpdate && editingId !== null && editingChargeItem !== null);
+
+  const chargeItemAccessDenied =
+    (chargeItemParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (chargeItemAccessDenied) {
+      void setChargeItemParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chargeItemAccessDenied]);
 
   function closeSheet() {
     void setChargeItemParam(null);
@@ -114,12 +130,14 @@ export function ChargeItemsPageImpl() {
               </SelectContent>
             </Select>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" onClick={() => void setChargeItemParam('new')}>
-                <Plus className="size-4" />
-                Add Charge Item
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" onClick={() => void setChargeItemParam('new')}>
+                  <Plus className="size-4" />
+                  Add Charge Item
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -145,12 +163,14 @@ export function ChargeItemsPageImpl() {
                 consumables so cashiers can add them to Invoices.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setChargeItemParam('new')}>
-                <Plus className="size-4" />
-                Add Charge Item
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setChargeItemParam('new')}>
+                  <Plus className="size-4" />
+                  Add Charge Item
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : chargeItems.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -168,6 +188,8 @@ export function ChargeItemsPageImpl() {
           <>
             <ChargeItemTable
               chargeItems={chargeItems}
+              canEdit={canUpdate}
+              canDelete={canDelete}
               onEdit={(chargeItem) => void setChargeItemParam(String(chargeItem.id))}
               onDelete={setChargeItemPendingDelete}
             />
@@ -213,7 +235,7 @@ export function ChargeItemsPageImpl() {
       />
 
       <DeleteChargeItemDialog
-        chargeItem={chargeItemPendingDelete}
+        chargeItem={canDelete ? chargeItemPendingDelete : null}
         onClose={() => setChargeItemPendingDelete(null)}
       />
     </>
