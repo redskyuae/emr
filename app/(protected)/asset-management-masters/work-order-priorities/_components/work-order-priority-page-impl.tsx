@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -18,6 +18,7 @@ import type { WorkOrderPriority } from '@/app/api/lib/modules/work-order-priorit
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWorkOrderPriorityQuery } from '@/app/queries/asset-masters/work-order-priorities/useWorkOrderPriority';
 import { useWorkOrderPrioritiesQuery } from '@/app/queries/asset-masters/work-order-priorities/useWorkOrderPriorities';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -54,7 +55,15 @@ export function WorkOrderPriorityPageImpl() {
     null
   );
 
-  const isCreating = priorityParam === 'new';
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission(
+    'work-order-priority:create'
+  );
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission(
+    'work-order-priority:update'
+  );
+  const { data: canDelete } = useHasPermission('work-order-priority:delete');
+
+  const isCreating = priorityParam === 'new' && canCreate;
   const editingPriorityId =
     priorityParam !== null && priorityParam !== 'new' && /^\d+$/.test(priorityParam)
       ? Number(priorityParam)
@@ -90,7 +99,19 @@ export function WorkOrderPriorityPageImpl() {
     editingPriority === null &&
     (prioritiesQuery.isLoading || editingPriorityQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingPriorityId !== null && (priorityResolving || editingPriority !== null));
+    isCreating ||
+    (canUpdate && editingPriorityId !== null && (priorityResolving || editingPriority !== null));
+
+  const priorityAccessDenied =
+    (priorityParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingPriorityId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (priorityAccessDenied) {
+      void setPriorityParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priorityAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -140,12 +161,14 @@ export function WorkOrderPriorityPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setPriorityParam('new')}>
-                <Plus className="size-4" />
-                Add Work Order Priority
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setPriorityParam('new')}>
+                  <Plus className="size-4" />
+                  Add Work Order Priority
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -170,12 +193,14 @@ export function WorkOrderPriorityPageImpl() {
                 Create Work Order Priorities to rank the urgency of Work Orders in this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setPriorityParam('new')}>
-                <Plus className="size-4" />
-                Add Work Order Priority
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setPriorityParam('new')}>
+                  <Plus className="size-4" />
+                  Add Work Order Priority
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : priorities.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -195,18 +220,24 @@ export function WorkOrderPriorityPageImpl() {
             {viewLayout === 'table' ? (
               <WorkOrderPriorityTableView
                 priorities={priorities}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(priority) => void setPriorityParam(String(priority.id))}
                 onDelete={setPriorityPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <WorkOrderPriorityCardView
                 priorities={priorities}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(priority) => void setPriorityParam(String(priority.id))}
                 onDelete={setPriorityPendingDelete}
               />
             ) : (
               <WorkOrderPriorityListView
                 priorities={priorities}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(priority) => void setPriorityParam(String(priority.id))}
                 onDelete={setPriorityPendingDelete}
               />
@@ -255,7 +286,7 @@ export function WorkOrderPriorityPageImpl() {
       />
 
       <WorkOrderPriorityDeleteDialog
-        priority={priorityPendingDelete}
+        priority={canDelete ? priorityPendingDelete : null}
         onClose={() => setPriorityPendingDelete(null)}
         onDeleted={(deletedId) => {
           if (editingPriorityId === deletedId) {

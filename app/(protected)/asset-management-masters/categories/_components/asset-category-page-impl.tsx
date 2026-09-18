@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -17,6 +17,7 @@ import {
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetCategoryQuery } from '@/app/queries/asset-masters/useAssetCategory';
 import { useAssetCategoriesQuery } from '@/app/queries/asset-masters/useAssetCategories';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,7 +52,14 @@ export function AssetCategoryPageImpl() {
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
   const [page, setPage] = useState(1);
 
-  const isCreating = categoryParam === 'new';
+  const { data: canCreate, isLoading: canCreateLoading } =
+    useHasPermission('asset-category:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } =
+    useHasPermission('asset-category:update');
+  const { data: canDelete, isLoading: canDeleteLoading } =
+    useHasPermission('asset-category:delete');
+
+  const isCreating = categoryParam === 'new' && canCreate;
   const editingCategoryId =
     categoryParam !== null && categoryParam !== 'new' && /^\d+$/.test(categoryParam)
       ? Number(categoryParam)
@@ -102,14 +110,36 @@ export function AssetCategoryPageImpl() {
     editingCategory === null &&
     (categoriesQuery.isLoading || editingCategoryQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingCategoryId !== null && (categoryResolving || editingCategory !== null));
+    isCreating ||
+    (canUpdate && editingCategoryId !== null && (categoryResolving || editingCategory !== null));
 
   const deleteCategoryResolving =
     deleteCategoryId !== null &&
     categoryPendingDelete === null &&
     (categoriesQuery.isLoading || deleteCategoryQuery.isFetching);
   const deleteDialogOpen =
-    deleteCategoryId !== null && (deleteCategoryResolving || categoryPendingDelete !== null);
+    canDelete &&
+    deleteCategoryId !== null &&
+    (deleteCategoryResolving || categoryPendingDelete !== null);
+
+  const categoryAccessDenied =
+    (categoryParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingCategoryId !== null && !canUpdateLoading && !canUpdate);
+  const deleteCategoryAccessDenied = deleteCategoryId !== null && !canDeleteLoading && !canDelete;
+
+  useEffect(() => {
+    if (categoryAccessDenied) {
+      void setCategoryParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryAccessDenied]);
+
+  useEffect(() => {
+    if (deleteCategoryAccessDenied) {
+      void setDeleteCategoryParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deleteCategoryAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -159,12 +189,14 @@ export function AssetCategoryPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setCategoryParam('new')}>
-                <Plus className="size-4" />
-                Add Asset Category
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setCategoryParam('new')}>
+                  <Plus className="size-4" />
+                  Add Asset Category
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -189,12 +221,14 @@ export function AssetCategoryPageImpl() {
                 Create Asset Categories to classify the equipment and assets tracked in this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setCategoryParam('new')}>
-                <Plus className="size-4" />
-                Add Asset Category
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setCategoryParam('new')}>
+                  <Plus className="size-4" />
+                  Add Asset Category
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : categories.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -214,18 +248,24 @@ export function AssetCategoryPageImpl() {
             {viewLayout === 'table' ? (
               <AssetCategoryTableView
                 categories={categories}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(category) => void setCategoryParam(String(category.id))}
                 onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
               />
             ) : viewLayout === 'card' ? (
               <AssetCategoryCardView
                 categories={categories}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(category) => void setCategoryParam(String(category.id))}
                 onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
               />
             ) : (
               <AssetCategoryListView
                 categories={categories}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(category) => void setCategoryParam(String(category.id))}
                 onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
               />

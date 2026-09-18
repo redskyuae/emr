@@ -6,9 +6,6 @@ export default function AssetConditionsPageLoader() {
       <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
         <Skeleton className="h-9 w-56" />
         <Skeleton className="h-9 w-full lg:max-w-sm" />
-        <div className="flex gap-2 lg:ml-auto">
-          <Skeleton className="h-9 w-44" />
-        </div>
       </div>
 
       <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">

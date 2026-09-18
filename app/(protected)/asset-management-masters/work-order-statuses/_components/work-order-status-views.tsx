@@ -58,13 +58,23 @@ function CategoryBadge({ category }: { category: WorkOrderStatus['category'] }) 
 
 function StatusActionsMenu({
   status,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   status: WorkOrderStatus;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (status: WorkOrderStatus) => void;
   onDelete: (status: WorkOrderStatus) => void;
 }) {
+  const canDeleteStatus = canDelete && !status.isSystem;
+
+  if (!canEdit && !canDeleteStatus) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -78,11 +88,13 @@ function StatusActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(status)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        {!status.isSystem ? (
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(status)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDeleteStatus ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(status)}>
             <Trash2 className="size-4" />
             Delete
@@ -95,10 +107,14 @@ function StatusActionsMenu({
 
 export function WorkOrderStatusTableView({
   statuses,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   statuses: WorkOrderStatus[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (status: WorkOrderStatus) => void;
   onDelete: (status: WorkOrderStatus) => void;
 }) {
@@ -137,7 +153,13 @@ export function WorkOrderStatusTableView({
                     {status.description || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <StatusActionsMenu status={status} onEdit={onEdit} onDelete={onDelete} />
+                    <StatusActionsMenu
+                      status={status}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -151,10 +173,14 @@ export function WorkOrderStatusTableView({
 
 export function WorkOrderStatusCardView({
   statuses,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   statuses: WorkOrderStatus[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (status: WorkOrderStatus) => void;
   onDelete: (status: WorkOrderStatus) => void;
 }) {
@@ -184,24 +210,28 @@ export function WorkOrderStatusCardView({
               ) : null}
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(status)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              {!status.isSystem ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(status)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="size-3.5" />
-                  Delete
-                </Button>
-              ) : null}
-            </div>
+            {canEdit || (canDelete && !status.isSystem) ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(status)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete && !status.isSystem ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(status)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -211,10 +241,14 @@ export function WorkOrderStatusCardView({
 
 export function WorkOrderStatusListView({
   statuses,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   statuses: WorkOrderStatus[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (status: WorkOrderStatus) => void;
   onDelete: (status: WorkOrderStatus) => void;
 }) {
@@ -248,7 +282,13 @@ export function WorkOrderStatusListView({
             </div>
 
             <div className="shrink-0 pl-14 sm:pl-0">
-              <StatusActionsMenu status={status} onEdit={onEdit} onDelete={onDelete} />
+              <StatusActionsMenu
+                status={status}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>

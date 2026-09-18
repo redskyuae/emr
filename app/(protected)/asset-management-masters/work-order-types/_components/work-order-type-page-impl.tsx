@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -18,6 +18,7 @@ import type { WorkOrderType } from '@/app/api/lib/modules/work-order-type/schema
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWorkOrderTypeQuery } from '@/app/queries/asset-masters/work-order-types/useWorkOrderType';
 import { useWorkOrderTypesQuery } from '@/app/queries/asset-masters/work-order-types/useWorkOrderTypes';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -52,7 +53,13 @@ export function WorkOrderTypePageImpl() {
   const [page, setPage] = useState(1);
   const [typePendingDelete, setTypePendingDelete] = useState<WorkOrderType | null>(null);
 
-  const isCreating = typeParam === 'new';
+  const { data: canCreate, isLoading: canCreateLoading } =
+    useHasPermission('work-order-type:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } =
+    useHasPermission('work-order-type:update');
+  const { data: canDelete } = useHasPermission('work-order-type:delete');
+
+  const isCreating = typeParam === 'new' && canCreate;
   const editingTypeId =
     typeParam !== null && typeParam !== 'new' && /^\d+$/.test(typeParam) ? Number(typeParam) : null;
 
@@ -82,7 +89,18 @@ export function WorkOrderTypePageImpl() {
     editingType === null &&
     (typesQuery.isLoading || editingTypeQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingTypeId !== null && (typeResolving || editingType !== null));
+    isCreating || (canUpdate && editingTypeId !== null && (typeResolving || editingType !== null));
+
+  const typeAccessDenied =
+    (typeParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingTypeId !== null && !canUpdateLoading && !canUpdate);
+
+  useEffect(() => {
+    if (typeAccessDenied) {
+      void setTypeParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -132,12 +150,14 @@ export function WorkOrderTypePageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setTypeParam('new')}>
-                <Plus className="size-4" />
-                Add Work Order Type
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setTypeParam('new')}>
+                  <Plus className="size-4" />
+                  Add Work Order Type
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -162,12 +182,14 @@ export function WorkOrderTypePageImpl() {
                 Create Work Order Types to classify the nature of maintenance work in this Tenant.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setTypeParam('new')}>
-                <Plus className="size-4" />
-                Add Work Order Type
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setTypeParam('new')}>
+                  <Plus className="size-4" />
+                  Add Work Order Type
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : types.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -187,18 +209,24 @@ export function WorkOrderTypePageImpl() {
             {viewLayout === 'table' ? (
               <WorkOrderTypeTableView
                 types={types}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(type) => void setTypeParam(String(type.id))}
                 onDelete={setTypePendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <WorkOrderTypeCardView
                 types={types}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(type) => void setTypeParam(String(type.id))}
                 onDelete={setTypePendingDelete}
               />
             ) : (
               <WorkOrderTypeListView
                 types={types}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(type) => void setTypeParam(String(type.id))}
                 onDelete={setTypePendingDelete}
               />
@@ -247,7 +275,7 @@ export function WorkOrderTypePageImpl() {
       />
 
       <WorkOrderTypeDeleteDialog
-        type={typePendingDelete}
+        type={canDelete ? typePendingDelete : null}
         onClose={() => setTypePendingDelete(null)}
         onDeleted={(deletedId) => {
           if (editingTypeId === deletedId) {
