@@ -19,6 +19,7 @@ import type { RoomType } from '@/app/api/lib/modules/room-type/schemas/room-type
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useRoomTypeQuery } from '@/app/queries/room-masters/room-types/useRoomType';
 import { useRoomTypesQuery } from '@/app/queries/room-masters/room-types/useRoomTypes';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -49,7 +50,11 @@ export function RoomTypePageImpl() {
   const [page, setPage] = useState(1);
   const [roomTypePendingDelete, setRoomTypePendingDelete] = useState<RoomType | null>(null);
 
-  const isCreating = roomTypeParam === 'new';
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('room-type:create');
+  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission('room-type:update');
+  const { data: canDelete } = useHasPermission('room-type:delete');
+
+  const isCreating = roomTypeParam === 'new' && canCreate;
   const editingRoomTypeId =
     roomTypeParam !== null && roomTypeParam !== 'new' && /^\d+$/.test(roomTypeParam)
       ? Number(roomTypeParam)
@@ -85,17 +90,23 @@ export function RoomTypePageImpl() {
     editingRoomType === null &&
     (roomTypesQuery.isLoading || editingRoomTypeQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRoomTypeId !== null && (roomTypeResolving || editingRoomType !== null));
+    isCreating ||
+    (canUpdate && editingRoomTypeId !== null && (roomTypeResolving || editingRoomType !== null));
   const roomTypeNotFound =
     editingRoomTypeId !== null && !roomTypeResolving && editingRoomType === null;
+  const roomTypeAccessDenied =
+    (roomTypeParam === 'new' && !canCreateLoading && !canCreate) ||
+    (editingRoomTypeId !== null && !canUpdateLoading && !canUpdate);
 
   useEffect(() => {
     if (roomTypeNotFound) {
       toast.error('This Room Type no longer exists.');
       void setRoomTypeParam(null);
+    } else if (roomTypeAccessDenied) {
+      void setRoomTypeParam(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomTypeNotFound]);
+  }, [roomTypeNotFound, roomTypeAccessDenied]);
 
   const [prevSearch, setPrevSearch] = useState(debouncedSearch);
   if (prevSearch !== debouncedSearch) {
@@ -145,12 +156,14 @@ export function RoomTypePageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setRoomTypeParam('new')}>
-                <Plus className="size-4" />
-                Add Room Type
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setRoomTypeParam('new')}>
+                  <Plus className="size-4" />
+                  Add Room Type
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -175,12 +188,14 @@ export function RoomTypePageImpl() {
                 Create Room Types to classify the Rooms in this Tenant and set their daily rate.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setRoomTypeParam('new')}>
-                <Plus className="size-4" />
-                Add Room Type
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setRoomTypeParam('new')}>
+                  <Plus className="size-4" />
+                  Add Room Type
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : roomTypes.length === 0 && debouncedSearch ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -199,18 +214,24 @@ export function RoomTypePageImpl() {
             {viewLayout === 'table' ? (
               <RoomTypeTableView
                 roomTypes={roomTypes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
                 onDelete={setRoomTypePendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <RoomTypeCardView
                 roomTypes={roomTypes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
                 onDelete={setRoomTypePendingDelete}
               />
             ) : (
               <RoomTypeListView
                 roomTypes={roomTypes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
                 onDelete={setRoomTypePendingDelete}
               />
@@ -259,7 +280,7 @@ export function RoomTypePageImpl() {
       />
 
       <RoomTypeDeleteDialog
-        roomType={roomTypePendingDelete}
+        roomType={canDelete ? roomTypePendingDelete : null}
         onClose={() => setRoomTypePendingDelete(null)}
         onDeleted={(deletedId) => {
           if (editingRoomTypeId === deletedId) {

@@ -16,9 +16,6 @@ export default function RoomTypesPageLoader() {
         <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
           <Skeleton className="h-9 w-56" />
           <Skeleton className="h-9 w-full lg:max-w-sm" />
-          <div className="flex gap-2 lg:ml-auto">
-            <Skeleton className="h-9 w-40" />
-          </div>
         </CardContent>
       </Card>
 
