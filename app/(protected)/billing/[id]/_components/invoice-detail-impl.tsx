@@ -41,6 +41,7 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
   const { data: canVoidInvoice } = useHasPermission('invoice:void');
   const { data: canDeleteInvoice } = useHasPermission('invoice:delete');
   const { data: canGenerateCharges } = useHasPermission('invoice:generate-charges');
+  const { data: canRecordPayment } = useHasPermission('payment:record');
 
   const lineAccessDenied =
     lineParam === 'new' && !canUpdateLoading && !canUpdateError && !canUpdateInvoice;
@@ -120,6 +121,7 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
           <InvoicePaymentsCard
             invoice={invoice}
             onRecordPayment={() => setActiveModal('payment')}
+            canRecordPayment={canRecordPayment}
           />
         </div>
 
@@ -148,7 +150,7 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
       />
       <RecordPaymentDialog
         invoice={invoice}
-        open={activeModal === 'payment'}
+        open={activeModal === 'payment' && canRecordPayment}
         onClose={() => setActiveModal(null)}
       />
       <GenerateBedChargesDialog
