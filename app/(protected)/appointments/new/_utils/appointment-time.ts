@@ -14,6 +14,10 @@ export function getDurationMinutes(startTime: string, endTime: string) {
   return end - start;
 }
 
+export function canAllocateProcedureResources(slotDate: string, startTime: string) {
+  return Boolean(slotDate && startTime);
+}
+
 export function addMinutesToTime(startTime: string, duration: number) {
   const start = timeToMinutes(startTime);
   if (start === null) return '';
@@ -50,9 +54,20 @@ export function getProcedureEndTimes() {
 
 export function getProcedureEndTime(
   startTime: string,
-  session: { duration: number; setupMinutes: number; cleaningMinutes: number } | null
+  session: {
+    duration: number | null;
+    setupMinutes: number | null;
+    cleaningMinutes: number | null;
+  } | null
 ) {
-  if (!startTime || !session) return '';
+  if (
+    !startTime ||
+    !session ||
+    session.duration === null ||
+    session.setupMinutes === null ||
+    session.cleaningMinutes === null
+  )
+    return '';
 
   return addMinutesToTime(
     startTime,
@@ -63,7 +78,11 @@ export function getProcedureEndTime(
 export function getProcedureEndTimeForStartChange(
   startTime: string,
   currentEndTime: string,
-  session: { duration: number; setupMinutes: number; cleaningMinutes: number } | null
+  session: {
+    duration: number | null;
+    setupMinutes: number | null;
+    cleaningMinutes: number | null;
+  } | null
 ) {
   if (getDurationMinutes(startTime, currentEndTime) > 0) return currentEndTime;
 

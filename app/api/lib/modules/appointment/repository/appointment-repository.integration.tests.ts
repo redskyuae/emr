@@ -1,8 +1,11 @@
-import { eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { and, eq } from 'drizzle-orm';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { db } from '@/app/db';
-import { appointment as appointmentTable } from '@/app/db/schema/appointment';
+import {
+  appointment as appointmentTable,
+  appointmentBookingNumberCounter as appointmentBookingNumberCounterTable,
+} from '@/app/db/schema/appointment';
 import { appointmentCancelledReason as appointmentCancelledReasonTable } from '@/app/db/schema/appointment-cancelled-reason';
 import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
@@ -16,6 +19,11 @@ import {
   doctorScheduleRota as doctorScheduleRotaTable,
 } from '@/app/db/schema/doctor-schedule';
 import { patient as patientTable } from '@/app/db/schema/patient';
+import {
+  patientTreatmentPlan as patientTreatmentPlanTable,
+  patientTreatmentPlanSession as patientTreatmentPlanSessionTable,
+  patientTreatmentPlanSessionReservation as patientTreatmentPlanSessionReservationTable,
+} from '@/app/db/schema/patient-treatment-plan';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import {
   treatment as treatmentTable,
@@ -23,6 +31,7 @@ import {
 } from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import { visitRepository } from '../../visit/repository/visit-repository';
+import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import type { ValidatedCreateAppointmentData } from '../schemas/appointment-schema';
 import { appointmentRepository } from './appointment-repository';
 
@@ -220,7 +229,95 @@ function appointmentData(
   };
 }
 
+async function createExistingPlan(fixtures: Awaited<ReturnType<typeof createFixtures>>) {
+  const [plan] = await db
+    .insert(patientTreatmentPlanTable)
+    .values({
+      tenantId: fixtures.tenantId,
+      patientId: fixtures.patient.id,
+      treatmentId: fixtures.treatmentId,
+      treatmentName: 'Abhyanga wellness programme',
+      treatmentCode: `TRT${sequence}`,
+      sessionStructure: 'SEQUENCED',
+      totalSessions: 1,
+    })
+    .returning({ id: patientTreatmentPlanTable.id });
+  const [session] = await db
+    .insert(patientTreatmentPlanSessionTable)
+    .values({
+      tenantId: fixtures.tenantId,
+      patientTreatmentPlanId: plan.id,
+      treatmentSessionId: fixtures.treatmentSessionId,
+      sessionNumber: 1,
+      label: 'Session 1 of 1 · Abhyanga',
+      procedure: 'Abhyanga',
+      durationMinutes: 60,
+      setupMinutes: 10,
+      cleaningMinutes: 5,
+    })
+    .returning({ id: patientTreatmentPlanSessionTable.id });
+
+  return { planId: plan.id, sessionId: session.id };
+}
+
+async function createRepeatableTreatment(
+  fixtures: Awaited<ReturnType<typeof createFixtures>>,
+  code: string
+) {
+  const [treatment] = await db
+    .insert(treatmentTable)
+    .values({
+      tenantId: fixtures.tenantId,
+      name: `Repeatable ${code}`,
+      code,
+      sessionStructure: 'REPEATABLE',
+    })
+    .returning({ id: treatmentTable.id });
+  const [template] = await db
+    .insert(treatmentSessionTable)
+    .values({
+      tenantId: fixtures.tenantId,
+      treatmentId: treatment.id,
+      sessionNumber: 1,
+      label: 'Repeatable Session',
+      procedure: 'Repeatable Procedure',
+      durationMinutes: 45,
+    })
+    .returning({ id: treatmentSessionTable.id });
+
+  return { treatmentId: treatment.id, templateId: template.id };
+}
+
+function procedureData(
+  fixtures: Awaited<ReturnType<typeof createFixtures>>,
+  plan: Awaited<ReturnType<typeof createExistingPlan>>,
+  overrides: Partial<
+    Pick<
+      Extract<ValidatedCreateAppointmentData, { bookingPath: 'PROCEDURE' }>,
+      'patientId' | 'doctorId' | 'slotDate' | 'startTime' | 'endTime' | 'remarks'
+    >
+  > = {}
+): Extract<ValidatedCreateAppointmentData, { bookingPath: 'PROCEDURE' }> {
+  return {
+    tenantId: fixtures.tenantId,
+    timeZone: 'Asia/Kolkata',
+    bookingPath: 'PROCEDURE',
+    patientId: fixtures.patient.id,
+    slotDate: '2099-12-31',
+    startTime: '10:00',
+    endTime: '11:00',
+    patientTreatmentPlanId: plan.planId,
+    patientTreatmentPlanSessionId: plan.sessionId,
+    remarks: undefined,
+    ...overrides,
+  };
+}
+
 describe('Appointment repository', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should cancel an Appointment, release slots, and retain its historical reason', async () => {
     const fixtures = await createFixtures();
     const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
@@ -450,6 +547,7 @@ describe('Appointment repository', () => {
 
   it('should reschedule a Procedure without changing its Doctor assignment', async () => {
     const fixtures = await createFixtures();
+    const plan = await createExistingPlan(fixtures);
     const created = await appointmentRepository.createAppointment({
       tenantId: fixtures.tenantId,
       timeZone: 'Asia/Kolkata',
@@ -459,8 +557,8 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '11:00',
-      treatmentId: fixtures.treatmentId,
-      treatmentSessionId: fixtures.treatmentSessionId,
+      patientTreatmentPlanId: plan.planId,
+      patientTreatmentPlanSessionId: plan.sessionId,
       remarks: undefined,
     });
     if (!created.success) throw new Error('appointment creation failed');
@@ -533,6 +631,7 @@ describe('Appointment repository', () => {
 
   it('should create a Procedure with Doctor N/A without reserving Doctor slots', async () => {
     const fixtures = await createFixtures();
+    const plan = await createExistingPlan(fixtures);
 
     const result = await appointmentRepository.createAppointment({
       tenantId: fixtures.tenantId,
@@ -542,8 +641,8 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '11:15',
-      treatmentId: fixtures.treatmentId,
-      treatmentSessionId: fixtures.treatmentSessionId,
+      patientTreatmentPlanId: plan.planId,
+      patientTreatmentPlanSessionId: plan.sessionId,
       remarks: undefined,
     });
 
@@ -563,10 +662,453 @@ describe('Appointment repository', () => {
         treatmentSession: { id: fixtures.treatmentSessionId, sessionNumber: 1 },
       },
     });
+    if (!result.success) throw new Error('appointment creation failed');
+
+    await expect(
+      db
+        .select({ id: patientTreatmentPlanSessionReservationTable.id })
+        .from(patientTreatmentPlanSessionReservationTable)
+        .where(
+          and(
+            eq(patientTreatmentPlanSessionReservationTable.tenantId, fixtures.tenantId),
+            eq(patientTreatmentPlanSessionReservationTable.appointmentId, result.data.id),
+            eq(patientTreatmentPlanSessionReservationTable.isDeleted, false)
+          )
+        )
+    ).resolves.toHaveLength(1);
+  });
+
+  it('should atomically create a Repeatable Plan, reserve Session 1, and create the Procedure', async () => {
+    const fixtures = await createFixtures();
+    const treatment = await createRepeatableTreatment(fixtures, `REP${sequence}`);
+
+    const result = await appointmentRepository.createAppointment({
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      patientId: fixtures.patient.id,
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '10:45',
+      treatmentId: treatment.treatmentId,
+      totalSessions: 3,
+      remarks: undefined,
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        treatment: { id: treatment.treatmentId },
+        treatmentSession: { id: treatment.templateId, sessionNumber: 1 },
+      },
+    });
+    if (!result.success) throw new Error('appointment creation failed');
+
+    const [appointment] = await db
+      .select({
+        planId: appointmentTable.patientTreatmentPlanId,
+        sessionId: appointmentTable.patientTreatmentPlanSessionId,
+      })
+      .from(appointmentTable)
+      .where(eq(appointmentTable.id, result.data.id));
+    const sessions = await db
+      .select({
+        id: patientTreatmentPlanSessionTable.id,
+        sessionNumber: patientTreatmentPlanSessionTable.sessionNumber,
+      })
+      .from(patientTreatmentPlanSessionTable)
+      .where(
+        and(
+          eq(patientTreatmentPlanSessionTable.tenantId, fixtures.tenantId),
+          eq(patientTreatmentPlanSessionTable.patientTreatmentPlanId, appointment.planId!)
+        )
+      );
+    const reservations = await db
+      .select({
+        appointmentId: patientTreatmentPlanSessionReservationTable.appointmentId,
+        sessionId: patientTreatmentPlanSessionReservationTable.patientTreatmentPlanSessionId,
+      })
+      .from(patientTreatmentPlanSessionReservationTable)
+      .where(
+        and(
+          eq(patientTreatmentPlanSessionReservationTable.tenantId, fixtures.tenantId),
+          eq(patientTreatmentPlanSessionReservationTable.isDeleted, false)
+        )
+      );
+
+    expect(sessions.map((session) => session.sessionNumber)).toEqual([1, 2, 3]);
+    expect(appointment.sessionId).toBe(sessions[0].id);
+    expect(reservations).toEqual([{ appointmentId: result.data.id, sessionId: sessions[0].id }]);
+  });
+
+  it('should reject catalogue assignment when a current Patient Treatment Plan exists', async () => {
+    const fixtures = await createFixtures();
+    await createExistingPlan(fixtures);
+    const treatment = await createRepeatableTreatment(fixtures, `BLOCK${sequence}`);
+
+    await expect(
+      appointmentRepository.createAppointment({
+        tenantId: fixtures.tenantId,
+        timeZone: 'Asia/Kolkata',
+        bookingPath: 'PROCEDURE',
+        patientId: fixtures.patient.id,
+        slotDate: '2099-12-31',
+        startTime: '10:00',
+        endTime: '10:45',
+        treatmentId: treatment.treatmentId,
+        totalSessions: 3,
+        remarks: undefined,
+      })
+    ).resolves.toEqual({ success: false, outcome: 'current-plan-exists' });
+  });
+
+  it('should allow exactly one concurrent catalogue assignment for a Patient without a current Plan', async () => {
+    const fixtures = await createFixtures();
+    const treatment = await createRepeatableTreatment(fixtures, `RACE${sequence}`);
+    const request: Extract<ValidatedCreateAppointmentData, { bookingPath: 'PROCEDURE' }> = {
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      patientId: fixtures.patient.id,
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '10:45',
+      treatmentId: treatment.treatmentId,
+      totalSessions: 3,
+      remarks: undefined,
+    };
+
+    const results = await Promise.all([
+      appointmentRepository.createAppointment(request),
+      appointmentRepository.createAppointment({ ...request, startTime: '12:00', endTime: '12:45' }),
+    ]);
+
+    expect(results.filter((result) => result.success)).toHaveLength(1);
+    expect(results.filter((result) => !result.success)).toEqual([
+      { success: false, outcome: 'current-plan-exists' },
+    ]);
+  });
+
+  it('should create a Sequenced Plan from every template and reserve its lowest Session number', async () => {
+    const fixtures = await createFixtures();
+    const [secondTemplate] = await db
+      .insert(treatmentSessionTable)
+      .values({
+        tenantId: fixtures.tenantId,
+        treatmentId: fixtures.treatmentId,
+        sessionNumber: 2,
+        label: 'Session 2 of 2 · Swedana',
+        procedure: 'Swedana',
+        durationMinutes: 30,
+      })
+      .returning({ id: treatmentSessionTable.id });
+
+    const result = await appointmentRepository.createAppointment({
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      patientId: fixtures.patient.id,
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '11:00',
+      treatmentId: fixtures.treatmentId,
+      remarks: undefined,
+    });
+
+    expect(result).toMatchObject({ success: true });
+    if (!result.success) throw new Error('appointment creation failed');
+
+    const [appointment] = await db
+      .select({
+        planId: appointmentTable.patientTreatmentPlanId,
+        sessionId: appointmentTable.patientTreatmentPlanSessionId,
+      })
+      .from(appointmentTable)
+      .where(eq(appointmentTable.id, result.data.id));
+    const sessions = await db
+      .select({
+        id: patientTreatmentPlanSessionTable.id,
+        templateId: patientTreatmentPlanSessionTable.treatmentSessionId,
+        sessionNumber: patientTreatmentPlanSessionTable.sessionNumber,
+      })
+      .from(patientTreatmentPlanSessionTable)
+      .where(eq(patientTreatmentPlanSessionTable.patientTreatmentPlanId, appointment.planId!));
+
+    expect(sessions).toEqual([
+      { id: appointment.sessionId, templateId: fixtures.treatmentSessionId, sessionNumber: 1 },
+      { id: expect.any(Number), templateId: secondTemplate.id, sessionNumber: 2 },
+    ]);
+  });
+
+  it('should allow exactly one concurrent booking of the same Patient Treatment Plan Session', async () => {
+    const fixtures = await createFixtures();
+    const plan = await createExistingPlan(fixtures);
+
+    const results = await Promise.all([
+      appointmentRepository.createAppointment(procedureData(fixtures, plan)),
+      appointmentRepository.createAppointment(
+        procedureData(fixtures, plan, { startTime: '12:00', endTime: '13:00' })
+      ),
+    ]);
+
+    expect(results.filter((result) => result.success)).toHaveLength(1);
+    expect(results.filter((result) => !result.success)).toEqual([
+      { success: false, outcome: 'plan-session-unavailable' },
+    ]);
+  });
+
+  it('should reject a stopped Patient Treatment Plan', async () => {
+    const stoppedFixtures = await createFixtures();
+    const stoppedPlan = await createExistingPlan(stoppedFixtures);
+    await db
+      .update(patientTreatmentPlanTable)
+      .set({ statusOverride: 'STOPPED' })
+      .where(eq(patientTreatmentPlanTable.id, stoppedPlan.planId));
+
+    await expect(
+      appointmentRepository.createAppointment(procedureData(stoppedFixtures, stoppedPlan))
+    ).resolves.toEqual({ success: false, outcome: 'plan-session-unavailable' });
+  });
+
+  it('should reject a completed Patient Treatment Plan Session', async () => {
+    const completedFixtures = await createFixtures();
+    const completedPlan = await createExistingPlan(completedFixtures);
+    await db
+      .update(patientTreatmentPlanSessionTable)
+      .set({
+        completionStatus: 'COMPLETED',
+        completionSource: 'LEGACY_IMPORT',
+        completedAt: new Date(),
+      })
+      .where(eq(patientTreatmentPlanSessionTable.id, completedPlan.sessionId));
+
+    await expect(
+      appointmentRepository.createAppointment(procedureData(completedFixtures, completedPlan))
+    ).resolves.toEqual({ success: false, outcome: 'plan-session-unavailable' });
+  });
+
+  it('should reject a cross-Tenant Patient Treatment Plan selection', async () => {
+    const fixtures = await createFixtures();
+    const otherTenant = await createFixtures();
+    const otherTenantPlan = await createExistingPlan(otherTenant);
+
+    await expect(
+      appointmentRepository.createAppointment(procedureData(fixtures, otherTenantPlan))
+    ).resolves.toEqual({ success: false, outcome: 'plan-session-unavailable' });
+  });
+
+  it('should reject a Patient Treatment Plan belonging to another Patient', async () => {
+    const fixtures = await createFixtures();
+    const [otherPatient] = await db
+      .insert(patientTable)
+      .values({
+        tenantId: fixtures.tenantId,
+        mrn: `MRN-OTHER-${sequence}`,
+        firstName: 'Anita',
+        lastName: 'Rao',
+        gender: 'female',
+        dateOfBirth: '1988-01-02',
+        phone: `90000000${String(sequence).padStart(2, '0')}`,
+        registrationStatus: 'registered',
+        isActive: true,
+      })
+      .returning({ id: patientTable.id });
+    const ownPlan = await createExistingPlan(fixtures);
+
+    await expect(
+      appointmentRepository.createAppointment(
+        procedureData(fixtures, ownPlan, { patientId: otherPatient.id })
+      )
+    ).resolves.toEqual({ success: false, outcome: 'plan-session-unavailable' });
+  });
+
+  it('should retain the Plan Session reservation on reschedule and release it on cancellation', async () => {
+    const fixtures = await createFixtures();
+    const plan = await createExistingPlan(fixtures);
+    const created = await appointmentRepository.createAppointment(procedureData(fixtures, plan));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    const rescheduled = await appointmentRepository.rescheduleAppointment({
+      id: created.data.id,
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      slotDate: '2100-01-01',
+      startTime: '12:00',
+      endTime: '13:00',
+    });
+
+    expect(rescheduled).toMatchObject({
+      success: true,
+      data: {
+        id: created.data.id,
+        slotDate: '01-01-2100',
+        startTime: '12:00',
+        endTime: '13:00',
+      },
+    });
+
+    const activeReservations = () =>
+      db
+        .select({ id: patientTreatmentPlanSessionReservationTable.id })
+        .from(patientTreatmentPlanSessionReservationTable)
+        .where(
+          and(
+            eq(patientTreatmentPlanSessionReservationTable.appointmentId, created.data.id),
+            eq(patientTreatmentPlanSessionReservationTable.tenantId, fixtures.tenantId),
+            eq(patientTreatmentPlanSessionReservationTable.isDeleted, false)
+          )
+        );
+
+    await expect(activeReservations()).resolves.toHaveLength(1);
+    await expect(
+      appointmentRepository.cancelAppointment({
+        id: created.data.id,
+        tenantId: fixtures.tenantId,
+        appointmentCancelledReasonId: fixtures.cancellationReason.id,
+      })
+    ).resolves.toMatchObject({ success: true });
+    await expect(activeReservations()).resolves.toEqual([]);
+    await expect(
+      appointmentRepository.createAppointment(
+        procedureData(fixtures, plan, { startTime: '14:00', endTime: '15:00' })
+      )
+    ).resolves.toMatchObject({ success: true });
+  });
+
+  it.each(['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED'] as const)(
+    'should retain a Plan Session reservation for %s status',
+    async (statusCategory) => {
+      const fixtures = await createFixtures();
+      const plan = await createExistingPlan(fixtures);
+      const created = await appointmentRepository.createAppointment(procedureData(fixtures, plan));
+      if (!created.success) throw new Error('appointment creation failed');
+
+      await db.transaction((tx) =>
+        appointmentRepository.releasePlanSessionReservationForTerminalStatus(
+          created.data.id,
+          fixtures.tenantId,
+          statusCategory,
+          tx
+        )
+      );
+
+      await expect(
+        db
+          .select({ id: patientTreatmentPlanSessionReservationTable.id })
+          .from(patientTreatmentPlanSessionReservationTable)
+          .where(
+            and(
+              eq(patientTreatmentPlanSessionReservationTable.appointmentId, created.data.id),
+              eq(patientTreatmentPlanSessionReservationTable.tenantId, fixtures.tenantId),
+              eq(patientTreatmentPlanSessionReservationTable.isDeleted, false)
+            )
+          )
+      ).resolves.toHaveLength(1);
+    }
+  );
+
+  it.each(['CANCELLED', 'NO_SHOW'] as const)(
+    'should release a Plan Session reservation for %s status',
+    async (statusCategory) => {
+      const fixtures = await createFixtures();
+      const plan = await createExistingPlan(fixtures);
+      const created = await appointmentRepository.createAppointment(procedureData(fixtures, plan));
+      if (!created.success) throw new Error('appointment creation failed');
+
+      await db.transaction((tx) =>
+        appointmentRepository.releasePlanSessionReservationForTerminalStatus(
+          created.data.id,
+          fixtures.tenantId,
+          statusCategory,
+          tx
+        )
+      );
+
+      await expect(
+        db
+          .select({ id: patientTreatmentPlanSessionReservationTable.id })
+          .from(patientTreatmentPlanSessionReservationTable)
+          .where(
+            and(
+              eq(patientTreatmentPlanSessionReservationTable.appointmentId, created.data.id),
+              eq(patientTreatmentPlanSessionReservationTable.tenantId, fixtures.tenantId),
+              eq(patientTreatmentPlanSessionReservationTable.isDeleted, false)
+            )
+          )
+      ).resolves.toEqual([]);
+    }
+  );
+
+  it('should roll back a catalogue Plan, Sessions, reservation, Appointment, and counter on failure', async () => {
+    const fixtures = await createFixtures();
+    const treatment = await createRepeatableTreatment(fixtures, `ROLL${sequence}`);
+    const reserveSession = patientTreatmentPlanRepository.reserveSession;
+    let reservationInserted = false;
+    vi.spyOn(patientTreatmentPlanRepository, 'reserveSession').mockImplementationOnce(
+      async (...args) => {
+        await reserveSession(...args);
+        reservationInserted = true;
+        throw new Error('Injected failure after reservation insertion');
+      }
+    );
+
+    await expect(
+      appointmentRepository.createAppointment({
+        tenantId: fixtures.tenantId,
+        timeZone: 'Asia/Kolkata',
+        bookingPath: 'PROCEDURE',
+        patientId: fixtures.patient.id,
+        slotDate: '2099-12-31',
+        startTime: '10:00',
+        endTime: '10:45',
+        treatmentId: treatment.treatmentId,
+        totalSessions: 3,
+        remarks: undefined,
+      })
+    ).rejects.toThrow('Injected failure after reservation insertion');
+    expect(reservationInserted).toBe(true);
+
+    await expect(
+      db
+        .select({ id: patientTreatmentPlanTable.id })
+        .from(patientTreatmentPlanTable)
+        .where(
+          and(
+            eq(patientTreatmentPlanTable.tenantId, fixtures.tenantId),
+            eq(patientTreatmentPlanTable.treatmentId, treatment.treatmentId)
+          )
+        )
+    ).resolves.toEqual([]);
+    await expect(
+      db
+        .select({ id: patientTreatmentPlanSessionTable.id })
+        .from(patientTreatmentPlanSessionTable)
+        .where(eq(patientTreatmentPlanSessionTable.tenantId, fixtures.tenantId))
+    ).resolves.toEqual([]);
+    await expect(
+      db
+        .select({ id: patientTreatmentPlanSessionReservationTable.id })
+        .from(patientTreatmentPlanSessionReservationTable)
+        .where(eq(patientTreatmentPlanSessionReservationTable.tenantId, fixtures.tenantId))
+    ).resolves.toEqual([]);
+    await expect(
+      db
+        .select({ id: appointmentTable.id })
+        .from(appointmentTable)
+        .where(eq(appointmentTable.tenantId, fixtures.tenantId))
+    ).resolves.toEqual([]);
+    await expect(
+      db
+        .select({ lastNumber: appointmentBookingNumberCounterTable.lastNumber })
+        .from(appointmentBookingNumberCounterTable)
+        .where(eq(appointmentBookingNumberCounterTable.tenantId, fixtures.tenantId))
+    ).resolves.toEqual([]);
   });
 
   it('should assign a Procedure Doctor without using a DoctorRota or reserving Doctor slots', async () => {
     const fixtures = await createFixtures();
+    const plan = await createExistingPlan(fixtures);
 
     const result = await appointmentRepository.createAppointment({
       tenantId: fixtures.tenantId,
@@ -577,8 +1119,8 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '12:00',
       endTime: '13:00',
-      treatmentId: fixtures.treatmentId,
-      treatmentSessionId: fixtures.treatmentSessionId,
+      patientTreatmentPlanId: plan.planId,
+      patientTreatmentPlanSessionId: plan.sessionId,
       remarks: undefined,
     });
 
@@ -592,6 +1134,44 @@ describe('Appointment repository', () => {
         endTime: '13:00',
         slots: [],
       },
+    });
+  });
+
+  it('should read a historical Procedure whose Patient Treatment Plan references are null', async () => {
+    const fixtures = await createFixtures();
+    const [scheduledStatus] = await db
+      .select({ id: appointmentStatusTable.id })
+      .from(appointmentStatusTable)
+      .where(
+        and(
+          eq(appointmentStatusTable.tenantId, fixtures.tenantId),
+          eq(appointmentStatusTable.category, 'SCHEDULED')
+        )
+      );
+    const [historical] = await db
+      .insert(appointmentTable)
+      .values({
+        tenantId: fixtures.tenantId,
+        bookingPath: 'PROCEDURE',
+        bookingNumber: 'APT-HISTORICAL',
+        patientId: fixtures.patient.id,
+        appointmentStatusId: scheduledStatus.id,
+        treatmentId: fixtures.treatmentId,
+        treatmentSessionId: fixtures.treatmentSessionId,
+        patientTreatmentPlanId: null,
+        patientTreatmentPlanSessionId: null,
+        slotDate: '2099-12-31',
+        startTime: '10:00',
+        endTime: '11:00',
+      })
+      .returning({ id: appointmentTable.id });
+
+    await expect(
+      appointmentRepository.getAppointmentById(historical.id, fixtures.tenantId)
+    ).resolves.toMatchObject({
+      id: historical.id,
+      treatment: { id: fixtures.treatmentId },
+      treatmentSession: { id: fixtures.treatmentSessionId },
     });
   });
 

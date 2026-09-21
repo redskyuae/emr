@@ -47,18 +47,21 @@ export async function validateUpdateTreatment(
     };
   }
 
-  const uniquenessResult = await validateTreatmentUniqueness({
-    ...payloadResult.data,
-    tenantId,
-    excludeId: idResult.data,
-  });
+  // Legacy identities may share names and codes with native catalogue entries.
+  if (existingTreatment.legacySourceIdentity === null) {
+    const uniquenessResult = await validateTreatmentUniqueness({
+      ...payloadResult.data,
+      tenantId,
+      excludeId: idResult.data,
+    });
 
-  if (!uniquenessResult.success) {
-    return {
-      success: false,
-      errors: uniquenessResult.errors,
-      status: uniquenessResult.status,
-    };
+    if (!uniquenessResult.success) {
+      return {
+        success: false,
+        errors: uniquenessResult.errors,
+        status: uniquenessResult.status,
+      };
+    }
   }
 
   return {

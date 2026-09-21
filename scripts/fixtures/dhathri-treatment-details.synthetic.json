@@ -1,0 +1,44 @@
+{
+  "sheetRelationshipTarget": "worksheets/treatment-details.xml",
+  "headers": [
+    { "column": "A", "mode": "shared", "value": "Treatment" },
+    { "column": "B", "mode": "inline", "value": "TotalSession" },
+    { "column": "C", "mode": "shared", "value": "MRN" },
+    { "column": "D", "mode": "inline", "value": "VisitID" },
+    { "column": "E", "mode": "shared", "value": "VisitNumber" },
+    { "column": "F", "mode": "inline", "value": "TreatmentStatus" },
+    { "column": "G", "mode": "shared", "value": "SessionNumber" },
+    { "column": "H", "mode": "inline", "value": "ConductionNote" },
+    { "column": "I", "mode": "shared", "value": "SessionStatus" }
+  ],
+  "rows": [
+    {
+      "rowNumber": 2,
+      "cells": [
+        { "column": "A", "mode": "shared", "value": "  SYN-TRT_Oil Therapy  " },
+        { "column": "B", "mode": "numeric", "value": "6" },
+        { "column": "C", "mode": "inline", "value": "  SYN-MRN-001  " },
+        { "column": "D", "mode": "shared", "value": "SYN-VISIT-001" },
+        { "column": "E", "mode": "numeric", "value": "1001" },
+        { "column": "F", "mode": "inline", "value": " Progress " },
+        { "column": "G", "mode": "numeric", "value": "1" },
+        { "column": "H", "mode": "blank", "value": null },
+        { "column": "I", "mode": "shared", "value": "Completed" }
+      ]
+    },
+    {
+      "rowNumber": 4,
+      "cells": [
+        { "column": "A", "mode": "inline", "value": "NULL" },
+        { "column": "B", "mode": "numeric", "value": "2" },
+        { "column": "C", "mode": "shared", "value": "SYN-MRN-002" },
+        { "column": "D", "mode": "inline", "value": "SYN-VISIT-002" },
+        { "column": "E", "mode": "numeric", "value": "1002" },
+        { "column": "F", "mode": "shared", "value": "Pending" },
+        { "column": "G", "mode": "blank", "value": null },
+        { "column": "H", "mode": "inline", "value": "  NULL  " },
+        { "column": "I", "mode": "blank", "value": null }
+      ]
+    }
+  ]
+}

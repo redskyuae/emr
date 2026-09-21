@@ -1,5 +1,6 @@
 import type { BookAppointmentFormValues } from '../_utils/book-appointment-form-schema';
-import type { DemoRoom, DemoTherapist } from './book-appointment-demo-data';
+import type { Room } from '@/app/api/lib/modules/room/schemas/room-schema';
+import type { DemoTherapist } from './book-appointment-demo-data';
 
 export function BookingSummary({
   values,
@@ -9,7 +10,7 @@ export function BookingSummary({
   showProcedureResources = true,
 }: {
   values: BookAppointmentFormValues;
-  room: DemoRoom | null;
+  room: Room | null;
   therapist: DemoTherapist | null;
   doctorName: string;
   showProcedureResources?: boolean;
@@ -38,7 +39,7 @@ export function BookingSummary({
         {doctorName || 'Choose a Doctor'}
         {procedure && showProcedureResources
           ? ' · ' +
-            (room?.name ?? 'Choose a Room') +
+            (room ? `Room ${room.roomNumber}` : 'Choose a Room') +
             ' · ' +
             (therapist?.name ?? 'Choose a Therapist')
           : ''}

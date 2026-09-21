@@ -43,6 +43,10 @@ const updatePayload = {
   cleaningMinutes: 5,
 };
 const existing = {
+  sessionStructure: 'SEQUENCED' as const,
+  defaultTotalSessions: null,
+  legacySourceIdentity: null,
+  legacySourceSystem: null,
   id: 1,
   tenantId: 'tenant-1',
   name: 'Abhyanga wellness programme',
@@ -117,6 +121,36 @@ describe('Treatment validators', () => {
   });
 
   describe('validateUpdateTreatment', () => {
+    it('should allow a legacy Treatment to retain a native Treatment name and code', async () => {
+      repo.getTreatmentById.mockResolvedValue({
+        ...existing,
+        legacySourceIdentity: 'TRT-0400_Abhyanga wellness programme',
+        legacySourceSystem: 'DHATHRI',
+      });
+      repo.findActiveByName.mockResolvedValue({ ...existing, id: 2 });
+      repo.findActiveByCode.mockResolvedValue({ ...existing, id: 2 });
+
+      await expect(validateUpdateTreatment('1', updatePayload, 'tenant-1')).resolves.toEqual({
+        success: true,
+        data: { id: 1, payload: updatePayload },
+      });
+      expect(repo.findActiveByName).not.toHaveBeenCalled();
+      expect(repo.findActiveByCode).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['findActiveByName', "Treatment name 'Abhyanga wellness programme' already exists."],
+      ['findActiveByCode', "Treatment code 'TRT-0400' already exists."],
+    ] as const)('should retain native update conflicts from %s', async (finder, error) => {
+      repo[finder].mockResolvedValue({ ...existing, id: 2 });
+
+      await expect(validateUpdateTreatment('1', updatePayload, 'tenant-1')).resolves.toEqual({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: [error],
+      });
+    });
+
     it('should return an invalid id error for a non-numeric id', async () => {
       const result = await validateUpdateTreatment('abc', updatePayload, 'tenant-1');
 

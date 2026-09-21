@@ -71,6 +71,22 @@ export async function createAppointmentCommand(
       };
     }
 
+    if (result.outcome === 'plan-session-unavailable') {
+      return {
+        success: false,
+        errors: ['The selected Patient Treatment Plan Session is no longer available.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
+    if (result.outcome === 'current-plan-exists') {
+      return {
+        success: false,
+        errors: ['Catalogue Treatment cannot be assigned while the Patient has a current Plan.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
     if (result.outcome === 'slot-past') {
       return {
         success: false,
@@ -119,6 +135,17 @@ export async function createAppointmentCommand(
       return {
         success: false,
         errors: ['Appointment Booking Number allocation conflicted. Please retry.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
+    if (
+      dbError?.code === '23505' &&
+      dbError.constraint === 'ptp_session_reservation_active_session_idx'
+    ) {
+      return {
+        success: false,
+        errors: ['The selected Patient Treatment Plan Session is no longer available.'],
         status: StatusCodes.CONFLICT,
       };
     }

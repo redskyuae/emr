@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/create-appointment-command';
 import { getAppointmentsQuery } from '@/app/api/lib/modules/appointment/queries/get-appointments-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { GET, POST } from './route';
 
 vi.mock('@/app/api/lib/modules/appointment/commands/create-appointment-command', () => ({
@@ -14,11 +14,13 @@ vi.mock('@/app/api/lib/modules/appointment/queries/get-appointments-query', () =
   getAppointmentsQuery: vi.fn(),
 }));
 vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
+  requireTenantPermissions: vi.fn(),
   requireTenantSession: vi.fn(),
 }));
 
 const createAppointment = vi.mocked(createAppointmentCommand);
 const getAppointments = vi.mocked(getAppointmentsQuery);
+const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
 
 const tenantSession = {
@@ -53,6 +55,7 @@ describe('Appointments route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireSession.mockResolvedValue(tenantSession as never);
+    requirePermissions.mockResolvedValue(null);
     createAppointment.mockResolvedValue({
       success: true,
       data: {
@@ -228,6 +231,19 @@ describe('Appointments route', () => {
       const response = await POST(jsonRequest(payload));
 
       expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
+      expect(requirePermissions).not.toHaveBeenCalled();
+      expect(createAppointment).not.toHaveBeenCalled();
+    });
+
+    it('should require Appointment create permission before reading the request body', async () => {
+      requirePermissions.mockResolvedValue(
+        NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+      );
+
+      const response = await POST(jsonRequest(payload));
+
+      expect(response.status).toBe(StatusCodes.FORBIDDEN);
+      expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['appointment:create']);
       expect(createAppointment).not.toHaveBeenCalled();
     });
 
@@ -253,6 +269,129 @@ describe('Appointments route', () => {
       await expect(response.json()).resolves.toMatchObject({
         data: { id: 10, bookingNumber: 'APT-1001' },
       });
+      expect(requirePermissions).toHaveBeenCalledTimes(1);
+    });
+
+    it('should require read permission for an existing-Plan Procedure selection', async () => {
+      const procedurePayload = {
+        bookingPath: 'PROCEDURE',
+        patientId: 5,
+        slotDate: '31-12-2099',
+        startTime: '09:00',
+        endTime: '10:00',
+        patientTreatmentPlanId: 20,
+        patientTreatmentPlanSessionId: 21,
+      };
+
+      await POST(jsonRequest(procedurePayload));
+
+      expect(requirePermissions).toHaveBeenNthCalledWith(1, tenantSession, ['appointment:create']);
+      expect(requirePermissions).toHaveBeenNthCalledWith(2, tenantSession, [
+        'patient-treatment-plan:read',
+      ]);
+      expect(createAppointment).toHaveBeenCalledWith(procedurePayload, 'tenant-1');
+    });
+
+    it('should reject a Procedure request that mixes existing-Plan and catalogue selectors', async () => {
+      const procedurePayload = {
+        bookingPath: 'PROCEDURE',
+        patientId: 5,
+        slotDate: '31-12-2099',
+        startTime: '09:00',
+        endTime: '10:00',
+        patientTreatmentPlanId: 20,
+        patientTreatmentPlanSessionId: 21,
+        treatmentId: 400,
+      };
+
+      const response = await POST(jsonRequest(procedurePayload));
+
+      expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+      await expect(response.json()).resolves.toEqual({
+        message: 'Validation failed',
+        errors: [
+          'Procedure selection must identify exactly one Patient Treatment Plan Session or catalogue Treatment.',
+        ],
+      });
+      expect(requirePermissions).toHaveBeenCalledTimes(1);
+      expect(createAppointment).not.toHaveBeenCalled();
+    });
+
+    it('should reject a Procedure request with a Plan id but no Plan Session id', async () => {
+      const procedurePayload = {
+        bookingPath: 'PROCEDURE',
+        patientId: 5,
+        slotDate: '31-12-2099',
+        startTime: '09:00',
+        endTime: '10:00',
+        patientTreatmentPlanId: 20,
+      };
+
+      const response = await POST(jsonRequest(procedurePayload));
+
+      expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+      await expect(response.json()).resolves.toMatchObject({
+        message: 'Validation failed',
+      });
+      expect(requirePermissions).toHaveBeenCalledTimes(1);
+      expect(createAppointment).not.toHaveBeenCalled();
+    });
+
+    it('should reject a Procedure request with a Plan Session id but no Plan id', async () => {
+      const procedurePayload = {
+        bookingPath: 'PROCEDURE',
+        patientId: 5,
+        slotDate: '31-12-2099',
+        startTime: '09:00',
+        endTime: '10:00',
+        patientTreatmentPlanSessionId: 21,
+      };
+
+      const response = await POST(jsonRequest(procedurePayload));
+
+      expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+      expect(requirePermissions).toHaveBeenCalledTimes(1);
+      expect(createAppointment).not.toHaveBeenCalled();
+    });
+
+    it('should require assign permission for a catalogue Procedure selection', async () => {
+      const procedurePayload = {
+        bookingPath: 'PROCEDURE',
+        patientId: 5,
+        slotDate: '31-12-2099',
+        startTime: '09:00',
+        endTime: '10:00',
+        treatmentId: 400,
+        totalSessions: 6,
+      };
+
+      await POST(jsonRequest(procedurePayload));
+
+      expect(requirePermissions).toHaveBeenNthCalledWith(2, tenantSession, [
+        'patient-treatment-plan:assign',
+      ]);
+      expect(createAppointment).toHaveBeenCalledWith(procedurePayload, 'tenant-1');
+    });
+
+    it('should not run the Appointment command when a path-specific permission is absent', async () => {
+      requirePermissions
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(
+          NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+        );
+      const procedurePayload = {
+        bookingPath: 'PROCEDURE',
+        patientId: 5,
+        slotDate: '31-12-2099',
+        startTime: '09:00',
+        endTime: '10:00',
+        treatmentId: 400,
+      };
+
+      const response = await POST(jsonRequest(procedurePayload));
+
+      expect(response.status).toBe(StatusCodes.FORBIDDEN);
+      expect(createAppointment).not.toHaveBeenCalled();
     });
 
     it('should include patient matches on conflict responses', async () => {

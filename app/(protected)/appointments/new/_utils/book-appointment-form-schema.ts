@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { PROCEDURE_SELECTION_MODE_VALUES } from './book-appointment-types';
+
 const patientModeValues = ['existing', 'provisional'] as const;
 const patientGenderValues = ['male', 'female', 'other', 'unknown'] as const;
 const visitTypeValues = ['CONSULTATION', 'PROCEDURE'] as const;
@@ -53,7 +55,17 @@ export const bookAppointmentFormSchema = z
       .refine(isIsoDate, 'Slot date must be a valid date'),
     doctorRotaId: z.string().trim(),
     slotTimes: z.array(z.string()),
+    selectionMode: z.enum(PROCEDURE_SELECTION_MODE_VALUES).or(z.literal('')),
+    patientTreatmentPlanId: z.string().trim(),
+    patientTreatmentPlanSessionId: z.string().trim(),
     treatmentId: z.string().trim(),
+    totalSessions: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value === '' || /^[1-9]\d*$/.test(value),
+        'Total Sessions must be a positive whole number'
+      ),
     sessionId: z.string().trim(),
     startTime: z.string().trim(),
     endTime: z.string().trim(),
@@ -169,8 +181,63 @@ export const bookAppointmentFormSchema = z
     }
 
     if (data.visitType === 'PROCEDURE') {
+      if (data.patientMode !== 'existing') {
+        context.addIssue({
+          code: 'custom',
+          path: ['patientId'],
+          message: 'A registered Patient is required for a Procedure',
+        });
+      }
+
+      if (data.selectionMode === '') {
+        context.addIssue({
+          code: 'custom',
+          path: ['selectionMode'],
+          message: 'Treatment selection is required',
+        });
+      } else if (data.selectionMode === 'EXISTING_PLAN') {
+        if (data.patientTreatmentPlanId === '') {
+          context.addIssue({
+            code: 'custom',
+            path: ['patientTreatmentPlanId'],
+            message: 'Patient Treatment Plan is required',
+          });
+        }
+
+        if (data.patientTreatmentPlanSessionId === '') {
+          context.addIssue({
+            code: 'custom',
+            path: ['patientTreatmentPlanSessionId'],
+            message: 'Patient Treatment Plan Session is required',
+          });
+        }
+
+        if (data.treatmentId !== '' || data.totalSessions !== '') {
+          context.addIssue({
+            code: 'custom',
+            path: ['treatmentId'],
+            message: 'Catalogue Treatment must be empty for an existing Plan',
+          });
+        }
+      } else {
+        if (data.treatmentId === '') {
+          context.addIssue({
+            code: 'custom',
+            path: ['treatmentId'],
+            message: 'Treatment is required',
+          });
+        }
+
+        if (data.patientTreatmentPlanId !== '' || data.patientTreatmentPlanSessionId !== '') {
+          context.addIssue({
+            code: 'custom',
+            path: ['patientTreatmentPlanId'],
+            message: 'Patient Treatment Plan must be empty for catalogue assignment',
+          });
+        }
+      }
+
       const requiredAyurvedaFields = [
-        ['treatmentId', data.treatmentId, 'Treatment is required'],
         ['roomId', data.roomId, 'Room is required'],
         ['therapistId', data.therapistId, 'Therapist is required'],
       ] as const;
@@ -179,10 +246,6 @@ export const bookAppointmentFormSchema = z
         if (value.trim() === '') {
           context.addIssue({ code: 'custom', path: [path], message });
         }
-      }
-
-      if (data.sessionId.trim() === '') {
-        context.addIssue({ code: 'custom', path: ['sessionId'], message: 'Session is required' });
       }
 
       if (data.consentStatus === 'BLOCKED' || data.approvalStatus === 'BLOCKED') {
@@ -216,7 +279,11 @@ export const EMPTY_BOOK_APPOINTMENT_FORM_VALUES: BookAppointmentFormValues = {
   slotDate: '',
   doctorRotaId: '',
   slotTimes: [],
+  selectionMode: '',
+  patientTreatmentPlanId: '',
+  patientTreatmentPlanSessionId: '',
   treatmentId: '',
+  totalSessions: '',
   sessionId: '',
   startTime: '',
   endTime: '',

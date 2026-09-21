@@ -17,6 +17,7 @@ import {
 } from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
+import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
 import { AppointmentStatusNotConfiguredError } from '../errors/appointment-status-not-configured-error';
 import {
@@ -574,6 +575,15 @@ async function runTransitionVisitTransaction(
         // disagree about what happened (ADR 0030).
         throw new AppointmentStatusNotConfiguredError();
       }
+    }
+
+    if (spec.to === 'COMPLETED' && existing.appointmentId !== null) {
+      await patientTreatmentPlanRepository.completeSessionForVisit(
+        id,
+        existing.appointmentId,
+        tenantId,
+        tx
+      );
     }
 
     const updated = await getVisitById(id, tenantId, tx);

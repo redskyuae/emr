@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addMinutesToTime,
+  canAllocateProcedureResources,
   getDurationMinutes,
   getProcedureEndTime,
   getProcedureEndTimeForStartChange,
@@ -10,6 +11,33 @@ import {
 } from './appointment-time';
 
 describe('Appointment time', () => {
+  it('should allow resource selection once a Procedure date and start time are selected', () => {
+    expect(canAllocateProcedureResources('2026-09-21', '10:30')).toBe(true);
+  });
+
+  it('should leave the end time unset when any Session timing is unknown', () => {
+    for (const field of ['duration', 'setupMinutes', 'cleaningMinutes']) {
+      expect(
+        getProcedureEndTime('10:30', {
+          duration: 60,
+          setupMinutes: 10,
+          cleaningMinutes: 5,
+          [field]: null,
+        })
+      ).toBe('');
+    }
+  });
+
+  it('should retain a manually entered end time for a Session with unknown timing', () => {
+    expect(
+      getProcedureEndTimeForStartChange('10:30', '12:00', {
+        duration: null,
+        setupMinutes: null,
+        cleaningMinutes: null,
+      })
+    ).toBe('12:00');
+  });
+
   it('should calculate a variable duration', () => {
     expect(getDurationMinutes('09:15', '10:45')).toBe(90);
   });

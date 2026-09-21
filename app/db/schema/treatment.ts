@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, pgTable, text, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { check, index, integer, pgTable, text, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
 import { masterColumns } from './helpers';
 
@@ -13,9 +13,18 @@ export const treatment = pgTable(
     name: varchar({ length: 200 }).notNull(),
     code: varchar({ length: 20 }).notNull(),
     description: text(),
-    durationMinutes: integer('duration_minutes').notNull(),
-    setupMinutes: integer('setup_minutes').notNull().default(0),
-    cleaningMinutes: integer('cleaning_minutes').notNull().default(0),
+    sessionStructure: varchar('session_structure', {
+      length: 20,
+      enum: ['REPEATABLE', 'SEQUENCED'],
+    })
+      .notNull()
+      .default('SEQUENCED'),
+    defaultTotalSessions: integer('default_total_sessions'),
+    legacySourceIdentity: text('legacy_source_identity'),
+    legacySourceSystem: varchar('legacy_source_system', { length: 100 }),
+    durationMinutes: integer('duration_minutes'),
+    setupMinutes: integer('setup_minutes'),
+    cleaningMinutes: integer('cleaning_minutes'),
     roomType: varchar('room_type', { length: 100 }),
     therapistSkill: varchar('therapist_skill', { length: 100 }),
     isDeleted,
@@ -24,12 +33,23 @@ export const treatment = pgTable(
     deletedOn,
   },
   (table) => ({
+    sessionStructureCheck: check(
+      'treatment_session_structure_check',
+      sql`${table.sessionStructure} in ('REPEATABLE', 'SEQUENCED')`
+    ),
+    defaultTotalSessionsCheck: check(
+      'treatment_default_total_sessions_check',
+      sql`${table.defaultTotalSessions} is null or (${table.sessionStructure} = 'REPEATABLE' and ${table.defaultTotalSessions} > 0)`
+    ),
     tenantNameUniqueIdx: uniqueIndex('treatment_tenant_name_idx')
       .on(table.tenantId, sql`lower(${table.name})`)
-      .where(sql`${table.isDeleted} = false`),
+      .where(sql`${table.isDeleted} = false and ${table.legacySourceIdentity} is null`),
     tenantCodeUniqueIdx: uniqueIndex('treatment_tenant_code_idx')
       .on(table.tenantId, sql`lower(${table.code})`)
-      .where(sql`${table.isDeleted} = false`),
+      .where(sql`${table.isDeleted} = false and ${table.legacySourceIdentity} is null`),
+    tenantLegacySourceUniqueIdx: uniqueIndex('treatment_tenant_legacy_source_idx')
+      .on(table.tenantId, sql`lower(${table.legacySourceIdentity})`)
+      .where(sql`${table.isDeleted} = false and ${table.legacySourceIdentity} is not null`),
     tenantIdx: index('treatment_tenant_idx').on(table.tenantId),
   })
 );
@@ -45,9 +65,9 @@ export const treatmentSession = pgTable(
     sessionNumber: integer('session_number').notNull(),
     label: varchar({ length: 200 }).notNull(),
     procedure: varchar({ length: 200 }).notNull(),
-    durationMinutes: integer('duration_minutes').notNull(),
-    setupMinutes: integer('setup_minutes').notNull().default(0),
-    cleaningMinutes: integer('cleaning_minutes').notNull().default(0),
+    durationMinutes: integer('duration_minutes'),
+    setupMinutes: integer('setup_minutes'),
+    cleaningMinutes: integer('cleaning_minutes'),
     preparation: text(),
     warning: text(),
     equipment: text(),

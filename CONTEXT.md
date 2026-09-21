@@ -256,6 +256,22 @@ A Tenant-scoped Master that names a clinical protocol or programme a Patient may
 
 A numbered encounter template belonging to a Treatment (for example Session 1 of 6). Booking a Procedure Appointment selects one Treatment Session. Completing that Appointment as a Visit records the same Treatment and Session on the Visit so later Sessions of the same Treatment can be scheduled independently.
 
+## Treatment Session Structure
+
+The way a Treatment supplies Session templates: Repeatable Treatments use one template for a Patient-specific number of Sessions, while Sequenced Treatments define a fixed ordered set of distinct templates.
+
+## Patient Treatment Plan
+
+A Patient-specific assignment of a Treatment and its planned Sessions. A Patient Treatment Plan is current while Pending or In Progress; a Completed or Stopped plan is retained as treatment history.
+
+## Patient Treatment Plan Session
+
+A Patient-specific planned occurrence within a Patient Treatment Plan. It carries that Patient's Session number and progress independently of the reusable Treatment Session template.
+
+## Patient Treatment Plan Session Reservation
+
+The exclusive reservation of one Patient Treatment Plan Session for a Procedure Appointment. Cancelling or marking the Appointment as No Show releases the reservation so the incomplete Session may be booked again.
+
 ## VisitType
 
 A Tenant-scoped Master that classifies the clinical nature of a Visit, such as OPD Consultation, Follow-up, Procedure, or Vaccination. Distinct from AppointmentType, which classifies the Appointment at booking time — a Walk-in Visit has a VisitType but no Appointment.

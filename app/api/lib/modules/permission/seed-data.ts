@@ -137,6 +137,14 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'appointments',
+    resource: 'patient-treatment-plan',
+    actions: [
+      ['read', 'View Patient Treatment Plans and Sessions.'],
+      ['assign', 'Assign Treatments to Patients and create Patient Treatment Plans.'],
+    ],
+  },
+  {
     module: 'appointment-masters',
     resource: 'appointment-mode',
     actions: [

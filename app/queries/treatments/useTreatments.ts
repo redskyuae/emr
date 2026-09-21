@@ -1,12 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { ListTreatmentsResponse } from '@/app/api/v1/treatments/types';
 
-type TreatmentsParams = {
+export type TreatmentsParams = {
   query?: string;
   page?: number;
   limit?: number;
+};
+
+type TreatmentsQueryOptions = {
+  enabled?: boolean;
 };
 
 export const TREATMENTS_KEY = ['treatments'] as const;
@@ -39,9 +43,14 @@ async function fetchTreatments(params: TreatmentsParams): Promise<ListTreatments
   return response.json() as Promise<ListTreatmentsResponse>;
 }
 
-export function useTreatmentsQuery(params: TreatmentsParams) {
+export function useTreatmentsQuery(
+  params: TreatmentsParams,
+  { enabled = true }: TreatmentsQueryOptions = {}
+) {
   return useQuery({
     queryKey: treatmentsQueryKey(params),
     queryFn: () => fetchTreatments(params),
+    enabled,
+    placeholderData: keepPreviousData,
   });
 }

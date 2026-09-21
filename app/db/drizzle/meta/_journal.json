@@ -421,6 +421,20 @@
       "when": 1789528200000,
       "tag": "0059_seed_treatment_masters",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1789549595449,
+      "tag": "0060_patient_treatment_plans",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1789707626739,
+      "tag": "0061_dhathri_treatment_import",
+      "breakpoints": true
     }
   ]
 }

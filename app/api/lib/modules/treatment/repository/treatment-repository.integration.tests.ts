@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
+
+import { db } from '@/app/db';
+import { treatment as treatmentTable } from '@/app/db/schema/treatment';
 
 import { treatmentRepository } from './treatment-repository';
 
@@ -29,6 +33,83 @@ const createTreatment = (tenantId: string, name: string, code: string) =>
   });
 
 describe('Treatment repository', () => {
+  it('should persist Repeatable structure and default count on creation', async () => {
+    const created = await treatmentRepository.createTreatment({
+      tenantId: tenantA,
+      name: 'Repeatable',
+      code: 'RPT',
+      sessionStructure: 'REPEATABLE',
+      defaultTotalSessions: 20,
+      durationMinutes: 60,
+      setupMinutes: 0,
+      cleaningMinutes: 0,
+      sessions: [session],
+    });
+    expect(created).toMatchObject({ sessionStructure: 'REPEATABLE', defaultTotalSessions: 20 });
+  });
+
+  it('should allow colliding legacy names and codes but enforce active source identities', async () => {
+    const data = {
+      tenantId: tenantA,
+      name: 'Legacy',
+      code: 'LEG',
+      sessionStructure: 'REPEATABLE' as const,
+      legacySourceSystem: 'DHATHRI',
+    };
+    const [first] = await db
+      .insert(treatmentTable)
+      .values({ ...data, legacySourceIdentity: 'LEG_First' })
+      .returning();
+    await db.insert(treatmentTable).values({ ...data, legacySourceIdentity: 'LEG_Second' });
+    await expect(
+      db.insert(treatmentTable).values({ ...data, legacySourceIdentity: 'leg_first' })
+    ).rejects.toThrow();
+    await expect(
+      db
+        .insert(treatmentTable)
+        .values({ ...data, tenantId: tenantB, legacySourceIdentity: 'leg_first' })
+        .returning()
+    ).resolves.toHaveLength(1);
+    await db.update(treatmentTable).set({ isDeleted: true }).where(eq(treatmentTable.id, first.id));
+    await expect(
+      db
+        .insert(treatmentTable)
+        .values({ ...data, legacySourceIdentity: 'leg_first' })
+        .returning()
+    ).resolves.toHaveLength(1);
+    await expect(treatmentRepository.getTreatmentById(first.id, tenantA)).resolves.toBeUndefined();
+  });
+
+  it('should preserve unknown legacy timing and default native rows to Sequenced', async () => {
+    const [native] = await db
+      .insert(treatmentTable)
+      .values({ tenantId: tenantA, name: 'Native', code: 'NAT' })
+      .returning();
+    expect(native.sessionStructure).toBe('SEQUENCED');
+    await expect(treatmentRepository.getTreatmentById(native.id, tenantA)).resolves.toMatchObject({
+      durationMinutes: null,
+      setupMinutes: null,
+      cleaningMinutes: null,
+    });
+  });
+
+  it('should exclude legacy identities from native name and code uniqueness checks', async () => {
+    await db.insert(treatmentTable).values({
+      tenantId: tenantA,
+      name: 'Legacy',
+      code: 'LEG',
+      legacySourceIdentity: 'LEG_Legacy',
+      legacySourceSystem: 'DHATHRI',
+      sessionStructure: 'REPEATABLE',
+    });
+    await expect(treatmentRepository.findActiveByName(tenantA, 'Legacy')).resolves.toBeUndefined();
+    await expect(treatmentRepository.findActiveByCode(tenantA, 'LEG')).resolves.toBeUndefined();
+    await expect(createTreatment(tenantA, 'Legacy', 'LEG')).resolves.toMatchObject({
+      legacySourceIdentity: null,
+      sessionStructure: 'SEQUENCED',
+    });
+  });
+
   it('should create and read back a treatment with its sessions', async () => {
     const created = await createTreatment(tenantA, 'Abhyanga wellness programme', 'TRT-0400');
 

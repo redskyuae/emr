@@ -27,6 +27,11 @@ import {
   treatmentSession as treatmentSessionTable,
 } from '@/app/db/schema/treatment';
 import { formatPatientMrn } from '../../patient/repository/patient-mrn';
+import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
+import {
+  patientTreatmentPlanRepository,
+  type PlanSessionBookingContext,
+} from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { formatAppointmentBookingNumber } from './appointment-booking-number';
 import type {
   Appointment,
@@ -251,10 +256,7 @@ function toAppointment(row: AppointmentRow, reservations?: AppointmentReservatio
       row.treatmentSession?.id != null &&
       row.treatmentSession.label != null &&
       row.treatmentSession.procedure != null &&
-      row.treatmentSession.sessionNumber != null &&
-      row.treatmentSession.durationMinutes != null &&
-      row.treatmentSession.setupMinutes != null &&
-      row.treatmentSession.cleaningMinutes != null
+      row.treatmentSession.sessionNumber != null
         ? {
             id: row.treatmentSession.id,
             label: row.treatmentSession.label,
@@ -631,7 +633,15 @@ export type CreateAppointmentRepositoryResult =
   | { success: false; outcome: 'invalid-reference'; invalidReferences: string[] }
   | { success: false; outcome: 'patient-inactive' }
   | { success: false; outcome: 'potential-patient-match'; patientMatches: PotentialPatientMatch[] }
-  | { success: false; outcome: 'slot-invalid' | 'slot-unavailable' | 'slot-past' };
+  | {
+      success: false;
+      outcome:
+        | 'slot-invalid'
+        | 'slot-unavailable'
+        | 'slot-past'
+        | 'current-plan-exists'
+        | 'plan-session-unavailable';
+    };
 
 export type RescheduleAppointmentRepositoryResult =
   | { success: true; data: Appointment }
@@ -655,12 +665,28 @@ export type CancelAppointmentRepositoryResult =
       outcome: 'not-found' | 'ineligible' | 'invalid-reason' | 'cancelled-status-not-configured';
     };
 
+async function releasePlanSessionReservationForTerminalStatus(
+  appointmentId: number,
+  tenantId: string,
+  statusCategory: AppointmentStatusCategory,
+  tx: Transaction
+) {
+  if (statusCategory !== 'CANCELLED' && statusCategory !== 'NO_SHOW') return;
+
+  await patientTreatmentPlanRepository.releaseReservationForAppointment(
+    appointmentId,
+    tenantId,
+    tx
+  );
+}
+
 async function createAppointment(
   data: ValidatedCreateAppointmentData
 ): Promise<CreateAppointmentRepositoryResult> {
   return db.transaction(async (tx) => {
     const invalidReferences: string[] = [];
     let slotContext: AppointmentSlotBookingContext | undefined;
+    let planSessionContext: PlanSessionBookingContext | undefined;
 
     if (data.bookingPath === 'CONSULTATION') {
       slotContext = await getSlotBookingContext(
@@ -779,7 +805,11 @@ async function createAppointment(
 
     if (patientId !== undefined) {
       const [patient] = await tx
-        .select({ id: patientTable.id, isActive: patientTable.isActive })
+        .select({
+          id: patientTable.id,
+          isActive: patientTable.isActive,
+          registrationStatus: patientTable.registrationStatus,
+        })
         .from(patientTable)
         .where(
           and(
@@ -801,6 +831,14 @@ async function createAppointment(
 
       if (!patient.isActive) {
         return { success: false, outcome: 'patient-inactive' };
+      }
+
+      if (data.bookingPath === 'PROCEDURE' && patient.registrationStatus !== 'registered') {
+        return {
+          success: false,
+          outcome: 'invalid-reference',
+          invalidReferences: ['Registered Patient'],
+        };
       }
     } else {
       const provisionalPatient = data.provisionalPatient;
@@ -827,6 +865,49 @@ async function createAppointment(
       }
 
       patientId = await createProvisionalPatient(tx, data);
+    }
+
+    if (data.bookingPath === 'PROCEDURE') {
+      if (data.patientTreatmentPlanId !== undefined) {
+        planSessionContext = await patientTreatmentPlanRepository.getPlanSessionForBooking(
+          data.patientTreatmentPlanId,
+          data.patientTreatmentPlanSessionId,
+          data.patientId,
+          data.tenantId,
+          tx
+        );
+
+        if (!planSessionContext) {
+          return { success: false, outcome: 'plan-session-unavailable' };
+        }
+      } else {
+        const hasCurrentPlan = await patientTreatmentPlanRepository.hasCurrentPlanForBooking(
+          data.patientId,
+          data.tenantId,
+          tx
+        );
+
+        if (hasCurrentPlan) {
+          return { success: false, outcome: 'current-plan-exists' };
+        }
+
+        const createdPlan = await patientTreatmentPlanRepository.createPlanFromTreatment(
+          {
+            tenantId: data.tenantId,
+            patientId: data.patientId,
+            treatmentId: data.treatmentId,
+            totalSessions: data.totalSessions,
+          },
+          tx
+        );
+        planSessionContext = createdPlan.sessions.toSorted(
+          (left, right) => left.sessionNumber - right.sessionNumber
+        )[0];
+
+        if (!planSessionContext) {
+          throw new Error('Created Patient Treatment Plan has no Sessions');
+        }
+      }
     }
 
     const [counter] = await tx
@@ -860,8 +941,20 @@ async function createAppointment(
         endTime: data.bookingPath === 'CONSULTATION' ? consultationEndTime : data.endTime,
         rotaName: data.bookingPath === 'CONSULTATION' ? slotContext?.rotaName : undefined,
         remarks: data.remarks ?? null,
-        treatmentId: data.bookingPath === 'PROCEDURE' ? data.treatmentId : undefined,
-        treatmentSessionId: data.bookingPath === 'PROCEDURE' ? data.treatmentSessionId : undefined,
+        treatmentId:
+          data.bookingPath === 'PROCEDURE'
+            ? (planSessionContext?.treatmentId ?? undefined)
+            : undefined,
+        treatmentSessionId:
+          data.bookingPath === 'PROCEDURE'
+            ? (planSessionContext?.treatmentSessionId ?? undefined)
+            : undefined,
+        patientTreatmentPlanId:
+          data.bookingPath === 'PROCEDURE' ? planSessionContext?.patientTreatmentPlanId : undefined,
+        patientTreatmentPlanSessionId:
+          data.bookingPath === 'PROCEDURE'
+            ? planSessionContext?.patientTreatmentPlanSessionId
+            : undefined,
       })
       .returning({ id: appointmentTable.id });
 
@@ -875,6 +968,13 @@ async function createAppointment(
           slotDate: data.slotDate,
           slotTime,
         }))
+      );
+    } else if (planSessionContext) {
+      await patientTreatmentPlanRepository.reserveSession(
+        planSessionContext.patientTreatmentPlanSessionId,
+        createdAppointment.id,
+        data.tenantId,
+        tx
       );
     }
 
@@ -1137,6 +1237,8 @@ async function cancelAppointment(
 
     const cancelledAt = new Date();
 
+    await releasePlanSessionReservationForTerminalStatus(data.id, data.tenantId, 'CANCELLED', tx);
+
     await tx
       .update(appointmentSlotReservationTable)
       .set({ isDeleted: true, deletedOn: cancelledAt, modifiedOn: cancelledAt })
@@ -1180,5 +1282,6 @@ export const appointmentRepository = {
   getReservedSlotTimes,
   getSlotBookingContext,
   findPotentialPatientMatches,
+  releasePlanSessionReservationForTerminalStatus,
   getAppointmentByBookingNumber,
 };

@@ -32,6 +32,7 @@ const validateUpdate = vi.mocked(validateUpdateTreatment);
 const validateDelete = vi.mocked(validateDeleteTreatment);
 
 const payload = {
+  sessionStructure: 'SEQUENCED' as const,
   name: 'Abhyanga wellness programme',
   code: 'TRT-0400',
   durationMinutes: 60,
@@ -53,6 +54,10 @@ const payload = {
 };
 
 const treatment = {
+  sessionStructure: 'SEQUENCED' as const,
+  defaultTotalSessions: null,
+  legacySourceIdentity: null,
+  legacySourceSystem: null,
   id: 1,
   tenantId: 'tenant-1',
   name: payload.name,

@@ -83,18 +83,19 @@ describe('Book Appointment request', () => {
     });
   });
 
-  it('should map a Procedure with Doctor N/A without Rota, Appointment Details, or UI dependencies', () => {
+  it('should map a catalogue Procedure without a generic Treatment Session selector', () => {
     const request = bookAppointmentFormValuesToRequest({
       ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
       patientId: '12',
       patientMode: 'existing',
       visitType: 'PROCEDURE',
       doctorId: 'not-applicable',
+      selectionMode: 'CATALOGUE',
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '11:15',
       treatmentId: '400',
-      sessionId: '4001',
+      totalSessions: '6',
       roomId: '7',
       therapistId: '41',
     });
@@ -106,23 +107,24 @@ describe('Book Appointment request', () => {
       startTime: '10:00',
       endTime: '11:15',
       treatmentId: 400,
-      treatmentSessionId: 4001,
+      totalSessions: 6,
       remarks: undefined,
     });
   });
 
-  it('should send a selected Procedure Doctor only as an assignment', () => {
+  it('should map an existing Plan Procedure and keep a selected Doctor as an assignment', () => {
     const request = bookAppointmentFormValuesToRequest({
       ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
       patientId: '12',
       patientMode: 'existing',
       visitType: 'PROCEDURE',
       doctorId: '18',
+      selectionMode: 'EXISTING_PLAN',
       slotDate: '2099-12-31',
       startTime: '10:30',
       endTime: '11:45',
-      treatmentId: '400',
-      sessionId: '4001',
+      patientTreatmentPlanId: '91',
+      patientTreatmentPlanSessionId: '912',
       roomId: '7',
       therapistId: '41',
     });
@@ -134,9 +136,29 @@ describe('Book Appointment request', () => {
       slotDate: '31-12-2099',
       startTime: '10:30',
       endTime: '11:45',
-      treatmentId: 400,
-      treatmentSessionId: 4001,
+      patientTreatmentPlanId: 91,
+      patientTreatmentPlanSessionId: 912,
       remarks: undefined,
     });
+  });
+
+  it('should omit Total Sessions when a catalogue selection does not provide one', () => {
+    const request = bookAppointmentFormValuesToRequest({
+      ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
+      patientId: '12',
+      patientMode: 'existing',
+      visitType: 'PROCEDURE',
+      doctorId: 'not-applicable',
+      selectionMode: 'CATALOGUE',
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '11:15',
+      treatmentId: '400',
+      totalSessions: '',
+      roomId: '7',
+      therapistId: '41',
+    });
+
+    expect(request).not.toHaveProperty('totalSessions');
   });
 });

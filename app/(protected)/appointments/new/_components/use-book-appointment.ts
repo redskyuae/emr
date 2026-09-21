@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +17,10 @@ import {
 } from '@/app/queries/appointments/useCreateAppointment';
 import { useDoctorSlotsQuery } from '@/app/queries/appointments/useDoctorSlots';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
+import { usePatientTreatmentPlansQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
+import { useRoomsQuery } from '@/app/queries/rooms/useRooms';
 import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
 import { usePatientVisitsQuery } from '@/app/queries/visits/useVisits';
 import {
@@ -25,6 +28,7 @@ import {
   getProcedureEndTimeForStartChange,
   getSlotTimes,
 } from '../_utils/appointment-time';
+import { getAvailableRooms } from '../_utils/room-availability';
 import {
   bookAppointmentFormSchema,
   type BookAppointmentFormValues,
@@ -36,10 +40,13 @@ import {
 } from '../_utils/submit-book-appointment';
 import {
   DEMO_FACILITY,
-  DEMO_ROOMS,
   DEMO_THERAPISTS,
+  getDefaultTreatmentSelection,
+  getTreatmentSelectionState,
+  toBookingPatientTreatmentPlan,
   toBookingTreatment,
 } from './book-appointment-demo-data';
+import type { TreatmentSelectionState } from './book-appointment-demo-data';
 
 const initialValues: BookAppointmentFormValues = {
   patientId: '',
@@ -60,7 +67,11 @@ const initialValues: BookAppointmentFormValues = {
   slotDate: '',
   doctorRotaId: '',
   slotTimes: [],
+  selectionMode: '',
+  patientTreatmentPlanId: '',
+  patientTreatmentPlanSessionId: '',
   treatmentId: '',
+  totalSessions: '',
   sessionId: '',
   startTime: '',
   endTime: '',
@@ -73,6 +84,8 @@ const initialValues: BookAppointmentFormValues = {
 
 const masterListParams = { page: 1, limit: 999 };
 const staleSlotMessage = 'One or more selected Doctor slots are no longer available.';
+const stalePlanSessionMessage =
+  'The selected Patient Treatment Plan Session is no longer available.';
 
 function getErrorMessage(error: unknown) {
   return error ? getApiErrorMessage(error) : null;
@@ -83,6 +96,10 @@ export function useBookAppointment() {
   const [step, setStep] = useState<1 | 2>(1);
   const [patientSearch, setPatientSearch] = useState('');
   const [debouncedPatientSearch] = useDebouncedValue(patientSearch.trim(), { wait: 300 });
+  const [treatmentSearch, setTreatmentSearch] = useState('');
+  const [debouncedTreatmentSearch] = useDebouncedValue(treatmentSearch.trim(), { wait: 300 });
+  const [selectedCatalogueTreatmentSnapshot, setSelectedCatalogueTreatmentSnapshot] =
+    useState<ReturnType<typeof toBookingTreatment> | null>(null);
   const [selectedPatientSnapshot, setSelectedPatientSnapshot] = useState<BookablePatient | null>(
     null
   );
@@ -90,6 +107,7 @@ export function useBookAppointment() {
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isProcedureEndTimeAdjusted, setProcedureEndTimeAdjusted] = useState(false);
+  const appliedPlanDefaultKey = useRef<string | null>(null);
   const form = useForm<BookAppointmentFormValues>({
     mode: 'onTouched',
     defaultValues: initialValues,
@@ -111,7 +129,7 @@ export function useBookAppointment() {
   const modesQuery = useAppointmentModesQuery(masterListParams);
   const typesQuery = useAppointmentTypesQuery(masterListParams);
   const reasonsQuery = useAppointmentReasonsQuery(masterListParams);
-  const treatmentsQuery = useTreatmentsQuery({ page: 1, limit: 999 });
+  const roomsQuery = useRoomsQuery(masterListParams);
 
   const doctors = (doctorsQuery.data?.data ?? []).map((doctor) => ({
     id: doctor.id,
@@ -132,6 +150,27 @@ export function useBookAppointment() {
     patientMode === 'existing' && selectedPatientSnapshot?.id === Number(selectedPatientId)
       ? selectedPatientSnapshot
       : null;
+  const plansQuery = usePatientTreatmentPlansQuery({
+    patientId: selectedPatient?.id ?? null,
+    registrationStatus: selectedPatient?.registrationStatus ?? null,
+    bookingPath: visitType,
+  });
+  const assignPermission = useHasPermission('patient-treatment-plan:assign');
+  const planOptions = (plansQuery.data ?? []).map(toBookingPatientTreatmentPlan);
+  const catalogueEnabled =
+    isProcedurePath &&
+    selectedPatient !== null &&
+    plansQuery.isSuccess &&
+    planOptions.length === 0 &&
+    assignPermission.data;
+  const treatmentsQuery = useTreatmentsQuery(
+    {
+      page: 1,
+      limit: 20,
+      query: debouncedTreatmentSearch || undefined,
+    },
+    { enabled: catalogueEnabled }
+  );
   const patientVisitsQuery = usePatientVisitsQuery(selectedPatient?.id ?? null);
   const selectablePatients = [...patientMatches, ...(patientsQuery.data?.data ?? [])].filter(
     (patient, index, patients) =>
@@ -141,32 +180,110 @@ export function useBookAppointment() {
   );
 
   const treatmentOptions = (treatmentsQuery.data?.data ?? []).map(toBookingTreatment);
-  const selectedTreatment =
-    treatmentOptions.find((treatment) => String(treatment.id) === values.treatmentId) ?? null;
+  const selectedPlan =
+    planOptions.find(
+      (treatment) => String(treatment.patientTreatmentPlanId) === values.patientTreatmentPlanId
+    ) ?? null;
+  const selectedCatalogueTreatment =
+    selectedCatalogueTreatmentSnapshot?.treatmentId === Number(values.treatmentId)
+      ? selectedCatalogueTreatmentSnapshot
+      : (treatmentOptions.find(
+          (treatment) => String(treatment.treatmentId) === values.treatmentId
+        ) ?? null);
+  const selectedTreatment = selectedPlan ?? selectedCatalogueTreatment;
   const selectedSession =
-    selectedTreatment?.sessions.find((session) => session.id === values.sessionId) ?? null;
-  const selectedRoom = DEMO_ROOMS.find((room) => String(room.id) === values.roomId) ?? null;
+    selectedTreatment?.sessions.find((session) =>
+      values.selectionMode === 'EXISTING_PLAN'
+        ? session.id === values.patientTreatmentPlanSessionId
+        : session.id === values.sessionId
+    ) ?? null;
+  const selectedRoom =
+    (roomsQuery.data?.data ?? []).find((room) => String(room.id) === values.roomId) ?? null;
   const selectedTherapist =
     DEMO_THERAPISTS.find((therapist) => String(therapist.id) === values.therapistId) ?? null;
   const resourceSession = selectedSession;
-  const filteredRooms = useMemo(
-    () =>
-      resourceSession
-        ? DEMO_ROOMS.filter((room) => room.roomType === resourceSession.roomType)
-        : [],
-    [resourceSession]
-  );
-  const filteredTherapists = useMemo(
-    () =>
-      resourceSession
-        ? DEMO_THERAPISTS.filter((therapist) => therapist.skill === resourceSession.therapistSkill)
-        : [],
-    [resourceSession]
-  );
+  const requiresRoom = isProcedurePath;
+  const requiresTherapist = Boolean(resourceSession?.therapistSkill);
+  const filteredRooms = getAvailableRooms(roomsQuery.data?.data ?? []);
+  const filteredTherapists = resourceSession?.therapistSkill
+    ? DEMO_THERAPISTS.filter((therapist) => therapist.skill === resourceSession.therapistSkill)
+    : [];
   const createAppointment = useCreateAppointment();
 
+  const treatmentSelectionState: TreatmentSelectionState | 'AWAITING_PATIENT' = selectedPatient
+    ? getTreatmentSelectionState({
+        isLoading:
+          plansQuery.isLoading ||
+          (plansQuery.isSuccess && planOptions.length === 0 && assignPermission.isLoading),
+        plans: planOptions,
+        canAssign: assignPermission.data,
+      })
+    : 'AWAITING_PATIENT';
+
+  useEffect(() => {
+    if (!isProcedurePath || !selectedPatient || !plansQuery.data) {
+      appliedPlanDefaultKey.current = null;
+      return;
+    }
+
+    const resultKey = `${selectedPatient.id}:${plansQuery.data
+      .map((plan) =>
+        [
+          plan.id,
+          plan.modifiedOn,
+          ...plan.sessions.map((session) => `${session.id}:${session.isBookable}`),
+        ].join(':')
+      )
+      .join('|')}`;
+    if (appliedPlanDefaultKey.current === resultKey) return;
+    appliedPlanDefaultKey.current = resultKey;
+
+    const currentPlanId = form.getValues('patientTreatmentPlanId');
+    const currentSessionId = form.getValues('patientTreatmentPlanSessionId');
+    const currentPlan = planOptions.find(
+      (plan) => String(plan.patientTreatmentPlanId) === currentPlanId
+    );
+    if (
+      currentPlan?.sessions.some((session) => session.id === currentSessionId && session.isBookable)
+    ) {
+      return;
+    }
+
+    const defaults = getDefaultTreatmentSelection(planOptions, currentPlanId);
+    if (!defaults.patientTreatmentPlanId) return;
+    const defaultPlan = planOptions.find(
+      (plan) => String(plan.patientTreatmentPlanId) === defaults.patientTreatmentPlanId
+    );
+    const defaultSession = defaultPlan?.sessions.find(
+      (session) => session.id === defaults.patientTreatmentPlanSessionId
+    );
+
+    form.setValue('selectionMode', 'EXISTING_PLAN', { shouldDirty: false });
+    form.setValue('patientTreatmentPlanId', defaults.patientTreatmentPlanId, {
+      shouldDirty: false,
+    });
+    form.setValue('patientTreatmentPlanSessionId', defaults.patientTreatmentPlanSessionId, {
+      shouldDirty: false,
+      shouldValidate: true,
+    });
+    form.setValue('sessionId', defaults.patientTreatmentPlanSessionId, { shouldDirty: false });
+    form.setValue('roomId', defaultSession?.roomType ? '' : 'not-required', {
+      shouldDirty: false,
+    });
+    form.setValue('therapistId', defaultSession?.therapistSkill ? '' : 'not-required', {
+      shouldDirty: false,
+    });
+  }, [form, isProcedurePath, planOptions, plansQuery.data, selectedPatient]);
+
   function clearProcedureFields() {
+    appliedPlanDefaultKey.current = null;
+    setTreatmentSearch('');
+    setSelectedCatalogueTreatmentSnapshot(null);
+    form.setValue('selectionMode', '', { shouldDirty: true });
+    form.setValue('patientTreatmentPlanId', '', { shouldDirty: true });
+    form.setValue('patientTreatmentPlanSessionId', '', { shouldDirty: true });
     form.setValue('treatmentId', '', { shouldDirty: true });
+    form.setValue('totalSessions', '', { shouldDirty: true });
     form.setValue('sessionId', '', { shouldDirty: true });
     form.setValue('roomId', '', { shouldDirty: true });
     form.setValue('therapistId', '', { shouldDirty: true });
@@ -235,21 +352,78 @@ export function useBookAppointment() {
 
   function changeTreatment(value: string) {
     setProcedureEndTimeAdjusted(false);
+    form.setValue('selectionMode', value === '' ? '' : 'CATALOGUE', { shouldDirty: true });
+    form.setValue('patientTreatmentPlanId', '', { shouldDirty: true });
+    form.setValue('patientTreatmentPlanSessionId', '', { shouldDirty: true });
     form.setValue('treatmentId', value, { shouldDirty: true, shouldValidate: true });
+    const treatment = treatmentOptions.find((candidate) => String(candidate.treatmentId) === value);
+    setSelectedCatalogueTreatmentSnapshot(treatment ?? null);
+    const firstSession = treatment?.sessions
+      .slice()
+      .sort((left, right) => left.sessionNumber - right.sessionNumber)[0];
+    form.setValue(
+      'totalSessions',
+      treatment?.sessionStructure === 'REPEATABLE'
+        ? String(treatment.defaultTotalSessions ?? 1)
+        : '',
+      { shouldDirty: true }
+    );
     form.setValue('startTime', '');
     form.setValue('endTime', '');
-    form.setValue('sessionId', '', { shouldDirty: true });
-    form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', '', { shouldDirty: true });
+    form.setValue('sessionId', firstSession?.id ?? '', { shouldDirty: true });
+    form.setValue('roomId', firstSession?.roomType ? '' : 'not-required', {
+      shouldDirty: true,
+    });
+    form.setValue('therapistId', firstSession?.therapistSkill ? '' : 'not-required', {
+      shouldDirty: true,
+    });
   }
 
   function changeSession(value: string) {
     setProcedureEndTimeAdjusted(false);
+    const session = selectedTreatment?.sessions.find((candidate) => candidate.id === value);
     form.setValue('sessionId', value, { shouldDirty: true, shouldValidate: true });
+    if (values.selectionMode === 'EXISTING_PLAN') {
+      form.setValue('patientTreatmentPlanSessionId', value, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
     form.setValue('startTime', '');
     form.setValue('endTime', '');
-    form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', '', { shouldDirty: true });
+    form.setValue('roomId', session?.roomType ? '' : 'not-required', { shouldDirty: true });
+    form.setValue('therapistId', session?.therapistSkill ? '' : 'not-required', {
+      shouldDirty: true,
+    });
+  }
+
+  function changePlan(value: string) {
+    setProcedureEndTimeAdjusted(false);
+    const defaults = getDefaultTreatmentSelection(planOptions, value);
+    const plan = planOptions.find(
+      (candidate) => String(candidate.patientTreatmentPlanId) === value
+    );
+    const session = plan?.sessions.find(
+      (candidate) => candidate.id === defaults.patientTreatmentPlanSessionId
+    );
+    form.setValue('selectionMode', value ? 'EXISTING_PLAN' : '', { shouldDirty: true });
+    form.setValue('patientTreatmentPlanId', value, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue('patientTreatmentPlanSessionId', defaults.patientTreatmentPlanSessionId, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    form.setValue('treatmentId', '', { shouldDirty: true });
+    form.setValue('totalSessions', '', { shouldDirty: true });
+    form.setValue('sessionId', defaults.patientTreatmentPlanSessionId, { shouldDirty: true });
+    form.setValue('startTime', '', { shouldDirty: true });
+    form.setValue('endTime', '', { shouldDirty: true });
+    form.setValue('roomId', session?.roomType ? '' : 'not-required', { shouldDirty: true });
+    form.setValue('therapistId', session?.therapistSkill ? '' : 'not-required', {
+      shouldDirty: true,
+    });
   }
 
   function changeDoctor() {
@@ -257,13 +431,21 @@ export function useBookAppointment() {
     if (!isProcedurePath) clearSchedule();
   }
 
+  function resetProcedureResources() {
+    form.setValue('roomId', selectedSession?.roomType ? '' : 'not-required', {
+      shouldDirty: true,
+    });
+    form.setValue('therapistId', selectedSession?.therapistSkill ? '' : 'not-required', {
+      shouldDirty: true,
+    });
+  }
+
   function changeProcedureDate() {
     setSubmitError(null);
     setProcedureEndTimeAdjusted(false);
     form.setValue('startTime', '', { shouldDirty: true });
     form.setValue('endTime', '', { shouldDirty: true });
-    form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', '', { shouldDirty: true });
+    resetProcedureResources();
   }
 
   function changeProcedureStartTime(value: string) {
@@ -276,16 +458,14 @@ export function useBookAppointment() {
       shouldDirty: true,
       shouldValidate: true,
     });
-    form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', '', { shouldDirty: true });
+    resetProcedureResources();
   }
 
   function changeProcedureEndTime(value: string) {
     setSubmitError(null);
     setProcedureEndTimeAdjusted(value !== '');
     form.setValue('endTime', value, { shouldDirty: true, shouldValidate: true });
-    form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', '', { shouldDirty: true });
+    resetProcedureResources();
   }
 
   function changeSchedule() {
@@ -327,6 +507,8 @@ export function useBookAppointment() {
     form.reset(initialValues);
     setStep(1);
     setPatientSearch('');
+    setTreatmentSearch('');
+    setSelectedCatalogueTreatmentSnapshot(null);
     setPatientMatches([]);
     setSelectedPatientSnapshot(null);
     setConfirmation(null);
@@ -342,7 +524,15 @@ export function useBookAppointment() {
     'email',
     'visitType',
     'doctorId',
-    ...(isProcedurePath ? (['treatmentId', 'sessionId'] as const) : []),
+    ...(isProcedurePath
+      ? ([
+          'selectionMode',
+          'patientTreatmentPlanId',
+          'patientTreatmentPlanSessionId',
+          'treatmentId',
+          'totalSessions',
+        ] as const)
+      : []),
   ];
 
   async function continueToSchedule() {
@@ -388,6 +578,13 @@ export function useBookAppointment() {
           form.setValue('endTime', '', { shouldDirty: true });
           form.setValue('slotTimes', [], { shouldDirty: true });
           setStep(2);
+        } else if (
+          error instanceof AppointmentApiError &&
+          error.status === 409 &&
+          error.errors.includes(stalePlanSessionMessage)
+        ) {
+          await plansQuery.refetch();
+          setStep(1);
         }
 
         toast.error(message);
@@ -401,7 +598,7 @@ export function useBookAppointment() {
   const dependencyErrors = [
     doctorsQuery.error,
     ...(isProcedurePath
-      ? [treatmentsQuery.error]
+      ? [plansQuery.error, treatmentsQuery.error, roomsQuery.error]
       : [modesQuery.error, typesQuery.error, reasonsQuery.error]),
   ]
     .map(getErrorMessage)
@@ -438,15 +635,25 @@ export function useBookAppointment() {
     bookingDependenciesLoading:
       doctorsQuery.isLoading ||
       (isProcedurePath
-        ? treatmentsQuery.isLoading
+        ? plansQuery.isLoading || treatmentsQuery.isLoading || roomsQuery.isLoading
         : modesQuery.isLoading || typesQuery.isLoading || reasonsQuery.isLoading),
     bookingDependencyError: dependencyErrors[0] ?? null,
     rotas,
     isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
     doctorSlotsError: getErrorMessage(doctorSlotsQuery.error),
     filteredRooms,
+    isRoomsLoading: roomsQuery.isLoading || roomsQuery.isFetching,
     filteredTherapists,
+    requiresRoom,
+    requiresTherapist,
+    planOptions,
+    treatmentSelectionState,
+    isPlansLoading: plansQuery.isLoading,
+    plansError: getErrorMessage(plansQuery.error),
+    isTreatmentsLoading: treatmentsQuery.isLoading || treatmentsQuery.isFetching,
+    treatmentsError: getErrorMessage(treatmentsQuery.error),
     treatmentOptions,
+    treatmentSearch,
     setStep,
     setPatientSearch,
     changeVisitType,
@@ -454,6 +661,8 @@ export function useBookAppointment() {
     changePatientMode,
     changeTreatment,
     changeSession,
+    changePlan,
+    setTreatmentSearch,
     changeDoctor,
     changeProcedureDate,
     changeProcedureEndTime,
@@ -467,10 +676,14 @@ export function useBookAppointment() {
     retryPatientSearch: patientsQuery.refetch,
     retryPatientVisits: patientVisitsQuery.refetch,
     retryDoctorSlots: doctorSlotsQuery.refetch,
+    retryPlans: plansQuery.refetch,
+    retryTreatments: treatmentsQuery.refetch,
     retryBookingDependencies: () => {
       void doctorsQuery.refetch();
       if (isProcedurePath) {
+        void plansQuery.refetch();
         void treatmentsQuery.refetch();
+        void roomsQuery.refetch();
       } else {
         void modesQuery.refetch();
         void typesQuery.refetch();

@@ -9,8 +9,11 @@ const procedure = {
   patientId: '1001',
   visitType: 'PROCEDURE',
   doctorId: 'not-applicable',
+  selectionMode: 'CATALOGUE',
+  patientTreatmentPlanId: '',
+  patientTreatmentPlanSessionId: '',
   treatmentId: '300',
-  sessionId: '300-3',
+  totalSessions: '8',
   slotDate: '2026-09-10',
   startTime: '09:00',
   endTime: '10:15',
@@ -123,19 +126,77 @@ describe('booking path validation', () => {
       );
   });
 
-  it('should require a Session for an existing Patient Procedure', () => {
-    const result = bookAppointmentFormSchema.safeParse({ ...procedure, sessionId: '' });
-    expect(result.success).toBe(false);
-    if (!result.success)
-      expect(result.error.issues).toEqual([
-        expect.objectContaining({ path: ['sessionId'], message: 'Session is required' }),
-      ]);
-  });
-
-  it('should require a Session for a Provisional Patient Procedure', () => {
+  it('should require a complete existing Plan and Plan Session selection', () => {
     const result = bookAppointmentFormSchema.safeParse({
       ...procedure,
-      sessionId: '',
+      selectionMode: 'EXISTING_PLAN',
+      treatmentId: '',
+      totalSessions: '',
+      patientTreatmentPlanId: '',
+      patientTreatmentPlanSessionId: '',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: ['patientTreatmentPlanId'],
+            message: 'Patient Treatment Plan is required',
+          }),
+          expect.objectContaining({
+            path: ['patientTreatmentPlanSessionId'],
+            message: 'Patient Treatment Plan Session is required',
+          }),
+        ])
+      );
+    }
+  });
+
+  it('should allow a complete existing Plan selection without a catalogue Treatment', () => {
+    expect(
+      bookAppointmentFormSchema.safeParse({
+        ...procedure,
+        selectionMode: 'EXISTING_PLAN',
+        patientTreatmentPlanId: '91',
+        patientTreatmentPlanSessionId: '912',
+        treatmentId: '',
+        totalSessions: '',
+      }).success
+    ).toBe(true);
+  });
+
+  it('should require a Treatment for catalogue assignment', () => {
+    const result = bookAppointmentFormSchema.safeParse({ ...procedure, treatmentId: '' });
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['treatmentId'], message: 'Treatment is required' })
+      );
+  });
+
+  it('should allow catalogue assignment without a Repeatable count', () => {
+    expect(bookAppointmentFormSchema.safeParse({ ...procedure, totalSessions: '' }).success).toBe(
+      true
+    );
+  });
+
+  it('should require a positive whole number when a Repeatable count is provided', () => {
+    const result = bookAppointmentFormSchema.safeParse({ ...procedure, totalSessions: '2.5' });
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          path: ['totalSessions'],
+          message: 'Total Sessions must be a positive whole number',
+        })
+      );
+  });
+
+  it('should reject a Provisional Patient Procedure', () => {
+    const result = bookAppointmentFormSchema.safeParse({
+      ...procedure,
       patientId: '',
       patientMode: 'provisional',
       firstName: 'Demo',
@@ -143,6 +204,6 @@ describe('booking path validation', () => {
       phone: '5550100',
     });
 
-    expect(errorsOf(result)).toContain('Session is required');
+    expect(errorsOf(result)).toContain('A registered Patient is required for a Procedure');
   });
 });
