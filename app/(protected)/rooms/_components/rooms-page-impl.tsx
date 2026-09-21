@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { Room, RoomStatus } from '@/app/api/lib/modules/room/schemas/room-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useRoomTypesQuery } from '@/app/queries/room-masters/room-types/useRoomTypes';
 import { useRoomQuery } from '@/app/queries/rooms/useRoom';
 import { useRoomSummaryQuery } from '@/app/queries/rooms/useRoomSummary';
@@ -62,7 +63,19 @@ export function RoomsPageImpl() {
   const [page, setPage] = useState(1);
   const [roomPendingDelete, setRoomPendingDelete] = useState<Room | null>(null);
 
-  const isCreating = roomParam === 'new';
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('room:create');
+  const {
+    data: canUpdate,
+    isLoading: canUpdateLoading,
+    isError: canUpdateError,
+  } = useHasPermission('room:update');
+  const { data: canDelete } = useHasPermission('room:delete');
+
+  const isCreating = roomParam === 'new' && canCreate;
   const editingRoomId =
     roomParam !== null && roomParam !== 'new' && /^\d+$/.test(roomParam) ? Number(roomParam) : null;
 
@@ -99,7 +112,18 @@ export function RoomsPageImpl() {
     editingRoom === null &&
     (roomsQuery.isLoading || editingRoomQuery.isFetching);
   const sheetOpen =
-    isCreating || (editingRoomId !== null && (roomResolving || editingRoom !== null));
+    isCreating || (canUpdate && editingRoomId !== null && (roomResolving || editingRoom !== null));
+
+  const roomAccessDenied =
+    (roomParam === 'new' && !canCreateLoading && !canCreateError && !canCreate) ||
+    (editingRoomId !== null && !canUpdateLoading && !canUpdateError && !canUpdate);
+
+  useEffect(() => {
+    if (roomAccessDenied) {
+      void setRoomParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomAccessDenied]);
 
   const filterKey = `${debouncedSearch}|${statusFilter}|${roomTypeFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
@@ -187,12 +211,14 @@ export function RoomsPageImpl() {
               </SelectContent>
             </Select>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" size="lg" onClick={() => void setRoomParam('new')}>
-                <Plus className="size-4" />
-                Add Room
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" size="lg" onClick={() => void setRoomParam('new')}>
+                  <Plus className="size-4" />
+                  Add Room
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -217,12 +243,14 @@ export function RoomsPageImpl() {
                 Add the Rooms in this Tenant to track their Room Type, Beds, and availability.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setRoomParam('new')}>
-                <Plus className="size-4" />
-                Add Room
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setRoomParam('new')}>
+                  <Plus className="size-4" />
+                  Add Room
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : rooms.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
@@ -241,18 +269,24 @@ export function RoomsPageImpl() {
             {viewLayout === 'table' ? (
               <RoomTableView
                 rooms={rooms}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(room) => void setRoomParam(String(room.id))}
                 onDelete={setRoomPendingDelete}
               />
             ) : viewLayout === 'card' ? (
               <RoomCardView
                 rooms={rooms}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(room) => void setRoomParam(String(room.id))}
                 onDelete={setRoomPendingDelete}
               />
             ) : (
               <RoomListView
                 rooms={rooms}
+                canEdit={canUpdate}
+                canDelete={canDelete}
                 onEdit={(room) => void setRoomParam(String(room.id))}
                 onDelete={setRoomPendingDelete}
               />
@@ -301,7 +335,7 @@ export function RoomsPageImpl() {
       />
 
       <RoomDeleteDialog
-        room={roomPendingDelete}
+        room={canDelete ? roomPendingDelete : null}
         onClose={() => setRoomPendingDelete(null)}
         onDeleted={(deletedId) => {
           if (editingRoomId === deletedId) {

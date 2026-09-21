@@ -23,6 +23,9 @@ export type DoctorStatusAction = 'deactivate' | 'reactivate';
 
 type DoctorViewProps = {
   doctors: Doctor[];
+  canEdit: boolean;
+  canDeactivate: boolean;
+  canReactivate: boolean;
   onEdit: (doctor: Doctor) => void;
   onStatusAction: (doctor: Doctor, action: DoctorStatusAction) => void;
 };
@@ -59,14 +62,25 @@ function DoctorAvatar() {
 
 function DoctorActionsMenu({
   doctor,
+  canEdit,
+  canDeactivate,
+  canReactivate,
   onEdit,
   onStatusAction,
 }: {
   doctor: Doctor;
+  canEdit: boolean;
+  canDeactivate: boolean;
+  canReactivate: boolean;
   onEdit: (doctor: Doctor) => void;
   onStatusAction: (doctor: Doctor, action: DoctorStatusAction) => void;
 }) {
   const statusAction = doctor.isActive ? 'deactivate' : 'reactivate';
+  const canStatusAction = doctor.isActive ? canDeactivate : canReactivate;
+
+  if (!canEdit && !canStatusAction) {
+    return null;
+  }
 
   return (
     <DropdownMenu>
@@ -81,23 +95,34 @@ function DoctorActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem onClick={() => onEdit(doctor)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          variant={doctor.isActive ? 'destructive' : 'default'}
-          onClick={() => onStatusAction(doctor, statusAction)}
-        >
-          {doctor.isActive ? <CircleOff className="size-4" /> : <RotateCcw className="size-4" />}
-          {doctor.isActive ? 'Deactivate' : 'Reactivate'}
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(doctor)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canStatusAction ? (
+          <DropdownMenuItem
+            variant={doctor.isActive ? 'destructive' : 'default'}
+            onClick={() => onStatusAction(doctor, statusAction)}
+          >
+            {doctor.isActive ? <CircleOff className="size-4" /> : <RotateCcw className="size-4" />}
+            {doctor.isActive ? 'Deactivate' : 'Reactivate'}
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export function DoctorTableView({ doctors, onEdit, onStatusAction }: DoctorViewProps) {
+export function DoctorTableView({
+  doctors,
+  canEdit,
+  canDeactivate,
+  canReactivate,
+  onEdit,
+  onStatusAction,
+}: DoctorViewProps) {
   return (
     <Card className="shadow-fluent-2">
       <CardContent className="p-0">
@@ -135,6 +160,9 @@ export function DoctorTableView({ doctors, onEdit, onStatusAction }: DoctorViewP
                   <TableCell className="pr-4 text-right">
                     <DoctorActionsMenu
                       doctor={doctor}
+                      canEdit={canEdit}
+                      canDeactivate={canDeactivate}
+                      canReactivate={canReactivate}
                       onEdit={onEdit}
                       onStatusAction={onStatusAction}
                     />
@@ -149,7 +177,14 @@ export function DoctorTableView({ doctors, onEdit, onStatusAction }: DoctorViewP
   );
 }
 
-export function DoctorCardView({ doctors, onEdit, onStatusAction }: DoctorViewProps) {
+export function DoctorCardView({
+  doctors,
+  canEdit,
+  canDeactivate,
+  canReactivate,
+  onEdit,
+  onStatusAction,
+}: DoctorViewProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {doctors.map((doctor) => (
@@ -170,28 +205,36 @@ export function DoctorCardView({ doctors, onEdit, onStatusAction }: DoctorViewPr
               <p className="text-muted-foreground text-sm">{dash(doctor.designation)}</p>
             </div>
 
-            <div className="flex flex-wrap gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(doctor)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={doctor.isActive ? 'text-destructive hover:text-destructive' : undefined}
-                onClick={() =>
-                  onStatusAction(doctor, doctor.isActive ? 'deactivate' : 'reactivate')
-                }
-              >
-                {doctor.isActive ? (
-                  <CircleOff className="size-3.5" />
-                ) : (
-                  <RotateCcw className="size-3.5" />
-                )}
-                {doctor.isActive ? 'Deactivate' : 'Reactivate'}
-              </Button>
-            </div>
+            {canEdit || (doctor.isActive ? canDeactivate : canReactivate) ? (
+              <div className="flex flex-wrap gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(doctor)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {(doctor.isActive ? canDeactivate : canReactivate) ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={
+                      doctor.isActive ? 'text-destructive hover:text-destructive' : undefined
+                    }
+                    onClick={() =>
+                      onStatusAction(doctor, doctor.isActive ? 'deactivate' : 'reactivate')
+                    }
+                  >
+                    {doctor.isActive ? (
+                      <CircleOff className="size-3.5" />
+                    ) : (
+                      <RotateCcw className="size-3.5" />
+                    )}
+                    {doctor.isActive ? 'Deactivate' : 'Reactivate'}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -199,7 +242,14 @@ export function DoctorCardView({ doctors, onEdit, onStatusAction }: DoctorViewPr
   );
 }
 
-export function DoctorListView({ doctors, onEdit, onStatusAction }: DoctorViewProps) {
+export function DoctorListView({
+  doctors,
+  canEdit,
+  canDeactivate,
+  canReactivate,
+  onEdit,
+  onStatusAction,
+}: DoctorViewProps) {
   return (
     <div className="space-y-3">
       {doctors.map((doctor) => (
@@ -220,7 +270,14 @@ export function DoctorListView({ doctors, onEdit, onStatusAction }: DoctorViewPr
             </div>
 
             <div className="shrink-0 pl-14 sm:pl-0">
-              <DoctorActionsMenu doctor={doctor} onEdit={onEdit} onStatusAction={onStatusAction} />
+              <DoctorActionsMenu
+                doctor={doctor}
+                canEdit={canEdit}
+                canDeactivate={canDeactivate}
+                canReactivate={canReactivate}
+                onEdit={onEdit}
+                onStatusAction={onStatusAction}
+              />
             </div>
           </CardContent>
         </Card>

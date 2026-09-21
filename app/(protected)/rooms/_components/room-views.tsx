@@ -22,6 +22,8 @@ import { getRoomStatusClassName, getRoomStatusLabel } from '../_utils/room-statu
 
 type RoomViewProps = {
   rooms: Room[];
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (room: Room) => void;
   onDelete: (room: Room) => void;
 };
@@ -64,13 +66,21 @@ function RoomIcon({ color }: { color: string }) {
 
 function RoomActionsMenu({
   room,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   room: Room;
+  canEdit: boolean;
+  canDelete: boolean;
   onEdit: (room: Room) => void;
   onDelete: (room: Room) => void;
 }) {
+  if (!canEdit && !canDelete) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -84,20 +94,24 @@ function RoomActionsMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuItem onClick={() => onEdit(room)}>
-          <Pencil className="size-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => onDelete(room)}>
-          <Trash2 className="size-4" />
-          Delete
-        </DropdownMenuItem>
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onEdit(room)}>
+            <Pencil className="size-4" />
+            Edit
+          </DropdownMenuItem>
+        ) : null}
+        {canDelete ? (
+          <DropdownMenuItem variant="destructive" onClick={() => onDelete(room)}>
+            <Trash2 className="size-4" />
+            Delete
+          </DropdownMenuItem>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export function RoomTableView({ rooms, onEdit, onDelete }: RoomViewProps) {
+export function RoomTableView({ rooms, canEdit, canDelete, onEdit, onDelete }: RoomViewProps) {
   return (
     <Card className="shadow-fluent-2">
       <CardContent className="p-0">
@@ -132,7 +146,13 @@ export function RoomTableView({ rooms, onEdit, onDelete }: RoomViewProps) {
                     {room.department || '—'}
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <RoomActionsMenu room={room} onEdit={onEdit} onDelete={onDelete} />
+                    <RoomActionsMenu
+                      room={room}
+                      canEdit={canEdit}
+                      canDelete={canDelete}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -144,7 +164,7 @@ export function RoomTableView({ rooms, onEdit, onDelete }: RoomViewProps) {
   );
 }
 
-export function RoomCardView({ rooms, onEdit, onDelete }: RoomViewProps) {
+export function RoomCardView({ rooms, canEdit, canDelete, onEdit, onDelete }: RoomViewProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {rooms.map((room) => (
@@ -168,22 +188,28 @@ export function RoomCardView({ rooms, onEdit, onDelete }: RoomViewProps) {
               ) : null}
             </div>
 
-            <div className="flex gap-2 border-t pt-3">
-              <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(room)}>
-                <Pencil className="size-3.5" />
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(room)}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-                Delete
-              </Button>
-            </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(room)}>
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(room)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                    Delete
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -191,7 +217,7 @@ export function RoomCardView({ rooms, onEdit, onDelete }: RoomViewProps) {
   );
 }
 
-export function RoomListView({ rooms, onEdit, onDelete }: RoomViewProps) {
+export function RoomListView({ rooms, canEdit, canDelete, onEdit, onDelete }: RoomViewProps) {
   return (
     <div className="space-y-3">
       {rooms.map((room) => (
@@ -214,7 +240,13 @@ export function RoomListView({ rooms, onEdit, onDelete }: RoomViewProps) {
             </div>
 
             <div className="shrink-0 pl-14 sm:pl-0">
-              <RoomActionsMenu room={room} onEdit={onEdit} onDelete={onDelete} />
+              <RoomActionsMenu
+                room={room}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             </div>
           </CardContent>
         </Card>
