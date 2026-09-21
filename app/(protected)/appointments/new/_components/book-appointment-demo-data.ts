@@ -16,6 +16,13 @@ export type BookingSession = {
   status: 'Pending' | 'Completed' | 'Unavailable';
   isBookable: boolean;
   unavailableReason: 'Completed' | 'Reserved by another Appointment' | null;
+  completedAt: Date | string | null;
+  reservedAppointment: {
+    bookingNumber: string;
+    slotDate: string;
+    startTime: string | null;
+    endTime: string | null;
+  } | null;
 };
 
 export type BookingTreatment = {
@@ -90,6 +97,8 @@ export function toBookingTreatment(treatment: {
       status: 'Pending',
       isBookable: true,
       unavailableReason: null,
+      completedAt: null,
+      reservedAppointment: null,
     })),
   };
 }
@@ -140,6 +149,8 @@ export function toBookingPatientTreatmentPlan(plan: PatientTreatmentPlan): Booki
           : session.unavailableReason === 'RESERVED'
             ? 'Reserved by another Appointment'
             : null,
+      completedAt: session.completedAt,
+      reservedAppointment: session.reservedAppointment,
     })),
   };
 }
@@ -226,6 +237,8 @@ const abhyangaSessions: BookingSession[] = [
     status: 'Pending',
     isBookable: true,
     unavailableReason: null,
+    completedAt: null,
+    reservedAppointment: null,
   },
   {
     id: '300-4',
@@ -243,6 +256,8 @@ const abhyangaSessions: BookingSession[] = [
     status: 'Pending',
     isBookable: true,
     unavailableReason: null,
+    completedAt: null,
+    reservedAppointment: null,
   },
   {
     id: '300-5',
@@ -260,6 +275,8 @@ const abhyangaSessions: BookingSession[] = [
     status: 'Pending',
     isBookable: true,
     unavailableReason: null,
+    completedAt: null,
+    reservedAppointment: null,
   },
 ];
 

@@ -237,15 +237,16 @@ export const bookAppointmentFormSchema = z
         }
       }
 
-      const requiredAyurvedaFields = [
-        ['roomId', data.roomId, 'Room is required'],
-        ['therapistId', data.therapistId, 'Therapist is required'],
-      ] as const;
+      if (!/^[1-9]\d*$/.test(data.roomId)) {
+        context.addIssue({ code: 'custom', path: ['roomId'], message: 'Room is required' });
+      }
 
-      for (const [path, value, message] of requiredAyurvedaFields) {
-        if (value.trim() === '') {
-          context.addIssue({ code: 'custom', path: [path], message });
-        }
+      if (data.therapistId.trim() === '') {
+        context.addIssue({
+          code: 'custom',
+          path: ['therapistId'],
+          message: 'Therapist is required',
+        });
       }
 
       if (data.consentStatus === 'BLOCKED' || data.approvalStatus === 'BLOCKED') {

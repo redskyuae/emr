@@ -18,6 +18,7 @@ import type {
   PatientTreatmentPlanRecord,
   PatientTreatmentPlanSession,
   PatientTreatmentPlanReadSession,
+  PatientTreatmentPlanSessionReservedAppointment,
   PatientTreatmentPlanStatus,
 } from '../schemas/patient-treatment-plan-schema';
 
@@ -167,7 +168,8 @@ function deriveStatus(
 
 function withAvailability(
   session: PatientTreatmentPlanSession,
-  isReserved: boolean
+  isReserved: boolean,
+  reservedAppointment: PatientTreatmentPlanSessionReservedAppointment | null
 ): PatientTreatmentPlanReadSession {
   const isCompleted = session.completionStatus === 'COMPLETED';
   const unavailableReason = isCompleted ? 'COMPLETED' : isReserved ? 'RESERVED' : null;
@@ -177,6 +179,7 @@ function withAvailability(
     isReserved,
     isBookable: unavailableReason === null,
     unavailableReason,
+    reservedAppointment,
   };
 }
 
@@ -211,6 +214,10 @@ async function getCurrentByPatientId(
     .select({
       ...sessionColumns,
       reservationId: reservationTable.id,
+      reservedBookingNumber: appointmentTable.bookingNumber,
+      reservedSlotDate: appointmentTable.slotDate,
+      reservedStartTime: appointmentTable.startTime,
+      reservedEndTime: appointmentTable.endTime,
     })
     .from(sessionTable)
     .leftJoin(
@@ -219,6 +226,14 @@ async function getCurrentByPatientId(
         eq(reservationTable.patientTreatmentPlanSessionId, sessionTable.id),
         eq(reservationTable.tenantId, tenantId),
         eq(reservationTable.isDeleted, false)
+      )
+    )
+    .leftJoin(
+      appointmentTable,
+      and(
+        eq(appointmentTable.id, reservationTable.appointmentId),
+        eq(appointmentTable.tenantId, tenantId),
+        eq(appointmentTable.isDeleted, false)
       )
     )
     .where(
@@ -239,9 +254,25 @@ async function getCurrentByPatientId(
 
   const sessionsByPlan = new Map<number, PatientTreatmentPlanReadSession[]>();
 
-  for (const { reservationId, ...session } of rows) {
+  for (const {
+    reservationId,
+    reservedBookingNumber,
+    reservedSlotDate,
+    reservedStartTime,
+    reservedEndTime,
+    ...session
+  } of rows) {
     const sessions = sessionsByPlan.get(session.patientTreatmentPlanId) ?? [];
-    sessions.push(withAvailability(session, reservationId !== null));
+    const reservedAppointment =
+      reservationId !== null && reservedBookingNumber !== null && reservedSlotDate !== null
+        ? {
+            bookingNumber: reservedBookingNumber,
+            slotDate: reservedSlotDate,
+            startTime: reservedStartTime,
+            endTime: reservedEndTime,
+          }
+        : null;
+    sessions.push(withAvailability(session, reservationId !== null, reservedAppointment));
     sessionsByPlan.set(session.patientTreatmentPlanId, sessions);
   }
 

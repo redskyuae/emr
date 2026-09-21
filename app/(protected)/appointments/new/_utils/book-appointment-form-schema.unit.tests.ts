@@ -175,6 +175,16 @@ describe('booking path validation', () => {
       );
   });
 
+  it('should require a selected Room rather than the previous not-required placeholder', () => {
+    const result = bookAppointmentFormSchema.safeParse({ ...procedure, roomId: 'not-required' });
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['roomId'], message: 'Room is required' })
+      );
+  });
+
   it('should allow catalogue assignment without a Repeatable count', () => {
     expect(bookAppointmentFormSchema.safeParse({ ...procedure, totalSessions: '' }).success).toBe(
       true

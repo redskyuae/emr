@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { ClipboardList, Info, RefreshCw, TriangleAlert } from 'lucide-react';
 import {
   Controller,
@@ -182,8 +183,7 @@ export function TreatmentSessionSection({
             <Info className="size-4" />
             <AlertTitle>Session Duration Not Configured</AlertTitle>
             <AlertDescription>
-              Enter the Procedure end time manually. Room and Therapist filtering is skipped when
-              its Session metadata is unavailable.
+              Enter the Procedure end time manually. Choose the Room from the available Room list.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -213,32 +213,38 @@ function PlanSelection({
   planError?: FormFieldError;
   sessionError?: FormFieldError;
 }) {
+  const [inspectedSessionId, setInspectedSessionId] = useState<string | null>(null);
+  const inspectedSession = plans
+    .flatMap((plan) => plan.sessions)
+    .find((session) => session.id === inspectedSessionId);
+  const sessionForDetails = inspectedSession ?? selectedSession;
+
   return (
     <div className="space-y-4">
-      {plans.length > 1 ? (
-        <Field>
-          <FieldLabel htmlFor="patient-treatment-plan">
-            Patient Treatment Plan <RequiredMark />
-          </FieldLabel>
-          <NativeSelect
-            id="patient-treatment-plan"
-            className="w-full"
-            value={selectedTreatment ? String(selectedTreatment.patientTreatmentPlanId) : ''}
-            aria-invalid={Boolean(planError)}
-            aria-required="true"
-            onChange={(event) => onPlanChange(event.target.value)}
-          >
-            <NativeSelectOption value="">Select Patient Treatment Plan</NativeSelectOption>
-            {plans.map((plan) => (
-              <NativeSelectOption key={plan.id} value={String(plan.patientTreatmentPlanId)}>
-                {plan.name} · {plan.code} · {plan.completedSessions}/{plan.plannedSessions}{' '}
-                completed
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          <FieldError errors={[planError]} />
-        </Field>
-      ) : null}
+      <Field>
+        <FieldLabel htmlFor="patient-treatment-plan">
+          Treatment <RequiredMark />
+        </FieldLabel>
+        <NativeSelect
+          id="patient-treatment-plan"
+          className="w-full"
+          value={selectedTreatment ? String(selectedTreatment.patientTreatmentPlanId) : ''}
+          aria-invalid={Boolean(planError)}
+          aria-required="true"
+          onChange={(event) => {
+            setInspectedSessionId(null);
+            onPlanChange(event.target.value);
+          }}
+        >
+          <NativeSelectOption value="">Select Treatment</NativeSelectOption>
+          {plans.map((plan) => (
+            <NativeSelectOption key={plan.id} value={String(plan.patientTreatmentPlanId)}>
+              {plan.name} · {plan.code} · {plan.completedSessions}/{plan.plannedSessions} completed
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+        <FieldError errors={[planError]} />
+      </Field>
 
       {(selectedTreatment ? [selectedTreatment] : plans).map((plan) => (
         <div key={plan.id} className="space-y-3 rounded-lg border p-3">
@@ -250,34 +256,58 @@ function PlanSelection({
                   key={session.id}
                   type="button"
                   variant="outline"
-                  disabled={!session.isBookable}
-                  aria-pressed={selectedSession?.id === session.id}
-                  onClick={() => onSessionChange(session.id)}
+                  aria-pressed={sessionForDetails?.id === session.id}
+                  aria-label={
+                    session.isBookable
+                      ? `Select ${session.label}`
+                      : `View details for ${session.label}, ${session.unavailableReason}`
+                  }
+                  onClick={() => {
+                    setInspectedSessionId(session.id);
+                    if (session.isBookable) onSessionChange(session.id);
+                  }}
                   className={cn(
-                    'h-auto min-h-14 min-w-0 items-start justify-between gap-3 px-3 py-2 text-left whitespace-normal',
-                    selectedSession?.id === session.id &&
+                    'flex h-auto min-h-14 w-full min-w-0 flex-col items-start gap-2 px-3 py-2 text-left whitespace-normal',
+                    sessionForDetails?.id === session.id &&
                       'border-primary bg-primary/5 ring-primary/15 ring-2'
                   )}
                 >
-                  <span className="min-w-0 flex-1">
+                  <span className="w-full min-w-0">
                     <span className="block truncate font-medium">{session.label}</span>
                     <span className="text-muted-foreground mt-1 block truncate text-xs">
                       {session.procedure}
                     </span>
+                    {session.reservedAppointment ? (
+                      <span className="text-warning mt-1 block text-xs leading-snug font-medium break-words">
+                        Booked: {formatBookedSessionDate(session.reservedAppointment.slotDate)} ·{' '}
+                        {session.reservedAppointment.startTime ?? 'Time not recorded'}–
+                        {session.reservedAppointment.endTime ?? 'Time not recorded'}
+                      </span>
+                    ) : session.unavailableReason === 'Completed' && session.completedAt ? (
+                      <span className="text-muted-foreground mt-1 block text-xs leading-snug font-medium break-words">
+                        Completed: {formatCompletedSessionDateTime(session.completedAt)}
+                      </span>
+                    ) : null}
                   </span>
-                  <BookingStatusBadge
-                    tone={
-                      session.isBookable
-                        ? selectedSession?.id === session.id
-                          ? 'selected'
-                          : 'success'
-                        : session.unavailableReason === 'Completed'
-                          ? 'neutral'
-                          : 'warning'
-                    }
-                  >
-                    {session.isBookable ? 'Available' : session.unavailableReason}
-                  </BookingStatusBadge>
+                  <span className="self-start">
+                    <BookingStatusBadge
+                      tone={
+                        session.isBookable
+                          ? selectedSession?.id === session.id
+                            ? 'selected'
+                            : 'success'
+                          : session.unavailableReason === 'Completed'
+                            ? 'neutral'
+                            : 'warning'
+                      }
+                    >
+                      {session.isBookable
+                        ? sessionForDetails?.id === session.id
+                          ? 'Selected'
+                          : 'Available'
+                        : session.unavailableReason}
+                    </BookingStatusBadge>
+                  </span>
                 </Button>
               ))}
             </div>
@@ -285,7 +315,7 @@ function PlanSelection({
         </div>
       ))}
       <FieldError errors={[sessionError]} />
-      {selectedSession ? <SessionDetails session={selectedSession} /> : null}
+      {sessionForDetails ? <SessionDetails session={sessionForDetails} /> : null}
     </div>
   );
 }
@@ -413,8 +443,7 @@ function CatalogueSelection({
           <Info className="size-4" />
           <AlertTitle>Session Duration Not Configured</AlertTitle>
           <AlertDescription>
-            Enter the Procedure end time manually. Room and Therapist filtering is skipped when its
-            Session metadata is unavailable.
+            Enter the Procedure end time manually. Choose the Room from the available Room list.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -460,10 +489,19 @@ function SessionDetails({ session }: { session: BookingSession }) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
         <span className="min-w-0 font-medium break-words">{session.procedure}</span>
-        <span className="text-muted-foreground">
-          {total === null
-            ? 'Duration not configured'
-            : `${total} min reserved · includes setup & cleaning`}
+        <span className="flex flex-wrap items-center gap-2">
+          {!session.isBookable ? (
+            <BookingStatusBadge
+              tone={session.unavailableReason === 'Completed' ? 'neutral' : 'warning'}
+            >
+              {session.unavailableReason}
+            </BookingStatusBadge>
+          ) : null}
+          <span className="text-muted-foreground">
+            {total === null
+              ? 'Duration not configured'
+              : `${total} min reserved · includes setup & cleaning`}
+          </span>
         </span>
       </div>
       <Collapsible>
@@ -488,10 +526,44 @@ function SessionDetails({ session }: { session: BookingSession }) {
             Room: {session.roomType || 'Not recorded'} · Skill:{' '}
             {session.therapistSkill || 'Not recorded'}
           </p>
+          {session.reservedAppointment ? (
+            <p className="text-muted-foreground text-xs">
+              Booked Appointment:{' '}
+              <span className="font-mono">{session.reservedAppointment.bookingNumber}</span> ·{' '}
+              {formatBookedSessionDate(session.reservedAppointment.slotDate)} ·{' '}
+              {session.reservedAppointment.startTime ?? 'Time not recorded'}–
+              {session.reservedAppointment.endTime ?? 'Time not recorded'}
+            </p>
+          ) : session.unavailableReason === 'Completed' && session.completedAt ? (
+            <p className="text-muted-foreground text-xs">
+              Completed: {formatCompletedSessionDateTime(session.completedAt)}
+            </p>
+          ) : null}
         </CollapsibleContent>
       </Collapsible>
     </div>
   );
+}
+
+function formatBookedSessionDate(slotDate: string) {
+  const [year, month, day] = slotDate.split('-');
+  return year && month && day ? `${day}-${month}-${year}` : slotDate;
+}
+
+function formatCompletedSessionDateTime(completedAt: Date | string) {
+  const date = new Date(completedAt);
+  if (Number.isNaN(date.getTime())) return 'Date and time not recorded';
+
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+    .format(date)
+    .replace(',', ' ·');
 }
 
 function LoadError({

@@ -113,6 +113,7 @@ describe('Booking Treatment adapter', () => {
           isReserved: false,
           isBookable: false,
           unavailableReason: 'COMPLETED',
+          reservedAppointment: null,
         },
         {
           id: 702,
@@ -140,6 +141,12 @@ describe('Booking Treatment adapter', () => {
           isReserved: true,
           isBookable: false,
           unavailableReason: 'RESERVED',
+          reservedAppointment: {
+            bookingNumber: 'APT-1001',
+            slotDate: '2026-09-21',
+            startTime: '09:00',
+            endTime: '10:00',
+          },
         },
       ],
     });
@@ -151,9 +158,16 @@ describe('Booking Treatment adapter', () => {
       completedSessions: 1,
       selectionMode: 'EXISTING_PLAN',
     });
+    expect(treatment.sessions[0].completedAt).toEqual(new Date('2026-01-03T00:00:00.000Z'));
     expect(treatment.sessions.map((session) => session.unavailableReason)).toEqual([
       'Completed',
       'Reserved by another Appointment',
     ]);
+    expect(treatment.sessions[1].reservedAppointment).toEqual({
+      bookingNumber: 'APT-1001',
+      slotDate: '2026-09-21',
+      startTime: '09:00',
+      endTime: '10:00',
+    });
   });
 });

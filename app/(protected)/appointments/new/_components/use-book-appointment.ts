@@ -267,9 +267,7 @@ export function useBookAppointment() {
       shouldValidate: true,
     });
     form.setValue('sessionId', defaults.patientTreatmentPlanSessionId, { shouldDirty: false });
-    form.setValue('roomId', defaultSession?.roomType ? '' : 'not-required', {
-      shouldDirty: false,
-    });
+    form.setValue('roomId', '', { shouldDirty: false });
     form.setValue('therapistId', defaultSession?.therapistSkill ? '' : 'not-required', {
       shouldDirty: false,
     });
@@ -371,9 +369,7 @@ export function useBookAppointment() {
     form.setValue('startTime', '');
     form.setValue('endTime', '');
     form.setValue('sessionId', firstSession?.id ?? '', { shouldDirty: true });
-    form.setValue('roomId', firstSession?.roomType ? '' : 'not-required', {
-      shouldDirty: true,
-    });
+    form.setValue('roomId', '', { shouldDirty: true });
     form.setValue('therapistId', firstSession?.therapistSkill ? '' : 'not-required', {
       shouldDirty: true,
     });
@@ -391,7 +387,7 @@ export function useBookAppointment() {
     }
     form.setValue('startTime', '');
     form.setValue('endTime', '');
-    form.setValue('roomId', session?.roomType ? '' : 'not-required', { shouldDirty: true });
+    form.setValue('roomId', '', { shouldDirty: true });
     form.setValue('therapistId', session?.therapistSkill ? '' : 'not-required', {
       shouldDirty: true,
     });
@@ -420,7 +416,7 @@ export function useBookAppointment() {
     form.setValue('sessionId', defaults.patientTreatmentPlanSessionId, { shouldDirty: true });
     form.setValue('startTime', '', { shouldDirty: true });
     form.setValue('endTime', '', { shouldDirty: true });
-    form.setValue('roomId', session?.roomType ? '' : 'not-required', { shouldDirty: true });
+    form.setValue('roomId', '', { shouldDirty: true });
     form.setValue('therapistId', session?.therapistSkill ? '' : 'not-required', {
       shouldDirty: true,
     });
@@ -432,9 +428,7 @@ export function useBookAppointment() {
   }
 
   function resetProcedureResources() {
-    form.setValue('roomId', selectedSession?.roomType ? '' : 'not-required', {
-      shouldDirty: true,
-    });
+    form.setValue('roomId', '', { shouldDirty: true });
     form.setValue('therapistId', selectedSession?.therapistSkill ? '' : 'not-required', {
       shouldDirty: true,
     });

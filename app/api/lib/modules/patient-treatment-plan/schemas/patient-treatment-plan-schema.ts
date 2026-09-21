@@ -66,12 +66,19 @@ export const patientTreatmentPlanSessionSchema = z.object({
 
 export type PatientTreatmentPlanStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'STOPPED';
 export type PatientTreatmentPlanSessionUnavailableReason = 'COMPLETED' | 'RESERVED';
+export type PatientTreatmentPlanSessionReservedAppointment = {
+  bookingNumber: string;
+  slotDate: string;
+  startTime: string | null;
+  endTime: string | null;
+};
 export type AssignPatientTreatmentPlanInput = z.infer<typeof assignPatientTreatmentPlanSchema>;
 export type PatientTreatmentPlanSession = z.infer<typeof patientTreatmentPlanSessionSchema>;
 export type PatientTreatmentPlanReadSession = PatientTreatmentPlanSession & {
   isReserved: boolean;
   isBookable: boolean;
   unavailableReason: PatientTreatmentPlanSessionUnavailableReason | null;
+  reservedAppointment: PatientTreatmentPlanSessionReservedAppointment | null;
 };
 export type PatientTreatmentPlanRecord = {
   id: number;

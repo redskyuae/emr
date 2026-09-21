@@ -9884,6 +9884,7 @@ export const openApiDocument = {
           'isReserved',
           'isBookable',
           'unavailableReason',
+          'reservedAppointment',
         ],
         properties: {
           id: { type: 'integer', minimum: 1 },
@@ -9908,6 +9909,16 @@ export const openApiDocument = {
           isReserved: { type: 'boolean' },
           isBookable: { type: 'boolean' },
           unavailableReason: { type: ['string', 'null'], enum: ['COMPLETED', 'RESERVED', null] },
+          reservedAppointment: {
+            type: ['object', 'null'],
+            required: ['bookingNumber', 'slotDate', 'startTime', 'endTime'],
+            properties: {
+              bookingNumber: { type: 'string' },
+              slotDate: { type: 'string', format: 'date' },
+              startTime: { type: ['string', 'null'], pattern: '^\\d{2}:\\d{2}$' },
+              endTime: { type: ['string', 'null'], pattern: '^\\d{2}:\\d{2}$' },
+            },
+          },
         },
       },
       PatientTreatmentPlan: {

@@ -42,6 +42,8 @@ function plan(
       therapistSkill: 'Therapist',
       status: session.isBookable ? 'Pending' : 'Unavailable',
       unavailableReason: session.unavailableReason ?? null,
+      completedAt: null,
+      reservedAppointment: null,
     })),
   };
 }

@@ -306,6 +306,12 @@ describe('Patient Treatment Plan repository', () => {
             isReserved: true,
             isBookable: false,
             unavailableReason: 'RESERVED',
+            reservedAppointment: {
+              bookingNumber: 'APT-ACT',
+              slotDate: '2026-10-01',
+              startTime: '09:00',
+              endTime: '10:00',
+            },
           }),
         ],
       }),
