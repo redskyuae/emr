@@ -8,9 +8,6 @@ export default function AppointmentsPageLoader() {
         <Skeleton className="h-9 lg:w-52" />
         <Skeleton className="h-9 lg:w-48" aria-label="Loading Appointment status filter" />
         <Skeleton className="h-9 w-full lg:max-w-xs" />
-        <div className="flex gap-2 lg:ml-auto">
-          <Skeleton className="h-9 w-36" />
-        </div>
       </div>
 
       {Array.from({ length: 2 }, (_, sectionIndex) => (
