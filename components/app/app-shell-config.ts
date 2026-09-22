@@ -502,6 +502,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Admit patient',
       href: '/admissions?admit=new',
+      permission: 'admission:create',
     },
   },
   '/bed-board': {
