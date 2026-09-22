@@ -114,13 +114,21 @@ The complete set of Permissions a user actually holds within a Tenant, expressed
 
 ## Staff
 
-A user who works within one or more Facilities under exactly one Tenant. Includes doctors, nurses, receptionists, and technicians. Not the same as a Doctor (see below).
+A user who works within one or more Facilities under exactly one Tenant. Includes doctors, therapists, nurses, receptionists, and technicians. Not the same as a Doctor or Therapist (see below).
 
 **Staff and User are the same entity, named differently by layer.** Frontend/product copy calls it Staff; the backend, auth layer, and API surface call it User (e.g. the `/api/v1/users` routes and `/identity-access/users` screen both operate on Staff). Treat the terms as synonyms — there is no separate "User" concept distinct from Staff in this domain.
 
 ## Doctor
 
 A Staff member with a clinical specialty who sees Patients. A Doctor is always a Staff member, shares that Staff member's active lifecycle, and cannot exist without the underlying Staff identity.
+
+## Therapist
+
+A Staff member who performs Treatment Sessions. A Therapist is always a Staff member, shares that Staff member's active lifecycle, and cannot exist without the underlying Staff identity. Doctor and Therapist are mutually exclusive Staff profiles.
+
+## Therapist Skill
+
+A Tenant-scoped Master representing a capability that qualifies a Therapist to perform particular Treatment Sessions, such as Abhyanga or Shirodhara. A Therapist may have no recorded Therapist Skills or hold multiple, while a Treatment Session may require one. A Therapist Skill cannot be removed while an active Therapist, Treatment, or Treatment Session depends on it.
 
 ## DoctorRota
 
@@ -192,11 +200,15 @@ The person to reach on a Patient's behalf in urgent situations, recorded during 
 
 ## Appointment
 
-A scheduled period for a Patient within a Tenant. A Consultation Appointment assigns a Doctor and reserves one or more consecutive DoctorSlots from the same DoctorRota. A Procedure Appointment records a direct start and end time, requires a Treatment and Treatment Session, may optionally assign a Doctor, and does not consume a DoctorRota or DoctorSlots. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
+A scheduled period for a Patient within a Tenant. A Consultation Appointment assigns a Doctor and reserves one or more consecutive DoctorSlots from the same DoctorRota. A Procedure Appointment records a direct start and end time, requires a Treatment, Treatment Session, and Therapist, may optionally assign a Doctor, and does not consume a DoctorRota or DoctorSlots. An Appointment is a scheduling concept — it leads to a Visit when the Patient arrives and is not the clinical event itself.
 
 ## Appointment Rescheduling
 
 Changing the scheduled period of an existing Scheduled or Confirmed Appointment while preserving its Booking Number and non-scheduling booking details. Rescheduling requires a real scheduling change, may change a Consultation Appointment's Doctor and replaces its Slot Reservations, or changes a Procedure Appointment's direct time window without changing its independently assigned Doctor; it returns the Appointment to Scheduled for confirmation, and Checked-in, Completed, Cancelled, and No-show Appointments cannot be rescheduled. Cancelling the original Appointment and creating a replacement is rebooking, not rescheduling.
+
+## Therapist Reassignment
+
+Replacing the Therapist assigned to a future Scheduled or Confirmed Procedure Appointment without changing its Booking Number or scheduled period. Therapist Reassignment is distinct from Appointment Rescheduling and requires an active replacement Therapist with any Therapist Skill required by the Treatment Session.
 
 ## Appointment Cancellation
 

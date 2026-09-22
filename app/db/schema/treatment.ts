@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { index, integer, pgTable, text, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
 import { masterColumns } from './helpers';
+import { therapistSkill } from './therapist-skill';
 
 const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
 
@@ -18,6 +19,7 @@ export const treatment = pgTable(
     cleaningMinutes: integer('cleaning_minutes').notNull().default(0),
     roomType: varchar('room_type', { length: 100 }),
     therapistSkill: varchar('therapist_skill', { length: 100 }),
+    therapistSkillId: integer('therapist_skill_id').references(() => therapistSkill.id),
     isDeleted,
     createdOn,
     modifiedOn,
@@ -53,6 +55,7 @@ export const treatmentSession = pgTable(
     equipment: text(),
     roomType: varchar('room_type', { length: 100 }),
     therapistSkill: varchar('therapist_skill', { length: 100 }),
+    therapistSkillId: integer('therapist_skill_id').references(() => therapistSkill.id),
     isDeleted,
     createdOn,
     modifiedOn,

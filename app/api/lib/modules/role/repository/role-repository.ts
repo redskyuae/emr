@@ -26,6 +26,11 @@ export const SYSTEM_ROLE_DEFINITIONS = [
     code: 'DOCTOR',
     description: 'Clinical staff with prescribing authority',
   },
+  {
+    name: 'Therapist',
+    code: 'THERAPIST',
+    description: 'Clinical staff who perform Treatment Sessions',
+  },
   { name: 'Nurse', code: 'NURSE', description: 'Clinical care staff' },
   {
     name: 'Receptionist',

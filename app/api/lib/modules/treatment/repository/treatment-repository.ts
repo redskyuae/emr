@@ -26,6 +26,7 @@ const treatmentColumns = {
   roomType: treatmentTable.roomType,
   setupMinutes: treatmentTable.setupMinutes,
   therapistSkill: treatmentTable.therapistSkill,
+  therapistSkillId: treatmentTable.therapistSkillId,
   durationMinutes: treatmentTable.durationMinutes,
   cleaningMinutes: treatmentTable.cleaningMinutes,
 };
@@ -45,6 +46,7 @@ const sessionColumns = {
   setupMinutes: treatmentSessionTable.setupMinutes,
   sessionNumber: treatmentSessionTable.sessionNumber,
   therapistSkill: treatmentSessionTable.therapistSkill,
+  therapistSkillId: treatmentSessionTable.therapistSkillId,
   durationMinutes: treatmentSessionTable.durationMinutes,
   cleaningMinutes: treatmentSessionTable.cleaningMinutes,
 };
@@ -102,6 +104,7 @@ async function insertSessions(executor: Executor, data: CreateTreatmentData, tre
       setupMinutes: session.setupMinutes,
       sessionNumber: session.sessionNumber,
       therapistSkill: session.therapistSkill ?? data.therapistSkill ?? null,
+      therapistSkillId: session.therapistSkillId ?? data.therapistSkillId ?? null,
       durationMinutes: session.durationMinutes,
       cleaningMinutes: session.cleaningMinutes,
     }))
@@ -122,6 +125,7 @@ async function createTreatment(data: CreateTreatmentData) {
         cleaningMinutes: data.cleaningMinutes,
         roomType: data.roomType ?? null,
         therapistSkill: data.therapistSkill ?? null,
+        therapistSkillId: data.therapistSkillId ?? null,
       })
       .returning(treatmentColumns);
 
@@ -152,6 +156,7 @@ async function updateTreatment(
       cleaningMinutes: data.cleaningMinutes,
       roomType: data.roomType ?? null,
       therapistSkill: data.therapistSkill ?? null,
+      therapistSkillId: data.therapistSkillId ?? null,
       modifiedOn: new Date(),
     })
     .where(

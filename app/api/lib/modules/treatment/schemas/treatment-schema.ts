@@ -83,6 +83,7 @@ const treatmentSessionInputSchema = z.object({
   equipment: optionalTextSchema('Session equipment', 500),
   roomType: optionalNameSchema('Session room type'),
   therapistSkill: optionalNameSchema('Session therapist skill'),
+  therapistSkillId: z.coerce.number().int().positive().optional(),
 });
 
 export const treatmentIdSchema = z.coerce
@@ -107,6 +108,7 @@ export const createTreatmentSchema = z
     cleaningMinutes: minutesSchema('Treatment cleaning minutes').default(0),
     roomType: optionalNameSchema('Treatment room type'),
     therapistSkill: optionalNameSchema('Treatment therapist skill'),
+    therapistSkillId: z.coerce.number().int().positive().optional(),
     sessions: z
       .array(treatmentSessionInputSchema, { error: 'Sessions are required' })
       .min(1, 'At least one Session is required')
@@ -128,6 +130,7 @@ export const updateTreatmentSchema = z
     cleaningMinutes: minutesSchema('Treatment cleaning minutes').default(0),
     roomType: optionalNameSchema('Treatment room type'),
     therapistSkill: optionalNameSchema('Treatment therapist skill'),
+    therapistSkillId: z.coerce.number().int().positive().optional(),
   })
   .strict();
 
@@ -155,6 +158,7 @@ export type TreatmentSession = {
   equipment: string | null;
   roomType: string | null;
   therapistSkill: string | null;
+  therapistSkillId?: number | null;
 };
 
 export type Treatment = {
@@ -170,6 +174,7 @@ export type Treatment = {
   cleaningMinutes: number;
   roomType: string | null;
   therapistSkill: string | null;
+  therapistSkillId?: number | null;
   sessions: TreatmentSession[];
 };
 
@@ -196,4 +201,5 @@ export type TreatmentSessionSummary = {
   cleaningMinutes: number;
   roomType: string | null;
   therapistSkill: string | null;
+  therapistSkillId?: number | null;
 };

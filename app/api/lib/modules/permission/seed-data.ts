@@ -47,6 +47,17 @@ const permissionGroups = [
   },
   {
     module: 'identity-access',
+    resource: 'therapist',
+    actions: [
+      ['read', 'View Therapists.'],
+      ['create', 'Create Therapists.'],
+      ['update', 'Update Therapist details.'],
+      ['deactivate', 'Deactivate Therapist access.'],
+      ['reactivate', 'Reactivate Therapist access.'],
+    ],
+  },
+  {
+    module: 'identity-access',
     resource: 'role',
     actions: [
       ['read', 'View Roles.'],
@@ -117,6 +128,16 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'clinical-masters',
+    resource: 'therapist-skill',
+    actions: [
+      ['read', 'View Therapist Skills.'],
+      ['create', 'Create Therapist Skills.'],
+      ['update', 'Update Therapist Skills.'],
+      ['delete', 'Delete Therapist Skills.'],
+    ],
+  },
+  {
     module: 'patient-management',
     resource: 'patient',
     actions: [
@@ -134,6 +155,7 @@ const permissionGroups = [
     actions: [
       ['read', 'View Appointments.'],
       ['create', 'Book Appointments.'],
+      ['reassign-therapist', 'Reassign Therapists on Procedure Appointments.'],
     ],
   },
   {

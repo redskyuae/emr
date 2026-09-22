@@ -151,6 +151,7 @@ const createProcedureAppointmentSchema = z
     endTime: appointmentTimeSchema('End time'),
     treatmentId: positiveIdSchema('Treatment ID'),
     treatmentSessionId: positiveIdSchema('Treatment session ID'),
+    therapistId: positiveIdSchema('Therapist ID').optional(),
   })
   .strict();
 
@@ -289,6 +290,10 @@ export type Appointment = {
   bookingNumber: string;
   createdOn: Date;
   doctor: {
+    id: number;
+    name: string;
+  } | null;
+  therapist?: {
     id: number;
     name: string;
   } | null;

@@ -42,6 +42,13 @@ const DEFAULT_PERMISSION_NAMES_BY_SYSTEM_ROLE = {
     'doctor:read',
     'patient:read',
   ],
+  THERAPIST: [
+    'appointment:read',
+    'patient:read',
+    'treatment:read',
+    'therapist:read',
+    'therapist-skill:read',
+  ],
   LAB_TECH: [],
   PHARMACIST: [],
   RECEPTIONIST: [],

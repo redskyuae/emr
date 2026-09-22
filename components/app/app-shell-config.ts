@@ -147,6 +147,12 @@ export const appNavGroups: AppNavGroup[] = [
         permission: 'doctor',
       },
       {
+        title: 'Therapists',
+        href: '/therapists',
+        icon: UserRoundCog,
+        permission: 'therapist',
+      },
+      {
         title: 'Doctor Schedules',
         href: '/doctor-schedules',
         icon: CalendarClock,
@@ -355,6 +361,11 @@ export const appNavGroups: AppNavGroup[] = [
             href: '/clinical-masters/note-types',
             permission: 'clinical-note-type',
           },
+          {
+            title: 'Therapist Skills',
+            href: '/clinical-masters/therapist-skills',
+            permission: 'therapist-skill',
+          },
         ],
       },
       {
@@ -466,6 +477,24 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       label: 'Add Doctor',
       href: '/doctors?doctor=new',
       permission: 'doctor:create',
+    },
+  },
+  '/therapists': {
+    title: 'Therapists',
+    subtitle: 'Staff-backed Therapists and their Ayurvedic treatment skills.',
+    primaryAction: {
+      label: 'Add Therapist',
+      href: '/therapists?therapist=new',
+      permission: 'therapist:create',
+    },
+  },
+  '/clinical-masters/therapist-skills': {
+    title: 'Therapist Skills',
+    subtitle: 'Tenant-scoped skills used to qualify Therapists for Treatment Sessions.',
+    primaryAction: {
+      label: 'Add Therapist Skill',
+      href: '/clinical-masters/therapist-skills?skill=new',
+      permission: 'therapist-skill:create',
     },
   },
   '/audit-log': {

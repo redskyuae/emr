@@ -12,6 +12,7 @@ import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/pat
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { treatmentRepository } from '../../treatment/repository/treatment-repository';
+import { therapistRepository } from '../../therapist/repository/therapist-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
 import {
   appointmentTenantIdSchema,
@@ -153,6 +154,28 @@ export async function validateCreateAppointment(
 
     if (errors.length > 0) {
       return { success: false, errors, status: StatusCodes.CONFLICT };
+    }
+
+    if (data.therapistId !== undefined) {
+      const therapist = await therapistRepository.getTherapistById(
+        data.therapistId,
+        validatedTenantId
+      );
+      if (!therapist) errors.push(`Therapist ${data.therapistId} is Invalid.`);
+      else if (!therapist.isActive)
+        errors.push(
+          `Therapist ${data.therapistId} is inactive and cannot be assigned to an Appointment.`
+        );
+      else {
+        const requiredSkillId = treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
+        if (
+          requiredSkillId !== undefined &&
+          !therapist.skills.some((skill) => skill.id === requiredSkillId)
+        ) {
+          errors.push(`Therapist ${data.therapistId} does not have the required Therapist Skill.`);
+        }
+      }
+      if (errors.length > 0) return { success: false, errors, status: StatusCodes.CONFLICT };
     }
   }
 
