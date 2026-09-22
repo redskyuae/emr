@@ -20,6 +20,9 @@ export default defineConfig({
           environment: 'node',
           include: ['**/*.integration.tests.ts'],
           setupFiles: ['./test/setup/integration.ts'],
+          testTimeout: 120_000,
+          hookTimeout: 120_000,
+          maxWorkers: 1,
           // Integration tests share one Postgres database and truncate it in a
           // beforeEach hook, so they must never run files concurrently.
           fileParallelism: false,
