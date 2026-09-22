@@ -45,30 +45,11 @@ import { useBookAppointment } from './use-book-appointment';
 import BookAppointmentLoader from '../loader';
 
 export function BookAppointmentPageImpl() {
-  const booking = useBookAppointment();
-  const { form, values, step, selectedPatient, selectedSession, isProcedurePath } = booking;
-  const stepHeading = useRef<HTMLHeadingElement>(null);
-  const previousStep = useRef(step);
   const {
     data: canCreate,
     isLoading: canCreateLoading,
     isError: canCreateError,
   } = useHasPermission('appointment:create');
-  const isProvisionalPatient = booking.patientMode === 'provisional';
-  const patientName = selectedPatient
-    ? selectedPatient.firstName + ' ' + selectedPatient.lastName
-    : isProvisionalPatient
-      ? `${values.firstName} ${values.lastName}`.trim()
-      : 'Patient not selected';
-  const visitLabel = isProcedurePath ? 'Procedure' : 'Consultation';
-
-  useEffect(() => {
-    if (previousStep.current !== step) {
-      stepHeading.current?.focus({ preventScroll: true });
-      window.scrollTo({ top: 0, behavior: 'instant' });
-      previousStep.current = step;
-    }
-  }, [step]);
 
   if (canCreateLoading || canCreateError) {
     return <BookAppointmentLoader />;
@@ -95,6 +76,30 @@ export function BookAppointmentPageImpl() {
       </div>
     );
   }
+
+  return <BookAppointmentWorkflow />;
+}
+
+function BookAppointmentWorkflow() {
+  const booking = useBookAppointment();
+  const { form, values, step, selectedPatient, selectedSession, isProcedurePath } = booking;
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  const previousStep = useRef(step);
+  const isProvisionalPatient = booking.patientMode === 'provisional';
+  const patientName = selectedPatient
+    ? selectedPatient.firstName + ' ' + selectedPatient.lastName
+    : isProvisionalPatient
+      ? `${values.firstName} ${values.lastName}`.trim()
+      : 'Patient not selected';
+  const visitLabel = isProcedurePath ? 'Procedure' : 'Consultation';
+
+  useEffect(() => {
+    if (previousStep.current !== step) {
+      stepHeading.current?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      previousStep.current = step;
+    }
+  }, [step]);
 
   return (
     <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col gap-4">
