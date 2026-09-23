@@ -27,3 +27,27 @@ WHERE "role"."code" = 'THERAPIST'
   AND "role"."is_deleted" = false
   AND "permission"."name" IN ('appointment:read', 'patient:read', 'treatment:read', 'therapist:read', 'therapist-skill:read')
 ON CONFLICT ("role_id", "permission_id") DO NOTHING;
+--> statement-breakpoint
+-- Existing Tenant Admin System Roles receive every Therapist permission, matching
+-- the full-catalogue default applied during new Tenant onboarding.
+INSERT INTO "role_permission" ("tenant_id", "role_id", "permission_id")
+SELECT "role"."tenant_id", "role"."id", "permission"."id"
+FROM "role"
+CROSS JOIN "permission"
+WHERE "role"."code" = 'TENANT_ADMIN'
+  AND "role"."is_system" = true
+  AND "role"."is_deleted" = false
+  AND "permission"."is_active" = true
+  AND "permission"."name" IN (
+    'therapist:read',
+    'therapist:create',
+    'therapist:update',
+    'therapist:deactivate',
+    'therapist:reactivate',
+    'therapist-skill:read',
+    'therapist-skill:create',
+    'therapist-skill:update',
+    'therapist-skill:delete',
+    'appointment:reassign-therapist'
+  )
+ON CONFLICT ("role_id", "permission_id") DO NOTHING;
