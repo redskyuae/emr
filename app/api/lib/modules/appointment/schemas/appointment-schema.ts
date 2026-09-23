@@ -147,6 +147,7 @@ const procedureAppointmentShape = {
   bookingPath: z.literal('PROCEDURE'),
   patientId: positiveIdSchema('Patient ID'),
   doctorId: positiveIdSchema('Doctor ID').optional(),
+  therapistId: positiveIdSchema('Therapist ID').optional(),
   startTime: appointmentTimeSchema('Start time'),
   endTime: appointmentTimeSchema('End time'),
 };
@@ -348,6 +349,10 @@ export type Appointment = {
   bookingNumber: string;
   createdOn: Date;
   doctor: {
+    id: number;
+    name: string;
+  } | null;
+  therapist?: {
     id: number;
     name: string;
   } | null;

@@ -235,11 +235,12 @@ describe('Role repository', () => {
 
   it('should seed system roles for tenant', async () => {
     const systemRoles = await roleRepository.seedSystemRolesForTenant(tenantA);
-    expect(systemRoles).toHaveLength(7);
+    expect(systemRoles).toHaveLength(8);
     expect(systemRoles.every((r) => r.isSystem === true && r.tenantId === tenantA)).toBe(true);
     expect(systemRoles.map((r) => r.code)).toEqual([
       'TENANT_ADMIN',
       'DOCTOR',
+      'THERAPIST',
       'NURSE',
       'RECEPTIONIST',
       'PHARMACIST',
@@ -287,6 +288,7 @@ describe('Role repository', () => {
       'PHARMACIST',
       'RECEPTIONIST',
       'TENANT_ADMIN',
+      'THERAPIST',
     ]);
   });
 });

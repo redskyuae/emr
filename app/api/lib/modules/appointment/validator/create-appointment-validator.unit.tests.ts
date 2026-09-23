@@ -12,6 +12,7 @@ import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/pat
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { treatmentRepository } from '../../treatment/repository/treatment-repository';
+import { therapistRepository } from '../../therapist/repository/therapist-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
 import { validateCreateAppointment } from './create-appointment-validator';
 
@@ -53,7 +54,10 @@ vi.mock('../repository/appointment-repository', () => ({
   },
 }));
 vi.mock('../../treatment/repository/treatment-repository', () => ({
-  treatmentRepository: { getTreatmentById: vi.fn() },
+  treatmentRepository: { getTreatmentById: vi.fn(), getTreatmentSessionById: vi.fn() },
+}));
+vi.mock('../../therapist/repository/therapist-repository', () => ({
+  therapistRepository: { getTherapistById: vi.fn() },
 }));
 
 const tenantRepo = vi.mocked(tenantRepository);
@@ -66,6 +70,7 @@ const planRepo = vi.mocked(patientTreatmentPlanRepository);
 const doctorRepo = vi.mocked(doctorRepository);
 const appointmentRepo = vi.mocked(appointmentRepository);
 const treatmentRepo = vi.mocked(treatmentRepository);
+const therapistRepo = vi.mocked(therapistRepository);
 const validateReferences = vi.mocked(validatePatientReferences);
 const validateEmiratesId = vi.mocked(validatePatientEmiratesIdUniqueness);
 
@@ -102,14 +107,16 @@ const catalogueProcedurePayload = {
 
 const currentPlan = {
   id: 400,
-  sessions: [{ id: 401, isBookable: true }],
+  treatmentId: 500,
+  sessions: [{ id: 401, treatmentSessionId: 501, isBookable: true }],
 };
 
 const repeatableTreatment = {
   id: 500,
   sessionStructure: 'REPEATABLE',
   defaultTotalSessions: 6,
-  sessions: [{ id: 501 }],
+  therapistSkillId: null,
+  sessions: [{ id: 501, sessionNumber: 1, therapistSkillId: 10 }],
 };
 
 const activePatient = { id: 5, isActive: true, registrationStatus: 'registered' as const };
@@ -137,6 +144,14 @@ describe('validateCreateAppointment', () => {
     doctorRepo.getDoctorById.mockResolvedValue({ id: 1, isActive: true } as never);
     planRepo.getCurrentByPatientId.mockResolvedValue([currentPlan] as never);
     treatmentRepo.getTreatmentById.mockResolvedValue(repeatableTreatment as never);
+    treatmentRepo.getTreatmentSessionById.mockResolvedValue(
+      repeatableTreatment.sessions[0] as never
+    );
+    therapistRepo.getTherapistById.mockResolvedValue({
+      id: 8,
+      isActive: true,
+      skills: [{ id: 10 }],
+    } as never);
     validateReferences.mockResolvedValue({ success: true, data: undefined });
     validateEmiratesId.mockResolvedValue({ success: true, data: undefined });
     appointmentRepo.findPotentialPatientMatches.mockResolvedValue([]);
@@ -215,6 +230,31 @@ describe('validateCreateAppointment', () => {
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['Patient Treatment Plan Session is not available.'],
+    });
+  });
+
+  it('should accept a Therapist qualified for the selected Plan Session', async () => {
+    await expect(
+      validateCreateAppointment({ ...procedurePayload, therapistId: 8 }, 'tenant-1')
+    ).resolves.toMatchObject({ success: true, data: { therapistId: 8 } });
+
+    expect(treatmentRepo.getTreatmentSessionById).toHaveBeenCalledWith(501, 'tenant-1');
+    expect(therapistRepo.getTherapistById).toHaveBeenCalledWith(8, 'tenant-1');
+  });
+
+  it('should reject a Therapist without the skill required by the selected Plan Session', async () => {
+    therapistRepo.getTherapistById.mockResolvedValue({
+      id: 8,
+      isActive: true,
+      skills: [],
+    } as never);
+
+    await expect(
+      validateCreateAppointment({ ...procedurePayload, therapistId: 8 }, 'tenant-1')
+    ).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Therapist 8 does not have the required Therapist Skill.'],
     });
   });
 

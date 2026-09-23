@@ -232,6 +232,15 @@ describe('Appointment schema', () => {
     });
   });
 
+  it('should accept and normalize an optional Therapist assignment for a Procedure', () => {
+    expect(
+      createAppointmentSchema.parse({ ...validProcedurePayload, therapistId: '8' })
+    ).toMatchObject({
+      bookingPath: 'PROCEDURE',
+      therapistId: 8,
+    });
+  });
+
   it('should reject invalid Procedure time windows', () => {
     expect(errorsOf({ ...validProcedurePayload, startTime: '10' })).toContain(
       'Start time must be in HH:mm format'

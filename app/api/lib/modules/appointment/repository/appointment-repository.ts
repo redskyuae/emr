@@ -1,3 +1,4 @@
+import { alias } from 'drizzle-orm/pg-core';
 import { and, asc, count, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
@@ -13,6 +14,7 @@ import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/app
 import { appointmentType as appointmentTypeTable } from '@/app/db/schema/appointment-type';
 import { user as userTable } from '@/app/db/schema/auth';
 import { doctor as doctorTable } from '@/app/db/schema/doctor';
+import { therapist as therapistTable } from '@/app/db/schema/therapist';
 import { doctorRota as doctorRotaTable } from '@/app/db/schema/doctor-rota';
 import {
   doctorSchedule as doctorScheduleTable,
@@ -49,6 +51,7 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type AppointmentRow = Omit<
   Appointment,
   | 'doctor'
+  | 'therapist'
   | 'doctorRotaId'
   | 'slotDate'
   | 'appointmentStatus'
@@ -57,6 +60,10 @@ type AppointmentRow = Omit<
   | 'treatmentSession'
 > & {
   doctor: {
+    id: number | null;
+    name: string | null;
+  };
+  therapist: {
     id: number | null;
     name: string | null;
   };
@@ -85,6 +92,8 @@ type AppointmentReservations = {
   doctorRotaId: number | null;
   slots: Appointment['slots'];
 };
+
+const therapistUserTable = alias(userTable, 'appointment_therapist_user');
 
 export type AppointmentSlotBookingContext = {
   rotaName: string;
@@ -115,6 +124,10 @@ const appointmentColumns = {
   doctor: {
     id: doctorTable.id,
     name: userTable.name,
+  },
+  therapist: {
+    id: therapistTable.id,
+    name: therapistUserTable.name,
   },
   patient: {
     id: patientTable.id,
@@ -190,6 +203,15 @@ function appointmentJoins(executor: SelectExecutor = db) {
     )
     .leftJoin(userTable, eq(userTable.id, doctorTable.userId))
     .leftJoin(
+      therapistTable,
+      and(
+        eq(therapistTable.id, appointmentTable.therapistId),
+        eq(therapistTable.tenantId, appointmentTable.tenantId),
+        eq(therapistTable.isDeleted, false)
+      )
+    )
+    .leftJoin(therapistUserTable, eq(therapistUserTable.id, therapistTable.userId))
+    .leftJoin(
       appointmentModeTable,
       and(
         eq(appointmentModeTable.id, appointmentTable.appointmentModeId),
@@ -248,6 +270,10 @@ function toAppointment(row: AppointmentRow, reservations?: AppointmentReservatio
       row.doctor.id === null || row.doctor.name === null
         ? null
         : { id: row.doctor.id, name: row.doctor.name },
+    therapist:
+      row.therapist.id === null || row.therapist.name === null
+        ? null
+        : { id: row.therapist.id, name: row.therapist.name },
     treatment:
       row.treatment?.id != null && row.treatment.name != null && row.treatment.code != null
         ? { id: row.treatment.id, name: row.treatment.name, code: row.treatment.code }
@@ -758,6 +784,23 @@ async function createAppointment(
       if (!doctor) invalidReferences.push('Doctor');
     }
 
+    if (data.bookingPath === 'PROCEDURE' && data.therapistId !== undefined) {
+      const [therapist] = await tx
+        .select({ id: therapistTable.id })
+        .from(therapistTable)
+        .where(
+          and(
+            eq(therapistTable.id, data.therapistId),
+            eq(therapistTable.tenantId, data.tenantId),
+            eq(therapistTable.isActive, true),
+            eq(therapistTable.isDeleted, false)
+          )
+        )
+        .for('update')
+        .limit(1);
+      if (!therapist) invalidReferences.push('Therapist');
+    }
+
     const [scheduledStatus] = await tx
       .select({ id: appointmentStatusTable.id })
       .from(appointmentStatusTable)
@@ -955,6 +998,7 @@ async function createAppointment(
           data.bookingPath === 'PROCEDURE'
             ? planSessionContext?.patientTreatmentPlanSessionId
             : undefined,
+        therapistId: data.bookingPath === 'PROCEDURE' ? data.therapistId : undefined,
       })
       .returning({ id: appointmentTable.id });
 

@@ -13,6 +13,7 @@ import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/pat
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { treatmentRepository } from '../../treatment/repository/treatment-repository';
+import { therapistRepository } from '../../therapist/repository/therapist-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
 import {
   appointmentTenantIdSchema,
@@ -171,6 +172,7 @@ export async function validateCreateAppointment(
       data.patientId,
       validatedTenantId
     );
+    let requiredTherapistSkillId: number | null | undefined;
 
     if ('patientTreatmentPlanId' in data) {
       const plan = currentPlans.find((candidate) => candidate.id === data.patientTreatmentPlanId);
@@ -193,6 +195,22 @@ export async function validateCreateAppointment(
           status: StatusCodes.CONFLICT,
         };
       }
+
+      if (data.therapistId !== undefined) {
+        const [treatment, treatmentSession] = await Promise.all([
+          plan?.treatmentId == null
+            ? undefined
+            : treatmentRepository.getTreatmentById(plan.treatmentId, validatedTenantId),
+          session.treatmentSessionId === null
+            ? undefined
+            : treatmentRepository.getTreatmentSessionById(
+                session.treatmentSessionId,
+                validatedTenantId
+              ),
+        ]);
+        requiredTherapistSkillId =
+          treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
+      }
     } else {
       if (currentPlans.length > 0) {
         return {
@@ -214,6 +232,10 @@ export async function validateCreateAppointment(
           status: StatusCodes.CONFLICT,
         };
       }
+
+      requiredTherapistSkillId =
+        treatment.sessions.toSorted((left, right) => left.sessionNumber - right.sessionNumber)[0]
+          ?.therapistSkillId ?? treatment.therapistSkillId;
 
       if (treatment.sessionStructure === 'REPEATABLE') {
         if (treatment.sessions.length !== 1) {
@@ -250,6 +272,27 @@ export async function validateCreateAppointment(
           };
         }
       }
+    }
+
+    if (data.therapistId !== undefined) {
+      const therapist = await therapistRepository.getTherapistById(
+        data.therapistId,
+        validatedTenantId
+      );
+      if (!therapist) errors.push(`Therapist ${data.therapistId} is Invalid.`);
+      else if (!therapist.isActive)
+        errors.push(
+          `Therapist ${data.therapistId} is inactive and cannot be assigned to an Appointment.`
+        );
+      else {
+        if (
+          requiredTherapistSkillId != null &&
+          !therapist.skills.some((skill) => skill.id === requiredTherapistSkillId)
+        ) {
+          errors.push(`Therapist ${data.therapistId} does not have the required Therapist Skill.`);
+        }
+      }
+      if (errors.length > 0) return { success: false, errors, status: StatusCodes.CONFLICT };
     }
   }
 

@@ -51,8 +51,10 @@ describe('0056 operational permissions migration', () => {
 
     const expectedPermissionNames = permissionSeedData
       .filter(
-        ({ module, resource }) =>
-          operationalModules.has(module) && resource !== 'patient-treatment-plan'
+        ({ module, name, resource }) =>
+          operationalModules.has(module) &&
+          resource !== 'patient-treatment-plan' &&
+          name !== 'appointment:reassign-therapist'
       )
       .map(({ name }) => name)
       .sort();
