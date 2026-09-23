@@ -5,6 +5,7 @@ import { parseAsInteger, useQueryState } from 'nuqs';
 
 import { useWorkOrderTypesQuery } from '@/app/queries/asset-masters/work-order-types/useWorkOrderTypes';
 import { useWorkOrdersQuery } from '@/app/queries/assets-management/work-orders/useWorkOrders';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCount } from '@/lib/format-count';
 import { NewWorkOrderSheet } from './_sheets/new-work-order-sheet';
@@ -23,6 +24,12 @@ export function MaintenancePageImpl() {
   const [typeParam, setTypeParam] = useQueryState('typeId', { defaultValue: '' });
   const [pageParam, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [workOrderParam, setWorkOrderParam] = useQueryState('work-order');
+
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('work-order:create');
 
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const typeId = parseOptionalId(typeParam);
@@ -56,6 +63,16 @@ export function MaintenancePageImpl() {
       void setPage(lastPage);
     }
   }, [meta, page, pageParam, setPage]);
+
+  const workOrderAccessDenied =
+    workOrderParam === 'new' && !canCreateLoading && !canCreateError && !canCreate;
+
+  useEffect(() => {
+    if (workOrderAccessDenied) {
+      void setWorkOrderParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workOrderAccessDenied]);
 
   function goToFirstPage() {
     void setPage(1);
@@ -99,6 +116,7 @@ export function MaintenancePageImpl() {
                 goToFirstPage();
               }}
               onNewWorkOrder={() => void setWorkOrderParam('new')}
+              canCreate={canCreate}
             />
 
             <WorkOrderQueueTable
@@ -116,7 +134,7 @@ export function MaintenancePageImpl() {
         </Card>
       </div>
 
-      <NewWorkOrderSheet open={workOrderParam === 'new'} />
+      <NewWorkOrderSheet open={workOrderParam === 'new' && canCreate} />
     </>
   );
 }

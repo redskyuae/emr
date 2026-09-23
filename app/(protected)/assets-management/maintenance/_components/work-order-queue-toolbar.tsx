@@ -19,6 +19,7 @@ type WorkOrderQueueToolbarProps = {
   typeValue: string;
   onTypeChange: (value: string) => void;
   onNewWorkOrder: () => void;
+  canCreate: boolean;
 };
 
 export function WorkOrderQueueToolbar({
@@ -28,6 +29,7 @@ export function WorkOrderQueueToolbar({
   typeValue,
   onTypeChange,
   onNewWorkOrder,
+  canCreate,
 }: WorkOrderQueueToolbarProps) {
   const [searchDraft, setSearchDraft] = useState(search);
   const [syncedSearch, setSyncedSearch] = useState(search);
@@ -92,10 +94,12 @@ export function WorkOrderQueueToolbar({
         })}
       </div>
 
-      <Button type="button" className="w-full sm:w-auto 2xl:ml-auto" onClick={onNewWorkOrder}>
-        <Plus className="size-4" />
-        <span>New work order</span>
-      </Button>
+      {canCreate ? (
+        <Button type="button" className="w-full sm:w-auto 2xl:ml-auto" onClick={onNewWorkOrder}>
+          <Plus className="size-4" />
+          <span>New work order</span>
+        </Button>
+      ) : null}
     </div>
   );
 }
