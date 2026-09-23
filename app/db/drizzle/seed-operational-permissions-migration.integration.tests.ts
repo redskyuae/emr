@@ -62,7 +62,7 @@ describe('0056 operational permissions migration', () => {
       tenantId
     );
 
-    expect(expectedPermissionNames).toHaveLength(47);
+    expect(expectedPermissionNames).toHaveLength(48);
     expect(tenantAdminPermissions.map(({ name }) => name).sort()).toEqual(
       expectedPermissionNames
     );

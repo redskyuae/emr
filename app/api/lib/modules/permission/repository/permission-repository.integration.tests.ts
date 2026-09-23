@@ -221,7 +221,7 @@ describe('Permission repository', () => {
     expect(operationalPermissions).toEqual({
       appointment: {
         module: 'appointments',
-        actions: ['read', 'create'],
+        actions: ['read', 'create', 'reassign-therapist'],
       },
       'doctor-rota': {
         module: 'doctor-scheduling',
