@@ -25,11 +25,7 @@ export function MaintenancePageImpl() {
   const [pageParam, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [workOrderParam, setWorkOrderParam] = useQueryState('work-order');
 
-  const {
-    data: canCreate,
-    isLoading: canCreateLoading,
-    isError: canCreateError,
-  } = useHasPermission('work-order:create');
+  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission('work-order:create');
 
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const typeId = parseOptionalId(typeParam);
@@ -64,8 +60,7 @@ export function MaintenancePageImpl() {
     }
   }, [meta, page, pageParam, setPage]);
 
-  const workOrderAccessDenied =
-    workOrderParam === 'new' && !canCreateLoading && !canCreateError && !canCreate;
+  const workOrderAccessDenied = workOrderParam === 'new' && !canCreateLoading && !canCreate;
 
   useEffect(() => {
     if (workOrderAccessDenied) {
