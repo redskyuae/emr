@@ -19,7 +19,7 @@
     "test:watch": "vitest",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
-    "test:db:migrate": "DATABASE_URL=$TEST_DATABASE_URL drizzle-kit migrate"
+    "test:db:migrate": "bun --env-file=.env scripts/test-db-migrate.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

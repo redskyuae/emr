@@ -7,6 +7,7 @@ import { appointmentStatusRepository } from '../../appointment-status/repository
 import { appointmentTypeRepository } from '../../appointment-type/repository/appointment-type-repository';
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
+import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
@@ -32,6 +33,9 @@ vi.mock('../../doctor/repository/doctor-repository', () => ({
 vi.mock('../../patient/repository/patient-repository', () => ({
   patientRepository: { getPatientById: vi.fn() },
 }));
+vi.mock('../../patient-treatment-plan/repository/patient-treatment-plan-repository', () => ({
+  patientTreatmentPlanRepository: { getCurrentByPatientId: vi.fn() },
+}));
 vi.mock('../../patient/validator/patient-emirates-id-validator', () => ({
   validatePatientEmiratesIdUniqueness: vi.fn(),
 }));
@@ -49,10 +53,7 @@ vi.mock('../repository/appointment-repository', () => ({
   },
 }));
 vi.mock('../../treatment/repository/treatment-repository', () => ({
-  treatmentRepository: {
-    getTreatmentById: vi.fn(),
-    getTreatmentSessionById: vi.fn(),
-  },
+  treatmentRepository: { getTreatmentById: vi.fn() },
 }));
 
 const tenantRepo = vi.mocked(tenantRepository);
@@ -61,6 +62,7 @@ const typeRepo = vi.mocked(appointmentTypeRepository);
 const reasonRepo = vi.mocked(appointmentReasonRepository);
 const statusRepo = vi.mocked(appointmentStatusRepository);
 const patientRepo = vi.mocked(patientRepository);
+const planRepo = vi.mocked(patientTreatmentPlanRepository);
 const doctorRepo = vi.mocked(doctorRepository);
 const appointmentRepo = vi.mocked(appointmentRepository);
 const treatmentRepo = vi.mocked(treatmentRepository);
@@ -85,8 +87,29 @@ const procedurePayload = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
-  treatmentId: 400,
-  treatmentSessionId: 401,
+  patientTreatmentPlanId: 400,
+  patientTreatmentPlanSessionId: 401,
+};
+
+const catalogueProcedurePayload = {
+  bookingPath: 'PROCEDURE',
+  patientId: 5,
+  slotDate: '31-12-2099',
+  startTime: '10:00',
+  endTime: '11:15',
+  treatmentId: 500,
+};
+
+const currentPlan = {
+  id: 400,
+  sessions: [{ id: 401, isBookable: true }],
+};
+
+const repeatableTreatment = {
+  id: 500,
+  sessionStructure: 'REPEATABLE',
+  defaultTotalSessions: 6,
+  sessions: [{ id: 501 }],
 };
 
 const activePatient = { id: 5, isActive: true, registrationStatus: 'registered' as const };
@@ -112,8 +135,8 @@ describe('validateCreateAppointment', () => {
     appointmentRepo.getReservedSlotTimes.mockResolvedValue([]);
     patientRepo.getPatientById.mockResolvedValue(activePatient as never);
     doctorRepo.getDoctorById.mockResolvedValue({ id: 1, isActive: true } as never);
-    treatmentRepo.getTreatmentById.mockResolvedValue({ id: 400 } as never);
-    treatmentRepo.getTreatmentSessionById.mockResolvedValue({ id: 401, treatmentId: 400 } as never);
+    planRepo.getCurrentByPatientId.mockResolvedValue([currentPlan] as never);
+    treatmentRepo.getTreatmentById.mockResolvedValue(repeatableTreatment as never);
     validateReferences.mockResolvedValue({ success: true, data: undefined });
     validateEmiratesId.mockResolvedValue({ success: true, data: undefined });
     appointmentRepo.findPotentialPatientMatches.mockResolvedValue([]);
@@ -170,6 +193,93 @@ describe('validateCreateAppointment', () => {
     expect(reasonRepo.getAppointmentReasonById).not.toHaveBeenCalled();
     expect(appointmentRepo.getSlotBookingContext).not.toHaveBeenCalled();
     expect(appointmentRepo.getReservedSlotTimes).not.toHaveBeenCalled();
+    expect(planRepo.getCurrentByPatientId).toHaveBeenCalledWith(5, 'tenant-1');
+  });
+
+  it('should reject an existing Plan Session outside the selected Patient and Tenant current Plans', async () => {
+    planRepo.getCurrentByPatientId.mockResolvedValue([]);
+
+    await expect(validateCreateAppointment(procedurePayload, 'tenant-1')).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Patient Treatment Plan Session is Invalid.'],
+    });
+  });
+
+  it('should reject an unavailable existing Plan Session', async () => {
+    planRepo.getCurrentByPatientId.mockResolvedValue([
+      { ...currentPlan, sessions: [{ id: 401, isBookable: false }] },
+    ] as never);
+
+    await expect(validateCreateAppointment(procedurePayload, 'tenant-1')).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Patient Treatment Plan Session is not available.'],
+    });
+  });
+
+  it('should reject catalogue fallback when any current Plan exists', async () => {
+    await expect(
+      validateCreateAppointment(catalogueProcedurePayload, 'tenant-1')
+    ).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Catalogue Treatment cannot be assigned while the Patient has a current Plan.'],
+    });
+  });
+
+  it('should normalize a Repeatable Treatment count from its default', async () => {
+    planRepo.getCurrentByPatientId.mockResolvedValue([]);
+
+    await expect(
+      validateCreateAppointment(catalogueProcedurePayload, 'tenant-1')
+    ).resolves.toMatchObject({
+      success: true,
+      data: { treatmentId: 500, totalSessions: 6 },
+    });
+  });
+
+  it('should preserve a caller count for a Repeatable Treatment', async () => {
+    planRepo.getCurrentByPatientId.mockResolvedValue([]);
+
+    await expect(
+      validateCreateAppointment({ ...catalogueProcedurePayload, totalSessions: 8 }, 'tenant-1')
+    ).resolves.toMatchObject({
+      success: true,
+      data: { treatmentId: 500, totalSessions: 8 },
+    });
+  });
+
+  it('should require a count for a Repeatable Treatment without a default', async () => {
+    planRepo.getCurrentByPatientId.mockResolvedValue([]);
+    treatmentRepo.getTreatmentById.mockResolvedValue({
+      ...repeatableTreatment,
+      defaultTotalSessions: null,
+    } as never);
+
+    await expect(
+      validateCreateAppointment(catalogueProcedurePayload, 'tenant-1')
+    ).resolves.toMatchObject({
+      success: false,
+      errors: ['Total Sessions is required for a Repeatable Treatment without a default.'],
+    });
+  });
+
+  it('should reject a caller count for a Sequenced Treatment', async () => {
+    planRepo.getCurrentByPatientId.mockResolvedValue([]);
+    treatmentRepo.getTreatmentById.mockResolvedValue({
+      id: 500,
+      sessionStructure: 'SEQUENCED',
+      defaultTotalSessions: null,
+      sessions: [{ id: 501 }, { id: 502 }],
+    } as never);
+
+    await expect(
+      validateCreateAppointment({ ...catalogueProcedurePayload, totalSessions: 2 }, 'tenant-1')
+    ).resolves.toMatchObject({
+      success: false,
+      errors: ['Sequenced Treatments derive their count from Session templates.'],
+    });
   });
 
   it('should validate an active Procedure Doctor without reading scheduling repositories', async () => {

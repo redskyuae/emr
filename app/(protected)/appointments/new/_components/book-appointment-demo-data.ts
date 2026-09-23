@@ -1,78 +1,86 @@
-export type DemoSession = {
+import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
+
+export type BookingSession = {
   id: string;
   sessionNumber: number;
   label: string;
   procedure: string;
-  duration: number;
-  setupMinutes: number;
-  cleaningMinutes: number;
+  duration: number | null;
+  setupMinutes: number | null;
+  cleaningMinutes: number | null;
   preparation: string;
   warning: string;
   equipment: string;
   roomType: string;
   therapistSkill: string;
-  status: 'Scheduled' | 'Completed' | 'Missed';
+  status: 'Pending' | 'Completed' | 'Unavailable';
+  isBookable: boolean;
+  unavailableReason: 'Completed' | 'Reserved by another Appointment' | null;
+  completedAt: Date | string | null;
+  reservedAppointment: {
+    bookingNumber: string;
+    slotDate: string;
+    startTime: string | null;
+    endTime: string | null;
+  } | null;
 };
 
-export type DemoTreatment = {
+export type BookingTreatment = {
   id: number;
+  treatmentId: number | null;
+  patientTreatmentPlanId: number | null;
   name: string;
   code: string;
-  responsibleDoctorId: number;
-  startDate: string;
-  endDate: string;
-  status: 'Active' | 'Complete' | 'Expired';
+  sessionStructure: 'REPEATABLE' | 'SEQUENCED';
+  defaultTotalSessions: number | null;
+  status: 'Pending' | 'In Progress' | 'Completed' | 'Stopped' | 'Available To Assign';
   plannedSessions: number;
   completedSessions: number;
-  sessions: DemoSession[];
-  availableToAssign?: boolean;
-};
-
-export type DemoRoom = {
-  id: number;
-  name: string;
-  roomType: string;
-  location: string;
-  capacity: number;
-  status: 'Ready' | 'Cleaning required' | 'In use' | 'Blocked' | 'Maintenance';
-  conflictReason?: string;
+  sessions: BookingSession[];
+  selectionMode: 'EXISTING_PLAN' | 'CATALOGUE';
 };
 
 export function toBookingTreatment(treatment: {
   id: number;
   name: string;
   code: string;
-  durationMinutes: number;
-  setupMinutes: number;
-  cleaningMinutes: number;
+  durationMinutes: number | null;
+  setupMinutes: number | null;
+  cleaningMinutes: number | null;
   roomType: string | null;
   therapistSkill: string | null;
+  sessionStructure?: 'REPEATABLE' | 'SEQUENCED';
+  defaultTotalSessions?: number | null;
   sessions: Array<{
     id: number;
     label: string;
     procedure: string;
     sessionNumber: number;
-    durationMinutes: number;
-    setupMinutes: number;
-    cleaningMinutes: number;
+    durationMinutes: number | null;
+    setupMinutes: number | null;
+    cleaningMinutes: number | null;
     preparation: string | null;
     warning: string | null;
     equipment: string | null;
     roomType: string | null;
     therapistSkill: string | null;
   }>;
-}): DemoTreatment {
+}): BookingTreatment {
   return {
     id: treatment.id,
+    treatmentId: treatment.id,
+    patientTreatmentPlanId: null,
     name: treatment.name,
     code: treatment.code,
-    responsibleDoctorId: 0,
-    startDate: 'Not started',
-    endDate: 'To be planned',
-    status: 'Active',
-    plannedSessions: treatment.sessions.length,
+    sessionStructure: treatment.sessionStructure ?? 'SEQUENCED',
+    defaultTotalSessions: treatment.defaultTotalSessions ?? null,
+    status: 'Available To Assign',
+    plannedSessions:
+      treatment.sessionStructure === 'REPEATABLE'
+        ? (treatment.defaultTotalSessions ?? 1)
+        : treatment.sessions.length,
     completedSessions: 0,
-    availableToAssign: true,
+    selectionMode: 'CATALOGUE',
     sessions: treatment.sessions.map((session) => ({
       id: String(session.id),
       sessionNumber: session.sessionNumber,
@@ -86,8 +94,109 @@ export function toBookingTreatment(treatment: {
       equipment: session.equipment ?? '',
       roomType: session.roomType ?? treatment.roomType ?? '',
       therapistSkill: session.therapistSkill ?? treatment.therapistSkill ?? '',
-      status: 'Scheduled',
+      status: 'Pending',
+      isBookable: true,
+      unavailableReason: null,
+      completedAt: null,
+      reservedAppointment: null,
     })),
+  };
+}
+
+const PLAN_STATUS_LABELS = {
+  PENDING: 'Pending',
+  IN_PROGRESS: 'In Progress',
+  COMPLETED: 'Completed',
+  STOPPED: 'Stopped',
+} as const;
+
+export function toBookingPatientTreatmentPlan(plan: PatientTreatmentPlan): BookingTreatment {
+  return {
+    id: plan.id,
+    treatmentId: plan.treatmentId,
+    patientTreatmentPlanId: plan.id,
+    name: plan.treatmentName,
+    code: plan.treatmentCode,
+    sessionStructure: plan.sessionStructure,
+    defaultTotalSessions: null,
+    status: PLAN_STATUS_LABELS[plan.status],
+    plannedSessions: plan.totalSessions,
+    completedSessions: plan.completedSessions,
+    selectionMode: 'EXISTING_PLAN',
+    sessions: plan.sessions.map((session) => ({
+      id: String(session.id),
+      sessionNumber: session.sessionNumber,
+      label: session.label ?? `Session ${session.sessionNumber} of ${plan.totalSessions}`,
+      procedure: session.procedure ?? plan.treatmentName,
+      duration: session.durationMinutes,
+      setupMinutes: session.setupMinutes,
+      cleaningMinutes: session.cleaningMinutes,
+      preparation: session.preparation ?? '',
+      warning: session.warning ?? '',
+      equipment: session.equipment ?? '',
+      roomType: session.roomType ?? '',
+      therapistSkill: session.therapistSkill ?? '',
+      status:
+        session.completionStatus === 'COMPLETED'
+          ? 'Completed'
+          : session.isBookable
+            ? 'Pending'
+            : 'Unavailable',
+      isBookable: session.isBookable,
+      unavailableReason:
+        session.unavailableReason === 'COMPLETED'
+          ? 'Completed'
+          : session.unavailableReason === 'RESERVED'
+            ? 'Reserved by another Appointment'
+            : null,
+      completedAt: session.completedAt,
+      reservedAppointment: session.reservedAppointment,
+    })),
+  };
+}
+
+export type TreatmentSelectionState =
+  'LOADING' | 'PLANS' | 'CONFLICT' | 'CATALOGUE' | 'CATALOGUE_FORBIDDEN';
+
+export function getTreatmentSelectionState({
+  isLoading,
+  plans,
+  canAssign,
+}: {
+  isLoading: boolean;
+  plans: BookingTreatment[];
+  canAssign: boolean;
+}): TreatmentSelectionState {
+  if (isLoading) return 'LOADING';
+  if (plans.length > 0) {
+    return plans.some((plan) => plan.sessions.some((session) => session.isBookable))
+      ? 'PLANS'
+      : 'CONFLICT';
+  }
+  return canAssign ? 'CATALOGUE' : 'CATALOGUE_FORBIDDEN';
+}
+
+export function getDefaultTreatmentSelection(
+  plans: BookingTreatment[],
+  selectedPlanId: string,
+  selectedSessionId = ''
+) {
+  const plan =
+    plans.length === 1
+      ? plans[0]
+      : plans.find((candidate) => String(candidate.patientTreatmentPlanId) === selectedPlanId);
+  const selectedSession = plan?.sessions.find(
+    (candidate) => candidate.id === selectedSessionId && candidate.isBookable
+  );
+  const session =
+    selectedSession ??
+    plan?.sessions
+      .filter((candidate) => candidate.isBookable)
+      .sort((left, right) => left.sessionNumber - right.sessionNumber)[0];
+
+  return {
+    patientTreatmentPlanId: plan ? String(plan.patientTreatmentPlanId) : '',
+    patientTreatmentPlanSessionId: session?.id ?? '',
   };
 }
 
@@ -111,7 +220,7 @@ export const DEMO_FACILITY = {
   timeZone: 'Asia/Dubai (GST)',
 };
 
-const abhyangaSessions: DemoSession[] = [
+const abhyangaSessions: BookingSession[] = [
   {
     id: '300-3',
     sessionNumber: 3,
@@ -125,7 +234,11 @@ const abhyangaSessions: DemoSession[] = [
     equipment: 'Steam cabinet, warm sesame oil, towels',
     roomType: 'Panchakarma room',
     therapistSkill: 'Abhyanga',
-    status: 'Scheduled',
+    status: 'Pending',
+    isBookable: true,
+    unavailableReason: null,
+    completedAt: null,
+    reservedAppointment: null,
   },
   {
     id: '300-4',
@@ -140,7 +253,11 @@ const abhyangaSessions: DemoSession[] = [
     equipment: 'Steam cabinet, warm sesame oil, towels',
     roomType: 'Panchakarma room',
     therapistSkill: 'Abhyanga',
-    status: 'Scheduled',
+    status: 'Pending',
+    isBookable: true,
+    unavailableReason: null,
+    completedAt: null,
+    reservedAppointment: null,
   },
   {
     id: '300-5',
@@ -155,22 +272,27 @@ const abhyangaSessions: DemoSession[] = [
     equipment: 'Steam cabinet, warm sesame oil, towels',
     roomType: 'Panchakarma room',
     therapistSkill: 'Abhyanga',
-    status: 'Scheduled',
+    status: 'Pending',
+    isBookable: true,
+    unavailableReason: null,
+    completedAt: null,
+    reservedAppointment: null,
   },
 ];
 
-export const DEMO_TREATMENT_CATALOG: DemoTreatment[] = [
+export const DEMO_TREATMENT_CATALOG: BookingTreatment[] = [
   {
     id: 400,
+    treatmentId: 400,
+    patientTreatmentPlanId: null,
     name: 'Abhyanga wellness programme',
     code: 'TRT-0400',
-    responsibleDoctorId: 18,
-    startDate: 'Not started',
-    endDate: 'To be planned',
-    status: 'Active',
+    sessionStructure: 'SEQUENCED',
+    defaultTotalSessions: null,
+    status: 'Available To Assign',
     plannedSessions: 6,
     completedSessions: 0,
-    availableToAssign: true,
+    selectionMode: 'CATALOGUE',
     sessions: abhyangaSessions.map((session, index) => ({
       ...session,
       id: `400-${index + 1}`,
@@ -180,15 +302,16 @@ export const DEMO_TREATMENT_CATALOG: DemoTreatment[] = [
   },
   {
     id: 401,
+    treatmentId: 401,
+    patientTreatmentPlanId: null,
     name: 'Shirodhara relaxation programme',
     code: 'TRT-0401',
-    responsibleDoctorId: 31,
-    startDate: 'Not started',
-    endDate: 'To be planned',
-    status: 'Active',
+    sessionStructure: 'SEQUENCED',
+    defaultTotalSessions: null,
+    status: 'Available To Assign',
     plannedSessions: 2,
     completedSessions: 0,
-    availableToAssign: true,
+    selectionMode: 'CATALOGUE',
     sessions: abhyangaSessions.slice(0, 2).map((session, index) => ({
       ...session,
       id: `401-${index + 1}`,
@@ -198,43 +321,6 @@ export const DEMO_TREATMENT_CATALOG: DemoTreatment[] = [
       therapistSkill: 'Shirodhara',
       roomType: 'Therapy room',
     })),
-  },
-];
-
-export const DEMO_ROOMS: DemoRoom[] = [
-  {
-    id: 7,
-    name: 'Panchakarma Room 1',
-    roomType: 'Panchakarma room',
-    location: 'Wellness wing · Level 2',
-    capacity: 1,
-    status: 'Ready',
-  },
-  {
-    id: 8,
-    name: 'Panchakarma Room 2',
-    roomType: 'Panchakarma room',
-    location: 'Wellness wing · Level 2',
-    capacity: 1,
-    status: 'Cleaning required',
-    conflictReason: 'Cleaning cycle ends at 09:30.',
-  },
-  {
-    id: 9,
-    name: 'Consultation Room 4',
-    roomType: 'Consultation room',
-    location: 'Clinical wing · Level 1',
-    capacity: 2,
-    status: 'Ready',
-    conflictReason: 'Does not meet the Session room requirement.',
-  },
-  {
-    id: 10,
-    name: 'Therapy Room 1',
-    roomType: 'Therapy room',
-    location: 'Wellness wing · Level 2',
-    capacity: 1,
-    status: 'Ready',
   },
 ];
 

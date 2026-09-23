@@ -2,6 +2,9 @@ import type { PatientRegistrationStatus } from '@/app/api/lib/modules/patient/sc
 
 export type BookingPath = 'CONSULTATION' | 'PROCEDURE';
 
+export const PROCEDURE_SELECTION_MODE_VALUES = ['EXISTING_PLAN', 'CATALOGUE'] as const;
+export type ProcedureSelectionMode = (typeof PROCEDURE_SELECTION_MODE_VALUES)[number];
+
 export type BookablePatient = {
   id: number;
   mrn: string;

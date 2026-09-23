@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import type { CreateAppointmentRequest } from './types';
 
@@ -10,30 +10,81 @@ describe('CreateAppointmentRequest', () => {
       slotDate: '31-12-2099',
       startTime: '10:00',
       endTime: '11:15',
-      treatmentId: 400,
-      treatmentSessionId: 401,
+      patientTreatmentPlanId: 400,
+      patientTreatmentPlanSessionId: 401,
     } satisfies CreateAppointmentRequest;
 
     expect(request.bookingPath).toBe('PROCEDURE');
   });
 
-  it('should not expose Patient registration-only fields for a Provisional Patient', () => {
+  it('should expose the catalogue assignment wire contract', () => {
     const request = {
       bookingPath: 'PROCEDURE',
-      provisionalPatient: {
-        firstName: 'Asha',
-        lastName: 'Rao',
-        phone: '9876543210',
-        // @ts-expect-error The strict Appointment schema does not accept this Patient field.
-        preferredPaymentMethod: 'cash',
-      },
+      patientId: 5,
       slotDate: '31-12-2099',
       startTime: '10:00',
       endTime: '11:15',
       treatmentId: 400,
-      treatmentSessionId: 401,
+      totalSessions: 6,
     } satisfies CreateAppointmentRequest;
 
     expect(request.bookingPath).toBe('PROCEDURE');
+  });
+
+  it('should exclude mixed, partial, and Provisional Procedure requests from the contract', () => {
+    expectTypeOf<{
+      bookingPath: 'PROCEDURE';
+      patientId: 5;
+      slotDate: '31-12-2099';
+      startTime: '10:00';
+      endTime: '11:15';
+      treatmentId: 400;
+      patientTreatmentPlanId: 500;
+      patientTreatmentPlanSessionId: 501;
+    }>().not.toMatchTypeOf<CreateAppointmentRequest>();
+    expectTypeOf<{
+      bookingPath: 'PROCEDURE';
+      patientId: 5;
+      slotDate: '31-12-2099';
+      startTime: '10:00';
+      endTime: '11:15';
+      patientTreatmentPlanId: 500;
+    }>().not.toMatchTypeOf<CreateAppointmentRequest>();
+    expectTypeOf<{
+      bookingPath: 'PROCEDURE';
+      provisionalPatient: { firstName: 'Asha'; lastName: 'Rao'; phone: '9876543210' };
+      slotDate: '31-12-2099';
+      startTime: '10:00';
+      endTime: '11:15';
+      treatmentId: 400;
+    }>().not.toMatchTypeOf<CreateAppointmentRequest>();
+  });
+
+  it('should not expose server-owned Procedure snapshot fields', () => {
+    expectTypeOf<{
+      bookingPath: 'PROCEDURE';
+      patientId: 5;
+      slotDate: '31-12-2099';
+      startTime: '10:00';
+      endTime: '11:15';
+      treatmentId: 400;
+      treatmentSessionId: 401;
+    }>().not.toMatchTypeOf<CreateAppointmentRequest>();
+  });
+
+  it('should preserve the Consultation Patient selector contract', () => {
+    const request = {
+      bookingPath: 'CONSULTATION',
+      provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+      doctorId: 1,
+      appointmentModeId: 2,
+      appointmentTypeId: 3,
+      appointmentReasonId: 4,
+      slotDate: '31-12-2099',
+      doctorRotaId: 5,
+      slotTimes: ['10:00'],
+    } satisfies CreateAppointmentRequest;
+
+    expect(request.bookingPath).toBe('CONSULTATION');
   });
 });

@@ -42,11 +42,13 @@ const optionalTextSchema = (fieldName: string, maxLength: number) =>
     .optional();
 
 const minutesSchema = (fieldName: string, { min = 0 }: { min?: number } = {}) =>
-  z.coerce
-    .number({ error: `${fieldName} is required` })
-    .int(`${fieldName} must be an integer`)
-    .min(min, `${fieldName} must be at least ${min}`)
-    .max(480, `${fieldName} must be at most 480`);
+  z.union([z.number(), z.string().trim().min(1)]).pipe(
+    z.coerce
+      .number<string | number>({ error: `${fieldName} is required` })
+      .int(`${fieldName} must be an integer`)
+      .min(min, `${fieldName} must be at least ${min}`)
+      .max(480, `${fieldName} must be at most 480`)
+  );
 
 const optionalNameSchema = (fieldName: string) =>
   z
@@ -96,11 +98,15 @@ export const treatmentSessionIdSchema = z.coerce
   .positive('Treatment session ID must be positive');
 
 export const treatmentTenantIdSchema = tenantIdSchema;
+export const treatmentSessionStructureSchema = z.enum(['REPEATABLE', 'SEQUENCED']);
+export type TreatmentSessionStructure = z.infer<typeof treatmentSessionStructureSchema>;
 
 export const createTreatmentSchema = z
   .object({
     name: treatmentNameSchema,
     code: treatmentCodeSchema,
+    sessionStructure: treatmentSessionStructureSchema.default('SEQUENCED'),
+    defaultTotalSessions: z.number().int().positive().nullable().optional(),
     description: optionalTextSchema('Treatment description', 500),
     durationMinutes: minutesSchema('Treatment duration', { min: 1 }),
     setupMinutes: minutesSchema('Treatment setup minutes').default(0),
@@ -116,7 +122,37 @@ export const createTreatmentSchema = z
         'Session numbers must be unique'
       ),
   })
-  .strict();
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.sessionStructure === 'REPEATABLE' && data.sessions.length !== 1) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['sessions'],
+        message: 'Repeatable Treatments require exactly one Session template',
+      });
+    }
+    if (data.sessionStructure === 'SEQUENCED') {
+      if (data.defaultTotalSessions != null) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['defaultTotalSessions'],
+          message: 'Sequenced Treatments derive their count from Session templates',
+        });
+      }
+      if (
+        data.sessions.some(
+          (session, index) =>
+            index > 0 && session.sessionNumber <= data.sessions[index - 1].sessionNumber
+        )
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['sessions'],
+          message: 'Sequenced Session numbers must be in ascending order',
+        });
+      }
+    }
+  });
 
 export const updateTreatmentSchema = z
   .object({
@@ -135,7 +171,10 @@ export type TreatmentIdInput = z.infer<typeof treatmentIdSchema>;
 export type TreatmentTenantIdInput = z.infer<typeof treatmentTenantIdSchema>;
 export type CreateTreatmentInput = z.infer<typeof createTreatmentSchema>;
 export type UpdateTreatmentInput = z.infer<typeof updateTreatmentSchema>;
-export type CreateTreatmentData = CreateTreatmentInput & { tenantId: string };
+export type CreateTreatmentData = Omit<CreateTreatmentInput, 'sessionStructure'> & {
+  tenantId: string;
+  sessionStructure?: TreatmentSessionStructure;
+};
 export type UpdateTreatmentData = UpdateTreatmentInput & { tenantId: string };
 
 export type TreatmentSession = {
@@ -147,9 +186,9 @@ export type TreatmentSession = {
   treatmentId: number;
   modifiedOn: Date;
   sessionNumber: number;
-  durationMinutes: number;
-  setupMinutes: number;
-  cleaningMinutes: number;
+  durationMinutes: number | null;
+  setupMinutes: number | null;
+  cleaningMinutes: number | null;
   preparation: string | null;
   warning: string | null;
   equipment: string | null;
@@ -165,9 +204,13 @@ export type Treatment = {
   createdOn: Date;
   modifiedOn: Date;
   description: string | null;
-  durationMinutes: number;
-  setupMinutes: number;
-  cleaningMinutes: number;
+  sessionStructure: TreatmentSessionStructure;
+  defaultTotalSessions: number | null;
+  legacySourceIdentity: string | null;
+  legacySourceSystem: string | null;
+  durationMinutes: number | null;
+  setupMinutes: number | null;
+  cleaningMinutes: number | null;
   roomType: string | null;
   therapistSkill: string | null;
   sessions: TreatmentSession[];
@@ -191,9 +234,9 @@ export type TreatmentSessionSummary = {
   label: string;
   procedure: string;
   sessionNumber: number;
-  durationMinutes: number;
-  setupMinutes: number;
-  cleaningMinutes: number;
+  durationMinutes: number | null;
+  setupMinutes: number | null;
+  cleaningMinutes: number | null;
   roomType: string | null;
   therapistSkill: string | null;
 };

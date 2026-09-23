@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { createAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/create-appointment-command';
 import { getAppointmentsQuery } from '@/app/api/lib/modules/appointment/queries/get-appointments-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 import type { CreateAppointmentResponse, ListAppointmentsResponse } from './types';
 
@@ -76,6 +76,14 @@ export async function POST(request: NextRequest) {
       return tenantSession;
     }
 
+    const createPermissionResponse = await requireTenantPermissions(tenantSession, [
+      'appointment:create',
+    ]);
+
+    if (createPermissionResponse) {
+      return createPermissionResponse;
+    }
+
     let payload: unknown;
 
     try {
@@ -85,6 +93,26 @@ export async function POST(request: NextRequest) {
         { message: 'Request body must be valid JSON' },
         { status: StatusCodes.BAD_REQUEST }
       );
+    }
+
+    if (isProcedurePayload(payload)) {
+      const selection = classifyProcedureSelection(payload);
+
+      if (selection === 'INVALID') {
+        return invalidProcedureSelectionResponse();
+      }
+
+      const procedurePermission =
+        selection === 'EXISTING_PLAN'
+          ? 'patient-treatment-plan:read'
+          : 'patient-treatment-plan:assign';
+      const procedurePermissionResponse = await requireTenantPermissions(tenantSession, [
+        procedurePermission,
+      ]);
+
+      if (procedurePermissionResponse) {
+        return procedurePermissionResponse;
+      }
     }
 
     const result = await createAppointmentCommand(payload, tenantSession.tenantId);
@@ -112,4 +140,43 @@ export async function POST(request: NextRequest) {
       { status: StatusCodes.INTERNAL_SERVER_ERROR }
     );
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isProcedurePayload(payload: unknown): payload is Record<string, unknown> {
+  return isRecord(payload) && payload.bookingPath === 'PROCEDURE';
+}
+
+function classifyProcedureSelection(
+  payload: Record<string, unknown>
+): 'EXISTING_PLAN' | 'CATALOGUE' | 'INVALID' {
+  const hasPlanId = Object.hasOwn(payload, 'patientTreatmentPlanId');
+  const hasPlanSessionId = Object.hasOwn(payload, 'patientTreatmentPlanSessionId');
+  const hasTreatmentId = Object.hasOwn(payload, 'treatmentId');
+  const hasTotalSessions = Object.hasOwn(payload, 'totalSessions');
+
+  if (hasPlanId && hasPlanSessionId && !hasTreatmentId && !hasTotalSessions) {
+    return 'EXISTING_PLAN';
+  }
+
+  if (hasTreatmentId && !hasPlanId && !hasPlanSessionId) {
+    return 'CATALOGUE';
+  }
+
+  return 'INVALID';
+}
+
+function invalidProcedureSelectionResponse() {
+  return NextResponse.json(
+    {
+      message: 'Validation failed',
+      errors: [
+        'Procedure selection must identify exactly one Patient Treatment Plan Session or catalogue Treatment.',
+      ],
+    },
+    { status: StatusCodes.BAD_REQUEST }
+  );
 }

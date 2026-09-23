@@ -32,6 +32,85 @@ const errorsOf = (result: ReturnType<typeof createTreatmentSchema.safeParse>) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
 
 describe('Treatment schema', () => {
+  it('should default native Treatments to Sequenced and accept both Session Structures', () => {
+    expect(createTreatmentSchema.parse(validPayload)).toMatchObject({
+      sessionStructure: 'SEQUENCED',
+    });
+    for (const sessionStructure of ['SEQUENCED', 'REPEATABLE']) {
+      expect(createTreatmentSchema.safeParse({ ...validPayload, sessionStructure }).success).toBe(
+        true
+      );
+    }
+    expect(
+      createTreatmentSchema.safeParse({ ...validPayload, sessionStructure: 'OTHER' }).success
+    ).toBe(false);
+  });
+
+  it('should require exactly one Repeatable template and a positive default count', () => {
+    expect(
+      createTreatmentSchema.safeParse({
+        ...validPayload,
+        sessionStructure: 'REPEATABLE',
+        defaultTotalSessions: 20,
+      }).success
+    ).toBe(true);
+    expect(
+      createTreatmentSchema.safeParse({
+        ...validPayload,
+        sessionStructure: 'REPEATABLE',
+        sessions: [session, { ...session, sessionNumber: 2 }],
+      }).success
+    ).toBe(false);
+    expect(
+      createTreatmentSchema.safeParse({
+        ...validPayload,
+        sessionStructure: 'REPEATABLE',
+        defaultTotalSessions: 0,
+      }).success
+    ).toBe(false);
+    expect(
+      createTreatmentSchema.safeParse({
+        ...validPayload,
+        sessionStructure: 'SEQUENCED',
+        defaultTotalSessions: 6,
+      }).success
+    ).toBe(false);
+  });
+
+  it('should require ascending unique Sequenced Session numbers', () => {
+    expect(
+      createTreatmentSchema.safeParse({
+        ...validPayload,
+        sessions: [{ ...session, sessionNumber: 2 }, session],
+      }).success
+    ).toBe(false);
+    expect(
+      createTreatmentSchema.safeParse({
+        ...validPayload,
+        sessions: [session, { ...session, sessionNumber: 2 }],
+      }).success
+    ).toBe(true);
+  });
+
+  it('should reject unknown timing values in staff create and update requests', () => {
+    const { sessions, ...header } = validPayload;
+    for (const field of ['durationMinutes', 'setupMinutes', 'cleaningMinutes']) {
+      expect(createTreatmentSchema.safeParse({ ...validPayload, [field]: null }).success).toBe(
+        false
+      );
+      expect(updateTreatmentSchema.safeParse({ ...header, [field]: null }).success).toBe(false);
+      expect(
+        createTreatmentSchema.safeParse({
+          ...validPayload,
+          sessions: [{ ...sessions[0], [field]: null }],
+        }).success
+      ).toBe(false);
+    }
+    expect(createTreatmentSchema.safeParse({ ...validPayload, durationMinutes: 0 }).success).toBe(
+      false
+    );
+  });
+
   it('should return validation error when name is missing', () => {
     expect(
       errorsOf(createTreatmentSchema.safeParse({ code: 'TRT-0400', sessions: [session] }))

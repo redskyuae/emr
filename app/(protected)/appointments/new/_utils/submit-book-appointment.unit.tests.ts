@@ -11,17 +11,15 @@ describe('submit Book Appointment', () => {
     await submitBookAppointmentAndNavigate(
       {
         ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
-        patientMode: 'provisional',
+        patientId: '82',
+        patientMode: 'existing',
         visitType: 'PROCEDURE',
-        firstName: 'Asha',
-        lastName: 'Rao',
-        phone: '9876543210',
         doctorId: 'not-applicable',
+        selectionMode: 'CATALOGUE',
         slotDate: '2099-12-31',
         startTime: '09:00',
         endTime: '09:30',
         treatmentId: '400',
-        sessionId: '4001',
         roomId: '7',
         therapistId: '41',
       },
@@ -83,6 +81,7 @@ describe('submit Book Appointment', () => {
         patientMode: 'existing',
         visitType: 'PROCEDURE',
         doctorId: 'not-applicable',
+        selectionMode: 'CATALOGUE',
         slotDate: '2099-12-31',
         startTime: '09:00',
         endTime: '09:30',
@@ -142,7 +141,6 @@ describe('submit Book Appointment', () => {
       startTime: '09:00',
       endTime: '09:30',
       treatmentId: 400,
-      treatmentSessionId: 4001,
       remarks: undefined,
     });
     expect(confirmation).toEqual({

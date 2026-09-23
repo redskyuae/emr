@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { beforeEach } from 'vitest';
 import { sql } from 'drizzle-orm';
 

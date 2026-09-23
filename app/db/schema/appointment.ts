@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   check,
   date,
   index,
@@ -20,6 +21,10 @@ import { doctor as doctorTable } from './doctor';
 import { doctorRota as doctorRotaTable } from './doctor-rota';
 import { masterColumns } from './helpers';
 import { patient as patientTable } from './patient';
+import {
+  patientTreatmentPlan as patientTreatmentPlanTable,
+  patientTreatmentPlanSession as patientTreatmentPlanSessionTable,
+} from './patient-treatment-plan';
 import {
   treatment as treatmentTable,
   treatmentSession as treatmentSessionTable,
@@ -51,6 +56,12 @@ export const appointment = pgTable(
       .references(() => appointmentStatusTable.id),
     treatmentId: integer('treatment_id').references(() => treatmentTable.id),
     treatmentSessionId: integer('treatment_session_id').references(() => treatmentSessionTable.id),
+    patientTreatmentPlanId: integer('patient_treatment_plan_id').references(
+      (): AnyPgColumn => patientTreatmentPlanTable.id
+    ),
+    patientTreatmentPlanSessionId: integer('patient_treatment_plan_session_id').references(
+      (): AnyPgColumn => patientTreatmentPlanSessionTable.id
+    ),
     appointmentCancelledReasonId: integer('appointment_cancelled_reason_id').references(
       () => appointmentCancelledReasonTable.id
     ),
@@ -69,6 +80,10 @@ export const appointment = pgTable(
     deletedOn,
   },
   (table) => ({
+    patientTreatmentPlanPairCheck: check(
+      'appointment_patient_treatment_plan_pair_check',
+      sql`(${table.patientTreatmentPlanId} is null) = (${table.patientTreatmentPlanSessionId} is null)`
+    ),
     bookingPathCheck: check(
       'appointment_booking_path_check',
       sql`${table.bookingPath} in ('CONSULTATION', 'PROCEDURE')`
