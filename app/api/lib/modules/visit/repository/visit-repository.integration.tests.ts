@@ -115,7 +115,7 @@ async function createAppointment(
     .returning({ id: appointmentReasonTable.id });
 
   // Every system category must exist so the Visit transitions can resolve them.
-  const statuses = await db
+  await db
     .insert(appointmentStatusTable)
     .values(
       (['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] as const).map(
@@ -128,7 +128,11 @@ async function createAppointment(
         })
       )
     )
-    .returning({ id: appointmentStatusTable.id, category: appointmentStatusTable.category });
+    .onConflictDoNothing();
+  const statuses = await db
+    .select({ id: appointmentStatusTable.id, category: appointmentStatusTable.category })
+    .from(appointmentStatusTable)
+    .where(eq(appointmentStatusTable.tenantId, tenantId));
 
   const statusId = statuses.find((status) => status.category === category)!.id;
 
