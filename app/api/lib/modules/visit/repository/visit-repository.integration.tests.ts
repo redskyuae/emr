@@ -12,9 +12,16 @@ import { appointmentType as appointmentTypeTable } from '@/app/db/schema/appoint
 import { organization, user } from '@/app/db/schema/auth';
 import { doctor as doctorTable } from '@/app/db/schema/doctor';
 import { patient as patientTable } from '@/app/db/schema/patient';
+import {
+  patientTreatmentPlan as patientTreatmentPlanTable,
+  patientTreatmentPlanSession as patientTreatmentPlanSessionTable,
+  patientTreatmentPlanSessionReservation as patientTreatmentPlanSessionReservationTable,
+} from '@/app/db/schema/patient-treatment-plan';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
+import { treatment as treatmentTable } from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
+import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
 import type { ValidatedCheckInVisitData } from '../schemas/visit-schema';
 import { visitRepository } from './visit-repository';
@@ -108,7 +115,7 @@ async function createAppointment(
     .returning({ id: appointmentReasonTable.id });
 
   // Every system category must exist so the Visit transitions can resolve them.
-  const statuses = await db
+  await db
     .insert(appointmentStatusTable)
     .values(
       (['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] as const).map(
@@ -121,7 +128,11 @@ async function createAppointment(
         })
       )
     )
-    .returning({ id: appointmentStatusTable.id, category: appointmentStatusTable.category });
+    .onConflictDoNothing();
+  const statuses = await db
+    .select({ id: appointmentStatusTable.id, category: appointmentStatusTable.category })
+    .from(appointmentStatusTable)
+    .where(eq(appointmentStatusTable.tenantId, tenantId));
 
   const statusId = statuses.find((status) => status.category === category)!.id;
 
@@ -145,6 +156,93 @@ async function createAppointment(
     appointmentId: appointment.id,
     statusIdsByCategory: new Map(statuses.map((status) => [status.category, status.id])),
   };
+}
+
+async function createPlanLinkedProcedureAppointments(
+  tenantId: string,
+  fixtures: TenantFixtures,
+  sessionCount = 2
+) {
+  const statuses = await db
+    .insert(appointmentStatusTable)
+    .values(
+      (['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] as const).map(
+        (category) => ({
+          tenantId,
+          category,
+          name: category,
+          code: category.slice(0, 3),
+          isSystem: true,
+        })
+      )
+    )
+    .returning({ id: appointmentStatusTable.id, category: appointmentStatusTable.category });
+  const scheduledStatus = statuses.find((status) => status.category === 'SCHEDULED');
+  if (!scheduledStatus) throw new Error('scheduled status not created');
+  const [treatment] = await db
+    .insert(treatmentTable)
+    .values({
+      tenantId,
+      name: 'Abhyanga Therapy',
+      code: 'ABHY',
+      sessionStructure: 'REPEATABLE',
+      defaultTotalSessions: sessionCount,
+    })
+    .returning({ id: treatmentTable.id });
+  const [plan] = await db
+    .insert(patientTreatmentPlanTable)
+    .values({
+      tenantId,
+      patientId: fixtures.patientId,
+      treatmentId: treatment.id,
+      treatmentName: 'Abhyanga Therapy',
+      treatmentCode: 'ABHY',
+      sessionStructure: 'REPEATABLE',
+      totalSessions: sessionCount,
+    })
+    .returning({ id: patientTreatmentPlanTable.id });
+  const sessions = await db
+    .insert(patientTreatmentPlanSessionTable)
+    .values(
+      Array.from({ length: sessionCount }, (_, index) => ({
+        tenantId,
+        patientTreatmentPlanId: plan.id,
+        sessionNumber: index + 1,
+        label: `Session ${index + 1}`,
+        procedure: 'Abhyanga Therapy',
+      }))
+    )
+    .returning({ id: patientTreatmentPlanSessionTable.id });
+
+  const appointments: { id: number }[] = [];
+  for (const [index, session] of sessions.entries()) {
+    const [appointment] = await db
+      .insert(appointmentTable)
+      .values({
+        tenantId,
+        bookingPath: 'PROCEDURE',
+        bookingNumber: `APT-PLAN-${index + 1}`,
+        patientId: fixtures.patientId,
+        doctorId: fixtures.doctorId,
+        appointmentStatusId: scheduledStatus.id,
+        treatmentId: treatment.id,
+        patientTreatmentPlanId: plan.id,
+        patientTreatmentPlanSessionId: session.id,
+        slotDate: TODAY,
+        startTime: `${String(10 + index).padStart(2, '0')}:00`,
+        endTime: `${String(11 + index).padStart(2, '0')}:00`,
+      })
+      .returning({ id: appointmentTable.id });
+
+    await db.insert(patientTreatmentPlanSessionReservationTable).values({
+      tenantId,
+      appointmentId: appointment.id,
+      patientTreatmentPlanSessionId: session.id,
+    });
+    appointments.push(appointment);
+  }
+
+  return { plan, sessions, appointments };
 }
 
 const checkInData = (
@@ -171,6 +269,20 @@ async function appointmentStatusCategoryOf(appointmentId: number) {
     .where(eq(appointmentTable.id, appointmentId));
 
   return row.category;
+}
+
+async function planSessionCompletionOf(sessionId: number) {
+  const [row] = await db
+    .select({
+      completedAt: patientTreatmentPlanSessionTable.completedAt,
+      completionSource: patientTreatmentPlanSessionTable.completionSource,
+      completedVisitId: patientTreatmentPlanSessionTable.completedVisitId,
+      completionStatus: patientTreatmentPlanSessionTable.completionStatus,
+    })
+    .from(patientTreatmentPlanSessionTable)
+    .where(eq(patientTreatmentPlanSessionTable.id, sessionId));
+
+  return row;
 }
 
 describe('Visit repository', () => {
@@ -424,6 +536,113 @@ describe('Visit repository', () => {
   });
 
   describe('transitions', () => {
+    it('should leave a linked Patient Treatment Plan Session pending on Check-in and Visit cancellation', async () => {
+      const { sessions, appointments } = await createPlanLinkedProcedureAppointments(
+        tenantA,
+        fixturesA,
+        1
+      );
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId: appointments[0].id })
+      );
+      if (!created.success) throw new Error('check-in failed');
+
+      await expect(planSessionCompletionOf(sessions[0].id)).resolves.toMatchObject({
+        completionStatus: 'PENDING',
+        completionSource: null,
+        completedVisitId: null,
+        completedAt: null,
+      });
+
+      await visitRepository.cancelVisit(created.data.id, tenantA, 'Patient left');
+
+      await expect(planSessionCompletionOf(sessions[0].id)).resolves.toMatchObject({
+        completionStatus: 'PENDING',
+        completionSource: null,
+        completedVisitId: null,
+        completedAt: null,
+      });
+    });
+
+    it('should complete the linked Patient Treatment Plan Session with Visit metadata', async () => {
+      const { sessions, appointments } = await createPlanLinkedProcedureAppointments(
+        tenantA,
+        fixturesA
+      );
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId: appointments[0].id })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+
+      const result = await visitRepository.completeVisit(created.data.id, tenantA);
+
+      expect(result).toMatchObject({ outcome: 'updated', data: { status: 'COMPLETED' } });
+      if (result.outcome !== 'updated') throw new Error('completion failed');
+      const completedSession = await planSessionCompletionOf(sessions[0].id);
+      expect(completedSession).toEqual({
+        completionStatus: 'COMPLETED',
+        completionSource: 'VISIT',
+        completedVisitId: created.data.id,
+        completedAt: result.data.completedAt,
+      });
+      await expect(
+        patientTreatmentPlanRepository.getCurrentByPatientId(fixturesA.patientId, tenantA)
+      ).resolves.toMatchObject([{ status: 'IN_PROGRESS', completedSessions: 1 }]);
+    });
+
+    it('should not complete a Plan Session linked from a non-Procedure Appointment', async () => {
+      const { plan, sessions } = await createPlanLinkedProcedureAppointments(tenantA, fixturesA, 1);
+      const consultation = await createAppointment(tenantA, fixturesA);
+      await db
+        .update(appointmentTable)
+        .set({
+          patientTreatmentPlanId: plan.id,
+          patientTreatmentPlanSessionId: sessions[0].id,
+        })
+        .where(eq(appointmentTable.id, consultation.appointmentId));
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId: consultation.appointmentId })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+      await visitRepository.completeVisit(created.data.id, tenantA);
+
+      await expect(planSessionCompletionOf(sessions[0].id)).resolves.toMatchObject({
+        completionStatus: 'PENDING',
+        completionSource: null,
+        completedVisitId: null,
+      });
+    });
+
+    it('should complete the final Plan Session once under the Visit transition guard', async () => {
+      const { sessions, appointments } = await createPlanLinkedProcedureAppointments(
+        tenantA,
+        fixturesA,
+        1
+      );
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId: appointments[0].id })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+      const completed = await visitRepository.completeVisit(created.data.id, tenantA);
+      if (completed.outcome !== 'updated') throw new Error('completion failed');
+      const originalSessionCompletion = await planSessionCompletionOf(sessions[0].id);
+
+      await expect(visitRepository.completeVisit(created.data.id, tenantA)).resolves.toMatchObject({
+        outcome: 'invalid-status',
+        data: { status: 'COMPLETED' },
+      });
+
+      await expect(planSessionCompletionOf(sessions[0].id)).resolves.toEqual(
+        originalSessionCompletion
+      );
+      await expect(
+        patientTreatmentPlanRepository.getCurrentByPatientId(fixturesA.patientId, tenantA)
+      ).resolves.toEqual([]);
+    });
+
     it('should start a consultation and stamp the timestamp', async () => {
       const created = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
       if (!created.success) throw new Error('check-in failed');
@@ -535,6 +754,82 @@ describe('Visit repository', () => {
         status: 'IN_CONSULTATION',
       });
       await expect(appointmentStatusCategoryOf(appointmentId)).resolves.toBe('CHECKED_IN');
+    });
+
+    it('should roll back Plan Session completion when the Appointment cannot move to completed', async () => {
+      const { sessions, appointments } = await createPlanLinkedProcedureAppointments(
+        tenantA,
+        fixturesA,
+        1
+      );
+      await db
+        .delete(appointmentStatusTable)
+        .where(
+          and(
+            eq(appointmentStatusTable.tenantId, tenantA),
+            eq(appointmentStatusTable.category, 'COMPLETED')
+          )
+        );
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId: appointments[0].id })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+
+      await expect(visitRepository.completeVisit(created.data.id, tenantA)).resolves.toEqual({
+        outcome: 'appointment-status-not-configured',
+      });
+
+      await expect(planSessionCompletionOf(sessions[0].id)).resolves.toMatchObject({
+        completionStatus: 'PENDING',
+        completionSource: null,
+        completedVisitId: null,
+        completedAt: null,
+      });
+    });
+
+    it('should leave Plan Sessions unchanged for a historical Procedure Appointment without Plan references', async () => {
+      const { sessions } = await createPlanLinkedProcedureAppointments(tenantA, fixturesA, 1);
+      const [scheduledStatus] = await db
+        .select({ id: appointmentStatusTable.id })
+        .from(appointmentStatusTable)
+        .where(
+          and(
+            eq(appointmentStatusTable.tenantId, tenantA),
+            eq(appointmentStatusTable.category, 'SCHEDULED')
+          )
+        );
+      const [historicalAppointment] = await db
+        .insert(appointmentTable)
+        .values({
+          tenantId: tenantA,
+          bookingPath: 'PROCEDURE',
+          bookingNumber: 'APT-HISTORICAL',
+          patientId: fixturesA.patientId,
+          doctorId: fixturesA.doctorId,
+          appointmentStatusId: scheduledStatus.id,
+          slotDate: TODAY,
+          startTime: '15:00',
+          endTime: '16:00',
+        })
+        .returning({ id: appointmentTable.id });
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { appointmentId: historicalAppointment.id })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+
+      await expect(visitRepository.completeVisit(created.data.id, tenantA)).resolves.toMatchObject({
+        outcome: 'updated',
+        data: { status: 'COMPLETED' },
+      });
+
+      await expect(planSessionCompletionOf(sessions[0].id)).resolves.toMatchObject({
+        completionStatus: 'PENDING',
+        completionSource: null,
+        completedVisitId: null,
+        completedAt: null,
+      });
     });
 
     it('should not transition a visit belonging to another tenant', async () => {

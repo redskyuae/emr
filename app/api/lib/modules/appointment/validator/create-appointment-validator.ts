@@ -8,6 +8,7 @@ import { appointmentStatusRepository } from '../../appointment-status/repository
 import { appointmentTypeRepository } from '../../appointment-type/repository/appointment-type-repository';
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
+import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
@@ -17,6 +18,7 @@ import { appointmentRepository } from '../repository/appointment-repository';
 import {
   appointmentTenantIdSchema,
   createAppointmentSchema,
+  type CreateAppointmentInput,
   type PotentialPatientMatch,
   type ValidatedCreateAppointmentData,
 } from '../schemas/appointment-schema';
@@ -48,6 +50,7 @@ export async function validateCreateAppointment(
   }
 
   const data = payloadResult.data;
+  let validatedData: CreateAppointmentInput = data;
   const validatedTenantId = tenantIdResult.data;
   const [tenant, scheduledStatus] = await Promise.all([
     tenantRepository.getTenantById(validatedTenantId),
@@ -60,6 +63,34 @@ export async function validateCreateAppointment(
 
   if (errors.length > 0 || !tenant) {
     return { success: false, errors, status: StatusCodes.CONFLICT };
+  }
+
+  if (data.bookingPath === 'PROCEDURE') {
+    const patient = await patientRepository.getPatientById(data.patientId, validatedTenantId);
+
+    if (!patient) {
+      return {
+        success: false,
+        errors: [`Patient ${data.patientId} is Invalid.`],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
+    if (!patient.isActive) {
+      return {
+        success: false,
+        errors: ['Inactive Patient cannot be booked for an Appointment.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
+    if (patient.registrationStatus !== 'registered') {
+      return {
+        success: false,
+        errors: ['Only a Registered Patient can be booked for a Procedure Appointment.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
   }
 
   if (data.bookingPath === 'CONSULTATION') {
@@ -137,23 +168,110 @@ export async function validateCreateAppointment(
       }
     }
 
-    const [treatment, treatmentSession] = await Promise.all([
-      treatmentRepository.getTreatmentById(data.treatmentId, validatedTenantId),
-      treatmentRepository.getTreatmentSessionById(data.treatmentSessionId, validatedTenantId),
-    ]);
+    const currentPlans = await patientTreatmentPlanRepository.getCurrentByPatientId(
+      data.patientId,
+      validatedTenantId
+    );
+    let requiredTherapistSkillId: number | null | undefined;
 
-    if (!treatment) {
-      errors.push(`Treatment ${data.treatmentId} is Invalid.`);
-    }
+    if ('patientTreatmentPlanId' in data) {
+      const plan = currentPlans.find((candidate) => candidate.id === data.patientTreatmentPlanId);
+      const session = plan?.sessions.find(
+        (candidate) => candidate.id === data.patientTreatmentPlanSessionId
+      );
 
-    if (!treatmentSession) {
-      errors.push(`Treatment session ${data.treatmentSessionId} is Invalid.`);
-    } else if (treatmentSession.treatmentId !== data.treatmentId) {
-      errors.push('Treatment session does not belong to the selected Treatment.');
-    }
+      if (!session) {
+        return {
+          success: false,
+          errors: ['Patient Treatment Plan Session is Invalid.'],
+          status: StatusCodes.CONFLICT,
+        };
+      }
 
-    if (errors.length > 0) {
-      return { success: false, errors, status: StatusCodes.CONFLICT };
+      if (!session.isBookable) {
+        return {
+          success: false,
+          errors: ['Patient Treatment Plan Session is not available.'],
+          status: StatusCodes.CONFLICT,
+        };
+      }
+
+      if (data.therapistId !== undefined) {
+        const [treatment, treatmentSession] = await Promise.all([
+          plan?.treatmentId == null
+            ? undefined
+            : treatmentRepository.getTreatmentById(plan.treatmentId, validatedTenantId),
+          session.treatmentSessionId === null
+            ? undefined
+            : treatmentRepository.getTreatmentSessionById(
+                session.treatmentSessionId,
+                validatedTenantId
+              ),
+        ]);
+        requiredTherapistSkillId =
+          treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
+      }
+    } else {
+      if (currentPlans.length > 0) {
+        return {
+          success: false,
+          errors: ['Catalogue Treatment cannot be assigned while the Patient has a current Plan.'],
+          status: StatusCodes.CONFLICT,
+        };
+      }
+
+      const treatment = await treatmentRepository.getTreatmentById(
+        data.treatmentId,
+        validatedTenantId
+      );
+
+      if (!treatment) {
+        return {
+          success: false,
+          errors: [`Treatment ${data.treatmentId} is Invalid.`],
+          status: StatusCodes.CONFLICT,
+        };
+      }
+
+      requiredTherapistSkillId =
+        treatment.sessions.toSorted((left, right) => left.sessionNumber - right.sessionNumber)[0]
+          ?.therapistSkillId ?? treatment.therapistSkillId;
+
+      if (treatment.sessionStructure === 'REPEATABLE') {
+        if (treatment.sessions.length !== 1) {
+          return {
+            success: false,
+            errors: ['Repeatable Treatment must have exactly one Session template.'],
+            status: StatusCodes.CONFLICT,
+          };
+        }
+
+        const totalSessions = data.totalSessions ?? treatment.defaultTotalSessions ?? undefined;
+
+        if (totalSessions === undefined) {
+          return {
+            success: false,
+            errors: ['Total Sessions is required for a Repeatable Treatment without a default.'],
+          };
+        }
+
+        validatedData = { ...data, totalSessions };
+      } else {
+        if (data.totalSessions !== undefined) {
+          return {
+            success: false,
+            errors: ['Sequenced Treatments derive their count from Session templates.'],
+          };
+        }
+
+        if (treatment.sessions.length === 0) {
+          return {
+            success: false,
+            errors: ['Sequenced Treatment must have at least one Session template.'],
+            status: StatusCodes.CONFLICT,
+          };
+        }
+      }
     }
 
     if (data.therapistId !== undefined) {
@@ -167,10 +285,9 @@ export async function validateCreateAppointment(
           `Therapist ${data.therapistId} is inactive and cannot be assigned to an Appointment.`
         );
       else {
-        const requiredSkillId = treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
         if (
-          requiredSkillId !== undefined &&
-          !therapist.skills.some((skill) => skill.id === requiredSkillId)
+          requiredTherapistSkillId != null &&
+          !therapist.skills.some((skill) => skill.id === requiredTherapistSkillId)
         ) {
           errors.push(`Therapist ${data.therapistId} does not have the required Therapist Skill.`);
         }
@@ -179,7 +296,7 @@ export async function validateCreateAppointment(
     }
   }
 
-  if (data.patientId !== undefined) {
+  if (data.bookingPath === 'CONSULTATION' && data.patientId !== undefined) {
     const patient = await patientRepository.getPatientById(data.patientId, validatedTenantId);
 
     if (!patient) {
@@ -209,7 +326,7 @@ export async function validateCreateAppointment(
     }
   }
 
-  if (data.provisionalPatient) {
+  if (data.bookingPath === 'CONSULTATION' && data.provisionalPatient) {
     const [referenceResult, emiratesIdResult, patientMatches] = await Promise.all([
       validatePatientReferences(data.provisionalPatient),
       validatePatientEmiratesIdUniqueness({
@@ -269,7 +386,7 @@ export async function validateCreateAppointment(
   return {
     success: true,
     data: {
-      ...data,
+      ...validatedData,
       tenantId: validatedTenantId,
       timeZone: tenant.timeZone,
     },

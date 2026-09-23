@@ -242,6 +242,28 @@ describe('Permission repository', () => {
     });
   });
 
+  it('should seed Patient Treatment Plan permissions in the appointments module', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const permissions = await permissionRepository.getPermissions({ module: 'appointments' });
+
+    expect(
+      permissions
+        .filter(({ resource }) => resource === 'patient-treatment-plan')
+        .map(({ name, action, description }) => ({ name, action, description }))
+    ).toEqual([
+      {
+        name: 'patient-treatment-plan:read',
+        action: 'read',
+        description: 'View Patient Treatment Plans and Sessions.',
+      },
+      {
+        name: 'patient-treatment-plan:assign',
+        action: 'assign',
+        description: 'Assign Treatments to Patients and create Patient Treatment Plans.',
+      },
+    ]);
+  });
+
   it('should not return inactive permissions', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const permissions = await permissionRepository.getPermissions();

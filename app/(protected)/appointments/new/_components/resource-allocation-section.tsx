@@ -8,14 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
+import type { Room } from '@/app/api/lib/modules/room/schemas/room-schema';
 import type { BookAppointmentFormValues } from '../_utils/book-appointment-form-schema';
-import type { DemoRoom, DemoSession, DemoTherapist } from './book-appointment-demo-data';
+import type { BookingSession, DemoTherapist } from './book-appointment-demo-data';
 
 export function ResourceAllocationSection({
   control,
   rooms,
+  isRoomsLoading,
   therapists,
   session,
+  requiresRoom,
+  requiresTherapist,
   canAllocate,
   selectedRoomId,
   selectedTherapistId,
@@ -23,9 +27,12 @@ export function ResourceAllocationSection({
   onTherapistChange,
 }: {
   control: Control<BookAppointmentFormValues>;
-  rooms: DemoRoom[];
+  rooms: Room[];
+  isRoomsLoading: boolean;
   therapists: DemoTherapist[];
-  session: DemoSession | null;
+  session: BookingSession | null;
+  requiresRoom: boolean;
+  requiresTherapist: boolean;
   canAllocate: boolean;
   selectedRoomId: string;
   selectedTherapistId: string;
@@ -42,10 +49,18 @@ export function ResourceAllocationSection({
     <Card className="shadow-fluent-2">
       <CardHeader className="border-procedure/15 border-b">
         <CardTitle>Room & Therapist</CardTitle>
-        <CardDescription>Match the Treatment requirements at this Facility.</CardDescription>
+        <CardDescription>
+          Choose an available Room and qualified Therapist at this Facility.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {!canAllocate ? (
+        {!requiresRoom && !requiresTherapist ? (
+          <p className="border-warning/25 bg-warning/5 rounded-lg border p-3 text-sm">
+            Room and Therapist requirements are not configured for this Session. Resource filtering
+            is skipped.
+          </p>
+        ) : null}
+        {!canAllocate && (requiresRoom || requiresTherapist) ? (
           <p className="border-primary/20 bg-primary/5 text-primary rounded-lg border p-3 text-sm">
             Choose a date and start time to select resources.
           </p>
@@ -54,91 +69,113 @@ export function ResourceAllocationSection({
           style={rowStyle}
           className="grid gap-x-4 gap-y-2 sm:grid-cols-2 sm:grid-rows-(--resource-rows) lg:grid-cols-1 lg:grid-rows-none xl:grid-cols-2 xl:grid-rows-(--resource-rows)"
         >
-          <div className="grid min-w-0 gap-2 sm:row-span-(--resource-span) sm:grid-rows-subgrid lg:row-auto lg:grid-rows-none xl:row-span-(--resource-span) xl:grid-rows-subgrid">
-            <div className="space-y-2">
-              <h3 className="flex items-center gap-2 text-sm font-semibold">
-                <DoorOpen className="text-primary size-4" /> Room{' '}
-                <span className="text-destructive" aria-hidden="true">
-                  *
-                </span>
-              </h3>
-              <p className="text-muted-foreground text-xs">
-                {session?.roomType ?? 'Choose a Treatment'}
-              </p>
+          {requiresRoom ? (
+            <div className="grid min-w-0 gap-2 sm:row-span-(--resource-span) sm:grid-rows-subgrid lg:row-auto lg:grid-rows-none xl:row-span-(--resource-span) xl:grid-rows-subgrid">
+              <div className="space-y-2">
+                <h3 className="flex items-center gap-2 text-sm font-semibold">
+                  <DoorOpen className="text-primary size-4" /> Room{' '}
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </h3>
+                <p className="text-muted-foreground text-xs">Available Rooms for this Procedure</p>
+              </div>
+              {rooms.map((room) => (
+                <ResourceOption
+                  key={room.id}
+                  title={`Room ${room.roomNumber}`}
+                  detail={
+                    getRoomLocation(room) +
+                    ' · ' +
+                    room.bedCount +
+                    ' bed' +
+                    (room.bedCount === 1 ? '' : 's')
+                  }
+                  status={getRoomStatusLabel(room.status)}
+                  available={canAllocate}
+                  selected={selectedRoomId === String(room.id)}
+                  onSelect={() => onRoomChange(String(room.id))}
+                />
+              ))}
+              {Array.from({ length: resourceRows - rooms.length }, (_, index) => (
+                <div
+                  key={'room-empty-' + index}
+                  className="hidden sm:block lg:hidden xl:block"
+                  aria-hidden="true"
+                />
+              ))}
+              <div>
+                {canAllocate && isRoomsLoading ? (
+                  <p className="text-muted-foreground text-sm">Loading matching Rooms…</p>
+                ) : null}
+                {canAllocate && !isRoomsLoading && !rooms.length ? (
+                  <p className="text-muted-foreground text-sm">No Room is currently available.</p>
+                ) : null}
+                <FieldError errors={[errors.roomId]} />
+              </div>
             </div>
-            {rooms.map((room) => (
-              <ResourceOption
-                key={room.id}
-                title={room.name}
-                detail={room.location + ' · Capacity ' + room.capacity}
-                status={room.status}
-                conflict={room.conflictReason}
-                available={canAllocate && room.status === 'Ready' && !room.conflictReason}
-                selected={selectedRoomId === String(room.id)}
-                onSelect={() => onRoomChange(String(room.id))}
-              />
-            ))}
-            {Array.from({ length: resourceRows - rooms.length }, (_, index) => (
-              <div
-                key={'room-empty-' + index}
-                className="hidden sm:block lg:hidden xl:block"
-                aria-hidden="true"
-              />
-            ))}
-            <div>
-              {canAllocate && !rooms.length ? (
-                <p className="text-muted-foreground text-sm">
-                  No matching Room. Choose another Treatment or Session.
+          ) : null}
+          {requiresTherapist ? (
+            <div className="grid min-w-0 gap-2 sm:row-span-(--resource-span) sm:grid-rows-subgrid lg:row-auto lg:grid-rows-none xl:row-span-(--resource-span) xl:grid-rows-subgrid">
+              <div className="space-y-2">
+                <h3 className="flex items-center gap-2 text-sm font-semibold">
+                  <UserRound className="text-primary size-4" /> Therapist{' '}
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </h3>
+                <p className="text-muted-foreground text-xs">
+                  {session?.therapistSkill ?? 'Choose a Treatment'}
                 </p>
-              ) : null}
-              <FieldError errors={[errors.roomId]} />
+              </div>
+              {therapists.map((therapist) => (
+                <ResourceOption
+                  key={therapist.id}
+                  title={therapist.name}
+                  detail={therapist.role + ' · ' + therapist.skill}
+                  extra={therapist.license + ' · ' + therapist.workload}
+                  status={
+                    therapist.active && !therapist.conflictReason ? 'Available' : 'Unavailable'
+                  }
+                  conflict={therapist.conflictReason}
+                  available={canAllocate && therapist.active && !therapist.conflictReason}
+                  selected={selectedTherapistId === String(therapist.id)}
+                  onSelect={() => onTherapistChange(String(therapist.id))}
+                />
+              ))}
+              {Array.from({ length: resourceRows - therapists.length }, (_, index) => (
+                <div
+                  key={'therapist-empty-' + index}
+                  className="hidden sm:block lg:hidden xl:block"
+                  aria-hidden="true"
+                />
+              ))}
+              <div>
+                {canAllocate && !therapists.length ? (
+                  <p className="text-muted-foreground text-sm">
+                    No matching Therapist. Choose another Treatment or Session.
+                  </p>
+                ) : null}
+                <FieldError errors={[errors.therapistId]} />
+              </div>
             </div>
-          </div>
-          <div className="grid min-w-0 gap-2 sm:row-span-(--resource-span) sm:grid-rows-subgrid lg:row-auto lg:grid-rows-none xl:row-span-(--resource-span) xl:grid-rows-subgrid">
-            <div className="space-y-2">
-              <h3 className="flex items-center gap-2 text-sm font-semibold">
-                <UserRound className="text-primary size-4" /> Therapist{' '}
-                <span className="text-destructive" aria-hidden="true">
-                  *
-                </span>
-              </h3>
-              <p className="text-muted-foreground text-xs">
-                {session?.therapistSkill ?? 'Choose a Treatment'}
-              </p>
-            </div>
-            {therapists.map((therapist) => (
-              <ResourceOption
-                key={therapist.id}
-                title={therapist.name}
-                detail={therapist.role + ' · ' + therapist.skill}
-                extra={therapist.license + ' · ' + therapist.workload}
-                status={therapist.active && !therapist.conflictReason ? 'Available' : 'Unavailable'}
-                conflict={therapist.conflictReason}
-                available={canAllocate && therapist.active && !therapist.conflictReason}
-                selected={selectedTherapistId === String(therapist.id)}
-                onSelect={() => onTherapistChange(String(therapist.id))}
-              />
-            ))}
-            {Array.from({ length: resourceRows - therapists.length }, (_, index) => (
-              <div
-                key={'therapist-empty-' + index}
-                className="hidden sm:block lg:hidden xl:block"
-                aria-hidden="true"
-              />
-            ))}
-            <div>
-              {canAllocate && !therapists.length ? (
-                <p className="text-muted-foreground text-sm">
-                  No matching Therapist. Choose another Treatment or Session.
-                </p>
-              ) : null}
-              <FieldError errors={[errors.therapistId]} />
-            </div>
-          </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>
   );
+}
+
+function getRoomLocation(room: Room) {
+  const location = [room.facility, room.wing, room.floor].filter((value): value is string =>
+    Boolean(value)
+  );
+
+  return location.length > 0 ? location.join(' · ') : room.roomType.name;
+}
+
+function getRoomStatusLabel(status: Room['status']) {
+  return status.charAt(0) + status.slice(1).toLowerCase();
 }
 
 function ResourceOption({
@@ -163,7 +200,10 @@ function ResourceOption({
   const tone =
     status === 'Ready' || status === 'Available'
       ? 'success'
-      : status === 'Cleaning required' || status === 'Maintenance' || status === 'In use'
+      : status === 'Cleaning' ||
+          status === 'Maintenance' ||
+          status === 'Occupied' ||
+          status === 'Reserved'
         ? 'warning'
         : 'danger';
   return (

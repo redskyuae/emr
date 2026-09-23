@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
+import { canAllocateProcedureResources } from '../_utils/appointment-time';
 
 import { AppointmentDetailsSection } from './appointment-details-section';
 import { AppointmentScheduleSection } from './appointment-schedule-section';
@@ -204,11 +205,29 @@ export function BookAppointmentPageImpl() {
               {isProcedurePath ? (
                 <TreatmentSessionSection
                   control={form.control}
+                  patient={
+                    selectedPatient
+                      ? {
+                          name: `${selectedPatient.firstName} ${selectedPatient.lastName}`,
+                          mrn: selectedPatient.mrn,
+                        }
+                      : null
+                  }
+                  state={booking.treatmentSelectionState}
+                  plans={booking.planOptions}
                   treatments={booking.treatmentOptions}
                   selectedTreatment={booking.selectedTreatment}
                   selectedSession={selectedSession}
+                  treatmentSearch={booking.treatmentSearch}
+                  isTreatmentsLoading={booking.isTreatmentsLoading}
+                  plansError={booking.plansError}
+                  treatmentsError={booking.treatmentsError}
+                  onPlanChange={booking.changePlan}
                   onTreatmentChange={booking.changeTreatment}
+                  onTreatmentSearchChange={booking.setTreatmentSearch}
                   onSessionChange={booking.changeSession}
+                  onRetryPlans={() => void booking.retryPlans()}
+                  onRetryTreatments={() => void booking.retryTreatments()}
                 />
               ) : (
                 <div className="text-muted-foreground flex items-start gap-3 px-2 py-4 text-sm">
@@ -266,6 +285,11 @@ export function BookAppointmentPageImpl() {
                     control={form.control}
                     startTime={values.startTime}
                     endTime={values.endTime}
+                    usesSessionDuration={
+                      selectedSession?.duration !== null &&
+                      selectedSession?.setupMinutes !== null &&
+                      selectedSession?.cleaningMinutes !== null
+                    }
                     onDateChange={booking.changeProcedureDate}
                     onEndTimeChange={booking.changeProcedureEndTime}
                     onStartTimeChange={booking.changeProcedureStartTime}
@@ -312,9 +336,12 @@ export function BookAppointmentPageImpl() {
                     <ResourceAllocationSection
                       control={form.control}
                       rooms={booking.filteredRooms}
+                      isRoomsLoading={booking.isRoomsLoading}
                       therapists={booking.filteredTherapists}
                       session={booking.resourceSession}
-                      canAllocate={Boolean(values.slotDate && values.startTime && values.endTime)}
+                      requiresRoom={booking.requiresRoom}
+                      requiresTherapist={booking.requiresTherapist}
+                      canAllocate={canAllocateProcedureResources(values.slotDate, values.startTime)}
                       selectedRoomId={values.roomId}
                       selectedTherapistId={values.therapistId}
                       onRoomChange={(value) =>
@@ -346,6 +373,7 @@ export function BookAppointmentPageImpl() {
                 room={booking.selectedRoom}
                 therapist={booking.selectedTherapist}
                 doctorName={booking.selectedDoctor?.name ?? (isProcedurePath ? 'N/A' : '')}
+                showProcedureResources={booking.requiresRoom || booking.requiresTherapist}
               />
             </>
           ) : (

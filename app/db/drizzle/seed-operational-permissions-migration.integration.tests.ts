@@ -50,7 +50,10 @@ describe('0056 operational permissions migration', () => {
     await executeMigration();
 
     const expectedPermissionNames = permissionSeedData
-      .filter(({ module }) => operationalModules.has(module))
+      .filter(
+        ({ module, resource }) =>
+          operationalModules.has(module) && resource !== 'patient-treatment-plan'
+      )
       .map(({ name }) => name)
       .sort();
     const tenantAdminPermissions = await rolePermissionRepository.getAssignedPermissionsByRole(

@@ -1,4 +1,4 @@
-import { and, asc, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { appointment as appointmentTable } from '@/app/db/schema/appointment';
@@ -19,6 +19,10 @@ const treatmentColumns = {
   id: treatmentTable.id,
   name: treatmentTable.name,
   code: treatmentTable.code,
+  sessionStructure: treatmentTable.sessionStructure,
+  defaultTotalSessions: treatmentTable.defaultTotalSessions,
+  legacySourceIdentity: treatmentTable.legacySourceIdentity,
+  legacySourceSystem: treatmentTable.legacySourceSystem,
   tenantId: treatmentTable.tenantId,
   createdOn: treatmentTable.createdOn,
   modifiedOn: treatmentTable.modifiedOn,
@@ -119,6 +123,8 @@ async function createTreatment(data: CreateTreatmentData) {
         tenantId: data.tenantId,
         name: data.name,
         code: data.code,
+        sessionStructure: data.sessionStructure ?? 'SEQUENCED',
+        defaultTotalSessions: data.defaultTotalSessions ?? null,
         description: data.description ?? null,
         durationMinutes: data.durationMinutes,
         setupMinutes: data.setupMinutes,
@@ -347,6 +353,7 @@ async function findActiveByName(
       and(
         eq(treatmentTable.tenantId, tenantId),
         eq(treatmentTable.isDeleted, false),
+        isNull(treatmentTable.legacySourceIdentity),
         sql`lower(${treatmentTable.name}) = ${name.toLowerCase()}`,
         excludeId ? ne(treatmentTable.id, excludeId) : undefined
       )
@@ -368,6 +375,7 @@ async function findActiveByCode(
       and(
         eq(treatmentTable.tenantId, tenantId),
         eq(treatmentTable.isDeleted, false),
+        isNull(treatmentTable.legacySourceIdentity),
         sql`lower(${treatmentTable.code}) = ${code.toLowerCase()}`,
         excludeId ? ne(treatmentTable.id, excludeId) : undefined
       )

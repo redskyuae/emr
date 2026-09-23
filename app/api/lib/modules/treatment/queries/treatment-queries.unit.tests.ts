@@ -16,6 +16,10 @@ const repo = vi.mocked(treatmentRepository);
 const validateById = vi.mocked(validateGetTreatmentById);
 
 const treatment = {
+  sessionStructure: 'SEQUENCED' as const,
+  defaultTotalSessions: null,
+  legacySourceIdentity: null,
+  legacySourceSystem: null,
   id: 1,
   tenantId: 'tenant-1',
   name: 'Abhyanga wellness programme',

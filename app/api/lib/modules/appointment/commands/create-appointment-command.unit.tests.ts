@@ -179,8 +179,8 @@ describe('createAppointmentCommand', () => {
         slotDate: '2099-12-31',
         startTime: '09:00',
         endTime: '10:00',
-        treatmentId: 400,
-        treatmentSessionId: 401,
+        patientTreatmentPlanId: 400,
+        patientTreatmentPlanSessionId: 401,
         remarks: undefined,
       },
     });
@@ -201,6 +201,34 @@ describe('createAppointmentCommand', () => {
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['One or more selected Doctor slots are no longer available.'],
+    });
+  });
+
+  it.each(['plan-session-unavailable' as const, 'current-plan-exists' as const])(
+    'should map %s to a stable Patient Treatment Plan conflict',
+    async (outcome) => {
+      repo.createAppointment.mockResolvedValue({ success: false, outcome });
+
+      await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors:
+          outcome === 'plan-session-unavailable'
+            ? ['The selected Patient Treatment Plan Session is no longer available.']
+            : ['Catalogue Treatment cannot be assigned while the Patient has a current Plan.'],
+      });
+    }
+  );
+
+  it('should map a concurrent Patient Treatment Plan Session reservation to a stable conflict', async () => {
+    repo.createAppointment.mockRejectedValue({
+      cause: { code: '23505', constraint: 'ptp_session_reservation_active_session_idx' },
+    });
+
+    await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['The selected Patient Treatment Plan Session is no longer available.'],
     });
   });
 });

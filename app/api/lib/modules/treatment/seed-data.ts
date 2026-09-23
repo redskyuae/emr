@@ -15,6 +15,7 @@ const abhyangaSession = {
 export const DEFAULT_TREATMENTS: CreateTreatmentInput[] = [
   {
     name: 'Abhyanga wellness programme',
+    sessionStructure: 'SEQUENCED',
     code: 'TRT-0400',
     durationMinutes: 60,
     setupMinutes: 10,
@@ -29,6 +30,7 @@ export const DEFAULT_TREATMENTS: CreateTreatmentInput[] = [
   },
   {
     name: 'Shirodhara relaxation programme',
+    sessionStructure: 'SEQUENCED',
     code: 'TRT-0401',
     durationMinutes: 60,
     setupMinutes: 10,

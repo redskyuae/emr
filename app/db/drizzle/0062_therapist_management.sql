@@ -32,6 +32,8 @@ CREATE TABLE "therapist" (
 );
 --> statement-breakpoint
 ALTER TABLE "appointment" ADD COLUMN "therapist_id" integer;--> statement-breakpoint
+ALTER TABLE "treatment" ADD COLUMN "therapist_skill_id" integer;--> statement-breakpoint
+ALTER TABLE "treatment_session" ADD COLUMN "therapist_skill_id" integer;--> statement-breakpoint
 ALTER TABLE "therapist_skill_assignment" ADD CONSTRAINT "therapist_skill_assignment_tenant_id_organization_id_fk" FOREIGN KEY ("tenant_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "therapist_skill_assignment" ADD CONSTRAINT "therapist_skill_assignment_therapist_id_therapist_id_fk" FOREIGN KEY ("therapist_id") REFERENCES "public"."therapist"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "therapist_skill_assignment" ADD CONSTRAINT "therapist_skill_assignment_therapist_skill_id_therapist_skill_id_fk" FOREIGN KEY ("therapist_skill_id") REFERENCES "public"."therapist_skill"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -44,4 +46,6 @@ CREATE UNIQUE INDEX "therapist_skill_tenant_name_idx" ON "therapist_skill" USING
 CREATE UNIQUE INDEX "therapist_skill_tenant_code_idx" ON "therapist_skill" USING btree ("tenant_id",lower("code")) WHERE "therapist_skill"."is_deleted" = false AND "therapist_skill"."code" IS NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "therapist_user_not_deleted_idx" ON "therapist" USING btree ("user_id") WHERE "therapist"."is_deleted" = false;--> statement-breakpoint
 CREATE UNIQUE INDEX "therapist_tenant_registration_number_idx" ON "therapist" USING btree ("tenant_id",lower("registration_number")) WHERE "therapist"."is_deleted" = false AND "therapist"."registration_number" IS NOT NULL;--> statement-breakpoint
-ALTER TABLE "appointment" ADD CONSTRAINT "appointment_therapist_id_therapist_id_fk" FOREIGN KEY ("therapist_id") REFERENCES "public"."therapist"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "appointment" ADD CONSTRAINT "appointment_therapist_id_therapist_id_fk" FOREIGN KEY ("therapist_id") REFERENCES "public"."therapist"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "treatment" ADD CONSTRAINT "treatment_therapist_skill_id_therapist_skill_id_fk" FOREIGN KEY ("therapist_skill_id") REFERENCES "public"."therapist_skill"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "treatment_session" ADD CONSTRAINT "treatment_session_therapist_skill_id_therapist_skill_id_fk" FOREIGN KEY ("therapist_skill_id") REFERENCES "public"."therapist_skill"("id") ON DELETE no action ON UPDATE no action;

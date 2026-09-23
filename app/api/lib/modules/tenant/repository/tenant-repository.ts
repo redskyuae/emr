@@ -204,7 +204,10 @@ async function markTenantOnboarded(id: string): Promise<Tenant | undefined> {
   return updatedTenant ? toTenant(updatedTenant) : undefined;
 }
 
-async function findTenantMembership(tenantId: string, userId: string) {
+async function findTenantMembership(
+  tenantId: string,
+  userId: string
+): Promise<TenantMembership | undefined> {
   const [membership] = await db
     .select(membershipColumns)
     .from(member)

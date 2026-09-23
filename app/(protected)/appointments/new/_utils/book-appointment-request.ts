@@ -35,17 +35,39 @@ export function bookAppointmentFormValuesToRequest(
   };
 
   if (values.visitType === 'PROCEDURE') {
-    return {
-      ...common,
-      bookingPath: 'PROCEDURE',
+    if (values.patientMode !== 'existing' || values.patientId === '') {
+      throw new Error('A registered Patient is required for a Procedure');
+    }
+
+    const procedure = {
+      bookingPath: 'PROCEDURE' as const,
+      patientId: Number(values.patientId),
+      slotDate: toAppointmentSlotDate(values.slotDate),
+      remarks: values.remarks || undefined,
       ...(values.doctorId && values.doctorId !== 'not-applicable'
         ? { doctorId: Number(values.doctorId) }
         : {}),
       startTime: values.startTime,
       endTime: values.endTime,
-      treatmentId: Number(values.treatmentId),
-      treatmentSessionId: Number(values.sessionId),
     };
+
+    if (values.selectionMode === 'EXISTING_PLAN') {
+      return {
+        ...procedure,
+        patientTreatmentPlanId: Number(values.patientTreatmentPlanId),
+        patientTreatmentPlanSessionId: Number(values.patientTreatmentPlanSessionId),
+      };
+    }
+
+    if (values.selectionMode === 'CATALOGUE') {
+      return {
+        ...procedure,
+        treatmentId: Number(values.treatmentId),
+        ...(values.totalSessions === '' ? {} : { totalSessions: Number(values.totalSessions) }),
+      };
+    }
+
+    throw new Error('Treatment selection is required');
   }
 
   return {

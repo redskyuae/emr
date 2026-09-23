@@ -26,8 +26,18 @@ const validProcedurePayload = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  patientTreatmentPlanId: 400,
+  patientTreatmentPlanSessionId: 401,
+};
+
+const validCatalogueProcedurePayload = {
+  bookingPath: 'PROCEDURE',
+  patientId: 5,
+  slotDate: '31-12-2099',
+  startTime: '10:00',
+  endTime: '11:15',
   treatmentId: 400,
-  treatmentSessionId: 401,
+  totalSessions: 6,
 };
 
 const errorsOf = (payload: unknown) =>
@@ -174,8 +184,8 @@ describe('Appointment schema', () => {
     );
   });
 
-  it('should require a Treatment and Session on a Procedure', () => {
-    const withoutTreatment = {
+  it('should require exactly one complete Procedure selection', () => {
+    const withoutSelection = {
       bookingPath: validProcedurePayload.bookingPath,
       patientId: validProcedurePayload.patientId,
       slotDate: validProcedurePayload.slotDate,
@@ -183,14 +193,34 @@ describe('Appointment schema', () => {
       endTime: validProcedurePayload.endTime,
     };
 
-    expect(errorsOf(withoutTreatment)).toEqual(
-      expect.arrayContaining(['Treatment ID is required', 'Treatment session ID is required'])
-    );
+    expect(createAppointmentSchema.safeParse(withoutSelection).success).toBe(false);
+    expect(
+      createAppointmentSchema.safeParse({
+        ...validProcedurePayload,
+        treatmentId: 500,
+      }).success
+    ).toBe(false);
+    expect(
+      createAppointmentSchema.safeParse({
+        ...withoutSelection,
+        patientTreatmentPlanId: 400,
+      }).success
+    ).toBe(false);
+    expect(
+      createAppointmentSchema.safeParse({
+        ...withoutSelection,
+        patientTreatmentPlanSessionId: 401,
+      }).success
+    ).toBe(false);
   });
 
-  it('should accept a Procedure without a Doctor, Doctor Rota, or Appointment Details', () => {
+  it('should accept existing Plan and catalogue Procedure selections', () => {
     expect(createAppointmentSchema.parse(validProcedurePayload)).toEqual({
       ...validProcedurePayload,
+      slotDate: '2099-12-31',
+    });
+    expect(createAppointmentSchema.parse(validCatalogueProcedurePayload)).toEqual({
+      ...validCatalogueProcedurePayload,
       slotDate: '2099-12-31',
     });
   });
@@ -199,6 +229,15 @@ describe('Appointment schema', () => {
     expect(createAppointmentSchema.parse({ ...validProcedurePayload, doctorId: 7 })).toMatchObject({
       bookingPath: 'PROCEDURE',
       doctorId: 7,
+    });
+  });
+
+  it('should accept and normalize an optional Therapist assignment for a Procedure', () => {
+    expect(
+      createAppointmentSchema.parse({ ...validProcedurePayload, therapistId: '8' })
+    ).toMatchObject({
+      bookingPath: 'PROCEDURE',
+      therapistId: 8,
     });
   });
 
@@ -215,6 +254,36 @@ describe('Appointment schema', () => {
     expect(errorsOf({ ...validProcedurePayload, doctorRotaId: 6 })).toContain(
       'Unrecognized key: "doctorRotaId"'
     );
+  });
+
+  it('should reject Provisional Patients and server-owned snapshot fields on a Procedure', () => {
+    const withoutPatient = {
+      bookingPath: validProcedurePayload.bookingPath,
+      slotDate: validProcedurePayload.slotDate,
+      startTime: validProcedurePayload.startTime,
+      endTime: validProcedurePayload.endTime,
+      patientTreatmentPlanId: validProcedurePayload.patientTreatmentPlanId,
+      patientTreatmentPlanSessionId: validProcedurePayload.patientTreatmentPlanSessionId,
+    };
+
+    expect(
+      createAppointmentSchema.safeParse({
+        ...withoutPatient,
+        provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+      }).success
+    ).toBe(false);
+    expect(
+      createAppointmentSchema.safeParse({
+        ...validProcedurePayload,
+        treatmentSessionId: 99,
+      }).success
+    ).toBe(false);
+    expect(
+      createAppointmentSchema.safeParse({
+        ...validCatalogueProcedurePayload,
+        treatmentName: 'Caller supplied snapshot',
+      }).success
+    ).toBe(false);
   });
 
   describe('listAppointmentsSchema', () => {

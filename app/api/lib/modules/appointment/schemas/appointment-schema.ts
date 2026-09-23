@@ -115,8 +115,6 @@ const provisionalPatientSchema = z
   });
 
 const commonAppointmentShape = {
-  patientId: positiveIdSchema('Patient ID').optional(),
-  provisionalPatient: provisionalPatientSchema.optional(),
   slotDate: slotDateSchema,
   remarks: z
     .string()
@@ -130,6 +128,8 @@ const createConsultationAppointmentSchema = z
   .object({
     ...commonAppointmentShape,
     bookingPath: z.literal('CONSULTATION'),
+    patientId: positiveIdSchema('Patient ID').optional(),
+    provisionalPatient: provisionalPatientSchema.optional(),
     doctorId: positiveIdSchema('Doctor ID'),
     appointmentModeId: positiveIdSchema('Appointment mode ID'),
     appointmentTypeId: positiveIdSchema('Appointment type ID'),
@@ -142,18 +142,74 @@ const createConsultationAppointmentSchema = z
   })
   .strict();
 
+const procedureAppointmentShape = {
+  ...commonAppointmentShape,
+  bookingPath: z.literal('PROCEDURE'),
+  patientId: positiveIdSchema('Patient ID'),
+  doctorId: positiveIdSchema('Doctor ID').optional(),
+  therapistId: positiveIdSchema('Therapist ID').optional(),
+  startTime: appointmentTimeSchema('Start time'),
+  endTime: appointmentTimeSchema('End time'),
+};
+
+const procedureAppointmentBaseSchema = z.object(procedureAppointmentShape).strict();
+
+type ProcedureAppointmentBaseInput = z.infer<typeof procedureAppointmentBaseSchema>;
+type ExistingPlanProcedureAppointmentInput = ProcedureAppointmentBaseInput & {
+  patientTreatmentPlanId: number;
+  patientTreatmentPlanSessionId: number;
+  treatmentId?: never;
+  totalSessions?: never;
+  provisionalPatient?: never;
+  treatmentSessionId?: never;
+};
+type CatalogueProcedureAppointmentInput = ProcedureAppointmentBaseInput & {
+  patientTreatmentPlanId?: never;
+  patientTreatmentPlanSessionId?: never;
+  treatmentId: number;
+  totalSessions?: number;
+  provisionalPatient?: never;
+  treatmentSessionId?: never;
+};
+
 const createProcedureAppointmentSchema = z
   .object({
-    ...commonAppointmentShape,
-    bookingPath: z.literal('PROCEDURE'),
-    doctorId: positiveIdSchema('Doctor ID').optional(),
-    startTime: appointmentTimeSchema('Start time'),
-    endTime: appointmentTimeSchema('End time'),
-    treatmentId: positiveIdSchema('Treatment ID'),
-    treatmentSessionId: positiveIdSchema('Treatment session ID'),
-    therapistId: positiveIdSchema('Therapist ID').optional(),
+    ...procedureAppointmentBaseSchema.shape,
+    patientTreatmentPlanId: positiveIdSchema('Patient Treatment Plan ID').optional(),
+    patientTreatmentPlanSessionId: positiveIdSchema('Patient Treatment Plan Session ID').optional(),
+    treatmentId: positiveIdSchema('Treatment ID').optional(),
+    totalSessions: z
+      .number({ error: 'Total Sessions must be a number' })
+      .int('Total Sessions must be an integer')
+      .positive('Total Sessions must be positive')
+      .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((data, context) => {
+    const hasAnyExistingPlanSelection =
+      data.patientTreatmentPlanId !== undefined || data.patientTreatmentPlanSessionId !== undefined;
+    const hasCompleteExistingPlanSelection =
+      data.patientTreatmentPlanId !== undefined && data.patientTreatmentPlanSessionId !== undefined;
+    const hasAnyCatalogueSelection =
+      data.treatmentId !== undefined || data.totalSessions !== undefined;
+    const hasCompleteCatalogueSelection = data.treatmentId !== undefined;
+
+    if (
+      (hasCompleteExistingPlanSelection && !hasAnyCatalogueSelection) ||
+      (hasCompleteCatalogueSelection && !hasAnyExistingPlanSelection)
+    ) {
+      return;
+    }
+
+    context.addIssue({
+      code: 'custom',
+      path: ['treatmentId'],
+      message: 'Exactly one complete Procedure treatment selection is required',
+    });
+  })
+  .transform(
+    (data) => data as ExistingPlanProcedureAppointmentInput | CatalogueProcedureAppointmentInput
+  );
 
 const rescheduleConsultationAppointmentSchema = z
   .object({
@@ -204,7 +260,10 @@ export const createAppointmentSchema = z
     createProcedureAppointmentSchema,
   ])
   .superRefine((data, context) => {
-    if ((data.patientId === undefined) === (data.provisionalPatient === undefined)) {
+    if (
+      data.bookingPath === 'CONSULTATION' &&
+      (data.patientId === undefined) === (data.provisionalPatient === undefined)
+    ) {
       context.addIssue({
         code: 'custom',
         path: ['patientId'],

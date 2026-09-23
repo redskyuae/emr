@@ -1,4 +1,0 @@
-ALTER TABLE "treatment" ADD COLUMN "therapist_skill_id" integer;--> statement-breakpoint
-ALTER TABLE "treatment_session" ADD COLUMN "therapist_skill_id" integer;--> statement-breakpoint
-ALTER TABLE "treatment" ADD CONSTRAINT "treatment_therapist_skill_id_therapist_skill_id_fk" FOREIGN KEY ("therapist_skill_id") REFERENCES "public"."therapist_skill"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "treatment_session" ADD CONSTRAINT "treatment_session_therapist_skill_id_therapist_skill_id_fk" FOREIGN KEY ("therapist_skill_id") REFERENCES "public"."therapist_skill"("id") ON DELETE no action ON UPDATE no action;

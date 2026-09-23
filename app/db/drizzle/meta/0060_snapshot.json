@@ -1,5 +1,5 @@
 {
-  "id": "6450fce4-29a9-497b-b8d2-124a93a67c9f",
+  "id": "53355dfe-10f2-40e2-9fe7-169662c5dbff",
   "prevId": "f2892fcb-ab3f-4852-898a-16452f2c943b",
   "version": "7",
   "dialect": "postgresql",
@@ -1481,12 +1481,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "therapist_id": {
-          "name": "therapist_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "appointment_mode_id": {
           "name": "appointment_mode_id",
           "type": "integer",
@@ -1519,6 +1513,18 @@
         },
         "treatment_session_id": {
           "name": "treatment_session_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "patient_treatment_plan_id": {
+          "name": "patient_treatment_plan_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "patient_treatment_plan_session_id": {
+          "name": "patient_treatment_plan_session_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -1664,19 +1670,6 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "appointment_therapist_id_therapist_id_fk": {
-          "name": "appointment_therapist_id_therapist_id_fk",
-          "tableFrom": "appointment",
-          "tableTo": "therapist",
-          "columnsFrom": [
-            "therapist_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "appointment_appointment_mode_id_appointment_mode_id_fk": {
           "name": "appointment_appointment_mode_id_appointment_mode_id_fk",
           "tableFrom": "appointment",
@@ -1755,6 +1748,32 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "appointment_patient_treatment_plan_id_patient_treatment_plan_id_fk": {
+          "name": "appointment_patient_treatment_plan_id_patient_treatment_plan_id_fk",
+          "tableFrom": "appointment",
+          "tableTo": "patient_treatment_plan",
+          "columnsFrom": [
+            "patient_treatment_plan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "appointment_patient_treatment_plan_session_id_patient_treatment_plan_session_id_fk": {
+          "name": "appointment_patient_treatment_plan_session_id_patient_treatment_plan_session_id_fk",
+          "tableFrom": "appointment",
+          "tableTo": "patient_treatment_plan_session",
+          "columnsFrom": [
+            "patient_treatment_plan_session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "appointment_appointment_cancelled_reason_id_appointment_cancelled_reason_id_fk": {
           "name": "appointment_appointment_cancelled_reason_id_appointment_cancelled_reason_id_fk",
           "tableFrom": "appointment",
@@ -1773,6 +1792,10 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "appointment_patient_treatment_plan_pair_check": {
+          "name": "appointment_patient_treatment_plan_pair_check",
+          "value": "(\"appointment\".\"patient_treatment_plan_id\" is null) = (\"appointment\".\"patient_treatment_plan_session_id\" is null)"
+        },
         "appointment_booking_path_check": {
           "name": "appointment_booking_path_check",
           "value": "\"appointment\".\"booking_path\" in ('CONSULTATION', 'PROCEDURE')"
@@ -6048,6 +6071,670 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.patient_treatment_plan": {
+      "name": "patient_treatment_plan",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "patient_treatment_plan_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_on": {
+          "name": "created_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "modified_on": {
+          "name": "modified_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_on": {
+          "name": "deleted_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "patient_id": {
+          "name": "patient_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "treatment_id": {
+          "name": "treatment_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "treatment_name": {
+          "name": "treatment_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "treatment_code": {
+          "name": "treatment_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "treatment_source_identity": {
+          "name": "treatment_source_identity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "session_structure": {
+          "name": "session_structure",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_sessions": {
+          "name": "total_sessions",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status_override": {
+          "name": "status_override",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "legacy_source_identity": {
+          "name": "legacy_source_identity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "legacy_source_system": {
+          "name": "legacy_source_system",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "legacy_visit_id": {
+          "name": "legacy_visit_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "legacy_visit_number": {
+          "name": "legacy_visit_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "import_batch_id": {
+          "name": "import_batch_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "patient_treatment_plan_tenant_patient_idx": {
+          "name": "patient_treatment_plan_tenant_patient_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "patient_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patient_treatment_plan_tenant_treatment_idx": {
+          "name": "patient_treatment_plan_tenant_treatment_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "treatment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patient_treatment_plan_tenant_legacy_source_idx": {
+          "name": "patient_treatment_plan_tenant_legacy_source_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "legacy_source_identity",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"patient_treatment_plan\".\"legacy_source_identity\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "patient_treatment_plan_patient_id_patient_id_fk": {
+          "name": "patient_treatment_plan_patient_id_patient_id_fk",
+          "tableFrom": "patient_treatment_plan",
+          "tableTo": "patient",
+          "columnsFrom": [
+            "patient_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "patient_treatment_plan_treatment_id_treatment_id_fk": {
+          "name": "patient_treatment_plan_treatment_id_treatment_id_fk",
+          "tableFrom": "patient_treatment_plan",
+          "tableTo": "treatment",
+          "columnsFrom": [
+            "treatment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "patient_treatment_plan_total_sessions_check": {
+          "name": "patient_treatment_plan_total_sessions_check",
+          "value": "\"patient_treatment_plan\".\"total_sessions\" > 0"
+        },
+        "patient_treatment_plan_structure_check": {
+          "name": "patient_treatment_plan_structure_check",
+          "value": "\"patient_treatment_plan\".\"session_structure\" in ('REPEATABLE', 'SEQUENCED')"
+        },
+        "patient_treatment_plan_status_override_check": {
+          "name": "patient_treatment_plan_status_override_check",
+          "value": "\"patient_treatment_plan\".\"status_override\" is null or \"patient_treatment_plan\".\"status_override\" = 'STOPPED'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.patient_treatment_plan_session": {
+      "name": "patient_treatment_plan_session",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "patient_treatment_plan_session_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_on": {
+          "name": "created_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "modified_on": {
+          "name": "modified_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_on": {
+          "name": "deleted_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "patient_treatment_plan_id": {
+          "name": "patient_treatment_plan_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "treatment_session_id": {
+          "name": "treatment_session_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "session_number": {
+          "name": "session_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "procedure": {
+          "name": "procedure",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_minutes": {
+          "name": "duration_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "setup_minutes": {
+          "name": "setup_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cleaning_minutes": {
+          "name": "cleaning_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preparation": {
+          "name": "preparation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "warning": {
+          "name": "warning",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "equipment": {
+          "name": "equipment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "room_type": {
+          "name": "room_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "therapist_skill": {
+          "name": "therapist_skill",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "legacy_conduction_note": {
+          "name": "legacy_conduction_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completion_status": {
+          "name": "completion_status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "completion_source": {
+          "name": "completion_source",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_visit_id": {
+          "name": "completed_visit_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "patient_treatment_plan_session_tenant_plan_number_idx": {
+          "name": "patient_treatment_plan_session_tenant_plan_number_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "patient_treatment_plan_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "session_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"patient_treatment_plan_session\".\"is_deleted\" = false",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patient_treatment_plan_session_tenant_visit_idx": {
+          "name": "patient_treatment_plan_session_tenant_visit_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "completed_visit_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "patient_treatment_plan_session_patient_treatment_plan_id_patient_treatment_plan_id_fk": {
+          "name": "patient_treatment_plan_session_patient_treatment_plan_id_patient_treatment_plan_id_fk",
+          "tableFrom": "patient_treatment_plan_session",
+          "tableTo": "patient_treatment_plan",
+          "columnsFrom": [
+            "patient_treatment_plan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "patient_treatment_plan_session_treatment_session_id_treatment_session_id_fk": {
+          "name": "patient_treatment_plan_session_treatment_session_id_treatment_session_id_fk",
+          "tableFrom": "patient_treatment_plan_session",
+          "tableTo": "treatment_session",
+          "columnsFrom": [
+            "treatment_session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "patient_treatment_plan_session_completed_visit_id_visit_id_fk": {
+          "name": "patient_treatment_plan_session_completed_visit_id_visit_id_fk",
+          "tableFrom": "patient_treatment_plan_session",
+          "tableTo": "visit",
+          "columnsFrom": [
+            "completed_visit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "patient_treatment_plan_session_number_check": {
+          "name": "patient_treatment_plan_session_number_check",
+          "value": "\"patient_treatment_plan_session\".\"session_number\" > 0"
+        },
+        "patient_treatment_plan_session_completion_check": {
+          "name": "patient_treatment_plan_session_completion_check",
+          "value": "(\n    \"patient_treatment_plan_session\".\"completion_status\" = 'PENDING' and \"patient_treatment_plan_session\".\"completion_source\" is null\n    and \"patient_treatment_plan_session\".\"completed_visit_id\" is null and \"patient_treatment_plan_session\".\"completed_at\" is null\n  ) or (\n    \"patient_treatment_plan_session\".\"completion_status\" = 'COMPLETED' and \"patient_treatment_plan_session\".\"completion_source\" is not null and (\n      (\"patient_treatment_plan_session\".\"completion_source\" = 'VISIT' and \"patient_treatment_plan_session\".\"completed_visit_id\" is not null and \"patient_treatment_plan_session\".\"completed_at\" is not null)\n      or (\"patient_treatment_plan_session\".\"completion_source\" = 'LEGACY_IMPORT' and \"patient_treatment_plan_session\".\"completed_visit_id\" is null)\n    )\n  )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.patient_treatment_plan_session_reservation": {
+      "name": "patient_treatment_plan_session_reservation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "patient_treatment_plan_session_reservation_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_on": {
+          "name": "created_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "modified_on": {
+          "name": "modified_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_on": {
+          "name": "deleted_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "patient_treatment_plan_session_id": {
+          "name": "patient_treatment_plan_session_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "appointment_id": {
+          "name": "appointment_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ptp_session_reservation_active_session_idx": {
+          "name": "ptp_session_reservation_active_session_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "patient_treatment_plan_session_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"patient_treatment_plan_session_reservation\".\"is_deleted\" = false",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ptp_session_reservation_active_appointment_idx": {
+          "name": "ptp_session_reservation_active_appointment_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "appointment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"patient_treatment_plan_session_reservation\".\"is_deleted\" = false",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "patient_treatment_plan_session_reservation_patient_treatment_plan_session_id_patient_treatment_plan_session_id_fk": {
+          "name": "patient_treatment_plan_session_reservation_patient_treatment_plan_session_id_patient_treatment_plan_session_id_fk",
+          "tableFrom": "patient_treatment_plan_session_reservation",
+          "tableTo": "patient_treatment_plan_session",
+          "columnsFrom": [
+            "patient_treatment_plan_session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "patient_treatment_plan_session_reservation_appointment_id_appointment_id_fk": {
+          "name": "patient_treatment_plan_session_reservation_appointment_id_appointment_id_fk",
+          "tableFrom": "patient_treatment_plan_session_reservation",
+          "tableTo": "appointment",
+          "columnsFrom": [
+            "appointment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.patient_vital_sign": {
       "name": "patient_vital_sign",
       "schema": "",
@@ -8004,439 +8691,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.therapist_skill_assignment": {
-      "name": "therapist_skill_assignment",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "therapist_skill_assignment_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "tenant_id": {
-          "name": "tenant_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "therapist_id": {
-          "name": "therapist_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "therapist_skill_id": {
-          "name": "therapist_skill_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_on": {
-          "name": "created_on",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "therapist_skill_assignment_tenant_idx": {
-          "name": "therapist_skill_assignment_tenant_idx",
-          "columns": [
-            {
-              "expression": "tenant_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "therapist_skill_assignment_therapist_idx": {
-          "name": "therapist_skill_assignment_therapist_idx",
-          "columns": [
-            {
-              "expression": "therapist_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "therapist_skill_assignment_unique_idx": {
-          "name": "therapist_skill_assignment_unique_idx",
-          "columns": [
-            {
-              "expression": "therapist_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "therapist_skill_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "tenant_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "therapist_skill_assignment_tenant_id_organization_id_fk": {
-          "name": "therapist_skill_assignment_tenant_id_organization_id_fk",
-          "tableFrom": "therapist_skill_assignment",
-          "tableTo": "organization",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "therapist_skill_assignment_therapist_id_therapist_id_fk": {
-          "name": "therapist_skill_assignment_therapist_id_therapist_id_fk",
-          "tableFrom": "therapist_skill_assignment",
-          "tableTo": "therapist",
-          "columnsFrom": [
-            "therapist_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "therapist_skill_assignment_therapist_skill_id_therapist_skill_id_fk": {
-          "name": "therapist_skill_assignment_therapist_skill_id_therapist_skill_id_fk",
-          "tableFrom": "therapist_skill_assignment",
-          "tableTo": "therapist_skill",
-          "columnsFrom": [
-            "therapist_skill_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.therapist_skill": {
-      "name": "therapist_skill",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "therapist_skill_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "tenant_id": {
-          "name": "tenant_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "code": {
-          "name": "code",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_deleted": {
-          "name": "is_deleted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "created_on": {
-          "name": "created_on",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "modified_on": {
-          "name": "modified_on",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "deleted_on": {
-          "name": "deleted_on",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "therapist_skill_tenant_name_idx": {
-          "name": "therapist_skill_tenant_name_idx",
-          "columns": [
-            {
-              "expression": "tenant_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "lower(\"name\")",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"therapist_skill\".\"is_deleted\" = false",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "therapist_skill_tenant_code_idx": {
-          "name": "therapist_skill_tenant_code_idx",
-          "columns": [
-            {
-              "expression": "tenant_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "lower(\"code\")",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"therapist_skill\".\"is_deleted\" = false AND \"therapist_skill\".\"code\" IS NOT NULL",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.therapist": {
-      "name": "therapist",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "therapist_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "tenant_id": {
-          "name": "tenant_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "qualifications": {
-          "name": "qualifications",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "registration_number": {
-          "name": "registration_number",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_active": {
-          "name": "is_active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "is_deleted": {
-          "name": "is_deleted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "created_on": {
-          "name": "created_on",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "modified_on": {
-          "name": "modified_on",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "deleted_on": {
-          "name": "deleted_on",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "therapist_user_not_deleted_idx": {
-          "name": "therapist_user_not_deleted_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"therapist\".\"is_deleted\" = false",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "therapist_tenant_registration_number_idx": {
-          "name": "therapist_tenant_registration_number_idx",
-          "columns": [
-            {
-              "expression": "tenant_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "lower(\"registration_number\")",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"therapist\".\"is_deleted\" = false AND \"therapist\".\"registration_number\" IS NOT NULL",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "therapist_tenant_id_organization_id_fk": {
-          "name": "therapist_tenant_id_organization_id_fk",
-          "tableFrom": "therapist",
-          "tableTo": "organization",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "therapist_user_id_user_id_fk": {
-          "name": "therapist_user_id_user_id_fk",
-          "tableFrom": "therapist",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.treatment": {
       "name": "treatment",
       "schema": "",
@@ -8482,25 +8736,48 @@
           "primaryKey": false,
           "notNull": false
         },
+        "session_structure": {
+          "name": "session_structure",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'SEQUENCED'"
+        },
+        "default_total_sessions": {
+          "name": "default_total_sessions",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "legacy_source_identity": {
+          "name": "legacy_source_identity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "legacy_source_system": {
+          "name": "legacy_source_system",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "duration_minutes": {
           "name": "duration_minutes",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "setup_minutes": {
           "name": "setup_minutes",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": false
         },
         "cleaning_minutes": {
           "name": "cleaning_minutes",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": false
         },
         "room_type": {
           "name": "room_type",
@@ -8560,7 +8837,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"treatment\".\"is_deleted\" = false",
+          "where": "\"treatment\".\"is_deleted\" = false and \"treatment\".\"legacy_source_identity\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -8582,7 +8859,29 @@
             }
           ],
           "isUnique": true,
-          "where": "\"treatment\".\"is_deleted\" = false",
+          "where": "\"treatment\".\"is_deleted\" = false and \"treatment\".\"legacy_source_identity\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "treatment_tenant_legacy_source_idx": {
+          "name": "treatment_tenant_legacy_source_idx",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(\"legacy_source_identity\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"treatment\".\"is_deleted\" = false and \"treatment\".\"legacy_source_identity\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -8607,7 +8906,16 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "treatment_session_structure_check": {
+          "name": "treatment_session_structure_check",
+          "value": "\"treatment\".\"session_structure\" in ('REPEATABLE', 'SEQUENCED')"
+        },
+        "treatment_default_total_sessions_check": {
+          "name": "treatment_default_total_sessions_check",
+          "value": "\"treatment\".\"default_total_sessions\" is null or (\"treatment\".\"session_structure\" = 'REPEATABLE' and \"treatment\".\"default_total_sessions\" > 0)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.treatment_session": {
@@ -8665,21 +8973,19 @@
           "name": "duration_minutes",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "setup_minutes": {
           "name": "setup_minutes",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": false
         },
         "cleaning_minutes": {
           "name": "cleaning_minutes",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "default": 0
+          "notNull": false
         },
         "preparation": {
           "name": "preparation",

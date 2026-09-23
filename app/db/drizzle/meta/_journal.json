@@ -425,22 +425,29 @@
     {
       "idx": 60,
       "version": "7",
-      "when": 1790062061230,
-      "tag": "0060_rare_quasar",
+      "when": 1789549595449,
+      "tag": "0060_patient_treatment_plans",
       "breakpoints": true
     },
     {
       "idx": 61,
       "version": "7",
-      "when": 1790062062230,
-      "tag": "0061_seed_therapist_permissions",
+      "when": 1789707626739,
+      "tag": "0061_dhathri_treatment_import",
       "breakpoints": true
     },
     {
       "idx": 62,
       "version": "7",
-      "when": 1790063329163,
-      "tag": "0062_glossy_odin",
+      "when": 1790164573497,
+      "tag": "0062_therapist_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1790164573498,
+      "tag": "0063_seed_therapist_permissions",
       "breakpoints": true
     }
   ]

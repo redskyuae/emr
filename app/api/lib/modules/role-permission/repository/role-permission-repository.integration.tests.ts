@@ -276,6 +276,30 @@ describe('Role-Permission repository', () => {
     expect(assigned).toHaveLength(allPermissions.length);
   });
 
+  it('should assign Patient Treatment Plan permissions to the TENANT_ADMIN system role', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const roles = await roleRepository.seedSystemRolesForTenant(tenantA);
+
+    await rolePermissionRepository.seedDefaultPermissionsForSystemRoles(tenantA, roles);
+
+    const tenantAdminRole = roles.find((role) => role.code === 'TENANT_ADMIN');
+    if (!tenantAdminRole) {
+      throw new Error('TENANT_ADMIN role not found');
+    }
+
+    const assigned = await rolePermissionRepository.getAssignedPermissionsByRole(
+      tenantAdminRole.id,
+      tenantA
+    );
+
+    expect(
+      assigned
+        .filter(({ resource }) => resource === 'patient-treatment-plan')
+        .map(({ name }) => name)
+        .sort()
+    ).toEqual(['patient-treatment-plan:assign', 'patient-treatment-plan:read']);
+  });
+
   it('should seed exactly the Doctor System Role clinical read permissions', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const roles = await roleRepository.seedSystemRolesForTenant(tenantA);
