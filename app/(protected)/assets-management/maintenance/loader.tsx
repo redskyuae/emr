@@ -37,7 +37,6 @@ export default function PageLoader() {
                 <Skeleton key={i} className="h-8 w-24 rounded-md" />
               ))}
             </div>
-            <Skeleton className="h-9 w-full sm:w-40 2xl:ml-auto" />
           </div>
 
           <Table className="min-w-max">
