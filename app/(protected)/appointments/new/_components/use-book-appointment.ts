@@ -21,6 +21,7 @@ import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
 import { usePatientTreatmentPlansQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { useRoomsQuery } from '@/app/queries/rooms/useRooms';
+import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
 import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
 import { usePatientVisitsQuery } from '@/app/queries/visits/useVisits';
 import {
@@ -34,13 +35,13 @@ import {
   type BookAppointmentFormValues,
 } from '../_utils/book-appointment-form-schema';
 import type { BookablePatient, BookingPath } from '../_utils/book-appointment-types';
+import { getTherapistsForSkill } from '../_utils/therapist-options';
 import {
   submitBookAppointmentAndNavigate,
   type BookingConfirmation,
 } from '../_utils/submit-book-appointment';
 import {
   DEMO_FACILITY,
-  DEMO_THERAPISTS,
   getDefaultTreatmentSelection,
   getTreatmentSelectionState,
   toBookingPatientTreatmentPlan,
@@ -130,6 +131,10 @@ export function useBookAppointment() {
   const typesQuery = useAppointmentTypesQuery(masterListParams);
   const reasonsQuery = useAppointmentReasonsQuery(masterListParams);
   const roomsQuery = useRoomsQuery(masterListParams);
+  const therapistsQuery = useTherapistsQuery(
+    { ...masterListParams, status: 'active' },
+    { enabled: isProcedurePath }
+  );
 
   const doctors = (doctorsQuery.data?.data ?? []).map((doctor) => ({
     id: doctor.id,
@@ -200,14 +205,22 @@ export function useBookAppointment() {
   const selectedRoom =
     (roomsQuery.data?.data ?? []).find((room) => String(room.id) === values.roomId) ?? null;
   const selectedTherapist =
-    DEMO_THERAPISTS.find((therapist) => String(therapist.id) === values.therapistId) ?? null;
+    (therapistsQuery.data?.data ?? []).find(
+      (therapist) => String(therapist.id) === values.therapistId
+    ) ?? null;
   const resourceSession = selectedSession;
   const requiresRoom = isProcedurePath;
   const requiresTherapist = Boolean(resourceSession?.therapistSkill);
   const filteredRooms = getAvailableRooms(roomsQuery.data?.data ?? []);
-  const filteredTherapists = resourceSession?.therapistSkill
-    ? DEMO_THERAPISTS.filter((therapist) => therapist.skill === resourceSession.therapistSkill)
-    : [];
+  const filteredTherapists = getTherapistsForSkill(
+    therapistsQuery.data?.data ?? [],
+    resourceSession?.therapistSkill
+      ? {
+          id: resourceSession.therapistSkillId ?? null,
+          name: resourceSession.therapistSkill,
+        }
+      : null
+  );
   const createAppointment = useCreateAppointment();
 
   const treatmentSelectionState: TreatmentSelectionState | 'AWAITING_PATIENT' = selectedPatient
@@ -592,7 +605,7 @@ export function useBookAppointment() {
   const dependencyErrors = [
     doctorsQuery.error,
     ...(isProcedurePath
-      ? [plansQuery.error, treatmentsQuery.error, roomsQuery.error]
+      ? [plansQuery.error, treatmentsQuery.error, roomsQuery.error, therapistsQuery.error]
       : [modesQuery.error, typesQuery.error, reasonsQuery.error]),
   ]
     .map(getErrorMessage)
@@ -629,7 +642,10 @@ export function useBookAppointment() {
     bookingDependenciesLoading:
       doctorsQuery.isLoading ||
       (isProcedurePath
-        ? plansQuery.isLoading || treatmentsQuery.isLoading || roomsQuery.isLoading
+        ? plansQuery.isLoading ||
+          treatmentsQuery.isLoading ||
+          roomsQuery.isLoading ||
+          therapistsQuery.isLoading
         : modesQuery.isLoading || typesQuery.isLoading || reasonsQuery.isLoading),
     bookingDependencyError: dependencyErrors[0] ?? null,
     rotas,
@@ -638,6 +654,7 @@ export function useBookAppointment() {
     filteredRooms,
     isRoomsLoading: roomsQuery.isLoading || roomsQuery.isFetching,
     filteredTherapists,
+    isTherapistsLoading: therapistsQuery.isLoading || therapistsQuery.isFetching,
     requiresRoom,
     requiresTherapist,
     planOptions,
@@ -678,6 +695,7 @@ export function useBookAppointment() {
         void plansQuery.refetch();
         void treatmentsQuery.refetch();
         void roomsQuery.refetch();
+        void therapistsQuery.refetch();
       } else {
         void modesQuery.refetch();
         void typesQuery.refetch();

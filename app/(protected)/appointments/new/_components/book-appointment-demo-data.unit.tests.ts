@@ -1,29 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  DEMO_THERAPISTS,
-  DEMO_TREATMENT_CATALOG,
-  toBookingPatientTreatmentPlan,
-  toBookingTreatment,
-} from './book-appointment-demo-data';
-
-describe('Book Appointment static Therapist dependencies', () => {
-  it('should provide a selectable Therapist for every Session', () => {
-    for (const treatment of DEMO_TREATMENT_CATALOG) {
-      for (const session of treatment.sessions) {
-        expect(
-          DEMO_THERAPISTS.some(
-            (therapist) =>
-              therapist.skill === session.therapistSkill &&
-              therapist.active &&
-              therapist.conflictReason === undefined
-          ),
-          `${session.label} should have an available Therapist`
-        ).toBe(true);
-      }
-    }
-  });
-});
+import { toBookingPatientTreatmentPlan, toBookingTreatment } from './book-appointment-demo-data';
 
 describe('Booking Treatment adapter', () => {
   it('should preserve unknown legacy timing without inventing resource requirements', () => {
@@ -59,7 +36,41 @@ describe('Booking Treatment adapter', () => {
       cleaningMinutes: null,
       roomType: '',
       therapistSkill: '',
+      therapistSkillId: null,
     });
+  });
+
+  it('should preserve the Therapist Skill ID used for qualified Therapist filtering', () => {
+    const treatment = toBookingTreatment({
+      id: 1,
+      name: 'Abhyanga',
+      code: 'ABH',
+      durationMinutes: 60,
+      setupMinutes: 5,
+      cleaningMinutes: 5,
+      roomType: 'Therapy room',
+      therapistSkill: 'Abhyanga',
+      therapistSkillId: 11,
+      sessions: [
+        {
+          id: 2,
+          label: 'Session 1',
+          procedure: 'Abhyanga',
+          sessionNumber: 1,
+          durationMinutes: 60,
+          setupMinutes: 5,
+          cleaningMinutes: 5,
+          preparation: null,
+          warning: null,
+          equipment: null,
+          roomType: null,
+          therapistSkill: null,
+          therapistSkillId: null,
+        },
+      ],
+    });
+
+    expect(treatment.sessions[0].therapistSkillId).toBe(11);
   });
 
   it('should preserve Patient Plan progress and Session availability reasons', () => {

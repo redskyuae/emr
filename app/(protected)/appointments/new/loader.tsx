@@ -68,9 +68,9 @@ export default function BookAppointmentLoader() {
                 <Skeleton className="h-6 w-24" />
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">

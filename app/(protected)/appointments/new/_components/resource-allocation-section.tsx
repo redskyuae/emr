@@ -9,14 +9,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FieldError } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
 import type { Room } from '@/app/api/lib/modules/room/schemas/room-schema';
+import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
 import type { BookAppointmentFormValues } from '../_utils/book-appointment-form-schema';
-import type { BookingSession, DemoTherapist } from './book-appointment-demo-data';
+import type { BookingSession } from './book-appointment-demo-data';
 
 export function ResourceAllocationSection({
   control,
   rooms,
   isRoomsLoading,
   therapists,
+  isTherapistsLoading,
   session,
   requiresRoom,
   requiresTherapist,
@@ -29,7 +31,8 @@ export function ResourceAllocationSection({
   control: Control<BookAppointmentFormValues>;
   rooms: Room[];
   isRoomsLoading: boolean;
-  therapists: DemoTherapist[];
+  therapists: Therapist[];
+  isTherapistsLoading: boolean;
   session: BookingSession | null;
   requiresRoom: boolean;
   requiresTherapist: boolean;
@@ -132,13 +135,18 @@ export function ResourceAllocationSection({
                 <ResourceOption
                   key={therapist.id}
                   title={therapist.name}
-                  detail={therapist.role + ' · ' + therapist.skill}
-                  extra={therapist.license + ' · ' + therapist.workload}
-                  status={
-                    therapist.active && !therapist.conflictReason ? 'Available' : 'Unavailable'
+                  detail={
+                    (therapist.designation ?? 'Therapist') +
+                    ' · ' +
+                    therapist.skills.map((skill) => skill.name).join(', ')
                   }
-                  conflict={therapist.conflictReason}
-                  available={canAllocate && therapist.active && !therapist.conflictReason}
+                  extra={
+                    therapist.registrationNumber
+                      ? `Registration ${therapist.registrationNumber}`
+                      : undefined
+                  }
+                  status={therapist.isActive ? 'Active' : 'Inactive'}
+                  available={canAllocate && therapist.isActive}
                   selected={selectedTherapistId === String(therapist.id)}
                   onSelect={() => onTherapistChange(String(therapist.id))}
                 />
@@ -151,7 +159,10 @@ export function ResourceAllocationSection({
                 />
               ))}
               <div>
-                {canAllocate && !therapists.length ? (
+                {canAllocate && isTherapistsLoading ? (
+                  <p className="text-muted-foreground text-sm">Loading matching Therapists…</p>
+                ) : null}
+                {canAllocate && !isTherapistsLoading && !therapists.length ? (
                   <p className="text-muted-foreground text-sm">
                     No matching Therapist. Choose another Treatment or Session.
                   </p>
@@ -198,7 +209,7 @@ function ResourceOption({
   onSelect: () => void;
 }) {
   const tone =
-    status === 'Ready' || status === 'Available'
+    status === 'Ready' || status === 'Available' || status === 'Active'
       ? 'success'
       : status === 'Cleaning' ||
           status === 'Maintenance' ||
