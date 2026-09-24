@@ -593,6 +593,36 @@ const doctorScheduleExample = {
   modifiedOn: '2026-07-14T08:30:00.000Z',
 };
 
+const therapistScheduleRequestExample = {
+  therapistId: 27,
+  rotaIds: [1, 2],
+  slotInMinute: 30,
+  slotFromDate: '2026-09-24',
+  slotToDate: '2026-09-30',
+};
+
+const therapistScheduleExample = {
+  id: 18,
+  tenantId: 'org_apollo',
+  therapistId: 27,
+  isActive: true,
+  slotFromDate: '2026-09-24',
+  slotToDate: '2026-09-30',
+  slotInMinute: '00:30',
+  slotDurationMinutes: 30,
+  rotaDetails: [
+    {
+      rotaId: 1,
+      rotaName: 'Morning Rota',
+      rotaTime: '09:00 - 13:00',
+      fromTime: '09:00',
+      toTime: '13:00',
+    },
+  ],
+  createdOn: '2026-09-24T08:30:00.000Z',
+  modifiedOn: '2026-09-24T08:30:00.000Z',
+};
+
 const doctorSlotsExample = [
   {
     slotDate: '2026-07-15',
@@ -2307,6 +2337,10 @@ export const openApiDocument = {
       description: 'Tenant-scoped Doctor availability assignment and generated slot APIs.',
     },
     {
+      name: 'Therapist Schedule',
+      description: 'Tenant-scoped Therapist availability assignment APIs.',
+    },
+    {
       name: 'Appointment',
       description: 'Tenant-scoped Appointment booking APIs.',
     },
@@ -3807,6 +3841,88 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedListErrorResponses,
+        },
+      },
+    },
+    '/api/v1/therapist-schedules': {
+      get: {
+        tags: ['Therapist Schedule'],
+        summary: 'List Therapist Schedules',
+        description:
+          'Returns paginated TherapistSchedules for the active Tenant, optionally filtered by Therapist and date range.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          parameterRef('Page'),
+          parameterRef('Limit'),
+          {
+            name: 'therapistId',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 1 },
+            description: 'Therapist identifier.',
+          },
+          {
+            name: 'fromDate',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', format: 'date' },
+          },
+          {
+            name: 'toDate',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', format: 'date' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated TherapistSchedule list.',
+            content: jsonContent(paginatedSchema('TherapistSchedule'), {
+              data: [therapistScheduleExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          ...authenticatedListErrorResponses,
+        },
+      },
+      post: {
+        tags: ['Therapist Schedule'],
+        summary: 'Create Therapist Schedule',
+        description:
+          'Assigns one or more reusable Rotas to an active Therapist over a date range. tenantId is resolved from the active Session.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateTherapistScheduleRequest', therapistScheduleRequestExample),
+        responses: {
+          '201': {
+            description: 'TherapistSchedule created.',
+            content: jsonContent(dataEnvelopeSchema('TherapistSchedule'), {
+              data: therapistScheduleExample,
+            }),
+          },
+          ...authenticatedErrorResponses,
+          '409': responseRef('Conflict'),
+        },
+      },
+      put: {
+        tags: ['Therapist Schedule'],
+        summary: 'Update Therapist Schedule',
+        description:
+          'Updates a TherapistSchedule by id supplied in the body. rotaType=new adds Rota links and rotaType=remove removes them.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('UpdateTherapistScheduleRequest', {
+          therapistScheduleId: 18,
+          rotaIds: [2],
+          rotaType: 'new',
+        }),
+        responses: {
+          '200': {
+            description: 'TherapistSchedule updated.',
+            content: jsonContent(dataEnvelopeSchema('TherapistSchedule'), {
+              data: therapistScheduleExample,
+            }),
+          },
+          ...authenticatedErrorResponses,
+          '409': responseRef('Conflict'),
         },
       },
     },
@@ -9534,6 +9650,87 @@ export const openApiDocument = {
             description: 'Tenant identifier resolved from the active authenticated Session.',
           },
           doctorId: { type: 'integer', minimum: 1 },
+          isActive: { type: 'boolean' },
+          slotFromDate: { type: 'string', format: 'date' },
+          slotToDate: { type: 'string', format: 'date' },
+          slotInMinute: { type: 'string' },
+          slotDurationMinutes: { type: 'integer', minimum: 1 },
+          rotaDetails: {
+            type: 'array',
+            items: schemaRef('DoctorScheduleRotaDetail'),
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      CreateTherapistScheduleRequest: {
+        type: 'object',
+        required: ['therapistId', 'rotaIds', 'slotInMinute', 'slotFromDate', 'slotToDate'],
+        properties: {
+          therapistId: { type: 'integer', minimum: 1 },
+          rotaIds: {
+            type: 'array',
+            items: { type: 'integer', minimum: 1 },
+            minItems: 1,
+            uniqueItems: true,
+          },
+          slotInMinute: {
+            oneOf: [
+              { type: 'integer', minimum: 1, maximum: 1440 },
+              { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+            ],
+            description: 'Slot duration as minutes or HH:mm duration.',
+          },
+          slotFromDate: { type: 'string', format: 'date' },
+          slotToDate: { type: 'string', format: 'date' },
+        },
+      },
+      UpdateTherapistScheduleRequest: {
+        type: 'object',
+        required: ['therapistScheduleId'],
+        properties: {
+          therapistScheduleId: { type: 'integer', minimum: 1 },
+          therapistId: { type: 'integer', minimum: 1 },
+          rotaIds: {
+            type: 'array',
+            items: { type: 'integer', minimum: 1 },
+            minItems: 1,
+            uniqueItems: true,
+          },
+          rotaType: { type: 'string', enum: ['new', 'remove'] },
+          slotInMinute: {
+            oneOf: [
+              { type: 'integer', minimum: 1, maximum: 1440 },
+              { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
+            ],
+          },
+          slotFromDate: { type: 'string', format: 'date' },
+          slotToDate: { type: 'string', format: 'date' },
+        },
+      },
+      TherapistSchedule: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'therapistId',
+          'isActive',
+          'slotFromDate',
+          'slotToDate',
+          'slotInMinute',
+          'slotDurationMinutes',
+          'rotaDetails',
+          'createdOn',
+          'modifiedOn',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          therapistId: { type: 'integer', minimum: 1 },
           isActive: { type: 'boolean' },
           slotFromDate: { type: 'string', format: 'date' },
           slotToDate: { type: 'string', format: 'date' },

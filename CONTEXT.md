@@ -142,6 +142,10 @@ A Tenant-scoped assignment of one or more DoctorRotas to a Doctor over a date ra
 
 A bookable time interval for a Doctor on a specific date whose start time has not passed. DoctorSlots are derived from DoctorSchedules and DoctorRotas; they are not the same as Appointments because no Patient has been booked until an Appointment is created.
 
+## TherapistSchedule
+
+A Tenant-scoped availability assignment of one or more reusable Rota Management time windows to a Therapist over a date range. A TherapistSchedule is independent of DoctorSchedule and identifies when a Therapist may be selected for Treatment Sessions. The current Rota Management API retains the DoctorRota backend name, while Therapist-facing UI calls these reusable time windows Rotas.
+
 ## Appointment Slot Reservation
 
 The exclusive reservation of one DoctorSlot for an Appointment, regardless of which DoctorRota exposes that time. One Appointment may hold multiple consecutive Appointment Slot Reservations from the same DoctorRota on the same date.

@@ -158,6 +158,12 @@ export const appNavGroups: AppNavGroup[] = [
         icon: CalendarClock,
         permission: 'doctor-schedule',
       },
+      {
+        title: 'Therapist Schedules',
+        href: '/therapist-schedules',
+        icon: CalendarClock,
+        permission: 'therapist-schedule',
+      },
     ],
   },
   {
@@ -468,6 +474,15 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       label: 'New schedule',
       href: '/doctor-schedules?schedule=new',
       permission: 'doctor-schedule:create',
+    },
+  },
+  '/therapist-schedules': {
+    title: 'Therapist Schedules',
+    subtitle: 'Therapist availability assignments built from reusable Rota templates.',
+    primaryAction: {
+      label: 'New schedule',
+      href: '/therapist-schedules?schedule=new',
+      permission: 'therapist-schedule:create',
     },
   },
   '/doctors': {

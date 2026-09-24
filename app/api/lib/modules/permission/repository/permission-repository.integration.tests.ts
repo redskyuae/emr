@@ -202,6 +202,7 @@ describe('Permission repository', () => {
       'appointment',
       'doctor-rota',
       'doctor-schedule',
+      'therapist-schedule',
       'room',
       'room-type',
     ]);
@@ -229,6 +230,10 @@ describe('Permission repository', () => {
       },
       'doctor-schedule': {
         module: 'doctor-scheduling',
+        actions: ['read', 'create', 'update'],
+      },
+      'therapist-schedule': {
+        module: 'therapist-scheduling',
         actions: ['read', 'create', 'update'],
       },
       room: {

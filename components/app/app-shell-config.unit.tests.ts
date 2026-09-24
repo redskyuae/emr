@@ -47,7 +47,7 @@ describe('App shell navigation permissions', () => {
     ]);
   });
 
-  it('should gate Appointment, Room, and Doctor Scheduling menus by resource', () => {
+  it('should gate Appointment, Room, Doctor, and Therapist Scheduling menus by resource', () => {
     expect(getVisibleGroup('Clinical', [])).toBeUndefined();
     expect(getVisibleGroup('Operations', [])).toBeUndefined();
     expect(
@@ -58,6 +58,11 @@ describe('App shell navigation permissions', () => {
         ({ title }) => title
       )
     ).toEqual(['Rooms', 'Doctor Schedules']);
+    expect(
+      getVisibleGroup('Operations', ['doctor-schedule:read', 'therapist-schedule:read'])?.items.map(
+        ({ title }) => title
+      )
+    ).toEqual(['Doctor Schedules', 'Therapist Schedules']);
   });
 
   it('should gate Doctor Rota and Room Type configuration menus by resource', () => {

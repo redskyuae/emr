@@ -38,3 +38,26 @@ describe('OpenAPI Patient Treatment Plan contracts', () => {
     expect(JSON.stringify(catalogue)).not.toContain('treatmentSessionId');
   });
 });
+
+describe('OpenAPI Therapist Schedule contracts', () => {
+  it('should document list, create, and update operations with authenticated errors', () => {
+    const path = openApiDocument.paths['/api/v1/therapist-schedules'];
+    expect(path.get.parameters).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'therapistId', in: 'query' })])
+    );
+    expect(path.post.responses['201']).toBeDefined();
+    expect(path.post.responses['409']).toBeDefined();
+    expect(path.put.responses['200']).toBeDefined();
+    expect(path.put.responses['401']).toBeDefined();
+  });
+
+  it('should require the Therapist and schedule inputs on create', () => {
+    expect(openApiDocument.components.schemas.CreateTherapistScheduleRequest.required).toEqual([
+      'therapistId',
+      'rotaIds',
+      'slotInMinute',
+      'slotFromDate',
+      'slotToDate',
+    ]);
+  });
+});
