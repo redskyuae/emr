@@ -29,12 +29,12 @@ describe('Therapist migration history', () => {
     expect(therapistMigration?.when).toBe(deployedTherapistSchemaWatermark);
   });
 
-  it('should only run the permission seed after the deployed therapist schema watermark', async () => {
+  it('should preserve the ordered Therapist migrations after the deployed schema watermark', async () => {
     const journal = await readJournal();
     const pendingTags = journal.entries
       .filter(({ when }) => when > deployedTherapistSchemaWatermark)
       .map(({ tag }) => tag);
 
-    expect(pendingTags).toEqual(['0063_seed_therapist_permissions']);
+    expect(pendingTags).toEqual(['0063_seed_therapist_permissions', '0064_lame_tombstone']);
   });
 });
