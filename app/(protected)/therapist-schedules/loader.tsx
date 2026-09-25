@@ -12,7 +12,6 @@ export default function TherapistSchedulesPageLoader() {
           </div>
           <div className="flex gap-2 xl:ml-auto">
             <Skeleton className="h-9 w-24" />
-            <Skeleton className="h-9 w-44" />
           </div>
         </div>
       </div>
