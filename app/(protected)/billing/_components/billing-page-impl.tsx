@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
@@ -8,6 +8,7 @@ import { AlertCircle, ChevronLeft, ChevronRight, Plus, ReceiptText, Search } fro
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useInvoicesQuery } from '@/app/queries/billing/invoices/useInvoices';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -44,7 +45,10 @@ const STATUS_FILTERS = [
 ] as const;
 
 export function BillingPageImpl() {
-  const [invoiceParam] = useQueryState('invoice');
+  const [invoiceParam, setInvoiceParam] = useQueryState('invoice');
+  const [, setPatientIdParam] = useQueryState('patientId');
+  const [, setVisitIdParam] = useQueryState('visitId');
+  const [, setAdmissionIdParam] = useQueryState('admissionId');
   const [statusFilter, setStatusFilter] = useState<string>('open');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
@@ -66,7 +70,25 @@ export function BillingPageImpl() {
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
   const isFiltered = Boolean(debouncedSearch) || statusFilter !== 'open';
 
-  const sheetOpen = invoiceParam === 'new';
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('invoice:create');
+
+  const sheetOpen = invoiceParam === 'new' && canCreate;
+  const invoiceAccessDenied =
+    invoiceParam === 'new' && !canCreateLoading && !canCreateError && !canCreate;
+
+  useEffect(() => {
+    if (invoiceAccessDenied) {
+      void setInvoiceParam(null);
+      void setPatientIdParam(null);
+      void setVisitIdParam(null);
+      void setAdmissionIdParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceAccessDenied]);
 
   return (
     <>
@@ -108,14 +130,16 @@ export function BillingPageImpl() {
               </SelectContent>
             </Select>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button asChild>
-                <Link href="/billing?invoice=new">
-                  <Plus className="size-4" />
-                  New Invoice
-                </Link>
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button asChild>
+                  <Link href="/billing?invoice=new">
+                    <Plus className="size-4" />
+                    New Invoice
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -141,14 +165,16 @@ export function BillingPageImpl() {
                 priced Charge Items to it.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button asChild>
-                <Link href="/billing?invoice=new">
-                  <Plus className="size-4" />
-                  New Invoice
-                </Link>
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button asChild>
+                  <Link href="/billing?invoice=new">
+                    <Plus className="size-4" />
+                    New Invoice
+                  </Link>
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : invoices.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">

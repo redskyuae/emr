@@ -546,6 +546,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'New Invoice',
       href: '/billing?invoice=new',
+      permission: 'invoice:create',
     },
   },
   '/inpatient-masters': {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import type { InvoiceLine } from '@/app/api/lib/modules/invoice/schemas/invoice-
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useInvoiceQuery } from '@/app/queries/billing/invoices/useInvoice';
 import { useRemoveInvoiceLine } from '@/app/queries/billing/invoices/useRemoveInvoiceLine';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { DeleteInvoiceDialog } from './_modals/delete-invoice-dialog';
@@ -30,6 +31,27 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
   const [lineParam, setLineParam] = useQueryState('line');
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const removeMutation = useRemoveInvoiceLine();
+
+  const {
+    data: canUpdateInvoice,
+    isLoading: canUpdateLoading,
+    isError: canUpdateError,
+  } = useHasPermission('invoice:update');
+  const { data: canFinalizeInvoice } = useHasPermission('invoice:finalize');
+  const { data: canVoidInvoice } = useHasPermission('invoice:void');
+  const { data: canDeleteInvoice } = useHasPermission('invoice:delete');
+  const { data: canGenerateCharges } = useHasPermission('invoice:generate-charges');
+  const { data: canRecordPayment } = useHasPermission('payment:record');
+
+  const lineAccessDenied =
+    lineParam === 'new' && !canUpdateLoading && !canUpdateError && !canUpdateInvoice;
+
+  useEffect(() => {
+    if (lineAccessDenied) {
+      void setLineParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lineAccessDenied]);
 
   if (invoiceQuery.isLoading) {
     return <InvoiceDetailLoader />;
@@ -66,17 +88,17 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
         invoice={invoice}
         actions={
           <>
-            {isDraft ? (
+            {isDraft && canFinalizeInvoice ? (
               <Button type="button" onClick={() => setActiveModal('finalize')}>
                 Finalize
               </Button>
             ) : null}
-            {canVoid ? (
+            {canVoid && canVoidInvoice ? (
               <Button type="button" variant="outline" onClick={() => setActiveModal('void')}>
                 Void
               </Button>
             ) : null}
-            {canDelete ? (
+            {canDelete && canDeleteInvoice ? (
               <Button type="button" variant="outline" onClick={() => setActiveModal('delete')}>
                 Delete
               </Button>
@@ -93,10 +115,13 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
             onRemoveLine={(line) => void handleRemoveLine(line)}
             onGenerateBedCharges={() => setActiveModal('generate-bed-charges')}
             isRemoving={removeMutation.isPending}
+            canUpdate={canUpdateInvoice}
+            canGenerateCharges={canGenerateCharges}
           />
           <InvoicePaymentsCard
             invoice={invoice}
             onRecordPayment={() => setActiveModal('payment')}
+            canRecordPayment={canRecordPayment}
           />
         </div>
 
@@ -105,32 +130,32 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
 
       <AddLineSheet
         invoiceId={invoice.id}
-        open={lineParam === 'new'}
+        open={lineParam === 'new' && canUpdateInvoice}
         onClose={() => void setLineParam(null)}
       />
       <FinalizeInvoiceDialog
         invoice={invoice}
-        open={activeModal === 'finalize'}
+        open={activeModal === 'finalize' && canFinalizeInvoice}
         onClose={() => setActiveModal(null)}
       />
       <VoidInvoiceDialog
         invoice={invoice}
-        open={activeModal === 'void'}
+        open={activeModal === 'void' && canVoidInvoice}
         onClose={() => setActiveModal(null)}
       />
       <DeleteInvoiceDialog
         invoice={invoice}
-        open={activeModal === 'delete'}
+        open={activeModal === 'delete' && canDeleteInvoice}
         onClose={() => setActiveModal(null)}
       />
       <RecordPaymentDialog
         invoice={invoice}
-        open={activeModal === 'payment'}
+        open={activeModal === 'payment' && canRecordPayment}
         onClose={() => setActiveModal(null)}
       />
       <GenerateBedChargesDialog
         invoice={invoice}
-        open={activeModal === 'generate-bed-charges'}
+        open={activeModal === 'generate-bed-charges' && canGenerateCharges}
         onClose={() => setActiveModal(null)}
       />
     </div>
