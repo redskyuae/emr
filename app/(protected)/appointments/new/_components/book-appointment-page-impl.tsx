@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import {
   ArrowLeft,
   ArrowRight,
   Building2,
+  CalendarX,
   Check,
   Pencil,
   RefreshCw,
@@ -14,9 +16,17 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { FieldError } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
 import { canAllocateProcedureResources } from '../_utils/appointment-time';
@@ -33,8 +43,45 @@ import { ProcedureScheduleSection } from './procedure-schedule-section';
 import { ResourceAllocationSection } from './resource-allocation-section';
 import { TreatmentSessionSection } from './treatment-session-section';
 import { useBookAppointment } from './use-book-appointment';
+import BookAppointmentLoader from '../loader';
 
 export function BookAppointmentPageImpl() {
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('appointment:create');
+
+  if (canCreateLoading || canCreateError) {
+    return <BookAppointmentLoader />;
+  }
+
+  if (!canCreate) {
+    return (
+      <div className="space-y-4">
+        <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
+          <Link href="/appointments">
+            <ArrowLeft className="size-4" />
+            Appointments
+          </Link>
+        </Button>
+        <Empty className="min-h-72">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CalendarX className="size-5" />
+            </EmptyMedia>
+            <EmptyTitle>You don&apos;t have permission to book Appointments.</EmptyTitle>
+            <EmptyDescription>Contact a Tenant Admin if you need access.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    );
+  }
+
+  return <BookAppointmentWorkflow />;
+}
+
+function BookAppointmentWorkflow() {
   const booking = useBookAppointment();
   const { form, values, step, selectedPatient, selectedSession, isProcedurePath } = booking;
   const stepHeading = useRef<HTMLHeadingElement>(null);

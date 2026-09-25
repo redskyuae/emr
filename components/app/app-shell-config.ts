@@ -401,6 +401,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Book Appointment',
       href: '/appointments/new',
+      permission: 'appointment:create',
     },
   },
   '/patients': {
@@ -422,6 +423,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Book Appointment',
       href: '/appointments/new',
+      permission: 'appointment:create',
     },
   },
   '/appointments/new': {
