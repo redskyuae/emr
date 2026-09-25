@@ -16,6 +16,7 @@ import {
   useCreateAppointment,
 } from '@/app/queries/appointments/useCreateAppointment';
 import { useDoctorSlotsQuery } from '@/app/queries/appointments/useDoctorSlots';
+import { useProcedureResourceAvailabilityQuery } from '@/app/queries/appointments/useProcedureResourceAvailability';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
@@ -29,6 +30,7 @@ import {
   getProcedureEndTimeForStartChange,
   getSlotTimes,
 } from '../_utils/appointment-time';
+import { toAppointmentSlotDate } from '../_utils/book-appointment-request';
 import { getAvailableRooms } from '../_utils/room-availability';
 import {
   bookAppointmentFormSchema,
@@ -135,6 +137,17 @@ export function useBookAppointment() {
     { ...masterListParams, status: 'active' },
     { enabled: isProcedurePath }
   );
+  const hasProcedureWindow = Boolean(values.slotDate && values.startTime && values.endTime);
+  const resourceAvailabilityQuery = useProcedureResourceAvailabilityQuery(
+    {
+      slotDate: values.slotDate ? toAppointmentSlotDate(values.slotDate) : '',
+      startTime: values.startTime,
+      endTime: values.endTime,
+      patientId:
+        values.patientMode === 'existing' && values.patientId ? values.patientId : undefined,
+    },
+    { enabled: isProcedurePath && hasProcedureWindow }
+  );
 
   const doctors = (doctorsQuery.data?.data ?? []).map((doctor) => ({
     id: doctor.id,
@@ -211,8 +224,12 @@ export function useBookAppointment() {
   const resourceSession = selectedSession;
   const requiresRoom = isProcedurePath;
   const requiresTherapist = Boolean(resourceSession?.therapistSkill);
-  const filteredRooms = getAvailableRooms(roomsQuery.data?.data ?? []);
-  const filteredTherapists = getTherapistsForSkill(
+  const unavailableRoomIds = new Set(resourceAvailabilityQuery.data?.roomIds ?? []);
+  const unavailableTherapistIds = new Set(resourceAvailabilityQuery.data?.therapistIds ?? []);
+  const patientHasConflictingAppointment =
+    resourceAvailabilityQuery.data?.patientUnavailable ?? false;
+  const availableRooms = getAvailableRooms(roomsQuery.data?.data ?? []);
+  const eligibleTherapists = getTherapistsForSkill(
     therapistsQuery.data?.data ?? [],
     resourceSession?.therapistSkill
       ? {
@@ -221,6 +238,12 @@ export function useBookAppointment() {
         }
       : null
   );
+  const filteredRooms = patientHasConflictingAppointment
+    ? []
+    : availableRooms.filter((room) => !unavailableRoomIds.has(room.id));
+  const filteredTherapists = patientHasConflictingAppointment
+    ? []
+    : eligibleTherapists.filter((therapist) => !unavailableTherapistIds.has(therapist.id));
   const createAppointment = useCreateAppointment();
 
   const treatmentSelectionState: TreatmentSelectionState | 'AWAITING_PATIENT' = selectedPatient
@@ -285,6 +308,21 @@ export function useBookAppointment() {
       shouldDirty: false,
     });
   }, [form, isProcedurePath, planOptions, plansQuery.data, selectedPatient]);
+
+  useEffect(() => {
+    const availability = resourceAvailabilityQuery.data;
+    if (!availability) return;
+
+    const selectedRoomId = Number(form.getValues('roomId'));
+    if (selectedRoomId && availability.roomIds.includes(selectedRoomId)) {
+      form.setValue('roomId', '', { shouldDirty: true, shouldValidate: true });
+    }
+
+    const selectedTherapistId = Number(form.getValues('therapistId'));
+    if (selectedTherapistId && availability.therapistIds.includes(selectedTherapistId)) {
+      form.setValue('therapistId', '', { shouldDirty: true, shouldValidate: true });
+    }
+  }, [form, resourceAvailabilityQuery.data]);
 
   function clearProcedureFields() {
     appliedPlanDefaultKey.current = null;
@@ -605,7 +643,13 @@ export function useBookAppointment() {
   const dependencyErrors = [
     doctorsQuery.error,
     ...(isProcedurePath
-      ? [plansQuery.error, treatmentsQuery.error, roomsQuery.error, therapistsQuery.error]
+      ? [
+          plansQuery.error,
+          treatmentsQuery.error,
+          roomsQuery.error,
+          therapistsQuery.error,
+          resourceAvailabilityQuery.error,
+        ]
       : [modesQuery.error, typesQuery.error, reasonsQuery.error]),
   ]
     .map(getErrorMessage)
@@ -652,9 +696,21 @@ export function useBookAppointment() {
     isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
     doctorSlotsError: getErrorMessage(doctorSlotsQuery.error),
     filteredRooms,
-    isRoomsLoading: roomsQuery.isLoading || roomsQuery.isFetching,
+    patientHasConflictingAppointment,
+    roomsBlockedByAppointments: availableRooms.length > 0 && filteredRooms.length === 0,
+    isRoomsLoading:
+      roomsQuery.isLoading ||
+      roomsQuery.isFetching ||
+      resourceAvailabilityQuery.isLoading ||
+      resourceAvailabilityQuery.isFetching,
     filteredTherapists,
-    isTherapistsLoading: therapistsQuery.isLoading || therapistsQuery.isFetching,
+    therapistsBlockedByAppointments:
+      eligibleTherapists.length > 0 && filteredTherapists.length === 0,
+    isTherapistsLoading:
+      therapistsQuery.isLoading ||
+      therapistsQuery.isFetching ||
+      resourceAvailabilityQuery.isLoading ||
+      resourceAvailabilityQuery.isFetching,
     requiresRoom,
     requiresTherapist,
     planOptions,
@@ -696,6 +752,7 @@ export function useBookAppointment() {
         void treatmentsQuery.refetch();
         void roomsQuery.refetch();
         void therapistsQuery.refetch();
+        if (hasProcedureWindow) void resourceAvailabilityQuery.refetch();
       } else {
         void modesQuery.refetch();
         void typesQuery.refetch();

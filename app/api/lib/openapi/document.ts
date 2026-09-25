@@ -630,8 +630,10 @@ const createProcedureAppointmentRequestExample = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
-  treatmentId: 400,
-  treatmentSessionId: 401,
+  roomId: 4,
+  therapistId: 8,
+  patientTreatmentPlanId: 400,
+  patientTreatmentPlanSessionId: 401,
   remarks: 'Shirodhara session; Doctor not assigned.',
 };
 
@@ -668,6 +670,7 @@ const appointmentExample = {
     registrationStatus: 'registered',
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
+  therapist: null,
   appointmentMode: { id: 1, name: 'In Person', code: 'INP' },
   appointmentType: { id: 2, name: 'Consultation', code: 'CONS' },
   appointmentReason: { id: 3, name: 'Follow-up', code: 'FUP' },
@@ -679,6 +682,7 @@ const appointmentExample = {
   endTime: '09:30',
   rotaName: 'Morning Rota',
   doctorRotaId: 1,
+  roomId: null,
   slots: [
     { slotTime: '09:00', status: 'Booked' },
     { slotTime: '09:15', status: 'Booked' },
@@ -712,9 +716,11 @@ const procedureAppointmentExample = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  roomId: 4,
   rotaName: null,
   doctorRotaId: null,
   slots: [],
+  therapist: { id: 8, name: 'Leela Krishnan' },
   treatment: { id: 400, name: 'Shirodhara relaxation programme', code: 'TRT-0401' },
   treatmentSession: {
     id: 401,
@@ -3868,7 +3874,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Create Appointment',
         description:
-          'Creates an Appointment in the active Tenant. Consultation Appointments require an active Doctor and atomically reserve consecutive DoctorSlots from one DoctorRota. Procedure Appointments use a direct start/end time and may optionally assign an active Doctor without consulting DoctorSchedule, DoctorRota, or DoctorSlots. The server assigns bookingNumber and the protected system Scheduled Appointment Status. Existing Provisional Patients must complete or reconcile Patient Registration before another Appointment.',
+          'Creates an Appointment in the active Tenant. Consultation Appointments require an active Doctor and atomically reserve consecutive DoctorSlots from one DoctorRota. Procedure Appointments use a direct start/end time, require an available Room, and may assign a qualified active Therapist or active Doctor. Room and Therapist allocations are persisted, and overlapping active Procedure Appointments are rejected atomically. The server assigns bookingNumber and the protected system Scheduled Appointment Status. Existing Provisional Patients must complete or reconcile Patient Registration before another Appointment.',
         security: [{ cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -3931,7 +3937,7 @@ export const openApiDocument = {
           '403': responseRef('Forbidden'),
           '409': {
             description:
-              'A referenced master is invalid, the Patient is inactive or Provisional, a selected slot is no longer available, or new Provisional Patient details match an existing Patient. patientMatches contains only Registered Patient candidates; existing Provisional Patients are never returned as selectable matches.',
+              'A referenced master is invalid, the Patient is inactive or Provisional, a selected DoctorSlot is no longer available, a selected Room or Therapist overlaps another active Procedure Appointment, or new Provisional Patient details match an existing Patient. patientMatches contains only Registered Patient candidates; existing Provisional Patients are never returned as selectable matches.',
             content: {
               'application/json': {
                 schema: schemaRef('AppointmentConflictError'),
@@ -3948,6 +3954,13 @@ export const openApiDocument = {
                     value: {
                       message: 'Conflict',
                       errors: ['One or more selected Doctor slots are no longer available.'],
+                    },
+                  },
+                  procedureResourceConflict: {
+                    summary: 'A Procedure Room or Therapist was booked concurrently',
+                    value: {
+                      message: 'Conflict',
+                      errors: ['The selected Room or Therapist is no longer available.'],
                     },
                   },
                   potentialPatientMatch: {
@@ -3973,6 +3986,54 @@ export const openApiDocument = {
             },
           },
           '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/appointments/resource-availability': {
+      get: {
+        tags: ['Appointment'],
+        summary: 'Get unavailable Procedure resources',
+        description:
+          'Returns the Room and Therapist identifiers already allocated to active Procedure Appointments that overlap the requested Tenant-local time window. Adjacent windows do not overlap. Cancelled, Completed, and No-show Appointments do not block resources.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'slotDate',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', pattern: '^\\d{2}-\\d{2}-\\d{4}$' },
+            description: 'Procedure date in DD-MM-YYYY format.',
+          },
+          {
+            name: 'startTime',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+          },
+          {
+            name: 'endTime',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+            description: 'Must be after startTime.',
+          },
+          {
+            name: 'patientId',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 1 },
+            description:
+              'When supplied, also reports whether the Patient has an overlapping active Appointment.',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Unavailable resource identifiers for the requested window.',
+            content: jsonContent(schemaRef('ProcedureResourceAvailabilityResponse'), {
+              data: { roomIds: [4], therapistIds: [8], patientUnavailable: true },
+            }),
+          },
+          ...authenticatedListErrorResponses,
         },
       },
     },
@@ -9814,6 +9875,7 @@ export const openApiDocument = {
           'slotDate',
           'startTime',
           'endTime',
+          'roomId',
           'patientTreatmentPlanId',
           'patientTreatmentPlanSessionId',
         ],
@@ -9827,6 +9889,17 @@ export const openApiDocument = {
             minimum: 1,
             description:
               'Optional active Doctor assignment. It does not control Procedure scheduling.',
+          },
+          roomId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Operationally AVAILABLE Room assigned to the Procedure.',
+          },
+          therapistId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional active Therapist. When the Session requires a Therapist Skill, the Therapist must have it.',
           },
           slotDate: {
             type: 'string',
@@ -9850,7 +9923,15 @@ export const openApiDocument = {
       CreateCatalogueProcedureAppointmentRequest: {
         type: 'object',
         additionalProperties: false,
-        required: ['bookingPath', 'patientId', 'slotDate', 'startTime', 'endTime', 'treatmentId'],
+        required: [
+          'bookingPath',
+          'patientId',
+          'slotDate',
+          'startTime',
+          'endTime',
+          'roomId',
+          'treatmentId',
+        ],
         properties: {
           bookingPath: { type: 'string', enum: ['PROCEDURE'] },
           patientId: { type: 'integer', minimum: 1 },
@@ -9858,6 +9939,17 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description: 'Optional active Doctor assignment.',
+          },
+          roomId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Operationally AVAILABLE Room assigned to the Procedure.',
+          },
+          therapistId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional active Therapist. When the Treatment requires a Therapist Skill, the Therapist must have it.',
           },
           slotDate: { type: 'string', pattern: '^\\d{2}-\\d{2}-\\d{4}$' },
           startTime: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
@@ -10016,6 +10108,8 @@ export const openApiDocument = {
           'endTime',
           'rotaName',
           'doctorRotaId',
+          'roomId',
+          'therapist',
           'slots',
           'remarks',
           'createdOn',
@@ -10027,6 +10121,21 @@ export const openApiDocument = {
           bookingNumber: { type: 'string', example: 'APT-1001' },
           patient: schemaRef('AppointmentPatientSummary'),
           doctor: {
+            oneOf: [
+              {
+                type: 'object',
+                required: ['id', 'name'],
+                properties: { id: { type: 'integer', minimum: 1 }, name: { type: 'string' } },
+              },
+              { type: 'null' },
+            ],
+          },
+          roomId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description: 'Room allocated to a Procedure Appointment; null for a Consultation.',
+          },
+          therapist: {
             oneOf: [
               {
                 type: 'object',
@@ -10089,6 +10198,29 @@ export const openApiDocument = {
           slots: { type: 'array', items: schemaRef('AppointmentSlotBooking') },
           remarks: { type: ['string', 'null'] },
           createdOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      ProcedureResourceAvailabilityResponse: {
+        type: 'object',
+        required: ['data'],
+        properties: {
+          data: {
+            type: 'object',
+            required: ['roomIds', 'therapistIds', 'patientUnavailable'],
+            properties: {
+              roomIds: { type: 'array', uniqueItems: true, items: { type: 'integer', minimum: 1 } },
+              therapistIds: {
+                type: 'array',
+                uniqueItems: true,
+                items: { type: 'integer', minimum: 1 },
+              },
+              patientUnavailable: {
+                type: 'boolean',
+                description:
+                  'True when the requested Patient has an active Appointment overlapping this window.',
+              },
+            },
+          },
         },
       },
       AppointmentConflictError: {

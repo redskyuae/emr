@@ -21,6 +21,7 @@ import { doctor as doctorTable } from './doctor';
 import { doctorRota as doctorRotaTable } from './doctor-rota';
 import { masterColumns } from './helpers';
 import { patient as patientTable } from './patient';
+import { room as roomTable } from './room';
 import { therapist as therapistTable } from './therapist';
 import {
   patientTreatmentPlan as patientTreatmentPlanTable,
@@ -47,6 +48,7 @@ export const appointment = pgTable(
       .notNull()
       .references(() => patientTable.id),
     doctorId: integer('doctor_id').references(() => doctorTable.id),
+    roomId: integer('room_id').references(() => roomTable.id),
     therapistId: integer('therapist_id').references(() => therapistTable.id),
     appointmentModeId: integer('appointment_mode_id').references(() => appointmentModeTable.id),
     appointmentTypeId: integer('appointment_type_id').references(() => appointmentTypeTable.id),

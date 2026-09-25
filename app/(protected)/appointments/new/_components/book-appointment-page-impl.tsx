@@ -336,8 +336,11 @@ export function BookAppointmentPageImpl() {
                     <ResourceAllocationSection
                       control={form.control}
                       rooms={booking.filteredRooms}
+                      patientHasConflictingAppointment={booking.patientHasConflictingAppointment}
+                      roomsBlockedByAppointments={booking.roomsBlockedByAppointments}
                       isRoomsLoading={booking.isRoomsLoading}
                       therapists={booking.filteredTherapists}
+                      therapistsBlockedByAppointments={booking.therapistsBlockedByAppointments}
                       isTherapistsLoading={booking.isTherapistsLoading}
                       session={booking.resourceSession}
                       requiresRoom={booking.requiresRoom}

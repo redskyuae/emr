@@ -10,6 +10,7 @@ describe('CreateAppointmentRequest', () => {
       slotDate: '31-12-2099',
       startTime: '10:00',
       endTime: '11:15',
+      roomId: 7,
       patientTreatmentPlanId: 400,
       patientTreatmentPlanSessionId: 401,
     } satisfies CreateAppointmentRequest;
@@ -24,6 +25,7 @@ describe('CreateAppointmentRequest', () => {
       slotDate: '31-12-2099',
       startTime: '10:00',
       endTime: '11:15',
+      roomId: 7,
       treatmentId: 400,
       totalSessions: 6,
     } satisfies CreateAppointmentRequest;

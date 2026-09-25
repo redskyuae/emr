@@ -9,6 +9,7 @@ import { appointmentTypeRepository } from '../../appointment-type/repository/app
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
 import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
+import { roomRepository } from '../../room/repository/room-repository';
 import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
@@ -166,6 +167,24 @@ export async function validateCreateAppointment(
           status: StatusCodes.CONFLICT,
         };
       }
+    }
+
+    const room = await roomRepository.getRoomById(data.roomId, validatedTenantId);
+
+    if (!room) {
+      return {
+        success: false,
+        errors: [`Room ${data.roomId} is Invalid.`],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
+    if (room.status !== 'AVAILABLE') {
+      return {
+        success: false,
+        errors: [`Room ${data.roomId} is not available for an Appointment.`],
+        status: StatusCodes.CONFLICT,
+      };
     }
 
     const currentPlans = await patientTreatmentPlanRepository.getCurrentByPatientId(
