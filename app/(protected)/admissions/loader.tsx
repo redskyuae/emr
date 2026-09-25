@@ -8,9 +8,6 @@ export default function AdmissionsPageLoader() {
         <Skeleton className="h-9 lg:w-48" />
         <Skeleton className="h-9 lg:w-52" />
         <Skeleton className="h-9 w-full lg:max-w-xs" />
-        <div className="flex gap-2 lg:ml-auto">
-          <Skeleton className="h-9 w-32" />
-        </div>
       </div>
 
       <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">

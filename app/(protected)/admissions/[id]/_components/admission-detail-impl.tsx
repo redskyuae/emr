@@ -22,6 +22,7 @@ import { useAdmission } from '@/app/queries/admissions/useAdmission';
 import { useUpdateAdmission } from '@/app/queries/admissions/useUpdateAdmission';
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientChart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,11 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
   );
 
   const updateMutation = useUpdateAdmission();
+
+  const { data: canUpdate } = useHasPermission('admission:update');
+  const { data: canDischarge } = useHasPermission('admission:discharge');
+  const { data: canTransfer } = useHasPermission('admission:transfer');
+  const { data: canCancel } = useHasPermission('admission:cancel');
 
   const status = admissionStatusPresentation(admission.status);
   const active = admission.status === 'ADMITTED';
@@ -128,21 +134,23 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {active ? (
-                  <>
-                    <Button type="button" onClick={() => setDischargeOpen(true)}>
-                      <LogOut className="size-4" />
-                      Discharge
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => setTransferOpen(true)}>
-                      <ArrowRightLeft className="size-4" />
-                      Transfer Bed
-                    </Button>
-                    <Button type="button" variant="outline" onClick={() => setCancelOpen(true)}>
-                      <XCircle className="size-4" />
-                      Cancel
-                    </Button>
-                  </>
+                {active && canDischarge ? (
+                  <Button type="button" onClick={() => setDischargeOpen(true)}>
+                    <LogOut className="size-4" />
+                    Discharge
+                  </Button>
+                ) : null}
+                {active && canTransfer ? (
+                  <Button type="button" variant="outline" onClick={() => setTransferOpen(true)}>
+                    <ArrowRightLeft className="size-4" />
+                    Transfer Bed
+                  </Button>
+                ) : null}
+                {active && canCancel ? (
+                  <Button type="button" variant="outline" onClick={() => setCancelOpen(true)}>
+                    <XCircle className="size-4" />
+                    Cancel
+                  </Button>
                 ) : null}
                 <Button asChild variant="outline">
                   <Link
@@ -190,7 +198,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                 <Textarea
                   id="admission-reason"
                   rows={2}
-                  disabled={!active}
+                  disabled={!active || !canUpdate}
                   value={admissionReason}
                   onChange={(event) => setAdmissionReason(event.target.value)}
                 />
@@ -200,7 +208,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                 <Textarea
                   id="admission-remarks"
                   rows={2}
-                  disabled={!active}
+                  disabled={!active || !canUpdate}
                   value={remarks}
                   onChange={(event) => setRemarks(event.target.value)}
                 />
@@ -210,12 +218,12 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                 <Input
                   id="admission-edd"
                   type="date"
-                  disabled={!active}
+                  disabled={!active || !canUpdate}
                   value={expectedDischarge}
                   onChange={(event) => setExpectedDischarge(event.target.value)}
                 />
               </Field>
-              {active ? (
+              {active && canUpdate ? (
                 <div className="flex justify-end">
                   <Button
                     type="button"
@@ -227,11 +235,11 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                     {updateMutation.isPending ? 'Saving…' : 'Save details'}
                   </Button>
                 </div>
-              ) : (
+              ) : !active ? (
                 <p className="text-muted-foreground text-sm">
                   This Admission is {status.label.toLowerCase()} and can no longer be edited.
                 </p>
-              )}
+              ) : null}
             </CardContent>
           </Card>
 
@@ -368,17 +376,17 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
       />
 
       <TransferBedDialog
-        admission={transferOpen ? admission : null}
+        admission={transferOpen && canTransfer ? admission : null}
         onClose={() => setTransferOpen(false)}
       />
 
       <DischargeDialog
-        admission={dischargeOpen ? admission : null}
+        admission={dischargeOpen && canDischarge ? admission : null}
         onClose={() => setDischargeOpen(false)}
       />
 
       <CancelAdmissionDialog
-        admission={cancelOpen ? admission : null}
+        admission={cancelOpen && canCancel ? admission : null}
         onClose={() => setCancelOpen(false)}
       />
     </>
