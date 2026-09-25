@@ -8,6 +8,7 @@ import { appointmentTypeRepository } from '../../appointment-type/repository/app
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
 import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
+import { roomRepository } from '../../room/repository/room-repository';
 import { validatePatientEmiratesIdUniqueness } from '../../patient/validator/patient-emirates-id-validator';
 import { validatePatientReferences } from '../../patient/validator/patient-reference-validator';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
@@ -36,6 +37,9 @@ vi.mock('../../patient/repository/patient-repository', () => ({
 }));
 vi.mock('../../patient-treatment-plan/repository/patient-treatment-plan-repository', () => ({
   patientTreatmentPlanRepository: { getCurrentByPatientId: vi.fn() },
+}));
+vi.mock('../../room/repository/room-repository', () => ({
+  roomRepository: { getRoomById: vi.fn() },
 }));
 vi.mock('../../patient/validator/patient-emirates-id-validator', () => ({
   validatePatientEmiratesIdUniqueness: vi.fn(),
@@ -66,6 +70,7 @@ const typeRepo = vi.mocked(appointmentTypeRepository);
 const reasonRepo = vi.mocked(appointmentReasonRepository);
 const statusRepo = vi.mocked(appointmentStatusRepository);
 const patientRepo = vi.mocked(patientRepository);
+const roomRepo = vi.mocked(roomRepository);
 const planRepo = vi.mocked(patientTreatmentPlanRepository);
 const doctorRepo = vi.mocked(doctorRepository);
 const appointmentRepo = vi.mocked(appointmentRepository);
@@ -92,6 +97,7 @@ const procedurePayload = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  roomId: 7,
   patientTreatmentPlanId: 400,
   patientTreatmentPlanSessionId: 401,
 };
@@ -102,6 +108,7 @@ const catalogueProcedurePayload = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  roomId: 7,
   treatmentId: 500,
 };
 
@@ -141,6 +148,7 @@ describe('validateCreateAppointment', () => {
     });
     appointmentRepo.getReservedSlotTimes.mockResolvedValue([]);
     patientRepo.getPatientById.mockResolvedValue(activePatient as never);
+    roomRepo.getRoomById.mockResolvedValue({ id: 7, status: 'AVAILABLE' } as never);
     doctorRepo.getDoctorById.mockResolvedValue({ id: 1, isActive: true } as never);
     planRepo.getCurrentByPatientId.mockResolvedValue([currentPlan] as never);
     treatmentRepo.getTreatmentById.mockResolvedValue(repeatableTreatment as never);
@@ -209,6 +217,26 @@ describe('validateCreateAppointment', () => {
     expect(appointmentRepo.getSlotBookingContext).not.toHaveBeenCalled();
     expect(appointmentRepo.getReservedSlotTimes).not.toHaveBeenCalled();
     expect(planRepo.getCurrentByPatientId).toHaveBeenCalledWith(5, 'tenant-1');
+  });
+
+  it('should reject a Room outside the active Tenant', async () => {
+    roomRepo.getRoomById.mockResolvedValue(undefined);
+
+    await expect(validateCreateAppointment(procedurePayload, 'tenant-1')).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Room 7 is Invalid.'],
+    });
+  });
+
+  it('should reject a Room that is not operationally available', async () => {
+    roomRepo.getRoomById.mockResolvedValue({ id: 7, status: 'MAINTENANCE' } as never);
+
+    await expect(validateCreateAppointment(procedurePayload, 'tenant-1')).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Room 7 is not available for an Appointment.'],
+    });
   });
 
   it('should reject an existing Plan Session outside the selected Patient and Tenant current Plans', async () => {

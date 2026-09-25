@@ -71,7 +71,7 @@ describe('submit Book Appointment', () => {
     expect(events).toEqual(['created', 'notified', '/appointments']);
   });
 
-  it('should create a Procedure Appointment without sending temporary dependency IDs', async () => {
+  it('should create a Procedure Appointment with its selected resources', async () => {
     let submittedRequest: CreateAppointmentRequest | undefined;
 
     const confirmation = await submitBookAppointment(
@@ -140,6 +140,8 @@ describe('submit Book Appointment', () => {
       slotDate: '31-12-2099',
       startTime: '09:00',
       endTime: '09:30',
+      roomId: 7,
+      therapistId: 41,
       treatmentId: 400,
       remarks: undefined,
     });

@@ -27,6 +27,7 @@ const validatedData = {
   patientId: 5,
   slotDate: '2099-12-31',
   doctorRotaId: 6,
+  roomId: null,
   slotTimes: ['09:00', '09:15'],
   remarks: undefined,
 };
@@ -168,6 +169,26 @@ describe('createAppointmentCommand', () => {
     });
   });
 
+  it('should map stale Procedure resource conflicts to conflict errors', async () => {
+    repo.createAppointment.mockResolvedValue({ success: false, outcome: 'resource-unavailable' });
+
+    await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['The selected Room or Therapist is no longer available.'],
+    });
+  });
+
+  it('should map an overlapping Patient Appointment to a conflict error', async () => {
+    repo.createAppointment.mockResolvedValue({ success: false, outcome: 'patient-unavailable' });
+
+    await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['The Patient already has an Appointment that overlaps the selected time.'],
+    });
+  });
+
   it('should describe a past Procedure time without referring to Doctor slots', async () => {
     validate.mockResolvedValue({
       success: true,
@@ -179,6 +200,7 @@ describe('createAppointmentCommand', () => {
         slotDate: '2099-12-31',
         startTime: '09:00',
         endTime: '10:00',
+        roomId: 7,
         patientTreatmentPlanId: 400,
         patientTreatmentPlanSessionId: 401,
         remarks: undefined,

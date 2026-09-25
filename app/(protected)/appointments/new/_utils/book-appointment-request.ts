@@ -49,6 +49,10 @@ export function bookAppointmentFormValuesToRequest(
         : {}),
       startTime: values.startTime,
       endTime: values.endTime,
+      roomId: Number(values.roomId),
+      ...(values.therapistId && values.therapistId !== 'not-required'
+        ? { therapistId: Number(values.therapistId) }
+        : {}),
     };
 
     if (values.selectionMode === 'EXISTING_PLAN') {

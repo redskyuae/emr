@@ -16,8 +16,11 @@ import type { BookingSession } from './book-appointment-demo-data';
 export function ResourceAllocationSection({
   control,
   rooms,
+  patientHasConflictingAppointment,
+  roomsBlockedByAppointments,
   isRoomsLoading,
   therapists,
+  therapistsBlockedByAppointments,
   isTherapistsLoading,
   session,
   requiresRoom,
@@ -30,8 +33,11 @@ export function ResourceAllocationSection({
 }: {
   control: Control<BookAppointmentFormValues>;
   rooms: Room[];
+  patientHasConflictingAppointment: boolean;
+  roomsBlockedByAppointments: boolean;
   isRoomsLoading: boolean;
   therapists: Therapist[];
+  therapistsBlockedByAppointments: boolean;
   isTherapistsLoading: boolean;
   session: BookingSession | null;
   requiresRoom: boolean;
@@ -57,6 +63,11 @@ export function ResourceAllocationSection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        {canAllocate && patientHasConflictingAppointment ? (
+          <p className="border-destructive/25 bg-destructive/5 text-destructive rounded-lg border p-3 text-sm">
+            This Patient already has an Appointment that overlaps the selected time.
+          </p>
+        ) : null}
         {!requiresRoom && !requiresTherapist ? (
           <p className="border-warning/25 bg-warning/5 rounded-lg border p-3 text-sm">
             Room and Therapist requirements are not configured for this Session. Resource filtering
@@ -112,7 +123,11 @@ export function ResourceAllocationSection({
                   <p className="text-muted-foreground text-sm">Loading matching Rooms…</p>
                 ) : null}
                 {canAllocate && !isRoomsLoading && !rooms.length ? (
-                  <p className="text-muted-foreground text-sm">No Room is currently available.</p>
+                  <p className="text-muted-foreground text-sm">
+                    {roomsBlockedByAppointments
+                      ? 'All matching Rooms are already booked for this time.'
+                      : 'No Room is currently available.'}
+                  </p>
                 ) : null}
                 <FieldError errors={[errors.roomId]} />
               </div>
@@ -164,7 +179,9 @@ export function ResourceAllocationSection({
                 ) : null}
                 {canAllocate && !isTherapistsLoading && !therapists.length ? (
                   <p className="text-muted-foreground text-sm">
-                    No matching Therapist. Choose another Treatment or Session.
+                    {therapistsBlockedByAppointments
+                      ? 'All matching Therapists are already booked for this time.'
+                      : 'No matching Therapist. Choose another Treatment or Session.'}
                   </p>
                 ) : null}
                 <FieldError errors={[errors.therapistId]} />
