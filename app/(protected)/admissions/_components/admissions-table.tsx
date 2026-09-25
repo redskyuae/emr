@@ -30,11 +30,17 @@ export function AdmissionsTable({
   onTransfer,
   onDischarge,
   onCancel,
+  canDischarge,
+  canTransfer,
+  canCancel,
 }: {
   admissions: Admission[];
   onTransfer: (admission: Admission) => void;
   onDischarge: (admission: Admission) => void;
   onCancel: (admission: Admission) => void;
+  canDischarge: boolean;
+  canTransfer: boolean;
+  canCancel: boolean;
 }) {
   return (
     <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
@@ -96,7 +102,7 @@ export function AdmissionsTable({
                   </td>
                   <td className="p-3 pr-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {active ? (
+                      {active && canDischarge ? (
                         <Button type="button" size="sm" onClick={() => onDischarge(admission)}>
                           <LogOut className="size-4" />
                           Discharge
@@ -126,20 +132,24 @@ export function AdmissionsTable({
                               Open Patient
                             </Link>
                           </DropdownMenuItem>
-                          {active ? (
+                          {active && (canTransfer || canCancel) ? (
                             <>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onSelect={() => onTransfer(admission)}>
-                                <ArrowRightLeft className="size-4" />
-                                Transfer Bed
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onSelect={() => onCancel(admission)}
-                              >
-                                <XCircle className="size-4" />
-                                Cancel Admission
-                              </DropdownMenuItem>
+                              {canTransfer ? (
+                                <DropdownMenuItem onSelect={() => onTransfer(admission)}>
+                                  <ArrowRightLeft className="size-4" />
+                                  Transfer Bed
+                                </DropdownMenuItem>
+                              ) : null}
+                              {canCancel ? (
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onSelect={() => onCancel(admission)}
+                                >
+                                  <XCircle className="size-4" />
+                                  Cancel Admission
+                                </DropdownMenuItem>
+                              ) : null}
                             </>
                           ) : null}
                         </DropdownMenuContent>

@@ -158,6 +158,12 @@ export const appNavGroups: AppNavGroup[] = [
         icon: CalendarClock,
         permission: 'doctor-schedule',
       },
+      {
+        title: 'Therapist Schedules',
+        href: '/therapist-schedules',
+        icon: CalendarClock,
+        permission: 'therapist-schedule',
+      },
     ],
   },
   {
@@ -401,6 +407,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Book Appointment',
       href: '/appointments/new',
+      permission: 'appointment:create',
     },
   },
   '/patients': {
@@ -422,6 +429,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Book Appointment',
       href: '/appointments/new',
+      permission: 'appointment:create',
     },
   },
   '/appointments/new': {
@@ -468,6 +476,15 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       label: 'New schedule',
       href: '/doctor-schedules?schedule=new',
       permission: 'doctor-schedule:create',
+    },
+  },
+  '/therapist-schedules': {
+    title: 'Therapist Schedules',
+    subtitle: 'Therapist availability assignments built from reusable Rota templates.',
+    primaryAction: {
+      label: 'New schedule',
+      href: '/therapist-schedules?schedule=new',
+      permission: 'therapist-schedule:create',
     },
   },
   '/doctors': {
@@ -531,6 +548,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Admit patient',
       href: '/admissions?admit=new',
+      permission: 'admission:create',
     },
   },
   '/bed-board': {
@@ -543,6 +561,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'New Invoice',
       href: '/billing?invoice=new',
+      permission: 'invoice:create',
     },
   },
   '/inpatient-masters': {

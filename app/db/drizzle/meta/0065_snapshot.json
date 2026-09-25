@@ -1,6 +1,6 @@
 {
-  "id": "6ec1a9cf-8f3d-491b-9171-5cdab4b59822",
-  "prevId": "84679858-d930-4f97-aa65-f7e7e12cc9e3",
+  "id": "f3f225e7-15aa-4bb9-a3d9-e3d344ebc8a5",
+  "prevId": "6ec1a9cf-8f3d-491b-9171-5cdab4b59822",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1481,6 +1481,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "room_id": {
+          "name": "room_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "therapist_id": {
           "name": "therapist_id",
           "type": "integer",
@@ -1669,6 +1675,19 @@
           "tableTo": "doctor",
           "columnsFrom": [
             "doctor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "appointment_room_id_room_id_fk": {
+          "name": "appointment_room_id_room_id_fk",
+          "tableFrom": "appointment",
+          "tableTo": "room",
+          "columnsFrom": [
+            "room_id"
           ],
           "columnsTo": [
             "id"

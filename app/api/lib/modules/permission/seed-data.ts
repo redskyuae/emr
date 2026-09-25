@@ -118,6 +118,15 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'therapist-scheduling',
+    resource: 'therapist-schedule',
+    actions: [
+      ['read', 'View Therapist Schedules.'],
+      ['create', 'Create Therapist Schedules.'],
+      ['update', 'Update Therapist Schedule details.'],
+    ],
+  },
+  {
     module: 'clinical-masters',
     resource: 'specialty',
     actions: [

@@ -14,37 +14,46 @@ export function InvoiceLinesCard({
   onRemoveLine,
   onGenerateBedCharges,
   isRemoving,
+  canUpdate,
+  canGenerateCharges,
 }: {
   invoice: Invoice;
   onAddLine: () => void;
   onRemoveLine: (line: InvoiceLine) => void;
   onGenerateBedCharges: () => void;
   isRemoving: boolean;
+  canUpdate: boolean;
+  canGenerateCharges: boolean;
 }) {
   const isDraft = invoice.status === 'DRAFT';
+  const showGenerateCharges = isDraft && canGenerateCharges && Boolean(invoice.admission);
+  const showAddLine = isDraft && canUpdate;
+  const showRemoveColumn = isDraft && canUpdate;
 
   return (
     <Card className="shadow-fluent-2">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Line items</CardTitle>
-        {isDraft ? (
+        {showGenerateCharges || showAddLine ? (
           <div className="flex gap-2">
-            {invoice.admission ? (
+            {showGenerateCharges ? (
               <Button type="button" variant="outline" size="sm" onClick={onGenerateBedCharges}>
                 Generate bed charges
               </Button>
             ) : null}
-            <Button type="button" size="sm" onClick={onAddLine}>
-              <Plus className="size-4" />
-              Add line
-            </Button>
+            {showAddLine ? (
+              <Button type="button" size="sm" onClick={onAddLine}>
+                <Plus className="size-4" />
+                Add line
+              </Button>
+            ) : null}
           </div>
         ) : null}
       </CardHeader>
       <CardContent className="p-0">
         {invoice.lines.length === 0 ? (
           <p className="text-muted-foreground p-4 text-sm">
-            No line items yet. {isDraft ? 'Add a Charge Item to get started.' : null}
+            No line items yet. {showAddLine ? 'Add a Charge Item to get started.' : null}
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -55,7 +64,7 @@ export function InvoiceLinesCard({
                   <th className="p-3 text-right font-medium">Qty</th>
                   <th className="p-3 text-right font-medium">Unit Price</th>
                   <th className="p-3 text-right font-medium">Amount</th>
-                  {isDraft ? <th className="p-3 pr-4" /> : null}
+                  {showRemoveColumn ? <th className="p-3 pr-4" /> : null}
                 </tr>
               </thead>
               <tbody>
@@ -72,7 +81,7 @@ export function InvoiceLinesCard({
                     <td className="p-3 text-right tabular-nums">{line.quantity}</td>
                     <td className="p-3 text-right tabular-nums">{formatMoney(line.unitPrice)}</td>
                     <td className="p-3 text-right tabular-nums">{formatMoney(line.amount)}</td>
-                    {isDraft ? (
+                    {showRemoveColumn ? (
                       <td className="p-3 pr-4 text-right">
                         <Button
                           type="button"

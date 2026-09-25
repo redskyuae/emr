@@ -8,9 +8,11 @@ import { formatMoney, getPaymentMethodLabel } from '../../_utils/invoice-display
 export function InvoicePaymentsCard({
   invoice,
   onRecordPayment,
+  canRecordPayment,
 }: {
   invoice: Invoice;
   onRecordPayment: () => void;
+  canRecordPayment: boolean;
 }) {
   const isPayable = invoice.status === 'FINALIZED' || invoice.status === 'PARTIALLY_PAID';
 
@@ -18,7 +20,7 @@ export function InvoicePaymentsCard({
     <Card className="shadow-fluent-2">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Payments</CardTitle>
-        {isPayable ? (
+        {isPayable && canRecordPayment ? (
           <Button type="button" size="sm" onClick={onRecordPayment}>
             Record payment
           </Button>

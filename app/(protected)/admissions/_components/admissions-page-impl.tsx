@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { AlertCircle, BedDouble, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
@@ -8,6 +8,7 @@ import { AlertCircle, BedDouble, ChevronLeft, ChevronRight, Plus, Search } from 
 import type { Admission } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAdmissionsQuery } from '@/app/queries/admissions/useAdmissions';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -54,6 +55,15 @@ export function AdmissionsPageImpl() {
   );
   const [admissionPendingCancel, setAdmissionPendingCancel] = useState<Admission | null>(null);
 
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('admission:create');
+  const { data: canDischarge } = useHasPermission('admission:discharge');
+  const { data: canTransfer } = useHasPermission('admission:transfer');
+  const { data: canCancel } = useHasPermission('admission:cancel');
+
   // The census defaults to Active Admissions — "who is in the hospital now".
   const status = statusParam && statusParam !== ALL_FILTER ? statusParam : undefined;
   const effectiveStatus = statusParam === null ? 'ADMITTED' : status;
@@ -80,7 +90,7 @@ export function AdmissionsPageImpl() {
 
   // ?admit=new opens the sheet; the Bed Board deep-links ?admit=new&ward=…&bed=…
   // with the target Bed preselected.
-  const admitOpen = admitParam === 'new';
+  const admitOpen = admitParam === 'new' && canCreate;
   const presetWardId =
     admitOpen && wardParam && /^\d+$/.test(wardParam) ? Number(wardParam) : undefined;
   const presetBedId =
@@ -90,6 +100,16 @@ export function AdmissionsPageImpl() {
     void setAdmitParam(null);
     void setBedParam(null);
   }
+
+  const admitAccessDenied =
+    admitParam === 'new' && !canCreateLoading && !canCreateError && !canCreate;
+
+  useEffect(() => {
+    if (admitAccessDenied) {
+      closeAdmitSheet();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [admitAccessDenied]);
 
   return (
     <>
@@ -172,12 +192,14 @@ export function AdmissionsPageImpl() {
               />
             </InputGroup>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-              <Button type="button" onClick={() => void setAdmitParam('new')}>
-                <Plus className="size-4" />
-                Admit Patient
-              </Button>
-            </div>
+            {canCreate ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button type="button" onClick={() => void setAdmitParam('new')}>
+                  <Plus className="size-4" />
+                  Admit Patient
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -203,12 +225,14 @@ export function AdmissionsPageImpl() {
                 Beds under Inpatient Masters first.
               </EmptyDescription>
             </EmptyHeader>
-            <EmptyContent>
-              <Button type="button" onClick={() => void setAdmitParam('new')}>
-                <Plus className="size-4" />
-                Admit Patient
-              </Button>
-            </EmptyContent>
+            {canCreate ? (
+              <EmptyContent>
+                <Button type="button" onClick={() => void setAdmitParam('new')}>
+                  <Plus className="size-4" />
+                  Admit Patient
+                </Button>
+              </EmptyContent>
+            ) : null}
           </Empty>
         ) : (
           <>
@@ -217,6 +241,9 @@ export function AdmissionsPageImpl() {
               onTransfer={setAdmissionPendingTransfer}
               onDischarge={setAdmissionPendingDischarge}
               onCancel={setAdmissionPendingCancel}
+              canDischarge={canDischarge}
+              canTransfer={canTransfer}
+              canCancel={canCancel}
             />
 
             {totalPages > 1 ? (
@@ -260,17 +287,17 @@ export function AdmissionsPageImpl() {
       />
 
       <TransferBedDialog
-        admission={admissionPendingTransfer}
+        admission={canTransfer ? admissionPendingTransfer : null}
         onClose={() => setAdmissionPendingTransfer(null)}
       />
 
       <DischargeDialog
-        admission={admissionPendingDischarge}
+        admission={canDischarge ? admissionPendingDischarge : null}
         onClose={() => setAdmissionPendingDischarge(null)}
       />
 
       <CancelAdmissionDialog
-        admission={admissionPendingCancel}
+        admission={canCancel ? admissionPendingCancel : null}
         onClose={() => setAdmissionPendingCancel(null)}
       />
     </>

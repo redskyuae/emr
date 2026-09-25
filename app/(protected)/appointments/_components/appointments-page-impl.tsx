@@ -9,6 +9,7 @@ import { AlertCircle, Plus, Search } from 'lucide-react';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
 import { useAppointmentsQuery } from '@/app/queries/appointments/useAppointments';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,8 @@ export function AppointmentsPageImpl() {
   const [cancelParam, setCancelParam] = useQueryState('cancel');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
+
+  const { data: canCreate } = useHasPermission('appointment:create');
 
   const slotDate = dateParam ?? todayDisplayDate();
   const doctorId = doctorParam && doctorParam !== ALL_FILTER ? Number(doctorParam) : undefined;
@@ -132,12 +135,14 @@ export function AppointmentsPageImpl() {
             />
           </InputGroup>
 
-          <Button type="button" className="lg:ml-auto" asChild>
-            <Link href="/appointments/new">
-              <Plus className="size-4" />
-              Book Appointment
-            </Link>
-          </Button>
+          {canCreate ? (
+            <Button type="button" className="lg:ml-auto" asChild>
+              <Link href="/appointments/new">
+                <Plus className="size-4" />
+                Book Appointment
+              </Link>
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
 
