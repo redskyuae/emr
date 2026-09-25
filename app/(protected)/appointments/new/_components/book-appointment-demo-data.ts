@@ -13,6 +13,7 @@ export type BookingSession = {
   equipment: string;
   roomType: string;
   therapistSkill: string;
+  therapistSkillId?: number | null;
   status: 'Pending' | 'Completed' | 'Unavailable';
   isBookable: boolean;
   unavailableReason: 'Completed' | 'Reserved by another Appointment' | null;
@@ -49,6 +50,7 @@ export function toBookingTreatment(treatment: {
   cleaningMinutes: number | null;
   roomType: string | null;
   therapistSkill: string | null;
+  therapistSkillId?: number | null;
   sessionStructure?: 'REPEATABLE' | 'SEQUENCED';
   defaultTotalSessions?: number | null;
   sessions: Array<{
@@ -64,6 +66,7 @@ export function toBookingTreatment(treatment: {
     equipment: string | null;
     roomType: string | null;
     therapistSkill: string | null;
+    therapistSkillId?: number | null;
   }>;
 }): BookingTreatment {
   return {
@@ -94,6 +97,7 @@ export function toBookingTreatment(treatment: {
       equipment: session.equipment ?? '',
       roomType: session.roomType ?? treatment.roomType ?? '',
       therapistSkill: session.therapistSkill ?? treatment.therapistSkill ?? '',
+      therapistSkillId: session.therapistSkillId ?? treatment.therapistSkillId ?? null,
       status: 'Pending',
       isBookable: true,
       unavailableReason: null,
@@ -136,6 +140,7 @@ export function toBookingPatientTreatmentPlan(plan: PatientTreatmentPlan): Booki
       equipment: session.equipment ?? '',
       roomType: session.roomType ?? '',
       therapistSkill: session.therapistSkill ?? '',
+      therapistSkillId: null,
       status:
         session.completionStatus === 'COMPLETED'
           ? 'Completed'
@@ -199,18 +204,6 @@ export function getDefaultTreatmentSelection(
     patientTreatmentPlanSessionId: session?.id ?? '',
   };
 }
-
-export type DemoTherapist = {
-  id: number;
-  name: string;
-  role: string;
-  license: string;
-  skill: string;
-  active: boolean;
-  facility: string;
-  workload: string;
-  conflictReason?: string;
-};
 
 export const DEMO_FACILITY = {
   id: '4',
@@ -321,39 +314,5 @@ export const DEMO_TREATMENT_CATALOG: BookingTreatment[] = [
       therapistSkill: 'Shirodhara',
       roomType: 'Therapy room',
     })),
-  },
-];
-
-export const DEMO_THERAPISTS: DemoTherapist[] = [
-  {
-    id: 41,
-    name: 'Leela Krishnan',
-    role: 'Ayurveda Therapist',
-    license: 'DHA-TCIM-1842',
-    skill: 'Abhyanga',
-    active: true,
-    facility: 'Ayurvedtha Hospital',
-    workload: '2 sessions today',
-  },
-  {
-    id: 42,
-    name: 'Maya Thomas',
-    role: 'Ayurveda Therapist',
-    license: 'DHA-TCIM-1908',
-    skill: 'Abhyanga',
-    active: true,
-    facility: 'Ayurvedtha Hospital',
-    workload: '4 sessions today',
-    conflictReason: 'On a concurrent session from 09:00–10:15.',
-  },
-  {
-    id: 43,
-    name: 'Ravi Menon',
-    role: 'Ayurveda Therapist',
-    license: 'DHA-TCIM-1771',
-    skill: 'Shirodhara',
-    active: true,
-    facility: 'Ayurvedtha Hospital',
-    workload: '1 session today',
   },
 ];

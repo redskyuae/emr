@@ -385,6 +385,7 @@ function BookAppointmentWorkflow() {
                       rooms={booking.filteredRooms}
                       isRoomsLoading={booking.isRoomsLoading}
                       therapists={booking.filteredTherapists}
+                      isTherapistsLoading={booking.isTherapistsLoading}
                       session={booking.resourceSession}
                       requiresRoom={booking.requiresRoom}
                       requiresTherapist={booking.requiresTherapist}
