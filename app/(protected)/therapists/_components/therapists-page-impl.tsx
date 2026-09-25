@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CircleOff, MoreVertical, Pencil, Plus, RotateCcw, Search, UserRound } from 'lucide-react';
 import { useQueryState } from 'nuqs';
@@ -104,8 +104,16 @@ export function TherapistsPageImpl() {
   const [debouncedSearch] = useDebouncedValue(search, { wait: 300 });
   const [status, setStatus] = useState<'active' | 'inactive' | undefined>(undefined);
   const [page, setPage] = useState(1);
-  const { data: canCreate } = useHasPermission('therapist:create');
-  const { data: canUpdate } = useHasPermission('therapist:update');
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('therapist:create');
+  const {
+    data: canUpdate,
+    isLoading: canUpdateLoading,
+    isError: canUpdateError,
+  } = useHasPermission('therapist:update');
   const { data: canDeactivate } = useHasPermission('therapist:deactivate');
   const { data: canReactivate } = useHasPermission('therapist:reactivate');
   const list = useTherapistsQuery({
@@ -117,15 +125,34 @@ export function TherapistsPageImpl() {
   const deactivate = useDeactivateTherapist();
   const reactivate = useReactivateTherapist();
   const therapists = list.data?.data ?? [];
-  const selected =
-    therapistParam && therapistParam !== 'new'
-      ? (therapists.find((item) => item.id === Number(therapistParam)) ?? null)
+  const isCreating = therapistParam === 'new' && canCreate;
+  const editingTherapistId =
+    therapistParam && therapistParam !== 'new' && /^\d+$/.test(therapistParam)
+      ? Number(therapistParam)
       : null;
-  const isOpen = therapistParam !== null;
+  const selected =
+    editingTherapistId !== null
+      ? (therapists.find((item) => item.id === editingTherapistId) ?? null)
+      : null;
+  const isOpen = isCreating || Boolean(canUpdate && selected !== null);
+
+  const therapistAccessDenied =
+    (therapistParam === 'new' && !canCreateLoading && !canCreateError && !canCreate) ||
+    (editingTherapistId !== null && !canUpdateLoading && !canUpdateError && !canUpdate);
+
+  useEffect(() => {
+    if (therapistAccessDenied) {
+      void setTherapistParam(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [therapistAccessDenied]);
 
   const toggleStatus = (therapist: Therapist) => {
-    if (therapist.isActive) void deactivate.mutateAsync(therapist.id);
-    else void reactivate.mutateAsync(therapist.id);
+    if (therapist.isActive) {
+      if (canDeactivate) void deactivate.mutateAsync(therapist.id);
+    } else if (canReactivate) {
+      void reactivate.mutateAsync(therapist.id);
+    }
   };
 
   return (
@@ -288,7 +315,7 @@ export function TherapistsPageImpl() {
 
       <TherapistFormSheet
         open={isOpen}
-        therapist={therapistParam === 'new' ? null : selected}
+        therapist={isCreating ? null : selected}
         onClose={() => void setTherapistParam(null)}
       />
     </div>
