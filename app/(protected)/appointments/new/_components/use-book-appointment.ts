@@ -31,6 +31,7 @@ import {
   getSlotTimes,
 } from '../_utils/appointment-time';
 import { toAppointmentSlotDate } from '../_utils/book-appointment-request';
+import { getProcedureResourceOptions } from '../_utils/procedure-resource-options';
 import { getAvailableRooms } from '../_utils/room-availability';
 import {
   bookAppointmentFormSchema,
@@ -224,8 +225,6 @@ export function useBookAppointment() {
   const resourceSession = selectedSession;
   const requiresRoom = isProcedurePath;
   const requiresTherapist = Boolean(resourceSession?.therapistSkill);
-  const unavailableRoomIds = new Set(resourceAvailabilityQuery.data?.roomIds ?? []);
-  const unavailableTherapistIds = new Set(resourceAvailabilityQuery.data?.therapistIds ?? []);
   const patientHasConflictingAppointment =
     resourceAvailabilityQuery.data?.patientUnavailable ?? false;
   const availableRooms = getAvailableRooms(roomsQuery.data?.data ?? []);
@@ -238,12 +237,19 @@ export function useBookAppointment() {
         }
       : null
   );
-  const filteredRooms = patientHasConflictingAppointment
-    ? []
-    : availableRooms.filter((room) => !unavailableRoomIds.has(room.id));
-  const filteredTherapists = patientHasConflictingAppointment
-    ? []
-    : eligibleTherapists.filter((therapist) => !unavailableTherapistIds.has(therapist.id));
+  const roomOptions = getProcedureResourceOptions(
+    availableRooms,
+    resourceAvailabilityQuery.data?.roomIds ?? []
+  );
+  const therapistOptions = getProcedureResourceOptions(
+    eligibleTherapists,
+    resourceAvailabilityQuery.data?.therapistIds ?? []
+  );
+  const isResourceAvailabilityLoading = hasProcedureWindow && resourceAvailabilityQuery.isFetching;
+  const isResourceAvailabilityReady =
+    hasProcedureWindow &&
+    resourceAvailabilityQuery.isSuccess &&
+    !resourceAvailabilityQuery.isFetching;
   const createAppointment = useCreateAppointment();
 
   const treatmentSelectionState: TreatmentSelectionState | 'AWAITING_PATIENT' = selectedPatient
@@ -695,22 +701,13 @@ export function useBookAppointment() {
     rotas,
     isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
     doctorSlotsError: getErrorMessage(doctorSlotsQuery.error),
-    filteredRooms,
+    roomOptions,
     patientHasConflictingAppointment,
-    roomsBlockedByAppointments: availableRooms.length > 0 && filteredRooms.length === 0,
-    isRoomsLoading:
-      roomsQuery.isLoading ||
-      roomsQuery.isFetching ||
-      resourceAvailabilityQuery.isLoading ||
-      resourceAvailabilityQuery.isFetching,
-    filteredTherapists,
-    therapistsBlockedByAppointments:
-      eligibleTherapists.length > 0 && filteredTherapists.length === 0,
-    isTherapistsLoading:
-      therapistsQuery.isLoading ||
-      therapistsQuery.isFetching ||
-      resourceAvailabilityQuery.isLoading ||
-      resourceAvailabilityQuery.isFetching,
+    isResourceAvailabilityLoading,
+    isResourceAvailabilityReady,
+    isRoomsLoading: roomsQuery.isLoading || roomsQuery.isFetching,
+    therapistOptions,
+    isTherapistsLoading: therapistsQuery.isLoading || therapistsQuery.isFetching,
     requiresRoom,
     requiresTherapist,
     planOptions,

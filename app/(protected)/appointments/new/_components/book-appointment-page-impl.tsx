@@ -382,17 +382,21 @@ function BookAppointmentWorkflow() {
                   <>
                     <ResourceAllocationSection
                       control={form.control}
-                      rooms={booking.filteredRooms}
+                      rooms={booking.roomOptions}
                       patientHasConflictingAppointment={booking.patientHasConflictingAppointment}
-                      roomsBlockedByAppointments={booking.roomsBlockedByAppointments}
+                      isAvailabilityLoading={booking.isResourceAvailabilityLoading}
+                      isAvailabilityReady={booking.isResourceAvailabilityReady}
                       isRoomsLoading={booking.isRoomsLoading}
-                      therapists={booking.filteredTherapists}
-                      therapistsBlockedByAppointments={booking.therapistsBlockedByAppointments}
+                      therapists={booking.therapistOptions}
                       isTherapistsLoading={booking.isTherapistsLoading}
                       session={booking.resourceSession}
                       requiresRoom={booking.requiresRoom}
                       requiresTherapist={booking.requiresTherapist}
-                      canAllocate={canAllocateProcedureResources(values.slotDate, values.startTime)}
+                      canAllocate={canAllocateProcedureResources(
+                        values.slotDate,
+                        values.startTime,
+                        values.endTime
+                      )}
                       selectedRoomId={values.roomId}
                       selectedTherapistId={values.therapistId}
                       onRoomChange={(value) =>

@@ -41,10 +41,14 @@ export function useProcedureResourceAvailabilityQuery(
   params: ProcedureResourceAvailabilityParams,
   options?: { enabled?: boolean }
 ) {
+  const enabled = options?.enabled ?? true;
+
   return useQuery({
-    enabled: options?.enabled,
+    enabled,
     queryKey: procedureResourceAvailabilityQueryKey(params),
     queryFn: () => fetchProcedureResourceAvailability(params),
+    refetchInterval: enabled ? 15_000 : false,
+    refetchOnWindowFocus: 'always',
     select: (response) => response.data,
   });
 }

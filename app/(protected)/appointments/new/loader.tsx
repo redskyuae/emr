@@ -67,10 +67,11 @@ export default function BookAppointmentLoader() {
                 </div>
                 <Skeleton className="h-6 w-24" />
               </div>
+              <Skeleton className="h-12 w-full" />
               <div className="grid gap-2 sm:grid-cols-2">
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
+                {[0, 1, 2, 3].map((item) => (
+                  <Skeleton key={item} className="h-32 w-full" />
+                ))}
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">

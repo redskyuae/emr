@@ -14,8 +14,12 @@ export function getDurationMinutes(startTime: string, endTime: string) {
   return end - start;
 }
 
-export function canAllocateProcedureResources(slotDate: string, startTime: string) {
-  return Boolean(slotDate && startTime);
+export function canAllocateProcedureResources(
+  slotDate: string,
+  startTime: string,
+  endTime: string
+) {
+  return Boolean(slotDate && startTime && endTime);
 }
 
 export function addMinutesToTime(startTime: string, duration: number) {
