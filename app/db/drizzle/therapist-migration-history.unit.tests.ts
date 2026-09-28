@@ -35,6 +35,10 @@ describe('Therapist migration history', () => {
       .filter(({ when }) => when > deployedTherapistSchemaWatermark)
       .map(({ tag }) => tag);
 
-    expect(pendingTags).toEqual(['0063_seed_therapist_permissions', '0064_lame_tombstone']);
+    expect(pendingTags).toEqual([
+      '0063_seed_therapist_permissions',
+      '0064_lame_tombstone',
+      '0065_unknown_sasquatch',
+    ]);
   });
 });

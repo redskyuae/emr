@@ -11,8 +11,9 @@ import {
 } from './appointment-time';
 
 describe('Appointment time', () => {
-  it('should allow resource selection once a Procedure date and start time are selected', () => {
-    expect(canAllocateProcedureResources('2026-09-21', '10:30')).toBe(true);
+  it('should allow resource selection only once a complete Procedure window is selected', () => {
+    expect(canAllocateProcedureResources('2026-09-21', '10:30', '11:30')).toBe(true);
+    expect(canAllocateProcedureResources('2026-09-21', '10:30', '')).toBe(false);
   });
 
   it('should leave the end time unset when any Session timing is unknown', () => {

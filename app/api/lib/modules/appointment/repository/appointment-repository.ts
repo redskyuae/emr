@@ -1,5 +1,20 @@
 import { alias } from 'drizzle-orm/pg-core';
-import { and, asc, count, desc, eq, gte, ilike, inArray, lte, ne, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  lt,
+  lte,
+  ne,
+  or,
+  sql,
+} from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import {
@@ -24,6 +39,7 @@ import {
   patient as patientTable,
   patientMrnCounter as patientMrnCounterTable,
 } from '@/app/db/schema/patient';
+import { room as roomTable } from '@/app/db/schema/room';
 import {
   treatment as treatmentTable,
   treatmentSession as treatmentSessionTable,
@@ -39,6 +55,7 @@ import type {
   Appointment,
   AppointmentListParams,
   PotentialPatientMatch,
+  ProcedureResourceAvailabilityParams,
   ValidatedCreateAppointmentData,
   ValidatedCancelAppointmentData,
   ValidatedRescheduleAppointmentData,
@@ -114,6 +131,7 @@ const appointmentColumns = {
   cancelledAt: appointmentTable.cancelledAt,
   remarks: appointmentTable.remarks,
   rotaName: appointmentTable.rotaName,
+  roomId: appointmentTable.roomId,
   tenantId: appointmentTable.tenantId,
   slotDate: appointmentTable.slotDate,
   endTime: appointmentTable.endTime,
@@ -602,6 +620,98 @@ async function getReservedSlotTimes(
     );
 }
 
+async function getUnavailableProcedureResources(
+  { tenantId, slotDate, startTime, endTime, patientId }: ProcedureResourceAvailabilityParams,
+  executor: SelectExecutor = db,
+  excludeAppointmentId?: number
+) {
+  const rows = await executor
+    .select({
+      roomId: appointmentTable.roomId,
+      therapistId: appointmentTable.therapistId,
+    })
+    .from(appointmentTable)
+    .innerJoin(
+      appointmentStatusTable,
+      and(
+        eq(appointmentStatusTable.id, appointmentTable.appointmentStatusId),
+        eq(appointmentStatusTable.tenantId, appointmentTable.tenantId)
+      )
+    )
+    .where(
+      and(
+        eq(appointmentTable.tenantId, tenantId),
+        eq(appointmentTable.bookingPath, 'PROCEDURE'),
+        eq(appointmentTable.slotDate, slotDate),
+        eq(appointmentTable.isDeleted, false),
+        excludeAppointmentId ? ne(appointmentTable.id, excludeAppointmentId) : undefined,
+        inArray(appointmentStatusTable.category, ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN']),
+        lt(appointmentTable.startTime, endTime),
+        gt(appointmentTable.endTime, startTime)
+      )
+    );
+
+  const [patientConflict] =
+    patientId === undefined
+      ? []
+      : await executor
+          .select({ id: appointmentTable.id })
+          .from(appointmentTable)
+          .innerJoin(
+            appointmentStatusTable,
+            and(
+              eq(appointmentStatusTable.id, appointmentTable.appointmentStatusId),
+              eq(appointmentStatusTable.tenantId, appointmentTable.tenantId)
+            )
+          )
+          .where(
+            and(
+              eq(appointmentTable.tenantId, tenantId),
+              eq(appointmentTable.patientId, patientId),
+              eq(appointmentTable.slotDate, slotDate),
+              eq(appointmentTable.isDeleted, false),
+              excludeAppointmentId ? ne(appointmentTable.id, excludeAppointmentId) : undefined,
+              inArray(appointmentStatusTable.category, ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN']),
+              lt(appointmentTable.startTime, endTime),
+              gt(appointmentTable.endTime, startTime)
+            )
+          )
+          .limit(1);
+
+  return {
+    roomIds: [...new Set(rows.flatMap((row) => (row.roomId === null ? [] : [row.roomId])))],
+    therapistIds: [
+      ...new Set(rows.flatMap((row) => (row.therapistId === null ? [] : [row.therapistId]))),
+    ],
+    patientUnavailable: patientConflict !== undefined,
+  };
+}
+
+async function lockProcedureResources(
+  tx: Transaction,
+  data: {
+    tenantId: string;
+    slotDate: string;
+    roomId: number | null;
+    therapistId?: number | null;
+    patientId?: number | null;
+  }
+) {
+  const keys = [
+    ...(data.roomId === null ? [] : [`${data.tenantId}:${data.slotDate}:room:${data.roomId}`]),
+    ...(data.therapistId == null
+      ? []
+      : [`${data.tenantId}:${data.slotDate}:therapist:${data.therapistId}`]),
+    ...(data.patientId == null
+      ? []
+      : [`${data.tenantId}:${data.slotDate}:patient:${data.patientId}`]),
+  ].sort();
+
+  for (const key of keys) {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${key}))`);
+  }
+}
+
 async function createProvisionalPatient(tx: Transaction, data: ValidatedCreateAppointmentData) {
   const provisionalPatient = data.provisionalPatient;
 
@@ -665,6 +775,8 @@ export type CreateAppointmentRepositoryResult =
         | 'slot-invalid'
         | 'slot-unavailable'
         | 'slot-past'
+        | 'resource-unavailable'
+        | 'patient-unavailable'
         | 'current-plan-exists'
         | 'plan-session-unavailable';
     };
@@ -681,6 +793,8 @@ export type RescheduleAppointmentRepositoryResult =
         | 'invalid-reference'
         | 'slot-invalid'
         | 'slot-unavailable'
+        | 'resource-unavailable'
+        | 'patient-unavailable'
         | 'slot-past';
     };
 
@@ -801,6 +915,23 @@ async function createAppointment(
       if (!therapist) invalidReferences.push('Therapist');
     }
 
+    if (data.bookingPath === 'PROCEDURE') {
+      const [room] = await tx
+        .select({ id: roomTable.id })
+        .from(roomTable)
+        .where(
+          and(
+            eq(roomTable.id, data.roomId),
+            eq(roomTable.tenantId, data.tenantId),
+            eq(roomTable.status, 'AVAILABLE'),
+            eq(roomTable.isDeleted, false)
+          )
+        )
+        .for('update')
+        .limit(1);
+      if (!room) invalidReferences.push('Room');
+    }
+
     const [scheduledStatus] = await tx
       .select({ id: appointmentStatusTable.id })
       .from(appointmentStatusTable)
@@ -840,8 +971,23 @@ async function createAppointment(
       if (reserved.length > 0) {
         return { success: false, outcome: 'slot-unavailable' };
       }
-    } else if (!isFutureSlotSelection(data.slotDate, data.startTime, data.timeZone)) {
-      return { success: false, outcome: 'slot-past' };
+    } else {
+      if (!isFutureSlotSelection(data.slotDate, data.startTime, data.timeZone)) {
+        return { success: false, outcome: 'slot-past' };
+      }
+
+      await lockProcedureResources(tx, data);
+      const unavailable = await getUnavailableProcedureResources(data, tx);
+
+      if (
+        unavailable.roomIds.includes(data.roomId) ||
+        (data.therapistId !== undefined && unavailable.therapistIds.includes(data.therapistId))
+      ) {
+        return { success: false, outcome: 'resource-unavailable' };
+      }
+      if (unavailable.patientUnavailable) {
+        return { success: false, outcome: 'patient-unavailable' };
+      }
     }
 
     let patientId = data.patientId;
@@ -999,6 +1145,7 @@ async function createAppointment(
             ? planSessionContext?.patientTreatmentPlanSessionId
             : undefined,
         therapistId: data.bookingPath === 'PROCEDURE' ? data.therapistId : undefined,
+        roomId: data.bookingPath === 'PROCEDURE' ? data.roomId : undefined,
       })
       .returning({ id: appointmentTable.id });
 
@@ -1043,6 +1190,9 @@ async function rescheduleAppointment(
         endTime: appointmentTable.endTime,
         startTime: appointmentTable.startTime,
         doctorId: appointmentTable.doctorId,
+        roomId: appointmentTable.roomId,
+        therapistId: appointmentTable.therapistId,
+        patientId: appointmentTable.patientId,
         bookingPath: appointmentTable.bookingPath,
         statusCategory: appointmentStatusTable.category,
       })
@@ -1101,6 +1251,30 @@ async function rescheduleAppointment(
 
       if (!isFutureSlotSelection(data.slotDate, data.startTime, data.timeZone)) {
         return { success: false, outcome: 'slot-past' };
+      }
+
+      await lockProcedureResources(tx, {
+        tenantId: data.tenantId,
+        slotDate: data.slotDate,
+        roomId: currentRow.roomId,
+        therapistId: currentRow.therapistId,
+        patientId: currentRow.patientId,
+      });
+      const unavailable = await getUnavailableProcedureResources(
+        { ...data, patientId: currentRow.patientId },
+        tx,
+        data.id
+      );
+
+      if (
+        (currentRow.roomId !== null && unavailable.roomIds.includes(currentRow.roomId)) ||
+        (currentRow.therapistId !== null &&
+          unavailable.therapistIds.includes(currentRow.therapistId))
+      ) {
+        return { success: false, outcome: 'resource-unavailable' };
+      }
+      if (unavailable.patientUnavailable) {
+        return { success: false, outcome: 'patient-unavailable' };
       }
 
       await tx
@@ -1324,6 +1498,7 @@ export const appointmentRepository = {
   rescheduleAppointment,
   getAppointmentById,
   getReservedSlotTimes,
+  getUnavailableProcedureResources,
   getSlotBookingContext,
   findPotentialPatientMatches,
   releasePlanSessionReservationForTerminalStatus,

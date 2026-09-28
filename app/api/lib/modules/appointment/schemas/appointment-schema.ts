@@ -147,6 +147,7 @@ const procedureAppointmentShape = {
   bookingPath: z.literal('PROCEDURE'),
   patientId: positiveIdSchema('Patient ID'),
   doctorId: positiveIdSchema('Doctor ID').optional(),
+  roomId: positiveIdSchema('Room ID'),
   therapistId: positiveIdSchema('Therapist ID').optional(),
   startTime: appointmentTimeSchema('Start time'),
   endTime: appointmentTimeSchema('End time'),
@@ -282,6 +283,19 @@ export const createAppointmentSchema = z
 
 export const appointmentTenantIdSchema = tenantIdSchema;
 
+export const procedureResourceAvailabilitySchema = z
+  .object({
+    slotDate: slotDateSchema,
+    startTime: appointmentTimeSchema('Start time'),
+    endTime: appointmentTimeSchema('End time'),
+    patientId: positiveIdSchema('Patient ID').optional(),
+  })
+  .strict()
+  .refine((data) => data.endTime > data.startTime, {
+    path: ['endTime'],
+    message: 'End time must be after start time',
+  });
+
 export const bookingNumberSchema = z
   .string({ error: 'Booking Number is required' })
   .trim()
@@ -315,6 +329,12 @@ export type ListAppointmentsInput = z.infer<typeof listAppointmentsSchema>;
 export type CreateAppointmentData = CreateAppointmentInput & { tenantId: string };
 export type ValidatedCreateAppointmentData = CreateAppointmentData & { timeZone: string };
 export type AppointmentListParams = ListAppointmentsInput & { tenantId: string };
+export type ProcedureResourceAvailabilityInput = z.infer<
+  typeof procedureResourceAvailabilitySchema
+>;
+export type ProcedureResourceAvailabilityParams = ProcedureResourceAvailabilityInput & {
+  tenantId: string;
+};
 
 export type AppointmentReferenceSummary = {
   id: number;
@@ -341,6 +361,7 @@ export type Appointment = {
   remarks: string | null;
   rotaName: string | null;
   doctorRotaId: number | null;
+  roomId?: number | null;
   tenantId: string;
   slotDate: string;
   startTime: string | null;

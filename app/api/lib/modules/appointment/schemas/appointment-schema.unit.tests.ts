@@ -4,6 +4,7 @@ import {
   cancelAppointmentSchema,
   createAppointmentSchema,
   listAppointmentsSchema,
+  procedureResourceAvailabilitySchema,
   rescheduleAppointmentSchema,
 } from './appointment-schema';
 
@@ -26,6 +27,7 @@ const validProcedurePayload = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  roomId: 7,
   patientTreatmentPlanId: 400,
   patientTreatmentPlanSessionId: 401,
 };
@@ -36,6 +38,7 @@ const validCatalogueProcedurePayload = {
   slotDate: '31-12-2099',
   startTime: '10:00',
   endTime: '11:15',
+  roomId: 7,
   treatmentId: 400,
   totalSessions: 6,
 };
@@ -191,6 +194,7 @@ describe('Appointment schema', () => {
       slotDate: validProcedurePayload.slotDate,
       startTime: validProcedurePayload.startTime,
       endTime: validProcedurePayload.endTime,
+      roomId: validProcedurePayload.roomId,
     };
 
     expect(createAppointmentSchema.safeParse(withoutSelection).success).toBe(false);
@@ -262,6 +266,7 @@ describe('Appointment schema', () => {
       slotDate: validProcedurePayload.slotDate,
       startTime: validProcedurePayload.startTime,
       endTime: validProcedurePayload.endTime,
+      roomId: validProcedurePayload.roomId,
       patientTreatmentPlanId: validProcedurePayload.patientTreatmentPlanId,
       patientTreatmentPlanSessionId: validProcedurePayload.patientTreatmentPlanSessionId,
     };
@@ -310,6 +315,34 @@ describe('Appointment schema', () => {
 
     it('should allow an empty filter set', () => {
       expect(listAppointmentsSchema.parse({})).toEqual({});
+    });
+  });
+
+  describe('procedureResourceAvailabilitySchema', () => {
+    it('should normalize a valid Procedure resource window', () => {
+      expect(
+        procedureResourceAvailabilitySchema.parse({
+          slotDate: '31-12-2099',
+          startTime: '10:00',
+          endTime: '11:00',
+        })
+      ).toEqual({ slotDate: '2099-12-31', startTime: '10:00', endTime: '11:00' });
+    });
+
+    it('should reject an invalid Procedure resource date', () => {
+      expect(
+        procedureResourceAvailabilitySchema
+          .safeParse({ slotDate: '2099-12-31', startTime: '11:00', endTime: '10:00' })
+          .error?.issues.map((issue) => issue.message)
+      ).toEqual(['Slot date must be in DD-MM-YYYY format']);
+    });
+
+    it('should reject a reversed Procedure resource window', () => {
+      expect(
+        procedureResourceAvailabilitySchema
+          .safeParse({ slotDate: '31-12-2099', startTime: '11:00', endTime: '10:00' })
+          .error?.issues.map((issue) => issue.message)
+      ).toEqual(['End time must be after start time']);
     });
   });
 });

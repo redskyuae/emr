@@ -11,11 +11,18 @@ import { cn } from '@/lib/utils';
 import type { Room } from '@/app/api/lib/modules/room/schemas/room-schema';
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
 import type { BookAppointmentFormValues } from '../_utils/book-appointment-form-schema';
+import {
+  canSelectProcedureResource,
+  type ProcedureResourceOption,
+} from '../_utils/procedure-resource-options';
 import type { BookingSession } from './book-appointment-demo-data';
 
 export function ResourceAllocationSection({
   control,
   rooms,
+  patientHasConflictingAppointment,
+  isAvailabilityLoading,
+  isAvailabilityReady,
   isRoomsLoading,
   therapists,
   isTherapistsLoading,
@@ -29,9 +36,12 @@ export function ResourceAllocationSection({
   onTherapistChange,
 }: {
   control: Control<BookAppointmentFormValues>;
-  rooms: Room[];
+  rooms: ProcedureResourceOption<Room>[];
+  patientHasConflictingAppointment: boolean;
+  isAvailabilityLoading: boolean;
+  isAvailabilityReady: boolean;
   isRoomsLoading: boolean;
-  therapists: Therapist[];
+  therapists: ProcedureResourceOption<Therapist>[];
   isTherapistsLoading: boolean;
   session: BookingSession | null;
   requiresRoom: boolean;
@@ -56,7 +66,19 @@ export function ResourceAllocationSection({
           Choose an available Room and qualified Therapist at this Facility.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3" aria-busy={isAvailabilityLoading}>
+        {canAllocate && patientHasConflictingAppointment ? (
+          <p className="border-destructive/25 bg-destructive/5 text-destructive rounded-lg border p-3 text-sm">
+            This Patient already has an Appointment that overlaps the selected time.
+          </p>
+        ) : null}
+        {canAllocate ? (
+          <p className="text-muted-foreground text-xs" role="status" aria-live="polite">
+            {isAvailabilityLoading
+              ? 'Checking current Room and Therapist availability…'
+              : 'Availability updates automatically every 15 seconds.'}
+          </p>
+        ) : null}
         {!requiresRoom && !requiresTherapist ? (
           <p className="border-warning/25 bg-warning/5 rounded-lg border p-3 text-sm">
             Room and Therapist requirements are not configured for this Session. Resource filtering
@@ -65,7 +87,7 @@ export function ResourceAllocationSection({
         ) : null}
         {!canAllocate && (requiresRoom || requiresTherapist) ? (
           <p className="border-primary/20 bg-primary/5 text-primary rounded-lg border p-3 text-sm">
-            Choose a date and start time to select resources.
+            Choose a date, start time, and end time to select resources.
           </p>
         ) : null}
         <div
@@ -83,23 +105,34 @@ export function ResourceAllocationSection({
                 </h3>
                 <p className="text-muted-foreground text-xs">Available Rooms for this Procedure</p>
               </div>
-              {rooms.map((room) => (
-                <ResourceOption
-                  key={room.id}
-                  title={`Room ${room.roomNumber}`}
-                  detail={
-                    getRoomLocation(room) +
-                    ' · ' +
-                    room.bedCount +
-                    ' bed' +
-                    (room.bedCount === 1 ? '' : 's')
-                  }
-                  status={getRoomStatusLabel(room.status)}
-                  available={canAllocate}
-                  selected={selectedRoomId === String(room.id)}
-                  onSelect={() => onRoomChange(String(room.id))}
-                />
-              ))}
+              {rooms.map(({ resource: room, isBooked }) => {
+                const available = canSelectProcedureResource({
+                  canAllocate,
+                  isAvailabilityLoading,
+                  isAvailabilityReady,
+                  isBooked,
+                  patientUnavailable: patientHasConflictingAppointment,
+                });
+
+                return (
+                  <ResourceOption
+                    key={room.id}
+                    title={`Room ${room.roomNumber}`}
+                    detail={
+                      getRoomLocation(room) +
+                      ' · ' +
+                      room.bedCount +
+                      ' bed' +
+                      (room.bedCount === 1 ? '' : 's')
+                    }
+                    status={isBooked ? 'Booked' : getRoomStatusLabel(room.status)}
+                    conflict={isBooked ? 'Booked for the selected time' : undefined}
+                    available={available}
+                    selected={selectedRoomId === String(room.id)}
+                    onSelect={() => onRoomChange(String(room.id))}
+                  />
+                );
+              })}
               {Array.from({ length: resourceRows - rooms.length }, (_, index) => (
                 <div
                   key={'room-empty-' + index}
@@ -131,26 +164,37 @@ export function ResourceAllocationSection({
                   {session?.therapistSkill ?? 'Choose a Treatment'}
                 </p>
               </div>
-              {therapists.map((therapist) => (
-                <ResourceOption
-                  key={therapist.id}
-                  title={therapist.name}
-                  detail={
-                    (therapist.designation ?? 'Therapist') +
-                    ' · ' +
-                    therapist.skills.map((skill) => skill.name).join(', ')
-                  }
-                  extra={
-                    therapist.registrationNumber
-                      ? `Registration ${therapist.registrationNumber}`
-                      : undefined
-                  }
-                  status={therapist.isActive ? 'Active' : 'Inactive'}
-                  available={canAllocate && therapist.isActive}
-                  selected={selectedTherapistId === String(therapist.id)}
-                  onSelect={() => onTherapistChange(String(therapist.id))}
-                />
-              ))}
+              {therapists.map(({ resource: therapist, isBooked }) => {
+                const available = canSelectProcedureResource({
+                  canAllocate,
+                  isAvailabilityLoading,
+                  isAvailabilityReady,
+                  isBooked,
+                  patientUnavailable: patientHasConflictingAppointment,
+                });
+
+                return (
+                  <ResourceOption
+                    key={therapist.id}
+                    title={therapist.name}
+                    detail={
+                      (therapist.designation ?? 'Therapist') +
+                      ' · ' +
+                      therapist.skills.map((skill) => skill.name).join(', ')
+                    }
+                    extra={
+                      therapist.registrationNumber
+                        ? `Registration ${therapist.registrationNumber}`
+                        : undefined
+                    }
+                    status={isBooked ? 'Booked' : therapist.isActive ? 'Active' : 'Inactive'}
+                    conflict={isBooked ? 'Booked for the selected time' : undefined}
+                    available={available && therapist.isActive}
+                    selected={selectedTherapistId === String(therapist.id)}
+                    onSelect={() => onTherapistChange(String(therapist.id))}
+                  />
+                );
+              })}
               {Array.from({ length: resourceRows - therapists.length }, (_, index) => (
                 <div
                   key={'therapist-empty-' + index}
@@ -221,10 +265,10 @@ function ResourceOption({
     <Button
       type="button"
       variant="outline"
-      aria-disabled={!available}
+      disabled={!available}
       aria-pressed={selected}
       onClick={() => {
-        if (available) onSelect();
+        onSelect();
       }}
       className={cn(
         'h-full min-h-40 w-full flex-col items-start justify-start gap-2 p-3 text-left whitespace-normal',
@@ -232,7 +276,7 @@ function ResourceOption({
         tone === 'warning' && 'border-warning/25 bg-warning/5 hover:bg-warning/5',
         tone === 'danger' && 'border-destructive/20 bg-destructive/5 hover:bg-destructive/5',
         selected && 'border-primary bg-primary/5 ring-primary/15 hover:bg-primary/10 ring-2',
-        !available && 'cursor-not-allowed'
+        !available && 'cursor-not-allowed opacity-70'
       )}
     >
       <span className="w-full font-medium">{title}</span>

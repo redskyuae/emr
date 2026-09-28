@@ -65,6 +65,20 @@ export async function rescheduleAppointmentCommand(
         errors: ['One or more selected Doctor slots are no longer available.'],
       };
     }
+    if (result.outcome === 'resource-unavailable') {
+      return {
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['The selected Room or Therapist is no longer available.'],
+      };
+    }
+    if (result.outcome === 'patient-unavailable') {
+      return {
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['The Patient already has an Appointment that overlaps the selected time.'],
+      };
+    }
 
     return {
       success: false,

@@ -78,6 +78,56 @@ describe('rescheduleAppointmentCommand', () => {
     });
   });
 
+  it('should map a Procedure resource conflict to a clean conflict response', async () => {
+    validate.mockResolvedValue({
+      success: true,
+      data: {
+        id: 10,
+        tenantId: 'tenant-1',
+        timeZone: 'Asia/Kolkata',
+        bookingPath: 'PROCEDURE',
+        slotDate: '2099-12-31',
+        startTime: '11:00',
+        endTime: '12:00',
+      },
+    });
+    repo.rescheduleAppointment.mockResolvedValue({
+      success: false,
+      outcome: 'resource-unavailable',
+    });
+
+    await expect(rescheduleAppointmentCommand('10', {}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['The selected Room or Therapist is no longer available.'],
+    });
+  });
+
+  it('should map an overlapping Patient Appointment to a clean conflict response', async () => {
+    validate.mockResolvedValue({
+      success: true,
+      data: {
+        id: 10,
+        tenantId: 'tenant-1',
+        timeZone: 'Asia/Kolkata',
+        bookingPath: 'PROCEDURE',
+        slotDate: '2099-12-31',
+        startTime: '11:00',
+        endTime: '12:00',
+      },
+    });
+    repo.rescheduleAppointment.mockResolvedValue({
+      success: false,
+      outcome: 'patient-unavailable',
+    });
+
+    await expect(rescheduleAppointmentCommand('10', {}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['The Patient already has an Appointment that overlaps the selected time.'],
+    });
+  });
+
   it('should map the slot reservation unique constraint to a conflict response', async () => {
     validate.mockResolvedValue({
       success: true,

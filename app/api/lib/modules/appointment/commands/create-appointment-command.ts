@@ -71,6 +71,22 @@ export async function createAppointmentCommand(
       };
     }
 
+    if (result.outcome === 'resource-unavailable') {
+      return {
+        success: false,
+        errors: ['The selected Room or Therapist is no longer available.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
+    if (result.outcome === 'patient-unavailable') {
+      return {
+        success: false,
+        errors: ['The Patient already has an Appointment that overlaps the selected time.'],
+        status: StatusCodes.CONFLICT,
+      };
+    }
+
     if (result.outcome === 'plan-session-unavailable') {
       return {
         success: false,

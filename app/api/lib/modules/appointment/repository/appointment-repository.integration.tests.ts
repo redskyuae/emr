@@ -19,6 +19,10 @@ import {
   doctorScheduleRota as doctorScheduleRotaTable,
 } from '@/app/db/schema/doctor-schedule';
 import { patient as patientTable } from '@/app/db/schema/patient';
+import { room as roomTable } from '@/app/db/schema/room';
+import { roomType as roomTypeTable } from '@/app/db/schema/room-type';
+import { staffProfile as staffProfileTable } from '@/app/db/schema/staff-profile';
+import { therapist as therapistTable } from '@/app/db/schema/therapist';
 import {
   patientTreatmentPlan as patientTreatmentPlanTable,
   patientTreatmentPlanSession as patientTreatmentPlanSessionTable,
@@ -41,6 +45,7 @@ async function createFixtures() {
   sequence += 1;
   const tenantId = `appointment-tenant-${sequence}`;
   const doctorUserId = `${tenantId}-doctor-user`;
+  const therapistUserId = `${tenantId}-therapist-user`;
 
   await db.insert(organization).values({
     id: tenantId,
@@ -54,6 +59,16 @@ async function createFixtures() {
     name: 'Dr. Meera Iyer',
     email: `${doctorUserId}@example.com`,
   });
+  await db.insert(user).values({
+    id: therapistUserId,
+    name: 'Leela Krishnan',
+    email: `${therapistUserId}@example.com`,
+  });
+  await db.insert(staffProfileTable).values({ tenantId, userId: therapistUserId });
+  const [therapist] = await db
+    .insert(therapistTable)
+    .values({ tenantId, userId: therapistUserId, isActive: true })
+    .returning({ id: therapistTable.id });
 
   const [specialty] = await db
     .insert(specialtyTable)
@@ -108,13 +123,24 @@ async function createFixtures() {
     .insert(appointmentReasonTable)
     .values({ tenantId, name: 'Follow-up', code: 'FUP' })
     .returning({ id: appointmentReasonTable.id });
-  await db.insert(appointmentStatusTable).values({
-    tenantId,
-    name: 'Scheduled',
-    code: 'SCH',
-    category: 'SCHEDULED',
-    isSystem: true,
-  });
+  const [roomType] = await db
+    .insert(roomTypeTable)
+    .values({ tenantId, name: 'Therapy Room', code: `TR${sequence}`, color: '#2563EB' })
+    .returning({ id: roomTypeTable.id });
+  const [room] = await db
+    .insert(roomTable)
+    .values({ tenantId, roomTypeId: roomType.id, roomNumber: `R-${sequence}` })
+    .returning({ id: roomTable.id });
+  const [scheduledStatus] = await db
+    .insert(appointmentStatusTable)
+    .values({
+      tenantId,
+      name: 'Scheduled',
+      code: 'SCH',
+      category: 'SCHEDULED',
+      isSystem: true,
+    })
+    .returning({ id: appointmentStatusTable.id });
   const [confirmedStatus] = await db
     .insert(appointmentStatusTable)
     .values({
@@ -195,11 +221,14 @@ async function createFixtures() {
   return {
     tenantId,
     doctorId: doctor.id,
+    roomId: room.id,
+    therapistId: therapist.id,
     rotaId: rota.id,
     mode,
     type,
     reason,
     visitType,
+    scheduledStatus,
     confirmedStatus,
     cancellationReason,
     patient,
@@ -229,12 +258,15 @@ function appointmentData(
   };
 }
 
-async function createExistingPlan(fixtures: Awaited<ReturnType<typeof createFixtures>>) {
+async function createExistingPlan(
+  fixtures: Awaited<ReturnType<typeof createFixtures>>,
+  patientId = fixtures.patient.id
+) {
   const [plan] = await db
     .insert(patientTreatmentPlanTable)
     .values({
       tenantId: fixtures.tenantId,
-      patientId: fixtures.patient.id,
+      patientId,
       treatmentId: fixtures.treatmentId,
       treatmentName: 'Abhyanga wellness programme',
       treatmentCode: `TRT${sequence}`,
@@ -258,6 +290,23 @@ async function createExistingPlan(fixtures: Awaited<ReturnType<typeof createFixt
     .returning({ id: patientTreatmentPlanSessionTable.id });
 
   return { planId: plan.id, sessionId: session.id };
+}
+
+async function createAdditionalPatient(fixtures: Awaited<ReturnType<typeof createFixtures>>) {
+  const [patient] = await db
+    .insert(patientTable)
+    .values({
+      tenantId: fixtures.tenantId,
+      mrn: `MRN-ADDITIONAL-${sequence}`,
+      firstName: 'Nila',
+      lastName: 'Shah',
+      phone: `97765432${String(sequence).padStart(2, '0')}`,
+      registrationStatus: 'registered',
+      isActive: true,
+    })
+    .returning({ id: patientTable.id });
+
+  return patient;
 }
 
 async function createRepeatableTreatment(
@@ -303,6 +352,8 @@ function procedureData(
     timeZone: 'Asia/Kolkata',
     bookingPath: 'PROCEDURE',
     patientId: fixtures.patient.id,
+    roomId: fixtures.roomId,
+    therapistId: fixtures.therapistId,
     slotDate: '2099-12-31',
     startTime: '10:00',
     endTime: '11:00',
@@ -557,6 +608,7 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '11:00',
+      roomId: fixtures.roomId,
       patientTreatmentPlanId: plan.planId,
       patientTreatmentPlanSessionId: plan.sessionId,
       remarks: undefined,
@@ -641,6 +693,8 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '11:15',
+      roomId: fixtures.roomId,
+      therapistId: fixtures.therapistId,
       patientTreatmentPlanId: plan.planId,
       patientTreatmentPlanSessionId: plan.sessionId,
       remarks: undefined,
@@ -651,6 +705,8 @@ describe('Appointment repository', () => {
       data: {
         bookingPath: 'PROCEDURE',
         doctor: null,
+        roomId: fixtures.roomId,
+        therapist: { id: fixtures.therapistId, name: 'Leela Krishnan' },
         rotaName: null,
         startTime: '10:00',
         endTime: '11:15',
@@ -678,6 +734,131 @@ describe('Appointment repository', () => {
     ).resolves.toHaveLength(1);
   });
 
+  it('should report only overlapping active Procedure resources as unavailable', async () => {
+    const fixtures = await createFixtures();
+    const plan = await createExistingPlan(fixtures);
+    const created = await appointmentRepository.createAppointment(procedureData(fixtures, plan));
+    if (!created.success) throw new Error('appointment creation failed');
+
+    await expect(
+      appointmentRepository.getUnavailableProcedureResources({
+        tenantId: fixtures.tenantId,
+        slotDate: '2099-12-31',
+        startTime: '10:30',
+        endTime: '11:30',
+      })
+    ).resolves.toEqual({
+      roomIds: [fixtures.roomId],
+      therapistIds: [fixtures.therapistId],
+      patientUnavailable: false,
+    });
+
+    await expect(
+      appointmentRepository.getUnavailableProcedureResources({
+        tenantId: fixtures.tenantId,
+        slotDate: '2099-12-31',
+        startTime: '11:00',
+        endTime: '12:00',
+      })
+    ).resolves.toEqual({ roomIds: [], therapistIds: [], patientUnavailable: false });
+
+    await appointmentRepository.cancelAppointment({
+      id: created.data.id,
+      tenantId: fixtures.tenantId,
+      appointmentCancelledReasonId: fixtures.cancellationReason.id,
+    });
+
+    await expect(
+      appointmentRepository.getUnavailableProcedureResources({
+        tenantId: fixtures.tenantId,
+        slotDate: '2099-12-31',
+        startTime: '10:30',
+        endTime: '11:30',
+      })
+    ).resolves.toEqual({ roomIds: [], therapistIds: [], patientUnavailable: false });
+  });
+
+  it('should block an overlapping Patient even when a legacy Appointment has no resources', async () => {
+    const fixtures = await createFixtures();
+    await db.insert(appointmentTable).values({
+      tenantId: fixtures.tenantId,
+      bookingPath: 'PROCEDURE',
+      bookingNumber: `LEGACY-${sequence}`,
+      patientId: fixtures.patient.id,
+      appointmentStatusId: fixtures.scheduledStatus.id,
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '11:00',
+    });
+
+    await expect(
+      appointmentRepository.getUnavailableProcedureResources({
+        tenantId: fixtures.tenantId,
+        patientId: fixtures.patient.id,
+        slotDate: '2099-12-31',
+        startTime: '10:30',
+        endTime: '11:30',
+      })
+    ).resolves.toEqual({ roomIds: [], therapistIds: [], patientUnavailable: true });
+
+    const plan = await createExistingPlan(fixtures);
+    await expect(
+      appointmentRepository.createAppointment(
+        procedureData(fixtures, plan, { startTime: '10:30', endTime: '11:30' })
+      )
+    ).resolves.toEqual({ success: false, outcome: 'patient-unavailable' });
+  });
+
+  it('should reject an overlapping Procedure allocation during creation', async () => {
+    const fixtures = await createFixtures();
+    const firstPlan = await createExistingPlan(fixtures);
+    const first = await appointmentRepository.createAppointment(procedureData(fixtures, firstPlan));
+    if (!first.success) throw new Error('first appointment creation failed');
+
+    const secondPatient = await createAdditionalPatient(fixtures);
+    const secondPlan = await createExistingPlan(fixtures, secondPatient.id);
+
+    await expect(
+      appointmentRepository.createAppointment(
+        procedureData(fixtures, secondPlan, {
+          patientId: secondPatient.id,
+          startTime: '10:30',
+          endTime: '11:30',
+        })
+      )
+    ).resolves.toEqual({ success: false, outcome: 'resource-unavailable' });
+  });
+
+  it('should reject rescheduling a Procedure onto an overlapping allocation', async () => {
+    const fixtures = await createFixtures();
+    const firstPlan = await createExistingPlan(fixtures);
+    const first = await appointmentRepository.createAppointment(procedureData(fixtures, firstPlan));
+    if (!first.success) throw new Error('first appointment creation failed');
+
+    const secondPatient = await createAdditionalPatient(fixtures);
+    const secondPlan = await createExistingPlan(fixtures, secondPatient.id);
+    const second = await appointmentRepository.createAppointment(
+      procedureData(fixtures, secondPlan, {
+        patientId: secondPatient.id,
+        startTime: '12:00',
+        endTime: '13:00',
+      })
+    );
+    if (!second.success) throw new Error('second appointment creation failed');
+
+    await expect(
+      appointmentRepository.rescheduleAppointment({
+        id: first.data.id,
+        tenantId: fixtures.tenantId,
+        timeZone: 'Asia/Kolkata',
+        bookingPath: 'PROCEDURE',
+        slotDate: '2099-12-31',
+        startTime: '12:30',
+        endTime: '13:30',
+      })
+    ).resolves.toEqual({ success: false, outcome: 'resource-unavailable' });
+  });
+
   it('should atomically create a Repeatable Plan, reserve Session 1, and create the Procedure', async () => {
     const fixtures = await createFixtures();
     const treatment = await createRepeatableTreatment(fixtures, `REP${sequence}`);
@@ -690,6 +871,8 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '10:45',
+      roomId: fixtures.roomId,
+      therapistId: fixtures.therapistId,
       treatmentId: treatment.treatmentId,
       totalSessions: 3,
       remarks: undefined,
@@ -755,6 +938,7 @@ describe('Appointment repository', () => {
         slotDate: '2099-12-31',
         startTime: '10:00',
         endTime: '10:45',
+        roomId: fixtures.roomId,
         treatmentId: treatment.treatmentId,
         totalSessions: 3,
         remarks: undefined,
@@ -773,6 +957,7 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '10:45',
+      roomId: fixtures.roomId,
       treatmentId: treatment.treatmentId,
       totalSessions: 3,
       remarks: undefined,
@@ -811,6 +996,7 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '10:00',
       endTime: '11:00',
+      roomId: fixtures.roomId,
       treatmentId: fixtures.treatmentId,
       remarks: undefined,
     });
@@ -1062,6 +1248,7 @@ describe('Appointment repository', () => {
         slotDate: '2099-12-31',
         startTime: '10:00',
         endTime: '10:45',
+        roomId: fixtures.roomId,
         treatmentId: treatment.treatmentId,
         totalSessions: 3,
         remarks: undefined,
@@ -1119,6 +1306,7 @@ describe('Appointment repository', () => {
       slotDate: '2099-12-31',
       startTime: '12:00',
       endTime: '13:00',
+      roomId: fixtures.roomId,
       patientTreatmentPlanId: plan.planId,
       patientTreatmentPlanSessionId: plan.sessionId,
       remarks: undefined,
