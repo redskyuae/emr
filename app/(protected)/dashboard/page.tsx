@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const workQueue = [
   {
     title: 'Review appointment master setup',
-    detail: 'Confirm Modes, Types, Statuses, Reasons, and Cancelled Reasons.',
+    detail: 'Confirm Modes, Type, Statuses, Reasons, and Cancelled Reasons.',
     icon: CalendarClock,
   },
   {
