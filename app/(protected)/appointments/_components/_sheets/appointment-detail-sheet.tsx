@@ -81,6 +81,9 @@ export function AppointmentDetailSheet({
                     value={appointment.appointmentCancelledReason.name}
                   />
                 ) : null}
+                {appointment.rescheduleReason ? (
+                  <DetailField label="Rescheduling reason" value={appointment.rescheduleReason} />
+                ) : null}
                 {appointment.cancelledAt ? (
                   <DetailField
                     label="Cancelled at"

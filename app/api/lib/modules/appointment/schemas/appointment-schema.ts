@@ -77,6 +77,12 @@ const appointmentTimeSchema = (fieldName: string) =>
     .trim()
     .regex(timePattern, `${fieldName} must be in HH:mm format`);
 
+const rescheduleReasonSchema = z
+  .string({ error: 'Rescheduling reason is required' })
+  .trim()
+  .min(1, 'Rescheduling reason is required')
+  .max(500, 'Rescheduling reason must be at most 500 characters');
+
 const patientShape = createPatientSchema.shape;
 
 const provisionalPatientSchema = z
@@ -215,6 +221,7 @@ const createProcedureAppointmentSchema = z
 const rescheduleConsultationAppointmentSchema = z
   .object({
     bookingPath: z.literal('CONSULTATION'),
+    rescheduleReason: rescheduleReasonSchema,
     doctorId: positiveIdSchema('Doctor ID'),
     slotDate: slotDateSchema,
     doctorRotaId: positiveIdSchema('Doctor rota ID'),
@@ -228,6 +235,7 @@ const rescheduleConsultationAppointmentSchema = z
 const rescheduleProcedureAppointmentSchema = z
   .object({
     bookingPath: z.literal('PROCEDURE'),
+    rescheduleReason: rescheduleReasonSchema,
     slotDate: slotDateSchema,
     startTime: appointmentTimeSchema('Start time'),
     endTime: appointmentTimeSchema('End time'),
@@ -359,6 +367,7 @@ export type Appointment = {
   id: number;
   cancelledAt: Date | null;
   remarks: string | null;
+  rescheduleReason: string | null;
   rotaName: string | null;
   doctorRotaId: number | null;
   roomId?: number | null;

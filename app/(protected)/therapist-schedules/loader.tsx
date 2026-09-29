@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function TherapistSchedulesPageLoader() {
   return (
-    <div className="space-y-4" aria-label="Loading Therapist Schedules">
+    <div className="space-y-4" aria-busy="true" aria-label="Loading Therapist Schedules">
       <div className="bg-card shadow-fluent-2 rounded-lg border p-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
           <div className="grid flex-1 gap-3 md:grid-cols-3">

@@ -567,8 +567,8 @@ const doctorScheduleRequestExample = {
   doctorId: 42,
   rotaIds: [1, 2],
   slotInMinute: '00:15',
-  slotFromDate: '2026-07-15',
-  slotToDate: '2026-07-20',
+  slotFromDate: '2026-10-15',
+  slotToDate: '2026-10-20',
 };
 
 const doctorScheduleExample = {
@@ -576,8 +576,8 @@ const doctorScheduleExample = {
   tenantId: 'org_apollo',
   doctorId: 42,
   isActive: true,
-  slotFromDate: '2026-07-15',
-  slotToDate: '2026-07-20',
+  slotFromDate: '2026-10-15',
+  slotToDate: '2026-10-20',
   slotInMinute: '00:15',
   slotDurationMinutes: 15,
   rotaDetails: [
@@ -597,8 +597,8 @@ const therapistScheduleRequestExample = {
   therapistId: 27,
   rotaIds: [1, 2],
   slotInMinute: 30,
-  slotFromDate: '2026-09-24',
-  slotToDate: '2026-09-30',
+  slotFromDate: '2026-10-24',
+  slotToDate: '2026-10-30',
 };
 
 const therapistScheduleExample = {
@@ -606,8 +606,8 @@ const therapistScheduleExample = {
   tenantId: 'org_apollo',
   therapistId: 27,
   isActive: true,
-  slotFromDate: '2026-09-24',
-  slotToDate: '2026-09-30',
+  slotFromDate: '2026-10-24',
+  slotToDate: '2026-10-30',
   slotInMinute: '00:30',
   slotDurationMinutes: 30,
   rotaDetails: [
@@ -669,6 +669,7 @@ const createProcedureAppointmentRequestExample = {
 
 const rescheduleConsultationAppointmentRequestExample = {
   bookingPath: 'CONSULTATION',
+  rescheduleReason: 'Patient requested a later time.',
   doctorId: 42,
   slotDate: '02-01-2100',
   doctorRotaId: 1,
@@ -677,6 +678,7 @@ const rescheduleConsultationAppointmentRequestExample = {
 
 const rescheduleProcedureAppointmentRequestExample = {
   bookingPath: 'PROCEDURE',
+  rescheduleReason: 'Therapist is unavailable at the original time.',
   slotDate: '02-01-2100',
   startTime: '11:00',
   endTime: '12:15',
@@ -705,6 +707,7 @@ const appointmentExample = {
   appointmentType: { id: 2, name: 'Consultation', code: 'CONS' },
   appointmentReason: { id: 3, name: 'Follow-up', code: 'FUP' },
   appointmentCancelledReason: null,
+  rescheduleReason: null,
   appointmentStatus: { id: 4, name: 'Scheduled', code: 'SCH', category: 'scheduled' },
   cancelledAt: null,
   slotDate: '31-12-2099',
@@ -3765,7 +3768,7 @@ export const openApiDocument = {
         tags: ['Doctor Schedule'],
         summary: 'Create Doctor Schedule',
         description:
-          'Assigns one or more DoctorRotas to a Doctor over a date range. tenantId is resolved from the active Session.',
+          'Assigns one or more DoctorRotas to a Doctor over a date range starting today or later in the active Tenant time zone. tenantId is resolved from the active Session.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreateDoctorScheduleRequest', doctorScheduleRequestExample),
         responses: {
@@ -3783,7 +3786,7 @@ export const openApiDocument = {
         tags: ['Doctor Schedule'],
         summary: 'Update Doctor Schedule',
         description:
-          'Updates a DoctorSchedule by id supplied in the request body. rotaType=new adds rota links; rotaType=remove removes rota links.',
+          'Updates a DoctorSchedule by id supplied in the request body. Submitted schedule dates must be today or later in the active Tenant time zone. rotaType=new adds rota links; rotaType=remove removes rota links.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('UpdateDoctorScheduleRequest', {
           doctorScheduleId: 11,
@@ -3895,7 +3898,7 @@ export const openApiDocument = {
         tags: ['Therapist Schedule'],
         summary: 'Create Therapist Schedule',
         description:
-          'Assigns one or more reusable Rotas to an active Therapist over a date range. tenantId is resolved from the active Session.',
+          'Assigns one or more reusable Rotas to an active Therapist over a date range starting today or later in the active Tenant time zone. tenantId is resolved from the active Session.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('CreateTherapistScheduleRequest', therapistScheduleRequestExample),
         responses: {
@@ -3913,7 +3916,7 @@ export const openApiDocument = {
         tags: ['Therapist Schedule'],
         summary: 'Update Therapist Schedule',
         description:
-          'Updates a TherapistSchedule by id supplied in the body. rotaType=new adds Rota links and rotaType=remove removes them.',
+          'Updates a TherapistSchedule by id supplied in the body. Submitted schedule dates must be today or later in the active Tenant time zone. rotaType=new adds Rota links and rotaType=remove removes them.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('UpdateTherapistScheduleRequest', {
           therapistScheduleId: 18,
@@ -6185,7 +6188,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Reschedule Appointment',
         description:
-          'Changes the schedule of a Scheduled or Confirmed Appointment in the active Tenant while preserving its Booking Number and non-scheduling details. Consultation rescheduling may change the Doctor and atomically replaces Slot Reservations. Procedure rescheduling changes only its direct date/time window. A successful reschedule returns the Appointment to the system Scheduled status.',
+          'Changes the schedule of a Scheduled or Confirmed Appointment in the active Tenant while preserving its Booking Number and non-scheduling details. A Rescheduling reason is required and recorded on the Appointment. Consultation rescheduling may change the Doctor and atomically replaces Slot Reservations. Procedure rescheduling changes only its direct date/time window. A successful reschedule returns the Appointment to the system Scheduled status.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Appointment')],
         requestBody: {
@@ -6213,10 +6216,10 @@ export const openApiDocument = {
           },
           '400': {
             description:
-              'The request is invalid, unchanged, in the past, or selects non-consecutive DoctorSlots.',
+              'The request is missing a Rescheduling reason, invalid, unchanged, in the past, or selects non-consecutive DoctorSlots.',
             content: jsonContent(schemaRef('ValidationError'), {
               message: 'Validation failed',
-              errors: ['The Appointment schedule has not changed.'],
+              errors: ['Rescheduling reason is required'],
             }),
           },
           '401': responseRef('Unauthorized'),
@@ -9646,8 +9649,16 @@ export const openApiDocument = {
             ],
             description: 'Slot duration as minutes or legacy HH:mm duration.',
           },
-          slotFromDate: { type: 'string', format: 'date' },
-          slotToDate: { type: 'string', format: 'date' },
+          slotFromDate: {
+            type: 'string',
+            format: 'date',
+            description: 'ISO date that must be today or later in the active Tenant time zone.',
+          },
+          slotToDate: {
+            type: 'string',
+            format: 'date',
+            description: 'ISO date that must be today or later in the active Tenant time zone.',
+          },
         },
       },
       UpdateDoctorScheduleRequest: {
@@ -9673,8 +9684,16 @@ export const openApiDocument = {
               { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
             ],
           },
-          slotFromDate: { type: 'string', format: 'date' },
-          slotToDate: { type: 'string', format: 'date' },
+          slotFromDate: {
+            type: 'string',
+            format: 'date',
+            description: 'ISO date that must be today or later in the active Tenant time zone.',
+          },
+          slotToDate: {
+            type: 'string',
+            format: 'date',
+            description: 'ISO date that must be today or later in the active Tenant time zone.',
+          },
         },
       },
       DoctorScheduleRotaDetail: {
@@ -9742,8 +9761,16 @@ export const openApiDocument = {
             ],
             description: 'Slot duration as minutes or HH:mm duration.',
           },
-          slotFromDate: { type: 'string', format: 'date' },
-          slotToDate: { type: 'string', format: 'date' },
+          slotFromDate: {
+            type: 'string',
+            format: 'date',
+            description: 'ISO date that must be today or later in the active Tenant time zone.',
+          },
+          slotToDate: {
+            type: 'string',
+            format: 'date',
+            description: 'ISO date that must be today or later in the active Tenant time zone.',
+          },
         },
       },
       UpdateTherapistScheduleRequest: {
@@ -9765,8 +9792,16 @@ export const openApiDocument = {
               { type: 'string', pattern: '^([01]\\d|2[0-3]):[0-5]\\d$' },
             ],
           },
-          slotFromDate: { type: 'string', format: 'date' },
-          slotToDate: { type: 'string', format: 'date' },
+          slotFromDate: {
+            type: 'string',
+            format: 'date',
+            description: 'ISO date that must be today or later in the active Tenant time zone.',
+          },
+          slotToDate: {
+            type: 'string',
+            format: 'date',
+            description: 'ISO date that must be today or later in the active Tenant time zone.',
+          },
         },
       },
       TherapistSchedule: {
@@ -9979,9 +10014,17 @@ export const openApiDocument = {
       RescheduleConsultationAppointmentRequest: {
         type: 'object',
         additionalProperties: false,
-        required: ['bookingPath', 'doctorId', 'slotDate', 'doctorRotaId', 'slotTimes'],
+        required: [
+          'bookingPath',
+          'rescheduleReason',
+          'doctorId',
+          'slotDate',
+          'doctorRotaId',
+          'slotTimes',
+        ],
         properties: {
           bookingPath: { type: 'string', enum: ['CONSULTATION'] },
+          rescheduleReason: { type: 'string', minLength: 1, maxLength: 500 },
           doctorId: { type: 'integer', minimum: 1 },
           slotDate: {
             type: 'string',
@@ -10000,9 +10043,10 @@ export const openApiDocument = {
       RescheduleProcedureAppointmentRequest: {
         type: 'object',
         additionalProperties: false,
-        required: ['bookingPath', 'slotDate', 'startTime', 'endTime'],
+        required: ['bookingPath', 'rescheduleReason', 'slotDate', 'startTime', 'endTime'],
         properties: {
           bookingPath: { type: 'string', enum: ['PROCEDURE'] },
+          rescheduleReason: { type: 'string', minLength: 1, maxLength: 500 },
           slotDate: {
             type: 'string',
             pattern: '^\\d{2}-\\d{2}-\\d{4}$',
@@ -10309,6 +10353,7 @@ export const openApiDocument = {
           'therapist',
           'slots',
           'remarks',
+          'rescheduleReason',
           'createdOn',
         ],
         properties: {
@@ -10394,6 +10439,10 @@ export const openApiDocument = {
           cancelledAt: { type: ['string', 'null'], format: 'date-time' },
           slots: { type: 'array', items: schemaRef('AppointmentSlotBooking') },
           remarks: { type: ['string', 'null'] },
+          rescheduleReason: {
+            type: ['string', 'null'],
+            description: 'Latest reason recorded when this Appointment was rescheduled.',
+          },
           createdOn: { type: 'string', format: 'date-time' },
         },
       },

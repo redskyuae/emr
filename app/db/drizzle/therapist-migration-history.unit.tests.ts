@@ -39,6 +39,7 @@ describe('Therapist migration history', () => {
       '0063_seed_therapist_permissions',
       '0064_lame_tombstone',
       '0065_unknown_sasquatch',
+      '0066_dear_mongu',
     ]);
   });
 });

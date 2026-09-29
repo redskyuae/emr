@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarClock, CircleX, Eye, MoreHorizontal, UserRound } from 'lucide-react';
+import { CalendarClock, CircleX, Eye, MoreHorizontal, Phone, UserRound } from 'lucide-react';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { Badge } from '@/components/ui/badge';
@@ -90,9 +90,15 @@ export function AppointmentsTable({
                     >
                       {appointment.patient.firstName} {appointment.patient.lastName}
                     </Link>
-                    <p className="text-muted-foreground text-xs">
-                      {appointment.patient.mrn} / {appointment.patient.phone}
-                    </p>
+                    <p className="text-muted-foreground text-xs">MRN {appointment.patient.mrn}</p>
+                    <a
+                      href={`tel:${appointment.patient.phone}`}
+                      className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
+                      aria-label={`Call ${appointment.patient.firstName} ${appointment.patient.lastName} at ${appointment.patient.phone}`}
+                    >
+                      <Phone className="size-3" aria-hidden="true" />
+                      {appointment.patient.phone}
+                    </a>
                   </td>
                   <td className="p-3">{appointment.doctor?.name ?? 'N/A'}</td>
                   <td className="p-3">
@@ -175,7 +181,10 @@ export function AppointmentsTableSkeleton() {
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-40" />
+          <div className="space-y-1">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-3 w-28" />
+          </div>
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-5 w-20" />
           <Skeleton className="h-5 w-24" />

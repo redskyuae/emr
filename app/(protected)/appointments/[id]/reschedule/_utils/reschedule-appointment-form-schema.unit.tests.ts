@@ -12,6 +12,7 @@ describe('rescheduleAppointmentFormSchema', () => {
         slotDate: '2099-12-31',
         startTime: '10:00',
         endTime: '11:00',
+        rescheduleReason: 'Patient requested a later time',
       }).success
     ).toBe(true);
   });
@@ -49,6 +50,26 @@ describe('rescheduleAppointmentFormSchema', () => {
 
     expect(result.error.issues).toContainEqual(
       expect.objectContaining({ path: ['endTime'], message: 'End time must be after start time' })
+    );
+  });
+
+  it('should require a Rescheduling reason', () => {
+    const result = rescheduleAppointmentFormSchema.safeParse({
+      ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
+      visitType: 'PROCEDURE',
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '11:00',
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        path: ['rescheduleReason'],
+        message: 'Rescheduling reason is required',
+      })
     );
   });
 });

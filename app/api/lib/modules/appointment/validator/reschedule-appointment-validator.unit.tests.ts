@@ -26,6 +26,7 @@ const tenantRepo = vi.mocked(tenantRepository);
 const appointment = {
   id: 10,
   remarks: null,
+  rescheduleReason: null,
   rotaName: null,
   doctorRotaId: null,
   cancelledAt: null,
@@ -86,6 +87,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'PROCEDURE',
+          rescheduleReason: 'Patient requested a later time',
           slotDate: '31-12-2099',
           startTime: '11:00',
           endTime: '12:00',
@@ -110,6 +112,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'PROCEDURE',
+          rescheduleReason: 'Patient requested a later time',
           slotDate: '31-12-2099',
           startTime: '11:00',
           endTime: '12:00',
@@ -129,6 +132,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'CONSULTATION',
+          rescheduleReason: 'Patient requested a later time',
           doctorId: 2,
           slotDate: '31-12-2099',
           doctorRotaId: 3,
@@ -149,6 +153,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'PROCEDURE',
+          rescheduleReason: 'Patient requested a later time',
           slotDate: '31-12-2099',
           startTime: '10:00',
           endTime: '11:00',
@@ -167,6 +172,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'PROCEDURE',
+          rescheduleReason: 'Patient requested a later time',
           slotDate: '31-12-2099',
           startTime: '11:00',
           endTime: '12:00',
@@ -180,6 +186,7 @@ describe('validateRescheduleAppointment', () => {
         tenantId: 'tenant-1',
         timeZone: 'Asia/Kolkata',
         bookingPath: 'PROCEDURE',
+        rescheduleReason: 'Patient requested a later time',
         slotDate: '2099-12-31',
         startTime: '11:00',
         endTime: '12:00',
@@ -215,6 +222,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'CONSULTATION',
+          rescheduleReason: 'Doctor requested a schedule change',
           doctorId: 2,
           slotDate: '31-12-2099',
           doctorRotaId: 8,
@@ -261,6 +269,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'CONSULTATION',
+          rescheduleReason: 'Doctor requested a schedule change',
           doctorId: 1,
           slotDate: '31-12-2099',
           doctorRotaId: 6,
@@ -297,6 +306,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'CONSULTATION',
+          rescheduleReason: 'Doctor requested a schedule change',
           doctorId: 2,
           slotDate: '31-12-2099',
           doctorRotaId: 8,
@@ -319,6 +329,7 @@ describe('validateRescheduleAppointment', () => {
         '10',
         {
           bookingPath: 'PROCEDURE',
+          rescheduleReason: 'Patient requested a later time',
           slotDate: '31-12-2099',
           startTime: '11:00',
           endTime: '12:00',

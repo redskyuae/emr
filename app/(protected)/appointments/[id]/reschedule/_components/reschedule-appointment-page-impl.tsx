@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import RescheduleAppointmentLoader from '../loader';
+import { RescheduleReason } from './reschedule-reason';
 import { useRescheduleAppointmentForm } from './use-reschedule-appointment';
 
 export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId: number }) {
@@ -179,6 +180,8 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
           />
         </div>
       )}
+
+      <RescheduleReason control={form.control} />
 
       <footer className="bg-card shadow-fluent-8 sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
         <CalendarClock className="text-primary hidden size-5 sm:block" />

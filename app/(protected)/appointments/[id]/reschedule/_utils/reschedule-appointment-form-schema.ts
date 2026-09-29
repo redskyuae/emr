@@ -47,6 +47,10 @@ export const rescheduleAppointmentFormSchema = z
     consentStatus: z.enum(['READY', 'PENDING', 'NOT_REQUIRED', 'BLOCKED']),
     approvalStatus: z.enum(['READY', 'PENDING', 'NOT_REQUIRED', 'BLOCKED']),
     remarks: z.string(),
+    rescheduleReason: z
+      .string()
+      .trim()
+      .max(500, 'Rescheduling reason must be at most 500 characters'),
   })
   .superRefine((data, context) => {
     if (data.visitType === '') {
@@ -54,6 +58,14 @@ export const rescheduleAppointmentFormSchema = z
         code: 'custom',
         path: ['visitType'],
         message: 'Booking Path is required',
+      });
+    }
+
+    if (data.rescheduleReason === '') {
+      context.addIssue({
+        code: 'custom',
+        path: ['rescheduleReason'],
+        message: 'Rescheduling reason is required',
       });
     }
 

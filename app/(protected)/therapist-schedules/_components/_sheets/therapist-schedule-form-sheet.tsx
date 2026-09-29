@@ -74,6 +74,13 @@ function diffIds(previousIds: number[], nextIds: number[]) {
   };
 }
 
+function getLocalDateInputValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate()
+  ).padStart(2, '0')}`;
+}
+
 export function TherapistScheduleFormSheet({
   open,
   mode,
@@ -96,6 +103,7 @@ export function TherapistScheduleFormSheet({
   });
   const isCreating = mode === 'new';
   const isSaving = createMutation.isPending || updateMutation.isPending;
+  const minimumScheduleDate = getLocalDateInputValue();
   const sessionKey = isCreating ? 'new' : schedule ? String(schedule.id) : null;
 
   useEffect(() => {
@@ -248,6 +256,7 @@ export function TherapistScheduleFormSheet({
                               id={`therapist-schedule-${name}`}
                               type="date"
                               {...field}
+                              min={minimumScheduleDate}
                               disabled={isSaving}
                               aria-required="true"
                               aria-invalid={fieldState.invalid}

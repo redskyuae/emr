@@ -1,7 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
+import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { doctorScheduleRepository } from '../repository/doctor-schedule-repository';
 import { validateCreateDoctorSchedule } from './create-doctor-schedule-validator';
 import { validateGetDoctorSchedules } from './get-doctor-schedules-validator';
@@ -10,6 +11,9 @@ import { validateUpdateDoctorSchedule } from './update-doctor-schedule-validator
 
 vi.mock('../../doctor/repository/doctor-repository', () => ({
   doctorRepository: { getDoctorById: vi.fn() },
+}));
+vi.mock('../../tenant/repository/tenant-repository', () => ({
+  tenantRepository: { getTenantById: vi.fn() },
 }));
 vi.mock('../repository/doctor-schedule-repository', () => ({
   doctorScheduleRepository: {
@@ -20,6 +24,8 @@ vi.mock('../repository/doctor-schedule-repository', () => ({
 
 const doctorRepo = vi.mocked(doctorRepository);
 const scheduleRepo = vi.mocked(doctorScheduleRepository);
+const tenantRepo = vi.mocked(tenantRepository);
+const NOW = new Date('2026-06-01T12:00:00Z');
 const doctor = {
   id: 2,
   userId: 'user-1',
@@ -63,10 +69,15 @@ const payload = {
 describe('DoctorSchedule validators', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
     doctorRepo.getDoctorById.mockResolvedValue(doctor);
+    tenantRepo.getTenantById.mockResolvedValue({ timeZone: 'Asia/Kolkata' } as never);
     scheduleRepo.getActiveRotaCount.mockResolvedValue(1);
     scheduleRepo.getDoctorScheduleById.mockResolvedValue(schedule);
   });
+
+  afterEach(() => vi.useRealTimers());
 
   it('should return schema validation errors without repository access on create', async () => {
     const result = await validateCreateDoctorSchedule({}, 'tenant-1');
@@ -86,6 +97,27 @@ describe('DoctorSchedule validators', () => {
     });
     expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
     expect(scheduleRepo.getActiveRotaCount).not.toHaveBeenCalled();
+  });
+
+  it('should reject past schedule dates before loading Doctors or Rotas', async () => {
+    const result = await validateCreateDoctorSchedule(
+      { ...payload, slotFromDate: '2026-05-31' },
+      'tenant-1'
+    );
+
+    expect(result).toEqual({ success: false, errors: ['Slot from date cannot be in the past.'] });
+    expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
+    expect(scheduleRepo.getActiveRotaCount).not.toHaveBeenCalled();
+  });
+
+  it('should reject a past schedule date before resolving the update target', async () => {
+    const result = await validateUpdateDoctorSchedule(
+      { doctorScheduleId: 1, slotFromDate: '2026-05-31' },
+      'tenant-1'
+    );
+
+    expect(result).toEqual({ success: false, errors: ['Slot from date cannot be in the past.'] });
+    expect(scheduleRepo.getDoctorScheduleById).not.toHaveBeenCalled();
   });
 
   it('should return invalid doctor when doctor is not active in tenant', async () => {
