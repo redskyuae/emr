@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
 import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
 import { OnboardingPageImpl } from '@/app/onboarding/_components/onboarding-page-impl';
+import { TabSessionGate } from '@/components/app/tab-session-gate';
 import { Logo } from '@/components/brand/logo';
 
 export default async function OnboardingPage() {
@@ -29,15 +30,17 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-svh flex-1 flex-col">
-      <div className="flex items-center p-6">
-        <Logo />
-      </div>
-      <div className="flex flex-1 items-center justify-center px-6 pb-16">
-        <div className="w-full max-w-sm">
-          <OnboardingPageImpl tenantName={tenant.name} />
+    <TabSessionGate>
+      <div className="flex min-h-svh flex-1 flex-col">
+        <div className="flex items-center p-6">
+          <Logo />
+        </div>
+        <div className="flex flex-1 items-center justify-center px-6 pb-16">
+          <div className="w-full max-w-sm">
+            <OnboardingPageImpl tenantName={tenant.name} />
+          </div>
         </div>
       </div>
-    </div>
+    </TabSessionGate>
   );
 }

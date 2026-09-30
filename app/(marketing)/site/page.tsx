@@ -56,7 +56,6 @@ const img = {
 };
 
 const trustedGroups = [
-  'Northgate Health',
   'Lakeshore Medical Group',
   'CarePoint Hospitals',
   'St. Avila Network',
@@ -183,8 +182,8 @@ const facilities = [
     image: img.facHospital,
     icon: Hospital,
     type: 'HOSPITAL',
-    name: 'Northgate General',
-    detail: '420 beds · 36 wards',
+    name: 'Hospital care',
+    detail: 'Inpatient wards and care teams',
   },
   {
     image: img.facClinic,
@@ -210,14 +209,6 @@ const facilities = [
 ];
 
 const testimonials = [
-  {
-    quote:
-      'We rolled Medical EMR out across nine facilities in a single quarter. For the first time a patient’s history follows them from our clinic to the hospital to the lab without a single phone call.',
-    name: 'Dr. Anaya Mehta',
-    role: 'Chief Medical Officer',
-    org: 'Northgate Health',
-    initials: 'AM',
-  },
   {
     quote:
       'The AI copilot drafts my encounter note while I’m still with the patient. I review, tweak, and sign. I’m leaving the clinic an hour earlier than I used to.',

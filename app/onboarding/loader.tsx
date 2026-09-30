@@ -2,7 +2,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function OnboardingLoader() {
   return (
-    <div className="flex min-h-svh flex-1 flex-col" aria-label="Loading workspace setup">
+    <div
+      className="flex min-h-svh flex-1 flex-col"
+      aria-label="Checking Session and loading workspace setup"
+    >
       <div className="flex items-center p-6">
         <Skeleton className="h-6 w-32" />
       </div>

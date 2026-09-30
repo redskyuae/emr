@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
+import { markTabSession } from '@/app/lib/tab-session';
 import { useSignUp } from '@/app/queries/auth/useSignUp';
+import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,15 +19,26 @@ import { Spinner } from '@/components/ui/spinner';
 export function SignupForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [storageError, setStorageError] = useState(false);
+  const signOutMutation = useSignOut();
 
   const signUpMutation = useSignUp({
     onSuccess: () => {
+      if (!markTabSession()) {
+        setStorageError(true);
+        signOutMutation.mutate();
+        return;
+      }
+
       router.replace('/onboarding');
       router.refresh();
     },
   });
 
-  const errors = getAuthMutationErrors(signUpMutation.error);
+  const errors = [
+    ...getAuthMutationErrors(signUpMutation.error),
+    ...(storageError ? ['Browser tab storage is unavailable. Enable it to continue.'] : []),
+  ];
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500">
@@ -40,6 +53,7 @@ export function SignupForm() {
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
+          setStorageError(false);
 
           const formData = new FormData(event.currentTarget);
 
@@ -88,7 +102,7 @@ export function SignupForm() {
             id="ownerEmail"
             name="ownerEmail"
             type="email"
-            placeholder="you@northgatehealth.com"
+            placeholder="name@hospital.example"
             autoComplete="email"
             required
             disabled={signUpMutation.isPending}
@@ -101,7 +115,7 @@ export function SignupForm() {
           <Input
             id="tenantName"
             name="tenantName"
-            placeholder="Northgate Health"
+            placeholder="Your hospital group"
             required
             disabled={signUpMutation.isPending}
             className="h-10"

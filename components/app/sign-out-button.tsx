@@ -1,58 +1,35 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
 import { LogOut } from 'lucide-react';
 
+import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
 export function SignOutButton() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const [isPending, setIsPending] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const signOutMutation = useSignOut(() => {
+    router.replace('/login');
+    router.refresh();
+  });
 
-  async function handleSignOut() {
-    setIsPending(true);
-    setHasError(false);
-
-    try {
-      const response = await fetch('/api/v1/signout', {
-        method: 'POST',
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Sign out failed');
-      }
-
-      // Drop all cached queries (including the Current User) so a subsequent
-      // sign-in in the same tab can't reveal the previous user's shell from
-      // still-fresh cache before the new /me resolves.
-      queryClient.clear();
-
-      router.replace('/login');
-      router.refresh();
-    } catch {
-      setHasError(true);
-      setIsPending(false);
-    }
+  function handleSignOut() {
+    signOutMutation.mutate();
   }
 
   return (
     <Button
       type="button"
-      variant={hasError ? 'destructive' : 'ghost'}
+      variant={signOutMutation.isError ? 'destructive' : 'ghost'}
       size="icon-sm"
       className="group-data-[collapsible=icon]:hidden"
-      aria-label={hasError ? 'Sign out failed. Try again.' : 'Sign out'}
-      title={hasError ? 'Sign out failed. Try again.' : 'Sign out'}
-      disabled={isPending}
+      aria-label={signOutMutation.isError ? 'Sign out failed. Try again.' : 'Sign out'}
+      title={signOutMutation.isError ? 'Sign out failed. Try again.' : 'Sign out'}
+      disabled={signOutMutation.isPending}
       onClick={handleSignOut}
     >
-      {isPending ? <Spinner className="size-4" /> : <LogOut className="size-4" />}
+      {signOutMutation.isPending ? <Spinner className="size-4" /> : <LogOut className="size-4" />}
     </Button>
   );
 }

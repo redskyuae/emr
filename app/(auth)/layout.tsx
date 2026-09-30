@@ -1,85 +1,56 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Building2, Hospital, Microscope, ShieldCheck } from 'lucide-react';
+import Image from 'next/image';
 
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
-import { DEFAULT_AUTH_REDIRECT_PATH } from '@/app/lib/auth-route-guards';
+import { brandLogos, getConfiguredBrandLogoVariant } from '@/components/brand/brand-config';
 import { Logo } from '@/components/brand/logo';
+import { ExistingSessionGate } from '@/components/auth/existing-session-gate';
 import { ReactNode } from 'react';
-
-const brandPoints = [
-  {
-    icon: Building2,
-    title: 'One Workspace, every Facility',
-    description: 'Hospitals, clinics, and labs under a single hospital group.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Isolated by architecture',
-    description: 'Workspace-level isolation on every table, every query.',
-  },
-];
+import { getAuthLinkFlags } from './_utils/auth-link-flags';
 
 export default async function AuthLayout({ children }: { children: ReactNode }) {
   const session = await getSession();
+  const logoVariant = getConfiguredBrandLogoVariant();
+  const brand = logoVariant === 'none' ? null : brandLogos[logoVariant];
+  const { showBackToSiteLink } = getAuthLinkFlags();
+  const logoHref = showBackToSiteLink ? '/site' : '/login';
 
   if (session) {
-    redirect(DEFAULT_AUTH_REDIRECT_PATH);
+    return <ExistingSessionGate />;
   }
 
   return (
     <div className="grid min-h-full flex-1 lg:grid-cols-2">
       {/* ── Brand panel ──────────────────────────────────────── */}
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-[oklch(0.24_0.07_256)] p-10 text-white lg:flex">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(50rem_30rem_at_85%_-10%,oklch(0.45_0.12_252/0.55),transparent),radial-gradient(40rem_24rem_at_-10%_110%,oklch(0.35_0.1_254/0.6),transparent)]"
+      <div className="bg-primary text-primary-foreground relative hidden overflow-hidden lg:flex">
+        <Image
+          src="/brand/dhathri-ayurvedic-care.jpg"
+          alt="A welcoming Ayurvedic care room with a wooden treatment table and botanical surroundings"
+          fill
+          priority
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          className="object-cover"
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.05)_1px,transparent_1px)] bg-[size:48px_48px]"
+          className="from-primary/95 via-primary/45 to-primary/35 absolute inset-0 bg-gradient-to-t"
         />
 
-        <div className="relative">
-          <Logo inverted className="text-white" />
-        </div>
+        <div className="relative flex w-full flex-col justify-between gap-16 p-10 xl:p-12">
+          <Logo href={logoHref} inverted className="text-primary-foreground" />
 
-        <div className="relative max-w-md space-y-8">
-          <blockquote className="space-y-3">
-            <p className="font-heading text-2xl leading-snug font-medium text-balance">
-              “We moved three hospitals and eleven clinics onto one system. Our front desks stopped
-              juggling logins the same week.”
+          <div className="max-w-lg space-y-4 pb-4">
+            <p className="text-primary-foreground/80 text-sm font-semibold tracking-widest uppercase">
+              {brand?.wordmarkAlt ?? 'Ayurvedic hospital care'}
             </p>
-            <footer className="text-sm text-white/60">
-              Director of Operations · Northgate Health
-            </footer>
-          </blockquote>
-
-          <div className="space-y-4">
-            {brandPoints.map((point) => (
-              <div key={point.title} className="flex items-start gap-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/10">
-                  <point.icon className="size-4" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold">{point.title}</p>
-                  <p className="text-sm text-white/60">{point.description}</p>
-                </div>
-              </div>
-            ))}
+            <h2 className="font-heading text-4xl leading-tight font-semibold text-balance xl:text-5xl">
+              Care rooted in Ayurveda.
+            </h2>
+            <p className="text-primary-foreground/90 max-w-md text-base leading-relaxed">
+              A calm, welcoming setting for Ayurvedic consultations, traditional therapies, and
+              thoughtful ongoing care.
+            </p>
           </div>
-        </div>
-
-        <div className="relative flex items-center gap-6 text-xs text-white/50">
-          <span className="flex items-center gap-1.5">
-            <Hospital className="size-3.5" /> Hospitals
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Building2 className="size-3.5" /> Clinics
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Microscope className="size-3.5" /> Labs
-          </span>
         </div>
       </div>
 
@@ -90,13 +61,15 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
           className="absolute inset-0 -z-10 bg-[radial-gradient(36rem_20rem_at_100%_0%,--alpha(var(--color-accent)/55%),transparent)]"
         />
         <div className="flex items-center justify-between p-6 lg:justify-end">
-          <Logo className="lg:hidden" />
-          <Link
-            href="/"
-            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
-          >
-            ← Back to site
-          </Link>
+          <Logo href={logoHref} className="lg:hidden" />
+          {showBackToSiteLink ? (
+            <Link
+              href="/site"
+              className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
+            >
+              ← Back to site
+            </Link>
+          ) : null}
         </div>
         <div className="flex flex-1 items-center justify-center px-6 pb-16">
           <div className="w-full max-w-sm">{children}</div>

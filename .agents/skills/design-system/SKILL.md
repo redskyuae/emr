@@ -11,7 +11,7 @@ This project has a committed design system: **Microsoft Fluent-inspired, built o
 
 1. **Read `DESIGN.md`.** Tokens, typography, elevation, motion rules, and the UI/UX principles all live there.
 2. **Check `components/ui/` first.** All 55 shadcn components are installed and themed. Never hand-roll a primitive (button, dialog, select, table, toast…) that already exists there.
-3. **Look at an existing page** (`app/(marketing)/page.tsx`, `app/(auth)/login/page.tsx`) to match composition patterns before inventing new ones.
+3. **Look at an existing page** (`app/(marketing)/site/page.tsx`, `app/(auth)/login/page.tsx`) to match composition patterns before inventing new ones.
 
 ## Hard rules
 

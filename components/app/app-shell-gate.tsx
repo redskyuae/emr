@@ -7,6 +7,7 @@ import {
   isSessionExpiredError,
   useCurrentUserQuery,
 } from '@/app/queries/identity-access/useCurrentUser';
+import { clearTabSession } from '@/app/lib/tab-session';
 import { AppSplashError, AppSplashLoading } from '@/components/app/app-splash';
 
 type Phase = 'loading' | 'fading' | 'ready';
@@ -30,6 +31,7 @@ export function AppShellGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isError && isSessionExpiredError(error) && !redirectedRef.current) {
       redirectedRef.current = true;
+      clearTabSession();
       router.replace('/login');
     }
   }, [isError, error, router]);

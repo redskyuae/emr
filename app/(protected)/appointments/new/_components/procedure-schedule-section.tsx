@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { CalendarClock } from 'lucide-react';
 import { Controller, type Control } from 'react-hook-form';
 
@@ -155,6 +155,7 @@ function ProcedureDateField({
   onChange: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const today = startOfDay(new Date());
 
   return (
     <Controller
@@ -194,6 +195,7 @@ function ProcedureDateField({
                 mode="single"
                 selected={field.value ? new Date(field.value + 'T12:00:00') : undefined}
                 defaultMonth={field.value ? new Date(field.value + 'T12:00:00') : undefined}
+                disabled={{ before: today }}
                 onSelect={(date) => {
                   if (!date) return;
                   field.onChange(format(date, 'yyyy-MM-dd'));

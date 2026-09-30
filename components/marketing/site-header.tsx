@@ -61,7 +61,7 @@ export function SiteHeader() {
       <header className="acrylic border-border/60 sticky top-0 z-50 border-b">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
           <div className="flex items-center gap-8">
-            <Logo showCompany />
+            <Logo href="/site" showCompany />
             <nav className="hidden items-center gap-1 lg:flex">
               {navLinks.map((link) => (
                 <Link

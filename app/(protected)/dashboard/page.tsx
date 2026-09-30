@@ -27,7 +27,7 @@ const workQueue = [
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {appShellStats.map((stat) => (
           <Card key={stat.label} className="shadow-fluent-2">
             <CardContent className="flex items-center gap-3 p-4">
