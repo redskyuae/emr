@@ -320,7 +320,7 @@ function PlanSelection({
   );
 }
 
-function CatalogueSelection({
+export function CatalogueSelection({
   control,
   treatments,
   selectedTreatment,
@@ -365,7 +365,8 @@ function CatalogueSelection({
         <Combobox<BookingTreatment>
           items={treatments}
           value={selectedTreatment}
-          itemToStringValue={(item) => `${item.name} · ${item.code}`}
+          itemToStringLabel={(item) => `${item.name} · ${item.code}`}
+          itemToStringValue={(item) => String(item.treatmentId)}
           onValueChange={(item) => onTreatmentChange(item ? String(item.treatmentId) : '')}
           onInputValueChange={onSearchChange}
         >

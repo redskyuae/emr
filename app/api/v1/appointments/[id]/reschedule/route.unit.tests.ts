@@ -18,6 +18,7 @@ const requireSession = vi.mocked(requireTenantSession);
 const context = { params: Promise.resolve({ id: '10' }) };
 const payload = {
   bookingPath: 'PROCEDURE',
+  rescheduleReason: 'Patient requested a later time',
   slotDate: '31-12-2099',
   startTime: '11:00',
   endTime: '12:00',

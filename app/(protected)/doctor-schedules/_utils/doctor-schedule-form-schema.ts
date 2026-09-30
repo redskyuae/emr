@@ -13,6 +13,19 @@ function isDateOnly(value: string) {
   );
 }
 
+function isTodayOrFuture(value: string) {
+  if (!isDateOnly(value)) {
+    return true;
+  }
+
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate()
+  ).padStart(2, '0')}`;
+
+  return value >= today;
+}
+
 export const doctorScheduleFormSchema = z
   .object({
     doctorId: z.string().trim().min(1, 'Doctor is required'),
@@ -21,12 +34,14 @@ export const doctorScheduleFormSchema = z
       .string()
       .trim()
       .min(1, 'Slot to date is required')
-      .refine(isDateOnly, 'Slot to date must be a valid date'),
+      .refine(isDateOnly, 'Slot to date must be a valid date')
+      .refine(isTodayOrFuture, 'Slot to date cannot be in the past.'),
     slotFromDate: z
       .string()
       .trim()
       .min(1, 'Slot from date is required')
-      .refine(isDateOnly, 'Slot from date must be a valid date'),
+      .refine(isDateOnly, 'Slot from date must be a valid date')
+      .refine(isTodayOrFuture, 'Slot from date cannot be in the past.'),
     slotInMinute: z
       .string()
       .trim()

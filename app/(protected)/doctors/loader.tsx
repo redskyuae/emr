@@ -11,7 +11,7 @@ import {
 
 export default function DoctorsPageLoader() {
   return (
-    <div className="space-y-4" aria-label="Loading page">
+    <div className="space-y-4" aria-busy="true" aria-label="Loading Doctors page">
       <Card className="shadow-fluent-2">
         <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
           <Skeleton className="h-9 w-56" />

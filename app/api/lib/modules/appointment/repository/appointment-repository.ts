@@ -130,6 +130,7 @@ const appointmentColumns = {
   id: appointmentTable.id,
   cancelledAt: appointmentTable.cancelledAt,
   remarks: appointmentTable.remarks,
+  rescheduleReason: appointmentTable.rescheduleReason,
   rotaName: appointmentTable.rotaName,
   roomId: appointmentTable.roomId,
   tenantId: appointmentTable.tenantId,
@@ -1283,6 +1284,7 @@ async function rescheduleAppointment(
           slotDate: data.slotDate,
           endTime: data.endTime,
           startTime: data.startTime,
+          rescheduleReason: data.rescheduleReason,
           modifiedOn: now,
           appointmentStatusId: scheduledStatus.id,
         })
@@ -1369,6 +1371,7 @@ async function rescheduleAppointment(
           doctorId: data.doctorId,
           startTime: data.slotTimes[0],
           rotaName: slotContext.rotaName,
+          rescheduleReason: data.rescheduleReason,
           modifiedOn: now,
           appointmentStatusId: scheduledStatus.id,
         })

@@ -9,6 +9,7 @@ describe('rescheduleAppointmentFormValuesToRequest', () => {
       rescheduleAppointmentFormValuesToRequest({
         ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
         visitType: 'CONSULTATION',
+        rescheduleReason: 'Doctor requested a schedule change',
         doctorId: '7',
         slotDate: '2099-12-31',
         doctorRotaId: '8',
@@ -16,6 +17,7 @@ describe('rescheduleAppointmentFormValuesToRequest', () => {
       })
     ).toEqual({
       bookingPath: 'CONSULTATION',
+      rescheduleReason: 'Doctor requested a schedule change',
       doctorId: 7,
       slotDate: '31-12-2099',
       doctorRotaId: 8,
@@ -28,6 +30,7 @@ describe('rescheduleAppointmentFormValuesToRequest', () => {
       rescheduleAppointmentFormValuesToRequest({
         ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
         visitType: 'PROCEDURE',
+        rescheduleReason: 'Room maintenance is scheduled',
         slotDate: '2099-12-31',
         startTime: '11:00',
         endTime: '12:15',
@@ -38,6 +41,7 @@ describe('rescheduleAppointmentFormValuesToRequest', () => {
       })
     ).toEqual({
       bookingPath: 'PROCEDURE',
+      rescheduleReason: 'Room maintenance is scheduled',
       slotDate: '31-12-2099',
       startTime: '11:00',
       endTime: '12:15',

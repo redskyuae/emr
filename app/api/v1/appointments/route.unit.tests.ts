@@ -71,6 +71,7 @@ describe('Appointments route', () => {
         cancelledAt: null,
         appointmentCancelledReason: null,
         remarks: null,
+        rescheduleReason: null,
         createdOn: new Date('2099-12-01T00:00:00.000Z'),
         doctor: { id: 1, name: 'Dr. Meera' },
         patient: {
@@ -106,6 +107,7 @@ describe('Appointments route', () => {
           cancelledAt: null,
           appointmentCancelledReason: null,
           remarks: null,
+          rescheduleReason: null,
           createdOn: new Date('2099-12-01T00:00:00.000Z'),
           doctor: { id: 1, name: 'Dr. Meera' },
           patient: {

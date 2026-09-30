@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { therapistRepository } from '../../therapist/repository/therapist-repository';
 import { therapistScheduleRepository } from '../repository/therapist-schedule-repository';
 import { validateCreateTherapistSchedule } from './create-therapist-schedule-validator';
@@ -9,6 +10,9 @@ import { validateUpdateTherapistSchedule } from './update-therapist-schedule-val
 
 vi.mock('../../therapist/repository/therapist-repository', () => ({
   therapistRepository: { getTherapistById: vi.fn() },
+}));
+vi.mock('../../tenant/repository/tenant-repository', () => ({
+  tenantRepository: { getTenantById: vi.fn() },
 }));
 vi.mock('../repository/therapist-schedule-repository', () => ({
   therapistScheduleRepository: {
@@ -19,6 +23,8 @@ vi.mock('../repository/therapist-schedule-repository', () => ({
 
 const therapistRepo = vi.mocked(therapistRepository);
 const scheduleRepo = vi.mocked(therapistScheduleRepository);
+const tenantRepo = vi.mocked(tenantRepository);
+const NOW = new Date('2026-06-01T12:00:00Z');
 const payload = {
   therapistId: 2,
   rotaIds: [3],
@@ -61,10 +67,15 @@ const schedule = {
 describe('TherapistSchedule validators', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
     therapistRepo.getTherapistById.mockResolvedValue(therapist);
+    tenantRepo.getTenantById.mockResolvedValue({ timeZone: 'Asia/Kolkata' } as never);
     scheduleRepo.getActiveRotaCount.mockResolvedValue(1);
     scheduleRepo.getTherapistScheduleById.mockResolvedValue(schedule);
   });
+
+  afterEach(() => vi.useRealTimers());
 
   it('should stop before repository checks when create schema validation fails', async () => {
     expect(await validateCreateTherapistSchedule({}, 'tenant-1')).toMatchObject({ success: false });
@@ -78,6 +89,27 @@ describe('TherapistSchedule validators', () => {
       success: false,
       errors: ['Therapist 2 is Invalid.'],
     });
+  });
+
+  it('should reject past schedule dates before loading Therapists or Rotas', async () => {
+    const result = await validateCreateTherapistSchedule(
+      { ...payload, slotFromDate: '2026-05-31' },
+      'tenant-1'
+    );
+
+    expect(result).toEqual({ success: false, errors: ['Slot from date cannot be in the past.'] });
+    expect(therapistRepo.getTherapistById).not.toHaveBeenCalled();
+    expect(scheduleRepo.getActiveRotaCount).not.toHaveBeenCalled();
+  });
+
+  it('should reject a past schedule date before resolving the update target', async () => {
+    const result = await validateUpdateTherapistSchedule(
+      { therapistScheduleId: 1, slotFromDate: '2026-05-31' },
+      'tenant-1'
+    );
+
+    expect(result).toEqual({ success: false, errors: ['Slot from date cannot be in the past.'] });
+    expect(scheduleRepo.getTherapistScheduleById).not.toHaveBeenCalled();
   });
 
   it('should reject invalid rotas and return parsed input on success', async () => {

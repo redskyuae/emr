@@ -8,6 +8,7 @@ export function rescheduleAppointmentFormValuesToRequest(
   if (values.visitType === 'PROCEDURE') {
     return {
       bookingPath: 'PROCEDURE',
+      rescheduleReason: values.rescheduleReason,
       slotDate: toAppointmentSlotDate(values.slotDate),
       startTime: values.startTime,
       endTime: values.endTime,
@@ -17,6 +18,7 @@ export function rescheduleAppointmentFormValuesToRequest(
   if (values.visitType === 'CONSULTATION') {
     return {
       bookingPath: 'CONSULTATION',
+      rescheduleReason: values.rescheduleReason,
       doctorId: Number(values.doctorId),
       slotDate: toAppointmentSlotDate(values.slotDate),
       doctorRotaId: Number(values.doctorRotaId),

@@ -74,6 +74,7 @@ export const bookAppointmentFormSchema = z
     consentStatus: z.enum(readinessValues),
     approvalStatus: z.enum(readinessValues),
     remarks: optionalTrimmedString(1000, 'Remarks must be at most 1000 characters'),
+    rescheduleReason: z.string().trim(),
   })
   .superRefine((data, context) => {
     if (data.visitType === '') {
@@ -293,4 +294,5 @@ export const EMPTY_BOOK_APPOINTMENT_FORM_VALUES: BookAppointmentFormValues = {
   consentStatus: 'READY',
   approvalStatus: 'NOT_REQUIRED',
   remarks: '',
+  rescheduleReason: '',
 };

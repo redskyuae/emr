@@ -30,6 +30,7 @@ import {
   getProcedureEndTimeForStartChange,
   getSlotTimes,
 } from '../_utils/appointment-time';
+import { getAppointmentDetailsDefaults } from '../_utils/appointment-details-defaults';
 import { toAppointmentSlotDate } from '../_utils/book-appointment-request';
 import { getProcedureResourceOptions } from '../_utils/procedure-resource-options';
 import { getAvailableRooms } from '../_utils/room-availability';
@@ -84,6 +85,7 @@ const initialValues: BookAppointmentFormValues = {
   consentStatus: 'READY',
   approvalStatus: 'NOT_REQUIRED',
   remarks: '',
+  rescheduleReason: '',
 };
 
 const masterListParams = { page: 1, limit: 999 };
@@ -120,6 +122,7 @@ export function useBookAppointment() {
   const values = { ...initialValues, ...useWatch({ control: form.control }) };
   const patientMode = values.patientMode ?? 'existing';
   const visitType = values.visitType ?? '';
+  const isConsultationPath = visitType === 'CONSULTATION';
   const isProcedurePath = visitType === 'PROCEDURE';
 
   const patientsQuery = usePatientsQuery({
@@ -251,6 +254,31 @@ export function useBookAppointment() {
     resourceAvailabilityQuery.isSuccess &&
     !resourceAvailabilityQuery.isFetching;
   const createAppointment = useCreateAppointment();
+
+  useEffect(() => {
+    if (!isConsultationPath) return;
+
+    const current = {
+      appointmentModeId: form.getValues('appointmentModeId'),
+      appointmentTypeId: form.getValues('appointmentTypeId'),
+      appointmentReasonId: form.getValues('appointmentReasonId'),
+    };
+    const defaults = getAppointmentDetailsDefaults(current, {
+      modes: modesQuery.data?.data ?? [],
+      types: typesQuery.data?.data ?? [],
+      reasons: reasonsQuery.data?.data ?? [],
+    });
+
+    if (defaults.appointmentModeId !== current.appointmentModeId) {
+      form.setValue('appointmentModeId', defaults.appointmentModeId, { shouldDirty: false });
+    }
+    if (defaults.appointmentTypeId !== current.appointmentTypeId) {
+      form.setValue('appointmentTypeId', defaults.appointmentTypeId, { shouldDirty: false });
+    }
+    if (defaults.appointmentReasonId !== current.appointmentReasonId) {
+      form.setValue('appointmentReasonId', defaults.appointmentReasonId, { shouldDirty: false });
+    }
+  }, [form, isConsultationPath, modesQuery.data, reasonsQuery.data, typesQuery.data]);
 
   const treatmentSelectionState: TreatmentSelectionState | 'AWAITING_PATIENT' = selectedPatient
     ? getTreatmentSelectionState({

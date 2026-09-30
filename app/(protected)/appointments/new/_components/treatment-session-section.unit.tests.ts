@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import type { BookingTreatment } from './book-appointment-demo-data';
 import {
   getDefaultTreatmentSelection,
   getTreatmentSelectionState,
 } from './book-appointment-demo-data';
+import { CatalogueSelection } from './treatment-session-section';
 
 function plan(
   id: number,
@@ -49,6 +52,32 @@ function plan(
 }
 
 describe('Treatment and Session selection state', () => {
+  it('should display the selected catalogue Treatment label instead of serialized object data', () => {
+    const treatment = plan(10, []);
+    treatment.name = 'Abhyanga';
+    treatment.code = 'ABH';
+    treatment.selectionMode = 'CATALOGUE';
+    treatment.patientTreatmentPlanId = null;
+
+    const markup = renderToStaticMarkup(
+      createElement(CatalogueSelection, {
+        control: null as never,
+        treatments: [treatment],
+        selectedTreatment: treatment,
+        selectedSession: null,
+        search: '',
+        isLoading: false,
+        error: null,
+        onTreatmentChange: () => {},
+        onSearchChange: () => {},
+        onRetry: () => {},
+      })
+    );
+
+    expect(markup).toContain('value="Abhyanga · ABH"');
+    expect(markup).not.toContain('&quot;name&quot;');
+  });
+
   it('should auto-select the only current Plan and its lowest bookable Session', () => {
     const plans = [
       plan(10, [

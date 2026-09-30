@@ -74,6 +74,7 @@ export const appointment = pgTable(
     endTime: varchar('end_time', { length: 5 }),
     rotaName: varchar('rota_name', { length: 100 }),
     remarks: text(),
+    rescheduleReason: text('reschedule_reason'),
     // Set when the Appointment moves to a cancelled AppointmentStatus. Rows
     // predating the Patient Timeline hold null and yield no cancelled event
     // rather than a wrong one derived from modifiedOn (ADR 0041).

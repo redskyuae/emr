@@ -83,6 +83,7 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
       startTime: appointment.startTime ?? '',
       endTime: appointment.endTime ?? '',
       remarks: appointment.remarks ?? '',
+      rescheduleReason: '',
     });
   }, [appointment, form]);
 

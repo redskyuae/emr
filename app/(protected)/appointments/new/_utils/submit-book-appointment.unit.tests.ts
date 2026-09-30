@@ -39,6 +39,7 @@ describe('submit Book Appointment', () => {
             cancelledAt: null,
             appointmentCancelledReason: null,
             remarks: null,
+            rescheduleReason: null,
             createdOn: new Date('2099-01-01T00:00:00.000Z'),
             doctor: null,
             patient: {
@@ -107,6 +108,7 @@ describe('submit Book Appointment', () => {
             cancelledAt: null,
             appointmentCancelledReason: null,
             remarks: null,
+            rescheduleReason: null,
             createdOn: new Date('2099-01-01T00:00:00.000Z'),
             doctor: null,
             patient: {

@@ -45,6 +45,7 @@ const appointment: Appointment = {
   bookingPath: 'CONSULTATION',
   rotaName: 'Morning',
   remarks: null,
+  rescheduleReason: null,
   createdOn: new Date(),
   treatment: null,
   treatmentSession: null,

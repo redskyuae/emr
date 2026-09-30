@@ -65,6 +65,7 @@ describe('Appointment schema', () => {
     expect(
       rescheduleAppointmentSchema.parse({
         bookingPath: 'CONSULTATION',
+        rescheduleReason: 'Patient requested a later time',
         doctorId: 7,
         slotDate: '31-12-2099',
         doctorRotaId: 8,
@@ -72,6 +73,7 @@ describe('Appointment schema', () => {
       })
     ).toEqual({
       bookingPath: 'CONSULTATION',
+      rescheduleReason: 'Patient requested a later time',
       doctorId: 7,
       slotDate: '2099-12-31',
       doctorRotaId: 8,
@@ -83,12 +85,14 @@ describe('Appointment schema', () => {
     expect(
       rescheduleAppointmentSchema.parse({
         bookingPath: 'PROCEDURE',
+        rescheduleReason: 'Therapist is unavailable',
         slotDate: '31-12-2099',
         startTime: '11:00',
         endTime: '12:15',
       })
     ).toEqual({
       bookingPath: 'PROCEDURE',
+      rescheduleReason: 'Therapist is unavailable',
       slotDate: '2099-12-31',
       startTime: '11:00',
       endTime: '12:15',
@@ -97,6 +101,7 @@ describe('Appointment schema', () => {
     expect(
       rescheduleAppointmentSchema.safeParse({
         bookingPath: 'PROCEDURE',
+        rescheduleReason: 'Therapist is unavailable',
         doctorId: 7,
         slotDate: '31-12-2099',
         startTime: '11:00',
@@ -110,6 +115,7 @@ describe('Appointment schema', () => {
       rescheduleAppointmentSchema
         .safeParse({
           bookingPath: 'PROCEDURE',
+          rescheduleReason: 'Therapist is unavailable',
           slotDate: '31-12-2099',
           startTime: '12:00',
           endTime: '11:00',
@@ -120,6 +126,7 @@ describe('Appointment schema', () => {
       rescheduleAppointmentSchema
         .safeParse({
           bookingPath: 'CONSULTATION',
+          rescheduleReason: 'Doctor requested a schedule change',
           doctorId: 7,
           slotDate: '31-12-2099',
           doctorRotaId: 8,
@@ -127,6 +134,28 @@ describe('Appointment schema', () => {
         })
         .error?.issues.map((issue) => issue.message)
     ).toContain('Slot times must be unique');
+  });
+
+  it('should require and trim a Rescheduling reason', () => {
+    expect(
+      rescheduleAppointmentSchema.parse({
+        bookingPath: 'PROCEDURE',
+        rescheduleReason: '  Patient requested a later time  ',
+        slotDate: '31-12-2099',
+        startTime: '11:00',
+        endTime: '12:15',
+      }).rescheduleReason
+    ).toBe('Patient requested a later time');
+    expect(
+      rescheduleAppointmentSchema
+        .safeParse({
+          bookingPath: 'PROCEDURE',
+          slotDate: '31-12-2099',
+          startTime: '11:00',
+          endTime: '12:15',
+        })
+        .error?.issues.map((issue) => issue.message)
+    ).toContain('Rescheduling reason is required');
   });
 
   it('should normalize DD-MM-YYYY slot date to ISO date and preserve HH:mm slot times', () => {

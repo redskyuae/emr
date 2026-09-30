@@ -63,6 +63,7 @@ const FIELD_ERROR_MATCHERS: Array<{ field: Path<DoctorFormValues>; patterns: str
   { field: 'designation', patterns: ['Designation '] },
   { field: 'registrationNumber', patterns: ['Doctor registration number'] },
 ];
+const LATEST_DATE_OF_BIRTH = '9999-12-31';
 
 function RequiredMark() {
   return (
@@ -413,6 +414,7 @@ export function DoctorFormSheet({
                           id="doctor-dob"
                           {...field}
                           type="date"
+                          max={LATEST_DATE_OF_BIRTH}
                           disabled={isSaving}
                           aria-invalid={fieldState.invalid}
                         />

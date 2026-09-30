@@ -3,6 +3,8 @@ import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
+import { tenantRepository } from '../../tenant/repository/tenant-repository';
+import { tenantLocalDateTime } from '../../appointment/schemas/appointment-slot';
 import { updateDoctorScheduleSchema } from '../schemas/doctor-schedule-schema';
 import type { UpdateDoctorScheduleInput } from '../schemas/doctor-schedule-schema';
 import { doctorScheduleRepository } from '../repository/doctor-schedule-repository';
@@ -15,6 +17,30 @@ export async function validateUpdateDoctorSchedule(
 
   if (!result.success) {
     return { success: false, errors: formatValidationErrors(result.error) };
+  }
+
+  const { slotFromDate, slotToDate } = result.data.payload;
+
+  if (slotFromDate !== undefined || slotToDate !== undefined) {
+    const tenant = await tenantRepository.getTenantById(tenantId);
+
+    if (!tenant) {
+      return { success: false, errors: ['Tenant not found'] };
+    }
+
+    const today = tenantLocalDateTime(new Date(), tenant.timeZone).date;
+    const dateErrors = [
+      ...(slotFromDate !== undefined && slotFromDate < today
+        ? ['Slot from date cannot be in the past.']
+        : []),
+      ...(slotToDate !== undefined && slotToDate < today
+        ? ['Slot to date cannot be in the past.']
+        : []),
+    ];
+
+    if (dateErrors.length > 0) {
+      return { success: false, errors: dateErrors };
+    }
   }
 
   const existingSchedule = await doctorScheduleRepository.getDoctorScheduleById(
