@@ -58,6 +58,7 @@ export default function BookAppointmentLoader() {
             <div className="space-y-2">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-3 w-52" />
             </div>
             <div className="space-y-3 rounded-lg border p-3">
               <div className="flex justify-between gap-4">
