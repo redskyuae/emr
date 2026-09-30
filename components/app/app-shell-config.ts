@@ -510,7 +510,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     subtitle: 'Tenant-scoped skills used to qualify Therapists for Treatment Sessions.',
     primaryAction: {
       label: 'Add Therapist Skill',
-      href: '/clinical-masters/therapist-skills?skill=new',
+      href: '/clinical-masters/therapist-skills?create=1',
       permission: 'therapist-skill:create',
     },
   },
