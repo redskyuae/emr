@@ -211,9 +211,95 @@ describe('booking path validation', () => {
       patientMode: 'provisional',
       firstName: 'Demo',
       lastName: 'Patient',
-      phone: '5550100',
+      phone: '0501234567',
     });
 
     expect(errorsOf(result)).toContain('A registered Patient is required for a Procedure');
+  });
+});
+
+describe('Provisional Patient phone validation', () => {
+  const provisionalConsultation = {
+    ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
+    patientMode: 'provisional',
+    firstName: 'Demo',
+    lastName: 'Patient',
+    visitType: 'CONSULTATION',
+    doctorId: '18',
+    doctorRotaId: '22',
+    appointmentModeId: '1',
+    appointmentTypeId: '1',
+    appointmentReasonId: '3',
+    slotDate: '2026-09-10',
+    startTime: '09:00',
+    endTime: '09:30',
+  };
+  const invalidPhoneMessage = 'Enter a valid UAE mobile number, e.g. 0501234567 or +971501234567';
+  const parsePhone = (phone: string) =>
+    bookAppointmentFormSchema.safeParse({ ...provisionalConsultation, phone });
+
+  it.each([
+    '0501234567',
+    '0521234567',
+    '0541234567',
+    '0551234567',
+    '0561234567',
+    '0581234567',
+  ])('should accept the local UAE mobile number %s', (phone) => {
+    expect(parsePhone(phone).success).toBe(true);
+  });
+
+  it.each(['+971501234567', '+971521234567'])(
+    'should accept the UAE mobile number %s with the country code',
+    (phone) => {
+      expect(parsePhone(phone).success).toBe(true);
+    }
+  );
+
+  it.each([
+    ['050 123 4567', '0501234567'],
+    [' +971 50 123 4567 ', '+971501234567'],
+  ])('should accept %s and strip its display spacing', (phone, expected) => {
+    const result = parsePhone(phone);
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.phone).toBe(expected);
+  });
+
+  it.each([
+    ['a missing leading 0', '501234567'],
+    ['a number that is too short', '050123456'],
+    ['a number that is too long', '05012345678'],
+    ['an invalid UAE mobile prefix', '0601234567'],
+    ['a number without a UAE mobile prefix', '1234567890'],
+    ['a leading 0 after the country code', '+9710501234567'],
+    ['a country code without the plus sign', '971501234567'],
+    ['non-digit characters', '05012345ab'],
+  ])('should reject %s', (_reason, phone) => {
+    const result = parsePhone(phone);
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['phone'], message: invalidPhoneMessage })
+      );
+  });
+
+  it.each(['', '   '])('should require a phone number when the value is "%s"', (phone) => {
+    const result = parsePhone(phone);
+
+    expect(errorsOf(result)).toContain('Patient phone is required');
+    expect(errorsOf(result)).not.toContain(invalidPhoneMessage);
+  });
+
+  it('should not validate the phone number for an existing Patient', () => {
+    const result = bookAppointmentFormSchema.safeParse({
+      ...provisionalConsultation,
+      patientMode: 'existing',
+      patientId: '1001',
+      phone: '12345',
+    });
+
+    expect(result.success).toBe(true);
   });
 });
