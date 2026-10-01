@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_AUTH_REDIRECT_PATH, getSafeNextPath, isPublicPagePath } from './auth-route-guards';
 
 describe('auth route guards', () => {
-  it('should treat only the marketing, auth, and Swagger pages as public', () => {
+  it('should treat only the entry, marketing, auth, and Swagger pages as public', () => {
     expect(isPublicPagePath('/')).toBe(true);
+    expect(isPublicPagePath('/site')).toBe(true);
+    expect(isPublicPagePath('/site/')).toBe(true);
     expect(isPublicPagePath('/login')).toBe(true);
     expect(isPublicPagePath('/signup')).toBe(true);
     expect(isPublicPagePath('/swagger')).toBe(true);

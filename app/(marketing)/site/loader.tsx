@@ -26,6 +26,12 @@ export default function MarketingLoader() {
           <Skeleton key={item} className="h-44 w-full" />
         ))}
       </section>
+
+      <section className="mx-auto grid max-w-7xl gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((item) => (
+          <Skeleton key={item} className="h-56 w-full" />
+        ))}
+      </section>
     </main>
   );
 }

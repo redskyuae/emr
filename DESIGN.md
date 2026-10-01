@@ -10,6 +10,7 @@ The design source of truth for all frontend work. Any agent or developer buildin
 - **Why shadcn/ui**: components are owned in-repo (`components/ui/`), themed centrally through CSS variables, and accessible by default (Radix primitives). We restyle tokens, not components.
 - **Why a darker blue**: Microsoft's brand blue (`#0078D4`) is too bright for long clinical sessions and too recognizable as "Microsoft". Our primary is a deeper, calmer blue — `oklch(0.43 0.118 254)` — that holds AA contrast as a text color and button fill on white.
 - **Decided**: June 2026, while building the marketing and auth pages. The product is **Medical EMR**, built by **Redsky Consultancy** (https://redskyconsultancy.com/). The brand string lives in `components/brand/logo.tsx`, the marketing header/footer, and root metadata — update it in those places only.
+- **Deployment branding**: `LOGIN_LOGO_VARIANT` selects the visible Dhathri logo across login, navigation, loading screens, and the browser icon. `none` keeps the Medical EMR mark. Product copy and metadata still identify Medical EMR and Redsky Consultancy.
 
 ## Tokens
 
@@ -126,7 +127,7 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 
 ## UX principles (EMR-specific)
 
-1. **Context is safety.** The active Tenant and Facility must always be visible (header/sidebar). Staff switching facilities must never be guessing where an action lands.
+1. **Context is safety.** Show the active Tenant in the shell. When Facility selection is available, show the selected Facility too. Never substitute a sample Facility name for missing session context; staff must not have to guess where an action lands.
 2. **Clarity over cleverness.** No information critical to patient care hidden behind hover, truncation, or low-contrast text. Tooltips supplement; they never carry sole meaning.
 3. **Forgiving forms.** Labels above fields, inline validation on blur (not on keystroke), exact API error messages surfaced verbatim, nothing blocks typing. Password fields get visibility toggles. Required fields are marked with a red asterisk; which fields are required is read from the API/DTO contract for that operation (not decided ad hoc), so the asterisk is `aria-hidden` and the input carries `aria-required`.
 4. **Destructive actions confirm.** Deactivate/delete always goes through `alert-dialog` with the entity named in the prompt.

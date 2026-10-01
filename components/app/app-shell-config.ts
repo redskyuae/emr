@@ -403,7 +403,7 @@ export const appNavGroups: AppNavGroup[] = [
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
     title: 'Dashboard',
-    subtitle: 'Tenant-wide operations for the active Facility context.',
+    subtitle: 'Tenant-wide operations and work queues.',
     primaryAction: {
       label: 'Book Appointment',
       href: '/appointments/new',
@@ -708,7 +708,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
 };
 
 export const appShellStats = [
-  { label: 'Active Facility', value: 'Northgate General', icon: Hospital },
   { label: 'Open Appointments', value: '42', icon: CalendarClock },
   { label: 'Users Online', value: '18', icon: UserRoundCog },
   { label: 'Open Work Orders', value: '12', icon: Wrench },
@@ -734,9 +733,9 @@ export const appShellShortcuts = [
     icon: ShieldCheck,
   },
   {
-    title: 'Facility Context',
+    title: 'Tenant settings',
     href: '/settings',
-    description: 'Active Tenant and Facility are always visible in the shell.',
+    description: 'Review Tenant configuration and Facility setup.',
     icon: MapPinned,
   },
 ];

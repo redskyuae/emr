@@ -1,3 +1,7 @@
+'use client';
+
+import { brandLogos } from '@/components/brand/brand-config';
+import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 import { LogoMark } from '@/components/brand/logo';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -21,6 +25,9 @@ function AppSplashFrame({ fading, children }: { fading: boolean; children: React
 }
 
 function AppSplashBrand({ pulse }: { pulse: boolean }) {
+  const variant = useBrandLogoVariant();
+  const brand = variant === 'none' ? null : brandLogos[variant];
+
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <LogoMark
@@ -28,9 +35,11 @@ function AppSplashBrand({ pulse }: { pulse: boolean }) {
       />
       <div className="grid gap-0.5">
         <span className="font-heading text-lg leading-none font-semibold tracking-tight">
-          Medical EMR
+          {brand?.name ?? 'Medical EMR'}
         </span>
-        <span className="text-muted-foreground text-xs">Redsky Consultancy</span>
+        <span className="text-muted-foreground text-xs">
+          {brand?.subtitle ?? 'Redsky Consultancy'}
+        </span>
       </div>
     </div>
   );

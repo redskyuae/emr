@@ -41,7 +41,7 @@ export function SiteFooter() {
     <footer className="bg-muted/40 border-t">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-4">
         <div className="space-y-3">
-          <Logo showCompany />
+          <Logo href="/site" showCompany />
           <p className="text-muted-foreground max-w-xs text-sm leading-relaxed">
             Medical EMR is the operating system for hospital groups — every facility, one platform,
             complete tenant isolation. Built and supported by{' '}

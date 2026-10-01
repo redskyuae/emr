@@ -3,8 +3,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function PageLoader() {
   return (
     <div className="space-y-6" aria-label="Loading page">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[0, 1, 2, 3].map((item) => (
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {[0, 1, 2].map((item) => (
           <Skeleton key={item} className="h-32 w-full" />
         ))}
       </section>

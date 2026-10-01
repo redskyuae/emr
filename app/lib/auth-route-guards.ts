@@ -1,6 +1,6 @@
 export const DEFAULT_AUTH_REDIRECT_PATH = '/dashboard';
 
-const PUBLIC_PAGE_PATHS = new Set(['/', '/login', '/signup', '/swagger']);
+const PUBLIC_PAGE_PATHS = new Set(['/', '/site', '/login', '/signup', '/swagger']);
 const AUTH_PAGE_PATHS = new Set(['/login', '/signup']);
 const STATIC_FILE_PATTERN =
   /\.(?:avif|bmp|css|gif|ico|jpeg|jpg|js|json|map|png|svg|txt|webp|xml)$/i;

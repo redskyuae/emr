@@ -6,32 +6,47 @@ import { useRouter } from 'next/navigation';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
+import { markTabSession } from '@/app/lib/tab-session';
 import { useSignIn } from '@/app/queries/auth/useSignIn';
+import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 
 type LoginFormProps = {
   redirectTo?: string;
+  showCreateWorkspaceLink?: boolean;
 };
 
-export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
+export function LoginForm({
+  redirectTo = '/dashboard',
+  showCreateWorkspaceLink = false,
+}: LoginFormProps) {
   const router = useRouter();
 
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [storageError, setStorageError] = useState(false);
+  const signOutMutation = useSignOut();
 
   const signInMutation = useSignIn({
     onSuccess: () => {
+      if (!markTabSession()) {
+        setStorageError(true);
+        signOutMutation.mutate();
+        return;
+      }
+
       router.replace(redirectTo);
       router.refresh();
     },
   });
 
-  const errors = getAuthMutationErrors(signInMutation.error);
+  const errors = [
+    ...getAuthMutationErrors(signInMutation.error),
+    ...(storageError ? ['Browser tab storage is unavailable. Enable it to sign in.'] : []),
+  ];
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500">
@@ -46,13 +61,13 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
+          setStorageError(false);
 
           const formData = new FormData(event.currentTarget);
 
           signInMutation.mutate({
             email: String(formData.get('email') ?? ''),
             password: String(formData.get('password') ?? ''),
-            rememberMe,
           });
         }}
       >
@@ -80,7 +95,7 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
             id="email"
             name="email"
             type="email"
-            placeholder="you@northgatehealth.com"
+            placeholder="name@hospital.example"
             autoComplete="email"
             required
             disabled={signInMutation.isPending}
@@ -121,18 +136,6 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="remember"
-            checked={rememberMe}
-            disabled={signInMutation.isPending}
-            onCheckedChange={(checked) => setRememberMe(checked === true)}
-          />
-          <Label htmlFor="remember" className="text-muted-foreground font-normal">
-            Keep me signed in on this device
-          </Label>
-        </div>
-
         <Button
           type="submit"
           className="h-10 w-full text-sm"
@@ -149,15 +152,17 @@ export function LoginForm({ redirectTo = '/dashboard' }: LoginFormProps) {
         </Button>
       </form>
 
-      <p className="text-muted-foreground text-center text-sm">
-        New to Medical EMR?{' '}
-        <Link
-          href="/signup"
-          className="text-primary font-medium underline-offset-4 hover:underline"
-        >
-          Create your Workspace
-        </Link>
-      </p>
+      {showCreateWorkspaceLink ? (
+        <p className="text-muted-foreground text-center text-sm">
+          New to Medical EMR?{' '}
+          <Link
+            href="/signup"
+            className="text-primary font-medium underline-offset-4 hover:underline"
+          >
+            Create your Workspace
+          </Link>
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
+import { Building2, ChevronRight } from 'lucide-react';
 
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import {
@@ -13,11 +13,12 @@ import {
   type AppNavItem,
 } from '@/components/app/app-shell-config';
 import { SignOutButton } from '@/components/app/sign-out-button';
+import { brandLogos } from '@/components/brand/brand-config';
+import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 import { LogoMark } from '@/components/brand/logo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Sidebar,
@@ -128,6 +129,8 @@ function getInitials(name: string, email: string) {
 
 export function AppSidebar() {
   const { data: currentUser, isLoading } = useCurrentUserQuery();
+  const brandVariant = useBrandLogoVariant();
+  const brand = brandVariant === 'none' ? null : brandLogos[brandVariant];
 
   const visibleNavGroups = useMemo(
     () => getVisibleNavGroups(appNavGroups, currentUser?.permissions ?? []),
@@ -144,35 +147,33 @@ export function AppSidebar() {
           <LogoMark />
           <span className="grid min-w-0 group-data-[collapsible=icon]:hidden">
             <span className="font-heading truncate text-sm leading-none font-semibold">
-              Medical EMR
+              {brand?.name ?? 'Medical EMR'}
             </span>
-            <span className="text-sidebar-foreground/70 truncate text-xs">Redsky Consultancy</span>
+            <span className="text-sidebar-foreground/70 truncate text-xs">
+              {brand?.subtitle ?? 'Redsky Consultancy'}
+            </span>
           </span>
         </Link>
 
-        <Button
-          type="button"
-          variant="outline"
+        <div
           className={cn(
-            'border-sidebar-border bg-sidebar hover:bg-sidebar-accent h-auto w-full justify-start gap-2 p-2 text-left',
+            'border-sidebar-border bg-sidebar flex min-w-0 items-center gap-2 rounded-md border p-2',
             'group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0'
           )}
-          aria-label={`Active Facility Northgate General, Tenant ${currentUser?.tenant.name ?? ''}`}
+          aria-label={currentUser ? `Active Tenant ${currentUser.tenant.name}` : 'Loading Tenant'}
         >
-          <span className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold">
-            NG
+          <span className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-md">
+            <Building2 className="size-4" aria-hidden="true" />
           </span>
           <span className="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-medium">Northgate General</span>
+            <span className="text-muted-foreground truncate text-xs">Active Tenant</span>
             {isLoading || !currentUser ? (
               <Skeleton className="mt-0.5 h-3 w-28" />
             ) : (
-              <span className="text-muted-foreground truncate text-xs">
-                Tenant: {currentUser.tenant.name}
-              </span>
+              <span className="truncate text-sm font-medium">{currentUser.tenant.name}</span>
             )}
           </span>
-        </Button>
+        </div>
       </SidebarHeader>
 
       <SidebarSeparator />

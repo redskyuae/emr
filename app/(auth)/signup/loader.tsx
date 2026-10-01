@@ -4,7 +4,7 @@ export default function SignupLoader() {
   return (
     <div
       className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500"
-      aria-label="Loading signup form"
+      aria-label="Loading Tenant signup form"
     >
       <div className="space-y-1.5">
         <Skeleton className="h-8 w-56 max-w-full" />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { CalendarClock, Check, LoaderCircle, RefreshCw } from 'lucide-react';
 import { Controller, useFormState, type Control } from 'react-hook-form';
 
@@ -225,6 +225,7 @@ function DateField({
   onChange: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const today = startOfDay(new Date());
   return (
     <Controller
       control={control}
@@ -263,6 +264,7 @@ function DateField({
                 mode="single"
                 selected={field.value ? new Date(field.value + 'T12:00:00') : undefined}
                 defaultMonth={field.value ? new Date(field.value + 'T12:00:00') : undefined}
+                disabled={{ before: today }}
                 onSelect={(date) => {
                   if (!date) return;
                   field.onChange(format(date, 'yyyy-MM-dd'));
