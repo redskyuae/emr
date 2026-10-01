@@ -22,7 +22,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
-import { therapistFormSchema, type TherapistFormValues } from '../_utils/therapist-form-schema';
+import {
+  getTodayDateInputValue,
+  therapistFormSchema,
+  type TherapistFormValues,
+} from '../_utils/therapist-form-schema';
 import {
   buildCreateTherapistRequest,
   buildUpdateTherapistRequest,
@@ -136,7 +140,14 @@ export function TherapistFormSheet({ open, therapist, onClose }: Props) {
               </Field>
               <Field>
                 <FieldLabel htmlFor="therapist-dob">Date of birth</FieldLabel>
-                <Input id="therapist-dob" type="date" {...form.register('dateOfBirth')} />
+                <Input
+                  id="therapist-dob"
+                  type="date"
+                  max={getTodayDateInputValue()}
+                  aria-invalid={!!form.formState.errors.dateOfBirth}
+                  {...form.register('dateOfBirth')}
+                />
+                <FieldError errors={[form.formState.errors.dateOfBirth]} />
               </Field>
             </div>
             <Field>
