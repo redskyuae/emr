@@ -46,12 +46,19 @@ function buildDoctorNameMap(doctors: Doctor[]) {
   return new Map(doctors.map((doctor) => [doctor.id, doctor.name]));
 }
 
+function formatDisplayDate(isoDate: string) {
+  const [year, month, day] = isoDate.split('-');
+  return year && month && day ? `${day}-${month}-${year}` : isoDate;
+}
+
 function formatDateRange(schedule: DoctorSchedule) {
+  const fromDate = formatDisplayDate(schedule.slotFromDate);
+
   if (schedule.slotFromDate === schedule.slotToDate) {
-    return schedule.slotFromDate;
+    return fromDate;
   }
 
-  return `${schedule.slotFromDate} to ${schedule.slotToDate}`;
+  return `${fromDate} to ${formatDisplayDate(schedule.slotToDate)}`;
 }
 
 function formatRotas(schedule: DoctorSchedule) {
