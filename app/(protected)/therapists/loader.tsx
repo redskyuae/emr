@@ -8,7 +8,6 @@ export default function TherapistsPageLoader() {
         <CardContent className="flex gap-3 p-3">
           <Skeleton className="h-9 w-56" />
           <Skeleton className="h-9 w-40" />
-          <Skeleton className="h-9 w-48" />
         </CardContent>
       </Card>
       <Card className="shadow-fluent-2">
