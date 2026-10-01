@@ -238,16 +238,12 @@ describe('Provisional Patient phone validation', () => {
   const parsePhone = (phone: string) =>
     bookAppointmentFormSchema.safeParse({ ...provisionalConsultation, phone });
 
-  it.each([
-    '0501234567',
-    '0521234567',
-    '0541234567',
-    '0551234567',
-    '0561234567',
-    '0581234567',
-  ])('should accept the local UAE mobile number %s', (phone) => {
-    expect(parsePhone(phone).success).toBe(true);
-  });
+  it.each(['0501234567', '0521234567', '0541234567', '0551234567', '0561234567', '0581234567'])(
+    'should accept the local UAE mobile number %s',
+    (phone) => {
+      expect(parsePhone(phone).success).toBe(true);
+    }
+  );
 
   it.each(['+971501234567', '+971521234567'])(
     'should accept the UAE mobile number %s with the country code',
