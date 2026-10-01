@@ -23,6 +23,8 @@ function isIsoDate(value: string) {
 const optionalTrimmedString = (maxLength: number, message: string) =>
   z.string().trim().max(maxLength, message);
 
+const UAE_MOBILE_PATTERN = /^(?:0|\+971)5[024568]\d{7}$/;
+
 export const bookAppointmentFormSchema = z
   .object({
     patientId: z.string().trim(),
@@ -34,7 +36,8 @@ export const bookAppointmentFormSchema = z
       .string()
       .trim()
       .refine((value) => value === '' || isIsoDate(value), 'Date of birth must be a valid date'),
-    phone: z.string().trim(),
+    // Display spacing such as `050 123 4567` is accepted and stripped on submit.
+    phone: z.string().transform((value) => value.replace(/\s+/g, '')),
     email: z
       .string()
       .trim()
@@ -110,11 +113,17 @@ export const bookAppointmentFormSchema = z
         });
       }
 
-      if (data.phone.trim() === '') {
+      if (data.phone === '') {
         context.addIssue({
           code: 'custom',
           path: ['phone'],
           message: 'Patient phone is required',
+        });
+      } else if (!UAE_MOBILE_PATTERN.test(data.phone)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['phone'],
+          message: 'Enter a valid UAE mobile number, e.g. 0501234567 or +971501234567',
         });
       }
     }
