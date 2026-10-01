@@ -127,14 +127,14 @@ function getInitials(name: string, email: string) {
   return email.slice(0, 2).toUpperCase();
 }
 
-export function AppSidebar() {
+export function AppSidebar({ appointmentsOnly }: { appointmentsOnly: boolean }) {
   const { data: currentUser, isLoading } = useCurrentUserQuery();
   const brandVariant = useBrandLogoVariant();
   const brand = brandVariant === 'none' ? null : brandLogos[brandVariant];
 
   const visibleNavGroups = useMemo(
-    () => getVisibleNavGroups(appNavGroups, currentUser?.permissions ?? []),
-    [currentUser?.permissions]
+    () => getVisibleNavGroups(appNavGroups, currentUser?.permissions ?? [], appointmentsOnly),
+    [currentUser?.permissions, appointmentsOnly]
   );
 
   return (
