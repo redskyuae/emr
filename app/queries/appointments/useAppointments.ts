@@ -3,6 +3,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type { ListAppointmentsResponse } from '@/app/api/v1/appointments/types';
+import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { parseApiError } from '@/app/queries/api-error';
 
 export type AppointmentsParams = {
@@ -49,5 +50,57 @@ export function useAppointmentsQuery(params: AppointmentsParams) {
     queryKey: appointmentsQueryKey(params),
     queryFn: () => fetchAppointments(params),
     placeholderData: keepPreviousData,
+  });
+}
+
+const DASHBOARD_DAY_LIMIT = 999;
+
+export function summarizeAppointmentDay(response: ListAppointmentsResponse) {
+  const counts = {
+    scheduled: 0,
+    confirmed: 0,
+    checkedIn: 0,
+    completed: 0,
+    cancelled: 0,
+    noShow: 0,
+  };
+  const bookingPaths = { consultation: 0, procedure: 0 };
+  const activeAppointments: Appointment[] = [];
+
+  for (const appointment of response.data) {
+    const category = appointment.appointmentStatus.category;
+
+    if (appointment.bookingPath === 'CONSULTATION') bookingPaths.consultation += 1;
+    if (appointment.bookingPath === 'PROCEDURE') bookingPaths.procedure += 1;
+
+    if (category === 'scheduled') counts.scheduled += 1;
+    if (category === 'confirmed') counts.confirmed += 1;
+    if (category === 'checked_in') counts.checkedIn += 1;
+    if (category === 'completed') counts.completed += 1;
+    if (category === 'cancelled') counts.cancelled += 1;
+    if (category === 'no_show') counts.noShow += 1;
+
+    if (category === 'scheduled' || category === 'confirmed' || category === 'checked_in') {
+      activeAppointments.push(appointment);
+    }
+  }
+
+  return {
+    total: response.meta.total,
+    counts,
+    bookingPaths,
+    activeAppointments: activeAppointments.slice(0, 6),
+    hasMore: response.meta.total > response.data.length,
+  };
+}
+
+export function useAppointmentDashboardQuery(slotDate: string, enabled: boolean) {
+  const params = { slotDate, limit: DASHBOARD_DAY_LIMIT };
+
+  return useQuery({
+    queryKey: appointmentsQueryKey(params),
+    queryFn: () => fetchAppointments(params),
+    select: summarizeAppointmentDay,
+    enabled,
   });
 }

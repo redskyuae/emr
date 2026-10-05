@@ -11,6 +11,88 @@ function getVisibleParent(groupTitle: string, parentTitle: string, permissions: 
 }
 
 describe('App shell navigation permissions', () => {
+  it('should show only Appointment booking modules and masters when the sidebar flag is on', () => {
+    const permissions = [
+      'patient:read',
+      'appointment:read',
+      'room:read',
+      'doctor:read',
+      'therapist:read',
+      'doctor-schedule:read',
+      'therapist-schedule:read',
+      'doctor-rota:read',
+      'appointment-mode:read',
+      'appointment-type:read',
+      'appointment-status:read',
+      'appointment-reason:read',
+      'appointment-cancelled-reason:read',
+      'room-type:read',
+      'therapist-skill:read',
+      'asset:read',
+      'invoice:read',
+      'visit:read',
+    ];
+
+    const groups = getVisibleNavGroups(appNavGroups, permissions, true);
+
+    expect(groups.map(({ title }) => title)).toEqual([
+      'Overview',
+      'Clinical',
+      'Operations',
+      'Configuration',
+    ]);
+    expect(groups[0].items.map(({ title }) => title)).toEqual(['Dashboard']);
+    expect(groups[1].items.map(({ title }) => title)).toEqual([
+      'Patients',
+      'Appointments',
+      'Book Appointment',
+    ]);
+    expect(groups[2].items.map(({ title }) => title)).toEqual([
+      'Rooms',
+      'Doctors',
+      'Therapists',
+      'Doctor Schedules',
+      'Therapist Schedules',
+    ]);
+    expect(groups[3].items.map(({ title }) => title)).toEqual([
+      'Rota Management',
+      'Appointment Masters',
+      'Room Masters',
+      'Clinical Masters',
+    ]);
+    expect(
+      groups[3].items.find(({ title }) => title === 'Appointment Masters')?.items
+    ).toHaveLength(5);
+    expect(
+      groups[3].items
+        .find(({ title }) => title === 'Room Masters')
+        ?.items?.map(({ title }) => title)
+    ).toEqual(['Room Type']);
+    expect(
+      groups[3].items
+        .find(({ title }) => title === 'Clinical Masters')
+        ?.items?.map(({ title }) => title)
+    ).toEqual(['Therapist Skills']);
+  });
+
+  it('should preserve permission filtering in the reduced sidebar', () => {
+    const groups = getVisibleNavGroups(appNavGroups, ['appointment:read'], true);
+
+    expect(groups.map(({ title }) => title)).toEqual(['Overview', 'Clinical']);
+    expect(groups[1].items.map(({ title }) => title)).toEqual(['Appointments', 'Book Appointment']);
+  });
+
+  it('should restore the full sidebar when the flag is off', () => {
+    const permissions = ['appointment:read', 'asset:read'];
+
+    expect(getVisibleNavGroups(appNavGroups, permissions, false)).toEqual(
+      getVisibleNavGroups(appNavGroups, permissions)
+    );
+    expect(
+      getVisibleNavGroups(appNavGroups, permissions, false).map(({ title }) => title)
+    ).toContain('Asset Management');
+  });
+
   it('should show Asset Management menus only for their matching resource permissions', () => {
     expect(getVisibleGroup('Asset Management', [])).toBeUndefined();
     expect(

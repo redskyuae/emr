@@ -3,20 +3,25 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, CircleHelp, Plus, Search } from 'lucide-react';
+import { Bell, Building2, CircleHelp, Plus, Search } from 'lucide-react';
 
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
 import { getAppPageMeta } from '@/components/app/app-shell-config';
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Kbd } from '@/components/ui/kbd';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function AppTopbar() {
   const pathname = usePathname();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pageMeta = getAppPageMeta(pathname);
+  const { data: currentUser, isLoading: isCurrentUserLoading } = useCurrentUserQuery();
   const { data: hasPrimaryActionPermission } = useHasPermission(
     pageMeta.primaryAction?.permission ?? ''
   );
@@ -44,9 +49,18 @@ export function AppTopbar() {
         <div className="flex min-w-0 items-center gap-2">
           <SidebarTrigger className="md:hidden" />
           <div className="min-w-0">
-            <h1 className="truncate text-lg leading-tight font-semibold sm:text-xl">
-              {pageMeta.title}
-            </h1>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h1 className="text-lg leading-tight font-semibold sm:text-xl">{pageMeta.title}</h1>
+              {isCurrentUserLoading ? (
+                <Skeleton className="h-5 w-24" aria-label="Loading Tenant" />
+              ) : currentUser ? (
+                <span className="border-border bg-muted/60 inline-flex max-w-full items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium">
+                  <Building2 className="size-3 shrink-0" aria-hidden="true" />
+                  <span className="text-muted-foreground">Tenant:</span>
+                  <span className="min-w-0 break-words">{currentUser.tenant.name}</span>
+                </span>
+              ) : null}
+            </div>
             <p className="text-muted-foreground line-clamp-2 text-xs sm:text-sm">
               {pageMeta.subtitle}
             </p>

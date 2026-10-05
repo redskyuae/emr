@@ -12,10 +12,8 @@ import {
   Gauge,
   Globe2,
   Hospital,
-  Languages,
   LayoutDashboard,
   LayoutGrid,
-  MapPinned,
   ReceiptText,
   Settings,
   ShieldCheck,
@@ -400,10 +398,33 @@ export const appNavGroups: AppNavGroup[] = [
   },
 ];
 
+const appointmentNavHrefs = new Set([
+  '/dashboard',
+  '/patients',
+  '/appointments',
+  '/appointments/new',
+  '/rooms',
+  '/doctors',
+  '/therapists',
+  '/doctor-schedules',
+  '/therapist-schedules',
+  '/rota-management',
+  '/appointment-masters',
+  '/appointment-masters/modes',
+  '/appointment-masters/types',
+  '/appointment-masters/statuses',
+  '/appointment-masters/reasons',
+  '/appointment-masters/cancelled-reasons',
+  '/room-masters',
+  '/room-masters/types',
+  '/clinical-masters',
+  '/clinical-masters/therapist-skills',
+]);
+
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
-    title: 'Dashboard',
-    subtitle: 'Tenant-wide operations and work queues.',
+    title: 'Appointment Dashboard',
+    subtitle: "Today's bookings, arrivals, and schedule for this Tenant.",
     primaryAction: {
       label: 'Book Appointment',
       href: '/appointments/new',
@@ -707,39 +728,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   },
 };
 
-export const appShellStats = [
-  { label: 'Open Appointments', value: '42', icon: CalendarClock },
-  { label: 'Users Online', value: '18', icon: UserRoundCog },
-  { label: 'Open Work Orders', value: '12', icon: Wrench },
-];
-
-export const appShellShortcuts = [
-  {
-    title: 'Appointment Masters',
-    href: '/appointment-masters',
-    description: 'Modes, types, statuses, reasons, and cancellation reasons.',
-    icon: CalendarClock,
-  },
-  {
-    title: 'Global References',
-    href: '/global-references',
-    description: 'Languages, Nationalities, Religions, Countries, and States.',
-    icon: Languages,
-  },
-  {
-    title: 'Identity & Access',
-    href: '/identity-access/users',
-    description: 'Users, Roles, Permission Assignments, and Sessions.',
-    icon: ShieldCheck,
-  },
-  {
-    title: 'Tenant settings',
-    href: '/settings',
-    description: 'Review Tenant configuration and Facility setup.',
-    icon: MapPinned,
-  },
-];
-
 function trimTrailingSlash(pathname: string) {
   if (pathname === '/') {
     return pathname;
@@ -774,8 +762,15 @@ function hasNavPermission(resource: string | undefined, grantedResources: Set<st
   return !resource || grantedResources.has(resource);
 }
 
-function filterNavItem(item: AppNavItem, grantedResources: Set<string>): AppNavItem | null {
-  if (!hasNavPermission(item.permission, grantedResources)) {
+function filterNavItem(
+  item: AppNavItem,
+  grantedResources: Set<string>,
+  appointmentsOnly: boolean
+): AppNavItem | null {
+  if (
+    !hasNavPermission(item.permission, grantedResources) ||
+    (appointmentsOnly && !appointmentNavHrefs.has(item.href))
+  ) {
     return null;
   }
 
@@ -783,21 +778,27 @@ function filterNavItem(item: AppNavItem, grantedResources: Set<string>): AppNavI
     return item;
   }
 
-  const items = item.items.filter((subItem) =>
-    hasNavPermission(subItem.permission, grantedResources)
+  const items = item.items.filter(
+    (subItem) =>
+      hasNavPermission(subItem.permission, grantedResources) &&
+      (!appointmentsOnly || appointmentNavHrefs.has(subItem.href))
   );
 
   return items.length > 0 ? { ...item, items } : null;
 }
 
-export function getVisibleNavGroups(groups: AppNavGroup[], permissions: string[]): AppNavGroup[] {
+export function getVisibleNavGroups(
+  groups: AppNavGroup[],
+  permissions: string[],
+  appointmentsOnly = false
+): AppNavGroup[] {
   const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
 
   return groups
     .map((group) => ({
       ...group,
       items: group.items
-        .map((item) => filterNavItem(item, grantedResources))
+        .map((item) => filterNavItem(item, grantedResources, appointmentsOnly))
         .filter((item): item is AppNavItem => item !== null),
     }))
     .filter((group) => group.items.length > 0);
