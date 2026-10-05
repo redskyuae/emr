@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import {
@@ -38,7 +38,6 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
 
 function NavBadge({ value }: { value: string }) {
   return (
@@ -139,7 +138,7 @@ export function AppSidebar({ appointmentsOnly }: { appointmentsOnly: boolean }) 
 
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
-      <SidebarHeader className="gap-3 p-3">
+      <SidebarHeader className="p-3">
         <Link
           href="/dashboard"
           className="focus-visible:ring-sidebar-ring flex min-w-0 items-center gap-2 rounded-md p-1 outline-none focus-visible:ring-2"
@@ -154,26 +153,6 @@ export function AppSidebar({ appointmentsOnly }: { appointmentsOnly: boolean }) 
             </span>
           </span>
         </Link>
-
-        <div
-          className={cn(
-            'border-sidebar-border bg-sidebar flex min-w-0 items-center gap-2 rounded-md border p-2',
-            'group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0'
-          )}
-          aria-label={currentUser ? `Active Tenant ${currentUser.tenant.name}` : 'Loading Tenant'}
-        >
-          <span className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-md">
-            <Building2 className="size-4" aria-hidden="true" />
-          </span>
-          <span className="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <span className="text-muted-foreground truncate text-xs">Active Tenant</span>
-            {isLoading || !currentUser ? (
-              <Skeleton className="mt-0.5 h-3 w-28" />
-            ) : (
-              <span className="truncate text-sm font-medium">{currentUser.tenant.name}</span>
-            )}
-          </span>
-        </div>
       </SidebarHeader>
 
       <SidebarSeparator />
