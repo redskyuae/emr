@@ -38,12 +38,18 @@ type ConsultationAppointmentInput = Extract<
 type ProcedureAppointmentInput = Extract<CreateAppointmentInput, { bookingPath: 'PROCEDURE' }>;
 type ProcedureAppointmentBase = Omit<
   ProcedureAppointmentInput,
-  'treatmentId' | 'totalSessions' | 'patientTreatmentPlanId' | 'patientTreatmentPlanSessionId'
+  | 'patientId'
+  | 'provisionalPatient'
+  | 'treatmentId'
+  | 'totalSessions'
+  | 'patientTreatmentPlanId'
+  | 'patientTreatmentPlanSessionId'
 >;
 
 export type CreateAppointmentRequest =
   | (WithoutPatientSelector<ConsultationAppointmentInput> & AppointmentPatientRequest)
-  | (ProcedureAppointmentBase & (ExistingPlanSelection | CatalogueAssignment));
+  | (ProcedureAppointmentBase & ExistingPlanSelection & { patientId: number })
+  | (ProcedureAppointmentBase & CatalogueAssignment & AppointmentPatientRequest);
 
 export type CreateAppointmentResponse = {
   data: Appointment;

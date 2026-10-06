@@ -114,6 +114,35 @@ describe('Book Appointment request', () => {
     });
   });
 
+  it('should map a Provisional Patient catalogue Procedure to one booking request', () => {
+    const request = bookAppointmentFormValuesToRequest({
+      ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
+      patientMode: 'provisional',
+      firstName: 'Asha',
+      lastName: 'Rao',
+      phone: '9876543210',
+      visitType: 'PROCEDURE',
+      selectionMode: 'CATALOGUE',
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '11:15',
+      treatmentId: '400',
+      totalSessions: '6',
+      roomId: '7',
+      therapistId: '41',
+    });
+
+    expect(request).toMatchObject({
+      bookingPath: 'PROCEDURE',
+      provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+      treatmentId: 400,
+      totalSessions: 6,
+      roomId: 7,
+      therapistId: 41,
+    });
+    expect(request).not.toHaveProperty('patientId');
+  });
+
   it('should map an existing Plan Procedure and keep a selected Doctor as an assignment', () => {
     const request = bookAppointmentFormValuesToRequest({
       ...EMPTY_BOOK_APPOINTMENT_FORM_VALUES,

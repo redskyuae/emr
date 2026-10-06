@@ -778,7 +778,6 @@ export type CreateAppointmentRepositoryResult =
         | 'slot-past'
         | 'resource-unavailable'
         | 'patient-unavailable'
-        | 'current-plan-exists'
         | 'plan-session-unavailable';
     };
 
@@ -1057,12 +1056,16 @@ async function createAppointment(
       patientId = await createProvisionalPatient(tx, data);
     }
 
+    if (patientId === undefined) {
+      throw new Error('Appointment Patient could not be resolved');
+    }
+
     if (data.bookingPath === 'PROCEDURE') {
       if (data.patientTreatmentPlanId !== undefined) {
         planSessionContext = await patientTreatmentPlanRepository.getPlanSessionForBooking(
           data.patientTreatmentPlanId,
           data.patientTreatmentPlanSessionId,
-          data.patientId,
+          patientId,
           data.tenantId,
           tx
         );
@@ -1071,20 +1074,10 @@ async function createAppointment(
           return { success: false, outcome: 'plan-session-unavailable' };
         }
       } else {
-        const hasCurrentPlan = await patientTreatmentPlanRepository.hasCurrentPlanForBooking(
-          data.patientId,
-          data.tenantId,
-          tx
-        );
-
-        if (hasCurrentPlan) {
-          return { success: false, outcome: 'current-plan-exists' };
-        }
-
         const createdPlan = await patientTreatmentPlanRepository.createPlanFromTreatment(
           {
             tenantId: data.tenantId,
-            patientId: data.patientId,
+            patientId,
             treatmentId: data.treatmentId,
             totalSessions: data.totalSessions,
           },

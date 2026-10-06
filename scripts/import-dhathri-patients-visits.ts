@@ -26,11 +26,22 @@ import {
 } from '../app/db/schema/visit';
 import { visitType as visitTypeTable } from '../app/db/schema/visit-type';
 
-const TENANT_ID = 'N5eSMvVQtLopN4ooFYN3W9GagQ4XJx8S';
 const OWNER_USER_ID = 'liEjlOC0cra1U8rb1ufpgUjjAXPVeAfi';
-const XLSX = '/Users/arunselvakumar/Downloads/DhathriDetails.xlsx';
 const BATCH = 80;
 const DOCTOR_PASSWORD = 'abz@1234';
+
+function requiredArgument(name: string) {
+  const index = process.argv.indexOf(name);
+  const value = index >= 0 ? process.argv[index + 1] : null;
+  if (!value || value.startsWith('--')) throw new Error(`${name} is required`);
+  return value;
+}
+
+if (!process.argv.includes('--confirm-patient-visit-import')) {
+  throw new Error('--confirm-patient-visit-import is required');
+}
+const tenantId = requiredArgument('--tenant');
+const workbookPath = requiredArgument('--workbook');
 
 type PatientRow = {
   mrn: string;
@@ -72,7 +83,7 @@ function loadWorkbook() {
 import zipfile, xml.etree.ElementTree as ET, re, json
 from datetime import datetime, timedelta
 from pathlib import Path
-p = Path(${JSON.stringify(XLSX)})
+p = Path(${JSON.stringify(workbookPath)})
 NS = {'m':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 def col_row(cell_ref):
     m = re.match(r'([A-Z]+)(\\d+)', cell_ref)
@@ -260,25 +271,25 @@ const [
   db
     .select({ id: visitTypeTable.id, code: visitTypeTable.code })
     .from(visitTypeTable)
-    .where(and(eq(visitTypeTable.tenantId, TENANT_ID), eq(visitTypeTable.isDeleted, false))),
+    .where(and(eq(visitTypeTable.tenantId, tenantId), eq(visitTypeTable.isDeleted, false))),
   db
     .select({ id: specialtyTable.id, name: specialtyTable.name })
     .from(specialtyTable)
-    .where(and(eq(specialtyTable.tenantId, TENANT_ID), eq(specialtyTable.isDeleted, false))),
+    .where(and(eq(specialtyTable.tenantId, tenantId), eq(specialtyTable.isDeleted, false))),
   db
     .select({
       id: doctorTable.id,
       registrationNumber: doctorTable.registrationNumber,
     })
     .from(doctorTable)
-    .where(and(eq(doctorTable.tenantId, TENANT_ID), eq(doctorTable.isDeleted, false))),
+    .where(and(eq(doctorTable.tenantId, tenantId), eq(doctorTable.isDeleted, false))),
   db
     .select({
       id: treatmentTable.id,
       code: treatmentTable.code,
     })
     .from(treatmentTable)
-    .where(and(eq(treatmentTable.tenantId, TENANT_ID), eq(treatmentTable.isDeleted, false))),
+    .where(and(eq(treatmentTable.tenantId, tenantId), eq(treatmentTable.isDeleted, false))),
 ]);
 
 const sessions = await db
@@ -289,7 +300,7 @@ const sessions = await db
   })
   .from(treatmentSessionTable)
   .where(
-    and(eq(treatmentSessionTable.tenantId, TENANT_ID), eq(treatmentSessionTable.isDeleted, false))
+    and(eq(treatmentSessionTable.tenantId, tenantId), eq(treatmentSessionTable.isDeleted, false))
   );
 
 const specialtyId =
@@ -327,7 +338,7 @@ for (const doctor of doctorsToCreate) {
       specialtyId,
       registrationNumber: doctor.license,
     },
-    TENANT_ID,
+    tenantId,
     OWNER_USER_ID
   );
   if (result.success) {
@@ -347,7 +358,7 @@ const existingPatients = await db
     mrn: patientTable.mrn,
   })
   .from(patientTable)
-  .where(and(eq(patientTable.tenantId, TENANT_ID), eq(patientTable.isDeleted, false)));
+  .where(and(eq(patientTable.tenantId, tenantId), eq(patientTable.isDeleted, false)));
 
 const patientIdByExcelMrn = new Map<string, number>();
 const existingByPhone = new Map(existingPatients.map((row) => [row.phone, row]));
@@ -393,7 +404,7 @@ for (const row of workbook.patients) {
   pendingPatients.push({
     excelMrn: row.mrn,
     values: {
-      tenantId: TENANT_ID,
+      tenantId: tenantId,
       mrn: clip(row.mrn, 20),
       firstName,
       lastName,
@@ -467,7 +478,7 @@ function pickTreatment(visitNumber: string) {
 const existingVisitCount = await db
   .select({ total: sql<number>`count(*)::int` })
   .from(visitTable)
-  .where(and(eq(visitTable.tenantId, TENANT_ID), eq(visitTable.isDeleted, false)));
+  .where(and(eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false)));
 let visitSequence = (existingVisitCount[0]?.total ?? 0) + 1001;
 const tokens = new Map<string, number>();
 const visitValues: Array<typeof visitTable.$inferInsert> = [];
@@ -491,7 +502,7 @@ for (const row of workbook.visits) {
     .map((item) => `${treatmentCode(item.treatment)} s${item.sessionNumber ?? 1} ${item.status}`)
     .join('; ');
   visitValues.push({
-    tenantId: TENANT_ID,
+    tenantId: tenantId,
     visitNumber: formatVisitNumber(visitSequence++),
     patientId,
     doctorId,
@@ -523,7 +534,7 @@ for (let offset = 0; offset < visitValues.length; offset += BATCH) {
 const nextMrn = 1003 + createdPatients;
 await db
   .insert(patientMrnCounterTable)
-  .values({ tenantId: TENANT_ID, lastNumber: nextMrn })
+  .values({ tenantId: tenantId, lastNumber: nextMrn })
   .onConflictDoUpdate({
     target: patientMrnCounterTable.tenantId,
     set: { lastNumber: nextMrn },
@@ -532,7 +543,7 @@ await db
 const lastVisitNumber = visitSequence - 1;
 await db
   .insert(visitNumberCounterTable)
-  .values({ tenantId: TENANT_ID, lastNumber: lastVisitNumber })
+  .values({ tenantId: tenantId, lastNumber: lastVisitNumber })
   .onConflictDoUpdate({
     target: visitNumberCounterTable.tenantId,
     set: { lastNumber: lastVisitNumber },
@@ -541,11 +552,11 @@ await db
 const [{ patientsInDb }] = await db
   .select({ patientsInDb: sql<number>`count(*)::int` })
   .from(patientTable)
-  .where(and(eq(patientTable.tenantId, TENANT_ID), eq(patientTable.isDeleted, false)));
+  .where(and(eq(patientTable.tenantId, tenantId), eq(patientTable.isDeleted, false)));
 const [{ visitsInDb }] = await db
   .select({ visitsInDb: sql<number>`count(*)::int` })
   .from(visitTable)
-  .where(and(eq(visitTable.tenantId, TENANT_ID), eq(visitTable.isDeleted, false)));
+  .where(and(eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false)));
 
 console.log(
   JSON.stringify({

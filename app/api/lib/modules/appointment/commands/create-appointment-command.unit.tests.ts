@@ -227,21 +227,18 @@ describe('createAppointmentCommand', () => {
     });
   });
 
-  it.each(['plan-session-unavailable' as const, 'current-plan-exists' as const])(
-    'should map %s to a stable Patient Treatment Plan conflict',
-    async (outcome) => {
-      repo.createAppointment.mockResolvedValue({ success: false, outcome });
+  it('should map an unavailable Plan Session to a stable conflict', async () => {
+    repo.createAppointment.mockResolvedValue({
+      success: false,
+      outcome: 'plan-session-unavailable',
+    });
 
-      await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
-        success: false,
-        status: StatusCodes.CONFLICT,
-        errors:
-          outcome === 'plan-session-unavailable'
-            ? ['The selected Patient Treatment Plan Session is no longer available.']
-            : ['Catalogue Treatment cannot be assigned while the Patient has a current Plan.'],
-      });
-    }
-  );
+    await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['The selected Patient Treatment Plan Session is no longer available.'],
+    });
+  });
 
   it('should map a concurrent Patient Treatment Plan Session reservation to a stable conflict', async () => {
     repo.createAppointment.mockRejectedValue({

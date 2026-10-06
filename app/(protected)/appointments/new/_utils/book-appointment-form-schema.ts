@@ -182,14 +182,6 @@ export const bookAppointmentFormSchema = z
     }
 
     if (data.visitType === 'PROCEDURE') {
-      if (data.patientMode !== 'existing') {
-        context.addIssue({
-          code: 'custom',
-          path: ['patientId'],
-          message: 'A registered Patient is required for a Procedure',
-        });
-      }
-
       if (data.selectionMode === '') {
         context.addIssue({
           code: 'custom',
@@ -197,6 +189,13 @@ export const bookAppointmentFormSchema = z
           message: 'Treatment selection is required',
         });
       } else if (data.selectionMode === 'EXISTING_PLAN') {
+        if (data.patientMode === 'provisional') {
+          context.addIssue({
+            code: 'custom',
+            path: ['selectionMode'],
+            message: 'A Provisional Patient must select a catalogue Treatment',
+          });
+        }
         if (data.patientTreatmentPlanId === '') {
           context.addIssue({
             code: 'custom',

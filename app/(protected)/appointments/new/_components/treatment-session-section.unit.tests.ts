@@ -7,7 +7,7 @@ import {
   getDefaultTreatmentSelection,
   getTreatmentSelectionState,
 } from './book-appointment-demo-data';
-import { CatalogueSelection } from './treatment-session-section';
+import { CatalogueSelection, PlanSelection } from './treatment-session-section';
 
 function plan(
   id: number,
@@ -62,6 +62,7 @@ describe('Treatment and Session selection state', () => {
     const markup = renderToStaticMarkup(
       createElement(CatalogueSelection, {
         control: null as never,
+        isProvisional: false,
         treatments: [treatment],
         selectedTreatment: treatment,
         selectedSession: null,
@@ -90,6 +91,46 @@ describe('Treatment and Session selection state', () => {
       patientTreatmentPlanId: '10',
       patientTreatmentPlanSessionId: '101',
     });
+  });
+
+  it('should render Sessions as cards without rendering Treatment cards', () => {
+    const plans = [
+      plan(10, [
+        { id: '101', sessionNumber: 1, isBookable: true },
+        {
+          id: '102',
+          sessionNumber: 2,
+          isBookable: false,
+          unavailableReason: 'Completed',
+        },
+      ]),
+    ];
+
+    const markup = renderToStaticMarkup(
+      createElement(PlanSelection, {
+        control: null as never,
+        plans,
+        treatments: [],
+        canAssignTreatment: true,
+        selectedTreatment: plans[0],
+        selectedSession: plans[0].sessions[0],
+        search: '',
+        isLoading: false,
+        error: null,
+        onPlanChange: () => {},
+        onTreatmentChange: () => {},
+        onSearchChange: () => {},
+        onSessionChange: () => {},
+        onRetry: () => {},
+      })
+    );
+
+    expect(markup).toContain('id="patient-treatment-selection"');
+    expect(markup).toContain('Search current Plans or Treatment masters');
+    expect(markup).toContain('aria-label="Select Session"');
+    expect(markup).toContain('aria-label="Select Session 1"');
+    expect(markup).toContain('View details for Session 2, Completed');
+    expect(markup).not.toContain('1 of 2 Sessions completed');
   });
 
   it('should preserve a manual bookable Session choice on a refreshed result', () => {

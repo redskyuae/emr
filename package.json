@@ -19,7 +19,9 @@
     "test:watch": "vitest",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
-    "test:db:migrate": "bun --env-file=.env scripts/test-db-migrate.ts"
+    "test:db:migrate": "bun --env-file=.env scripts/test-db-migrate.ts",
+    "import:dhathri-treatments": "bun run scripts/import-dhathri-treatments.ts",
+    "import:dhathri-treatments:dry-run": "bun run scripts/import-dhathri-treatments.ts --dry-run"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

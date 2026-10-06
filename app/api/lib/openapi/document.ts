@@ -667,6 +667,19 @@ const createProcedureAppointmentRequestExample = {
   remarks: 'Shirodhara session; Doctor not assigned.',
 };
 
+const createProvisionalProcedureAppointmentRequestExample = {
+  bookingPath: 'PROCEDURE',
+  provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+  slotDate: '31-12-2099',
+  startTime: '11:30',
+  endTime: '12:15',
+  roomId: 4,
+  therapistId: 8,
+  treatmentId: 400,
+  totalSessions: 6,
+  remarks: 'First Treatment booked before full Patient Registration.',
+};
+
 const rescheduleConsultationAppointmentRequestExample = {
   bookingPath: 'CONSULTATION',
   rescheduleReason: 'Patient requested a later time.',
@@ -3993,7 +4006,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Create Appointment',
         description:
-          'Creates an Appointment in the active Tenant. Consultation Appointments require an active Doctor and atomically reserve consecutive DoctorSlots from one DoctorRota. Procedure Appointments use a direct start/end time, require an available Room, and may assign a qualified active Therapist or active Doctor. Room and Therapist allocations are persisted, and overlapping active Procedure Appointments are rejected atomically. The server assigns bookingNumber and the protected system Scheduled Appointment Status. Existing Provisional Patients must complete or reconcile Patient Registration before another Appointment.',
+          'Creates an Appointment in the active Tenant. Consultation Appointments require an active Doctor and atomically reserve consecutive DoctorSlots from one DoctorRota. Procedure Appointments use a direct start/end time, require an available Room, and may assign a qualified active Therapist or active Doctor. A new Provisional Patient may book a catalogue Treatment as a Procedure; the Patient, Patient Treatment Plan, Session reservation, and Appointment are created atomically. Room and Therapist allocations are persisted, and overlapping active Procedure Appointments are rejected atomically. The server assigns bookingNumber and the protected system Scheduled Appointment Status. Existing Provisional Patients must complete or reconcile Patient Registration before another Appointment.',
         security: [{ cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -4008,6 +4021,10 @@ export const openApiDocument = {
                 procedureDoctorNotAssigned: {
                   summary: 'Procedure with Doctor N/A',
                   value: createProcedureAppointmentRequestExample,
+                },
+                provisionalProcedure: {
+                  summary: 'New Provisional Patient with catalogue Treatment',
+                  value: createProvisionalProcedureAppointmentRequestExample,
                 },
               },
             },
@@ -4027,6 +4044,22 @@ export const openApiDocument = {
                   procedureDoctorNotAssigned: {
                     summary: 'Procedure Appointment with Doctor N/A',
                     value: { data: procedureAppointmentExample },
+                  },
+                  provisionalProcedure: {
+                    summary: 'Procedure Appointment for a new Provisional Patient',
+                    value: {
+                      data: {
+                        ...procedureAppointmentExample,
+                        patient: {
+                          id: 84,
+                          mrn: 'MRN-1084',
+                          firstName: 'Asha',
+                          lastName: 'Rao',
+                          phone: '9876543210',
+                          registrationStatus: 'provisional',
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -4056,7 +4089,7 @@ export const openApiDocument = {
           '403': responseRef('Forbidden'),
           '409': {
             description:
-              'A referenced master is invalid, the Patient is inactive or Provisional, a selected DoctorSlot is no longer available, a selected Room or Therapist overlaps another active Procedure Appointment, or new Provisional Patient details match an existing Patient. patientMatches contains only Registered Patient candidates; existing Provisional Patients are never returned as selectable matches.',
+              'A referenced master is invalid, an existing Patient is inactive or Provisional, a selected DoctorSlot is no longer available, a selected Room or Therapist overlaps another active Procedure Appointment, or new Provisional Patient details match an existing Patient. patientMatches contains only Registered Patient candidates; existing Provisional Patients are never returned as selectable matches.',
             content: {
               'application/json': {
                 schema: schemaRef('AppointmentConflictError'),
@@ -10164,18 +10197,16 @@ export const openApiDocument = {
       CreateCatalogueProcedureAppointmentRequest: {
         type: 'object',
         additionalProperties: false,
-        required: [
-          'bookingPath',
-          'patientId',
-          'slotDate',
-          'startTime',
-          'endTime',
-          'roomId',
-          'treatmentId',
-        ],
+        required: ['bookingPath', 'slotDate', 'startTime', 'endTime', 'roomId', 'treatmentId'],
         properties: {
           bookingPath: { type: 'string', enum: ['PROCEDURE'] },
-          patientId: { type: 'integer', minimum: 1 },
+          patientId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Existing active Registered Patient. Send exactly one of patientId or provisionalPatient.',
+          },
+          provisionalPatient: schemaRef('ProvisionalPatientInput'),
           doctorId: {
             type: 'integer',
             minimum: 1,
@@ -10203,6 +10234,7 @@ export const openApiDocument = {
           totalSessions: { type: 'integer', minimum: 1, description: 'Repeatable count override.' },
           remarks: { type: 'string', maxLength: 1000 },
         },
+        oneOf: [{ required: ['patientId'] }, { required: ['provisionalPatient'] }],
       },
       PatientTreatmentPlanSession: {
         type: 'object',

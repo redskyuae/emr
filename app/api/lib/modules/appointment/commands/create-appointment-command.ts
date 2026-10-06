@@ -95,14 +95,6 @@ export async function createAppointmentCommand(
       };
     }
 
-    if (result.outcome === 'current-plan-exists') {
-      return {
-        success: false,
-        errors: ['Catalogue Treatment cannot be assigned while the Patient has a current Plan.'],
-        status: StatusCodes.CONFLICT,
-      };
-    }
-
     if (result.outcome === 'slot-past') {
       return {
         success: false,
