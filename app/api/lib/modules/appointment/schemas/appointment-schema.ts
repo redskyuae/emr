@@ -151,7 +151,8 @@ const createConsultationAppointmentSchema = z
 const procedureAppointmentShape = {
   ...commonAppointmentShape,
   bookingPath: z.literal('PROCEDURE'),
-  patientId: positiveIdSchema('Patient ID'),
+  patientId: positiveIdSchema('Patient ID').optional(),
+  provisionalPatient: provisionalPatientSchema.optional(),
   doctorId: positiveIdSchema('Doctor ID').optional(),
   roomId: positiveIdSchema('Room ID'),
   therapistId: positiveIdSchema('Therapist ID').optional(),
@@ -161,8 +162,15 @@ const procedureAppointmentShape = {
 
 const procedureAppointmentBaseSchema = z.object(procedureAppointmentShape).strict();
 
-type ProcedureAppointmentBaseInput = z.infer<typeof procedureAppointmentBaseSchema>;
+type ProcedureAppointmentBaseInput = Omit<
+  z.infer<typeof procedureAppointmentBaseSchema>,
+  'patientId' | 'provisionalPatient'
+>;
+type ProcedurePatientInput =
+  | { patientId: number; provisionalPatient?: never }
+  | { patientId?: never; provisionalPatient: z.infer<typeof provisionalPatientSchema> };
 type ExistingPlanProcedureAppointmentInput = ProcedureAppointmentBaseInput & {
+  patientId: number;
   patientTreatmentPlanId: number;
   patientTreatmentPlanSessionId: number;
   treatmentId?: never;
@@ -170,14 +178,14 @@ type ExistingPlanProcedureAppointmentInput = ProcedureAppointmentBaseInput & {
   provisionalPatient?: never;
   treatmentSessionId?: never;
 };
-type CatalogueProcedureAppointmentInput = ProcedureAppointmentBaseInput & {
-  patientTreatmentPlanId?: never;
-  patientTreatmentPlanSessionId?: never;
-  treatmentId: number;
-  totalSessions?: number;
-  provisionalPatient?: never;
-  treatmentSessionId?: never;
-};
+type CatalogueProcedureAppointmentInput = ProcedureAppointmentBaseInput &
+  ProcedurePatientInput & {
+    patientTreatmentPlanId?: never;
+    patientTreatmentPlanSessionId?: never;
+    treatmentId: number;
+    totalSessions?: number;
+    treatmentSessionId?: never;
+  };
 
 const createProcedureAppointmentSchema = z
   .object({
@@ -200,6 +208,22 @@ const createProcedureAppointmentSchema = z
     const hasAnyCatalogueSelection =
       data.treatmentId !== undefined || data.totalSessions !== undefined;
     const hasCompleteCatalogueSelection = data.treatmentId !== undefined;
+
+    if ((data.patientId === undefined) === (data.provisionalPatient === undefined)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['patientId'],
+        message: 'Exactly one of patientId or provisionalPatient is required',
+      });
+    }
+
+    if (hasAnyExistingPlanSelection && data.provisionalPatient !== undefined) {
+      context.addIssue({
+        code: 'custom',
+        path: ['patientTreatmentPlanId'],
+        message: 'An existing Patient is required for a Patient Treatment Plan Session',
+      });
+    }
 
     if (
       (hasCompleteExistingPlanSelection && !hasAnyCatalogueSelection) ||

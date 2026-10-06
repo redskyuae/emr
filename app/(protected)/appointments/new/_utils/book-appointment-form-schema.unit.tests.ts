@@ -204,7 +204,7 @@ describe('booking path validation', () => {
       );
   });
 
-  it('should reject a Provisional Patient Procedure', () => {
+  it('should allow a Provisional Patient Procedure with a catalogue Treatment', () => {
     const result = bookAppointmentFormSchema.safeParse({
       ...procedure,
       patientId: '',
@@ -214,6 +214,6 @@ describe('booking path validation', () => {
       phone: '5550100',
     });
 
-    expect(errorsOf(result)).toContain('A registered Patient is required for a Procedure');
+    expect(result.success).toBe(true);
   });
 });

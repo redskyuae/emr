@@ -289,7 +289,18 @@ describe('Appointment schema', () => {
     );
   });
 
-  it('should reject Provisional Patients and server-owned snapshot fields on a Procedure', () => {
+  it('should accept a new Provisional Patient with a catalogue Treatment', () => {
+    const provisionalPatient = { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' };
+    expect(
+      createAppointmentSchema.parse({
+        ...validCatalogueProcedurePayload,
+        patientId: undefined,
+        provisionalPatient,
+      })
+    ).toMatchObject({ bookingPath: 'PROCEDURE', treatmentId: 400, provisionalPatient });
+  });
+
+  it('should reject a Provisional Patient with an existing Plan and server-owned snapshot fields on a Procedure', () => {
     const withoutPatient = {
       bookingPath: validProcedurePayload.bookingPath,
       slotDate: validProcedurePayload.slotDate,
@@ -301,11 +312,11 @@ describe('Appointment schema', () => {
     };
 
     expect(
-      createAppointmentSchema.safeParse({
+      errorsOf({
         ...withoutPatient,
         provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
-      }).success
-    ).toBe(false);
+      })
+    ).toContain('An existing Patient is required for a Patient Treatment Plan Session');
     expect(
       createAppointmentSchema.safeParse({
         ...validProcedurePayload,

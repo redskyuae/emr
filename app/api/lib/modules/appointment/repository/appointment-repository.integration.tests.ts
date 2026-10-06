@@ -930,30 +930,84 @@ describe('Appointment repository', () => {
     expect(reservations).toEqual([{ appointmentId: result.data.id, sessionId: sessions[0].id }]);
   });
 
-  it('should reject catalogue assignment when a current Patient Treatment Plan exists', async () => {
+  it('should create a Provisional Patient, catalogue Plan, and Procedure in one transaction', async () => {
+    const fixtures = await createFixtures();
+    const treatment = await createRepeatableTreatment(fixtures, `PROV${sequence}`);
+
+    const result = await appointmentRepository.createAppointment({
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      provisionalPatient: { firstName: 'Priya', lastName: 'Menon', phone: '9000000002' },
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '10:45',
+      roomId: fixtures.roomId,
+      therapistId: fixtures.therapistId,
+      treatmentId: treatment.treatmentId,
+      totalSessions: 3,
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        patient: { firstName: 'Priya', registrationStatus: 'provisional' },
+        treatment: { id: treatment.treatmentId },
+      },
+    });
+    if (!result.success) throw new Error('appointment creation failed');
+
+    const [appointment] = await db
+      .select({
+        patientId: appointmentTable.patientId,
+        planId: appointmentTable.patientTreatmentPlanId,
+        sessionId: appointmentTable.patientTreatmentPlanSessionId,
+      })
+      .from(appointmentTable)
+      .where(eq(appointmentTable.id, result.data.id));
+    const [plan] = await db
+      .select({ patientId: patientTreatmentPlanTable.patientId })
+      .from(patientTreatmentPlanTable)
+      .where(eq(patientTreatmentPlanTable.id, appointment.planId!));
+    const [reservation] = await db
+      .select({ appointmentId: patientTreatmentPlanSessionReservationTable.appointmentId })
+      .from(patientTreatmentPlanSessionReservationTable)
+      .where(
+        eq(
+          patientTreatmentPlanSessionReservationTable.patientTreatmentPlanSessionId,
+          appointment.sessionId!
+        )
+      );
+
+    expect(plan.patientId).toBe(appointment.patientId);
+    expect(reservation.appointmentId).toBe(result.data.id);
+  });
+
+  it('should create a catalogue Plan when a Patient already has a current Plan', async () => {
     const fixtures = await createFixtures();
     await createExistingPlan(fixtures);
     const treatment = await createRepeatableTreatment(fixtures, `BLOCK${sequence}`);
 
-    await expect(
-      appointmentRepository.createAppointment({
-        tenantId: fixtures.tenantId,
-        timeZone: 'Asia/Kolkata',
-        bookingPath: 'PROCEDURE',
-        patientId: fixtures.patient.id,
-        slotDate: '2099-12-31',
-        startTime: '10:00',
-        endTime: '10:45',
-        roomId: fixtures.roomId,
-        treatmentId: treatment.treatmentId,
-        totalSessions: 3,
-        remarks: undefined,
-      })
-    ).resolves.toEqual({ success: false, outcome: 'current-plan-exists' });
+    const result = await appointmentRepository.createAppointment({
+      tenantId: fixtures.tenantId,
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'PROCEDURE',
+      patientId: fixtures.patient.id,
+      slotDate: '2099-12-31',
+      startTime: '10:00',
+      endTime: '10:45',
+      roomId: fixtures.roomId,
+      treatmentId: treatment.treatmentId,
+      totalSessions: 3,
+      remarks: undefined,
+    });
+
+    expect(result).toMatchObject({ success: true });
   });
 
-  it('should allow exactly one concurrent catalogue assignment for a Patient without a current Plan', async () => {
+  it('should allow concurrent catalogue assignments when a Patient has current Plans', async () => {
     const fixtures = await createFixtures();
+    await createExistingPlan(fixtures);
     const treatment = await createRepeatableTreatment(fixtures, `RACE${sequence}`);
     const request: Extract<ValidatedCreateAppointmentData, { bookingPath: 'PROCEDURE' }> = {
       tenantId: fixtures.tenantId,
@@ -974,10 +1028,7 @@ describe('Appointment repository', () => {
       appointmentRepository.createAppointment({ ...request, startTime: '12:00', endTime: '12:45' }),
     ]);
 
-    expect(results.filter((result) => result.success)).toHaveLength(1);
-    expect(results.filter((result) => !result.success)).toEqual([
-      { success: false, outcome: 'current-plan-exists' },
-    ]);
+    expect(results.filter((result) => result.success)).toHaveLength(2);
   });
 
   it('should create a Sequenced Plan from every template and reserve its lowest Session number', async () => {

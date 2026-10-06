@@ -252,6 +252,7 @@ function BookAppointmentWorkflow() {
               {isProcedurePath ? (
                 <TreatmentSessionSection
                   control={form.control}
+                  isProvisional={isProvisionalPatient}
                   patient={
                     selectedPatient
                       ? {
@@ -263,6 +264,7 @@ function BookAppointmentWorkflow() {
                   state={booking.treatmentSelectionState}
                   plans={booking.planOptions}
                   treatments={booking.treatmentOptions}
+                  canAssignTreatment={booking.canAssignTreatment}
                   selectedTreatment={booking.selectedTreatment}
                   selectedSession={selectedSession}
                   treatmentSearch={booking.treatmentSearch}

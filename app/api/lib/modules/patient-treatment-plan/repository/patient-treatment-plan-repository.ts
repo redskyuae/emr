@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { appointment as appointmentTable } from '@/app/db/schema/appointment';
@@ -374,51 +374,6 @@ async function getPlanSessionForBooking(
   return reservation ? undefined : context;
 }
 
-async function hasCurrentPlanForBooking(
-  patientId: number,
-  tenantId: string,
-  tx: PatientTreatmentPlanTransaction
-): Promise<boolean> {
-  const [patient] = await tx
-    .select({ id: patientTable.id })
-    .from(patientTable)
-    .where(
-      and(
-        eq(patientTable.id, patientId),
-        eq(patientTable.tenantId, tenantId),
-        eq(patientTable.isDeleted, false)
-      )
-    )
-    .for('update')
-    .limit(1);
-
-  if (!patient) return false;
-
-  const [currentPlan] = await tx
-    .select({ id: planTable.id })
-    .from(planTable)
-    .leftJoin(
-      sessionTable,
-      and(
-        eq(sessionTable.patientTreatmentPlanId, planTable.id),
-        eq(sessionTable.tenantId, tenantId),
-        eq(sessionTable.isDeleted, false)
-      )
-    )
-    .where(
-      and(
-        eq(planTable.patientId, patientId),
-        eq(planTable.tenantId, tenantId),
-        eq(planTable.isDeleted, false),
-        isNull(planTable.statusOverride),
-        or(isNull(sessionTable.id), eq(sessionTable.completionStatus, 'PENDING'))
-      )
-    )
-    .limit(1);
-
-  return currentPlan !== undefined;
-}
-
 function snapshotSessionValues(
   tenantId: string,
   patientTreatmentPlanId: number,
@@ -756,7 +711,6 @@ export const patientTreatmentPlanRepository = {
   reserveSession,
   createPlanFromTreatment,
   getCurrentByPatientId,
-  hasCurrentPlanForBooking,
   completeSessionForVisit,
   getPlanSessionForBooking,
   releaseReservationForAppointment,

@@ -286,14 +286,10 @@ describe('validateCreateAppointment', () => {
     });
   });
 
-  it('should reject catalogue fallback when any current Plan exists', async () => {
+  it('should allow catalogue assignment when the Patient has current Plans', async () => {
     await expect(
       validateCreateAppointment(catalogueProcedurePayload, 'tenant-1')
-    ).resolves.toMatchObject({
-      success: false,
-      status: StatusCodes.CONFLICT,
-      errors: ['Catalogue Treatment cannot be assigned while the Patient has a current Plan.'],
-    });
+    ).resolves.toMatchObject({ success: true, data: { treatmentId: 500, totalSessions: 6 } });
   });
 
   it('should normalize a Repeatable Treatment count from its default', async () => {
@@ -315,6 +311,53 @@ describe('validateCreateAppointment', () => {
     ).resolves.toMatchObject({
       success: true,
       data: { treatmentId: 500, totalSessions: 8 },
+    });
+  });
+
+  it('should validate a new Provisional Patient catalogue Procedure without a Patient ID', async () => {
+    const provisionalPatient = { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' };
+
+    await expect(
+      validateCreateAppointment(
+        { ...catalogueProcedurePayload, patientId: undefined, provisionalPatient },
+        'tenant-1'
+      )
+    ).resolves.toMatchObject({
+      success: true,
+      data: { provisionalPatient, treatmentId: 500, totalSessions: 6 },
+    });
+
+    expect(patientRepo.getPatientById).not.toHaveBeenCalled();
+    expect(planRepo.getCurrentByPatientId).not.toHaveBeenCalled();
+    expect(appointmentRepo.findPotentialPatientMatches).toHaveBeenCalledWith(
+      'tenant-1',
+      'Asha',
+      'Rao',
+      '9876543210',
+      undefined
+    );
+  });
+
+  it('should block a new Provisional Patient Procedure when details match an existing Patient', async () => {
+    appointmentRepo.findPotentialPatientMatches.mockResolvedValue([
+      { id: 9, registrationStatus: 'provisional' } as never,
+    ]);
+
+    await expect(
+      validateCreateAppointment(
+        {
+          ...catalogueProcedurePayload,
+          patientId: undefined,
+          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+        },
+        'tenant-1'
+      )
+    ).resolves.toMatchObject({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: [
+        'Matching Provisional Patient must complete or reconcile Patient Registration before another Appointment.',
+      ],
     });
   });
 

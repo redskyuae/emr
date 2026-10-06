@@ -35,13 +35,8 @@ export function bookAppointmentFormValuesToRequest(
   };
 
   if (values.visitType === 'PROCEDURE') {
-    if (values.patientMode !== 'existing' || values.patientId === '') {
-      throw new Error('A registered Patient is required for a Procedure');
-    }
-
     const procedure = {
       bookingPath: 'PROCEDURE' as const,
-      patientId: Number(values.patientId),
       slotDate: toAppointmentSlotDate(values.slotDate),
       remarks: values.remarks || undefined,
       ...(values.doctorId && values.doctorId !== 'not-applicable'
@@ -56,8 +51,12 @@ export function bookAppointmentFormValuesToRequest(
     };
 
     if (values.selectionMode === 'EXISTING_PLAN') {
+      if (values.patientMode !== 'existing' || values.patientId === '') {
+        throw new Error('An existing Patient is required for a Patient Treatment Plan Session');
+      }
       return {
         ...procedure,
+        patientId: Number(values.patientId),
         patientTreatmentPlanId: Number(values.patientTreatmentPlanId),
         patientTreatmentPlanSessionId: Number(values.patientTreatmentPlanSessionId),
       };
@@ -66,6 +65,7 @@ export function bookAppointmentFormValuesToRequest(
     if (values.selectionMode === 'CATALOGUE') {
       return {
         ...procedure,
+        ...patient,
         treatmentId: Number(values.treatmentId),
         ...(values.totalSessions === '' ? {} : { totalSessions: Number(values.totalSessions) }),
       };

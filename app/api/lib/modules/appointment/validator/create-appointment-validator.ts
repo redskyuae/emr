@@ -66,7 +66,7 @@ export async function validateCreateAppointment(
     return { success: false, errors, status: StatusCodes.CONFLICT };
   }
 
-  if (data.bookingPath === 'PROCEDURE') {
+  if (data.bookingPath === 'PROCEDURE' && data.patientId !== undefined) {
     const patient = await patientRepository.getPatientById(data.patientId, validatedTenantId);
 
     if (!patient) {
@@ -187,10 +187,13 @@ export async function validateCreateAppointment(
       };
     }
 
-    const currentPlans = await patientTreatmentPlanRepository.getCurrentByPatientId(
-      data.patientId,
-      validatedTenantId
-    );
+    const currentPlans =
+      data.patientId === undefined
+        ? []
+        : await patientTreatmentPlanRepository.getCurrentByPatientId(
+            data.patientId,
+            validatedTenantId
+          );
     let requiredTherapistSkillId: number | null | undefined;
 
     if ('patientTreatmentPlanId' in data) {
@@ -231,14 +234,6 @@ export async function validateCreateAppointment(
           treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
       }
     } else {
-      if (currentPlans.length > 0) {
-        return {
-          success: false,
-          errors: ['Catalogue Treatment cannot be assigned while the Patient has a current Plan.'],
-          status: StatusCodes.CONFLICT,
-        };
-      }
-
       const treatment = await treatmentRepository.getTreatmentById(
         data.treatmentId,
         validatedTenantId
@@ -345,7 +340,7 @@ export async function validateCreateAppointment(
     }
   }
 
-  if (data.bookingPath === 'CONSULTATION' && data.provisionalPatient) {
+  if (data.provisionalPatient) {
     const [referenceResult, emiratesIdResult, patientMatches] = await Promise.all([
       validatePatientReferences(data.provisionalPatient),
       validatePatientEmiratesIdUniqueness({

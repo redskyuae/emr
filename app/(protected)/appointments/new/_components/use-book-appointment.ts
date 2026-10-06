@@ -181,9 +181,7 @@ export function useBookAppointment() {
   const planOptions = (plansQuery.data ?? []).map(toBookingPatientTreatmentPlan);
   const catalogueEnabled =
     isProcedurePath &&
-    selectedPatient !== null &&
-    plansQuery.isSuccess &&
-    planOptions.length === 0 &&
+    (patientMode === 'provisional' || selectedPatient !== null) &&
     assignPermission.data;
   const treatmentsQuery = useTreatmentsQuery(
     {
@@ -280,15 +278,22 @@ export function useBookAppointment() {
     }
   }, [form, isConsultationPath, modesQuery.data, reasonsQuery.data, typesQuery.data]);
 
-  const treatmentSelectionState: TreatmentSelectionState | 'AWAITING_PATIENT' = selectedPatient
-    ? getTreatmentSelectionState({
-        isLoading:
-          plansQuery.isLoading ||
-          (plansQuery.isSuccess && planOptions.length === 0 && assignPermission.isLoading),
-        plans: planOptions,
-        canAssign: assignPermission.data,
-      })
-    : 'AWAITING_PATIENT';
+  const treatmentSelectionState: TreatmentSelectionState | 'AWAITING_PATIENT' =
+    patientMode === 'provisional'
+      ? getTreatmentSelectionState({
+          isLoading: assignPermission.isLoading,
+          plans: [],
+          canAssign: assignPermission.data,
+        })
+      : selectedPatient
+        ? getTreatmentSelectionState({
+            isLoading:
+              plansQuery.isLoading ||
+              (plansQuery.isSuccess && planOptions.length === 0 && assignPermission.isLoading),
+            plans: planOptions,
+            canAssign: assignPermission.data,
+          })
+        : 'AWAITING_PATIENT';
 
   useEffect(() => {
     if (!isProcedurePath || !selectedPatient || !plansQuery.data) {
@@ -310,6 +315,7 @@ export function useBookAppointment() {
 
     const currentPlanId = form.getValues('patientTreatmentPlanId');
     const currentSessionId = form.getValues('patientTreatmentPlanSessionId');
+    if (form.getValues('selectionMode') === 'CATALOGUE' && form.getValues('treatmentId')) return;
     const currentPlan = planOptions.find(
       (plan) => String(plan.patientTreatmentPlanId) === currentPlanId
     );
@@ -720,7 +726,8 @@ export function useBookAppointment() {
     bookingDependenciesLoading:
       doctorsQuery.isLoading ||
       (isProcedurePath
-        ? plansQuery.isLoading ||
+        ? (patientMode === 'existing' && plansQuery.isLoading) ||
+          assignPermission.isLoading ||
           treatmentsQuery.isLoading ||
           roomsQuery.isLoading ||
           therapistsQuery.isLoading
@@ -745,6 +752,7 @@ export function useBookAppointment() {
     isTreatmentsLoading: treatmentsQuery.isLoading || treatmentsQuery.isFetching,
     treatmentsError: getErrorMessage(treatmentsQuery.error),
     treatmentOptions,
+    canAssignTreatment: Boolean(assignPermission.data),
     treatmentSearch,
     setStep,
     setPatientSearch,

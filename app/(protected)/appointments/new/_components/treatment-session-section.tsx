@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/combobox';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -39,10 +38,12 @@ type TreatmentSectionState = TreatmentSelectionState | 'AWAITING_PATIENT';
 
 export function TreatmentSessionSection({
   control,
+  isProvisional,
   patient,
   state,
   plans,
   treatments,
+  canAssignTreatment,
   selectedTreatment,
   selectedSession,
   treatmentSearch,
@@ -57,10 +58,12 @@ export function TreatmentSessionSection({
   onRetryTreatments,
 }: {
   control: Control<BookAppointmentFormValues>;
+  isProvisional: boolean;
   patient: { name: string; mrn: string } | null;
   state: TreatmentSectionState;
   plans: BookingTreatment[];
   treatments: BookingTreatment[];
+  canAssignTreatment: boolean;
   selectedTreatment: BookingTreatment | null;
   selectedSession: BookingSession | null;
   treatmentSearch: string;
@@ -100,9 +103,11 @@ export function TreatmentSessionSection({
           <div>
             <CardTitle>Treatment & Session</CardTitle>
             <p className="text-muted-foreground mt-1 text-xs">
-              {patient
-                ? `Current Treatment Plans for ${patient.name} · ${patient.mrn}`
-                : 'Select a Registered Patient to load their current Treatment Plans.'}
+              {isProvisional
+                ? 'Choose a catalogue Treatment for the new Provisional Patient.'
+                : patient
+                  ? `Search current Plans or Treatment masters for ${patient.name} · ${patient.mrn}`
+                  : 'Select a Registered Patient to load their current Treatment Plans.'}
             </p>
           </div>
         </div>
@@ -122,13 +127,22 @@ export function TreatmentSessionSection({
           <PlanLoadingSkeleton />
         ) : state === 'PLANS' || state === 'CONFLICT' ? (
           <PlanSelection
+            control={control}
             plans={plans}
+            treatments={treatments}
+            canAssignTreatment={canAssignTreatment}
             selectedTreatment={selectedTreatment}
             selectedSession={selectedSession}
+            search={treatmentSearch}
+            isLoading={isTreatmentsLoading}
+            error={treatmentsError}
             onPlanChange={onPlanChange}
+            onTreatmentChange={onTreatmentChange}
+            onSearchChange={onTreatmentSearchChange}
             onSessionChange={onSessionChange}
-            showAllSessions={state === 'CONFLICT'}
+            onRetry={onRetryTreatments}
             planError={errors.patientTreatmentPlanId}
+            treatmentError={errors.treatmentId}
             sessionError={errors.patientTreatmentPlanSessionId}
           />
         ) : state === 'CATALOGUE_FORBIDDEN' ? (
@@ -142,6 +156,7 @@ export function TreatmentSessionSection({
         ) : (
           <CatalogueSelection
             control={control}
+            isProvisional={isProvisional}
             treatments={treatments}
             selectedTreatment={selectedTreatment}
             selectedSession={selectedSession}
@@ -155,19 +170,20 @@ export function TreatmentSessionSection({
           />
         )}
 
-        {state === 'CONFLICT' ? (
+        {state === 'CONFLICT' && selectedTreatment?.selectionMode !== 'CATALOGUE' ? (
           <Alert className="border-warning/25 bg-warning/5">
             <TriangleAlert className="text-warning size-4" />
             <AlertTitle>No Bookable Session</AlertTitle>
             <AlertDescription>
               This Patient has a current Treatment Plan, but every Session is completed or reserved
-              by another Appointment. Catalogue assignment is unavailable while a current Plan
-              exists.
+              by another Appointment. Choose another current Plan or search for a Treatment master.
             </AlertDescription>
           </Alert>
         ) : null}
 
-        {state === 'PLANS' && selectedTreatment && !selectedSession ? (
+        {(state === 'PLANS' || state === 'CONFLICT') &&
+        selectedTreatment?.selectionMode === 'EXISTING_PLAN' &&
+        !selectedSession ? (
           <Alert className="border-warning/25 bg-warning/5">
             <Info className="size-4" />
             <AlertTitle>No Bookable Session In This Plan</AlertTitle>
@@ -178,7 +194,7 @@ export function TreatmentSessionSection({
           </Alert>
         ) : null}
 
-        {state === 'PLANS' && selectedDurationUnknown ? (
+        {(state === 'PLANS' || state === 'CONFLICT') && selectedDurationUnknown ? (
           <Alert className="border-warning/25 bg-warning/5">
             <Info className="size-4" />
             <AlertTitle>Session Duration Not Configured</AlertTitle>
@@ -194,127 +210,233 @@ export function TreatmentSessionSection({
   );
 }
 
-function PlanSelection({
+export function PlanSelection({
+  control,
   plans,
+  treatments,
+  canAssignTreatment,
   selectedTreatment,
   selectedSession,
+  search,
+  isLoading,
+  error,
   onPlanChange,
+  onTreatmentChange,
+  onSearchChange,
   onSessionChange,
-  showAllSessions,
+  onRetry,
   planError,
+  treatmentError,
   sessionError,
 }: {
+  control: Control<BookAppointmentFormValues>;
   plans: BookingTreatment[];
+  treatments: BookingTreatment[];
+  canAssignTreatment: boolean;
   selectedTreatment: BookingTreatment | null;
   selectedSession: BookingSession | null;
+  search: string;
+  isLoading: boolean;
+  error: string | null;
   onPlanChange: (value: string) => void;
+  onTreatmentChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
   onSessionChange: (value: string) => void;
-  showAllSessions: boolean;
+  onRetry: () => void;
   planError?: FormFieldError;
+  treatmentError?: FormFieldError;
   sessionError?: FormFieldError;
 }) {
   const [inspectedSessionId, setInspectedSessionId] = useState<string | null>(null);
-  const inspectedSession = plans
-    .flatMap((plan) => plan.sessions)
-    .find((session) => session.id === inspectedSessionId);
+  const inspectedSession = selectedTreatment?.sessions.find(
+    (session) => session.id === inspectedSessionId
+  );
   const sessionForDetails = inspectedSession ?? selectedSession;
+  const options = canAssignTreatment ? [...plans, ...treatments] : plans;
+
+  function changeSelection(treatment: BookingTreatment | null) {
+    setInspectedSessionId(null);
+    if (!treatment) {
+      if (selectedTreatment?.selectionMode === 'CATALOGUE') onTreatmentChange('');
+      else onPlanChange('');
+      return;
+    }
+    if (treatment.selectionMode === 'EXISTING_PLAN') {
+      onPlanChange(String(treatment.patientTreatmentPlanId));
+    } else {
+      onTreatmentChange(String(treatment.treatmentId));
+    }
+  }
 
   return (
     <div className="space-y-4">
+      <p className="text-muted-foreground text-sm">
+        Choose a current Treatment Plan or search the Treatment masters to assign a new Plan.
+      </p>
       <Field>
-        <FieldLabel htmlFor="patient-treatment-plan">
+        <FieldLabel htmlFor="patient-treatment-selection">
           Treatment <RequiredMark />
         </FieldLabel>
-        <NativeSelect
-          id="patient-treatment-plan"
-          className="w-full"
-          value={selectedTreatment ? String(selectedTreatment.patientTreatmentPlanId) : ''}
-          aria-invalid={Boolean(planError)}
-          aria-required="true"
-          onChange={(event) => {
-            setInspectedSessionId(null);
-            onPlanChange(event.target.value);
-          }}
+        <Combobox<BookingTreatment>
+          items={options}
+          value={selectedTreatment}
+          itemToStringLabel={(item) => `${item.name} · ${item.code}`}
+          itemToStringValue={(item) =>
+            item.selectionMode === 'EXISTING_PLAN'
+              ? `plan-${item.patientTreatmentPlanId}`
+              : `master-${item.treatmentId}`
+          }
+          onValueChange={changeSelection}
+          onInputValueChange={onSearchChange}
         >
-          <NativeSelectOption value="">Select Treatment</NativeSelectOption>
-          {plans.map((plan) => (
-            <NativeSelectOption key={plan.id} value={String(plan.patientTreatmentPlanId)}>
-              {plan.name} · {plan.code} · {plan.completedSessions}/{plan.plannedSessions} completed
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <FieldError errors={[planError]} />
-      </Field>
-
-      {(selectedTreatment ? [selectedTreatment] : plans).map((plan) => (
-        <div key={plan.id} className="space-y-3 rounded-lg border p-3">
-          <TreatmentProgress treatment={plan} />
-          {selectedTreatment || plans.length === 1 || showAllSessions ? (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {plan.sessions.map((session) => (
-                <Button
-                  key={session.id}
-                  type="button"
-                  variant="outline"
-                  aria-pressed={sessionForDetails?.id === session.id}
-                  aria-label={
-                    session.isBookable
-                      ? `Select ${session.label}`
-                      : `View details for ${session.label}, ${session.unavailableReason}`
-                  }
-                  onClick={() => {
-                    setInspectedSessionId(session.id);
-                    if (session.isBookable) onSessionChange(session.id);
-                  }}
-                  className={cn(
-                    'flex h-auto min-h-14 w-full min-w-0 flex-col items-start gap-2 px-3 py-2 text-left whitespace-normal',
-                    sessionForDetails?.id === session.id &&
-                      'border-primary bg-primary/5 ring-primary/15 ring-2'
-                  )}
-                >
-                  <span className="w-full min-w-0">
-                    <span className="block truncate font-medium">{session.label}</span>
-                    <span className="text-muted-foreground mt-1 block truncate text-xs">
-                      {session.procedure}
+          <ComboboxInput
+            id="patient-treatment-selection"
+            className="w-full"
+            placeholder="Search current Plans or Treatment masters"
+            aria-invalid={Boolean(planError ?? treatmentError)}
+            aria-required="true"
+            showClear
+          />
+          <ComboboxContent>
+            <ComboboxEmpty>
+              {isLoading ? 'Searching Treatments…' : 'No Treatments found.'}
+            </ComboboxEmpty>
+            <ComboboxList>
+              {options.map((treatment) => (
+                <ComboboxItem key={`${treatment.selectionMode}-${treatment.id}`} value={treatment}>
+                  <span className="flex w-full min-w-0 items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{treatment.name}</span>
+                      <span className="text-muted-foreground block truncate font-mono text-xs">
+                        {treatment.code}
+                      </span>
                     </span>
-                    {session.reservedAppointment ? (
-                      <span className="text-warning mt-1 block text-xs leading-snug font-medium break-words">
-                        Booked: {formatBookedSessionDate(session.reservedAppointment.slotDate)} ·{' '}
-                        {session.reservedAppointment.startTime ?? 'Time not recorded'}–
-                        {session.reservedAppointment.endTime ?? 'Time not recorded'}
-                      </span>
-                    ) : session.unavailableReason === 'Completed' && session.completedAt ? (
-                      <span className="text-muted-foreground mt-1 block text-xs leading-snug font-medium break-words">
-                        Completed: {formatCompletedSessionDateTime(session.completedAt)}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="self-start">
                     <BookingStatusBadge
-                      tone={
-                        session.isBookable
-                          ? selectedSession?.id === session.id
-                            ? 'selected'
-                            : 'success'
-                          : session.unavailableReason === 'Completed'
-                            ? 'neutral'
-                            : 'warning'
-                      }
+                      tone={treatment.selectionMode === 'EXISTING_PLAN' ? 'selected' : 'neutral'}
                     >
-                      {session.isBookable
-                        ? sessionForDetails?.id === session.id
-                          ? 'Selected'
-                          : 'Available'
-                        : session.unavailableReason}
+                      {treatment.selectionMode === 'EXISTING_PLAN'
+                        ? 'Current Plan'
+                        : 'Treatment Master'}
                     </BookingStatusBadge>
                   </span>
-                </Button>
+                </ComboboxItem>
               ))}
-            </div>
-          ) : null}
-        </div>
-      ))}
-      <FieldError errors={[sessionError]} />
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
+        <p className="text-muted-foreground text-xs" aria-live="polite">
+          {isLoading
+            ? `Searching${search ? ` for “${search}”` : ''}…`
+            : canAssignTreatment
+              ? 'Showing current Plans and up to 20 matching Treatment masters.'
+              : 'Showing current Treatment Plans.'}
+        </p>
+        <FieldError errors={[planError, treatmentError]} />
+      </Field>
+
+      {error ? <LoadError message={error} subject="Treatment masters" onRetry={onRetry} /> : null}
+
+      {selectedTreatment?.selectionMode === 'CATALOGUE' &&
+      selectedTreatment.sessionStructure === 'REPEATABLE' ? (
+        <Controller
+          control={control}
+          name="totalSessions"
+          render={({ field, fieldState }) => (
+            <Field>
+              <FieldLabel htmlFor="total-sessions">
+                Total Sessions <RequiredMark />
+              </FieldLabel>
+              <Input
+                {...field}
+                id="total-sessions"
+                type="number"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                aria-required="true"
+                aria-invalid={fieldState.invalid}
+              />
+              <p className="text-muted-foreground text-xs">
+                Repeatable Treatments use the same Session template for the prescribed count.
+              </p>
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
+      ) : null}
+
+      {selectedTreatment ? (
+        <Field>
+          <FieldLabel>
+            Session <RequiredMark />
+          </FieldLabel>
+          <div
+            className="grid gap-2 sm:grid-cols-2"
+            role="group"
+            aria-label="Select Session"
+            data-invalid={Boolean(sessionError)}
+          >
+            {selectedTreatment.sessions.map((session) => (
+              <Button
+                key={session.id}
+                type="button"
+                variant="outline"
+                aria-pressed={sessionForDetails?.id === session.id}
+                aria-label={
+                  session.isBookable
+                    ? `Select ${session.label}`
+                    : `View details for ${session.label}, ${session.unavailableReason}`
+                }
+                onClick={() => {
+                  setInspectedSessionId(session.id);
+                  if (session.isBookable) onSessionChange(session.id);
+                }}
+                className={cn(
+                  'flex h-auto min-h-14 w-full min-w-0 flex-col items-start gap-2 px-3 py-2 text-left whitespace-normal',
+                  sessionForDetails?.id === session.id &&
+                    'border-primary bg-primary/5 ring-primary/15 ring-2'
+                )}
+              >
+                <span className="w-full min-w-0">
+                  <span className="block truncate font-medium">{session.label}</span>
+                  <span className="text-muted-foreground mt-1 block truncate text-xs">
+                    {session.procedure}
+                  </span>
+                  {session.reservedAppointment ? (
+                    <span className="text-warning mt-1 block text-xs leading-snug font-medium break-words">
+                      Booked: {formatBookedSessionDate(session.reservedAppointment.slotDate)} ·{' '}
+                      {session.reservedAppointment.startTime ?? 'Time not recorded'}–
+                      {session.reservedAppointment.endTime ?? 'Time not recorded'}
+                    </span>
+                  ) : session.unavailableReason === 'Completed' && session.completedAt ? (
+                    <span className="text-muted-foreground mt-1 block text-xs leading-snug font-medium break-words">
+                      Completed: {formatCompletedSessionDateTime(session.completedAt)}
+                    </span>
+                  ) : null}
+                </span>
+                <BookingStatusBadge
+                  tone={
+                    session.isBookable
+                      ? selectedSession?.id === session.id
+                        ? 'selected'
+                        : 'success'
+                      : session.unavailableReason === 'Completed'
+                        ? 'neutral'
+                        : 'warning'
+                  }
+                >
+                  {session.isBookable
+                    ? sessionForDetails?.id === session.id
+                      ? 'Selected'
+                      : 'Available'
+                    : session.unavailableReason}
+                </BookingStatusBadge>
+              </Button>
+            ))}
+          </div>
+          <FieldError errors={[sessionError]} />
+        </Field>
+      ) : null}
       {sessionForDetails ? <SessionDetails session={sessionForDetails} /> : null}
     </div>
   );
@@ -322,6 +444,7 @@ function PlanSelection({
 
 export function CatalogueSelection({
   control,
+  isProvisional,
   treatments,
   selectedTreatment,
   selectedSession,
@@ -334,6 +457,7 @@ export function CatalogueSelection({
   onRetry,
 }: {
   control: Control<BookAppointmentFormValues>;
+  isProvisional: boolean;
   treatments: BookingTreatment[];
   selectedTreatment: BookingTreatment | null;
   selectedSession: BookingSession | null;
@@ -356,7 +480,9 @@ export function CatalogueSelection({
   return (
     <div className="space-y-4">
       <p className="text-muted-foreground text-sm">
-        No current Patient Treatment Plan. Search the catalogue to assign one while booking.
+        {isProvisional
+          ? 'Search the catalogue to assign a Treatment while booking this Provisional Patient.'
+          : 'No current Patient Treatment Plan. Search the catalogue to assign one while booking.'}
       </p>
       <Field>
         <FieldLabel htmlFor="treatment-catalogue">
@@ -450,32 +576,6 @@ export function CatalogueSelection({
       ) : null}
 
       {selectedSession ? <SessionDetails session={selectedSession} /> : null}
-    </div>
-  );
-}
-
-function TreatmentProgress({ treatment }: { treatment: BookingTreatment }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <div>
-        <p className="font-medium">
-          {treatment.name} <span className="font-mono text-xs">{treatment.code}</span>
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {treatment.completedSessions} of {treatment.plannedSessions} Sessions completed
-        </p>
-      </div>
-      <BookingStatusBadge
-        tone={
-          treatment.status === 'Stopped'
-            ? 'danger'
-            : treatment.status === 'Completed'
-              ? 'neutral'
-              : 'success'
-        }
-      >
-        {treatment.status}
-      </BookingStatusBadge>
     </div>
   );
 }
