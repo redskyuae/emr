@@ -447,11 +447,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/appointments': {
     title: 'Appointments',
     subtitle: 'Schedule and track outpatient appointments for this Tenant.',
-    primaryAction: {
-      label: 'Book Appointment',
-      href: '/appointments/new',
-      permission: 'appointment:create',
-    },
   },
   '/appointments/new': {
     title: 'Book Appointment',
