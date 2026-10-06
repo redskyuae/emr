@@ -23,7 +23,7 @@ function isIsoDate(value: string) {
 const optionalTrimmedString = (maxLength: number, message: string) =>
   z.string().trim().max(maxLength, message);
 
-const UAE_MOBILE_PATTERN = /^(?:0|\+971)5[024568]\d{7}$/;
+const UAE_MOBILE_PATTERN = /^(?:0|\+971)5[0234568]\d{7}$/;
 
 export const bookAppointmentFormSchema = z
   .object({
