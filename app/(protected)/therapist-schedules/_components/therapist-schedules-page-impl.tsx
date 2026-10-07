@@ -23,12 +23,16 @@ export function TherapistSchedulesPageImpl() {
   const [toDateParam, setToDateParam] = useQueryState('to', { defaultValue: '' });
   const [pageParam, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [scheduleParam, setScheduleParam] = useQueryState('schedule');
-  const { data: canCreate, isLoading: canCreateLoading } = useHasPermission(
-    'therapist-schedule:create'
-  );
-  const { data: canUpdate, isLoading: canUpdateLoading } = useHasPermission(
-    'therapist-schedule:update'
-  );
+  const {
+    data: canCreate,
+    isLoading: canCreateLoading,
+    isError: canCreateError,
+  } = useHasPermission('therapist-schedule:create');
+  const {
+    data: canUpdate,
+    isLoading: canUpdateLoading,
+    isError: canUpdateError,
+  } = useHasPermission('therapist-schedule:update');
 
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const parsedTherapistId = therapistParam ? Number(therapistParam) : Number.NaN;
@@ -70,8 +74,8 @@ export function TherapistSchedulesPageImpl() {
       (schedulesQuery.isLoading || editingSchedule !== null)
     );
   const accessDenied =
-    (scheduleParam === 'new' && !canCreateLoading && !canCreate) ||
-    (editingScheduleId !== null && !canUpdateLoading && !canUpdate);
+    (scheduleParam === 'new' && !canCreateLoading && !canCreateError && !canCreate) ||
+    (editingScheduleId !== null && !canUpdateLoading && !canUpdateError && !canUpdate);
 
   useEffect(() => {
     if (accessDenied) void setScheduleParam(null);
