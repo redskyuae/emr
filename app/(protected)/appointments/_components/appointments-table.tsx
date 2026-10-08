@@ -47,13 +47,14 @@ export function AppointmentsTable({
   return (
     <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
       <div className="overflow-x-auto">
-        <table aria-label={label} className="w-full min-w-[960px] text-sm">
+        <table aria-label={label} className="w-full min-w-[1080px] text-sm">
           <thead>
             <tr className="text-muted-foreground border-b text-left">
               <th className="p-3 pl-4 font-medium">Booking</th>
               <th className="p-3 font-medium">Date / Slot</th>
               <th className="p-3 font-medium">Patient</th>
               <th className="p-3 font-medium">Doctor</th>
+              <th className="p-3 font-medium">Therapist</th>
               <th className="p-3 font-medium">Type</th>
               <th className="p-3 font-medium">Mode</th>
               <th className="p-3 font-medium">Status</th>
@@ -101,6 +102,7 @@ export function AppointmentsTable({
                     </a>
                   </td>
                   <td className="p-3">{appointment.doctor?.name ?? 'N/A'}</td>
+                  <td className="p-3">{appointment.therapist?.name ?? 'N/A'}</td>
                   <td className="p-3">
                     <Badge variant="secondary">
                       {appointment.appointmentType?.code ?? appointment.bookingPath}
@@ -185,6 +187,7 @@ export function AppointmentsTableSkeleton() {
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-3 w-28" />
           </div>
+          <Skeleton className="h-5 w-32" />
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-5 w-20" />
           <Skeleton className="h-5 w-24" />

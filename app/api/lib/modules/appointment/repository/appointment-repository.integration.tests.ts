@@ -1557,10 +1557,15 @@ describe('Appointment repository', () => {
       });
     });
 
-    it('should filter Appointments by doctor, patient, status, and search text', async () => {
+    it('should filter Appointments by doctor, patient, Therapist, status, and search text', async () => {
       const fixtures = await createFixtures();
       const created = await appointmentRepository.createAppointment(appointmentData(fixtures));
       if (!created.success) throw new Error('appointment creation failed');
+      const plan = await createExistingPlan(fixtures);
+      const procedure = await appointmentRepository.createAppointment(
+        procedureData(fixtures, plan)
+      );
+      if (!procedure.success) throw new Error('procedure creation failed');
 
       const byDoctor = await appointmentRepository.getAppointments({
         tenantId: fixtures.tenantId,
@@ -1569,6 +1574,10 @@ describe('Appointment repository', () => {
       const byPatient = await appointmentRepository.getAppointments({
         tenantId: fixtures.tenantId,
         patientId: fixtures.patient.id,
+      });
+      const byTherapist = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        therapistId: fixtures.therapistId,
       });
       const byStatus = await appointmentRepository.getAppointments({
         tenantId: fixtures.tenantId,
@@ -1588,10 +1597,14 @@ describe('Appointment repository', () => {
       });
 
       expect(byDoctor.total).toBe(1);
-      expect(byPatient.total).toBe(1);
-      expect(byStatus.total).toBe(1);
+      expect(byPatient.total).toBe(2);
+      expect(byTherapist).toMatchObject({
+        total: 1,
+        data: [{ id: procedure.data.id, therapist: { id: fixtures.therapistId } }],
+      });
+      expect(byStatus.total).toBe(2);
       expect(byBookingNumber.total).toBe(1);
-      expect(byPatientName.total).toBe(1);
+      expect(byPatientName.total).toBe(2);
       expect(noMatch).toMatchObject({ total: 0, data: [] });
     });
 

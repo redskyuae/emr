@@ -3972,6 +3972,13 @@ export const openApiDocument = {
             schema: { type: 'integer', minimum: 1 },
           },
           {
+            name: 'therapistId',
+            in: 'query',
+            required: false,
+            description: 'Filter to Appointments assigned to one Therapist.',
+            schema: { type: 'integer', minimum: 1, example: 8 },
+          },
+          {
             name: 'patientId',
             in: 'query',
             required: false,
