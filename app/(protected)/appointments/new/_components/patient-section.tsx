@@ -261,6 +261,8 @@ export function PatientSection({
                       aria-invalid={Boolean(errors.phone)}
                       autoComplete="tel"
                       inputMode="tel"
+                      type="tel"
+                      placeholder="050 123 4567"
                     />
                     <FieldError errors={[errors.phone]} />
                   </Field>
