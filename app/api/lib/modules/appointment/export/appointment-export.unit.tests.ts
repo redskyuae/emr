@@ -1,7 +1,14 @@
+import { Buffer } from 'node:buffer';
+
+import { Workbook } from 'exceljs';
 import { describe, expect, it } from 'vitest';
 
-import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
-import { buildAppointmentExportRows } from './appointment-export';
+import type { Appointment } from '../schemas/appointment-schema';
+import {
+  appointmentExportFilename,
+  buildAppointmentExportRows,
+  createAppointmentExport,
+} from './appointment-export';
 
 function appointment(overrides: Partial<Appointment> = {}): Appointment {
   return {
@@ -44,8 +51,17 @@ function appointment(overrides: Partial<Appointment> = {}): Appointment {
   };
 }
 
-describe('Appointment export rows', () => {
-  it('should map a Consultation Appointment into spreadsheet and PDF columns', () => {
+const brand = {
+  organizationName: 'Dhathri Gram',
+  organizationSubtitle: 'Ayurveda Medical Centre',
+  logo: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64'
+  ),
+};
+
+describe('Appointment export', () => {
+  it('should map Consultation details into report columns', () => {
     expect(buildAppointmentExportRows([appointment()])).toEqual([
       {
         Booking: 'APT-1001',
@@ -85,5 +101,36 @@ describe('Appointment export rows', () => {
       Mode: 'N/A',
       Treatment: 'Abhyanga',
     });
+  });
+
+  it('should create a branded Excel workbook on the server', async () => {
+    const file = await createAppointmentExport('excel', [appointment()], '08-10-2026', brand);
+    const workbook = new Workbook();
+    await workbook.xlsx.load(file.body as never);
+    const worksheet = workbook.getWorksheet('Appointments');
+
+    expect(file).toMatchObject({
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      filename: 'appointments-2026-10-08.xlsx',
+    });
+    expect(worksheet?.getCell('C1').value).toBe('Dhathri Gram');
+    expect(worksheet?.getCell('C2').value).toBe('Ayurveda Medical Centre · Appointment Schedule');
+    expect(worksheet?.getCell('F4').value).toBe(1);
+    expect(worksheet?.getCell('H7').value).toBe('Therapist');
+    expect(worksheet?.getCell('A8').value).toBe('APT-1001');
+  });
+
+  it('should create a PDF document on the server', async () => {
+    const file = await createAppointmentExport('pdf', [appointment()], '08-10-2026', brand);
+    const signature = Buffer.from(file.body).subarray(0, 5).toString('ascii');
+
+    expect(file.contentType).toBe('application/pdf');
+    expect(file.filename).toBe('appointments-2026-10-08.pdf');
+    expect(signature).toBe('%PDF-');
+    expect(file.body.byteLength).toBeGreaterThan(1_000);
+  });
+
+  it('should keep ISO dates stable in filenames', () => {
+    expect(appointmentExportFilename('pdf', '2026-10-08')).toBe('appointments-2026-10-08.pdf');
   });
 });

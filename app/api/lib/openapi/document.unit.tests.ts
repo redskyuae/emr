@@ -54,6 +54,24 @@ describe('OpenAPI Patient Treatment Plan contracts', () => {
     expect(response['200'].content).toBeDefined();
     expect(appointment.required).toEqual(expect.arrayContaining(['roomId', 'therapist']));
   });
+
+  it('should document server-generated Appointment exports and their filters', () => {
+    const operation = openApiDocument.paths['/api/v1/appointments/export'].get;
+    const response = operation.responses['200'] as { content: Record<string, unknown> };
+
+    expect(operation.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'format', in: 'query', required: true }),
+        expect.objectContaining({ name: 'doctorId', in: 'query' }),
+        expect.objectContaining({ name: 'therapistId', in: 'query' }),
+        expect.objectContaining({ name: 'appointmentStatusId', in: 'query' }),
+      ])
+    );
+    expect(response.content['application/pdf']).toBeDefined();
+    expect(
+      response.content['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+    ).toBeDefined();
+  });
 });
 
 describe('OpenAPI Therapist Schedule contracts', () => {

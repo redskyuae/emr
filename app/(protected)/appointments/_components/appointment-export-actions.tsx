@@ -1,63 +1,38 @@
 'use client';
 
-import { useState } from 'react';
 import { FileSpreadsheet, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
+import type {
+  AppointmentExportFormat,
+  DownloadAppointmentsExportRequest,
+} from '@/app/api/v1/appointments/export/types';
+import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useDownloadAppointmentsExport } from '@/app/queries/appointments/useDownloadAppointmentsExport';
 import { Button } from '@/components/ui/button';
-import { downloadAppointmentsExcel, downloadAppointmentsPdf } from '../_utils/appointment-export';
-
-type ExportFormat = 'excel' | 'pdf';
 
 export function AppointmentExportActions({
-  appointments,
   disabled,
-  slotDate,
-  logoUrl,
-  organizationName,
-  organizationSubtitle,
+  filters,
+  hasAppointments,
 }: {
-  appointments: Appointment[];
   disabled: boolean;
-  slotDate: string;
-  logoUrl: string | null;
-  organizationName: string;
-  organizationSubtitle: string;
+  filters: Omit<DownloadAppointmentsExportRequest, 'format'>;
+  hasAppointments: boolean;
 }) {
-  const [pendingFormat, setPendingFormat] = useState<ExportFormat | null>(null);
+  const exportMutation = useDownloadAppointmentsExport();
+  const pendingFormat = exportMutation.isPending ? exportMutation.variables?.format : undefined;
 
-  async function download(format: ExportFormat) {
-    setPendingFormat(format);
-
+  async function download(format: AppointmentExportFormat) {
     try {
-      if (format === 'excel') {
-        await downloadAppointmentsExcel(
-          appointments,
-          slotDate,
-          organizationName,
-          organizationSubtitle,
-          logoUrl
-        );
-      } else {
-        await downloadAppointmentsPdf(
-          appointments,
-          slotDate,
-          organizationName,
-          organizationSubtitle,
-          logoUrl
-        );
-      }
-
+      await exportMutation.mutateAsync({ ...filters, format });
       toast.success(`${format === 'excel' ? 'Excel' : 'PDF'} downloaded.`);
-    } catch {
-      toast.error(`Could not download the ${format === 'excel' ? 'Excel' : 'PDF'} file.`);
-    } finally {
-      setPendingFormat(null);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error));
     }
   }
 
-  const isDisabled = disabled || appointments.length === 0 || pendingFormat !== null;
+  const isDisabled = disabled || !hasAppointments || exportMutation.isPending;
 
   return (
     <div className="flex flex-1 gap-2 sm:flex-none">
@@ -70,7 +45,7 @@ export function AppointmentExportActions({
         onClick={() => void download('excel')}
       >
         <FileSpreadsheet className="size-4" aria-hidden="true" />
-        {pendingFormat === 'excel' ? 'Preparing Excel...' : 'Download Excel'}
+        {pendingFormat === 'excel' ? 'Generating Excel...' : 'Download Excel'}
       </Button>
       <Button
         type="button"
@@ -81,7 +56,7 @@ export function AppointmentExportActions({
         onClick={() => void download('pdf')}
       >
         <FileText className="size-4" aria-hidden="true" />
-        {pendingFormat === 'pdf' ? 'Preparing PDF...' : 'Download PDF'}
+        {pendingFormat === 'pdf' ? 'Generating PDF...' : 'Download PDF'}
       </Button>
     </div>
   );

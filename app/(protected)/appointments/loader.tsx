@@ -9,7 +9,7 @@ export default function AppointmentsPageLoader() {
         <Skeleton className="h-9 lg:w-52" aria-label="Loading Therapist filter" />
         <Skeleton className="h-9 lg:w-48" aria-label="Loading Appointment status filter" />
         <Skeleton className="h-9 w-full lg:max-w-xs" />
-        <div className="flex gap-2 lg:ml-auto" aria-label="Loading branded export actions">
+        <div className="flex gap-2 lg:ml-auto" aria-label="Loading server export actions">
           <Skeleton className="h-8 w-32" aria-label="Loading Excel download action" />
           <Skeleton className="h-8 w-32" aria-label="Loading PDF download action" />
           <Skeleton className="h-8 w-36" aria-label="Loading Book Appointment action" />

@@ -12,8 +12,6 @@ import { useAppointmentsQuery } from '@/app/queries/appointments/useAppointments
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
-import { brandLogos } from '@/components/brand/brand-config';
-import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -48,8 +46,6 @@ export function AppointmentsPageImpl() {
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
 
   const { data: canCreate } = useHasPermission('appointment:create');
-  const brandVariant = useBrandLogoVariant();
-  const brand = brandVariant === 'none' ? null : brandLogos[brandVariant];
 
   const slotDate = dateParam ?? todayDisplayDate();
   const doctorId = doctorParam && doctorParam !== ALL_FILTER ? Number(doctorParam) : undefined;
@@ -167,11 +163,14 @@ export function AppointmentsPageImpl() {
 
           <div className="flex flex-wrap gap-2 lg:ml-auto">
             <AppointmentExportActions
-              appointments={appointments}
-              slotDate={slotDate}
-              logoUrl={brand?.markSrc ?? null}
-              organizationName={brand?.name ?? 'Medical EMR'}
-              organizationSubtitle={brand?.subtitle ?? 'Electronic Medical Record'}
+              filters={{
+                slotDate,
+                doctorId,
+                therapistId,
+                appointmentStatusId,
+                query: debouncedSearch || undefined,
+              }}
+              hasAppointments={appointments.length > 0}
               disabled={
                 appointmentsQuery.isLoading ||
                 appointmentsQuery.isFetching ||
