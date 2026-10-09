@@ -9,6 +9,7 @@ import { parseApiError } from '@/app/queries/api-error';
 export type AppointmentsParams = {
   slotDate?: string;
   doctorId?: number;
+  therapistId?: number;
   patientId?: number;
   appointmentStatusId?: number;
   query?: string;
@@ -26,6 +27,7 @@ async function fetchAppointments(params: AppointmentsParams): Promise<ListAppoin
 
   if (params.slotDate) searchParams.set('slotDate', params.slotDate);
   if (params.doctorId) searchParams.set('doctorId', String(params.doctorId));
+  if (params.therapistId) searchParams.set('therapistId', String(params.therapistId));
   if (params.patientId) searchParams.set('patientId', String(params.patientId));
   if (params.appointmentStatusId) {
     searchParams.set('appointmentStatusId', String(params.appointmentStatusId));

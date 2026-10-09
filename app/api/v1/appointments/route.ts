@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       filters: {
         slotDate: searchParams.get('slotDate')?.trim() || undefined,
         doctorId: searchParams.get('doctorId')?.trim() || undefined,
+        therapistId: searchParams.get('therapistId')?.trim() || undefined,
         patientId: searchParams.get('patientId')?.trim() || undefined,
         appointmentStatusId: searchParams.get('appointmentStatusId')?.trim() || undefined,
         query: searchParams.get('query')?.trim() || searchParams.get('search')?.trim() || undefined,

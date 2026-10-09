@@ -396,6 +396,7 @@ async function getAppointments({
   query,
   tenantId,
   doctorId,
+  therapistId,
   patientId,
   slotDate,
   appointmentStatusId,
@@ -416,6 +417,7 @@ async function getAppointments({
     eq(appointmentTable.isDeleted, false),
     slotDate ? eq(appointmentTable.slotDate, slotDate) : undefined,
     doctorId ? eq(appointmentTable.doctorId, doctorId) : undefined,
+    therapistId ? eq(appointmentTable.therapistId, therapistId) : undefined,
     patientId ? eq(appointmentTable.patientId, patientId) : undefined,
     appointmentStatusId ? eq(appointmentTable.appointmentStatusId, appointmentStatusId) : undefined,
     searchCondition

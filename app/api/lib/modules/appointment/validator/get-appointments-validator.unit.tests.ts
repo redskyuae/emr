@@ -21,6 +21,13 @@ describe('validateGetAppointments', () => {
     });
   });
 
+  it('should normalize the Therapist filter', () => {
+    expect(validateGetAppointments({ therapistId: '8' }, 'tenant-1')).toEqual({
+      success: true,
+      data: { therapistId: 8, tenantId: 'tenant-1' },
+    });
+  });
+
   it('should reject invalid filter values', () => {
     expect(validateGetAppointments({ appointmentStatusId: '0' }, 'tenant-1')).toMatchObject({
       success: false,

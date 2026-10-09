@@ -337,6 +337,7 @@ export const bookingNumberSchema = z
 export const listAppointmentsSchema = z.object({
   slotDate: slotDateSchema.optional(),
   doctorId: positiveIdSchema('Doctor ID').optional(),
+  therapistId: positiveIdSchema('Therapist ID').optional(),
   patientId: positiveIdSchema('Patient ID').optional(),
   appointmentStatusId: positiveIdSchema('Appointment status ID').optional(),
   query: z.string().trim().optional(),

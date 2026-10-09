@@ -337,12 +337,21 @@ describe('Appointment schema', () => {
     });
 
     it('should reject invalid date and id filters', () => {
-      const result = listAppointmentsSchema.safeParse({ slotDate: '2026-07-16', doctorId: '0' });
+      const result = listAppointmentsSchema.safeParse({
+        slotDate: '2026-07-16',
+        doctorId: '0',
+        therapistId: '0',
+      });
 
       expect(result.error?.issues.map((issue) => issue.message)).toEqual([
         'Slot date must be in DD-MM-YYYY format',
         'Doctor ID must be positive',
+        'Therapist ID must be positive',
       ]);
+    });
+
+    it('should coerce a valid Therapist filter', () => {
+      expect(listAppointmentsSchema.parse({ therapistId: '8' })).toEqual({ therapistId: 8 });
     });
 
     it('should trim query and coerce paging filters', () => {

@@ -7,10 +7,12 @@ import { useDebouncedValue } from '@tanstack/react-pacer';
 import { AlertCircle, Plus, Search } from 'lucide-react';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { partitionAppointmentsByDayView } from '@/app/api/lib/modules/appointment/appointment-day-view';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
 import { useAppointmentsQuery } from '@/app/queries/appointments/useAppointments';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
+import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,8 +26,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toDateInputValue, toDisplayDate, todayDisplayDate } from '../_utils/appointment-date';
-import { partitionAppointmentsByDayView } from '../_utils/appointment-groups';
 import { AppointmentDaySection, AppointmentDaySectionSkeleton } from './appointment-day-section';
+import { AppointmentExportActions } from './appointment-export-actions';
 import { CancelAppointmentDialog } from './_modals/cancel-appointment-dialog';
 import { AppointmentDetailSheet } from './_sheets/appointment-detail-sheet';
 
@@ -35,6 +37,7 @@ const ALL_FILTER = 'all';
 export function AppointmentsPageImpl() {
   const [dateParam, setDateParam] = useQueryState('date');
   const [doctorParam, setDoctorParam] = useQueryState('doctor');
+  const [therapistParam, setTherapistParam] = useQueryState('therapist');
   const [statusParam, setStatusParam] = useQueryState('status');
   // Deep-link target for Booking entries on the Patient Timeline (ADR 0010).
   const [appointmentParam, setAppointmentParam] = useQueryState('appointment');
@@ -46,6 +49,8 @@ export function AppointmentsPageImpl() {
 
   const slotDate = dateParam ?? todayDisplayDate();
   const doctorId = doctorParam && doctorParam !== ALL_FILTER ? Number(doctorParam) : undefined;
+  const therapistId =
+    therapistParam && therapistParam !== ALL_FILTER ? Number(therapistParam) : undefined;
   const appointmentStatusId =
     statusParam && statusParam !== ALL_FILTER ? Number(statusParam) : undefined;
   const selectedAppointmentId =
@@ -54,11 +59,13 @@ export function AppointmentsPageImpl() {
   const appointmentsQuery = useAppointmentsQuery({
     slotDate,
     doctorId,
+    therapistId,
     appointmentStatusId,
     query: debouncedSearch || undefined,
     limit: DAY_VIEW_LIMIT,
   });
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
+  const therapistsQuery = useTherapistsQuery({ page: 1, limit: 999 });
   const statusesQuery = useAppointmentStatusesQuery({ page: 1, limit: 999 });
 
   const appointments = appointmentsQuery.data?.data ?? [];
@@ -71,7 +78,7 @@ export function AppointmentsPageImpl() {
   return (
     <div className="space-y-4">
       <Card className="shadow-fluent-2">
-        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:flex-wrap lg:items-center">
           <Input
             type="date"
             aria-label="Appointment date"
@@ -96,6 +103,25 @@ export function AppointmentsPageImpl() {
               {(doctorsQuery.data?.data ?? []).map((doctor) => (
                 <SelectItem key={doctor.id} value={String(doctor.id)}>
                   {doctor.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={therapistParam ?? ALL_FILTER}
+            onValueChange={(value) => {
+              void setTherapistParam(value === ALL_FILTER ? null : value);
+            }}
+          >
+            <SelectTrigger className="h-9 lg:w-52" aria-label="Filter by Therapist">
+              <SelectValue placeholder="All Therapists" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_FILTER}>All Therapists</SelectItem>
+              {(therapistsQuery.data?.data ?? []).map((therapist) => (
+                <SelectItem key={therapist.id} value={String(therapist.id)}>
+                  {therapist.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -135,14 +161,33 @@ export function AppointmentsPageImpl() {
             />
           </InputGroup>
 
-          {canCreate ? (
-            <Button type="button" className="lg:ml-auto" asChild>
-              <Link href="/appointments/new">
-                <Plus className="size-4" />
-                Book Appointment
-              </Link>
-            </Button>
-          ) : null}
+          <div className="flex flex-wrap gap-2 lg:ml-auto">
+            <AppointmentExportActions
+              filters={{
+                slotDate,
+                doctorId,
+                therapistId,
+                appointmentStatusId,
+                query: debouncedSearch || undefined,
+              }}
+              hasAppointments={appointments.length > 0}
+              disabled={
+                appointmentsQuery.isLoading ||
+                appointmentsQuery.isFetching ||
+                doctorsQuery.isLoading ||
+                therapistsQuery.isLoading ||
+                statusesQuery.isLoading
+              }
+            />
+            {canCreate ? (
+              <Button type="button" className="flex-1 sm:flex-none" asChild>
+                <Link href="/appointments/new">
+                  <Plus className="size-4" />
+                  Book Appointment
+                </Link>
+              </Button>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
 

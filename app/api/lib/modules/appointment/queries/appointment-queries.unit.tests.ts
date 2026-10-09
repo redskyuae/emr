@@ -123,6 +123,7 @@ describe('Appointment queries', () => {
         tenantId: 'tenant-1',
         filters: {
           doctorId: 3,
+          therapistId: 8,
           page: 2,
           limit: 5,
           query: 'rao',
@@ -134,6 +135,7 @@ describe('Appointment queries', () => {
         tenantId: 'tenant-1',
         slotDate: '2026-07-16',
         doctorId: 3,
+        therapistId: 8,
         page: 2,
         limit: 5,
         query: 'rao',
