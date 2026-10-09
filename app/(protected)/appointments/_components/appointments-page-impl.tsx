@@ -200,7 +200,7 @@ export function AppointmentsPageImpl() {
       ) : null}
 
       {!appointmentsQuery.isError ? (
-        appointmentsQuery.isLoading ? (
+        appointmentsQuery.isFetching ? (
           <div className="space-y-6">
             <AppointmentDaySectionSkeleton />
             <AppointmentDaySectionSkeleton />

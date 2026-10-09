@@ -43,7 +43,9 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     maritalStatus: patient.maritalStatus ?? '',
     preferredPaymentMethod: patient.preferredPaymentMethod ?? '',
     phone: patient.phone,
-    alternatePhone: patient.alternatePhone ?? '',
+    // Saved before the digits-only rule, e.g. +91-9123456780; stripped here so an
+    // unrelated edit still saves. The country code stays, only formatting goes.
+    alternatePhone: (patient.alternatePhone ?? '').replace(/\D/g, ''),
     email: patient.email ?? '',
     addressLine1: patient.addressLine1 ?? '',
     addressLine2: patient.addressLine2 ?? '',
@@ -54,10 +56,7 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     nationalityId: patient.nationalityId ?? undefined,
     languageId: patient.languageId ?? undefined,
     religionId: patient.religionId ?? undefined,
-    // Shown in the dashed form the card is printed with; normalised again on save.
     emiratesId: formatEmiratesId(patient.emiratesId) ?? '',
-    // The id round-trips so the server can diff the replace rather than
-    // tombstoning and reinserting unchanged documents (ADR 0043).
     identityDocuments: patient.identityDocuments.map((document) => ({
       id: document.id,
       documentType: document.documentType,

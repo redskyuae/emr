@@ -73,6 +73,38 @@ describe('Patient schema', () => {
     expect(result.data?.preferredPaymentMethod).toBeUndefined();
   });
 
+  it('should accept a digits-only alternate phone', () => {
+    const result = createPatientSchema.safeParse({ ...validPayload, alternatePhone: '0501234567' });
+    expect(result.success).toBe(true);
+    expect(result.data?.alternatePhone).toBe('0501234567');
+  });
+
+  it('should reject an alternate phone containing letters', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, alternatePhone: 'sadhfoiaeifjvo' }))
+    ).toContain('Patient alternate phone must contain only digits');
+  });
+
+  it('should reject an alternate phone containing special characters', () => {
+    for (const alternatePhone of ['+971501234567', '050-123-4567', '050 123 4567']) {
+      expect(
+        errorsOf(createPatientSchema.safeParse({ ...validPayload, alternatePhone }))
+      ).toContain('Patient alternate phone must contain only digits');
+    }
+  });
+
+  it('should treat a blank alternate phone as omitted', () => {
+    const result = createPatientSchema.safeParse({ ...validPayload, alternatePhone: '  ' });
+    expect(result.success).toBe(true);
+    expect(result.data?.alternatePhone).toBeUndefined();
+  });
+
+  it('should reject a non-digit alternate phone on update', () => {
+    expect(
+      errorsOf(updatePatientSchema.safeParse({ ...validPayload, alternatePhone: 'abc123' }))
+    ).toContain('Patient alternate phone must contain only digits');
+  });
+
   it('should reject a future date of birth', () => {
     expect(
       errorsOf(createPatientSchema.safeParse({ ...validPayload, dateOfBirth: '3000-01-01' }))

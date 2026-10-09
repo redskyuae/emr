@@ -332,7 +332,9 @@ function ContactSection({ control }: { control: Control<PatientFormValues> }) {
                 <Input
                   id="patient-alternate-phone"
                   type="tel"
+                  inputMode="numeric"
                   {...field}
+                  onChange={(event) => field.onChange(event.target.value.replace(/\D/g, ''))}
                   aria-invalid={fieldState.invalid}
                 />
                 {fieldState.error ? (
