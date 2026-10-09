@@ -154,9 +154,7 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
         request: rescheduleAppointmentFormValuesToRequest(submitted),
       });
       toast.success(`${response.data.bookingNumber} rescheduled.`);
-      router.push(
-        `/appointments?date=${encodeURIComponent(response.data.slotDate)}&appointment=${response.data.id}`
-      );
+      router.push(`/appointments?date=${encodeURIComponent(response.data.slotDate)}`);
     } catch (error) {
       const message = getApiErrorMessage(error);
       setSubmitError(message);

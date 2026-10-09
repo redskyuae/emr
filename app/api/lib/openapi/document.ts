@@ -1858,7 +1858,7 @@ const patientRequestExample = {
   maritalStatus: 'married',
   preferredPaymentMethod: 'insurance',
   phone: '+91-9876543210',
-  alternatePhone: '+91-9123456780',
+  alternatePhone: '9123456780',
   email: 'asha.rao@example.com',
   addressLine1: '221B Residency Road',
   addressLine2: 'Near City Hospital',
@@ -2048,6 +2048,13 @@ const patientValidationFailed = {
           value: {
             message: 'Validation failed',
             errors: ['Patient Emirates ID must be 15 digits beginning with 784'],
+          },
+        },
+        invalidAlternatePhone: {
+          summary: 'Alternate phone contains non-digit characters',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient alternate phone must contain only digits'],
           },
         },
         passportMissingExpiry: {
@@ -10067,7 +10074,7 @@ export const openApiDocument = {
             enum: ['single', 'married', 'divorced', 'widowed', 'other'],
           },
           phone: { type: 'string', minLength: 1, maxLength: 20 },
-          alternatePhone: { type: 'string', maxLength: 20 },
+          alternatePhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
           email: { type: 'string', format: 'email', maxLength: 255 },
           addressLine1: { type: 'string', maxLength: 255 },
           addressLine2: { type: 'string', maxLength: 255 },
@@ -11259,7 +11266,7 @@ export const openApiDocument = {
               'Default payment means for front-desk registration. A convenience hint only — actual insurance coverage is captured per Visit.',
           },
           phone: { type: 'string', minLength: 1, maxLength: 20 },
-          alternatePhone: { type: 'string', maxLength: 20 },
+          alternatePhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
           email: { type: 'string', format: 'email', maxLength: 255 },
           addressLine1: { type: 'string', maxLength: 255 },
           addressLine2: { type: 'string', maxLength: 255 },

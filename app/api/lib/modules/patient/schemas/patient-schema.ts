@@ -221,7 +221,12 @@ const patientPayloadSchema = z
     maritalStatus: optionalTrimmedValue(maritalStatusSchema),
     preferredPaymentMethod: optionalTrimmedValue(paymentMethodSchema),
     phone: patientPhoneSchema('phone'),
-    alternatePhone: optionalTrimmedValue(patientPhoneSchema('alternate phone')),
+    alternatePhone: optionalTrimmedValue(
+      patientPhoneSchema('alternate phone').regex(
+        /^\d+$/,
+        'Patient alternate phone must contain only digits'
+      )
+    ),
     email: optionalTrimmedValue(patientEmailSchema),
     addressLine1: optionalTrimmedValue(
       z.string().trim().max(255, 'Patient address line 1 must be at most 255 characters')

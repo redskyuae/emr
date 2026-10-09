@@ -94,7 +94,10 @@ export const patientFormSchema = z
     maritalStatus: z.enum(PATIENT_MARITAL_STATUSES).optional().or(z.literal('')),
     preferredPaymentMethod: z.enum(PATIENT_PAYMENT_METHODS).optional().or(z.literal('')),
     phone: requiredPhoneField('Phone'),
-    alternatePhone: optionalPhoneField('Alternate phone'),
+    alternatePhone: optionalPhoneField('Alternate phone').refine(
+      (value) => !value || /^\d+$/.test(value),
+      'Alternate phone must contain only digits.'
+    ),
     email: z
       .email('Email must be valid.')
       .trim()
