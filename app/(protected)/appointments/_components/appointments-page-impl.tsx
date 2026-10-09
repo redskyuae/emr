@@ -7,6 +7,7 @@ import { useDebouncedValue } from '@tanstack/react-pacer';
 import { AlertCircle, Plus, Search } from 'lucide-react';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { partitionAppointmentsByDayView } from '@/app/api/lib/modules/appointment/appointment-day-view';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
 import { useAppointmentsQuery } from '@/app/queries/appointments/useAppointments';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -25,7 +26,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toDateInputValue, toDisplayDate, todayDisplayDate } from '../_utils/appointment-date';
-import { partitionAppointmentsByDayView } from '../_utils/appointment-groups';
 import { AppointmentDaySection, AppointmentDaySectionSkeleton } from './appointment-day-section';
 import { AppointmentExportActions } from './appointment-export-actions';
 import { CancelAppointmentDialog } from './_modals/cancel-appointment-dialog';

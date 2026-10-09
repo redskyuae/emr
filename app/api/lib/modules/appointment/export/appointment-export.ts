@@ -99,6 +99,7 @@ export function appointmentExportFilename(format: AppointmentExportFormat, slotD
 async function createAppointmentsExcel(
   appointments: Appointment[],
   slotDate: string,
+  filterSummary: string,
   brand: AppointmentExportBrand
 ) {
   const { Workbook } = await import('exceljs');
@@ -108,7 +109,7 @@ async function createAppointmentsExcel(
   workbook.created = new Date();
 
   const worksheet = workbook.addWorksheet('Appointments', {
-    views: [{ state: 'frozen', ySplit: 7 }],
+    views: [{ state: 'frozen', ySplit: 8 }],
     pageSetup: {
       fitToPage: true,
       fitToWidth: 1,
@@ -117,7 +118,7 @@ async function createAppointmentsExcel(
       paperSize: 9,
       showGridLines: false,
       horizontalCentered: true,
-      printTitlesRow: '7:7',
+      printTitlesRow: '8:8',
       margins: { top: 0.5, bottom: 0.5, left: 0.3, right: 0.3, header: 0.2, footer: 0.2 },
     },
   });
@@ -176,27 +177,36 @@ async function createAppointmentsExcel(
   worksheet.mergeCells('B4:C4');
   worksheet.getCell('B4').value = slotDate;
   worksheet.getCell('B4').font = { bold: true, color: { argb: EXCEL_PRIMARY } };
+  worksheet.mergeCells('E4:F4');
   worksheet.getCell('E4').value = 'Total Appointments';
   worksheet.getCell('E4').font = { bold: true, color: { argb: EXCEL_MUTED } };
-  worksheet.getCell('F4').value = appointments.length;
-  worksheet.getCell('F4').font = { bold: true, color: { argb: EXCEL_PRIMARY } };
+  worksheet.getCell('G4').value = appointments.length;
+  worksheet.getCell('G4').font = { bold: true, color: { argb: EXCEL_PRIMARY } };
+
+  worksheet.getCell('A5').value = 'Filters';
+  worksheet.getCell('A5').font = { bold: true, color: { argb: EXCEL_MUTED } };
+  worksheet.mergeCells('B5:L5');
+  worksheet.getCell('B5').value = filterSummary;
+  worksheet.getCell('B5').font = { color: { argb: EXCEL_PRIMARY } };
+  worksheet.getCell('B5').alignment = { vertical: 'middle', wrapText: true };
+  worksheet.getRow(5).height = 22;
 
   for (let column = 1; column <= headers.length; column += 1) {
-    worksheet.getCell(5, column).border = {
+    worksheet.getCell(6, column).border = {
       bottom: { style: 'thin', color: { argb: EXCEL_BORDER } },
     };
   }
 
   worksheet.addTable({
     name: 'AppointmentSchedule',
-    ref: 'A7',
+    ref: 'A8',
     headerRow: true,
     totalsRow: false,
     style: { theme: 'TableStyleMedium2', showRowStripes: true },
     columns: headers.map((header) => ({ name: header, filterButton: true })),
     rows: rows.map((row) => headers.map((header) => row[header])),
   });
-  worksheet.getRow(7).height = 24;
+  worksheet.getRow(8).height = 24;
   worksheet.headerFooter.oddFooter = `&L${excelFooterText(brand.organizationName)}&C${REPORT_TITLE}&RPage &P of &N`;
   worksheet.headerFooter.evenFooter = worksheet.headerFooter.oddFooter;
 
@@ -206,6 +216,7 @@ async function createAppointmentsExcel(
 async function createAppointmentsPdf(
   appointments: Appointment[],
   slotDate: string,
+  filterSummary: string,
   brand: AppointmentExportBrand
 ) {
   const [{ jsPDF }, { autoTable }] = await Promise.all([
@@ -226,13 +237,13 @@ async function createAppointmentsPdf(
 
   function drawHeader() {
     document.setFillColor(25, 62, 104);
-    document.rect(0, 0, pageWidth, 66, 'F');
+    document.rect(0, 0, pageWidth, 82, 'F');
 
     document.setFillColor(255, 255, 255);
     document.roundedRect(24, 14, 38, 38, 5, 5, 'F');
 
     if (brand.logo) {
-      document.addImage(brand.logo, 'PNG', 27, 17, 32, 32);
+      document.addImage(brand.logo, 'PNG', 27, 17, 32, 32, undefined, 'FAST');
     } else {
       document.setFont('helvetica', 'bold');
       document.setFontSize(11);
@@ -253,13 +264,17 @@ async function createAppointmentsPdf(
     document.text(`Total Appointments  ${appointments.length}`, pageWidth - 24, 45, {
       align: 'right',
     });
+
+    document.setFont('helvetica', 'normal');
+    document.setFontSize(8);
+    document.text(`Filters: ${filterSummary}`, 24, 68, { maxWidth: pageWidth - 48 });
   }
 
   autoTable(document, {
-    startY: 80,
+    startY: 96,
     head: [[...headers]],
     body: rows.map((row) => headers.map((header) => row[header])),
-    margin: { top: 80, right: 24, bottom: 38, left: 24 },
+    margin: { top: 96, right: 24, bottom: 38, left: 24 },
     styles: {
       fontSize: 6.5,
       cellPadding: 4,
@@ -294,18 +309,19 @@ export async function createAppointmentExport(
   format: AppointmentExportFormat,
   appointments: Appointment[],
   slotDate: string,
+  filterSummary: string,
   brand: AppointmentExportBrand
 ): Promise<AppointmentExportFile> {
   if (format === 'excel') {
     return {
-      body: await createAppointmentsExcel(appointments, slotDate, brand),
+      body: await createAppointmentsExcel(appointments, slotDate, filterSummary, brand),
       contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       filename: appointmentExportFilename(format, slotDate),
     };
   }
 
   return {
-    body: await createAppointmentsPdf(appointments, slotDate, brand),
+    body: await createAppointmentsPdf(appointments, slotDate, filterSummary, brand),
     contentType: 'application/pdf',
     filename: appointmentExportFilename(format, slotDate),
   };

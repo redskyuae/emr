@@ -4153,7 +4153,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Download an Appointment schedule',
         description:
-          'Generates a branded Excel workbook or PDF document on the server for Appointments matching the supplied active-Tenant filters.',
+          'Generates a branded Excel workbook or PDF document on the server for Appointments matching the supplied active-Tenant filters. The document header records the active Doctor, Therapist, Patient, Status, and search filters, or states that no filters were applied.',
         security: [{ cookieAuth: [] }],
         parameters: [
           {
@@ -4218,6 +4218,14 @@ export const openApiDocument = {
             },
           },
           ...authenticatedListErrorResponses,
+          '409': {
+            description:
+              'The matching Appointment count exceeds the server export limit. Narrow the filters before retrying.',
+            content: jsonContent(schemaRef('ErrorResponse'), {
+              message: 'Conflict',
+              errors: ['Too many Appointments to export (1000). Narrow the filters.'],
+            }),
+          },
         },
       },
     },

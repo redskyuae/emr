@@ -9,7 +9,9 @@ import {
   type AppointmentExportBrand,
   type AppointmentExportFormat,
 } from '@/app/api/lib/modules/appointment/export/appointment-export';
+import { filterAppointmentsForDayView } from '@/app/api/lib/modules/appointment/appointment-day-view';
 import { getAppointmentsQuery } from '@/app/api/lib/modules/appointment/queries/get-appointments-query';
+import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { brandLogos, getConfiguredBrandLogoVariant } from '@/components/brand/brand-config';
 
@@ -25,6 +27,49 @@ function responseBody(bytes: Uint8Array) {
   const body = new Uint8Array(bytes.byteLength);
   body.set(bytes);
   return body.buffer;
+}
+
+function shortFilterValue(value: string) {
+  const normalized = value.replaceAll('"', "'");
+  return normalized.length > 48 ? `${normalized.slice(0, 45)}...` : normalized;
+}
+
+function getFilterSummary(searchParams: URLSearchParams, appointments: Appointment[]) {
+  const parts: string[] = [];
+  const doctorId = searchParams.get('doctorId')?.trim();
+  const therapistId = searchParams.get('therapistId')?.trim();
+  const patientId = searchParams.get('patientId')?.trim();
+  const statusId = searchParams.get('appointmentStatusId')?.trim();
+  const query = searchParams.get('query')?.trim();
+
+  if (doctorId) {
+    const doctor = appointments.find((appointment) => appointment.doctor?.id === Number(doctorId));
+    parts.push(`Doctor ${shortFilterValue(doctor?.doctor?.name ?? `#${doctorId}`)}`);
+  }
+
+  if (therapistId) {
+    const appointment = appointments.find((item) => item.therapist?.id === Number(therapistId));
+    parts.push(`Therapist ${shortFilterValue(appointment?.therapist?.name ?? `#${therapistId}`)}`);
+  }
+
+  if (patientId) {
+    const appointment = appointments.find((item) => item.patient.id === Number(patientId));
+    const patientName = appointment
+      ? `${appointment.patient.firstName} ${appointment.patient.lastName}`.trim()
+      : `#${patientId}`;
+    parts.push(`Patient ${shortFilterValue(patientName)}`);
+  }
+
+  if (statusId) {
+    const appointment = appointments.find((item) => item.appointmentStatus.id === Number(statusId));
+    parts.push(`Status ${shortFilterValue(appointment?.appointmentStatus.name ?? `#${statusId}`)}`);
+  }
+
+  if (query) {
+    parts.push(`Search "${shortFilterValue(query)}"`);
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : 'none';
 }
 
 async function getExportBrand(): Promise<AppointmentExportBrand> {
@@ -108,11 +153,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (queryResult.total > queryResult.data.length) {
+      return NextResponse.json(
+        {
+          message: 'Conflict',
+          errors: [`Too many Appointments to export (${queryResult.total}). Narrow the filters.`],
+        },
+        { status: StatusCodes.CONFLICT }
+      );
+    }
+
     const reportDate = slotDate ?? queryResult.data[0]?.slotDate ?? 'schedule';
+    const appointments = filterAppointmentsForDayView(queryResult.data);
+    const filterSummary = getFilterSummary(searchParams, queryResult.data);
     const file = await createAppointmentExport(
       format,
-      queryResult.data,
+      appointments,
       reportDate,
+      filterSummary,
       await getExportBrand()
     );
 

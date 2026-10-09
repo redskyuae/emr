@@ -60,7 +60,16 @@ describe('Appointment export route', () => {
     readLogo.mockResolvedValue(Buffer.from([1, 2, 3]));
     getAppointments.mockResolvedValue({
       success: true,
-      data: [{ id: 10, slotDate: '2026-10-08' }] as never,
+      data: [
+        {
+          id: 10,
+          slotDate: '2026-10-08',
+          doctor: { id: 3, name: 'Dr. Meera' },
+          therapist: { id: 8, name: 'Leela Krishnan' },
+          patient: { id: 5, firstName: 'Asha', lastName: 'Rao', mrn: 'MRN-1001' },
+          appointmentStatus: { id: 9, name: 'Scheduled', category: 'scheduled' },
+        },
+      ] as never,
       total: 1,
     });
     createExport.mockResolvedValue({
@@ -116,6 +125,7 @@ describe('Appointment export route', () => {
       'excel',
       expect.arrayContaining([expect.objectContaining({ id: 10 })]),
       '08-10-2026',
+      'Doctor Dr. Meera · Therapist Leela Krishnan · Status Scheduled · Search "rao"',
       {
         organizationName: 'Dhathri Gram',
         organizationSubtitle: 'Ayurveda Medical Centre',
@@ -143,7 +153,7 @@ describe('Appointment export route', () => {
     const response = await GET(request('?format=pdf&slotDate=08-10-2026'));
 
     expect(readLogo).not.toHaveBeenCalled();
-    expect(createExport).toHaveBeenCalledWith('pdf', expect.any(Array), '08-10-2026', {
+    expect(createExport).toHaveBeenCalledWith('pdf', expect.any(Array), '08-10-2026', 'none', {
       organizationName: 'Medical EMR',
       organizationSubtitle: 'Redsky Consultancy',
     });
@@ -151,6 +161,50 @@ describe('Appointment export route', () => {
     expect(response.headers.get('Content-Disposition')).toBe(
       'attachment; filename="appointments-2026-10-08.pdf"'
     );
+  });
+
+  it('should omit cancelled and no-show Appointments from the exported day schedule', async () => {
+    getAppointments.mockResolvedValue({
+      success: true,
+      data: [
+        { id: 1, appointmentStatus: { category: 'scheduled' } },
+        { id: 2, appointmentStatus: { category: 'completed' } },
+        { id: 3, appointmentStatus: { category: 'cancelled' } },
+        { id: 4, appointmentStatus: { category: 'no_show' } },
+      ] as never,
+      total: 4,
+    });
+
+    await GET(request('?format=pdf&slotDate=08-10-2026'));
+
+    expect(createExport).toHaveBeenCalledWith(
+      'pdf',
+      [expect.objectContaining({ id: 1 }), expect.objectContaining({ id: 2 })],
+      '08-10-2026',
+      'none',
+      expect.any(Object)
+    );
+  });
+
+  it('should reject an export when the matching Appointments exceed the fetched page', async () => {
+    getAppointments.mockResolvedValue({
+      success: true,
+      data: Array.from({ length: 999 }, (_, index) => ({
+        id: index + 1,
+        appointmentStatus: { category: 'scheduled' },
+      })) as never,
+      total: 1_000,
+    });
+
+    const response = await GET(request('?format=excel&slotDate=08-10-2026'));
+
+    expect(response.status).toBe(StatusCodes.CONFLICT);
+    await expect(response.json()).resolves.toEqual({
+      message: 'Conflict',
+      errors: ['Too many Appointments to export (1000). Narrow the filters.'],
+    });
+    expect(readLogo).not.toHaveBeenCalled();
+    expect(createExport).not.toHaveBeenCalled();
   });
 
   it('should return validation errors without generating a file', async () => {

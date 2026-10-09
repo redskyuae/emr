@@ -59,6 +59,7 @@ const brand = {
     'base64'
   ),
 };
+const filterSummary = 'Therapist Leela Krishnan · Status Scheduled · Search "rao"';
 
 describe('Appointment export', () => {
   it('should map Consultation details into report columns', () => {
@@ -104,7 +105,13 @@ describe('Appointment export', () => {
   });
 
   it('should create a branded Excel workbook on the server', async () => {
-    const file = await createAppointmentExport('excel', [appointment()], '08-10-2026', brand);
+    const file = await createAppointmentExport(
+      'excel',
+      [appointment()],
+      '08-10-2026',
+      filterSummary,
+      brand
+    );
     const workbook = new Workbook();
     await workbook.xlsx.load(file.body as never);
     const worksheet = workbook.getWorksheet('Appointments');
@@ -115,19 +122,30 @@ describe('Appointment export', () => {
     });
     expect(worksheet?.getCell('C1').value).toBe('Dhathri Gram');
     expect(worksheet?.getCell('C2').value).toBe('Ayurveda Medical Centre · Appointment Schedule');
-    expect(worksheet?.getCell('F4').value).toBe(1);
-    expect(worksheet?.getCell('H7').value).toBe('Therapist');
-    expect(worksheet?.getCell('A8').value).toBe('APT-1001');
+    expect(worksheet?.getCell('G4').value).toBe(1);
+    expect(worksheet?.getCell('A5').value).toBe('Filters');
+    expect(worksheet?.getCell('B5').value).toBe(filterSummary);
+    expect(worksheet?.getCell('H8').value).toBe('Therapist');
+    expect(worksheet?.getCell('A9').value).toBe('APT-1001');
   });
 
   it('should create a PDF document on the server', async () => {
-    const file = await createAppointmentExport('pdf', [appointment()], '08-10-2026', brand);
+    const file = await createAppointmentExport(
+      'pdf',
+      [appointment()],
+      '08-10-2026',
+      filterSummary,
+      brand
+    );
     const signature = Buffer.from(file.body).subarray(0, 5).toString('ascii');
+    const content = Buffer.from(file.body).toString('latin1');
 
     expect(file.contentType).toBe('application/pdf');
     expect(file.filename).toBe('appointments-2026-10-08.pdf');
     expect(signature).toBe('%PDF-');
     expect(file.body.byteLength).toBeGreaterThan(1_000);
+    expect(content).toContain('Filters:');
+    expect(content).toContain('Therapist Leela Krishnan');
   });
 
   it('should keep ISO dates stable in filenames', () => {

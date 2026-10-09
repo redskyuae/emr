@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { partitionAppointmentsByDayView } from './appointment-groups';
+import {
+  filterAppointmentsForDayView,
+  partitionAppointmentsByDayView,
+} from './appointment-day-view';
 
-describe('partitionAppointmentsByDayView', () => {
-  it('should place active lifecycle appointments in the upcoming group and completed appointments in the completed group', () => {
+describe('Appointment day view', () => {
+  it('should place active lifecycle Appointments in upcoming and completed Appointments in completed', () => {
     const scheduled = { appointmentStatus: { category: 'scheduled' as const } };
     const confirmed = { appointmentStatus: { category: 'confirmed' as const } };
     const checkedIn = { appointmentStatus: { category: 'checked_in' as const } };
@@ -15,10 +18,16 @@ describe('partitionAppointmentsByDayView', () => {
     });
   });
 
-  it('should omit cancelled and no-show appointments from the operational day view', () => {
+  it('should omit cancelled and no-show Appointments from the operational day view', () => {
+    const scheduled = { appointmentStatus: { category: 'scheduled' as const } };
+    const completed = { appointmentStatus: { category: 'completed' as const } };
     const cancelled = { appointmentStatus: { category: 'cancelled' as const } };
     const noShow = { appointmentStatus: { category: 'no_show' as const } };
 
+    expect(filterAppointmentsForDayView([scheduled, cancelled, noShow, completed])).toEqual([
+      scheduled,
+      completed,
+    ]);
     expect(partitionAppointmentsByDayView([cancelled, noShow])).toEqual({
       upcoming: [],
       completed: [],

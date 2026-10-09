@@ -71,6 +71,7 @@ describe('OpenAPI Patient Treatment Plan contracts', () => {
     expect(
       response.content['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
     ).toBeDefined();
+    expect(operation.responses['409']).toBeDefined();
   });
 });
 
