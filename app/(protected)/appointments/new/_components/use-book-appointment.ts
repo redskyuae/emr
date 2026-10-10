@@ -225,7 +225,7 @@ export function useBookAppointment() {
     ) ?? null;
   const resourceSession = selectedSession;
   const requiresRoom = isProcedurePath;
-  const requiresTherapist = Boolean(resourceSession?.therapistSkill);
+  const requiresTherapist = isProcedurePath;
   const patientHasConflictingAppointment =
     resourceAvailabilityQuery.data?.patientUnavailable ?? false;
   const availableRooms = getAvailableRooms(roomsQuery.data?.data ?? []);
@@ -327,13 +327,6 @@ export function useBookAppointment() {
 
     const defaults = getDefaultTreatmentSelection(planOptions, currentPlanId);
     if (!defaults.patientTreatmentPlanId) return;
-    const defaultPlan = planOptions.find(
-      (plan) => String(plan.patientTreatmentPlanId) === defaults.patientTreatmentPlanId
-    );
-    const defaultSession = defaultPlan?.sessions.find(
-      (session) => session.id === defaults.patientTreatmentPlanSessionId
-    );
-
     form.setValue('selectionMode', 'EXISTING_PLAN', { shouldDirty: false });
     form.setValue('patientTreatmentPlanId', defaults.patientTreatmentPlanId, {
       shouldDirty: false,
@@ -344,9 +337,7 @@ export function useBookAppointment() {
     });
     form.setValue('sessionId', defaults.patientTreatmentPlanSessionId, { shouldDirty: false });
     form.setValue('roomId', '', { shouldDirty: false });
-    form.setValue('therapistId', defaultSession?.therapistSkill ? '' : 'not-required', {
-      shouldDirty: false,
-    });
+    form.setValue('therapistId', '', { shouldDirty: false });
   }, [form, isProcedurePath, planOptions, plansQuery.data, selectedPatient]);
 
   useEffect(() => {
@@ -461,14 +452,11 @@ export function useBookAppointment() {
     form.setValue('endTime', '');
     form.setValue('sessionId', firstSession?.id ?? '', { shouldDirty: true });
     form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', firstSession?.therapistSkill ? '' : 'not-required', {
-      shouldDirty: true,
-    });
+    form.setValue('therapistId', '', { shouldDirty: true });
   }
 
   function changeSession(value: string) {
     setProcedureEndTimeAdjusted(false);
-    const session = selectedTreatment?.sessions.find((candidate) => candidate.id === value);
     form.setValue('sessionId', value, { shouldDirty: true, shouldValidate: true });
     if (values.selectionMode === 'EXISTING_PLAN') {
       form.setValue('patientTreatmentPlanSessionId', value, {
@@ -479,20 +467,12 @@ export function useBookAppointment() {
     form.setValue('startTime', '');
     form.setValue('endTime', '');
     form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', session?.therapistSkill ? '' : 'not-required', {
-      shouldDirty: true,
-    });
+    form.setValue('therapistId', '', { shouldDirty: true });
   }
 
   function changePlan(value: string) {
     setProcedureEndTimeAdjusted(false);
     const defaults = getDefaultTreatmentSelection(planOptions, value);
-    const plan = planOptions.find(
-      (candidate) => String(candidate.patientTreatmentPlanId) === value
-    );
-    const session = plan?.sessions.find(
-      (candidate) => candidate.id === defaults.patientTreatmentPlanSessionId
-    );
     form.setValue('selectionMode', value ? 'EXISTING_PLAN' : '', { shouldDirty: true });
     form.setValue('patientTreatmentPlanId', value, {
       shouldDirty: true,
@@ -508,9 +488,7 @@ export function useBookAppointment() {
     form.setValue('startTime', '', { shouldDirty: true });
     form.setValue('endTime', '', { shouldDirty: true });
     form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', session?.therapistSkill ? '' : 'not-required', {
-      shouldDirty: true,
-    });
+    form.setValue('therapistId', '', { shouldDirty: true });
   }
 
   function changeDoctor() {
@@ -520,9 +498,7 @@ export function useBookAppointment() {
 
   function resetProcedureResources() {
     form.setValue('roomId', '', { shouldDirty: true });
-    form.setValue('therapistId', selectedSession?.therapistSkill ? '' : 'not-required', {
-      shouldDirty: true,
-    });
+    form.setValue('therapistId', '', { shouldDirty: true });
   }
 
   function changeProcedureDate() {
