@@ -49,14 +49,17 @@ describe('Therapist options', () => {
     ]);
   });
 
-  it('should return no Therapists when the Session has no required skill', () => {
-    const therapist = buildTherapist({
-      id: 1,
-      name: 'Leela',
-      skills: [{ id: 11, name: 'Abhyanga', code: 'ABH' }],
-    });
+  it('should return every active Therapist when the Session has no skill filter', () => {
+    const therapists = [
+      buildTherapist({
+        id: 1,
+        name: 'Leela',
+        skills: [{ id: 11, name: 'Abhyanga', code: 'ABH' }],
+      }),
+      buildTherapist({ id: 2, name: 'Maya', isActive: false }),
+    ];
 
-    expect(getTherapistsForSkill([therapist], null)).toEqual([]);
+    expect(getTherapistsForSkill(therapists, null)).toEqual([therapists[0]]);
   });
 
   it('should return every active Therapist for a legacy skill label without a Master ID', () => {

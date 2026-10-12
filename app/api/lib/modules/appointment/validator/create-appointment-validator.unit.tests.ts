@@ -98,6 +98,7 @@ const procedurePayload = {
   startTime: '10:00',
   endTime: '11:15',
   roomId: 7,
+  therapistId: 8,
   patientTreatmentPlanId: 400,
   patientTreatmentPlanSessionId: 401,
 };
@@ -109,6 +110,7 @@ const catalogueProcedurePayload = {
   startTime: '10:00',
   endTime: '11:15',
   roomId: 7,
+  therapistId: 8,
   treatmentId: 500,
 };
 
@@ -169,6 +171,16 @@ describe('validateCreateAppointment', () => {
     const result = await validateCreateAppointment({}, 'tenant-1');
 
     expect(result.success).toBe(false);
+    expect(tenantRepo.getTenantById).not.toHaveBeenCalled();
+  });
+
+  it('should reject a Procedure without a Therapist before reading repositories', async () => {
+    const { therapistId: _therapistId, ...withoutTherapist } = procedurePayload;
+
+    await expect(validateCreateAppointment(withoutTherapist, 'tenant-1')).resolves.toMatchObject({
+      success: false,
+      errors: ['Therapist ID is required'],
+    });
     expect(tenantRepo.getTenantById).not.toHaveBeenCalled();
   });
 
@@ -262,9 +274,10 @@ describe('validateCreateAppointment', () => {
   });
 
   it('should accept a Therapist qualified for the selected Plan Session', async () => {
-    await expect(
-      validateCreateAppointment({ ...procedurePayload, therapistId: 8 }, 'tenant-1')
-    ).resolves.toMatchObject({ success: true, data: { therapistId: 8 } });
+    await expect(validateCreateAppointment(procedurePayload, 'tenant-1')).resolves.toMatchObject({
+      success: true,
+      data: { therapistId: 8 },
+    });
 
     expect(treatmentRepo.getTreatmentSessionById).toHaveBeenCalledWith(501, 'tenant-1');
     expect(therapistRepo.getTherapistById).toHaveBeenCalledWith(8, 'tenant-1');
@@ -277,12 +290,31 @@ describe('validateCreateAppointment', () => {
       skills: [],
     } as never);
 
-    await expect(
-      validateCreateAppointment({ ...procedurePayload, therapistId: 8 }, 'tenant-1')
-    ).resolves.toMatchObject({
+    await expect(validateCreateAppointment(procedurePayload, 'tenant-1')).resolves.toMatchObject({
       success: false,
       status: StatusCodes.CONFLICT,
       errors: ['Therapist 8 does not have the required Therapist Skill.'],
+    });
+  });
+
+  it('should accept an active Therapist when the selected Plan Session has no required skill', async () => {
+    treatmentRepo.getTreatmentById.mockResolvedValue({
+      ...repeatableTreatment,
+      sessions: [{ ...repeatableTreatment.sessions[0], therapistSkillId: null }],
+    } as never);
+    treatmentRepo.getTreatmentSessionById.mockResolvedValue({
+      ...repeatableTreatment.sessions[0],
+      therapistSkillId: null,
+    } as never);
+    therapistRepo.getTherapistById.mockResolvedValue({
+      id: 8,
+      isActive: true,
+      skills: [],
+    } as never);
+
+    await expect(validateCreateAppointment(procedurePayload, 'tenant-1')).resolves.toMatchObject({
+      success: true,
+      data: { therapistId: 8 },
     });
   });
 

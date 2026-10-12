@@ -4,7 +4,7 @@ export default function BookAppointmentLoader() {
   return (
     <div
       className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col gap-4"
-      aria-label="Loading Book Appointment patient and visit step"
+      aria-label="Loading Book Appointment"
       aria-busy="true"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">

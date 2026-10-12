@@ -28,6 +28,7 @@ const validProcedurePayload = {
   startTime: '10:00',
   endTime: '11:15',
   roomId: 7,
+  therapistId: 8,
   patientTreatmentPlanId: 400,
   patientTreatmentPlanSessionId: 401,
 };
@@ -39,6 +40,7 @@ const validCatalogueProcedurePayload = {
   startTime: '10:00',
   endTime: '11:15',
   roomId: 7,
+  therapistId: 8,
   treatmentId: 400,
   totalSessions: 6,
 };
@@ -81,7 +83,7 @@ describe('Appointment schema', () => {
     });
   });
 
-  it('should normalize a Procedure reschedule request without accepting a Doctor', () => {
+  it('should normalize a Procedure reschedule request without accepting resource changes', () => {
     expect(
       rescheduleAppointmentSchema.parse({
         bookingPath: 'PROCEDURE',
@@ -103,6 +105,17 @@ describe('Appointment schema', () => {
         bookingPath: 'PROCEDURE',
         rescheduleReason: 'Therapist is unavailable',
         doctorId: 7,
+        slotDate: '31-12-2099',
+        startTime: '11:00',
+        endTime: '12:15',
+      }).success
+    ).toBe(false);
+
+    expect(
+      rescheduleAppointmentSchema.safeParse({
+        bookingPath: 'PROCEDURE',
+        rescheduleReason: 'Therapist is unavailable',
+        therapistId: null,
         slotDate: '31-12-2099',
         startTime: '11:00',
         endTime: '12:15',
@@ -224,6 +237,7 @@ describe('Appointment schema', () => {
       startTime: validProcedurePayload.startTime,
       endTime: validProcedurePayload.endTime,
       roomId: validProcedurePayload.roomId,
+      therapistId: validProcedurePayload.therapistId,
     };
 
     expect(createAppointmentSchema.safeParse(withoutSelection).success).toBe(false);
@@ -265,7 +279,13 @@ describe('Appointment schema', () => {
     });
   });
 
-  it('should accept and normalize an optional Therapist assignment for a Procedure', () => {
+  it('should require a Therapist assignment for a Procedure', () => {
+    const { therapistId: _therapistId, ...withoutTherapist } = validProcedurePayload;
+
+    expect(errorsOf(withoutTherapist)).toContain('Therapist ID is required');
+  });
+
+  it('should normalize a required Therapist assignment for a Procedure', () => {
     expect(
       createAppointmentSchema.parse({ ...validProcedurePayload, therapistId: '8' })
     ).toMatchObject({
@@ -307,6 +327,7 @@ describe('Appointment schema', () => {
       startTime: validProcedurePayload.startTime,
       endTime: validProcedurePayload.endTime,
       roomId: validProcedurePayload.roomId,
+      therapistId: validProcedurePayload.therapistId,
       patientTreatmentPlanId: validProcedurePayload.patientTreatmentPlanId,
       patientTreatmentPlanSessionId: validProcedurePayload.patientTreatmentPlanSessionId,
     };

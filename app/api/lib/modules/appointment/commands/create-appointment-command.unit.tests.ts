@@ -202,6 +202,7 @@ describe('createAppointmentCommand', () => {
         startTime: '09:00',
         endTime: '10:00',
         roomId: 7,
+        therapistId: 8,
         patientTreatmentPlanId: 400,
         patientTreatmentPlanSessionId: 401,
         remarks: undefined,

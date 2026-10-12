@@ -161,7 +161,7 @@ export function ResourceAllocationSection({
                   </span>
                 </h3>
                 <p className="text-muted-foreground text-xs">
-                  {session?.therapistSkill ?? 'Choose a Treatment'}
+                  {session?.therapistSkill || 'Any active Therapist'}
                 </p>
               </div>
               {therapists.map(({ resource: therapist, isBooked }) => {
@@ -208,7 +208,9 @@ export function ResourceAllocationSection({
                 ) : null}
                 {canAllocate && !isTherapistsLoading && !therapists.length ? (
                   <p className="text-muted-foreground text-sm">
-                    No matching Therapist. Choose another Treatment or Session.
+                    {session?.therapistSkill
+                      ? 'No matching Therapist. Choose another Treatment or Session.'
+                      : 'No active Therapist is available.'}
                   </p>
                 ) : null}
                 <FieldError errors={[errors.therapistId]} />

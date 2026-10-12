@@ -11,6 +11,7 @@ describe('CreateAppointmentRequest', () => {
       startTime: '10:00',
       endTime: '11:15',
       roomId: 7,
+      therapistId: 8,
       patientTreatmentPlanId: 400,
       patientTreatmentPlanSessionId: 401,
     } satisfies CreateAppointmentRequest;
@@ -26,6 +27,7 @@ describe('CreateAppointmentRequest', () => {
       startTime: '10:00',
       endTime: '11:15',
       roomId: 7,
+      therapistId: 8,
       treatmentId: 400,
       totalSessions: 6,
     } satisfies CreateAppointmentRequest;

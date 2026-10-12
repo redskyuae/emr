@@ -218,21 +218,18 @@ export async function validateCreateAppointment(
         };
       }
 
-      if (data.therapistId !== undefined) {
-        const [treatment, treatmentSession] = await Promise.all([
-          plan?.treatmentId == null
-            ? undefined
-            : treatmentRepository.getTreatmentById(plan.treatmentId, validatedTenantId),
-          session.treatmentSessionId === null
-            ? undefined
-            : treatmentRepository.getTreatmentSessionById(
-                session.treatmentSessionId,
-                validatedTenantId
-              ),
-        ]);
-        requiredTherapistSkillId =
-          treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
-      }
+      const [treatment, treatmentSession] = await Promise.all([
+        plan?.treatmentId == null
+          ? undefined
+          : treatmentRepository.getTreatmentById(plan.treatmentId, validatedTenantId),
+        session.treatmentSessionId === null
+          ? undefined
+          : treatmentRepository.getTreatmentSessionById(
+              session.treatmentSessionId,
+              validatedTenantId
+            ),
+      ]);
+      requiredTherapistSkillId = treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
     } else {
       const treatment = await treatmentRepository.getTreatmentById(
         data.treatmentId,
@@ -288,25 +285,23 @@ export async function validateCreateAppointment(
       }
     }
 
-    if (data.therapistId !== undefined) {
-      const therapist = await therapistRepository.getTherapistById(
-        data.therapistId,
-        validatedTenantId
+    const therapist = await therapistRepository.getTherapistById(
+      data.therapistId,
+      validatedTenantId
+    );
+    if (!therapist) errors.push(`Therapist ${data.therapistId} is Invalid.`);
+    else if (!therapist.isActive)
+      errors.push(
+        `Therapist ${data.therapistId} is inactive and cannot be assigned to an Appointment.`
       );
-      if (!therapist) errors.push(`Therapist ${data.therapistId} is Invalid.`);
-      else if (!therapist.isActive)
-        errors.push(
-          `Therapist ${data.therapistId} is inactive and cannot be assigned to an Appointment.`
-        );
-      else {
-        if (
-          requiredTherapistSkillId != null &&
-          !therapist.skills.some((skill) => skill.id === requiredTherapistSkillId)
-        ) {
-          errors.push(`Therapist ${data.therapistId} does not have the required Therapist Skill.`);
-        }
-      }
-      if (errors.length > 0) return { success: false, errors, status: StatusCodes.CONFLICT };
+    else if (
+      requiredTherapistSkillId != null &&
+      !therapist.skills.some((skill) => skill.id === requiredTherapistSkillId)
+    ) {
+      errors.push(`Therapist ${data.therapistId} does not have the required Therapist Skill.`);
+    }
+    if (errors.length > 0) {
+      return { success: false, errors, status: StatusCodes.CONFLICT };
     }
   }
 

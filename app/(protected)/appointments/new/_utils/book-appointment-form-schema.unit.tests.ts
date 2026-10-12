@@ -185,6 +185,19 @@ describe('booking path validation', () => {
       );
   });
 
+  it('should require a selected Therapist rather than the not-required placeholder', () => {
+    const result = bookAppointmentFormSchema.safeParse({
+      ...procedure,
+      therapistId: 'not-required',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['therapistId'], message: 'Therapist is required' })
+      );
+  });
+
   it('should allow catalogue assignment without a Repeatable count', () => {
     expect(bookAppointmentFormSchema.safeParse({ ...procedure, totalSessions: '' }).success).toBe(
       true

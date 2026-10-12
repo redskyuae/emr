@@ -250,7 +250,7 @@ export const bookAppointmentFormSchema = z
         context.addIssue({ code: 'custom', path: ['roomId'], message: 'Room is required' });
       }
 
-      if (data.therapistId.trim() === '') {
+      if (!/^[1-9]\d*$/.test(data.therapistId)) {
         context.addIssue({
           code: 'custom',
           path: ['therapistId'],
