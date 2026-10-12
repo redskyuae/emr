@@ -155,7 +155,7 @@ const procedureAppointmentShape = {
   provisionalPatient: provisionalPatientSchema.optional(),
   doctorId: positiveIdSchema('Doctor ID').optional(),
   roomId: positiveIdSchema('Room ID'),
-  therapistId: positiveIdSchema('Therapist ID').optional(),
+  therapistId: positiveIdSchema('Therapist ID'),
   startTime: appointmentTimeSchema('Start time'),
   endTime: appointmentTimeSchema('End time'),
 };
