@@ -229,8 +229,7 @@ export async function validateCreateAppointment(
               validatedTenantId
             ),
       ]);
-      requiredTherapistSkillId =
-        treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
+      requiredTherapistSkillId = treatmentSession?.therapistSkillId ?? treatment?.therapistSkillId;
     } else {
       const treatment = await treatmentRepository.getTreatmentById(
         data.treatmentId,
