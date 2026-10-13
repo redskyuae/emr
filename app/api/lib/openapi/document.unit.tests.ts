@@ -18,6 +18,23 @@ describe('OpenAPI Patient Treatment Plan contracts', () => {
     expect(response['404']).toBeDefined();
   });
 
+  it('documents adding Sessions to a current Patient Treatment Plan', () => {
+    const operation = openApiDocument.paths['/api/v1/patients/{id}/treatment-plans'].post;
+    const response = operation.responses as Record<string, { content?: unknown }>;
+    const request = openApiDocument.components.schemas.AddPatientTreatmentPlanSessionsRequest;
+
+    expect(operation.parameters).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'id', in: 'path' })])
+    );
+    expect(operation.requestBody).toBeDefined();
+    expect(request.required).toEqual(['patientTreatmentPlanId', 'sessions']);
+    expect(response['200'].content).toBeDefined();
+    expect(response['400']).toBeDefined();
+    expect(response['403']).toBeDefined();
+    expect(response['404']).toBeDefined();
+    expect(response['409']).toBeDefined();
+  });
+
   it('documents mutually exclusive Procedure Plan and catalogue selectors', () => {
     const schema = openApiDocument.components.schemas.CreateProcedureAppointmentRequest;
     const oneOf = schema.oneOf as Array<{ $ref: string }>;
