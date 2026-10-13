@@ -354,18 +354,22 @@ describe('Appointment schema', () => {
 
   describe('listAppointmentsSchema', () => {
     it('should normalize DD-MM-YYYY slot date filters to ISO dates', () => {
-      expect(listAppointmentsSchema.parse({ slotDate: '16-07-2026' }).slotDate).toBe('2026-07-16');
+      expect(
+        listAppointmentsSchema.parse({ slotDate: '16-07-2026', fromDate: '17-07-2026' })
+      ).toMatchObject({ slotDate: '2026-07-16', fromDate: '2026-07-17' });
     });
 
     it('should reject invalid date and id filters', () => {
       const result = listAppointmentsSchema.safeParse({
         slotDate: '2026-07-16',
+        fromDate: '2026-07-17',
         doctorId: '0',
         therapistId: '0',
       });
 
       expect(result.error?.issues.map((issue) => issue.message)).toEqual([
         'Slot date must be in DD-MM-YYYY format',
+        'From date must be in DD-MM-YYYY format',
         'Doctor ID must be positive',
         'Therapist ID must be positive',
       ]);
@@ -373,6 +377,15 @@ describe('Appointment schema', () => {
 
     it('should coerce a valid Therapist filter', () => {
       expect(listAppointmentsSchema.parse({ therapistId: '8' })).toEqual({ therapistId: 8 });
+    });
+
+    it('should accept Appointment status category filters and reject unknown categories', () => {
+      expect(
+        listAppointmentsSchema.parse({ statusCategories: ['SCHEDULED', 'CHECKED_IN'] })
+      ).toEqual({ statusCategories: ['SCHEDULED', 'CHECKED_IN'] });
+      expect(listAppointmentsSchema.safeParse({ statusCategories: ['UNKNOWN'] }).success).toBe(
+        false
+      );
     });
 
     it('should trim query and coerce paging filters', () => {

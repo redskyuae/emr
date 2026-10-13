@@ -20,15 +20,21 @@ export async function GET(request: NextRequest) {
     const limit = parsePositiveInteger(searchParams.get('limit'), 10);
     const safePage = Math.max(1, Math.floor(page));
     const safeLimit = Math.min(999, Math.max(1, Math.floor(limit)));
+    const statusCategories = searchParams
+      .getAll('statusCategory')
+      .map((category) => category.trim())
+      .filter(Boolean);
 
     const queryResult = await getAppointmentsQuery({
       tenantId: tenantSession.tenantId,
       filters: {
         slotDate: searchParams.get('slotDate')?.trim() || undefined,
+        fromDate: searchParams.get('fromDate')?.trim() || undefined,
         doctorId: searchParams.get('doctorId')?.trim() || undefined,
         therapistId: searchParams.get('therapistId')?.trim() || undefined,
         patientId: searchParams.get('patientId')?.trim() || undefined,
         appointmentStatusId: searchParams.get('appointmentStatusId')?.trim() || undefined,
+        statusCategories: statusCategories.length > 0 ? statusCategories : undefined,
         query: searchParams.get('query')?.trim() || searchParams.get('search')?.trim() || undefined,
         page: safePage,
         limit: safeLimit,

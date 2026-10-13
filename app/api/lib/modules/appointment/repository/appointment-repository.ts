@@ -399,7 +399,9 @@ async function getAppointments({
   therapistId,
   patientId,
   slotDate,
+  fromDate,
   appointmentStatusId,
+  statusCategories,
 }: AppointmentListParams) {
   const offset = (page - 1) * limit;
   const trimmedQuery = query?.trim();
@@ -416,10 +418,14 @@ async function getAppointments({
     eq(appointmentTable.tenantId, tenantId),
     eq(appointmentTable.isDeleted, false),
     slotDate ? eq(appointmentTable.slotDate, slotDate) : undefined,
+    fromDate ? gte(appointmentTable.slotDate, fromDate) : undefined,
     doctorId ? eq(appointmentTable.doctorId, doctorId) : undefined,
     therapistId ? eq(appointmentTable.therapistId, therapistId) : undefined,
     patientId ? eq(appointmentTable.patientId, patientId) : undefined,
     appointmentStatusId ? eq(appointmentTable.appointmentStatusId, appointmentStatusId) : undefined,
+    statusCategories?.length
+      ? inArray(appointmentStatusTable.category, statusCategories)
+      : undefined,
     searchCondition
   );
   const earliestSlotTime = sql<string>`coalesce(${appointmentTable.startTime}, (
@@ -429,9 +435,10 @@ async function getAppointments({
       and ${appointmentSlotReservationTable.tenantId} = ${appointmentTable.tenantId}
       and ${appointmentSlotReservationTable.isDeleted} = false
   ))`;
-  const ordering = slotDate
-    ? [asc(appointmentTable.slotDate), asc(earliestSlotTime), asc(appointmentTable.id)]
-    : [desc(appointmentTable.slotDate), asc(earliestSlotTime), desc(appointmentTable.id)];
+  const ordering =
+    slotDate || fromDate
+      ? [asc(appointmentTable.slotDate), asc(earliestSlotTime), asc(appointmentTable.id)]
+      : [desc(appointmentTable.slotDate), asc(earliestSlotTime), desc(appointmentTable.id)];
 
   const [rows, [{ total }]] = await Promise.all([
     appointmentJoins()
@@ -448,6 +455,14 @@ async function getAppointments({
           eq(patientTable.id, appointmentTable.patientId),
           eq(patientTable.tenantId, appointmentTable.tenantId),
           eq(patientTable.isDeleted, false)
+        )
+      )
+      .innerJoin(
+        appointmentStatusTable,
+        and(
+          eq(appointmentStatusTable.id, appointmentTable.appointmentStatusId),
+          eq(appointmentStatusTable.tenantId, appointmentTable.tenantId),
+          eq(appointmentStatusTable.isDeleted, false)
         )
       )
       .leftJoin(

@@ -125,14 +125,22 @@ export async function GET(request: NextRequest) {
     }
 
     const slotDate = searchParams.get('slotDate')?.trim() || undefined;
+    const fromDate = searchParams.get('fromDate')?.trim() || undefined;
+    const statusCategories = searchParams
+      .getAll('statusCategory')
+      .flatMap((value) => value.split(','))
+      .map((value) => value.trim())
+      .filter(Boolean);
     const queryResult = await getAppointmentsQuery({
       tenantId: tenantSession.tenantId,
       filters: {
         slotDate,
+        fromDate,
         doctorId: searchParams.get('doctorId')?.trim() || undefined,
         therapistId: searchParams.get('therapistId')?.trim() || undefined,
         patientId: searchParams.get('patientId')?.trim() || undefined,
         appointmentStatusId: searchParams.get('appointmentStatusId')?.trim() || undefined,
+        statusCategories: statusCategories.length > 0 ? statusCategories : undefined,
         query: searchParams.get('query')?.trim() || undefined,
         page: 1,
         limit: EXPORT_LIMIT,
@@ -163,7 +171,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const reportDate = slotDate ?? queryResult.data[0]?.slotDate ?? 'schedule';
+    const reportDate = slotDate ?? fromDate ?? queryResult.data[0]?.slotDate ?? 'schedule';
     const appointments = filterAppointmentsForDayView(queryResult.data);
     const filterSummary = getFilterSummary(searchParams, queryResult.data);
     const file = await createAppointmentExport(

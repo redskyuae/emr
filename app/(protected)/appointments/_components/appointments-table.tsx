@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { canCancelAppointment } from '../_utils/appointment-cancellation';
 import { appointmentStatusVariant } from '../_utils/appointment-status';
 
@@ -37,16 +38,31 @@ function formatSlotRange(appointment: Appointment) {
 
 export function AppointmentsTable({
   appointments,
+  total,
+  totalPages,
+  page,
+  pageSize,
+  isFetching,
+  onPageChange,
   onCancel,
   label = 'Appointments',
 }: {
   appointments: Appointment[];
+  total: number;
+  totalPages: number;
+  page: number;
+  pageSize: number;
+  isFetching: boolean;
+  onPageChange: (page: number) => void;
   onCancel: (appointment: Appointment) => void;
   label?: string;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
-      <div className="overflow-x-auto">
+    <div
+      className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border"
+      aria-busy={isFetching}
+    >
+      <div className={cn('overflow-x-auto', isFetching && 'opacity-70 transition-opacity')}>
         <table aria-label={label} className="w-full min-w-[1080px] text-sm">
           <thead>
             <tr className="text-muted-foreground border-b text-left">
@@ -172,6 +188,34 @@ export function AppointmentsTable({
           </tbody>
         </table>
       </div>
+      <div className="flex flex-col items-center justify-between gap-3 border-t p-3 sm:flex-row">
+        <p className="text-muted-foreground text-sm" aria-live="polite">
+          Showing {(page - 1) * pageSize + 1}&ndash;{Math.min(page * pageSize, total)} of {total}
+          {totalPages > 1 ? ` · Page ${page} of ${totalPages}` : ''}
+        </p>
+        {totalPages > 1 ? (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page <= 1 || isFetching}
+              onClick={() => onPageChange(page - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages || isFetching}
+              onClick={() => onPageChange(page + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -179,7 +223,7 @@ export function AppointmentsTable({
 export function AppointmentsTableSkeleton() {
   return (
     <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
-      {Array.from({ length: 7 }, (_, index) => (
+      {Array.from({ length: 3 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-5 w-32" />
@@ -195,6 +239,13 @@ export function AppointmentsTableSkeleton() {
           <Skeleton className="ml-auto h-8 w-10" />
         </div>
       ))}
+      <div className="flex items-center justify-between border-t p-3">
+        <Skeleton className="h-5 w-36" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-16" />
+        </div>
+      </div>
     </div>
   );
 }

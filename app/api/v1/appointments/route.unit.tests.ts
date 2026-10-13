@@ -145,17 +145,21 @@ describe('Appointments route', () => {
 
     it('should parse the filter query parameters', async () => {
       await GET(
-        getRequest('?slotDate=16-07-2026&doctorId=3&therapistId=8&appointmentStatusId=9&query=rao')
+        getRequest(
+          '?slotDate=16-07-2026&fromDate=17-07-2026&doctorId=3&therapistId=8&appointmentStatusId=9&statusCategory=SCHEDULED&statusCategory=CONFIRMED&query=rao'
+        )
       );
 
       expect(getAppointments).toHaveBeenCalledWith({
         tenantId: 'tenant-1',
         filters: {
           slotDate: '16-07-2026',
+          fromDate: '17-07-2026',
           doctorId: '3',
           therapistId: '8',
           patientId: undefined,
           appointmentStatusId: '9',
+          statusCategories: ['SCHEDULED', 'CONFIRMED'],
           query: 'rao',
           page: 1,
           limit: 10,
@@ -164,12 +168,13 @@ describe('Appointments route', () => {
     });
 
     it('should treat blank filters as absent so the query can default the date', async () => {
-      await GET(getRequest('?slotDate=&doctorId=&therapistId=&appointmentStatusId='));
+      await GET(getRequest('?slotDate=&fromDate=&doctorId=&therapistId=&appointmentStatusId='));
 
       expect(getAppointments).toHaveBeenCalledWith({
         tenantId: 'tenant-1',
         filters: expect.objectContaining({
           slotDate: undefined,
+          fromDate: undefined,
           doctorId: undefined,
           therapistId: undefined,
           appointmentStatusId: undefined,

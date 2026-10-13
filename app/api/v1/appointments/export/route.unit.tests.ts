@@ -112,10 +112,12 @@ describe('Appointment export route', () => {
       tenantId: 'tenant-1',
       filters: {
         slotDate: '08-10-2026',
+        fromDate: undefined,
         doctorId: '3',
         therapistId: '8',
         patientId: undefined,
         appointmentStatusId: '9',
+        statusCategories: undefined,
         query: 'rao',
         page: 1,
         limit: 999,
@@ -140,6 +142,35 @@ describe('Appointment export route', () => {
       'attachment; filename="appointments-2026-10-08.xlsx"'
     );
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([11, 22, 33]));
+  });
+
+  it('should export future Appointments using the inclusive date and lifecycle categories', async () => {
+    await GET(
+      request('?format=pdf&fromDate=09-10-2026&statusCategory=SCHEDULED&statusCategory=CONFIRMED')
+    );
+
+    expect(getAppointments).toHaveBeenCalledWith({
+      tenantId: 'tenant-1',
+      filters: {
+        slotDate: undefined,
+        fromDate: '09-10-2026',
+        doctorId: undefined,
+        therapistId: undefined,
+        patientId: undefined,
+        appointmentStatusId: undefined,
+        statusCategories: ['SCHEDULED', 'CONFIRMED'],
+        query: undefined,
+        page: 1,
+        limit: 999,
+      },
+    });
+    expect(createExport).toHaveBeenCalledWith(
+      'pdf',
+      expect.any(Array),
+      '09-10-2026',
+      'none',
+      expect.any(Object)
+    );
   });
 
   it('should generate a PDF attachment with fallback branding', async () => {

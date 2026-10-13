@@ -158,13 +158,16 @@ async function createFixtures() {
     category: 'CHECKED_IN',
     isSystem: true,
   });
-  await db.insert(appointmentStatusTable).values({
-    tenantId,
-    name: 'Cancelled',
-    code: 'CAN',
-    category: 'CANCELLED',
-    isSystem: true,
-  });
+  const [cancelledStatus] = await db
+    .insert(appointmentStatusTable)
+    .values({
+      tenantId,
+      name: 'Cancelled',
+      code: 'CAN',
+      category: 'CANCELLED',
+      isSystem: true,
+    })
+    .returning({ id: appointmentStatusTable.id });
   const [cancellationReason] = await db
     .insert(appointmentCancelledReasonTable)
     .values({
@@ -230,6 +233,7 @@ async function createFixtures() {
     visitType,
     scheduledStatus,
     confirmedStatus,
+    cancelledStatus,
     cancellationReason,
     patient,
     treatmentId: treatment.id,
@@ -1559,6 +1563,49 @@ describe('Appointment repository', () => {
         data: [
           { id: earlier.data.id, slotDate: '31-12-2099', slots: [{ slotTime: '09:00' }] },
           { id: later.data.id, slotDate: '31-12-2099', slots: [{ slotTime: '09:30' }] },
+        ],
+      });
+    });
+
+    it('should list Appointments from an inclusive date in ascending schedule order', async () => {
+      const fixtures = await createFixtures();
+      await db
+        .update(doctorScheduleTable)
+        .set({ slotToDate: '2100-01-02' })
+        .where(
+          and(
+            eq(doctorScheduleTable.tenantId, fixtures.tenantId),
+            eq(doctorScheduleTable.doctorId, fixtures.doctorId)
+          )
+        );
+      const first = await appointmentRepository.createAppointment(
+        appointmentData(fixtures, { slotDate: '2099-12-31', slotTimes: ['09:30'] })
+      );
+      const excluded = await appointmentRepository.createAppointment(
+        appointmentData(fixtures, { slotDate: '2100-01-01', slotTimes: ['09:15'] })
+      );
+      const second = await appointmentRepository.createAppointment(
+        appointmentData(fixtures, { slotDate: '2100-01-02', slotTimes: ['09:00'] })
+      );
+      if (!first.success || !excluded.success || !second.success) {
+        throw new Error('appointment creation failed');
+      }
+      await db
+        .update(appointmentTable)
+        .set({ appointmentStatusId: fixtures.cancelledStatus.id })
+        .where(eq(appointmentTable.id, excluded.data.id));
+
+      const result = await appointmentRepository.getAppointments({
+        tenantId: fixtures.tenantId,
+        fromDate: '2099-12-31',
+        statusCategories: ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'],
+      });
+
+      expect(result).toMatchObject({
+        total: 2,
+        data: [
+          { id: first.data.id, slotDate: '31-12-2099' },
+          { id: second.data.id, slotDate: '02-01-2100' },
         ],
       });
     });
