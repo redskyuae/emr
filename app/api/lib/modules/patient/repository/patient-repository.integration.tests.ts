@@ -27,6 +27,7 @@ function patientData(
 ): CreatePatientData {
   return {
     tenantId,
+    title: 'mrs',
     firstName: 'Asha',
     lastName: 'Rao',
     gender: 'female',
@@ -102,6 +103,140 @@ describe('Patient repository', () => {
     const created = await patientRepository.createPatient(patientData(tenantA));
 
     expect(created.preferredPaymentMethod).toBeNull();
+  });
+
+  it('should persist Race, Ethnic Group and Next of Kin Gender', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        race: 'asian',
+        ethnicGroup: 'south-asian',
+        emergencyContactName: 'Kiran Rao',
+        emergencyContactGender: 'male',
+        emergencyContactRelationship: 'Spouse',
+      })
+    );
+
+    expect(created).toMatchObject({
+      race: 'asian',
+      ethnicGroup: 'south-asian',
+      emergencyContactName: 'Kiran Rao',
+      emergencyContactGender: 'male',
+      emergencyContactRelationship: 'Spouse',
+    });
+
+    const fetched = await patientRepository.getPatientById(created.id, tenantA);
+    expect(fetched).toMatchObject({
+      race: 'asian',
+      ethnicGroup: 'south-asian',
+      emergencyContactGender: 'male',
+    });
+  });
+
+  it('should persist Title and Passport Number', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        title: 'mr',
+        passportNumber: 'P9876543',
+      })
+    );
+
+    expect(created.title).toBe('mr');
+    expect(created.passportNumber).toBe('P9876543');
+
+    const fetched = await patientRepository.getPatientById(created.id, tenantA);
+    expect(fetched).toMatchObject({
+      title: 'mr',
+      passportNumber: 'P9876543',
+    });
+  });
+
+  it('should persist no-card identification and registration flags', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        uid: '123456789',
+        isVip: true,
+        smsConsent: true,
+        isMedicalTourist: true,
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(created).toMatchObject({
+      uid: '123456789',
+      isVip: true,
+      emiratesId: null,
+      smsConsent: true,
+      isMedicalTourist: true,
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+
+    const fetched = await patientRepository.getPatientById(created.id, tenantA);
+    expect(fetched).toMatchObject({
+      uid: '123456789',
+      isVip: true,
+      smsConsent: true,
+      isMedicalTourist: true,
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+  });
+
+  it('should persist the category-backed fallback Emirates ID for no-card registration', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        emiratesId: '999999999999999',
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(created).toMatchObject({
+      emiratesId: '999999999999999',
+      patientIdentificationCategory: 'unknown-status-without-card',
+    });
+  });
+
+  it('should clear Patient Identification Category when Emirates ID is present', async () => {
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, {
+        emiratesId: '784199012345671',
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(created.patientIdentificationCategory).toBeNull();
+  });
+
+  it('should clear Patient Identification Category on update when Emirates ID is present', async () => {
+    const created = await patientRepository.createPatient(patientData(tenantA));
+
+    const updated = await patientRepository.updatePatient(
+      created.id,
+      patientData(tenantA, {
+        emiratesId: '784199012345672',
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(updated?.patientIdentificationCategory).toBeNull();
+  });
+
+  it('should persist an Emirates ID read photo and clear it when Emirates ID is absent', async () => {
+    const photoUrl = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==';
+    const created = await patientRepository.createPatient(
+      patientData(tenantA, { emiratesId: '784199012345671', photoUrl })
+    );
+
+    expect(created.photoUrl).toBe(photoUrl);
+
+    const updated = await patientRepository.updatePatient(
+      created.id,
+      patientData(tenantA, {
+        photoUrl,
+        emiratesId: undefined,
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    expect(updated?.photoUrl).toBeNull();
   });
 
   it('should clear the preferred payment method on update when omitted', async () => {
@@ -227,6 +362,24 @@ describe('Patient repository', () => {
     await expect(
       patientRepository.createPatient(patientData(tenantA, { emiratesId: undefined }))
     ).resolves.toBeDefined();
+  });
+
+  it('should allow many patients with the same category-backed fallback Emirates ID', async () => {
+    await patientRepository.createPatient(
+      patientData(tenantA, {
+        emiratesId: '999999999999999',
+        patientIdentificationCategory: 'unknown-status-without-card',
+      })
+    );
+
+    await expect(
+      patientRepository.createPatient(
+        patientData(tenantA, {
+          emiratesId: '999999999999999',
+          patientIdentificationCategory: 'unknown-status-without-card',
+        })
+      )
+    ).resolves.toMatchObject({ emiratesId: '999999999999999' });
   });
 
   it('should find an active patient by Emirates ID excluding a given patient', async () => {

@@ -18,18 +18,32 @@ import type {
   PatientIdentityDocument,
   PatientIdentityDocumentInput,
 } from '../schemas/patient-schema';
-import { normaliseEmiratesId } from '../schemas/patient-schema';
+import { isRealEmiratesId, normaliseEmiratesId } from '../schemas/patient-schema';
 import { patientIdentityDocumentRepository } from './patient-identity-document-repository';
 import { formatPatientMrn } from './patient-mrn';
 
 type PatientRow = Omit<
   Patient,
-  'gender' | 'bloodGroup' | 'maritalStatus' | 'preferredPaymentMethod' | 'identityDocuments'
+  | 'gender'
+  | 'title'
+  | 'bloodGroup'
+  | 'maritalStatus'
+  | 'preferredPaymentMethod'
+  | 'identityDocuments'
+  | 'patientIdentificationCategory'
+  | 'race'
+  | 'ethnicGroup'
+  | 'emergencyContactGender'
 > & {
+  race: string | null;
   gender: string | null;
+  title: string | null;
   bloodGroup: string | null;
+  ethnicGroup: string | null;
   maritalStatus: string | null;
   preferredPaymentMethod: string | null;
+  patientIdentificationCategory: string | null;
+  emergencyContactGender: string | null;
 };
 
 function toPatient(row: PatientRow, identityDocuments: PatientIdentityDocument[] = []): Patient {
@@ -37,9 +51,15 @@ function toPatient(row: PatientRow, identityDocuments: PatientIdentityDocument[]
     ...row,
     identityDocuments,
     gender: row.gender as Patient['gender'],
+    title: row.title as Patient['title'],
     bloodGroup: row.bloodGroup as Patient['bloodGroup'],
+    race: row.race as Patient['race'],
+    ethnicGroup: row.ethnicGroup as Patient['ethnicGroup'],
     maritalStatus: row.maritalStatus as Patient['maritalStatus'],
     preferredPaymentMethod: row.preferredPaymentMethod as Patient['preferredPaymentMethod'],
+    patientIdentificationCategory:
+      row.patientIdentificationCategory as Patient['patientIdentificationCategory'],
+    emergencyContactGender: row.emergencyContactGender as Patient['emergencyContactGender'],
   };
 }
 
@@ -49,6 +69,8 @@ const patientColumns = {
   city: patientTable.city,
   email: patientTable.email,
   phone: patientTable.phone,
+  race: patientTable.race,
+  title: patientTable.title,
   gender: patientTable.gender,
   stateId: patientTable.stateId,
   tenantId: patientTable.tenantId,
@@ -61,18 +83,27 @@ const patientColumns = {
   modifiedOn: patientTable.modifiedOn,
   postalCode: patientTable.postalCode,
   emiratesId: patientTable.emiratesId,
+  photoUrl: patientTable.photoUrl,
+  isVip: patientTable.isVip,
+  uid: patientTable.uid,
+  passportNumber: patientTable.passportNumber,
   bloodGroup: patientTable.bloodGroup,
+  smsConsent: patientTable.smsConsent,
   middleName: patientTable.middleName,
   languageId: patientTable.languageId,
   religionId: patientTable.religionId,
+  ethnicGroup: patientTable.ethnicGroup,
   dateOfBirth: patientTable.dateOfBirth,
   addressLine1: patientTable.addressLine1,
   addressLine2: patientTable.addressLine2,
   maritalStatus: patientTable.maritalStatus,
   nationalityId: patientTable.nationalityId,
+  isMedicalTourist: patientTable.isMedicalTourist,
   preferredPaymentMethod: patientTable.preferredPaymentMethod,
   alternatePhone: patientTable.alternatePhone,
+  patientIdentificationCategory: patientTable.patientIdentificationCategory,
   emergencyContactName: patientTable.emergencyContactName,
+  emergencyContactGender: patientTable.emergencyContactGender,
   emergencyContactPhone: patientTable.emergencyContactPhone,
   emergencyContactRelationship: patientTable.emergencyContactRelationship,
   state: { id: stateTable.id, name: stateTable.name },
@@ -112,10 +143,14 @@ function patientJoins() {
 }
 
 function patientValues(data: CreatePatientData | UpdatePatientData) {
+  const hasRealEmiratesId = isRealEmiratesId(data.emiratesId);
+
   return {
     city: data.city ?? null,
     email: data.email ?? null,
     phone: data.phone,
+    race: data.race ?? null,
+    title: data.title,
     gender: data.gender,
     registrationStatus: 'registered' as const,
     tenantId: data.tenantId,
@@ -125,18 +160,29 @@ function patientValues(data: CreatePatientData | UpdatePatientData) {
     firstName: data.firstName,
     postalCode: data.postalCode ?? null,
     emiratesId: data.emiratesId ?? null,
+    photoUrl: hasRealEmiratesId ? (data.photoUrl ?? null) : null,
+    isVip: data.isVip ?? false,
+    uid: data.uid ?? null,
+    passportNumber: data.passportNumber ?? null,
     bloodGroup: data.bloodGroup ?? null,
+    smsConsent: data.smsConsent ?? false,
     middleName: data.middleName ?? null,
     languageId: data.languageId ?? null,
     religionId: data.religionId ?? null,
+    ethnicGroup: data.ethnicGroup ?? null,
     dateOfBirth: data.dateOfBirth,
     addressLine1: data.addressLine1 ?? null,
     addressLine2: data.addressLine2 ?? null,
     maritalStatus: data.maritalStatus ?? null,
     nationalityId: data.nationalityId ?? null,
+    isMedicalTourist: data.isMedicalTourist ?? false,
     preferredPaymentMethod: data.preferredPaymentMethod ?? null,
     alternatePhone: data.alternatePhone ?? null,
+    patientIdentificationCategory: hasRealEmiratesId
+      ? null
+      : (data.patientIdentificationCategory ?? null),
     emergencyContactName: data.emergencyContactName ?? null,
+    emergencyContactGender: data.emergencyContactGender ?? null,
     emergencyContactPhone: data.emergencyContactPhone ?? null,
     emergencyContactRelationship: data.emergencyContactRelationship ?? null,
   };

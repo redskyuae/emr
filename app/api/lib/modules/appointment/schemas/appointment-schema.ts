@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createPatientSchema } from '../../patient/schemas/patient-schema';
+import { createPatientSchema, emiratesIdSchema } from '../../patient/schemas/patient-schema';
 import type { PatientRegistrationStatus } from '../../patient/schemas/patient-schema';
 import {
   APPOINTMENT_STATUS_CATEGORIES,
@@ -113,12 +113,15 @@ const provisionalPatientSchema = z
     nationalityId: patientShape.nationalityId,
     languageId: patientShape.languageId,
     religionId: patientShape.religionId,
+    race: patientShape.race,
+    ethnicGroup: patientShape.ethnicGroup,
     // Emirates ID only — no identity documents. A booking is usually a phone
     // call, and nobody reads out a passport's issuing country and expiry date
     // down the phone. Documents belong at registration or check-in (ADR 0042).
-    emiratesId: patientShape.emiratesId,
+    emiratesId: emiratesIdSchema,
     emergencyContactName: patientShape.emergencyContactName,
     emergencyContactRelationship: patientShape.emergencyContactRelationship,
+    emergencyContactGender: patientShape.emergencyContactGender,
     emergencyContactPhone: patientShape.emergencyContactPhone,
   })
   .strict()

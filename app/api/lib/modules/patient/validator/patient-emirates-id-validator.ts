@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { patientRepository } from '../repository/patient-repository';
+import { isRealEmiratesId } from '../schemas/patient-schema';
 
 const PATIENT_EMIRATES_ID_EXISTS = 'Patient Emirates ID {value} already exists.';
 const PATIENT_MRN_CONFLICT = 'Patient MRN allocation conflicted. Please retry.';
@@ -26,7 +27,7 @@ export async function validatePatientEmiratesIdUniqueness({
   emiratesId,
   excludeId,
 }: PatientEmiratesIdInput): Promise<ValidationResult<void>> {
-  if (!emiratesId) {
+  if (!emiratesId || !isRealEmiratesId(emiratesId)) {
     return { success: true, data: undefined };
   }
 

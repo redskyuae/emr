@@ -5,6 +5,7 @@ import {
   date,
   integer,
   pgTable,
+  text,
   timestamp,
   uniqueIndex,
   varchar,
@@ -25,6 +26,7 @@ export const patient = pgTable(
     id,
     tenantId: varchar('tenant_id', { length: 255 }).notNull(),
     mrn: varchar({ length: 20 }).notNull(),
+    title: varchar({ length: 20 }),
     firstName: varchar('first_name', { length: 100 }).notNull(),
     middleName: varchar('middle_name', { length: 100 }),
     lastName: varchar('last_name', { length: 100 }).notNull(),
@@ -51,12 +53,22 @@ export const patient = pgTable(
     nationalityId: integer('nationality_id').references(() => nationalityTable.id),
     languageId: integer('language_id').references(() => languageTable.id),
     religionId: integer('religion_id').references(() => religionTable.id),
+    race: varchar({ length: 20 }),
+    ethnicGroup: varchar('ethnic_group', { length: 30 }),
     // Stored digit-normalised (784199012345671), never in the dashed form the
     // card is printed with — three spellings of one ID would otherwise insert
     // as three patients past the unique index below (ADR 0042).
     emiratesId: varchar('emirates_id', { length: 15 }),
+    photoUrl: text('photo_url'),
+    patientIdentificationCategory: varchar('patient_identification_category', { length: 60 }),
+    passportNumber: varchar('passport_number', { length: 50 }),
+    uid: varchar({ length: 30 }),
+    isVip: boolean('is_vip').notNull().default(false),
+    smsConsent: boolean('sms_consent').notNull().default(false),
+    isMedicalTourist: boolean('is_medical_tourist').notNull().default(false),
     emergencyContactName: varchar('emergency_contact_name', { length: 150 }),
     emergencyContactRelationship: varchar('emergency_contact_relationship', { length: 50 }),
+    emergencyContactGender: varchar('emergency_contact_gender', { length: 20 }),
     emergencyContactPhone: varchar('emergency_contact_phone', { length: 20 }),
     isActive: boolean('is_active').notNull().default(true),
     // Deactivation/reactivation instants for the Patient Timeline. isActive
@@ -78,14 +90,14 @@ export const patient = pgTable(
       table.tenantId,
       sql`lower(${table.mrn})`
     ),
-    // An Emirates ID is issued once per person and persists for life, so two
-    // active Patients sharing one is never legitimate. Identity Documents get
-    // no equivalent index on purpose — passport numbers are unique only within
-    // their issuing country (ADR 0042). Partial on isDeleted so a soft-deleted
-    // Patient does not permanently burn the number (lessons.md).
+    // Real Emirates IDs are issued once per person and persist for life, so two
+    // active Patients sharing one is never legitimate. No-card fallback IDs come
+    // from Patient Identification Category and are intentionally reusable.
     tenantEmiratesIdUniqueIdx: uniqueIndex('patient_tenant_emirates_id_idx')
       .on(table.tenantId, table.emiratesId)
-      .where(sql`${table.isDeleted} = false and ${table.emiratesId} is not null`),
+      .where(
+        sql`${table.isDeleted} = false and ${table.emiratesId} is not null and ${table.emiratesId} like '784%'`
+      ),
   })
 );
 

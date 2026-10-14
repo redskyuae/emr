@@ -9,7 +9,7 @@ import { seedStates } from './state';
 // Religion, Country/State), plus the Permission Catalogue. Every seed is
 // idempotent — it checks for an existing row before inserting — so this is
 // safe to re-run. Countries are seeded before States, which resolve their
-// Country by name.
+// Country by code.
 async function seed() {
   await seedCountries();
   await seedStates();

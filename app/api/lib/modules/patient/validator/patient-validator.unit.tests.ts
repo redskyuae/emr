@@ -48,6 +48,7 @@ const existing = {
   id: 1,
   tenantId: 'tenant-1',
   mrn: 'MRN-1001',
+  title: 'mrs',
   firstName: 'Asha',
   middleName: null,
   lastName: 'Rao',
@@ -73,10 +74,20 @@ const existing = {
   language: null,
   religionId: null,
   religion: null,
+  race: null,
+  ethnicGroup: null,
   emiratesId: null,
+  photoUrl: null,
+  patientIdentificationCategory: null,
+  passportNumber: null,
+  uid: null,
+  isVip: false,
+  smsConsent: false,
+  isMedicalTourist: false,
   identityDocuments: [],
   emergencyContactName: null,
   emergencyContactRelationship: null,
+  emergencyContactGender: null,
   emergencyContactPhone: null,
   isActive: true,
   createdOn: new Date(),
@@ -84,11 +95,13 @@ const existing = {
 } as never;
 
 const validPayload = {
+  title: 'mrs',
   firstName: 'Asha',
   lastName: 'Rao',
   gender: 'female',
   dateOfBirth: '1990-05-14',
   phone: '9876543210',
+  emiratesId: '784199012345671',
 };
 
 describe('Patient reference validator', () => {
@@ -152,6 +165,15 @@ describe('Patient Emirates ID uniqueness validator', () => {
 
   it('should skip the uniqueness check when no Emirates ID is provided', async () => {
     await validatePatientEmiratesIdUniqueness({ tenantId: 'tenant-1' });
+    expect(repo.findActiveByEmiratesId).not.toHaveBeenCalled();
+  });
+
+  it('should skip the uniqueness check for a category-backed fallback Emirates ID', async () => {
+    await validatePatientEmiratesIdUniqueness({
+      tenantId: 'tenant-1',
+      emiratesId: '999999999999999',
+    });
+
     expect(repo.findActiveByEmiratesId).not.toHaveBeenCalled();
   });
 

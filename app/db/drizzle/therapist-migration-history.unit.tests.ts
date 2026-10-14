@@ -40,6 +40,7 @@ describe('Therapist migration history', () => {
       '0064_lame_tombstone',
       '0065_unknown_sasquatch',
       '0066_dear_mongu',
+      '0067_brave_wendell_rand',
     ]);
   });
 });
