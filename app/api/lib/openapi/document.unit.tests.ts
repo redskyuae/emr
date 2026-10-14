@@ -2,6 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import { openApiDocument } from './document';
 
+describe('OpenAPI Current User contracts', () => {
+  it('should expose the Tenant operational time zone', () => {
+    const tenant = openApiDocument.components.schemas.CurrentUserTenant;
+
+    expect(tenant.required).toContain('timeZone');
+    expect(tenant.properties.timeZone).toMatchObject({
+      type: 'string',
+      example: 'Asia/Kolkata',
+    });
+  });
+});
+
 describe('OpenAPI Patient Treatment Plan contracts', () => {
   it('documents the patient-scoped current-plan response and permission errors', () => {
     const operation = openApiDocument.paths['/api/v1/patients/{id}/treatment-plans'].get;

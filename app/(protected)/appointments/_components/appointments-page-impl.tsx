@@ -9,19 +9,20 @@ import { AlertCircle, CalendarClock, CalendarDays, Plus } from 'lucide-react';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
 import { useAppointmentsQuery } from '@/app/queries/appointments/useAppointments';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { todayDisplayDate, tomorrowDisplayDate } from '../_utils/appointment-date';
+import { getPaginationCorrection } from '../_utils/appointment-pagination';
 import { AppointmentDaySection, AppointmentDaySectionSkeleton } from './appointment-day-section';
 import { AppointmentsTabToolbar } from './appointments-tab-toolbar';
 import { CancelAppointmentDialog } from './_modals/cancel-appointment-dialog';
 import { AppointmentDetailSheet } from './_sheets/appointment-detail-sheet';
 
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 5;
 const TODAY_STATUS_CATEGORIES = ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED'] as const;
 const UPCOMING_STATUS_CATEGORIES = ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'] as const;
 
@@ -41,10 +42,13 @@ export function AppointmentsPageImpl() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchTerm, { wait: 300 });
 
-  const { data: canCreate } = useHasPermission('appointment:create');
+  const { data: currentUser } = useCurrentUserQuery();
+  const canCreate = currentUser?.permissions.includes('appointment:create') ?? false;
+  const tenantTimeZone = currentUser?.tenant.timeZone ?? 'Asia/Kolkata';
 
-  const todayDate = todayDisplayDate();
-  const tomorrowDate = tomorrowDisplayDate();
+  const now = new Date();
+  const todayDate = todayDisplayDate(now, tenantTimeZone);
+  const tomorrowDate = tomorrowDisplayDate(now, tenantTimeZone);
   const todayPage = Number.isInteger(todayPageParam) && todayPageParam > 0 ? todayPageParam : 1;
   const upcomingPage =
     Number.isInteger(upcomingPageParam) && upcomingPageParam > 0 ? upcomingPageParam : 1;
@@ -90,24 +94,42 @@ export function AppointmentsPageImpl() {
     appointments.find((appointment) => appointment.id === cancellingAppointmentId) ?? null;
 
   useEffect(() => {
-    const lastPage = Math.max(1, todayMeta?.totalPages ?? 1);
+    const correction = getPaginationCorrection({
+      pageParam: todayPageParam,
+      normalizedPage: todayPage,
+      totalPages: todayMeta?.totalPages,
+      isPlaceholderData: todayAppointmentsQuery.isPlaceholderData,
+    });
 
-    if (todayPageParam !== todayPage) {
-      void setTodayPage(todayPage);
-    } else if (todayPage > lastPage) {
-      void setTodayPage(lastPage);
+    if (correction !== undefined) {
+      void setTodayPage(correction);
     }
-  }, [setTodayPage, todayMeta?.totalPages, todayPage, todayPageParam]);
+  }, [
+    setTodayPage,
+    todayAppointmentsQuery.isPlaceholderData,
+    todayMeta?.totalPages,
+    todayPage,
+    todayPageParam,
+  ]);
 
   useEffect(() => {
-    const lastPage = Math.max(1, upcomingMeta?.totalPages ?? 1);
+    const correction = getPaginationCorrection({
+      pageParam: upcomingPageParam,
+      normalizedPage: upcomingPage,
+      totalPages: upcomingMeta?.totalPages,
+      isPlaceholderData: upcomingAppointmentsQuery.isPlaceholderData,
+    });
 
-    if (upcomingPageParam !== upcomingPage) {
-      void setUpcomingPage(upcomingPage);
-    } else if (upcomingPage > lastPage) {
-      void setUpcomingPage(lastPage);
+    if (correction !== undefined) {
+      void setUpcomingPage(correction);
     }
-  }, [setUpcomingPage, upcomingMeta?.totalPages, upcomingPage, upcomingPageParam]);
+  }, [
+    setUpcomingPage,
+    upcomingAppointmentsQuery.isPlaceholderData,
+    upcomingMeta?.totalPages,
+    upcomingPage,
+    upcomingPageParam,
+  ]);
 
   function resetPages() {
     void setTodayPage(1);

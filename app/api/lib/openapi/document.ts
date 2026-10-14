@@ -2617,6 +2617,7 @@ export const openApiDocument = {
                   name: 'Apollo Hospitals',
                   slug: 'apollo-hospitals',
                   isActive: true,
+                  timeZone: 'Asia/Kolkata',
                 },
                 roles: [{ id: 8, name: 'Facilities Manager', code: 'FACILITIES_MANAGER' }],
                 permissions: [
@@ -8113,12 +8114,17 @@ export const openApiDocument = {
       CurrentUserTenant: {
         type: 'object',
         description: 'The Active Tenant resolved from the Session.',
-        required: ['id', 'name', 'slug', 'isActive'],
+        required: ['id', 'name', 'slug', 'isActive', 'timeZone'],
         properties: {
           id: { type: 'string' },
           name: { type: 'string' },
           slug: { type: 'string', maxLength: 60, pattern: '^[a-z0-9-]+$' },
           isActive: { type: 'boolean' },
+          timeZone: {
+            type: 'string',
+            description: 'IANA time zone governing the Tenant operational calendar.',
+            example: 'Asia/Kolkata',
+          },
         },
       },
       CurrentUserRoleSummary: {

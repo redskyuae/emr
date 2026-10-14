@@ -262,7 +262,8 @@ function appointmentJoins(executor: SelectExecutor = db) {
       appointmentStatusTable,
       and(
         eq(appointmentStatusTable.id, appointmentTable.appointmentStatusId),
-        eq(appointmentStatusTable.tenantId, appointmentTable.tenantId)
+        eq(appointmentStatusTable.tenantId, appointmentTable.tenantId),
+        eq(appointmentStatusTable.isDeleted, false)
       )
     )
     .leftJoin(

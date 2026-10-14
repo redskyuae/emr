@@ -6,7 +6,7 @@ export type CurrentUserMembership = {
   role: string;
 };
 
-export type CurrentUserTenant = Pick<Tenant, 'id' | 'name' | 'slug' | 'isActive'>;
+export type CurrentUserTenant = Pick<Tenant, 'id' | 'name' | 'slug' | 'isActive' | 'timeZone'>;
 
 export type CurrentUserRoleSummary = Pick<Role, 'id' | 'name' | 'code'>;
 

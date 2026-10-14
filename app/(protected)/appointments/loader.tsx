@@ -28,7 +28,7 @@ export default function AppointmentsPageLoader() {
           <Skeleton className="h-5 w-8" />
         </div>
         <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
-          {Array.from({ length: 3 }, (_, index) => (
+          {Array.from({ length: 5 }, (_, index) => (
             <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
               <Skeleton className="h-5 w-24" />
               <Skeleton className="h-5 w-32" />
