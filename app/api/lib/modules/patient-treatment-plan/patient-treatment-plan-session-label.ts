@@ -1,5 +1,4 @@
-const POSITIONED_SESSION_LABEL =
-  /^Session\s+\d+(?:\s+of\s+\d+)?(?:\s*·\s*(.*))?$/iu;
+const POSITIONED_SESSION_LABEL = /^Session\s+\d+(?:\s+of\s+\d+)?(?:\s*·\s*(.*))?$/iu;
 
 function positionedClinicalLabel(label: string): string | null {
   const match = label.trim().match(POSITIONED_SESSION_LABEL);
