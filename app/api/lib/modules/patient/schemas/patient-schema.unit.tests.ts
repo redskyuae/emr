@@ -21,11 +21,17 @@ const validPayload = {
 };
 
 describe('Patient schema', () => {
-  it('should require title, first name, last name, gender, date of birth and phone', () => {
+  it('should allow title to be omitted on create and update', () => {
+    const { title: _title, ...payloadWithoutTitle } = validPayload;
+
+    expect(createPatientSchema.safeParse(payloadWithoutTitle).success).toBe(true);
+    expect(updatePatientSchema.safeParse(payloadWithoutTitle).success).toBe(true);
+  });
+
+  it('should require first name, last name, gender, date of birth and phone', () => {
     const errors = errorsOf(createPatientSchema.safeParse({}));
     expect(errors).toEqual(
       expect.arrayContaining([
-        'Patient title is invalid',
         'Patient first name is required',
         'Patient last name is required',
         'Patient gender is invalid',

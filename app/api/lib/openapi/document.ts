@@ -11441,12 +11441,12 @@ export const openApiDocument = {
       },
       CreatePatientRequest: {
         type: 'object',
-        required: ['title', 'firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
+        required: ['firstName', 'lastName', 'gender', 'dateOfBirth', 'phone'],
         properties: {
           title: {
             type: 'string',
             enum: ['mr', 'mrs', 'miss', 'baby', 'master', 'ms', 'dr'],
-            description: 'Mandatory Patient title captured during Patient Registration.',
+            description: 'Patient title captured during Patient Registration.',
           },
           firstName: { type: 'string', minLength: 1, maxLength: 100 },
           middleName: { type: 'string', maxLength: 100 },

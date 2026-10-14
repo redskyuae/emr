@@ -560,6 +560,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     primaryAction: {
       label: 'Create Visit',
       href: '/visits/new',
+      permission: 'visit:create',
     },
   },
   '/visits/new': {

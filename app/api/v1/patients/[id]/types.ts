@@ -6,7 +6,7 @@ export type GetPatientResponse = {
 };
 
 export type UpdatePatientRequest = {
-  title: string;
+  title?: string;
   firstName: string;
   middleName?: string;
   lastName: string;

@@ -172,19 +172,24 @@ export function isRealEmiratesId(value: string | null | undefined) {
 
 // Shape only — never the check digit. The ICP has not published the algorithm,
 // and a false rejection turns away a patient holding a valid card (ADR 0042).
-const emiratesIdSchema = z.preprocess(
-  (value) => {
+const optionalEmiratesIdSchema = (pattern: RegExp, message: string) =>
+  z.preprocess((value) => {
     if (typeof value !== 'string') {
       return value;
     }
 
     const digits = normaliseEmiratesId(value);
     return digits === '' ? undefined : digits;
-  },
-  z
-    .string()
-    .regex(/^\d{15}$/, 'Patient Emirates ID must be 15 digits')
-    .optional()
+  }, z.string().regex(pattern, message).optional());
+
+export const emiratesIdSchema = optionalEmiratesIdSchema(
+  /^784\d{12}$/,
+  'Patient Emirates ID must be 15 digits beginning with 784'
+);
+
+const categoryAwareEmiratesIdSchema = optionalEmiratesIdSchema(
+  /^\d{15}$/,
+  'Patient Emirates ID must be 15 digits'
 );
 
 const identityDocumentNumberSchema = z
@@ -271,7 +276,7 @@ export const patientTenantIdSchema = tenantIdSchema;
 
 const patientPayloadSchema = z
   .object({
-    title: titleSchema,
+    title: titleSchema.optional(),
     firstName: patientNameSchema('first name'),
     middleName: optionalTrimmedValue(
       z.string().trim().max(100, 'Patient middle name must be at most 100 characters')
@@ -309,7 +314,7 @@ const patientPayloadSchema = z
     religionId: optionalMasterIdSchema('religion ID'),
     race: optionalTrimmedValue(raceSchema),
     ethnicGroup: optionalTrimmedValue(ethnicGroupSchema),
-    emiratesId: emiratesIdSchema,
+    emiratesId: categoryAwareEmiratesIdSchema,
     photoUrl: optionalTrimmedValue(
       z
         .string()

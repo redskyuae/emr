@@ -17,7 +17,7 @@ export type SavePatientIdentityDocumentRequest = {
 };
 
 export type SavePatientRequest = {
-  title: string;
+  title?: string;
   firstName: string;
   middleName?: string;
   lastName: string;

@@ -204,7 +204,7 @@ A category recorded during Patient Registration when the Patient does not have a
 
 ## Unified Identification Number
 
-The UAE immigration identifier recorded for a Patient who does not have an Emirates ID, commonly abbreviated UID. It is distinct from the Patient's Emirates ID, Medical Record Number, and passport number.
+The UAE immigration identifier recorded for a Patient, commonly abbreviated UID. It is distinct from the Patient's Emirates ID, Medical Record Number, and passport number. Only Medical Tourists are required to provide a UID.
 
 ## Identity Document
 
