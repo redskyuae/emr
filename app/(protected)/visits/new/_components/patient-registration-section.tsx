@@ -84,10 +84,7 @@ export function PatientRegistrationSection({
   const nationalityOptionsQuery = useNationalityOptionsQuery();
   const languageOptionsQuery = useLanguageOptionsQuery();
   const religionOptionsQuery = useReligionOptionsQuery();
-  const demoCountryId = findReferenceIdByName(
-    countryOptionsQuery.data,
-    'United Arab Emirates'
-  );
+  const demoCountryId = findReferenceIdByName(countryOptionsQuery.data, 'United Arab Emirates');
   const stateOptionsQuery = useStateOptionsQuery(isDemo ? (demoCountryId ?? null) : null);
   const demoStateId = findReferenceIdByName(stateOptionsQuery.data, 'Dubai');
   const demoNationalityId = findReferenceIdByName(nationalityOptionsQuery.data, 'Emirati');

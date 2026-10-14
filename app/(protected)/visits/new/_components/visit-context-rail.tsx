@@ -112,10 +112,10 @@ export function AppointmentContextCard({ appointment }: { appointment: Appointme
             value={appointment.slots.map((slot) => slot.slotTime).join(', ')}
             mono
           />
-          <Detail label="Doctor" value={appointment.doctor.name} />
-          <Detail label="Type" value={appointment.appointmentType.name} />
-          <Detail label="Mode" value={appointment.appointmentMode.name} />
-          <Detail label="Reason" value={appointment.appointmentReason.name} />
+          <Detail label="Doctor" value={appointment.doctor?.name} />
+          <Detail label="Type" value={appointment.appointmentType?.name} />
+          <Detail label="Mode" value={appointment.appointmentMode?.name} />
+          <Detail label="Reason" value={appointment.appointmentReason?.name} />
         </div>
       </CardContent>
     </Card>

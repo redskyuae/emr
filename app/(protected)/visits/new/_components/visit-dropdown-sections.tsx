@@ -281,7 +281,7 @@ export function VisitDetailsSection({
   dependenciesLoading: boolean;
   onChange: <K extends keyof CreateVisitUiValues>(key: K, value: CreateVisitUiValues[K]) => void;
 }) {
-  const clinicianValue = selectedAppointment
+  const clinicianValue = selectedAppointment?.doctor
     ? String(selectedAppointment.doctor.id)
     : values.doctorId;
 

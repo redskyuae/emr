@@ -166,7 +166,9 @@ export function CreateVisitPageImpl() {
       if (key !== 'department' && key !== 'doctorId') {
         return next;
       }
-      const clinicianValue = selectedAppointment ? String(selectedAppointment.doctor.id) : next.doctorId;
+      const clinicianValue = selectedAppointment?.doctor
+        ? String(selectedAppointment.doctor.id)
+        : next.doctorId;
       return applyRecentVisitDefaults(next, clinicianValue, selectedPatient);
     });
   }
@@ -187,7 +189,7 @@ export function CreateVisitPageImpl() {
     setStep('patient');
   }
 
-  const clinicianName = selectedAppointment
+  const clinicianName = selectedAppointment?.doctor
     ? selectedAppointment.doctor.name
     : (doctors.find((doctor) => String(doctor.id) === values.doctorId)?.name ?? '');
   const departmentLabel =
