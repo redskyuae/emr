@@ -71,6 +71,7 @@ export async function getCurrentUserQuery(
         name: tenant.name,
         slug: tenant.slug,
         isActive: tenant.isActive,
+        timeZone: tenant.timeZone,
       },
       membership: { role: membership.role },
       permissions: Array.from(new Set(permissionKeys)).sort(),

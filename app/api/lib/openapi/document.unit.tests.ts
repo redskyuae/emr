@@ -2,6 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import { openApiDocument } from './document';
 
+describe('OpenAPI Current User contracts', () => {
+  it('should expose the Tenant operational time zone', () => {
+    const tenant = openApiDocument.components.schemas.CurrentUserTenant;
+
+    expect(tenant.required).toContain('timeZone');
+    expect(tenant.properties.timeZone).toMatchObject({
+      type: 'string',
+      example: 'Asia/Kolkata',
+    });
+  });
+});
+
 describe('OpenAPI Patient Treatment Plan contracts', () => {
   it('documents the patient-scoped current-plan response and permission errors', () => {
     const operation = openApiDocument.paths['/api/v1/patients/{id}/treatment-plans'].get;
@@ -72,6 +84,17 @@ describe('OpenAPI Patient Treatment Plan contracts', () => {
     expect(appointment.required).toEqual(expect.arrayContaining(['roomId', 'therapist']));
   });
 
+  it('should document the inclusive Appointment date filter', () => {
+    const operation = openApiDocument.paths['/api/v1/appointments'].get;
+
+    expect(operation.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'fromDate', in: 'query', required: false }),
+        expect.objectContaining({ name: 'statusCategory', in: 'query', required: false }),
+      ])
+    );
+  });
+
   it('should document server-generated Appointment exports and their filters', () => {
     const operation = openApiDocument.paths['/api/v1/appointments/export'].get;
     const response = operation.responses['200'] as { content: Record<string, unknown> };
@@ -79,9 +102,11 @@ describe('OpenAPI Patient Treatment Plan contracts', () => {
     expect(operation.parameters).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: 'format', in: 'query', required: true }),
+        expect.objectContaining({ name: 'fromDate', in: 'query', required: false }),
         expect.objectContaining({ name: 'doctorId', in: 'query' }),
         expect.objectContaining({ name: 'therapistId', in: 'query' }),
         expect.objectContaining({ name: 'appointmentStatusId', in: 'query' }),
+        expect.objectContaining({ name: 'statusCategory', in: 'query', required: false }),
       ])
     );
     expect(response.content['application/pdf']).toBeDefined();

@@ -22,7 +22,7 @@ export async function getAppointmentsQuery({
 
   const params = validationResult.data;
 
-  if (!params.slotDate && !params.patientId) {
+  if (!params.slotDate && !params.fromDate && !params.patientId) {
     const tenant = await tenantRepository.getTenantById(params.tenantId);
 
     if (tenant) {

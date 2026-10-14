@@ -2,7 +2,10 @@ import { z } from 'zod';
 
 import { createPatientSchema } from '../../patient/schemas/patient-schema';
 import type { PatientRegistrationStatus } from '../../patient/schemas/patient-schema';
-import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
+import {
+  APPOINTMENT_STATUS_CATEGORIES,
+  type AppointmentStatusCategory,
+} from '../../appointment-status/schemas/appointment-status-schema';
 import type {
   TreatmentSessionSummary,
   TreatmentSummary,
@@ -51,20 +54,24 @@ export function formatAppointmentDate(isoDate: string) {
   return `${day}-${month}-${year}`;
 }
 
-const slotDateSchema = z
-  .string({ error: 'Slot date is required' })
-  .trim()
-  .min(1, 'Slot date is required')
-  .transform((value, context) => {
-    const isoDate = toIsoDate(value);
+const appointmentDateSchema = (fieldName: string) =>
+  z
+    .string({ error: `${fieldName} is required` })
+    .trim()
+    .min(1, `${fieldName} is required`)
+    .transform((value, context) => {
+      const isoDate = toIsoDate(value);
 
-    if (!isoDate) {
-      context.addIssue({ code: 'custom', message: 'Slot date must be in DD-MM-YYYY format' });
-      return z.NEVER;
-    }
+      if (!isoDate) {
+        context.addIssue({ code: 'custom', message: `${fieldName} must be in DD-MM-YYYY format` });
+        return z.NEVER;
+      }
 
-    return isoDate;
-  });
+      return isoDate;
+    });
+
+const slotDateSchema = appointmentDateSchema('Slot date');
+const fromDateSchema = appointmentDateSchema('From date');
 
 const slotTimeSchema = z
   .string({ error: 'Slot time is required' })
@@ -336,10 +343,12 @@ export const bookingNumberSchema = z
 
 export const listAppointmentsSchema = z.object({
   slotDate: slotDateSchema.optional(),
+  fromDate: fromDateSchema.optional(),
   doctorId: positiveIdSchema('Doctor ID').optional(),
   therapistId: positiveIdSchema('Therapist ID').optional(),
   patientId: positiveIdSchema('Patient ID').optional(),
   appointmentStatusId: positiveIdSchema('Appointment status ID').optional(),
+  statusCategories: z.array(z.enum(APPOINTMENT_STATUS_CATEGORIES)).min(1).optional(),
   query: z.string().trim().optional(),
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().optional(),

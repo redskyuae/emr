@@ -1,4 +1,4 @@
-import { CalendarClock, CircleCheck } from 'lucide-react';
+import { CalendarClock, CalendarDays } from 'lucide-react';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,13 @@ type AppointmentDaySectionProps = {
   appointments: Appointment[];
   description: string;
   emptyDescription: string;
-  kind: 'upcoming' | 'completed';
+  kind: 'today' | 'upcoming';
+  total: number;
+  totalPages: number;
+  page: number;
+  pageSize: number;
+  isFetching: boolean;
+  onPageChange: (page: number) => void;
   onCancel: (appointment: Appointment) => void;
 };
 
@@ -23,20 +29,21 @@ export function AppointmentDaySection({
   appointments,
   description,
   emptyDescription,
+  total,
+  totalPages,
+  page,
+  pageSize,
+  isFetching,
+  onPageChange,
   onCancel,
 }: AppointmentDaySectionProps) {
-  const Icon = kind === 'upcoming' ? CalendarClock : CircleCheck;
-  const iconClassName = kind === 'upcoming' ? 'text-primary' : 'text-success';
-  const badgeClassName =
-    kind === 'upcoming'
-      ? 'border-primary/25 bg-primary/10 text-primary'
-      : 'border-success/25 bg-success/10 text-success';
+  const Icon = kind === 'today' ? CalendarDays : CalendarClock;
 
   return (
     <section className="space-y-2" aria-labelledby={id}>
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          <Icon className={`size-5 ${iconClassName}`} aria-hidden="true" />
+          <Icon className="text-primary size-5" aria-hidden="true" />
           <div>
             <h2 id={id} className="font-heading text-lg font-semibold">
               {title}
@@ -44,13 +51,23 @@ export function AppointmentDaySection({
             <p className="text-muted-foreground text-sm">{description}</p>
           </div>
         </div>
-        <Badge variant="outline" className={badgeClassName}>
-          {appointments.length}
+        <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary">
+          {total}
         </Badge>
       </div>
 
       {appointments.length > 0 ? (
-        <AppointmentsTable appointments={appointments} label={title} onCancel={onCancel} />
+        <AppointmentsTable
+          appointments={appointments}
+          label={title}
+          total={total}
+          totalPages={totalPages}
+          page={page}
+          pageSize={pageSize}
+          isFetching={isFetching}
+          onPageChange={onPageChange}
+          onCancel={onCancel}
+        />
       ) : (
         <Card className="shadow-fluent-2">
           <CardContent className="p-4">

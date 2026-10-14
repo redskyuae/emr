@@ -14,10 +14,16 @@ describe('validateGetAppointments', () => {
     });
   });
 
-  it('should transform the slot date filter to ISO', () => {
-    expect(validateGetAppointments({ slotDate: '16-07-2026' }, 'tenant-1')).toMatchObject({
+  it('should transform the exact and inclusive date filters to ISO', () => {
+    expect(
+      validateGetAppointments({ slotDate: '16-07-2026', fromDate: '17-07-2026' }, 'tenant-1')
+    ).toMatchObject({
       success: true,
-      data: { slotDate: '2026-07-16', tenantId: 'tenant-1' },
+      data: {
+        slotDate: '2026-07-16',
+        fromDate: '2026-07-17',
+        tenantId: 'tenant-1',
+      },
     });
   });
 
@@ -25,6 +31,21 @@ describe('validateGetAppointments', () => {
     expect(validateGetAppointments({ therapistId: '8' }, 'tenant-1')).toEqual({
       success: true,
       data: { therapistId: 8, tenantId: 'tenant-1' },
+    });
+  });
+
+  it('should preserve valid Appointment status category filters', () => {
+    expect(
+      validateGetAppointments(
+        { statusCategories: ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'] },
+        'tenant-1'
+      )
+    ).toEqual({
+      success: true,
+      data: {
+        statusCategories: ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'],
+        tenantId: 'tenant-1',
+      },
     });
   });
 

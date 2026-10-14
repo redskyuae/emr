@@ -2617,6 +2617,7 @@ export const openApiDocument = {
                   name: 'Apollo Hospitals',
                   slug: 'apollo-hospitals',
                   isActive: true,
+                  timeZone: 'Asia/Kolkata',
                 },
                 roles: [{ id: 8, name: 'Facilities Manager', code: 'FACILITIES_MANAGER' }],
                 permissions: [
@@ -3960,7 +3961,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'List Appointments',
         description:
-          "Lists Appointments in the active Tenant. With no slotDate or patientId filter, the list defaults to today's schedule in the Tenant Time Zone and is ordered by earliest reserved DoctorSlot; Patient-specific history suppresses that default.",
+          "Lists Appointments in the active Tenant. Use fromDate for an inclusive future schedule. With no slotDate, fromDate, or patientId filter, the list defaults to today's schedule in the Tenant Time Zone and is ordered by earliest reserved DoctorSlot; Patient-specific history suppresses that default.",
         security: [{ cookieAuth: [] }],
         parameters: [
           {
@@ -3970,6 +3971,14 @@ export const openApiDocument = {
             description:
               'Tenant-local Appointment date in DD-MM-YYYY format. Defaults to today unless patientId is supplied.',
             schema: { type: 'string', example: '16-07-2026' },
+          },
+          {
+            name: 'fromDate',
+            in: 'query',
+            required: false,
+            description:
+              'Inclusive Tenant-local lower bound for Appointment dates in DD-MM-YYYY format.',
+            schema: { type: 'string', example: '17-07-2026' },
           },
           {
             name: 'doctorId',
@@ -3999,6 +4008,21 @@ export const openApiDocument = {
             required: false,
             description: 'Filter by one tenant-scoped AppointmentStatus.',
             schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'statusCategory',
+            in: 'query',
+            required: false,
+            description: 'Repeat to include Appointments in one or more lifecycle categories.',
+            schema: {
+              type: 'array',
+              items: {
+                type: 'string',
+                enum: ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED', 'NO_SHOW'],
+              },
+            },
+            style: 'form',
+            explode: true,
           },
           parameterRef('Page'),
           parameterRef('Limit'),
@@ -4160,7 +4184,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Download an Appointment schedule',
         description:
-          'Generates a branded Excel workbook or PDF document on the server for Appointments matching the supplied active-Tenant filters. The document header records the active Doctor, Therapist, Patient, Status, and search filters, or states that no filters were applied.',
+          'Generates a branded Excel workbook or PDF document on the server for Appointments matching the supplied active-Tenant filters. Use fromDate and statusCategory for future schedules. The document header records the active Doctor, Therapist, Patient, Status, and search filters, or states that no filters were applied.',
         security: [{ cookieAuth: [] }],
         parameters: [
           {
@@ -4174,9 +4198,16 @@ export const openApiDocument = {
             name: 'slotDate',
             in: 'query',
             required: false,
-            description:
-              'Tenant-local Appointment date in DD-MM-YYYY format. Defaults to today when omitted.',
+            description: 'Tenant-local Appointment date in DD-MM-YYYY format.',
             schema: { type: 'string', example: '16-07-2026' },
+          },
+          {
+            name: 'fromDate',
+            in: 'query',
+            required: false,
+            description:
+              'Inclusive Tenant-local lower bound for Appointment dates in DD-MM-YYYY format.',
+            schema: { type: 'string', example: '17-07-2026' },
           },
           {
             name: 'doctorId',
@@ -4205,6 +4236,21 @@ export const openApiDocument = {
             required: false,
             description: 'Filter by one tenant-scoped AppointmentStatus.',
             schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'statusCategory',
+            in: 'query',
+            required: false,
+            description: 'Repeat to include Appointments in one or more lifecycle categories.',
+            schema: {
+              type: 'array',
+              items: {
+                type: 'string',
+                enum: ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'COMPLETED', 'CANCELLED', 'NO_SHOW'],
+              },
+            },
+            style: 'form',
+            explode: true,
           },
           parameterRef('Query'),
         ],
@@ -8151,12 +8197,17 @@ export const openApiDocument = {
       CurrentUserTenant: {
         type: 'object',
         description: 'The Active Tenant resolved from the Session.',
-        required: ['id', 'name', 'slug', 'isActive'],
+        required: ['id', 'name', 'slug', 'isActive', 'timeZone'],
         properties: {
           id: { type: 'string' },
           name: { type: 'string' },
           slug: { type: 'string', maxLength: 60, pattern: '^[a-z0-9-]+$' },
           isActive: { type: 'boolean' },
+          timeZone: {
+            type: 'string',
+            description: 'IANA time zone governing the Tenant operational calendar.',
+            example: 'Asia/Kolkata',
+          },
         },
       },
       CurrentUserRoleSummary: {

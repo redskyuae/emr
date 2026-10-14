@@ -118,6 +118,16 @@ describe('Appointment queries', () => {
       });
     });
 
+    it('should respect an inclusive from date without defaulting to today', async () => {
+      await getAppointmentsQuery({ tenantId: 'tenant-1', filters: { fromDate: '17-07-2026' } });
+
+      expect(repo.getAppointments).toHaveBeenCalledWith({
+        tenantId: 'tenant-1',
+        fromDate: '2026-07-17',
+      });
+      expect(tenantRepo.getTenantById).not.toHaveBeenCalled();
+    });
+
     it('should pass filters and paging through to the repository', async () => {
       await getAppointmentsQuery({
         tenantId: 'tenant-1',
@@ -128,6 +138,7 @@ describe('Appointment queries', () => {
           limit: 5,
           query: 'rao',
           appointmentStatusId: 9,
+          statusCategories: ['SCHEDULED', 'CONFIRMED'],
         },
       });
 
@@ -140,6 +151,7 @@ describe('Appointment queries', () => {
         limit: 5,
         query: 'rao',
         appointmentStatusId: 9,
+        statusCategories: ['SCHEDULED', 'CONFIRMED'],
       });
     });
 

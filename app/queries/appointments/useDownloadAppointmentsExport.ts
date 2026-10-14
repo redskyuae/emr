@@ -29,12 +29,16 @@ async function downloadAppointmentsExport(request: DownloadAppointmentsExportReq
   const searchParams = new URLSearchParams({ format: request.format });
 
   if (request.slotDate) searchParams.set('slotDate', request.slotDate);
+  if (request.fromDate) searchParams.set('fromDate', request.fromDate);
   if (request.doctorId) searchParams.set('doctorId', String(request.doctorId));
   if (request.therapistId) searchParams.set('therapistId', String(request.therapistId));
   if (request.patientId) searchParams.set('patientId', String(request.patientId));
   if (request.appointmentStatusId) {
     searchParams.set('appointmentStatusId', String(request.appointmentStatusId));
   }
+  request.statusCategories?.forEach((category) => {
+    searchParams.append('statusCategory', category);
+  });
   if (request.query) searchParams.set('query', request.query);
 
   const response = await fetch(`/api/v1/appointments/export?${searchParams.toString()}`, {

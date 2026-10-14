@@ -4,14 +4,17 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import type { ListAppointmentsResponse } from '@/app/api/v1/appointments/types';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
+import type { AppointmentStatusCategory } from '@/app/api/lib/modules/appointment-status/schemas/appointment-status-schema';
 import { parseApiError } from '@/app/queries/api-error';
 
 export type AppointmentsParams = {
   slotDate?: string;
+  fromDate?: string;
   doctorId?: number;
   therapistId?: number;
   patientId?: number;
   appointmentStatusId?: number;
+  statusCategories?: AppointmentStatusCategory[];
   query?: string;
   page?: number;
   limit?: number;
@@ -26,12 +29,16 @@ async function fetchAppointments(params: AppointmentsParams): Promise<ListAppoin
   const searchParams = new URLSearchParams();
 
   if (params.slotDate) searchParams.set('slotDate', params.slotDate);
+  if (params.fromDate) searchParams.set('fromDate', params.fromDate);
   if (params.doctorId) searchParams.set('doctorId', String(params.doctorId));
   if (params.therapistId) searchParams.set('therapistId', String(params.therapistId));
   if (params.patientId) searchParams.set('patientId', String(params.patientId));
   if (params.appointmentStatusId) {
     searchParams.set('appointmentStatusId', String(params.appointmentStatusId));
   }
+  params.statusCategories?.forEach((category) => {
+    searchParams.append('statusCategory', category);
+  });
   if (params.query) searchParams.set('query', params.query);
   if (params.page) searchParams.set('page', String(params.page));
   if (params.limit) searchParams.set('limit', String(params.limit));
