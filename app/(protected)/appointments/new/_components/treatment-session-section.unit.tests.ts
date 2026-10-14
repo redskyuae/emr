@@ -122,15 +122,106 @@ describe('Treatment and Session selection state', () => {
         onSearchChange: () => {},
         onSessionChange: () => {},
         onRetry: () => {},
+        onAddSessions: () => {},
       })
     );
 
     expect(markup).toContain('id="patient-treatment-selection"');
     expect(markup).toContain('Search current Plans or Treatment masters');
     expect(markup).toContain('aria-label="Select Session"');
-    expect(markup).toContain('aria-label="Select Session 1"');
-    expect(markup).toContain('View details for Session 2, Completed');
+    expect(markup).toContain('aria-label="Select Session 1 of 2"');
+    expect(markup).toContain('View details for Session 2 of 2, Completed');
     expect(markup).not.toContain('1 of 2 Sessions completed');
+  });
+
+  it('should render appended Sessions with their current Plan numbering instead of a copied stale label', () => {
+    const sessions = Array.from({ length: 8 }, (_, index) => ({
+      id: String(101 + index),
+      sessionNumber: index + 1,
+      isBookable: true,
+    }));
+    const selectedPlan = plan(10, sessions);
+    selectedPlan.sessions[6].label = 'Session 6 of 6 · Abhyanga';
+    selectedPlan.sessions[7].label = 'Session 6 of 6 · Abhyanga';
+
+    const markup = renderToStaticMarkup(
+      createElement(PlanSelection, {
+        control: null as never,
+        plans: [selectedPlan],
+        treatments: [],
+        canAssignTreatment: true,
+        selectedTreatment: selectedPlan,
+        selectedSession: selectedPlan.sessions[0],
+        search: '',
+        isLoading: false,
+        error: null,
+        onPlanChange: () => {},
+        onTreatmentChange: () => {},
+        onSearchChange: () => {},
+        onSessionChange: () => {},
+        onRetry: () => {},
+        onAddSessions: () => {},
+      })
+    );
+
+    expect(markup).toContain('Session 7 of 8 · Abhyanga');
+    expect(markup).toContain('Session 8 of 8 · Abhyanga');
+    expect(markup).not.toContain('Session 6 of 6 · Abhyanga');
+  });
+
+  it('should render an Add Sessions card for a Repeatable current Plan with assignment access', () => {
+    const repeatablePlan = plan(10, [{ id: '101', sessionNumber: 1, isBookable: true }]);
+    repeatablePlan.sessionStructure = 'REPEATABLE';
+
+    const markup = renderToStaticMarkup(
+      createElement(PlanSelection, {
+        control: null as never,
+        plans: [repeatablePlan],
+        treatments: [],
+        canAssignTreatment: true,
+        selectedTreatment: repeatablePlan,
+        selectedSession: repeatablePlan.sessions[0],
+        search: '',
+        isLoading: false,
+        error: null,
+        onPlanChange: () => {},
+        onTreatmentChange: () => {},
+        onSearchChange: () => {},
+        onSessionChange: () => {},
+        onRetry: () => {},
+        onAddSessions: () => {},
+      })
+    );
+
+    expect(markup).toContain('Add Sessions');
+    expect(markup).toContain('Extend this Treatment Plan');
+  });
+
+  it('should render an Add Sessions card for a Sequenced current Plan with assignment access', () => {
+    const sequencedPlan = plan(10, [{ id: '101', sessionNumber: 1, isBookable: true }]);
+
+    const markup = renderToStaticMarkup(
+      createElement(PlanSelection, {
+        control: null as never,
+        plans: [sequencedPlan],
+        treatments: [],
+        canAssignTreatment: true,
+        selectedTreatment: sequencedPlan,
+        selectedSession: sequencedPlan.sessions[0],
+        search: '',
+        isLoading: false,
+        error: null,
+        onPlanChange: () => {},
+        onTreatmentChange: () => {},
+        onSearchChange: () => {},
+        onSessionChange: () => {},
+        onRetry: () => {},
+        onAddSessions: () => {},
+      })
+    );
+
+    expect(markup).toContain('Add Sessions');
+    expect(markup).toContain('Extend this Treatment Plan');
   });
 
   it('should preserve a manual bookable Session choice on a refreshed result', () => {

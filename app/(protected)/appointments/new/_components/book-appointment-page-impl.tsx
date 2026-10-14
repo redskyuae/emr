@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useQueryState } from 'nuqs';
 import {
   ArrowLeft,
   ArrowRight,
@@ -29,10 +30,12 @@ import {
 } from '@/components/ui/empty';
 import { FieldError } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
+import { shouldClearAddSessionsQueryParam } from '../_utils/add-sessions-query-state';
 import { canAllocateProcedureResources } from '../_utils/appointment-time';
 
 import { AppointmentDetailsSection } from './appointment-details-section';
 import { AppointmentScheduleSection } from './appointment-schedule-section';
+import { AddTreatmentPlanSessionsDialog } from './_modals/add-treatment-plan-sessions-dialog';
 import { DEMO_FACILITY } from './book-appointment-demo-data';
 import { BookingPathSelector } from './booking-path-selector';
 import { BookingRemarks } from './booking-remarks';
@@ -83,6 +86,7 @@ export function BookAppointmentPageImpl() {
 
 function BookAppointmentWorkflow() {
   const booking = useBookAppointment();
+  const [addSessionsPlanParam, setAddSessionsPlanParam] = useQueryState('add-sessions');
   const { form, values, step, selectedPatient, selectedSession, isProcedurePath } = booking;
   const stepHeading = useRef<HTMLHeadingElement>(null);
   const previousStep = useRef(step);
@@ -93,6 +97,26 @@ function BookAppointmentWorkflow() {
       ? `${values.firstName} ${values.lastName}`.trim()
       : 'Patient not selected';
   const visitLabel = isProcedurePath ? 'Procedure' : 'Consultation';
+  const addSessionsPlanId =
+    addSessionsPlanParam !== null && /^\d+$/.test(addSessionsPlanParam)
+      ? Number(addSessionsPlanParam)
+      : null;
+  const currentPlans = booking.planOptions.filter((plan) => plan.selectionMode === 'EXISTING_PLAN');
+  const clearAddSessionsParam = shouldClearAddSessionsQueryParam({
+    hasCurrentPlans: currentPlans.length > 0,
+    hasPlansError: booking.plansError !== null,
+    isPlansLoading: booking.isPlansLoading,
+    canAssignTreatment: booking.canAssignTreatment,
+    hasSelectedPatient: selectedPatient !== null,
+    isAssignPermissionError: booking.isAssignPermissionError,
+    isAssignPermissionLoading: booking.isAssignPermissionLoading,
+  });
+
+  useEffect(() => {
+    if (addSessionsPlanParam !== null && clearAddSessionsParam) {
+      void setAddSessionsPlanParam(null);
+    }
+  }, [addSessionsPlanParam, clearAddSessionsParam, setAddSessionsPlanParam]);
 
   useEffect(() => {
     if (previousStep.current !== step) {
@@ -277,6 +301,9 @@ function BookAppointmentWorkflow() {
                   onSessionChange={booking.changeSession}
                   onRetryPlans={() => void booking.retryPlans()}
                   onRetryTreatments={() => void booking.retryTreatments()}
+                  onAddSessions={(patientTreatmentPlanId) =>
+                    void setAddSessionsPlanParam(String(patientTreatmentPlanId))
+                  }
                 />
               ) : (
                 <div className="text-muted-foreground flex items-start gap-3 px-2 py-4 text-sm">
@@ -457,6 +484,17 @@ function BookAppointmentWorkflow() {
           </Button>
         </footer>
       </form>
+      {addSessionsPlanParam !== null &&
+      selectedPatient !== null &&
+      booking.canAssignTreatment &&
+      currentPlans.length > 0 ? (
+        <AddTreatmentPlanSessionsDialog
+          patientId={selectedPatient.id}
+          plans={currentPlans}
+          initialPlanId={addSessionsPlanId}
+          onClose={() => void setAddSessionsPlanParam(null)}
+        />
+      ) : null}
     </div>
   );
 }

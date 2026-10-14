@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  addPatientTreatmentPlanSessionsSchema,
   assignPatientTreatmentPlanSchema,
   patientTreatmentPlanIdSchema,
   patientTreatmentPlanPatientIdSchema,
@@ -10,6 +11,22 @@ import {
 } from './patient-treatment-plan-schema';
 
 describe('Patient Treatment Plan schema', () => {
+  it('should accept a positive integer Session count for an existing Plan', () => {
+    expect(
+      addPatientTreatmentPlanSessionsSchema.parse({ patientTreatmentPlanId: 12, sessions: 3 })
+    ).toEqual({ patientTreatmentPlanId: 12, sessions: 3 });
+  });
+
+  it('should reject missing, fractional, and non-positive Session counts', () => {
+    for (const payload of [
+      { patientTreatmentPlanId: 12 },
+      { patientTreatmentPlanId: 12, sessions: 1.5 },
+      { patientTreatmentPlanId: 12, sessions: 0 },
+    ]) {
+      expect(addPatientTreatmentPlanSessionsSchema.safeParse(payload).success).toBe(false);
+    }
+  });
+
   it('should accept a Repeatable assignment with a positive count beyond twelve', () => {
     expect(
       assignPatientTreatmentPlanSchema.parse({

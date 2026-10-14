@@ -2,10 +2,15 @@ import { StatusCodes } from 'http-status-codes';
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { addPatientTreatmentPlanSessionsCommand } from '@/app/api/lib/modules/patient-treatment-plan/commands/add-patient-treatment-plan-sessions-command';
 import { getPatientTreatmentPlansQuery } from '@/app/api/lib/modules/patient-treatment-plan/queries/get-patient-treatment-plans-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
-import { GET } from './route';
+import { GET, POST } from './route';
 
+vi.mock(
+  '@/app/api/lib/modules/patient-treatment-plan/commands/add-patient-treatment-plan-sessions-command',
+  () => ({ addPatientTreatmentPlanSessionsCommand: vi.fn() })
+);
 vi.mock(
   '@/app/api/lib/modules/patient-treatment-plan/queries/get-patient-treatment-plans-query',
   () => ({ getPatientTreatmentPlansQuery: vi.fn() })
@@ -16,6 +21,7 @@ vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
 }));
 
 const getPlans = vi.mocked(getPatientTreatmentPlansQuery);
+const addSessions = vi.mocked(addPatientTreatmentPlanSessionsCommand);
 const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
 
@@ -54,6 +60,14 @@ function request(search = '?status=current') {
   return new NextRequest(`http://localhost/api/v1/patients/12/treatment-plans${search}`);
 }
 
+function postRequest(body = JSON.stringify({ patientTreatmentPlanId: 1, sessions: 2 })) {
+  return new NextRequest('http://localhost/api/v1/patients/12/treatment-plans', {
+    method: 'POST',
+    body,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 function context(id = '12') {
   return {
     params: Promise.resolve({ id }),
@@ -66,6 +80,10 @@ describe('Patient Treatment Plans route', () => {
     requireSession.mockResolvedValue(tenantSession as never);
     requirePermissions.mockResolvedValue(null);
     getPlans.mockResolvedValue({ success: true, data: [plan] });
+    addSessions.mockResolvedValue({
+      success: true,
+      data: { ...plan, totalSessions: 4 },
+    });
   });
 
   it('should return unauthorized without checking permission or querying Plans', async () => {
@@ -151,6 +169,63 @@ describe('Patient Treatment Plans route', () => {
     await expect(response.json()).resolves.toEqual({
       message: 'Patient not found',
       errors: ['Patient not found'],
+    });
+  });
+
+  it('should require read and assign permissions before adding Sessions', async () => {
+    await POST(postRequest(), context());
+
+    expect(requirePermissions).toHaveBeenCalledWith(tenantSession, [
+      'patient-treatment-plan:read',
+      'patient-treatment-plan:assign',
+    ]);
+    expect(addSessions).toHaveBeenCalledWith('12', 'tenant-1', {
+      patientTreatmentPlanId: 1,
+      sessions: 2,
+    });
+  });
+
+  it('should not add Sessions when assignment permission is absent', async () => {
+    requirePermissions.mockResolvedValue(
+      NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+    );
+
+    const response = await POST(postRequest(), context());
+
+    expect(response.status).toBe(StatusCodes.FORBIDDEN);
+    expect(addSessions).not.toHaveBeenCalled();
+  });
+
+  it('should reject invalid JSON before adding Sessions', async () => {
+    const response = await POST(postRequest('{'), context());
+
+    expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+    await expect(response.json()).resolves.toEqual({ message: 'Request body must be valid JSON' });
+    expect(addSessions).not.toHaveBeenCalled();
+  });
+
+  it('should return the updated Plan after adding Sessions', async () => {
+    const response = await POST(postRequest(), context());
+
+    expect(response.status).toBe(StatusCodes.OK);
+    await expect(response.json()).resolves.toMatchObject({
+      data: { id: 1, totalSessions: 4 },
+    });
+  });
+
+  it('should map an unavailable Plan to conflict', async () => {
+    addSessions.mockResolvedValue({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: ['Patient Treatment Plan is no longer available.'],
+    });
+
+    const response = await POST(postRequest(), context());
+
+    expect(response.status).toBe(StatusCodes.CONFLICT);
+    await expect(response.json()).resolves.toEqual({
+      message: 'Conflict',
+      errors: ['Patient Treatment Plan is no longer available.'],
     });
   });
 });

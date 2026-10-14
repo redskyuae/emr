@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { ClipboardList, Info, RefreshCw, TriangleAlert } from 'lucide-react';
+import { ClipboardList, Info, Plus, RefreshCw, TriangleAlert } from 'lucide-react';
 import {
   Controller,
   useFormState,
   type Control,
   type FieldError as FormFieldError,
 } from 'react-hook-form';
+
+import { formatPatientTreatmentPlanSessionDisplayLabel } from '@/app/api/lib/modules/patient-treatment-plan/patient-treatment-plan-session-label';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -56,6 +58,7 @@ export function TreatmentSessionSection({
   onSessionChange,
   onRetryPlans,
   onRetryTreatments,
+  onAddSessions,
 }: {
   control: Control<BookAppointmentFormValues>;
   isProvisional: boolean;
@@ -76,6 +79,7 @@ export function TreatmentSessionSection({
   onSessionChange: (value: string) => void;
   onRetryPlans: () => void;
   onRetryTreatments: () => void;
+  onAddSessions: (patientTreatmentPlanId: number) => void;
 }) {
   const { errors } = useFormState({
     control,
@@ -141,6 +145,7 @@ export function TreatmentSessionSection({
             onSearchChange={onTreatmentSearchChange}
             onSessionChange={onSessionChange}
             onRetry={onRetryTreatments}
+            onAddSessions={onAddSessions}
             planError={errors.patientTreatmentPlanId}
             treatmentError={errors.treatmentId}
             sessionError={errors.patientTreatmentPlanSessionId}
@@ -176,7 +181,10 @@ export function TreatmentSessionSection({
             <AlertTitle>No Bookable Session</AlertTitle>
             <AlertDescription>
               This Patient has a current Treatment Plan, but every Session is completed or reserved
-              by another Appointment. Choose another current Plan or search for a Treatment master.
+              by another Appointment.{' '}
+              {canAssignTreatment
+                ? 'Add Sessions, choose another current Plan, or search for a Treatment master.'
+                : 'Choose another current Plan or search for a Treatment master.'}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -188,8 +196,10 @@ export function TreatmentSessionSection({
             <Info className="size-4" />
             <AlertTitle>No Bookable Session In This Plan</AlertTitle>
             <AlertDescription>
-              Choose another current Plan. Completed and reserved Sessions remain visible for
-              context.
+              {canAssignTreatment
+                ? 'Add Sessions or choose another current Plan. '
+                : 'Choose another current Plan. '}
+              Completed and reserved Sessions remain visible for context.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -225,6 +235,7 @@ export function PlanSelection({
   onSearchChange,
   onSessionChange,
   onRetry,
+  onAddSessions,
   planError,
   treatmentError,
   sessionError,
@@ -243,6 +254,7 @@ export function PlanSelection({
   onSearchChange: (value: string) => void;
   onSessionChange: (value: string) => void;
   onRetry: () => void;
+  onAddSessions: (patientTreatmentPlanId: number) => void;
   planError?: FormFieldError;
   treatmentError?: FormFieldError;
   sessionError?: FormFieldError;
@@ -376,63 +388,86 @@ export function PlanSelection({
             aria-label="Select Session"
             data-invalid={Boolean(sessionError)}
           >
-            {selectedTreatment.sessions.map((session) => (
+            {selectedTreatment.sessions.map((session) => {
+              const displayLabel = formatPatientTreatmentPlanSessionDisplayLabel(
+                session.label,
+                session.sessionNumber,
+                selectedTreatment.plannedSessions
+              );
+
+              return (
+                <Button
+                  key={session.id}
+                  type="button"
+                  variant="outline"
+                  aria-pressed={sessionForDetails?.id === session.id}
+                  aria-label={
+                    session.isBookable
+                      ? `Select ${displayLabel}`
+                      : `View details for ${displayLabel}, ${session.unavailableReason}`
+                  }
+                  onClick={() => {
+                    setInspectedSessionId(session.id);
+                    if (session.isBookable) onSessionChange(session.id);
+                  }}
+                  className={cn(
+                    'flex h-auto min-h-14 w-full min-w-0 flex-col items-start gap-2 px-3 py-2 text-left whitespace-normal',
+                    sessionForDetails?.id === session.id &&
+                      'border-primary bg-primary/5 ring-primary/15 ring-2'
+                  )}
+                >
+                  <span className="w-full min-w-0">
+                    <span className="block truncate font-medium">{displayLabel}</span>
+                    <span className="text-muted-foreground mt-1 block truncate text-xs">
+                      {session.procedure}
+                    </span>
+                    {session.reservedAppointment ? (
+                      <span className="text-warning mt-1 block text-xs leading-snug font-medium break-words">
+                        Booked: {formatBookedSessionDate(session.reservedAppointment.slotDate)} ·{' '}
+                        {session.reservedAppointment.startTime ?? 'Time not recorded'}–
+                        {session.reservedAppointment.endTime ?? 'Time not recorded'}
+                      </span>
+                    ) : session.unavailableReason === 'Completed' && session.completedAt ? (
+                      <span className="text-muted-foreground mt-1 block text-xs leading-snug font-medium break-words">
+                        Completed: {formatCompletedSessionDateTime(session.completedAt)}
+                      </span>
+                    ) : null}
+                  </span>
+                  <BookingStatusBadge
+                    tone={
+                      session.isBookable
+                        ? selectedSession?.id === session.id
+                          ? 'selected'
+                          : 'success'
+                        : session.unavailableReason === 'Completed'
+                          ? 'neutral'
+                          : 'warning'
+                    }
+                  >
+                    {session.isBookable
+                      ? sessionForDetails?.id === session.id
+                        ? 'Selected'
+                        : 'Available'
+                      : session.unavailableReason}
+                  </BookingStatusBadge>
+                </Button>
+              );
+            })}
+            {canAssignTreatment &&
+            selectedTreatment.selectionMode === 'EXISTING_PLAN' &&
+            selectedTreatment.patientTreatmentPlanId !== null ? (
               <Button
-                key={session.id}
                 type="button"
                 variant="outline"
-                aria-pressed={sessionForDetails?.id === session.id}
-                aria-label={
-                  session.isBookable
-                    ? `Select ${session.label}`
-                    : `View details for ${session.label}, ${session.unavailableReason}`
-                }
-                onClick={() => {
-                  setInspectedSessionId(session.id);
-                  if (session.isBookable) onSessionChange(session.id);
-                }}
-                className={cn(
-                  'flex h-auto min-h-14 w-full min-w-0 flex-col items-start gap-2 px-3 py-2 text-left whitespace-normal',
-                  sessionForDetails?.id === session.id &&
-                    'border-primary bg-primary/5 ring-primary/15 ring-2'
-                )}
+                onClick={() => onAddSessions(Number(selectedTreatment.patientTreatmentPlanId))}
+                className="border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 flex h-auto min-h-14 w-full min-w-0 flex-col items-start gap-2 px-3 py-2 text-left whitespace-normal"
               >
-                <span className="w-full min-w-0">
-                  <span className="block truncate font-medium">{session.label}</span>
-                  <span className="text-muted-foreground mt-1 block truncate text-xs">
-                    {session.procedure}
-                  </span>
-                  {session.reservedAppointment ? (
-                    <span className="text-warning mt-1 block text-xs leading-snug font-medium break-words">
-                      Booked: {formatBookedSessionDate(session.reservedAppointment.slotDate)} ·{' '}
-                      {session.reservedAppointment.startTime ?? 'Time not recorded'}–
-                      {session.reservedAppointment.endTime ?? 'Time not recorded'}
-                    </span>
-                  ) : session.unavailableReason === 'Completed' && session.completedAt ? (
-                    <span className="text-muted-foreground mt-1 block text-xs leading-snug font-medium break-words">
-                      Completed: {formatCompletedSessionDateTime(session.completedAt)}
-                    </span>
-                  ) : null}
+                <span className="flex items-center gap-2 font-medium">
+                  <Plus className="size-4" /> Add Sessions
                 </span>
-                <BookingStatusBadge
-                  tone={
-                    session.isBookable
-                      ? selectedSession?.id === session.id
-                        ? 'selected'
-                        : 'success'
-                      : session.unavailableReason === 'Completed'
-                        ? 'neutral'
-                        : 'warning'
-                  }
-                >
-                  {session.isBookable
-                    ? sessionForDetails?.id === session.id
-                      ? 'Selected'
-                      : 'Available'
-                    : session.unavailableReason}
-                </BookingStatusBadge>
+                <span className="text-muted-foreground text-xs">Extend this Treatment Plan</span>
               </Button>
-            ))}
+            ) : null}
           </div>
           <FieldError errors={[sessionError]} />
         </Field>

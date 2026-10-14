@@ -141,16 +141,11 @@ export const createTreatmentSchema = z
           message: 'Sequenced Treatments derive their count from Session templates',
         });
       }
-      if (
-        data.sessions.some(
-          (session, index) =>
-            index > 0 && session.sessionNumber <= data.sessions[index - 1].sessionNumber
-        )
-      ) {
+      if (data.sessions.some((session, index) => session.sessionNumber !== index + 1)) {
         ctx.addIssue({
           code: 'custom',
           path: ['sessions'],
-          message: 'Sequenced Session numbers must be in ascending order',
+          message: 'Sequenced Session numbers must be contiguous from 1',
         });
       }
     }

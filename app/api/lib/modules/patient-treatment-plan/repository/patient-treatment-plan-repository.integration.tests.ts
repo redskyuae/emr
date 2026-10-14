@@ -506,6 +506,147 @@ describe('Patient Treatment Plan repository', () => {
     expect(savedSession.label).toBe('Template 1');
   });
 
+  it('should append numbered Sessions from the assigned Repeatable Plan snapshot', async () => {
+    const patient = await createPatient(tenantA, 'MRN-ADD');
+    const treatment = await createTreatment(tenantA, 'REPEATABLE', 'MASTER-ADD');
+    const template = await createTemplate(tenantA, treatment.id, 1);
+    const plan = await createPlan(tenantA, patient.id, treatment.id, 2);
+    await createPlanSession(tenantA, plan.id, 1, {
+      treatmentSessionId: template.id,
+      label: 'Assigned snapshot',
+      procedure: 'Assigned procedure',
+      durationMinutes: 55,
+    });
+    await createPlanSession(tenantA, plan.id, 2, {
+      treatmentSessionId: template.id,
+      label: 'Assigned snapshot',
+      procedure: 'Assigned procedure',
+      durationMinutes: 55,
+    });
+
+    const updated = await patientTreatmentPlanRepository.addSessionsToPlan({
+      tenantId: tenantA,
+      patientId: patient.id,
+      patientTreatmentPlanId: plan.id,
+      sessions: 2,
+    });
+
+    expect(updated).toMatchObject({ id: plan.id, totalSessions: 4, status: 'PENDING' });
+    expect(updated?.sessions).toHaveLength(4);
+    expect(updated?.sessions.map((session) => session.sessionNumber)).toEqual([1, 2, 3, 4]);
+    expect(updated?.sessions.slice(2)).toEqual([
+      expect.objectContaining({
+        treatmentSessionId: template.id,
+        label: 'Assigned snapshot',
+        procedure: 'Assigned procedure',
+        durationMinutes: 55,
+      }),
+      expect.objectContaining({
+        treatmentSessionId: template.id,
+        label: 'Assigned snapshot',
+        procedure: 'Assigned procedure',
+        durationMinutes: 55,
+      }),
+    ]);
+  });
+
+  it('should not append Sessions across Tenants', async () => {
+    const patient = await createPatient(tenantA, 'MRN-ADD-GUARD');
+    const treatment = await createTreatment(tenantA, 'REPEATABLE', 'MASTER-ADD-GUARD');
+    const plan = await createPlan(tenantA, patient.id, treatment.id, 1);
+    await createPlanSession(tenantA, plan.id, 1);
+
+    await expect(
+      patientTreatmentPlanRepository.addSessionsToPlan({
+        tenantId: tenantB,
+        patientId: patient.id,
+        patientTreatmentPlanId: plan.id,
+        sessions: 2,
+      })
+    ).resolves.toBeUndefined();
+    const [unchanged] = await db.select().from(planTable).where(eq(planTable.id, plan.id));
+    expect(unchanged.totalSessions).toBe(1);
+  });
+
+  it('should append Sessions from the final assigned Sequenced Session snapshot', async () => {
+    const patient = await createPatient(tenantA, 'MRN-ADD-SEQUENCED');
+    const treatment = await createTreatment(tenantA, 'SEQUENCED', 'MASTER-ADD-SEQUENCED');
+    const firstTemplate = await createTemplate(tenantA, treatment.id, 1);
+    const finalTemplate = await createTemplate(tenantA, treatment.id, 2);
+    const plan = await createPlan(tenantA, patient.id, treatment.id, 2, {
+      sessionStructure: 'SEQUENCED',
+    });
+    await createPlanSession(tenantA, plan.id, 1, {
+      treatmentSessionId: firstTemplate.id,
+      label: 'Session 1 of 2 · First assigned snapshot',
+      procedure: 'First procedure',
+      durationMinutes: 30,
+    });
+    await createPlanSession(tenantA, plan.id, 2, {
+      treatmentSessionId: finalTemplate.id,
+      label: 'Session 2 of 2 · Final assigned snapshot',
+      procedure: 'Final procedure',
+      durationMinutes: 60,
+    });
+
+    const updated = await patientTreatmentPlanRepository.addSessionsToPlan({
+      tenantId: tenantA,
+      patientId: patient.id,
+      patientTreatmentPlanId: plan.id,
+      sessions: 2,
+    });
+
+    expect(updated).toMatchObject({ id: plan.id, totalSessions: 4 });
+    expect(updated?.sessions.map((session) => session.sessionNumber)).toEqual([1, 2, 3, 4]);
+    expect(updated?.sessions.map((session) => session.label)).toEqual([
+      'Session 1 of 4 · First assigned snapshot',
+      'Session 2 of 4 · Final assigned snapshot',
+      'Session 3 of 4 · Final assigned snapshot',
+      'Session 4 of 4 · Final assigned snapshot',
+    ]);
+    expect(updated?.sessions.slice(2)).toEqual([
+      expect.objectContaining({
+        treatmentSessionId: finalTemplate.id,
+        label: 'Session 3 of 4 · Final assigned snapshot',
+        procedure: 'Final procedure',
+        durationMinutes: 60,
+      }),
+      expect.objectContaining({
+        treatmentSessionId: finalTemplate.id,
+        label: 'Session 4 of 4 · Final assigned snapshot',
+        procedure: 'Final procedure',
+        durationMinutes: 60,
+      }),
+    ]);
+  });
+
+  it('should reject appending when active Session numbering has drifted', async () => {
+    const patient = await createPatient(tenantA, 'MRN-ADD-DRIFT');
+    const treatment = await createTreatment(tenantA, 'SEQUENCED', 'MASTER-ADD-DRIFT');
+    const plan = await createPlan(tenantA, patient.id, treatment.id, 2, {
+      sessionStructure: 'SEQUENCED',
+    });
+    await createPlanSession(tenantA, plan.id, 1);
+    await createPlanSession(tenantA, plan.id, 3);
+
+    await expect(
+      patientTreatmentPlanRepository.addSessionsToPlan({
+        tenantId: tenantA,
+        patientId: patient.id,
+        patientTreatmentPlanId: plan.id,
+        sessions: 1,
+      })
+    ).resolves.toBeUndefined();
+
+    const [unchanged] = await db.select().from(planTable).where(eq(planTable.id, plan.id));
+    const sessions = await db
+      .select({ sessionNumber: sessionTable.sessionNumber })
+      .from(sessionTable)
+      .where(eq(sessionTable.patientTreatmentPlanId, plan.id));
+    expect(unchanged.totalSessions).toBe(2);
+    expect(sessions.map(({ sessionNumber }) => sessionNumber)).toEqual([1, 3]);
+  });
+
   it('should reject a caller-supplied Session count for a Sequenced Treatment', async () => {
     const patient = await createPatient(tenantA, 'MRN-A');
     const treatment = await createTreatment(tenantA, 'SEQUENCED', 'MASTER-S');

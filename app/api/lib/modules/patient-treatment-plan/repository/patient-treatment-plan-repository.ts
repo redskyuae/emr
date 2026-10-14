@@ -20,7 +20,9 @@ import type {
   PatientTreatmentPlanReadSession,
   PatientTreatmentPlanSessionReservedAppointment,
   PatientTreatmentPlanStatus,
+  AddPatientTreatmentPlanSessionsInput,
 } from '../schemas/patient-treatment-plan-schema';
+import { resequencePatientTreatmentPlanSessionLabel } from '../patient-treatment-plan-session-label';
 
 export type PatientTreatmentPlanTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -547,6 +549,145 @@ async function createPlanFromTreatment(
   };
 }
 
+async function addSessionsToPlan(
+  input: AddPatientTreatmentPlanSessionsInput
+): Promise<PatientTreatmentPlan | undefined> {
+  const updated = await db.transaction(async (tx) => {
+    const [plan] = await tx
+      .select({
+        id: planTable.id,
+        totalSessions: planTable.totalSessions,
+        sessionStructure: planTable.sessionStructure,
+      })
+      .from(planTable)
+      .innerJoin(
+        patientTable,
+        and(
+          eq(patientTable.id, planTable.patientId),
+          eq(patientTable.tenantId, input.tenantId),
+          eq(patientTable.isDeleted, false)
+        )
+      )
+      .where(
+        and(
+          eq(planTable.id, input.patientTreatmentPlanId),
+          eq(planTable.patientId, input.patientId),
+          eq(planTable.tenantId, input.tenantId),
+          isNull(planTable.statusOverride),
+          eq(planTable.isDeleted, false)
+        )
+      )
+      .for('update', { of: planTable })
+      .limit(1);
+
+    if (!plan) return false;
+
+    const existingSessions = await tx
+      .select({
+        id: sessionTable.id,
+        sessionNumber: sessionTable.sessionNumber,
+        treatmentSessionId: sessionTable.treatmentSessionId,
+        label: sessionTable.label,
+        procedure: sessionTable.procedure,
+        durationMinutes: sessionTable.durationMinutes,
+        setupMinutes: sessionTable.setupMinutes,
+        cleaningMinutes: sessionTable.cleaningMinutes,
+        preparation: sessionTable.preparation,
+        warning: sessionTable.warning,
+        equipment: sessionTable.equipment,
+        roomType: sessionTable.roomType,
+        therapistSkill: sessionTable.therapistSkill,
+        legacyConductionNote: sessionTable.legacyConductionNote,
+      })
+      .from(sessionTable)
+      .where(
+        and(
+          eq(sessionTable.patientTreatmentPlanId, plan.id),
+          eq(sessionTable.tenantId, input.tenantId),
+          eq(sessionTable.isDeleted, false)
+        )
+      )
+      .orderBy(asc(sessionTable.sessionNumber), asc(sessionTable.id))
+      .for('update');
+
+    const hasNumberingDrift =
+      existingSessions.length !== plan.totalSessions ||
+      existingSessions.some((session, index) => session.sessionNumber !== index + 1);
+    if (hasNumberingDrift) return false;
+
+    const template =
+      plan.sessionStructure === 'REPEATABLE'
+        ? existingSessions[0]
+        : existingSessions[existingSessions.length - 1];
+    if (!template) return false;
+
+    const modifiedOn = new Date();
+    const newTotalSessions = plan.totalSessions + input.sessions;
+    await tx
+      .update(planTable)
+      .set({ totalSessions: newTotalSessions, modifiedOn })
+      .where(
+        and(
+          eq(planTable.id, plan.id),
+          eq(planTable.tenantId, input.tenantId),
+          eq(planTable.isDeleted, false)
+        )
+      );
+
+    for (const session of existingSessions) {
+      const label = resequencePatientTreatmentPlanSessionLabel(
+        session.label,
+        session.sessionNumber,
+        newTotalSessions
+      );
+      if (label === session.label) continue;
+
+      await tx
+        .update(sessionTable)
+        .set({ label, modifiedOn })
+        .where(
+          and(
+            eq(sessionTable.id, session.id),
+            eq(sessionTable.tenantId, input.tenantId),
+            eq(sessionTable.isDeleted, false)
+          )
+        );
+    }
+
+    await tx.insert(sessionTable).values(
+      Array.from({ length: input.sessions }, (_, index) => ({
+        tenantId: input.tenantId,
+        patientTreatmentPlanId: plan.id,
+        treatmentSessionId: template.treatmentSessionId,
+        sessionNumber: plan.totalSessions + index + 1,
+        label: resequencePatientTreatmentPlanSessionLabel(
+          template.label,
+          plan.totalSessions + index + 1,
+          newTotalSessions
+        ),
+        procedure: template.procedure,
+        durationMinutes: template.durationMinutes,
+        setupMinutes: template.setupMinutes,
+        cleaningMinutes: template.cleaningMinutes,
+        preparation: template.preparation,
+        warning: template.warning,
+        equipment: template.equipment,
+        roomType: template.roomType,
+        therapistSkill: template.therapistSkill,
+        legacyConductionNote: template.legacyConductionNote,
+        modifiedOn,
+      }))
+    );
+
+    return true;
+  });
+
+  if (!updated) return undefined;
+
+  const plans = await getCurrentByPatientId(input.patientId, input.tenantId);
+  return plans.find((plan) => plan.id === input.patientTreatmentPlanId);
+}
+
 async function reserveSession(
   planSessionId: number,
   appointmentId: number,
@@ -708,6 +849,7 @@ async function completeSessionForVisit(
 }
 
 export const patientTreatmentPlanRepository = {
+  addSessionsToPlan,
   reserveSession,
   createPlanFromTreatment,
   getCurrentByPatientId,

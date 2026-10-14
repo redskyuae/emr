@@ -77,7 +77,7 @@ describe('Treatment schema', () => {
     ).toBe(false);
   });
 
-  it('should require ascending unique Sequenced Session numbers', () => {
+  it('should require Sequenced Session numbers to be contiguous from one', () => {
     expect(
       createTreatmentSchema.safeParse({
         ...validPayload,
@@ -90,6 +90,25 @@ describe('Treatment schema', () => {
         sessions: [session, { ...session, sessionNumber: 2 }],
       }).success
     ).toBe(true);
+    expect(
+      errorsOf(
+        createTreatmentSchema.safeParse({
+          ...validPayload,
+          sessions: [session, { ...session, sessionNumber: 3 }],
+        })
+      )
+    ).toContain('Sequenced Session numbers must be contiguous from 1');
+    expect(
+      errorsOf(
+        createTreatmentSchema.safeParse({
+          ...validPayload,
+          sessions: [
+            { ...session, sessionNumber: 2 },
+            { ...session, sessionNumber: 3 },
+          ],
+        })
+      )
+    ).toContain('Sequenced Session numbers must be contiguous from 1');
   });
 
   it('should reject unknown timing values in staff create and update requests', () => {
