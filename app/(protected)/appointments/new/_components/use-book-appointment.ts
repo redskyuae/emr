@@ -729,6 +729,8 @@ export function useBookAppointment() {
     treatmentsError: getErrorMessage(treatmentsQuery.error),
     treatmentOptions,
     canAssignTreatment: Boolean(assignPermission.data),
+    isAssignPermissionError: assignPermission.isError,
+    isAssignPermissionLoading: assignPermission.isLoading,
     treatmentSearch,
     setStep,
     setPatientSearch,

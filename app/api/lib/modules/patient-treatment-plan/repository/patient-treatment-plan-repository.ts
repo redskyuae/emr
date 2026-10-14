@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { appointment as appointmentTable } from '@/app/db/schema/appointment';
@@ -582,8 +582,10 @@ async function addSessionsToPlan(
 
     if (!plan) return false;
 
-    const [template] = await tx
+    const existingSessions = await tx
       .select({
+        id: sessionTable.id,
+        sessionNumber: sessionTable.sessionNumber,
         treatmentSessionId: sessionTable.treatmentSessionId,
         label: sessionTable.label,
         procedure: sessionTable.procedure,
@@ -605,14 +607,18 @@ async function addSessionsToPlan(
           eq(sessionTable.isDeleted, false)
         )
       )
-      .orderBy(
-        plan.sessionStructure === 'REPEATABLE'
-          ? asc(sessionTable.sessionNumber)
-          : desc(sessionTable.sessionNumber),
-        plan.sessionStructure === 'REPEATABLE' ? asc(sessionTable.id) : desc(sessionTable.id)
-      )
-      .limit(1);
+      .orderBy(asc(sessionTable.sessionNumber), asc(sessionTable.id))
+      .for('update');
 
+    const hasNumberingDrift =
+      existingSessions.length !== plan.totalSessions ||
+      existingSessions.some((session, index) => session.sessionNumber !== index + 1);
+    if (hasNumberingDrift) return false;
+
+    const template =
+      plan.sessionStructure === 'REPEATABLE'
+        ? existingSessions[0]
+        : existingSessions[existingSessions.length - 1];
     if (!template) return false;
 
     const modifiedOn = new Date();
@@ -627,6 +633,26 @@ async function addSessionsToPlan(
           eq(planTable.isDeleted, false)
         )
       );
+
+    for (const session of existingSessions) {
+      const label = resequencePatientTreatmentPlanSessionLabel(
+        session.label,
+        session.sessionNumber,
+        newTotalSessions
+      );
+      if (label === session.label) continue;
+
+      await tx
+        .update(sessionTable)
+        .set({ label, modifiedOn })
+        .where(
+          and(
+            eq(sessionTable.id, session.id),
+            eq(sessionTable.tenantId, input.tenantId),
+            eq(sessionTable.isDeleted, false)
+          )
+        );
+    }
 
     await tx.insert(sessionTable).values(
       Array.from({ length: input.sessions }, (_, index) => ({

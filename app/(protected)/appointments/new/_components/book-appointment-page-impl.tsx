@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/empty';
 import { FieldError } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
+import { shouldClearAddSessionsQueryParam } from '../_utils/add-sessions-query-state';
 import { canAllocateProcedureResources } from '../_utils/appointment-time';
 
 import { AppointmentDetailsSection } from './appointment-details-section';
@@ -101,6 +102,21 @@ function BookAppointmentWorkflow() {
       ? Number(addSessionsPlanParam)
       : null;
   const currentPlans = booking.planOptions.filter((plan) => plan.selectionMode === 'EXISTING_PLAN');
+  const clearAddSessionsParam = shouldClearAddSessionsQueryParam({
+    hasCurrentPlans: currentPlans.length > 0,
+    hasPlansError: booking.plansError !== null,
+    isPlansLoading: booking.isPlansLoading,
+    canAssignTreatment: booking.canAssignTreatment,
+    hasSelectedPatient: selectedPatient !== null,
+    isAssignPermissionError: booking.isAssignPermissionError,
+    isAssignPermissionLoading: booking.isAssignPermissionLoading,
+  });
+
+  useEffect(() => {
+    if (addSessionsPlanParam !== null && clearAddSessionsParam) {
+      void setAddSessionsPlanParam(null);
+    }
+  }, [addSessionsPlanParam, clearAddSessionsParam, setAddSessionsPlanParam]);
 
   useEffect(() => {
     if (previousStep.current !== step) {

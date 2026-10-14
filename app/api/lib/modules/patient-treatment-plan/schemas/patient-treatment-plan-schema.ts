@@ -45,7 +45,8 @@ export const addPatientTreatmentPlanSessionsSchema = z
     sessions: z
       .number({ error: 'Sessions is required' })
       .int('Sessions must be an integer')
-      .positive('Sessions must be positive'),
+      .positive('Sessions must be positive')
+      .max(100, 'Sessions must be at most 100'),
   })
   .strict();
 

@@ -578,7 +578,7 @@ describe('Patient Treatment Plan repository', () => {
     });
     await createPlanSession(tenantA, plan.id, 1, {
       treatmentSessionId: firstTemplate.id,
-      label: 'First assigned snapshot',
+      label: 'Session 1 of 2 · First assigned snapshot',
       procedure: 'First procedure',
       durationMinutes: 30,
     });
@@ -598,6 +598,12 @@ describe('Patient Treatment Plan repository', () => {
 
     expect(updated).toMatchObject({ id: plan.id, totalSessions: 4 });
     expect(updated?.sessions.map((session) => session.sessionNumber)).toEqual([1, 2, 3, 4]);
+    expect(updated?.sessions.map((session) => session.label)).toEqual([
+      'Session 1 of 4 · First assigned snapshot',
+      'Session 2 of 4 · Final assigned snapshot',
+      'Session 3 of 4 · Final assigned snapshot',
+      'Session 4 of 4 · Final assigned snapshot',
+    ]);
     expect(updated?.sessions.slice(2)).toEqual([
       expect.objectContaining({
         treatmentSessionId: finalTemplate.id,
@@ -612,6 +618,33 @@ describe('Patient Treatment Plan repository', () => {
         durationMinutes: 60,
       }),
     ]);
+  });
+
+  it('should reject appending when active Session numbering has drifted', async () => {
+    const patient = await createPatient(tenantA, 'MRN-ADD-DRIFT');
+    const treatment = await createTreatment(tenantA, 'SEQUENCED', 'MASTER-ADD-DRIFT');
+    const plan = await createPlan(tenantA, patient.id, treatment.id, 2, {
+      sessionStructure: 'SEQUENCED',
+    });
+    await createPlanSession(tenantA, plan.id, 1);
+    await createPlanSession(tenantA, plan.id, 3);
+
+    await expect(
+      patientTreatmentPlanRepository.addSessionsToPlan({
+        tenantId: tenantA,
+        patientId: patient.id,
+        patientTreatmentPlanId: plan.id,
+        sessions: 1,
+      })
+    ).resolves.toBeUndefined();
+
+    const [unchanged] = await db.select().from(planTable).where(eq(planTable.id, plan.id));
+    const sessions = await db
+      .select({ sessionNumber: sessionTable.sessionNumber })
+      .from(sessionTable)
+      .where(eq(sessionTable.patientTreatmentPlanId, plan.id));
+    expect(unchanged.totalSessions).toBe(2);
+    expect(sessions.map(({ sessionNumber }) => sessionNumber)).toEqual([1, 3]);
   });
 
   it('should reject a caller-supplied Session count for a Sequenced Treatment', async () => {
