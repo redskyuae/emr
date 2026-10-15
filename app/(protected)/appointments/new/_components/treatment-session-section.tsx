@@ -340,7 +340,7 @@ export function PlanSelection({
           {isLoading
             ? `Searching${search ? ` for “${search}”` : ''}…`
             : canAssignTreatment
-              ? 'Showing current Plans and up to 20 matching Treatment masters.'
+              ? 'Showing current Plans and up to 999 matching Treatment masters.'
               : 'Showing current Treatment Plans.'}
         </p>
         <FieldError errors={[planError, treatmentError]} />
@@ -560,7 +560,7 @@ export function CatalogueSelection({
         <p className="text-muted-foreground text-xs" aria-live="polite">
           {isLoading
             ? `Searching${search ? ` for “${search}”` : ''}…`
-            : 'Showing up to 20 matching Treatments.'}
+            : 'Showing up to 999 matching Treatments.'}
         </p>
         <FieldError errors={[treatmentError]} />
       </Field>

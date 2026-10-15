@@ -186,7 +186,7 @@ export function useBookAppointment() {
   const treatmentsQuery = useTreatmentsQuery(
     {
       page: 1,
-      limit: 20,
+      limit: 999,
       query: debouncedTreatmentSearch || undefined,
     },
     { enabled: catalogueEnabled }
