@@ -12,10 +12,16 @@ export async function getPatientTreatmentPlansQuery(
 
   if (!validationResult.success) return validationResult;
 
-  const plans = await patientTreatmentPlanRepository.getCurrentByPatientId(
-    validationResult.data.patientId,
-    validationResult.data.tenantId
-  );
+  const plans =
+    validationResult.data.status === 'all'
+      ? await patientTreatmentPlanRepository.getAllByPatientId(
+          validationResult.data.patientId,
+          validationResult.data.tenantId
+        )
+      : await patientTreatmentPlanRepository.getCurrentByPatientId(
+          validationResult.data.patientId,
+          validationResult.data.tenantId
+        );
 
   return { success: true, data: plans };
 }

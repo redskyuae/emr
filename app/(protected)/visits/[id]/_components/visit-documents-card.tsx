@@ -10,6 +10,13 @@ import { useAddVisitDocument } from '@/app/queries/visits/useAddVisitDocument';
 import { useVisitDocumentsQuery } from '@/app/queries/visits/useVisitDocuments';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { formatFileSize } from '../../_utils/format-file-size';
 import { VisitDocumentUploadButton } from '../../_components/visit-document-upload';
 import { DeleteVisitDocumentDialog } from './_modals/delete-visit-document-dialog';
@@ -44,7 +51,17 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
         ) : documentsQuery.isError ? (
           <p className="text-destructive text-sm">{getApiErrorMessage(documentsQuery.error)}</p>
         ) : documents.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No documents attached to this Visit.</p>
+          <Empty className="min-h-56 rounded-lg border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FileText className="size-5" />
+              </EmptyMedia>
+              <EmptyTitle>No documents yet</EmptyTitle>
+              <EmptyDescription>
+                Upload reports, images, or other files for this Visit.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <ul className="space-y-2 text-sm">
             {documents.map((document) => (

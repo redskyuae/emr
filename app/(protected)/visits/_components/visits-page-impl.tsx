@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
@@ -183,6 +184,12 @@ export function VisitsPageImpl() {
 
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
+                <Button variant="outline" asChild>
+                  <Link href="/visits/new">
+                    <Plus className="size-4" />
+                    Create Visit
+                  </Link>
+                </Button>
                 <Button type="button" onClick={() => void setCheckInParam('new')}>
                   <Plus className="size-4" />
                   Check in
@@ -216,9 +223,11 @@ export function VisitsPageImpl() {
             </EmptyHeader>
             {canCreate ? (
               <EmptyContent>
-                <Button type="button" onClick={() => void setCheckInParam('new')}>
-                  <Plus className="size-4" />
-                  Check in
+                <Button asChild>
+                  <Link href="/visits/new">
+                    <Plus className="size-4" />
+                    Create Visit
+                  </Link>
                 </Button>
               </EmptyContent>
             ) : null}

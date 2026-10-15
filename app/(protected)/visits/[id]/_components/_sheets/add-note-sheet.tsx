@@ -51,11 +51,13 @@ export function AddNoteSheet({
   open,
   patientId,
   visitId,
+  preferredNoteTypeCode,
   onClose,
 }: {
   open: boolean;
   patientId: number;
   visitId: number;
+  preferredNoteTypeCode?: string;
   onClose: () => void;
 }) {
   const form = useForm<VisitNoteFormValues>({
@@ -64,7 +66,7 @@ export function AddNoteSheet({
     defaultValues: EMPTY,
   });
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
-  const noteTypes = noteTypesQuery.data?.data ?? [];
+  const noteTypes = noteTypesQuery.data?.data;
   const createNote = useCreateClinicalNote();
 
   useEffect(() => {
@@ -72,6 +74,12 @@ export function AddNoteSheet({
       form.reset(EMPTY);
     }
   }, [open, form]);
+
+  useEffect(() => {
+    if (!open || !preferredNoteTypeCode || form.getValues('noteTypeId')) return;
+    const preferred = noteTypes?.find((type) => type.code === preferredNoteTypeCode);
+    if (preferred) form.setValue('noteTypeId', String(preferred.id));
+  }, [open, preferredNoteTypeCode, noteTypes, form]);
 
   const handleSave = form.handleSubmit(async (values) => {
     try {
@@ -135,7 +143,7 @@ export function AddNoteSheet({
                         <SelectValue placeholder="Select a note type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {noteTypes.map((noteType) => (
+                        {(noteTypes ?? []).map((noteType) => (
                           <SelectItem key={noteType.id} value={String(noteType.id)}>
                             {noteType.name}
                           </SelectItem>

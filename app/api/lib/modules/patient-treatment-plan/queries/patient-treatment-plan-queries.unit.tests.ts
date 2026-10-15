@@ -6,7 +6,7 @@ import { validateGetPatientTreatmentPlans } from '../validator/patient-treatment
 import { getPatientTreatmentPlansQuery } from './get-patient-treatment-plans-query';
 
 vi.mock('../repository/patient-treatment-plan-repository', () => ({
-  patientTreatmentPlanRepository: { getCurrentByPatientId: vi.fn() },
+  patientTreatmentPlanRepository: { getCurrentByPatientId: vi.fn(), getAllByPatientId: vi.fn() },
 }));
 vi.mock('../validator/patient-treatment-plan-validator', () => ({
   validateGetPatientTreatmentPlans: vi.fn(),
@@ -91,5 +91,19 @@ describe('Patient Treatment Plan queries', () => {
       success: true,
       data: [],
     });
+  });
+
+  it('returns completed and stopped Plans for the journey summary when status is all', async () => {
+    validate.mockResolvedValue({
+      success: true,
+      data: { patientId: 12, tenantId: 'tenant-a', status: 'all' },
+    });
+    repo.getAllByPatientId.mockResolvedValue([{ ...plan, status: 'COMPLETED' }] as never);
+    await expect(getPatientTreatmentPlansQuery('12', 'tenant-a', 'all')).resolves.toMatchObject({
+      success: true,
+      data: [{ status: 'COMPLETED' }],
+    });
+    expect(repo.getAllByPatientId).toHaveBeenCalledWith(12, 'tenant-a');
+    expect(repo.getCurrentByPatientId).not.toHaveBeenCalled();
   });
 });
