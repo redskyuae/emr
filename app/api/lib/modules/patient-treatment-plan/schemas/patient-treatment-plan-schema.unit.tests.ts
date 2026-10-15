@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   addPatientTreatmentPlanSessionsSchema,
+  assignPatientTreatmentPlanRequestSchema,
   assignPatientTreatmentPlanSchema,
   patientTreatmentPlanIdSchema,
   patientTreatmentPlanPatientIdSchema,
@@ -11,6 +12,18 @@ import {
 } from './patient-treatment-plan-schema';
 
 describe('Patient Treatment Plan schema', () => {
+  it('accepts a Treatment assignment request and rejects unexpected fields', () => {
+    expect(
+      assignPatientTreatmentPlanRequestSchema.parse({ treatmentId: 2, totalSessions: 5 })
+    ).toEqual({ treatmentId: 2, totalSessions: 5 });
+    expect(
+      assignPatientTreatmentPlanRequestSchema.safeParse({ treatmentId: 2, patientId: 9 }).success
+    ).toBe(false);
+    expect(
+      assignPatientTreatmentPlanRequestSchema.safeParse({ treatmentId: 2, totalSessions: 0 })
+        .success
+    ).toBe(false);
+  });
   it('should accept a positive integer Session count for an existing Plan', () => {
     expect(
       addPatientTreatmentPlanSessionsSchema.parse({ patientTreatmentPlanId: 12, sessions: 3 })

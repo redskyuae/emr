@@ -34,13 +34,14 @@ export default async function AppLayout({
 
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
   const appointmentsOnly = process.env.SIDEBAR_APPOINTMENTS_ONLY !== 'false';
+  const showVisits = process.env.SIDEBAR_SHOW_VISITS === 'true';
 
   return (
     <TabSessionGate>
       <AppShellGate>
         <TooltipProvider>
           <SidebarProvider defaultOpen={defaultOpen}>
-            <AppSidebar appointmentsOnly={appointmentsOnly} />
+            <AppSidebar appointmentsOnly={appointmentsOnly} showVisits={showVisits} />
             <SidebarInset>
               <AppTopbar />
               <div className="flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">

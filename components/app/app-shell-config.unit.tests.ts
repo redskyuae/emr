@@ -82,6 +82,21 @@ describe('App shell navigation permissions', () => {
     expect(groups[1].items.map(({ title }) => title)).toEqual(['Appointments', 'Book Appointment']);
   });
 
+  it('should show Visits in the reduced sidebar only when enabled and permitted', () => {
+    const permissions = ['appointment:read', 'visit:read'];
+
+    const enabledGroups = getVisibleNavGroups(appNavGroups, permissions, true, true);
+    expect(enabledGroups.map(({ title }) => title)).toEqual(['Overview', 'Clinical', 'Outpatient']);
+    expect(enabledGroups[2].items.map(({ title }) => title)).toEqual(['Visits']);
+
+    expect(getVisibleNavGroups(appNavGroups, permissions, true, false)).not.toContainEqual(
+      expect.objectContaining({ title: 'Outpatient' })
+    );
+    expect(getVisibleNavGroups(appNavGroups, ['appointment:read'], true, true)).not.toContainEqual(
+      expect.objectContaining({ title: 'Outpatient' })
+    );
+  });
+
   it('should restore the full sidebar when the flag is off', () => {
     const permissions = ['appointment:read', 'asset:read'];
 

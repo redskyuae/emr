@@ -6211,9 +6211,9 @@ export const openApiDocument = {
     '/api/v1/patients/{id}/treatment-plans': {
       get: {
         tags: ['Patient'],
-        summary: 'List Current Patient Treatment Plans',
+        summary: 'List Patient Treatment Plans',
         description:
-          'Returns current Patient Treatment Plans and every Session availability state for one Patient in the active Tenant. The response is reservation-aware and requires patient-treatment-plan:read permission.',
+          'Returns Patient Treatment Plans and every Session availability state for one Patient in the active Tenant. By default, only pending and in-progress Plans are returned; status=all also includes completed and stopped Plans for longitudinal review. The response is reservation-aware and requires patient-treatment-plan:read permission.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Patient'),
@@ -6221,13 +6221,13 @@ export const openApiDocument = {
             name: 'status',
             in: 'query',
             required: false,
-            description: 'Current Plan filter. Only current is supported by this endpoint.',
-            schema: { type: 'string', enum: ['current'], default: 'current' },
+            description: 'Use all to include completed and stopped Plans; current is the default.',
+            schema: { type: 'string', enum: ['current', 'all'], default: 'current' },
           },
         ],
         responses: {
           '200': {
-            description: 'Current Patient Treatment Plans with Session availability.',
+            description: 'Patient Treatment Plans with Session availability.',
             content: jsonContent(dataEnvelopeSchema('PatientTreatmentPlansResponse')),
           },
           '400': responseRef('ValidationFailed'),
@@ -6318,6 +6318,92 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/patients/{id}/treatment-plans/assign': {
+      post: {
+        tags: ['Patient'],
+        summary: 'Assign Treatment to Patient',
+        description:
+          'Creates a Patient Treatment Plan from a Tenant Treatment and snapshots its Session templates. The Patient must be registered and active. Repeatable Treatments require totalSessions; Sequenced Treatments derive their count from the catalogue. Requires patient-treatment-plan:read and patient-treatment-plan:assign. The Tenant is resolved from the active Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Patient')],
+        requestBody: requestBody('AssignPatientTreatmentPlanRequest', {
+          treatmentId: 12,
+          totalSessions: 5,
+        }),
+        responses: {
+          '201': {
+            description: 'Patient Treatment Plan assigned with Patient-specific Sessions.',
+            content: jsonContent(dataEnvelopeSchema('PatientTreatmentPlan'), {
+              data: {
+                id: 81,
+                tenantId: 'tenant-ayur',
+                patientId: 42,
+                treatmentId: 12,
+                treatmentName: 'Abhyanga',
+                treatmentCode: 'ABH',
+                sessionStructure: 'REPEATABLE',
+                totalSessions: 5,
+                status: 'PENDING',
+                completedSessions: 0,
+                sessions: [
+                  {
+                    id: 901,
+                    patientTreatmentPlanId: 81,
+                    treatmentSessionId: 12,
+                    sessionNumber: 1,
+                    label: 'Abhyanga Session',
+                    procedure: 'Abhyanga',
+                    durationMinutes: 45,
+                    completionStatus: 'PENDING',
+                    completionSource: null,
+                    completedVisitId: null,
+                    completedAt: null,
+                    isReserved: false,
+                    isBookable: true,
+                    unavailableReason: null,
+                    reservedAppointment: null,
+                  },
+                ],
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid JSON or assignment values.',
+            content: {
+              'application/json': {
+                schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+                examples: {
+                  missingCount: {
+                    value: {
+                      message: 'Number of Sessions is required for a Repeatable Treatment.',
+                      errors: ['Number of Sessions is required for a Repeatable Treatment.'],
+                    },
+                  },
+                  invalidJson: { value: { message: 'Request body must be valid JSON' } },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'Patient or Treatment not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Treatment not found',
+              errors: ['Treatment not found'],
+            }),
+          },
+          '409': {
+            description: 'The Patient is Provisional or the Treatment has no Session templates.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient must be registered before assigning a Treatment Plan.',
+              errors: ['Patient must be registered before assigning a Treatment Plan.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -10608,6 +10694,20 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description: 'Number of additional Patient Treatment Plan Sessions to append.',
+          },
+        },
+      },
+      AssignPatientTreatmentPlanRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['treatmentId'],
+        properties: {
+          treatmentId: { type: 'integer', minimum: 1 },
+          totalSessions: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
+            description: 'Required for Repeatable Treatments; omitted for Sequenced Treatments.',
           },
         },
       },

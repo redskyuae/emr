@@ -15,7 +15,21 @@ describe('OpenAPI Current User contracts', () => {
 });
 
 describe('OpenAPI Patient Treatment Plan contracts', () => {
-  it('documents the patient-scoped current-plan response and permission errors', () => {
+  it('documents direct Treatment assignment after consultation', () => {
+    const operation = openApiDocument.paths['/api/v1/patients/{id}/treatment-plans/assign'].post;
+    const response = operation.responses as Record<string, { content?: unknown }>;
+    const request = openApiDocument.components.schemas.AssignPatientTreatmentPlanRequest;
+
+    expect(operation.requestBody).toBeDefined();
+    expect(request.required).toEqual(['treatmentId']);
+    expect(response['201'].content).toBeDefined();
+    expect(response['400'].content).toBeDefined();
+    expect(response['403']).toBeDefined();
+    expect(response['404'].content).toBeDefined();
+    expect(response['409'].content).toBeDefined();
+  });
+
+  it('documents current and historical Patient Treatment Plan response and permission errors', () => {
     const operation = openApiDocument.paths['/api/v1/patients/{id}/treatment-plans'].get;
     const response = operation.responses as Record<string, { content?: unknown }>;
 
@@ -23,6 +37,14 @@ describe('OpenAPI Patient Treatment Plan contracts', () => {
       expect.arrayContaining([
         expect.objectContaining({ name: 'id', in: 'path' }),
         expect.objectContaining({ name: 'status', in: 'query' }),
+      ])
+    );
+    expect(operation.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'status',
+          schema: expect.objectContaining({ enum: ['current', 'all'], default: 'current' }),
+        }),
       ])
     );
     expect(response['200'].content).toBeDefined();

@@ -12,11 +12,6 @@ import {
   patientToFormValues,
 } from '@/app/(protected)/patients/_utils/patient-form-values';
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { useCountryOptionsQuery } from '@/app/queries/global-references/countries/useCountries';
-import { useLanguageOptionsQuery } from '@/app/queries/global-references/languages/useLanguages';
-import { useNationalityOptionsQuery } from '@/app/queries/global-references/nationalities/useNationalities';
-import { useReligionOptionsQuery } from '@/app/queries/global-references/religions/useReligions';
-import { useStateOptionsQuery } from '@/app/queries/global-references/states/useStates';
 import { useUpdatePatient } from '@/app/queries/patients/useUpdatePatient';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -29,13 +24,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-
-function findReferenceIdByName(
-  options: Array<{ id: number; name: string }> | undefined,
-  name: string
-): number | undefined {
-  return options?.find((option) => option.name.toLowerCase() === name.toLowerCase())?.id;
-}
 
 function PatientRegistrationSkeleton() {
   return (
@@ -66,30 +54,17 @@ export function PatientRegistrationSection({
   patient,
   loading,
   error,
-  isDemo,
   onRetry,
   onContinue,
 }: {
   patient: Patient | null;
   loading: boolean;
   error: unknown;
-  isDemo?: boolean;
   onRetry: () => void;
   onContinue: () => void;
 }) {
   const [formRevision, setFormRevision] = useState(0);
   const updatePatient = useUpdatePatient();
-
-  const countryOptionsQuery = useCountryOptionsQuery();
-  const nationalityOptionsQuery = useNationalityOptionsQuery();
-  const languageOptionsQuery = useLanguageOptionsQuery();
-  const religionOptionsQuery = useReligionOptionsQuery();
-  const demoCountryId = findReferenceIdByName(countryOptionsQuery.data, 'United Arab Emirates');
-  const stateOptionsQuery = useStateOptionsQuery(isDemo ? (demoCountryId ?? null) : null);
-  const demoStateId = findReferenceIdByName(stateOptionsQuery.data, 'Dubai');
-  const demoNationalityId = findReferenceIdByName(nationalityOptionsQuery.data, 'Emirati');
-  const demoLanguageId = findReferenceIdByName(languageOptionsQuery.data, 'Arabic');
-  const demoReligionId = findReferenceIdByName(religionOptionsQuery.data, 'Islam');
 
   if (loading) {
     return <PatientRegistrationSkeleton />;
@@ -127,28 +102,8 @@ export function PatientRegistrationSection({
     );
   }
 
-  const defaultValues: PatientFormValues = isDemo
-    ? {
-        ...patientToFormValues(patient),
-        countryId: demoCountryId,
-        stateId: demoStateId,
-        nationalityId: demoNationalityId,
-        languageId: demoLanguageId,
-        religionId: demoReligionId,
-        identityDocuments: patientToFormValues(patient).identityDocuments.map((document) => ({
-          documentType: document.documentType,
-          documentNumber: document.documentNumber,
-          issuingCountryId:
-            document.documentType === 'passport' ? demoCountryId : document.issuingCountryId,
-          expiryDate: document.expiryDate,
-          label: document.label,
-        })),
-      }
-    : patientToFormValues(patient);
-
-  const formKey = isDemo
-    ? `demo-${patient.id}-${formRevision}-${demoCountryId}-${demoStateId}-${demoNationalityId}-${demoLanguageId}-${demoReligionId}`
-    : `${patient.id}-${formRevision}`;
+  const defaultValues: PatientFormValues = patientToFormValues(patient);
+  const formKey = `${patient.id}-${formRevision}`;
 
   return (
     <section className="space-y-4" aria-labelledby="patient-information-heading">
@@ -158,9 +113,7 @@ export function PatientRegistrationSection({
             Patient information
           </h2>
           <p className="text-muted-foreground text-sm">
-            {isDemo
-              ? 'Demo Patient — static data used to preview the Visit workflow.'
-              : 'Registration details loaded from the Patient record.'}
+            Registration details loaded from the Patient record.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -173,6 +126,18 @@ export function PatientRegistrationSection({
         </div>
       </div>
 
+      {patient.registrationStatus === 'registered' ? (
+        <div className="flex justify-end">
+          <Button type="button" variant="outline" onClick={onContinue}>
+            Continue with existing details
+          </Button>
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">
+          Complete and save Patient registration before creating the Visit.
+        </p>
+      )}
+
       <PatientForm
         key={formKey}
         mode="edit"
@@ -183,11 +148,6 @@ export function PatientRegistrationSection({
         submitLabel="Save and continue"
         onCancel={() => setFormRevision((current) => current + 1)}
         onSave={async (values) => {
-          if (isDemo) {
-            toast.success('Demo Patient details loaded.');
-            onContinue();
-            return;
-          }
           await updatePatient.mutateAsync({
             patientId: patient.id,
             request: patientFormValuesToRequest(values),

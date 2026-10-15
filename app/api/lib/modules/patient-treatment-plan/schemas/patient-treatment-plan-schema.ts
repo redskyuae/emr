@@ -50,6 +50,13 @@ export const addPatientTreatmentPlanSessionsSchema = z
   })
   .strict();
 
+export const assignPatientTreatmentPlanRequestSchema = z
+  .object({
+    treatmentId: treatmentIdSchema,
+    totalSessions: z.number().int().positive().max(100).optional(),
+  })
+  .strict();
+
 export const patientTreatmentPlanSessionSchema = z.object({
   id: patientTreatmentPlanSessionIdSchema,
   tenantId: patientTreatmentPlanTenantIdSchema,
@@ -84,6 +91,9 @@ export type PatientTreatmentPlanSessionReservedAppointment = {
   endTime: string | null;
 };
 export type AssignPatientTreatmentPlanInput = z.infer<typeof assignPatientTreatmentPlanSchema>;
+export type AssignPatientTreatmentPlanRequest = z.infer<
+  typeof assignPatientTreatmentPlanRequestSchema
+>;
 export type AddPatientTreatmentPlanSessionsRequest = z.infer<
   typeof addPatientTreatmentPlanSessionsSchema
 >;

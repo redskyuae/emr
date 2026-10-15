@@ -3,40 +3,28 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import Link from 'next/link';
-import {
-  Activity,
-  CheckCircle2,
-  NotebookPen,
-  PlayCircle,
-  ReceiptText,
-  Save,
-  User,
-  XCircle,
-} from 'lucide-react';
+import { CheckCircle2, PlayCircle, ReceiptText, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { AllergyBanner } from '@/app/(protected)/patients/[id]/_components/_chart/allergy-banner';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
-import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientChart';
-import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
 import { useCompleteVisit } from '@/app/queries/visits/useCompleteVisit';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
-import { useUpdateVisit } from '@/app/queries/visits/useUpdateVisit';
 import { useVisit } from '@/app/queries/visits/useVisit';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
 import { isActiveVisit, visitStatusPresentation } from '../../_utils/visit-status';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
+import { AssignTreatmentPlanSheet } from './_sheets/assign-treatment-plan-sheet';
+import { DoctorConsultationSheet } from './_sheets/doctor-consultation-sheet';
+import { DailyTreatmentSheet } from './_sheets/daily-treatment-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
-import { VisitDocumentsCard } from './visit-documents-card';
+import { VisitCarePathway } from './visit-care-pathway';
 import { VisitStatusTimeline } from './visit-status-timeline';
 
 export function VisitDetailImpl({ visitId }: { visitId: number }) {
@@ -44,58 +32,20 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const { data: visit } = useVisit(visitId);
   const chartQuery = usePatientChartQuery(visit.patient.id);
   const allergensQuery = useAllergensQuery({ limit: 100 });
-  const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
-  const treatmentsQuery = useTreatmentsQuery({ page: 1, limit: 999 });
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [detailsDraft, setDetailsDraft] = useState<{
-    remarks: string;
-    treatmentId: string;
-    chiefComplaint: string;
-    treatmentSessionId: string;
-  } | null>(null);
-  const details = detailsDraft ?? {
-    remarks: visit.remarks ?? '',
-    treatmentId: visit.treatment ? String(visit.treatment.id) : '',
-    chiefComplaint: visit.chiefComplaint ?? '',
-    treatmentSessionId: visit.treatmentSession ? String(visit.treatmentSession.id) : '',
-  };
-  const { remarks, treatmentId, chiefComplaint, treatmentSessionId } = details;
 
   const startMutation = useStartConsultation();
   const completeMutation = useCompleteVisit();
-  const updateMutation = useUpdateVisit();
 
-  const { data: canUpdate } = useHasPermission('visit:update');
   const { data: canStart } = useHasPermission('visit:start');
   const { data: canComplete } = useHasPermission('visit:complete');
   const { data: canCancel } = useHasPermission('visit:cancel');
+  const { data: canCreateInvoice } = useHasPermission('invoice:create');
 
   const status = visitStatusPresentation(visit.status);
   const active = isActiveVisit(visit.status);
-  const canEditDetails = active && canUpdate;
-
   const allergenName = (id: number) =>
     allergensQuery.data?.data.find((allergen) => allergen.id === id)?.name ?? 'Allergen';
-  const noteTypeName = (id: number) =>
-    noteTypesQuery.data?.data.find((noteType) => noteType.id === id)?.name ?? 'Note';
-
-  const visitVitals = (chartQuery.data?.vitalSigns ?? []).filter(
-    (vitalSign) => vitalSign.visitId === visit.id
-  );
-  const visitNotes = (chartQuery.data?.clinicalNotes ?? []).filter(
-    (note) => note.visitId === visit.id
-  );
-
-  const treatments = treatmentsQuery.data?.data ?? [];
-  const selectedTreatment = treatments.find((treatment) => String(treatment.id) === treatmentId);
-  const selectedSession = selectedTreatment?.sessions.find(
-    (session) => String(session.id) === treatmentSessionId
-  );
-  const isDirty =
-    chiefComplaint !== (visit.chiefComplaint ?? '') ||
-    remarks !== (visit.remarks ?? '') ||
-    treatmentId !== (visit.treatment ? String(visit.treatment.id) : '') ||
-    treatmentSessionId !== (visit.treatmentSession ? String(visit.treatmentSession.id) : '');
 
   async function runTransition(action: 'start' | 'complete') {
     try {
@@ -111,64 +61,62 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     }
   }
 
-  async function handleSaveDetails() {
-    const treatmentDirty =
-      treatmentId !== (visit.treatment ? String(visit.treatment.id) : '') ||
-      treatmentSessionId !== (visit.treatmentSession ? String(visit.treatmentSession.id) : '');
-
-    try {
-      await updateMutation.mutateAsync({
-        id: visit.id,
-        request: {
-          chiefComplaint: chiefComplaint || undefined,
-          remarks: remarks || undefined,
-          ...(treatmentDirty
-            ? {
-                treatmentId: treatmentId ? Number(treatmentId) : null,
-                treatmentSessionId: treatmentSessionId ? Number(treatmentSessionId) : null,
-              }
-            : {}),
-        },
-      });
-      setDetailsDraft(null);
-      toast.success('Visit updated.');
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    }
-  }
-
   return (
     <>
-      <div className="space-y-4">
+      <div className="mx-auto w-full max-w-6xl space-y-5">
         {/* The same safety banner the Patient Chart shows — the consulting
             Doctor must see allergies without leaving the Visit. */}
         <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
 
         <Card className="shadow-fluent-2">
-          <CardContent className="space-y-4 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-semibold">{visit.visitNumber}</h2>
-                  <Badge variant={status.variant}>{status.label}</Badge>
-                  <span className="bg-primary/10 text-primary inline-flex size-8 items-center justify-center rounded-md text-sm font-semibold tabular-nums">
-                    {visit.queueToken}
-                  </span>
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  {visit.visitDate} · {visit.visitType.name} · {visit.doctor.name}
-                  {visit.appointment ? ` · ${visit.appointment.bookingNumber}` : ' · Walk-in'}
-                </p>
-                <Link
-                  href={`/patients/${visit.patient.id}`}
-                  className="inline-flex items-center gap-1 text-sm font-medium hover:underline"
+          <CardContent className="space-y-5 p-5">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div className="flex min-w-0 items-start gap-4">
+                <span
+                  className="bg-primary/10 text-primary grid size-12 shrink-0 place-items-center rounded-xl text-base font-semibold"
+                  aria-hidden="true"
                 >
-                  <User className="size-4" />
-                  {visit.patient.firstName} {visit.patient.lastName} · {visit.patient.mrn}
-                </Link>
+                  {visit.patient.firstName.charAt(0)}
+                  {visit.patient.lastName.charAt(0)}
+                </span>
+                <div className="min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/patients/${visit.patient.id}`}
+                      className="text-xl font-semibold hover:underline"
+                    >
+                      {visit.patient.firstName} {visit.patient.lastName}
+                    </Link>
+                    <Badge variant={status.variant}>{status.label}</Badge>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    {visit.patient.mrn} · {visit.visitType.name} · {visit.doctor.name}
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    {visit.visitDate} · {visit.visitNumber} ·{' '}
+                    {visit.appointment?.bookingNumber ?? 'Walk-in'}
+                    <span className="text-primary ml-2 font-medium">Token {visit.queueToken}</span>
+                  </p>
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 md:justify-end">
+                {active && canCancel ? (
+                  <Button type="button" variant="outline" onClick={() => setCancelOpen(true)}>
+                    <XCircle className="size-4" />
+                    Cancel Visit
+                  </Button>
+                ) : null}
+                {canCreateInvoice ? (
+                  <Button asChild variant="outline">
+                    <Link
+                      href={`/billing?invoice=new&patientId=${visit.patient.id}&visitId=${visit.id}`}
+                    >
+                      <ReceiptText className="size-4" />
+                      Create Invoice
+                    </Link>
+                  </Button>
+                ) : null}
                 {visit.status === 'CHECKED_IN' && canStart ? (
                   <Button
                     type="button"
@@ -189,24 +137,11 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                     Complete Visit
                   </Button>
                 ) : null}
-                {active && canCancel ? (
-                  <Button type="button" variant="outline" onClick={() => setCancelOpen(true)}>
-                    <XCircle className="size-4" />
-                    Cancel
-                  </Button>
-                ) : null}
-                <Button asChild variant="outline">
-                  <Link
-                    href={`/billing?invoice=new&patientId=${visit.patient.id}&visitId=${visit.id}`}
-                  >
-                    <ReceiptText className="size-4" />
-                    Create Invoice
-                  </Link>
-                </Button>
               </div>
             </div>
-
-            <VisitStatusTimeline visit={visit} />
+            <div className="border-t pt-5">
+              <VisitStatusTimeline visit={visit} />
+            </div>
 
             {visit.status === 'CANCELLED' && visit.cancellationReason ? (
               <p className="text-muted-foreground text-sm">
@@ -216,209 +151,18 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           </CardContent>
         </Card>
 
-        <Card className="shadow-fluent-2">
-          <CardHeader>
-            <CardTitle className="text-base">Visit details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Field>
-              <FieldLabel htmlFor="visit-chief-complaint">Purpose of visit</FieldLabel>
-              <Textarea
-                id="visit-chief-complaint"
-                rows={2}
-                disabled={!canEditDetails}
-                value={chiefComplaint}
-                onChange={(event) =>
-                  setDetailsDraft({ ...details, chiefComplaint: event.target.value })
-                }
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="visit-remarks">Remarks</FieldLabel>
-              <Textarea
-                id="visit-remarks"
-                rows={2}
-                disabled={!canEditDetails}
-                value={remarks}
-                onChange={(event) => setDetailsDraft({ ...details, remarks: event.target.value })}
-              />
-            </Field>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field>
-                <FieldLabel htmlFor="visit-treatment">Treatment</FieldLabel>
-                {canEditDetails ? (
-                  <NativeSelect
-                    id="visit-treatment"
-                    className="w-full"
-                    value={treatmentId}
-                    onChange={(event) => {
-                      setDetailsDraft({
-                        ...details,
-                        treatmentId: event.target.value,
-                        treatmentSessionId: '',
-                      });
-                    }}
-                  >
-                    <NativeSelectOption value="">No Treatment</NativeSelectOption>
-                    {treatments.map((treatment) => (
-                      <NativeSelectOption key={treatment.id} value={String(treatment.id)}>
-                        {treatment.name} · {treatment.code}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                ) : (
-                  <p className="text-sm">
-                    {visit.treatment
-                      ? `${visit.treatment.name} · ${visit.treatment.code}`
-                      : 'No Treatment'}
-                  </p>
-                )}
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="visit-session">Session</FieldLabel>
-                {canEditDetails ? (
-                  <NativeSelect
-                    id="visit-session"
-                    className="w-full"
-                    value={treatmentSessionId}
-                    disabled={!selectedTreatment}
-                    onChange={(event) =>
-                      setDetailsDraft({ ...details, treatmentSessionId: event.target.value })
-                    }
-                  >
-                    <NativeSelectOption value="">No Session</NativeSelectOption>
-                    {(selectedTreatment?.sessions ?? []).map((session) => (
-                      <NativeSelectOption key={session.id} value={String(session.id)}>
-                        {session.label}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                ) : (
-                  <p className="text-sm">{visit.treatmentSession?.label ?? 'No Session'}</p>
-                )}
-              </Field>
-            </div>
-            {selectedSession ? (
-              <p className="text-muted-foreground text-xs">
-                {selectedSession.procedure} · {selectedSession.durationMinutes} min
-              </p>
-            ) : null}
-            {canEditDetails ? (
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={
-                    !isDirty ||
-                    updateMutation.isPending ||
-                    Boolean(treatmentId) !== Boolean(treatmentSessionId)
-                  }
-                  onClick={() => void handleSaveDetails()}
-                >
-                  <Save className="size-4" />
-                  {updateMutation.isPending ? 'Saving…' : 'Save details'}
-                </Button>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {active
-                  ? 'You do not have permission to edit this Visit.'
-                  : `This Visit is ${status.label.toLowerCase()} and can no longer be edited.`}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="shadow-fluent-2">
-            <CardHeader className="flex-row items-center justify-between">
-              <CardTitle className="text-base">Vitals this Visit</CardTitle>
-              {active ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void setCaptureParam('vitals')}
-                >
-                  <Activity className="size-4" />
-                  Record
-                </Button>
-              ) : null}
-            </CardHeader>
-            <CardContent>
-              {visitVitals.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  No vitals recorded during this Visit.
-                </p>
-              ) : (
-                <ul className="space-y-2 text-sm">
-                  {visitVitals.map((vitalSign) => (
-                    <li key={vitalSign.id} className="rounded-md border p-2">
-                      <p className="text-muted-foreground text-xs">
-                        {new Date(vitalSign.recordedAt).toLocaleString()}
-                      </p>
-                      <p>
-                        {[
-                          vitalSign.systolic && vitalSign.diastolic
-                            ? `BP ${vitalSign.systolic}/${vitalSign.diastolic}`
-                            : null,
-                          vitalSign.pulseBpm ? `Pulse ${vitalSign.pulseBpm}` : null,
-                          vitalSign.temperatureC ? `Temp ${vitalSign.temperatureC}°C` : null,
-                          vitalSign.spo2 ? `SpO₂ ${vitalSign.spo2}%` : null,
-                          vitalSign.bmi ? `BMI ${vitalSign.bmi}` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ') || 'Recorded'}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-fluent-2">
-            <CardHeader className="flex-row items-center justify-between">
-              <CardTitle className="text-base">Notes this Visit</CardTitle>
-              {active ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void setCaptureParam('note')}
-                >
-                  <NotebookPen className="size-4" />
-                  Add note
-                </Button>
-              ) : null}
-            </CardHeader>
-            <CardContent>
-              {visitNotes.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  No notes authored during this Visit.
-                </p>
-              ) : (
-                <ul className="space-y-2 text-sm">
-                  {visitNotes.map((note) => (
-                    <li key={note.id} className="rounded-md border p-2">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium">{noteTypeName(note.noteTypeId)}</p>
-                        <Badge variant={note.status === 'signed' ? 'outline' : 'secondary'}>
-                          {note.status === 'signed' ? 'Signed' : 'Draft'}
-                        </Badge>
-                      </div>
-                      {note.subjective ? (
-                        <p className="text-muted-foreground line-clamp-2">{note.subjective}</p>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <VisitDocumentsCard visitId={visit.id} active={active} />
+        <VisitCarePathway
+          visit={visit}
+          chart={chartQuery.data}
+          chartLoading={chartQuery.isLoading}
+          chartError={chartQuery.isError}
+          onRecordVitals={() => void setCaptureParam('vitals')}
+          onAddNote={() => void setCaptureParam('nurse-note')}
+          onDoctorConsultation={() => void setCaptureParam('consultation')}
+          onDailyTreatment={() => void setCaptureParam('session')}
+          onAssignPlan={() => void setCaptureParam('plan')}
+          onAddClinicalNote={() => void setCaptureParam('note')}
+        />
       </div>
 
       <RecordVitalsSheet
@@ -429,11 +173,38 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
       />
 
       <AddNoteSheet
-        open={captureParam === 'note'}
+        open={captureParam === 'note' || captureParam === 'nurse-note'}
         patientId={visit.patient.id}
         visitId={visit.id}
+        preferredNoteTypeCode={captureParam === 'nurse-note' ? 'NURS' : undefined}
         onClose={() => void setCaptureParam(null)}
       />
+
+      <AssignTreatmentPlanSheet
+        key={captureParam === 'plan' ? 'plan-open' : 'plan-closed'}
+        open={captureParam === 'plan'}
+        patientId={visit.patient.id}
+        onClose={() => void setCaptureParam(null)}
+      />
+
+      <DoctorConsultationSheet
+        open={captureParam === 'consultation'}
+        patientId={visit.patient.id}
+        visitId={visit.id}
+        chiefComplaint={visit.chiefComplaint}
+        onClose={() => void setCaptureParam(null)}
+      />
+
+      {visit.treatmentSession ? (
+        <DailyTreatmentSheet
+          open={captureParam === 'session'}
+          patientId={visit.patient.id}
+          visitId={visit.id}
+          appointmentId={visit.appointment?.id ?? null}
+          session={visit.treatmentSession}
+          onClose={() => void setCaptureParam(null)}
+        />
+      ) : null}
 
       <CancelVisitDialog visit={cancelOpen ? visit : null} onClose={() => setCancelOpen(false)} />
     </>

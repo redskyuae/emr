@@ -185,9 +185,10 @@ function withAvailability(
   };
 }
 
-async function getCurrentByPatientId(
+async function getByPatientId(
   patientId: number,
-  tenantId: string
+  tenantId: string,
+  includeHistory: boolean
 ): Promise<PatientTreatmentPlan[]> {
   const plans = await db
     .select(planColumns)
@@ -205,7 +206,7 @@ async function getCurrentByPatientId(
         eq(planTable.patientId, patientId),
         eq(planTable.tenantId, tenantId),
         eq(planTable.isDeleted, false),
-        isNull(planTable.statusOverride)
+        ...(includeHistory ? [] : [isNull(planTable.statusOverride)])
       )
     )
     .orderBy(asc(planTable.createdOn), asc(planTable.id));
@@ -278,7 +279,7 @@ async function getCurrentByPatientId(
     sessionsByPlan.set(session.patientTreatmentPlanId, sessions);
   }
 
-  const currentPlans: PatientTreatmentPlan[] = [];
+  const matchingPlans: PatientTreatmentPlan[] = [];
 
   for (const plan of plans) {
     const sessions = sessionsByPlan.get(plan.id) ?? [];
@@ -287,12 +288,20 @@ async function getCurrentByPatientId(
     ).length;
     const status = deriveStatus(plan, sessions);
 
-    if (status === 'PENDING' || status === 'IN_PROGRESS') {
-      currentPlans.push({ ...plan, status, completedSessions, sessions });
+    if (includeHistory || status === 'PENDING' || status === 'IN_PROGRESS') {
+      matchingPlans.push({ ...plan, status, completedSessions, sessions });
     }
   }
 
-  return currentPlans;
+  return matchingPlans;
+}
+
+async function getCurrentByPatientId(patientId: number, tenantId: string) {
+  return getByPatientId(patientId, tenantId, false);
+}
+
+async function getAllByPatientId(patientId: number, tenantId: string) {
+  return getByPatientId(patientId, tenantId, true);
 }
 
 async function getPlanSessionForBooking(
@@ -547,6 +556,14 @@ async function createPlanFromTreatment(
     patientTreatmentPlanId: createdPlan.id,
     sessions: createdSessions.map((session) => createdBookingContext(planSnapshot, session)),
   };
+}
+
+async function assignTreatmentToPatient(
+  input: CatalogueAssignment
+): Promise<PatientTreatmentPlan | undefined> {
+  const created = await db.transaction((tx) => createPlanFromTreatment(input, tx));
+  const plans = await getCurrentByPatientId(input.patientId, input.tenantId);
+  return plans.find((plan) => plan.id === created.patientTreatmentPlanId);
 }
 
 async function addSessionsToPlan(
@@ -850,9 +867,11 @@ async function completeSessionForVisit(
 
 export const patientTreatmentPlanRepository = {
   addSessionsToPlan,
+  assignTreatmentToPatient,
   reserveSession,
   createPlanFromTreatment,
   getCurrentByPatientId,
+  getAllByPatientId,
   completeSessionForVisit,
   getPlanSessionForBooking,
   releaseReservationForAppointment,
