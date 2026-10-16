@@ -35,7 +35,7 @@ export function addMinutesToTime(startTime: string, duration: number) {
 export function getProcedureStartTimes() {
   const times: string[] = [];
 
-  for (let minutes = 8 * 60; minutes <= 20 * 60; minutes += 15) {
+  for (let minutes = 0; minutes <= 23 * 60 + 30; minutes += 15) {
     const hours = Math.floor(minutes / 60);
     const remainder = minutes % 60;
     times.push(`${String(hours).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`);
@@ -47,7 +47,7 @@ export function getProcedureStartTimes() {
 export function getProcedureEndTimes() {
   const times: string[] = [];
 
-  for (let minutes = 8 * 60 + 15; minutes <= 23 * 60 + 45; minutes += 15) {
+  for (let minutes = 15; minutes <= 23 * 60 + 45; minutes += 15) {
     const hours = Math.floor(minutes / 60);
     const remainder = minutes % 60;
     times.push(`${String(hours).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`);

@@ -56,19 +56,19 @@ describe('Appointment time', () => {
     expect(getSlotTimes('09:00', '10:00', 15)).toEqual(['09:00', '09:15', '09:30', '09:45']);
   });
 
-  it('should provide static Procedure start times in 15 minute intervals', () => {
+  it('should provide Procedure start times throughout the day in 15 minute intervals', () => {
     const times = getProcedureStartTimes();
 
-    expect(times[0]).toBe('08:00');
-    expect(times.slice(0, 4)).toEqual(['08:00', '08:15', '08:30', '08:45']);
-    expect(times.at(-1)).toBe('20:00');
+    expect(times.slice(0, 4)).toEqual(['00:00', '00:15', '00:30', '00:45']);
+    expect(times).toContain('20:15');
+    expect(times.at(-1)).toBe('23:30');
+    expect(times).not.toContain('23:45');
   });
 
   it('should provide adjustable Procedure end times through the end of the day', () => {
     const times = getProcedureEndTimes();
 
-    expect(times[0]).toBe('08:15');
-    expect(times.slice(0, 4)).toEqual(['08:15', '08:30', '08:45', '09:00']);
+    expect(times.slice(0, 4)).toEqual(['00:15', '00:30', '00:45', '01:00']);
     expect(times.at(-1)).toBe('23:45');
   });
 
