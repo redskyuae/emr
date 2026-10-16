@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarClock, CircleX, Eye, MoreHorizontal, Phone, UserRound } from 'lucide-react';
+import { CalendarClock, CircleX, MoreHorizontal, Phone, Plus, UserRound } from 'lucide-react';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { Badge } from '@/components/ui/badge';
@@ -174,9 +174,9 @@ export function AppointmentsTable({
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href="/visits?checkin=new">
-                            <Eye className="size-4" />
-                            Check-in desk
+                          <Link href="/visits/new">
+                            <Plus className="size-4" />
+                            Create Visit
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>

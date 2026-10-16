@@ -61,6 +61,9 @@ export default function VisitDetailPageLoader() {
           </div>
         </div>
       </div>
+      <div className="flex justify-end border-t pt-5">
+        <Skeleton className="h-9 w-36" />
+      </div>
     </div>
   );
 }

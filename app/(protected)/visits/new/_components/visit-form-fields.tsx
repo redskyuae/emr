@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
+import { getAppointmentVisitDefaults } from '../_utils/appointment-visit-defaults';
 
 type FormProps = {
   control: Control<CreateVisitFormValues>;
@@ -39,6 +40,7 @@ export function VisitSourceFields({
   setValue,
   appointments,
   patients,
+  visitTypes,
   loading,
 }: FormProps) {
   const mode = useWatch({ control, name: 'mode' });
@@ -57,6 +59,9 @@ export function VisitSourceFields({
             setValue('appointmentId', '');
             setValue('patientId', '');
             setValue('doctorId', '');
+            setValue('visitTypeId', '');
+            setValue('chiefComplaint', '');
+            setValue('remarks', '');
           }}
         >
           <TabsList className="grid w-full grid-cols-2 sm:w-96">
@@ -81,6 +86,17 @@ export function VisitSourceFields({
                   aria-required
                   className="w-full"
                   disabled={loading}
+                  onChange={(event) => {
+                    field.onChange(event);
+                    const selected = appointments.find(
+                      (appointment) => String(appointment.id) === event.target.value
+                    );
+                    const defaults = getAppointmentVisitDefaults(selected, visitTypes);
+                    setValue('visitTypeId', defaults.visitTypeId);
+                    setValue('chiefComplaint', defaults.chiefComplaint);
+                    setValue('remarks', defaults.remarks);
+                    setValue('doctorId', '');
+                  }}
                 >
                   <NativeSelectOption value="">Select an Appointment</NativeSelectOption>
                   {appointments.map((appointment) => (
@@ -147,6 +163,19 @@ export function VisitDetailsFields({
         <CardDescription>These details are saved on the Visit.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {appointment?.bookingPath === 'PROCEDURE' ? (
+          <div className="bg-muted/50 rounded-md border p-4 text-sm">
+            <p className="font-medium">Scheduled Treatment</p>
+            <p className="text-muted-foreground mt-1">
+              {appointment.treatment?.name ?? 'Treatment'}
+              {appointment.treatmentSession ? ` · ${appointment.treatmentSession.label}` : ''}
+            </p>
+            <p className="text-muted-foreground mt-2 text-xs">
+              This Treatment and Session will be linked to the Visit at Check-in. Review the
+              prefilled details below.
+            </p>
+          </div>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2">
           <Controller
             control={control}

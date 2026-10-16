@@ -138,7 +138,7 @@ Recommended route:
 - `/visits/new?appointmentId=123`
 - `/visits/new?patientId=456`
 
-This follows ADR 0021: clinical entity forms use dedicated pages. The current `CheckInSheet` can remain as the quick action, but should eventually route into or reuse the same Create Visit form.
+This follows ADR 0021: clinical entity forms use dedicated pages. The Visits page and Appointment actions open `/visits/new`; the old `CheckInSheet` quick action has been removed.
 
 ## Target UI
 
