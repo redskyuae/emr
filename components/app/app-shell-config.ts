@@ -769,11 +769,14 @@ function hasNavPermission(resource: string | undefined, grantedResources: Set<st
 function filterNavItem(
   item: AppNavItem,
   grantedResources: Set<string>,
-  appointmentsOnly: boolean
+  appointmentsOnly: boolean,
+  showVisits: boolean
 ): AppNavItem | null {
   if (
     !hasNavPermission(item.permission, grantedResources) ||
-    (appointmentsOnly && !appointmentNavHrefs.has(item.href))
+    (appointmentsOnly &&
+      !appointmentNavHrefs.has(item.href) &&
+      !(showVisits && item.href === '/visits'))
   ) {
     return null;
   }
@@ -794,7 +797,8 @@ function filterNavItem(
 export function getVisibleNavGroups(
   groups: AppNavGroup[],
   permissions: string[],
-  appointmentsOnly = false
+  appointmentsOnly = false,
+  showVisits = false
 ): AppNavGroup[] {
   const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
 
@@ -802,7 +806,7 @@ export function getVisibleNavGroups(
     .map((group) => ({
       ...group,
       items: group.items
-        .map((item) => filterNavItem(item, grantedResources, appointmentsOnly))
+        .map((item) => filterNavItem(item, grantedResources, appointmentsOnly, showVisits))
         .filter((item): item is AppNavItem => item !== null),
     }))
     .filter((group) => group.items.length > 0);
@@ -810,6 +814,14 @@ export function getVisibleNavGroups(
 
 export function getAppPageMeta(pathname: string): AppPageMeta {
   const currentPath = trimTrailingSlash(pathname);
+
+  if (/^\/visits\/\d+\/assessment$/.test(currentPath)) {
+    return {
+      title: 'Clinician assessment',
+      subtitle: 'Complete this Visit in the active Facility context.',
+    };
+  }
+
   const exactMeta = pageMetaByHref[currentPath];
 
   if (exactMeta) {

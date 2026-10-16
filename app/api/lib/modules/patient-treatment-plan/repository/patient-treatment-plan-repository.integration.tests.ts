@@ -173,6 +173,30 @@ async function createAppointment(
 }
 
 describe('Patient Treatment Plan repository', () => {
+  it('assigns a Tenant Treatment to a Patient and snapshots its Sessions', async () => {
+    const patient = await createPatient(tenantA, 'MRN-A');
+    const treatment = await createTreatment(tenantA, 'REPEATABLE', 'MASTER-R');
+    await createTemplate(tenantA, treatment.id, 1);
+
+    const assigned = await patientTreatmentPlanRepository.assignTreatmentToPatient({
+      tenantId: tenantA,
+      patientId: patient.id,
+      treatmentId: treatment.id,
+      totalSessions: 3,
+    });
+
+    expect(assigned).toMatchObject({
+      patientId: patient.id,
+      treatmentId: treatment.id,
+      totalSessions: 3,
+      status: 'PENDING',
+    });
+    expect(assigned?.sessions.map((session) => session.sessionNumber)).toEqual([1, 2, 3]);
+    await expect(
+      patientTreatmentPlanRepository.getCurrentByPatientId(patient.id, tenantB)
+    ).resolves.toEqual([]);
+  });
+
   it('should return only current Tenant-scoped Plans with derived progress and snapshot availability', async () => {
     const patient = await createPatient(tenantA, 'MRN-A');
     const otherPatient = await createPatient(tenantA, 'MRN-B');
@@ -316,6 +340,17 @@ describe('Patient Treatment Plan repository', () => {
         ],
       }),
     ]);
+
+    const allPlans = await patientTreatmentPlanRepository.getAllByPatientId(patient.id, tenantA);
+    expect(allPlans.map((plan) => plan.status)).toEqual([
+      'PENDING',
+      'IN_PROGRESS',
+      'COMPLETED',
+      'STOPPED',
+    ]);
+    await expect(
+      patientTreatmentPlanRepository.getAllByPatientId(patient.id, tenantB)
+    ).resolves.toEqual([]);
   });
 
   it('should lock and return only a current Session belonging to the requested Patient, Plan, and Tenant', async () => {

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
@@ -9,7 +11,6 @@ import { toast } from 'sonner';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
-import { useCompleteVisit } from '@/app/queries/visits/useCompleteVisit';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -40,14 +41,13 @@ import {
   todayDisplayDate,
 } from '../_utils/visit-status';
 import { CancelVisitDialog } from './_modals/cancel-visit-dialog';
-import { CheckInSheet } from './_sheets/check-in-sheet';
 import { VisitsTable, VisitsTableSkeleton } from './visits-table';
 
 const PAGE_SIZE = 20;
 const ALL_FILTER = 'all';
 
 export function VisitsPageImpl() {
-  const [checkInParam, setCheckInParam] = useQueryState('checkin');
+  const router = useRouter();
   const [dateParam, setDateParam] = useQueryState('date');
   const [doctorParam, setDoctorParam] = useQueryState('doctor');
   const [statusParam, setStatusParam] = useQueryState('status');
@@ -73,11 +73,9 @@ export function VisitsPageImpl() {
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
 
   const startMutation = useStartConsultation();
-  const completeMutation = useCompleteVisit();
 
   const { data: canCreate } = useHasPermission('visit:create');
   const { data: canStart } = useHasPermission('visit:start');
-  const { data: canComplete } = useHasPermission('visit:complete');
   const { data: canCancel } = useHasPermission('visit:cancel');
 
   const visits = visitsQuery.data?.data ?? [];
@@ -86,24 +84,13 @@ export function VisitsPageImpl() {
   const totalPages = meta?.totalPages ?? 0;
   const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
-  const pendingVisitId =
-    (startMutation.isPending ? startMutation.variables : undefined) ??
-    (completeMutation.isPending ? completeMutation.variables?.valueOf() : undefined) ??
-    null;
+  const pendingVisitId = startMutation.isPending ? startMutation.variables : null;
 
   async function handleStart(visit: Visit) {
     try {
       await startMutation.mutateAsync(visit.id);
       toast.success(`${visit.visitNumber} is now in consultation.`);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error));
-    }
-  }
-
-  async function handleComplete(visit: Visit) {
-    try {
-      await completeMutation.mutateAsync(visit.id);
-      toast.success(`${visit.visitNumber} completed.`);
+      router.push(`/visits/${visit.id}`);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -182,10 +169,12 @@ export function VisitsPageImpl() {
             </InputGroup>
 
             {canCreate ? (
-              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-                <Button type="button" onClick={() => void setCheckInParam('new')}>
-                  <Plus className="size-4" />
-                  Check in
+              <div className="flex justify-end lg:ml-auto">
+                <Button asChild>
+                  <Link href="/visits/new">
+                    <Plus className="size-4" />
+                    Create Visit
+                  </Link>
                 </Button>
               </div>
             ) : null}
@@ -210,15 +199,17 @@ export function VisitsPageImpl() {
               </EmptyMedia>
               <EmptyTitle>No Visits for {visitDate}</EmptyTitle>
               <EmptyDescription>
-                Check a Patient in to start the queue for this day, from a booked Appointment or as
-                a Walk-in.
+                Create a Visit from a booked Appointment or for a Walk-in Patient to start
+                today&apos;s queue.
               </EmptyDescription>
             </EmptyHeader>
             {canCreate ? (
               <EmptyContent>
-                <Button type="button" onClick={() => void setCheckInParam('new')}>
-                  <Plus className="size-4" />
-                  Check in
+                <Button asChild>
+                  <Link href="/visits/new">
+                    <Plus className="size-4" />
+                    Create Visit
+                  </Link>
                 </Button>
               </EmptyContent>
             ) : null}
@@ -227,12 +218,10 @@ export function VisitsPageImpl() {
           <>
             <VisitsTable
               visits={visits}
-              pendingVisitId={pendingVisitId as number | null}
+              pendingVisitId={pendingVisitId}
               canStart={canStart}
-              canComplete={canComplete}
               canCancel={canCancel}
               onStart={(visit) => void handleStart(visit)}
-              onComplete={(visit) => void handleComplete(visit)}
               onCancel={setVisitPendingCancel}
             />
 
@@ -268,11 +257,6 @@ export function VisitsPageImpl() {
           </>
         )}
       </div>
-
-      <CheckInSheet
-        open={checkInParam === 'new' && canCreate}
-        onClose={() => void setCheckInParam(null)}
-      />
 
       <CancelVisitDialog visit={visitPendingCancel} onClose={() => setVisitPendingCancel(null)} />
     </>

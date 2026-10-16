@@ -1,15 +1,12 @@
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
-import { CalendarClock, CreditCard, FileText, History, UserRound } from 'lucide-react';
+import { CalendarClock, UserRound } from 'lucide-react';
 
 import {
   formatEmiratesId,
   getPatientGenderLabel,
-  getPatientPaymentMethodLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
-import type { DemoRecentVisit } from '@/app/(protected)/visits/new/_utils/demo-visit-data';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -57,7 +54,6 @@ export function PatientContextCard({
               </div>
               <p className="text-muted-foreground font-mono text-xs">MRN {patient.mrn}</p>
             </div>
-
             <div className="flex flex-wrap gap-2">
               <Badge variant={patient.isActive ? 'secondary' : 'destructive'}>
                 {patient.isActive ? 'Active' : 'Inactive'}
@@ -66,7 +62,6 @@ export function PatientContextCard({
                 {patient.registrationStatus === 'registered' ? 'Registered' : 'Provisional'}
               </Badge>
             </div>
-
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
               <Detail label="Phone" value={patient.phone} />
               <Detail
@@ -78,9 +73,9 @@ export function PatientContextCard({
             </div>
           </>
         ) : (
-          <div className="bg-muted/40 text-muted-foreground rounded-lg border p-4 text-sm">
+          <p className="text-muted-foreground text-sm">
             Select a Patient or Appointment to review Patient details.
-          </div>
+          </p>
         )}
       </CardContent>
     </Card>
@@ -88,9 +83,7 @@ export function PatientContextCard({
 }
 
 export function AppointmentContextCard({ appointment }: { appointment: Appointment | null }) {
-  if (!appointment) {
-    return null;
-  }
+  if (!appointment) return null;
 
   return (
     <Card className="shadow-fluent-2">
@@ -117,85 +110,6 @@ export function AppointmentContextCard({ appointment }: { appointment: Appointme
           <Detail label="Mode" value={appointment.appointmentMode?.name} />
           <Detail label="Reason" value={appointment.appointmentReason?.name} />
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-export function PaymentContextCard({ patient }: { patient: Patient | null }) {
-  return (
-    <Card className="shadow-fluent-2">
-      <CardHeader className="border-b">
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="text-primary size-4" />
-          Payment summary
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Detail
-          label="Preferred payment method"
-          value={
-            patient?.preferredPaymentMethod
-              ? getPatientPaymentMethodLabel(patient.preferredPaymentMethod)
-              : null
-          }
-        />
-        <Detail label="Coverage card" value={null} />
-      </CardContent>
-    </Card>
-  );
-}
-
-export function RecentVisitsCard({ visits }: { visits: DemoRecentVisit[] }) {
-  return (
-    <Card className="shadow-fluent-2">
-      <CardHeader className="border-b">
-        <CardTitle className="flex items-center gap-2">
-          <History className="text-primary size-4" />
-          Recent visits
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {visits.length === 0 ? (
-          <div className="bg-muted/40 text-muted-foreground rounded-lg border p-4 text-sm">
-            No previous Visits recorded for this Patient.
-          </div>
-        ) : (
-          visits.slice(0, 5).map((visit) => (
-            <div key={visit.id} className="space-y-1 rounded-lg border p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-mono text-sm font-medium">{visit.date}</p>
-                <Badge variant="outline">{visit.status}</Badge>
-              </div>
-              <p className="text-muted-foreground text-xs">
-                {visit.department} &middot; {visit.clinician}
-              </p>
-              <p className="text-muted-foreground text-xs">{visit.visitModeLabel}</p>
-            </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-export function DocumentsCard() {
-  return (
-    <Card className="shadow-fluent-2">
-      <CardHeader className="border-b">
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="text-primary size-4" />
-          Documents
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="bg-muted/40 text-muted-foreground rounded-lg border border-dashed p-4 text-center text-sm">
-          No documents attached
-        </div>
-        <Button type="button" variant="outline" className="w-full">
-          <FileText className="size-4" />
-          Add document
-        </Button>
       </CardContent>
     </Card>
   );
