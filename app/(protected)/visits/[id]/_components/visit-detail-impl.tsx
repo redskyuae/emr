@@ -127,16 +127,6 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                     Start consultation
                   </Button>
                 ) : null}
-                {visit.status === 'IN_CONSULTATION' && canComplete ? (
-                  <Button
-                    type="button"
-                    disabled={completeMutation.isPending}
-                    onClick={() => void runTransition('complete')}
-                  >
-                    <CheckCircle2 className="size-4" />
-                    Complete Visit
-                  </Button>
-                ) : null}
               </div>
             </div>
             <div className="border-t pt-5">
@@ -163,6 +153,19 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           onAssignPlan={() => void setCaptureParam('plan')}
           onAddClinicalNote={() => void setCaptureParam('note')}
         />
+
+        {visit.status === 'IN_CONSULTATION' && canComplete ? (
+          <div className="flex justify-end border-t pt-5">
+            <Button
+              type="button"
+              disabled={completeMutation.isPending}
+              onClick={() => void runTransition('complete')}
+            >
+              <CheckCircle2 className="size-4" />
+              {completeMutation.isPending ? 'Completing Visit…' : 'Complete Visit'}
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <RecordVitalsSheet

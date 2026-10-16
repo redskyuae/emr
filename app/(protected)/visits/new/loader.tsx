@@ -18,7 +18,7 @@ export default function CreateVisitLoader() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">
-          {[0, 1].map((section) => (
+          {[0, 1, 2].map((section) => (
             <div key={section} className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="size-9 rounded-lg" />
@@ -27,6 +27,7 @@ export default function CreateVisitLoader() {
                   <Skeleton className="h-3 w-64" />
                 </div>
               </div>
+              {section === 0 ? <Skeleton className="h-20 w-full" /> : null}
               <div className="grid gap-4 sm:grid-cols-2">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />

@@ -8,8 +8,8 @@ export default function VisitsPageLoader() {
         <Skeleton className="h-9 lg:w-52" />
         <Skeleton className="h-9 lg:w-44" />
         <Skeleton className="h-9 w-full lg:max-w-xs" />
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-          <Skeleton className="h-9 w-28" />
+        <div className="flex justify-end lg:ml-auto">
+          <Skeleton className="h-9 w-32" />
         </div>
       </div>
 
@@ -22,22 +22,10 @@ export default function VisitsPageLoader() {
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-5 w-16" />
             <Skeleton className="h-5 w-24" />
-            <Skeleton className="ml-auto h-8 w-28" />
+            <Skeleton className="ml-auto h-8 w-20" />
+            <Skeleton className="h-8 w-9" />
           </div>
         ))}
-      </div>
-
-      <div className="bg-card shadow-fluent-2 ml-auto w-full max-w-lg space-y-3 rounded-lg border p-4">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-72 max-w-full" />
-        <Skeleton className="h-9 w-full" />
-        <Skeleton className="h-9 w-full" />
-        <Skeleton className="h-9 w-full" />
-        <Skeleton className="h-16 w-full" />
-        <div className="flex justify-end gap-2">
-          <Skeleton className="h-9 w-20" />
-          <Skeleton className="h-9 w-24" />
-        </div>
       </div>
     </div>
   );
