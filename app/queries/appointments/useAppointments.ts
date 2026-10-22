@@ -54,8 +54,9 @@ async function fetchAppointments(params: AppointmentsParams): Promise<ListAppoin
   return response.json() as Promise<ListAppointmentsResponse>;
 }
 
-export function useAppointmentsQuery(params: AppointmentsParams) {
+export function useAppointmentsQuery(params: AppointmentsParams, options?: { enabled?: boolean }) {
   return useQuery({
+    enabled: options?.enabled,
     queryKey: appointmentsQueryKey(params),
     queryFn: () => fetchAppointments(params),
     placeholderData: keepPreviousData,

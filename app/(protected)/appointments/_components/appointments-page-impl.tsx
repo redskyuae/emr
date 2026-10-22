@@ -65,20 +65,26 @@ export function AppointmentsPageImpl() {
     appointmentStatusId,
     query: debouncedSearch || undefined,
   };
-  const todayAppointmentsQuery = useAppointmentsQuery({
-    ...sharedFilters,
-    slotDate: todayDate,
-    page: todayPage,
-    limit: PAGE_SIZE,
-    statusCategories: [...TODAY_STATUS_CATEGORIES],
-  });
-  const upcomingAppointmentsQuery = useAppointmentsQuery({
-    ...sharedFilters,
-    fromDate: tomorrowDate,
-    page: upcomingPage,
-    limit: PAGE_SIZE,
-    statusCategories: [...UPCOMING_STATUS_CATEGORIES],
-  });
+  const todayAppointmentsQuery = useAppointmentsQuery(
+    {
+      ...sharedFilters,
+      slotDate: todayDate,
+      page: todayPage,
+      limit: PAGE_SIZE,
+      statusCategories: [...TODAY_STATUS_CATEGORIES],
+    },
+    { enabled: activeView === 'today' }
+  );
+  const upcomingAppointmentsQuery = useAppointmentsQuery(
+    {
+      ...sharedFilters,
+      fromDate: tomorrowDate,
+      page: upcomingPage,
+      limit: PAGE_SIZE,
+      statusCategories: [...UPCOMING_STATUS_CATEGORIES],
+    },
+    { enabled: activeView === 'upcoming' }
+  );
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
   const therapistsQuery = useTherapistsQuery({ page: 1, limit: 999 });
   const statusesQuery = useAppointmentStatusesQuery({ page: 1, limit: 999 });
@@ -138,6 +144,16 @@ export function AppointmentsPageImpl() {
 
   const toolbarDisabled =
     doctorsQuery.isLoading || therapistsQuery.isLoading || statusesQuery.isLoading;
+
+  // keepPreviousData leaves isLoading false after a filter, search, or page change, so
+  // placeholder data (and a search still inside its debounce window) also shows the loader.
+  const isSearchPending = searchTerm !== debouncedSearch;
+  const todayLoading =
+    todayAppointmentsQuery.isLoading || todayAppointmentsQuery.isPlaceholderData || isSearchPending;
+  const upcomingLoading =
+    upcomingAppointmentsQuery.isLoading ||
+    upcomingAppointmentsQuery.isPlaceholderData ||
+    isSearchPending;
 
   const toolbarProps = {
     appointmentStatusId: statusParam,
@@ -205,11 +221,7 @@ export function AppointmentsPageImpl() {
               statusCategories: [...TODAY_STATUS_CATEGORIES],
             }}
             hasAppointments={(todayMeta?.total ?? 0) > 0}
-            disabled={
-              toolbarDisabled ||
-              todayAppointmentsQuery.isLoading ||
-              todayAppointmentsQuery.isFetching
-            }
+            disabled={toolbarDisabled || todayLoading || todayAppointmentsQuery.isFetching}
           />
 
           {todayAppointmentsQuery.isError ? (
@@ -220,7 +232,7 @@ export function AppointmentsPageImpl() {
                 {getApiErrorMessage(todayAppointmentsQuery.error)}
               </AlertDescription>
             </Alert>
-          ) : todayAppointmentsQuery.isLoading ? (
+          ) : todayLoading ? (
             <AppointmentDaySectionSkeleton />
           ) : (
             <AppointmentDaySection
@@ -253,11 +265,7 @@ export function AppointmentsPageImpl() {
               statusCategories: [...UPCOMING_STATUS_CATEGORIES],
             }}
             hasAppointments={(upcomingMeta?.total ?? 0) > 0}
-            disabled={
-              toolbarDisabled ||
-              upcomingAppointmentsQuery.isLoading ||
-              upcomingAppointmentsQuery.isFetching
-            }
+            disabled={toolbarDisabled || upcomingLoading || upcomingAppointmentsQuery.isFetching}
           />
 
           {upcomingAppointmentsQuery.isError ? (
@@ -268,7 +276,7 @@ export function AppointmentsPageImpl() {
                 {getApiErrorMessage(upcomingAppointmentsQuery.error)}
               </AlertDescription>
             </Alert>
-          ) : upcomingAppointmentsQuery.isLoading ? (
+          ) : upcomingLoading ? (
             <AppointmentDaySectionSkeleton />
           ) : (
             <AppointmentDaySection
