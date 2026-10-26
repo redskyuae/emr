@@ -14,6 +14,7 @@ import { seedDefaultVisitMastersCommand } from './seed-default-visit-masters-com
 import { seedDefaultSpecialtiesCommand } from './seed-default-specialties-command';
 import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
+import { seedDefaultBillingMastersCommand } from './seed-default-billing-masters-command';
 
 vi.mock('../validator/tenant-onboarding-validator', () => ({
   validateTenantOnboarding: vi.fn(),
@@ -50,6 +51,9 @@ vi.mock('../repository/tenant-provisioning-repository', () => ({
 vi.mock('./seed-default-appointment-masters-command', () => ({
   seedDefaultAppointmentMastersCommand: vi.fn(),
 }));
+vi.mock('./seed-default-billing-masters-command', () => ({
+  seedDefaultBillingMastersCommand: vi.fn(),
+}));
 
 vi.mock('./seed-default-asset-masters-command', () => ({
   seedDefaultAssetMastersCommand: vi.fn(),
@@ -79,6 +83,7 @@ const seedSystemRoles = vi.mocked(seedSystemRolesCommand);
 const tenantRepo = vi.mocked(tenantRepository);
 const provisioningRepo = vi.mocked(tenantProvisioningRepository);
 const seedAppointmentMasters = vi.mocked(seedDefaultAppointmentMastersCommand);
+const seedBillingMasters = vi.mocked(seedDefaultBillingMastersCommand);
 const seedAssetMasters = vi.mocked(seedDefaultAssetMastersCommand);
 const seedClinicalMasters = vi.mocked(seedDefaultClinicalMastersCommand);
 const seedVisitMasters = vi.mocked(seedDefaultVisitMastersCommand);
@@ -113,6 +118,7 @@ describe('OnboardTenant command', () => {
     provisioningRepo.hasSeededWorkOrderMasters.mockResolvedValue(false);
     provisioningRepo.hasSeededAppointmentMasters.mockResolvedValue(false);
     seedAppointmentMasters.mockResolvedValue({ success: true, data: undefined });
+    seedBillingMasters.mockResolvedValue({ success: true, data: undefined });
     seedAssetMasters.mockResolvedValue({ success: true, data: undefined });
     seedClinicalMasters.mockResolvedValue({ success: true, data: undefined });
     seedVisitMasters.mockResolvedValue({ success: true, data: undefined });
@@ -173,6 +179,7 @@ describe('OnboardTenant command', () => {
     expect(seedAppointmentMasters).toHaveBeenCalledWith('org-1');
     expect(seedAssetMasters).toHaveBeenCalledWith('org-1');
     expect(seedWorkOrderMasters).toHaveBeenCalledWith('org-1');
+    expect(seedBillingMasters).toHaveBeenCalledWith('org-1');
     expect(tenantRepo.markTenantOnboarded).toHaveBeenCalledWith('org-1');
     expect(seedSystemRoles.mock.invocationCallOrder[0]).toBeLessThan(
       seedSpecialties.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER
@@ -238,6 +245,20 @@ describe('OnboardTenant command', () => {
       status: StatusCodes.INTERNAL_SERVER_ERROR,
     });
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();
+    expect(tenantRepo.markTenantOnboarded).not.toHaveBeenCalled();
+  });
+
+  it('should not complete onboarding when Billing Masters seeding fails', async () => {
+    seedBillingMasters.mockResolvedValue({
+      success: false,
+      errors: ['Billing seeding failed'],
+    });
+
+    await expect(onboardTenantCommand('org-1')).resolves.toEqual({
+      success: false,
+      errors: ['Billing seeding failed'],
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+    });
     expect(tenantRepo.markTenantOnboarded).not.toHaveBeenCalled();
   });
 

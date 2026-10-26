@@ -477,6 +477,20 @@
       "when": 1791961061696,
       "tag": "0067_brave_wendell_rand",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1792984001349,
+      "tag": "0068_neat_sunspot",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1792994595929,
+      "tag": "0069_default-visit-charge-items",
+      "breakpoints": true
     }
   ]
 }

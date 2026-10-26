@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createElement, Fragment, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -19,7 +19,13 @@ const followUpCharge = {
   unitPrice: 200,
 } as ChargeItem;
 
-function Form() {
+function Form({
+  chargeItems = [followUpCharge],
+  hasRecentDoctorVisit = false,
+}: {
+  chargeItems?: ChargeItem[];
+  hasRecentDoctorVisit?: boolean;
+}) {
   const [visitTypeCode, setVisitTypeCode] = useState<'FUP' | 'OPD'>('FUP');
   const form = useForm<CreateVisitFormValues>({
     defaultValues: {
@@ -53,11 +59,13 @@ function Form() {
       control: form.control,
       errors: form.formState.errors,
       setValue: form.setValue,
-      chargeItems: [followUpCharge],
+      chargeItems,
       canBill: true,
       canCollectPayment: true,
       visitTypeCode,
       patientType: 'ESTABLISHED',
+      visitDate: '2026-10-26',
+      hasRecentDoctorVisit,
       loading: false,
       error: false,
       onRetry: () => {},
@@ -80,14 +88,11 @@ describe('Visit Billing', () => {
     render(createElement(Form));
     await user.click(screen.getByRole('checkbox'));
     await waitFor(() => expect(screen.getByTestId('charge-item-id').textContent).toBe('4'));
-    expect(within(screen.getByLabelText(/Charge Item/)).getAllByRole('option')).toHaveLength(5);
-    expect(
-      (screen.getByRole('option', { name: /New Patient Consultation/ }) as HTMLOptionElement)
-        .disabled
-    ).toBe(true);
-    expect(
-      (screen.getByRole('option', { name: /Follow-up Consultation/ }) as HTMLOptionElement).disabled
-    ).toBe(false);
+    expect(screen.queryByRole('option', { name: 'Set up in Billing Masters' })).toBeNull();
+    const chargeItemSelect = screen.getByLabelText(/Charge Item/) as HTMLSelectElement;
+    expect(chargeItemSelect.options).toHaveLength(2);
+    expect(chargeItemSelect.querySelectorAll('optgroup')).toHaveLength(1);
+    expect(screen.getByRole('option', { name: /FUP · Follow-up Consultation/ })).toBeTruthy();
     expect((screen.getByLabelText(/Visit charge/) as HTMLInputElement).value).toBe('200');
 
     await user.selectOptions(screen.getByLabelText('Payment timing'), 'NOW');
@@ -100,5 +105,75 @@ describe('Visit Billing', () => {
 
     await user.click(screen.getByRole('button', { name: 'Change to OPD' }));
     await waitFor(() => expect(screen.getByTestId('charge-item-id').textContent).toBe(''));
+  });
+
+  it('requires staff to choose a coded consultation level and uses its Cash Price', async () => {
+    const user = userEvent.setup();
+    const levels = [
+      {
+        ...followUpCharge,
+        id: 12,
+        code: '99212',
+        name: 'Established Patient Level Two',
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        cashPrice: 90,
+      },
+      {
+        ...followUpCharge,
+        id: 13,
+        code: '99213',
+        name: 'Established Patient Level Three',
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        cashPrice: 120,
+        insuranceContractPrice: 80,
+      },
+    ] as ChargeItem[];
+    render(createElement(Form, { chargeItems: levels }));
+    await user.click(screen.getByRole('button', { name: 'Change to OPD' }));
+    await user.click(screen.getByRole('checkbox'));
+    expect(screen.getByTestId('charge-item-id').textContent).toBe('');
+    await user.selectOptions(screen.getByLabelText(/Charge Item/), '13');
+    expect(screen.getByTestId('charge-item-id').textContent).toBe('13');
+    expect((screen.getByLabelText(/Visit charge/) as HTMLInputElement).value).toBe('120');
+    await user.selectOptions(screen.getByLabelText(/Payment classification/), 'REIMBURSEMENT');
+    expect((screen.getByLabelText(/Visit charge/) as HTMLInputElement).value).toBe('120');
+  });
+
+  it('suggests zero only for an eligible recent follow-up', async () => {
+    const user = userEvent.setup();
+    render(
+      createElement(Form, {
+        chargeItems: [{ ...followUpCharge, freeFollowUpEligible: true }],
+        hasRecentDoctorVisit: true,
+      })
+    );
+    await user.click(screen.getByRole('checkbox'));
+    await waitFor(() => expect(screen.getByTestId('charge-item-id').textContent).toBe('4'));
+    expect(screen.getByRole('option', { name: /Follow-up Consultation · 0\.00/ })).toBeTruthy();
+    expect((screen.getByLabelText(/Visit charge/) as HTMLInputElement).value).toBe('0');
+    expect(screen.getByText(/Eligible follow-up within 7 days/)).toBeTruthy();
+  });
+
+  it('waives an eligible established CPT service when used on a qualifying follow-up Visit', async () => {
+    const user = userEvent.setup();
+    render(
+      createElement(Form, {
+        chargeItems: [
+          {
+            ...followUpCharge,
+            id: 13,
+            code: '99213',
+            name: 'Established Patient Level Three',
+            visitChargeKind: 'ESTABLISHED_CONSULTATION',
+            freeFollowUpEligible: true,
+            cashPrice: 120,
+          } as ChargeItem,
+        ],
+        hasRecentDoctorVisit: true,
+      })
+    );
+    await user.click(screen.getByRole('checkbox'));
+    await user.selectOptions(screen.getByLabelText(/Charge Item/), '13');
+    expect((screen.getByLabelText(/Visit charge/) as HTMLInputElement).value).toBe('0');
   });
 });

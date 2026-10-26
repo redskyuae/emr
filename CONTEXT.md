@@ -402,7 +402,7 @@ The list of Admissions, defaulting to Active Admissions, used by ward staff to s
 
 ## Charge Item
 
-A Tenant-scoped Master that names a billable service or item and carries its unit price, such as a consultation fee, a procedure, an investigation, or a consumable. A Charge Item is the priced catalogue entry a cashier draws Invoice Lines from; it is not itself a bill.
+A Tenant-scoped Master that names a billable service or item, such as a consultation fee, a procedure, an investigation, or a consumable. Its code may be a verified CPT code or a local service code. It carries a Standard Price, optional Cash Price and Insurance Contract Price, an optional Effective Date, and Active status. An Established or Follow-up Consultation Charge Item may be marked Free Follow-up Eligible; the waiver applies only to a qualifying follow-up Visit. A Visit service designation links the Charge Item to New Consultation, Established Consultation, Follow-up Consultation, or Treatment Session; staff select the actual coded service and level. A Charge Item is the priced catalogue entry a cashier draws Invoice Lines from; it is not itself a bill. Patient-paid Invoice Lines default to Cash Price when configured, otherwise Standard Price. Insurance Contract Price is stored for future direct insurer billing and is not used for Patient reimbursement.
 
 ## Charge Item Category
 

@@ -463,6 +463,8 @@ export function CreateVisitPageImpl({
                 canCollectPayment={Boolean(canRecordPayment)}
                 visitTypeCode={selectedVisitType?.code.toUpperCase() ?? null}
                 patientType={patientTypeQuery.data?.patientType ?? null}
+                visitDate={referenceDate}
+                hasRecentDoctorVisit={Boolean(recentDoctorVisitQuery.data)}
                 loading={chargeItemsQuery.isLoading}
                 error={chargeItemsQuery.isError}
                 onRetry={() => void chargeItemsQuery.refetch()}
