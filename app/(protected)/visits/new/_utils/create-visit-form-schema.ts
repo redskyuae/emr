@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
 import type { PaymentMethod } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
+import { VISIT_CHARGE_OPTIONS } from './visit-charge-options';
+
+const VISIT_CHARGE_KINDS = VISIT_CHARGE_OPTIONS.map((option) => option.value);
 
 const PAYMENT_METHODS = [
   'CASH',
@@ -38,9 +41,11 @@ export const createVisitFormSchema = z
     chiefComplaint: z.string().trim().max(500, 'Chief complaint must be at most 500 characters.'),
     remarks: z.string().trim(),
     createInvoice: z.boolean(),
+    paymentTiming: z.enum(['NOW', 'LATER']),
     paymentClassification: z.enum(['SELF_PAY', 'REIMBURSEMENT']),
     insurer: z.string().trim(),
     policyReference: z.string().trim(),
+    chargeKind: z.union([z.literal(''), z.enum(VISIT_CHARGE_KINDS)]),
     chargeItemId: z.string(),
     chargeAmount: z.string(),
     amountReceived: z.string(),
@@ -81,16 +86,35 @@ export const createVisitFormSchema = z
       }
     }
 
+    if (!values.chargeKind) {
+      context.addIssue({
+        code: 'custom',
+        path: ['chargeKind'],
+        message: 'Choose a Visit Charge Item.',
+      });
+    }
+
     if (!/^\d+$/.test(values.chargeItemId) || Number(values.chargeItemId) <= 0) {
       context.addIssue({
         code: 'custom',
-        path: ['chargeItemId'],
-        message: 'Charge Item is required.',
+        path: ['chargeKind'],
+        message: 'Set up the selected Charge Item in Billing Masters.',
       });
     }
 
     const charge = validateAmount(values.chargeAmount, 'chargeAmount', context);
-    const received = validateAmount(values.amountReceived || '0', 'amountReceived', context);
+    const received =
+      values.paymentTiming === 'NOW'
+        ? validateAmount(values.amountReceived, 'amountReceived', context)
+        : 0;
+
+    if (values.paymentTiming === 'NOW' && received === 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['amountReceived'],
+        message: 'Enter an amount greater than zero to collect Payment now.',
+      });
+    }
 
     if (received !== null && received > 0 && values.paymentReference.length > 100) {
       context.addIssue({

@@ -1,11 +1,13 @@
-import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
+import type { Control, FieldErrors, UseFormResetField, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
+import type { VisitPatientTypeAssessment } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,16 +15,24 @@ import { Textarea } from '@/components/ui/textarea';
 
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
 import { getAppointmentVisitDefaults } from '../_utils/appointment-visit-defaults';
+import { WalkInPatientSearch } from './walk-in-patient-search';
 
 type FormProps = {
   control: Control<CreateVisitFormValues>;
   errors: FieldErrors<CreateVisitFormValues>;
   setValue: UseFormSetValue<CreateVisitFormValues>;
+  resetField: UseFormResetField<CreateVisitFormValues>;
   appointments: Appointment[];
-  patients: Patient[];
+  selectedPatient: Patient | null;
   doctors: Doctor[];
   visitTypes: VisitType[];
   loading: boolean;
+  historyError?: boolean;
+  recentDoctorVisit?: { visitDate: string; visitNumber: string } | null;
+  patientType?: VisitPatientTypeAssessment | null;
+  patientTypeLoading?: boolean;
+  patientTypeError?: boolean;
+  onRetryPatientType?: () => void;
 };
 
 function RequiredMark() {
@@ -38,12 +48,22 @@ export function VisitSourceFields({
   control,
   errors,
   setValue,
+  resetField,
   appointments,
-  patients,
+  selectedPatient,
   visitTypes,
   loading,
 }: FormProps) {
   const mode = useWatch({ control, name: 'mode' });
+  function replaceField(
+    name: 'appointmentId' | 'patientId' | 'doctorId' | 'visitTypeId' | 'chiefComplaint' | 'remarks',
+    value: string
+  ) {
+    resetField(name, { defaultValue: value });
+    // Visit detail fields are mounted only on the next step. Keep their values
+    // in form state even when resetField has no registered input to update.
+    setValue(name, value);
+  }
 
   return (
     <Card className="shadow-fluent-2">
@@ -56,12 +76,12 @@ export function VisitSourceFields({
           value={mode}
           onValueChange={(value) => {
             setValue('mode', value as CreateVisitFormValues['mode']);
-            setValue('appointmentId', '');
-            setValue('patientId', '');
-            setValue('doctorId', '');
-            setValue('visitTypeId', '');
-            setValue('chiefComplaint', '');
-            setValue('remarks', '');
+            replaceField('appointmentId', '');
+            replaceField('patientId', '');
+            replaceField('doctorId', '');
+            replaceField('visitTypeId', '');
+            replaceField('chiefComplaint', '');
+            replaceField('remarks', '');
           }}
         >
           <TabsList className="grid w-full grid-cols-2 sm:w-96">
@@ -92,10 +112,10 @@ export function VisitSourceFields({
                       (appointment) => String(appointment.id) === event.target.value
                     );
                     const defaults = getAppointmentVisitDefaults(selected, visitTypes);
-                    setValue('visitTypeId', defaults.visitTypeId);
-                    setValue('chiefComplaint', defaults.chiefComplaint);
-                    setValue('remarks', defaults.remarks);
-                    setValue('doctorId', '');
+                    replaceField('visitTypeId', defaults.visitTypeId);
+                    replaceField('chiefComplaint', defaults.chiefComplaint);
+                    replaceField('remarks', defaults.remarks);
+                    replaceField('doctorId', '');
                   }}
                 >
                   <NativeSelectOption value="">Select an Appointment</NativeSelectOption>
@@ -115,27 +135,17 @@ export function VisitSourceFields({
             control={control}
             name="patientId"
             render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="visit-patient">
-                  Patient
-                  <RequiredMark />
-                </FieldLabel>
-                <NativeSelect
-                  {...field}
-                  id="visit-patient"
-                  aria-required
-                  className="w-full"
-                  disabled={loading}
-                >
-                  <NativeSelectOption value="">Select a Patient</NativeSelectOption>
-                  {patients.map((patient) => (
-                    <NativeSelectOption key={patient.id} value={String(patient.id)}>
-                      {patient.firstName} {patient.lastName} · {patient.mrn}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-                <FieldError>{errors.patientId?.message}</FieldError>
-              </Field>
+              <WalkInPatientSearch
+                field={field}
+                error={errors.patientId?.message}
+                selectedPatient={selectedPatient}
+                onSelect={(patientId) => {
+                  field.onChange(patientId);
+                  replaceField('visitTypeId', '');
+                  replaceField('chiefComplaint', '');
+                  replaceField('remarks', '');
+                }}
+              />
             )}
           />
         )}
@@ -151,18 +161,61 @@ export function VisitDetailsFields({
   visitTypes,
   loading,
   appointments,
+  historyError,
+  recentDoctorVisit,
+  patientType,
+  patientTypeLoading,
+  patientTypeError,
+  onRetryPatientType,
 }: FormProps) {
   const mode = useWatch({ control, name: 'mode' });
   const appointmentId = useWatch({ control, name: 'appointmentId' });
+  const visitTypeId = useWatch({ control, name: 'visitTypeId' });
   const appointment = appointments.find((item) => String(item.id) === appointmentId);
+  const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
 
   return (
     <Card className="shadow-fluent-2">
       <CardHeader>
         <CardTitle>Visit details</CardTitle>
-        <CardDescription>These details are saved on the Visit.</CardDescription>
+        <CardDescription>Verify Patient history and enter details for this Visit.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="bg-muted/50 rounded-md border p-4 text-sm" aria-live="polite">
+          <p className="font-medium">Patient type</p>
+          {patientTypeLoading ? (
+            <p className="text-muted-foreground mt-1">Checking completed Visit history…</p>
+          ) : patientTypeError ? (
+            <p className="text-destructive mt-1">
+              Could not verify Patient type.{' '}
+              <button type="button" className="underline" onClick={onRetryPatientType}>
+                Retry
+              </button>
+            </p>
+          ) : patientType ? (
+            <>
+              <p className="mt-1 font-semibold">
+                {patientType.patientType === 'ESTABLISHED' ? 'Established Patient' : 'New Patient'}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Patient record opened {patientType.patientRecordDate}.{' '}
+                {patientType.lastCompletedVisit
+                  ? `Last completed Visit ${patientType.lastCompletedVisit.visitNumber} on ${patientType.lastCompletedVisit.visitDate}.`
+                  : 'No completed Visit in the past three years.'}
+              </p>
+            </>
+          ) : (
+            <p className="text-muted-foreground mt-1">Select a Patient to verify type.</p>
+          )}
+        </div>
+        {historyError ? (
+          <Alert>
+            <AlertTitle>Recent Visit history could not be checked</AlertTitle>
+            <AlertDescription>
+              Review the Visit type before creating this Visit. Follow-up may apply.
+            </AlertDescription>
+          </Alert>
+        ) : null}
         {appointment?.bookingPath === 'PROCEDURE' ? (
           <div className="bg-muted/50 rounded-md border p-4 text-sm">
             <p className="font-medium">Scheduled Treatment</p>
@@ -201,6 +254,13 @@ export function VisitDetailsFields({
                   ))}
                 </NativeSelect>
                 <FieldError>{errors.visitTypeId?.message}</FieldError>
+                {recentDoctorVisit && selectedVisitType?.code.toUpperCase() === 'FUP' ? (
+                  <p className="text-muted-foreground text-xs">
+                    Follow-up suggested from completed Doctor Visit {recentDoctorVisit.visitNumber}{' '}
+                    on {recentDoctorVisit.visitDate}. You can change the Visit type if this is a new
+                    concern.
+                  </p>
+                ) : null}
               </Field>
             )}
           />

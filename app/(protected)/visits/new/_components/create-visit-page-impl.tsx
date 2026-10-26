@@ -8,7 +8,10 @@ import { useForm, useWatch } from 'react-hook-form';
 import { AlertCircle, ArrowLeft, CheckCircle2, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
+import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { getApiErrors } from '@/app/queries/api-error';
+import { useAppointmentQuery } from '@/app/queries/appointments/useAppointment';
 import { useAppointmentsQuery } from '@/app/queries/appointments/useAppointments';
 import { useChargeItemsQuery } from '@/app/queries/billing/charge-items/useChargeItems';
 import { useAddInvoiceLine } from '@/app/queries/billing/invoices/useAddInvoiceLine';
@@ -16,10 +19,15 @@ import { useCreateInvoice } from '@/app/queries/billing/invoices/useCreateInvoic
 import { useFinalizeInvoice } from '@/app/queries/billing/invoices/useFinalizeInvoice';
 import { useRecordPayment } from '@/app/queries/billing/invoices/useRecordPayment';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
-import { usePatientQuery, usePatientsQuery } from '@/app/queries/patients/usePatients';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
+import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
 import { useCheckInVisit } from '@/app/queries/visits/useCheckInVisit';
+import { useRecentDoctorVisitQuery } from '@/app/queries/visits/useRecentDoctorVisit';
+import { useVisitPatientTypeQuery } from '@/app/queries/visits/useVisitPatientType';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,10 +39,15 @@ import {
   type CreateVisitFormValues,
 } from '../_utils/create-visit-form-schema';
 import { checkInInvoiceNotes } from '../_utils/check-in-invoice-notes';
+import {
+  getAppointmentVisitDefaults,
+  getWalkInVisitTypeId,
+} from '../_utils/appointment-visit-defaults';
 import { PatientRegistrationSection } from './patient-registration-section';
 import { VisitBillingFields } from './visit-billing-fields';
 import { AppointmentContextCard, PatientContextCard } from './visit-context-rail';
 import { VisitDetailsFields, VisitSourceFields } from './visit-form-fields';
+import { useAppointmentVisitPrefill } from './use-appointment-visit-prefill';
 
 const DEFAULT_VALUES: CreateVisitFormValues = {
   mode: 'appointment',
@@ -45,19 +58,28 @@ const DEFAULT_VALUES: CreateVisitFormValues = {
   chiefComplaint: '',
   remarks: '',
   createInvoice: false,
+  paymentTiming: 'LATER',
   paymentClassification: 'SELF_PAY',
   insurer: '',
   policyReference: '',
+  chargeKind: '',
   chargeItemId: '',
   chargeAmount: '',
   amountReceived: '0',
   paymentMethod: 'CASH',
   paymentReference: '',
 };
+const EMPTY_VISIT_TYPES: VisitType[] = [];
 
-export function CreateVisitPageImpl() {
+export function CreateVisitPageImpl({
+  initialAppointmentId = null,
+}: {
+  initialAppointmentId?: number | null;
+}) {
   const router = useRouter();
   const [step, setStep] = useState<'patient' | 'visit'>('patient');
+  const [checkingHistory, setCheckingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [createdVisit, setCreatedVisit] = useState<{
     id: number;
@@ -69,7 +91,10 @@ export function CreateVisitPageImpl() {
   const form = useForm<CreateVisitFormValues>({
     resolver: zodResolver(createVisitFormSchema),
     mode: 'onTouched',
-    defaultValues: DEFAULT_VALUES,
+    defaultValues: {
+      ...DEFAULT_VALUES,
+      appointmentId: initialAppointmentId ? String(initialAppointmentId) : '',
+    },
   });
 
   const mode = useWatch({ control: form.control, name: 'mode' });
@@ -77,16 +102,19 @@ export function CreateVisitPageImpl() {
   const patientId = useWatch({ control: form.control, name: 'patientId' });
   const includeInvoice = useWatch({ control: form.control, name: 'createInvoice' });
   const amountReceived = useWatch({ control: form.control, name: 'amountReceived' });
+  const paymentTiming = useWatch({ control: form.control, name: 'paymentTiming' });
+  const visitTypeId = useWatch({ control: form.control, name: 'visitTypeId' });
 
   const appointmentsQuery = useAppointmentsQuery({
     statusCategories: ['SCHEDULED', 'CONFIRMED'],
     page: 1,
     limit: 999,
   });
-  const patientsQuery = usePatientsQuery({ page: 1, limit: 100, isActive: true });
+  const initialAppointmentQuery = useAppointmentQuery(initialAppointmentId);
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
   const visitTypesQuery = useVisitTypesQuery({ limit: 100 });
   const chargeItemsQuery = useChargeItemsQuery({ page: 1, limit: 999, isActive: true });
+  const currentUserQuery = useCurrentUserQuery();
   const { data: canCreate } = useHasPermission('visit:create');
   const { data: canCreateInvoice } = useHasPermission('invoice:create');
   const { data: canReadInvoice } = useHasPermission('invoice:read');
@@ -100,17 +128,22 @@ export function CreateVisitPageImpl() {
   const finalizeInvoiceMutation = useFinalizeInvoice();
   const recordPaymentMutation = useRecordPayment();
 
-  const appointments = appointmentsQuery.data?.data ?? [];
-  const patients = patientsQuery.data?.data ?? [];
+  const listedAppointments = appointmentsQuery.data?.data ?? [];
+  const initialAppointment = initialAppointmentQuery.data;
+  const appointments = initialAppointment
+    ? [
+        initialAppointment,
+        ...listedAppointments.filter((item) => item.id !== initialAppointment.id),
+      ]
+    : listedAppointments;
   const doctors = doctorsQuery.data?.data ?? [];
-  const visitTypes = visitTypesQuery.data?.data ?? [];
+  const visitTypes = visitTypesQuery.data?.data ?? EMPTY_VISIT_TYPES;
   const chargeItems = chargeItemsQuery.data?.data ?? [];
   const canBill = Boolean(
     canCreateInvoice &&
     canReadInvoice &&
     canUpdateInvoice &&
     canFinalizeInvoice &&
-    canRecordPayment &&
     canReadChargeItems
   );
   const billingPending =
@@ -122,6 +155,13 @@ export function CreateVisitPageImpl() {
     mode === 'appointment'
       ? (appointments.find((item) => String(item.id) === appointmentId) ?? null)
       : null;
+  useAppointmentVisitPrefill({
+    form,
+    selectedAppointmentId: appointmentId,
+    initialAppointmentId,
+    initialAppointment,
+    visitTypes,
+  });
   const selectedPatientId =
     mode === 'appointment'
       ? (appointment?.patient.id ?? null)
@@ -130,21 +170,56 @@ export function CreateVisitPageImpl() {
         : null;
   const patientQuery = usePatientQuery(selectedPatientId);
   const patient = patientQuery.data ?? null;
+  const patientTypeQuery = useVisitPatientTypeQuery(selectedPatientId);
+  const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
+  const referenceDate = currentUserQuery.data?.tenant.timeZone
+    ? tenantLocalDateTime(new Date(), currentUserQuery.data.tenant.timeZone).date
+    : null;
+  const recentDoctorVisitQuery = useRecentDoctorVisitQuery(selectedPatientId, referenceDate);
   const loading =
     appointmentsQuery.isLoading ||
-    patientsQuery.isLoading ||
+    initialAppointmentQuery.isLoading ||
     doctorsQuery.isLoading ||
     visitTypesQuery.isLoading;
   const dependencyError =
-    appointmentsQuery.error ?? patientsQuery.error ?? doctorsQuery.error ?? visitTypesQuery.error;
+    appointmentsQuery.error ??
+    initialAppointmentQuery.error ??
+    doctorsQuery.error ??
+    visitTypesQuery.error;
 
   async function retryDependencies() {
     await Promise.all([
       appointmentsQuery.refetch(),
-      patientsQuery.refetch(),
+      initialAppointmentId ? initialAppointmentQuery.refetch() : Promise.resolve(),
       doctorsQuery.refetch(),
       visitTypesQuery.refetch(),
     ]);
+  }
+
+  async function continueToVisit() {
+    setCheckingHistory(true);
+
+    try {
+      const history = referenceDate ? await recentDoctorVisitQuery.refetch() : null;
+      const hasRecentDoctorVisit = Boolean(history?.data);
+      setHistoryError(!referenceDate || Boolean(history?.isError));
+
+      if (!form.getFieldState('visitTypeId').isDirty) {
+        const visitTypeId =
+          mode === 'appointment'
+            ? getAppointmentVisitDefaults(
+                appointment ?? undefined,
+                visitTypes,
+                hasRecentDoctorVisit
+              ).visitTypeId
+            : getWalkInVisitTypeId(visitTypes, hasRecentDoctorVisit);
+        form.setValue('visitTypeId', visitTypeId, { shouldValidate: true });
+      }
+
+      setStep('visit');
+    } finally {
+      setCheckingHistory(false);
+    }
   }
 
   const submit = form.handleSubmit(async (values) => {
@@ -153,6 +228,11 @@ export function CreateVisitPageImpl() {
     if (!patient) {
       setServerErrors(['Select a Patient or Appointment before creating the Visit.']);
       setStep('patient');
+      return;
+    }
+    const patientTypeCheck = await patientTypeQuery.refetch();
+    if (!patientTypeCheck.isSuccess) {
+      setServerErrors(['Patient type could not be verified. Retry before creating the Visit.']);
       return;
     }
     if (values.mode === 'appointment' && !appointment) {
@@ -167,7 +247,10 @@ export function CreateVisitPageImpl() {
 
     if (
       values.createInvoice &&
-      (!canBill || chargeItemsQuery.isLoading || chargeItemsQuery.isError)
+      (!canBill ||
+        (values.paymentTiming === 'NOW' && !canRecordPayment) ||
+        chargeItemsQuery.isLoading ||
+        chargeItemsQuery.isError)
     ) {
       setServerErrors([
         'Billing is not available at Check-in. Create the Visit without an Invoice or retry loading Charge Items.',
@@ -216,8 +299,8 @@ export function CreateVisitPageImpl() {
             unitPrice: Number(values.chargeAmount),
           },
         });
-        if (Number(values.amountReceived) > 0) {
-          await finalizeInvoiceMutation.mutateAsync(invoice.data.id);
+        await finalizeInvoiceMutation.mutateAsync(invoice.data.id);
+        if (values.paymentTiming === 'NOW') {
           await recordPaymentMutation.mutateAsync({
             id: invoice.data.id,
             request: {
@@ -326,8 +409,9 @@ export function CreateVisitPageImpl() {
                 control={form.control}
                 errors={form.formState.errors}
                 setValue={form.setValue}
+                resetField={form.resetField}
                 appointments={appointments}
-                patients={patients}
+                selectedPatient={patient}
                 doctors={doctors}
                 visitTypes={visitTypes}
                 loading={loading}
@@ -337,7 +421,8 @@ export function CreateVisitPageImpl() {
                 loading={patientQuery.isLoading}
                 error={patientQuery.error}
                 onRetry={() => void patientQuery.refetch()}
-                onContinue={() => setStep('visit')}
+                onContinue={continueToVisit}
+                continuing={checkingHistory}
               />
             </>
           ) : (
@@ -356,11 +441,18 @@ export function CreateVisitPageImpl() {
                 control={form.control}
                 errors={form.formState.errors}
                 setValue={form.setValue}
+                resetField={form.resetField}
                 appointments={appointments}
-                patients={patients}
+                selectedPatient={patient}
                 doctors={doctors}
                 visitTypes={visitTypes}
                 loading={loading}
+                historyError={historyError}
+                recentDoctorVisit={recentDoctorVisitQuery.data}
+                patientType={patientTypeQuery.data ?? null}
+                patientTypeLoading={patientTypeQuery.isLoading || patientTypeQuery.isFetching}
+                patientTypeError={patientTypeQuery.isError}
+                onRetryPatientType={() => void patientTypeQuery.refetch()}
               />
               <VisitBillingFields
                 control={form.control}
@@ -368,6 +460,9 @@ export function CreateVisitPageImpl() {
                 setValue={form.setValue}
                 chargeItems={chargeItems}
                 canBill={canBill}
+                canCollectPayment={Boolean(canRecordPayment)}
+                visitTypeCode={selectedVisitType?.code.toUpperCase() ?? null}
+                patientType={patientTypeQuery.data?.patientType ?? null}
                 loading={chargeItemsQuery.isLoading}
                 error={chargeItemsQuery.isError}
                 onRetry={() => void chargeItemsQuery.refetch()}
@@ -413,7 +508,7 @@ export function CreateVisitPageImpl() {
                   : 'Creating Visit…'
                 : createdVisit
                   ? 'Visit created'
-                  : includeInvoice && Number(amountReceived) > 0
+                  : includeInvoice && paymentTiming === 'NOW' && Number(amountReceived) > 0
                     ? 'Create Visit & Record Payment'
                     : includeInvoice
                       ? 'Create Visit & Invoice'

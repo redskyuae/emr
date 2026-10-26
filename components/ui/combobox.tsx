@@ -1,6 +1,6 @@
 'use client';
 
-import { ComponentPropsWithRef, useRef } from 'react';
+import { ComponentPropsWithRef, type RefObject, useRef } from 'react';
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
 
 import { cn } from '@/lib/utils';
@@ -81,6 +81,7 @@ function ComboboxInput({
 
 function ComboboxContent({
   className,
+  portalContainer,
   side = 'bottom',
   sideOffset = 6,
   align = 'start',
@@ -91,9 +92,9 @@ function ComboboxContent({
   Pick<
     ComboboxPrimitive.Positioner.Props,
     'side' | 'align' | 'sideOffset' | 'alignOffset' | 'anchor'
-  >) {
+  > & { portalContainer?: RefObject<HTMLElement | null> }) {
   return (
-    <ComboboxPrimitive.Portal>
+    <ComboboxPrimitive.Portal container={portalContainer}>
       <ComboboxPrimitive.Positioner
         side={side}
         sideOffset={sideOffset}

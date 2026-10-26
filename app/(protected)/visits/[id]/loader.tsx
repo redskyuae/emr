@@ -45,6 +45,7 @@ export default function VisitDetailPageLoader() {
             >
               <Skeleton className="h-5 w-40" />
               <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-9 w-full" />
               <Skeleton className="h-12 w-1/2" />
             </div>
           ))}

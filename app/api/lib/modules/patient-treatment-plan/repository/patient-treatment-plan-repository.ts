@@ -31,6 +31,7 @@ export type CatalogueAssignment = {
   patientId: number;
   treatmentId: number;
   totalSessions?: number;
+  additionalSessions?: number;
 };
 
 export type PlanSessionBookingContext = {
@@ -500,6 +501,9 @@ async function createPlanFromTreatment(
   let totalSessions: number;
 
   if (treatment.sessionStructure === 'REPEATABLE') {
+    if (input.additionalSessions !== undefined) {
+      throw new Error('Additional Sessions are only available for a Sequenced Treatment');
+    }
     totalSessions = input.totalSessions ?? treatment.defaultTotalSessions ?? 0;
     if (!Number.isInteger(totalSessions) || totalSessions <= 0) {
       throw new Error('Repeatable Treatment requires a positive total Sessions count');
@@ -511,7 +515,7 @@ async function createPlanFromTreatment(
     if (input.totalSessions !== undefined) {
       throw new Error('Sequenced Treatment derives its count from Session templates');
     }
-    totalSessions = templates.length;
+    totalSessions = templates.length + (input.additionalSessions ?? 0);
   }
 
   const [createdPlan] = await tx
@@ -538,6 +542,27 @@ async function createPlanFromTreatment(
     sessionValues = templates.map((template) =>
       snapshotSessionValues(input.tenantId, createdPlan.id, template, template.sessionNumber)
     );
+    const lastTemplate = templates[templates.length - 1];
+    for (
+      let sessionNumber = templates.length + 1;
+      sessionNumber <= totalSessions;
+      sessionNumber++
+    ) {
+      sessionValues.push(
+        snapshotSessionValues(input.tenantId, createdPlan.id, lastTemplate, sessionNumber)
+      );
+    }
+    if (input.additionalSessions) {
+      sessionValues = sessionValues.map((session) => ({
+        ...session,
+        label:
+          resequencePatientTreatmentPlanSessionLabel(
+            session.label,
+            session.sessionNumber,
+            totalSessions
+          ) ?? session.label,
+      }));
+    }
   }
 
   const createdSessions = await tx

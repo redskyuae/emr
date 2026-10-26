@@ -1,8 +1,10 @@
 import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
+import { useEffect, useRef } from 'react';
 import { ReceiptText, RefreshCcw } from 'lucide-react';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
+import type { VisitPatientType } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
 import {
   PAYMENT_METHOD_OPTIONS,
   formatMoney,
@@ -16,6 +18,12 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
+import {
+  findVisitChargeItem,
+  suggestedVisitChargeKind,
+  VISIT_CHARGE_OPTIONS,
+  type VisitChargeKind,
+} from '../_utils/visit-charge-options';
 
 type Props = {
   control: Control<CreateVisitFormValues>;
@@ -23,6 +31,9 @@ type Props = {
   setValue: UseFormSetValue<CreateVisitFormValues>;
   chargeItems: ChargeItem[];
   canBill: boolean;
+  canCollectPayment: boolean;
+  visitTypeCode: string | null;
+  patientType: VisitPatientType | null;
   loading: boolean;
   error: boolean;
   onRetry: () => void;
@@ -34,17 +45,37 @@ export function VisitBillingFields({
   setValue,
   chargeItems,
   canBill,
+  canCollectPayment,
+  visitTypeCode,
+  patientType,
   loading,
   error,
   onRetry,
 }: Props) {
   const createInvoice = useWatch({ control, name: 'createInvoice' });
   const paymentClassification = useWatch({ control, name: 'paymentClassification' });
+  const paymentTiming = useWatch({ control, name: 'paymentTiming' });
+  const chargeKind = useWatch({ control, name: 'chargeKind' });
   const chargeAmount = useWatch({ control, name: 'chargeAmount' });
   const amountReceived = useWatch({ control, name: 'amountReceived' });
-  const calculatedBalance = Number(chargeAmount || 0) - Number(amountReceived || 0);
+  const lastSuggestedContext = useRef<string | null>(null);
+  const calculatedBalance =
+    Number(chargeAmount || 0) - (paymentTiming === 'NOW' ? Number(amountReceived || 0) : 0);
   const balance =
     chargeAmount && Number.isFinite(calculatedBalance) ? Math.max(0, calculatedBalance) : null;
+
+  useEffect(() => {
+    if (!createInvoice) return;
+    const context = `${visitTypeCode ?? ''}:${patientType ?? ''}`;
+    if (lastSuggestedContext.current === context && chargeKind) return;
+    lastSuggestedContext.current = context;
+
+    const suggestion = suggestedVisitChargeKind(visitTypeCode, patientType);
+    const match = suggestion ? findVisitChargeItem(chargeItems, suggestion) : null;
+    setValue('chargeKind', match && suggestion ? suggestion : '', { shouldValidate: true });
+    setValue('chargeItemId', match ? String(match.id) : '', { shouldValidate: true });
+    setValue('chargeAmount', match ? String(match.unitPrice) : '', { shouldValidate: true });
+  }, [chargeItems, chargeKind, createInvoice, patientType, setValue, visitTypeCode]);
 
   return (
     <Card className="shadow-fluent-2">
@@ -53,8 +84,7 @@ export function VisitBillingFields({
           <ReceiptText className="text-primary size-5" /> Billing at Check-in
         </CardTitle>
         <CardDescription>
-          Create a Visit-linked Invoice and record a Payment when money is received. Billing can
-          also be completed later from the Visit.
+          Create a Visit-linked Invoice, then collect Payment now or later from Billing.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -82,8 +112,8 @@ export function VisitBillingFields({
         {!canBill ? (
           <Alert>
             <AlertDescription>
-              Your current permissions do not allow Invoice and Payment creation at Check-in. You
-              can still create the Visit and continue in Billing.
+              Your current permissions do not allow Invoice creation with this Visit. You can create
+              the Visit and continue in Billing.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -102,10 +132,15 @@ export function VisitBillingFields({
             ) : null}
             {!loading && !error && chargeItems.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                No active Charge Items are available. Add one in Billing Masters or create the Visit
-                without an Invoice.
+                No active Charge Items are available. Configure the workflow prices in Billing
+                Masters or create the Visit without an Invoice.
               </p>
             ) : null}
+            <p className="text-muted-foreground text-sm">
+              Select the Visit service. The matching active Charge Item supplies the price; you can
+              adjust this Visit&apos;s charge below. Unavailable choices need setup in Billing
+              Masters.
+            </p>
             <Controller
               control={control}
               name="paymentClassification"
@@ -120,7 +155,7 @@ export function VisitBillingFields({
                   <NativeSelect {...field} id="visit-payment-classification" className="w-full">
                     <NativeSelectOption value="SELF_PAY">Cash / Self-pay</NativeSelectOption>
                     <NativeSelectOption value="REIMBURSEMENT">
-                      Insurance reimbursement (Patient pays upfront)
+                      Insurance reimbursement (Patient responsible)
                     </NativeSelectOption>
                   </NativeSelect>
                 </Field>
@@ -154,16 +189,16 @@ export function VisitBillingFields({
                 />
                 <p className="text-muted-foreground text-xs sm:col-span-2">
                   The Invoice records these details for Patient reimbursement. This does not submit
-                  an insurance claim.
+                  an insurance claim or collect Payment unless Pay now is selected.
                 </p>
               </div>
             ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
               <Controller
                 control={control}
-                name="chargeItemId"
+                name="chargeKind"
                 render={({ field }) => (
-                  <Field data-invalid={Boolean(errors.chargeItemId)}>
+                  <Field data-invalid={Boolean(errors.chargeKind)}>
                     <FieldLabel htmlFor="visit-charge-item">
                       Charge Item{' '}
                       <span aria-hidden="true" className="text-destructive">
@@ -178,22 +213,33 @@ export function VisitBillingFields({
                       disabled={loading || error}
                       onChange={(event) => {
                         field.onChange(event);
-                        const item = chargeItems.find(
-                          (charge) => String(charge.id) === event.target.value
-                        );
+                        const item = event.target.value
+                          ? findVisitChargeItem(chargeItems, event.target.value as VisitChargeKind)
+                          : null;
+                        setValue('chargeItemId', item ? String(item.id) : '', {
+                          shouldValidate: true,
+                        });
                         setValue('chargeAmount', item ? String(item.unitPrice) : '', {
                           shouldValidate: true,
                         });
                       }}
                     >
                       <NativeSelectOption value="">Select a Charge Item</NativeSelectOption>
-                      {chargeItems.map((item) => (
-                        <NativeSelectOption key={item.id} value={String(item.id)}>
-                          {item.name} · {formatMoney(item.unitPrice)}
-                        </NativeSelectOption>
-                      ))}
+                      {VISIT_CHARGE_OPTIONS.map((option) => {
+                        const item = findVisitChargeItem(chargeItems, option.value);
+                        return (
+                          <NativeSelectOption
+                            key={option.value}
+                            value={option.value}
+                            disabled={!item}
+                          >
+                            {option.label} ·{' '}
+                            {item ? formatMoney(item.unitPrice) : 'Set up in Billing Masters'}
+                          </NativeSelectOption>
+                        );
+                      })}
                     </NativeSelect>
-                    <FieldError>{errors.chargeItemId?.message}</FieldError>
+                    <FieldError>{errors.chargeKind?.message}</FieldError>
                   </Field>
                 )}
               />
@@ -224,24 +270,60 @@ export function VisitBillingFields({
               />
               <Controller
                 control={control}
-                name="amountReceived"
+                name="paymentTiming"
                 render={({ field }) => (
-                  <Field data-invalid={Boolean(errors.amountReceived)}>
-                    <FieldLabel htmlFor="visit-amount-received">Amount received</FieldLabel>
-                    <Input
+                  <Field>
+                    <FieldLabel htmlFor="visit-payment-timing">Payment timing</FieldLabel>
+                    <NativeSelect
                       {...field}
-                      id="visit-amount-received"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      inputMode="decimal"
-                      placeholder="0.00"
-                    />
-                    <FieldError>{errors.amountReceived?.message}</FieldError>
+                      id="visit-payment-timing"
+                      className="w-full"
+                      onChange={(event) => {
+                        field.onChange(event);
+                        setValue(
+                          'amountReceived',
+                          event.target.value === 'NOW' ? chargeAmount || '' : '0',
+                          { shouldValidate: true }
+                        );
+                      }}
+                    >
+                      <NativeSelectOption value="LATER">Pay later · Balance Due</NativeSelectOption>
+                      {canCollectPayment ? (
+                        <NativeSelectOption value="NOW">
+                          Pay now · Record Payment
+                        </NativeSelectOption>
+                      ) : null}
+                    </NativeSelect>
+                    {!canCollectPayment ? (
+                      <p className="text-muted-foreground text-xs">
+                        Payment recording permission is required to collect now.
+                      </p>
+                    ) : null}
                   </Field>
                 )}
               />
-              {Number(amountReceived) > 0 ? (
+              {paymentTiming === 'NOW' ? (
+                <Controller
+                  control={control}
+                  name="amountReceived"
+                  render={({ field }) => (
+                    <Field data-invalid={Boolean(errors.amountReceived)}>
+                      <FieldLabel htmlFor="visit-amount-received">Amount received</FieldLabel>
+                      <Input
+                        {...field}
+                        id="visit-amount-received"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                      />
+                      <FieldError>{errors.amountReceived?.message}</FieldError>
+                    </Field>
+                  )}
+                />
+              ) : null}
+              {paymentTiming === 'NOW' && Number(amountReceived) > 0 ? (
                 <Controller
                   control={control}
                   name="paymentMethod"
@@ -264,7 +346,7 @@ export function VisitBillingFields({
                   )}
                 />
               ) : null}
-              {Number(amountReceived) > 0 ? (
+              {paymentTiming === 'NOW' && Number(amountReceived) > 0 ? (
                 <Controller
                   control={control}
                   name="paymentReference"

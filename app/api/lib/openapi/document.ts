@@ -4644,6 +4644,89 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/visits/patient-type': {
+      get: {
+        tags: ['Visit'],
+        summary: 'Verify New or Established Patient type for a Visit',
+        description:
+          'Checks completed, non-deleted Visits for this Patient in the active Tenant. A Patient is Established when a completed Visit exists in the inclusive three-calendar-year window ending on the Tenant-local current date, starting no earlier than creation of the Patient record. Otherwise the Patient is New. The Create Visit page recalculates this assessment before submission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'patientId',
+            in: 'query',
+            required: true,
+            description: 'Patient to assess in the active Tenant.',
+            schema: { type: 'integer', minimum: 1, example: 1042 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Patient type and qualifying Visit history.',
+            content: jsonContent(
+              {
+                type: 'object',
+                required: ['data'],
+                properties: {
+                  data: {
+                    type: 'object',
+                    required: [
+                      'patientType',
+                      'patientRecordDate',
+                      'lookbackStartDate',
+                      'lastCompletedVisit',
+                    ],
+                    properties: {
+                      patientType: { type: 'string', enum: ['NEW', 'ESTABLISHED'] },
+                      patientRecordDate: { type: 'string', format: 'date' },
+                      lookbackStartDate: { type: 'string', format: 'date' },
+                      lastCompletedVisit: {
+                        oneOf: [
+                          { type: 'null' },
+                          {
+                            type: 'object',
+                            required: ['visitNumber', 'visitDate'],
+                            properties: {
+                              visitNumber: { type: 'string' },
+                              visitDate: { type: 'string', example: '18-10-2026' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                data: {
+                  patientType: 'ESTABLISHED',
+                  patientRecordDate: '2025-01-01',
+                  lookbackStartDate: '2023-10-19',
+                  lastCompletedVisit: { visitNumber: 'VST-1001', visitDate: '18-10-2026' },
+                },
+              }
+            ),
+          },
+          '400': {
+            description: 'Invalid Patient ID.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient ID must be a positive integer.',
+              errors: ['Patient ID must be a positive integer.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'Patient not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient not found.',
+              errors: ['Patient not found.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/visits/{id}': {
       get: {
         tags: ['Visit'],
@@ -6326,13 +6409,23 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Assign Treatment to Patient',
         description:
-          'Creates a Patient Treatment Plan from a Tenant Treatment and snapshots its Session templates. The Patient must be registered and active. Repeatable Treatments require totalSessions; Sequenced Treatments derive their count from the catalogue. Requires patient-treatment-plan:read and patient-treatment-plan:assign. The Tenant is resolved from the active Session.',
+          'Creates a Patient Treatment Plan from a Tenant Treatment and snapshots its Session templates. The Patient must be registered and active. Repeatable Treatments require totalSessions. Sequenced Treatments derive their base count from the catalogue and may append additionalSessions by repeating the last template in the same assignment. Requires patient-treatment-plan:read and patient-treatment-plan:assign. The Tenant is resolved from the active Session.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Patient')],
-        requestBody: requestBody('AssignPatientTreatmentPlanRequest', {
-          treatmentId: 12,
-          totalSessions: 5,
-        }),
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: schemaRef('AssignPatientTreatmentPlanRequest'),
+              examples: {
+                repeatable: { value: { treatmentId: 12, totalSessions: 5 } },
+                sequencedWithExtraSessions: {
+                  value: { treatmentId: 13, additionalSessions: 2 },
+                },
+              },
+            },
+          },
+        },
         responses: {
           '201': {
             description: 'Patient Treatment Plan assigned with Patient-specific Sessions.',
@@ -6380,6 +6473,12 @@ export const openApiDocument = {
                     value: {
                       message: 'Number of Sessions is required for a Repeatable Treatment.',
                       errors: ['Number of Sessions is required for a Repeatable Treatment.'],
+                    },
+                  },
+                  invalidAdditionalSessions: {
+                    value: {
+                      message: 'Additional Sessions are only available for a Sequenced Treatment.',
+                      errors: ['Additional Sessions are only available for a Sequenced Treatment.'],
                     },
                   },
                   invalidJson: { value: { message: 'Request body must be valid JSON' } },
@@ -6923,7 +7022,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'List Patients',
         description:
-          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, MRN, and phone. Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
+          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, full first and last name, MRN, phone, Emirates ID, and date of birth (YYYY-MM-DD, DD/MM/YYYY, or DD-MM-YYYY). Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
         security: [{ cookieAuth: [] }],
         parameters: [
           ...listParameters,
@@ -10708,6 +10807,13 @@ export const openApiDocument = {
             minimum: 1,
             maximum: 100,
             description: 'Required for Repeatable Treatments; omitted for Sequenced Treatments.',
+          },
+          additionalSessions: {
+            type: 'integer',
+            minimum: 0,
+            maximum: 100,
+            description:
+              'Optional for Sequenced Treatments only. Appends this many Sessions using the final Session template during assignment.',
           },
         },
       },

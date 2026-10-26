@@ -9,7 +9,7 @@ export function checkInInvoiceNotes(details: ReimbursementDetails) {
   if (details.paymentClassification === 'SELF_PAY') return undefined;
 
   return [
-    'Insurance reimbursement documentation — Patient pays upfront; no claim is processed.',
+    'Insurance reimbursement documentation — Patient responsible for Payment; no claim is processed.',
     details.insurer ? `Insurer: ${details.insurer}` : null,
     details.policyReference ? `Policy / Member Reference: ${details.policyReference}` : null,
   ]

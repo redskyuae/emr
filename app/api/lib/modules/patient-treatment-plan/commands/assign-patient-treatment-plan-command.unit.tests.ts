@@ -34,4 +34,23 @@ describe('assignPatientTreatmentPlanCommand', () => {
     ).resolves.toMatchObject({ success: true, data: { id: 21 } });
     expect(repo.assignTreatmentToPatient).toHaveBeenCalledWith(data);
   });
+
+  it('should pass additional Sequenced Sessions into the same assignment', async () => {
+    const data = {
+      tenantId: 'tenant-a',
+      patientId: 7,
+      treatmentId: 11,
+      additionalSessions: 2,
+    };
+    validate.mockResolvedValue({ success: true, data });
+    repo.assignTreatmentToPatient.mockResolvedValue({ id: 22, totalSessions: 4 } as never);
+
+    await expect(
+      assignPatientTreatmentPlanCommand('7', 'tenant-a', {
+        treatmentId: 11,
+        additionalSessions: 2,
+      })
+    ).resolves.toMatchObject({ success: true, data: { totalSessions: 4 } });
+    expect(repo.assignTreatmentToPatient).toHaveBeenCalledWith(data);
+  });
 });

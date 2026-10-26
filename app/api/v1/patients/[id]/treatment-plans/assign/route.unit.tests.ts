@@ -64,6 +64,18 @@ describe('POST Patient Treatment Plan assignment', () => {
     expect(await response.json()).toEqual({ data: { id: 21 } });
   });
 
+  it('should pass additional Sessions for a Sequenced Treatment assignment', async () => {
+    const response = await POST(
+      request(JSON.stringify({ treatmentId: 11, additionalSessions: 2 })),
+      context
+    );
+    expect(command).toHaveBeenCalledWith('7', 'tenant-a', {
+      treatmentId: 11,
+      additionalSessions: 2,
+    });
+    expect(response.status).toBe(201);
+  });
+
   it('returns validation errors from the command', async () => {
     command.mockResolvedValue({
       success: false,

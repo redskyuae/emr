@@ -521,6 +521,27 @@ describe('Patient repository', () => {
     expect(byPhone.data.map((patient) => patient.id)).toEqual([other.id]);
   });
 
+  it('should search by full name and date of birth in common date formats', async () => {
+    const matching = await patientRepository.createPatient(
+      patientData(tenantA, {
+        firstName: 'Meera',
+        lastName: 'Nair',
+        dateOfBirth: '1988-11-23',
+      })
+    );
+    await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Meera', lastName: 'Shah', dateOfBirth: '1988-10-23' })
+    );
+    await patientRepository.createPatient(
+      patientData(tenantB, { firstName: 'Meera', lastName: 'Nair', dateOfBirth: '1988-11-23' })
+    );
+
+    for (const query of ['Meera Nair', '1988-11-23', '23/11/1988', '23-11-1988']) {
+      const result = await patientRepository.getPatients({ tenantId: tenantA, query });
+      expect(result.data.map((patient) => patient.id)).toEqual([matching.id]);
+    }
+  });
+
   it('should filter by gender and active status and paginate results', async () => {
     await patientRepository.createPatient(patientData(tenantA, { gender: 'male' }));
     const active = await patientRepository.createPatient(

@@ -328,6 +328,10 @@ The exclusive reservation of one Patient Treatment Plan Session for a Procedure 
 
 A Tenant-scoped Master that classifies the clinical nature of a Visit, such as OPD Consultation, Follow-up, Procedure, or Vaccination. Distinct from AppointmentType, which classifies the Appointment at booking time — a Walk-in Visit has a VisitType but no Appointment.
 
+## Visit Patient Type
+
+An assessment shown while creating a Visit. A Patient is New until a completed Visit exists in the active Tenant within the last three calendar years, counted no earlier than creation of the Patient record. A Patient with such a Visit is Established. This is distinct from Patient Registration Status, which is Provisional or Registered, and from VisitType, which classifies the clinical encounter.
+
 ## Visit Number
 
 The permanent, human-facing identifier assigned by the system to a Visit within a Tenant, formatted as `VST-` followed by a Tenant-scoped sequence beginning at `1001`. A Visit Number is immutable and never reused, including after the Visit is removed.

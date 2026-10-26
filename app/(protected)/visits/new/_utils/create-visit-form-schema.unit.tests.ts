@@ -11,9 +11,11 @@ const base = {
   chiefComplaint: '',
   remarks: '',
   createInvoice: false,
+  paymentTiming: 'LATER' as const,
   paymentClassification: 'SELF_PAY' as const,
   insurer: '',
   policyReference: '',
+  chargeKind: '' as const,
   chargeItemId: '',
   chargeAmount: '',
   amountReceived: '0',
@@ -51,7 +53,7 @@ describe('createVisitFormSchema', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues.map((issue) => issue.path[0])).toEqual(
-        expect.arrayContaining(['chargeItemId', 'chargeAmount'])
+        expect.arrayContaining(['chargeKind', 'chargeAmount'])
       );
     }
   });
@@ -60,9 +62,11 @@ describe('createVisitFormSchema', () => {
     const valid = {
       ...base,
       createInvoice: true,
+      chargeKind: 'FOLLOW_UP_CONSULTATION' as const,
       chargeItemId: '7',
       chargeAmount: '500.00',
       amountReceived: '250.00',
+      paymentTiming: 'NOW' as const,
     };
     expect(createVisitFormSchema.safeParse(valid).success).toBe(true);
     const excess = createVisitFormSchema.safeParse({ ...valid, amountReceived: '500.01' });
@@ -73,6 +77,7 @@ describe('createVisitFormSchema', () => {
     const result = createVisitFormSchema.safeParse({
       ...base,
       createInvoice: true,
+      chargeKind: 'FOLLOW_UP_CONSULTATION',
       chargeItemId: '7',
       chargeAmount: '1.001',
       amountReceived: '0',
@@ -85,11 +90,28 @@ describe('createVisitFormSchema', () => {
       createVisitFormSchema.safeParse({
         ...base,
         createInvoice: true,
+        chargeKind: 'FOLLOW_UP_CONSULTATION',
         chargeItemId: '7',
         chargeAmount: '500',
         amountReceived: '',
       }).success
     ).toBe(true);
+  });
+
+  it('requires a positive Payment when Pay now is selected', () => {
+    const result = createVisitFormSchema.safeParse({
+      ...base,
+      createInvoice: true,
+      paymentTiming: 'NOW',
+      chargeKind: 'FOLLOW_UP_CONSULTATION',
+      chargeItemId: '7',
+      chargeAmount: '500',
+      amountReceived: '0',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.path[0] === 'amountReceived')).toBe(true);
+    }
   });
 
   it('does not validate hidden billing details when Invoice creation is off', () => {
@@ -110,9 +132,11 @@ describe('createVisitFormSchema', () => {
       paymentClassification: 'REIMBURSEMENT',
       insurer: 'x'.repeat(151),
       policyReference: 'x'.repeat(101),
+      chargeKind: 'FOLLOW_UP_CONSULTATION',
       chargeItemId: '7',
       chargeAmount: '500',
       amountReceived: '100',
+      paymentTiming: 'NOW',
       paymentReference: 'x'.repeat(101),
     });
     expect(result.success).toBe(false);

@@ -41,7 +41,10 @@ export default function AppointmentsPageLoader() {
               <Skeleton className="h-5 w-20" />
               <Skeleton className="h-5 w-24" />
               <Skeleton className="h-5 w-20" />
-              <Skeleton className="ml-auto h-8 w-10" aria-label="Loading Appointment actions" />
+              <Skeleton
+                className="ml-auto h-8 w-10"
+                aria-label="Loading Appointment actions including Create Visit"
+              />
             </div>
           ))}
           <div className="flex items-center justify-between border-t p-3">
