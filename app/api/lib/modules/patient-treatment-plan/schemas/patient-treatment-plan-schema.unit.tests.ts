@@ -23,6 +23,13 @@ describe('Patient Treatment Plan schema', () => {
       assignPatientTreatmentPlanRequestSchema.safeParse({ treatmentId: 2, totalSessions: 0 })
         .success
     ).toBe(false);
+    expect(
+      assignPatientTreatmentPlanRequestSchema.parse({ treatmentId: 2, additionalSessions: 2 })
+    ).toEqual({ treatmentId: 2, additionalSessions: 2 });
+    expect(
+      assignPatientTreatmentPlanRequestSchema.safeParse({ treatmentId: 2, additionalSessions: 101 })
+        .success
+    ).toBe(false);
   });
   it('should accept a positive integer Session count for an existing Plan', () => {
     expect(
@@ -64,6 +71,9 @@ describe('Patient Treatment Plan schema', () => {
   it('should reject caller-supplied counts for Sequenced assignments', () => {
     const input = { patientId: 1, treatmentId: 2, sessionStructure: 'SEQUENCED' };
     expect(assignPatientTreatmentPlanSchema.safeParse(input).success).toBe(true);
+    expect(
+      assignPatientTreatmentPlanSchema.parse({ ...input, additionalSessions: 2 })
+    ).toMatchObject({ additionalSessions: 2 });
     expect(assignPatientTreatmentPlanSchema.safeParse({ ...input, totalSessions: 2 }).success).toBe(
       false
     );

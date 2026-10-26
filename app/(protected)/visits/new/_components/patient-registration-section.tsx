@@ -56,12 +56,14 @@ export function PatientRegistrationSection({
   error,
   onRetry,
   onContinue,
+  continuing,
 }: {
   patient: Patient | null;
   loading: boolean;
   error: unknown;
   onRetry: () => void;
-  onContinue: () => void;
+  onContinue: () => Promise<void> | void;
+  continuing: boolean;
 }) {
   const [formRevision, setFormRevision] = useState(0);
   const updatePatient = useUpdatePatient();
@@ -128,8 +130,13 @@ export function PatientRegistrationSection({
 
       {patient.registrationStatus === 'registered' ? (
         <div className="flex justify-end">
-          <Button type="button" variant="outline" onClick={onContinue}>
-            Continue with existing details
+          <Button
+            type="button"
+            variant="outline"
+            disabled={continuing}
+            onClick={() => void onContinue()}
+          >
+            {continuing ? 'Checking Visit history…' : 'Continue with existing details'}
           </Button>
         </div>
       ) : (
@@ -153,7 +160,7 @@ export function PatientRegistrationSection({
             request: patientFormValuesToRequest(values),
           });
           toast.success('Patient information updated.');
-          onContinue();
+          await onContinue();
         }}
       />
     </section>

@@ -35,6 +35,7 @@ export const assignPatientTreatmentPlanSchema = z.discriminatedUnion('sessionStr
       patientId: patientTreatmentPlanPatientIdSchema,
       treatmentId: treatmentIdSchema,
       sessionStructure: z.literal('SEQUENCED'),
+      additionalSessions: z.number().int().min(0).max(100).optional(),
     })
     .strict(),
 ]);
@@ -54,6 +55,7 @@ export const assignPatientTreatmentPlanRequestSchema = z
   .object({
     treatmentId: treatmentIdSchema,
     totalSessions: z.number().int().positive().max(100).optional(),
+    additionalSessions: z.number().int().min(0).max(100).optional(),
   })
   .strict();
 

@@ -174,7 +174,7 @@ export function AppointmentsTable({
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href="/visits/new">
+                          <Link href={`/visits/new?appointmentId=${appointment.id}`}>
                             <Plus className="size-4" />
                             Create Visit
                           </Link>

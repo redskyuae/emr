@@ -83,7 +83,43 @@ describe('validateAssignPatientTreatmentPlan', () => {
       validateAssignPatientTreatmentPlan('7', 'tenant-a', { treatmentId: 11 })
     ).resolves.toEqual({
       success: true,
-      data: { tenantId: 'tenant-a', patientId: 7, treatmentId: 11, totalSessions: undefined },
+      data: {
+        tenantId: 'tenant-a',
+        patientId: 7,
+        treatmentId: 11,
+        totalSessions: undefined,
+        additionalSessions: undefined,
+      },
+    });
+  });
+
+  it('should allow additional Sessions for Sequenced Treatments only', async () => {
+    treatments.getTreatmentById.mockResolvedValue({
+      id: 11,
+      sessionStructure: 'SEQUENCED',
+      sessions: [{ id: 1 }, { id: 2 }],
+    } as never);
+    await expect(
+      validateAssignPatientTreatmentPlan('7', 'tenant-a', {
+        treatmentId: 11,
+        additionalSessions: 2,
+      })
+    ).resolves.toMatchObject({ success: true, data: { additionalSessions: 2 } });
+
+    treatments.getTreatmentById.mockResolvedValue({
+      id: 11,
+      sessionStructure: 'REPEATABLE',
+      sessions: [{ id: 1 }],
+    } as never);
+    await expect(
+      validateAssignPatientTreatmentPlan('7', 'tenant-a', {
+        treatmentId: 11,
+        totalSessions: 2,
+        additionalSessions: 1,
+      })
+    ).resolves.toMatchObject({
+      success: false,
+      errors: ['Additional Sessions are only available for a Sequenced Treatment.'],
     });
   });
 

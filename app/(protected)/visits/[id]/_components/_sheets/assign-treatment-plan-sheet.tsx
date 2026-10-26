@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
@@ -14,7 +14,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '@/components/ui/combobox';
 import {
   Sheet,
   SheetContent,
@@ -29,7 +36,11 @@ import {
   type AssignTreatmentPlanFormValues,
 } from '../../_utils/assign-treatment-plan-form-schema';
 
-const EMPTY: AssignTreatmentPlanFormValues = { treatmentId: '', totalSessions: '' };
+const EMPTY: AssignTreatmentPlanFormValues = {
+  treatmentId: '',
+  totalSessions: '',
+  additionalSessions: '0',
+};
 
 export function AssignTreatmentPlanSheet({
   open,
@@ -41,6 +52,7 @@ export function AssignTreatmentPlanSheet({
   onClose: () => void;
 }) {
   const [search, setSearch] = useState('');
+  const sheetRef = useRef<HTMLDivElement>(null);
   const [debouncedSearch] = useDebouncedValue(search, { wait: 300 });
   const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
@@ -54,6 +66,11 @@ export function AssignTreatmentPlanSheet({
     mode: 'onTouched',
     defaultValues: EMPTY,
   });
+  const treatments = treatmentsQuery.data?.data ?? [];
+  const treatmentOptions =
+    selectedTreatment && !treatments.some((item) => item.id === selectedTreatment.id)
+      ? [selectedTreatment, ...treatments]
+      : treatments;
 
   const submit = form.handleSubmit(async (values) => {
     if (!selectedTreatment) {
@@ -72,7 +89,7 @@ export function AssignTreatmentPlanSheet({
           treatmentId: selectedTreatment.id,
           ...(selectedTreatment.sessionStructure === 'REPEATABLE'
             ? { totalSessions: Number(values.totalSessions) }
-            : {}),
+            : { additionalSessions: Number(values.additionalSessions) }),
         },
       });
       toast.success('Patient Treatment Plan assigned.');
@@ -83,8 +100,12 @@ export function AssignTreatmentPlanSheet({
   });
 
   return (
-    <Sheet open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
+    <Sheet
+      open={open}
+      onOpenChange={(next) => (!next && !assign.isPending ? onClose() : undefined)}
+    >
       <SheetContent
+        ref={sheetRef}
         side="right"
         className="shadow-fluent-64 w-full gap-0 p-0 data-[side=right]:w-full sm:max-w-lg"
         style={{ width: 'min(620px, 100vw)', maxWidth: '100vw' }}
@@ -115,16 +136,6 @@ export function AssignTreatmentPlanSheet({
                 </AlertDescription>
               </Alert>
             ) : null}
-            <Field>
-              <FieldLabel htmlFor="treatment-search">Search Treatments</FieldLabel>
-              <Input
-                id="treatment-search"
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name or code"
-              />
-            </Field>
             <Controller
               control={form.control}
               name="treatmentId"
@@ -136,18 +147,13 @@ export function AssignTreatmentPlanSheet({
                       *
                     </span>
                   </FieldLabel>
-                  <NativeSelect
-                    id="assign-treatment"
-                    className="w-full"
-                    aria-required
-                    value={field.value}
-                    disabled={treatmentsQuery.isLoading}
-                    onChange={(event) => {
-                      field.onChange(event.target.value);
-                      const treatment =
-                        treatmentsQuery.data?.data.find(
-                          (item) => String(item.id) === event.target.value
-                        ) ?? null;
+                  <Combobox<Treatment>
+                    items={treatmentOptions}
+                    value={selectedTreatment}
+                    itemToStringLabel={(item) => `${item.name} · ${item.code}`}
+                    itemToStringValue={(item) => String(item.id)}
+                    onValueChange={(treatment) => {
+                      field.onChange(treatment ? String(treatment.id) : '');
                       setSelectedTreatment(treatment);
                       form.setValue(
                         'totalSessions',
@@ -155,29 +161,51 @@ export function AssignTreatmentPlanSheet({
                           ? String(treatment.defaultTotalSessions)
                           : ''
                       );
+                      form.setValue('additionalSessions', '0');
+                      form.clearErrors(['treatmentId', 'totalSessions', 'additionalSessions']);
                     }}
+                    onInputValueChange={setSearch}
                   >
-                    <NativeSelectOption value="">Select a Treatment</NativeSelectOption>
-                    {selectedTreatment &&
-                    !(treatmentsQuery.data?.data ?? []).some(
-                      (item) => item.id === selectedTreatment.id
-                    ) ? (
-                      <NativeSelectOption value={String(selectedTreatment.id)}>
-                        {selectedTreatment.name} · {selectedTreatment.code}
-                      </NativeSelectOption>
-                    ) : null}
-                    {(treatmentsQuery.data?.data ?? []).map((treatment) => (
-                      <NativeSelectOption key={treatment.id} value={String(treatment.id)}>
-                        {treatment.name} · {treatment.code}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
+                    <ComboboxInput
+                      id="assign-treatment"
+                      className="w-full"
+                      placeholder="Search Treatment name or code"
+                      aria-required="true"
+                      aria-invalid={Boolean(form.formState.errors.treatmentId)}
+                      onBlur={field.onBlur}
+                      showClear
+                    />
+                    <ComboboxContent portalContainer={sheetRef}>
+                      <ComboboxEmpty>
+                        {treatmentsQuery.isFetching
+                          ? 'Searching Treatments…'
+                          : 'No Treatments found.'}
+                      </ComboboxEmpty>
+                      <ComboboxList>
+                        {treatmentOptions.map((treatment) => (
+                          <ComboboxItem key={treatment.id} value={treatment}>
+                            <span>
+                              <span className="block font-medium">{treatment.name}</span>
+                              <span className="text-muted-foreground block font-mono text-xs">
+                                {treatment.code}
+                              </span>
+                            </span>
+                          </ComboboxItem>
+                        ))}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
                   {form.formState.errors.treatmentId ? (
                     <FieldError>{form.formState.errors.treatmentId.message}</FieldError>
                   ) : null}
                   {treatmentsQuery.isError ? (
                     <p className="text-destructive text-sm">Treatments could not be loaded.</p>
                   ) : null}
+                  <p className="text-muted-foreground text-xs" aria-live="polite">
+                    {treatmentsQuery.isFetching
+                      ? 'Searching Treatments…'
+                      : 'Search within the dropdown to find a Treatment.'}
+                  </p>
                 </Field>
               )}
             />
@@ -209,12 +237,37 @@ export function AssignTreatmentPlanSheet({
                 </FieldLabel>
                 <Input
                   id="assign-session-count"
+                  type="number"
+                  min={1}
+                  max={100}
+                  step={1}
                   inputMode="numeric"
                   aria-required
                   {...form.register('totalSessions')}
                 />
                 {form.formState.errors.totalSessions ? (
                   <FieldError>{form.formState.errors.totalSessions.message}</FieldError>
+                ) : null}
+              </Field>
+            ) : null}
+            {selectedTreatment?.sessionStructure === 'SEQUENCED' ? (
+              <Field data-invalid={Boolean(form.formState.errors.additionalSessions)}>
+                <FieldLabel htmlFor="assign-additional-sessions">Additional Sessions</FieldLabel>
+                <Input
+                  id="assign-additional-sessions"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  inputMode="numeric"
+                  {...form.register('additionalSessions')}
+                />
+                <p className="text-muted-foreground text-xs">
+                  The {selectedTreatment.sessions.length} template Sessions are included. Extra
+                  Sessions repeat the final template and are added with this Plan.
+                </p>
+                {form.formState.errors.additionalSessions ? (
+                  <FieldError>{form.formState.errors.additionalSessions.message}</FieldError>
                 ) : null}
               </Field>
             ) : null}

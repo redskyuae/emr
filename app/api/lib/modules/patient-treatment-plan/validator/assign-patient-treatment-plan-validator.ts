@@ -69,6 +69,15 @@ export async function validateAssignPatientTreatmentPlan(
     };
   }
   if (
+    treatment.sessionStructure === 'REPEATABLE' &&
+    payloadResult.data.additionalSessions !== undefined
+  ) {
+    return {
+      success: false,
+      errors: ['Additional Sessions are only available for a Sequenced Treatment.'],
+    };
+  }
+  if (
     treatment.sessionStructure === 'SEQUENCED' &&
     payloadResult.data.totalSessions !== undefined
   ) {
@@ -85,6 +94,7 @@ export async function validateAssignPatientTreatmentPlan(
       patientId: patientIdResult.data,
       treatmentId: payloadResult.data.treatmentId,
       totalSessions: payloadResult.data.totalSessions,
+      additionalSessions: payloadResult.data.additionalSessions,
     },
   };
 }
