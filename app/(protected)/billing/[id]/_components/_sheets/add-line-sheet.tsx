@@ -78,7 +78,10 @@ function AddLineForm({ invoiceId, onClose }: { invoiceId: number; onClose: () =>
     isActive: true,
     query: debouncedSearch || undefined,
   });
-  const chargeItems = chargeItemsQuery.data?.data ?? [];
+  const today = new Date().toISOString().slice(0, 10);
+  const chargeItems = (chargeItemsQuery.data?.data ?? []).filter(
+    (item) => !item.effectiveDate || item.effectiveDate <= today
+  );
 
   const {
     control,
@@ -89,7 +92,7 @@ function AddLineForm({ invoiceId, onClose }: { invoiceId: number; onClose: () =>
 
   function handleSelectChargeItem(chargeItem: ChargeItem, onChange: (value: string) => void) {
     onChange(String(chargeItem.id));
-    setValue('unitPrice', String(chargeItem.unitPrice));
+    setValue('unitPrice', String(chargeItem.cashPrice ?? chargeItem.unitPrice));
   }
 
   const handleSave = form.handleSubmit(async (values) => {
@@ -187,7 +190,9 @@ function AddLineForm({ invoiceId, onClose }: { invoiceId: number; onClose: () =>
           {errors.unitPrice ? (
             <FieldError>{errors.unitPrice.message}</FieldError>
           ) : (
-            <p className="text-muted-foreground text-xs">Prefilled from the Charge Item.</p>
+            <p className="text-muted-foreground text-xs">
+              Prefilled from Cash Price, or Standard Price when no Cash Price is configured.
+            </p>
           )}
         </Field>
       </div>

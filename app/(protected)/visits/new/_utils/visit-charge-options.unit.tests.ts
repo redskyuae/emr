@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import {
   findVisitChargeItem,
+  isFreeFollowUpCharge,
+  listVisitChargeItems,
   suggestedVisitChargeKind,
+  visitChargePrice,
   VISIT_CHARGE_OPTIONS,
 } from './visit-charge-options';
 
@@ -65,5 +68,39 @@ describe('Visit Charge Item choices', () => {
     expect(
       findVisitChargeItem([item(3, 'CONS', 'General Consultation')], 'NEW_CONSULTATION')
     ).toBeNull();
+  });
+
+  it('offers all coded levels explicitly and uses the cash price after the effective date', () => {
+    const levels = [
+      {
+        ...item(1, '99212', 'Established Patient Level Two'),
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        effectiveDate: '2026-01-01',
+        cashPrice: 90,
+      },
+      {
+        ...item(2, '99213', 'Established Patient Level Three'),
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        effectiveDate: '2027-01-01',
+        cashPrice: 120,
+      },
+    ] as ChargeItem[];
+    expect(
+      listVisitChargeItems(levels, 'ESTABLISHED_CONSULTATION', '2026-10-26').map(
+        (service) => service.code
+      )
+    ).toEqual(['99212']);
+    expect(listVisitChargeItems(levels, 'ESTABLISHED_CONSULTATION', '2027-10-26')).toHaveLength(2);
+    expect(visitChargePrice(levels[0])).toBe(90);
+  });
+
+  it('waives only a recent follow-up for a flagged established service', () => {
+    const service = {
+      ...item(1, '99213', 'Established Patient Level Three'),
+      freeFollowUpEligible: true,
+    } as ChargeItem;
+    expect(isFreeFollowUpCharge(service, 'FUP', true)).toBe(true);
+    expect(isFreeFollowUpCharge(service, 'OPD', true)).toBe(false);
+    expect(isFreeFollowUpCharge(service, 'FUP', false)).toBe(false);
   });
 });

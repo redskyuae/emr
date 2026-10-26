@@ -5152,11 +5152,16 @@ export const openApiDocument = {
       schemaName: 'ChargeItem',
       createSchemaName: 'CreateChargeItemRequest',
       example: {
-        name: 'General Consultation',
-        code: 'CONS',
+        name: 'Established Patient Level 3',
+        code: '99213',
         category: 'CONSULTATION',
-        unitPrice: 500,
-        description: 'Standard outpatient consultation fee',
+        unitPrice: 150,
+        cashPrice: 150,
+        insuranceContractPrice: 120,
+        freeFollowUpEligible: false,
+        effectiveDate: '2026-01-01',
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        description: 'Configured outpatient consultation service',
         isActive: true,
       },
       security: [{ cookieAuth: [] }],
@@ -5194,11 +5199,16 @@ export const openApiDocument = {
       schemaName: 'ChargeItem',
       updateSchemaName: 'UpdateChargeItemRequest',
       example: {
-        name: 'General Consultation',
-        code: 'CONS',
+        name: 'Established Patient Level 3',
+        code: '99213',
         category: 'CONSULTATION',
-        unitPrice: 500,
-        description: 'Standard outpatient consultation fee',
+        unitPrice: 150,
+        cashPrice: 150,
+        insuranceContractPrice: 120,
+        freeFollowUpEligible: false,
+        effectiveDate: '2026-01-01',
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        description: 'Configured outpatient consultation service',
         isActive: true,
       },
       parameters: [numberIdPathParameter('Charge Item')],
@@ -5362,7 +5372,7 @@ export const openApiDocument = {
         tags: ['Invoice'],
         summary: 'Add Invoice Line',
         description:
-          'Adds a line to a Draft Invoice from a Charge Item. The line snapshots the Charge Item description and unit price; an optional price override may be supplied. Recomputes the Invoice totals.',
+          'Adds a line to a Draft Invoice from an active, effective Charge Item. The line snapshots its description and patient-paid price; an optional price override may be supplied. Recomputes the Invoice totals.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Invoice')],
         requestBody: requestBody('AddInvoiceLineRequest', {
@@ -9454,7 +9464,41 @@ export const openApiDocument = {
           unitPrice: {
             type: 'number',
             minimum: 0,
-            description: 'Unit price in the Tenant currency, rounded to two decimals.',
+            description: 'Standard price in the Tenant currency, rounded to two decimals.',
+          },
+          cashPrice: {
+            type: ['number', 'null'],
+            minimum: 0,
+            description: 'Patient-paid price. If absent, Standard Price applies.',
+          },
+          insuranceContractPrice: {
+            type: ['number', 'null'],
+            minimum: 0,
+            description:
+              'Direct insurer contract price. Not used for patient-paid reimbursement or current Visit billing.',
+          },
+          freeFollowUpEligible: {
+            type: 'boolean',
+            default: false,
+            description:
+              'Whether this Established or Follow-up Consultation can receive a waived charge on a qualifying follow-up Visit.',
+          },
+          effectiveDate: {
+            type: ['string', 'null'],
+            format: 'date',
+            description: 'First date this price can be used for a new Visit or Invoice Line.',
+          },
+          visitChargeKind: {
+            type: ['string', 'null'],
+            enum: [
+              'NEW_CONSULTATION',
+              'ESTABLISHED_CONSULTATION',
+              'FOLLOW_UP_CONSULTATION',
+              'TREATMENT_SESSION',
+              null,
+            ],
+            description:
+              'Explicit Visit service group. CPT level must be chosen from the documented service.',
           },
           description: {
             type: ['string', 'null'],
@@ -9481,6 +9525,11 @@ export const openApiDocument = {
               'code',
               'category',
               'unitPrice',
+              'cashPrice',
+              'insuranceContractPrice',
+              'freeFollowUpEligible',
+              'effectiveDate',
+              'visitChargeKind',
               'isActive',
               'description',
               'createdOn',
@@ -9724,7 +9773,8 @@ export const openApiDocument = {
           unitPrice: {
             type: 'number',
             minimum: 0,
-            description: 'Optional price override. Defaults to the Charge Item unit price.',
+            description:
+              'Optional price override. Defaults to Cash Price, or Standard Price when Cash Price is absent.',
           },
         },
       },

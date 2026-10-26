@@ -419,6 +419,8 @@ const appointmentNavHrefs = new Set([
   '/room-masters/types',
   '/clinical-masters',
   '/clinical-masters/therapist-skills',
+  '/billing-masters',
+  '/billing-masters/charge-items',
 ]);
 
 const pageMetaByHref: Record<string, AppPageMeta> = {

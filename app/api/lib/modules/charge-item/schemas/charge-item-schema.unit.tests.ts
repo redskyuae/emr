@@ -130,6 +130,63 @@ describe('ChargeItem schema', () => {
     ).toContain('Charge item description must be at most 500 characters');
   });
 
+  it('accepts a coded Visit service with separate prices and effective date', () => {
+    expect(
+      createChargeItemSchema.parse({
+        ...validPayload,
+        name: 'Established Patient – Level 3',
+        code: '99213',
+        unitPrice: 150,
+        cashPrice: 150,
+        insuranceContractPrice: 120,
+        effectiveDate: '2026-01-01',
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+      })
+    ).toMatchObject({
+      code: '99213',
+      cashPrice: 150,
+      insuranceContractPrice: 120,
+      effectiveDate: '2026-01-01',
+      visitChargeKind: 'ESTABLISHED_CONSULTATION',
+    });
+  });
+
+  it('rejects invalid prices, dates, and free follow-up on the wrong service', () => {
+    expect(
+      errorsOf(createChargeItemSchema.safeParse({ ...validPayload, cashPrice: -1 }))
+    ).toContain('Cash price must be zero or more');
+    expect(
+      createChargeItemSchema.safeParse({ ...validPayload, effectiveDate: '2026-02-30' }).success
+    ).toBe(false);
+    expect(
+      errorsOf(
+        createChargeItemSchema.safeParse({
+          ...validPayload,
+          freeFollowUpEligible: true,
+          visitChargeKind: 'NEW_CONSULTATION',
+        })
+      )
+    ).toContain(
+      'Only Follow-up or Established Consultation Charge Items can be free follow-up eligible'
+    );
+    expect(
+      createChargeItemSchema.safeParse({
+        ...validPayload,
+        freeFollowUpEligible: true,
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+      }).success
+    ).toBe(true);
+    expect(
+      errorsOf(
+        createChargeItemSchema.safeParse({
+          ...validPayload,
+          category: 'PROCEDURE',
+          visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        })
+      )
+    ).toContain('Consultation Charge Items must have Consultation category');
+  });
+
   it('should validate id is a positive integer and tenant id is non-empty', () => {
     expect(chargeItemIdSchema.safeParse('0').success).toBe(false);
     expect(chargeItemIdSchema.safeParse('abc').success).toBe(false);
@@ -148,9 +205,7 @@ describe('ChargeItem schema', () => {
           unitPrice: 500,
         })
       )
-    ).toContain(
-      'Charge item name must contain only letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses.'
-    );
+    ).toContain('Charge item name contains unsupported characters.');
 
     expect(
       errorsOf(

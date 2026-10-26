@@ -10,7 +10,7 @@ export default function ChargeItemsPageLoader() {
 
       <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[1000px]">
             <thead>
               <tr className="border-b">
                 <th className="p-3 pl-4">
@@ -28,6 +28,11 @@ export default function ChargeItemsPageLoader() {
                 <th className="p-3 pr-4 text-right">
                   <Skeleton className="ml-auto h-4 w-14" />
                 </th>
+                {Array.from({ length: 4 }, (_, index) => (
+                  <th key={index} className="p-3">
+                    <Skeleton className="h-4 w-16" />
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -48,6 +53,11 @@ export default function ChargeItemsPageLoader() {
                   <td className="p-3 pr-4 text-right">
                     <Skeleton className="ml-auto h-8 w-8" />
                   </td>
+                  {Array.from({ length: 4 }, (_, index) => (
+                    <td key={index} className="p-3">
+                      <Skeleton className="h-5 w-16" />
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>

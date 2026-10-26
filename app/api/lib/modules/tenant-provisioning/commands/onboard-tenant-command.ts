@@ -14,6 +14,7 @@ import { seedDefaultInpatientMastersCommand } from './seed-default-inpatient-mas
 import { seedDefaultVisitMastersCommand } from './seed-default-visit-masters-command';
 import { seedDefaultWorkOrderMastersCommand } from './seed-default-work-order-masters-command';
 import { seedDefaultAppointmentMastersCommand } from './seed-default-appointment-masters-command';
+import { seedDefaultBillingMastersCommand } from './seed-default-billing-masters-command';
 
 const seedDefaultMastersOperations = [
   {
@@ -124,6 +125,16 @@ export async function onboardTenantCommand(tenantId: unknown): Promise<CommandRe
           status: seedResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
         };
       }
+    }
+
+    // The billing seed is idempotent and also preserves custom or removed Charge Items.
+    const billingSeedResult = await seedDefaultBillingMastersCommand(tenant.id);
+    if (!billingSeedResult.success) {
+      return {
+        success: false,
+        errors: billingSeedResult.errors,
+        status: billingSeedResult.status ?? StatusCodes.INTERNAL_SERVER_ERROR,
+      };
     }
 
     const onboardedTenant = await tenantRepository.markTenantOnboarded(tenant.id);

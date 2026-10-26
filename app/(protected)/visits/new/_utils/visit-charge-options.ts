@@ -1,14 +1,45 @@
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import type { VisitPatientType } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
+import { VISIT_CHARGE_OPTIONS } from '@/lib/visit-charge-options';
 
-export const VISIT_CHARGE_OPTIONS = [
-  { value: 'NEW_CONSULTATION', label: 'New Patient Consultation' },
-  { value: 'ESTABLISHED_CONSULTATION', label: 'Established Patient Consultation' },
-  { value: 'FOLLOW_UP_CONSULTATION', label: 'Follow-up Consultation' },
-  { value: 'TREATMENT_SESSION', label: 'Treatment Session' },
-] as const;
+export { VISIT_CHARGE_OPTIONS };
 
 export type VisitChargeKind = (typeof VISIT_CHARGE_OPTIONS)[number]['value'];
+
+export function visitChargePrice(item: ChargeItem) {
+  return item.cashPrice ?? item.unitPrice;
+}
+
+export function isFreeFollowUpCharge(
+  item: ChargeItem,
+  visitTypeCode: string | null,
+  hasRecentDoctorVisit: boolean
+) {
+  return (
+    visitTypeCode?.toUpperCase() === 'FUP' && hasRecentDoctorVisit && item.freeFollowUpEligible
+  );
+}
+
+export function listVisitChargeItems(
+  items: ChargeItem[],
+  kind: VisitChargeKind,
+  visitDate?: string | null
+) {
+  const category = kind === 'TREATMENT_SESSION' ? 'PROCEDURE' : 'CONSULTATION';
+  const available = items.filter(
+    (item) =>
+      item.isActive &&
+      item.category === category &&
+      (!visitDate || !item.effectiveDate || item.effectiveDate <= visitDate)
+  );
+  const explicit = available.filter((item) => item.visitChargeKind === kind);
+  const legacy = available.filter(
+    (item) =>
+      !item.visitChargeKind &&
+      (CHARGE_ITEM_CODES[kind].includes(item.code.trim().toUpperCase()) || matchesKind(item, kind))
+  );
+  return [...explicit, ...legacy];
+}
 
 const CHARGE_ITEM_CODES: Record<VisitChargeKind, readonly string[]> = {
   NEW_CONSULTATION: ['CONS_NEW', 'NEW_CONS', 'NEW_CONSULTATION', 'NEW_OPD'],
@@ -36,14 +67,12 @@ function matchesKind(item: ChargeItem, kind: VisitChargeKind) {
   return /\bfollow[ -]?up\b/.test(name);
 }
 
-export function findVisitChargeItem(items: ChargeItem[], kind: VisitChargeKind) {
-  const category = kind === 'TREATMENT_SESSION' ? 'PROCEDURE' : 'CONSULTATION';
-  const available = items.filter((item) => item.isActive && item.category === category);
-  return (
-    available.find((item) => CHARGE_ITEM_CODES[kind].includes(item.code.trim().toUpperCase())) ??
-    available.find((item) => matchesKind(item, kind)) ??
-    null
-  );
+export function findVisitChargeItem(
+  items: ChargeItem[],
+  kind: VisitChargeKind,
+  visitDate?: string | null
+) {
+  return listVisitChargeItems(items, kind, visitDate)[0] ?? null;
 }
 
 export function suggestedVisitChargeKind(

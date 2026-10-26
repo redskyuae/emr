@@ -8,6 +8,36 @@ import type {
   CreateChargeItemData,
   UpdateChargeItemData,
 } from '../schemas/charge-item-schema';
+import type { VisitChargeItemSeed } from '../seed-data';
+
+async function seedDefaultVisitChargeItems(
+  tenantId: string,
+  defaults: readonly VisitChargeItemSeed[]
+) {
+  for (const item of defaults) {
+    // Include soft-deleted rows: removing a default must not resurrect it on retry.
+    const [existing] = await db
+      .select({ id: chargeItemTable.id })
+      .from(chargeItemTable)
+      .where(
+        and(
+          eq(chargeItemTable.tenantId, tenantId),
+          or(
+            sql`lower(${chargeItemTable.code}) = ${item.code.toLowerCase()}`,
+            sql`lower(${chargeItemTable.name}) = ${item.name.toLowerCase()}`,
+            eq(chargeItemTable.visitChargeKind, item.visitChargeKind)
+          )
+        )
+      )
+      .limit(1);
+    if (existing) continue;
+
+    await db
+      .insert(chargeItemTable)
+      .values({ tenantId, ...item, cashPrice: item.unitPrice, isActive: true })
+      .onConflictDoNothing();
+  }
+}
 
 const chargeItemColumns = {
   id: chargeItemTable.id,
@@ -16,6 +46,11 @@ const chargeItemColumns = {
   tenantId: chargeItemTable.tenantId,
   category: chargeItemTable.category,
   unitPrice: chargeItemTable.unitPrice,
+  cashPrice: chargeItemTable.cashPrice,
+  insuranceContractPrice: chargeItemTable.insuranceContractPrice,
+  freeFollowUpEligible: chargeItemTable.freeFollowUpEligible,
+  effectiveDate: chargeItemTable.effectiveDate,
+  visitChargeKind: chargeItemTable.visitChargeKind,
   isActive: chargeItemTable.isActive,
   description: chargeItemTable.description,
   createdOn: chargeItemTable.createdOn,
@@ -31,6 +66,11 @@ async function createChargeItem(data: CreateChargeItemData) {
       code: data.code,
       category: data.category,
       unitPrice: data.unitPrice,
+      cashPrice: data.cashPrice ?? null,
+      insuranceContractPrice: data.insuranceContractPrice ?? null,
+      freeFollowUpEligible: data.freeFollowUpEligible,
+      effectiveDate: data.effectiveDate ?? null,
+      visitChargeKind: data.visitChargeKind ?? null,
       description: data.description ?? null,
       isActive: data.isActive,
     })
@@ -50,6 +90,11 @@ async function updateChargeItem(
       code: data.code,
       category: data.category,
       unitPrice: data.unitPrice,
+      cashPrice: data.cashPrice,
+      insuranceContractPrice: data.insuranceContractPrice,
+      freeFollowUpEligible: data.freeFollowUpEligible,
+      effectiveDate: data.effectiveDate,
+      visitChargeKind: data.visitChargeKind,
       description: data.description ?? null,
       isActive: data.isActive,
       modifiedOn: new Date(),
@@ -185,6 +230,7 @@ async function findActiveByCode(
 }
 
 export const chargeItemRepository = {
+  seedDefaultVisitChargeItems,
   getChargeItems,
   findActiveByCode,
   findActiveByName,

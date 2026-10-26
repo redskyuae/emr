@@ -19,10 +19,11 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
 import {
-  findVisitChargeItem,
+  listVisitChargeItems,
+  isFreeFollowUpCharge,
   suggestedVisitChargeKind,
+  visitChargePrice,
   VISIT_CHARGE_OPTIONS,
-  type VisitChargeKind,
 } from '../_utils/visit-charge-options';
 
 type Props = {
@@ -34,6 +35,8 @@ type Props = {
   canCollectPayment: boolean;
   visitTypeCode: string | null;
   patientType: VisitPatientType | null;
+  visitDate: string | null;
+  hasRecentDoctorVisit: boolean;
   loading: boolean;
   error: boolean;
   onRetry: () => void;
@@ -48,6 +51,8 @@ export function VisitBillingFields({
   canCollectPayment,
   visitTypeCode,
   patientType,
+  visitDate,
+  hasRecentDoctorVisit,
   loading,
   error,
   onRetry,
@@ -56,6 +61,7 @@ export function VisitBillingFields({
   const paymentClassification = useWatch({ control, name: 'paymentClassification' });
   const paymentTiming = useWatch({ control, name: 'paymentTiming' });
   const chargeKind = useWatch({ control, name: 'chargeKind' });
+  const chargeItemId = useWatch({ control, name: 'chargeItemId' });
   const chargeAmount = useWatch({ control, name: 'chargeAmount' });
   const amountReceived = useWatch({ control, name: 'amountReceived' });
   const lastSuggestedContext = useRef<string | null>(null);
@@ -66,16 +72,42 @@ export function VisitBillingFields({
 
   useEffect(() => {
     if (!createInvoice) return;
-    const context = `${visitTypeCode ?? ''}:${patientType ?? ''}`;
+    const context = `${visitTypeCode ?? ''}:${patientType ?? ''}:${visitDate ?? ''}:${hasRecentDoctorVisit}`;
     if (lastSuggestedContext.current === context && chargeKind) return;
     lastSuggestedContext.current = context;
 
     const suggestion = suggestedVisitChargeKind(visitTypeCode, patientType);
-    const match = suggestion ? findVisitChargeItem(chargeItems, suggestion) : null;
+    const candidates = suggestion ? listVisitChargeItems(chargeItems, suggestion, visitDate) : [];
+    // A CPT level must be selected by staff from the documented service; Visit type alone cannot establish it.
+    const match =
+      candidates.length === 1 && !/^\d{5}$/.test(candidates[0].code) ? candidates[0] : null;
     setValue('chargeKind', match && suggestion ? suggestion : '', { shouldValidate: true });
     setValue('chargeItemId', match ? String(match.id) : '', { shouldValidate: true });
-    setValue('chargeAmount', match ? String(match.unitPrice) : '', { shouldValidate: true });
-  }, [chargeItems, chargeKind, createInvoice, patientType, setValue, visitTypeCode]);
+    setValue(
+      'chargeAmount',
+      match
+        ? String(
+            isFreeFollowUpCharge(match, visitTypeCode, hasRecentDoctorVisit)
+              ? 0
+              : visitChargePrice(match)
+          )
+        : '',
+      { shouldValidate: true }
+    );
+  }, [
+    chargeItems,
+    chargeKind,
+    createInvoice,
+    patientType,
+    setValue,
+    visitTypeCode,
+    visitDate,
+    hasRecentDoctorVisit,
+  ]);
+
+  const selectedItem = chargeItems.find((item) => item.id === Number(chargeItemId));
+  const freeFollowUp =
+    selectedItem && isFreeFollowUpCharge(selectedItem, visitTypeCode, hasRecentDoctorVisit);
 
   return (
     <Card className="shadow-fluent-2">
@@ -137,9 +169,8 @@ export function VisitBillingFields({
               </p>
             ) : null}
             <p className="text-muted-foreground text-sm">
-              Select the Visit service. The matching active Charge Item supplies the price; you can
-              adjust this Visit&apos;s charge below. Unavailable choices need setup in Billing
-              Masters.
+              Select the documented Visit service and code. Cash Price is used when configured;
+              otherwise Standard Price applies. You can adjust this Visit&apos;s charge below.
             </p>
             <Controller
               control={control}
@@ -196,7 +227,7 @@ export function VisitBillingFields({
             <div className="grid gap-4 sm:grid-cols-2">
               <Controller
                 control={control}
-                name="chargeKind"
+                name="chargeItemId"
                 render={({ field }) => (
                   <Field data-invalid={Boolean(errors.chargeKind)}>
                     <FieldLabel htmlFor="visit-charge-item">
@@ -213,33 +244,59 @@ export function VisitBillingFields({
                       disabled={loading || error}
                       onChange={(event) => {
                         field.onChange(event);
-                        const item = event.target.value
-                          ? findVisitChargeItem(chargeItems, event.target.value as VisitChargeKind)
-                          : null;
-                        setValue('chargeItemId', item ? String(item.id) : '', {
-                          shouldValidate: true,
-                        });
-                        setValue('chargeAmount', item ? String(item.unitPrice) : '', {
-                          shouldValidate: true,
-                        });
+                        const item = chargeItems.find(
+                          (candidate) => candidate.id === Number(event.target.value)
+                        );
+                        const kind = VISIT_CHARGE_OPTIONS.find(
+                          (option) =>
+                            item &&
+                            listVisitChargeItems(chargeItems, option.value, visitDate).some(
+                              (candidate) => candidate.id === item.id
+                            )
+                        )?.value;
+                        setValue('chargeKind', kind ?? '', { shouldValidate: true });
+                        setValue(
+                          'chargeAmount',
+                          item
+                            ? String(
+                                isFreeFollowUpCharge(item, visitTypeCode, hasRecentDoctorVisit)
+                                  ? 0
+                                  : visitChargePrice(item)
+                              )
+                            : '',
+                          {
+                            shouldValidate: true,
+                          }
+                        );
                       }}
                     >
                       <NativeSelectOption value="">Select a Charge Item</NativeSelectOption>
                       {VISIT_CHARGE_OPTIONS.map((option) => {
-                        const item = findVisitChargeItem(chargeItems, option.value);
+                        const items = listVisitChargeItems(chargeItems, option.value, visitDate);
+                        if (items.length === 0) return null;
                         return (
-                          <NativeSelectOption
-                            key={option.value}
-                            value={option.value}
-                            disabled={!item}
-                          >
-                            {option.label} ·{' '}
-                            {item ? formatMoney(item.unitPrice) : 'Set up in Billing Masters'}
-                          </NativeSelectOption>
+                          <optgroup key={option.value} label={option.label}>
+                            {items.map((item) => (
+                              <NativeSelectOption key={item.id} value={String(item.id)}>
+                                {item.code} · {item.name} ·{' '}
+                                {formatMoney(
+                                  isFreeFollowUpCharge(item, visitTypeCode, hasRecentDoctorVisit)
+                                    ? 0
+                                    : visitChargePrice(item)
+                                )}
+                              </NativeSelectOption>
+                            ))}
+                          </optgroup>
                         );
                       })}
                     </NativeSelect>
                     <FieldError>{errors.chargeKind?.message}</FieldError>
+                    {freeFollowUp ? (
+                      <p className="text-muted-foreground text-xs">
+                        Eligible follow-up within 7 days of a completed Doctor Visit: suggested
+                        charge is zero. Confirm the policy before saving.
+                      </p>
+                    ) : null}
                   </Field>
                 )}
               />
