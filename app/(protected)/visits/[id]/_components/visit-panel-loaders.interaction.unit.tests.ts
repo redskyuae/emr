@@ -66,6 +66,8 @@ describe('Visit panel loaders', () => {
         onRecordVitals: () => {},
         onAddClinicalNote: () => {},
         onNursingHandoff: () => {},
+        onAddAllergy: () => {},
+        onAddMedication: () => {},
       })
     );
 

@@ -36,10 +36,14 @@ export default function CreateVisitLoader() {
                 </div>
               ) : null}
               {section === 1 ? (
-                <div className="space-y-2 rounded-md border p-3">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-5 w-40" />
-                  <Skeleton className="h-3 w-64 max-w-full" />
+                <div className="space-y-4">
+                  <div className="space-y-2 rounded-md border p-3">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-3 w-64 max-w-full" />
+                  </div>
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-32 w-full" />
                 </div>
               ) : null}
               {section === 2 ? (

@@ -7,6 +7,8 @@ import { AlertCircle, CheckCircle2, Loader2, PlayCircle, ReceiptText, XCircle } 
 import { toast } from 'sonner';
 
 import { AllergyBanner } from '@/app/(protected)/patients/[id]/_components/_chart/allergy-banner';
+import { AllergyFormSheet } from '@/app/(protected)/patients/[id]/_components/_chart/_sheets/allergy-form-sheet';
+import { MedicationFormSheet } from '@/app/(protected)/patients/[id]/_components/_chart/_sheets/medication-form-sheet';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
 import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientChart';
@@ -14,6 +16,7 @@ import { useCompleteVisit } from '@/app/queries/visits/useCompleteVisit';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
 import { useVisit } from '@/app/queries/visits/useVisit';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -158,9 +161,10 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
             </div>
 
             {visit.status === 'CANCELLED' && visit.cancellationReason ? (
-              <p className="text-muted-foreground text-sm">
-                Cancellation reason: {visit.cancellationReason}
-              </p>
+              <div className="text-muted-foreground text-sm">
+                <span className="font-medium">Cancellation reason:</span>
+                <RichTextContent value={visit.cancellationReason} />
+              </div>
             ) : null}
           </CardContent>
         </Card>
@@ -176,6 +180,8 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           onDailyTreatment={() => void setCaptureParam('session')}
           onAssignPlan={() => void setCaptureParam('plan')}
           onAddClinicalNote={() => void setCaptureParam('note')}
+          onAddAllergy={() => void setCaptureParam('allergy')}
+          onAddMedication={() => void setCaptureParam('medication')}
         />
 
         {visit.status === 'IN_CONSULTATION' && canComplete ? (
@@ -204,6 +210,22 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
         patientId={visit.patient.id}
         visitId={visit.id}
         preferredNoteTypeCode={captureParam === 'nurse-note' ? 'NURS' : undefined}
+        onClose={() => void setCaptureParam(null)}
+      />
+
+      <AllergyFormSheet
+        open={captureParam === 'allergy'}
+        mode="new"
+        patientId={visit.patient.id}
+        allergy={null}
+        onClose={() => void setCaptureParam(null)}
+      />
+
+      <MedicationFormSheet
+        open={captureParam === 'medication'}
+        mode="new"
+        patientId={visit.patient.id}
+        medication={null}
         onClose={() => void setCaptureParam(null)}
       />
 

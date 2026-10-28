@@ -3,6 +3,7 @@
 import { Activity } from 'lucide-react';
 
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
+import { RichTextContent } from '@/components/clinical/rich-text-content';
 
 import { formatChartDate } from '../../_utils/chart-value-sets';
 import { ChartPanel, ChartPanelEmpty, ChartRowActions } from './chart-panel';
@@ -78,20 +79,25 @@ export function VitalsPanel({
             </p>
             <ul className="divide-border/60 divide-y">
               {vitalSigns.map((vital) => (
-                <li key={vital.id} className="flex items-center justify-between gap-3 py-2">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                    <span className="text-muted-foreground w-36 shrink-0 text-xs">
-                      {formatDateTime(String(vital.recordedAt))}
-                    </span>
-                    {vital.systolic !== null && vital.diastolic !== null ? (
-                      <span>
-                        BP {vital.systolic}/{vital.diastolic}
+                <li key={vital.id} className="flex items-start justify-between gap-3 py-2">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                      <span className="text-muted-foreground w-36 shrink-0 text-xs">
+                        {formatDateTime(String(vital.recordedAt))}
                       </span>
+                      {vital.systolic !== null && vital.diastolic !== null ? (
+                        <span>
+                          BP {vital.systolic}/{vital.diastolic}
+                        </span>
+                      ) : null}
+                      {vital.pulseBpm !== null ? <span>HR {vital.pulseBpm}</span> : null}
+                      {vital.temperatureC !== null ? <span>{vital.temperatureC}°C</span> : null}
+                      {vital.spo2 !== null ? <span>SpO₂ {vital.spo2}%</span> : null}
+                      {vital.bmi !== null ? <span>BMI {vital.bmi}</span> : null}
+                    </div>
+                    {vital.notes ? (
+                      <RichTextContent value={vital.notes} className="text-muted-foreground" />
                     ) : null}
-                    {vital.pulseBpm !== null ? <span>HR {vital.pulseBpm}</span> : null}
-                    {vital.temperatureC !== null ? <span>{vital.temperatureC}°C</span> : null}
-                    {vital.spo2 !== null ? <span>SpO₂ {vital.spo2}%</span> : null}
-                    {vital.bmi !== null ? <span>BMI {vital.bmi}</span> : null}
                   </div>
                   <ChartRowActions onEdit={() => onEdit(vital)} onDelete={() => onDelete(vital)} />
                 </li>

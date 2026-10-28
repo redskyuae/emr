@@ -25,6 +25,8 @@ type Props = {
   onRecordVitals: () => void;
   onAddNote: () => void;
   onAddClinicalNote: () => void;
+  onAddAllergy: () => void;
+  onAddMedication: () => void;
   onDoctorConsultation: () => void;
   onDailyTreatment: () => void;
   onAssignPlan: () => void;
@@ -40,6 +42,8 @@ export function VisitCarePathway({
   onRecordVitals,
   onAddNote,
   onAddClinicalNote,
+  onAddAllergy,
+  onAddMedication,
   onDoctorConsultation,
   onDailyTreatment,
   onAssignPlan,
@@ -136,6 +140,8 @@ export function VisitCarePathway({
           onRecordVitals={onRecordVitals}
           onAddClinicalNote={onAddClinicalNote}
           onNursingHandoff={onAddNote}
+          onAddAllergy={onAddAllergy}
+          onAddMedication={onAddMedication}
         />
       </TabsContent>
       <TabsContent value="plans">

@@ -9265,8 +9265,13 @@ export const openApiDocument = {
             description:
               'Required for a Walk-in Visit. Required for Appointment check-in when the Appointment has no Doctor. Must be an active Doctor.',
           },
-          chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
-          remarks: { type: ['string', 'null'] },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description:
+              'Purpose of Visit. Plain text or Markdown formatting from the Lexical editor.',
+          },
+          remarks: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           documents: {
             type: 'array',
             maxItems: 20,
@@ -9279,8 +9284,13 @@ export const openApiDocument = {
       UpdateVisitRequest: {
         type: 'object',
         properties: {
-          chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
-          remarks: { type: ['string', 'null'] },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description:
+              'Purpose of Visit. Plain text or Markdown formatting from the Lexical editor.',
+          },
+          remarks: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           treatmentId: {
             type: ['integer', 'null'],
             minimum: 1,
@@ -9299,7 +9309,12 @@ export const openApiDocument = {
         type: 'object',
         required: ['cancellationReason'],
         properties: {
-          cancellationReason: { type: 'string', minLength: 1, maxLength: 255 },
+          cancellationReason: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 255,
+            description: 'Plain text or Markdown formatting.',
+          },
         },
       },
       VisitPatientSummary: {
@@ -9429,13 +9444,19 @@ export const openApiDocument = {
             oneOf: [schemaRef('TreatmentSessionSummary'), { type: 'null' }],
             description: 'Treatment Session conducted during this Visit, if any.',
           },
-          chiefComplaint: { type: ['string', 'null'] },
-          remarks: { type: ['string', 'null'] },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
+          remarks: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           checkedInAt: { type: 'string', format: 'date-time' },
           consultationStartedAt: { type: ['string', 'null'], format: 'date-time' },
           completedAt: { type: ['string', 'null'], format: 'date-time' },
           cancelledAt: { type: ['string', 'null'], format: 'date-time' },
-          cancellationReason: { type: ['string', 'null'] },
+          cancellationReason: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
         },
@@ -11312,7 +11333,11 @@ export const openApiDocument = {
           temperatureC: { type: 'number', minimum: 20, maximum: 45 },
           spo2: { type: 'integer', minimum: 0, maximum: 100 },
           painScore: { type: 'integer', minimum: 0, maximum: 10 },
-          notes: { type: 'string', maxLength: 2000 },
+          notes: {
+            type: 'string',
+            maxLength: 2000,
+            description: 'Plain text or Markdown formatting from the Lexical editor.',
+          },
         },
       },
       UpdatePatientVitalSignRequest: schemaRef('CreatePatientVitalSignRequest'),
@@ -11348,7 +11373,7 @@ export const openApiDocument = {
           temperatureC: { type: ['number', 'null'] },
           spo2: { type: ['integer', 'null'] },
           painScore: { type: ['integer', 'null'] },
-          notes: { type: ['string', 'null'] },
+          notes: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           recordedByUserId: { type: 'string' },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
@@ -11422,10 +11447,26 @@ export const openApiDocument = {
             description:
               'Optional Admission this note was authored during. The Admission must belong to this Patient and still be Admitted. A record may reference a Visit or an Admission, not both.',
           },
-          subjective: { type: 'string', maxLength: 20000 },
-          objective: { type: 'string', maxLength: 20000 },
-          assessment: { type: 'string', maxLength: 20000 },
-          plan: { type: 'string', maxLength: 20000 },
+          subjective: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          objective: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          assessment: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          plan: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
         },
       },
       UpdateClinicalNoteRequest: schemaRef('CreateClinicalNoteRequest'),
@@ -11449,10 +11490,19 @@ export const openApiDocument = {
           visitId: { type: ['integer', 'null'] },
           admissionId: { type: ['integer', 'null'] },
           noteTypeId: { type: 'integer', minimum: 1 },
-          subjective: { type: ['string', 'null'] },
-          objective: { type: ['string', 'null'] },
-          assessment: { type: ['string', 'null'] },
-          plan: { type: ['string', 'null'] },
+          subjective: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
+          objective: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
+          assessment: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
+          plan: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           status: { type: 'string', enum: ['draft', 'signed'] },
           signedAt: {
             type: ['string', 'null'],

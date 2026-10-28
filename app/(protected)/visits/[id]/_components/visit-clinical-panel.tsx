@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { Activity, ClipboardList, NotebookPen } from 'lucide-react';
+import { Activity, ClipboardList, NotebookPen, Pill, ShieldAlert } from 'lucide-react';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
+import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,8 @@ type Props = {
   onRecordVitals: () => void;
   onAddClinicalNote: () => void;
   onNursingHandoff: () => void;
+  onAddAllergy: () => void;
+  onAddMedication: () => void;
 };
 
 export function VisitClinicalPanel({
@@ -33,6 +36,8 @@ export function VisitClinicalPanel({
   onRecordVitals,
   onAddClinicalNote,
   onNursingHandoff,
+  onAddAllergy,
+  onAddMedication,
 }: Props) {
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
   const allergensQuery = useAllergensQuery({ limit: 100 });
@@ -110,6 +115,9 @@ export function VisitClinicalPanel({
                       .filter(Boolean)
                       .join(' · ') || 'Recorded'}
                   </p>
+                  {item.notes ? (
+                    <RichTextContent value={item.notes} className="text-muted-foreground mt-2" />
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -118,13 +126,18 @@ export function VisitClinicalPanel({
       </Card>
 
       <Card className="shadow-fluent-2">
-        <CardHeader className="flex-row items-center justify-between gap-3">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
           <CardTitle className="text-base">Clinical Notes</CardTitle>
           {active && canCreateNote ? (
-            <Button type="button" size="sm" variant="outline" onClick={onAddClinicalNote}>
-              <NotebookPen className="size-4" />
-              Add note
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={onNursingHandoff}>
+                Nursing handoff
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={onAddClinicalNote}>
+                <NotebookPen className="size-4" />
+                Add note
+              </Button>
+            </div>
           ) : null}
         </CardHeader>
         <CardContent>
@@ -143,7 +156,10 @@ export function VisitClinicalPanel({
                     </Badge>
                   </div>
                   {note.subjective ? (
-                    <p className="text-muted-foreground mt-1 line-clamp-2">{note.subjective}</p>
+                    <RichTextContent
+                      value={note.subjective}
+                      className="text-muted-foreground mt-1 line-clamp-2"
+                    />
                   ) : null}
                 </li>
               ))}
@@ -153,12 +169,19 @@ export function VisitClinicalPanel({
       </Card>
 
       <Card className="shadow-fluent-2">
-        <CardHeader className="flex-row items-center justify-between gap-3">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
           <CardTitle className="text-base">Allergies & medications</CardTitle>
-          {active && canCreateNote ? (
-            <Button type="button" size="sm" variant="outline" onClick={onNursingHandoff}>
-              Nursing handoff
-            </Button>
+          {active ? (
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={onAddAllergy}>
+                <ShieldAlert className="size-4" />
+                Add allergy
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={onAddMedication}>
+                <Pill className="size-4" />
+                Add medication
+              </Button>
+            </div>
           ) : null}
         </CardHeader>
         <CardContent className="space-y-3 text-sm">

@@ -6,12 +6,12 @@ import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema'
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import type { VisitPatientTypeAssessment } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
@@ -305,10 +305,12 @@ export function VisitDetailsFields({
           render={({ field }) => (
             <Field>
               <FieldLabel htmlFor="visit-complaint">Purpose of Visit</FieldLabel>
-              <Textarea
-                {...field}
+              <RichTextEditor
                 id="visit-complaint"
-                rows={3}
+                aria-label="Purpose of Visit"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
                 placeholder="Patient's presenting concern"
               />
               <FieldError>{errors.chiefComplaint?.message}</FieldError>
@@ -321,7 +323,13 @@ export function VisitDetailsFields({
           render={({ field }) => (
             <Field>
               <FieldLabel htmlFor="visit-remarks">Remarks</FieldLabel>
-              <Textarea {...field} id="visit-remarks" rows={2} />
+              <RichTextEditor
+                id="visit-remarks"
+                aria-label="Remarks"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+              />
             </Field>
           )}
         />

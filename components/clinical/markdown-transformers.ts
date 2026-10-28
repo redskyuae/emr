@@ -1,0 +1,24 @@
+import {
+  BOLD_ITALIC_STAR,
+  BOLD_STAR,
+  BOLD_UNDERSCORE,
+  HEADING,
+  ITALIC_STAR,
+  ITALIC_UNDERSCORE,
+  ORDERED_LIST,
+  STRIKETHROUGH,
+  UNORDERED_LIST,
+} from '@lexical/markdown';
+
+// Visit narratives stay string-valued in the API; Markdown preserves these formats on reopen.
+export const CLINICAL_MARKDOWN_TRANSFORMERS = [
+  HEADING,
+  UNORDERED_LIST,
+  ORDERED_LIST,
+  BOLD_ITALIC_STAR,
+  BOLD_STAR,
+  BOLD_UNDERSCORE,
+  ITALIC_STAR,
+  ITALIC_UNDERSCORE,
+  STRIKETHROUGH,
+];

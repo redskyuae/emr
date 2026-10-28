@@ -6,6 +6,7 @@ import { CalendarPlus, Check, Circle, NotebookPen, ShieldCheck } from 'lucide-re
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
+import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -145,9 +146,10 @@ export function VisitTodayPanel({
                 </div>
               </>
             ) : (
-              <p className="text-muted-foreground text-sm">
-                {visit.chiefComplaint || 'No purpose of Visit recorded yet.'}
-              </p>
+              <RichTextContent
+                value={visit.chiefComplaint || 'No purpose of Visit recorded yet.'}
+                className="text-muted-foreground"
+              />
             )}
             <div className="flex flex-wrap gap-2 border-t pt-4">
               {active && canCreateNote ? (

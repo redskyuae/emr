@@ -2,7 +2,7 @@ import type { Dispatch } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import type { ClinicalFinding } from '../../../_data/static-clinician-visits';
 import type { AssessmentAction, AssessmentState } from '../_utils/assessment-state';
 import { FindingControl } from './finding-control';
@@ -105,15 +105,14 @@ export function ExamineColumn({
                 <span className="mb-1 block text-sm font-medium">
                   {ayurvedaLabels[label as keyof typeof ayurvedaLabels]}
                 </span>
-                <Textarea
+                <RichTextEditor
                   aria-label={ayurvedaLabels[label as keyof typeof ayurvedaLabels]}
-                  className="min-h-20 resize-y"
                   disabled={disabled}
-                  onChange={(event) =>
+                  onChange={(value) =>
                     dispatch({
                       type: 'update-ayurveda',
                       field: label as keyof AssessmentState['ayurveda'],
-                      value: event.target.value,
+                      value,
                     })
                   }
                   value={value}

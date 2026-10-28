@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { getApiErrors } from '@/app/queries/api-error';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
@@ -23,7 +24,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import {
@@ -212,10 +212,20 @@ export function DoctorConsultationSheet({
                   {['prakriti', 'vikriti'].includes(name) ? (
                     <Input id={`consult-${name}`} {...form.register(name)} />
                   ) : (
-                    <Textarea
-                      id={`consult-${name}`}
-                      rows={name === 'hpi' || name === 'examination' ? 3 : 2}
-                      {...form.register(name)}
+                    <Controller
+                      control={form.control}
+                      name={name}
+                      render={({ field }) => (
+                        <RichTextEditor
+                          id={`consult-${name}`}
+                          aria-label={label}
+                          required={name === 'chiefComplaint'}
+                          value={field.value}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          invalid={Boolean(form.formState.errors[name])}
+                        />
+                      )}
                     />
                   )}
                   {form.formState.errors[name] ? (

@@ -23,7 +23,7 @@ export default function VisitsPageLoader() {
             <Skeleton className="h-5 w-16" />
             <Skeleton className="h-5 w-24" />
             <Skeleton className="ml-auto h-8 w-20" />
-            <Skeleton className="h-8 w-9" />
+            <Skeleton className="h-8 w-9" aria-label="Loading Visit actions" />
           </div>
         ))}
       </div>

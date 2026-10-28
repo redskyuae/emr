@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import type { TreatmentSessionSummary } from '@/app/api/lib/modules/treatment/schemas/treatment-schema';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrors } from '@/app/queries/api-error';
 import { useAppointmentQuery } from '@/app/queries/appointments/useAppointment';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
@@ -25,7 +26,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import {
@@ -220,11 +220,20 @@ export function DailyTreatmentSheet({
                   *
                 </span>
               </FieldLabel>
-              <Textarea
-                id="session-response"
-                rows={3}
-                aria-required
-                {...form.register('response')}
+              <Controller
+                control={form.control}
+                name="response"
+                render={({ field }) => (
+                  <RichTextEditor
+                    id="session-response"
+                    aria-label="Treatment response"
+                    required
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    invalid={Boolean(form.formState.errors.response)}
+                  />
+                )}
               />
               {form.formState.errors.response ? (
                 <FieldError>{form.formState.errors.response.message}</FieldError>
@@ -232,11 +241,35 @@ export function DailyTreatmentSheet({
             </Field>
             <Field>
               <FieldLabel htmlFor="session-variations">Variations / therapist notes</FieldLabel>
-              <Textarea id="session-variations" rows={3} {...form.register('variations')} />
+              <Controller
+                control={form.control}
+                name="variations"
+                render={({ field }) => (
+                  <RichTextEditor
+                    id="session-variations"
+                    aria-label="Variations / therapist notes"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                )}
+              />
             </Field>
             <Field>
               <FieldLabel htmlFor="session-adverse">Adverse events</FieldLabel>
-              <Textarea id="session-adverse" rows={3} {...form.register('adverseEvents')} />
+              <Controller
+                control={form.control}
+                name="adverseEvents"
+                render={({ field }) => (
+                  <RichTextEditor
+                    id="session-adverse"
+                    aria-label="Adverse events"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                )}
+              />
             </Field>
           </div>
           <SheetFooter className="flex-row justify-end gap-2 border-t p-4">

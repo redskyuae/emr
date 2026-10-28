@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
@@ -27,7 +28,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   visitNoteFormSchema,
@@ -186,11 +186,20 @@ export function AddNoteSheet({
                   data-invalid={Boolean(form.formState.errors[section.name])}
                 >
                   <FieldLabel htmlFor={`note-${section.name}`}>{section.label}</FieldLabel>
-                  <Textarea
-                    id={`note-${section.name}`}
-                    rows={3}
-                    placeholder={section.placeholder}
-                    {...form.register(section.name)}
+                  <Controller
+                    control={form.control}
+                    name={section.name}
+                    render={({ field }) => (
+                      <RichTextEditor
+                        id={`note-${section.name}`}
+                        aria-label={section.label}
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        placeholder={section.placeholder}
+                        invalid={Boolean(form.formState.errors[section.name])}
+                      />
+                    )}
                   />
                   {form.formState.errors[section.name] ? (
                     <FieldError>{form.formState.errors[section.name]?.message}</FieldError>

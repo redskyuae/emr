@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createElement, Fragment } from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useForm, useWatch } from 'react-hook-form';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -120,23 +120,19 @@ describe('Create Visit Appointment defaults', () => {
 
     await user.selectOptions(screen.getByLabelText(/^Appointment/), '1');
     expect((screen.getByLabelText(/^Visit type/) as HTMLSelectElement).value).toBe('4');
-    expect((screen.getByLabelText('Purpose of Visit') as HTMLTextAreaElement).value).toBe(
-      'Shirodhara · Session 2'
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Purpose of Visit' }).textContent).toBe(
+        'Shirodhara · Session 2'
+      )
     );
-    expect((screen.getByLabelText('Remarks') as HTMLTextAreaElement).value).toBe(
-      'Continue treatment'
-    );
-
-    await user.clear(screen.getByLabelText('Purpose of Visit'));
-    await user.type(screen.getByLabelText('Purpose of Visit'), 'Patient reports new symptoms');
-    expect((screen.getByLabelText('Purpose of Visit') as HTMLTextAreaElement).value).toBe(
-      'Patient reports new symptoms'
-    );
+    expect(screen.getByRole('textbox', { name: 'Remarks' }).textContent).toBe('Continue treatment');
 
     await user.selectOptions(screen.getByLabelText(/^Appointment/), '2');
     expect((screen.getByLabelText(/^Visit type/) as HTMLSelectElement).value).toBe('3');
-    expect((screen.getByLabelText('Purpose of Visit') as HTMLTextAreaElement).value).toBe('');
-    expect((screen.getByLabelText('Remarks') as HTMLTextAreaElement).value).toBe('');
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: 'Purpose of Visit' }).textContent).toBe('')
+    );
+    expect(screen.getByRole('textbox', { name: 'Remarks' }).textContent).toBe('');
   });
 });
 

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import type { AssessmentAction, AssessmentState } from '../_utils/assessment-state';
 import {
   DiagnosisEditor,
@@ -91,15 +91,14 @@ function OrdersContent({
       >
         <label>
           <span className="mb-1 block text-sm font-medium">Clinical Impression</span>
-          <Textarea
+          <RichTextEditor
             aria-label="Clinical Impression"
-            className="min-h-20 resize-y"
             disabled={disabled}
-            onChange={(event) =>
+            onChange={(value) =>
               dispatch({
                 type: 'update-field',
                 field: 'clinicalImpression',
-                value: event.target.value,
+                value,
               })
             }
             value={state.clinicalImpression}
@@ -127,15 +126,14 @@ function OrdersContent({
       >
         <label>
           <span className="mb-1 block text-sm font-medium">Advised Treatment</span>
-          <Textarea
+          <RichTextEditor
             aria-label="Advised Treatment"
-            className="min-h-20 resize-y"
             disabled={disabled}
-            onChange={(event) =>
+            onChange={(value) =>
               dispatch({
                 type: 'update-field',
                 field: 'advisedTreatment',
-                value: event.target.value,
+                value,
               })
             }
             value={state.advisedTreatment}
@@ -260,13 +258,10 @@ function CompletionContent({
       <WorkflowSection title="Addendum">
         <label>
           <span className="mb-1 block text-sm font-medium">Additional clinical note</span>
-          <Textarea
+          <RichTextEditor
             aria-label="Addendum"
-            className="min-h-32 resize-y"
             disabled={disabled}
-            onChange={(event) =>
-              dispatch({ type: 'update-field', field: 'addendum', value: event.target.value })
-            }
+            onChange={(value) => dispatch({ type: 'update-field', field: 'addendum', value })}
             placeholder="Optional note after assessment"
             value={state.addendum}
           />

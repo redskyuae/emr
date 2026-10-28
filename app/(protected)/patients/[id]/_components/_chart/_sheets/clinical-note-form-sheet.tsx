@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrors, getApiErrorMessage } from '@/app/queries/api-error';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
 import { useUpdateClinicalNote } from '@/app/queries/patients/chart/useUpdateClinicalNote';
@@ -18,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { useChartFormServerErrors } from '../use-chart-form-server-errors';
 
 import {
@@ -66,7 +66,6 @@ export function ClinicalNoteFormSheet({
 
   const {
     control,
-    register,
     reset,
     formState: { errors },
   } = form;
@@ -172,13 +171,21 @@ export function ClinicalNoteFormSheet({
       {SOAP_FIELDS.map((soap) => (
         <Field key={soap.name} data-invalid={!!errors[soap.name]}>
           <FieldLabel htmlFor={`note-${soap.name}`}>{soap.label}</FieldLabel>
-          <Textarea
-            id={`note-${soap.name}`}
-            {...register(soap.name)}
-            disabled={isSaving}
-            rows={3}
-            placeholder={soap.placeholder}
-            aria-invalid={!!errors[soap.name]}
+          <Controller
+            control={control}
+            name={soap.name}
+            render={({ field }) => (
+              <RichTextEditor
+                id={`note-${soap.name}`}
+                aria-label={soap.label}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                disabled={isSaving}
+                placeholder={soap.placeholder}
+                invalid={!!errors[soap.name]}
+              />
+            )}
           />
           <FieldError errors={[errors[soap.name]]} />
         </Field>

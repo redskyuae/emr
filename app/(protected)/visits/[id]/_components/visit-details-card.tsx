@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 
 import { isActiveVisit, visitStatusPresentation } from '../../_utils/visit-status';
 
@@ -85,24 +85,24 @@ export function VisitDetailsCard({ visit }: { visit: Visit }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="visit-chief-complaint">Purpose of visit</FieldLabel>
-            <Textarea
+            <RichTextEditor
               id="visit-chief-complaint"
-              rows={3}
+              aria-label="Purpose of visit"
               placeholder="Why is the Patient here today?"
               disabled={!canEdit}
               value={chiefComplaint}
-              onChange={(event) => setDraft({ ...details, chiefComplaint: event.target.value })}
+              onChange={(value) => setDraft({ ...details, chiefComplaint: value })}
             />
           </Field>
           <Field>
             <FieldLabel htmlFor="visit-remarks">Remarks</FieldLabel>
-            <Textarea
+            <RichTextEditor
               id="visit-remarks"
-              rows={3}
+              aria-label="Remarks"
               placeholder="Anything the next person should know"
               disabled={!canEdit}
               value={remarks}
-              onChange={(event) => setDraft({ ...details, remarks: event.target.value })}
+              onChange={(value) => setDraft({ ...details, remarks: value })}
             />
           </Field>
         </div>

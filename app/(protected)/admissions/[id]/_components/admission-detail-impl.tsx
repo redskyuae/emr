@@ -24,6 +24,7 @@ import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useA
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientChart';
+import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -350,7 +351,10 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                         </Badge>
                       </div>
                       {note.subjective ? (
-                        <p className="text-muted-foreground line-clamp-2">{note.subjective}</p>
+                        <RichTextContent
+                          value={note.subjective}
+                          className="text-muted-foreground line-clamp-2"
+                        />
                       ) : null}
                     </li>
                   ))}
