@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -112,25 +113,33 @@ export function VisitsPageImpl() {
               }}
             />
 
-            <Select
-              value={doctorParam ?? ALL_FILTER}
-              onValueChange={(value) => {
-                setPage(1);
-                void setDoctorParam(value === ALL_FILTER ? null : value);
-              }}
-            >
-              <SelectTrigger className="h-9 lg:w-52" aria-label="Filter by doctor">
-                <SelectValue placeholder="All doctors" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_FILTER}>All doctors</SelectItem>
-                {(doctorsQuery.data?.data ?? []).map((doctor) => (
-                  <SelectItem key={doctor.id} value={String(doctor.id)}>
-                    {doctor.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {doctorsQuery.isLoading ? (
+              <Skeleton className="h-9 w-full lg:w-52" aria-label="Loading Doctor filter" />
+            ) : (
+              <Select
+                value={doctorParam ?? ALL_FILTER}
+                onValueChange={(value) => {
+                  setPage(1);
+                  void setDoctorParam(value === ALL_FILTER ? null : value);
+                }}
+              >
+                <SelectTrigger
+                  className="h-9 lg:w-52"
+                  aria-label="Filter by doctor"
+                  disabled={doctorsQuery.isError}
+                >
+                  <SelectValue placeholder="All doctors" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_FILTER}>All doctors</SelectItem>
+                  {(doctorsQuery.data?.data ?? []).map((doctor) => (
+                    <SelectItem key={doctor.id} value={String(doctor.id)}>
+                      {doctor.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <Select
               value={statusParam ?? ALL_FILTER}
@@ -189,9 +198,27 @@ export function VisitsPageImpl() {
           </Alert>
         ) : null}
 
+        {doctorsQuery.isError ? (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Could not load Doctor filter</AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center gap-2">
+              {getApiErrorMessage(doctorsQuery.error)}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void doctorsQuery.refetch()}
+              >
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
         {visitsQuery.isLoading ? (
           <VisitsTableSkeleton />
-        ) : visits.length === 0 ? (
+        ) : visitsQuery.isError ? null : visits.length === 0 ? (
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">

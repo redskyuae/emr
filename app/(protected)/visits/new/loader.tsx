@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CreateVisitLoader() {
   return (
-    <div className="space-y-4" aria-label="Loading Create Visit">
+    <div className="space-y-4" aria-label="Loading Create Visit options">
       <div className="flex items-center justify-between gap-4">
         <Skeleton className="h-9 w-28" />
         <Skeleton className="h-9 w-64" />

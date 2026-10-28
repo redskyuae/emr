@@ -8,6 +8,7 @@ import type { ControllerRenderProps } from 'react-hook-form';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 
@@ -87,7 +88,17 @@ export function WalkInPatientSearch({
           aria-live="polite"
         >
           {!searchReady || patientsQuery.isFetching ? (
-            <p className="text-muted-foreground p-3 text-sm">Searching Patients…</p>
+            <div className="space-y-2 p-2" aria-label="Searching Patients">
+              {Array.from({ length: 3 }, (_, index) => (
+                <div key={index} className="flex items-center gap-3 p-2">
+                  <Skeleton className="size-5 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-40 max-w-full" />
+                    <Skeleton className="h-3 w-56 max-w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : patientsQuery.isError ? (
             <div className="space-y-2 p-3 text-sm">
               <p className="text-destructive">{patientsQuery.error.message}</p>

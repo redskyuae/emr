@@ -11,6 +11,7 @@ import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
 import { useUpdateVisit } from '@/app/queries/visits/useUpdateVisit';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
@@ -105,11 +106,26 @@ export function VisitDetailsCard({ visit }: { visit: Visit }) {
             />
           </Field>
         </div>
+        {canEdit && treatmentsQuery.isError ? (
+          <div className="flex flex-wrap items-center gap-2" role="alert">
+            <p className="text-destructive text-sm">Treatments could not be loaded.</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void treatmentsQuery.refetch()}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : null}
         {(visit.treatment || canEdit) && (
           <div className="grid gap-4 border-t pt-4 sm:grid-cols-2">
             <Field>
               <FieldLabel htmlFor="visit-treatment">Treatment</FieldLabel>
-              {canEdit ? (
+              {canEdit && treatmentsQuery.isLoading ? (
+                <Skeleton className="h-10 w-full" aria-label="Loading Treatments" />
+              ) : canEdit ? (
                 <NativeSelect
                   id="visit-treatment"
                   className="w-full"
@@ -135,7 +151,9 @@ export function VisitDetailsCard({ visit }: { visit: Visit }) {
             </Field>
             <Field>
               <FieldLabel htmlFor="visit-session">Session</FieldLabel>
-              {canEdit ? (
+              {canEdit && treatmentsQuery.isLoading ? (
+                <Skeleton className="h-10 w-full" aria-label="Loading Sessions" />
+              ) : canEdit ? (
                 <NativeSelect
                   id="visit-session"
                   className="w-full"
@@ -172,6 +190,8 @@ export function VisitDetailsCard({ visit }: { visit: Visit }) {
               disabled={
                 !isDirty ||
                 updateMutation.isPending ||
+                treatmentsQuery.isLoading ||
+                treatmentsQuery.isError ||
                 Boolean(treatmentId) !== Boolean(treatmentSessionId)
               }
               onClick={() => void save()}

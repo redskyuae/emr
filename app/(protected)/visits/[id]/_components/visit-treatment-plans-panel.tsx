@@ -17,6 +17,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Props = {
   visit: Visit;
@@ -122,7 +123,24 @@ export function VisitTreatmentPlansPanel({
   );
   const activeVisit = visit.status === 'CHECKED_IN' || visit.status === 'IN_CONSULTATION';
 
-  if (loading) return <p className="text-muted-foreground text-sm">Loading Treatment Plans…</p>;
+  if (loading)
+    return (
+      <Card className="shadow-fluent-2" aria-label="Loading Treatment Plans">
+        <CardHeader className="flex-row items-center justify-between">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-6 w-28 rounded-full" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-3 w-full" />
+          <div className="grid grid-cols-3 gap-2">
+            {Array.from({ length: 3 }, (_, index) => (
+              <Skeleton key={index} className="h-16" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
   if (error)
     return <p className="text-destructive text-sm">Treatment Plans could not be loaded.</p>;
 

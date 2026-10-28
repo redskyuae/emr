@@ -115,6 +115,7 @@ export function VisitCarePathway({
           chartError={chartError}
           invoiceCount={invoices.length}
           invoiceLoading={invoicesQuery.isLoading}
+          invoiceError={invoicesQuery.isError}
           canRecordVitals={Boolean(canRecordVitals)}
           canCreateNote={Boolean(canCreateNote)}
           canCreateInvoice={Boolean(canCreateInvoice)}

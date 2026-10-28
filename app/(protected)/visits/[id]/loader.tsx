@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function VisitDetailPageLoader() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5" aria-label="Loading Visit">
+      <Skeleton className="h-14 w-full" aria-label="Loading Patient safety information" />
       <div className="bg-card shadow-fluent-2 space-y-5 rounded-lg border p-5">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div className="flex items-start gap-4">

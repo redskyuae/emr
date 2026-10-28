@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Combobox,
   ComboboxContent,
@@ -195,11 +196,27 @@ export function AssignTreatmentPlanSheet({
                       </ComboboxList>
                     </ComboboxContent>
                   </Combobox>
+                  {treatmentsQuery.isLoading ? (
+                    <div className="space-y-2" aria-label="Loading Treatments">
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  ) : null}
                   {form.formState.errors.treatmentId ? (
                     <FieldError>{form.formState.errors.treatmentId.message}</FieldError>
                   ) : null}
                   {treatmentsQuery.isError ? (
-                    <p className="text-destructive text-sm">Treatments could not be loaded.</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-destructive text-sm">Treatments could not be loaded.</p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void treatmentsQuery.refetch()}
+                      >
+                        Retry
+                      </Button>
+                    </div>
                   ) : null}
                   <p className="text-muted-foreground text-xs" aria-live="polite">
                     {treatmentsQuery.isFetching

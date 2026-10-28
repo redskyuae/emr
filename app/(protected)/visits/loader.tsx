@@ -5,7 +5,7 @@ export default function VisitsPageLoader() {
     <div className="space-y-4" aria-label="Loading page">
       <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
         <Skeleton className="h-9 lg:w-44" />
-        <Skeleton className="h-9 lg:w-52" />
+        <Skeleton className="h-9 lg:w-52" aria-label="Loading Doctor filter" />
         <Skeleton className="h-9 lg:w-44" />
         <Skeleton className="h-9 w-full lg:max-w-xs" />
         <div className="flex justify-end lg:ml-auto">

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import Link from 'next/link';
-import { CheckCircle2, PlayCircle, ReceiptText, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, PlayCircle, ReceiptText, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { AllergyBanner } from '@/app/(protected)/patients/[id]/_components/_chart/allergy-banner';
@@ -15,8 +15,10 @@ import { useStartConsultation } from '@/app/queries/visits/useStartConsultation'
 import { useVisit } from '@/app/queries/visits/useVisit';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
 import { isActiveVisit, visitStatusPresentation } from '../../_utils/visit-status';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
@@ -66,7 +68,24 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
       <div className="mx-auto w-full max-w-6xl space-y-5">
         {/* The same safety banner the Patient Chart shows — the consulting
             Doctor must see allergies without leaving the Visit. */}
-        <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
+        {chartQuery.isLoading || allergensQuery.isLoading ? (
+          <Skeleton className="h-14 w-full" aria-label="Loading Patient safety information" />
+        ) : chartQuery.isError ? (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Patient safety information unavailable</AlertTitle>
+            <AlertDescription>Allergies and medications could not be loaded.</AlertDescription>
+          </Alert>
+        ) : (
+          <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
+        )}
+        {allergensQuery.isError && !chartQuery.isError ? (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Allergen names unavailable</AlertTitle>
+            <AlertDescription>Review the Patient Chart before clinical decisions.</AlertDescription>
+          </Alert>
+        ) : null}
 
         <Card className="shadow-fluent-2">
           <CardContent className="space-y-5 p-5">
@@ -121,10 +140,15 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
                   <Button
                     type="button"
                     disabled={startMutation.isPending}
+                    aria-busy={startMutation.isPending}
                     onClick={() => void runTransition('start')}
                   >
-                    <PlayCircle className="size-4" />
-                    Start consultation
+                    {startMutation.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <PlayCircle className="size-4" />
+                    )}
+                    {startMutation.isPending ? 'Starting consultation…' : 'Start consultation'}
                   </Button>
                 ) : null}
               </div>
