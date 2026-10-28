@@ -46,7 +46,7 @@ describe('Patient Treatment Plan validator', () => {
       success: false,
       errors: expect.arrayContaining([
         'Tenant ID cannot be empty',
-        'Patient Treatment Plan status must be current',
+        'Patient Treatment Plan status must be current or all',
       ]),
     });
     expect(repo.getPatientById).not.toHaveBeenCalled();
@@ -69,6 +69,13 @@ describe('Patient Treatment Plan validator', () => {
       data: { patientId: 12, tenantId: 'tenant-a', status: 'current' },
     });
     expect(repo.getPatientById).toHaveBeenCalledWith(12, 'tenant-a');
+  });
+
+  it('accepts all Plan statuses for a Patient journey', async () => {
+    await expect(validateGetPatientTreatmentPlans('12', 'tenant-a', 'all')).resolves.toEqual({
+      success: true,
+      data: { patientId: 12, tenantId: 'tenant-a', status: 'all' },
+    });
   });
 
   it('should reject invalid add-Sessions input before reading repositories', async () => {

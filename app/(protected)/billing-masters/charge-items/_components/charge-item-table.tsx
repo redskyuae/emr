@@ -30,13 +30,17 @@ export function ChargeItemTable({
   return (
     <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[1000px] text-sm">
           <thead>
             <tr className="text-muted-foreground border-b text-left">
-              <th className="p-3 pl-4 font-medium">Charge Item</th>
-              <th className="p-3 font-medium">Code</th>
+              <th className="p-3 pl-4 font-medium">Service Name</th>
+              <th className="p-3 font-medium">CPT / Service Code</th>
               <th className="p-3 font-medium">Category</th>
-              <th className="p-3 text-right font-medium">Unit Price</th>
+              <th className="p-3 text-right font-medium">Standard</th>
+              <th className="p-3 text-right font-medium">Cash</th>
+              <th className="p-3 text-right font-medium">Insurance</th>
+              <th className="p-3 font-medium">Effective</th>
+              <th className="p-3 font-medium">Free follow-up</th>
               <th className="p-3 font-medium">Status</th>
               <th className="p-3 pr-4 text-right font-medium">Actions</th>
             </tr>
@@ -61,6 +65,16 @@ export function ChargeItemTable({
                 <td className="p-3 text-right tabular-nums">
                   {formatUnitPrice(chargeItem.unitPrice)}
                 </td>
+                <td className="p-3 text-right tabular-nums">
+                  {chargeItem.cashPrice === null ? '—' : formatUnitPrice(chargeItem.cashPrice)}
+                </td>
+                <td className="p-3 text-right tabular-nums">
+                  {chargeItem.insuranceContractPrice === null
+                    ? '—'
+                    : formatUnitPrice(chargeItem.insuranceContractPrice)}
+                </td>
+                <td className="p-3 font-mono text-xs">{chargeItem.effectiveDate ?? '—'}</td>
+                <td className="p-3">{chargeItem.freeFollowUpEligible ? 'Eligible' : '—'}</td>
                 <td className="p-3">
                   {chargeItem.isActive ? (
                     <Badge variant="outline">Active</Badge>

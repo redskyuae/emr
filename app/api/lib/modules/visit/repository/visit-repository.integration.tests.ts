@@ -293,6 +293,56 @@ describe('Visit repository', () => {
     fixturesA = await createTenantFixtures(tenantA);
   });
 
+  it('finds only a completed, visible Patient Visit inside the three-year window and Tenant', async () => {
+    const created = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+    if (!created.success) throw new Error(created.outcome);
+    expect(
+      await visitRepository.findLatestCompletedVisitForPatient(
+        tenantA,
+        fixturesA.patientId,
+        TODAY,
+        TODAY
+      )
+    ).toBeUndefined();
+
+    await visitRepository.startConsultation(created.data.id, tenantA);
+    await visitRepository.completeVisit(created.data.id, tenantA);
+    expect(
+      await visitRepository.findLatestCompletedVisitForPatient(
+        tenantA,
+        fixturesA.patientId,
+        TODAY,
+        TODAY
+      )
+    ).toMatchObject({ visitNumber: created.data.visitNumber, visitDate: TODAY });
+    expect(
+      await visitRepository.findLatestCompletedVisitForPatient(
+        tenantB,
+        fixturesA.patientId,
+        TODAY,
+        TODAY
+      )
+    ).toBeUndefined();
+    expect(
+      await visitRepository.findLatestCompletedVisitForPatient(
+        tenantA,
+        fixturesA.patientId,
+        '2026-07-17',
+        '2026-10-19'
+      )
+    ).toBeUndefined();
+
+    await visitRepository.deleteVisit(created.data.id, tenantA);
+    expect(
+      await visitRepository.findLatestCompletedVisitForPatient(
+        tenantA,
+        fixturesA.patientId,
+        TODAY,
+        TODAY
+      )
+    ).toBeUndefined();
+  });
+
   describe('checkInVisit', () => {
     it('should create a walk-in visit with a generated visit number and first queue token', async () => {
       const result = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));

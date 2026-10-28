@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm, type UseFormRegister } from 'react-hook-form';
+import { Controller, useForm, type UseFormRegister } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrors, getApiErrorMessage } from '@/app/queries/api-error';
 import { useCreatePatientVitalSign } from '@/app/queries/patients/chart/useCreatePatientVitalSign';
 import { useUpdatePatientVitalSign } from '@/app/queries/patients/chart/useUpdatePatientVitalSign';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useChartFormServerErrors } from '../use-chart-form-server-errors';
 
 import {
@@ -210,12 +210,20 @@ export function VitalsFormSheet({
 
       <Field data-invalid={!!errors.notes}>
         <FieldLabel htmlFor="vital-notes">Notes</FieldLabel>
-        <Textarea
-          id="vital-notes"
-          {...register('notes')}
-          disabled={isSaving}
-          rows={3}
-          maxLength={2000}
+        <Controller
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <RichTextEditor
+              id="vital-notes"
+              aria-label="Notes"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              disabled={isSaving}
+              invalid={!!errors.notes}
+            />
+          )}
         />
         <FieldError errors={[errors.notes]} />
       </Field>

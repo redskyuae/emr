@@ -33,6 +33,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { CHARGE_ITEM_CATEGORY_OPTIONS } from '../../_utils/charge-item-category';
+import { VISIT_CHARGE_OPTIONS } from '@/lib/visit-charge-options';
 import {
   chargeItemFormSchema,
   type ChargeItemFormValues,
@@ -43,6 +44,11 @@ const EMPTY_FORM: ChargeItemFormValues = {
   code: '',
   category: 'CONSULTATION',
   unitPrice: '',
+  cashPrice: '',
+  insuranceContractPrice: '',
+  effectiveDate: '',
+  freeFollowUpEligible: false,
+  visitChargeKind: '',
   description: '',
   isActive: true,
 };
@@ -87,6 +93,14 @@ export function ChargeItemFormSheet({
             code: chargeItem.code,
             category: chargeItem.category,
             unitPrice: String(chargeItem.unitPrice),
+            cashPrice: chargeItem.cashPrice === null ? '' : String(chargeItem.cashPrice),
+            insuranceContractPrice:
+              chargeItem.insuranceContractPrice === null
+                ? ''
+                : String(chargeItem.insuranceContractPrice),
+            effectiveDate: chargeItem.effectiveDate ?? '',
+            freeFollowUpEligible: chargeItem.freeFollowUpEligible,
+            visitChargeKind: chargeItem.visitChargeKind ?? '',
             description: chargeItem.description ?? '',
             isActive: chargeItem.isActive,
           }
@@ -100,6 +114,12 @@ export function ChargeItemFormSheet({
       code: values.code,
       category: values.category,
       unitPrice: Number(values.unitPrice),
+      cashPrice: values.cashPrice === '' ? null : Number(values.cashPrice),
+      insuranceContractPrice:
+        values.insuranceContractPrice === '' ? null : Number(values.insuranceContractPrice),
+      effectiveDate: values.effectiveDate || null,
+      freeFollowUpEligible: values.freeFollowUpEligible,
+      visitChargeKind: values.visitChargeKind || null,
       description: values.description || undefined,
       isActive: values.isActive,
     };
@@ -143,7 +163,7 @@ export function ChargeItemFormSheet({
           </SheetTitle>
           <SheetDescription>
             {isCreating
-              ? 'Add a billable service or item with its unit price to the catalogue.'
+              ? 'Add a billable service or item with its prices to the catalogue.'
               : 'Update the Charge Item. Price changes never alter existing Invoices.'}
           </SheetDescription>
         </SheetHeader>
@@ -173,7 +193,7 @@ export function ChargeItemFormSheet({
 
               <Field data-invalid={Boolean(errors.name)}>
                 <FieldLabel htmlFor="charge-item-name">
-                  Name{' '}
+                  Service name{' '}
                   <span aria-hidden className="text-destructive">
                     *
                   </span>
@@ -189,7 +209,7 @@ export function ChargeItemFormSheet({
 
               <Field data-invalid={Boolean(errors.code)}>
                 <FieldLabel htmlFor="charge-item-code">
-                  Code{' '}
+                  CPT / service code{' '}
                   <span aria-hidden className="text-destructive">
                     *
                   </span>
@@ -197,13 +217,16 @@ export function ChargeItemFormSheet({
                 <Input
                   id="charge-item-code"
                   aria-required
-                  placeholder="CONS"
+                  placeholder="99213 or CONS_EST"
                   {...register('code')}
                 />
                 {errors.code ? (
                   <FieldError>{errors.code.message}</FieldError>
                 ) : (
-                  <p className="text-muted-foreground text-xs">Normalized to uppercase.</p>
+                  <p className="text-muted-foreground text-xs">
+                    Enter the verified CPT code for coded services, or a local service code. A Visit
+                    type does not determine a CPT level.
+                  </p>
                 )}
               </Field>
 
@@ -235,9 +258,38 @@ export function ChargeItemFormSheet({
                 )}
               />
 
+              <Controller
+                control={control}
+                name="visitChargeKind"
+                render={({ field }) => (
+                  <Field data-invalid={Boolean(errors.visitChargeKind)}>
+                    <FieldLabel htmlFor="charge-item-visit-kind">Visit service</FieldLabel>
+                    <Select
+                      value={field.value || 'NONE'}
+                      onValueChange={(value) => field.onChange(value === 'NONE' ? '' : value)}
+                    >
+                      <SelectTrigger id="charge-item-visit-kind" className="w-full">
+                        <SelectValue placeholder="No Visit service" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NONE">No Visit service</SelectItem>
+                        {VISIT_CHARGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.visitChargeKind ? (
+                      <FieldError>{errors.visitChargeKind.message}</FieldError>
+                    ) : null}
+                  </Field>
+                )}
+              />
+
               <Field data-invalid={Boolean(errors.unitPrice)}>
                 <FieldLabel htmlFor="charge-item-unit-price">
-                  Unit price{' '}
+                  Standard price{' '}
                   <span aria-hidden className="text-destructive">
                     *
                   </span>
@@ -254,6 +306,75 @@ export function ChargeItemFormSheet({
                 />
                 {errors.unitPrice ? <FieldError>{errors.unitPrice.message}</FieldError> : null}
               </Field>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field data-invalid={Boolean(errors.cashPrice)}>
+                  <FieldLabel htmlFor="charge-item-cash-price">Cash price</FieldLabel>
+                  <Input
+                    id="charge-item-cash-price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="Uses standard price"
+                    {...register('cashPrice')}
+                  />
+                  {errors.cashPrice ? <FieldError>{errors.cashPrice.message}</FieldError> : null}
+                </Field>
+                <Field data-invalid={Boolean(errors.insuranceContractPrice)}>
+                  <FieldLabel htmlFor="charge-item-insurance-price">
+                    Insurance contract price
+                  </FieldLabel>
+                  <Input
+                    id="charge-item-insurance-price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="Not configured"
+                    {...register('insuranceContractPrice')}
+                  />
+                  {errors.insuranceContractPrice ? (
+                    <FieldError>{errors.insuranceContractPrice.message}</FieldError>
+                  ) : null}
+                </Field>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Insurance contract price is held for direct insurer billing. Patient-paid
+                reimbursement uses the cash price.
+              </p>
+              <Field data-invalid={Boolean(errors.effectiveDate)}>
+                <FieldLabel htmlFor="charge-item-effective-date">Effective date</FieldLabel>
+                <Input id="charge-item-effective-date" type="date" {...register('effectiveDate')} />
+                {errors.effectiveDate ? (
+                  <FieldError>{errors.effectiveDate.message}</FieldError>
+                ) : null}
+              </Field>
+              <Controller
+                control={control}
+                name="freeFollowUpEligible"
+                render={({ field }) => (
+                  <Field orientation="horizontal" className="items-center justify-between">
+                    <div className="space-y-0.5">
+                      <FieldLabel htmlFor="charge-item-free-follow-up">
+                        Free follow-up eligible
+                      </FieldLabel>
+                      <p className="text-muted-foreground text-xs">
+                        Mark an established or follow-up consultation as eligible for a waived
+                        charge on a qualifying follow-up Visit.
+                      </p>
+                    </div>
+                    <Switch
+                      id="charge-item-free-follow-up"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    {errors.freeFollowUpEligible ? (
+                      <FieldError>{errors.freeFollowUpEligible.message}</FieldError>
+                    ) : null}
+                  </Field>
+                )}
+              />
 
               <Field data-invalid={Boolean(errors.description)}>
                 <FieldLabel htmlFor="charge-item-description">Description</FieldLabel>

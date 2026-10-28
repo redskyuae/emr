@@ -140,10 +140,17 @@ describe('Patient Treatment Plans route', () => {
     expect(getPlans).toHaveBeenCalledWith('42', 'tenant-1', 'current');
   });
 
+  it('should pass all status for longitudinal Plan review', async () => {
+    const response = await GET(request('?status=all'), context('42'));
+
+    expect(response.status).toBe(StatusCodes.OK);
+    expect(getPlans).toHaveBeenCalledWith('42', 'tenant-1', 'all');
+  });
+
   it('should map an invalid status to bad request', async () => {
     getPlans.mockResolvedValue({
       success: false,
-      errors: ['Patient Treatment Plan status must be current'],
+      errors: ['Patient Treatment Plan status must be current or all'],
     });
 
     const response = await GET(request('?status=historical'), context());
@@ -151,7 +158,7 @@ describe('Patient Treatment Plans route', () => {
     expect(response.status).toBe(StatusCodes.BAD_REQUEST);
     await expect(response.json()).resolves.toEqual({
       message: 'Validation failed',
-      errors: ['Patient Treatment Plan status must be current'],
+      errors: ['Patient Treatment Plan status must be current or all'],
     });
     expect(getPlans).toHaveBeenCalledWith('12', 'tenant-1', 'historical');
   });

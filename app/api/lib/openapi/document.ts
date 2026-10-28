@@ -4644,6 +4644,89 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/visits/patient-type': {
+      get: {
+        tags: ['Visit'],
+        summary: 'Verify New or Established Patient type for a Visit',
+        description:
+          'Checks completed, non-deleted Visits for this Patient in the active Tenant. A Patient is Established when a completed Visit exists in the inclusive three-calendar-year window ending on the Tenant-local current date, starting no earlier than creation of the Patient record. Otherwise the Patient is New. The Create Visit page recalculates this assessment before submission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'patientId',
+            in: 'query',
+            required: true,
+            description: 'Patient to assess in the active Tenant.',
+            schema: { type: 'integer', minimum: 1, example: 1042 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Patient type and qualifying Visit history.',
+            content: jsonContent(
+              {
+                type: 'object',
+                required: ['data'],
+                properties: {
+                  data: {
+                    type: 'object',
+                    required: [
+                      'patientType',
+                      'patientRecordDate',
+                      'lookbackStartDate',
+                      'lastCompletedVisit',
+                    ],
+                    properties: {
+                      patientType: { type: 'string', enum: ['NEW', 'ESTABLISHED'] },
+                      patientRecordDate: { type: 'string', format: 'date' },
+                      lookbackStartDate: { type: 'string', format: 'date' },
+                      lastCompletedVisit: {
+                        oneOf: [
+                          { type: 'null' },
+                          {
+                            type: 'object',
+                            required: ['visitNumber', 'visitDate'],
+                            properties: {
+                              visitNumber: { type: 'string' },
+                              visitDate: { type: 'string', example: '18-10-2026' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                data: {
+                  patientType: 'ESTABLISHED',
+                  patientRecordDate: '2025-01-01',
+                  lookbackStartDate: '2023-10-19',
+                  lastCompletedVisit: { visitNumber: 'VST-1001', visitDate: '18-10-2026' },
+                },
+              }
+            ),
+          },
+          '400': {
+            description: 'Invalid Patient ID.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient ID must be a positive integer.',
+              errors: ['Patient ID must be a positive integer.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'Patient not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient not found.',
+              errors: ['Patient not found.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/visits/{id}': {
       get: {
         tags: ['Visit'],
@@ -5069,11 +5152,16 @@ export const openApiDocument = {
       schemaName: 'ChargeItem',
       createSchemaName: 'CreateChargeItemRequest',
       example: {
-        name: 'General Consultation',
-        code: 'CONS',
+        name: 'Established Patient Level 3',
+        code: '99213',
         category: 'CONSULTATION',
-        unitPrice: 500,
-        description: 'Standard outpatient consultation fee',
+        unitPrice: 150,
+        cashPrice: 150,
+        insuranceContractPrice: 120,
+        freeFollowUpEligible: false,
+        effectiveDate: '2026-01-01',
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        description: 'Configured outpatient consultation service',
         isActive: true,
       },
       security: [{ cookieAuth: [] }],
@@ -5111,11 +5199,16 @@ export const openApiDocument = {
       schemaName: 'ChargeItem',
       updateSchemaName: 'UpdateChargeItemRequest',
       example: {
-        name: 'General Consultation',
-        code: 'CONS',
+        name: 'Established Patient Level 3',
+        code: '99213',
         category: 'CONSULTATION',
-        unitPrice: 500,
-        description: 'Standard outpatient consultation fee',
+        unitPrice: 150,
+        cashPrice: 150,
+        insuranceContractPrice: 120,
+        freeFollowUpEligible: false,
+        effectiveDate: '2026-01-01',
+        visitChargeKind: 'ESTABLISHED_CONSULTATION',
+        description: 'Configured outpatient consultation service',
         isActive: true,
       },
       parameters: [numberIdPathParameter('Charge Item')],
@@ -5279,7 +5372,7 @@ export const openApiDocument = {
         tags: ['Invoice'],
         summary: 'Add Invoice Line',
         description:
-          'Adds a line to a Draft Invoice from a Charge Item. The line snapshots the Charge Item description and unit price; an optional price override may be supplied. Recomputes the Invoice totals.',
+          'Adds a line to a Draft Invoice from an active, effective Charge Item. The line snapshots its description and patient-paid price; an optional price override may be supplied. Recomputes the Invoice totals.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Invoice')],
         requestBody: requestBody('AddInvoiceLineRequest', {
@@ -6211,9 +6304,9 @@ export const openApiDocument = {
     '/api/v1/patients/{id}/treatment-plans': {
       get: {
         tags: ['Patient'],
-        summary: 'List Current Patient Treatment Plans',
+        summary: 'List Patient Treatment Plans',
         description:
-          'Returns current Patient Treatment Plans and every Session availability state for one Patient in the active Tenant. The response is reservation-aware and requires patient-treatment-plan:read permission.',
+          'Returns Patient Treatment Plans and every Session availability state for one Patient in the active Tenant. By default, only pending and in-progress Plans are returned; status=all also includes completed and stopped Plans for longitudinal review. The response is reservation-aware and requires patient-treatment-plan:read permission.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Patient'),
@@ -6221,13 +6314,13 @@ export const openApiDocument = {
             name: 'status',
             in: 'query',
             required: false,
-            description: 'Current Plan filter. Only current is supported by this endpoint.',
-            schema: { type: 'string', enum: ['current'], default: 'current' },
+            description: 'Use all to include completed and stopped Plans; current is the default.',
+            schema: { type: 'string', enum: ['current', 'all'], default: 'current' },
           },
         ],
         responses: {
           '200': {
-            description: 'Current Patient Treatment Plans with Session availability.',
+            description: 'Patient Treatment Plans with Session availability.',
             content: jsonContent(dataEnvelopeSchema('PatientTreatmentPlansResponse')),
           },
           '400': responseRef('ValidationFailed'),
@@ -6318,6 +6411,108 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/patients/{id}/treatment-plans/assign': {
+      post: {
+        tags: ['Patient'],
+        summary: 'Assign Treatment to Patient',
+        description:
+          'Creates a Patient Treatment Plan from a Tenant Treatment and snapshots its Session templates. The Patient must be registered and active. Repeatable Treatments require totalSessions. Sequenced Treatments derive their base count from the catalogue and may append additionalSessions by repeating the last template in the same assignment. Requires patient-treatment-plan:read and patient-treatment-plan:assign. The Tenant is resolved from the active Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Patient')],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: schemaRef('AssignPatientTreatmentPlanRequest'),
+              examples: {
+                repeatable: { value: { treatmentId: 12, totalSessions: 5 } },
+                sequencedWithExtraSessions: {
+                  value: { treatmentId: 13, additionalSessions: 2 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Patient Treatment Plan assigned with Patient-specific Sessions.',
+            content: jsonContent(dataEnvelopeSchema('PatientTreatmentPlan'), {
+              data: {
+                id: 81,
+                tenantId: 'tenant-ayur',
+                patientId: 42,
+                treatmentId: 12,
+                treatmentName: 'Abhyanga',
+                treatmentCode: 'ABH',
+                sessionStructure: 'REPEATABLE',
+                totalSessions: 5,
+                status: 'PENDING',
+                completedSessions: 0,
+                sessions: [
+                  {
+                    id: 901,
+                    patientTreatmentPlanId: 81,
+                    treatmentSessionId: 12,
+                    sessionNumber: 1,
+                    label: 'Abhyanga Session',
+                    procedure: 'Abhyanga',
+                    durationMinutes: 45,
+                    completionStatus: 'PENDING',
+                    completionSource: null,
+                    completedVisitId: null,
+                    completedAt: null,
+                    isReserved: false,
+                    isBookable: true,
+                    unavailableReason: null,
+                    reservedAppointment: null,
+                  },
+                ],
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid JSON or assignment values.',
+            content: {
+              'application/json': {
+                schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+                examples: {
+                  missingCount: {
+                    value: {
+                      message: 'Number of Sessions is required for a Repeatable Treatment.',
+                      errors: ['Number of Sessions is required for a Repeatable Treatment.'],
+                    },
+                  },
+                  invalidAdditionalSessions: {
+                    value: {
+                      message: 'Additional Sessions are only available for a Sequenced Treatment.',
+                      errors: ['Additional Sessions are only available for a Sequenced Treatment.'],
+                    },
+                  },
+                  invalidJson: { value: { message: 'Request body must be valid JSON' } },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'Patient or Treatment not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Treatment not found',
+              errors: ['Treatment not found'],
+            }),
+          },
+          '409': {
+            description: 'The Patient is Provisional or the Treatment has no Session templates.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient must be registered before assigning a Treatment Plan.',
+              errors: ['Patient must be registered before assigning a Treatment Plan.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -6837,7 +7032,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'List Patients',
         description:
-          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, MRN, and phone. Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
+          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, full first and last name, MRN, phone, Emirates ID, and date of birth (YYYY-MM-DD, DD/MM/YYYY, or DD-MM-YYYY). Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
         security: [{ cookieAuth: [] }],
         parameters: [
           ...listParameters,
@@ -9070,8 +9265,13 @@ export const openApiDocument = {
             description:
               'Required for a Walk-in Visit. Required for Appointment check-in when the Appointment has no Doctor. Must be an active Doctor.',
           },
-          chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
-          remarks: { type: ['string', 'null'] },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description:
+              'Purpose of Visit. Plain text or Markdown formatting from the Lexical editor.',
+          },
+          remarks: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           documents: {
             type: 'array',
             maxItems: 20,
@@ -9084,8 +9284,13 @@ export const openApiDocument = {
       UpdateVisitRequest: {
         type: 'object',
         properties: {
-          chiefComplaint: { type: ['string', 'null'], maxLength: 500 },
-          remarks: { type: ['string', 'null'] },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description:
+              'Purpose of Visit. Plain text or Markdown formatting from the Lexical editor.',
+          },
+          remarks: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           treatmentId: {
             type: ['integer', 'null'],
             minimum: 1,
@@ -9104,7 +9309,12 @@ export const openApiDocument = {
         type: 'object',
         required: ['cancellationReason'],
         properties: {
-          cancellationReason: { type: 'string', minLength: 1, maxLength: 255 },
+          cancellationReason: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 255,
+            description: 'Plain text or Markdown formatting.',
+          },
         },
       },
       VisitPatientSummary: {
@@ -9234,13 +9444,19 @@ export const openApiDocument = {
             oneOf: [schemaRef('TreatmentSessionSummary'), { type: 'null' }],
             description: 'Treatment Session conducted during this Visit, if any.',
           },
-          chiefComplaint: { type: ['string', 'null'] },
-          remarks: { type: ['string', 'null'] },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
+          remarks: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           checkedInAt: { type: 'string', format: 'date-time' },
           consultationStartedAt: { type: ['string', 'null'], format: 'date-time' },
           completedAt: { type: ['string', 'null'], format: 'date-time' },
           cancelledAt: { type: ['string', 'null'], format: 'date-time' },
-          cancellationReason: { type: ['string', 'null'] },
+          cancellationReason: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
         },
@@ -9269,7 +9485,41 @@ export const openApiDocument = {
           unitPrice: {
             type: 'number',
             minimum: 0,
-            description: 'Unit price in the Tenant currency, rounded to two decimals.',
+            description: 'Standard price in the Tenant currency, rounded to two decimals.',
+          },
+          cashPrice: {
+            type: ['number', 'null'],
+            minimum: 0,
+            description: 'Patient-paid price. If absent, Standard Price applies.',
+          },
+          insuranceContractPrice: {
+            type: ['number', 'null'],
+            minimum: 0,
+            description:
+              'Direct insurer contract price. Not used for patient-paid reimbursement or current Visit billing.',
+          },
+          freeFollowUpEligible: {
+            type: 'boolean',
+            default: false,
+            description:
+              'Whether this Established or Follow-up Consultation can receive a waived charge on a qualifying follow-up Visit.',
+          },
+          effectiveDate: {
+            type: ['string', 'null'],
+            format: 'date',
+            description: 'First date this price can be used for a new Visit or Invoice Line.',
+          },
+          visitChargeKind: {
+            type: ['string', 'null'],
+            enum: [
+              'NEW_CONSULTATION',
+              'ESTABLISHED_CONSULTATION',
+              'FOLLOW_UP_CONSULTATION',
+              'TREATMENT_SESSION',
+              null,
+            ],
+            description:
+              'Explicit Visit service group. CPT level must be chosen from the documented service.',
           },
           description: {
             type: ['string', 'null'],
@@ -9296,6 +9546,11 @@ export const openApiDocument = {
               'code',
               'category',
               'unitPrice',
+              'cashPrice',
+              'insuranceContractPrice',
+              'freeFollowUpEligible',
+              'effectiveDate',
+              'visitChargeKind',
               'isActive',
               'description',
               'createdOn',
@@ -9539,7 +9794,8 @@ export const openApiDocument = {
           unitPrice: {
             type: 'number',
             minimum: 0,
-            description: 'Optional price override. Defaults to the Charge Item unit price.',
+            description:
+              'Optional price override. Defaults to Cash Price, or Standard Price when Cash Price is absent.',
           },
         },
       },
@@ -10611,6 +10867,27 @@ export const openApiDocument = {
           },
         },
       },
+      AssignPatientTreatmentPlanRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['treatmentId'],
+        properties: {
+          treatmentId: { type: 'integer', minimum: 1 },
+          totalSessions: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 100,
+            description: 'Required for Repeatable Treatments; omitted for Sequenced Treatments.',
+          },
+          additionalSessions: {
+            type: 'integer',
+            minimum: 0,
+            maximum: 100,
+            description:
+              'Optional for Sequenced Treatments only. Appends this many Sessions using the final Session template during assignment.',
+          },
+        },
+      },
       PatientTreatmentPlansResponse: {
         type: 'object',
         required: ['data'],
@@ -11056,7 +11333,11 @@ export const openApiDocument = {
           temperatureC: { type: 'number', minimum: 20, maximum: 45 },
           spo2: { type: 'integer', minimum: 0, maximum: 100 },
           painScore: { type: 'integer', minimum: 0, maximum: 10 },
-          notes: { type: 'string', maxLength: 2000 },
+          notes: {
+            type: 'string',
+            maxLength: 2000,
+            description: 'Plain text or Markdown formatting from the Lexical editor.',
+          },
         },
       },
       UpdatePatientVitalSignRequest: schemaRef('CreatePatientVitalSignRequest'),
@@ -11092,7 +11373,7 @@ export const openApiDocument = {
           temperatureC: { type: ['number', 'null'] },
           spo2: { type: ['integer', 'null'] },
           painScore: { type: ['integer', 'null'] },
-          notes: { type: ['string', 'null'] },
+          notes: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           recordedByUserId: { type: 'string' },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
@@ -11166,10 +11447,26 @@ export const openApiDocument = {
             description:
               'Optional Admission this note was authored during. The Admission must belong to this Patient and still be Admitted. A record may reference a Visit or an Admission, not both.',
           },
-          subjective: { type: 'string', maxLength: 20000 },
-          objective: { type: 'string', maxLength: 20000 },
-          assessment: { type: 'string', maxLength: 20000 },
-          plan: { type: 'string', maxLength: 20000 },
+          subjective: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          objective: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          assessment: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          plan: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
         },
       },
       UpdateClinicalNoteRequest: schemaRef('CreateClinicalNoteRequest'),
@@ -11193,10 +11490,19 @@ export const openApiDocument = {
           visitId: { type: ['integer', 'null'] },
           admissionId: { type: ['integer', 'null'] },
           noteTypeId: { type: 'integer', minimum: 1 },
-          subjective: { type: ['string', 'null'] },
-          objective: { type: ['string', 'null'] },
-          assessment: { type: ['string', 'null'] },
-          plan: { type: ['string', 'null'] },
+          subjective: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
+          objective: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
+          assessment: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting.',
+          },
+          plan: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
           status: { type: 'string', enum: ['draft', 'signed'] },
           signedAt: {
             type: ['string', 'null'],

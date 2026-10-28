@@ -6,10 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import {
   Select,
@@ -26,7 +28,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   visitNoteFormSchema,
   type VisitNoteFormValues,
@@ -51,11 +53,13 @@ export function AddNoteSheet({
   open,
   patientId,
   visitId,
+  preferredNoteTypeCode,
   onClose,
 }: {
   open: boolean;
   patientId: number;
   visitId: number;
+  preferredNoteTypeCode?: string;
   onClose: () => void;
 }) {
   const form = useForm<VisitNoteFormValues>({
@@ -64,7 +68,7 @@ export function AddNoteSheet({
     defaultValues: EMPTY,
   });
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
-  const noteTypes = noteTypesQuery.data?.data ?? [];
+  const noteTypes = noteTypesQuery.data?.data;
   const createNote = useCreateClinicalNote();
 
   useEffect(() => {
@@ -72,6 +76,12 @@ export function AddNoteSheet({
       form.reset(EMPTY);
     }
   }, [open, form]);
+
+  useEffect(() => {
+    if (!open || !preferredNoteTypeCode || form.getValues('noteTypeId')) return;
+    const preferred = noteTypes?.find((type) => type.code === preferredNoteTypeCode);
+    if (preferred) form.setValue('noteTypeId', String(preferred.id));
+  }, [open, preferredNoteTypeCode, noteTypes, form]);
 
   const handleSave = form.handleSubmit(async (values) => {
     try {
@@ -116,38 +126,59 @@ export function AddNoteSheet({
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <FieldGroup>
-              <Controller
-                control={form.control}
-                name="noteTypeId"
-                render={({ field }) => (
-                  <Field data-invalid={Boolean(form.formState.errors.noteTypeId)}>
-                    <FieldLabel htmlFor="note-type">
-                      Note type{' '}
-                      <span aria-hidden className="text-destructive">
-                        *
-                      </span>
-                    </FieldLabel>
-                    <Select
-                      value={field.value === '' ? undefined : field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger id="note-type" aria-required className="w-full">
-                        <SelectValue placeholder="Select a note type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {noteTypes.map((noteType) => (
-                          <SelectItem key={noteType.id} value={String(noteType.id)}>
-                            {noteType.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.noteTypeId ? (
-                      <FieldError>{form.formState.errors.noteTypeId.message}</FieldError>
-                    ) : null}
-                  </Field>
-                )}
-              />
+              {noteTypesQuery.isLoading ? (
+                <div className="space-y-2" aria-label="Loading Clinical Note Types">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : noteTypesQuery.isError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Clinical Note Types could not be loaded. Retry to continue.
+                  </AlertDescription>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void noteTypesQuery.refetch()}
+                  >
+                    Retry
+                  </Button>
+                </Alert>
+              ) : (
+                <Controller
+                  control={form.control}
+                  name="noteTypeId"
+                  render={({ field }) => (
+                    <Field data-invalid={Boolean(form.formState.errors.noteTypeId)}>
+                      <FieldLabel htmlFor="note-type">
+                        Note type{' '}
+                        <span aria-hidden className="text-destructive">
+                          *
+                        </span>
+                      </FieldLabel>
+                      <Select
+                        value={field.value === '' ? undefined : field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger id="note-type" aria-required className="w-full">
+                          <SelectValue placeholder="Select a note type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(noteTypes ?? []).map((noteType) => (
+                            <SelectItem key={noteType.id} value={String(noteType.id)}>
+                              {noteType.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors.noteTypeId ? (
+                        <FieldError>{form.formState.errors.noteTypeId.message}</FieldError>
+                      ) : null}
+                    </Field>
+                  )}
+                />
+              )}
 
               {SOAP_SECTIONS.map((section) => (
                 <Field
@@ -155,11 +186,20 @@ export function AddNoteSheet({
                   data-invalid={Boolean(form.formState.errors[section.name])}
                 >
                   <FieldLabel htmlFor={`note-${section.name}`}>{section.label}</FieldLabel>
-                  <Textarea
-                    id={`note-${section.name}`}
-                    rows={3}
-                    placeholder={section.placeholder}
-                    {...form.register(section.name)}
+                  <Controller
+                    control={form.control}
+                    name={section.name}
+                    render={({ field }) => (
+                      <RichTextEditor
+                        id={`note-${section.name}`}
+                        aria-label={section.label}
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        placeholder={section.placeholder}
+                        invalid={Boolean(form.formState.errors[section.name])}
+                      />
+                    )}
                   />
                   {form.formState.errors[section.name] ? (
                     <FieldError>{form.formState.errors[section.name]?.message}</FieldError>
@@ -178,7 +218,15 @@ export function AddNoteSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createNote.isPending}>
+            <Button
+              type="submit"
+              disabled={
+                createNote.isPending ||
+                noteTypesQuery.isLoading ||
+                noteTypesQuery.isError ||
+                !noteTypes?.length
+              }
+            >
               <NotebookPen className="size-4" />
               {createNote.isPending ? 'Saving…' : 'Add note'}
             </Button>

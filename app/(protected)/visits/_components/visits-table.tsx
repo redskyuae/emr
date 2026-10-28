@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle2, Eye, MoreHorizontal, PlayCircle, XCircle } from 'lucide-react';
+import { Eye, Loader2, MoreHorizontal, PlayCircle, XCircle } from 'lucide-react';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Badge } from '@/components/ui/badge';
@@ -24,19 +24,15 @@ export function VisitsTable({
   visits,
   pendingVisitId,
   canStart,
-  canComplete,
   canCancel,
   onStart,
-  onComplete,
   onCancel,
 }: {
   visits: Visit[];
   pendingVisitId: number | null;
   canStart: boolean;
-  canComplete: boolean;
   canCancel: boolean;
   onStart: (visit: Visit) => void;
-  onComplete: (visit: Visit) => void;
   onCancel: (visit: Visit) => void;
 }) {
   return (
@@ -102,22 +98,15 @@ export function VisitsTable({
                           type="button"
                           size="sm"
                           disabled={isPending}
+                          aria-busy={isPending}
                           onClick={() => onStart(visit)}
                         >
-                          <PlayCircle className="size-4" />
-                          Start
-                        </Button>
-                      ) : null}
-
-                      {visit.status === 'IN_CONSULTATION' && canComplete ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={isPending}
-                          onClick={() => onComplete(visit)}
-                        >
-                          <CheckCircle2 className="size-4" />
-                          Complete
+                          {isPending ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <PlayCircle className="size-4" />
+                          )}
+                          {isPending ? 'Starting…' : 'Start'}
                         </Button>
                       ) : null}
 

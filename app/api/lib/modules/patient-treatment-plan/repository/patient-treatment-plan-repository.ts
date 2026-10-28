@@ -31,6 +31,7 @@ export type CatalogueAssignment = {
   patientId: number;
   treatmentId: number;
   totalSessions?: number;
+  additionalSessions?: number;
 };
 
 export type PlanSessionBookingContext = {
@@ -185,9 +186,10 @@ function withAvailability(
   };
 }
 
-async function getCurrentByPatientId(
+async function getByPatientId(
   patientId: number,
-  tenantId: string
+  tenantId: string,
+  includeHistory: boolean
 ): Promise<PatientTreatmentPlan[]> {
   const plans = await db
     .select(planColumns)
@@ -205,7 +207,7 @@ async function getCurrentByPatientId(
         eq(planTable.patientId, patientId),
         eq(planTable.tenantId, tenantId),
         eq(planTable.isDeleted, false),
-        isNull(planTable.statusOverride)
+        ...(includeHistory ? [] : [isNull(planTable.statusOverride)])
       )
     )
     .orderBy(asc(planTable.createdOn), asc(planTable.id));
@@ -278,7 +280,7 @@ async function getCurrentByPatientId(
     sessionsByPlan.set(session.patientTreatmentPlanId, sessions);
   }
 
-  const currentPlans: PatientTreatmentPlan[] = [];
+  const matchingPlans: PatientTreatmentPlan[] = [];
 
   for (const plan of plans) {
     const sessions = sessionsByPlan.get(plan.id) ?? [];
@@ -287,12 +289,20 @@ async function getCurrentByPatientId(
     ).length;
     const status = deriveStatus(plan, sessions);
 
-    if (status === 'PENDING' || status === 'IN_PROGRESS') {
-      currentPlans.push({ ...plan, status, completedSessions, sessions });
+    if (includeHistory || status === 'PENDING' || status === 'IN_PROGRESS') {
+      matchingPlans.push({ ...plan, status, completedSessions, sessions });
     }
   }
 
-  return currentPlans;
+  return matchingPlans;
+}
+
+async function getCurrentByPatientId(patientId: number, tenantId: string) {
+  return getByPatientId(patientId, tenantId, false);
+}
+
+async function getAllByPatientId(patientId: number, tenantId: string) {
+  return getByPatientId(patientId, tenantId, true);
 }
 
 async function getPlanSessionForBooking(
@@ -491,6 +501,9 @@ async function createPlanFromTreatment(
   let totalSessions: number;
 
   if (treatment.sessionStructure === 'REPEATABLE') {
+    if (input.additionalSessions !== undefined) {
+      throw new Error('Additional Sessions are only available for a Sequenced Treatment');
+    }
     totalSessions = input.totalSessions ?? treatment.defaultTotalSessions ?? 0;
     if (!Number.isInteger(totalSessions) || totalSessions <= 0) {
       throw new Error('Repeatable Treatment requires a positive total Sessions count');
@@ -502,7 +515,7 @@ async function createPlanFromTreatment(
     if (input.totalSessions !== undefined) {
       throw new Error('Sequenced Treatment derives its count from Session templates');
     }
-    totalSessions = templates.length;
+    totalSessions = templates.length + (input.additionalSessions ?? 0);
   }
 
   const [createdPlan] = await tx
@@ -529,6 +542,27 @@ async function createPlanFromTreatment(
     sessionValues = templates.map((template) =>
       snapshotSessionValues(input.tenantId, createdPlan.id, template, template.sessionNumber)
     );
+    const lastTemplate = templates[templates.length - 1];
+    for (
+      let sessionNumber = templates.length + 1;
+      sessionNumber <= totalSessions;
+      sessionNumber++
+    ) {
+      sessionValues.push(
+        snapshotSessionValues(input.tenantId, createdPlan.id, lastTemplate, sessionNumber)
+      );
+    }
+    if (input.additionalSessions) {
+      sessionValues = sessionValues.map((session) => ({
+        ...session,
+        label:
+          resequencePatientTreatmentPlanSessionLabel(
+            session.label,
+            session.sessionNumber,
+            totalSessions
+          ) ?? session.label,
+      }));
+    }
   }
 
   const createdSessions = await tx
@@ -547,6 +581,14 @@ async function createPlanFromTreatment(
     patientTreatmentPlanId: createdPlan.id,
     sessions: createdSessions.map((session) => createdBookingContext(planSnapshot, session)),
   };
+}
+
+async function assignTreatmentToPatient(
+  input: CatalogueAssignment
+): Promise<PatientTreatmentPlan | undefined> {
+  const created = await db.transaction((tx) => createPlanFromTreatment(input, tx));
+  const plans = await getCurrentByPatientId(input.patientId, input.tenantId);
+  return plans.find((plan) => plan.id === created.patientTreatmentPlanId);
 }
 
 async function addSessionsToPlan(
@@ -850,9 +892,11 @@ async function completeSessionForVisit(
 
 export const patientTreatmentPlanRepository = {
   addSessionsToPlan,
+  assignTreatmentToPatient,
   reserveSession,
   createPlanFromTreatment,
   getCurrentByPatientId,
+  getAllByPatientId,
   completeSessionForVisit,
   getPlanSessionForBooking,
   releaseReservationForAppointment,

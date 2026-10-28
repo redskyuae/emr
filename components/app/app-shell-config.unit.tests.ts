@@ -82,6 +82,40 @@ describe('App shell navigation permissions', () => {
     expect(groups[1].items.map(({ title }) => title)).toEqual(['Appointments', 'Book Appointment']);
   });
 
+  it('shows Charge Items under Billing Masters in the reduced sidebar when permitted', () => {
+    const permitted = getVisibleNavGroups(appNavGroups, ['charge-item:read'], true);
+    const configuration = permitted.find(({ title }) => title === 'Configuration');
+
+    expect(configuration?.items.find(({ title }) => title === 'Billing Masters')?.items).toEqual([
+      {
+        title: 'Charge Items',
+        href: '/billing-masters/charge-items',
+        permission: 'charge-item',
+      },
+    ]);
+    const withoutPermission = getVisibleNavGroups(appNavGroups, ['appointment:read'], true);
+    expect(
+      withoutPermission
+        .find(({ title }) => title === 'Configuration')
+        ?.items.some(({ title }) => title === 'Billing Masters') ?? false
+    ).toBe(false);
+  });
+
+  it('should show Visits in the reduced sidebar only when enabled and permitted', () => {
+    const permissions = ['appointment:read', 'visit:read'];
+
+    const enabledGroups = getVisibleNavGroups(appNavGroups, permissions, true, true);
+    expect(enabledGroups.map(({ title }) => title)).toEqual(['Overview', 'Clinical', 'Outpatient']);
+    expect(enabledGroups[2].items.map(({ title }) => title)).toEqual(['Visits']);
+
+    expect(getVisibleNavGroups(appNavGroups, permissions, true, false)).not.toContainEqual(
+      expect.objectContaining({ title: 'Outpatient' })
+    );
+    expect(getVisibleNavGroups(appNavGroups, ['appointment:read'], true, true)).not.toContainEqual(
+      expect.objectContaining({ title: 'Outpatient' })
+    );
+  });
+
   it('should restore the full sidebar when the flag is off', () => {
     const permissions = ['appointment:read', 'asset:read'];
 
