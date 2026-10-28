@@ -24,6 +24,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import {
   consultationToSoap,
@@ -131,7 +132,28 @@ export function DoctorConsultationSheet({
           }}
         >
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
-            {availableNoteTypes.length === 0 && !noteTypes.isLoading ? (
+            {noteTypes.isLoading ? (
+              <div className="space-y-2" aria-label="Loading Clinical Note Types">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : null}
+            {noteTypes.isError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Clinical Note Types could not be loaded</AlertTitle>
+                <AlertDescription>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void noteTypes.refetch()}
+                  >
+                    Retry
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            {availableNoteTypes.length === 0 && !noteTypes.isLoading && !noteTypes.isError ? (
               <Alert variant="destructive">
                 <AlertTitle>No Clinical Note Types configured</AlertTitle>
                 <AlertDescription>
@@ -204,18 +226,24 @@ export function DoctorConsultationSheet({
             </div>
             <Field>
               <FieldLabel htmlFor="consult-diagnosis-code">Modern diagnosis code</FieldLabel>
-              <NativeSelect
-                id="consult-diagnosis-code"
-                className="w-full"
-                {...form.register('diagnosisCodeId')}
-              >
-                <NativeSelectOption value="">Select from Tenant Diagnosis Codes</NativeSelectOption>
-                {(diagnosisCodes.data?.data ?? []).map((item) => (
-                  <NativeSelectOption key={item.id} value={String(item.id)}>
-                    {item.code} · {item.title}
+              {diagnosisCodes.isLoading ? (
+                <Skeleton className="h-10 w-full" aria-label="Loading Diagnosis Codes" />
+              ) : (
+                <NativeSelect
+                  id="consult-diagnosis-code"
+                  className="w-full"
+                  {...form.register('diagnosisCodeId')}
+                >
+                  <NativeSelectOption value="">
+                    Select from Tenant Diagnosis Codes
                   </NativeSelectOption>
-                ))}
-              </NativeSelect>
+                  {(diagnosisCodes.data?.data ?? []).map((item) => (
+                    <NativeSelectOption key={item.id} value={String(item.id)}>
+                      {item.code} · {item.title}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              )}
               {diagnosisCodes.isError ? (
                 <p className="text-destructive text-sm">Diagnosis Codes could not be loaded.</p>
               ) : null}
@@ -234,7 +262,12 @@ export function DoctorConsultationSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createNote.isPending || !noteTypeId}>
+            <Button
+              type="submit"
+              disabled={
+                createNote.isPending || noteTypes.isLoading || noteTypes.isError || !noteTypeId
+              }
+            >
               {createNote.isPending ? 'Saving…' : 'Save consultation'}
             </Button>
           </SheetFooter>

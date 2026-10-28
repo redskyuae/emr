@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
 import {
@@ -225,81 +226,88 @@ export function VisitBillingFields({
               </div>
             ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Controller
-                control={control}
-                name="chargeItemId"
-                render={({ field }) => (
-                  <Field data-invalid={Boolean(errors.chargeKind)}>
-                    <FieldLabel htmlFor="visit-charge-item">
-                      Charge Item{' '}
-                      <span aria-hidden="true" className="text-destructive">
-                        *
-                      </span>
-                    </FieldLabel>
-                    <NativeSelect
-                      {...field}
-                      id="visit-charge-item"
-                      aria-required
-                      className="w-full"
-                      disabled={loading || error}
-                      onChange={(event) => {
-                        field.onChange(event);
-                        const item = chargeItems.find(
-                          (candidate) => candidate.id === Number(event.target.value)
-                        );
-                        const kind = VISIT_CHARGE_OPTIONS.find(
-                          (option) =>
-                            item &&
-                            listVisitChargeItems(chargeItems, option.value, visitDate).some(
-                              (candidate) => candidate.id === item.id
-                            )
-                        )?.value;
-                        setValue('chargeKind', kind ?? '', { shouldValidate: true });
-                        setValue(
-                          'chargeAmount',
-                          item
-                            ? String(
-                                isFreeFollowUpCharge(item, visitTypeCode, hasRecentDoctorVisit)
-                                  ? 0
-                                  : visitChargePrice(item)
+              {loading ? (
+                <div className="space-y-2" aria-label="Loading Charge Items">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : (
+                <Controller
+                  control={control}
+                  name="chargeItemId"
+                  render={({ field }) => (
+                    <Field data-invalid={Boolean(errors.chargeKind)}>
+                      <FieldLabel htmlFor="visit-charge-item">
+                        Charge Item{' '}
+                        <span aria-hidden="true" className="text-destructive">
+                          *
+                        </span>
+                      </FieldLabel>
+                      <NativeSelect
+                        {...field}
+                        id="visit-charge-item"
+                        aria-required
+                        className="w-full"
+                        disabled={loading || error}
+                        onChange={(event) => {
+                          field.onChange(event);
+                          const item = chargeItems.find(
+                            (candidate) => candidate.id === Number(event.target.value)
+                          );
+                          const kind = VISIT_CHARGE_OPTIONS.find(
+                            (option) =>
+                              item &&
+                              listVisitChargeItems(chargeItems, option.value, visitDate).some(
+                                (candidate) => candidate.id === item.id
                               )
-                            : '',
-                          {
-                            shouldValidate: true,
-                          }
-                        );
-                      }}
-                    >
-                      <NativeSelectOption value="">Select a Charge Item</NativeSelectOption>
-                      {VISIT_CHARGE_OPTIONS.map((option) => {
-                        const items = listVisitChargeItems(chargeItems, option.value, visitDate);
-                        if (items.length === 0) return null;
-                        return (
-                          <optgroup key={option.value} label={option.label}>
-                            {items.map((item) => (
-                              <NativeSelectOption key={item.id} value={String(item.id)}>
-                                {item.code} · {item.name} ·{' '}
-                                {formatMoney(
+                          )?.value;
+                          setValue('chargeKind', kind ?? '', { shouldValidate: true });
+                          setValue(
+                            'chargeAmount',
+                            item
+                              ? String(
                                   isFreeFollowUpCharge(item, visitTypeCode, hasRecentDoctorVisit)
                                     ? 0
                                     : visitChargePrice(item)
-                                )}
-                              </NativeSelectOption>
-                            ))}
-                          </optgroup>
-                        );
-                      })}
-                    </NativeSelect>
-                    <FieldError>{errors.chargeKind?.message}</FieldError>
-                    {freeFollowUp ? (
-                      <p className="text-muted-foreground text-xs">
-                        Eligible follow-up within 7 days of a completed Doctor Visit: suggested
-                        charge is zero. Confirm the policy before saving.
-                      </p>
-                    ) : null}
-                  </Field>
-                )}
-              />
+                                )
+                              : '',
+                            {
+                              shouldValidate: true,
+                            }
+                          );
+                        }}
+                      >
+                        <NativeSelectOption value="">Select a Charge Item</NativeSelectOption>
+                        {VISIT_CHARGE_OPTIONS.map((option) => {
+                          const items = listVisitChargeItems(chargeItems, option.value, visitDate);
+                          if (items.length === 0) return null;
+                          return (
+                            <optgroup key={option.value} label={option.label}>
+                              {items.map((item) => (
+                                <NativeSelectOption key={item.id} value={String(item.id)}>
+                                  {item.code} · {item.name} ·{' '}
+                                  {formatMoney(
+                                    isFreeFollowUpCharge(item, visitTypeCode, hasRecentDoctorVisit)
+                                      ? 0
+                                      : visitChargePrice(item)
+                                  )}
+                                </NativeSelectOption>
+                              ))}
+                            </optgroup>
+                          );
+                        })}
+                      </NativeSelect>
+                      <FieldError>{errors.chargeKind?.message}</FieldError>
+                      {freeFollowUp ? (
+                        <p className="text-muted-foreground text-xs">
+                          Eligible follow-up within 7 days of a completed Doctor Visit: suggested
+                          charge is zero. Confirm the policy before saving.
+                        </p>
+                      ) : null}
+                    </Field>
+                  )}
+                />
+              )}
               <Controller
                 control={control}
                 name="chargeAmount"

@@ -6,8 +6,10 @@ import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/p
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Props = {
   visit: Visit;
@@ -44,8 +46,22 @@ export function VisitClinicalPanel({
   const allergenName = (id: number | null) =>
     allergensQuery.data?.data.find((item) => item.id === id)?.name ?? 'Allergen';
 
-  if (chartLoading) {
-    return <p className="text-muted-foreground text-sm">Loading clinical records…</p>;
+  if (chartLoading || noteTypesQuery.isLoading || allergensQuery.isLoading) {
+    return (
+      <div className="grid gap-5 md:grid-cols-2" aria-label="Loading clinical records">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Card key={index} className="shadow-fluent-2">
+            <CardHeader>
+              <Skeleton className="h-5 w-40" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-3/4" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
   if (chartError) {
     return <p className="text-destructive text-sm">Clinical records could not be loaded.</p>;
@@ -53,6 +69,14 @@ export function VisitClinicalPanel({
 
   return (
     <div className="grid items-start gap-5 md:grid-cols-2">
+      {noteTypesQuery.isError || allergensQuery.isError ? (
+        <Alert variant="destructive" className="md:col-span-2">
+          <AlertDescription>
+            Some clinical names could not be loaded. Review the Patient Chart before using these
+            records.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       <Card className="shadow-fluent-2">
         <CardHeader className="flex-row items-center justify-between gap-3">
           <CardTitle className="text-base">Vital Signs this Visit</CardTitle>

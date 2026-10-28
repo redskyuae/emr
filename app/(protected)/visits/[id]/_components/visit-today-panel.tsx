@@ -9,6 +9,7 @@ import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/p
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 import { VisitDetailsCard } from './visit-details-card';
@@ -20,6 +21,7 @@ type Props = {
   chartError: boolean;
   invoiceCount: number;
   invoiceLoading: boolean;
+  invoiceError: boolean;
   canRecordVitals: boolean;
   canCreateNote: boolean;
   canCreateInvoice: boolean;
@@ -34,30 +36,36 @@ function ChecklistRow({
   detail,
   done,
   action,
+  loading = false,
 }: {
   label: string;
-  detail: string;
+  detail: React.ReactNode;
   done: boolean;
   action?: React.ReactNode;
+  loading?: boolean;
 }) {
   return (
     <li className="flex items-center gap-3 border-t py-3 first:border-t-0">
-      <span
-        className={cn(
-          'grid size-6 shrink-0 place-items-center rounded-full border-2',
-          done
-            ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-border text-muted-foreground'
-        )}
-        aria-hidden="true"
-      >
-        {done ? <Check className="size-3.5" /> : <Circle className="size-2 fill-current" />}
-      </span>
-      <span className="min-w-0 flex-1">
+      {loading ? (
+        <Skeleton className="size-6 shrink-0 rounded-full" />
+      ) : (
+        <span
+          className={cn(
+            'grid size-6 shrink-0 place-items-center rounded-full border-2',
+            done
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border text-muted-foreground'
+          )}
+          aria-hidden="true"
+        >
+          {done ? <Check className="size-3.5" /> : <Circle className="size-2 fill-current" />}
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{label}</span>
-        <span className="text-muted-foreground block text-xs">{detail}</span>
-      </span>
-      {action}
+        <div className="text-muted-foreground text-xs">{detail}</div>
+      </div>
+      {!loading ? action : null}
     </li>
   );
 }
@@ -69,6 +77,7 @@ export function VisitTodayPanel({
   chartError,
   invoiceCount,
   invoiceLoading,
+  invoiceError,
   canRecordVitals,
   canCreateNote,
   canCreateInvoice,
@@ -170,14 +179,17 @@ export function VisitTodayPanel({
             <ul>
               <ChecklistRow
                 label="Vital Signs"
+                loading={chartLoading}
                 detail={
-                  chartLoading
-                    ? 'Loading…'
-                    : chartError
-                      ? 'Could not load records'
-                      : visitVitals.length
-                        ? `${visitVitals.length} recorded`
-                        : 'Not recorded'
+                  chartLoading ? (
+                    <Skeleton className="mt-1 h-3 w-28" />
+                  ) : chartError ? (
+                    'Could not load records'
+                  ) : visitVitals.length ? (
+                    `${visitVitals.length} recorded`
+                  ) : (
+                    'Not recorded'
+                  )
                 }
                 done={visitVitals.length > 0}
                 action={
@@ -190,7 +202,16 @@ export function VisitTodayPanel({
               />
               <ChecklistRow
                 label="Clinical Note"
-                detail={`${visitNotes.length} notes · ${signedCount} signed`}
+                loading={chartLoading}
+                detail={
+                  chartLoading ? (
+                    <Skeleton className="mt-1 h-3 w-32" />
+                  ) : chartError ? (
+                    'Could not load records'
+                  ) : (
+                    `${visitNotes.length} notes · ${signedCount} signed`
+                  )
+                }
                 done={visitNotes.length > 0}
                 action={
                   active && canCreateNote ? (
@@ -209,12 +230,17 @@ export function VisitTodayPanel({
               ) : null}
               <ChecklistRow
                 label="Invoice"
+                loading={invoiceLoading}
                 detail={
-                  invoiceLoading
-                    ? 'Loading…'
-                    : invoiceCount
-                      ? `${invoiceCount} linked`
-                      : 'Not created'
+                  invoiceLoading ? (
+                    <Skeleton className="mt-1 h-3 w-24" />
+                  ) : invoiceError ? (
+                    'Could not load Invoices'
+                  ) : invoiceCount ? (
+                    `${invoiceCount} linked`
+                  ) : (
+                    'Not created'
+                  )
                 }
                 done={invoiceCount > 0}
                 action={
@@ -237,13 +263,15 @@ export function VisitTodayPanel({
             <ShieldCheck className="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
             <div className="space-y-1">
               <p className="text-sm font-medium">Patient safety</p>
-              <p className="text-muted-foreground text-sm">
-                {chartLoading
-                  ? 'Loading allergies and medications…'
-                  : chartError
-                    ? 'Safety records could not be loaded.'
-                    : `${chart?.allergies.filter((item) => item.status === 'active').length ?? 0} active allergies · ${chart?.medications.filter((item) => item.status === 'active').length ?? 0} current medications on record.`}
-              </p>
+              <div className="text-muted-foreground text-sm">
+                {chartLoading ? (
+                  <Skeleton className="h-4 w-52 max-w-full" />
+                ) : chartError ? (
+                  'Safety records could not be loaded.'
+                ) : (
+                  `${chart?.allergies.filter((item) => item.status === 'active').length ?? 0} active allergies · ${chart?.medications.filter((item) => item.status === 'active').length ?? 0} current medications on record.`
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

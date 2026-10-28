@@ -48,6 +48,7 @@ import { VisitBillingFields } from './visit-billing-fields';
 import { AppointmentContextCard, PatientContextCard } from './visit-context-rail';
 import { VisitDetailsFields, VisitSourceFields } from './visit-form-fields';
 import { useAppointmentVisitPrefill } from './use-appointment-visit-prefill';
+import CreateVisitLoader from '../loader';
 
 const DEFAULT_VALUES: CreateVisitFormValues = {
   mode: 'appointment',
@@ -180,12 +181,14 @@ export function CreateVisitPageImpl({
     appointmentsQuery.isLoading ||
     initialAppointmentQuery.isLoading ||
     doctorsQuery.isLoading ||
-    visitTypesQuery.isLoading;
+    visitTypesQuery.isLoading ||
+    currentUserQuery.isLoading;
   const dependencyError =
     appointmentsQuery.error ??
     initialAppointmentQuery.error ??
     doctorsQuery.error ??
-    visitTypesQuery.error;
+    visitTypesQuery.error ??
+    currentUserQuery.error;
 
   async function retryDependencies() {
     await Promise.all([
@@ -193,6 +196,7 @@ export function CreateVisitPageImpl({
       initialAppointmentId ? initialAppointmentQuery.refetch() : Promise.resolve(),
       doctorsQuery.refetch(),
       visitTypesQuery.refetch(),
+      currentUserQuery.refetch(),
     ]);
   }
 
@@ -321,6 +325,8 @@ export function CreateVisitPageImpl({
     );
     router.push(`/visits?date=${encodeURIComponent(result.data.visitDate)}`);
   });
+
+  if (loading) return <CreateVisitLoader />;
 
   return (
     <div className="space-y-4 pb-20">

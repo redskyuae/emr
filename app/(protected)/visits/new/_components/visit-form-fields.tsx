@@ -12,6 +12,7 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
 import { getAppointmentVisitDefaults } from '../_utils/appointment-visit-defaults';
@@ -184,7 +185,10 @@ export function VisitDetailsFields({
         <div className="bg-muted/50 rounded-md border p-4 text-sm" aria-live="polite">
           <p className="font-medium">Patient type</p>
           {patientTypeLoading ? (
-            <p className="text-muted-foreground mt-1">Checking completed Visit history…</p>
+            <div className="mt-2 space-y-2" aria-label="Checking completed Visit history">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-3 w-72 max-w-full" />
+            </div>
           ) : patientTypeError ? (
             <p className="text-destructive mt-1">
               Could not verify Patient type.{' '}

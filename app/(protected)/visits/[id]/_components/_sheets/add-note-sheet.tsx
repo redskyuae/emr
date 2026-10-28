@@ -10,6 +10,7 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import {
   Select,
@@ -27,6 +28,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   visitNoteFormSchema,
   type VisitNoteFormValues,
@@ -124,38 +126,59 @@ export function AddNoteSheet({
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <FieldGroup>
-              <Controller
-                control={form.control}
-                name="noteTypeId"
-                render={({ field }) => (
-                  <Field data-invalid={Boolean(form.formState.errors.noteTypeId)}>
-                    <FieldLabel htmlFor="note-type">
-                      Note type{' '}
-                      <span aria-hidden className="text-destructive">
-                        *
-                      </span>
-                    </FieldLabel>
-                    <Select
-                      value={field.value === '' ? undefined : field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger id="note-type" aria-required className="w-full">
-                        <SelectValue placeholder="Select a note type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(noteTypes ?? []).map((noteType) => (
-                          <SelectItem key={noteType.id} value={String(noteType.id)}>
-                            {noteType.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.noteTypeId ? (
-                      <FieldError>{form.formState.errors.noteTypeId.message}</FieldError>
-                    ) : null}
-                  </Field>
-                )}
-              />
+              {noteTypesQuery.isLoading ? (
+                <div className="space-y-2" aria-label="Loading Clinical Note Types">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : noteTypesQuery.isError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Clinical Note Types could not be loaded. Retry to continue.
+                  </AlertDescription>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void noteTypesQuery.refetch()}
+                  >
+                    Retry
+                  </Button>
+                </Alert>
+              ) : (
+                <Controller
+                  control={form.control}
+                  name="noteTypeId"
+                  render={({ field }) => (
+                    <Field data-invalid={Boolean(form.formState.errors.noteTypeId)}>
+                      <FieldLabel htmlFor="note-type">
+                        Note type{' '}
+                        <span aria-hidden className="text-destructive">
+                          *
+                        </span>
+                      </FieldLabel>
+                      <Select
+                        value={field.value === '' ? undefined : field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger id="note-type" aria-required className="w-full">
+                          <SelectValue placeholder="Select a note type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(noteTypes ?? []).map((noteType) => (
+                            <SelectItem key={noteType.id} value={String(noteType.id)}>
+                              {noteType.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors.noteTypeId ? (
+                        <FieldError>{form.formState.errors.noteTypeId.message}</FieldError>
+                      ) : null}
+                    </Field>
+                  )}
+                />
+              )}
 
               {SOAP_SECTIONS.map((section) => (
                 <Field
@@ -186,7 +209,15 @@ export function AddNoteSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createNote.isPending}>
+            <Button
+              type="submit"
+              disabled={
+                createNote.isPending ||
+                noteTypesQuery.isLoading ||
+                noteTypesQuery.isError ||
+                !noteTypes?.length
+              }
+            >
               <NotebookPen className="size-4" />
               {createNote.isPending ? 'Saving…' : 'Add note'}
             </Button>

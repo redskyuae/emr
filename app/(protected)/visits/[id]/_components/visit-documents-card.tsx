@@ -10,6 +10,7 @@ import { useAddVisitDocument } from '@/app/queries/visits/useAddVisitDocument';
 import { useVisitDocumentsQuery } from '@/app/queries/visits/useVisitDocuments';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Empty,
   EmptyDescription,
@@ -47,7 +48,15 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
       </CardHeader>
       <CardContent>
         {documentsQuery.isLoading ? (
-          <p className="text-muted-foreground text-sm">Loading documents…</p>
+          <div className="space-y-2" aria-label="Loading Visit documents">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="flex items-center gap-3 rounded-md border p-3">
+                <Skeleton className="size-4" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            ))}
+          </div>
         ) : documentsQuery.isError ? (
           <p className="text-destructive text-sm">{getApiErrorMessage(documentsQuery.error)}</p>
         ) : documents.length === 0 ? (

@@ -6,6 +6,7 @@ import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Empty,
   EmptyDescription,
@@ -45,7 +46,19 @@ export function VisitBillingPanel({ visit, invoices, loading, error, canCreateIn
         ) : null}
       </CardHeader>
       <CardContent>
-        {loading ? <p className="text-muted-foreground text-sm">Loading Invoices…</p> : null}
+        {loading ? (
+          <div className="space-y-3" aria-label="Loading Invoices">
+            {Array.from({ length: 2 }, (_, index) => (
+              <div key={index} className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-6 w-20" />
+              </div>
+            ))}
+          </div>
+        ) : null}
         {error ? <p className="text-destructive text-sm">Invoices could not be loaded.</p> : null}
         {!loading && !error && invoices.length === 0 ? (
           <Empty className="min-h-56 rounded-lg border border-dashed">
@@ -60,7 +73,7 @@ export function VisitBillingPanel({ visit, invoices, loading, error, canCreateIn
             </EmptyHeader>
           </Empty>
         ) : null}
-        {invoices.length > 0 ? (
+        {!loading && !error && invoices.length > 0 ? (
           <ul className="space-y-3">
             {invoices.map((invoice) => (
               <li

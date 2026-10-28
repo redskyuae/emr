@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Eye, MoreHorizontal, PlayCircle, XCircle } from 'lucide-react';
+import { Eye, Loader2, MoreHorizontal, PlayCircle, XCircle } from 'lucide-react';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Badge } from '@/components/ui/badge';
@@ -98,10 +98,15 @@ export function VisitsTable({
                           type="button"
                           size="sm"
                           disabled={isPending}
+                          aria-busy={isPending}
                           onClick={() => onStart(visit)}
                         >
-                          <PlayCircle className="size-4" />
-                          Start
+                          {isPending ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <PlayCircle className="size-4" />
+                          )}
+                          {isPending ? 'Starting…' : 'Start'}
                         </Button>
                       ) : null}
 

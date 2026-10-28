@@ -26,6 +26,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 
 import {
   dailyTreatmentFormSchema,
@@ -127,12 +128,39 @@ export function DailyTreatmentSheet({
                 Planned duration:{' '}
                 {session.durationMinutes ? `${session.durationMinutes} minutes` : 'Not configured'}
               </p>
-              <p className="text-muted-foreground">
-                Therapist: {appointment.data?.therapist?.name ?? 'Not assigned'} · Room:{' '}
-                {room.data?.roomNumber ?? 'Not assigned'}
-              </p>
+              {appointment.isLoading || room.isLoading ? (
+                <Skeleton className="h-4 w-48" aria-label="Loading Appointment and Room" />
+              ) : appointment.isError || room.isError ? (
+                <p className="text-destructive">Appointment or Room details could not be loaded.</p>
+              ) : (
+                <p className="text-muted-foreground">
+                  Therapist: {appointment.data?.therapist?.name ?? 'Not assigned'} · Room:{' '}
+                  {room.data?.roomNumber ?? 'Not assigned'}
+                </p>
+              )}
             </div>
-            {availableNoteTypes.length === 0 && !noteTypes.isLoading ? (
+            {noteTypes.isLoading ? (
+              <div className="space-y-2" aria-label="Loading Clinical Note Types">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : null}
+            {noteTypes.isError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Clinical Note Types could not be loaded</AlertTitle>
+                <AlertDescription>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void noteTypes.refetch()}
+                  >
+                    Retry
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            {availableNoteTypes.length === 0 && !noteTypes.isLoading && !noteTypes.isError ? (
               <Alert variant="destructive">
                 <AlertTitle>No Clinical Note Types configured</AlertTitle>
                 <AlertDescription>
@@ -220,7 +248,12 @@ export function DailyTreatmentSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createNote.isPending || !noteTypeId}>
+            <Button
+              type="submit"
+              disabled={
+                createNote.isPending || noteTypes.isLoading || noteTypes.isError || !noteTypeId
+              }
+            >
               {createNote.isPending ? 'Saving…' : 'Record Session'}
             </Button>
           </SheetFooter>
