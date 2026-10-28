@@ -106,7 +106,7 @@ describe('App shell navigation permissions', () => {
 
     const enabledGroups = getVisibleNavGroups(appNavGroups, permissions, true, true);
     expect(enabledGroups.map(({ title }) => title)).toEqual(['Overview', 'Clinical', 'Outpatient']);
-    expect(enabledGroups[2].items.map(({ title }) => title)).toEqual(['Visits']);
+    expect(enabledGroups[2].items.map(({ title }) => title)).toEqual(['Visits', 'Visit List']);
 
     expect(getVisibleNavGroups(appNavGroups, permissions, true, false)).not.toContainEqual(
       expect.objectContaining({ title: 'Outpatient' })

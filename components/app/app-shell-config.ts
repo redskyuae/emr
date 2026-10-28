@@ -14,6 +14,7 @@ import {
   Hospital,
   LayoutDashboard,
   LayoutGrid,
+  ListChecks,
   ReceiptText,
   Settings,
   ShieldCheck,
@@ -21,6 +22,7 @@ import {
   Tag,
   UserRoundCog,
   UsersRound,
+  WalletCards,
   Wrench,
 } from 'lucide-react';
 
@@ -98,6 +100,12 @@ export const appNavGroups: AppNavGroup[] = [
         icon: ClipboardList,
         permission: 'visit',
       },
+      {
+        title: 'Visit List',
+        href: '/visit-list',
+        icon: ListChecks,
+        permission: 'visit',
+      },
     ],
   },
   {
@@ -125,6 +133,12 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/billing',
         icon: ReceiptText,
         exact: true,
+        permission: 'invoice',
+      },
+      {
+        title: 'Billing Counter',
+        href: '/billing-counter',
+        icon: WalletCards,
         permission: 'invoice',
       },
     ],
@@ -423,6 +437,8 @@ const appointmentNavHrefs = new Set([
   '/billing-masters/charge-items',
 ]);
 
+const visitNavHrefs = new Set(['/visits', '/visit-list']);
+
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
     title: 'Appointment Dashboard',
@@ -564,6 +580,19 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       href: '/visits/new',
       permission: 'visit:create',
     },
+  },
+  '/visit-list': {
+    title: 'Visit List',
+    subtitle: 'Search every outpatient Visit by date, Doctor, status, type, source, and billing.',
+    primaryAction: {
+      label: 'Create Visit',
+      href: '/visits/new',
+      permission: 'visit:create',
+    },
+  },
+  '/billing-counter': {
+    title: 'Billing Counter',
+    subtitle: 'Invoice, collect advances, refund, and close the shift for this Counter.',
   },
   '/visits/new': {
     title: 'Create Visit',
@@ -778,7 +807,7 @@ function filterNavItem(
     !hasNavPermission(item.permission, grantedResources) ||
     (appointmentsOnly &&
       !appointmentNavHrefs.has(item.href) &&
-      !(showVisits && item.href === '/visits'))
+      !(showVisits && visitNavHrefs.has(item.href)))
   ) {
     return null;
   }
