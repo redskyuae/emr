@@ -25,14 +25,14 @@ export function dailyTreatmentToSoap(
   session: { label: string; procedure: string; sessionNumber: number }
 ) {
   return {
-    subjective: `Treatment response: ${values.response}${values.painScore ? `\nPain score: ${values.painScore}/10` : ''}`,
+    subjective: `**Treatment response:**\n\n${values.response}${values.painScore ? `\n\nPain score: ${values.painScore}/10` : ''}`,
     objective: [
       `Session ${session.sessionNumber}: ${session.label} · ${session.procedure}`,
       values.actualMinutes ? `Actual duration: ${values.actualMinutes} minutes` : null,
-      values.variations ? `Variations: ${values.variations}` : null,
-      values.adverseEvents ? `Adverse events: ${values.adverseEvents}` : null,
+      values.variations ? `**Variations:**\n\n${values.variations}` : null,
+      values.adverseEvents ? `**Adverse events:**\n\n${values.adverseEvents}` : null,
     ]
       .filter(Boolean)
-      .join('\n'),
+      .join('\n\n'),
   };
 }

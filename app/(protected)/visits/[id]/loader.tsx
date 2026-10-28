@@ -44,10 +44,13 @@ export default function VisitDetailPageLoader() {
               className="bg-card shadow-fluent-2 space-y-4 rounded-lg border p-5"
               style={{ minHeight: height }}
             >
-              <Skeleton className="h-5 w-40" />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-7 w-28" />
+              </div>
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-12 w-1/2" />
+              <Skeleton className="h-24 w-full" />
             </div>
           ))}
         </div>

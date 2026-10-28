@@ -37,8 +37,9 @@ describe('daily Treatment Session note', () => {
         { label: 'Day 1', procedure: 'Abhyanga', sessionNumber: 1 }
       )
     ).toEqual({
-      subjective: 'Treatment response: Improved\nPain score: 4/10',
-      objective: 'Session 1: Day 1 · Abhyanga\nActual duration: 45 minutes\nAdverse events: None',
+      subjective: '**Treatment response:**\n\nImproved\n\nPain score: 4/10',
+      objective:
+        'Session 1: Day 1 · Abhyanga\n\nActual duration: 45 minutes\n\n**Adverse events:**\n\nNone',
     });
   });
 });

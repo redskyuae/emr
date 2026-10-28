@@ -25,11 +25,12 @@ describe('doctor consultation capture', () => {
 
   it('keeps modern and Ayurvedic findings in Visit-linked SOAP sections', () => {
     expect(consultationToSoap(values, { code: 'M54', title: 'Dorsalgia' })).toEqual({
-      subjective: 'Chief complaint: Low back pain\n\nPresent condition / HPI: Three weeks',
+      subjective:
+        '**Chief complaint:**\n\nLow back pain\n\n**Present condition / HPI:**\n\nThree weeks',
       objective:
-        'Examination / red flags: No red flags\n\nPrakriti: Vata-Pitta\n\nVikriti / body condition: Vata aggravation',
-      assessment: 'Modern diagnosis: M54 — Dorsalgia\n\nAyurvedic diagnosis: Katigraha',
-      plan: 'Treatment precautions: Avoid heavy lifting',
+        '**Examination / red flags:**\n\nNo red flags\n\n**Prakriti:**\n\nVata-Pitta\n\n**Vikriti / body condition:**\n\nVata aggravation',
+      assessment: 'Modern diagnosis: M54 — Dorsalgia\n\n**Ayurvedic diagnosis:**\n\nKatigraha',
+      plan: '**Treatment precautions:**\n\nAvoid heavy lifting',
     });
   });
 });

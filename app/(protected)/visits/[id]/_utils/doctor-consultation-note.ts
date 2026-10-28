@@ -19,7 +19,7 @@ export const doctorConsultationFormSchema = z.object({
 export type DoctorConsultationFormValues = z.infer<typeof doctorConsultationFormSchema>;
 
 function labelled(label: string, value: string) {
-  return value ? `${label}: ${value}` : null;
+  return value ? `**${label}:**\n\n${value}` : null;
 }
 
 export function consultationToSoap(

@@ -4,7 +4,7 @@ import { PlusIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import type { AssessmentAction, AssessmentState } from '../_utils/assessment-state';
 import { SectionHeading } from './section-heading';
 
@@ -91,13 +91,10 @@ export function AssessColumn({
 
               <label>
                 <span className="mb-1 block text-sm font-medium">HPI narrative</span>
-                <Textarea
+                <RichTextEditor
                   aria-label="HPI narrative"
-                  className="min-h-28 resize-y"
                   disabled={disabled}
-                  onChange={(event) =>
-                    dispatch({ type: 'update-field', field: 'hpi', value: event.target.value })
-                  }
+                  onChange={(value) => dispatch({ type: 'update-field', field: 'hpi', value })}
                   value={state.hpi}
                 />
               </label>

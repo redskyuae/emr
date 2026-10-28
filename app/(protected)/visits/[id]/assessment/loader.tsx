@@ -51,6 +51,7 @@ export default function ClinicianAssessmentLoader() {
           <Skeleton className="h-72 w-full" />
           <Skeleton className="h-72 w-full" />
         </div>
+        <Skeleton className="h-32 w-full" />
       </div>
 
       <div className="bg-card shadow-fluent-8 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
