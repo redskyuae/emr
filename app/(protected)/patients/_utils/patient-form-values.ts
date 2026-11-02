@@ -94,7 +94,8 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     emergencyContactName: patient.emergencyContactName ?? '',
     emergencyContactRelationship: patient.emergencyContactRelationship ?? '',
     emergencyContactGender: patient.emergencyContactGender ?? '',
-    emergencyContactPhone: patient.emergencyContactPhone ?? '',
+    // Same legacy clean-up as alternatePhone: saved before the digits-only rule.
+    emergencyContactPhone: (patient.emergencyContactPhone ?? '').replace(/\D/g, ''),
   };
 }
 

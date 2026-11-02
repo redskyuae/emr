@@ -1893,7 +1893,7 @@ const patientRequestExample = {
   emergencyContactName: 'Kiran Rao',
   emergencyContactRelationship: 'Spouse',
   emergencyContactGender: 'male',
-  emergencyContactPhone: '+91-9988776655',
+  emergencyContactPhone: '919988776655',
 };
 
 const patientExample = {
@@ -2068,6 +2068,13 @@ const patientValidationFailed = {
           value: {
             message: 'Validation failed',
             errors: ['Patient alternate phone must contain only digits'],
+          },
+        },
+        invalidNextOfKinPhone: {
+          summary: 'Next of Kin phone contains non-digit characters',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient Next of Kin phone must contain only digits'],
           },
         },
         missingIdentificationCategory: {
@@ -10281,7 +10288,7 @@ export const openApiDocument = {
             enum: ['male', 'female', 'other', 'unknown'],
             description: 'Next of Kin Gender in Patient Registration UI.',
           },
-          emergencyContactPhone: { type: 'string', maxLength: 20 },
+          emergencyContactPhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
         },
       },
       CreateAppointmentRequest: {
@@ -11543,7 +11550,7 @@ export const openApiDocument = {
           },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
-          emergencyContactPhone: { type: 'string', maxLength: 20 },
+          emergencyContactPhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
         },
       },
       UpdatePatientRequest: schemaRef('CreatePatientRequest'),

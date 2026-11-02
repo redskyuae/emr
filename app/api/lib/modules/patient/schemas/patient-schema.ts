@@ -343,7 +343,12 @@ const patientPayloadSchema = z
       z.string().trim().max(50, 'Patient Next of Kin Relationship must be at most 50 characters')
     ),
     emergencyContactGender: optionalTrimmedValue(genderSchema),
-    emergencyContactPhone: optionalTrimmedValue(patientPhoneSchema('Next of Kin phone')),
+    emergencyContactPhone: optionalTrimmedValue(
+      patientPhoneSchema('Next of Kin phone').regex(
+        /^\d+$/,
+        'Patient Next of Kin phone must contain only digits'
+      )
+    ),
   })
   .refine((data) => data.stateId === undefined || data.countryId !== undefined, {
     message: 'Patient country ID is required when state ID is provided',

@@ -167,7 +167,10 @@ export const patientFormSchema = z
     emergencyContactName: optionalNameField('Next of Kin', 150),
     emergencyContactRelationship: optionalNameField('Next of Kin Relationship', 50),
     emergencyContactGender: z.enum(PATIENT_GENDERS).optional().or(z.literal('')),
-    emergencyContactPhone: optionalPhoneField('Next of Kin Phone'),
+    emergencyContactPhone: optionalPhoneField('Next of Kin Phone').refine(
+      (value) => !value || /^\d+$/.test(value),
+      'Next of Kin Phone must contain only digits.'
+    ),
   })
   .superRefine((data, ctx) => {
     if (data.title === '') {

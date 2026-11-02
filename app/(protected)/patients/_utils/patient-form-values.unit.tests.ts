@@ -98,14 +98,29 @@ describe('Patient form values', () => {
     expect(patientFormValuesToRequest(values).alternatePhone).toBeUndefined();
   });
 
-  it('should leave the phone and emergency contact phone untouched when loading', () => {
+  it('should leave the phone untouched when loading', () => {
+    const values = patientToFormValues({ ...existingPatient, phone: '+971-50-1234567' });
+
+    expect(values.phone).toBe('+971-50-1234567');
+  });
+
+  it('should strip non-digits from a legacy Next of Kin phone when loading the edit form', () => {
     const values = patientToFormValues({
       ...existingPatient,
-      phone: '+971-50-1234567',
       emergencyContactPhone: '+971 50 7654321',
     });
 
-    expect(values.phone).toBe('+971-50-1234567');
-    expect(values.emergencyContactPhone).toBe('+971 50 7654321');
+    expect(values.emergencyContactPhone).toBe('971507654321');
+  });
+
+  it('should let an unrelated edit save for a patient with a legacy Next of Kin phone', () => {
+    const { form, api } = editAddress({
+      ...existingPatient,
+      emergencyContactPhone: '747920843idjcksdno',
+    });
+
+    expect(form.success).toBe(true);
+    expect(api.success).toBe(true);
+    expect(api.data?.emergencyContactPhone).toBe('747920843');
   });
 });
