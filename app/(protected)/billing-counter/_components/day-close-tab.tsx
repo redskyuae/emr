@@ -21,6 +21,7 @@ import {
 import { formatAed, round2 } from '../_utils/money';
 import { CounterField } from './counter-field';
 import { useCounter } from './counter-state';
+import { MethodBreakdown } from './method-breakdown';
 import { ShiftOpenPanel } from './shift-open-panel';
 import { Money, TenderChips, TxnTypeBadge } from './txn-cells';
 
@@ -172,7 +173,7 @@ export function DayCloseTab() {
           accent="border-t-destructive"
         />
         <Kpi
-          label="Bank, cheque & Google Pay"
+          label="UPI, wallets, transfer & cheque"
           value={`AED ${formatAed(totals.bankAndDigital)}`}
           accent="border-t-primary"
         />
@@ -242,6 +243,8 @@ export function DayCloseTab() {
               </table>
             </CardContent>
           </Card>
+
+          <MethodBreakdown txns={txns} />
 
           {outstandingTxns.length > 0 ? (
             <Card className="shadow-fluent-2">

@@ -228,6 +228,7 @@ export function CreateVisitPageImpl({
 
   const submit = form.handleSubmit(async (values) => {
     setServerErrors([]);
+    let paymentReceiptPath: string | null = null;
     if (createdVisit) return;
     if (!patient) {
       setServerErrors(['Select a Patient or Appointment before creating the Visit.']);
@@ -305,7 +306,7 @@ export function CreateVisitPageImpl({
         });
         await finalizeInvoiceMutation.mutateAsync(invoice.data.id);
         if (values.paymentTiming === 'NOW') {
-          await recordPaymentMutation.mutateAsync({
+          const recordedPayment = await recordPaymentMutation.mutateAsync({
             id: invoice.data.id,
             request: {
               amount: Number(values.amountReceived),
@@ -313,6 +314,7 @@ export function CreateVisitPageImpl({
               reference: values.paymentReference || undefined,
             },
           });
+          paymentReceiptPath = `/billing/${invoice.data.id}?receipt=${recordedPayment.data.payment.id}`;
         }
       } catch (error) {
         setServerErrors(getApiErrors(error));
@@ -323,7 +325,7 @@ export function CreateVisitPageImpl({
     toast.success(
       `${result.data.visitNumber} created${values.createInvoice ? ' with Billing' : ''}.`
     );
-    router.push(`/visits?date=${encodeURIComponent(result.data.visitDate)}`);
+    router.push(paymentReceiptPath ?? `/visits?date=${encodeURIComponent(result.data.visitDate)}`);
   });
 
   if (loading) return <CreateVisitLoader />;

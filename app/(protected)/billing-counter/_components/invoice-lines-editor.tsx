@@ -1,19 +1,43 @@
-import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
+import { cn } from '@/lib/utils';
 import { CHARGE_ITEMS } from '../_data/counter-seed';
 import { calculateInvoice, newInvoiceLine } from '../_utils/invoice-calc';
 import { formatAed } from '../_utils/money';
-import type { BillTo, ChargeItem, InvoiceLine } from '../_utils/counter-types';
+import type { BillTo, InvoiceLine } from '../_utils/counter-types';
+import { ChargeItemPicker } from './charge-item-picker';
 
-const CATEGORIES = ['Consultation', 'Investigation', 'Therapy', 'Pharmacy', 'Wellness'] as const;
+function LineField({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label htmlFor={htmlFor} className="text-muted-foreground text-xs">
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
 
-function optionLabel(item: ChargeItem) {
-  return `${item.code} — ${item.description} — AED ${formatAed(item.unitPrice)}`;
+function ReadOnlyValue({ children, strong }: { children: ReactNode; strong?: boolean }) {
+  return (
+    <p className={cn('flex h-8 items-center text-sm tabular-nums', strong && 'font-semibold')}>
+      {children}
+    </p>
+  );
 }
 
 export function InvoiceLinesEditor({
@@ -25,115 +49,102 @@ export function InvoiceLinesEditor({
   hasPayer: boolean;
   onChange: (lines: InvoiceLine[]) => void;
 }) {
-  const [selectedCode, setSelectedCode] = useState('');
   const totals = calculateInvoice(lines);
 
   function patchLine(key: string, patch: Partial<InvoiceLine>) {
     onChange(lines.map((line) => (line.key === key ? { ...line, ...patch } : line)));
   }
 
-  function addLine() {
-    const item = CHARGE_ITEMS.find((candidate) => candidate.code === selectedCode);
-
-    if (item) {
-      onChange([...lines, newInvoiceLine(item, hasPayer)]);
-      setSelectedCode('');
-    }
-  }
-
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <NativeSelect
-          aria-label="Charge Item to add"
-          className="w-full"
-          value={selectedCode}
-          onChange={(event) => setSelectedCode(event.target.value)}
-        >
-          <option value="">Choose a Charge Item (service or CPT code)…</option>
-          {CATEGORIES.map((category) => (
-            <optgroup key={category} label={category}>
-              {CHARGE_ITEMS.filter((item) => item.category === category).map((item) => (
-                <option key={item.code} value={item.code}>
-                  {optionLabel(item)}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </NativeSelect>
-        <Button type="button" variant="outline" disabled={!selectedCode} onClick={addLine}>
-          <Plus className="size-4" />
-          Add
-        </Button>
-      </div>
+    <div className="@container space-y-3">
+      <ChargeItemPicker onPick={(item) => onChange([...lines, newInvoiceLine(item, hasPayer)])} />
 
       {lines.length === 0 ? (
         <p className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
-          No charges yet. Add a Charge Item to start the Invoice.
+          No charges yet. Search above to add a Charge Item to the Invoice.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="text-muted-foreground bg-muted/40 border-b text-left text-xs">
-                <th className="p-2 pl-3 font-medium">Code</th>
-                <th className="p-2 font-medium">Description</th>
-                <th className="p-2 text-right font-medium">Qty</th>
-                <th className="p-2 text-right font-medium">Unit</th>
-                <th className="p-2 text-right font-medium">Disc.</th>
-                <th className="p-2 text-right font-medium">VAT %</th>
-                {hasPayer ? <th className="p-2 font-medium">Bill to</th> : null}
-                <th className="p-2 text-right font-medium">Total</th>
-                <th className="p-2 pr-3">
-                  <span className="sr-only">Remove</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((line, index) => (
-                <tr key={line.key} className="border-b last:border-b-0">
-                  <td className="p-2 pl-3 font-mono text-xs">{line.code}</td>
-                  <td className="p-2">
-                    {line.description}
-                    {CHARGE_ITEMS.find((item) => item.code === line.code)?.cpt ? (
-                      <Badge variant="secondary" className="ml-2">
-                        CPT
-                      </Badge>
-                    ) : null}
-                  </td>
-                  <td className="p-2">
+        <ul className="space-y-2">
+          {lines.map((line, index) => {
+            const calculated = totals.lines[index];
+
+            return (
+              <li key={line.key} className="space-y-3 rounded-md border p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      {line.description}
+                      {CHARGE_ITEMS.find((item) => item.code === line.code)?.cpt ? (
+                        <Badge variant="secondary" className="ml-2">
+                          CPT
+                        </Badge>
+                      ) : null}
+                    </p>
+                    <p className="text-muted-foreground font-mono text-xs">{line.code}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-7 shrink-0"
+                    aria-label={`Remove ${line.description}`}
+                    onClick={() => onChange(lines.filter((item) => item.key !== line.key))}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 @md:grid-cols-3 @2xl:grid-cols-6">
+                  <LineField label="Qty" htmlFor={`${line.key}-qty`}>
                     <Input
+                      id={`${line.key}-qty`}
                       type="number"
                       min={1}
                       step={1}
                       aria-label={`Quantity for ${line.description}`}
-                      className="ml-auto h-8 w-16 text-right tabular-nums"
+                      className="h-8 text-right tabular-nums"
                       value={line.quantity || ''}
                       onChange={(event) =>
                         patchLine(line.key, { quantity: Number(event.target.value) || 0 })
                       }
                     />
-                  </td>
-                  <td className="p-2 text-right tabular-nums">{formatAed(line.unitPrice)}</td>
-                  <td className="p-2">
+                  </LineField>
+                  <LineField label="Unit price">
+                    <ReadOnlyValue>{formatAed(line.unitPrice)}</ReadOnlyValue>
+                  </LineField>
+                  <LineField label="Discount %" htmlFor={`${line.key}-disc`}>
                     <Input
+                      id={`${line.key}-disc`}
                       type="number"
                       min={0}
-                      step="0.01"
-                      aria-label={`Discount for ${line.description}`}
-                      className="ml-auto h-8 w-20 text-right tabular-nums"
-                      value={line.discount || ''}
-                      placeholder="0.00"
+                      max={100}
+                      step="0.5"
+                      inputMode="decimal"
+                      placeholder="0"
+                      aria-label={`Discount percent for ${line.description}`}
+                      className="h-8 text-right tabular-nums"
+                      value={line.discountPercent || ''}
                       onChange={(event) =>
-                        patchLine(line.key, { discount: Number(event.target.value) || 0 })
+                        patchLine(line.key, {
+                          discountPercent: Number(event.target.value) || 0,
+                        })
                       }
                     />
-                  </td>
-                  <td className="p-2 text-right tabular-nums">{line.vatRate}</td>
+                    {calculated.discount > 0 ? (
+                      <p className="text-muted-foreground text-right text-xs tabular-nums">
+                        − {formatAed(calculated.discount)}
+                      </p>
+                    ) : null}
+                  </LineField>
+                  <LineField label="VAT %">
+                    <ReadOnlyValue>{line.vatRate}</ReadOnlyValue>
+                  </LineField>
                   {hasPayer ? (
-                    <td className="p-2">
+                    <LineField label="Bill to" htmlFor={`${line.key}-bill`}>
                       <NativeSelect
+                        id={`${line.key}-bill`}
                         size="sm"
+                        className="w-full"
                         aria-label={`Bill ${line.description} to`}
                         value={line.billTo}
                         onChange={(event) =>
@@ -143,28 +154,16 @@ export function InvoiceLinesEditor({
                         <option value="PATIENT">Patient</option>
                         <option value="PAYER">Insurer</option>
                       </NativeSelect>
-                    </td>
+                    </LineField>
                   ) : null}
-                  <td className="p-2 text-right font-medium tabular-nums">
-                    {formatAed(totals.lines[index].total)}
-                  </td>
-                  <td className="p-2 pr-3">
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-7"
-                      aria-label={`Remove ${line.description}`}
-                      onClick={() => onChange(lines.filter((item) => item.key !== line.key))}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  <LineField label="Line total">
+                    <ReadOnlyValue strong>{formatAed(calculated.total)}</ReadOnlyValue>
+                  </LineField>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       <dl className="ml-auto w-full max-w-xs space-y-1 text-sm tabular-nums">
@@ -195,6 +194,13 @@ export function InvoiceLinesEditor({
           </div>
         ) : null}
       </dl>
+
+      <div className="bg-success/10 border-success/30 flex items-center justify-between rounded-md border px-3 py-2">
+        <span className="text-success text-sm font-medium">Patient pays</span>
+        <span className="text-success font-heading text-lg font-semibold tabular-nums">
+          AED {formatAed(totals.patientShare)}
+        </span>
+      </div>
     </div>
   );
 }

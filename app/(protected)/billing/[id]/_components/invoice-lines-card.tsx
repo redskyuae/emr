@@ -33,7 +33,7 @@ export function InvoiceLinesCard({
   return (
     <Card className="shadow-fluent-2">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Line items</CardTitle>
+        <CardTitle>Charges</CardTitle>
         {showGenerateCharges || showAddLine ? (
           <div className="flex gap-2">
             {showGenerateCharges ? (

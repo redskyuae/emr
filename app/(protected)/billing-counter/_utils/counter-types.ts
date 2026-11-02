@@ -1,6 +1,7 @@
 export type BillTo = 'PATIENT' | 'PAYER';
 export type TxnType = 'INVOICE' | 'ADVANCE' | 'CREDIT_NOTE';
-export type TenderMethod = 'CASH' | 'CARD' | 'CHEQUE' | 'BANK_TRANSFER' | 'GOOGLE_PAY' | 'ADVANCE';
+export type TenderMethod =
+  'CASH' | 'CARD' | 'UPI' | 'GOOGLE_PAY' | 'BANK_TRANSFER' | 'CHEQUE' | 'OTHER' | 'ADVANCE';
 
 export type ChargeItem = {
   code: string;
@@ -22,6 +23,8 @@ export type CounterPatient = {
   name: string;
   phone: string;
   payer: string | null;
+  /** Insurance member / policy number; null for self-pay. */
+  memberId: string | null;
   visits: CounterVisit[];
   advanceBalance: number;
   category: 'Resident' | 'Tourist' | 'GCC National';
@@ -33,7 +36,7 @@ export type InvoiceLine = {
   quantity: number;
   vatRate: number;
   billTo: BillTo;
-  discount: number;
+  discountPercent: number;
   unitPrice: number;
   description: string;
 };
@@ -41,6 +44,8 @@ export type InvoiceLine = {
 export type TenderInput = {
   key: string;
   bank: string;
+  /** Method-specific fields beyond reference and bank, keyed by TenderFieldKey. */
+  details: Record<string, string>;
   amount: number;
   tendered: number;
   reference: string;
@@ -49,6 +54,7 @@ export type TenderInput = {
 
 export type ResolvedTender = {
   bank: string;
+  details: Record<string, string>;
   amount: number;
   change: number;
   reference: string;
@@ -64,6 +70,7 @@ export type LedgerLine = {
   taxable: number;
   vatRate: number;
   discount: number;
+  discountPercent: number;
   quantity: number;
   unitPrice: number;
   description: string;
@@ -87,6 +94,11 @@ export type LedgerTxn = {
   description: string;
   lines: LedgerLine[];
   approvedBy: string | null;
+  /** An Invoice discount needs a reason, and a supervisor above the approval threshold. */
+  discountReason: string | null;
+  discountApprovedBy: string | null;
+  /** Insurer approval number, required when part of the Invoice is billed to the insurer. */
+  payerAuthNumber: string | null;
   tenders: ResolvedTender[];
   reason: string | null;
   /** Credit Notes name what they settle, e.g. "Advance balance" or an Invoice Number. */

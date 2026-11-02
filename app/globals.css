@@ -202,3 +202,23 @@
     mask-image: radial-gradient(closest-side, black 40%, transparent 78%);
   }
 }
+
+@media print {
+  body.payment-receipt-printing > * {
+    visibility: hidden !important;
+  }
+
+  body.payment-receipt-printing [data-payment-receipt],
+  body.payment-receipt-printing [data-payment-receipt] * {
+    visibility: visible !important;
+  }
+
+  body.payment-receipt-printing [data-payment-receipt] {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+}

@@ -5,12 +5,82 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { cn } from '@/lib/utils';
 import { formatAed } from '../_utils/money';
 import type { TenderInput, TenderMethod } from '../_utils/counter-types';
-import { COLLECTION_METHODS, TENDER_META, newTender, type validateTenders } from '../_utils/tender';
+import { COUNTER_ENABLED_METHODS } from '../_data/counter-seed';
+import {
+  COLLECTION_METHODS,
+  TENDER_META,
+  newTender,
+  tenderFieldValue,
+  withTenderField,
+  type TenderField,
+  type TenderFieldKey,
+  type validateTenders,
+} from '../_utils/tender';
 
 type Validation = ReturnType<typeof validateTenders>;
+
+function TenderFieldInput({
+  field,
+  tenderKey,
+  value,
+  onChange,
+}: {
+  field: TenderField;
+  tenderKey: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const id = `${tenderKey}-${field.key}`;
+
+  return (
+    <div className={cn('space-y-1', field.kind === 'date' && 'sm:col-span-1')}>
+      <Label htmlFor={id} className="text-muted-foreground text-xs">
+        {field.label}
+        {field.required ? (
+          <span aria-hidden="true" className="text-destructive">
+            *
+          </span>
+        ) : null}
+      </Label>
+      {field.kind === 'select' ? (
+        <NativeSelect
+          id={id}
+          size="sm"
+          className="w-full"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        >
+          <option value="">Select…</option>
+          {field.options?.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </NativeSelect>
+      ) : (
+        <Input
+          id={id}
+          className="h-8"
+          type={field.kind === 'date' ? 'date' : 'text'}
+          inputMode={field.kind === 'digits' ? 'numeric' : undefined}
+          maxLength={field.maxLength}
+          placeholder={field.placeholder}
+          aria-required={field.required || undefined}
+          value={value}
+          onChange={(event) =>
+            onChange(
+              field.kind === 'digits' ? event.target.value.replace(/\D/g, '') : event.target.value
+            )
+          }
+        />
+      )}
+    </div>
+  );
+}
 
 function TenderRow({
   tender,
@@ -18,6 +88,7 @@ function TenderRow({
   change,
   advanceBalance,
   onChange,
+  onField,
   onRemove,
 }: {
   tender: TenderInput;
@@ -25,6 +96,7 @@ function TenderRow({
   change: number;
   advanceBalance: number;
   onChange: (patch: Partial<TenderInput>) => void;
+  onField: (key: TenderFieldKey, value: string) => void;
   onRemove: () => void;
 }) {
   const meta = TENDER_META[tender.method];
@@ -67,33 +139,15 @@ function TenderRow({
           />
         </div>
 
-        {meta.referenceLabel ? (
-          <div className="space-y-1">
-            <Label htmlFor={`${tender.key}-ref`} className="text-muted-foreground text-xs">
-              {meta.referenceLabel}
-            </Label>
-            <Input
-              id={`${tender.key}-ref`}
-              className="h-8"
-              value={tender.reference}
-              onChange={(event) => onChange({ reference: event.target.value })}
-            />
-          </div>
-        ) : null}
-
-        {tender.method === 'CHEQUE' ? (
-          <div className="space-y-1 sm:col-span-2">
-            <Label htmlFor={`${tender.key}-bank`} className="text-muted-foreground text-xs">
-              Drawee bank
-            </Label>
-            <Input
-              id={`${tender.key}-bank`}
-              className="h-8"
-              value={tender.bank}
-              onChange={(event) => onChange({ bank: event.target.value })}
-            />
-          </div>
-        ) : null}
+        {meta.fields.map((field) => (
+          <TenderFieldInput
+            key={field.key}
+            field={field}
+            tenderKey={tender.key}
+            value={tenderFieldValue(tender, field.key)}
+            onChange={(value) => onField(field.key, value)}
+          />
+        ))}
       </div>
 
       {isCash && tender.tendered > 0 ? (
@@ -127,6 +181,7 @@ export function TenderPanel({
   advanceBalance,
   allowAdvance,
   outstanding,
+  advanceAuto,
   submitLabel,
   onTendersChange,
   onSubmit,
@@ -141,13 +196,21 @@ export function TenderPanel({
   advanceBalance: number;
   allowAdvance: boolean;
   outstanding?: { checked: boolean; onChange: (checked: boolean) => void };
+  advanceAuto?: { checked: boolean; onChange: (checked: boolean) => void; amount: number };
   submitLabel: string;
   onTendersChange: (tenders: TenderInput[]) => void;
   onSubmit: () => void;
 }) {
   const errors = [...extraErrors, ...validation.errors];
-  const methods: TenderMethod[] =
-    allowAdvance && advanceBalance > 0 ? [...COLLECTION_METHODS, 'ADVANCE'] : COLLECTION_METHODS;
+  const offerAdvance = allowAdvance && advanceBalance > 0 && !advanceAuto?.checked;
+  const collectionMethods = COLLECTION_METHODS.filter((method) =>
+    COUNTER_ENABLED_METHODS.includes(method)
+  );
+  const methods: TenderMethod[] = offerAdvance
+    ? [...collectionMethods, 'ADVANCE']
+    : collectionMethods;
+  // Auto-applied Advance is prepended to the validated tenders, so shift the index.
+  const resolvedOffset = validation.resolved.length - tenders.length;
 
   function patchTender(key: string, patch: Partial<TenderInput>) {
     onTendersChange(
@@ -168,6 +231,28 @@ export function TenderPanel({
             AED {formatAed(due)}
           </span>
         </div>
+
+        {advanceAuto && advanceBalance > 0 ? (
+          <div className="bg-accent/50 space-y-1 rounded-md border p-2.5">
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="auto-advance"
+                checked={advanceAuto.checked}
+                onCheckedChange={(checked) => advanceAuto.onChange(checked === true)}
+              />
+              <Label htmlFor="auto-advance" className="text-xs leading-snug">
+                Apply the Patient&apos;s advance automatically
+              </Label>
+            </div>
+            <p className="text-muted-foreground text-xs tabular-nums">
+              {!advanceAuto.checked
+                ? `AED ${formatAed(advanceBalance)} available. Switch on, or add Advance below, to use it.`
+                : advanceAuto.amount > 0
+                  ? `AED ${formatAed(advanceAuto.amount)} applied from AED ${formatAed(advanceBalance)} · balance after AED ${formatAed(advanceBalance - advanceAuto.amount)}`
+                  : `AED ${formatAed(advanceBalance)} available. It is applied once there are charges.`}
+            </p>
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <p className="text-muted-foreground text-xs">
@@ -195,10 +280,17 @@ export function TenderPanel({
               <TenderRow
                 key={tender.key}
                 tender={tender}
-                applied={validation.resolved[index]?.amount ?? 0}
-                change={validation.resolved[index]?.change ?? 0}
+                applied={validation.resolved[index + resolvedOffset]?.amount ?? 0}
+                change={validation.resolved[index + resolvedOffset]?.change ?? 0}
                 advanceBalance={advanceBalance}
                 onChange={(patch) => patchTender(tender.key, patch)}
+                onField={(key, value) =>
+                  onTendersChange(
+                    tenders.map((item) =>
+                      item.key === tender.key ? withTenderField(item, key, value) : item
+                    )
+                  )
+                }
                 onRemove={() => onTendersChange(tenders.filter((item) => item.key !== tender.key))}
               />
             ))}

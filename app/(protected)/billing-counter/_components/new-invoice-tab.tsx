@@ -1,14 +1,23 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from 'date-fns';
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { NativeSelect } from '@/components/ui/native-select';
 import { buildInvoiceTxn } from '../_utils/counter-ledger';
-import { calculateInvoice, validateInvoiceLines } from '../_utils/invoice-calc';
-import { validateTenders } from '../_utils/tender';
+import {
+  calculateInvoice,
+  largestDiscountPercent,
+  validateDiscount,
+  validateInvoiceLines,
+  validatePayerAuth,
+} from '../_utils/invoice-calc';
+import { autoAdvanceAmount, newTender, validateTenders } from '../_utils/tender';
 import type { InvoiceLine, LedgerTxn, TenderInput } from '../_utils/counter-types';
 import { CounterField } from './counter-field';
 import { useCounter } from './counter-state';
+import { DiscountApproval, InsurerAuthorization } from './invoice-approvals';
 import { InvoiceLinesEditor } from './invoice-lines-editor';
 import { PatientPicker, PatientStrip } from './patient-picker';
 import { TenderPanel } from './tender-panel';
@@ -30,14 +39,24 @@ export function NewInvoiceTab({
   const [lines, setLines] = useState<InvoiceLine[]>([]);
   const [tenders, setTenders] = useState<TenderInput[]>([]);
   const [leaveOutstanding, setLeaveOutstanding] = useState(false);
+  const [autoAdvance, setAutoAdvance] = useState(true);
+  const [discountReason, setDiscountReason] = useState('');
+  const [discountApprovedBy, setDiscountApprovedBy] = useState('');
+  const [payerAuth, setPayerAuth] = useState('');
 
   const patient = patientByMrn(mrn);
   const advanceBalance = patient ? (state.advanceBalances[patient.mrn] ?? 0) : 0;
   const totals = calculateInvoice(lines);
   const hasPayer = Boolean(patient?.payer);
 
+  const autoAmount = autoAdvance ? autoAdvanceAmount(advanceBalance, totals.patientShare) : 0;
+  const effectiveTenders: TenderInput[] =
+    autoAmount > 0
+      ? [{ ...newTender('ADVANCE'), key: 'auto-advance', amount: autoAmount }, ...tenders]
+      : tenders;
+
   const validation = validateTenders({
-    tenders,
+    tenders: effectiveTenders,
     advanceBalance,
     due: totals.patientShare,
     allowOutstanding: leaveOutstanding,
@@ -46,7 +65,20 @@ export function NewInvoiceTab({
     ...(shiftOpen ? [] : ['The shift is closed. Open a new shift to post.']),
     ...(patient ? [] : ['Select a Patient.']),
     ...validateInvoiceLines(lines),
+    ...validateDiscount({ lines, reason: discountReason, approvedBy: discountApprovedBy }),
+    ...validatePayerAuth({ payerShare: totals.payerShare, authNumber: payerAuth }),
   ];
+  const largestDiscount = largestDiscountPercent(lines);
+  const selectedVisit = patient?.visits.find((visit) => visit.number === visitNumber);
+  const visitLabel = selectedVisit
+    ? `Visit ${selectedVisit.number} · ${format(new Date(), 'dd-MMM-yyyy')}`
+    : undefined;
+
+  function resetApprovals() {
+    setDiscountReason('');
+    setDiscountApprovedBy('');
+    setPayerAuth('');
+  }
 
   function changePatient(next: string) {
     const nextPatient = patientByMrn(next);
@@ -55,6 +87,8 @@ export function NewInvoiceTab({
     setLines([]);
     setTenders([]);
     setLeaveOutstanding(false);
+    setAutoAdvance(true);
+    resetApprovals();
     setVisitNumber(nextPatient?.visits[0]?.number ?? NO_VISIT);
   }
 
@@ -70,6 +104,9 @@ export function NewInvoiceTab({
       tenders: validation.resolved.filter((tender) => tender.amount > 0),
       outstanding: validation.remaining,
       visitNumber: visitNumber === NO_VISIT ? null : visitNumber,
+      discountReason: discountReason.trim() || null,
+      discountApprovedBy: discountApprovedBy || null,
+      payerAuthNumber: payerAuth.trim() || null,
     });
 
     dispatch({ type: 'POST', txn });
@@ -78,6 +115,7 @@ export function NewInvoiceTab({
     setLines([]);
     setTenders([]);
     setLeaveOutstanding(false);
+    resetApprovals();
   }
 
   return (
@@ -111,23 +149,50 @@ export function NewInvoiceTab({
                 </NativeSelect>
               </CounterField>
             </div>
-            {patient ? <PatientStrip patient={patient} advanceBalance={advanceBalance} /> : null}
+            {patient ? (
+              <PatientStrip
+                patient={patient}
+                advanceBalance={advanceBalance}
+                visitLabel={visitLabel}
+              />
+            ) : null}
           </CardContent>
         </Card>
 
         <Card className="shadow-fluent-2">
           <CardHeader>
             <CardTitle className="text-base">Charges</CardTitle>
+            <CardDescription>
+              {hasPayer
+                ? 'Lines marked Insurer are billed to the insurer; the Patient pays the rest.'
+                : 'Patient pays all lines.'}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <InvoiceLinesEditor lines={lines} hasPayer={hasPayer} onChange={setLines} />
+            {largestDiscount > 0 ? (
+              <DiscountApproval
+                largestPercent={largestDiscount}
+                reason={discountReason}
+                approvedBy={discountApprovedBy}
+                onReasonChange={setDiscountReason}
+                onApprovedByChange={setDiscountApprovedBy}
+              />
+            ) : null}
+            {patient?.payer && totals.payerShare > 0 ? (
+              <InsurerAuthorization
+                insurer={patient.payer}
+                authNumber={payerAuth}
+                onAuthNumberChange={setPayerAuth}
+              />
+            ) : null}
           </CardContent>
         </Card>
       </div>
 
       <TenderPanel
         title="Payment"
-        subtitle="Split across cash, card, cheque, transfer, Google Pay and advance."
+        subtitle="Split across cash, card, UPI, wallets, transfer, cheque and advance."
         dueLabel="Patient to pay"
         due={totals.patientShare}
         tenders={tenders}
@@ -136,6 +201,7 @@ export function NewInvoiceTab({
         advanceBalance={advanceBalance}
         allowAdvance
         outstanding={{ checked: leaveOutstanding, onChange: setLeaveOutstanding }}
+        advanceAuto={{ checked: autoAdvance, onChange: setAutoAdvance, amount: autoAmount }}
         submitLabel="Post invoice & receipt"
         onTendersChange={setTenders}
         onSubmit={post}

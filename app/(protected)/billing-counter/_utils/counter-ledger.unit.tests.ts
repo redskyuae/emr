@@ -10,6 +10,7 @@ import {
   buildSalesBook,
   computeCashDrawer,
   computeDayTotals,
+  computeMethodBreakdown,
   counterReducer,
   reconcileShift,
   refundableOf,
@@ -84,7 +85,15 @@ describe('posting an Invoice', () => {
       outstanding: 0,
       visitNumber: 'VST-1024',
       tenders: [
-        { method: 'ADVANCE', amount: 367.5, reference: '', bank: '', tendered: null, change: 0 },
+        {
+          method: 'ADVANCE',
+          amount: 367.5,
+          reference: '',
+          bank: '',
+          details: {},
+          tendered: null,
+          change: 0,
+        },
       ],
     });
     const next = counterReducer(state, { type: 'POST', txn });
@@ -106,7 +115,15 @@ describe('posting an Advance', () => {
       amount: 1050,
       purpose: 'Treatment advance',
       tenders: [
-        { method: 'CASH', amount: 1050, tendered: 1050, reference: '', bank: '', change: 0 },
+        {
+          method: 'CASH',
+          amount: 1050,
+          tendered: 1050,
+          reference: '',
+          bank: '',
+          details: {},
+          change: 0,
+        },
       ],
     });
     const next = counterReducer(state, { type: 'POST', txn });
@@ -285,5 +302,151 @@ describe('shift opening and closing', () => {
     expect(reopened.ledger).toEqual([]);
     expect(reopened.closedShifts).toHaveLength(1);
     expect(reopened.closedShifts[0].txnCount).toBe(10);
+  });
+});
+
+describe('payment methods in the ledger', () => {
+  function upiPayment(amount: number) {
+    return {
+      method: 'UPI' as const,
+      amount,
+      reference: '409112345678',
+      bank: '',
+      details: { upiId: 'priya@okhdfc' },
+      tendered: null,
+      change: 0,
+    };
+  }
+
+  it('should count UPI with the bank collections, not the cash drawer or card batch', () => {
+    const state = createSeedState();
+    const lines = [newInvoiceLine(CHEQUE_FREE_ITEM(), false)];
+    const txn = buildInvoiceTxn({
+      state,
+      lines,
+      patient: priya,
+      outstanding: 0,
+      visitNumber: null,
+      tenders: [upiPayment(367.5)],
+    });
+    const next = counterReducer(state, { type: 'POST', txn });
+    const totals = computeDayTotals(next.ledger);
+    const drawer = computeCashDrawer(next.shift, next.ledger);
+
+    expect(totals.bankAndDigital).toBe(367.5);
+    expect(totals.cashCollected).toBe(36503);
+    expect(totals.cardCollected).toBe(2306.6);
+    expect(drawer.expectedCash).toBe(33503);
+    expect(drawer.expectedCard).toBe(2306.6);
+    expect(buildBankBook(next.ledger).some((row) => row.tender.method === 'UPI')).toBe(true);
+  });
+
+  it('should break collections down by method with refunds netted', () => {
+    const rows = computeMethodBreakdown(createSeedState().ledger);
+    const cash = rows.find((row) => row.method === 'CASH')!;
+    const card = rows.find((row) => row.method === 'CARD')!;
+
+    expect(cash).toEqual({ method: 'CASH', received: 36503, refunded: 4000, net: 32503 });
+    expect(card.net).toBe(2306.6);
+    expect(rows.find((row) => row.method === 'UPI')?.net).toBe(0);
+  });
+
+  it('should only let a Patient refund to the instrument they paid with', () => {
+    const state = createSeedState();
+    const invoice = state.ledger.find((txn) => txn.number === 'AUH-INV-2026-002414')!;
+
+    expect(invoice.tenders.map((tender) => tender.method)).toEqual(['CARD', 'CASH']);
+    expect(refundableOf({ kind: 'INVOICE', invoice }, 0, state.ledger)).toBe(362.5);
+  });
+
+  it('should ask for a refund transaction ID when refunding to UPI', () => {
+    const errors = validateRefund({
+      amount: 100,
+      refundable: 500,
+      method: 'UPI',
+      reference: '',
+      reason: 'Billing error',
+      approvedBy: 'Hassan Ali (Finance Manager)',
+      cashInDrawer: 0,
+    });
+
+    expect(errors).toEqual(['Enter the refund transaction id.']);
+  });
+});
+
+function CHEQUE_FREE_ITEM() {
+  return CHARGE_ITEMS.find((item) => item.code === 'ABH')!;
+}
+
+describe('Invoice authorizations', () => {
+  const state = createSeedState();
+  const khalid = COUNTER_PATIENTS.find((patient) => patient.mrn === 'AYU000112')!;
+
+  it('should keep the discount reason and approver on a discounted Invoice', () => {
+    const lines = [
+      {
+        ...newInvoiceLine(
+          CHARGE_ITEMS.find((i) => i.code === 'ABH')!,
+          false
+        ),
+        discountPercent: 15,
+      },
+    ];
+    const txn = buildInvoiceTxn({
+      state,
+      lines,
+      patient: priya,
+      outstanding: 0,
+      visitNumber: null,
+      tenders: [],
+      discountReason: 'Package rate',
+      discountApprovedBy: 'Reem Khalid (Branch Supervisor)',
+    });
+
+    expect(txn.discountReason).toBe('Package rate');
+    expect(txn.discountApprovedBy).toBe('Reem Khalid (Branch Supervisor)');
+  });
+
+  it('should drop a discount reason when nothing was discounted', () => {
+    const lines = [
+      newInvoiceLine(
+        CHARGE_ITEMS.find((i) => i.code === 'ABH')!,
+        false
+      ),
+    ];
+    const txn = buildInvoiceTxn({
+      state,
+      lines,
+      patient: priya,
+      outstanding: 0,
+      visitNumber: null,
+      tenders: [],
+      discountReason: 'left over',
+    });
+
+    expect(txn.discountReason).toBeNull();
+  });
+
+  it('should keep the insurer approval number only when the insurer is billed', () => {
+    const covered = [
+      newInvoiceLine(
+        CHARGE_ITEMS.find((i) => i.code === '99213')!,
+        true
+      ),
+    ];
+    const selfPay = [
+      newInvoiceLine(
+        CHARGE_ITEMS.find((i) => i.code === 'ABH')!,
+        true
+      ),
+    ];
+    const common = { state, patient: khalid, outstanding: 0, visitNumber: null, tenders: [] };
+
+    expect(
+      buildInvoiceTxn({ ...common, lines: covered, payerAuthNumber: 'DAN-AUTH-1' }).payerAuthNumber
+    ).toBe('DAN-AUTH-1');
+    expect(
+      buildInvoiceTxn({ ...common, lines: selfPay, payerAuthNumber: 'DAN-AUTH-1' }).payerAuthNumber
+    ).toBeNull();
   });
 });

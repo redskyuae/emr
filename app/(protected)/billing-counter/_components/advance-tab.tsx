@@ -145,7 +145,7 @@ export function AdvanceTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void })
 
       <TenderPanel
         title="Payment"
-        subtitle="Cash, card, cheque, bank transfer or Google Pay."
+        subtitle="Cash, card, UPI, Google Pay, bank transfer or cheque."
         dueLabel="Advance to collect"
         due={amount}
         tenders={tenders}

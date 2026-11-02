@@ -59,6 +59,11 @@ export function PatientStrip({
           AED {formatAed(advanceBalance)}
         </span>
       </span>
+      {patient.memberId ? (
+        <span className="text-muted-foreground text-xs">
+          Member ID <span className="text-foreground font-mono">{patient.memberId}</span>
+        </span>
+      ) : null}
       {visitLabel ? <span className="text-muted-foreground text-xs">{visitLabel}</span> : null}
     </div>
   );

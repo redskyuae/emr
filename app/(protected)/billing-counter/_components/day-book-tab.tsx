@@ -14,7 +14,7 @@ import {
 } from '../_utils/counter-ledger';
 import { formatAed } from '../_utils/money';
 import type { LedgerTxn, TenderMethod, TxnType } from '../_utils/counter-types';
-import { TENDER_META } from '../_utils/tender';
+import { TENDER_META, describeTender } from '../_utils/tender';
 import { TXN_TYPE_LABEL } from '../_utils/txn-presentation';
 import { useCounter } from './counter-state';
 import { Money, TenderChips, TxnTypeBadge } from './txn-cells';
@@ -278,7 +278,7 @@ function BankBook({ txns }: { txns: LedgerTxn[] }) {
           <td className="p-2">
             <Badge variant="secondary">{TENDER_META[tender.method].label}</Badge>
           </td>
-          <td className="p-2 font-mono text-xs">{tender.reference || '—'}</td>
+          <td className="p-2 text-xs">{describeTender(tender) || '—'}</td>
           <td className="p-2 text-right">{receipt > 0 ? <Money value={receipt} /> : ''}</td>
           <td className="p-2 text-right">{payment > 0 ? <Money value={payment} /> : ''}</td>
         </tr>

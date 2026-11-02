@@ -5,7 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
-import type { Invoice } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
+import type { Invoice, Payment } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useRecordPayment } from '@/app/queries/billing/invoices/useRecordPayment';
 import {
@@ -36,10 +36,12 @@ export function RecordPaymentDialog({
   invoice,
   open,
   onClose,
+  onRecorded,
 }: {
   invoice: Invoice;
   open: boolean;
   onClose: () => void;
+  onRecorded: (receipt: { invoice: Invoice; payment: Payment }) => void;
 }) {
   const form = useForm<RecordPaymentFormValues>({
     resolver: zodResolver(recordPaymentFormSchema),
@@ -74,6 +76,7 @@ export function RecordPaymentDialog({
       });
       toast.success(`Payment ${result.data.payment.receiptNumber} recorded.`);
       onClose();
+      onRecorded(result.data);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -110,6 +113,7 @@ export function RecordPaymentDialog({
               min="0"
               step="0.01"
               inputMode="decimal"
+              aria-required
               {...register('amount')}
             />
             {errors.amount ? <FieldError>{errors.amount.message}</FieldError> : null}

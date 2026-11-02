@@ -17,6 +17,7 @@ import {
 } from '../_utils/counter-ledger';
 import { formatAed } from '../_utils/money';
 import type { LedgerTxn, TenderMethod } from '../_utils/counter-types';
+import { TENDER_META, refundReferenceLabel } from '../_utils/tender';
 import { TXN_TYPE_LABEL } from '../_utils/txn-presentation';
 import { CounterField } from './counter-field';
 import { useCounter } from './counter-state';
@@ -41,7 +42,10 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
   const invoice = invoices.find((txn) => txn.number === sourceKey);
   const source: RefundSource = invoice ? { kind: 'INVOICE', invoice } : { kind: 'ADVANCE' };
   const refundable = patient ? refundableOf(source, balance, state.ledger) : 0;
-  const paidByCard = invoice?.tenders.some((tender) => tender.method === 'CARD') ?? false;
+  // Money can go back to the instrument it came in on: card, UPI or Google Pay.
+  const originalInstruments = (['CARD', 'UPI', 'GOOGLE_PAY'] as const).filter((candidate) =>
+    invoice?.tenders.some((tender) => tender.method === candidate)
+  );
   const cashInDrawer = computeCashDrawer(state.shift, state.ledger).expectedCash;
 
   const errors = [
@@ -154,12 +158,16 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
               >
                 <option value="CASH">Cash</option>
                 <option value="BANK_TRANSFER">Bank transfer</option>
-                {paidByCard ? <option value="CARD">Original card</option> : null}
+                {originalInstruments.map((instrument) => (
+                  <option key={instrument} value={instrument}>
+                    Original {instrument === 'CARD' ? 'card' : TENDER_META[instrument].label}
+                  </option>
+                ))}
               </NativeSelect>
             </CounterField>
             {method !== 'CASH' ? (
               <CounterField
-                label={method === 'CARD' ? 'Card approval code' : 'Transfer reference'}
+                label={refundReferenceLabel(method)}
                 htmlFor="refund-reference"
                 required
               >

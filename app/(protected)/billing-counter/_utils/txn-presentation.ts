@@ -1,4 +1,4 @@
-import { TENDER_META } from './tender';
+import { TENDER_META, describeTender } from './tender';
 import type { LedgerTxn, TxnType } from './counter-types';
 
 export const TXN_TYPE_LABEL: Record<TxnType, string> = {
@@ -17,6 +17,7 @@ export function tenderSummary(txn: LedgerTxn) {
   return txn.tenders.map((tender) => ({
     key: `${tender.method}-${tender.reference}-${tender.amount}`,
     label: TENDER_META[tender.method].label,
+    detail: describeTender(tender),
     amount: tender.amount,
   }));
 }

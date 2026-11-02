@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 
 import { round2, splitVatInclusive } from './money';
 import { calculateInvoice } from './invoice-calc';
+import { COLLECTION_METHODS, methodsInGroup, refundReferenceLabel } from './tender';
 import type {
   ClosingFigures,
   CounterPatient,
@@ -55,6 +56,9 @@ export function buildInvoiceTxn({
   lines,
   tenders,
   outstanding,
+  discountReason = null,
+  discountApprovedBy = null,
+  payerAuthNumber = null,
 }: {
   state: CounterState;
   patient: CounterPatient;
@@ -62,6 +66,9 @@ export function buildInvoiceTxn({
   lines: InvoiceLine[];
   tenders: ResolvedTender[];
   outstanding: number;
+  discountReason?: string | null;
+  discountApprovedBy?: string | null;
+  payerAuthNumber?: string | null;
 }): LedgerTxn {
   const totals = calculateInvoice(lines);
   const number = nextNumber(state, 'inv');
@@ -78,6 +85,9 @@ export function buildInvoiceTxn({
     against: null,
     reason: null,
     approvedBy: null,
+    discountReason: totals.discount > 0 ? discountReason : null,
+    discountApprovedBy: totals.discount > 0 ? discountApprovedBy : null,
+    payerAuthNumber: totals.payerShare > 0 ? payerAuthNumber : null,
     refundOfInvoice: null,
     time: nowTime(),
     vat: totals.vat,
@@ -121,6 +131,9 @@ export function buildAdvanceTxn({
     against: null,
     reason: purpose,
     approvedBy: null,
+    discountReason: null,
+    discountApprovedBy: null,
+    payerAuthNumber: null,
     visitNumber: null,
     patientPaid: amount,
     type: 'ADVANCE',
@@ -144,13 +157,7 @@ export function refundableOf(source: RefundSource, advanceBalance: number, ledge
 
   // Only money actually tendered can go back; advance applied to the Invoice
   // stays with the advance account.
-  const tendered = sumTenders(source.invoice.tenders, [
-    'CASH',
-    'CARD',
-    'CHEQUE',
-    'BANK_TRANSFER',
-    'GOOGLE_PAY',
-  ]);
+  const tendered = sumTenders(source.invoice.tenders, COLLECTION_METHODS);
   const refunded = round2(
     ledger
       .filter((txn) => txn.refundOfInvoice === source.invoice.number)
@@ -194,6 +201,9 @@ export function buildCreditNoteTxn({
     number,
     reason,
     approvedBy,
+    discountReason: null,
+    discountApprovedBy: null,
+    payerAuthNumber: null,
     id: txnId(number),
     lines: [],
     outstanding: 0,
@@ -210,7 +220,7 @@ export function buildCreditNoteTxn({
     patientName: patient.name,
     shiftNo: state.shift.no,
     description: reason,
-    tenders: [{ method, amount, reference, bank: '', tendered: null, change: 0 }],
+    tenders: [{ method, amount, reference, bank: '', details: {}, tendered: null, change: 0 }],
     against: source.kind === 'ADVANCE' ? 'Advance balance' : source.invoice.number,
     refundOfInvoice: source.kind === 'INVOICE' ? source.invoice.number : null,
   };
@@ -246,9 +256,7 @@ export function validateRefund({
   }
 
   if (method !== 'CASH' && !reference.trim()) {
-    errors.push(
-      method === 'CARD' ? 'Enter the original card approval code.' : 'Enter the transfer reference.'
-    );
+    errors.push(`Enter the ${refundReferenceLabel(method).toLowerCase()}.`);
   }
 
   if (!reason) {
@@ -262,6 +270,26 @@ export function validateRefund({
   return errors;
 }
 
+const bankMethods = methodsInGroup('BANK');
+const otherMethods = methodsInGroup('OTHER');
+
+/** Receipts, refunds and net per payment method; Advance applied is reported apart. */
+export function computeMethodBreakdown(txns: LedgerTxn[]) {
+  const total = (types: LedgerTxn['type'][], method: TenderMethod) =>
+    round2(
+      txns
+        .filter((txn) => types.includes(txn.type))
+        .reduce((sum, txn) => sum + sumTenders(txn.tenders, [method]), 0)
+    );
+
+  return COLLECTION_METHODS.map((method) => {
+    const received = total(['INVOICE', 'ADVANCE'], method);
+    const refunded = total(['CREDIT_NOTE'], method);
+
+    return { method, received, refunded, net: round2(received - refunded) };
+  });
+}
+
 export function computeDayTotals(txns: LedgerTxn[]) {
   const sumOf = (type: LedgerTxn['type'], methods: TenderMethod[]) =>
     round2(
@@ -273,10 +301,8 @@ export function computeDayTotals(txns: LedgerTxn[]) {
   return {
     cashCollected: round2(sumOf('INVOICE', ['CASH']) + sumOf('ADVANCE', ['CASH'])),
     cardCollected: round2(sumOf('INVOICE', ['CARD']) + sumOf('ADVANCE', ['CARD'])),
-    bankAndDigital: round2(
-      sumOf('INVOICE', ['CHEQUE', 'BANK_TRANSFER', 'GOOGLE_PAY']) +
-        sumOf('ADVANCE', ['CHEQUE', 'BANK_TRANSFER', 'GOOGLE_PAY'])
-    ),
+    bankAndDigital: round2(sumOf('INVOICE', bankMethods) + sumOf('ADVANCE', bankMethods)),
+    otherCollected: round2(sumOf('INVOICE', otherMethods) + sumOf('ADVANCE', otherMethods)),
     advanceApplied: sumOf('INVOICE', ['ADVANCE']),
     advancesReceived: round2(
       txns.filter((txn) => txn.type === 'ADVANCE').reduce((total, txn) => total + txn.total, 0)

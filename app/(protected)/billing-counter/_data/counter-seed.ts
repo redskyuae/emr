@@ -23,6 +23,17 @@ export const COUNTER_ENTITY = {
 
 export const COUNTER_CASHIER = 'Reem K. (Cashier)';
 
+// Methods this Counter accepts. A Facility without UPI or Google Pay switches them off here.
+export const COUNTER_ENABLED_METHODS: TenderMethod[] = [
+  'CASH',
+  'CARD',
+  'UPI',
+  'GOOGLE_PAY',
+  'BANK_TRANSFER',
+  'CHEQUE',
+  'OTHER',
+];
+
 export const APPROVERS = [
   'Dr. Nisha Menon (Medical Director)',
   'Hassan Ali (Finance Manager)',
@@ -141,6 +152,7 @@ export const CHARGE_ITEMS: ChargeItem[] = [
 export const COUNTER_PATIENTS: CounterPatient[] = [
   {
     payer: null,
+    memberId: null,
     mrn: 'AYU000110',
     advanceBalance: 3000,
     category: 'Resident',
@@ -150,6 +162,7 @@ export const COUNTER_PATIENTS: CounterPatient[] = [
   },
   {
     payer: null,
+    memberId: null,
     mrn: 'AYU000131',
     advanceBalance: 4000,
     category: 'Resident',
@@ -159,6 +172,7 @@ export const COUNTER_PATIENTS: CounterPatient[] = [
   },
   {
     payer: null,
+    memberId: null,
     mrn: 'AYU000129',
     advanceBalance: 26000,
     category: 'Tourist',
@@ -168,6 +182,7 @@ export const COUNTER_PATIENTS: CounterPatient[] = [
   },
   {
     payer: null,
+    memberId: null,
     mrn: 'AYU000101',
     advanceBalance: 0,
     category: 'Resident',
@@ -177,6 +192,7 @@ export const COUNTER_PATIENTS: CounterPatient[] = [
   },
   {
     payer: null,
+    memberId: null,
     mrn: 'AYU000104',
     advanceBalance: 0,
     category: 'Resident',
@@ -186,6 +202,7 @@ export const COUNTER_PATIENTS: CounterPatient[] = [
   },
   {
     payer: null,
+    memberId: null,
     mrn: 'AYU000107',
     advanceBalance: 2000,
     category: 'Resident',
@@ -200,6 +217,7 @@ export const COUNTER_PATIENTS: CounterPatient[] = [
     name: 'Mr. Khalid Al Nuaimi',
     phone: '+971 50 667 4412',
     payer: 'Daman Enhanced',
+    memberId: 'DAN-4471920',
     visits: [{ number: 'VST-1022', label: 'Follow-up · today' }],
   },
   {
@@ -209,10 +227,12 @@ export const COUNTER_PATIENTS: CounterPatient[] = [
     name: 'Ms. Maria Santos',
     phone: '+971 58 903 1175',
     payer: 'Thiqa',
+    memberId: 'THQ-8820145',
     visits: [{ number: 'VST-1023', label: 'OPD Consultation · today' }],
   },
   {
     payer: null,
+    memberId: null,
     mrn: 'AYU000121',
     advanceBalance: 0,
     category: 'Resident',
@@ -223,6 +243,7 @@ export const COUNTER_PATIENTS: CounterPatient[] = [
   {
     visits: [],
     payer: null,
+    memberId: null,
     mrn: 'AYU000118',
     advanceBalance: 500,
     category: 'GCC National',
@@ -236,14 +257,20 @@ function cash(amount: number, tendered = amount): ResolvedTender {
     amount,
     tendered,
     bank: '',
+    details: {},
     method: 'CASH',
     reference: '',
     change: Math.round((tendered - amount) * 100) / 100,
   };
 }
 
-function other(method: TenderMethod, amount: number, reference: string): ResolvedTender {
-  return { method, amount, reference, bank: '', tendered: null, change: 0 };
+function other(
+  method: TenderMethod,
+  amount: number,
+  reference: string,
+  details: Record<string, string> = {}
+): ResolvedTender {
+  return { method, amount, reference, bank: '', details, tendered: null, change: 0 };
 }
 
 function line(
@@ -265,6 +292,7 @@ function line(
     unitPrice,
     description,
     discount: 0,
+    discountPercent: 0,
     billTo: 'PATIENT',
     total: Math.round((taxable + vat) * 100) / 100,
   };
@@ -288,6 +316,9 @@ function txn(seed: SeedInput): LedgerTxn {
     outstanding: 0,
     description: '',
     approvedBy: null,
+    discountReason: null,
+    discountApprovedBy: null,
+    payerAuthNumber: null,
     visitNumber: null,
     receiptNumber: null,
     refundOfInvoice: null,
@@ -387,12 +418,16 @@ function seedLedger(): LedgerTxn[] {
       patientMrn: 'AYU000115',
       patientName: 'Ms. Maria Santos',
       visitNumber: 'VST-1023',
-      tenders: [other('CARD', 44.1, 'A-77120'), cash(20)],
+      tenders: [
+        other('CARD', 44.1, 'A-77120', { last4: '4242', network: 'Visa', cardType: 'Debit' }),
+        cash(20),
+      ],
       total: 461,
       taxable: 439.05,
       vat: 21.95,
       payerShare: 396.9,
       description: 'Consultation (Thiqa co-pay 14%)',
+      payerAuthNumber: 'THQ-AUTH-55012',
       receiptNumber: 'AUH-RCP-2026-005101',
     }),
     txn({
@@ -408,6 +443,7 @@ function seedLedger(): LedgerTxn[] {
       vat: 32.5,
       payerShare: 682.5,
       description: 'Consultation and Janu Basti (Daman Enhanced, fully covered)',
+      payerAuthNumber: 'DAN-AUTH-90871',
     }),
     txn({
       time: '10:30',
@@ -415,7 +451,13 @@ function seedLedger(): LedgerTxn[] {
       number: 'AUH-ADV-2026-000308',
       patientMrn: 'AYU000107',
       patientName: 'Ms. Deepa Menon',
-      tenders: [other('CARD', 2000, 'A-76544')],
+      tenders: [
+        other('CARD', 2000, 'A-76544', {
+          last4: '1881',
+          network: 'Mastercard',
+          cardType: 'Credit',
+        }),
+      ],
       total: 2000,
       taxable: 1904.76,
       vat: 95.24,
@@ -430,7 +472,10 @@ function seedLedger(): LedgerTxn[] {
       patientMrn: 'AYU000104',
       patientName: 'Ms. Leena Joseph',
       visitNumber: 'VST-1020',
-      tenders: [other('CARD', 262.5, 'A-76210'), cash(100)],
+      tenders: [
+        other('CARD', 262.5, 'A-76210', { last4: '0005', network: 'Visa', cardType: 'Debit' }),
+        cash(100),
+      ],
       total: 362.5,
       taxable: 345.24,
       vat: 17.26,

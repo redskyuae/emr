@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function BillingCounterPageLoader() {
   return (
-    <div className="space-y-4" aria-label="Loading page">
+    <div className="space-y-4" aria-label="Loading Billing Counter">
       <div className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-3">
         <div className="flex flex-wrap items-center gap-3">
           <Skeleton className="h-10 w-72" />

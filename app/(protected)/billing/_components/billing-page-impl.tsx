@@ -29,7 +29,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { OPEN_INVOICE_STATUSES } from '../_utils/invoice-display';
-import { CreateInvoiceSheet } from './_sheets/create-invoice-sheet';
+import BillingPageLoader from '../loader';
+import { InvoiceComposer } from './invoice-composer';
 import { InvoiceTable, InvoiceTableSkeleton } from './invoice-table';
 
 const PAGE_SIZE = 10;
@@ -76,7 +77,6 @@ export function BillingPageImpl() {
     isError: canCreateError,
   } = useHasPermission('invoice:create');
 
-  const sheetOpen = invoiceParam === 'new' && canCreate;
   const invoiceAccessDenied =
     invoiceParam === 'new' && !canCreateLoading && !canCreateError && !canCreate;
 
@@ -89,6 +89,27 @@ export function BillingPageImpl() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceAccessDenied]);
+
+  if (invoiceParam === 'new') {
+    if (canCreateLoading) return <BillingPageLoader variant="composer" />;
+    if (canCreateError)
+      return (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Could not check Invoice access</AlertTitle>
+          <AlertDescription>Refresh the page and try again.</AlertDescription>
+        </Alert>
+      );
+    return canCreate ? (
+      <InvoiceComposer />
+    ) : (
+      <Alert variant="destructive">
+        <AlertCircle className="size-4" />
+        <AlertTitle>Invoice access denied</AlertTitle>
+        <AlertDescription>You do not have permission to create an Invoice.</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <>
@@ -224,8 +245,6 @@ export function BillingPageImpl() {
           </>
         )}
       </div>
-
-      <CreateInvoiceSheet open={sheetOpen} />
     </>
   );
 }

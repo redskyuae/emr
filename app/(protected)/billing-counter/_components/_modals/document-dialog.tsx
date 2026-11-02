@@ -5,6 +5,8 @@ import { format } from 'date-fns';
 import { Mail, MessageCircle, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
+import { LogoMark } from '@/components/brand/logo';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,7 +19,7 @@ import {
 import { COUNTER_ENTITY } from '../../_data/counter-seed';
 import { formatAed } from '../../_utils/money';
 import type { LedgerTxn } from '../../_utils/counter-types';
-import { TENDER_META } from '../../_utils/tender';
+import { TENDER_META, describeTender } from '../../_utils/tender';
 import { useCounter } from '../counter-state';
 
 const TITLES = {
@@ -64,7 +66,15 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
   );
 }
 
-function DocumentBody({ txn, advanceBalance }: { txn: LedgerTxn; advanceBalance: number }) {
+function DocumentBody({
+  txn,
+  advanceBalance,
+  tenantName,
+}: {
+  txn: LedgerTxn;
+  advanceBalance: number;
+  tenantName: string;
+}) {
   const title = TITLES[txn.type];
   const isCredit = txn.type === 'CREDIT_NOTE';
   const sign = isCredit ? -1 : 1;
@@ -73,16 +83,12 @@ function DocumentBody({ txn, advanceBalance }: { txn: LedgerTxn; advanceBalance:
   return (
     <div className="bg-card space-y-4 rounded-md border p-5 text-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="font-heading font-semibold">{COUNTER_ENTITY.legalName}</p>
-          <p className="text-muted-foreground text-xs" dir="rtl">
-            {COUNTER_ENTITY.legalNameArabic}
-          </p>
-          <p className="text-muted-foreground text-xs">{COUNTER_ENTITY.address}</p>
-          <p className="text-xs">
-            TRN <span className="font-mono font-semibold">{COUNTER_ENTITY.trn}</span> ·{' '}
-            {COUNTER_ENTITY.licence}
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          <LogoMark className="size-10" />
+          <div className="min-w-0">
+            <p className="font-heading text-lg leading-tight font-semibold">{tenantName}</p>
+            <p className="text-muted-foreground text-xs">Medical EMR · Billing Counter</p>
+          </div>
         </div>
         <div className="text-right">
           <p className="font-heading text-lg font-semibold">{title.en}</p>
@@ -98,7 +104,7 @@ function DocumentBody({ txn, advanceBalance }: { txn: LedgerTxn; advanceBalance:
 
       <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
         <div>
-          <p className="text-muted-foreground text-xs">Bill to</p>
+          <p className="text-muted-foreground text-xs">Patient</p>
           <p className="font-semibold">{txn.patientName}</p>
           <p className="text-xs">MRN {txn.patientMrn}</p>
           {txn.visitNumber ? <p className="text-xs">Visit {txn.visitNumber}</p> : null}
@@ -116,8 +122,8 @@ function DocumentBody({ txn, advanceBalance }: { txn: LedgerTxn; advanceBalance:
           <div>
             <p className="text-muted-foreground text-xs">Supply date</p>
             <p className="text-xs">{format(new Date(), 'dd-MMM-yyyy')}</p>
-            <p className="text-muted-foreground text-xs">Place of supply</p>
-            <p className="text-xs">{COUNTER_ENTITY.facility}, UAE</p>
+            <p className="text-muted-foreground text-xs">Clinic</p>
+            <p className="text-xs">{tenantName}</p>
           </div>
         )}
       </div>
@@ -143,7 +149,10 @@ function DocumentBody({ txn, advanceBalance }: { txn: LedgerTxn; advanceBalance:
                   <td className="py-1.5 text-left">{line.description}</td>
                   <td>{line.quantity}</td>
                   <td>{formatAed(line.unitPrice)}</td>
-                  <td>{formatAed(line.discount)}</td>
+                  <td>
+                    {line.discountPercent > 0 ? `${line.discountPercent}% · ` : ''}
+                    {formatAed(line.discount)}
+                  </td>
                   <td>{formatAed(line.taxable)}</td>
                   <td>{line.vatRate}</td>
                   <td>{formatAed(line.vat)}</td>
@@ -199,20 +208,38 @@ function DocumentBody({ txn, advanceBalance }: { txn: LedgerTxn; advanceBalance:
               {TENDER_META[tender.method].label}
               {tender === cashTender && tender.tendered !== null
                 ? ` · received ${formatAed(tender.tendered)}, change ${formatAed(tender.change)}`
-                : tender.reference
-                  ? ` · ref ${tender.reference}`
+                : describeTender(tender)
+                  ? ` · ${describeTender(tender)}`
                   : ''}
               : <span className="font-semibold">AED {formatAed(tender.amount)}</span>
             </p>
           ))
         )}
+        {txn.discountReason ? (
+          <p className="text-muted-foreground">
+            Discount: {txn.discountReason}
+            {txn.discountApprovedBy ? ` · approved by ${txn.discountApprovedBy}` : ''}
+          </p>
+        ) : null}
+        {txn.payerAuthNumber ? (
+          <p className="text-muted-foreground">
+            Insurer approval no. <span className="font-mono">{txn.payerAuthNumber}</span>
+          </p>
+        ) : null}
         {txn.outstanding > 0 ? (
           <p className="text-warning font-semibold">
             Outstanding on account: AED {formatAed(txn.outstanding)}
           </p>
         ) : null}
         <p className="text-muted-foreground">
-          Advance balance remaining ({COUNTER_ENTITY.facility}): AED {formatAed(advanceBalance)}
+          Advance balance remaining ({tenantName}): AED {formatAed(advanceBalance)}
+        </p>
+      </div>
+
+      <div className="border-t pt-3 text-center text-xs">
+        <p className="font-medium">Thank you for choosing {tenantName}.</p>
+        <p className="text-muted-foreground mt-1">
+          This is a computer-generated document and does not require a signature.
         </p>
       </div>
     </div>
@@ -221,8 +248,10 @@ function DocumentBody({ txn, advanceBalance }: { txn: LedgerTxn; advanceBalance:
 
 export function DocumentDialog({ txn, onClose }: { txn: LedgerTxn | null; onClose: () => void }) {
   const { state, patientByMrn } = useCounter();
+  const currentUserQuery = useCurrentUserQuery();
   const previewRef = useRef<HTMLDivElement>(null);
   const patient = txn ? patientByMrn(txn.patientMrn) : undefined;
+  const tenantName = currentUserQuery.data?.tenant.name ?? 'Medical EMR';
 
   return (
     <Dialog open={txn !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
@@ -237,7 +266,11 @@ export function DocumentDialog({ txn, onClose }: { txn: LedgerTxn | null; onClos
             </DialogHeader>
 
             <div ref={previewRef}>
-              <DocumentBody txn={txn} advanceBalance={state.advanceBalances[txn.patientMrn] ?? 0} />
+              <DocumentBody
+                txn={txn}
+                tenantName={tenantName}
+                advanceBalance={state.advanceBalances[txn.patientMrn] ?? 0}
+              />
             </div>
 
             <DialogFooter className="gap-2 sm:justify-between">
