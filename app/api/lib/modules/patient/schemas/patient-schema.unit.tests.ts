@@ -149,6 +149,28 @@ describe('Patient schema', () => {
     expect(result.data?.alternatePhone).toBeUndefined();
   });
 
+  it('should accept a digits-only Next of Kin phone', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      emergencyContactPhone: '0501234567',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject a Next of Kin phone containing letters or special characters', () => {
+    for (const emergencyContactPhone of ['747920843idjcksdno', '+971501234567', '050 123 4567']) {
+      expect(
+        errorsOf(createPatientSchema.safeParse({ ...validPayload, emergencyContactPhone }))
+      ).toContain('Patient Next of Kin phone must contain only digits');
+    }
+  });
+
+  it('should reject a non-digit Next of Kin phone on update', () => {
+    expect(
+      errorsOf(updatePatientSchema.safeParse({ ...validPayload, emergencyContactPhone: 'abc123' }))
+    ).toContain('Patient Next of Kin phone must contain only digits');
+  });
+
   it('should reject a non-digit alternate phone on update', () => {
     expect(
       errorsOf(updatePatientSchema.safeParse({ ...validPayload, alternatePhone: 'abc123' }))

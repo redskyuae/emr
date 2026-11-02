@@ -56,6 +56,20 @@ describe('Patient form schema', () => {
     }
   });
 
+  it('should accept a digits-only Next of Kin phone', () => {
+    expect(
+      patientFormSchema.safeParse({ ...createValues, emergencyContactPhone: '0501234567' }).success
+    ).toBe(true);
+  });
+
+  it('should reject a Next of Kin phone containing letters or special characters', () => {
+    for (const emergencyContactPhone of ['747920843idjcksdno', '+971501234567', '050-123 4567']) {
+      expect(errorsOf({ ...createValues, emergencyContactPhone })).toEqual([
+        'Next of Kin Phone must contain only digits.',
+      ]);
+    }
+  });
+
   it('should reject an empty title for create values', () => {
     expect(errorsOf({ ...createValues, title: '' })).toContain('Title is required.');
   });
