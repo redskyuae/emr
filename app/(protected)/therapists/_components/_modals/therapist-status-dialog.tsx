@@ -75,8 +75,8 @@ export function TherapistStatusDialog({ pendingAction, onClose }: TherapistStatu
                 {isDeactivate ? 'Deactivate' : 'Reactivate'} Therapist &ldquo;
                 <strong>{pendingAction.therapist.name}</strong>&rdquo;?{' '}
                 {isDeactivate
-                  ? 'They will no longer be available for new Procedure Appointments.'
-                  : 'They will be available for Procedure Appointments again.'}
+                  ? 'They will be signed out of every device and cannot sign in, and they will no longer be available for Procedure Appointments.'
+                  : 'They will be able to sign in again and will be available for Procedure Appointments again.'}
               </>
             ) : (
               'Update this Therapist status?'
