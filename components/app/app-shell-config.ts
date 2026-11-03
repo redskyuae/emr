@@ -11,6 +11,7 @@ import {
   FileClock,
   Gauge,
   Globe2,
+  HeartHandshake,
   Hospital,
   LayoutDashboard,
   LayoutGrid,
@@ -105,6 +106,16 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/visit-list',
         icon: ListChecks,
         permission: 'visit',
+      },
+    ],
+  },
+  {
+    title: 'Community',
+    items: [
+      {
+        title: 'Community Outreach',
+        href: '/community-outreach',
+        icon: HeartHandshake,
       },
     ],
   },
@@ -435,6 +446,7 @@ const appointmentNavHrefs = new Set([
   '/clinical-masters/therapist-skills',
   '/billing-masters',
   '/billing-masters/charge-items',
+  '/community-outreach',
 ]);
 
 const visitNavHrefs = new Set(['/visits', '/visit-list']);
@@ -589,6 +601,23 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       href: '/visits/new',
       permission: 'visit:create',
     },
+  },
+  '/community-outreach': {
+    title: 'Community Outreach',
+    subtitle:
+      'Wellness camps, awareness events and home visits, and the people who showed interest.',
+    primaryAction: {
+      label: 'Log activity',
+      href: '/community-outreach/activities/new',
+    },
+  },
+  '/community-outreach/contacts/new': {
+    title: 'Add contact',
+    subtitle: 'Record someone who showed interest at an outreach activity.',
+  },
+  '/community-outreach/activities/new': {
+    title: 'Log activity',
+    subtitle: 'Plan an outreach activity ahead, or record one that already happened.',
   },
   '/billing-counter': {
     title: 'Billing Counter',
@@ -763,6 +792,28 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   },
 };
 
+const outreachDetailPages: Array<{ pattern: RegExp; meta: AppPageMeta }> = [
+  {
+    pattern: /^\/community-outreach\/activities\/(?!new$)[^/]+$/,
+    meta: {
+      title: 'Activity details',
+      subtitle: 'Schedule, staff, and results for this outreach activity.',
+    },
+  },
+  {
+    pattern: /^\/community-outreach\/contacts\/[^/]+\/edit$/,
+    meta: { title: 'Edit contact', subtitle: 'Update the details recorded for this contact.' },
+  },
+  {
+    pattern: /^\/community-outreach\/contacts\/[^/]+\/follow-up$/,
+    meta: { title: 'Log follow-up', subtitle: 'Record the call or message with this contact.' },
+  },
+  {
+    pattern: /^\/community-outreach\/contacts\/[^/]+\/reassign$/,
+    meta: { title: 'Reassign contact', subtitle: 'Choose who follows up with this contact.' },
+  },
+];
+
 function trimTrailingSlash(pathname: string) {
   if (pathname === '/') {
     return pathname;
@@ -851,6 +902,12 @@ export function getAppPageMeta(pathname: string): AppPageMeta {
       title: 'Clinician assessment',
       subtitle: 'Complete this Visit in the active Facility context.',
     };
+  }
+
+  const outreachDetailMeta = outreachDetailPages.find(({ pattern }) => pattern.test(currentPath));
+
+  if (outreachDetailMeta) {
+    return outreachDetailMeta.meta;
   }
 
   const exactMeta = pageMetaByHref[currentPath];

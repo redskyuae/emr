@@ -38,6 +38,7 @@ describe('App shell navigation permissions', () => {
     expect(groups.map(({ title }) => title)).toEqual([
       'Overview',
       'Clinical',
+      'Community',
       'Operations',
       'Configuration',
     ]);
@@ -47,29 +48,30 @@ describe('App shell navigation permissions', () => {
       'Appointments',
       'Book Appointment',
     ]);
-    expect(groups[2].items.map(({ title }) => title)).toEqual([
+    expect(groups[2].items.map(({ title }) => title)).toEqual(['Community Outreach']);
+    expect(groups[3].items.map(({ title }) => title)).toEqual([
       'Rooms',
       'Doctors',
       'Therapists',
       'Doctor Schedules',
       'Therapist Schedules',
     ]);
-    expect(groups[3].items.map(({ title }) => title)).toEqual([
+    expect(groups[4].items.map(({ title }) => title)).toEqual([
       'Rota Management',
       'Appointment Masters',
       'Room Masters',
       'Clinical Masters',
     ]);
     expect(
-      groups[3].items.find(({ title }) => title === 'Appointment Masters')?.items
+      groups[4].items.find(({ title }) => title === 'Appointment Masters')?.items
     ).toHaveLength(5);
     expect(
-      groups[3].items
+      groups[4].items
         .find(({ title }) => title === 'Room Masters')
         ?.items?.map(({ title }) => title)
     ).toEqual(['Room Type']);
     expect(
-      groups[3].items
+      groups[4].items
         .find(({ title }) => title === 'Clinical Masters')
         ?.items?.map(({ title }) => title)
     ).toEqual(['Therapist Skills']);
@@ -78,7 +80,7 @@ describe('App shell navigation permissions', () => {
   it('should preserve permission filtering in the reduced sidebar', () => {
     const groups = getVisibleNavGroups(appNavGroups, ['appointment:read'], true);
 
-    expect(groups.map(({ title }) => title)).toEqual(['Overview', 'Clinical']);
+    expect(groups.map(({ title }) => title)).toEqual(['Overview', 'Clinical', 'Community']);
     expect(groups[1].items.map(({ title }) => title)).toEqual(['Appointments', 'Book Appointment']);
   });
 
@@ -105,7 +107,12 @@ describe('App shell navigation permissions', () => {
     const permissions = ['appointment:read', 'visit:read'];
 
     const enabledGroups = getVisibleNavGroups(appNavGroups, permissions, true, true);
-    expect(enabledGroups.map(({ title }) => title)).toEqual(['Overview', 'Clinical', 'Outpatient']);
+    expect(enabledGroups.map(({ title }) => title)).toEqual([
+      'Overview',
+      'Clinical',
+      'Outpatient',
+      'Community',
+    ]);
     expect(enabledGroups[2].items.map(({ title }) => title)).toEqual(['Visits', 'Visit List']);
 
     expect(getVisibleNavGroups(appNavGroups, permissions, true, false)).not.toContainEqual(
@@ -206,5 +213,16 @@ describe('App shell navigation permissions', () => {
       title: 'Asset Conditions',
       subtitle: 'Tenant-scoped physical condition records for Assets.',
     });
+  });
+
+  it('should title each Community Outreach detail page without the list page action', () => {
+    expect(getAppPageMeta('/community-outreach/activities/a3').title).toBe('Activity details');
+    expect(getAppPageMeta('/community-outreach/activities/new').title).toBe('Log activity');
+    expect(getAppPageMeta('/community-outreach/contacts/new').title).toBe('Add contact');
+    expect(getAppPageMeta('/community-outreach/contacts/c7/edit').title).toBe('Edit contact');
+    expect(getAppPageMeta('/community-outreach/contacts/c7/follow-up').title).toBe('Log follow-up');
+    expect(
+      getAppPageMeta('/community-outreach/contacts/c7/reassign').primaryAction
+    ).toBeUndefined();
   });
 });
