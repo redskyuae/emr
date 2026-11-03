@@ -2,25 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { CircleOff, MoreVertical, Pencil, Plus, RotateCcw, Search, UserRound } from 'lucide-react';
+import { LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, UserRound } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
-import { useDeactivateTherapist } from '@/app/queries/therapists/useDeactivateTherapist';
-import { useReactivateTherapist } from '@/app/queries/therapists/useReactivateTherapist';
 import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Empty,
   EmptyContent,
@@ -30,80 +21,34 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { TherapistStatusDialog } from './_modals/therapist-status-dialog';
 import { TherapistFormSheet } from './therapist-form-sheet';
+import { TherapistViewSkeleton } from './therapist-skeletons';
+import {
+  TherapistCardView,
+  TherapistListView,
+  TherapistTableView,
+  type TherapistStatusAction,
+} from './therapist-views';
+
+type ViewLayout = 'table' | 'card' | 'list';
+type PendingTherapistStatusAction = {
+  therapist: Therapist;
+  action: TherapistStatusAction;
+};
 
 const PAGE_SIZE = 10;
 
-function TherapistActionsMenu({
-  therapist,
-  canEdit,
-  canDeactivate,
-  canReactivate,
-  onEdit,
-  onStatusAction,
-}: {
-  therapist: Therapist;
-  canEdit: boolean;
-  canDeactivate: boolean;
-  canReactivate: boolean;
-  onEdit: (therapist: Therapist) => void;
-  onStatusAction: (therapist: Therapist) => void;
-}) {
-  const canStatusAction = therapist.isActive ? canDeactivate : canReactivate;
-
-  if (!canEdit && !canStatusAction) return null;
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Actions for ${therapist.name}`}
-        >
-          <MoreVertical className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
-        {canEdit ? (
-          <DropdownMenuItem onClick={() => onEdit(therapist)}>
-            <Pencil className="size-4" />
-            Edit
-          </DropdownMenuItem>
-        ) : null}
-        {canStatusAction ? (
-          <DropdownMenuItem
-            variant={therapist.isActive ? 'destructive' : 'default'}
-            onClick={() => onStatusAction(therapist)}
-          >
-            {therapist.isActive ? (
-              <CircleOff className="size-4" />
-            ) : (
-              <RotateCcw className="size-4" />
-            )}
-            {therapist.isActive ? 'Deactivate' : 'Reactivate'}
-          </DropdownMenuItem>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 export function TherapistsPageImpl() {
   const [therapistParam, setTherapistParam] = useQueryState('therapist');
+  const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, { wait: 300 });
   const [status, setStatus] = useState<'active' | 'inactive' | undefined>(undefined);
   const [page, setPage] = useState(1);
+  const [pendingStatusAction, setPendingStatusAction] =
+    useState<PendingTherapistStatusAction | null>(null);
   const {
     data: canCreate,
     isLoading: canCreateLoading,
@@ -122,8 +67,6 @@ export function TherapistsPageImpl() {
     query: debouncedSearch || undefined,
     status,
   });
-  const deactivate = useDeactivateTherapist();
-  const reactivate = useReactivateTherapist();
   const therapists = list.data?.data ?? [];
   const isCreating = therapistParam === 'new' && canCreate;
   const editingTherapistId =
@@ -147,19 +90,44 @@ export function TherapistsPageImpl() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [therapistAccessDenied]);
 
-  const toggleStatus = (therapist: Therapist) => {
-    if (therapist.isActive) {
-      if (canDeactivate) void deactivate.mutateAsync(therapist.id);
-    } else if (canReactivate) {
-      void reactivate.mutateAsync(therapist.id);
-    }
+  const viewProps = {
+    therapists,
+    canEdit: Boolean(canUpdate),
+    canDeactivate: Boolean(canDeactivate),
+    canReactivate: Boolean(canReactivate),
+    onEdit: (item: Therapist) => void setTherapistParam(String(item.id)),
+    onStatusAction: (therapist: Therapist, action: TherapistStatusAction) =>
+      setPendingStatusAction({ therapist, action }),
   };
 
   return (
     <div className="space-y-4">
       <Card className="shadow-fluent-2">
-        <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
-          <InputGroup className="h-9 sm:max-w-sm">
+        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+          <ToggleGroup
+            type="single"
+            value={viewLayout}
+            onValueChange={(value) => {
+              if (value) setViewLayout(value as ViewLayout);
+            }}
+            variant="outline"
+            size="lg"
+            spacing={0}
+          >
+            <ToggleGroupItem value="table" aria-label="Table view">
+              <TableIcon className="size-4" />
+              Table
+            </ToggleGroupItem>
+            <ToggleGroupItem value="card" aria-label="Card view">
+              <LayoutGrid className="size-4" />
+              Card
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="List view">
+              <LayoutList className="size-4" />
+              List
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <InputGroup className="h-9 lg:max-w-xs">
             <InputGroupAddon>
               <Search className="size-4" />
             </InputGroupAddon>
@@ -191,7 +159,7 @@ export function TherapistsPageImpl() {
             <option value="inactive">Inactive</option>
           </select>
           {canCreate ? (
-            <Button className="sm:ml-auto" onClick={() => void setTherapistParam('new')}>
+            <Button className="lg:ml-auto" onClick={() => void setTherapistParam('new')}>
               <Plus className="size-4" />
               Add Therapist
             </Button>
@@ -206,13 +174,7 @@ export function TherapistsPageImpl() {
         </Alert>
       ) : null}
       {list.isLoading ? (
-        <Card className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
-            {Array.from({ length: 5 }, (_, index) => (
-              <div key={index} className="bg-muted h-10 animate-pulse rounded" />
-            ))}
-          </CardContent>
-        </Card>
+        <TherapistViewSkeleton layout={viewLayout} />
       ) : therapists.length === 0 ? (
         <Empty>
           <EmptyHeader>
@@ -233,65 +195,12 @@ export function TherapistsPageImpl() {
             ) : null}
           </EmptyContent>
         </Empty>
+      ) : viewLayout === 'table' ? (
+        <TherapistTableView {...viewProps} />
+      ) : viewLayout === 'card' ? (
+        <TherapistCardView {...viewProps} />
       ) : (
-        <Card className="shadow-fluent-2">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table className="min-w-[900px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-4">Therapist</TableHead>
-                    <TableHead>Skills</TableHead>
-                    <TableHead>Staff code</TableHead>
-                    <TableHead>Registration</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="pr-4 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {therapists.map((therapist) => (
-                    <TableRow key={therapist.id}>
-                      <TableCell className="pl-4">
-                        <p className="font-medium">{therapist.name}</p>
-                        <p className="text-muted-foreground text-xs">{therapist.email}</p>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {therapist.skills.length > 0 ? (
-                            therapist.skills.map((skill) => (
-                              <Badge key={skill.id} variant="secondary">
-                                {skill.name}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-muted-foreground">No skills</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{therapist.staffCode ?? '—'}</TableCell>
-                      <TableCell>{therapist.registrationNumber ?? '—'}</TableCell>
-                      <TableCell>
-                        <Badge variant={therapist.isActive ? 'default' : 'outline'}>
-                          {therapist.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="pr-4 text-right">
-                        <TherapistActionsMenu
-                          therapist={therapist}
-                          canEdit={Boolean(canUpdate)}
-                          canDeactivate={Boolean(canDeactivate)}
-                          canReactivate={Boolean(canReactivate)}
-                          onEdit={(item) => void setTherapistParam(String(item.id))}
-                          onStatusAction={toggleStatus}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        <TherapistListView {...viewProps} />
       )}
       <div className="flex items-center justify-end gap-2">
         <Button
@@ -317,6 +226,16 @@ export function TherapistsPageImpl() {
         open={isOpen}
         therapist={isCreating ? null : selected}
         onClose={() => void setTherapistParam(null)}
+      />
+
+      <TherapistStatusDialog
+        pendingAction={
+          pendingStatusAction &&
+          (pendingStatusAction.action === 'deactivate' ? canDeactivate : canReactivate)
+            ? pendingStatusAction
+            : null
+        }
+        onClose={() => setPendingStatusAction(null)}
       />
     </div>
   );
