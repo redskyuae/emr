@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { AlertCircle } from 'lucide-react';
 
@@ -12,8 +12,8 @@ import { useDoctorRotasQuery } from '@/app/queries/rota-management/useDoctorRota
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import { DoctorScheduleFormSheet } from './_sheets/doctor-schedule-form-sheet';
-import { DoctorSchedulesTable } from './doctor-schedules-table';
-import { DoctorSchedulesToolbar } from './doctor-schedules-toolbar';
+import { DoctorSchedulesResults } from './doctor-schedules-results';
+import { DoctorSchedulesToolbar, type ViewLayout } from './doctor-schedules-toolbar';
 
 const PAGE_SIZE = 10;
 
@@ -27,6 +27,7 @@ export function DoctorSchedulesPageImpl() {
   const [toDateParam, setToDateParam] = useQueryState('to', { defaultValue: '' });
   const [pageParam, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [scheduleParam, setScheduleParam] = useQueryState('schedule');
+  const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
 
   const {
     data: canCreate,
@@ -116,6 +117,8 @@ export function DoctorSchedulesPageImpl() {
       <div className="space-y-4">
         <DoctorSchedulesToolbar
           doctors={doctors}
+          viewLayout={viewLayout}
+          onViewLayoutChange={setViewLayout}
           doctorValue={doctorParam}
           toDateValue={toDateParam}
           fromDateValue={fromDateParam}
@@ -153,8 +156,9 @@ export function DoctorSchedulesPageImpl() {
           </Alert>
         ) : null}
 
-        <DoctorSchedulesTable
+        <DoctorSchedulesResults
           page={page}
+          layout={viewLayout}
           doctors={doctors}
           meta={meta}
           schedules={schedules}
