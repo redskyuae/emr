@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, RotateCcw } from 'lucide-react';
+import { LayoutGrid, LayoutList, Plus, RotateCcw, Table as TableIcon } from 'lucide-react';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import { Button } from '@/components/ui/button';
@@ -13,11 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const ALL = 'all';
 
+export type ViewLayout = 'table' | 'card' | 'list';
+
 type DoctorSchedulesToolbarProps = {
   doctors: Doctor[];
+  viewLayout: ViewLayout;
+  onViewLayoutChange: (layout: ViewLayout) => void;
   doctorsLoading: boolean;
   doctorValue: string;
   fromDateValue: string;
@@ -32,6 +37,8 @@ type DoctorSchedulesToolbarProps = {
 
 export function DoctorSchedulesToolbar({
   doctors,
+  viewLayout,
+  onViewLayoutChange,
   doctorValue,
   toDateValue,
   doctorsLoading,
@@ -48,6 +55,30 @@ export function DoctorSchedulesToolbar({
   return (
     <Card className="shadow-fluent-2">
       <CardContent className="flex flex-col gap-3 p-3 xl:flex-row xl:items-center">
+        <ToggleGroup
+          type="single"
+          value={viewLayout}
+          onValueChange={(value) => {
+            if (value) onViewLayoutChange(value as ViewLayout);
+          }}
+          variant="outline"
+          size="lg"
+          spacing={0}
+        >
+          <ToggleGroupItem value="table" aria-label="Table view">
+            <TableIcon className="size-4" />
+            Table
+          </ToggleGroupItem>
+          <ToggleGroupItem value="card" aria-label="Card view">
+            <LayoutGrid className="size-4" />
+            Card
+          </ToggleGroupItem>
+          <ToggleGroupItem value="list" aria-label="List view">
+            <LayoutList className="size-4" />
+            List
+          </ToggleGroupItem>
+        </ToggleGroup>
+
         <div className="grid flex-1 gap-3 md:grid-cols-3">
           <Select
             value={doctorValue || ALL}
