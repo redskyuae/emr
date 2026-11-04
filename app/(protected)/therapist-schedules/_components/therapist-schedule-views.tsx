@@ -203,10 +203,10 @@ export function TherapistScheduleListView({
             <div className="flex min-w-0 items-center gap-3 sm:w-64 sm:shrink-0">
               <TherapistScheduleAvatar />
               <div className="min-w-0">
-                <h3 className="font-heading truncate text-base font-semibold">
+                <h3 className="font-heading text-base font-semibold break-words">
                   {getTherapistName(schedule, therapistNameById)}
                 </h3>
-                <p className="text-muted-foreground truncate font-mono text-sm">
+                <p className="text-muted-foreground font-mono text-sm break-words">
                   {formatDateRange(schedule)}
                 </p>
               </div>
