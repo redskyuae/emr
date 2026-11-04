@@ -227,9 +227,9 @@ export function DoctorScheduleListView({
 
             <div className="flex min-w-0 flex-1 flex-col gap-1 pl-14 text-sm sm:flex-row sm:items-center sm:gap-6 sm:pl-0">
               <div className="min-w-0 sm:flex-1">
-                <p className="truncate">{formatRotas(schedule)}</p>
+                <p className="break-words">{formatRotas(schedule)}</p>
                 {schedule.rotaDetails.length > 0 ? (
-                  <p className="text-muted-foreground truncate text-xs">
+                  <p className="text-muted-foreground text-xs break-words">
                     {formatRotaTimes(schedule)}
                   </p>
                 ) : null}
