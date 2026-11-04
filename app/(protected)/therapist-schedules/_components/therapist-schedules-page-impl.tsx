@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 
@@ -11,8 +11,8 @@ import { useTherapistSchedulesQuery } from '@/app/queries/therapist-schedules/us
 import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { TherapistScheduleFormSheet } from './_sheets/therapist-schedule-form-sheet';
-import { TherapistSchedulesTable } from './therapist-schedules-table';
-import { TherapistSchedulesToolbar } from './therapist-schedules-toolbar';
+import { TherapistSchedulesResults } from './therapist-schedules-results';
+import { TherapistSchedulesToolbar, type ViewLayout } from './therapist-schedules-toolbar';
 
 const PAGE_SIZE = 10;
 const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -23,6 +23,7 @@ export function TherapistSchedulesPageImpl() {
   const [toDateParam, setToDateParam] = useQueryState('to', { defaultValue: '' });
   const [pageParam, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [scheduleParam, setScheduleParam] = useQueryState('schedule');
+  const [viewLayout, setViewLayout] = useState<ViewLayout>('table');
   const {
     data: canCreate,
     isLoading: canCreateLoading,
@@ -94,6 +95,8 @@ export function TherapistSchedulesPageImpl() {
       <div className="space-y-4">
         <TherapistSchedulesToolbar
           therapists={therapists}
+          viewLayout={viewLayout}
+          onViewLayoutChange={setViewLayout}
           therapistValue={therapistParam}
           toDateValue={toDateParam}
           fromDateValue={fromDateParam}
@@ -128,8 +131,9 @@ export function TherapistSchedulesPageImpl() {
             <AlertDescription>{getApiErrorMessage(rotasQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
-        <TherapistSchedulesTable
+        <TherapistSchedulesResults
           page={page}
+          layout={viewLayout}
           meta={meta}
           therapists={therapists}
           schedules={schedules}

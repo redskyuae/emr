@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, RotateCcw } from 'lucide-react';
+import { LayoutGrid, LayoutList, Plus, RotateCcw, Table as TableIcon } from 'lucide-react';
 
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
 import { Button } from '@/components/ui/button';
@@ -13,11 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 const ALL = 'all';
 
+export type ViewLayout = 'table' | 'card' | 'list';
+
 type Props = {
   therapists: Therapist[];
+  viewLayout: ViewLayout;
+  onViewLayoutChange: (layout: ViewLayout) => void;
   therapistsLoading: boolean;
   therapistValue: string;
   fromDateValue: string;
@@ -32,6 +37,8 @@ type Props = {
 
 export function TherapistSchedulesToolbar({
   therapists,
+  viewLayout,
+  onViewLayoutChange,
   therapistValue,
   toDateValue,
   fromDateValue,
@@ -47,6 +54,29 @@ export function TherapistSchedulesToolbar({
   return (
     <Card className="shadow-fluent-2">
       <CardContent className="flex flex-col gap-3 p-3 xl:flex-row xl:items-center">
+        <ToggleGroup
+          type="single"
+          value={viewLayout}
+          onValueChange={(value) => {
+            if (value) onViewLayoutChange(value as ViewLayout);
+          }}
+          variant="outline"
+          size="lg"
+          spacing={0}
+        >
+          <ToggleGroupItem value="table" aria-label="Table view">
+            <TableIcon className="size-4" />
+            Table
+          </ToggleGroupItem>
+          <ToggleGroupItem value="card" aria-label="Card view">
+            <LayoutGrid className="size-4" />
+            Card
+          </ToggleGroupItem>
+          <ToggleGroupItem value="list" aria-label="List view">
+            <LayoutList className="size-4" />
+            List
+          </ToggleGroupItem>
+        </ToggleGroup>
         <div className="grid flex-1 gap-3 md:grid-cols-3">
           <Select
             value={therapistValue || ALL}
