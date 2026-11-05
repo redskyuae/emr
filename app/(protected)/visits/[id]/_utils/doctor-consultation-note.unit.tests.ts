@@ -10,7 +10,8 @@ describe('doctor consultation capture', () => {
     surgicalHistory: '',
     familySocialHistory: '',
     examination: 'No red flags',
-    diagnosisCodeId: '1',
+    diagnosisCode: { code: 'M54', title: 'Dorsalgia' },
+    ayurvedaDiagnosisCode: { code: 'AYU-KATIGRAHA', title: 'Katigraha (Low back stiffness)' },
     ayurvedicDiagnosis: 'Katigraha',
     prakriti: 'Vata-Pitta',
     vikriti: 'Vata aggravation',
@@ -23,14 +24,21 @@ describe('doctor consultation capture', () => {
     );
   });
 
-  it('keeps modern and Ayurvedic findings in Visit-linked SOAP sections', () => {
-    expect(consultationToSoap(values, { code: 'M54', title: 'Dorsalgia' })).toEqual({
+  it('keeps coded and Ayurvedic findings in Visit-linked SOAP sections', () => {
+    expect(consultationToSoap(values)).toEqual({
       subjective:
         '**Chief complaint:**\n\nLow back pain\n\n**Present condition / HPI:**\n\nThree weeks',
       objective:
         '**Examination / red flags:**\n\nNo red flags\n\n**Prakriti:**\n\nVata-Pitta\n\n**Vikriti / body condition:**\n\nVata aggravation',
-      assessment: 'Modern diagnosis: M54 — Dorsalgia\n\n**Ayurvedic diagnosis:**\n\nKatigraha',
+      assessment:
+        'Diagnosis Code: M54 — Dorsalgia\n\nAyurveda Diagnosis Code: AYU-KATIGRAHA — Katigraha (Low back stiffness)\n\n**Ayurvedic diagnosis:**\n\nKatigraha',
       plan: '**Treatment precautions:**\n\nAvoid heavy lifting',
     });
+  });
+
+  it('omits coded diagnosis lines when no code is selected', () => {
+    expect(
+      consultationToSoap({ ...values, diagnosisCode: null, ayurvedaDiagnosisCode: null }).assessment
+    ).toBe('**Ayurvedic diagnosis:**\n\nKatigraha');
   });
 });

@@ -34,6 +34,39 @@ describe('ClinicalNote schema', () => {
     expect(createClinicalNoteSchema.parse({ noteTypeId: '3', plan: 'Rest' }).noteTypeId).toBe(3);
   });
 
+  it('should coerce coded diagnosis ids and keep null as an explicit clear', () => {
+    expect(
+      createClinicalNoteSchema.parse({
+        noteTypeId: 1,
+        plan: 'Rest',
+        diagnosisCodeId: '4',
+        ayurvedaDiagnosisCodeId: null,
+      })
+    ).toMatchObject({ diagnosisCodeId: 4, ayurvedaDiagnosisCodeId: null });
+  });
+
+  it('should leave coded diagnosis ids undefined when they are omitted', () => {
+    const parsed = createClinicalNoteSchema.parse({ noteTypeId: 1, plan: 'Rest' });
+
+    expect(parsed.diagnosisCodeId).toBeUndefined();
+    expect(parsed.ayurvedaDiagnosisCodeId).toBeUndefined();
+  });
+
+  it('should reject non-positive coded diagnosis ids', () => {
+    expect(
+      errorsOf(createClinicalNoteSchema.safeParse({ noteTypeId: 1, plan: 'x', diagnosisCodeId: 0 }))
+    ).toContain('Diagnosis code ID must be positive');
+    expect(
+      errorsOf(
+        createClinicalNoteSchema.safeParse({
+          noteTypeId: 1,
+          plan: 'x',
+          ayurvedaDiagnosisCodeId: -1,
+        })
+      )
+    ).toContain('Ayurveda diagnosis code ID must be positive');
+  });
+
   it('should validate clinical note id is positive', () => {
     expect(clinicalNoteIdSchema.safeParse('1').success).toBe(true);
     expect(clinicalNoteIdSchema.safeParse('0').success).toBe(false);

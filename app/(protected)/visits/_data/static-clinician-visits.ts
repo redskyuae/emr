@@ -12,6 +12,8 @@ export type DiagnosisRow = {
   id: string;
   code: string;
   description: string;
+  ayurvedaCode: string;
+  ayurvedaDescription: string;
   type: string;
   reasonForVisit: boolean;
   onsetYear: string;
@@ -244,6 +246,8 @@ export const staticClinicianVisits: StaticClinicianVisit[] = [
           id: 'diagnosis-1',
           code: 'J45.21',
           description: 'Mild intermittent asthma with acute exacerbation',
+          ayurvedaCode: '',
+          ayurvedaDescription: '',
           type: 'Working',
           reasonForVisit: true,
           onsetYear: '2019',
@@ -370,6 +374,8 @@ export const staticClinicianVisits: StaticClinicianVisit[] = [
           id: 'diagnosis-1',
           code: 'Z00.00',
           description: 'General adult medical examination',
+          ayurvedaCode: '',
+          ayurvedaDescription: '',
           type: 'Final',
           reasonForVisit: true,
           onsetYear: '2026',

@@ -198,3 +198,40 @@ describe('OpenAPI Therapist Schedule contracts', () => {
     ]);
   });
 });
+
+describe('OpenAPI diagnosis master contracts', () => {
+  const paths = openApiDocument.paths as unknown as Record<
+    string,
+    {
+      get: { parameters: unknown[] };
+      post: { description: string; responses: Record<string, unknown> };
+    }
+  >;
+  const masters = [
+    ['diagnosis-codes', 'DiagnosisCode', 'diagnosis-code:update'],
+    ['ayurveda-diagnosis-codes', 'AyurvedaDiagnosisCode', 'ayurveda-diagnosis-code:update'],
+  ] as const;
+
+  it.each(masters)('should document activation for %s', (path, schemaName, permission) => {
+    for (const action of ['activate', 'deactivate']) {
+      const operation = paths[`/api/v1/clinical-masters/${path}/{id}/${action}`].post;
+
+      expect(operation.description).toContain(permission);
+      expect(Object.keys(operation.responses)).toEqual(['200', '400', '401', '403', '404', '500']);
+    }
+    expect(openApiDocument.components.schemas).toHaveProperty(schemaName);
+  });
+
+  it.each(masters)('should document the isActive list filter for %s', (path) => {
+    expect(paths[`/api/v1/clinical-masters/${path}`].get.parameters).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'isActive', in: 'query' })])
+    );
+  });
+
+  it('should document both coded diagnoses on Clinical Notes', () => {
+    expect(openApiDocument.components.schemas.CreateClinicalNoteRequest.properties).toMatchObject({
+      diagnosisCodeId: expect.any(Object),
+      ayurvedaDiagnosisCodeId: expect.any(Object),
+    });
+  });
+});

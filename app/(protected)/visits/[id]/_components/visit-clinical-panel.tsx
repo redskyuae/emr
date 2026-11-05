@@ -161,6 +161,9 @@ export function VisitClinicalPanel({
                       className="text-muted-foreground mt-1 line-clamp-2"
                     />
                   ) : null}
+                  {note.assessment ? (
+                    <RichTextContent value={note.assessment} className="mt-2 line-clamp-3" />
+                  ) : null}
                 </li>
               ))}
             </ul>

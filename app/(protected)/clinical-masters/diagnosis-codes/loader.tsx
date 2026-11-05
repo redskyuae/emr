@@ -13,7 +13,7 @@ export default function DiagnosisCodesPageLoader() {
 
       <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[680px]">
             <thead>
               <tr className="border-b">
                 <th className="p-3 pl-4">
@@ -24,6 +24,9 @@ export default function DiagnosisCodesPageLoader() {
                 </th>
                 <th className="p-3">
                   <Skeleton className="h-4 w-20" />
+                </th>
+                <th className="p-3">
+                  <Skeleton className="h-4 w-14" />
                 </th>
                 <th className="p-3 pr-4 text-right">
                   <Skeleton className="ml-auto h-4 w-14" />
@@ -41,6 +44,9 @@ export default function DiagnosisCodesPageLoader() {
                   </td>
                   <td className="p-3">
                     <Skeleton className="h-5 w-32" />
+                  </td>
+                  <td className="p-3">
+                    <Skeleton className="h-5 w-16" />
                   </td>
                   <td className="p-3 pr-4 text-right">
                     <Skeleton className="ml-auto h-8 w-8" />

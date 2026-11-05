@@ -12,6 +12,8 @@ import { bedRepository } from '../../bed/repository/bed-repository';
 import { clinicalNoteTypeRepository } from '../../clinical-note-type/repository/clinical-note-type-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
 import { wardRepository } from '../../ward/repository/ward-repository';
+import { ayurvedaDiagnosisCodeRepository } from '../../ayurveda-diagnosis-code/repository/ayurveda-diagnosis-code-repository';
+import { diagnosisCodeRepository } from '../../diagnosis-code/repository/diagnosis-code-repository';
 import { clinicalNoteRepository } from './clinical-note-repository';
 
 const tenantA = 'tenant-a-test';
@@ -173,6 +175,83 @@ describe('ClinicalNote repository', () => {
     });
 
     expect(updated).toMatchObject({ admissionId, subjective: 'Edited from the chart' });
+  });
+
+  describe('coded diagnoses', () => {
+    const createCodedNote = async () => {
+      const diagnosisCode = await diagnosisCodeRepository.createDiagnosisCode({
+        tenantId: tenantA,
+        code: 'I10',
+        title: 'Essential hypertension',
+        category: undefined,
+      });
+      const ayurvedaDiagnosisCode =
+        await ayurvedaDiagnosisCodeRepository.createAyurvedaDiagnosisCode({
+          tenantId: tenantA,
+          code: 'AYU-JVARA',
+          title: 'Jvara (Fever)',
+          category: undefined,
+        });
+      const note = await clinicalNoteRepository.createClinicalNote({
+        tenantId: tenantA,
+        patientId,
+        noteTypeId,
+        diagnosisCodeId: diagnosisCode.id,
+        ayurvedaDiagnosisCodeId: ayurvedaDiagnosisCode.id,
+        subjective: 'Fever for 2 days',
+        authorUserId: 'user-1',
+        recordedByUserId: 'user-1',
+      });
+
+      return { note, diagnosisCode, ayurvedaDiagnosisCode };
+    };
+
+    it('should store both coded diagnoses on the note', async () => {
+      const { note, diagnosisCode, ayurvedaDiagnosisCode } = await createCodedNote();
+
+      expect(note).toMatchObject({
+        diagnosisCodeId: diagnosisCode.id,
+        ayurvedaDiagnosisCodeId: ayurvedaDiagnosisCode.id,
+      });
+    });
+
+    it('should default coded diagnoses to null', async () => {
+      await expect(createNote(tenantA)).resolves.toMatchObject({
+        diagnosisCodeId: null,
+        ayurvedaDiagnosisCodeId: null,
+      });
+    });
+
+    it('should keep coded diagnoses when a chart edit omits them', async () => {
+      const { note, diagnosisCode, ayurvedaDiagnosisCode } = await createCodedNote();
+
+      const updated = await clinicalNoteRepository.updateClinicalNote(note.id, {
+        tenantId: tenantA,
+        noteTypeId,
+        subjective: 'Edited from the chart',
+      });
+
+      expect(updated).toMatchObject({
+        diagnosisCodeId: diagnosisCode.id,
+        ayurvedaDiagnosisCodeId: ayurvedaDiagnosisCode.id,
+      });
+    });
+
+    it('should clear a coded diagnosis only when null is sent', async () => {
+      const { note, ayurvedaDiagnosisCode } = await createCodedNote();
+
+      const updated = await clinicalNoteRepository.updateClinicalNote(note.id, {
+        tenantId: tenantA,
+        noteTypeId,
+        diagnosisCodeId: null,
+        subjective: 'Diagnosis removed',
+      });
+
+      expect(updated).toMatchObject({
+        diagnosisCodeId: null,
+        ayurvedaDiagnosisCodeId: ayurvedaDiagnosisCode.id,
+      });
+    });
   });
 
   it('should honor an explicit Admission link on update', async () => {

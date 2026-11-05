@@ -5,7 +5,7 @@ import type { ListChargeItemsResponse, SaveChargeItemResponse } from './types';
 import { createChargeItemCommand } from '@/app/api/lib/modules/charge-item/commands/create-charge-item-command';
 import { getChargeItemsQuery } from '@/app/api/lib/modules/charge-item/queries/get-charge-items-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
-import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { parseIsActive, parsePositiveInteger } from '@/app/api/lib/utils/parser';
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -13,18 +13,6 @@ function mutationMessage(status: number, errors: string[]) {
   }
 
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
-}
-
-function parseIsActive(value: string | null): boolean | undefined {
-  if (value === 'true') {
-    return true;
-  }
-
-  if (value === 'false') {
-    return false;
-  }
-
-  return undefined;
 }
 
 export async function GET(request: NextRequest) {

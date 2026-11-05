@@ -128,6 +128,8 @@ function newDiagnosis(id: string): DiagnosisRow {
     id,
     code: '',
     description: 'New diagnosis',
+    ayurvedaCode: '',
+    ayurvedaDescription: '',
     type: 'Working',
     reasonForVisit: false,
     onsetYear: '',

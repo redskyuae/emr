@@ -32,6 +32,7 @@ const diagnosisCode = {
   code: 'I10',
   title: 'Essential hypertension',
   category: null,
+  isActive: true,
   createdOn: new Date(),
   modifiedOn: new Date(),
 };
@@ -57,12 +58,19 @@ describe('DiagnosisCode queries', () => {
   it('should call repository with parsed tenant/id/list params on success', async () => {
     await getDiagnosisCodeByIdQuery('1', 'tenant-1');
     expect(repo.getDiagnosisCodeById).toHaveBeenCalledWith(1, 'tenant-1');
-    await getDiagnosisCodesQuery({ tenantId: 'tenant-1', page: 2, limit: 5, query: 'i10' });
+    await getDiagnosisCodesQuery({
+      tenantId: 'tenant-1',
+      page: 2,
+      limit: 5,
+      query: 'i10',
+      isActive: true,
+    });
     expect(repo.getDiagnosisCodes).toHaveBeenCalledWith({
       tenantId: 'tenant-1',
       page: 2,
       limit: 5,
       query: 'i10',
+      isActive: true,
     });
   });
 

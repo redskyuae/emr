@@ -101,6 +101,38 @@ describe('App shell navigation permissions', () => {
     ).toBe(false);
   });
 
+  it('should show both diagnosis masters under Clinical Masters in the reduced sidebar', () => {
+    const permitted = getVisibleNavGroups(
+      appNavGroups,
+      ['diagnosis-code:read', 'ayurveda-diagnosis-code:read'],
+      true
+    );
+    const configuration = permitted.find(({ title }) => title === 'Configuration');
+
+    expect(configuration?.items.find(({ title }) => title === 'Clinical Masters')?.items).toEqual([
+      {
+        title: 'Diagnosis Codes',
+        href: '/clinical-masters/diagnosis-codes',
+        permission: 'diagnosis-code',
+      },
+      {
+        title: 'Ayurveda Diagnosis Codes',
+        href: '/clinical-masters/ayurveda-diagnosis-codes',
+        permission: 'ayurveda-diagnosis-code',
+      },
+    ]);
+  });
+
+  it('should hide the Ayurveda master without its permission', () => {
+    const permitted = getVisibleNavGroups(appNavGroups, ['diagnosis-code:read'], true);
+    const titles = permitted
+      .find(({ title }) => title === 'Configuration')
+      ?.items.find(({ title }) => title === 'Clinical Masters')
+      ?.items?.map(({ title }) => title);
+
+    expect(titles).toEqual(['Diagnosis Codes']);
+  });
+
   it('should show Visits in the reduced sidebar only when enabled and permitted', () => {
     const permissions = ['appointment:read', 'visit:read'];
 

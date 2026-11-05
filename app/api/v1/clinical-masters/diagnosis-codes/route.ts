@@ -5,7 +5,7 @@ import type { ListDiagnosisCodesResponse, SaveDiagnosisCodeResponse } from './ty
 import { createDiagnosisCodeCommand } from '@/app/api/lib/modules/diagnosis-code/commands/create-diagnosis-code-command';
 import { getDiagnosisCodesQuery } from '@/app/api/lib/modules/diagnosis-code/queries/get-diagnosis-codes-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
-import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { parseIsActive, parsePositiveInteger } from '@/app/api/lib/utils/parser';
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
       request.nextUrl.searchParams.get('query')?.trim() ||
       request.nextUrl.searchParams.get('search')?.trim() ||
       undefined;
+    const isActive = parseIsActive(request.nextUrl.searchParams.get('isActive'));
 
     const safePage = Math.max(1, Math.floor(page));
     const safeLimit = Math.min(999, Math.max(1, Math.floor(limit)));
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
       page: safePage,
       limit: safeLimit,
       query,
+      isActive,
     });
 
     if (!queryResult.success) {

@@ -1,8 +1,19 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import {
+  check,
+  foreignKey,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 import { admission as admissionTable } from './admission';
+import { ayurvedaDiagnosisCode as ayurvedaDiagnosisCodeTable } from './ayurveda-diagnosis-code';
 import { clinicalNoteType as clinicalNoteTypeTable } from './clinical-note-type';
+import { diagnosisCode as diagnosisCodeTable } from './diagnosis-code';
 import { masterColumns } from './helpers';
 import { patient as patientTable } from './patient';
 import { visit as visitTable } from './visit';
@@ -23,6 +34,8 @@ export const clinicalNote = pgTable(
     noteTypeId: integer('note_type_id')
       .notNull()
       .references(() => clinicalNoteTypeTable.id),
+    diagnosisCodeId: integer('diagnosis_code_id').references(() => diagnosisCodeTable.id),
+    ayurvedaDiagnosisCodeId: integer('ayurveda_diagnosis_code_id'),
     subjective: text(),
     objective: text(),
     assessment: text(),
@@ -37,6 +50,12 @@ export const clinicalNote = pgTable(
     deletedOn,
   },
   (table) => ({
+    // Named explicitly: the generated name exceeds Postgres's 63-character identifier limit.
+    ayurvedaDiagnosisCodeFk: foreignKey({
+      name: 'clinical_note_ayurveda_diagnosis_code_fk',
+      columns: [table.ayurvedaDiagnosisCodeId],
+      foreignColumns: [ayurvedaDiagnosisCodeTable.id],
+    }),
     singleClinicalParentCheck: check(
       'clinical_note_single_parent_check',
       sql`not (${table.visitId} is not null and ${table.admissionId} is not null)`

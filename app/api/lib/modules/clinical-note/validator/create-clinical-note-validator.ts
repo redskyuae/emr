@@ -8,6 +8,7 @@ import {
 import { validateAdmissionForClinicalCapture } from '../../admission/validator/admission-clinical-capture-validator';
 import { validateVisitForClinicalCapture } from '../../visit/validator/visit-clinical-capture-validator';
 import {
+  validateDiagnosisCodeReferences,
   validateNoteTypeReference,
   validatePatientExistsForNote,
 } from './clinical-note-reference-validator';
@@ -44,6 +45,12 @@ export async function validateCreateClinicalNote(
 
   if (!noteTypeResult.success) {
     return noteTypeResult;
+  }
+
+  const diagnosisCodesResult = await validateDiagnosisCodeReferences(payloadResult.data, tenantId);
+
+  if (!diagnosisCodesResult.success) {
+    return diagnosisCodesResult;
   }
 
   if (payloadResult.data.visitId !== undefined && payloadResult.data.visitId !== null) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm } from 'react-hook-form';
@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 
 import { getApiErrors } from '@/app/queries/api-error';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
-import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,6 +25,7 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { AyurvedaDiagnosisCodePicker, DiagnosisCodePicker } from '../diagnosis-code-pickers';
 import {
   consultationToSoap,
   doctorConsultationFormSchema,
@@ -39,7 +39,8 @@ const EMPTY: DoctorConsultationFormValues = {
   surgicalHistory: '',
   familySocialHistory: '',
   examination: '',
-  diagnosisCodeId: '',
+  diagnosisCode: null,
+  ayurvedaDiagnosisCode: null,
   ayurvedicDiagnosis: '',
   prakriti: '',
   vikriti: '',
@@ -79,7 +80,7 @@ export function DoctorConsultationSheet({
   });
   const noteTypes = useClinicalNoteTypesQuery({ limit: 100 });
   const [selectedNoteTypeId, setSelectedNoteTypeId] = useState<number | null>(null);
-  const diagnosisCodes = useDiagnosisCodesQuery({ limit: 100 });
+  const sheetRef = useRef<HTMLDivElement>(null);
   const createNote = useCreateClinicalNote();
   const consultationType = noteTypes.data?.data.find((type) => type.code === 'CONS');
   const availableNoteTypes = noteTypes.data?.data ?? [];
@@ -91,16 +92,15 @@ export function DoctorConsultationSheet({
 
   const submit = form.handleSubmit(async (values) => {
     if (!noteTypeId) return;
-    const diagnosis = diagnosisCodes.data?.data.find(
-      (item) => String(item.id) === values.diagnosisCodeId
-    );
     try {
       await createNote.mutateAsync({
         patientId,
         body: {
           noteTypeId,
           visitId,
-          ...consultationToSoap(values, diagnosis),
+          diagnosisCodeId: values.diagnosisCode?.id,
+          ayurvedaDiagnosisCodeId: values.ayurvedaDiagnosisCode?.id,
+          ...consultationToSoap(values),
         },
       });
       toast.success('Doctor consultation saved as a draft Clinical Note.');
@@ -113,6 +113,7 @@ export function DoctorConsultationSheet({
   return (
     <Sheet open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
       <SheetContent
+        ref={sheetRef}
         side="right"
         className="shadow-fluent-64 w-full gap-0 p-0 data-[side=right]:w-full sm:max-w-2xl"
         style={{ width: 'min(720px, 100vw)', maxWidth: '100vw' }}
@@ -234,34 +235,42 @@ export function DoctorConsultationSheet({
                 </Field>
               ))}
             </div>
-            <Field>
-              <FieldLabel htmlFor="consult-diagnosis-code">Modern diagnosis code</FieldLabel>
-              {diagnosisCodes.isLoading ? (
-                <Skeleton className="h-10 w-full" aria-label="Loading Diagnosis Codes" />
-              ) : (
-                <NativeSelect
-                  id="consult-diagnosis-code"
-                  className="w-full"
-                  {...form.register('diagnosisCodeId')}
-                >
-                  <NativeSelectOption value="">
-                    Select from Tenant Diagnosis Codes
-                  </NativeSelectOption>
-                  {(diagnosisCodes.data?.data ?? []).map((item) => (
-                    <NativeSelectOption key={item.id} value={String(item.id)}>
-                      {item.code} · {item.title}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              )}
-              {diagnosisCodes.isError ? (
-                <p className="text-destructive text-sm">Diagnosis Codes could not be loaded.</p>
-              ) : null}
-            </Field>
-            <p className="text-muted-foreground text-xs">
-              Ayurvedic terms are clinician-entered narrative until a validated terminology
-              catalogue is configured.
-            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="consult-diagnosis-code">Diagnosis Code</FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="diagnosisCode"
+                  render={({ field }) => (
+                    <DiagnosisCodePicker
+                      id="consult-diagnosis-code"
+                      label="Diagnosis Code"
+                      value={field.value}
+                      onChange={field.onChange}
+                      portalContainer={sheetRef}
+                    />
+                  )}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="consult-ayurveda-diagnosis-code">
+                  Ayurveda Diagnosis Code
+                </FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="ayurvedaDiagnosisCode"
+                  render={({ field }) => (
+                    <AyurvedaDiagnosisCodePicker
+                      id="consult-ayurveda-diagnosis-code"
+                      label="Ayurveda Diagnosis Code"
+                      value={field.value}
+                      onChange={field.onChange}
+                      portalContainer={sheetRef}
+                    />
+                  )}
+                />
+              </Field>
+            </div>
           </div>
           <SheetFooter className="flex-row justify-end gap-2 border-t p-4">
             <Button

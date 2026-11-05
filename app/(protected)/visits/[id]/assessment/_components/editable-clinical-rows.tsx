@@ -1,4 +1,4 @@
-import type { Dispatch, InputHTMLAttributes } from 'react';
+import type { Dispatch, InputHTMLAttributes, ReactNode } from 'react';
 import { Trash2Icon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,11 @@ import type {
   ProcedureRow,
   TreatmentRow,
 } from '../../../_data/static-clinician-visits';
+import {
+  AyurvedaDiagnosisCodePicker,
+  DiagnosisCodePicker,
+  type DiagnosisCodeOption,
+} from '../../_components/diagnosis-code-pickers';
 import type { AssessmentAction } from '../_utils/assessment-state';
 
 function ClinicalField({
@@ -23,6 +28,23 @@ function ClinicalField({
       <span className="text-muted-foreground mb-1 block text-xs font-medium">{label}</span>
       <Input aria-label={label} {...props} />
     </label>
+  );
+}
+
+function CodeField({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={cn('min-w-0', className)}>
+      <span className="text-muted-foreground mb-1 block text-xs font-medium">{label}</span>
+      {children}
+    </div>
   );
 }
 
@@ -87,6 +109,14 @@ export function DiagnosisEditor({
 }) {
   const update = (field: keyof Omit<DiagnosisRow, 'id'>, value: string | boolean) =>
     dispatch({ type: 'update-diagnosis', id: row.id, field, value });
+  const selectDiagnosisCode = (option: DiagnosisCodeOption | null) => {
+    update('code', option?.code ?? '');
+    if (option) update('description', option.title);
+  };
+  const selectAyurvedaDiagnosisCode = (option: DiagnosisCodeOption | null) => {
+    update('ayurvedaCode', option?.code ?? '');
+    update('ayurvedaDescription', option?.title ?? '');
+  };
 
   return (
     <div className="bg-background space-y-3 rounded-lg border p-3">
@@ -96,15 +126,26 @@ export function DiagnosisEditor({
         onRemove={() => dispatch({ type: 'remove-diagnosis', id: row.id })}
       />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <CodeField className="sm:col-span-2 lg:col-span-3" label="Diagnosis Code">
+          <DiagnosisCodePicker
+            disabled={disabled}
+            label="Diagnosis Code"
+            onChange={selectDiagnosisCode}
+            value={row.code ? { code: row.code, title: row.description } : null}
+          />
+        </CodeField>
+        <CodeField className="sm:col-span-2 lg:col-span-3" label="Ayurveda Diagnosis Code">
+          <AyurvedaDiagnosisCodePicker
+            disabled={disabled}
+            label="Ayurveda Diagnosis Code"
+            onChange={selectAyurvedaDiagnosisCode}
+            value={
+              row.ayurvedaCode ? { code: row.ayurvedaCode, title: row.ayurvedaDescription } : null
+            }
+          />
+        </CodeField>
         <ClinicalField
-          className="lg:col-span-1"
-          disabled={disabled}
-          label="Code"
-          onChange={(event) => update('code', event.target.value)}
-          value={row.code}
-        />
-        <ClinicalField
-          className="lg:col-span-3"
+          className="sm:col-span-2 lg:col-span-4"
           disabled={disabled}
           label="Diagnosis"
           onChange={(event) => update('description', event.target.value)}

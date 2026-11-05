@@ -150,6 +150,27 @@ const roleAssignmentErrorResponses = {
   '422': responseRef('UnprocessableEntity'),
 };
 
+const diagnosisCodeExample = {
+  code: 'I10',
+  title: 'Essential (primary) hypertension',
+  category: 'Circulatory system',
+};
+
+const ayurvedaDiagnosisCodeExample = {
+  code: 'AYU-KASA',
+  title: 'Kasa (Cough)',
+  category: 'Respiratory',
+};
+
+const isActiveQueryParameter = (entityName: string) => ({
+  name: 'isActive',
+  in: 'query',
+  required: false,
+  description: `Filters ${entityName} by active state. Omit to return both active and inactive entries.`,
+  schema: { type: 'boolean' },
+  example: true,
+});
+
 const listParameters = [
   parameterRef('Page'),
   parameterRef('Limit'),
@@ -271,6 +292,65 @@ const itemOperations = ({
     responses: {
       '204': { description: `${entity} deleted.` },
       ...operationErrorResponses,
+    },
+  },
+});
+
+const masterActivationOperation = ({
+  tag,
+  entity,
+  action,
+  schemaName,
+  permission,
+  example,
+}: {
+  tag: string;
+  entity: string;
+  action: 'Activate' | 'Deactivate';
+  schemaName: string;
+  permission: string;
+  example: Record<string, unknown>;
+}) => ({
+  post: {
+    tags: [tag],
+    summary: `${action} ${entity}`,
+    description:
+      action === 'Activate'
+        ? `Makes the ${entity} available for selection again. Requires the ${permission} Permission.`
+        : `Stops the ${entity} being selected on new records. Records that already use it keep it. Requires the ${permission} Permission.`,
+    security: [{ cookieAuth: [] }],
+    parameters: [numberIdPathParameter(entity)],
+    responses: {
+      '200': {
+        description: `${entity} ${action.toLowerCase()}d.`,
+        content: jsonContent(dataEnvelopeSchema(schemaName), {
+          data: {
+            id: 12,
+            tenantId: 'org_123',
+            ...example,
+            isActive: action === 'Activate',
+            createdOn: '2026-01-15T08:30:00.000Z',
+            modifiedOn: '2026-02-01T10:15:00.000Z',
+          },
+        }),
+      },
+      '400': {
+        description: `The ${entity} identifier is invalid.`,
+        content: jsonContent(schemaRef('ErrorResponse'), {
+          message: 'Validation failed',
+          errors: [`${entity.charAt(0)}${entity.slice(1).toLowerCase()} abc is Invalid.`],
+        }),
+      },
+      '401': responseRef('Unauthorized'),
+      '403': responseRef('Forbidden'),
+      '404': {
+        description: `The ${entity} does not exist in the active Tenant.`,
+        content: jsonContent(schemaRef('ErrorResponse'), {
+          message: `${entity.charAt(0)}${entity.slice(1).toLowerCase()} not found`,
+          errors: [`${entity.charAt(0)}${entity.slice(1).toLowerCase()} not found`],
+        }),
+      },
+      '500': responseRef('InternalServerError'),
     },
   },
 });
@@ -2015,6 +2095,8 @@ const clinicalNoteExample = {
   visitId: null,
   admissionId: null,
   noteTypeId: 3,
+  diagnosisCodeId: 4,
+  ayurvedaDiagnosisCodeId: 3,
   subjective: 'Patient reports a productive cough for three days with mild fever.',
   objective: 'Temp 37.8C, chest clear on auscultation, throat mildly erythematous.',
   assessment: 'Acute upper respiratory infection.',
@@ -2422,6 +2504,10 @@ export const openApiDocument = {
     { name: 'Room Type', description: 'Tenant-scoped Room Type Master APIs.' },
     { name: 'Room', description: 'Tenant-scoped Room registry and occupancy APIs.' },
     { name: 'Diagnosis Code', description: 'Tenant-scoped Diagnosis Code (ICD-10) Master APIs.' },
+    {
+      name: 'Ayurveda Diagnosis Code',
+      description: 'Tenant-scoped Ayurveda Diagnosis Code Master APIs.',
+    },
     { name: 'Allergen', description: 'Tenant-scoped Allergen Master APIs.' },
     { name: 'Clinical Note Type', description: 'Tenant-scoped Clinical Note Type Master APIs.' },
     { name: 'Patient', description: 'Patient Registration and management APIs.' },
@@ -6026,11 +6112,8 @@ export const openApiDocument = {
       summaryEntity: 'Diagnosis Codes',
       schemaName: 'DiagnosisCode',
       createSchemaName: 'CreateDiagnosisCodeRequest',
-      example: {
-        code: 'I10',
-        title: 'Essential (primary) hypertension',
-        category: 'Circulatory system',
-      },
+      example: diagnosisCodeExample,
+      extraListParameters: [isActiveQueryParameter('Diagnosis Codes')],
       security: [{ cookieAuth: [] }],
       listErrorResponses: authenticatedListErrorResponses,
       mutationErrorResponses: authenticatedErrorResponses,
@@ -6040,14 +6123,64 @@ export const openApiDocument = {
       entity: 'Diagnosis Code',
       schemaName: 'DiagnosisCode',
       updateSchemaName: 'UpdateDiagnosisCodeRequest',
-      example: {
-        code: 'I10',
-        title: 'Essential (primary) hypertension',
-        category: 'Circulatory system',
-      },
+      example: diagnosisCodeExample,
       parameters: [numberIdPathParameter('Diagnosis Code')],
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/clinical-masters/diagnosis-codes/{id}/activate': masterActivationOperation({
+      tag: 'Diagnosis Code',
+      entity: 'Diagnosis Code',
+      action: 'Activate',
+      schemaName: 'DiagnosisCode',
+      permission: 'diagnosis-code:update',
+      example: diagnosisCodeExample,
+    }),
+    '/api/v1/clinical-masters/diagnosis-codes/{id}/deactivate': masterActivationOperation({
+      tag: 'Diagnosis Code',
+      entity: 'Diagnosis Code',
+      action: 'Deactivate',
+      schemaName: 'DiagnosisCode',
+      permission: 'diagnosis-code:update',
+      example: diagnosisCodeExample,
+    }),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes': collectionOperations({
+      tag: 'Ayurveda Diagnosis Code',
+      entity: 'Ayurveda Diagnosis Code',
+      summaryEntity: 'Ayurveda Diagnosis Codes',
+      schemaName: 'AyurvedaDiagnosisCode',
+      createSchemaName: 'CreateAyurvedaDiagnosisCodeRequest',
+      example: ayurvedaDiagnosisCodeExample,
+      extraListParameters: [isActiveQueryParameter('Ayurveda Diagnosis Codes')],
+      security: [{ cookieAuth: [] }],
+      listErrorResponses: authenticatedListErrorResponses,
+      mutationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}': itemOperations({
+      tag: 'Ayurveda Diagnosis Code',
+      entity: 'Ayurveda Diagnosis Code',
+      schemaName: 'AyurvedaDiagnosisCode',
+      updateSchemaName: 'UpdateAyurvedaDiagnosisCodeRequest',
+      example: ayurvedaDiagnosisCodeExample,
+      parameters: [numberIdPathParameter('Ayurveda Diagnosis Code')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}/activate': masterActivationOperation({
+      tag: 'Ayurveda Diagnosis Code',
+      entity: 'Ayurveda Diagnosis Code',
+      action: 'Activate',
+      schemaName: 'AyurvedaDiagnosisCode',
+      permission: 'ayurveda-diagnosis-code:update',
+      example: ayurvedaDiagnosisCodeExample,
+    }),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}/deactivate': masterActivationOperation({
+      tag: 'Ayurveda Diagnosis Code',
+      entity: 'Ayurveda Diagnosis Code',
+      action: 'Deactivate',
+      schemaName: 'AyurvedaDiagnosisCode',
+      permission: 'ayurveda-diagnosis-code:update',
+      example: ayurvedaDiagnosisCodeExample,
     }),
     '/api/v1/clinical-masters/allergens': collectionOperations({
       tag: 'Allergen',
@@ -6240,6 +6373,8 @@ export const openApiDocument = {
       createSchemaName: 'CreateClinicalNoteRequest',
       requestExample: {
         noteTypeId: 3,
+        diagnosisCodeId: 4,
+        ayurvedaDiagnosisCodeId: 3,
         subjective: 'Patient reports a productive cough for three days with mild fever.',
         objective: 'Temp 37.8C, chest clear on auscultation, throat mildly erythematous.',
         assessment: 'Acute upper respiratory infection.',
@@ -11116,12 +11251,48 @@ export const openApiDocument = {
         },
       },
       UpdateDiagnosisCodeRequest: schemaRef('CreateDiagnosisCodeRequest'),
-      DiagnosisCode: {
+      CreateAyurvedaDiagnosisCodeRequest: {
+        type: 'object',
+        required: ['code', 'title'],
+        description:
+          'Creating, updating, deleting, activating, and deactivating require the matching ayurveda-diagnosis-code Permission. Reading requires only an active Tenant Session.',
+        properties: {
+          code: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            description:
+              'Tenant-defined Ayurveda diagnosis code. The API normalizes this value to uppercase.',
+          },
+          title: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 255,
+            description: 'Human-readable Ayurveda diagnosis title.',
+          },
+          category: {
+            type: 'string',
+            maxLength: 100,
+            description: 'Optional grouping.',
+          },
+        },
+      },
+      UpdateAyurvedaDiagnosisCodeRequest: schemaRef('CreateAyurvedaDiagnosisCodeRequest'),
+      AyurvedaDiagnosisCode: {
         allOf: [
-          schemaRef('CreateDiagnosisCodeRequest'),
+          schemaRef('CreateAyurvedaDiagnosisCodeRequest'),
           {
             type: 'object',
-            required: ['id', 'tenantId', 'code', 'title', 'category', 'createdOn', 'modifiedOn'],
+            required: [
+              'id',
+              'tenantId',
+              'code',
+              'title',
+              'category',
+              'isActive',
+              'createdOn',
+              'modifiedOn',
+            ],
             properties: {
               id: { type: 'integer', minimum: 1 },
               tenantId: {
@@ -11130,6 +11301,43 @@ export const openApiDocument = {
                 description: 'Tenant identifier resolved from the active authenticated Session.',
               },
               category: { type: ['string', 'null'] },
+              isActive: {
+                type: 'boolean',
+                description: 'Inactive codes cannot be selected on new records.',
+              },
+              createdOn: { type: 'string', format: 'date-time' },
+              modifiedOn: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
+      },
+      DiagnosisCode: {
+        allOf: [
+          schemaRef('CreateDiagnosisCodeRequest'),
+          {
+            type: 'object',
+            required: [
+              'id',
+              'tenantId',
+              'code',
+              'title',
+              'category',
+              'isActive',
+              'createdOn',
+              'modifiedOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              tenantId: {
+                type: 'string',
+                minLength: 1,
+                description: 'Tenant identifier resolved from the active authenticated Session.',
+              },
+              category: { type: ['string', 'null'] },
+              isActive: {
+                type: 'boolean',
+                description: 'Inactive codes cannot be selected on new records.',
+              },
               createdOn: { type: 'string', format: 'date-time' },
               modifiedOn: { type: 'string', format: 'date-time' },
             },
@@ -11454,6 +11662,18 @@ export const openApiDocument = {
             description:
               'Optional Admission this note was authored during. The Admission must belong to this Patient and still be Admitted. A record may reference a Visit or an Admission, not both.',
           },
+          diagnosisCodeId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'Optional Diagnosis Code. It must exist in this Tenant and be active, unless an update keeps the code the note already has. On update, omit it to keep the current code or send null to clear it.',
+          },
+          ayurvedaDiagnosisCodeId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'Optional Ayurveda Diagnosis Code. It must exist in this Tenant and be active, unless an update keeps the code the note already has. On update, omit it to keep the current code or send null to clear it.',
+          },
           subjective: {
             type: 'string',
             maxLength: 20000,
@@ -11497,6 +11717,8 @@ export const openApiDocument = {
           visitId: { type: ['integer', 'null'] },
           admissionId: { type: ['integer', 'null'] },
           noteTypeId: { type: 'integer', minimum: 1 },
+          diagnosisCodeId: { type: ['integer', 'null'] },
+          ayurvedaDiagnosisCodeId: { type: ['integer', 'null'] },
           subjective: {
             type: ['string', 'null'],
             description: 'Plain text or Markdown formatting.',

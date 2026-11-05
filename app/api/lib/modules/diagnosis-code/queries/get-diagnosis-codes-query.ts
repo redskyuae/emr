@@ -8,6 +8,7 @@ export type GetDiagnosisCodesParams = {
   query?: string;
   limit?: number;
   tenantId: unknown;
+  isActive?: boolean;
 };
 
 export async function getDiagnosisCodesQuery({
@@ -15,6 +16,7 @@ export async function getDiagnosisCodesQuery({
   page,
   limit,
   query,
+  isActive,
 }: GetDiagnosisCodesParams): Promise<ListQueryResult<DiagnosisCode>> {
   const tenantIdValidationResult = validateGetDiagnosisCodes(tenantId);
 
@@ -27,6 +29,7 @@ export async function getDiagnosisCodesQuery({
     page,
     limit,
     query,
+    isActive,
   });
 
   return { success: true, data, total };

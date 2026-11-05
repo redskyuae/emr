@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 const narrative = z.string().trim().max(5000, 'This section must be at most 5000 characters.');
 
+const diagnosisCodeOption = z
+  .object({ id: z.number().optional(), code: z.string(), title: z.string() })
+  .nullable();
+
 export const doctorConsultationFormSchema = z.object({
   chiefComplaint: narrative.min(1, 'Chief complaint is required.'),
   hpi: narrative,
@@ -9,7 +13,8 @@ export const doctorConsultationFormSchema = z.object({
   surgicalHistory: narrative,
   familySocialHistory: narrative,
   examination: narrative,
-  diagnosisCodeId: z.string(),
+  diagnosisCode: diagnosisCodeOption,
+  ayurvedaDiagnosisCode: diagnosisCodeOption,
   ayurvedicDiagnosis: narrative,
   prakriti: narrative,
   vikriti: narrative,
@@ -22,10 +27,9 @@ function labelled(label: string, value: string) {
   return value ? `**${label}:**\n\n${value}` : null;
 }
 
-export function consultationToSoap(
-  values: DoctorConsultationFormValues,
-  modernDiagnosis?: { code: string; title: string }
-) {
+export function consultationToSoap(values: DoctorConsultationFormValues) {
+  const { diagnosisCode, ayurvedaDiagnosisCode } = values;
+
   return {
     subjective: [
       labelled('Chief complaint', values.chiefComplaint),
@@ -46,8 +50,9 @@ export function consultationToSoap(
         .join('\n\n') || undefined,
     assessment:
       [
-        modernDiagnosis
-          ? `Modern diagnosis: ${modernDiagnosis.code} — ${modernDiagnosis.title}`
+        diagnosisCode ? `Diagnosis Code: ${diagnosisCode.code} — ${diagnosisCode.title}` : null,
+        ayurvedaDiagnosisCode
+          ? `Ayurveda Diagnosis Code: ${ayurvedaDiagnosisCode.code} — ${ayurvedaDiagnosisCode.title}`
           : null,
         labelled('Ayurvedic diagnosis', values.ayurvedicDiagnosis),
       ]

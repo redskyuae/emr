@@ -46,7 +46,9 @@ export function ProblemFormSheet({
   onClose: () => void;
 }) {
   const diagnosisCodesQuery = useDiagnosisCodesQuery({ limit: 200 });
-  const diagnosisCodeOptions = diagnosisCodesQuery.data?.data ?? [];
+  const diagnosisCodeOptions = (diagnosisCodesQuery.data?.data ?? []).filter(
+    (option) => option.isActive || option.id === problem?.diagnosisCodeId
+  );
 
   const { serverErrors, setServerErrors, clearServerErrors } = useChartFormServerErrors();
   const form = useForm<ProblemFormValues>({

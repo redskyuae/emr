@@ -23,6 +23,39 @@ vi.mock('@/app/queries/clinical-masters/note-types/useClinicalNoteTypes', () => 
 afterEach(cleanup);
 
 describe('Visit Clinical panel record actions', () => {
+  it('shows the diagnoses recorded on a Visit Clinical Note', () => {
+    render(
+      createElement(VisitClinicalPanel, {
+        visit: { id: 7, status: 'IN_CONSULTATION', patient: { id: 3 } } as Visit,
+        chart: {
+          vitalSigns: [],
+          clinicalNotes: [
+            {
+              id: 1,
+              visitId: 7,
+              noteTypeId: 3,
+              status: 'draft',
+              assessment: 'Diagnosis Code: M54 — Dorsalgia (back pain)',
+            },
+          ],
+          allergies: [],
+          medications: [],
+        } as unknown as PatientChart,
+        chartLoading: false,
+        chartError: false,
+        canRecordVitals: true,
+        canCreateNote: true,
+        onRecordVitals: vi.fn(),
+        onAddClinicalNote: vi.fn(),
+        onNursingHandoff: vi.fn(),
+        onAddAllergy: vi.fn(),
+        onAddMedication: vi.fn(),
+      })
+    );
+
+    expect(screen.getByText(/Diagnosis Code: M54/)).toBeTruthy();
+  });
+
   it('opens separate Allergy and Medication capture actions without opening a Clinical Note', () => {
     const onAddAllergy = vi.fn();
     const onAddMedication = vi.fn();

@@ -52,6 +52,7 @@ export type DiagnosisCode = {
   code: string;
   title: string;
   tenantId: string;
+  isActive: boolean;
   createdOn: Date;
   modifiedOn: Date;
   category: string | null;
@@ -62,4 +63,5 @@ export type DiagnosisCodeListParams = {
   query?: string;
   limit?: number;
   tenantId: string;
+  isActive?: boolean;
 };

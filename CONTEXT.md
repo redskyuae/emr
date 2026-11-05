@@ -400,6 +400,14 @@ The ward-wise operational view of every Bed and its Bed Status, showing the Pati
 
 The list of Admissions, defaulting to Active Admissions, used by ward staff to see who is currently admitted, where, and under which Doctor.
 
+## Diagnosis Code
+
+A Tenant-scoped Master that names a diagnosis using an ICD-10 code, a title, and an optional category. A Doctor selects one when recording a Consultation, and a Patient Problem may reference one. An Inactive Diagnosis Code cannot be selected on new records; records that already use it keep it. Distinct from Ayurveda Diagnosis Code, which belongs to a separate catalogue.
+
+## Ayurveda Diagnosis Code
+
+A Tenant-scoped Master that names an Ayurveda diagnosis using a code, a title, and an optional category, such as Kasa (Cough). The `AYU-` starter codes seeded for each Tenant are local identifiers, not NAMASTE or ICD-11 TM2 codes. A Clinical Note may carry an Ayurveda Diagnosis Code alongside a Diagnosis Code. An Inactive Ayurveda Diagnosis Code cannot be selected on new records; records that already use it keep it.
+
 ## Charge Item
 
 A Tenant-scoped Master that names a billable service or item, such as a consultation fee, a procedure, an investigation, or a consumable. Its code may be a verified CPT code or a local service code. It carries a Standard Price, optional Cash Price and Insurance Contract Price, an optional Effective Date, and Active status. An Established or Follow-up Consultation Charge Item may be marked Free Follow-up Eligible; the waiver applies only to a qualifying follow-up Visit. A Visit service designation links the Charge Item to New Consultation, Established Consultation, Follow-up Consultation, or Treatment Session; staff select the actual coded service and level. A Charge Item is the priced catalogue entry a cashier draws Invoice Lines from; it is not itself a bill. Patient-paid Invoice Lines default to Cash Price when configured, otherwise Standard Price. Insurance Contract Price is stored for future direct insurer billing and is not used for Patient reimbursement.

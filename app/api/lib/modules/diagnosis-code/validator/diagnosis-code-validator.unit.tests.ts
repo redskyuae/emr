@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { diagnosisCodeRepository } from '../repository/diagnosis-code-repository';
 import { validateCreateDiagnosisCode } from './create-diagnosis-code-validator';
 import { validateDeleteDiagnosisCode } from './delete-diagnosis-code-validator';
+import { validateDiagnosisCodeExists } from './diagnosis-code-exists-validator';
 import { validateGetDiagnosisCodeById } from './get-diagnosis-code-by-id-validator';
 import { validateGetDiagnosisCodes } from './get-diagnosis-codes-validator';
 import { validateUpdateDiagnosisCode } from './update-diagnosis-code-validator';
@@ -26,6 +27,7 @@ const existing = {
   code: 'I10',
   title: 'Essential hypertension',
   category: null,
+  isActive: true,
   createdOn: new Date(),
   modifiedOn: new Date(),
 };
@@ -85,6 +87,32 @@ describe('DiagnosisCode validators', () => {
     ).resolves.toEqual({
       success: true,
       data: { code: 'I10', title: 'Essential hypertension' },
+    });
+  });
+
+  it('should return the existing diagnosis code when it exists', async () => {
+    await expect(validateDiagnosisCodeExists('1', 'tenant-1')).resolves.toEqual({
+      success: true,
+      data: existing,
+    });
+    expect(repo.getDiagnosisCodeById).toHaveBeenCalledWith(1, 'tenant-1');
+  });
+
+  it('should reject an invalid id without reading the repository', async () => {
+    await expect(validateDiagnosisCodeExists('abc', 'tenant-1')).resolves.toMatchObject({
+      success: false,
+      errors: ['Diagnosis code abc is Invalid.'],
+    });
+    expect(repo.getDiagnosisCodeById).not.toHaveBeenCalled();
+  });
+
+  it('should return not-found when the diagnosis code does not exist', async () => {
+    repo.getDiagnosisCodeById.mockResolvedValue(undefined);
+
+    await expect(validateDiagnosisCodeExists('1', 'tenant-1')).resolves.toEqual({
+      success: false,
+      errors: ['Diagnosis code not found'],
+      status: StatusCodes.NOT_FOUND,
     });
   });
 

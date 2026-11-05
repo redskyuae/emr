@@ -1,9 +1,27 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getStaticClinicianVisit } from '../../../_data/static-clinician-visits';
 import { createAssessmentState } from '../_utils/assessment-state';
 import { PlanColumn } from './plan-column';
+
+vi.mock('@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes', () => ({
+  useDiagnosisCodesQuery: vi.fn(() => ({
+    data: { data: [{ id: 21, code: 'M54', title: 'Dorsalgia (back pain)' }] },
+    isFetching: false,
+    isError: false,
+  })),
+}));
+vi.mock(
+  '@/app/queries/clinical-masters/ayurveda-diagnosis-codes/useAyurvedaDiagnosisCodes',
+  () => ({
+    useAyurvedaDiagnosisCodesQuery: vi.fn(() => ({
+      data: { data: [{ id: 31, code: 'AYU-KASA', title: 'Kasa (Cough)' }] },
+      isFetching: false,
+      isError: false,
+    })),
+  })
+);
 
 describe('PlanColumn', () => {
   it('should show diagnosis and orders without completion fields in the planning step', () => {

@@ -14,6 +14,7 @@ const diagnosisCodeColumns = {
   code: diagnosisCodeTable.code,
   title: diagnosisCodeTable.title,
   tenantId: diagnosisCodeTable.tenantId,
+  isActive: diagnosisCodeTable.isActive,
   createdOn: diagnosisCodeTable.createdOn,
   modifiedOn: diagnosisCodeTable.modifiedOn,
   category: diagnosisCodeTable.category,
@@ -79,6 +80,26 @@ async function deleteDiagnosisCode(
   return deletedDiagnosisCode;
 }
 
+async function setDiagnosisCodeActive(
+  id: number,
+  tenantId: string,
+  isActive: boolean
+): Promise<DiagnosisCode | undefined> {
+  const [updatedDiagnosisCode] = await db
+    .update(diagnosisCodeTable)
+    .set({ isActive, modifiedOn: new Date() })
+    .where(
+      and(
+        eq(diagnosisCodeTable.id, id),
+        eq(diagnosisCodeTable.tenantId, tenantId),
+        eq(diagnosisCodeTable.isDeleted, false)
+      )
+    )
+    .returning(diagnosisCodeColumns);
+
+  return updatedDiagnosisCode;
+}
+
 async function getDiagnosisCodeById(
   id: number,
   tenantId: string
@@ -103,6 +124,7 @@ async function getDiagnosisCodes({
   page = 1,
   limit = 10,
   query,
+  isActive,
 }: DiagnosisCodeListParams) {
   const offset = (page - 1) * limit;
   const trimmedQuery = query?.trim();
@@ -115,6 +137,7 @@ async function getDiagnosisCodes({
   const whereClause = and(
     eq(diagnosisCodeTable.tenantId, tenantId),
     eq(diagnosisCodeTable.isDeleted, false),
+    isActive === undefined ? undefined : eq(diagnosisCodeTable.isActive, isActive),
     searchCondition
   );
 
@@ -180,5 +203,6 @@ export const diagnosisCodeRepository = {
   updateDiagnosisCode,
   deleteDiagnosisCode,
   getDiagnosisCodeById,
+  setDiagnosisCodeActive,
   seedDefaultDiagnosisCodes,
 };

@@ -7,6 +7,7 @@ type DiagnosisCodesParams = {
   query?: string;
   page?: number;
   limit?: number;
+  isActive?: boolean;
 };
 
 export const DIAGNOSIS_CODES_KEY = ['diagnosis-codes'] as const;
@@ -29,6 +30,10 @@ async function fetchDiagnosisCodes(
 
   if (params.query) {
     searchParams.set('query', params.query);
+  }
+
+  if (params.isActive !== undefined) {
+    searchParams.set('isActive', String(params.isActive));
   }
 
   const url = `/api/v1/clinical-masters/diagnosis-codes?${searchParams.toString()}`;

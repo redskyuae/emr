@@ -1,6 +1,8 @@
 import type { CommandResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { allergenRepository } from '../../allergen/repository/allergen-repository';
+import { ayurvedaDiagnosisCodeRepository } from '../../ayurveda-diagnosis-code/repository/ayurveda-diagnosis-code-repository';
+import { DEFAULT_AYURVEDA_DIAGNOSIS_CODES } from '../../ayurveda-diagnosis-code/seed-data';
 import { clinicalNoteTypeRepository } from '../../clinical-note-type/repository/clinical-note-type-repository';
 import { diagnosisCodeRepository } from '../../diagnosis-code/repository/diagnosis-code-repository';
 import { tenantIdSchema } from '../../tenant/schemas/tenant-schema';
@@ -53,12 +55,15 @@ const DEFAULT_CLINICAL_NOTE_TYPES = [
 type DiagnosisCodeSeeder = typeof diagnosisCodeRepository.seedDefaultDiagnosisCodes;
 type AllergenSeeder = typeof allergenRepository.seedDefaultAllergens;
 type ClinicalNoteTypeSeeder = typeof clinicalNoteTypeRepository.seedDefaultClinicalNoteTypes;
+type AyurvedaDiagnosisCodeSeeder =
+  typeof ayurvedaDiagnosisCodeRepository.seedDefaultAyurvedaDiagnosisCodes;
 
 export async function seedDefaultClinicalMastersCommand(
   tenantId: unknown,
   seedDiagnosisCodes: DiagnosisCodeSeeder = diagnosisCodeRepository.seedDefaultDiagnosisCodes,
   seedAllergens: AllergenSeeder = allergenRepository.seedDefaultAllergens,
-  seedClinicalNoteTypes: ClinicalNoteTypeSeeder = clinicalNoteTypeRepository.seedDefaultClinicalNoteTypes
+  seedClinicalNoteTypes: ClinicalNoteTypeSeeder = clinicalNoteTypeRepository.seedDefaultClinicalNoteTypes,
+  seedAyurvedaDiagnosisCodes: AyurvedaDiagnosisCodeSeeder = ayurvedaDiagnosisCodeRepository.seedDefaultAyurvedaDiagnosisCodes
 ): Promise<CommandResult<void>> {
   const tenantIdResult = tenantIdSchema.safeParse(tenantId);
 
@@ -70,6 +75,7 @@ export async function seedDefaultClinicalMastersCommand(
     await seedDiagnosisCodes(tenantIdResult.data, [...DEFAULT_DIAGNOSIS_CODES]);
     await seedAllergens(tenantIdResult.data, [...DEFAULT_ALLERGENS]);
     await seedClinicalNoteTypes(tenantIdResult.data, [...DEFAULT_CLINICAL_NOTE_TYPES]);
+    await seedAyurvedaDiagnosisCodes(tenantIdResult.data, [...DEFAULT_AYURVEDA_DIAGNOSIS_CODES]);
 
     return { success: true, data: undefined };
   } catch {

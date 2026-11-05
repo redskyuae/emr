@@ -10,7 +10,10 @@ import {
 } from '../schemas/clinical-note-schema';
 import { validateAdmissionForClinicalCapture } from '../../admission/validator/admission-clinical-capture-validator';
 import { validateVisitForClinicalCapture } from '../../visit/validator/visit-clinical-capture-validator';
-import { validateNoteTypeReference } from './clinical-note-reference-validator';
+import {
+  validateDiagnosisCodeReferences,
+  validateNoteTypeReference,
+} from './clinical-note-reference-validator';
 
 export type UpdateClinicalNoteParams = {
   id: number;
@@ -57,6 +60,16 @@ export async function validateUpdateClinicalNote(
 
   if (!noteTypeResult.success) {
     return noteTypeResult;
+  }
+
+  const diagnosisCodesResult = await validateDiagnosisCodeReferences(
+    payloadResult.data,
+    tenantId,
+    existing
+  );
+
+  if (!diagnosisCodesResult.success) {
+    return diagnosisCodesResult;
   }
 
   // The foreign key only proves the Visit row exists — it cannot stop an update

@@ -8,6 +8,24 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getStaticClinicianVisit } from '../../../_data/static-clinician-visits';
 import { ClinicianAssessmentPageImpl } from './clinician-assessment-page-impl';
 
+vi.mock('@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes', () => ({
+  useDiagnosisCodesQuery: vi.fn(() => ({
+    data: { data: [{ id: 21, code: 'M54', title: 'Dorsalgia (back pain)' }] },
+    isFetching: false,
+    isError: false,
+  })),
+}));
+vi.mock(
+  '@/app/queries/clinical-masters/ayurveda-diagnosis-codes/useAyurvedaDiagnosisCodes',
+  () => ({
+    useAyurvedaDiagnosisCodesQuery: vi.fn(() => ({
+      data: { data: [{ id: 31, code: 'AYU-KASA', title: 'Kasa (Cough)' }] },
+      isFetching: false,
+      isError: false,
+    })),
+  })
+);
+
 afterEach(cleanup);
 
 function renderConsultation() {
@@ -80,6 +98,31 @@ describe('ClinicianAssessmentPageImpl interactions', () => {
     expect(screen.getByRole('button', { name: 'Complete Visit' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Next:/ })).toBeNull();
     expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+
+  it('should fill the diagnosis row from the Diagnosis Code master', async () => {
+    const user = userEvent.setup();
+    renderConsultation();
+
+    await user.click(screen.getByRole('button', { name: /^3\s*Diagnosis & Orders/ }));
+    await user.click(screen.getByRole('combobox', { name: 'Diagnosis Code' }));
+    await user.click(await screen.findByRole('option', { name: /Dorsalgia/ }));
+
+    expect((screen.getByLabelText('Diagnosis') as HTMLInputElement).value).toBe(
+      'Dorsalgia (back pain)'
+    );
+  });
+
+  it('should record an Ayurveda Diagnosis Code on the diagnosis row', async () => {
+    const user = userEvent.setup();
+    renderConsultation();
+
+    await user.click(screen.getByRole('button', { name: /^3\s*Diagnosis & Orders/ }));
+    const picker = screen.getByRole('combobox', { name: 'Ayurveda Diagnosis Code' });
+    await user.click(picker);
+    await user.click(await screen.findByRole('option', { name: /Kasa/ }));
+
+    expect((picker as HTMLInputElement).value).toBe('AYU-KASA · Kasa (Cough)');
   });
 
   it('should show completion errors without blocking navigation', async () => {

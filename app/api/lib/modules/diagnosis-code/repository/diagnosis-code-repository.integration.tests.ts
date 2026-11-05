@@ -133,6 +133,64 @@ describe('DiagnosisCode repository', () => {
     ).toEqual(['Essential hypertension']);
   });
 
+  it('should create diagnosis codes as active by default', async () => {
+    const created = await createCode(tenantA, 'I10', 'Essential hypertension');
+    expect(created.isActive).toBe(true);
+  });
+
+  it('should deactivate and reactivate a diagnosis code', async () => {
+    const created = await createCode(tenantA, 'I10', 'Essential hypertension');
+
+    await expect(
+      diagnosisCodeRepository.setDiagnosisCodeActive(created.id, tenantA, false)
+    ).resolves.toMatchObject({ id: created.id, isActive: false });
+    await expect(
+      diagnosisCodeRepository.setDiagnosisCodeActive(created.id, tenantA, true)
+    ).resolves.toMatchObject({ id: created.id, isActive: true });
+  });
+
+  it("should not change another tenant's diagnosis code active state", async () => {
+    const created = await createCode(tenantA, 'I10', 'Essential hypertension');
+
+    await expect(
+      diagnosisCodeRepository.setDiagnosisCodeActive(created.id, tenantB, false)
+    ).resolves.toBeUndefined();
+    await expect(
+      diagnosisCodeRepository.getDiagnosisCodeById(created.id, tenantA)
+    ).resolves.toMatchObject({ isActive: true });
+  });
+
+  it('should not change the active state of a soft-deleted diagnosis code', async () => {
+    const created = await createCode(tenantA, 'I10', 'Essential hypertension');
+    await diagnosisCodeRepository.deleteDiagnosisCode(created.id, tenantA);
+
+    await expect(
+      diagnosisCodeRepository.setDiagnosisCodeActive(created.id, tenantA, false)
+    ).resolves.toBeUndefined();
+  });
+
+  it('should filter the list by active state and return all codes without a filter', async () => {
+    const activeCode = await createCode(tenantA, 'I10', 'Essential hypertension');
+    const inactiveCode = await createCode(tenantA, 'E11', 'Type 2 diabetes mellitus');
+    await diagnosisCodeRepository.setDiagnosisCodeActive(inactiveCode.id, tenantA, false);
+
+    const codesFor = async (isActive?: boolean) =>
+      (await diagnosisCodeRepository.getDiagnosisCodes({ tenantId: tenantA, isActive })).data.map(
+        (entry) => entry.id
+      );
+
+    await expect(codesFor(true)).resolves.toEqual([activeCode.id]);
+    await expect(codesFor(false)).resolves.toEqual([inactiveCode.id]);
+    await expect(codesFor()).resolves.toEqual([inactiveCode.id, activeCode.id]);
+  });
+
+  it('should keep an inactive code reserved for uniqueness', async () => {
+    const created = await createCode(tenantA, 'I10', 'Essential hypertension');
+    await diagnosisCodeRepository.setDiagnosisCodeActive(created.id, tenantA, false);
+
+    await expect(createCode(tenantA, 'I10', 'Duplicate')).rejects.toThrow();
+  });
+
   it('should paginate list results and return total', async () => {
     await createCode(tenantA, 'A00', 'Alpha');
     await createCode(tenantA, 'B00', 'Bravo');
