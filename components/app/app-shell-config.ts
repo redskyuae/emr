@@ -14,6 +14,7 @@ import {
   Hospital,
   LayoutDashboard,
   LayoutGrid,
+  ListChecks,
   ReceiptText,
   Settings,
   ShieldCheck,
@@ -21,6 +22,7 @@ import {
   Tag,
   UserRoundCog,
   UsersRound,
+  WalletCards,
   Wrench,
 } from 'lucide-react';
 
@@ -98,6 +100,12 @@ export const appNavGroups: AppNavGroup[] = [
         icon: ClipboardList,
         permission: 'visit',
       },
+      {
+        title: 'Visit List',
+        href: '/visit-list',
+        icon: ListChecks,
+        permission: 'visit',
+      },
     ],
   },
   {
@@ -125,6 +133,12 @@ export const appNavGroups: AppNavGroup[] = [
         href: '/billing',
         icon: ReceiptText,
         exact: true,
+        permission: 'invoice',
+      },
+      {
+        title: 'Billing Counter',
+        href: '/billing-counter',
+        icon: WalletCards,
         permission: 'invoice',
       },
     ],
@@ -419,7 +433,13 @@ const appointmentNavHrefs = new Set([
   '/room-masters/types',
   '/clinical-masters',
   '/clinical-masters/therapist-skills',
+  '/billing-masters',
+  '/billing-masters/charge-items',
 ]);
+
+const visitNavHrefs = new Set(['/visits', '/visit-list']);
+
+const demoNavHrefs = new Set(['/visit-list', '/billing-counter']);
 
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
@@ -562,6 +582,19 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       href: '/visits/new',
       permission: 'visit:create',
     },
+  },
+  '/visit-list': {
+    title: 'Visit List',
+    subtitle: 'Search every outpatient Visit by date, Doctor, status, type, source, and billing.',
+    primaryAction: {
+      label: 'Create Visit',
+      href: '/visits/new',
+      permission: 'visit:create',
+    },
+  },
+  '/billing-counter': {
+    title: 'Billing Counter',
+    subtitle: 'Invoice, collect advances, refund, and close the shift for this Counter.',
   },
   '/visits/new': {
     title: 'Create Visit',
@@ -769,11 +802,16 @@ function hasNavPermission(resource: string | undefined, grantedResources: Set<st
 function filterNavItem(
   item: AppNavItem,
   grantedResources: Set<string>,
-  appointmentsOnly: boolean
+  appointmentsOnly: boolean,
+  showVisits: boolean,
+  showDemoPages: boolean
 ): AppNavItem | null {
   if (
     !hasNavPermission(item.permission, grantedResources) ||
-    (appointmentsOnly && !appointmentNavHrefs.has(item.href))
+    (!showDemoPages && demoNavHrefs.has(item.href)) ||
+    (appointmentsOnly &&
+      !appointmentNavHrefs.has(item.href) &&
+      !(showVisits && visitNavHrefs.has(item.href)))
   ) {
     return null;
   }
@@ -794,7 +832,9 @@ function filterNavItem(
 export function getVisibleNavGroups(
   groups: AppNavGroup[],
   permissions: string[],
-  appointmentsOnly = false
+  appointmentsOnly = false,
+  showVisits = false,
+  showDemoPages = false
 ): AppNavGroup[] {
   const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
 
@@ -802,7 +842,9 @@ export function getVisibleNavGroups(
     .map((group) => ({
       ...group,
       items: group.items
-        .map((item) => filterNavItem(item, grantedResources, appointmentsOnly))
+        .map((item) =>
+          filterNavItem(item, grantedResources, appointmentsOnly, showVisits, showDemoPages)
+        )
         .filter((item): item is AppNavItem => item !== null),
     }))
     .filter((group) => group.items.length > 0);
@@ -810,6 +852,14 @@ export function getVisibleNavGroups(
 
 export function getAppPageMeta(pathname: string): AppPageMeta {
   const currentPath = trimTrailingSlash(pathname);
+
+  if (/^\/visits\/\d+\/assessment$/.test(currentPath)) {
+    return {
+      title: 'Clinician assessment',
+      subtitle: 'Complete this Visit in the active Facility context.',
+    };
+  }
+
   const exactMeta = pageMetaByHref[currentPath];
 
   if (exactMeta) {

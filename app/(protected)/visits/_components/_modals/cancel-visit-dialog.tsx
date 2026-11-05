@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useCancelVisit } from '@/app/queries/visits/useCancelVisit';
 import {
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
-import { Textarea } from '@/components/ui/textarea';
 
 export function CancelVisitDialog({
   visit,
@@ -78,14 +78,14 @@ function CancelVisitForm({ visit, onClose }: { visit: Visit; onClose: () => void
             *
           </span>
         </FieldLabel>
-        <Textarea
+        <RichTextEditor
           id="cancellation-reason"
-          aria-required
-          rows={3}
+          aria-label="Cancellation reason"
+          required
           value={reason}
           placeholder="Patient left before consultation"
-          onChange={(event) => {
-            setReason(event.target.value);
+          onChange={(value) => {
+            setReason(value);
             setError(null);
           }}
         />

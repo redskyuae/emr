@@ -35,6 +35,7 @@ export const assignPatientTreatmentPlanSchema = z.discriminatedUnion('sessionStr
       patientId: patientTreatmentPlanPatientIdSchema,
       treatmentId: treatmentIdSchema,
       sessionStructure: z.literal('SEQUENCED'),
+      additionalSessions: z.number().int().min(0).max(100).optional(),
     })
     .strict(),
 ]);
@@ -47,6 +48,14 @@ export const addPatientTreatmentPlanSessionsSchema = z
       .int('Sessions must be an integer')
       .positive('Sessions must be positive')
       .max(100, 'Sessions must be at most 100'),
+  })
+  .strict();
+
+export const assignPatientTreatmentPlanRequestSchema = z
+  .object({
+    treatmentId: treatmentIdSchema,
+    totalSessions: z.number().int().positive().max(100).optional(),
+    additionalSessions: z.number().int().min(0).max(100).optional(),
   })
   .strict();
 
@@ -84,6 +93,9 @@ export type PatientTreatmentPlanSessionReservedAppointment = {
   endTime: string | null;
 };
 export type AssignPatientTreatmentPlanInput = z.infer<typeof assignPatientTreatmentPlanSchema>;
+export type AssignPatientTreatmentPlanRequest = z.infer<
+  typeof assignPatientTreatmentPlanRequestSchema
+>;
 export type AddPatientTreatmentPlanSessionsRequest = z.infer<
   typeof addPatientTreatmentPlanSessionsSchema
 >;

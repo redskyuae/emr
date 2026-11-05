@@ -1,9 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { admissionRepository } from '@/app/api/lib/modules/admission/repository/admission-repository';
 import { chargeItemRepository } from '@/app/api/lib/modules/charge-item/repository/charge-item-repository';
 import { patientRepository } from '@/app/api/lib/modules/patient/repository/patient-repository';
+import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
 import { visitRepository } from '@/app/api/lib/modules/visit/repository/visit-repository';
 import { invoiceRepository } from '../repository/invoice-repository';
 import { validateAddInvoiceLine } from './add-invoice-line-validator';
@@ -22,6 +23,9 @@ vi.mock('../repository/invoice-repository', () => ({
 vi.mock('@/app/api/lib/modules/patient/repository/patient-repository', () => ({
   patientRepository: { getPatientById: vi.fn() },
 }));
+vi.mock('@/app/api/lib/modules/tenant/repository/tenant-repository', () => ({
+  tenantRepository: { getTenantById: vi.fn() },
+}));
 vi.mock('@/app/api/lib/modules/visit/repository/visit-repository', () => ({
   visitRepository: { getVisitById: vi.fn() },
 }));
@@ -34,6 +38,7 @@ vi.mock('@/app/api/lib/modules/charge-item/repository/charge-item-repository', (
 
 const invoiceRepo = vi.mocked(invoiceRepository);
 const patientRepo = vi.mocked(patientRepository);
+const tenantRepo = vi.mocked(tenantRepository);
 const visitRepo = vi.mocked(visitRepository);
 const admissionRepo = vi.mocked(admissionRepository);
 const chargeItemRepo = vi.mocked(chargeItemRepository);
@@ -55,6 +60,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   patientRepo.getPatientById.mockResolvedValue({ id: 7, mrn: 'MRN-0007' } as never);
   invoiceRepo.findInvoiceById.mockResolvedValue(draftInvoice);
+  tenantRepo.getTenantById.mockResolvedValue({ timeZone: 'Asia/Dubai' } as never);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('Invoice validators', () => {
@@ -170,6 +180,99 @@ describe('Invoice validators', () => {
       expect(result).toMatchObject({
         success: true,
         data: { invoiceId: 1, description: 'Consultation', quantity: 2, unitPrice: 500 },
+      });
+    });
+
+    it('uses Cash Price for patient billing and rejects a future-effective service', async () => {
+      chargeItemRepo.getChargeItemById.mockResolvedValue({
+        id: 1,
+        code: '99213',
+        name: 'Established Patient Level Three',
+        unitPrice: 150,
+        cashPrice: 130,
+        effectiveDate: '2026-01-01',
+        isActive: true,
+      } as never);
+      const cashLine = await validateAddInvoiceLine(
+        '1',
+        { chargeItemId: 1, quantity: 1 },
+        'tenant-1'
+      );
+      expect(cashLine).toMatchObject({ success: true, data: { unitPrice: 130 } });
+
+      chargeItemRepo.getChargeItemById.mockResolvedValue({
+        id: 1,
+        code: '99213',
+        name: 'Established Patient Level Three',
+        unitPrice: 150,
+        effectiveDate: '2999-01-01',
+        isActive: true,
+      } as never);
+      const futureLine = await validateAddInvoiceLine(
+        '1',
+        { chargeItemId: 1, quantity: 1 },
+        'tenant-1'
+      );
+      expect(futureLine).toMatchObject({
+        success: false,
+        errors: ['Charge item 99213 is not effective yet.'],
+      });
+    });
+
+    describe('effective date', () => {
+      const addLine = () =>
+        validateAddInvoiceLine('1', { chargeItemId: 1, quantity: 1 }, 'tenant-1');
+
+      beforeEach(() => {
+        chargeItemRepo.getChargeItemById.mockResolvedValue({
+          id: 1,
+          code: '99213',
+          name: 'Established Patient Level Three',
+          unitPrice: 150,
+          effectiveDate: '2026-03-15',
+          isActive: true,
+        } as never);
+      });
+
+      it('should accept an item effective today just after midnight in Asia/Dubai', async () => {
+        vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-03-14T20:30:00.000Z') });
+
+        expect(await addLine()).toMatchObject({ success: true });
+      });
+
+      it('should reject an item effective tomorrow in the Tenant time zone', async () => {
+        vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-03-15T02:00:00.000Z') });
+        tenantRepo.getTenantById.mockResolvedValue({ timeZone: 'America/New_York' } as never);
+
+        expect(await addLine()).toEqual({
+          success: false,
+          errors: ['Charge item 99213 is not effective yet.'],
+          status: StatusCodes.CONFLICT,
+        });
+      });
+
+      it('should return not found when the Tenant does not exist', async () => {
+        tenantRepo.getTenantById.mockResolvedValue(undefined as never);
+
+        expect(await addLine()).toEqual({
+          success: false,
+          errors: ['Tenant not found.'],
+          status: StatusCodes.NOT_FOUND,
+        });
+      });
+
+      it('should not read the Tenant when the item has no effective date', async () => {
+        chargeItemRepo.getChargeItemById.mockResolvedValue({
+          id: 1,
+          code: '99213',
+          name: 'Established Patient Level Three',
+          unitPrice: 150,
+          effectiveDate: null,
+          isActive: true,
+        } as never);
+
+        expect(await addLine()).toMatchObject({ success: true });
+        expect(tenantRepo.getTenantById).not.toHaveBeenCalled();
       });
     });
 

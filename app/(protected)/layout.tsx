@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
+import { demoPagesEnabled } from '@/lib/demo-pages';
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
 import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
 import { AppShellGate } from '@/components/app/app-shell-gate';
@@ -34,13 +35,18 @@ export default async function AppLayout({
 
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
   const appointmentsOnly = process.env.SIDEBAR_APPOINTMENTS_ONLY !== 'false';
+  const showVisits = process.env.SIDEBAR_SHOW_VISITS === 'true';
 
   return (
     <TabSessionGate>
       <AppShellGate>
         <TooltipProvider>
           <SidebarProvider defaultOpen={defaultOpen}>
-            <AppSidebar appointmentsOnly={appointmentsOnly} />
+            <AppSidebar
+              appointmentsOnly={appointmentsOnly}
+              showVisits={showVisits}
+              showDemoPages={demoPagesEnabled()}
+            />
             <SidebarInset>
               <AppTopbar />
               <div className="flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">

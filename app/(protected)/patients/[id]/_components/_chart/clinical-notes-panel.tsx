@@ -3,6 +3,7 @@
 import { FileText } from 'lucide-react';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
+import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -86,7 +87,9 @@ function NoteCard({
           return (
             <div key={section.label} className="flex gap-2 text-sm">
               <dt className="text-muted-foreground w-5 shrink-0 font-semibold">{section.label}</dt>
-              <dd className="whitespace-pre-wrap">{value}</dd>
+              <dd>
+                <RichTextContent value={value} />
+              </dd>
             </div>
           );
         })}

@@ -328,6 +328,10 @@ The exclusive reservation of one Patient Treatment Plan Session for a Procedure 
 
 A Tenant-scoped Master that classifies the clinical nature of a Visit, such as OPD Consultation, Follow-up, Procedure, or Vaccination. Distinct from AppointmentType, which classifies the Appointment at booking time — a Walk-in Visit has a VisitType but no Appointment.
 
+## Visit Patient Type
+
+An assessment shown while creating a Visit. A Patient is New until a completed Visit exists in the active Tenant within the last three calendar years, counted no earlier than creation of the Patient record. A Patient with such a Visit is Established. This is distinct from Patient Registration Status, which is Provisional or Registered, and from VisitType, which classifies the clinical encounter.
+
 ## Visit Number
 
 The permanent, human-facing identifier assigned by the system to a Visit within a Tenant, formatted as `VST-` followed by a Tenant-scoped sequence beginning at `1001`. A Visit Number is immutable and never reused, including after the Visit is removed.
@@ -398,7 +402,7 @@ The list of Admissions, defaulting to Active Admissions, used by ward staff to s
 
 ## Charge Item
 
-A Tenant-scoped Master that names a billable service or item and carries its unit price, such as a consultation fee, a procedure, an investigation, or a consumable. A Charge Item is the priced catalogue entry a cashier draws Invoice Lines from; it is not itself a bill.
+A Tenant-scoped Master that names a billable service or item, such as a consultation fee, a procedure, an investigation, or a consumable. Its code may be a verified CPT code or a local service code. It carries a Standard Price, optional Cash Price and Insurance Contract Price, an optional Effective Date, and Active status. An Established or Follow-up Consultation Charge Item may be marked Free Follow-up Eligible; the waiver applies only to a qualifying follow-up Visit. A Visit service designation links the Charge Item to New Consultation, Established Consultation, Follow-up Consultation, or Treatment Session; staff select the actual coded service and level. A Charge Item is the priced catalogue entry a cashier draws Invoice Lines from; it is not itself a bill. Patient-paid Invoice Lines default to Cash Price when configured, otherwise Standard Price. Insurance Contract Price is stored for future direct insurer billing and is not used for Patient reimbursement.
 
 ## Charge Item Category
 

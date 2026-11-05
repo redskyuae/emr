@@ -30,23 +30,7 @@ export function InvoiceHeader({
           </Badge>
         </div>
         <p className="text-muted-foreground pl-11 text-sm">
-          {invoice.patient.firstName} {invoice.patient.lastName} · {invoice.patient.mrn}
-          {invoice.visit ? (
-            <>
-              {' · '}
-              <Link href={`/visits/${invoice.visit.id}`} className="hover:underline">
-                Visit {invoice.visit.visitNumber}
-              </Link>
-            </>
-          ) : null}
-          {invoice.admission ? (
-            <>
-              {' · '}
-              <Link href={`/admissions/${invoice.admission.id}`} className="hover:underline">
-                Admission {invoice.admission.admissionNumber}
-              </Link>
-            </>
-          ) : null}
+          Invoice for {invoice.patient.firstName} {invoice.patient.lastName}
         </p>
         {invoice.status === 'VOID' && invoice.voidReason ? (
           <p className="text-destructive pl-11 text-xs">Voided: {invoice.voidReason}</p>

@@ -40,6 +40,7 @@ export default function PatientDetailLoader() {
                   </>
                 ) : null}
               </div>
+              {section === 4 ? <Skeleton className="mt-4 h-24 w-full" /> : null}
               {section === 0 ? (
                 <div className="flex items-center gap-3 rounded-md border p-3">
                   <Skeleton className="size-20 rounded-md" />

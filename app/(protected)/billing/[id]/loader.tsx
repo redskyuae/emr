@@ -11,13 +11,14 @@ export default function InvoiceDetailLoader() {
         <Skeleton className="h-9 w-32" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <Skeleton className="h-56 w-full rounded-lg" />
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="space-y-4">
           <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-64 w-full rounded-lg" />
         </div>
         <Skeleton className="h-64 w-full rounded-lg" />
       </div>
+      <Skeleton className="h-52 w-full rounded-lg" />
     </div>
   );
 }

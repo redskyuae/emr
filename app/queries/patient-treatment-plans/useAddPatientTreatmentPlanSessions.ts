@@ -7,7 +7,7 @@ import type {
   AddPatientTreatmentPlanSessionsResponse,
 } from '@/app/api/v1/patients/[id]/treatment-plans/types';
 import { parseApiError } from '@/app/queries/api-error';
-import { patientTreatmentPlansQueryKey } from './usePatientTreatmentPlans';
+import { patientTreatmentPlansBaseKey } from './usePatientTreatmentPlans';
 
 type AddPatientTreatmentPlanSessionsVariables = {
   patientId: number;
@@ -52,7 +52,7 @@ export function useAddPatientTreatmentPlanSessions(
     mutationFn: addPatientTreatmentPlanSessions,
     onSuccess: async (...args) => {
       const [, { patientId }] = args;
-      await queryClient.invalidateQueries({ queryKey: patientTreatmentPlansQueryKey(patientId) });
+      await queryClient.invalidateQueries({ queryKey: patientTreatmentPlansBaseKey(patientId) });
       await onSuccess?.(...args);
     },
   });

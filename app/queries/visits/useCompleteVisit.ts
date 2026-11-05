@@ -36,6 +36,10 @@ export function useCompleteVisit(options?: UseCompleteVisitOptions) {
       const [, visitId] = args;
       await queryClient.invalidateQueries({ queryKey: VISITS_KEY });
       await queryClient.invalidateQueries({ queryKey: visitQueryKey(visitId) });
+      await queryClient.invalidateQueries({
+        predicate: (query) =>
+          query.queryKey[0] === 'patients' && query.queryKey[2] === 'treatment-plans',
+      });
       await onSuccess?.(...args);
     },
   });

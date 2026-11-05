@@ -11,14 +11,14 @@ import {
   type AddPatientTreatmentPlanSessionsInput,
 } from '../schemas/patient-treatment-plan-schema';
 
-const currentStatusSchema = z.literal('current', {
-  error: 'Patient Treatment Plan status must be current',
+const planStatusSchema = z.enum(['current', 'all'], {
+  error: 'Patient Treatment Plan status must be current or all',
 });
 
 export type GetPatientTreatmentPlansParams = {
   patientId: number;
   tenantId: string;
-  status: 'current';
+  status: 'current' | 'all';
 };
 
 export async function validateGetPatientTreatmentPlans(
@@ -28,7 +28,7 @@ export async function validateGetPatientTreatmentPlans(
 ): Promise<ValidationResult<GetPatientTreatmentPlansParams>> {
   const patientIdResult = patientTreatmentPlanPatientIdSchema.safeParse(patientId);
   const tenantIdResult = patientTreatmentPlanTenantIdSchema.safeParse(tenantId);
-  const statusResult = currentStatusSchema.safeParse(status);
+  const statusResult = planStatusSchema.safeParse(status);
 
   if (!patientIdResult.success || !tenantIdResult.success || !statusResult.success) {
     const errors: string[] = [];
