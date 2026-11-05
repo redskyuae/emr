@@ -60,13 +60,14 @@ async function fetchPatientList(filters: PatientListFilters): Promise<ListPatien
   return response.json() as Promise<ListPatientsResponse>;
 }
 
-export function usePatientsQuery(filters: PatientListFilters) {
+export function usePatientsQuery(filters: PatientListFilters, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: patientListQueryKey(filters),
     queryFn: () => fetchPatientList(filters),
     // Keep the previous page visible while the next page/filter loads, so the
     // table doesn't flash empty on every pagination or filter change.
     placeholderData: keepPreviousData,
+    enabled: options?.enabled,
   });
 }
 

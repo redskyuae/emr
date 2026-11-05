@@ -7,6 +7,8 @@ export type SaveClinicalNoteRequest = {
   noteTypeId: number;
   visitId?: number;
   admissionId?: number;
+  diagnosisCodeId?: number | null;
+  ayurvedaDiagnosisCodeId?: number | null;
   subjective?: string;
   objective?: string;
   assessment?: string;

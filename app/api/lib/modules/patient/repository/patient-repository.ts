@@ -413,13 +413,18 @@ async function getPatients({
   // non-empty: an unguarded strip turns a name search for O'Brien into '',
   // which would match every patient in the tenant (ADR 0042).
   const normalisedQuery = trimmedQuery ? normaliseEmiratesId(trimmedQuery) : '';
+  const searchPattern = `%${trimmedQuery}%`;
   const searchCondition = trimmedQuery
     ? or(
-        ilike(patientTable.firstName, `%${trimmedQuery}%`),
-        ilike(patientTable.middleName, `%${trimmedQuery}%`),
-        ilike(patientTable.lastName, `%${trimmedQuery}%`),
-        ilike(patientTable.mrn, `%${trimmedQuery}%`),
-        ilike(patientTable.phone, `%${trimmedQuery}%`),
+        ilike(patientTable.firstName, searchPattern),
+        ilike(patientTable.middleName, searchPattern),
+        ilike(patientTable.lastName, searchPattern),
+        ilike(sql`${patientTable.firstName} || ' ' || ${patientTable.lastName}`, searchPattern),
+        ilike(patientTable.mrn, searchPattern),
+        ilike(patientTable.phone, searchPattern),
+        ilike(sql`${patientTable.dateOfBirth}::text`, searchPattern),
+        ilike(sql`to_char(${patientTable.dateOfBirth}, 'DD/MM/YYYY')`, searchPattern),
+        ilike(sql`to_char(${patientTable.dateOfBirth}, 'DD-MM-YYYY')`, searchPattern),
         normalisedQuery === '' ? undefined : ilike(patientTable.emiratesId, `%${normalisedQuery}%`)
       )
     : undefined;

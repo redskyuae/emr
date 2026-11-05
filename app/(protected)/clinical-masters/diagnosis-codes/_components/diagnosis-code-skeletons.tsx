@@ -22,6 +22,7 @@ function TableSkeleton() {
                 <TableHead className="pl-4">Code</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="pr-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -36,6 +37,9 @@ function TableSkeleton() {
                   </TableCell>
                   <TableCell>
                     <Skeleton className="h-5 w-32" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-16" />
                   </TableCell>
                   <TableCell className="pr-4 text-right">
                     <Skeleton className="ml-auto h-8 w-8" />
@@ -56,12 +60,16 @@ function CardViewSkeleton() {
       {Array.from({ length: 6 }, (_, i) => (
         <Card key={i} className="shadow-fluent-2">
           <CardContent className="space-y-3 p-4">
-            <Skeleton className="size-10 rounded-full" />
+            <div className="flex items-start justify-between gap-2">
+              <Skeleton className="size-10 rounded-full" />
+              <Skeleton className="h-5 w-14" />
+            </div>
             <Skeleton className="h-5 w-24" />
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-4 w-28" />
             <div className="flex gap-2 pt-1">
               <Skeleton className="h-8 w-14" />
+              <Skeleton className="h-8 w-24" />
               <Skeleton className="h-8 w-16" />
             </div>
           </CardContent>
@@ -82,6 +90,7 @@ function ListViewSkeleton() {
               <Skeleton className="h-5 w-20" />
               <Skeleton className="h-4 w-48" />
               <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-5 w-14" />
             </div>
             <Skeleton className="h-8 w-8 shrink-0" />
           </CardContent>

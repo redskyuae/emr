@@ -1,6 +1,7 @@
 import type {
   ChargeItem,
   ChargeItemCategory,
+  VisitChargeKind,
 } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 
@@ -11,6 +12,11 @@ export type SaveChargeItemRequest = {
   code: string;
   category: ChargeItemCategory;
   unitPrice: number;
+  cashPrice?: number | null;
+  insuranceContractPrice?: number | null;
+  freeFollowUpEligible?: boolean;
+  effectiveDate?: string | null;
+  visitChargeKind?: VisitChargeKind | null;
   description?: string | null;
   isActive?: boolean;
 };

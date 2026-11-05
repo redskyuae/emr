@@ -7,7 +7,9 @@ const useQueryMock = vi.hoisted(() => vi.fn());
 vi.mock('@tanstack/react-query', () => ({ useQuery: useQueryMock }));
 
 import {
+  patientTreatmentPlanHistoryQueryKey,
   patientTreatmentPlansQueryKey,
+  usePatientTreatmentPlanHistoryQuery,
   usePatientTreatmentPlansQuery,
 } from './usePatientTreatmentPlans';
 
@@ -41,6 +43,21 @@ describe('Patient Treatment Plan query', () => {
       'treatment-plans',
       { status: 'current' },
     ]);
+  });
+
+  it('should fetch all Plans for longitudinal Visit review', async () => {
+    const response: ListPatientTreatmentPlansResponse = { data: [] };
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => response });
+    vi.stubGlobal('fetch', fetchMock);
+
+    usePatientTreatmentPlanHistoryQuery(42);
+    const options = capturedQueryOptions();
+
+    expect(options.queryKey).toEqual(patientTreatmentPlanHistoryQueryKey(42));
+    await expect(options.queryFn()).resolves.toBe(response);
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/patients/42/treatment-plans?status=all', {
+      credentials: 'same-origin',
+    });
   });
 
   it.each([

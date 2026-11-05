@@ -2,6 +2,38 @@ import { describe, expect, it } from 'vitest';
 
 import { openApiDocument } from './document';
 
+describe('OpenAPI Visit Patient type contract', () => {
+  it('documents three-year classification and lookup errors', () => {
+    const operation = openApiDocument.paths['/api/v1/visits/patient-type'].get;
+    expect(operation.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'patientId', in: 'query', required: true }),
+      ])
+    );
+    expect(operation.description).toContain('three-calendar-year window');
+    expect(operation.responses).toMatchObject({
+      '200': { content: expect.any(Object) },
+      '400': { content: expect.any(Object) },
+      '404': { content: expect.any(Object) },
+    });
+  });
+});
+
+describe('OpenAPI Patient search contract', () => {
+  it('should document name, MRN, phone, and date of birth search', () => {
+    const operation = openApiDocument.paths['/api/v1/patients'].get;
+
+    expect(operation.description).toContain('full first and last name');
+    expect(operation.description).toContain('MRN, phone');
+    expect(operation.description).toContain(
+      'date of birth (YYYY-MM-DD, DD/MM/YYYY, or DD-MM-YYYY)'
+    );
+    expect(operation.parameters).toEqual(
+      expect.arrayContaining([{ $ref: '#/components/parameters/Query' }])
+    );
+  });
+});
+
 describe('OpenAPI Current User contracts', () => {
   it('should expose the Tenant operational time zone', () => {
     const tenant = openApiDocument.components.schemas.CurrentUserTenant;
@@ -15,7 +47,26 @@ describe('OpenAPI Current User contracts', () => {
 });
 
 describe('OpenAPI Patient Treatment Plan contracts', () => {
-  it('documents the patient-scoped current-plan response and permission errors', () => {
+  it('documents direct Treatment assignment after consultation', () => {
+    const operation = openApiDocument.paths['/api/v1/patients/{id}/treatment-plans/assign'].post;
+    const response = operation.responses as Record<string, { content?: unknown }>;
+    const request = openApiDocument.components.schemas.AssignPatientTreatmentPlanRequest;
+
+    expect(operation.requestBody).toBeDefined();
+    expect(request.required).toEqual(['treatmentId']);
+    expect(request.properties.additionalSessions).toMatchObject({
+      type: 'integer',
+      minimum: 0,
+      maximum: 100,
+    });
+    expect(response['201'].content).toBeDefined();
+    expect(response['400'].content).toBeDefined();
+    expect(response['403']).toBeDefined();
+    expect(response['404'].content).toBeDefined();
+    expect(response['409'].content).toBeDefined();
+  });
+
+  it('documents current and historical Patient Treatment Plan response and permission errors', () => {
     const operation = openApiDocument.paths['/api/v1/patients/{id}/treatment-plans'].get;
     const response = operation.responses as Record<string, { content?: unknown }>;
 
@@ -23,6 +74,14 @@ describe('OpenAPI Patient Treatment Plan contracts', () => {
       expect.arrayContaining([
         expect.objectContaining({ name: 'id', in: 'path' }),
         expect.objectContaining({ name: 'status', in: 'query' }),
+      ])
+    );
+    expect(operation.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'status',
+          schema: expect.objectContaining({ enum: ['current', 'all'], default: 'current' }),
+        }),
       ])
     );
     expect(response['200'].content).toBeDefined();
@@ -137,5 +196,42 @@ describe('OpenAPI Therapist Schedule contracts', () => {
       'slotFromDate',
       'slotToDate',
     ]);
+  });
+});
+
+describe('OpenAPI diagnosis master contracts', () => {
+  const paths = openApiDocument.paths as unknown as Record<
+    string,
+    {
+      get: { parameters: unknown[] };
+      post: { description: string; responses: Record<string, unknown> };
+    }
+  >;
+  const masters = [
+    ['diagnosis-codes', 'DiagnosisCode', 'diagnosis-code:update'],
+    ['ayurveda-diagnosis-codes', 'AyurvedaDiagnosisCode', 'ayurveda-diagnosis-code:update'],
+  ] as const;
+
+  it.each(masters)('should document activation for %s', (path, schemaName, permission) => {
+    for (const action of ['activate', 'deactivate']) {
+      const operation = paths[`/api/v1/clinical-masters/${path}/{id}/${action}`].post;
+
+      expect(operation.description).toContain(permission);
+      expect(Object.keys(operation.responses)).toEqual(['200', '400', '401', '403', '404', '500']);
+    }
+    expect(openApiDocument.components.schemas).toHaveProperty(schemaName);
+  });
+
+  it.each(masters)('should document the isActive list filter for %s', (path) => {
+    expect(paths[`/api/v1/clinical-masters/${path}`].get.parameters).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'isActive', in: 'query' })])
+    );
+  });
+
+  it('should document both coded diagnoses on Clinical Notes', () => {
+    expect(openApiDocument.components.schemas.CreateClinicalNoteRequest.properties).toMatchObject({
+      diagnosisCodeId: expect.any(Object),
+      ayurvedaDiagnosisCodeId: expect.any(Object),
+    });
   });
 });

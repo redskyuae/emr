@@ -54,7 +54,8 @@ export async function validateUpdatePatientProblem(
 
   const diagnosisResult = await validateDiagnosisCodeReference(
     payloadResult.data.diagnosisCodeId,
-    tenantId
+    tenantId,
+    existing.diagnosisCodeId
   );
 
   if (!diagnosisResult.success) {

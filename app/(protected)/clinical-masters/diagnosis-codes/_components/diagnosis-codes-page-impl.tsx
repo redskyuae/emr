@@ -21,6 +21,7 @@ import type { DiagnosisCode } from '@/app/api/lib/modules/diagnosis-code/schemas
 import { createDiagnosisCodeSchema } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes';
+import { useSetDiagnosisCodeActive } from '@/app/queries/clinical-masters/diagnosis-codes/useSetDiagnosisCodeActive';
 import { useCreateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useCreateDiagnosisCode';
 import { useUpdateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useUpdateDiagnosisCode';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -80,6 +81,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
 
   const createMutation = useCreateDiagnosisCode();
   const updateMutation = useUpdateDiagnosisCode();
+  const setActiveMutation = useSetDiagnosisCodeActive();
 
   const { data: canCreate } = useHasPermission('diagnosis-code:create');
   const { data: canUpdate } = useHasPermission('diagnosis-code:update');
@@ -168,6 +170,17 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
       toast.error(getApiErrorMessage(error));
     }
   });
+
+  async function handleToggleActive(diagnosisCode: DiagnosisCode) {
+    const isActive = !diagnosisCode.isActive;
+
+    try {
+      await setActiveMutation.mutateAsync({ id: diagnosisCode.id, isActive });
+      toast.success(`Diagnosis Code ${isActive ? 'activated' : 'deactivated'}.`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error));
+    }
+  }
 
   function handleDiagnosisCodeDeleted(diagnosisCodeId: number) {
     if (editingDiagnosisCode?.id === diagnosisCodeId) {
@@ -280,6 +293,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
                 canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setDiagnosisCodePendingDelete}
+                onToggleActive={(diagnosisCode) => void handleToggleActive(diagnosisCode)}
               />
             ) : viewLayout === 'card' ? (
               <DiagnosisCodeCardView
@@ -288,6 +302,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
                 canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setDiagnosisCodePendingDelete}
+                onToggleActive={(diagnosisCode) => void handleToggleActive(diagnosisCode)}
               />
             ) : (
               <DiagnosisCodeListView
@@ -296,6 +311,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
                 canDelete={canDelete}
                 onEdit={openEditSheet}
                 onDelete={setDiagnosisCodePendingDelete}
+                onToggleActive={(diagnosisCode) => void handleToggleActive(diagnosisCode)}
               />
             )}
 

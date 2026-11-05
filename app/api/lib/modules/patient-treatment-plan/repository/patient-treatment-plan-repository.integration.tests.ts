@@ -173,6 +173,30 @@ async function createAppointment(
 }
 
 describe('Patient Treatment Plan repository', () => {
+  it('assigns a Tenant Treatment to a Patient and snapshots its Sessions', async () => {
+    const patient = await createPatient(tenantA, 'MRN-A');
+    const treatment = await createTreatment(tenantA, 'REPEATABLE', 'MASTER-R');
+    await createTemplate(tenantA, treatment.id, 1);
+
+    const assigned = await patientTreatmentPlanRepository.assignTreatmentToPatient({
+      tenantId: tenantA,
+      patientId: patient.id,
+      treatmentId: treatment.id,
+      totalSessions: 3,
+    });
+
+    expect(assigned).toMatchObject({
+      patientId: patient.id,
+      treatmentId: treatment.id,
+      totalSessions: 3,
+      status: 'PENDING',
+    });
+    expect(assigned?.sessions.map((session) => session.sessionNumber)).toEqual([1, 2, 3]);
+    await expect(
+      patientTreatmentPlanRepository.getCurrentByPatientId(patient.id, tenantB)
+    ).resolves.toEqual([]);
+  });
+
   it('should return only current Tenant-scoped Plans with derived progress and snapshot availability', async () => {
     const patient = await createPatient(tenantA, 'MRN-A');
     const otherPatient = await createPatient(tenantA, 'MRN-B');
@@ -316,6 +340,17 @@ describe('Patient Treatment Plan repository', () => {
         ],
       }),
     ]);
+
+    const allPlans = await patientTreatmentPlanRepository.getAllByPatientId(patient.id, tenantA);
+    expect(allPlans.map((plan) => plan.status)).toEqual([
+      'PENDING',
+      'IN_PROGRESS',
+      'COMPLETED',
+      'STOPPED',
+    ]);
+    await expect(
+      patientTreatmentPlanRepository.getAllByPatientId(patient.id, tenantB)
+    ).resolves.toEqual([]);
   });
 
   it('should lock and return only a current Session belonging to the requested Patient, Plan, and Tenant', async () => {
@@ -458,7 +493,12 @@ describe('Patient Treatment Plan repository', () => {
         tx
       );
       const createdSequenced = await patientTreatmentPlanRepository.createPlanFromTreatment(
-        { tenantId: tenantA, patientId: patient.id, treatmentId: sequenced.id },
+        {
+          tenantId: tenantA,
+          patientId: patient.id,
+          treatmentId: sequenced.id,
+          additionalSessions: 2,
+        },
         tx
       );
       return [createdRepeatable, createdSequenced];
@@ -479,10 +519,20 @@ describe('Patient Treatment Plan repository', () => {
       treatmentSessionId: repeatedTemplate.id,
     });
     expect(sequencedCreated).toMatchObject({
-      totalSessions: 2,
+      totalSessions: 4,
       sessions: [
         expect.objectContaining({ sessionNumber: 1, treatmentSessionId: firstTemplate.id }),
         expect.objectContaining({ sessionNumber: 2, treatmentSessionId: secondTemplate.id }),
+        expect.objectContaining({
+          sessionNumber: 3,
+          treatmentSessionId: secondTemplate.id,
+          procedure: 'Procedure 2',
+        }),
+        expect.objectContaining({
+          sessionNumber: 4,
+          treatmentSessionId: secondTemplate.id,
+          procedure: 'Procedure 2',
+        }),
       ],
     });
 

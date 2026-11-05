@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
 import { masterColumns } from './helpers';
 
@@ -13,6 +13,7 @@ export const diagnosisCode = pgTable(
     code: varchar({ length: 10 }).notNull(),
     title: varchar({ length: 255 }).notNull(),
     category: varchar({ length: 100 }),
+    isActive: boolean('is_active').notNull().default(true),
     isDeleted,
     createdOn,
     modifiedOn,

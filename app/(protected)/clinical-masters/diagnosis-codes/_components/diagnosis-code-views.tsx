@@ -1,5 +1,6 @@
-import { MoreVertical, Pencil, Stethoscope, Trash2 } from 'lucide-react';
+import { CircleCheck, CircleOff, MoreVertical, Pencil, Stethoscope, Trash2 } from 'lucide-react';
 import type { DiagnosisCode } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -25,18 +26,30 @@ function DiagnosisCodeIcon() {
   );
 }
 
+function DiagnosisCodeStatusBadge({ isActive }: { isActive: boolean }) {
+  return isActive ? (
+    <Badge variant="outline">Active</Badge>
+  ) : (
+    <Badge variant="outline" className="text-muted-foreground">
+      Inactive
+    </Badge>
+  );
+}
+
 function DiagnosisCodeActionsMenu({
   diagnosisCode,
   canEdit,
   canDelete,
   onEdit,
   onDelete,
+  onToggleActive,
 }: {
   diagnosisCode: DiagnosisCode;
   canEdit: boolean;
   canDelete: boolean;
   onEdit: (diagnosisCode: DiagnosisCode) => void;
   onDelete: (diagnosisCode: DiagnosisCode) => void;
+  onToggleActive: (diagnosisCode: DiagnosisCode) => void;
 }) {
   if (!canEdit && !canDelete) {
     return null;
@@ -61,6 +74,16 @@ function DiagnosisCodeActionsMenu({
             Edit
           </DropdownMenuItem>
         ) : null}
+        {canEdit ? (
+          <DropdownMenuItem onClick={() => onToggleActive(diagnosisCode)}>
+            {diagnosisCode.isActive ? (
+              <CircleOff className="size-4" />
+            ) : (
+              <CircleCheck className="size-4" />
+            )}
+            {diagnosisCode.isActive ? 'Deactivate' : 'Activate'}
+          </DropdownMenuItem>
+        ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(diagnosisCode)}>
             <Trash2 className="size-4" />
@@ -78,23 +101,26 @@ export function DiagnosisCodeTableView({
   canDelete,
   onEdit,
   onDelete,
+  onToggleActive,
 }: {
   diagnosisCodes: DiagnosisCode[];
   canEdit: boolean;
   canDelete: boolean;
   onEdit: (diagnosisCode: DiagnosisCode) => void;
   onDelete: (diagnosisCode: DiagnosisCode) => void;
+  onToggleActive: (diagnosisCode: DiagnosisCode) => void;
 }) {
   return (
     <Card className="shadow-fluent-2">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <Table className="min-w-[600px]">
+          <Table className="min-w-[680px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Code</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="pr-4 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -108,6 +134,9 @@ export function DiagnosisCodeTableView({
                   <TableCell className="text-muted-foreground">
                     {diagnosisCode.category || '—'}
                   </TableCell>
+                  <TableCell>
+                    <DiagnosisCodeStatusBadge isActive={diagnosisCode.isActive} />
+                  </TableCell>
                   <TableCell className="pr-4 text-right">
                     <DiagnosisCodeActionsMenu
                       diagnosisCode={diagnosisCode}
@@ -115,6 +144,7 @@ export function DiagnosisCodeTableView({
                       canDelete={canDelete}
                       onEdit={onEdit}
                       onDelete={onDelete}
+                      onToggleActive={onToggleActive}
                     />
                   </TableCell>
                 </TableRow>
@@ -133,19 +163,24 @@ export function DiagnosisCodeCardView({
   canDelete,
   onEdit,
   onDelete,
+  onToggleActive,
 }: {
   diagnosisCodes: DiagnosisCode[];
   canEdit: boolean;
   canDelete: boolean;
   onEdit: (diagnosisCode: DiagnosisCode) => void;
   onDelete: (diagnosisCode: DiagnosisCode) => void;
+  onToggleActive: (diagnosisCode: DiagnosisCode) => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {diagnosisCodes.map((diagnosisCode) => (
         <Card key={diagnosisCode.id} className="shadow-fluent-2">
           <CardContent className="space-y-3 p-4">
-            <DiagnosisCodeIcon />
+            <div className="flex items-start justify-between gap-2">
+              <DiagnosisCodeIcon />
+              <DiagnosisCodeStatusBadge isActive={diagnosisCode.isActive} />
+            </div>
 
             <div>
               <h3 className="font-heading text-base font-semibold">
@@ -168,6 +203,21 @@ export function DiagnosisCodeCardView({
                   >
                     <Pencil className="size-3.5" />
                     Edit
+                  </Button>
+                ) : null}
+                {canEdit ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onToggleActive(diagnosisCode)}
+                  >
+                    {diagnosisCode.isActive ? (
+                      <CircleOff className="size-3.5" />
+                    ) : (
+                      <CircleCheck className="size-3.5" />
+                    )}
+                    {diagnosisCode.isActive ? 'Deactivate' : 'Activate'}
                   </Button>
                 ) : null}
                 {canDelete ? (
@@ -197,12 +247,14 @@ export function DiagnosisCodeListView({
   canDelete,
   onEdit,
   onDelete,
+  onToggleActive,
 }: {
   diagnosisCodes: DiagnosisCode[];
   canEdit: boolean;
   canDelete: boolean;
   onEdit: (diagnosisCode: DiagnosisCode) => void;
   onDelete: (diagnosisCode: DiagnosisCode) => void;
+  onToggleActive: (diagnosisCode: DiagnosisCode) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -227,6 +279,7 @@ export function DiagnosisCodeListView({
                 <span className="text-muted-foreground">Category: </span>
                 <span>{diagnosisCode.category || '—'}</span>
               </div>
+              <DiagnosisCodeStatusBadge isActive={diagnosisCode.isActive} />
             </div>
 
             <div className="shrink-0 pl-13 sm:pl-0">
@@ -236,6 +289,7 @@ export function DiagnosisCodeListView({
                 canDelete={canDelete}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onToggleActive={onToggleActive}
               />
             </div>
           </CardContent>

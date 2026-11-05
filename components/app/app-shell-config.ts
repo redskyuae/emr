@@ -359,6 +359,11 @@ export const appNavGroups: AppNavGroup[] = [
             href: '/clinical-masters/diagnosis-codes',
             permission: 'diagnosis-code',
           },
+          {
+            title: 'Ayurveda Diagnosis Codes',
+            href: '/clinical-masters/ayurveda-diagnosis-codes',
+            permission: 'ayurveda-diagnosis-code',
+          },
           { title: 'Allergens', href: '/clinical-masters/allergens', permission: 'allergen' },
           {
             title: 'Note Types',
@@ -418,7 +423,11 @@ const appointmentNavHrefs = new Set([
   '/room-masters',
   '/room-masters/types',
   '/clinical-masters',
+  '/clinical-masters/diagnosis-codes',
+  '/clinical-masters/ayurveda-diagnosis-codes',
   '/clinical-masters/therapist-skills',
+  '/billing-masters',
+  '/billing-masters/charge-items',
 ]);
 
 const pageMetaByHref: Record<string, AppPageMeta> = {
@@ -714,6 +723,15 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       href: '/clinical-masters/diagnosis-codes?create=1',
     },
   },
+  '/clinical-masters/ayurveda-diagnosis-codes': {
+    title: 'Ayurveda Diagnosis Codes',
+    subtitle: 'Tenant-scoped Ayurveda diagnosis catalogue used in doctor consultations.',
+    primaryAction: {
+      label: 'Add Ayurveda Diagnosis Code',
+      href: '/clinical-masters/ayurveda-diagnosis-codes?code=new',
+      permission: 'ayurveda-diagnosis-code:create',
+    },
+  },
   '/clinical-masters/allergens': {
     title: 'Allergens',
     subtitle: 'Tenant-scoped Allergen catalogue used when recording Patient allergies.',
@@ -769,11 +787,14 @@ function hasNavPermission(resource: string | undefined, grantedResources: Set<st
 function filterNavItem(
   item: AppNavItem,
   grantedResources: Set<string>,
-  appointmentsOnly: boolean
+  appointmentsOnly: boolean,
+  showVisits: boolean
 ): AppNavItem | null {
   if (
     !hasNavPermission(item.permission, grantedResources) ||
-    (appointmentsOnly && !appointmentNavHrefs.has(item.href))
+    (appointmentsOnly &&
+      !appointmentNavHrefs.has(item.href) &&
+      !(showVisits && item.href === '/visits'))
   ) {
     return null;
   }
@@ -794,7 +815,8 @@ function filterNavItem(
 export function getVisibleNavGroups(
   groups: AppNavGroup[],
   permissions: string[],
-  appointmentsOnly = false
+  appointmentsOnly = false,
+  showVisits = false
 ): AppNavGroup[] {
   const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
 
@@ -802,7 +824,7 @@ export function getVisibleNavGroups(
     .map((group) => ({
       ...group,
       items: group.items
-        .map((item) => filterNavItem(item, grantedResources, appointmentsOnly))
+        .map((item) => filterNavItem(item, grantedResources, appointmentsOnly, showVisits))
         .filter((item): item is AppNavItem => item !== null),
     }))
     .filter((group) => group.items.length > 0);
@@ -810,6 +832,14 @@ export function getVisibleNavGroups(
 
 export function getAppPageMeta(pathname: string): AppPageMeta {
   const currentPath = trimTrailingSlash(pathname);
+
+  if (/^\/visits\/\d+\/assessment$/.test(currentPath)) {
+    return {
+      title: 'Clinician assessment',
+      subtitle: 'Complete this Visit in the active Facility context.',
+    };
+  }
+
   const exactMeta = pageMetaByHref[currentPath];
 
   if (exactMeta) {

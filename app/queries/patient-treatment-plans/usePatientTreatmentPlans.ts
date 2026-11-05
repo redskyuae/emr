@@ -13,10 +13,17 @@ type PatientTreatmentPlansQueryParams = {
 export const patientTreatmentPlansQueryKey = (patientId: number | null) =>
   ['patients', patientId, 'treatment-plans', { status: 'current' }] as const;
 
+export const patientTreatmentPlansBaseKey = (patientId: number | null) =>
+  ['patients', patientId, 'treatment-plans'] as const;
+
+export const patientTreatmentPlanHistoryQueryKey = (patientId: number) =>
+  [...patientTreatmentPlansBaseKey(patientId), { status: 'all' }] as const;
+
 async function fetchPatientTreatmentPlans(
-  patientId: number
+  patientId: number,
+  status: 'current' | 'all' = 'current'
 ): Promise<ListPatientTreatmentPlansResponse> {
-  const response = await fetch(`/api/v1/patients/${patientId}/treatment-plans?status=current`, {
+  const response = await fetch(`/api/v1/patients/${patientId}/treatment-plans?status=${status}`, {
     credentials: 'same-origin',
   });
 
@@ -41,6 +48,22 @@ export function usePatientTreatmentPlansQuery({
     queryFn: () => fetchPatientTreatmentPlans(patientId as number),
     enabled:
       patientId !== null && registrationStatus === 'registered' && bookingPath === 'PROCEDURE',
+    select: transformPatientTreatmentPlansResponse,
+  });
+}
+
+export function useCurrentPatientTreatmentPlansQuery(patientId: number) {
+  return useQuery({
+    queryKey: patientTreatmentPlansQueryKey(patientId),
+    queryFn: () => fetchPatientTreatmentPlans(patientId),
+    select: transformPatientTreatmentPlansResponse,
+  });
+}
+
+export function usePatientTreatmentPlanHistoryQuery(patientId: number) {
+  return useQuery({
+    queryKey: patientTreatmentPlanHistoryQueryKey(patientId),
+    queryFn: () => fetchPatientTreatmentPlans(patientId, 'all'),
     select: transformPatientTreatmentPlansResponse,
   });
 }

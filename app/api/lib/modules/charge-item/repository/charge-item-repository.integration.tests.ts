@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ChargeItemCategory } from '../schemas/charge-item-schema';
+import { DEFAULT_VISIT_CHARGE_ITEMS } from '../seed-data';
 import { chargeItemRepository } from './charge-item-repository';
 
 const tenantA = 'tenant-a-test';
@@ -23,6 +24,64 @@ const createChargeItem = (
   });
 
 describe('ChargeItem repository', () => {
+  it('should seed the four Visit charges and keep the defaults on retry', async () => {
+    await chargeItemRepository.seedDefaultVisitChargeItems(tenantA, DEFAULT_VISIT_CHARGE_ITEMS);
+    const first = await chargeItemRepository.getChargeItems({ tenantId: tenantA, limit: 100 });
+
+    expect(first.data).toHaveLength(4);
+    expect(first.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'CONS_NEW', unitPrice: 200, cashPrice: 200 }),
+        expect.objectContaining({ code: 'CONS_EST', unitPrice: 150, cashPrice: 150 }),
+        expect.objectContaining({
+          code: 'CONS_FUP',
+          unitPrice: 150,
+          freeFollowUpEligible: true,
+        }),
+        expect.objectContaining({
+          code: 'TREAT_SESSION',
+          category: 'PROCEDURE',
+          unitPrice: 250,
+        }),
+      ])
+    );
+
+    await chargeItemRepository.seedDefaultVisitChargeItems(tenantA, DEFAULT_VISIT_CHARGE_ITEMS);
+    const second = await chargeItemRepository.getChargeItems({ tenantId: tenantA, limit: 100 });
+    expect(second.data.map((item) => item.id)).toEqual(first.data.map((item) => item.id));
+  });
+
+  it('should preserve a custom or removed workflow Charge Item when seeding', async () => {
+    const custom = await chargeItemRepository.createChargeItem({
+      tenantId: tenantA,
+      name: 'Custom Established Consultation',
+      code: 'CUSTOM_EST',
+      category: 'CONSULTATION',
+      unitPrice: 175,
+      visitChargeKind: 'ESTABLISHED_CONSULTATION',
+      isActive: true,
+    });
+    const removed = await chargeItemRepository.createChargeItem({
+      tenantId: tenantA,
+      name: 'New Consultation',
+      code: 'CONS_NEW',
+      category: 'CONSULTATION',
+      unitPrice: 225,
+      visitChargeKind: 'NEW_CONSULTATION',
+      isActive: true,
+    });
+    await chargeItemRepository.deleteChargeItem(removed.id, tenantA);
+
+    await chargeItemRepository.seedDefaultVisitChargeItems(tenantA, DEFAULT_VISIT_CHARGE_ITEMS);
+
+    const result = await chargeItemRepository.getChargeItems({ tenantId: tenantA, limit: 100 });
+    expect(result.data.map((item) => item.code)).toEqual([
+      'CUSTOM_EST',
+      'CONS_FUP',
+      'TREAT_SESSION',
+    ]);
+    expect(result.data.find((item) => item.id === custom.id)?.unitPrice).toBe(175);
+  });
   it('should create and read back a charge item', async () => {
     const created = await createChargeItem(tenantA, 'General Consultation', 'CONS');
 
@@ -36,6 +95,49 @@ describe('ChargeItem repository', () => {
       unitPrice: 500,
       isActive: true,
       tenantId: tenantA,
+    });
+  });
+
+  it('persists the pricing master fields for a coded Visit service', async () => {
+    const created = await chargeItemRepository.createChargeItem({
+      tenantId: tenantA,
+      name: 'Established Patient Level Three',
+      code: '99213',
+      category: 'CONSULTATION',
+      unitPrice: 150,
+      cashPrice: 150,
+      insuranceContractPrice: 120,
+      freeFollowUpEligible: false,
+      effectiveDate: '2026-01-01',
+      visitChargeKind: 'ESTABLISHED_CONSULTATION',
+      isActive: true,
+    });
+    await expect(
+      chargeItemRepository.getChargeItemById(created.id, tenantA)
+    ).resolves.toMatchObject({
+      cashPrice: 150,
+      insuranceContractPrice: 120,
+      freeFollowUpEligible: false,
+      effectiveDate: '2026-01-01',
+      visitChargeKind: 'ESTABLISHED_CONSULTATION',
+    });
+
+    const updated = await chargeItemRepository.updateChargeItem(created.id, {
+      tenantId: tenantA,
+      name: 'Established Patient Level Three',
+      code: '99213',
+      category: 'CONSULTATION',
+      unitPrice: 160,
+      cashPrice: 140,
+      insuranceContractPrice: 125,
+      effectiveDate: '2026-06-01',
+      visitChargeKind: 'ESTABLISHED_CONSULTATION',
+      isActive: true,
+    });
+    expect(updated).toMatchObject({
+      cashPrice: 140,
+      insuranceContractPrice: 125,
+      effectiveDate: '2026-06-01',
     });
   });
 

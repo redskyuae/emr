@@ -20,7 +20,8 @@ export async function validatePatientExistsForProblem(
 
 export async function validateDiagnosisCodeReference(
   diagnosisCodeId: number | undefined,
-  tenantId: string
+  tenantId: string,
+  currentDiagnosisCodeId?: number | null
 ): Promise<ValidationResult<DiagnosisCode | undefined>> {
   if (diagnosisCodeId === undefined) {
     return { success: true, data: undefined };
@@ -35,6 +36,15 @@ export async function validateDiagnosisCodeReference(
     return {
       success: false,
       errors: [`Diagnosis code ${diagnosisCodeId} does not exist.`],
+      status: StatusCodes.BAD_REQUEST,
+    };
+  }
+
+  // Deactivation only stops new selections, so a Problem may keep the code it already carries.
+  if (!diagnosisCode.isActive && diagnosisCodeId !== currentDiagnosisCodeId) {
+    return {
+      success: false,
+      errors: [`Diagnosis code ${diagnosisCode.code} is inactive.`],
       status: StatusCodes.BAD_REQUEST,
     };
   }

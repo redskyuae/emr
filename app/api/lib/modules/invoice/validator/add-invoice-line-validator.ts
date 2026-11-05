@@ -76,8 +76,19 @@ export async function validateAddInvoiceLine(
     };
   }
 
+  if (
+    chargeItem.effectiveDate &&
+    chargeItem.effectiveDate > new Date().toISOString().slice(0, 10)
+  ) {
+    return {
+      success: false,
+      errors: [`Charge item ${chargeItem.code} is not effective yet.`],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
   const quantity = payloadResult.data.quantity;
-  const unitPrice = payloadResult.data.unitPrice ?? chargeItem.unitPrice;
+  const unitPrice = payloadResult.data.unitPrice ?? chargeItem.cashPrice ?? chargeItem.unitPrice;
   const amount = roundMoney(quantity * unitPrice);
 
   if (amount > MAX_MONEY_AMOUNT) {

@@ -1,243 +1,408 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { AlertCircle, ArrowLeft, CheckCircle2, RefreshCcw, RotateCcw } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, useWatch } from 'react-hook-form';
+import { AlertCircle, ArrowLeft, CheckCircle2, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
+import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
+import { getApiErrors } from '@/app/queries/api-error';
+import { useAppointmentQuery } from '@/app/queries/appointments/useAppointment';
 import { useAppointmentsQuery } from '@/app/queries/appointments/useAppointments';
+import { useChargeItemsQuery } from '@/app/queries/billing/charge-items/useChargeItems';
+import { useAddInvoiceLine } from '@/app/queries/billing/invoices/useAddInvoiceLine';
+import { useCreateInvoice } from '@/app/queries/billing/invoices/useCreateInvoice';
+import { useFinalizeInvoice } from '@/app/queries/billing/invoices/useFinalizeInvoice';
+import { useRecordPayment } from '@/app/queries/billing/invoices/useRecordPayment';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
-import { usePatientQuery, usePatientsQuery } from '@/app/queries/patients/usePatients';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
+import { usePatientQuery } from '@/app/queries/patients/usePatients';
+import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
+import { useCheckInVisit } from '@/app/queries/visits/useCheckInVisit';
+import { useRecentDoctorVisitQuery } from '@/app/queries/visits/useRecentDoctorVisit';
+import { useVisitPatientTypeQuery } from '@/app/queries/visits/useVisitPatientType';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
 
 import {
-  DEMO_PATIENT,
-  DEMO_PATIENT_ID,
-  getRecentVisitsForPatient,
-  isWithinFreeRevisitWindow,
-  resolveVisitDefaultsForDepartment,
-} from '../_utils/demo-visit-data';
-import { PreInvoiceSheet } from './_sheets/pre-invoice-sheet';
+  createVisitFormSchema,
+  type CreateVisitFormValues,
+} from '../_utils/create-visit-form-schema';
+import { checkInInvoiceNotes } from '../_utils/check-in-invoice-notes';
 import {
-  AppointmentContextCard,
-  DocumentsCard,
-  PatientContextCard,
-  PaymentContextCard,
-  RecentVisitsCard,
-} from './visit-context-rail';
-import {
-  CardInformationSection,
-  DEPARTMENT_OPTIONS,
-  PATIENT_TYPE_OPTIONS,
-  VISIT_MODE_OPTIONS,
-  VisitDetailsSection,
-  VisitSourceSection,
-  type CreateVisitUiValues,
-} from './visit-dropdown-sections';
+  getAppointmentVisitDefaults,
+  getWalkInVisitTypeId,
+} from '../_utils/appointment-visit-defaults';
 import { PatientRegistrationSection } from './patient-registration-section';
+import { VisitBillingFields } from './visit-billing-fields';
+import { AppointmentContextCard, PatientContextCard } from './visit-context-rail';
+import { VisitDetailsFields, VisitSourceFields } from './visit-form-fields';
+import { useAppointmentVisitPrefill } from './use-appointment-visit-prefill';
+import CreateVisitLoader from '../loader';
 
-function applyRecentVisitDefaults(
-  nextValues: CreateVisitUiValues,
-  clinicianValue: string,
-  patient: { id: number } | null
-): CreateVisitUiValues {
-  if (!nextValues.department || !clinicianValue || !patient) {
-    return nextValues;
-  }
-  const departmentLabel =
-    DEPARTMENT_OPTIONS.find((option) => option.value === nextValues.department)?.label ?? '';
-  const defaults = resolveVisitDefaultsForDepartment(patient.id, departmentLabel);
-  return {
-    ...nextValues,
-    patientType: defaults.patientType,
-    visitModeId: defaults.visitMode,
-  };
-}
-
-function todayDisplayDate() {
-  const today = new Date();
-  const day = String(today.getDate()).padStart(2, '0');
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  return `${day}-${month}-${today.getFullYear()}`;
-}
-
-const INITIAL_VALUES: CreateVisitUiValues = {
+const DEFAULT_VALUES: CreateVisitFormValues = {
   mode: 'appointment',
   appointmentId: '',
   patientId: '',
-  patientClass: 'out-patient',
-  visitTypeId: 'op',
-  department: '',
   doctorId: '',
-  patientType: 'established',
-  visitModeId: '',
-  adminSource: '',
+  visitTypeId: '',
   chiefComplaint: '',
   remarks: '',
-  visitClassification: 'cash',
-  visitCard: 'primary',
-  payerReceiver: '',
-  policy: '',
-  policyHolder: '',
-  membershipId: '',
-  coverageStartDate: '',
-  coverageEndDate: '',
-  scannerEnabled: false,
+  createInvoice: false,
+  paymentTiming: 'LATER',
+  paymentClassification: 'SELF_PAY',
+  insurer: '',
+  policyReference: '',
+  chargeKind: '',
+  chargeItemId: '',
+  chargeAmount: '',
+  amountReceived: '0',
+  paymentMethod: 'CASH',
+  paymentReference: '',
 };
+const EMPTY_VISIT_TYPES: VisitType[] = [];
 
-type CreateVisitStep = 'patient' | 'visit';
+export function CreateVisitPageImpl({
+  initialAppointmentId = null,
+}: {
+  initialAppointmentId?: number | null;
+}) {
+  const router = useRouter();
+  const [step, setStep] = useState<'patient' | 'visit'>('patient');
+  const [checkingHistory, setCheckingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
+  const [serverErrors, setServerErrors] = useState<string[]>([]);
+  const [createdVisit, setCreatedVisit] = useState<{
+    id: number;
+    patientId: number;
+    visitNumber: string;
+    visitDate: string;
+  } | null>(null);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<number | null>(null);
+  const form = useForm<CreateVisitFormValues>({
+    resolver: zodResolver(createVisitFormSchema),
+    mode: 'onTouched',
+    defaultValues: {
+      ...DEFAULT_VALUES,
+      appointmentId: initialAppointmentId ? String(initialAppointmentId) : '',
+    },
+  });
 
-function CreateVisitProgress({ step }: { step: CreateVisitStep }) {
-  return (
-    <Card className="shadow-fluent-2 py-3">
-      <CardContent className="space-y-3 px-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <span
-              className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
-                step === 'patient'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-primary/10 text-primary border-primary/20'
-              )}
-            >
-              1
-            </span>
-            <span className="min-w-0 text-sm font-medium">Patient information</span>
-          </div>
-          <div className="flex min-w-0 items-center gap-2">
-            <span
-              className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
-                step === 'visit'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-muted text-muted-foreground'
-              )}
-            >
-              2
-            </span>
-            <span className="min-w-0 text-sm font-medium">Visit and card details</span>
-          </div>
-        </div>
-        <Progress
-          value={step === 'patient' ? 50 : 100}
-          aria-label={`Step ${step === 'patient' ? 1 : 2} of 2`}
-        />
-      </CardContent>
-    </Card>
-  );
-}
-
-export function CreateVisitPageImpl() {
-  const [values, setValues] = useState<CreateVisitUiValues>(INITIAL_VALUES);
-  const [step, setStep] = useState<CreateVisitStep>('patient');
-  const [preInvoiceOpen, setPreInvoiceOpen] = useState(false);
+  const mode = useWatch({ control: form.control, name: 'mode' });
+  const appointmentId = useWatch({ control: form.control, name: 'appointmentId' });
+  const patientId = useWatch({ control: form.control, name: 'patientId' });
+  const includeInvoice = useWatch({ control: form.control, name: 'createInvoice' });
+  const amountReceived = useWatch({ control: form.control, name: 'amountReceived' });
+  const paymentTiming = useWatch({ control: form.control, name: 'paymentTiming' });
+  const visitTypeId = useWatch({ control: form.control, name: 'visitTypeId' });
 
   const appointmentsQuery = useAppointmentsQuery({
-    slotDate: todayDisplayDate(),
+    statusCategories: ['SCHEDULED', 'CONFIRMED'],
     page: 1,
-    limit: 100,
+    limit: 999,
   });
-  const patientsQuery = usePatientsQuery({ page: 1, limit: 100, isActive: true });
+  const initialAppointmentQuery = useAppointmentQuery(initialAppointmentId);
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
+  const visitTypesQuery = useVisitTypesQuery({ limit: 100 });
+  const chargeItemsQuery = useChargeItemsQuery({ page: 1, limit: 999, isActive: true });
+  const currentUserQuery = useCurrentUserQuery();
+  const { data: canCreate } = useHasPermission('visit:create');
+  const { data: canCreateInvoice } = useHasPermission('invoice:create');
+  const { data: canReadInvoice } = useHasPermission('invoice:read');
+  const { data: canUpdateInvoice } = useHasPermission('invoice:update');
+  const { data: canFinalizeInvoice } = useHasPermission('invoice:finalize');
+  const { data: canRecordPayment } = useHasPermission('payment:record');
+  const { data: canReadChargeItems } = useHasPermission('charge-item:read');
+  const checkInMutation = useCheckInVisit();
+  const createInvoiceMutation = useCreateInvoice();
+  const addInvoiceLineMutation = useAddInvoiceLine();
+  const finalizeInvoiceMutation = useFinalizeInvoice();
+  const recordPaymentMutation = useRecordPayment();
 
-  const appointments = appointmentsQuery.data?.data ?? [];
-  const patients = [DEMO_PATIENT, ...(patientsQuery.data?.data ?? [])];
+  const listedAppointments = appointmentsQuery.data?.data ?? [];
+  const initialAppointment = initialAppointmentQuery.data;
+  const appointments = initialAppointment
+    ? [
+        initialAppointment,
+        ...listedAppointments.filter((item) => item.id !== initialAppointment.id),
+      ]
+    : listedAppointments;
   const doctors = doctorsQuery.data?.data ?? [];
-
-  const selectedAppointment =
-    values.mode === 'appointment'
-      ? (appointments.find((appointment) => String(appointment.id) === values.appointmentId) ??
-        null)
+  const visitTypes = visitTypesQuery.data?.data ?? EMPTY_VISIT_TYPES;
+  const chargeItems = chargeItemsQuery.data?.data ?? [];
+  const canBill = Boolean(
+    canCreateInvoice &&
+    canReadInvoice &&
+    canUpdateInvoice &&
+    canFinalizeInvoice &&
+    canReadChargeItems
+  );
+  const billingPending =
+    createInvoiceMutation.isPending ||
+    addInvoiceLineMutation.isPending ||
+    finalizeInvoiceMutation.isPending ||
+    recordPaymentMutation.isPending;
+  const appointment =
+    mode === 'appointment'
+      ? (appointments.find((item) => String(item.id) === appointmentId) ?? null)
       : null;
-  const selectedPatientId = (selectedAppointment?.patient.id ?? Number(values.patientId)) || null;
-  const isDemoPatient = selectedPatientId === DEMO_PATIENT_ID;
-  const patientQuery = usePatientQuery(isDemoPatient ? null : selectedPatientId);
-  const selectedPatient = isDemoPatient ? DEMO_PATIENT : (patientQuery.data ?? null);
-
-  function changeValue<K extends keyof CreateVisitUiValues>(key: K, value: CreateVisitUiValues[K]) {
-    setValues((current) => {
-      const next = { ...current, [key]: value };
-      if (key !== 'department' && key !== 'doctorId') {
-        return next;
-      }
-      const clinicianValue = selectedAppointment?.doctor
-        ? String(selectedAppointment.doctor.id)
-        : next.doctorId;
-      return applyRecentVisitDefaults(next, clinicianValue, selectedPatient);
-    });
-  }
-
-  const hasDependencyError =
-    appointmentsQuery.isError || patientsQuery.isError || doctorsQuery.isError;
+  useAppointmentVisitPrefill({
+    form,
+    selectedAppointmentId: appointmentId,
+    initialAppointmentId,
+    initialAppointment,
+    visitTypes,
+  });
+  const selectedPatientId =
+    mode === 'appointment'
+      ? (appointment?.patient.id ?? null)
+      : patientId
+        ? Number(patientId)
+        : null;
+  const patientQuery = usePatientQuery(selectedPatientId);
+  const patient = patientQuery.data ?? null;
+  const patientTypeQuery = useVisitPatientTypeQuery(selectedPatientId);
+  const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
+  const referenceDate = currentUserQuery.data?.tenant.timeZone
+    ? tenantLocalDateTime(new Date(), currentUserQuery.data.tenant.timeZone).date
+    : null;
+  const recentDoctorVisitQuery = useRecentDoctorVisitQuery(selectedPatientId, referenceDate);
+  const loading =
+    appointmentsQuery.isLoading ||
+    initialAppointmentQuery.isLoading ||
+    doctorsQuery.isLoading ||
+    visitTypesQuery.isLoading ||
+    currentUserQuery.isLoading;
+  const dependencyError =
+    appointmentsQuery.error ??
+    initialAppointmentQuery.error ??
+    doctorsQuery.error ??
+    visitTypesQuery.error ??
+    currentUserQuery.error;
 
   async function retryDependencies() {
     await Promise.all([
       appointmentsQuery.refetch(),
-      patientsQuery.refetch(),
+      initialAppointmentId ? initialAppointmentQuery.refetch() : Promise.resolve(),
       doctorsQuery.refetch(),
+      visitTypesQuery.refetch(),
+      currentUserQuery.refetch(),
     ]);
   }
 
-  function resetVisit() {
-    setValues(INITIAL_VALUES);
-    setStep('patient');
+  async function continueToVisit() {
+    setCheckingHistory(true);
+
+    try {
+      const history = referenceDate ? await recentDoctorVisitQuery.refetch() : null;
+      const hasRecentDoctorVisit = Boolean(history?.data);
+      setHistoryError(!referenceDate || Boolean(history?.isError));
+
+      if (!form.getFieldState('visitTypeId').isDirty) {
+        const visitTypeId =
+          mode === 'appointment'
+            ? getAppointmentVisitDefaults(
+                appointment ?? undefined,
+                visitTypes,
+                hasRecentDoctorVisit
+              ).visitTypeId
+            : getWalkInVisitTypeId(visitTypes, hasRecentDoctorVisit);
+        form.setValue('visitTypeId', visitTypeId, { shouldValidate: true });
+      }
+
+      setStep('visit');
+    } finally {
+      setCheckingHistory(false);
+    }
   }
 
-  const clinicianName = selectedAppointment?.doctor
-    ? selectedAppointment.doctor.name
-    : (doctors.find((doctor) => String(doctor.id) === values.doctorId)?.name ?? '');
-  const departmentLabel =
-    DEPARTMENT_OPTIONS.find((option) => option.value === values.department)?.label ?? '';
-  const visitModeLabel =
-    VISIT_MODE_OPTIONS.find((option) => option.value === values.visitModeId)?.label ??
-    'Not selected';
-  const patientTypeLabel =
-    PATIENT_TYPE_OPTIONS.find((option) => option.value === values.patientType)?.label ??
-    'Not selected';
-  const isFreeRevisit = selectedPatient
-    ? isWithinFreeRevisitWindow(selectedPatient.id, departmentLabel)
-    : false;
+  const submit = form.handleSubmit(async (values) => {
+    setServerErrors([]);
+    if (createdVisit) return;
+    if (!patient) {
+      setServerErrors(['Select a Patient or Appointment before creating the Visit.']);
+      setStep('patient');
+      return;
+    }
+    const patientTypeCheck = await patientTypeQuery.refetch();
+    if (!patientTypeCheck.isSuccess) {
+      setServerErrors(['Patient type could not be verified. Retry before creating the Visit.']);
+      return;
+    }
+    if (values.mode === 'appointment' && !appointment) {
+      form.setError('appointmentId', { message: 'Select an Appointment scheduled today.' });
+      setStep('patient');
+      return;
+    }
+    if (values.mode === 'appointment' && !appointment?.doctor && !values.doctorId) {
+      form.setError('doctorId', { message: 'Doctor is required for this Appointment.' });
+      return;
+    }
 
-  function confirmCreateVisit() {
-    setPreInvoiceOpen(false);
-    toast.success(`Visit created for ${selectedPatient?.firstName} ${selectedPatient?.lastName}.`);
-    resetVisit();
-  }
+    if (
+      values.createInvoice &&
+      (!canBill ||
+        (values.paymentTiming === 'NOW' && !canRecordPayment) ||
+        chargeItemsQuery.isLoading ||
+        chargeItemsQuery.isError)
+    ) {
+      setServerErrors([
+        'Billing is not available at Check-in. Create the Visit without an Invoice or retry loading Charge Items.',
+      ]);
+      return;
+    }
+
+    let result;
+    try {
+      result = await checkInMutation.mutateAsync({
+        visitTypeId: Number(values.visitTypeId),
+        ...(values.mode === 'appointment'
+          ? {
+              appointmentId: Number(values.appointmentId),
+              doctorId: values.doctorId ? Number(values.doctorId) : undefined,
+            }
+          : { patientId: Number(values.patientId), doctorId: Number(values.doctorId) }),
+        chiefComplaint: values.chiefComplaint || undefined,
+        remarks: values.remarks || undefined,
+      });
+    } catch (error) {
+      setServerErrors(getApiErrors(error));
+      return;
+    }
+
+    setCreatedVisit({
+      id: result.data.id,
+      patientId: result.data.patient.id,
+      visitNumber: result.data.visitNumber,
+      visitDate: result.data.visitDate,
+    });
+
+    if (values.createInvoice) {
+      try {
+        const invoice = await createInvoiceMutation.mutateAsync({
+          patientId: result.data.patient.id,
+          visitId: result.data.id,
+          notes: checkInInvoiceNotes(values),
+        });
+        setCreatedInvoiceId(invoice.data.id);
+        await addInvoiceLineMutation.mutateAsync({
+          id: invoice.data.id,
+          request: {
+            chargeItemId: Number(values.chargeItemId),
+            quantity: 1,
+            unitPrice: Number(values.chargeAmount),
+          },
+        });
+        await finalizeInvoiceMutation.mutateAsync(invoice.data.id);
+        if (values.paymentTiming === 'NOW') {
+          await recordPaymentMutation.mutateAsync({
+            id: invoice.data.id,
+            request: {
+              amount: Number(values.amountReceived),
+              method: values.paymentMethod,
+              reference: values.paymentReference || undefined,
+            },
+          });
+        }
+      } catch (error) {
+        setServerErrors(getApiErrors(error));
+        return;
+      }
+    }
+
+    toast.success(
+      `${result.data.visitNumber} created${values.createInvoice ? ' with Billing' : ''}.`
+    );
+    router.push(`/visits?date=${encodeURIComponent(result.data.visitDate)}`);
+  });
+
+  if (loading) return <CreateVisitLoader />;
 
   return (
-    <div className={cn('space-y-4', step === 'visit' && 'pb-24')}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button type="button" variant="ghost" size="sm" asChild className="-ml-2 w-fit">
-          <Link href="/visits">
-            <ArrowLeft className="size-4" />
-            Visits
-          </Link>
-        </Button>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">
-            {values.mode === 'appointment' ? 'From Appointment' : 'Walk-in'}
-          </Badge>
-        </div>
-      </div>
+    <div className="space-y-4 pb-20">
+      <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
+        <Link href="/visits">
+          <ArrowLeft className="size-4" />
+          Visits
+        </Link>
+      </Button>
 
-      <CreateVisitProgress step={step} />
+      <Card className="shadow-fluent-2 py-3">
+        <CardContent className="space-y-3 px-4">
+          <div className="flex items-center justify-between gap-4 text-sm font-medium">
+            <span className={step === 'patient' ? 'text-primary' : 'text-muted-foreground'}>
+              1 · Patient information
+            </span>
+            <span className={step === 'visit' ? 'text-primary' : 'text-muted-foreground'}>
+              2 · Visit details
+            </span>
+          </div>
+          <Progress
+            value={step === 'patient' ? 50 : 100}
+            aria-label={`Step ${step === 'patient' ? 1 : 2} of 2`}
+          />
+        </CardContent>
+      </Card>
 
-      {hasDependencyError ? (
+      {dependencyError ? (
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
-          <AlertTitle>Some dropdown options could not be loaded</AlertTitle>
-          <AlertDescription className="space-y-3">
-            <p>One or more Visit dependencies are unavailable.</p>
-            <Button type="button" size="sm" variant="outline" onClick={retryDependencies}>
+          <AlertTitle>Could not load Visit options</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>{getApiErrors(dependencyError)[0]}</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void retryDependencies()}
+            >
               <RefreshCcw className="size-4" />
               Retry
             </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {serverErrors.length > 0 ? (
+        <Alert variant="destructive" role="alert">
+          <AlertCircle className="size-4" />
+          <AlertTitle>
+            {createdVisit ? 'Visit created; Billing needs attention' : 'Could not create Visit'}
+          </AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc pl-4">
+              {serverErrors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+            {createdVisit ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/visits/${createdVisit.id}`}>Open {createdVisit.visitNumber}</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link
+                    href={
+                      createdInvoiceId
+                        ? `/billing/${createdInvoiceId}`
+                        : `/billing?invoice=new&patientId=${createdVisit.patientId}&visitId=${createdVisit.id}`
+                    }
+                  >
+                    {createdInvoiceId ? 'Finish Invoice' : 'Create Invoice in Billing'}
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -246,108 +411,119 @@ export function CreateVisitPageImpl() {
         <div className="space-y-4">
           {step === 'patient' ? (
             <>
-              <VisitSourceSection
-                values={values}
+              <VisitSourceFields
+                control={form.control}
+                errors={form.formState.errors}
+                setValue={form.setValue}
+                resetField={form.resetField}
                 appointments={appointments}
-                patients={patients}
-                appointmentsLoading={appointmentsQuery.isLoading}
-                patientsLoading={patientsQuery.isLoading}
-                onChange={changeValue}
+                selectedPatient={patient}
+                doctors={doctors}
+                visitTypes={visitTypes}
+                loading={loading}
               />
               <PatientRegistrationSection
-                patient={selectedPatient}
-                loading={!isDemoPatient && patientQuery.isLoading}
-                error={!isDemoPatient && patientQuery.isError ? patientQuery.error : null}
-                isDemo={isDemoPatient}
+                patient={patient}
+                loading={patientQuery.isLoading}
+                error={patientQuery.error}
                 onRetry={() => void patientQuery.refetch()}
-                onContinue={() => setStep('visit')}
+                onContinue={continueToVisit}
+                continuing={checkingHistory}
               />
             </>
           ) : (
             <>
-              <div className="flex items-center justify-between gap-3">
-                <Button type="button" variant="ghost" size="sm" onClick={() => setStep('patient')}>
-                  <ArrowLeft className="size-4" />
-                  Patient information
-                </Button>
-                <Badge variant="secondary" className="hidden sm:inline-flex">
-                  {selectedPatient?.mrn}
-                </Badge>
-              </div>
-              <VisitDetailsSection
-                values={values}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={checkInMutation.isPending || billingPending || Boolean(createdVisit)}
+                onClick={() => setStep('patient')}
+              >
+                <ArrowLeft className="size-4" />
+                Patient information
+              </Button>
+              <VisitDetailsFields
+                control={form.control}
+                errors={form.formState.errors}
+                setValue={form.setValue}
+                resetField={form.resetField}
+                appointments={appointments}
+                selectedPatient={patient}
                 doctors={doctors}
-                selectedAppointment={selectedAppointment}
-                dependenciesLoading={doctorsQuery.isLoading}
-                onChange={changeValue}
+                visitTypes={visitTypes}
+                loading={loading}
+                historyError={historyError}
+                recentDoctorVisit={recentDoctorVisitQuery.data}
+                patientType={patientTypeQuery.data ?? null}
+                patientTypeLoading={patientTypeQuery.isLoading || patientTypeQuery.isFetching}
+                patientTypeError={patientTypeQuery.isError}
+                onRetryPatientType={() => void patientTypeQuery.refetch()}
               />
-              <CardInformationSection values={values} onChange={changeValue} />
+              <VisitBillingFields
+                control={form.control}
+                errors={form.formState.errors}
+                setValue={form.setValue}
+                chargeItems={chargeItems}
+                canBill={canBill}
+                canCollectPayment={Boolean(canRecordPayment)}
+                visitTypeCode={selectedVisitType?.code.toUpperCase() ?? null}
+                patientType={patientTypeQuery.data?.patientType ?? null}
+                visitDate={referenceDate}
+                hasRecentDoctorVisit={Boolean(recentDoctorVisitQuery.data)}
+                loading={chargeItemsQuery.isLoading}
+                error={chargeItemsQuery.isError}
+                onRetry={() => void chargeItemsQuery.refetch()}
+              />
             </>
           )}
         </div>
-
         <aside className="space-y-4 xl:sticky xl:top-20">
-          <PatientContextCard
-            patient={selectedPatient}
-            loading={!isDemoPatient && patientQuery.isLoading}
-          />
-          <AppointmentContextCard appointment={selectedAppointment} />
-          {step === 'visit' ? (
-            <>
-              <RecentVisitsCard
-                visits={selectedPatient ? getRecentVisitsForPatient(selectedPatient.id) : []}
-              />
-              <PaymentContextCard patient={selectedPatient} />
-              <DocumentsCard />
-            </>
-          ) : null}
+          <PatientContextCard patient={patient} loading={patientQuery.isLoading} />
+          <AppointmentContextCard appointment={appointment} />
+          {patient ? <Badge variant="outline">{patient.mrn}</Badge> : null}
         </aside>
       </div>
 
       {step === 'visit' ? (
         <Card className="acrylic shadow-fluent-16 fixed right-4 bottom-4 left-4 z-20 py-3 lg:left-[calc(var(--sidebar-width)+1rem)]">
-          <CardContent className="flex items-center justify-end gap-2 px-3 sm:justify-between">
-            <Badge variant="secondary" className="hidden w-fit sm:inline-flex">
-              {values.mode === 'appointment' ? 'Appointment Visit' : 'Walk-in Visit'}
-            </Badge>
-            <div className="flex gap-2 sm:justify-end">
-              <Button type="button" variant="ghost" onClick={() => setStep('patient')}>
-                <ArrowLeft className="size-4" />
-                Back
-              </Button>
-              <Button type="button" variant="outline" onClick={resetVisit}>
-                <RotateCcw className="size-4" />
-                Reset
-              </Button>
-              <Button
-                type="button"
-                disabled={!selectedPatient}
-                onClick={() => setPreInvoiceOpen(true)}
-              >
-                <CheckCircle2 className="size-4" />
-                Create Visit
-              </Button>
-            </div>
+          <CardContent className="flex justify-end gap-2 px-3">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={checkInMutation.isPending || billingPending || Boolean(createdVisit)}
+              onClick={() => setStep('patient')}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              disabled={
+                !canCreate ||
+                !patient ||
+                loading ||
+                checkInMutation.isPending ||
+                billingPending ||
+                Boolean(createdVisit)
+              }
+              aria-busy={checkInMutation.isPending || billingPending}
+              onClick={() => void submit()}
+            >
+              <CheckCircle2 className="size-4" />
+              {checkInMutation.isPending || billingPending
+                ? billingPending
+                  ? 'Completing Billing…'
+                  : 'Creating Visit…'
+                : createdVisit
+                  ? 'Visit created'
+                  : includeInvoice && paymentTiming === 'NOW' && Number(amountReceived) > 0
+                    ? 'Create Visit & Record Payment'
+                    : includeInvoice
+                      ? 'Create Visit & Invoice'
+                      : 'Create Visit'}
+            </Button>
           </CardContent>
         </Card>
-      ) : null}
-
-      {selectedPatient ? (
-        <PreInvoiceSheet
-          open={preInvoiceOpen}
-          patientName={`${selectedPatient.firstName} ${selectedPatient.lastName}`}
-          mrn={selectedPatient.mrn}
-          dob={selectedPatient.dateOfBirth ?? ''}
-          nationality={selectedPatient.nationality?.name ?? ''}
-          patientTypeLabel={patientTypeLabel}
-          clinicianName={clinicianName}
-          departmentLabel={departmentLabel}
-          visitModeLabel={visitModeLabel}
-          visitModeId={values.visitModeId}
-          isFreeRevisit={isFreeRevisit}
-          onOpenChange={setPreInvoiceOpen}
-          onConfirm={confirmCreateVisit}
-        />
       ) : null}
     </div>
   );

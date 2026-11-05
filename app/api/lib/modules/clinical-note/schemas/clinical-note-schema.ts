@@ -43,6 +43,14 @@ const optionalAdmissionId = z.preprocess(
     .optional()
 );
 
+const optionalDiagnosisCodeId = (label: string) =>
+  z.coerce
+    .number({ error: `${label} ID must be a number` })
+    .int(`${label} ID must be an integer`)
+    .positive(`${label} ID must be positive`)
+    .nullable()
+    .optional();
+
 export const clinicalNoteIdSchema = z.coerce
   .number({ error: 'Clinical note ID is required' })
   .int('Clinical note ID must be an integer')
@@ -55,6 +63,8 @@ export const clinicalNotePayloadSchema = z
     noteTypeId: requiredNoteTypeId,
     visitId: optionalVisitId,
     admissionId: optionalAdmissionId,
+    diagnosisCodeId: optionalDiagnosisCodeId('Diagnosis code'),
+    ayurvedaDiagnosisCodeId: optionalDiagnosisCodeId('Ayurveda diagnosis code'),
     subjective: optionalSoap('subjective'),
     objective: optionalSoap('objective'),
     assessment: optionalSoap('assessment'),
@@ -94,6 +104,8 @@ export type ClinicalNote = {
   visitId: number | null;
   admissionId: number | null;
   noteTypeId: number;
+  diagnosisCodeId: number | null;
+  ayurvedaDiagnosisCodeId: number | null;
   subjective: string | null;
   objective: string | null;
   assessment: string | null;

@@ -287,6 +287,16 @@ const permissionGroups = [
   },
   {
     module: 'clinical-masters',
+    resource: 'ayurveda-diagnosis-code',
+    actions: [
+      ['read', 'View Ayurveda Diagnosis Codes.'],
+      ['create', 'Create Ayurveda Diagnosis Codes.'],
+      ['update', 'Update Ayurveda Diagnosis Codes.'],
+      ['delete', 'Delete Ayurveda Diagnosis Codes.'],
+    ],
+  },
+  {
+    module: 'clinical-masters',
     resource: 'allergen',
     actions: [
       ['read', 'View Allergens.'],

@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, CircleDot, LogIn, XCircle } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { cn } from '@/lib/utils';
@@ -23,21 +23,18 @@ export function VisitStatusTimeline({ visit }: { visit: Visit }) {
     {
       key: 'checked-in',
       label: 'Checked in',
-      icon: LogIn,
       at: formatMoment(visit.checkedInAt),
       reached: true,
     },
     {
       key: 'in-consultation',
       label: 'In consultation',
-      icon: CircleDot,
       at: formatMoment(visit.consultationStartedAt),
       reached: visit.consultationStartedAt !== null,
     },
     {
       key: 'completed',
       label: 'Completed',
-      icon: CheckCircle2,
       at: formatMoment(visit.completedAt),
       reached: visit.completedAt !== null,
     },
@@ -47,27 +44,43 @@ export function VisitStatusTimeline({ visit }: { visit: Visit }) {
     steps.push({
       key: 'cancelled',
       label: 'Cancelled',
-      icon: XCircle,
       at: formatMoment(visit.cancelledAt),
       reached: true,
     });
   }
 
   return (
-    <ol className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+    <ol
+      className="grid gap-3 sm:auto-cols-fr sm:grid-flow-col sm:gap-0"
+      aria-label="Visit progress"
+    >
       {steps.map((step) => {
-        const Icon = step.icon;
-
         return (
-          <li key={step.key} className="flex items-center gap-2">
-            <Icon
+          <li
+            key={step.key}
+            className="sm:after:bg-border relative flex items-start gap-2.5 sm:pr-3 sm:after:absolute sm:after:top-3 sm:after:right-1 sm:after:left-9 sm:after:h-px sm:last:after:hidden"
+          >
+            <span
               className={cn(
-                'size-4',
-                step.reached ? 'text-primary' : 'text-muted-foreground/50',
-                step.key === 'cancelled' && 'text-destructive'
+                'bg-background relative z-10 grid size-6 shrink-0 place-items-center rounded-full border-2',
+                step.reached
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border text-muted-foreground',
+                step.key === 'cancelled' &&
+                  'border-destructive bg-destructive text-destructive-foreground'
               )}
-            />
-            <div className="text-sm">
+            >
+              {step.reached ? (
+                step.key === 'cancelled' ? (
+                  <X className="size-3.5" />
+                ) : (
+                  <Check className="size-3.5" />
+                )
+              ) : (
+                <span className="size-1.5 rounded-full bg-current" />
+              )}
+            </span>
+            <div className="text-sm sm:-ml-8 sm:pt-7">
               <p className={cn('font-medium', !step.reached && 'text-muted-foreground/70')}>
                 {step.label}
               </p>

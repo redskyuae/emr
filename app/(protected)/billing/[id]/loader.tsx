@@ -13,7 +13,7 @@ export default function InvoiceDetailLoader() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <Skeleton className="h-56 w-full rounded-lg" />
+          <Skeleton className="h-64 w-full rounded-lg" />
           <Skeleton className="h-40 w-full rounded-lg" />
         </div>
         <Skeleton className="h-64 w-full rounded-lg" />

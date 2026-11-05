@@ -5,8 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { diagnosisCodeRepository } from '../repository/diagnosis-code-repository';
 import { validateCreateDiagnosisCode } from '../validator/create-diagnosis-code-validator';
 import { validateDeleteDiagnosisCode } from '../validator/delete-diagnosis-code-validator';
+import { validateDiagnosisCodeExists } from '../validator/diagnosis-code-exists-validator';
 import { validateUpdateDiagnosisCode } from '../validator/update-diagnosis-code-validator';
+import { activateDiagnosisCodeCommand } from './activate-diagnosis-code-command';
 import { createDiagnosisCodeCommand } from './create-diagnosis-code-command';
+import { deactivateDiagnosisCodeCommand } from './deactivate-diagnosis-code-command';
 import { deleteDiagnosisCodeCommand } from './delete-diagnosis-code-command';
 import { updateDiagnosisCodeCommand } from './update-diagnosis-code-command';
 
@@ -15,6 +18,7 @@ vi.mock('../repository/diagnosis-code-repository', () => ({
     createDiagnosisCode: vi.fn(),
     updateDiagnosisCode: vi.fn(),
     deleteDiagnosisCode: vi.fn(),
+    setDiagnosisCodeActive: vi.fn(),
   },
 }));
 vi.mock('../validator/create-diagnosis-code-validator', () => ({
@@ -26,21 +30,27 @@ vi.mock('../validator/update-diagnosis-code-validator', () => ({
 vi.mock('../validator/delete-diagnosis-code-validator', () => ({
   validateDeleteDiagnosisCode: vi.fn(),
 }));
+vi.mock('../validator/diagnosis-code-exists-validator', () => ({
+  validateDiagnosisCodeExists: vi.fn(),
+}));
 
 const repo = diagnosisCodeRepository as typeof diagnosisCodeRepository & {
   createDiagnosisCode: Mock<typeof diagnosisCodeRepository.createDiagnosisCode>;
   updateDiagnosisCode: Mock<typeof diagnosisCodeRepository.updateDiagnosisCode>;
   deleteDiagnosisCode: Mock<typeof diagnosisCodeRepository.deleteDiagnosisCode>;
+  setDiagnosisCodeActive: Mock<typeof diagnosisCodeRepository.setDiagnosisCodeActive>;
 };
 const validateCreate = validateCreateDiagnosisCode as Mock<typeof validateCreateDiagnosisCode>;
 const validateUpdate = validateUpdateDiagnosisCode as Mock<typeof validateUpdateDiagnosisCode>;
 const validateDelete = validateDeleteDiagnosisCode as Mock<typeof validateDeleteDiagnosisCode>;
+const validateExists = validateDiagnosisCodeExists as Mock<typeof validateDiagnosisCodeExists>;
 const diagnosisCode = {
   id: 1,
   tenantId: 'tenant-1',
   code: 'I10',
   title: 'Essential hypertension',
   category: null,
+  isActive: true,
   createdOn: new Date(),
   modifiedOn: new Date(),
 };
@@ -112,6 +122,47 @@ describe('DiagnosisCode commands', () => {
     const error = new Error('database down');
     repo.createDiagnosisCode.mockRejectedValue(error);
     await expect(createDiagnosisCodeCommand({}, 'tenant-1')).rejects.toThrow(error);
+  });
+
+  it('should activate and deactivate through the repository after validation', async () => {
+    validateExists.mockResolvedValue({ success: true, data: diagnosisCode });
+    repo.setDiagnosisCodeActive.mockResolvedValue(diagnosisCode);
+
+    await expect(activateDiagnosisCodeCommand('1', 'tenant-1')).resolves.toEqual({
+      success: true,
+      data: diagnosisCode,
+    });
+    expect(repo.setDiagnosisCodeActive).toHaveBeenLastCalledWith(1, 'tenant-1', true);
+
+    await expect(deactivateDiagnosisCodeCommand('1', 'tenant-1')).resolves.toEqual({
+      success: true,
+      data: diagnosisCode,
+    });
+    expect(repo.setDiagnosisCodeActive).toHaveBeenLastCalledWith(1, 'tenant-1', false);
+  });
+
+  it('should not write when activation validation fails', async () => {
+    const failure = {
+      success: false as const,
+      errors: ['Diagnosis code not found'],
+      status: StatusCodes.NOT_FOUND,
+    };
+    validateExists.mockResolvedValue(failure);
+
+    await expect(activateDiagnosisCodeCommand('1', 'tenant-1')).resolves.toEqual(failure);
+    await expect(deactivateDiagnosisCodeCommand('1', 'tenant-1')).resolves.toEqual(failure);
+    expect(repo.setDiagnosisCodeActive).not.toHaveBeenCalled();
+  });
+
+  it('should return not-found when the code disappears before activation is written', async () => {
+    validateExists.mockResolvedValue({ success: true, data: diagnosisCode });
+    repo.setDiagnosisCodeActive.mockResolvedValue(undefined);
+
+    await expect(deactivateDiagnosisCodeCommand('1', 'tenant-1')).resolves.toEqual({
+      success: false,
+      errors: ['Diagnosis code not found'],
+      status: StatusCodes.NOT_FOUND,
+    });
   });
 
   it('should preserve validation failure status', async () => {

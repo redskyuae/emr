@@ -173,6 +173,42 @@ describe('Invoice validators', () => {
       });
     });
 
+    it('uses Cash Price for patient billing and rejects a future-effective service', async () => {
+      chargeItemRepo.getChargeItemById.mockResolvedValue({
+        id: 1,
+        code: '99213',
+        name: 'Established Patient Level Three',
+        unitPrice: 150,
+        cashPrice: 130,
+        effectiveDate: '2026-01-01',
+        isActive: true,
+      } as never);
+      const cashLine = await validateAddInvoiceLine(
+        '1',
+        { chargeItemId: 1, quantity: 1 },
+        'tenant-1'
+      );
+      expect(cashLine).toMatchObject({ success: true, data: { unitPrice: 130 } });
+
+      chargeItemRepo.getChargeItemById.mockResolvedValue({
+        id: 1,
+        code: '99213',
+        name: 'Established Patient Level Three',
+        unitPrice: 150,
+        effectiveDate: '2999-01-01',
+        isActive: true,
+      } as never);
+      const futureLine = await validateAddInvoiceLine(
+        '1',
+        { chargeItemId: 1, quantity: 1 },
+        'tenant-1'
+      );
+      expect(futureLine).toMatchObject({
+        success: false,
+        errors: ['Charge item 99213 is not effective yet.'],
+      });
+    });
+
     it('should honour a price override', async () => {
       chargeItemRepo.getChargeItemById.mockResolvedValue({
         id: 1,

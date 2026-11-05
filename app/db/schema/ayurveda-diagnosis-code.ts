@@ -1,0 +1,27 @@
+import { sql } from 'drizzle-orm';
+import { boolean, pgTable, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+
+import { masterColumns } from './helpers';
+
+const { id, isDeleted, createdOn, modifiedOn, deletedOn } = masterColumns();
+
+export const ayurvedaDiagnosisCode = pgTable(
+  'ayurveda_diagnosis_code',
+  {
+    id,
+    tenantId: varchar('tenant_id', { length: 255 }).notNull(),
+    code: varchar({ length: 20 }).notNull(),
+    title: varchar({ length: 255 }).notNull(),
+    category: varchar({ length: 100 }),
+    isActive: boolean('is_active').notNull().default(true),
+    isDeleted,
+    createdOn,
+    modifiedOn,
+    deletedOn,
+  },
+  (table) => ({
+    tenantCodeUniqueIdx: uniqueIndex('ayurveda_diagnosis_code_tenant_code_idx')
+      .on(table.tenantId, sql`lower(${table.code})`)
+      .where(sql`${table.isDeleted} = false`),
+  })
+);

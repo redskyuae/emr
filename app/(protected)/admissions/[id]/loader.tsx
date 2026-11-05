@@ -46,7 +46,7 @@ export default function AdmissionDetailPageLoader() {
               <Skeleton className="h-8 w-24" />
             </div>
             <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-24 w-full" />
           </div>
         ))}
       </div>

@@ -13,6 +13,7 @@ import { assetCondition as assetConditionTable } from '@/app/db/schema/asset-con
 import { assetStatus as assetStatusTable } from '@/app/db/schema/asset-status';
 import { asset as assetTable } from '@/app/db/schema/asset';
 import { allergen as allergenTable } from '@/app/db/schema/allergen';
+import { ayurvedaDiagnosisCode as ayurvedaDiagnosisCodeTable } from '@/app/db/schema/ayurveda-diagnosis-code';
 import { clinicalNoteType as clinicalNoteTypeTable } from '@/app/db/schema/clinical-note-type';
 import { diagnosisCode as diagnosisCodeTable } from '@/app/db/schema/diagnosis-code';
 import { organization, user } from '@/app/db/schema/auth';
@@ -119,7 +120,7 @@ async function hasSeededWorkOrderMasters(tenantId: string) {
 
 async function hasSeededClinicalMasters(tenantId: string) {
   return hasSeededMasterTables(
-    [diagnosisCodeTable, allergenTable, clinicalNoteTypeTable],
+    [diagnosisCodeTable, ayurvedaDiagnosisCodeTable, allergenTable, clinicalNoteTypeTable],
     tenantId
   );
 }

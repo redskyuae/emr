@@ -34,7 +34,9 @@ describe('PatientProblem validators', () => {
     patientRepo.getPatientById.mockResolvedValue({ id: 1 } as never);
     codeRepo.getDiagnosisCodeById.mockResolvedValue({
       id: 7,
+      code: 'I10',
       title: 'Essential hypertension',
+      isActive: true,
     } as never);
     problemRepo.getPatientProblemById.mockResolvedValue({ id: 9, patientId: 1 } as never);
   });
@@ -55,6 +57,40 @@ describe('PatientProblem validators', () => {
       status: StatusCodes.BAD_REQUEST,
       errors: ['Diagnosis code 7 does not exist.'],
     });
+  });
+
+  it('should reject selecting an inactive diagnosis code', async () => {
+    codeRepo.getDiagnosisCodeById.mockResolvedValue({
+      id: 7,
+      code: 'I10',
+      isActive: false,
+    } as never);
+
+    await expect(
+      validateCreatePatientProblem('1', 'tenant-1', { diagnosisCodeId: 7 })
+    ).resolves.toEqual({
+      success: false,
+      status: StatusCodes.BAD_REQUEST,
+      errors: ['Diagnosis code I10 is inactive.'],
+    });
+  });
+
+  it('should let a Problem keep a diagnosis code deactivated after it was recorded', async () => {
+    problemRepo.getPatientProblemById.mockResolvedValue({
+      id: 9,
+      patientId: 1,
+      diagnosisCodeId: 7,
+    } as never);
+    codeRepo.getDiagnosisCodeById.mockResolvedValue({
+      id: 7,
+      code: 'I10',
+      title: 'Essential hypertension',
+      isActive: false,
+    } as never);
+
+    await expect(
+      validateUpdatePatientProblem('9', { diagnosisCodeId: 7 }, 'tenant-1')
+    ).resolves.toMatchObject({ success: true });
   });
 
   it('should return not-found when patient is missing', async () => {

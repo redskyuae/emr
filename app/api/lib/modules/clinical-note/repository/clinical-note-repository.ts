@@ -17,6 +17,8 @@ const clinicalNoteColumns = {
   visitId: clinicalNoteTable.visitId,
   admissionId: clinicalNoteTable.admissionId,
   noteTypeId: clinicalNoteTable.noteTypeId,
+  diagnosisCodeId: clinicalNoteTable.diagnosisCodeId,
+  ayurvedaDiagnosisCodeId: clinicalNoteTable.ayurvedaDiagnosisCodeId,
   subjective: clinicalNoteTable.subjective,
   objective: clinicalNoteTable.objective,
   assessment: clinicalNoteTable.assessment,
@@ -51,6 +53,8 @@ async function createClinicalNote(data: CreateClinicalNoteData) {
       visitId: data.visitId ?? null,
       admissionId: data.admissionId ?? null,
       noteTypeId: data.noteTypeId,
+      diagnosisCodeId: data.diagnosisCodeId ?? null,
+      ayurvedaDiagnosisCodeId: data.ayurvedaDiagnosisCodeId ?? null,
       subjective: data.subjective ?? null,
       objective: data.objective ?? null,
       assessment: data.assessment ?? null,
@@ -76,6 +80,10 @@ async function updateClinicalNote(
       // sends one. A chart edit that omits both must not orphan an Admission-linked
       // note (which would drop it from the Admission detail).
       ...linkageChanges(data),
+      // Undefined leaves the coded diagnoses untouched: chart edits do not send them, and only
+      // an explicit null clears one.
+      diagnosisCodeId: data.diagnosisCodeId,
+      ayurvedaDiagnosisCodeId: data.ayurvedaDiagnosisCodeId,
       subjective: data.subjective ?? null,
       objective: data.objective ?? null,
       assessment: data.assessment ?? null,
