@@ -2,7 +2,9 @@ import { StatusCodes } from 'http-status-codes';
 
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
+import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
 import { chargeItemRepository } from '@/app/api/lib/modules/charge-item/repository/charge-item-repository';
+import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
 import { invoiceRepository } from '../repository/invoice-repository';
 import {
   addInvoiceLineSchema,
@@ -76,15 +78,20 @@ export async function validateAddInvoiceLine(
     };
   }
 
-  if (
-    chargeItem.effectiveDate &&
-    chargeItem.effectiveDate > new Date().toISOString().slice(0, 10)
-  ) {
-    return {
-      success: false,
-      errors: [`Charge item ${chargeItem.code} is not effective yet.`],
-      status: StatusCodes.CONFLICT,
-    };
+  if (chargeItem.effectiveDate) {
+    const tenant = await tenantRepository.getTenantById(tenantId);
+
+    if (!tenant) {
+      return { success: false, errors: ['Tenant not found.'], status: StatusCodes.NOT_FOUND };
+    }
+
+    if (chargeItem.effectiveDate > tenantLocalDateTime(new Date(), tenant.timeZone).date) {
+      return {
+        success: false,
+        errors: [`Charge item ${chargeItem.code} is not effective yet.`],
+        status: StatusCodes.CONFLICT,
+      };
+    }
   }
 
   const quantity = payloadResult.data.quantity;

@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, ClipboardList, Plus } from 'lucide-react';
 
 import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { DemoDataBanner } from '@/components/app/demo-data-banner';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -106,6 +107,8 @@ export function VisitListPageImpl() {
 
   return (
     <div className="space-y-4">
+      <DemoDataBanner />
+
       <VisitListSummary
         summary={summary}
         activeStatus={filters.status as VisitStatus | null}

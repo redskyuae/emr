@@ -82,6 +82,10 @@ function DocumentBody({
 
   return (
     <div className="bg-card space-y-4 rounded-md border p-5 text-sm">
+      <p className="rounded-sm border py-1 text-center text-xs font-semibold tracking-wide uppercase">
+        Demo data. Not a valid tax document
+      </p>
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <LogoMark className="size-10" />

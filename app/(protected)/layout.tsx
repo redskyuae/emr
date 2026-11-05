@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
+import { demoPagesEnabled } from '@/lib/demo-pages';
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
 import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
 import { AppShellGate } from '@/components/app/app-shell-gate';
@@ -41,7 +42,11 @@ export default async function AppLayout({
       <AppShellGate>
         <TooltipProvider>
           <SidebarProvider defaultOpen={defaultOpen}>
-            <AppSidebar appointmentsOnly={appointmentsOnly} showVisits={showVisits} />
+            <AppSidebar
+              appointmentsOnly={appointmentsOnly}
+              showVisits={showVisits}
+              showDemoPages={demoPagesEnabled()}
+            />
             <SidebarInset>
               <AppTopbar />
               <div className="flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">

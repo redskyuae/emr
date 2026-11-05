@@ -5,6 +5,9 @@ Visit List (`/visit-list`) are **front-end demos on static data**: nothing is pe
 called. Their calculation rules live in pure, unit-tested modules under
 `app/(protected)/billing-counter/_utils/`, so they can move behind the API unchanged.
 
+Both pages, and the Clinician assessment at `/visits/[id]/assessment`, return 404 and stay out of the
+sidebar unless `ENABLE_DEMO_PAGES=true`. Keep the flag off in production.
+
 The existing `/billing` Invoice module (API-backed, Draft → Finalize → Pay) is untouched.
 
 ## End-to-end workflow

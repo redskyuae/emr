@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useReducer, useRef, useState } from 'react';
+
+import { DemoDataBanner } from '@/components/app/demo-data-banner';
 import type { StaticClinicianVisit } from '../../../_data/static-clinician-visits';
 import {
   assessmentReducer,
@@ -54,6 +56,8 @@ export function ClinicianAssessmentPageImpl({ visit }: { visit: StaticClinicianV
       className="mx-auto w-full max-w-screen-2xl space-y-4 pb-4"
       data-testid="clinician-consultation"
     >
+      <DemoDataBanner />
+
       <VisitSafetyStrip allergies={state.allergies} status={state.status} visit={visit} />
 
       <ConsultationProgress currentStep={currentStep} onStepChange={moveToStep} />

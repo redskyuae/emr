@@ -439,6 +439,8 @@ const appointmentNavHrefs = new Set([
 
 const visitNavHrefs = new Set(['/visits', '/visit-list']);
 
+const demoNavHrefs = new Set(['/visit-list', '/billing-counter']);
+
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
     title: 'Appointment Dashboard',
@@ -801,10 +803,12 @@ function filterNavItem(
   item: AppNavItem,
   grantedResources: Set<string>,
   appointmentsOnly: boolean,
-  showVisits: boolean
+  showVisits: boolean,
+  showDemoPages: boolean
 ): AppNavItem | null {
   if (
     !hasNavPermission(item.permission, grantedResources) ||
+    (!showDemoPages && demoNavHrefs.has(item.href)) ||
     (appointmentsOnly &&
       !appointmentNavHrefs.has(item.href) &&
       !(showVisits && visitNavHrefs.has(item.href)))
@@ -829,7 +833,8 @@ export function getVisibleNavGroups(
   groups: AppNavGroup[],
   permissions: string[],
   appointmentsOnly = false,
-  showVisits = false
+  showVisits = false,
+  showDemoPages = false
 ): AppNavGroup[] {
   const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
 
@@ -837,7 +842,9 @@ export function getVisibleNavGroups(
     .map((group) => ({
       ...group,
       items: group.items
-        .map((item) => filterNavItem(item, grantedResources, appointmentsOnly, showVisits))
+        .map((item) =>
+          filterNavItem(item, grantedResources, appointmentsOnly, showVisits, showDemoPages)
+        )
         .filter((item): item is AppNavItem => item !== null),
     }))
     .filter((group) => group.items.length > 0);

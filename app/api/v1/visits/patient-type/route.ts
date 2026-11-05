@@ -3,12 +3,15 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type { GetVisitPatientTypeResponse } from './types';
 
 import { getVisitPatientTypeQuery } from '@/app/api/lib/modules/visit/queries/get-visit-patient-type-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await requireTenantSession();
     if (session instanceof Response) return session;
+
+    const denied = await requireTenantPermissions(session, ['visit:read']);
+    if (denied) return denied;
 
     const result = await getVisitPatientTypeQuery(
       request.nextUrl.searchParams.get('patientId'),

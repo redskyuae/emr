@@ -14,8 +14,10 @@ describe('OpenAPI Visit Patient type contract', () => {
     expect(operation.responses).toMatchObject({
       '200': { content: expect.any(Object) },
       '400': { content: expect.any(Object) },
+      '403': expect.any(Object),
       '404': { content: expect.any(Object) },
     });
+    expect(operation.description).toContain('`visit:read`');
   });
 });
 

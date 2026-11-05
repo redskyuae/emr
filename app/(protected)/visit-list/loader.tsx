@@ -3,6 +3,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function VisitListPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
+      <Skeleton className="h-16 rounded-lg" />
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         {Array.from({ length: 6 }, (_, index) => (
           <Skeleton key={index} className="h-20 rounded-lg" />

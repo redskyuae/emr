@@ -104,7 +104,7 @@ describe('App shell navigation permissions', () => {
   it('should show Visits in the reduced sidebar only when enabled and permitted', () => {
     const permissions = ['appointment:read', 'visit:read'];
 
-    const enabledGroups = getVisibleNavGroups(appNavGroups, permissions, true, true);
+    const enabledGroups = getVisibleNavGroups(appNavGroups, permissions, true, true, true);
     expect(enabledGroups.map(({ title }) => title)).toEqual(['Overview', 'Clinical', 'Outpatient']);
     expect(enabledGroups[2].items.map(({ title }) => title)).toEqual(['Visits', 'Visit List']);
 
@@ -114,6 +114,19 @@ describe('App shell navigation permissions', () => {
     expect(getVisibleNavGroups(appNavGroups, ['appointment:read'], true, true)).not.toContainEqual(
       expect.objectContaining({ title: 'Outpatient' })
     );
+  });
+
+  it('should hide the static demo pages unless demo pages are enabled', () => {
+    const permissions = ['visit:read', 'invoice:read'];
+    const titles = (showDemoPages: boolean) =>
+      getVisibleNavGroups(appNavGroups, permissions, false, false, showDemoPages).flatMap(
+        ({ items }) => items.map(({ title }) => title)
+      );
+
+    expect(titles(false)).toEqual(expect.arrayContaining(['Visits', 'Invoices']));
+    expect(titles(false)).not.toContain('Visit List');
+    expect(titles(false)).not.toContain('Billing Counter');
+    expect(titles(true)).toEqual(expect.arrayContaining(['Visit List', 'Billing Counter']));
   });
 
   it('should restore the full sidebar when the flag is off', () => {

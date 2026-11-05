@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 import { Lock } from 'lucide-react';
 
+import { DemoDataBanner } from '@/components/app/demo-data-banner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,6 +42,8 @@ function CounterWorkspace() {
 
   return (
     <div className="space-y-4">
+      <DemoDataBanner />
+
       <CounterHeader />
 
       {shiftOpen ? null : (

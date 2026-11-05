@@ -755,30 +755,31 @@ async function deleteVisit(id: number, tenantId: string): Promise<DeleteVisitRes
   }
 }
 
-export const visitRepository = {
-  async findLatestCompletedVisitForPatient(
-    tenantId: string,
-    patientId: number,
-    fromDate: string,
-    throughDate: string
-  ): Promise<{ visitNumber: string; visitDate: string } | undefined> {
-    const [row] = await db
-      .select({ visitNumber: visitTable.visitNumber, visitDate: visitTable.visitDate })
-      .from(visitTable)
-      .where(
-        and(
-          eq(visitTable.tenantId, tenantId),
-          eq(visitTable.patientId, patientId),
-          eq(visitTable.status, 'COMPLETED'),
-          eq(visitTable.isDeleted, false),
-          gte(visitTable.visitDate, fromDate),
-          lte(visitTable.visitDate, throughDate)
-        )
+async function findLatestCompletedVisitForPatient(
+  tenantId: string,
+  patientId: number,
+  fromDate: string,
+  throughDate: string
+): Promise<{ visitNumber: string; visitDate: string } | undefined> {
+  const [row] = await db
+    .select({ visitNumber: visitTable.visitNumber, visitDate: visitTable.visitDate })
+    .from(visitTable)
+    .where(
+      and(
+        eq(visitTable.tenantId, tenantId),
+        eq(visitTable.patientId, patientId),
+        eq(visitTable.status, 'COMPLETED'),
+        eq(visitTable.isDeleted, false),
+        gte(visitTable.visitDate, fromDate),
+        lte(visitTable.visitDate, throughDate)
       )
-      .orderBy(desc(visitTable.visitDate), desc(visitTable.id))
-      .limit(1);
-    return row;
-  },
+    )
+    .orderBy(desc(visitTable.visitDate), desc(visitTable.id))
+    .limit(1);
+  return row;
+}
+
+export const visitRepository = {
   getVisits,
   updateVisit,
   deleteVisit,
@@ -789,5 +790,6 @@ export const visitRepository = {
   startConsultation,
   findActiveVisitByPatientId,
   getVisitForClinicalCapture,
+  findLatestCompletedVisitForPatient,
   findNonCancelledVisitByAppointmentId,
 };

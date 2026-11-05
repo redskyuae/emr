@@ -4649,7 +4649,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Verify New or Established Patient type for a Visit',
         description:
-          'Checks completed, non-deleted Visits for this Patient in the active Tenant. A Patient is Established when a completed Visit exists in the inclusive three-calendar-year window ending on the Tenant-local current date, starting no earlier than creation of the Patient record. Otherwise the Patient is New. The Create Visit page recalculates this assessment before submission.',
+          'Checks completed, non-deleted Visits for this Patient in the active Tenant. A Patient is Established when a completed Visit exists in the inclusive three-calendar-year window ending on the Tenant-local current date, starting no earlier than creation of the Patient record. Otherwise the Patient is New. The Create Visit page recalculates this assessment before submission. Requires the `visit:read` permission.',
         security: [{ cookieAuth: [] }],
         parameters: [
           {

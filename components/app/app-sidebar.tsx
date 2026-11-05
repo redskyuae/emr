@@ -129,9 +129,11 @@ function getInitials(name: string, email: string) {
 export function AppSidebar({
   appointmentsOnly,
   showVisits,
+  showDemoPages,
 }: {
   appointmentsOnly: boolean;
   showVisits: boolean;
+  showDemoPages: boolean;
 }) {
   const { data: currentUser, isLoading } = useCurrentUserQuery();
   const brandVariant = useBrandLogoVariant();
@@ -143,9 +145,10 @@ export function AppSidebar({
         appNavGroups,
         currentUser?.permissions ?? [],
         appointmentsOnly,
-        showVisits
+        showVisits,
+        showDemoPages
       ),
-    [currentUser?.permissions, appointmentsOnly, showVisits]
+    [currentUser?.permissions, appointmentsOnly, showVisits, showDemoPages]
   );
 
   return (

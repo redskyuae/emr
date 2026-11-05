@@ -3,6 +3,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function ClinicianAssessmentLoader() {
   return (
     <div className="mx-auto w-full max-w-screen-2xl space-y-4 pb-4" aria-label="Loading page">
+      <Skeleton className="h-16 rounded-lg" />
+
       <div className="bg-card shadow-fluent-4 grid gap-3 rounded-lg border p-3 md:grid-cols-2 md:p-4 xl:grid-cols-[1.35fr_1fr_1fr]">
         <div className="flex items-center gap-3">
           <Skeleton className="size-9 rounded-md" />
