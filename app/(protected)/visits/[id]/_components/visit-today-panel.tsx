@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { CalendarPlus, NotebookPen } from 'lucide-react';
 
+import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,14 +12,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 import { VisitDetailsCard } from './visit-details-card';
+import { VisitTreatmentPlanSummary } from './visit-treatment-plan-summary';
 
 export function VisitTodayPanel({
   visit,
+  plans,
+  plansLoading,
+  plansError,
+  canReadPlans,
   canCreateNote,
   canBookAppointment,
   onDailyTreatment,
 }: {
   visit: Visit;
+  plans: PatientTreatmentPlan[];
+  plansLoading: boolean;
+  plansError: boolean;
+  canReadPlans: boolean;
   canCreateNote: boolean;
   canBookAppointment: boolean;
   onDailyTreatment: () => void;
@@ -82,6 +92,15 @@ export function VisitTodayPanel({
             ) : null}
           </CardContent>
         </Card>
+      ) : null}
+
+      {canReadPlans ? (
+        <VisitTreatmentPlanSummary
+          visit={visit}
+          plans={plans}
+          loading={plansLoading}
+          error={plansError}
+        />
       ) : null}
 
       <VisitDetailsCard visit={visit} />

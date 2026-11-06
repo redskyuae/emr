@@ -307,6 +307,46 @@ describe('Visit consultation', () => {
     expect(screen.queryByLabelText('Chief complaint')).toBeNull();
   });
 
+  it('should show what was recorded on a closed Visit that has no consultation note', () => {
+    renderPanel({
+      visit: {
+        ...visit,
+        status: 'COMPLETED',
+        remarks: 'Source visit 2718',
+        treatment: { id: 4, name: 'Abhyangam' },
+      } as Visit,
+    });
+
+    expect(screen.getByText('Visit summary')).toBeTruthy();
+    expect(screen.getByText('No consultation note was recorded for this Visit.')).toBeTruthy();
+    expect(screen.getByText('Back pain')).toBeTruthy();
+    expect(screen.getByText('Abhyangam')).toBeTruthy();
+    expect(screen.getByText('Source visit 2718')).toBeTruthy();
+    expect(screen.queryByText('No consultation was recorded')).toBeNull();
+  });
+
+  it('should keep the empty state on a closed Visit with nothing recorded', () => {
+    renderPanel({
+      visit: {
+        ...visit,
+        status: 'COMPLETED',
+        chiefComplaint: null,
+        remarks: null,
+        treatment: null,
+      } as Visit,
+    });
+
+    expect(screen.getByText('No consultation was recorded')).toBeTruthy();
+    expect(screen.queryByText('Visit summary')).toBeNull();
+  });
+
+  it('should not show the Visit summary while the Patient is only checked in', () => {
+    renderPanel({ visit: { ...visit, status: 'CHECKED_IN' } });
+
+    expect(screen.getByText('Consultation not started')).toBeTruthy();
+    expect(screen.queryByText('Visit summary')).toBeNull();
+  });
+
   it('should link to every section and show how many fields are filled', () => {
     renderPanel();
 

@@ -10,7 +10,7 @@ import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Empty,
   EmptyContent,
@@ -21,8 +21,20 @@ import {
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { isActiveVisit } from '../../_utils/visit-status';
 import { SOAP_SECTIONS, soapToConsultation } from '../_utils/doctor-consultation-note';
 import { VisitConsultationForm } from './visit-consultation-form';
+
+function RecordedSection({ label, value }: { label: string; value: string }) {
+  return (
+    <section className="space-y-1 border-t pt-3 first:border-t-0 first:pt-0">
+      <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        {label}
+      </h3>
+      <RichTextContent value={value} />
+    </section>
+  );
+}
 
 function ConsultationSummary({ note, action }: { note: ClinicalNote; action?: React.ReactNode }) {
   const signed = note.status === 'signed';
@@ -39,15 +51,30 @@ function ConsultationSummary({ note, action }: { note: ClinicalNote; action?: Re
       <CardContent className="space-y-4">
         {SOAP_SECTIONS.map(({ key, label }) => {
           const value = note[key];
-          return value ? (
-            <section key={key} className="space-y-1 border-t pt-3 first:border-t-0 first:pt-0">
-              <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                {label}
-              </h3>
-              <RichTextContent value={value} />
-            </section>
-          ) : null;
+          return value ? <RecordedSection key={key} label={label} value={value} /> : null;
         })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function VisitSummary({ visit }: { visit: Visit }) {
+  const sections = [
+    { label: 'Purpose of visit', value: visit.chiefComplaint },
+    { label: 'Treatment', value: visit.treatment?.name },
+    { label: 'Remarks', value: visit.remarks },
+  ];
+
+  return (
+    <Card className="shadow-fluent-2 gap-4">
+      <CardHeader>
+        <CardTitle className="text-base">Visit summary</CardTitle>
+        <CardDescription>No consultation note was recorded for this Visit.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {sections.map(({ label, value }) =>
+          value ? <RecordedSection key={label} label={label} value={value} /> : null
+        )}
       </CardContent>
     </Card>
   );
@@ -173,6 +200,11 @@ export function VisitConsultationPanel({
         }
       />
     );
+  }
+
+  // A closed Visit with no note, such as an imported one, may still hold details.
+  if (!isActiveVisit(visit.status) && (visit.chiefComplaint || visit.treatment || visit.remarks)) {
+    return <VisitSummary visit={visit} />;
   }
 
   return (

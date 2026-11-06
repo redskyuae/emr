@@ -137,6 +137,10 @@ export function VisitCarePathway({
       <TabsContent value="details">
         <VisitTodayPanel
           visit={visit}
+          plans={plans}
+          plansLoading={plansQuery.isLoading}
+          plansError={plansQuery.isError}
+          canReadPlans={Boolean(canReadPlan)}
           canCreateNote={Boolean(canCreateNote)}
           canBookAppointment={Boolean(canBookAppointment)}
           onDailyTreatment={onDailyTreatment}
