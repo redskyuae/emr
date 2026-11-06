@@ -42,8 +42,8 @@ vi.mock('@/app/queries/identity-access/useCurrentUser', () => ({
 vi.mock('@/app/queries/visits/useStartConsultation', () => ({
   useStartConsultation: () => ({ isPending: false, mutateAsync: vi.fn() }),
 }));
-vi.mock('@/app/queries/visits/useCompleteVisit', () => ({
-  useCompleteVisit: () => ({ isPending: false, mutateAsync: vi.fn() }),
+vi.mock('@/app/queries/billing/invoices/useInvoices', () => ({
+  useInvoicesQuery: () => ({ data: { data: [] }, isLoading: false, isError: false }),
 }));
 vi.mock('@/app/(protected)/patients/[id]/_components/_chart/allergy-banner', () => ({
   AllergyBanner: () => null,
@@ -77,10 +77,13 @@ vi.mock('./_sheets/add-note-sheet', async () => {
 });
 vi.mock('./_sheets/record-vitals-sheet', () => ({ RecordVitalsSheet: () => null }));
 vi.mock('./_sheets/assign-treatment-plan-sheet', () => ({ AssignTreatmentPlanSheet: () => null }));
-vi.mock('./_sheets/doctor-consultation-sheet', () => ({ DoctorConsultationSheet: () => null }));
 vi.mock('./_sheets/daily-treatment-sheet', () => ({ DailyTreatmentSheet: () => null }));
 vi.mock('../../_components/_modals/cancel-visit-dialog', () => ({ CancelVisitDialog: () => null }));
-vi.mock('./visit-status-timeline', () => ({ VisitStatusTimeline: () => null }));
+vi.mock('./_modals/complete-visit-dialog', () => ({ CompleteVisitDialog: () => null }));
+vi.mock('./_modals/sign-clinical-note-dialog', () => ({ SignClinicalNoteDialog: () => null }));
+vi.mock('./visit-patient-header', () => ({ VisitPatientHeader: () => null }));
+vi.mock('./visit-snapshot-rail', () => ({ VisitSnapshotRail: () => null }));
+vi.mock('./visit-workflow-stepper', () => ({ VisitWorkflowStepper: () => null }));
 vi.mock('./visit-care-pathway', async () => {
   const { createElement } = await import('react');
   return {

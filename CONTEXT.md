@@ -328,6 +328,10 @@ The exclusive reservation of one Patient Treatment Plan Session for a Procedure 
 
 A Tenant-scoped Master that classifies the clinical nature of a Visit, such as OPD Consultation, Follow-up, Procedure, or Vaccination. Distinct from AppointmentType, which classifies the Appointment at booking time — a Walk-in Visit has a VisitType but no Appointment.
 
+## Admit Source
+
+A Tenant-scoped Master that records how a Patient came to a Visit, such as Self / Walk-in, Doctor Referral, Hospital Transfer, or Emergency. Admit Source is optional and is chosen when the Visit is created. Distinct from VisitType, which classifies the clinical nature of the Visit, and from AdmissionType, which classifies an inpatient Admission.
+
 ## Visit Patient Type
 
 An assessment shown while creating a Visit. A Patient is New until a completed Visit exists in the active Tenant within the last three calendar years, counted no earlier than creation of the Patient record. A Patient with such a Visit is Established. This is distinct from Patient Registration Status, which is Provisional or Registered, and from VisitType, which classifies the clinical encounter.

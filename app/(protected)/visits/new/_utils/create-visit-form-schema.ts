@@ -38,6 +38,7 @@ export const createVisitFormSchema = z
     patientId: z.string(),
     doctorId: z.string(),
     visitTypeId: z.string().min(1, 'Visit type is required.'),
+    admitSourceId: z.string(),
     chiefComplaint: z.string().trim().max(500, 'Chief complaint must be at most 500 characters.'),
     remarks: z.string().trim(),
     createInvoice: z.boolean(),

@@ -34,7 +34,7 @@ export function VisitBillingPanel({ visit, invoices, loading, error, canCreateIn
 
   return (
     <Card className="shadow-fluent-2">
-      <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
+      <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle className="text-base">Billing for this Visit</CardTitle>
         {canCreateInvoice ? (
           <Button asChild size="sm">

@@ -157,7 +157,7 @@ function Toolbar() {
 
   return (
     <div
-      className="bg-muted/40 flex flex-wrap gap-0.5 border-b p-1"
+      className="bg-muted/40 hidden flex-wrap gap-0.5 border-t p-1 group-focus-within/editor:flex"
       role="toolbar"
       aria-label="Text formatting"
     >
@@ -253,13 +253,12 @@ export function RichTextEditor({
     <LexicalComposer initialConfig={initialConfig}>
       <div
         className={cn(
-          'border-input bg-background focus-within:border-ring focus-within:ring-ring/50 rounded-md border text-sm focus-within:ring-[3px]',
-          invalid && 'border-destructive',
-          disabled && 'bg-muted/50 opacity-70',
+          'group/editor border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 overflow-hidden rounded-lg border bg-transparent text-sm transition-colors focus-within:ring-3',
+          invalid && 'border-destructive ring-destructive/20 dark:ring-destructive/40 ring-3',
+          disabled && 'bg-input/50 opacity-70',
           className
         )}
       >
-        {!disabled ? <Toolbar /> : null}
         <div className="relative">
           <RichTextPlugin
             contentEditable={
@@ -269,12 +268,12 @@ export function RichTextEditor({
                 aria-required={required}
                 aria-invalid={invalid}
                 onBlur={onBlur}
-                className="min-h-24 w-full px-3 py-2 outline-none [&_p]:min-h-5"
+                className="min-h-20 w-full px-2.5 py-2 outline-none [&_p]:min-h-5"
               />
             }
             placeholder={
               placeholder ? (
-                <span className="text-muted-foreground pointer-events-none absolute top-2 left-3">
+                <span className="text-muted-foreground pointer-events-none absolute top-2 left-2.5">
                   {placeholder}
                 </span>
               ) : null
@@ -286,6 +285,7 @@ export function RichTextEditor({
           <ValuePlugin value={value} onChange={onChange} />
           <EditableStatePlugin disabled={disabled} />
         </div>
+        {!disabled ? <Toolbar /> : null}
       </div>
     </LexicalComposer>
   );

@@ -8,6 +8,7 @@ const base = {
   patientId: '',
   doctorId: '',
   visitTypeId: '3',
+  admitSourceId: '',
   chiefComplaint: '',
   remarks: '',
   createInvoice: false,
@@ -28,6 +29,11 @@ describe('createVisitFormSchema', () => {
     expect(createVisitFormSchema.safeParse(base).success).toBe(true);
   });
 
+  it('accepts a Visit with or without an Admit source', () => {
+    expect(createVisitFormSchema.safeParse({ ...base, admitSourceId: '' }).success).toBe(true);
+    expect(createVisitFormSchema.safeParse({ ...base, admitSourceId: '2' }).success).toBe(true);
+  });
+
   it('requires an Appointment for an Appointment Visit', () => {
     const result = createVisitFormSchema.safeParse({ ...base, appointmentId: '' });
     expect(result.success).toBe(false);
@@ -39,6 +45,7 @@ describe('createVisitFormSchema', () => {
       mode: 'walk-in',
       appointmentId: '',
       visitTypeId: '',
+      admitSourceId: '',
     });
     expect(result.success).toBe(false);
     if (!result.success) {

@@ -35,13 +35,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  VISIT_STATUS_FILTERS,
-  toDateInputValue,
-  toDisplayDate,
-  todayDisplayDate,
-} from '../_utils/visit-status';
+import { toDateInputValue, toDisplayDate, todayDisplayDate } from '../_utils/visit-status';
 import { CancelVisitDialog } from './_modals/cancel-visit-dialog';
+import { VisitQueueSummary } from './visit-queue-summary';
 import { VisitsTable, VisitsTableSkeleton } from './visits-table';
 
 const PAGE_SIZE = 20;
@@ -100,7 +96,17 @@ export function VisitsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
+        <VisitQueueSummary
+          visitDate={visitDate}
+          doctorId={doctorId}
+          status={status}
+          onStatusChange={(next) => {
+            setPage(1);
+            void setStatusParam(next);
+          }}
+        />
+
+        <Card className="shadow-fluent-2 py-0">
           <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
             <Input
               type="date"
@@ -141,27 +147,7 @@ export function VisitsPageImpl() {
               </Select>
             )}
 
-            <Select
-              value={statusParam ?? ALL_FILTER}
-              onValueChange={(value) => {
-                setPage(1);
-                void setStatusParam(value === ALL_FILTER ? null : value);
-              }}
-            >
-              <SelectTrigger className="h-9 lg:w-44" aria-label="Filter by status">
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_FILTER}>All statuses</SelectItem>
-                {VISIT_STATUS_FILTERS.map((filter) => (
-                  <SelectItem key={filter.value} value={filter.value}>
-                    {filter.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-xs">
+            <InputGroup className="bg-background h-9 lg:ml-auto lg:max-w-xs">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>
@@ -176,17 +162,6 @@ export function VisitsPageImpl() {
                 aria-label="Search visits"
               />
             </InputGroup>
-
-            {canCreate ? (
-              <div className="flex justify-end lg:ml-auto">
-                <Button asChild>
-                  <Link href="/visits/new">
-                    <Plus className="size-4" />
-                    Create Visit
-                  </Link>
-                </Button>
-              </div>
-            ) : null}
           </CardContent>
         </Card>
 
@@ -245,6 +220,7 @@ export function VisitsPageImpl() {
           <>
             <VisitsTable
               visits={visits}
+              now={visitsQuery.dataUpdatedAt}
               pendingVisitId={pendingVisitId}
               canStart={canStart}
               canCancel={canCancel}

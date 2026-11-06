@@ -12,6 +12,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
+import { admitSource as admitSourceTable } from './admit-source';
 import { appointment as appointmentTable } from './appointment';
 import { doctor as doctorTable } from './doctor';
 import { masterColumns } from './helpers';
@@ -39,6 +40,7 @@ export const visit = pgTable(
     visitTypeId: integer('visit_type_id')
       .notNull()
       .references(() => visitTypeTable.id),
+    admitSourceId: integer('admit_source_id').references(() => admitSourceTable.id),
     appointmentId: integer('appointment_id').references(() => appointmentTable.id),
     treatmentId: integer('treatment_id').references(() => treatmentTable.id),
     treatmentSessionId: integer('treatment_session_id').references(() => treatmentSessionTable.id),

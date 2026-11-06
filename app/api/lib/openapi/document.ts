@@ -876,6 +876,7 @@ const visitExample = {
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
   visitType: { id: 1, name: 'OPD Consultation', code: 'OPD' },
+  admitSource: { id: 2, name: 'Doctor Referral', code: 'DOCREF' },
   appointment: { id: 101, bookingNumber: 'APT-1042' },
   treatment: null,
   treatmentSession: null,
@@ -2364,6 +2365,7 @@ export const openApiDocument = {
     { name: 'Appointment Mode', description: 'Appointment Mode Master APIs.' },
     { name: 'Appointment Status', description: 'Appointment Status Master APIs.' },
     { name: 'Visit Type', description: 'Visit Type Master APIs.' },
+    { name: 'Admit Source', description: 'Admit Source Master APIs.' },
     {
       name: 'Treatment',
       description: 'Tenant-scoped Treatment catalogue and Session APIs used for Procedure booking.',
@@ -4598,7 +4600,12 @@ export const openApiDocument = {
               examples: {
                 fromAppointment: {
                   summary: 'Check in against a booked Appointment',
-                  value: { appointmentId: 42, visitTypeId: 1, chiefComplaint: 'Fever for 3 days' },
+                  value: {
+                    appointmentId: 42,
+                    visitTypeId: 1,
+                    admitSourceId: 2,
+                    chiefComplaint: 'Fever for 3 days',
+                  },
                 },
                 fromDoctorlessProcedure: {
                   summary: 'Check in a Procedure Appointment that has no Doctor',
@@ -4641,11 +4648,28 @@ export const openApiDocument = {
           '403': responseRef('Forbidden'),
           '409': {
             description:
-              'A referenced record is invalid, the Appointment is not checkable today, the Patient is provisional or inactive, or the Patient already has an Active Visit.',
-            content: jsonContent(schemaRef('ValidationError'), {
-              message: 'Patient 1042 already has an active visit.',
-              errors: ['Patient 1042 already has an active visit.'],
-            }),
+              'A referenced record such as the Visit Type or Admit Source is invalid, the Appointment is not checkable today, the Patient is provisional or inactive, or the Patient already has an Active Visit.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  activeVisit: {
+                    summary: 'Patient already has an Active Visit',
+                    value: {
+                      message: 'Patient 1042 already has an active visit.',
+                      errors: ['Patient 1042 already has an active visit.'],
+                    },
+                  },
+                  invalidAdmitSource: {
+                    summary: 'Admit Source is unknown or deleted in this Tenant',
+                    value: {
+                      message: 'Admit source 99 is Invalid.',
+                      errors: ['Admit source 99 is Invalid.'],
+                    },
+                  },
+                },
+              },
+            },
           },
           '500': responseRef('InternalServerError'),
         },
@@ -5098,6 +5122,31 @@ export const openApiDocument = {
         description: 'Standard outpatient consultation',
       },
       parameters: [numberIdPathParameter('Visit Type')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
+    '/api/v1/visits/admit-sources': appointmentMasterCollection({
+      tag: 'Admit Source',
+      entity: 'Admit Source',
+      schemaName: 'AdmitSource',
+      createSchemaName: 'CreateAdmitSourceRequest',
+      example: {
+        name: 'Doctor Referral',
+        code: 'DOCREF',
+        description: 'Referred by an external Doctor',
+      },
+    }),
+    '/api/v1/visits/admit-sources/{id}': itemOperations({
+      tag: 'Admit Source',
+      entity: 'Admit Source',
+      schemaName: 'AdmitSource',
+      updateSchemaName: 'UpdateAdmitSourceRequest',
+      example: {
+        name: 'Doctor Referral',
+        code: 'DOCREF',
+        description: 'Referred by an external Doctor',
+      },
+      parameters: [numberIdPathParameter('Admit Source')],
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
@@ -9065,6 +9114,9 @@ export const openApiDocument = {
       CreateVisitTypeRequest: appointmentMasterCreateSchema('Visit Type', true),
       UpdateVisitTypeRequest: appointmentMasterCreateSchema('Visit Type', true),
       VisitType: appointmentMasterSchema('CreateVisitTypeRequest'),
+      CreateAdmitSourceRequest: appointmentMasterCreateSchema('Admit Source', true),
+      UpdateAdmitSourceRequest: appointmentMasterCreateSchema('Admit Source', true),
+      AdmitSource: appointmentMasterSchema('CreateAdmitSourceRequest'),
       TreatmentSessionInput: {
         type: 'object',
         required: ['label', 'procedure', 'sessionNumber', 'durationMinutes'],
@@ -9255,6 +9307,12 @@ export const openApiDocument = {
             minimum: 1,
             description: 'VisitType classifying the Visit.',
           },
+          admitSourceId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional Admit Source recording how the Patient came to this Visit. Must be an existing, non-deleted Admit Source in the Tenant.',
+          },
           appointmentId: {
             type: 'integer',
             minimum: 1,
@@ -9352,6 +9410,15 @@ export const openApiDocument = {
           code: { type: 'string' },
         },
       },
+      VisitAdmitSourceSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
       VisitAppointmentSummary: {
         type: 'object',
         required: ['id', 'bookingNumber'],
@@ -9409,6 +9476,7 @@ export const openApiDocument = {
           'patient',
           'doctor',
           'visitType',
+          'admitSource',
           'appointment',
           'checkedInAt',
           'createdOn',
@@ -9439,6 +9507,10 @@ export const openApiDocument = {
           patient: schemaRef('VisitPatientSummary'),
           doctor: schemaRef('VisitDoctorSummary'),
           visitType: schemaRef('VisitTypeSummary'),
+          admitSource: {
+            oneOf: [schemaRef('VisitAdmitSourceSummary'), { type: 'null' }],
+            description: 'How the Patient came to this Visit, or null when not recorded.',
+          },
           appointment: {
             oneOf: [schemaRef('VisitAppointmentSummary'), { type: 'null' }],
             description: 'The fulfilled Appointment, or null for a Walk-in Visit.',

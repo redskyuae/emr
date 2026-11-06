@@ -21,6 +21,11 @@ export const brandLogos = {
   },
 } as const;
 
+/** Dhathri deployments practise Ayurveda; `none` is the general Medical EMR. */
+export function isAyurvedaBrand(variant: BrandLogoVariant) {
+  return variant !== 'none';
+}
+
 export function resolveBrandLogoVariant(value: string | undefined): BrandLogoVariant {
   if (value === 'dhathri-gram' || value === 'none') {
     return value;
