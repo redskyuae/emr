@@ -22,6 +22,22 @@ describe('Visit schema', () => {
       });
     });
 
+    it('should accept an optional Admit Source', () => {
+      expect(
+        checkInVisitSchema.parse({ appointmentId: 5, visitTypeId: 2, admitSourceId: 4 })
+          .admitSourceId
+      ).toBe(4);
+      expect(
+        checkInVisitSchema.parse({ appointmentId: 5, visitTypeId: 2 }).admitSourceId
+      ).toBeUndefined();
+    });
+
+    it('should reject an Admit Source ID that is not positive', () => {
+      expect(
+        checkInVisitSchema.safeParse({ appointmentId: 5, visitTypeId: 2, admitSourceId: 0 }).success
+      ).toBe(false);
+    });
+
     it('should accept a doctor assignment on an appointment check-in', () => {
       expect(
         checkInVisitSchema.parse({ appointmentId: 5, visitTypeId: 2, doctorId: 3 })

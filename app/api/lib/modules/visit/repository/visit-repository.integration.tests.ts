@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
+import { admitSource as admitSourceTable } from '@/app/db/schema/admit-source';
 import { appointment as appointmentTable } from '@/app/db/schema/appointment';
 import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
@@ -20,6 +21,7 @@ import {
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import { treatment as treatmentTable } from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
+import { admitSourceRepository } from '../../admit-source/repository/admit-source-repository';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
 import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
@@ -84,6 +86,15 @@ async function createVisitType(tenantId: string) {
     .returning({ id: visitTypeTable.id });
 
   return visitType.id;
+}
+
+async function createAdmitSource(tenantId: string) {
+  const [admitSource] = await db
+    .insert(admitSourceTable)
+    .values({ tenantId, name: 'Doctor Referral', code: 'DOCREF' })
+    .returning({ id: admitSourceTable.id });
+
+  return admitSource.id;
 }
 
 async function createTenantFixtures(tenantId: string): Promise<TenantFixtures> {
@@ -356,6 +367,39 @@ describe('Visit repository', () => {
           visitDate: '16-07-2026',
           appointment: null,
         },
+      });
+    });
+
+    it('should record the Admit Source supplied at check-in', async () => {
+      const admitSourceId = await createAdmitSource(tenantA);
+
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { admitSourceId })
+      );
+
+      expect(result).toMatchObject({
+        success: true,
+        data: { admitSource: { id: admitSourceId, name: 'Doctor Referral', code: 'DOCREF' } },
+      });
+    });
+
+    it('should leave the Admit Source empty when none is supplied', async () => {
+      const result = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+
+      expect(result).toMatchObject({ success: true, data: { admitSource: null } });
+    });
+
+    it('should still read a Visit whose Admit Source was soft-deleted', async () => {
+      const admitSourceId = await createAdmitSource(tenantA);
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { admitSourceId })
+      );
+      if (!result.success) throw new Error('Check-in failed');
+
+      await admitSourceRepository.deleteAdmitSource(admitSourceId, tenantA);
+
+      await expect(visitRepository.getVisitById(result.data.id, tenantA)).resolves.toMatchObject({
+        admitSource: { id: admitSourceId, name: 'Doctor Referral' },
       });
     });
 

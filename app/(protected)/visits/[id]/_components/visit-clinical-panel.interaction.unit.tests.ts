@@ -22,6 +22,56 @@ vi.mock('@/app/queries/clinical-masters/note-types/useClinicalNoteTypes', () => 
 
 afterEach(cleanup);
 
+describe('Visit Clinical panel notes', () => {
+  it('should show every SOAP section a Clinical Note holds', () => {
+    render(
+      createElement(VisitClinicalPanel, {
+        visit: { id: 7, status: 'CHECKED_IN', patient: { id: 3 } } as Visit,
+        chart: {
+          vitalSigns: [],
+          clinicalNotes: [
+            {
+              id: 1,
+              visitId: 7,
+              noteTypeId: 5,
+              status: 'draft',
+              subjective: 'Reports back pain',
+              objective: 'Tender lumbar spine',
+              assessment: 'Mechanical back pain',
+              plan: 'Review in two weeks',
+            },
+          ],
+          allergies: [],
+          medications: [],
+        } as unknown as PatientChart,
+        chartLoading: false,
+        chartError: false,
+        canRecordVitals: true,
+        canCreateNote: true,
+        onRecordVitals: vi.fn(),
+        onAddClinicalNote: vi.fn(),
+        onNursingHandoff: vi.fn(),
+        onAddAllergy: vi.fn(),
+        onAddMedication: vi.fn(),
+        onSignNote: vi.fn(),
+      })
+    );
+
+    for (const text of [
+      'Subjective',
+      'Reports back pain',
+      'Objective',
+      'Tender lumbar spine',
+      'Assessment',
+      'Mechanical back pain',
+      'Plan',
+      'Review in two weeks',
+    ]) {
+      expect(screen.getByText(text)).toBeTruthy();
+    }
+  });
+});
+
 describe('Visit Clinical panel record actions', () => {
   it('opens separate Allergy and Medication capture actions without opening a Clinical Note', () => {
     const onAddAllergy = vi.fn();
@@ -47,6 +97,7 @@ describe('Visit Clinical panel record actions', () => {
         onNursingHandoff,
         onAddAllergy,
         onAddMedication,
+        onSignNote: vi.fn(),
       })
     );
 

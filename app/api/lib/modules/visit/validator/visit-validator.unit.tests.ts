@@ -5,6 +5,7 @@ import { appointmentRepository } from '../../appointment/repository/appointment-
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { patientRepository } from '../../patient/repository/patient-repository';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
+import { admitSourceRepository } from '../../admit-source/repository/admit-source-repository';
 import { visitTypeRepository } from '../../visit-type/repository/visit-type-repository';
 import { treatmentRepository } from '../../treatment/repository/treatment-repository';
 import { visitRepository } from '../repository/visit-repository';
@@ -36,6 +37,9 @@ vi.mock('../../doctor/repository/doctor-repository', () => ({
 vi.mock('../../visit-type/repository/visit-type-repository', () => ({
   visitTypeRepository: { getVisitTypeById: vi.fn() },
 }));
+vi.mock('../../admit-source/repository/admit-source-repository', () => ({
+  admitSourceRepository: { getAdmitSourceById: vi.fn() },
+}));
 vi.mock('../../tenant/repository/tenant-repository', () => ({
   tenantRepository: { getTenantById: vi.fn() },
 }));
@@ -52,6 +56,7 @@ const appointmentRepo = vi.mocked(appointmentRepository);
 const patientRepo = vi.mocked(patientRepository);
 const doctorRepo = vi.mocked(doctorRepository);
 const visitTypeRepo = vi.mocked(visitTypeRepository);
+const admitSourceRepo = vi.mocked(admitSourceRepository);
 const tenantRepo = vi.mocked(tenantRepository);
 
 // The Tenant clock decides "today"; freeze it so the date gate is deterministic.
@@ -78,6 +83,7 @@ describe('Visit validators', () => {
       timeZone: 'Asia/Kolkata',
     } as never);
     visitTypeRepo.getVisitTypeById.mockResolvedValue({ id: 2, name: 'OPD' } as never);
+    admitSourceRepo.getAdmitSourceById.mockResolvedValue({ id: 4, name: 'Emergency' } as never);
     appointmentRepo.getAppointmentById.mockResolvedValue(appointment as never);
     patientRepo.getPatientById.mockResolvedValue(registeredPatient as never);
     doctorRepo.getDoctorById.mockResolvedValue({ id: 3, isActive: true } as never);
@@ -112,6 +118,35 @@ describe('Visit validators', () => {
           visitDate: '2026-07-16',
         },
       });
+    });
+
+    it('should not look up an Admit Source when none is supplied', async () => {
+      await validateCheckInVisit({ appointmentId: 5, visitTypeId: 2 }, 'tenant-1');
+
+      expect(admitSourceRepo.getAdmitSourceById).not.toHaveBeenCalled();
+    });
+
+    it('should carry a valid Admit Source for the tenant into the validated data', async () => {
+      const result = await validateCheckInVisit(
+        { appointmentId: 5, visitTypeId: 2, admitSourceId: 4 },
+        'tenant-1'
+      );
+
+      expect(admitSourceRepo.getAdmitSourceById).toHaveBeenCalledWith(4, 'tenant-1');
+      expect(result).toMatchObject({ success: true, data: { admitSourceId: 4 } });
+    });
+
+    it('should return conflict when the Admit Source is not found for the tenant', async () => {
+      admitSourceRepo.getAdmitSourceById.mockResolvedValue(undefined);
+
+      await expect(
+        validateCheckInVisit({ appointmentId: 5, visitTypeId: 2, admitSourceId: 4 }, 'tenant-1')
+      ).resolves.toEqual({
+        success: false,
+        errors: ['Admit source 4 is Invalid.'],
+        status: StatusCodes.CONFLICT,
+      });
+      expect(appointmentRepo.getAppointmentById).not.toHaveBeenCalled();
     });
 
     it('should take the visit date from the tenant time zone, not the server clock', async () => {

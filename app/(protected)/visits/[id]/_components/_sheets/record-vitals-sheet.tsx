@@ -1,17 +1,23 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Activity } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { computeBmi } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { useCreatePatientVitalSign } from '@/app/queries/patients/chart/useCreatePatientVitalSign';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '@/components/ui/input-group';
 import {
   Sheet,
   SheetContent,
@@ -39,16 +45,31 @@ const EMPTY: VisitVitalsFormValues = {
   notes: '',
 };
 
-const MEASUREMENTS = [
-  { name: 'systolic', label: 'Systolic (mmHg)' },
-  { name: 'diastolic', label: 'Diastolic (mmHg)' },
-  { name: 'pulseBpm', label: 'Pulse (bpm)' },
-  { name: 'respRate', label: 'Respiratory rate' },
-  { name: 'temperatureC', label: 'Temperature (°C)' },
-  { name: 'spo2', label: 'SpO₂ (%)' },
-  { name: 'heightCm', label: 'Height (cm)' },
-  { name: 'weightKg', label: 'Weight (kg)' },
-  { name: 'painScore', label: 'Pain score (0–10)' },
+const MEASUREMENT_GROUPS = [
+  {
+    title: 'Circulation',
+    items: [
+      { name: 'systolic', label: 'Systolic', unit: 'mmHg' },
+      { name: 'diastolic', label: 'Diastolic', unit: 'mmHg' },
+      { name: 'pulseBpm', label: 'Pulse', unit: 'bpm' },
+    ],
+  },
+  {
+    title: 'Breathing and temperature',
+    items: [
+      { name: 'respRate', label: 'Respiratory rate', unit: '/min' },
+      { name: 'spo2', label: 'SpO₂', unit: '%' },
+      { name: 'temperatureC', label: 'Temperature', unit: '°C' },
+    ],
+  },
+  {
+    title: 'Body and pain',
+    items: [
+      { name: 'heightCm', label: 'Height', unit: 'cm' },
+      { name: 'weightKg', label: 'Weight', unit: 'kg' },
+      { name: 'painScore', label: 'Pain score', unit: '/10' },
+    ],
+  },
 ] as const;
 
 export function RecordVitalsSheet({
@@ -68,6 +89,11 @@ export function RecordVitalsSheet({
     defaultValues: EMPTY,
   });
   const createVitals = useCreatePatientVitalSign();
+  const [heightCm, weightKg] = useWatch({
+    control: form.control,
+    name: ['heightCm', 'weightKg'],
+  });
+  const bmi = computeBmi(toOptionalNumber(heightCm), toOptionalNumber(weightKg));
 
   useEffect(() => {
     if (open) {
@@ -125,24 +151,48 @@ export function RecordVitalsSheet({
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <FieldGroup>
-              <div className="grid grid-cols-2 gap-3">
-                {MEASUREMENTS.map((measurement) => (
-                  <Field
-                    key={measurement.name}
-                    data-invalid={Boolean(form.formState.errors[measurement.name])}
-                  >
-                    <FieldLabel htmlFor={measurement.name}>{measurement.label}</FieldLabel>
-                    <Input
-                      id={measurement.name}
-                      inputMode="decimal"
-                      {...form.register(measurement.name)}
-                    />
-                    {form.formState.errors[measurement.name] ? (
-                      <FieldError>{form.formState.errors[measurement.name]?.message}</FieldError>
-                    ) : null}
-                  </Field>
-                ))}
-              </div>
+              {MEASUREMENT_GROUPS.map((group) => (
+                <fieldset key={group.title} className="space-y-3">
+                  <legend className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                    {group.title}
+                  </legend>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {group.items.map((measurement) => (
+                      <Field
+                        key={measurement.name}
+                        data-invalid={Boolean(form.formState.errors[measurement.name])}
+                      >
+                        <FieldLabel htmlFor={measurement.name}>{measurement.label}</FieldLabel>
+                        <InputGroup>
+                          <InputGroupInput
+                            id={measurement.name}
+                            inputMode="decimal"
+                            aria-invalid={Boolean(form.formState.errors[measurement.name])}
+                            className="font-mono tabular-nums"
+                            {...form.register(measurement.name)}
+                          />
+                          <InputGroupAddon align="inline-end">
+                            <InputGroupText>{measurement.unit}</InputGroupText>
+                          </InputGroupAddon>
+                        </InputGroup>
+                        {form.formState.errors[measurement.name] ? (
+                          <FieldError>
+                            {form.formState.errors[measurement.name]?.message}
+                          </FieldError>
+                        ) : null}
+                      </Field>
+                    ))}
+                  </div>
+                </fieldset>
+              ))}
+
+              <p className="text-muted-foreground text-sm" role="status">
+                BMI{' '}
+                <span className="text-foreground font-mono font-medium tabular-nums">
+                  {bmi ?? '—'}
+                </span>
+                {bmi === undefined ? ' · enter height and weight' : ''}
+              </p>
 
               <Field>
                 <FieldLabel htmlFor="vitals-notes">Notes</FieldLabel>

@@ -25,13 +25,16 @@ export const visitVitalsFormSchema = z.object({
   notes: z.string().trim(),
 });
 
+const soapSection = (label: string) =>
+  z.string().trim().max(20000, `${label} must be at most 20000 characters.`);
+
 export const visitNoteFormSchema = z
   .object({
     noteTypeId: z.string().min(1, 'Note type is required.'),
-    subjective: z.string().trim(),
-    objective: z.string().trim(),
-    assessment: z.string().trim(),
-    plan: z.string().trim(),
+    subjective: soapSection('Subjective'),
+    objective: soapSection('Objective'),
+    assessment: soapSection('Assessment'),
+    plan: soapSection('Plan'),
   })
   .refine(
     (data) =>

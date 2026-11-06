@@ -1,6 +1,7 @@
 import type { Control, FieldErrors, UseFormResetField, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
 
+import type { AdmitSource } from '@/app/api/lib/modules/admit-source/schemas/admit-source-schema';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
@@ -27,6 +28,7 @@ type FormProps = {
   selectedPatient: Patient | null;
   doctors: Doctor[];
   visitTypes: VisitType[];
+  admitSources: AdmitSource[];
   loading: boolean;
   historyError?: boolean;
   recentDoctorVisit?: { visitDate: string; visitNumber: string } | null;
@@ -57,7 +59,14 @@ export function VisitSourceFields({
 }: FormProps) {
   const mode = useWatch({ control, name: 'mode' });
   function replaceField(
-    name: 'appointmentId' | 'patientId' | 'doctorId' | 'visitTypeId' | 'chiefComplaint' | 'remarks',
+    name:
+      | 'appointmentId'
+      | 'patientId'
+      | 'doctorId'
+      | 'visitTypeId'
+      | 'admitSourceId'
+      | 'chiefComplaint'
+      | 'remarks',
     value: string
   ) {
     resetField(name, { defaultValue: value });
@@ -81,6 +90,7 @@ export function VisitSourceFields({
             replaceField('patientId', '');
             replaceField('doctorId', '');
             replaceField('visitTypeId', '');
+            replaceField('admitSourceId', '');
             replaceField('chiefComplaint', '');
             replaceField('remarks', '');
           }}
@@ -114,6 +124,7 @@ export function VisitSourceFields({
                     );
                     const defaults = getAppointmentVisitDefaults(selected, visitTypes);
                     replaceField('visitTypeId', defaults.visitTypeId);
+                    replaceField('admitSourceId', '');
                     replaceField('chiefComplaint', defaults.chiefComplaint);
                     replaceField('remarks', defaults.remarks);
                     replaceField('doctorId', '');
@@ -143,6 +154,7 @@ export function VisitSourceFields({
                 onSelect={(patientId) => {
                   field.onChange(patientId);
                   replaceField('visitTypeId', '');
+                  replaceField('admitSourceId', '');
                   replaceField('chiefComplaint', '');
                   replaceField('remarks', '');
                 }}
@@ -160,6 +172,7 @@ export function VisitDetailsFields({
   errors,
   doctors,
   visitTypes,
+  admitSources,
   loading,
   appointments,
   historyError,
@@ -265,6 +278,29 @@ export function VisitDetailsFields({
                     concern.
                   </p>
                 ) : null}
+              </Field>
+            )}
+          />
+          <Controller
+            control={control}
+            name="admitSourceId"
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="visit-admit-source">Admit source</FieldLabel>
+                <NativeSelect
+                  {...field}
+                  id="visit-admit-source"
+                  className="w-full"
+                  disabled={loading}
+                >
+                  <NativeSelectOption value="">Select an Admit source</NativeSelectOption>
+                  {admitSources.map((source) => (
+                    <NativeSelectOption key={source.id} value={String(source.id)}>
+                      {source.name}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                <FieldError>{errors.admitSourceId?.message}</FieldError>
               </Field>
             )}
           />

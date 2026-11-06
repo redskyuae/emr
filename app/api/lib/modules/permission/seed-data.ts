@@ -378,6 +378,16 @@ const permissionGroups = [
   },
   {
     module: 'visits',
+    resource: 'admit-source',
+    actions: [
+      ['read', 'View Admit Sources.'],
+      ['create', 'Create Admit Sources.'],
+      ['update', 'Update Admit Sources.'],
+      ['delete', 'Delete Admit Sources.'],
+    ],
+  },
+  {
+    module: 'visits',
     resource: 'visit',
     actions: [
       ['read', 'View Visits.'],

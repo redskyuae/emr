@@ -2,10 +2,7 @@ import Link from 'next/link';
 import { CalendarPlus, Check, ClipboardList, X } from 'lucide-react';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
-import type {
-  PatientTreatmentPlan,
-  PatientTreatmentPlanReadSession,
-} from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
+import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +16,8 @@ import {
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { isCurrentPlan, planSessionLabel } from '../_utils/visit-treatment-plan';
+
 type Props = {
   visit: Visit;
   plans: PatientTreatmentPlan[];
@@ -29,14 +28,6 @@ type Props = {
   onAssignPlan: () => void;
 };
 
-function sessionLabel(session: PatientTreatmentPlanReadSession, visit: Visit) {
-  if (session.completionStatus === 'COMPLETED') return 'Done';
-  if (session.reservedAppointment?.bookingNumber === visit.appointment?.bookingNumber)
-    return 'Today';
-  if (session.isReserved) return 'Booked';
-  return 'Pending';
-}
-
 function PlanCard({ plan, visit }: { plan: PatientTreatmentPlan; visit: Visit }) {
   const procedures = [
     ...new Set(plan.sessions.map((session) => session.procedure).filter(Boolean)),
@@ -44,7 +35,7 @@ function PlanCard({ plan, visit }: { plan: PatientTreatmentPlan; visit: Visit })
 
   return (
     <Card className="shadow-fluent-2">
-      <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
+      <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             Active Plan
@@ -71,7 +62,7 @@ function PlanCard({ plan, visit }: { plan: PatientTreatmentPlan; visit: Visit })
           aria-label={`${plan.completedSessions} of ${plan.totalSessions} Sessions completed`}
         >
           {plan.sessions.map((session) => {
-            const label = sessionLabel(session, visit);
+            const label = planSessionLabel(session, visit);
             return (
               <span
                 key={session.id}
@@ -92,7 +83,7 @@ function PlanCard({ plan, visit }: { plan: PatientTreatmentPlan; visit: Visit })
         </div>
         <div className="grid [grid-template-columns:repeat(auto-fill,minmax(7.5rem,1fr))] gap-2">
           {plan.sessions.map((session) => {
-            const label = sessionLabel(session, visit);
+            const label = planSessionLabel(session, visit);
             return (
               <div key={session.id} className="space-y-2 rounded-md border p-3">
                 <p className="text-muted-foreground text-xs">Session {session.sessionNumber}</p>
@@ -115,9 +106,7 @@ export function VisitTreatmentPlansPanel({
   canBookAppointment,
   onAssignPlan,
 }: Props) {
-  const activePlans = plans.filter(
-    (plan) => plan.status === 'PENDING' || plan.status === 'IN_PROGRESS'
-  );
+  const activePlans = plans.filter(isCurrentPlan);
   const completedPlans = plans.filter(
     (plan) => plan.status === 'COMPLETED' || plan.status === 'STOPPED'
   );
@@ -126,7 +115,7 @@ export function VisitTreatmentPlansPanel({
   if (loading)
     return (
       <Card className="shadow-fluent-2" aria-label="Loading Treatment Plans">
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex items-center justify-between">
           <Skeleton className="h-5 w-48" />
           <Skeleton className="h-6 w-28 rounded-full" />
         </CardHeader>

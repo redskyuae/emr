@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { useForm, useWatch } from 'react-hook-form';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { AdmitSource } from '@/app/api/lib/modules/admit-source/schemas/admit-source-schema';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
@@ -61,6 +62,11 @@ const visitTypes = [
   { id: 5, code: 'FUP', name: 'Follow-up' },
 ] as VisitType[];
 
+const admitSources = [
+  { id: 7, code: 'DOCREF', name: 'Doctor Referral' },
+  { id: 8, code: 'EMER', name: 'Emergency' },
+] as AdmitSource[];
+
 function Form({ showDetails = true }: { showDetails?: boolean }) {
   const form = useForm<CreateVisitFormValues>({
     defaultValues: {
@@ -69,12 +75,14 @@ function Form({ showDetails = true }: { showDetails?: boolean }) {
       patientId: '',
       doctorId: '',
       visitTypeId: '',
+      admitSourceId: '',
       chiefComplaint: '',
       remarks: '',
     },
   });
   const patientId = useWatch({ control: form.control, name: 'patientId' });
   const visitTypeId = useWatch({ control: form.control, name: 'visitTypeId' });
+  const admitSourceId = useWatch({ control: form.control, name: 'admitSourceId' });
   const purpose = useWatch({ control: form.control, name: 'chiefComplaint' });
   const remarks = useWatch({ control: form.control, name: 'remarks' });
   const props = {
@@ -86,6 +94,7 @@ function Form({ showDetails = true }: { showDetails?: boolean }) {
     selectedPatient: null,
     doctors: [],
     visitTypes,
+    admitSources,
     loading: false,
   };
 
@@ -96,6 +105,7 @@ function Form({ showDetails = true }: { showDetails?: boolean }) {
     showDetails ? createElement(VisitDetailsFields, props) : null,
     createElement('output', { 'data-testid': 'selected-patient-id' }, patientId),
     createElement('output', { 'data-testid': 'visit-type-id' }, visitTypeId),
+    createElement('output', { 'data-testid': 'admit-source-id' }, admitSourceId),
     createElement('output', { 'data-testid': 'purpose' }, purpose),
     createElement('output', { 'data-testid': 'remarks' }, remarks)
   );
@@ -133,6 +143,51 @@ describe('Create Visit Appointment defaults', () => {
       expect(screen.getByRole('textbox', { name: 'Purpose of Visit' }).textContent).toBe('')
     );
     expect(screen.getByRole('textbox', { name: 'Remarks' }).textContent).toBe('');
+  });
+});
+
+describe('Create Visit Admit source', () => {
+  it('should offer the Admit Sources as an optional choice', () => {
+    render(createElement(Form));
+
+    const select = screen.getByLabelText('Admit source') as HTMLSelectElement;
+
+    expect(select.getAttribute('aria-required')).toBeNull();
+    expect(Array.from(select.options).map((option) => option.text)).toEqual([
+      'Select an Admit source',
+      'Doctor Referral',
+      'Emergency',
+    ]);
+  });
+
+  it('should store the selected Admit Source', async () => {
+    const user = userEvent.setup();
+    render(createElement(Form));
+
+    await user.selectOptions(screen.getByLabelText('Admit source'), '8');
+
+    expect(screen.getByTestId('admit-source-id').textContent).toBe('8');
+  });
+
+  it('should clear the Admit Source when the Appointment changes', async () => {
+    const user = userEvent.setup();
+    render(createElement(Form));
+
+    await user.selectOptions(screen.getByLabelText(/^Appointment/), '1');
+    await user.selectOptions(screen.getByLabelText('Admit source'), '7');
+    await user.selectOptions(screen.getByLabelText(/^Appointment/), '2');
+
+    expect(screen.getByTestId('admit-source-id').textContent).toBe('');
+  });
+
+  it('should clear the Admit Source when switching to a Walk-in Visit', async () => {
+    const user = userEvent.setup();
+    render(createElement(Form));
+
+    await user.selectOptions(screen.getByLabelText('Admit source'), '7');
+    await user.click(screen.getByRole('tab', { name: 'Walk-in' }));
+
+    expect(screen.getByTestId('admit-source-id').textContent).toBe('');
   });
 });
 
