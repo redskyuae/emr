@@ -6432,6 +6432,8 @@ export const openApiDocument = {
                     completionSource: null,
                     completedVisitId: null,
                     completedAt: null,
+                    startedVisitId: null,
+                    startedAt: null,
                     isReserved: false,
                     isBookable: true,
                     unavailableReason: null,
@@ -6457,6 +6459,8 @@ export const openApiDocument = {
                     completionSource: null,
                     completedVisitId: null,
                     completedAt: null,
+                    startedVisitId: null,
+                    startedAt: null,
                     isReserved: false,
                     isBookable: true,
                     unavailableReason: null,
@@ -6467,6 +6471,236 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/patients/{id}/treatment-plans/{planId}/sessions/{sessionId}': {
+      patch: {
+        tags: ['Patient'],
+        summary: 'Edit a Patient Treatment Plan Session plan',
+        description:
+          'Edits the plan of one pending Patient Treatment Plan Session: procedure, durations, preparation, warning, equipment, Room type, and Therapist Skill. Only the Patient-specific snapshot changes; the Treatment Session template and booking rules are unchanged. Send only the fields to change; text fields are trimmed and an empty string or null clears an optional field. Completed Sessions, Sessions already In Progress in a Visit, and Sessions of stopped Plans cannot be edited; the plan is frozen once the Session is started. The Tenant is resolved from the active Session. Requires patient-treatment-plan:read and patient-treatment-plan:update permissions.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Patient'),
+          namedNumberPathParameter('planId', 'Patient Treatment Plan'),
+          namedNumberPathParameter('sessionId', 'Patient Treatment Plan Session'),
+        ],
+        requestBody: requestBody('UpdatePatientTreatmentPlanSessionRequest', {
+          procedure: 'Abhyanga with Ksheerabala taila, full body',
+          durationMinutes: 50,
+          preparation: 'Warm the oil to body temperature.',
+          warning: 'Avoid pressure over the left knee.',
+          equipment: 'Droni and warm oil',
+        }),
+        responses: {
+          '200': {
+            description: 'Session plan updated and the current Patient Treatment Plan returned.',
+            content: jsonContent(dataEnvelopeSchema('PatientTreatmentPlan'), {
+              data: {
+                id: 81,
+                patientId: 42,
+                treatmentId: 12,
+                treatmentName: 'Abhyanga',
+                treatmentCode: 'ABH',
+                sessionStructure: 'REPEATABLE',
+                totalSessions: 2,
+                status: 'IN_PROGRESS',
+                completedSessions: 1,
+                sessions: [
+                  {
+                    id: 902,
+                    patientTreatmentPlanId: 81,
+                    treatmentSessionId: 12,
+                    sessionNumber: 2,
+                    label: 'Abhyanga Session',
+                    procedure: 'Abhyanga with Ksheerabala taila, full body',
+                    durationMinutes: 50,
+                    setupMinutes: 10,
+                    cleaningMinutes: 5,
+                    preparation: 'Warm the oil to body temperature.',
+                    warning: 'Avoid pressure over the left knee.',
+                    equipment: 'Droni and warm oil',
+                    roomType: 'Panchakarma room',
+                    therapistSkill: 'Abhyanga',
+                    legacyConductionNote: null,
+                    completionStatus: 'PENDING',
+                    completionSource: null,
+                    completedVisitId: null,
+                    completedAt: null,
+                    startedVisitId: null,
+                    startedAt: null,
+                    isReserved: false,
+                    isBookable: true,
+                    unavailableReason: null,
+                    reservedAppointment: null,
+                  },
+                ],
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid path parameters, invalid JSON, or an invalid Session plan.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Duration minutes must be at most 480', 'Procedure cannot be empty'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description:
+              'Patient, current Patient Treatment Plan, or Session not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient Treatment Plan Session not found',
+              errors: ['Patient Treatment Plan Session not found'],
+            }),
+          },
+          '409': {
+            description:
+              'The Session is completed, In Progress in a Visit, or no longer available.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  completed: {
+                    value: { message: 'Conflict', errors: ['Session 1 is already completed.'] },
+                  },
+                  inProgress: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Session 2 is in progress and cannot be edited.'],
+                    },
+                  },
+                  noLongerAvailable: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Patient Treatment Plan Session is no longer available.'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/patients/{id}/treatment-plans/{planId}/sessions/{sessionId}/start': {
+      post: {
+        tags: ['Patient'],
+        summary: 'Start a Patient Treatment Plan Session',
+        description:
+          "Starts one pending Patient Treatment Plan Session in an active Visit of the same Patient. The Visit must be Checked In or In Consultation. A started Session is In Progress and cannot be booked; completing the Visit completes it, and cancelling or deleting the Visit returns it to pending. A Visit delivers at most one Session of each Plan, and a Session reserved for an Appointment can only be started in that Appointment's Visit. The Tenant is resolved from the active Session. Requires patient-treatment-plan:read and patient-treatment-plan:start permissions.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Patient'),
+          namedNumberPathParameter('planId', 'Patient Treatment Plan'),
+          namedNumberPathParameter('sessionId', 'Patient Treatment Plan Session'),
+        ],
+        requestBody: requestBody('StartPatientTreatmentPlanSessionRequest', { visitId: 5120 }),
+        responses: {
+          '200': {
+            description: 'Session started and the current Patient Treatment Plan returned.',
+            content: jsonContent(dataEnvelopeSchema('PatientTreatmentPlan'), {
+              data: {
+                id: 81,
+                patientId: 42,
+                treatmentId: 12,
+                treatmentName: 'Abhyanga',
+                treatmentCode: 'ABH',
+                sessionStructure: 'REPEATABLE',
+                totalSessions: 2,
+                status: 'IN_PROGRESS',
+                completedSessions: 1,
+                sessions: [
+                  {
+                    id: 902,
+                    patientTreatmentPlanId: 81,
+                    treatmentSessionId: 12,
+                    sessionNumber: 2,
+                    label: 'Abhyanga Session',
+                    procedure: 'Abhyanga with Ksheerabala taila, full body',
+                    durationMinutes: 50,
+                    setupMinutes: 10,
+                    cleaningMinutes: 5,
+                    preparation: 'Warm the oil to body temperature.',
+                    warning: 'Avoid pressure over the left knee.',
+                    equipment: 'Droni and warm oil',
+                    roomType: 'Panchakarma room',
+                    therapistSkill: 'Abhyanga',
+                    legacyConductionNote: null,
+                    completionStatus: 'PENDING',
+                    completionSource: null,
+                    completedVisitId: null,
+                    completedAt: null,
+                    startedVisitId: 5120,
+                    startedAt: '2026-11-10T04:30:00.000Z',
+                    isReserved: false,
+                    isBookable: false,
+                    unavailableReason: 'IN_PROGRESS',
+                    reservedAppointment: null,
+                  },
+                ],
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid path parameters, invalid JSON, or a missing Visit ID.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Visit ID is required'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description:
+              'Patient, Plan, Session, or a Visit of this Patient not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit not found',
+              errors: ['Visit not found'],
+            }),
+          },
+          '409': {
+            description:
+              'The Visit is not active (including a Visit completed, cancelled, or deleted while the Session was being started), or the Session is completed, already in progress, booked for another Appointment, or the Visit already has a Session of this Plan.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  inactiveVisit: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Visit must be Checked In or In Consultation to start a Session.'],
+                    },
+                  },
+                  alreadyStarted: {
+                    value: { message: 'Conflict', errors: ['Session 2 is already in progress.'] },
+                  },
+                  bookedElsewhere: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Session 2 is booked for Appointment APT-2026-0042.'],
+                    },
+                  },
+                  visitHasPlanSession: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['This Visit already has Session 1 of this Patient Treatment Plan.'],
+                    },
+                  },
+                  visitClosedConcurrently: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Patient Treatment Plan Session is no longer available.'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -6520,6 +6754,8 @@ export const openApiDocument = {
                     completionSource: null,
                     completedVisitId: null,
                     completedAt: null,
+                    startedVisitId: null,
+                    startedAt: null,
                     isReserved: false,
                     isBookable: true,
                     unavailableReason: null,
@@ -10860,6 +11096,8 @@ export const openApiDocument = {
           'completionSource',
           'completedVisitId',
           'completedAt',
+          'startedVisitId',
+          'startedAt',
           'isReserved',
           'isBookable',
           'unavailableReason',
@@ -10885,9 +11123,18 @@ export const openApiDocument = {
           completionSource: { type: ['string', 'null'], enum: ['VISIT', 'LEGACY_IMPORT', null] },
           completedVisitId: { type: ['integer', 'null'], minimum: 1 },
           completedAt: { type: ['string', 'null'], format: 'date-time' },
+          startedVisitId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description: 'Visit in which the Session was started; null until started.',
+          },
+          startedAt: { type: ['string', 'null'], format: 'date-time' },
           isReserved: { type: 'boolean' },
           isBookable: { type: 'boolean' },
-          unavailableReason: { type: ['string', 'null'], enum: ['COMPLETED', 'RESERVED', null] },
+          unavailableReason: {
+            type: ['string', 'null'],
+            enum: ['COMPLETED', 'RESERVED', 'IN_PROGRESS', null],
+          },
           reservedAppointment: {
             type: ['object', 'null'],
             required: ['bookingNumber', 'slotDate', 'startTime', 'endTime'],
@@ -10943,6 +11190,36 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description: 'Number of additional Patient Treatment Plan Sessions to append.',
+          },
+        },
+      },
+      UpdatePatientTreatmentPlanSessionRequest: {
+        type: 'object',
+        additionalProperties: false,
+        minProperties: 1,
+        description:
+          'Send at least one field. An empty string or null clears an optional text field.',
+        properties: {
+          procedure: { type: 'string', minLength: 1, maxLength: 5000 },
+          durationMinutes: { type: ['integer', 'null'], minimum: 1, maximum: 480 },
+          setupMinutes: { type: ['integer', 'null'], minimum: 0, maximum: 480 },
+          cleaningMinutes: { type: ['integer', 'null'], minimum: 0, maximum: 480 },
+          preparation: { type: ['string', 'null'], maxLength: 5000 },
+          warning: { type: ['string', 'null'], maxLength: 5000 },
+          equipment: { type: ['string', 'null'], maxLength: 5000 },
+          roomType: { type: ['string', 'null'], maxLength: 5000 },
+          therapistSkill: { type: ['string', 'null'], maxLength: 5000 },
+        },
+      },
+      StartPatientTreatmentPlanSessionRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['visitId'],
+        properties: {
+          visitId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Checked In or In Consultation Visit of the same Patient.',
           },
         },
       },

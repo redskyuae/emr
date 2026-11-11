@@ -16,7 +16,7 @@ export const patientTreatmentPlansQueryKey = (patientId: number | null) =>
 export const patientTreatmentPlansBaseKey = (patientId: number | null) =>
   ['patients', patientId, 'treatment-plans'] as const;
 
-export const patientTreatmentPlanHistoryQueryKey = (patientId: number) =>
+export const patientTreatmentPlanHistoryQueryKey = (patientId: number | null) =>
   [...patientTreatmentPlansBaseKey(patientId), { status: 'all' }] as const;
 
 async function fetchPatientTreatmentPlans(
@@ -60,10 +60,11 @@ export function useCurrentPatientTreatmentPlansQuery(patientId: number) {
   });
 }
 
-export function usePatientTreatmentPlanHistoryQuery(patientId: number) {
+export function usePatientTreatmentPlanHistoryQuery(patientId: number | null, enabled = true) {
   return useQuery({
     queryKey: patientTreatmentPlanHistoryQueryKey(patientId),
-    queryFn: () => fetchPatientTreatmentPlans(patientId, 'all'),
+    queryFn: () => fetchPatientTreatmentPlans(patientId as number, 'all'),
+    enabled: patientId !== null && enabled,
     select: transformPatientTreatmentPlansResponse,
   });
 }

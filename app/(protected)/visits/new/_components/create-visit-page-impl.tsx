@@ -23,6 +23,7 @@ import {
   useCurrentUserQuery,
   useHasPermission,
 } from '@/app/queries/identity-access/useCurrentUser';
+import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useAdmitSourcesQuery } from '@/app/queries/visit-masters/admit-sources/useAdmitSources';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
@@ -45,6 +46,7 @@ import {
   getWalkInVisitTypeId,
 } from '../_utils/appointment-visit-defaults';
 import { PatientRegistrationSection } from './patient-registration-section';
+import { PatientTreatmentsCard } from './patient-treatments-card';
 import { VisitBillingFields } from './visit-billing-fields';
 import { AppointmentContextCard, PatientContextCard } from './visit-context-rail';
 import { VisitDetailsFields, VisitSourceFields } from './visit-form-fields';
@@ -126,6 +128,7 @@ export function CreateVisitPageImpl({
   const { data: canFinalizeInvoice } = useHasPermission('invoice:finalize');
   const { data: canRecordPayment } = useHasPermission('payment:record');
   const { data: canReadChargeItems } = useHasPermission('charge-item:read');
+  const { data: canReadTreatmentPlans } = useHasPermission('patient-treatment-plan:read');
   const checkInMutation = useCheckInVisit();
   const createInvoiceMutation = useCreateInvoice();
   const addInvoiceLineMutation = useAddInvoiceLine();
@@ -176,6 +179,10 @@ export function CreateVisitPageImpl({
   const patientQuery = usePatientQuery(selectedPatientId);
   const patient = patientQuery.data ?? null;
   const patientTypeQuery = useVisitPatientTypeQuery(selectedPatientId);
+  const treatmentPlansQuery = usePatientTreatmentPlanHistoryQuery(
+    selectedPatientId,
+    Boolean(canReadTreatmentPlans)
+  );
   const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
   const referenceDate = currentUserQuery.data?.tenant.timeZone
     ? tenantLocalDateTime(new Date(), currentUserQuery.data.tenant.timeZone).date
@@ -490,9 +497,17 @@ export function CreateVisitPageImpl({
             </>
           )}
         </div>
-        <aside className="space-y-4 xl:sticky xl:top-20">
+        <aside className="space-y-4 xl:sticky xl:top-20 xl:-mx-1 xl:max-h-[calc(100svh-10rem)] xl:overflow-y-auto xl:px-1 xl:pb-1">
           <PatientContextCard patient={patient} loading={patientQuery.isLoading} />
           <AppointmentContextCard appointment={appointment} />
+          {selectedPatientId !== null && canReadTreatmentPlans ? (
+            <PatientTreatmentsCard
+              plans={treatmentPlansQuery.data ?? []}
+              loading={treatmentPlansQuery.isLoading}
+              error={treatmentPlansQuery.isError}
+              onRetry={() => void treatmentPlansQuery.refetch()}
+            />
+          ) : null}
           {patient ? <Badge variant="outline">{patient.mrn}</Badge> : null}
         </aside>
       </div>

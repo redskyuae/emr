@@ -38,7 +38,11 @@ vi.mock('@/app/queries/patients/usePatients', () => ({
 const treatmentAppointment = {
   id: 1,
   bookingNumber: 'APT-1',
-  patient: { firstName: 'Asha', lastName: 'Rao' },
+  slotDate: '2026-11-11',
+  startTime: '09:30',
+  slots: [] as Appointment['slots'],
+  patient: { firstName: 'Asha', lastName: 'Rao', mrn: 'MRN-1001', phone: '9000000011' },
+  appointmentStatus: { id: 1, code: 'SCHEDULED', name: 'Scheduled', category: 'scheduled' },
   doctor: null,
   bookingPath: 'PROCEDURE',
   treatment: { name: 'Shirodhara' },
@@ -50,6 +54,8 @@ const consultationAppointment = {
   ...treatmentAppointment,
   id: 2,
   bookingNumber: 'APT-2',
+  patient: { ...treatmentAppointment.patient, firstName: 'Vikram', mrn: 'MRN-1002' },
+  doctor: { id: 6, name: 'Dr. Kavya Menon' },
   bookingPath: 'CONSULTATION' as const,
   treatment: null,
   treatmentSession: null,
@@ -113,12 +119,17 @@ function Form({ showDetails = true }: { showDetails?: boolean }) {
 
 afterEach(cleanup);
 
+async function selectAppointment(user: ReturnType<typeof userEvent.setup>, bookingNumber: string) {
+  await user.type(screen.getByRole('searchbox', { name: /^Appointment/ }), bookingNumber);
+  await user.click(screen.getByRole('button', { name: new RegExp(bookingNumber) }));
+}
+
 describe('Create Visit Appointment defaults', () => {
   it('should retain Appointment defaults while Visit detail fields are unmounted', async () => {
     const user = userEvent.setup();
     render(createElement(Form, { showDetails: false }));
 
-    await user.selectOptions(screen.getByLabelText(/^Appointment/), '1');
+    await selectAppointment(user, 'APT-1');
     expect(screen.getByTestId('visit-type-id').textContent).toBe('4');
     expect(screen.getByTestId('purpose').textContent).toBe('Shirodhara · Session 2');
     expect(screen.getByTestId('remarks').textContent).toBe('Continue treatment');
@@ -128,7 +139,7 @@ describe('Create Visit Appointment defaults', () => {
     const user = userEvent.setup();
     render(createElement(Form));
 
-    await user.selectOptions(screen.getByLabelText(/^Appointment/), '1');
+    await selectAppointment(user, 'APT-1');
     expect((screen.getByLabelText(/^Visit type/) as HTMLSelectElement).value).toBe('4');
     await waitFor(() =>
       expect(screen.getByRole('textbox', { name: 'Purpose of Visit' }).textContent).toBe(
@@ -137,12 +148,60 @@ describe('Create Visit Appointment defaults', () => {
     );
     expect(screen.getByRole('textbox', { name: 'Remarks' }).textContent).toBe('Continue treatment');
 
-    await user.selectOptions(screen.getByLabelText(/^Appointment/), '2');
+    await selectAppointment(user, 'APT-2');
     expect((screen.getByLabelText(/^Visit type/) as HTMLSelectElement).value).toBe('3');
     await waitFor(() =>
       expect(screen.getByRole('textbox', { name: 'Purpose of Visit' }).textContent).toBe('')
     );
     expect(screen.getByRole('textbox', { name: 'Remarks' }).textContent).toBe('');
+  });
+});
+
+describe('Create Visit Appointment search', () => {
+  it('should list every open Appointment before a search', () => {
+    render(createElement(Form));
+
+    expect(screen.getByRole('button', { name: /APT-1 · Asha Rao/ })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: /APT-2 · Vikram Rao.*MRN-1002.*Dr\. Kavya Menon/ })
+    ).toBeTruthy();
+  });
+
+  it('should narrow the Appointments by Patient, MRN or Doctor', async () => {
+    const user = userEvent.setup();
+    render(createElement(Form));
+    const search = screen.getByRole('searchbox', { name: /^Appointment/ });
+
+    await user.type(search, 'menon');
+    expect(screen.queryByRole('button', { name: /APT-1/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /APT-2/ })).toBeTruthy();
+
+    await user.clear(search);
+    await user.type(search, 'mrn-1001');
+    expect(screen.getByRole('button', { name: /APT-1/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /APT-2/ })).toBeNull();
+  });
+
+  it('should say when no Appointment matches the search', async () => {
+    const user = userEvent.setup();
+    render(createElement(Form));
+
+    await user.type(screen.getByRole('searchbox', { name: /^Appointment/ }), 'nobody');
+
+    expect(screen.getByText('No Appointments match this search.')).toBeTruthy();
+  });
+
+  it('should show the selected Appointment and hide the list until the next search', async () => {
+    const user = userEvent.setup();
+    render(createElement(Form));
+
+    await selectAppointment(user, 'APT-2');
+
+    expect(screen.getByText('Selected')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /APT-1/ })).toBeNull();
+    expect(
+      (screen.getByRole('searchbox', { name: /^Appointment/ }) as HTMLInputElement).value
+    ).toBe('');
   });
 });
 
@@ -173,9 +232,9 @@ describe('Create Visit Admit source', () => {
     const user = userEvent.setup();
     render(createElement(Form));
 
-    await user.selectOptions(screen.getByLabelText(/^Appointment/), '1');
+    await selectAppointment(user, 'APT-1');
     await user.selectOptions(screen.getByLabelText('Admit source'), '7');
-    await user.selectOptions(screen.getByLabelText(/^Appointment/), '2');
+    await selectAppointment(user, 'APT-2');
 
     expect(screen.getByTestId('admit-source-id').textContent).toBe('');
   });

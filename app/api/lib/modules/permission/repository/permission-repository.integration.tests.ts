@@ -266,6 +266,16 @@ describe('Permission repository', () => {
         action: 'assign',
         description: 'Assign Treatments to Patients and create Patient Treatment Plans.',
       },
+      {
+        name: 'patient-treatment-plan:update',
+        action: 'update',
+        description: 'Edit the plan of Patient Treatment Plan Sessions.',
+      },
+      {
+        name: 'patient-treatment-plan:start',
+        action: 'start',
+        description: 'Start Patient Treatment Plan Sessions in a Visit.',
+      },
     ]);
   });
 

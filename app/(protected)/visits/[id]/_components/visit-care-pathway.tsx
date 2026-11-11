@@ -38,6 +38,7 @@ type Props = {
   onAddMedication: () => void;
   onDailyTreatment: () => void;
   onAssignPlan: () => void;
+  onOpenPlanSession: (sessionId: number) => void;
   onSignNote: (note: ClinicalNote) => void;
 };
 
@@ -70,6 +71,7 @@ export function VisitCarePathway({
   onAddMedication,
   onDailyTreatment,
   onAssignPlan,
+  onOpenPlanSession,
   onSignNote,
 }: Props) {
   const [sectionParam, setSectionParam] = useQueryState('section');
@@ -80,6 +82,7 @@ export function VisitCarePathway({
   const documentsQuery = useVisitDocumentsQuery(visit.id);
   const { data: canAssignPlan } = useHasPermission('patient-treatment-plan:assign');
   const { data: canReadPlan } = useHasPermission('patient-treatment-plan:read');
+  const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
   const { data: canRecordVitals } = useHasPermission('vital-sign:create');
   const { data: canCreateNote } = useHasPermission('clinical-note:create');
   const { data: canCreateInvoice } = useHasPermission('invoice:create');
@@ -170,7 +173,9 @@ export function VisitCarePathway({
           error={plansQuery.isError}
           canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
           canBookAppointment={Boolean(canBookAppointment)}
+          canStartSession={Boolean(canStartPlanSession && canReadPlan)}
           onAssignPlan={onAssignPlan}
+          onOpenSession={onOpenPlanSession}
         />
       </TabsContent>
       <TabsContent value="billing">

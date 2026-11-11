@@ -297,7 +297,12 @@ describe('Role-Permission repository', () => {
         .filter(({ resource }) => resource === 'patient-treatment-plan')
         .map(({ name }) => name)
         .sort()
-    ).toEqual(['patient-treatment-plan:assign', 'patient-treatment-plan:read']);
+    ).toEqual([
+      'patient-treatment-plan:assign',
+      'patient-treatment-plan:read',
+      'patient-treatment-plan:start',
+      'patient-treatment-plan:update',
+    ]);
   });
 
   it('should seed exactly the Doctor System Role clinical read permissions', async () => {

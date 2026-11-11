@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
 import { getAppointmentVisitDefaults } from '../_utils/appointment-visit-defaults';
+import { AppointmentSearch } from './appointment-search';
 import { WalkInPatientSearch } from './walk-in-patient-search';
 
 type FormProps = {
@@ -106,40 +107,24 @@ export function VisitSourceFields({
             control={control}
             name="appointmentId"
             render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="visit-appointment">
-                  Appointment
-                  <RequiredMark />
-                </FieldLabel>
-                <NativeSelect
-                  {...field}
-                  id="visit-appointment"
-                  aria-required
-                  className="w-full"
-                  disabled={loading}
-                  onChange={(event) => {
-                    field.onChange(event);
-                    const selected = appointments.find(
-                      (appointment) => String(appointment.id) === event.target.value
-                    );
-                    const defaults = getAppointmentVisitDefaults(selected, visitTypes);
-                    replaceField('visitTypeId', defaults.visitTypeId);
-                    replaceField('admitSourceId', '');
-                    replaceField('chiefComplaint', defaults.chiefComplaint);
-                    replaceField('remarks', defaults.remarks);
-                    replaceField('doctorId', '');
-                  }}
-                >
-                  <NativeSelectOption value="">Select an Appointment</NativeSelectOption>
-                  {appointments.map((appointment) => (
-                    <NativeSelectOption key={appointment.id} value={String(appointment.id)}>
-                      {appointment.bookingNumber} · {appointment.patient.firstName}{' '}
-                      {appointment.patient.lastName}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-                <FieldError>{errors.appointmentId?.message}</FieldError>
-              </Field>
+              <AppointmentSearch
+                field={field}
+                error={errors.appointmentId?.message}
+                appointments={appointments}
+                disabled={loading}
+                onSelect={(appointmentId) => {
+                  field.onChange(appointmentId);
+                  const selected = appointments.find(
+                    (appointment) => String(appointment.id) === appointmentId
+                  );
+                  const defaults = getAppointmentVisitDefaults(selected, visitTypes);
+                  replaceField('visitTypeId', defaults.visitTypeId);
+                  replaceField('admitSourceId', '');
+                  replaceField('chiefComplaint', defaults.chiefComplaint);
+                  replaceField('remarks', defaults.remarks);
+                  replaceField('doctorId', '');
+                }}
+              />
             )}
           />
         ) : (

@@ -601,6 +601,13 @@ async function runTransitionVisitTransaction(
       );
     }
 
+    // Sessions started in this Visit finish with it, or return to pending when it is cancelled.
+    if (spec.to === 'COMPLETED') {
+      await patientTreatmentPlanRepository.completeStartedSessionsForVisit(id, tenantId, tx);
+    } else if (spec.to === 'CANCELLED') {
+      await patientTreatmentPlanRepository.releaseStartedSessionsForVisit(id, tenantId, tx);
+    }
+
     const updated = await getVisitById(id, tenantId, tx);
 
     if (!updated) {
@@ -734,6 +741,8 @@ async function runDeleteVisitTransaction(id: number, tenantId: string): Promise<
       .update(visitTable)
       .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
       .where(and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId)));
+
+    await patientTreatmentPlanRepository.releaseStartedSessionsForVisit(id, tenantId, tx);
 
     // Deleting an Active Visit must hand its Appointment back, exactly as
     // cancelling does. Otherwise the Appointment is stranded in Checked In with

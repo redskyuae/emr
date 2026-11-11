@@ -59,6 +59,51 @@ export const assignPatientTreatmentPlanRequestSchema = z
   })
   .strict();
 
+const optionalPlanText = (label: string) =>
+  z
+    .string({ error: `${label} must be text` })
+    .trim()
+    .max(5000, `${label} must be at most 5000 characters`)
+    .transform((value) => value || null)
+    .nullable()
+    .optional();
+
+const optionalPlanMinutes = (label: string, min: number) =>
+  z
+    .number({ error: `${label} must be a number` })
+    .int(`${label} must be an integer`)
+    .min(min, `${label} must be at least ${min}`)
+    .max(480, `${label} must be at most 480`)
+    .nullable()
+    .optional();
+
+// Edits the Patient-specific snapshot only; the Treatment Session template is unchanged.
+export const updatePatientTreatmentPlanSessionSchema = z
+  .object({
+    procedure: z
+      .string({ error: 'Procedure must be text' })
+      .trim()
+      .min(1, 'Procedure cannot be empty')
+      .max(5000, 'Procedure must be at most 5000 characters')
+      .optional(),
+    warning: optionalPlanText('Warning'),
+    roomType: optionalPlanText('Room type'),
+    equipment: optionalPlanText('Equipment'),
+    preparation: optionalPlanText('Preparation'),
+    setupMinutes: optionalPlanMinutes('Setup minutes', 0),
+    therapistSkill: optionalPlanText('Therapist skill'),
+    durationMinutes: optionalPlanMinutes('Duration minutes', 1),
+    cleaningMinutes: optionalPlanMinutes('Cleaning minutes', 0),
+  })
+  .strict()
+  .refine((value) => Object.values(value).some((field) => field !== undefined), {
+    error: 'At least one Session plan field is required',
+  });
+
+export const startPatientTreatmentPlanSessionSchema = z
+  .object({ visitId: positiveId('Visit ID') })
+  .strict();
+
 export const patientTreatmentPlanSessionSchema = z.object({
   id: patientTreatmentPlanSessionIdSchema,
   tenantId: patientTreatmentPlanTenantIdSchema,
@@ -80,12 +125,14 @@ export const patientTreatmentPlanSessionSchema = z.object({
   completionSource: z.enum(['VISIT', 'LEGACY_IMPORT']).nullable(),
   completedVisitId: positiveId('Completed Visit ID').nullable(),
   completedAt: z.date().nullable(),
+  startedVisitId: positiveId('Started Visit ID').nullable(),
+  startedAt: z.date().nullable(),
   createdOn: z.date(),
   modifiedOn: z.date(),
 });
 
 export type PatientTreatmentPlanStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'STOPPED';
-export type PatientTreatmentPlanSessionUnavailableReason = 'COMPLETED' | 'RESERVED';
+export type PatientTreatmentPlanSessionUnavailableReason = 'COMPLETED' | 'RESERVED' | 'IN_PROGRESS';
 export type PatientTreatmentPlanSessionReservedAppointment = {
   bookingNumber: string;
   slotDate: string;
@@ -103,6 +150,22 @@ export type AddPatientTreatmentPlanSessionsInput = AddPatientTreatmentPlanSessio
   patientId: number;
   tenantId: string;
 };
+export type UpdatePatientTreatmentPlanSessionRequest = z.input<
+  typeof updatePatientTreatmentPlanSessionSchema
+>;
+export type StartPatientTreatmentPlanSessionRequest = z.input<
+  typeof startPatientTreatmentPlanSessionSchema
+>;
+type PlanSessionTarget = {
+  tenantId: string;
+  patientId: number;
+  patientTreatmentPlanId: number;
+  patientTreatmentPlanSessionId: number;
+};
+export type UpdatePatientTreatmentPlanSessionInput = PlanSessionTarget & {
+  plan: z.output<typeof updatePatientTreatmentPlanSessionSchema>;
+};
+export type StartPatientTreatmentPlanSessionInput = PlanSessionTarget & { visitId: number };
 export type PatientTreatmentPlanSession = z.infer<typeof patientTreatmentPlanSessionSchema>;
 export type PatientTreatmentPlanReadSession = PatientTreatmentPlanSession & {
   isReserved: boolean;
