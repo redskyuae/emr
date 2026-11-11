@@ -74,13 +74,15 @@ export default function CreateVisitLoader() {
         </div>
 
         <div className="space-y-4">
-          {[0, 1].map((section) => (
+          {[
+            'Loading selected Patient',
+            'Loading selected Appointment',
+            'Loading Patient Treatment Plans',
+          ].map((label) => (
             <div
-              key={section}
+              key={label}
               className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4"
-              aria-label={
-                section === 0 ? 'Loading selected Patient' : 'Loading selected Appointment'
-              }
+              aria-label={label}
             >
               <Skeleton className="h-5 w-36" />
               <Skeleton className="h-16 w-full" />
