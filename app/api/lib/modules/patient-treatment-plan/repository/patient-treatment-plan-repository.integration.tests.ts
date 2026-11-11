@@ -1082,6 +1082,87 @@ describe('Patient Treatment Plan Session plan and start', () => {
     expect(await readSession(first.id)).toMatchObject({ procedure: 'Snapshot procedure 1' });
   });
 
+  it('should not edit a Session once it is In Progress in a Visit', async () => {
+    const { patient, plan, first } = await setup();
+    const visit = await createVisit(tenantA, patient.id, 'VST-START-EDIT');
+    await patientTreatmentPlanRepository.startSession({
+      ...target(patient.id, plan.id, first.id),
+      visitId: visit.id,
+    });
+
+    await expect(
+      patientTreatmentPlanRepository.updateSessionPlan({
+        ...target(patient.id, plan.id, first.id),
+        plan: { procedure: 'Changed mid-treatment' },
+      })
+    ).resolves.toBeUndefined();
+    expect(await readSession(first.id)).toMatchObject({ procedure: 'Snapshot procedure 1' });
+  });
+
+  it('should not start a Session in a Visit that is no longer active or belongs to another Patient', async () => {
+    const { patient, plan, first } = await setup();
+    const otherPatient = await createPatient(tenantA, 'MRN-START-OTHER');
+    const completed = await createVisit(tenantA, patient.id, 'VST-START-DONE', {
+      status: 'COMPLETED',
+      completedAt: new Date('2026-11-10T06:00:00Z'),
+    });
+    const cancelled = await createVisit(tenantA, patient.id, 'VST-START-CXL', {
+      status: 'CANCELLED',
+      queueToken: 2,
+    });
+    const deleted = await createVisit(tenantA, patient.id, 'VST-START-DEL', { isDeleted: true });
+    const otherPatientVisit = await createVisit(tenantA, otherPatient.id, 'VST-START-OTHER', {
+      queueToken: 3,
+    });
+
+    for (const visit of [completed, cancelled, deleted, otherPatientVisit]) {
+      await expect(
+        patientTreatmentPlanRepository.startSession({
+          ...target(patient.id, plan.id, first.id),
+          visitId: visit.id,
+        })
+      ).resolves.toBeUndefined();
+    }
+    expect(await readSession(first.id)).toMatchObject({ startedVisitId: null, startedAt: null });
+  });
+
+  it('should not strand a Session when the Visit completes while the Session is being started', async () => {
+    const { patient, plan, first } = await setup();
+    const visit = await createVisit(tenantA, patient.id, 'VST-START-RACE');
+    let visitLocked!: () => void;
+    const locked = new Promise<void>((resolve) => (visitLocked = resolve));
+    let startIssued!: () => void;
+    const issued = new Promise<void>((resolve) => (startIssued = resolve));
+
+    // Mirrors the Visit transition: lock the Visit, complete it, complete its started Sessions.
+    const completeVisit = db.transaction(async (tx) => {
+      await tx.select().from(visitTable).where(eq(visitTable.id, visit.id)).for('update');
+      visitLocked();
+      await issued;
+      await tx
+        .update(visitTable)
+        .set({ status: 'COMPLETED', completedAt: new Date('2026-11-10T06:00:00Z') })
+        .where(eq(visitTable.id, visit.id));
+      await patientTreatmentPlanRepository.completeStartedSessionsForVisit(visit.id, tenantA, tx);
+    });
+
+    await locked;
+    const start = patientTreatmentPlanRepository.startSession({
+      ...target(patient.id, plan.id, first.id),
+      visitId: visit.id,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    startIssued();
+
+    await completeVisit;
+    await expect(start).resolves.toBeUndefined();
+    expect(await readSession(first.id)).toMatchObject({
+      completionStatus: 'PENDING',
+      startedVisitId: null,
+      startedAt: null,
+    });
+  });
+
   it('should start a pending Session in a Visit and mark it In Progress and not bookable', async () => {
     const { patient, plan, first } = await setup();
     const visit = await createVisit(tenantA, patient.id, 'VST-START-1');

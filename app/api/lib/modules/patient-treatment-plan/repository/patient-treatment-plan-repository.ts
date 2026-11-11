@@ -935,13 +935,14 @@ async function getCurrentPlan(patientId: number, planId: number, tenantId: strin
   return plans.find((plan) => plan.id === planId);
 }
 
+// The plan is frozen once the Session is started, so it cannot change mid-treatment.
 async function updateSessionPlan(
   input: UpdatePatientTreatmentPlanSessionInput
 ): Promise<PatientTreatmentPlan | undefined> {
   const [updated] = await db
     .update(sessionTable)
     .set({ ...input.plan, modifiedOn: new Date() })
-    .where(pendingPlanSessionWhere(input))
+    .where(and(pendingPlanSessionWhere(input), isNull(sessionTable.startedVisitId)))
     .returning({ id: sessionTable.id });
 
   if (!updated) return undefined;
@@ -952,12 +953,35 @@ async function updateSessionPlan(
 async function startSession(
   input: StartPatientTreatmentPlanSessionInput
 ): Promise<PatientTreatmentPlan | undefined> {
-  const startedAt = new Date();
-  const [started] = await db
-    .update(sessionTable)
-    .set({ startedVisitId: input.visitId, startedAt, modifiedOn: startedAt })
-    .where(and(pendingPlanSessionWhere(input), isNull(sessionTable.startedVisitId)))
-    .returning({ id: sessionTable.id });
+  const started = await db.transaction(async (tx) => {
+    // Validation happens before this transaction. Lock the Visit and re-check that it is
+    // still active, so a concurrent complete/cancel/delete cannot strand the Session.
+    const [visit] = await tx
+      .select({ id: visitTable.id })
+      .from(visitTable)
+      .where(
+        and(
+          eq(visitTable.id, input.visitId),
+          eq(visitTable.tenantId, input.tenantId),
+          eq(visitTable.patientId, input.patientId),
+          inArray(visitTable.status, ['CHECKED_IN', 'IN_CONSULTATION']),
+          eq(visitTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!visit) return undefined;
+
+    const startedAt = new Date();
+    const [session] = await tx
+      .update(sessionTable)
+      .set({ startedVisitId: input.visitId, startedAt, modifiedOn: startedAt })
+      .where(and(pendingPlanSessionWhere(input), isNull(sessionTable.startedVisitId)))
+      .returning({ id: sessionTable.id });
+
+    return session;
+  });
 
   if (!started) return undefined;
 

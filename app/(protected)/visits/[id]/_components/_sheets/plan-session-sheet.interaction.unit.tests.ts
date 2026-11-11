@@ -181,4 +181,14 @@ describe('Plan Session sheet', () => {
 
     expect(screen.queryByRole('button', { name: 'Edit plan' })).toBeNull();
   });
+
+  it('should not offer editing once the Session is In Progress in any Visit', () => {
+    renderSheet({}, { startedVisitId: 5120, startedAt: new Date('2026-11-10T04:30:00Z') });
+    expect(screen.queryByRole('button', { name: 'Edit plan' })).toBeNull();
+    cleanup();
+
+    renderSheet({}, { startedVisitId: 4000, startedAt: new Date('2026-11-10T04:30:00Z') });
+    expect(screen.queryByRole('button', { name: 'Edit plan' })).toBeNull();
+    expect(screen.getByText('In progress in another Visit')).toBeTruthy();
+  });
 });

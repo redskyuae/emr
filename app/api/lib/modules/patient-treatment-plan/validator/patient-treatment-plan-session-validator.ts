@@ -136,6 +136,17 @@ export async function validateUpdatePatientTreatmentPlanSession(
 
   if (!pending.success) return pending;
 
+  // The plan is frozen once delivery starts so it cannot change mid-treatment.
+  const { session } = pending.data;
+
+  if (session.startedVisitId !== null) {
+    return {
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: [`Session ${session.sessionNumber} is in progress and cannot be edited.`],
+    };
+  }
+
   return { success: true, data: { ...target.data, plan: payloadResult.data } };
 }
 

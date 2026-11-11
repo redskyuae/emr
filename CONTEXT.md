@@ -318,7 +318,7 @@ A Patient-specific assignment of a Treatment and its planned Sessions. A Patient
 
 ## Patient Treatment Plan Session
 
-A Patient-specific planned occurrence within a Patient Treatment Plan. It carries that Patient's Session number and progress independently of the reusable Treatment Session template. Each Session carries its own plan — procedure, durations, preparation, warning, equipment, Room type, and Therapist Skill — copied from the template at assignment and editable for that Patient while the Session is pending, without changing the template. Starting a Session links it to an active Visit of the same Patient and marks it In Progress; completing that Visit completes the Session, while cancelling or deleting the Visit returns it to pending. A Visit delivers at most one Session of each Plan.
+A Patient-specific planned occurrence within a Patient Treatment Plan. It carries that Patient's Session number and progress independently of the reusable Treatment Session template. Each Session carries its own plan — procedure, durations, preparation, warning, equipment, Room type, and Therapist Skill — copied from the template at assignment and editable for that Patient while the Session is pending and not yet started, without changing the template. Starting a Session links it to an active Visit of the same Patient and marks it In Progress, which freezes its plan; completing that Visit completes the Session, while cancelling or deleting the Visit returns it to pending. A Visit delivers at most one Session of each Plan.
 
 ## Patient Treatment Plan Session Reservation
 

@@ -157,6 +157,8 @@ export function PlanSessionSheet({
   const startSession = useStartPatientTreatmentPlanSession();
   const label = planSessionLabel(session, visit);
   const pending = session.completionStatus === 'PENDING';
+  // The plan is frozen once the Session is started, so it cannot change mid-treatment.
+  const editable = canUpdate && pending && session.startedVisitId === null;
   const startable = canStart && canStartPlanSession(plan, session, visit);
   const busy = updateSession.isPending || startSession.isPending;
   const target = { patientId: plan.patientId, planId: plan.id, sessionId: session.id };
@@ -260,7 +262,7 @@ export function PlanSessionSheet({
             </>
           ) : (
             <>
-              {canUpdate && pending ? (
+              {editable ? (
                 <Button
                   type="button"
                   variant="outline"

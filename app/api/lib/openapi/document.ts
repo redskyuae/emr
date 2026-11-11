@@ -6479,7 +6479,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Edit a Patient Treatment Plan Session plan',
         description:
-          'Edits the plan of one pending Patient Treatment Plan Session: procedure, durations, preparation, warning, equipment, Room type, and Therapist Skill. Only the Patient-specific snapshot changes; the Treatment Session template and booking rules are unchanged. Send only the fields to change; text fields are trimmed and an empty string or null clears an optional field. Completed Sessions and Sessions of stopped Plans cannot be edited. The Tenant is resolved from the active Session. Requires patient-treatment-plan:read and patient-treatment-plan:update permissions.',
+          'Edits the plan of one pending Patient Treatment Plan Session: procedure, durations, preparation, warning, equipment, Room type, and Therapist Skill. Only the Patient-specific snapshot changes; the Treatment Session template and booking rules are unchanged. Send only the fields to change; text fields are trimmed and an empty string or null clears an optional field. Completed Sessions, Sessions already In Progress in a Visit, and Sessions of stopped Plans cannot be edited; the plan is frozen once the Session is started. The Tenant is resolved from the active Session. Requires patient-treatment-plan:read and patient-treatment-plan:update permissions.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Patient'),
@@ -6557,11 +6557,30 @@ export const openApiDocument = {
             }),
           },
           '409': {
-            description: 'The Session is completed or no longer available.',
-            content: jsonContent(schemaRef('ValidationError'), {
-              message: 'Conflict',
-              errors: ['Session 1 is already completed.'],
-            }),
+            description:
+              'The Session is completed, In Progress in a Visit, or no longer available.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  completed: {
+                    value: { message: 'Conflict', errors: ['Session 1 is already completed.'] },
+                  },
+                  inProgress: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Session 2 is in progress and cannot be edited.'],
+                    },
+                  },
+                  noLongerAvailable: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Patient Treatment Plan Session is no longer available.'],
+                    },
+                  },
+                },
+              },
+            },
           },
           '500': responseRef('InternalServerError'),
         },
@@ -6645,7 +6664,7 @@ export const openApiDocument = {
           },
           '409': {
             description:
-              'The Visit is not active, or the Session is completed, already in progress, booked for another Appointment, or the Visit already has a Session of this Plan.',
+              'The Visit is not active (including a Visit completed, cancelled, or deleted while the Session was being started), or the Session is completed, already in progress, booked for another Appointment, or the Visit already has a Session of this Plan.',
             content: {
               'application/json': {
                 schema: schemaRef('ValidationError'),
@@ -6669,6 +6688,12 @@ export const openApiDocument = {
                     value: {
                       message: 'Conflict',
                       errors: ['This Visit already has Session 1 of this Patient Treatment Plan.'],
+                    },
+                  },
+                  visitClosedConcurrently: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Patient Treatment Plan Session is no longer available.'],
                     },
                   },
                 },

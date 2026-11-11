@@ -149,6 +149,10 @@ export const patientTreatmentPlanSession = pgTable(
       table.tenantId,
       table.completedVisitId
     ),
+    // Visit complete/cancel/delete look up the Sessions started in that Visit.
+    tenantStartedVisitIdx: index('patient_treatment_plan_session_tenant_started_visit_idx')
+      .on(table.tenantId, table.startedVisitId)
+      .where(sql`${table.startedVisitId} is not null`),
     // A Visit delivers at most one Session of each Patient Treatment Plan.
     tenantPlanStartedVisitUniqueIdx: uniqueIndex(
       'patient_treatment_plan_session_tenant_plan_started_visit_idx'

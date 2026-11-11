@@ -152,6 +152,18 @@ describe('Patient Treatment Plan Session validator', () => {
       });
     });
 
+    it('should reject editing a Session that is In Progress in a Visit', async () => {
+      mockPlan(session(102, 2, { startedVisitId: 5120 }));
+
+      await expect(
+        validateUpdatePatientTreatmentPlanSession(params, { warning: 'Avoid the left knee.' })
+      ).resolves.toEqual({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Session 2 is in progress and cannot be edited.'],
+      });
+    });
+
     it('should return the normalized target and Session plan', async () => {
       await expect(
         validateUpdatePatientTreatmentPlanSession(
