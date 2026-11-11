@@ -102,6 +102,7 @@ export const checkInVisitSchema = z
     patientId: positiveIdSchema('Patient ID').optional(),
     doctorId: positiveIdSchema('Doctor ID').optional(),
     visitTypeId: positiveIdSchema('Visit type ID'),
+    admitSourceId: positiveIdSchema('Admit source ID').optional(),
     chiefComplaint: chiefComplaintSchema,
     remarks: remarksSchema,
     documents: z
@@ -187,6 +188,7 @@ export type ValidatedCheckInVisitData = {
   patientId: number;
   doctorId: number;
   visitTypeId: number;
+  admitSourceId?: number;
   appointmentId?: number;
   treatmentId?: number;
   treatmentSessionId?: number;
@@ -217,6 +219,12 @@ export type VisitTypeSummary = {
   code: string;
 };
 
+type VisitAdmitSourceSummary = {
+  id: number;
+  name: string;
+  code: string;
+};
+
 export type VisitAppointmentSummary = {
   id: number;
   bookingNumber: string;
@@ -241,6 +249,7 @@ export type Visit = {
   patient: VisitPatientSummary;
   doctor: VisitDoctorSummary;
   visitType: VisitTypeSummary;
+  admitSource: VisitAdmitSourceSummary | null;
   appointment: VisitAppointmentSummary | null;
   treatment: TreatmentSummary | null;
   treatmentSession: TreatmentSessionSummary | null;

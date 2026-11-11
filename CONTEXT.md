@@ -318,7 +318,7 @@ A Patient-specific assignment of a Treatment and its planned Sessions. A Patient
 
 ## Patient Treatment Plan Session
 
-A Patient-specific planned occurrence within a Patient Treatment Plan. It carries that Patient's Session number and progress independently of the reusable Treatment Session template.
+A Patient-specific planned occurrence within a Patient Treatment Plan. It carries that Patient's Session number and progress independently of the reusable Treatment Session template. Each Session carries its own plan — procedure, durations, preparation, warning, equipment, Room type, and Therapist Skill — copied from the template at assignment and editable for that Patient while the Session is pending and not yet started, without changing the template. Starting a Session links it to an active Visit of the same Patient and marks it In Progress, which freezes its plan; completing that Visit completes the Session, while cancelling or deleting the Visit returns it to pending. A Visit delivers at most one Session of each Plan.
 
 ## Patient Treatment Plan Session Reservation
 
@@ -327,6 +327,10 @@ The exclusive reservation of one Patient Treatment Plan Session for a Procedure 
 ## VisitType
 
 A Tenant-scoped Master that classifies the clinical nature of a Visit, such as OPD Consultation, Follow-up, Procedure, or Vaccination. Distinct from AppointmentType, which classifies the Appointment at booking time — a Walk-in Visit has a VisitType but no Appointment.
+
+## Admit Source
+
+A Tenant-scoped Master that records how a Patient came to a Visit, such as Self / Walk-in, Doctor Referral, Hospital Transfer, or Emergency. Admit Source is optional and is chosen when the Visit is created. Distinct from VisitType, which classifies the clinical nature of the Visit, and from AdmissionType, which classifies an inpatient Admission.
 
 ## Visit Patient Type
 

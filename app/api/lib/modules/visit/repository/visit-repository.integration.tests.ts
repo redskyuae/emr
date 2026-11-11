@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
+import { admitSource as admitSourceTable } from '@/app/db/schema/admit-source';
 import { appointment as appointmentTable } from '@/app/db/schema/appointment';
 import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
@@ -20,6 +21,7 @@ import {
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import { treatment as treatmentTable } from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
+import { admitSourceRepository } from '../../admit-source/repository/admit-source-repository';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
 import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
@@ -84,6 +86,15 @@ async function createVisitType(tenantId: string) {
     .returning({ id: visitTypeTable.id });
 
   return visitType.id;
+}
+
+async function createAdmitSource(tenantId: string) {
+  const [admitSource] = await db
+    .insert(admitSourceTable)
+    .values({ tenantId, name: 'Doctor Referral', code: 'DOCREF' })
+    .returning({ id: admitSourceTable.id });
+
+  return admitSource.id;
 }
 
 async function createTenantFixtures(tenantId: string): Promise<TenantFixtures> {
@@ -356,6 +367,39 @@ describe('Visit repository', () => {
           visitDate: '16-07-2026',
           appointment: null,
         },
+      });
+    });
+
+    it('should record the Admit Source supplied at check-in', async () => {
+      const admitSourceId = await createAdmitSource(tenantA);
+
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { admitSourceId })
+      );
+
+      expect(result).toMatchObject({
+        success: true,
+        data: { admitSource: { id: admitSourceId, name: 'Doctor Referral', code: 'DOCREF' } },
+      });
+    });
+
+    it('should leave the Admit Source empty when none is supplied', async () => {
+      const result = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+
+      expect(result).toMatchObject({ success: true, data: { admitSource: null } });
+    });
+
+    it('should still read a Visit whose Admit Source was soft-deleted', async () => {
+      const admitSourceId = await createAdmitSource(tenantA);
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { admitSourceId })
+      );
+      if (!result.success) throw new Error('Check-in failed');
+
+      await admitSourceRepository.deleteAdmitSource(admitSourceId, tenantA);
+
+      await expect(visitRepository.getVisitById(result.data.id, tenantA)).resolves.toMatchObject({
+        admitSource: { id: admitSourceId, name: 'Doctor Referral' },
       });
     });
 
@@ -1158,6 +1202,100 @@ describe('Visit repository', () => {
 
       expect(page.total).toBe(2);
       expect(page.data.map((visit) => visit.queueToken)).toEqual([2]);
+    });
+  });
+});
+
+describe('Visit repository started Patient Treatment Plan Sessions', () => {
+  let fixtures: TenantFixtures;
+
+  beforeEach(async () => {
+    mrnSequence = 0;
+    fixtures = await createTenantFixtures(tenantA);
+  });
+
+  async function startWalkInSession() {
+    const [plan] = await db
+      .insert(patientTreatmentPlanTable)
+      .values({
+        tenantId: tenantA,
+        patientId: fixtures.patientId,
+        treatmentName: 'Abhyanga Therapy',
+        treatmentCode: 'ABHY',
+        sessionStructure: 'REPEATABLE',
+        totalSessions: 1,
+      })
+      .returning({ id: patientTreatmentPlanTable.id });
+    const [session] = await db
+      .insert(patientTreatmentPlanSessionTable)
+      .values({
+        tenantId: tenantA,
+        patientTreatmentPlanId: plan.id,
+        sessionNumber: 1,
+        procedure: 'Abhyanga Therapy',
+      })
+      .returning({ id: patientTreatmentPlanSessionTable.id });
+    const created = await visitRepository.checkInVisit(checkInData(tenantA, fixtures));
+    if (!created.success) throw new Error(created.outcome);
+    await patientTreatmentPlanRepository.startSession({
+      tenantId: tenantA,
+      patientId: fixtures.patientId,
+      patientTreatmentPlanId: plan.id,
+      patientTreatmentPlanSessionId: session.id,
+      visitId: created.data.id,
+    });
+
+    return { visitId: created.data.id, sessionId: session.id };
+  }
+
+  async function startedStateOf(sessionId: number) {
+    const [row] = await db
+      .select({
+        startedAt: patientTreatmentPlanSessionTable.startedAt,
+        startedVisitId: patientTreatmentPlanSessionTable.startedVisitId,
+      })
+      .from(patientTreatmentPlanSessionTable)
+      .where(eq(patientTreatmentPlanSessionTable.id, sessionId));
+
+    return { ...row, ...(await planSessionCompletionOf(sessionId)) };
+  }
+
+  it('should complete a Session started in a walk-in Visit when the Visit completes', async () => {
+    const { visitId, sessionId } = await startWalkInSession();
+    await visitRepository.startConsultation(visitId, tenantA);
+
+    const completed = await visitRepository.completeVisit(visitId, tenantA);
+    if (completed.outcome !== 'updated') throw new Error(completed.outcome);
+
+    expect(await startedStateOf(sessionId)).toMatchObject({
+      startedVisitId: visitId,
+      completionStatus: 'COMPLETED',
+      completionSource: 'VISIT',
+      completedVisitId: visitId,
+      completedAt: completed.data.completedAt,
+    });
+  });
+
+  it('should return a started Session to pending when the Visit is cancelled', async () => {
+    const { visitId, sessionId } = await startWalkInSession();
+
+    await visitRepository.cancelVisit(visitId, tenantA, 'Patient left before treatment.');
+
+    expect(await startedStateOf(sessionId)).toMatchObject({
+      startedAt: null,
+      startedVisitId: null,
+      completionStatus: 'PENDING',
+    });
+  });
+
+  it('should return a started Session to pending when the Visit is deleted', async () => {
+    const { visitId, sessionId } = await startWalkInSession();
+
+    await visitRepository.deleteVisit(visitId, tenantA);
+
+    expect(await startedStateOf(sessionId)).toMatchObject({
+      startedVisitId: null,
+      completionStatus: 'PENDING',
     });
   });
 });

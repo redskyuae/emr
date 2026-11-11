@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Activity, ClipboardList, NotebookPen, Pill, ShieldAlert } from 'lucide-react';
 
+import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
@@ -11,6 +12,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+
+import { SOAP_SECTIONS } from '../_utils/doctor-consultation-note';
 
 type Props = {
   visit: Visit;
@@ -24,6 +27,7 @@ type Props = {
   onNursingHandoff: () => void;
   onAddAllergy: () => void;
   onAddMedication: () => void;
+  onSignNote: (note: ClinicalNote) => void;
 };
 
 export function VisitClinicalPanel({
@@ -38,6 +42,7 @@ export function VisitClinicalPanel({
   onNursingHandoff,
   onAddAllergy,
   onAddMedication,
+  onSignNote,
 }: Props) {
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
   const allergensQuery = useAllergensQuery({ limit: 100 });
@@ -83,7 +88,7 @@ export function VisitClinicalPanel({
         </Alert>
       ) : null}
       <Card className="shadow-fluent-2">
-        <CardHeader className="flex-row items-center justify-between gap-3">
+        <CardHeader className="flex items-center justify-between gap-3">
           <CardTitle className="text-base">Vital Signs this Visit</CardTitle>
           {active && canRecordVitals ? (
             <Button type="button" size="sm" variant="outline" onClick={onRecordVitals}>
@@ -126,7 +131,7 @@ export function VisitClinicalPanel({
       </Card>
 
       <Card className="shadow-fluent-2">
-        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle className="text-base">Clinical Notes</CardTitle>
           {active && canCreateNote ? (
             <div className="flex flex-wrap gap-2">
@@ -151,16 +156,36 @@ export function VisitClinicalPanel({
                 <li key={note.id} className="rounded-md border p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium">{noteTypeName(note.noteTypeId)}</p>
-                    <Badge variant={note.status === 'signed' ? 'outline' : 'secondary'}>
-                      {note.status === 'signed' ? 'Signed' : 'Draft'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={note.status === 'signed' ? 'outline' : 'secondary'}>
+                        {note.status === 'signed' ? 'Signed' : 'Draft'}
+                      </Badge>
+                      {note.status === 'draft' && canCreateNote ? (
+                        <Button
+                          type="button"
+                          size="xs"
+                          variant="outline"
+                          onClick={() => onSignNote(note)}
+                        >
+                          Sign
+                        </Button>
+                      ) : null}
+                    </div>
                   </div>
-                  {note.subjective ? (
-                    <RichTextContent
-                      value={note.subjective}
-                      className="text-muted-foreground mt-1 line-clamp-2"
-                    />
-                  ) : null}
+                  <dl className="mt-2 space-y-2">
+                    {SOAP_SECTIONS.map(({ key, label }) => {
+                      const value = note[key];
+
+                      return value ? (
+                        <div key={key}>
+                          <dt className="text-xs font-semibold">{label}</dt>
+                          <dd>
+                            <RichTextContent value={value} className="text-muted-foreground" />
+                          </dd>
+                        </div>
+                      ) : null;
+                    })}
+                  </dl>
                 </li>
               ))}
             </ul>
@@ -169,7 +194,7 @@ export function VisitClinicalPanel({
       </Card>
 
       <Card className="shadow-fluent-2">
-        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle className="text-base">Allergies & medications</CardTitle>
           {active ? (
             <div className="flex flex-wrap gap-2">

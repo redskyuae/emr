@@ -54,10 +54,20 @@ describe('Patient Treatment Plan query', () => {
     const options = capturedQueryOptions();
 
     expect(options.queryKey).toEqual(patientTreatmentPlanHistoryQueryKey(42));
+    expect(options.enabled).toBe(true);
     await expect(options.queryFn()).resolves.toBe(response);
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/patients/42/treatment-plans?status=all', {
       credentials: 'same-origin',
     });
+  });
+
+  it.each([
+    { label: 'no selected Patient', patientId: null, enabled: true },
+    { label: 'a caller without access', patientId: 42, enabled: false },
+  ])('should keep the Plan history query disabled for $label', ({ patientId, enabled }) => {
+    usePatientTreatmentPlanHistoryQuery(patientId, enabled);
+
+    expect(capturedQueryOptions().enabled).toBe(false);
   });
 
   it.each([

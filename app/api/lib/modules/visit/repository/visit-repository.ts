@@ -16,6 +16,7 @@ import {
   treatmentSession as treatmentSessionTable,
 } from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
+import { admitSource as admitSourceTable } from '@/app/db/schema/admit-source';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
 import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
@@ -65,6 +66,11 @@ const visitColumns = {
     id: visitTypeTable.id,
     name: visitTypeTable.name,
     code: visitTypeTable.code,
+  },
+  admitSource: {
+    id: admitSourceTable.id,
+    name: admitSourceTable.name,
+    code: admitSourceTable.code,
   },
   appointment: {
     id: appointmentTable.id,
@@ -145,7 +151,8 @@ function toVisit(row: VisitRow): Visit {
 }
 
 // The masters are joined without an isDeleted filter so a Visit still reads
-// back after its VisitType is soft-deleted; historical Visits must not vanish.
+// back after its VisitType or Admit Source is soft-deleted; historical Visits
+// must not vanish.
 function visitJoins(executor: SelectExecutor = db) {
   return executor
     .select(visitColumns)
@@ -164,6 +171,13 @@ function visitJoins(executor: SelectExecutor = db) {
       and(
         eq(visitTypeTable.id, visitTable.visitTypeId),
         eq(visitTypeTable.tenantId, visitTable.tenantId)
+      )
+    )
+    .leftJoin(
+      admitSourceTable,
+      and(
+        eq(admitSourceTable.id, visitTable.admitSourceId),
+        eq(admitSourceTable.tenantId, visitTable.tenantId)
       )
     )
     .leftJoin(
@@ -448,6 +462,7 @@ async function runCheckInVisitTransaction(
         patientId: data.patientId,
         doctorId: data.doctorId,
         visitTypeId: data.visitTypeId,
+        admitSourceId: data.admitSourceId ?? null,
         appointmentId: data.appointmentId ?? null,
         status: 'CHECKED_IN',
         visitDate: data.visitDate,
@@ -586,6 +601,13 @@ async function runTransitionVisitTransaction(
       );
     }
 
+    // Sessions started in this Visit finish with it, or return to pending when it is cancelled.
+    if (spec.to === 'COMPLETED') {
+      await patientTreatmentPlanRepository.completeStartedSessionsForVisit(id, tenantId, tx);
+    } else if (spec.to === 'CANCELLED') {
+      await patientTreatmentPlanRepository.releaseStartedSessionsForVisit(id, tenantId, tx);
+    }
+
     const updated = await getVisitById(id, tenantId, tx);
 
     if (!updated) {
@@ -719,6 +741,8 @@ async function runDeleteVisitTransaction(id: number, tenantId: string): Promise<
       .update(visitTable)
       .set({ isDeleted: true, modifiedOn: deletedOn, deletedOn })
       .where(and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId)));
+
+    await patientTreatmentPlanRepository.releaseStartedSessionsForVisit(id, tenantId, tx);
 
     // Deleting an Active Visit must hand its Appointment back, exactly as
     // cancelling does. Otherwise the Appointment is stranded in Checked In with

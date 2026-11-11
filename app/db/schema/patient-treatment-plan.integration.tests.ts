@@ -340,4 +340,19 @@ describe('Patient Treatment Plan database invariants', () => {
       db.insert(sessionTable).values({ ...data, sessionNumber: 2, patientTreatmentPlanId: 999999 })
     ).rejects.toThrow();
   });
+
+  it('should reject a Session start time without its started Visit', async () => {
+    const { plan } = await fixture();
+    const data = { tenantId, patientTreatmentPlanId: plan.id, sessionNumber: 1 };
+
+    await expect(
+      db
+        .insert(sessionTable)
+        .values({ ...data, startedAt: new Date() })
+        .catch(getDatabaseError)
+    ).resolves.toMatchObject({
+      code: '23514',
+      constraint: 'patient_treatment_plan_session_started_check',
+    });
+  });
 });

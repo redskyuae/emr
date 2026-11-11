@@ -23,7 +23,9 @@ import {
   useCurrentUserQuery,
   useHasPermission,
 } from '@/app/queries/identity-access/useCurrentUser';
+import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
+import { useAdmitSourcesQuery } from '@/app/queries/visit-masters/admit-sources/useAdmitSources';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
 import { useCheckInVisit } from '@/app/queries/visits/useCheckInVisit';
 import { useRecentDoctorVisitQuery } from '@/app/queries/visits/useRecentDoctorVisit';
@@ -44,6 +46,7 @@ import {
   getWalkInVisitTypeId,
 } from '../_utils/appointment-visit-defaults';
 import { PatientRegistrationSection } from './patient-registration-section';
+import { PatientTreatmentsCard } from './patient-treatments-card';
 import { VisitBillingFields } from './visit-billing-fields';
 import { AppointmentContextCard, PatientContextCard } from './visit-context-rail';
 import { VisitDetailsFields, VisitSourceFields } from './visit-form-fields';
@@ -56,6 +59,7 @@ const DEFAULT_VALUES: CreateVisitFormValues = {
   patientId: '',
   doctorId: '',
   visitTypeId: '',
+  admitSourceId: '',
   chiefComplaint: '',
   remarks: '',
   createInvoice: false,
@@ -114,6 +118,7 @@ export function CreateVisitPageImpl({
   const initialAppointmentQuery = useAppointmentQuery(initialAppointmentId);
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
   const visitTypesQuery = useVisitTypesQuery({ limit: 100 });
+  const admitSourcesQuery = useAdmitSourcesQuery({ limit: 100 });
   const chargeItemsQuery = useChargeItemsQuery({ page: 1, limit: 999, isActive: true });
   const currentUserQuery = useCurrentUserQuery();
   const { data: canCreate } = useHasPermission('visit:create');
@@ -123,6 +128,7 @@ export function CreateVisitPageImpl({
   const { data: canFinalizeInvoice } = useHasPermission('invoice:finalize');
   const { data: canRecordPayment } = useHasPermission('payment:record');
   const { data: canReadChargeItems } = useHasPermission('charge-item:read');
+  const { data: canReadTreatmentPlans } = useHasPermission('patient-treatment-plan:read');
   const checkInMutation = useCheckInVisit();
   const createInvoiceMutation = useCreateInvoice();
   const addInvoiceLineMutation = useAddInvoiceLine();
@@ -139,6 +145,7 @@ export function CreateVisitPageImpl({
     : listedAppointments;
   const doctors = doctorsQuery.data?.data ?? [];
   const visitTypes = visitTypesQuery.data?.data ?? EMPTY_VISIT_TYPES;
+  const admitSources = admitSourcesQuery.data?.data ?? [];
   const chargeItems = chargeItemsQuery.data?.data ?? [];
   const canBill = Boolean(
     canCreateInvoice &&
@@ -172,6 +179,10 @@ export function CreateVisitPageImpl({
   const patientQuery = usePatientQuery(selectedPatientId);
   const patient = patientQuery.data ?? null;
   const patientTypeQuery = useVisitPatientTypeQuery(selectedPatientId);
+  const treatmentPlansQuery = usePatientTreatmentPlanHistoryQuery(
+    selectedPatientId,
+    Boolean(canReadTreatmentPlans)
+  );
   const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
   const referenceDate = currentUserQuery.data?.tenant.timeZone
     ? tenantLocalDateTime(new Date(), currentUserQuery.data.tenant.timeZone).date
@@ -182,12 +193,14 @@ export function CreateVisitPageImpl({
     initialAppointmentQuery.isLoading ||
     doctorsQuery.isLoading ||
     visitTypesQuery.isLoading ||
+    admitSourcesQuery.isLoading ||
     currentUserQuery.isLoading;
   const dependencyError =
     appointmentsQuery.error ??
     initialAppointmentQuery.error ??
     doctorsQuery.error ??
     visitTypesQuery.error ??
+    admitSourcesQuery.error ??
     currentUserQuery.error;
 
   async function retryDependencies() {
@@ -196,6 +209,7 @@ export function CreateVisitPageImpl({
       initialAppointmentId ? initialAppointmentQuery.refetch() : Promise.resolve(),
       doctorsQuery.refetch(),
       visitTypesQuery.refetch(),
+      admitSourcesQuery.refetch(),
       currentUserQuery.refetch(),
     ]);
   }
@@ -267,6 +281,7 @@ export function CreateVisitPageImpl({
     try {
       result = await checkInMutation.mutateAsync({
         visitTypeId: Number(values.visitTypeId),
+        admitSourceId: values.admitSourceId ? Number(values.admitSourceId) : undefined,
         ...(values.mode === 'appointment'
           ? {
               appointmentId: Number(values.appointmentId),
@@ -422,6 +437,7 @@ export function CreateVisitPageImpl({
                 selectedPatient={patient}
                 doctors={doctors}
                 visitTypes={visitTypes}
+                admitSources={admitSources}
                 loading={loading}
               />
               <PatientRegistrationSection
@@ -454,6 +470,7 @@ export function CreateVisitPageImpl({
                 selectedPatient={patient}
                 doctors={doctors}
                 visitTypes={visitTypes}
+                admitSources={admitSources}
                 loading={loading}
                 historyError={historyError}
                 recentDoctorVisit={recentDoctorVisitQuery.data}
@@ -480,9 +497,17 @@ export function CreateVisitPageImpl({
             </>
           )}
         </div>
-        <aside className="space-y-4 xl:sticky xl:top-20">
+        <aside className="space-y-4 xl:sticky xl:top-20 xl:-mx-1 xl:max-h-[calc(100svh-10rem)] xl:overflow-y-auto xl:px-1 xl:pb-1">
           <PatientContextCard patient={patient} loading={patientQuery.isLoading} />
           <AppointmentContextCard appointment={appointment} />
+          {selectedPatientId !== null && canReadTreatmentPlans ? (
+            <PatientTreatmentsCard
+              plans={treatmentPlansQuery.data ?? []}
+              loading={treatmentPlansQuery.isLoading}
+              error={treatmentPlansQuery.isError}
+              onRetry={() => void treatmentPlansQuery.refetch()}
+            />
+          ) : null}
           {patient ? <Badge variant="outline">{patient.mrn}</Badge> : null}
         </aside>
       </div>

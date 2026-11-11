@@ -19,6 +19,7 @@ import { organization, user } from '@/app/db/schema/auth';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import { treatment as treatmentTable } from '@/app/db/schema/treatment';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
+import { admitSource as admitSourceTable } from '@/app/db/schema/admit-source';
 import {
   workOrderCodeCounter as workOrderCodeCounterTable,
   workOrder as workOrderTable,
@@ -125,7 +126,7 @@ async function hasSeededClinicalMasters(tenantId: string) {
 }
 
 async function hasSeededVisitMasters(tenantId: string) {
-  return hasSeededMasterTables([visitTypeTable, treatmentTable], tenantId);
+  return hasSeededMasterTables([visitTypeTable, treatmentTable, admitSourceTable], tenantId);
 }
 
 async function hasSeededInpatientMasters(tenantId: string) {

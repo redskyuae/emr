@@ -116,6 +116,13 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 - `components/ui/calendar.tsx` was patched for react-day-picker v10 (`month_grid` classNames key replaces v8's `table`). Re-apply if the component is regenerated.
 - Charts use `chart.tsx` (Recharts) with `--chart-1..5` (a blue-led ramp). Toasts use `sonner.tsx`.
 
+## Clinical surfaces
+
+- **Rich text fields**: `components/clinical/rich-text-editor.tsx` matches `Input` (same radius, border, focus ring) and shows its formatting toolbar below the text only while focused, so a form with many narrative fields stays calm. The toolbar is never the only route to the text.
+- **Visit workspace** (`/visits/[id]`): a sticky Patient header holds the one primary action for the current Visit Status, a workflow stepper shows progress, and a snapshot rail keeps Vital Signs, allergies, medications, and the completion checklist in view. The consultation is an inline form, not a Sheet, because it is the main task on the page. Closing a Visit warns about open items rather than blocking.
+- **Everything within reach**: the consultation is one scrolling page with numbered sections and a sticky jump bar showing fields filled per section. Workflow steps are clickable, a Quick actions panel holds every Visit task, and Previous Visits expand in place, newest first. Tabs hold separate records (Billing, Documents), never the encounter itself.
+- **EMR and Ayurveda**: `isAyurvedaBrand()` in `components/brand/brand-config.ts` decides whether Ayurveda-specific fields appear. `LOGIN_LOGO_VARIANT=none` is the general EMR. Keep shared screens free of Ayurvedic wording unless they check this.
+
 ## UI principles (Fluent-inspired)
 
 1. **Light, calm, blue-accented.** Surfaces are near-white and cool-tinted; deep blue primary anchors the main action. Functional and status colors add meaning through restrained tints.

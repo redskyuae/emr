@@ -113,7 +113,7 @@ export function AddNoteSheet({
         <SheetHeader className="border-b p-4 pr-12">
           <SheetTitle className="text-xl">Add clinical note</SheetTitle>
           <SheetDescription>
-            Authored against this Visit and saved as a draft. Sign it from the Patient Chart.
+            Authored against this Visit and saved as a draft. Sign it under Clinical records.
           </SheetDescription>
         </SheetHeader>
 

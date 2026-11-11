@@ -34,6 +34,7 @@ function Form({
       patientId: '1',
       doctorId: '2',
       visitTypeId: '3',
+      admitSourceId: '',
       chiefComplaint: '',
       remarks: '',
       createInvoice: false,

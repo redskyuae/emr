@@ -1,0 +1,1 @@
+CREATE INDEX "patient_treatment_plan_session_tenant_started_visit_idx" ON "patient_treatment_plan_session" USING btree ("tenant_id","started_visit_id") WHERE "patient_treatment_plan_session"."started_visit_id" is not null;

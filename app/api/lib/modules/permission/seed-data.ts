@@ -173,6 +173,8 @@ const permissionGroups = [
     actions: [
       ['read', 'View Patient Treatment Plans and Sessions.'],
       ['assign', 'Assign Treatments to Patients and create Patient Treatment Plans.'],
+      ['update', 'Edit the plan of Patient Treatment Plan Sessions.'],
+      ['start', 'Start Patient Treatment Plan Sessions in a Visit.'],
     ],
   },
   {
@@ -374,6 +376,16 @@ const permissionGroups = [
       ['create', 'Create VisitTypes.'],
       ['update', 'Update VisitTypes.'],
       ['delete', 'Delete VisitTypes.'],
+    ],
+  },
+  {
+    module: 'visits',
+    resource: 'admit-source',
+    actions: [
+      ['read', 'View Admit Sources.'],
+      ['create', 'Create Admit Sources.'],
+      ['update', 'Update Admit Sources.'],
+      ['delete', 'Delete Admit Sources.'],
     ],
   },
   {

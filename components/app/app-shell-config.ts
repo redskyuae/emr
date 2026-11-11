@@ -292,6 +292,11 @@ export const appNavGroups: AppNavGroup[] = [
             href: '/visit-masters/visit-types',
             permission: 'visit-type',
           },
+          {
+            title: 'Admit Source',
+            href: '/visit-masters/admit-sources',
+            permission: 'admit-source',
+          },
         ],
       },
       {
@@ -534,7 +539,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   },
   '/therapists': {
     title: 'Therapists',
-    subtitle: 'Staff-backed Therapists and their Ayurvedic treatment skills.',
+    subtitle: 'Staff-backed Therapists and their treatment skills.',
     primaryAction: {
       label: 'Add Therapist',
       href: '/therapists?therapist=new',
@@ -641,6 +646,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/visit-masters/visit-types': {
     title: 'Visit Types',
     subtitle: 'Tenant-scoped records classifying the clinical nature of a Visit.',
+  },
+  '/visit-masters/admit-sources': {
+    title: 'Admit Sources',
+    subtitle: 'Tenant-scoped records of how a Patient came to a Visit.',
   },
   '/appointment-masters/statuses': {
     title: 'Appointment Statuses',

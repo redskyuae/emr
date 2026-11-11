@@ -21,6 +21,25 @@ describe('OpenAPI Visit Patient type contract', () => {
   });
 });
 
+describe('OpenAPI Admit Source contract', () => {
+  it('should document the Admit Source Master operations', () => {
+    expect(Object.keys(openApiDocument.paths['/api/v1/visits/admit-sources'])).toEqual(
+      expect.arrayContaining(['get', 'post'])
+    );
+    expect(Object.keys(openApiDocument.paths['/api/v1/visits/admit-sources/{id}'])).toEqual(
+      expect.arrayContaining(['get', 'put', 'delete'])
+    );
+  });
+
+  it('should document the optional Admit Source on Visit check-in', () => {
+    const request = openApiDocument.components.schemas.CheckInVisitRequest;
+
+    expect(request.properties).toHaveProperty('admitSourceId');
+    expect(request.required).not.toContain('admitSourceId');
+    expect(openApiDocument.components.schemas.Visit.properties).toHaveProperty('admitSource');
+  });
+});
+
 describe('OpenAPI Patient search contract', () => {
   it('should document name, MRN, phone, and date of birth search', () => {
     const operation = openApiDocument.paths['/api/v1/patients'].get;

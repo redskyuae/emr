@@ -1,11 +1,8 @@
 import Link from 'next/link';
-import { CalendarPlus, Check, ClipboardList, X } from 'lucide-react';
+import { CalendarPlus, Check, ClipboardList, Play, X } from 'lucide-react';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
-import type {
-  PatientTreatmentPlan,
-  PatientTreatmentPlanReadSession,
-} from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
+import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +16,13 @@ import {
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import {
+  canStartPlanSession,
+  currentPlanSession,
+  isCurrentPlan,
+  planSessionLabel,
+} from '../_utils/visit-treatment-plan';
+
 type Props = {
   visit: Visit;
   plans: PatientTreatmentPlan[];
@@ -26,34 +30,56 @@ type Props = {
   error: boolean;
   canAssignPlan: boolean;
   canBookAppointment: boolean;
+  canStartSession: boolean;
   onAssignPlan: () => void;
+  onOpenSession: (sessionId: number) => void;
 };
 
-function sessionLabel(session: PatientTreatmentPlanReadSession, visit: Visit) {
-  if (session.completionStatus === 'COMPLETED') return 'Done';
-  if (session.reservedAppointment?.bookingNumber === visit.appointment?.bookingNumber)
-    return 'Today';
-  if (session.isReserved) return 'Booked';
-  return 'Pending';
-}
+const SEGMENT_TONE: Record<ReturnType<typeof planSessionLabel>, string> = {
+  Done: 'bg-primary',
+  'In progress': 'bg-chart-3',
+  Today: 'bg-chart-4',
+  Booked: 'bg-chart-2',
+  Pending: 'bg-muted',
+};
 
-function PlanCard({ plan, visit }: { plan: PatientTreatmentPlan; visit: Visit }) {
+function PlanCard({
+  plan,
+  visit,
+  canStartSession,
+  onOpenSession,
+}: {
+  plan: PatientTreatmentPlan;
+  visit: Visit;
+  canStartSession: boolean;
+  onOpenSession: (sessionId: number) => void;
+}) {
   const procedures = [
     ...new Set(plan.sessions.map((session) => session.procedure).filter(Boolean)),
   ];
+  const next = currentPlanSession(plan, visit);
+  const startable = next && canStartSession && canStartPlanSession(plan, next, visit);
 
   return (
     <Card className="shadow-fluent-2">
-      <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
+      <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             Active Plan
           </p>
           <CardTitle className="text-lg">{plan.treatmentName}</CardTitle>
         </div>
-        <Badge variant="secondary">
-          {plan.completedSessions} of {plan.totalSessions} completed
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">
+            {plan.completedSessions} of {plan.totalSessions} completed
+          </Badge>
+          {startable ? (
+            <Button type="button" size="sm" onClick={() => onOpenSession(next.id)}>
+              <Play className="size-4" />
+              Start Session {next.sessionNumber}
+            </Button>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="space-y-5">
         {procedures.length > 0 ? (
@@ -71,33 +97,36 @@ function PlanCard({ plan, visit }: { plan: PatientTreatmentPlan; visit: Visit })
           aria-label={`${plan.completedSessions} of ${plan.totalSessions} Sessions completed`}
         >
           {plan.sessions.map((session) => {
-            const label = sessionLabel(session, visit);
+            const label = planSessionLabel(session, visit);
             return (
               <span
                 key={session.id}
                 title={`Session ${session.sessionNumber}: ${label}`}
-                className={cn(
-                  'h-2.5 min-w-1 flex-1 rounded-sm',
-                  label === 'Done'
-                    ? 'bg-primary'
-                    : label === 'Today'
-                      ? 'bg-chart-4'
-                      : label === 'Booked'
-                        ? 'bg-chart-2'
-                        : 'bg-muted'
-                )}
+                className={cn('h-2.5 min-w-1 flex-1 rounded-sm', SEGMENT_TONE[label])}
               />
             );
           })}
         </div>
         <div className="grid [grid-template-columns:repeat(auto-fill,minmax(7.5rem,1fr))] gap-2">
           {plan.sessions.map((session) => {
-            const label = sessionLabel(session, visit);
+            const label = planSessionLabel(session, visit);
             return (
-              <div key={session.id} className="space-y-2 rounded-md border p-3">
+              <button
+                key={session.id}
+                type="button"
+                aria-label={`Session ${session.sessionNumber}, ${label}. View Session plan`}
+                onClick={() => onOpenSession(session.id)}
+                className={cn(
+                  'hover:bg-accent focus-visible:ring-ring space-y-2 rounded-md border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                  session.id === next?.id && 'border-primary'
+                )}
+              >
                 <p className="text-muted-foreground text-xs">Session {session.sessionNumber}</p>
                 <Badge variant={label === 'Done' ? 'secondary' : 'outline'}>{label}</Badge>
-              </div>
+                {session.procedure ? (
+                  <p className="line-clamp-2 text-xs">{session.procedure}</p>
+                ) : null}
+              </button>
             );
           })}
         </div>
@@ -113,11 +142,11 @@ export function VisitTreatmentPlansPanel({
   error,
   canAssignPlan,
   canBookAppointment,
+  canStartSession,
   onAssignPlan,
+  onOpenSession,
 }: Props) {
-  const activePlans = plans.filter(
-    (plan) => plan.status === 'PENDING' || plan.status === 'IN_PROGRESS'
-  );
+  const activePlans = plans.filter(isCurrentPlan);
   const completedPlans = plans.filter(
     (plan) => plan.status === 'COMPLETED' || plan.status === 'STOPPED'
   );
@@ -126,7 +155,7 @@ export function VisitTreatmentPlansPanel({
   if (loading)
     return (
       <Card className="shadow-fluent-2" aria-label="Loading Treatment Plans">
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex items-center justify-between">
           <Skeleton className="h-5 w-48" />
           <Skeleton className="h-6 w-28 rounded-full" />
         </CardHeader>
@@ -147,7 +176,15 @@ export function VisitTreatmentPlansPanel({
   return (
     <div className="space-y-5">
       {activePlans.length ? (
-        activePlans.map((plan) => <PlanCard key={plan.id} plan={plan} visit={visit} />)
+        activePlans.map((plan) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            visit={visit}
+            canStartSession={canStartSession}
+            onOpenSession={onOpenSession}
+          />
+        ))
       ) : (
         <Card className="shadow-fluent-2">
           <CardContent>

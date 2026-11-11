@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
+import { admitSourceRepository } from '../../admit-source/repository/admit-source-repository';
 import { appointmentRepository } from '../../appointment/repository/appointment-repository';
 import { tenantLocalDateTime } from '../../appointment/schemas/appointment-slot';
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
@@ -69,9 +70,12 @@ export async function validateCheckInVisit(
   const data = payloadResult.data;
   const validatedTenantId = tenantIdResult.data;
 
-  const [tenant, visitType] = await Promise.all([
+  const [tenant, visitType, admitSource] = await Promise.all([
     tenantRepository.getTenantById(validatedTenantId),
     visitTypeRepository.getVisitTypeById(data.visitTypeId, validatedTenantId),
+    data.admitSourceId === undefined
+      ? undefined
+      : admitSourceRepository.getAdmitSourceById(data.admitSourceId, validatedTenantId),
   ]);
 
   if (!tenant) {
@@ -82,6 +86,14 @@ export async function validateCheckInVisit(
     return {
       success: false,
       errors: [`Visit type ${data.visitTypeId} is Invalid.`],
+      status: StatusCodes.CONFLICT,
+    };
+  }
+
+  if (data.admitSourceId !== undefined && !admitSource) {
+    return {
+      success: false,
+      errors: [`Admit source ${data.admitSourceId} is Invalid.`],
       status: StatusCodes.CONFLICT,
     };
   }
@@ -223,6 +235,7 @@ export async function validateCheckInVisit(
       patientId,
       doctorId,
       visitTypeId: data.visitTypeId,
+      admitSourceId: data.admitSourceId,
       appointmentId: data.appointmentId,
       treatmentId,
       treatmentSessionId,
