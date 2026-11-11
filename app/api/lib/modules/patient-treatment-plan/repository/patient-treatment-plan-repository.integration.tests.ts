@@ -937,3 +937,294 @@ describe('Patient Treatment Plan repository', () => {
     });
   });
 });
+
+async function createVisit(
+  tenantId: string,
+  patientId: number,
+  visitNumber: string,
+  overrides: Partial<typeof visitTable.$inferInsert> = {}
+) {
+  const doctorUserId = `${tenantId}-doctor`;
+  const [existingDoctor] = await db
+    .select({ id: doctorTable.id })
+    .from(doctorTable)
+    .where(eq(doctorTable.userId, doctorUserId))
+    .limit(1);
+  let doctorId = existingDoctor?.id;
+
+  if (!doctorId) {
+    await db
+      .insert(organization)
+      .values({ id: tenantId, name: tenantId, slug: tenantId, createdAt: new Date() })
+      .onConflictDoNothing();
+    await db.insert(user).values({
+      id: doctorUserId,
+      name: 'Session Doctor',
+      email: `${doctorUserId}@example.test`,
+    });
+    const [specialty] = await db
+      .insert(specialtyTable)
+      .values({ tenantId, name: 'General', code: 'GEN' })
+      .returning();
+    const [doctor] = await db
+      .insert(doctorTable)
+      .values({ tenantId, userId: doctorUserId, specialtyId: specialty.id })
+      .returning();
+    doctorId = doctor.id;
+  }
+
+  const [visitType] = await db
+    .insert(visitTypeTable)
+    .values({ tenantId, name: `Procedure ${visitNumber}`, code: visitNumber.slice(-6) })
+    .returning();
+  const [visit] = await db
+    .insert(visitTable)
+    .values({
+      tenantId,
+      patientId,
+      doctorId,
+      visitNumber,
+      visitTypeId: visitType.id,
+      visitDate: '2026-11-10',
+      queueToken: 1,
+      status: 'IN_CONSULTATION',
+      ...overrides,
+    })
+    .returning();
+
+  return visit;
+}
+
+async function readSession(id: number) {
+  const [session] = await db.select().from(sessionTable).where(eq(sessionTable.id, id));
+  return session;
+}
+
+describe('Patient Treatment Plan Session plan and start', () => {
+  async function setup() {
+    const patient = await createPatient(tenantA, 'MRN-START');
+    const treatment = await createTreatment(tenantA, 'REPEATABLE', 'MASTER-S');
+    const template = await createTemplate(tenantA, treatment.id, 1);
+    const plan = await createPlan(tenantA, patient.id, treatment.id, 2);
+    const first = await createPlanSession(tenantA, plan.id, 1, {
+      treatmentSessionId: template.id,
+    });
+    const second = await createPlanSession(tenantA, plan.id, 2, {
+      treatmentSessionId: template.id,
+    });
+
+    return { patient, template, plan, first, second };
+  }
+
+  function target(
+    patientId: number,
+    planId: number,
+    sessionId: number,
+    tenantId: string = tenantA
+  ) {
+    return {
+      tenantId,
+      patientId,
+      patientTreatmentPlanId: planId,
+      patientTreatmentPlanSessionId: sessionId,
+    };
+  }
+
+  it('should edit only the Patient Session snapshot and leave the Treatment template unchanged', async () => {
+    const { patient, template, plan, first, second } = await setup();
+
+    const updated = await patientTreatmentPlanRepository.updateSessionPlan({
+      ...target(patient.id, plan.id, first.id),
+      plan: { procedure: 'Abhyanga with Ksheerabala taila', durationMinutes: 50, warning: null },
+    });
+
+    expect(updated?.sessions.find((session) => session.id === first.id)).toMatchObject({
+      procedure: 'Abhyanga with Ksheerabala taila',
+      durationMinutes: 50,
+      warning: null,
+    });
+    expect(await readSession(second.id)).toMatchObject({ procedure: 'Snapshot procedure 2' });
+    const [unchangedTemplate] = await db
+      .select()
+      .from(templateTable)
+      .where(eq(templateTable.id, template.id));
+    expect(unchangedTemplate).toMatchObject({ procedure: 'Procedure 1', durationMinutes: 45 });
+  });
+
+  it('should not edit a Session from another Tenant, a completed Session, or a stopped Plan', async () => {
+    const { patient, plan, first, second } = await setup();
+    await db
+      .update(sessionTable)
+      .set({ completionStatus: 'COMPLETED', completionSource: 'LEGACY_IMPORT' })
+      .where(eq(sessionTable.id, second.id));
+    const plan2 = { procedure: 'Changed' };
+
+    await expect(
+      patientTreatmentPlanRepository.updateSessionPlan({
+        ...target(patient.id, plan.id, first.id, tenantB),
+        plan: plan2,
+      })
+    ).resolves.toBeUndefined();
+    await expect(
+      patientTreatmentPlanRepository.updateSessionPlan({
+        ...target(patient.id, plan.id, second.id),
+        plan: plan2,
+      })
+    ).resolves.toBeUndefined();
+
+    await db.update(planTable).set({ statusOverride: 'STOPPED' }).where(eq(planTable.id, plan.id));
+    await expect(
+      patientTreatmentPlanRepository.updateSessionPlan({
+        ...target(patient.id, plan.id, first.id),
+        plan: plan2,
+      })
+    ).resolves.toBeUndefined();
+    expect(await readSession(first.id)).toMatchObject({ procedure: 'Snapshot procedure 1' });
+  });
+
+  it('should start a pending Session in a Visit and mark it In Progress and not bookable', async () => {
+    const { patient, plan, first } = await setup();
+    const visit = await createVisit(tenantA, patient.id, 'VST-START-1');
+
+    const started = await patientTreatmentPlanRepository.startSession({
+      ...target(patient.id, plan.id, first.id),
+      visitId: visit.id,
+    });
+
+    expect(started?.sessions.find((session) => session.id === first.id)).toMatchObject({
+      startedVisitId: visit.id,
+      startedAt: expect.any(Date),
+      completionStatus: 'PENDING',
+      isBookable: false,
+      unavailableReason: 'IN_PROGRESS',
+    });
+    await expect(
+      db.transaction((tx) =>
+        patientTreatmentPlanRepository.getPlanSessionForBooking(
+          plan.id,
+          first.id,
+          patient.id,
+          tenantA,
+          tx
+        )
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  it('should not start an already started Session or one from another Tenant', async () => {
+    const { patient, plan, first } = await setup();
+    const visit = await createVisit(tenantA, patient.id, 'VST-START-2');
+    const input = { ...target(patient.id, plan.id, first.id), visitId: visit.id };
+
+    await patientTreatmentPlanRepository.startSession(input);
+
+    await expect(patientTreatmentPlanRepository.startSession(input)).resolves.toBeUndefined();
+    await expect(
+      patientTreatmentPlanRepository.startSession({ ...input, tenantId: tenantB })
+    ).resolves.toBeUndefined();
+  });
+
+  it('should allow only one started Session of a Plan per Visit', async () => {
+    const { patient, plan, first, second } = await setup();
+    const visit = await createVisit(tenantA, patient.id, 'VST-START-3');
+
+    await patientTreatmentPlanRepository.startSession({
+      ...target(patient.id, plan.id, first.id),
+      visitId: visit.id,
+    });
+
+    await expect(
+      patientTreatmentPlanRepository.startSession({
+        ...target(patient.id, plan.id, second.id),
+        visitId: visit.id,
+      })
+    ).rejects.toMatchObject({
+      cause: expect.objectContaining({
+        code: '23505',
+        constraint: 'patient_treatment_plan_session_tenant_plan_started_visit_idx',
+      }),
+    });
+  });
+
+  it('should complete Sessions started in a completed Visit with the Visit completion time', async () => {
+    const { patient, plan, first, second } = await setup();
+    const completedAt = new Date('2026-11-10T06:00:00Z');
+    const visit = await createVisit(tenantA, patient.id, 'VST-START-4');
+    await patientTreatmentPlanRepository.startSession({
+      ...target(patient.id, plan.id, first.id),
+      visitId: visit.id,
+    });
+    await db
+      .update(visitTable)
+      .set({ status: 'COMPLETED', completedAt })
+      .where(eq(visitTable.id, visit.id));
+
+    await db.transaction((tx) =>
+      patientTreatmentPlanRepository.completeStartedSessionsForVisit(visit.id, tenantB, tx)
+    );
+    expect(await readSession(first.id)).toMatchObject({ completionStatus: 'PENDING' });
+
+    await db.transaction((tx) =>
+      patientTreatmentPlanRepository.completeStartedSessionsForVisit(visit.id, tenantA, tx)
+    );
+
+    expect(await readSession(first.id)).toMatchObject({
+      completionStatus: 'COMPLETED',
+      completionSource: 'VISIT',
+      completedVisitId: visit.id,
+      completedAt,
+      startedVisitId: visit.id,
+    });
+    expect(await readSession(second.id)).toMatchObject({ completionStatus: 'PENDING' });
+  });
+
+  it('should not complete started Sessions while the Visit is still active', async () => {
+    const { patient, plan, first } = await setup();
+    const visit = await createVisit(tenantA, patient.id, 'VST-START-5');
+    await patientTreatmentPlanRepository.startSession({
+      ...target(patient.id, plan.id, first.id),
+      visitId: visit.id,
+    });
+
+    await db.transaction((tx) =>
+      patientTreatmentPlanRepository.completeStartedSessionsForVisit(visit.id, tenantA, tx)
+    );
+
+    expect(await readSession(first.id)).toMatchObject({
+      completionStatus: 'PENDING',
+      startedVisitId: visit.id,
+    });
+  });
+
+  it('should release started Sessions back to pending for a Tenant-scoped Visit', async () => {
+    const { patient, plan, first } = await setup();
+    const visit = await createVisit(tenantA, patient.id, 'VST-START-6');
+    await patientTreatmentPlanRepository.startSession({
+      ...target(patient.id, plan.id, first.id),
+      visitId: visit.id,
+    });
+
+    await db.transaction((tx) =>
+      patientTreatmentPlanRepository.releaseStartedSessionsForVisit(visit.id, tenantB, tx)
+    );
+    expect(await readSession(first.id)).toMatchObject({ startedVisitId: visit.id });
+
+    await db.transaction((tx) =>
+      patientTreatmentPlanRepository.releaseStartedSessionsForVisit(visit.id, tenantA, tx)
+    );
+
+    expect(await readSession(first.id)).toMatchObject({
+      completionStatus: 'PENDING',
+      startedVisitId: null,
+      startedAt: null,
+    });
+    const [current] = await patientTreatmentPlanRepository.getCurrentByPatientId(
+      patient.id,
+      tenantA
+    );
+    expect(current.sessions.find((session) => session.id === first.id)).toMatchObject({
+      isBookable: true,
+      unavailableReason: null,
+    });
+  });
+});

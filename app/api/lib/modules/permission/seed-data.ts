@@ -173,6 +173,8 @@ const permissionGroups = [
     actions: [
       ['read', 'View Patient Treatment Plans and Sessions.'],
       ['assign', 'Assign Treatments to Patients and create Patient Treatment Plans.'],
+      ['update', 'Edit the plan of Patient Treatment Plan Sessions.'],
+      ['start', 'Start Patient Treatment Plan Sessions in a Visit.'],
     ],
   },
   {

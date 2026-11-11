@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQueryState } from 'nuqs';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -13,6 +13,7 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useInvoicesQuery } from '@/app/queries/billing/invoices/useInvoices';
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientChart';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
 import { useVisit } from '@/app/queries/visits/useVisit';
@@ -31,6 +32,7 @@ import { SignClinicalNoteDialog } from './_modals/sign-clinical-note-dialog';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
 import { AssignTreatmentPlanSheet } from './_sheets/assign-treatment-plan-sheet';
 import { DailyTreatmentSheet } from './_sheets/daily-treatment-sheet';
+import { PlanSessionSheet } from './_sheets/plan-session-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
 import { VisitCarePathway } from './visit-care-pathway';
 import { VisitPatientHeader } from './visit-patient-header';
@@ -51,7 +53,9 @@ const STEP_SECTIONS: Record<VisitWorkflowStepKey, string> = {
 export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const [captureParam, setCaptureParam] = useQueryState('capture');
   const [, setSectionParam] = useQueryState('section');
+  const [planSessionParam, setPlanSessionParam] = useQueryState('planSession', parseAsInteger);
   const { data: visit } = useVisit(visitId);
+  const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
   const chartQuery = usePatientChartQuery(visit.patient.id);
   const allergensQuery = useAllergensQuery({ limit: 100 });
   const invoicesQuery = useInvoicesQuery({ patientId: visit.patient.id, page: 1, limit: 999 });
@@ -70,6 +74,8 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const { data: canAssignPlan } = useHasPermission('patient-treatment-plan:assign');
   const { data: canReadPlan } = useHasPermission('patient-treatment-plan:read');
   const { data: canBookAppointment } = useHasPermission('appointment:create');
+  const { data: canUpdatePlanSession } = useHasPermission('patient-treatment-plan:update');
+  const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
 
   const chart = chartQuery.data;
   const allergenName = (id: number) =>
@@ -83,6 +89,9 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     draftNoteCount: visitNotes.filter((note) => note.status === 'draft').length,
     invoiceCount: invoices.length,
   };
+  const planSessionTarget = (plansQuery.data ?? [])
+    .flatMap((plan) => plan.sessions.map((session) => ({ plan, session })))
+    .find(({ session }) => session.id === planSessionParam);
   const outstanding = [
     ...(consultationDirty ? ['The consultation has unsaved changes.'] : []),
     ...visitOutstandingItems(workflow),
@@ -169,6 +178,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
             onAddNote={() => void setCaptureParam('nurse-note')}
             onDailyTreatment={() => void setCaptureParam('session')}
             onAssignPlan={() => void setCaptureParam('plan')}
+            onOpenPlanSession={(sessionId) => void setPlanSessionParam(sessionId)}
             onAddClinicalNote={() => void setCaptureParam('note')}
             onAddAllergy={() => void setCaptureParam('allergy')}
             onAddMedication={() => void setCaptureParam('medication')}
@@ -235,6 +245,19 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
         patientId={visit.patient.id}
         onClose={() => void setCaptureParam(null)}
       />
+
+      {planSessionTarget ? (
+        <PlanSessionSheet
+          key={planSessionTarget.session.id}
+          open
+          visit={visit}
+          plan={planSessionTarget.plan}
+          session={planSessionTarget.session}
+          canUpdate={Boolean(canUpdatePlanSession && canReadPlan)}
+          canStart={Boolean(canStartPlanSession && canReadPlan)}
+          onClose={() => void setPlanSessionParam(null)}
+        />
+      ) : null}
 
       {visit.treatmentSession ? (
         <DailyTreatmentSheet

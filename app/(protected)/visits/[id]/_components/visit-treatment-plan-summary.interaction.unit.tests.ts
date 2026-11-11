@@ -25,6 +25,7 @@ function plan(overrides: Partial<PatientTreatmentPlan> = {}) {
         label: 'Abhyanga',
         isReserved: true,
         completedVisitId: null,
+        startedVisitId: null,
         completionStatus: 'PENDING',
         reservedAppointment: { bookingNumber: 'APT-1001' },
       },
