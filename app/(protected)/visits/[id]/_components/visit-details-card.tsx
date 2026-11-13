@@ -11,6 +11,7 @@ import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
 import { useUpdateVisit } from '@/app/queries/visits/useUpdateVisit';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
@@ -25,7 +26,13 @@ type DetailsDraft = {
   treatmentSessionId: string;
 };
 
-export function VisitDetailsCard({ visit }: { visit: Visit }) {
+export function VisitDetailsCard({
+  visit,
+  embedded = false,
+}: {
+  visit: Visit;
+  embedded?: boolean;
+}) {
   const [draft, setDraft] = useState<DetailsDraft | null>(null);
   const { data: canUpdate } = useHasPermission('visit:update');
   const treatmentsQuery = useTreatmentsQuery({ page: 1, limit: 999 });
@@ -77,11 +84,13 @@ export function VisitDetailsCard({ visit }: { visit: Visit }) {
   }
 
   return (
-    <Card className="shadow-fluent-2 gap-4">
-      <CardHeader>
-        <CardTitle className="text-base">Visit details</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card className={cn('shadow-fluent-2 gap-4', embedded && 'gap-0 border-0 py-0 shadow-none')}>
+      {embedded ? null : (
+        <CardHeader>
+          <CardTitle className="text-base">Visit details</CardTitle>
+        </CardHeader>
+      )}
+      <CardContent className={cn('space-y-4', embedded && 'px-0')}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="visit-chief-complaint">Purpose of visit</FieldLabel>

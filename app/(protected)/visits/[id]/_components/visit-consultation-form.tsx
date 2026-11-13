@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { Check, CheckCircle2, Save } from 'lucide-react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { CheckCircle2, Save } from 'lucide-react';
+import { Controller, useForm, useWatch, type FieldErrors } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -18,7 +18,6 @@ import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Combobox,
   ComboboxContent,
@@ -31,7 +30,12 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 
-import { consultationSections, filledFieldCount } from '../_utils/consultation-sections';
+import {
+  filledFieldCount,
+  stepForField,
+  type ConsultationStep,
+  type ConsultationStepId,
+} from '../_utils/consultation-steps';
 import {
   consultationToSoap,
   doctorConsultationFormSchema,
@@ -39,6 +43,7 @@ import {
   type DoctorConsultationFormValues,
 } from '../_utils/doctor-consultation-note';
 import { SignConsultationDialog } from './_modals/sign-consultation-dialog';
+import { VisitStepShell } from './visit-step-shell';
 
 type NarrativeName = Exclude<
   keyof DoctorConsultationFormValues,
@@ -55,31 +60,8 @@ const PRAKRITI_SUGGESTIONS = [
   'Tridosha',
 ];
 
-function FormSection({
-  id,
-  number,
-  title,
-  description,
-  children,
-}: {
-  id: string;
-  number: number;
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <Card id={id} className="shadow-fluent-2 scroll-mt-4 gap-4 lg:scroll-mt-52">
-      <CardHeader>
-        <CardTitle className="text-base">
-          {number}. {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2">{children}</CardContent>
-    </Card>
-  );
-}
+/** Visit records shown in a step beside the note, such as Vital Signs or today's Session. */
+export type ConsultationStepSlots = Partial<Record<ConsultationStepId, ReactNode>>;
 
 export function VisitConsultationForm({
   visit,
@@ -88,6 +70,10 @@ export function VisitConsultationForm({
   noteId,
   initialValues,
   onDirtyChange,
+  steps,
+  stepId,
+  onStepChange,
+  slots = {},
 }: {
   visit: Visit;
   noteTypes: { id: number; name: string }[];
@@ -95,6 +81,10 @@ export function VisitConsultationForm({
   noteId: number | null;
   initialValues: DoctorConsultationFormValues | null;
   onDirtyChange: (dirty: boolean) => void;
+  steps: ConsultationStep[];
+  stepId: ConsultationStepId;
+  onStepChange: (id: ConsultationStepId) => void;
+  slots?: ConsultationStepSlots;
 }) {
   const showAyurveda = isAyurvedaBrand(useBrandLogoVariant());
   const form = useForm<DoctorConsultationFormValues>({
@@ -121,8 +111,16 @@ export function VisitConsultationForm({
     query: debouncedDiagnosisSearch || undefined,
     limit: 50,
   });
+  const askNoteType = defaultNoteTypeId === null && !initialValues;
   const saving = createNote.isPending || updateNote.isPending || signNote.isPending;
   const patientId = visit.patient.id;
+  function openFirstError(fieldErrors: FieldErrors<DoctorConsultationFormValues>) {
+    setSignOpen(false);
+    const target = Object.keys(fieldErrors)
+      .map((field) => stepForField(field, steps))
+      .find(Boolean);
+    if (target && target !== stepId) onStepChange(target);
+  }
 
   const dirtyRef = useRef(onDirtyChange);
   useEffect(() => {
@@ -166,7 +164,7 @@ export function VisitConsultationForm({
     } catch (error) {
       form.setError('root', { message: getApiErrors(error).join(' ') });
     }
-  });
+  }, openFirstError);
 
   const saveAndSign = form.handleSubmit(async (values) => {
     setSignOpen(false);
@@ -178,13 +176,13 @@ export function VisitConsultationForm({
     } catch (error) {
       form.setError('root', { message: getApiErrors(error).join(' ') });
     }
-  });
+  }, openFirstError);
 
   function narrative(name: NarrativeName, label: string, placeholder: string, wide = false) {
     const required = name === 'chiefComplaint';
 
     return (
-      <Field data-invalid={Boolean(errors[name])} className={wide ? 'md:col-span-2' : undefined}>
+      <Field data-invalid={Boolean(errors[name])} className={wide ? 'md:col-span-full' : undefined}>
         <FieldLabel htmlFor={`consult-${name}`}>
           {label}
           {required ? (
@@ -218,111 +216,124 @@ export function VisitConsultationForm({
   const diagnosisOptions = (diagnosisCodes.data?.data ?? []).map(
     (item) => `${item.code} — ${item.title}`
   );
-  const sections = consultationSections(showAyurveda);
-  const sectionNumber = (id: string) => sections.findIndex((section) => section.id === id) + 1;
   const options =
     selectedDiagnosis && !diagnosisOptions.includes(selectedDiagnosis)
       ? [selectedDiagnosis, ...diagnosisOptions]
       : diagnosisOptions;
+  const saveStatus = isDirty
+    ? 'Unsaved changes'
+    : savedAt
+      ? `Draft saved at ${savedAt.toLocaleTimeString(undefined, {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`
+      : savedNoteId
+        ? 'Draft saved'
+        : 'Not saved yet';
 
-  return (
-    <form
-      className="space-y-4"
-      aria-label="Doctor consultation"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void saveDraft();
-      }}
-    >
-      {errors.root ? (
-        <Alert variant="destructive">
-          <AlertTitle>Could not save consultation</AlertTitle>
-          <AlertDescription>{errors.root.message}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      <nav
-        aria-label="Consultation sections"
-        className="acrylic shadow-fluent-2 z-[5] flex gap-1 overflow-x-auto rounded-lg border p-1 lg:sticky lg:top-38"
-      >
-        {sections.map((section, index) => {
-          const filled = filledFieldCount(section, values);
-
-          return (
-            <a
-              key={section.id}
-              href={`#${section.id}`}
-              className="hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring/50 flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm outline-none focus-visible:ring-3"
-            >
-              <span className="font-medium">
-                {index + 1}. {section.title}
-              </span>
-              <span className="text-muted-foreground flex items-center gap-0.5 text-xs tabular-nums">
-                {filled > 0 ? <Check className="size-3" aria-hidden="true" /> : null}
-                {filled}/{section.fields.length}
-              </span>
-            </a>
-          );
-        })}
-      </nav>
-
-      <FormSection
-        id="consult-presenting"
-        number={sectionNumber('consult-presenting')}
-        title="Presenting complaint"
-        description="Why the Patient is here and how the condition has developed."
-      >
-        <Field data-invalid={Boolean(errors.noteTypeId)}>
-          <FieldLabel htmlFor="consult-note-type">
-            Clinical Note Type
-            <span aria-hidden="true" className="text-destructive">
-              {' '}
-              *
-            </span>
-          </FieldLabel>
-          <NativeSelect
-            id="consult-note-type"
-            className="w-full"
-            aria-required
-            aria-invalid={Boolean(errors.noteTypeId)}
-            {...form.register('noteTypeId')}
-          >
-            <NativeSelectOption value="">Select a note type</NativeSelectOption>
-            {noteTypes.map((type) => (
-              <NativeSelectOption key={type.id} value={String(type.id)}>
-                {type.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          {errors.noteTypeId ? <FieldError>{errors.noteTypeId.message}</FieldError> : null}
-        </Field>
-        {narrative('chiefComplaint', 'Chief complaint', 'Main reason for this Visit', true)}
-        {narrative('hpi', 'Present condition / HPI', 'Onset, duration, severity, triggers', true)}
-      </FormSection>
-
-      <FormSection
-        id="consult-history"
-        number={sectionNumber('consult-history')}
-        title="History"
-        description="Leave blank anything that is not relevant."
-      >
-        {narrative('medicalHistory', 'Past medical history', 'Known conditions')}
-        {narrative('surgicalHistory', 'Past surgical history', 'Operations and procedures')}
-        {narrative('familySocialHistory', 'Family / social history', 'Family, work, habits', true)}
-      </FormSection>
-
-      <FormSection
-        id="consult-examination"
-        number={sectionNumber('consult-examination')}
-        title="Examination and diagnosis"
-        description="Findings today and the working diagnosis."
-      >
-        {narrative('examination', 'Examination / red flags', 'Findings and any red flags', true)}
+  const content: Record<ConsultationStepId, ReactNode> = {
+    subjective: (
+      <div className="space-y-4">
+        {slots.subjective}
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* The note is saved as a Consultation; only a tenant without that type must choose. */}
+          {askNoteType ? (
+            <Field data-invalid={Boolean(errors.noteTypeId)}>
+              <FieldLabel htmlFor="consult-note-type">
+                Clinical Note Type
+                <span aria-hidden="true" className="text-destructive">
+                  {' '}
+                  *
+                </span>
+              </FieldLabel>
+              <NativeSelect
+                id="consult-note-type"
+                className="w-full"
+                aria-required
+                aria-invalid={Boolean(errors.noteTypeId)}
+                {...form.register('noteTypeId')}
+              >
+                <NativeSelectOption value="">Select a note type</NativeSelectOption>
+                {noteTypes.map((type) => (
+                  <NativeSelectOption key={type.id} value={String(type.id)}>
+                    {type.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              {errors.noteTypeId ? <FieldError>{errors.noteTypeId.message}</FieldError> : null}
+            </Field>
+          ) : null}
+          {narrative('chiefComplaint', 'Chief complaint', 'Main reason for this Visit', true)}
+          {narrative('hpi', 'Present condition / HPI', 'Onset, duration, severity, triggers', true)}
+          {narrative('medicalHistory', 'Past medical history', 'Known conditions')}
+          {narrative('surgicalHistory', 'Past surgical history', 'Operations and procedures')}
+          {narrative('familySocialHistory', 'Family / social history', 'Family, work, habits')}
+        </div>
+      </div>
+    ),
+    objective: (
+      <div className="space-y-4">
+        {slots.objective}
+        <div className="grid gap-4 md:grid-cols-2">
+          {narrative('examination', 'Examination / red flags', 'Findings and any red flags', true)}
+          {showAyurveda ? (
+            <>
+              <Field data-invalid={Boolean(errors.prakriti)}>
+                <FieldLabel htmlFor="consult-prakriti">Prakriti</FieldLabel>
+                <Input
+                  id="consult-prakriti"
+                  placeholder="Constitution"
+                  aria-invalid={Boolean(errors.prakriti)}
+                  {...form.register('prakriti')}
+                />
+                <div
+                  className="flex flex-wrap gap-1"
+                  role="group"
+                  aria-label="Prakriti suggestions"
+                >
+                  {PRAKRITI_SUGGESTIONS.map((suggestion) => (
+                    <Button
+                      key={suggestion}
+                      type="button"
+                      size="xs"
+                      variant={values.prakriti === suggestion ? 'default' : 'outline'}
+                      aria-pressed={values.prakriti === suggestion}
+                      onClick={() =>
+                        form.setValue('prakriti', suggestion, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      {suggestion}
+                    </Button>
+                  ))}
+                </div>
+                {errors.prakriti ? <FieldError>{errors.prakriti.message}</FieldError> : null}
+              </Field>
+              <Field data-invalid={Boolean(errors.vikriti)}>
+                <FieldLabel htmlFor="consult-vikriti">Vikriti / body condition</FieldLabel>
+                <Input
+                  id="consult-vikriti"
+                  placeholder="Current imbalance"
+                  aria-invalid={Boolean(errors.vikriti)}
+                  {...form.register('vikriti')}
+                />
+                {errors.vikriti ? <FieldError>{errors.vikriti.message}</FieldError> : null}
+              </Field>
+            </>
+          ) : null}
+        </div>
+      </div>
+    ),
+    assessment: (
+      <div className="grid gap-4">
+        {slots.assessment}
         <Controller
           control={form.control}
           name="modernDiagnosis"
           render={({ field }) => (
-            <Field className="md:col-span-2">
+            <Field>
               <FieldLabel htmlFor="consult-diagnosis-code">Modern diagnosis code</FieldLabel>
               <Combobox<string>
                 items={options}
@@ -358,90 +369,71 @@ export function VisitConsultationForm({
             </Field>
           )}
         />
-      </FormSection>
-
-      {showAyurveda ? (
-        <FormSection
-          id="consult-ayurveda"
-          number={sectionNumber('consult-ayurveda')}
-          title="Ayurvedic assessment"
-          description="Clinician-entered narrative until a validated terminology catalogue is configured."
-        >
-          <Field data-invalid={Boolean(errors.prakriti)}>
-            <FieldLabel htmlFor="consult-prakriti">Prakriti</FieldLabel>
-            <Input
-              id="consult-prakriti"
-              placeholder="Constitution"
-              aria-invalid={Boolean(errors.prakriti)}
-              {...form.register('prakriti')}
-            />
-            <div className="flex flex-wrap gap-1" role="group" aria-label="Prakriti suggestions">
-              {PRAKRITI_SUGGESTIONS.map((suggestion) => (
-                <Button
-                  key={suggestion}
-                  type="button"
-                  size="xs"
-                  variant="outline"
-                  onClick={() =>
-                    form.setValue('prakriti', suggestion, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                >
-                  {suggestion}
-                </Button>
-              ))}
-            </div>
-            {errors.prakriti ? <FieldError>{errors.prakriti.message}</FieldError> : null}
-          </Field>
-          <Field data-invalid={Boolean(errors.vikriti)}>
-            <FieldLabel htmlFor="consult-vikriti">Vikriti / body condition</FieldLabel>
-            <Input
-              id="consult-vikriti"
-              placeholder="Current imbalance"
-              aria-invalid={Boolean(errors.vikriti)}
-              {...form.register('vikriti')}
-            />
-            {errors.vikriti ? <FieldError>{errors.vikriti.message}</FieldError> : null}
-          </Field>
-          {narrative('ayurvedicDiagnosis', 'Ayurvedic diagnosis', 'Roga and dosha involved', true)}
-        </FormSection>
-      ) : null}
-
-      <FormSection
-        id="consult-plan"
-        number={sectionNumber('consult-plan')}
-        title="Plan"
-        description="What the care team must watch for during treatment."
-      >
-        {narrative('precautions', 'Treatment precautions', 'Precautions and advice', true)}
-      </FormSection>
-
-      <div className="acrylic shadow-fluent-8 sticky bottom-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
-        <p className="text-muted-foreground text-sm" role="status">
-          {isDirty
-            ? 'Unsaved changes'
-            : savedAt
-              ? `Draft saved at ${savedAt.toLocaleTimeString(undefined, {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}`
-              : savedNoteId
-                ? 'Draft saved'
-                : 'Not saved yet'}
+        {showAyurveda
+          ? narrative('ayurvedicDiagnosis', 'Ayurvedic diagnosis', 'Roga and dosha involved')
+          : null}
+      </div>
+    ),
+    plan: (
+      <div className="space-y-4">
+        <div className="grid gap-4">
+          {narrative('precautions', 'Treatment precautions', 'Precautions and advice')}
+        </div>
+        {slots.plan}
+      </div>
+    ),
+    review: (
+      <div className="space-y-4">
+        <p className="text-sm">
+          Check each step, then save and sign. Signing locks the consultation; add anything later as
+          a separate Clinical Note.
         </p>
-        <div className="flex flex-wrap gap-2">
+        {slots.review}
+      </div>
+    ),
+  };
+
+  return (
+    <form
+      className="flex flex-col xl:h-full xl:min-h-0"
+      aria-label="Doctor consultation"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void saveDraft();
+      }}
+    >
+      <VisitStepShell
+        steps={steps}
+        current={stepId}
+        onSelect={onStepChange}
+        filled={(step) => filledFieldCount(step, values)}
+        renderStep={(id) => content[id]}
+        alert={
+          errors.root ? (
+            <Alert variant="destructive">
+              <AlertTitle>Could not save consultation</AlertTitle>
+              <AlertDescription>{errors.root.message}</AlertDescription>
+            </Alert>
+          ) : null
+        }
+        status={
+          <p className="text-muted-foreground text-sm" role="status">
+            {saveStatus}
+          </p>
+        }
+        actions={
           <Button type="submit" variant="outline" disabled={saving}>
             <Save className="size-4" />
             {createNote.isPending || updateNote.isPending ? 'Saving…' : 'Save draft'}
           </Button>
+        }
+        finalAction={
           <Button type="button" disabled={saving} onClick={() => setSignOpen(true)}>
             <CheckCircle2 className="size-4" />
             {signNote.isPending ? 'Signing…' : 'Save and sign'}
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <SignConsultationDialog
         open={signOpen}

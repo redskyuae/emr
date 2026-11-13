@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createElement } from 'react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import { createElement, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
@@ -103,26 +104,53 @@ function note(overrides: Partial<ClinicalNote>) {
 }
 
 function renderPanel(
-  props: { notes?: ClinicalNote[]; visit?: Visit; canStart?: boolean } = {},
+  props: {
+    notes?: ClinicalNote[];
+    visit?: Visit;
+    canStart?: boolean;
+    onStart?: () => void;
+    slots?: Record<string, ReactNode>;
+  } = {},
   variant: BrandLogoVariant = 'dhathri-gram'
 ) {
   mocks.brand.variant = variant;
 
   return render(
-    createElement(VisitConsultationPanel, {
-      visit,
-      notes: [],
-      chartLoading: false,
-      chartError: false,
-      canCreateNote: true,
-      canStart: false,
-      starting: false,
-      onStart: vi.fn(),
-      onAddNote: vi.fn(),
-      onDirtyChange: vi.fn(),
-      ...props,
-    })
+    createElement(
+      NuqsTestingAdapter,
+      null,
+      createElement(VisitConsultationPanel, {
+        visit,
+        notes: [],
+        chartLoading: false,
+        chartError: false,
+        canCreateNote: true,
+        canStart: false,
+        starting: false,
+        onStart: vi.fn(),
+        onAddNote: vi.fn(),
+        onDirtyChange: vi.fn(),
+        ...props,
+      })
+    )
   );
+}
+
+function stepButton(name: RegExp | string) {
+  return within(screen.getByRole('navigation', { name: 'Consultation steps' })).getByRole(
+    'button',
+    { name }
+  );
+}
+
+function openStep(name: RegExp | string) {
+  fireEvent.click(stepButton(name));
+}
+
+function currentStep() {
+  return screen
+    .getByRole('navigation', { name: 'Consultation steps' })
+    .querySelector('[aria-current="step"]')?.textContent;
 }
 
 beforeEach(() => {
@@ -193,6 +221,7 @@ describe('Visit consultation', () => {
     fireEvent.change(screen.getByLabelText('Chief complaint'), {
       target: { value: 'Worse today' },
     });
+    openStep(/Review & complete/);
     fireEvent.click(screen.getByRole('button', { name: 'Save and sign' }));
     const dialog = await screen.findByRole('alertdialog');
     fireEvent.click(
@@ -212,6 +241,7 @@ describe('Visit consultation', () => {
     mocks.update.mockRejectedValue(new Error('Clinical note 20 is signed and cannot be edited.'));
     renderPanel({ notes: [note({})] });
 
+    openStep(/Review & complete/);
     fireEvent.click(screen.getByRole('button', { name: 'Save and sign' }));
     const dialog = await screen.findByRole('alertdialog');
     fireEvent.click(
@@ -250,28 +280,25 @@ describe('Visit consultation', () => {
     expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
   });
 
-  it('should default to the Consultation type and save the type the Doctor picks', async () => {
+  it('should save the note as a Consultation without asking for a type', async () => {
     renderPanel();
 
-    const noteType = screen.getByLabelText(/Clinical Note Type/) as HTMLSelectElement;
-    expect(noteType.value).toBe('5');
-
-    fireEvent.change(noteType, { target: { value: '6' } });
+    expect(screen.queryByLabelText(/Clinical Note Type/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
     await waitFor(() => expect(mocks.create).toHaveBeenCalledOnce());
-    expect(mocks.create.mock.calls[0][0]).toMatchObject({ body: { noteTypeId: 6 } });
+    expect(mocks.create.mock.calls[0][0]).toMatchObject({ body: { noteTypeId: 5 } });
   });
 
-  it('should resume a form draft saved under another Clinical Note Type', async () => {
+  it('should keep the type of a form draft saved under another Clinical Note Type', async () => {
     renderPanel({ notes: [note({ noteTypeId: 6 })] });
 
-    expect((screen.getByLabelText(/Clinical Note Type/) as HTMLSelectElement).value).toBe('6');
-
+    expect(screen.queryByLabelText(/Clinical Note Type/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
     await waitFor(() => expect(mocks.update).toHaveBeenCalledOnce());
     expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.update.mock.calls[0][0]).toMatchObject({ body: { noteTypeId: 6 } });
   });
 
   it('should ask for a type instead of guessing when there is no Consultation type', async () => {
@@ -286,20 +313,7 @@ describe('Visit consultation', () => {
 
   it('should ask to start the consultation while the Patient is only checked in', () => {
     const onStart = vi.fn();
-    render(
-      createElement(VisitConsultationPanel, {
-        visit: { ...visit, status: 'CHECKED_IN' },
-        notes: [],
-        chartLoading: false,
-        chartError: false,
-        canCreateNote: true,
-        canStart: true,
-        starting: false,
-        onStart,
-        onAddNote: vi.fn(),
-        onDirtyChange: vi.fn(),
-      })
-    );
+    renderPanel({ visit: { ...visit, status: 'CHECKED_IN' }, canStart: true, onStart });
 
     fireEvent.click(screen.getByRole('button', { name: 'Start consultation' }));
 
@@ -347,26 +361,106 @@ describe('Visit consultation', () => {
     expect(screen.queryByText('Visit summary')).toBeNull();
   });
 
-  it('should link to every section and show how many fields are filled', () => {
+  it('should move through the steps with Continue and Back', () => {
     renderPanel();
 
-    const presenting = screen.getByRole('link', { name: /Presenting complaint/ });
+    expect(currentStep()).toContain('Subjective');
+    expect(screen.queryByRole('button', { name: 'Save and sign' })).toBeNull();
 
-    expect(presenting.getAttribute('href')).toBe('#consult-presenting');
-    expect(presenting.textContent).toContain('1/2');
-    expect(screen.getByRole('link', { name: /History/ }).textContent).toContain('0/3');
-    expect(document.getElementById('consult-plan')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Continue to Objective/ }));
+    expect(currentStep()).toContain('Objective');
+    expect(screen.getByRole('group', { name: 'Objective' }).hidden).toBe(false);
+    expect(
+      (document.querySelector('[aria-labelledby="consult-step-subjective"]') as HTMLElement).hidden
+    ).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Subjective' }));
+    expect(currentStep()).toContain('Subjective');
   });
 
-  it('should show the Ayurvedic assessment only on Ayurveda deployments', () => {
+  it('should offer signing only on the last step', () => {
+    renderPanel();
+
+    openStep(/Review & complete/);
+
+    expect(screen.getByRole('button', { name: 'Save and sign' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Continue to/ })).toBeNull();
+  });
+
+  it('should show how many fields each step has filled', () => {
+    renderPanel();
+
+    expect(stepButton(/Subjective/).textContent).toContain('1/5');
+    expect(stepButton(/Objective/).textContent).toContain('0/3');
+  });
+
+  it('should open the step that holds the first error when saving fails validation', async () => {
+    renderPanel();
+
+    fireEvent.change(screen.getByLabelText('Chief complaint'), { target: { value: '' } });
+    openStep(/Assessment/);
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    await screen.findByText('Chief complaint is required.');
+    expect(currentStep()).toContain('Subjective');
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it('should show the Step slots the Visit passes in', () => {
+    const panel = createElement(VisitConsultationPanel, {
+      visit,
+      notes: [],
+      chartLoading: false,
+      chartError: false,
+      canCreateNote: true,
+      canStart: false,
+      starting: false,
+      onStart: vi.fn(),
+      onAddNote: vi.fn(),
+      onDirtyChange: vi.fn(),
+      slots: { plan: createElement('p', null, 'Session 5 card') },
+    });
+    render(
+      createElement(
+        NuqsTestingAdapter as (props: { searchParams: string }) => ReactNode,
+        { searchParams: '?step=plan' },
+        panel
+      )
+    );
+
+    expect(currentStep()).toContain('Plan & Session');
+    expect(screen.getByText('Session 5 card')).toBeTruthy();
+  });
+
+  it('should keep the Visit records in their steps on a closed Visit', () => {
+    renderPanel({
+      visit: { ...visit, status: 'COMPLETED' },
+      notes: [note({ status: 'signed' })],
+      slots: {
+        subjective: createElement('p', null, 'Visit details card'),
+        review: createElement('p', null, 'Billing for this Visit'),
+      },
+    });
+
+    expect(screen.queryByRole('button', { name: 'Save draft' })).toBeNull();
+    expect(screen.getByText('Visit details card')).toBeTruthy();
+    expect(screen.getByText('Signed')).toBeTruthy();
+
+    openStep(/Review & complete/);
+    expect(currentStep()).toContain('Review & complete');
+    expect(screen.getByText('Billing for this Visit')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Save and sign' })).toBeNull();
+  });
+
+  it('should show the Ayurvedic fields only on Ayurveda deployments', () => {
     renderPanel({}, 'dhathri-ayurvedic');
-    expect(screen.getByRole('link', { name: /Ayurvedic assessment/ })).toBeTruthy();
     expect(screen.getByLabelText('Prakriti')).toBeTruthy();
+    expect(screen.getByLabelText('Ayurvedic diagnosis')).toBeTruthy();
     cleanup();
 
     renderPanel({}, 'none');
-    expect(screen.queryByRole('link', { name: /Ayurvedic assessment/ })).toBeNull();
     expect(screen.queryByLabelText('Prakriti')).toBeNull();
+    expect(screen.queryByLabelText('Ayurvedic diagnosis')).toBeNull();
     expect(screen.getByLabelText('Chief complaint')).toBeTruthy();
   });
 });

@@ -49,6 +49,8 @@ export const visit = pgTable(
     queueToken: integer('queue_token').notNull(),
     chiefComplaint: varchar('chief_complaint', { length: 500 }),
     remarks: text(),
+    // The Visit's number in the source system it was imported from; null for Visits created here.
+    legacyVisitNumber: text('legacy_visit_number'),
     checkedInAt: timestamp('checked_in_at', { withTimezone: true }).notNull().defaultNow(),
     consultationStartedAt: timestamp('consultation_started_at', { withTimezone: true }),
     completedAt: timestamp('completed_at', { withTimezone: true }),

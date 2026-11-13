@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
@@ -20,6 +21,7 @@ import {
 } from '@/app/db/schema/patient-treatment-plan';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
 import { treatment as treatmentTable } from '@/app/db/schema/treatment';
+import { visit as visitTable } from '@/app/db/schema/visit';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import { admitSourceRepository } from '../../admit-source/repository/admit-source-repository';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
@@ -1138,6 +1140,76 @@ describe('Visit repository', () => {
       expect(result.data[0].visitDate).toBe('17-07-2026');
     });
 
+    it('should filter by an inclusive date range ordered most recent first', async () => {
+      const patients = await Promise.all(
+        ['Bilal', 'Chitra', 'Dev'].map((name) => createPatient(tenantA, name))
+      );
+      const dates = ['2026-07-10', '2026-07-12', '2026-07-14'];
+
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { visitDate: '2026-07-09' })
+      );
+      for (const [index, visitDate] of dates.entries()) {
+        await visitRepository.checkInVisit(
+          checkInData(tenantA, fixturesA, { patientId: patients[index], visitDate })
+        );
+      }
+
+      const result = await visitRepository.getVisits({
+        tenantId: tenantA,
+        fromDate: '2026-07-10',
+        toDate: '2026-07-14',
+      });
+
+      expect(result.total).toBe(3);
+      expect(result.data.map((visit) => visit.visitDate)).toEqual([
+        '14-07-2026',
+        '12-07-2026',
+        '10-07-2026',
+      ]);
+      await expect(
+        visitRepository.getVisits({ tenantId: tenantA, fromDate: '2026-07-13' })
+      ).resolves.toMatchObject({ total: 1 });
+      await expect(
+        visitRepository.getVisits({ tenantId: tenantA, toDate: '2026-07-10' })
+      ).resolves.toMatchObject({ total: 2 });
+    });
+
+    it('should not leak another tenant visits into a date range', async () => {
+      const fixturesB = await createTenantFixtures(tenantB);
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      await visitRepository.checkInVisit(checkInData(tenantB, fixturesB));
+
+      const result = await visitRepository.getVisits({
+        tenantId: tenantA,
+        fromDate: '2026-07-01',
+        toDate: '2026-07-31',
+      });
+
+      expect(result.total).toBe(1);
+      expect(result.data[0].tenantId).toBe(tenantA);
+    });
+
+    it('should filter by Visit Type', async () => {
+      const [followUp] = await db
+        .insert(visitTypeTable)
+        .values({ tenantId: tenantA, name: 'Follow-up', code: 'FUP' })
+        .returning({ id: visitTypeTable.id });
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: secondPatient, visitTypeId: followUp.id })
+      );
+
+      const result = await visitRepository.getVisits({
+        tenantId: tenantA,
+        visitTypeId: followUp.id,
+      });
+
+      expect(result.total).toBe(1);
+      expect(result.data[0].visitType.code).toBe('FUP');
+    });
+
     it('should filter by doctor, status and patient', async () => {
       const otherDoctor = await createDoctor(tenantA, 'Dr Iyer');
       const secondPatient = await createPatient(tenantA, 'Bilal');
@@ -1159,7 +1231,7 @@ describe('Visit repository', () => {
       ).resolves.toMatchObject({ total: 1 });
     });
 
-    it('should search by visit number, mrn and patient name', async () => {
+    it('should search by visit number, mrn, phone and patient name', async () => {
       await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
 
       await expect(
@@ -1172,8 +1244,28 @@ describe('Visit repository', () => {
         visitRepository.getVisits({ tenantId: tenantA, query: 'asha' })
       ).resolves.toMatchObject({ total: 1 });
       await expect(
+        visitRepository.getVisits({ tenantId: tenantA, query: '9876543210' })
+      ).resolves.toMatchObject({ total: 1 });
+      await expect(
+        visitRepository.getVisits({ tenantId: tenantA, query: 'asha rao' })
+      ).resolves.toMatchObject({ total: 1 });
+      await expect(
         visitRepository.getVisits({ tenantId: tenantA, query: 'nobody' })
       ).resolves.toMatchObject({ total: 0 });
+    });
+
+    it('should search an imported visit by its legacy visit number', async () => {
+      const created = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      if (!created.success) throw new Error('check-in failed');
+      await db
+        .update(visitTable)
+        .set({ legacyVisitNumber: '1453' })
+        .where(eq(visitTable.id, created.data.id));
+
+      const result = await visitRepository.getVisits({ tenantId: tenantA, query: '1453' });
+
+      expect(result.total).toBe(1);
+      expect(result.data[0].legacyVisitNumber).toBe('1453');
     });
 
     it('should exclude soft-deleted visits from the list', async () => {
@@ -1297,5 +1389,68 @@ describe('Visit repository started Patient Treatment Plan Sessions', () => {
       startedVisitId: null,
       completionStatus: 'PENDING',
     });
+  });
+});
+
+describe('Visit repository legacy Visit number', () => {
+  let fixtures: TenantFixtures;
+
+  beforeEach(async () => {
+    mrnSequence = 0;
+    fixtures = await createTenantFixtures(tenantA);
+  });
+
+  async function checkIn(remarks: string, legacyVisitNumber: string | null = null) {
+    const created = await visitRepository.checkInVisit(checkInData(tenantA, fixtures, { remarks }));
+    if (!created.success) throw new Error(created.outcome);
+    await db
+      .update(visitTable)
+      .set({ legacyVisitNumber, status: 'COMPLETED' })
+      .where(eq(visitTable.id, created.data.id));
+    return created.data.id;
+  }
+
+  async function executeMigration() {
+    const migration = await readFile(
+      new URL('../../../../../db/drizzle/0074_visit_legacy_visit_number.sql', import.meta.url),
+      'utf8'
+    );
+
+    for (const statement of migration.split('--> statement-breakpoint')) {
+      if (statement.trim()) await db.execute(sql.raw(statement));
+    }
+  }
+
+  it('should leave the legacy Visit number empty for a Visit checked in here', async () => {
+    const created = await visitRepository.checkInVisit(checkInData(tenantA, fixtures));
+    if (!created.success) throw new Error(created.outcome);
+
+    expect(created.data.legacyVisitNumber).toBeNull();
+  });
+
+  it('should return the legacy Visit number of an imported Visit', async () => {
+    const id = await checkIn('Imported', '1453');
+
+    await expect(visitRepository.getVisitById(id, tenantA)).resolves.toMatchObject({
+      legacyVisitNumber: '1453',
+    });
+  });
+
+  it('should backfill the legacy Visit number from imported remarks idempotently', async () => {
+    const imported = await checkIn('Source visit 1453. Treatments: DAMC325 s1 completed');
+    const bare = await checkIn('Source visit 1465');
+    const local = await checkIn('Referred by GP; see Source visit 9 notes');
+    const kept = await checkIn('Source visit 2001', '1999');
+
+    await executeMigration();
+    await executeMigration();
+
+    const numbers = await Promise.all(
+      [imported, bare, local, kept].map(async (id) => {
+        const visit = await visitRepository.getVisitById(id, tenantA);
+        return visit?.legacyVisitNumber;
+      })
+    );
+    expect(numbers).toEqual(['1453', '1465', null, '1999']);
   });
 });

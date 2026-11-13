@@ -45,6 +45,7 @@ function renderCard(props: Partial<Parameters<typeof PatientTreatmentsCard>[0]> 
       loading: false,
       error: false,
       onRetry: vi.fn(),
+      linkedBookingNumber: null,
       ...props,
     })
   );
@@ -72,6 +73,13 @@ describe('Patient Treatments card', () => {
 
     expect(screen.getByText('Next: Session 3 · Abhyanga')).toBeTruthy();
     expect(screen.getByText('Booked · APT-1001')).toBeTruthy();
+    expect(screen.queryByText('This Visit')).toBeNull();
+  });
+
+  it('should mark the Session the Appointment being checked in fulfils', () => {
+    renderCard({ linkedBookingNumber: 'APT-1001' });
+
+    expect(screen.getByText('This Visit')).toBeTruthy();
   });
 
   it('should show an empty state when the Patient has no Treatment Plans', () => {

@@ -1,94 +1,82 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
+function SectionHeadingSkeleton() {
+  return (
+    <div className="flex items-center gap-3">
+      <Skeleton className="size-10 rounded-lg" />
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-3 w-64 max-w-full" />
+      </div>
+    </div>
+  );
+}
+
 export default function CreateVisitLoader() {
   return (
-    <div className="space-y-4" aria-label="Loading Create Visit options">
-      <div className="flex items-center justify-between gap-4">
-        <Skeleton className="h-9 w-28" />
-        <Skeleton className="h-9 w-64" />
-      </div>
-
-      <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Skeleton className="h-7 w-full max-w-44" />
-          <Skeleton className="h-7 w-full max-w-44" />
+    <div className="space-y-4 pb-28" aria-label="Loading Create Visit options">
+      <div className="bg-card shadow-fluent-2 flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-20" />
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-36" />
         </div>
-        <Skeleton className="h-2 w-full" />
+        <div className="flex items-center gap-3">
+          {[0, 1, 2].map((step) => (
+            <div key={step} className="flex items-center gap-2">
+              <Skeleton className="size-7 rounded-full" />
+              <Skeleton className="h-4 w-14" />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">
-          {[0, 1, 2].map((section) => (
-            <div key={section} className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-9 rounded-lg" />
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-40" />
-                  <Skeleton className="h-3 w-64" />
+          <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <SectionHeadingSkeleton />
+              <Skeleton className="h-9 w-72 max-w-full" />
+            </div>
+            <Skeleton className="h-10 w-full" />
+            <div className="overflow-hidden rounded-xl border">
+              <div className="flex items-center gap-4 border-b p-4">
+                <Skeleton className="size-14 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-4 w-72 max-w-full" />
                 </div>
               </div>
-              {section === 0 ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-9 w-96 max-w-full" />
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                  <div className="space-y-1 rounded-lg border p-1">
-                    {[0, 1, 2].map((row) => (
-                      <div key={row} className="flex items-center gap-3 px-3 py-2">
-                        <Skeleton className="size-4 rounded-full" />
-                        <div className="flex-1 space-y-2">
-                          <Skeleton className="h-4 w-48 max-w-full" />
-                          <Skeleton className="h-3 w-64 max-w-full" />
-                        </div>
-                        <Skeleton className="h-5 w-16 rounded-full" />
-                      </div>
-                    ))}
+              <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[0, 1, 2, 3, 4, 5].map((item) => (
+                  <div key={item} className="space-y-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-4 w-32" />
                   </div>
-                </div>
-              ) : null}
-              {section === 1 ? (
-                <div className="space-y-4">
-                  <div className="space-y-2 rounded-md border p-3">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-5 w-40" />
-                    <Skeleton className="h-3 w-64 max-w-full" />
-                  </div>
-                  <Skeleton className="h-32 w-full" />
-                  <Skeleton className="h-32 w-full" />
-                </div>
-              ) : null}
-              {section === 2 ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-4 w-80 max-w-full" />
-                </div>
-              ) : null}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
+                ))}
               </div>
             </div>
-          ))}
+          </div>
         </div>
 
-        <div className="space-y-4">
-          {[
-            'Loading selected Patient',
-            'Loading selected Appointment',
-            'Loading Patient Treatment Plans',
-          ].map((label) => (
-            <div
-              key={label}
-              className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4"
-              aria-label={label}
-            >
-              <Skeleton className="h-5 w-36" />
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          ))}
+        <div
+          className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4"
+          aria-label="Loading Patient Treatment Plans"
+        >
+          <SectionHeadingSkeleton />
+          <Skeleton className="h-28 w-full rounded-lg" />
+          <Skeleton className="h-28 w-full rounded-lg" />
+        </div>
+      </div>
+
+      <div className="bg-card shadow-fluent-16 fixed right-4 bottom-4 left-4 z-20 flex items-center justify-between gap-3 rounded-xl border p-3 lg:left-[calc(var(--sidebar-width)+1rem)]">
+        <div className="flex gap-2">
+          <Skeleton className="h-6 w-28 rounded-full" />
+          <Skeleton className="h-6 w-40 rounded-full" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-36" />
         </div>
       </div>
     </div>

@@ -48,17 +48,36 @@ borders, icons, and badges; reserve solid primary for the main action. Status te
 accompany color. Selected resources use blue while their availability status remains labeled.
 Resource option cards use equal grid tracks and retain all details when text wraps.
 
+#### Visit step accents
+
+The Visit workspace gives each consultation step one accent so the Doctor can tell where they are
+at a glance. The accent tints the step's nav item, its heading icon and the stripe on top of the
+step pane, and the matching sections of the Patient context pane. It is identity, not status, so
+labels and icons always carry the meaning.
+
+| Step              | Token         | Why                                            |
+| ----------------- | ------------- | ---------------------------------------------- |
+| Subjective        | `--primary`   | The Consultation itself                        |
+| Objective         | `--chart-4`   | Teal for Vital Signs and examination           |
+| Assessment        | `--pop`       | The one permitted second accent, for diagnosis |
+| Plan & Session    | `--procedure` | Treatment functionality                        |
+| Review & complete | `--success`   | Completion                                     |
+
+`--warning` and `--destructive` stay reserved for alerts (Allergies tint destructive only when the
+Patient has an active allergy).
+
 ### Typography
 
-| Role     | Font                                       | Tailwind                              |
-| -------- | ------------------------------------------ | ------------------------------------- |
-| Headings | Urbanist                                   | `font-heading` (automatic on `h1–h4`) |
-| Body/UI  | Urbanist                                   | `font-sans` (default)                 |
-| Data     | Geist Mono — codes, IDs, timestamps, slugs | `font-mono`                           |
+| Role     | Font                                                      | Tailwind                              |
+| -------- | --------------------------------------------------------- | ------------------------------------- |
+| Headings | Urbanist                                                  | `font-heading` (automatic on `h1–h4`) |
+| Body/UI  | Urbanist                                                  | `font-sans` (default)                 |
+| Data     | Urbanist, tabular figures — codes, IDs, timestamps, slugs | `font-mono`                           |
 
-Urbanist is the single global sans: headings and body share the family, so hierarchy comes from
-weight and size rather than a second typeface. (It replaced Schibsted Grotesk headings + Public Sans
-body.)
+Urbanist is the single global font: headings, body and data share the family, so hierarchy comes
+from weight and size rather than a second typeface. (It replaced Schibsted Grotesk headings + Public
+Sans body, and later Geist Mono for data.) `font-mono` is kept as the semantic marker for codes and
+IDs; it maps to Urbanist with tabular figures so numbers still line up in columns.
 
 Loaded in `app/layout.tsx` via `next/font`. Do not introduce other fonts.
 
@@ -92,7 +111,7 @@ Depth communicates hierarchy: the more an element interrupts the user, the highe
 
 The public marketing pages (`app/(marketing)/`) follow an editorial, image-led layout inspired by a corporate-IT theme: a top utility bar, hexagon/blob-masked photography, dotted-grid accents, eyebrow labels, and a facilities gallery. These treatments are **marketing-only** and must never appear in the clinical app.
 
-- **`--pop` / `bg-pop` / `text-pop`** — a single warm magenta-rose accent used sparingly as a pop (stat badges, a few decorative dots). The deep blue primary is still the dominant colour; `--pop` is the one permitted second accent and is confined to marketing artwork. Dark theme has its own `--pop`.
+- **`--pop` / `bg-pop` / `text-pop`** — a single warm magenta-rose accent used sparingly as a pop (stat badges, a few decorative dots). The deep blue primary is still the dominant colour; `--pop` is the one permitted second accent and is confined to marketing artwork and the Assessment step accent in the Visit workspace. Dark theme has its own `--pop`.
 - **Decorative utilities** (in `globals.css`, marketing-only): `.clip-hexagon` (hero image mask), `.blob-a` / `.blob-b` (organic squircle photo masks), `.dot-grid` and `.dot-halo` (dotted-grid accents; `currentColor` tints the dots).
 - **Imagery** comes from the Unsplash CDN via `next/image` (`images.unsplash.com` is whitelisted in `next.config.ts`). Large radii and continuous/parallax motion remain marketing-only, as already noted above.
 
