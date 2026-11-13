@@ -49,6 +49,7 @@ const visitColumns = {
   cancelledAt: visitTable.cancelledAt,
   visitNumber: visitTable.visitNumber,
   chiefComplaint: visitTable.chiefComplaint,
+  legacyVisitNumber: visitTable.legacyVisitNumber,
   cancellationReason: visitTable.cancellationReason,
   consultationStartedAt: visitTable.consultationStartedAt,
   patient: {
@@ -220,8 +221,11 @@ async function getVisitById(
 async function getVisits({
   tenantId,
   visitDate,
+  fromDate,
+  toDate,
   doctorId,
   patientId,
+  visitTypeId,
   status,
   query,
   page = 1,
@@ -232,17 +236,26 @@ async function getVisits({
   const searchCondition = trimmedQuery
     ? or(
         ilike(visitTable.visitNumber, `%${trimmedQuery}%`),
+        ilike(visitTable.legacyVisitNumber, `%${trimmedQuery}%`),
         ilike(patientTable.mrn, `%${trimmedQuery}%`),
+        ilike(patientTable.phone, `%${trimmedQuery}%`),
         ilike(patientTable.firstName, `%${trimmedQuery}%`),
-        ilike(patientTable.lastName, `%${trimmedQuery}%`)
+        ilike(patientTable.lastName, `%${trimmedQuery}%`),
+        ilike(
+          sql`${patientTable.firstName} || ' ' || ${patientTable.lastName}`,
+          `%${trimmedQuery}%`
+        )
       )
     : undefined;
   const whereClause = and(
     eq(visitTable.tenantId, tenantId),
     eq(visitTable.isDeleted, false),
     visitDate ? eq(visitTable.visitDate, visitDate) : undefined,
+    fromDate ? gte(visitTable.visitDate, fromDate) : undefined,
+    toDate ? lte(visitTable.visitDate, toDate) : undefined,
     doctorId ? eq(visitTable.doctorId, doctorId) : undefined,
     patientId ? eq(visitTable.patientId, patientId) : undefined,
+    visitTypeId ? eq(visitTable.visitTypeId, visitTypeId) : undefined,
     status ? eq(visitTable.status, status) : undefined,
     searchCondition
   );
@@ -251,7 +264,7 @@ async function getVisits({
   // order; across days the most recent Visit is the interesting one.
   const ordering = visitDate
     ? [asc(visitTable.queueToken), asc(visitTable.id)]
-    : [desc(visitTable.checkedInAt), desc(visitTable.id)];
+    : [desc(visitTable.visitDate), desc(visitTable.checkedInAt), desc(visitTable.id)];
 
   const [rows, [{ total }]] = await Promise.all([
     visitJoins()

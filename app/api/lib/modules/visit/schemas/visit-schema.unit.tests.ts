@@ -267,6 +267,51 @@ describe('Visit schema', () => {
     it('should accept an empty filter object', () => {
       expect(listVisitsSchema.parse({})).toEqual({});
     });
+
+    it('should transform a DD-MM-YYYY date range to ISO', () => {
+      expect(listVisitsSchema.parse({ fromDate: ' 01-07-2026 ', toDate: '16-07-2026' })).toEqual({
+        fromDate: '2026-07-01',
+        toDate: '2026-07-16',
+      });
+    });
+
+    it('should accept a single-day range', () => {
+      expect(
+        listVisitsSchema.safeParse({ fromDate: '16-07-2026', toDate: '16-07-2026' }).success
+      ).toBe(true);
+    });
+
+    it('should accept an open-ended range', () => {
+      expect(listVisitsSchema.parse({ fromDate: '01-07-2026' })).toEqual({
+        fromDate: '2026-07-01',
+      });
+      expect(listVisitsSchema.parse({ toDate: '16-07-2026' })).toEqual({ toDate: '2026-07-16' });
+    });
+
+    it('should reject malformed range dates with field-specific messages', () => {
+      const errors = errorsOf(
+        listVisitsSchema.safeParse({ fromDate: '2026-07-01', toDate: '31-02-2026' })
+      );
+
+      expect(errors).toContain('From date must be in DD-MM-YYYY format');
+      expect(errors).toContain('To date must be in DD-MM-YYYY format');
+    });
+
+    it('should reject a from date after the to date', () => {
+      expect(
+        errorsOf(listVisitsSchema.safeParse({ fromDate: '17-07-2026', toDate: '16-07-2026' }))
+      ).toContain('From date must be on or before To date');
+    });
+
+    it('should coerce a Visit Type filter', () => {
+      expect(listVisitsSchema.parse({ visitTypeId: '4' })).toEqual({ visitTypeId: 4 });
+    });
+
+    it('should reject a non-positive Visit Type filter', () => {
+      expect(errorsOf(listVisitsSchema.safeParse({ visitTypeId: '0' }))).toContain(
+        'Visit Type ID must be positive'
+      );
+    });
   });
 
   describe('formatVisitDate', () => {

@@ -215,7 +215,11 @@ export function VisitContextPane({
         </TabsContent>
 
         <TabsContent value="history" className="p-3 xl:min-h-0 xl:overflow-y-auto">
-          <VisitPreviousVisits visit={visit} notes={chart?.clinicalNotes ?? []} />
+          <VisitPreviousVisits
+            visit={visit}
+            notes={chart?.clinicalNotes ?? []}
+            plans={canReadPlan ? (plansQuery.data ?? []) : []}
+          />
         </TabsContent>
       </Tabs>
     </aside>

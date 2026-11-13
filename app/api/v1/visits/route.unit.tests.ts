@@ -149,8 +149,11 @@ describe('Visits route', () => {
         tenantId: 'tenant-1',
         filters: {
           visitDate: '16-07-2026',
+          fromDate: undefined,
+          toDate: undefined,
           doctorId: '3',
           patientId: undefined,
+          visitTypeId: undefined,
           status: 'CHECKED_IN',
           query: 'rao',
           page: 1,
@@ -165,6 +168,20 @@ describe('Visits route', () => {
       expect(getVisits).toHaveBeenCalledWith({
         tenantId: 'tenant-1',
         filters: expect.objectContaining({ visitDate: undefined, doctorId: undefined }),
+      });
+    });
+
+    it('should parse the date range and Visit Type filters', async () => {
+      await GET(getRequest('?fromDate=01-07-2026&toDate=16-07-2026&visitTypeId=2'));
+
+      expect(getVisits).toHaveBeenCalledWith({
+        tenantId: 'tenant-1',
+        filters: expect.objectContaining({
+          visitDate: undefined,
+          fromDate: '01-07-2026',
+          toDate: '16-07-2026',
+          visitTypeId: '2',
+        }),
       });
     });
 

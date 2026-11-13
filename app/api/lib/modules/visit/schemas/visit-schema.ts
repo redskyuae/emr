@@ -168,15 +168,36 @@ export const cancelVisitSchema = z.object({
     .max(255, 'Cancellation reason must be at most 255 characters'),
 });
 
-export const listVisitsSchema = z.object({
-  visitDate: visitDateSchema.optional(),
-  doctorId: positiveIdSchema('Doctor ID').optional(),
-  patientId: positiveIdSchema('Patient ID').optional(),
-  status: z.enum(VISIT_STATUSES, { error: 'Status is Invalid.' }).optional(),
-  query: z.string().trim().optional(),
-  page: z.coerce.number().int().positive().optional(),
-  limit: z.coerce.number().int().positive().optional(),
-});
+// Range bounds for searching past Visits; inclusive on both ends.
+const dateFilterSchema = (fieldName: string) =>
+  z.string().transform((value, context) => {
+    const isoDate = toIsoDate(value.trim());
+
+    if (!isoDate) {
+      context.addIssue({ code: 'custom', message: `${fieldName} must be in DD-MM-YYYY format` });
+      return z.NEVER;
+    }
+
+    return isoDate;
+  });
+
+export const listVisitsSchema = z
+  .object({
+    visitDate: visitDateSchema.optional(),
+    toDate: dateFilterSchema('To date').optional(),
+    fromDate: dateFilterSchema('From date').optional(),
+    doctorId: positiveIdSchema('Doctor ID').optional(),
+    patientId: positiveIdSchema('Patient ID').optional(),
+    visitTypeId: positiveIdSchema('Visit Type ID').optional(),
+    status: z.enum(VISIT_STATUSES, { error: 'Status is Invalid.' }).optional(),
+    query: z.string().trim().optional(),
+    page: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().optional(),
+  })
+  .refine((filters) => !filters.fromDate || !filters.toDate || filters.fromDate <= filters.toDate, {
+    message: 'From date must be on or before To date',
+    path: ['toDate'],
+  });
 
 export type CheckInVisitInput = z.infer<typeof checkInVisitSchema>;
 export type UpdateVisitInput = z.infer<typeof updateVisitSchema>;
@@ -239,6 +260,7 @@ export type Visit = {
   queueToken: number;
   chiefComplaint: string | null;
   remarks: string | null;
+  legacyVisitNumber: string | null;
   checkedInAt: Date;
   consultationStartedAt: Date | null;
   completedAt: Date | null;

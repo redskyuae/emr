@@ -882,6 +882,7 @@ const visitExample = {
   treatmentSession: null,
   chiefComplaint: 'Fever for 3 days',
   remarks: null,
+  legacyVisitNumber: null,
   checkedInAt: '2026-07-16T04:30:00.000Z',
   consultationStartedAt: null,
   completedAt: null,
@@ -4539,7 +4540,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'List Visits',
         description:
-          "Lists Visits in the active Tenant. With no visitDate or patientId filter, the list defaults to today's queue in the Tenant Time Zone and is ordered by Queue Token; otherwise it is ordered most recently checked in first.",
+          "Lists Visits in the active Tenant. With no visitDate, fromDate, toDate or patientId filter, the list defaults to today's queue in the Tenant Time Zone. A single visitDate is ordered by Queue Token; any other list (a date range or one Patient's history) is ordered most recently checked in first. The query term matches Visit Number, legacy Visit number of an imported Visit, MRN, Patient phone, and Patient first, last or full name.",
         security: [{ cookieAuth: [] }],
         parameters: [
           {
@@ -4547,6 +4548,22 @@ export const openApiDocument = {
             in: 'query',
             required: false,
             description: 'Tenant-local Visit date in DD-MM-YYYY format. Defaults to today.',
+            schema: { type: 'string', example: '16-07-2026' },
+          },
+          {
+            name: 'fromDate',
+            in: 'query',
+            required: false,
+            description:
+              'Inclusive start of a Visit date range in DD-MM-YYYY format. Suppresses the today default. Must be on or before toDate.',
+            schema: { type: 'string', example: '01-07-2026' },
+          },
+          {
+            name: 'toDate',
+            in: 'query',
+            required: false,
+            description:
+              'Inclusive end of a Visit date range in DD-MM-YYYY format. Suppresses the today default.',
             schema: { type: 'string', example: '16-07-2026' },
           },
           {
@@ -4570,6 +4587,13 @@ export const openApiDocument = {
             description: 'Filter by Visit Status.',
             schema: schemaRef('VisitStatus'),
           },
+          {
+            name: 'visitTypeId',
+            in: 'query',
+            required: false,
+            description: 'Filter by VisitType.',
+            schema: { type: 'integer', minimum: 1 },
+          },
           parameterRef('Page'),
           parameterRef('Limit'),
           parameterRef('Query'),
@@ -4577,13 +4601,44 @@ export const openApiDocument = {
         ],
         responses: {
           '200': {
-            description: "Today's Visit queue.",
+            description:
+              "Today's Visit queue, or the Visits matching the date range and filters (for example GET /api/v1/visits?fromDate=01-07-2026&toDate=16-07-2026&status=COMPLETED&query=asha).",
             content: jsonContent(paginatedSchema('Visit'), {
               data: [visitExample],
               meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
             }),
           },
-          ...authenticatedListErrorResponses,
+          '400': {
+            description: 'A filter is invalid.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  invalidDate: {
+                    summary: 'Malformed range date',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['From date must be in DD-MM-YYYY format'],
+                    },
+                  },
+                  invertedRange: {
+                    summary: 'From date after To date',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['From date must be on or before To date'],
+                    },
+                  },
+                  invalidStatus: {
+                    summary: 'Unknown Visit Status',
+                    value: { message: 'Validation failed', errors: ['Status is Invalid.'] },
+                  },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
         },
       },
       post: {
@@ -9764,6 +9819,12 @@ export const openApiDocument = {
             description: 'Plain text or Markdown formatting.',
           },
           remarks: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
+          legacyVisitNumber: {
+            type: ['string', 'null'],
+            description:
+              'Visit number in the source system this Visit was imported from, or null for a Visit created in this system. Matches `legacyVisitNumber` on the Patient Treatment Plans prescribed in that source Visit.',
+            example: null,
+          },
           checkedInAt: { type: 'string', format: 'date-time' },
           consultationStartedAt: { type: ['string', 'null'], format: 'date-time' },
           completedAt: { type: ['string', 'null'], format: 'date-time' },

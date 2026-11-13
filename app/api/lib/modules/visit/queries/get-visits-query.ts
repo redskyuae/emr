@@ -24,8 +24,11 @@ export async function getVisitsQuery({
 
   // The board opens on today's queue. "Today" is the Tenant's operational day
   // (ADR 0026), and only an unfiltered request gets that default — a caller
-  // asking for one Patient's history wants every Visit, not just today's.
-  if (!params.visitDate && !params.patientId) {
+  // asking for one Patient's history or a date range wants every matching
+  // Visit, not just today's.
+  const hasDateScope = params.visitDate || params.fromDate || params.toDate;
+
+  if (!hasDateScope && !params.patientId) {
     const tenant = await tenantRepository.getTenantById(params.tenantId);
 
     if (tenant) {

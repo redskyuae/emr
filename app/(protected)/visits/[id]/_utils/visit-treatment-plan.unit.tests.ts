@@ -11,6 +11,7 @@ import {
   currentPlanSession,
   isCurrentPlan,
   planSessionLabel,
+  visitProcedures,
 } from './visit-treatment-plan';
 
 function session(overrides: Partial<PatientTreatmentPlanReadSession>) {
@@ -181,5 +182,146 @@ describe('canStartPlanSession', () => {
     ]) {
       expect(canStartPlanSession(current([other, next]), next, activeBooked)).toBe(false);
     }
+  });
+});
+
+describe('visitProcedures', () => {
+  type ProcedureVisit = Pick<Visit, 'id' | 'legacyVisitNumber' | 'treatment' | 'treatmentSession'>;
+
+  const previous: ProcedureVisit = {
+    id: 5,
+    legacyVisitNumber: null,
+    treatment: null,
+    treatmentSession: null,
+  };
+  const delivered = session({
+    id: 11,
+    sessionNumber: 2,
+    label: 'Abhyanga',
+    procedure: 'Full-body oil massage',
+    durationMinutes: 45,
+    completedVisitId: 5,
+    completionStatus: 'COMPLETED',
+    legacyConductionNote: 'Warm the oil before use.',
+  });
+  const plans = [
+    {
+      id: 1,
+      treatmentName: 'Panchakarma',
+      legacyVisitNumber: null,
+      sessions: [session({ id: 10 }), delivered],
+    },
+  ] as unknown as PatientTreatmentPlan[];
+
+  it('should return the Plan Session the Visit delivered with its conduction note', () => {
+    expect(visitProcedures(previous, plans)).toEqual([
+      {
+        key: 'plan-1',
+        treatmentName: 'Panchakarma',
+        progress: null,
+        sessions: [
+          expect.objectContaining({
+            key: 'plan-session-11',
+            sessionNumber: 2,
+            label: 'Abhyanga',
+            procedure: 'Full-body oil massage',
+            durationMinutes: 45,
+            conductionNote: 'Warm the oil before use.',
+            completed: null,
+          }),
+        ],
+      },
+    ]);
+  });
+
+  it('should include a Session the Visit started but did not complete', () => {
+    const started = [
+      { id: 2, treatmentName: 'Panchakarma', sessions: [session({ id: 12, startedVisitId: 5 })] },
+    ] as unknown as PatientTreatmentPlan[];
+
+    expect(visitProcedures(previous, started)[0].sessions.map((item) => item.key)).toEqual([
+      'plan-session-12',
+    ]);
+  });
+
+  it('should show every Session of an imported Plan under the source Visit it was prescribed in', () => {
+    const imported = { ...previous, id: 9, legacyVisitNumber: '1453' };
+    const legacyPlans = [
+      {
+        id: 3,
+        treatmentName: 'GREEVAVASTI+NASYAM',
+        legacyVisitNumber: '1453',
+        completedSessions: 1,
+        totalSessions: 2,
+        sessions: [
+          session({ id: 22, sessionNumber: 2, procedure: 'NASYAM' }),
+          session({
+            id: 21,
+            sessionNumber: 1,
+            procedure: 'GREEVAVASTI',
+            completionStatus: 'COMPLETED',
+            legacyConductionNote: 'Tolerated well',
+          }),
+        ],
+      },
+      { id: 4, treatmentName: 'Other', legacyVisitNumber: '1999', sessions: [session({ id: 30 })] },
+    ] as unknown as PatientTreatmentPlan[];
+
+    expect(visitProcedures(imported, legacyPlans)).toEqual([
+      expect.objectContaining({
+        key: 'plan-3',
+        progress: '1 of 2 Sessions completed',
+        sessions: [
+          expect.objectContaining({
+            sessionNumber: 1,
+            procedure: 'GREEVAVASTI',
+            conductionNote: 'Tolerated well',
+            completed: true,
+          }),
+          expect.objectContaining({ sessionNumber: 2, procedure: 'NASYAM', completed: false }),
+        ],
+      }),
+    ]);
+  });
+
+  it('should not match imported Plans to a Visit created here', () => {
+    const legacyOnly = [
+      { id: 5, treatmentName: 'Other', legacyVisitNumber: '1453', sessions: [session({ id: 31 })] },
+    ] as unknown as PatientTreatmentPlan[];
+
+    expect(visitProcedures(previous, legacyOnly)).toEqual([]);
+  });
+
+  it('should fall back to the Treatment Session recorded on the Visit', () => {
+    const booked: ProcedureVisit = {
+      id: 5,
+      legacyVisitNumber: null,
+      treatment: { id: 1, name: 'Shirodhara', code: 'SHD' },
+      treatmentSession: {
+        id: 3,
+        label: 'Session 1',
+        procedure: 'Oil stream on forehead',
+        sessionNumber: 1,
+        durationMinutes: 30,
+        setupMinutes: null,
+        cleaningMinutes: null,
+        roomType: null,
+        therapistSkill: null,
+      },
+    };
+
+    expect(visitProcedures(booked, [])).toEqual([
+      expect.objectContaining({
+        key: 'treatment-session-3',
+        treatmentName: 'Shirodhara',
+        sessions: [
+          expect.objectContaining({ procedure: 'Oil stream on forehead', conductionNote: null }),
+        ],
+      }),
+    ]);
+  });
+
+  it('should return nothing when the Visit has no procedure', () => {
+    expect(visitProcedures(previous, [{ ...plans[0], sessions: [] }])).toEqual([]);
   });
 });

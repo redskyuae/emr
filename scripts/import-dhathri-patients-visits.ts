@@ -515,6 +515,7 @@ for (const row of workbook.visits) {
       `Source visit ${row.visitNumber}${extras ? `. Treatments: ${extras}` : ''}`,
       2000
     ),
+    legacyVisitNumber: row.visitNumber,
     checkedInAt: visitAt,
     consultationStartedAt: visitAt,
     completedAt: visitAt,
