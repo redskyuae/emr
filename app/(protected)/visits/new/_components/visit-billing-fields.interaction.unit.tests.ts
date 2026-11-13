@@ -84,10 +84,26 @@ function Form({
 afterEach(cleanup);
 
 describe('Visit Billing', () => {
+  it('should collect the suggested charge when collecting now is chosen first', async () => {
+    const user = userEvent.setup();
+    render(createElement(Form));
+    expect(screen.getByRole('radio', { name: /No Invoice/ }).getAttribute('aria-checked')).toBe(
+      'true'
+    );
+
+    await user.click(screen.getByRole('radio', { name: /Invoice and collect now/ }));
+    await waitFor(() => expect(screen.getByTestId('amount-received').textContent).toBe('200'));
+    expect((screen.getByLabelText('Amount received') as HTMLInputElement).value).toBe('200');
+
+    await user.click(screen.getByRole('radio', { name: /No Invoice/ }));
+    expect(screen.queryByLabelText(/Charge Item/)).toBeNull();
+    expect(screen.getByTestId('amount-received').textContent).toBe('0');
+  });
+
   it('prefills the follow-up Charge Item and makes Pay now or later explicit', async () => {
     const user = userEvent.setup();
     render(createElement(Form));
-    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('radio', { name: /Invoice, pay later/ }));
     await waitFor(() => expect(screen.getByTestId('charge-item-id').textContent).toBe('4'));
     expect(screen.queryByRole('option', { name: 'Set up in Billing Masters' })).toBeNull();
     const chargeItemSelect = screen.getByLabelText(/Charge Item/) as HTMLSelectElement;
@@ -96,11 +112,11 @@ describe('Visit Billing', () => {
     expect(screen.getByRole('option', { name: /FUP · Follow-up Consultation/ })).toBeTruthy();
     expect((screen.getByLabelText(/Visit charge/) as HTMLInputElement).value).toBe('200');
 
-    await user.selectOptions(screen.getByLabelText('Payment timing'), 'NOW');
+    await user.click(screen.getByRole('radio', { name: /Invoice and collect now/ }));
     expect((screen.getByLabelText('Amount received') as HTMLInputElement).value).toBe('200');
     expect(screen.getByTestId('amount-received').textContent).toBe('200');
 
-    await user.selectOptions(screen.getByLabelText('Payment timing'), 'LATER');
+    await user.click(screen.getByRole('radio', { name: /Invoice, pay later/ }));
     expect(screen.queryByLabelText('Amount received')).toBeNull();
     expect(screen.getByTestId('amount-received').textContent).toBe('0');
 
@@ -131,7 +147,7 @@ describe('Visit Billing', () => {
     ] as ChargeItem[];
     render(createElement(Form, { chargeItems: levels }));
     await user.click(screen.getByRole('button', { name: 'Change to OPD' }));
-    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('radio', { name: /Invoice, pay later/ }));
     expect(screen.getByTestId('charge-item-id').textContent).toBe('');
     await user.selectOptions(screen.getByLabelText(/Charge Item/), '13');
     expect(screen.getByTestId('charge-item-id').textContent).toBe('13');
@@ -148,7 +164,7 @@ describe('Visit Billing', () => {
         hasRecentDoctorVisit: true,
       })
     );
-    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('radio', { name: /Invoice, pay later/ }));
     await waitFor(() => expect(screen.getByTestId('charge-item-id').textContent).toBe('4'));
     expect(screen.getByRole('option', { name: /Follow-up Consultation · 0\.00/ })).toBeTruthy();
     expect((screen.getByLabelText(/Visit charge/) as HTMLInputElement).value).toBe('0');
@@ -173,7 +189,7 @@ describe('Visit Billing', () => {
         hasRecentDoctorVisit: true,
       })
     );
-    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('radio', { name: /Invoice, pay later/ }));
     await user.selectOptions(screen.getByLabelText(/Charge Item/), '13');
     expect((screen.getByLabelText(/Visit charge/) as HTMLInputElement).value).toBe('0');
   });
