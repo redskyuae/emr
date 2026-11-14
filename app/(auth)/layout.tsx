@@ -7,6 +7,7 @@ import { Logo } from '@/components/brand/logo';
 import { ExistingSessionGate } from '@/components/auth/existing-session-gate';
 import { ReactNode } from 'react';
 import { getAuthLinkFlags } from './_utils/auth-link-flags';
+import { SquigglyText } from './_components/squiggly-text';
 
 export default async function AuthLayout({ children }: { children: ReactNode }) {
   const session = await getSession();
@@ -45,7 +46,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
               {brand?.wordmarkAlt ?? 'Ayurvedic hospital care'}
             </p>
             <h2 className="font-heading text-4xl leading-tight font-semibold text-balance xl:text-5xl">
-              Care rooted in Ayurveda.
+              <SquigglyText>Care rooted in Ayurveda.</SquigglyText>
             </h2>
             <p className="max-w-md text-base leading-relaxed text-white/90">
               A calm, welcoming setting for Ayurvedic consultations, traditional therapies, and
