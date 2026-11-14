@@ -20,8 +20,8 @@ export default function InventoryLoader() {
         <CardContent className="space-y-4 p-4">
           <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
             <div className="grid gap-2 sm:grid-cols-3 2xl:w-full 2xl:max-w-xl">
-              <Skeleton className="h-9 w-full sm:col-span-2" />
-              <Skeleton className="h-9 w-full sm:col-span-1" />
+              <Skeleton className="h-10 w-full sm:col-span-2" />
+              <Skeleton className="h-10 w-full sm:col-span-1" />
             </div>
             <div className="flex flex-wrap gap-1.5">
               {Array.from({ length: 6 }, (_, i) => (
@@ -29,7 +29,7 @@ export default function InventoryLoader() {
               ))}
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center 2xl:ml-auto 2xl:justify-end">
-              <Skeleton className="h-9 w-32" />
+              <Skeleton className="h-10 w-32" />
             </div>
           </div>
 

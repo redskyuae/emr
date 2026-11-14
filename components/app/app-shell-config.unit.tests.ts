@@ -1,6 +1,12 @@
+import { CalendarClock, CalendarPlus, LayoutDashboard, UsersRound } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
-import { appNavGroups, getAppPageMeta, getVisibleNavGroups } from './app-shell-config';
+import {
+  appNavGroups,
+  getAppPageIcon,
+  getAppPageMeta,
+  getVisibleNavGroups,
+} from './app-shell-config';
 
 function getVisibleGroup(groupTitle: string, permissions: string[]) {
   return getVisibleNavGroups(appNavGroups, permissions).find(({ title }) => title === groupTitle);
@@ -225,5 +231,20 @@ describe('App shell navigation permissions', () => {
       title: 'Asset Conditions',
       subtitle: 'Tenant-scoped physical condition records for Assets.',
     });
+  });
+
+  it('should give a page the icon of the navigation item it belongs to', () => {
+    expect(getAppPageIcon('/patients')).toBe(UsersRound);
+    expect(getAppPageIcon('/patients/42')).toBe(UsersRound);
+    expect(getAppPageIcon('/appointment-masters/modes')).toBe(CalendarClock);
+  });
+
+  it('should prefer the most specific navigation item for a page icon', () => {
+    expect(getAppPageIcon('/appointments/new')).toBe(CalendarPlus);
+    expect(getAppPageIcon('/appointments/7/reschedule')).toBe(CalendarClock);
+  });
+
+  it('should fall back to a default icon for a page outside the navigation', () => {
+    expect(getAppPageIcon('/somewhere-else')).toBe(LayoutDashboard);
   });
 });

@@ -16,7 +16,7 @@ type WorkOrderStatCardsProps = {
 export function WorkOrderStatCards({ workOrderSummary }: WorkOrderStatCardsProps) {
   return (
     <Card className="shadow-fluent-2">
-      <CardContent className="flex min-h-32 flex-col justify-between gap-5 p-4">
+      <CardContent className="flex min-h-32 flex-col justify-between gap-5">
         <div className="flex items-start justify-between gap-3">
           <p className="text-muted-foreground text-sm font-medium">Active work orders</p>
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-md">

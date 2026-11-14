@@ -50,6 +50,10 @@ export type AppNavGroup = {
 export type AppPageMeta = {
   title: string;
   subtitle: string;
+  /**
+   * Shown at the end of the page header. Only for pages whose own content has no always-visible
+   * button for the same action; a list page with a create button in its toolbar leaves this out.
+   */
   primaryAction?: {
     label: string;
     href: string;
@@ -466,11 +470,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/patients': {
     title: 'Patients',
     subtitle: 'Patient registry and demographics for this Tenant.',
-    primaryAction: {
-      label: 'Register patient',
-      href: '/patients/new',
-      permission: 'patient:create',
-    },
   },
   '/patients/new': {
     title: 'Register patient',
@@ -487,11 +486,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/identity-access/users': {
     title: 'Users',
     subtitle: 'Staff user access within this Tenant.',
-    primaryAction: {
-      label: 'Add user',
-      href: '/identity-access/users?user=new',
-      permission: 'staff:create',
-    },
   },
   '/identity-access/roles': {
     title: 'Roles & Permissions',
@@ -520,47 +514,22 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/doctor-schedules': {
     title: 'Doctor Schedules',
     subtitle: 'Doctor availability assignments built from Doctor Rotas.',
-    primaryAction: {
-      label: 'New schedule',
-      href: '/doctor-schedules?schedule=new',
-      permission: 'doctor-schedule:create',
-    },
   },
   '/therapist-schedules': {
     title: 'Therapist Schedules',
     subtitle: 'Therapist availability assignments built from reusable Rota templates.',
-    primaryAction: {
-      label: 'New schedule',
-      href: '/therapist-schedules?schedule=new',
-      permission: 'therapist-schedule:create',
-    },
   },
   '/doctors': {
     title: 'Doctors',
     subtitle: 'Staff-backed Doctors, Specialties, and clinical profile details.',
-    primaryAction: {
-      label: 'Add Doctor',
-      href: '/doctors?doctor=new',
-      permission: 'doctor:create',
-    },
   },
   '/therapists': {
     title: 'Therapists',
     subtitle: 'Staff-backed Therapists and their treatment skills.',
-    primaryAction: {
-      label: 'Add Therapist',
-      href: '/therapists?therapist=new',
-      permission: 'therapist:create',
-    },
   },
   '/clinical-masters/therapist-skills': {
     title: 'Therapist Skills',
     subtitle: 'Tenant-scoped skills used to qualify Therapists for Treatment Sessions.',
-    primaryAction: {
-      label: 'Add Therapist Skill',
-      href: '/clinical-masters/therapist-skills?create=1',
-      permission: 'therapist-skill:create',
-    },
   },
   '/audit-log': {
     title: 'Audit Log',
@@ -602,11 +571,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/visit-list': {
     title: 'Visit List',
     subtitle: 'Search every outpatient Visit by date, Doctor, status, type, source, and billing.',
-    primaryAction: {
-      label: 'Create Visit',
-      href: '/visits/new',
-      permission: 'visit:create',
-    },
   },
   '/billing-counter': {
     title: 'Billing Counter',
@@ -619,11 +583,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/admissions': {
     title: 'Admissions',
     subtitle: 'The inpatient census. Admit Patients to Beds, transfer, and discharge.',
-    primaryAction: {
-      label: 'Admit patient',
-      href: '/admissions?admit=new',
-      permission: 'admission:create',
-    },
   },
   '/bed-board': {
     title: 'Bed Board',
@@ -632,11 +591,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/billing': {
     title: 'Invoices',
     subtitle: 'Raise, finalize, and collect payment on patient Invoices.',
-    primaryAction: {
-      label: 'New Invoice',
-      href: '/billing?invoice=new',
-      permission: 'invoice:create',
-    },
   },
   '/inpatient-masters': {
     title: 'Inpatient Masters',
@@ -705,11 +659,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/rooms': {
     title: 'Rooms',
     subtitle: 'Room registry, Bed capacity, and availability across this Tenant.',
-    primaryAction: {
-      label: 'Add room',
-      href: '/rooms?room=new',
-      permission: 'room:create',
-    },
   },
   '/room-masters/types': {
     title: 'Room Types',
@@ -722,66 +671,34 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/global-references/languages': {
     title: 'Languages',
     subtitle: 'Shared Language Global References used in Patient demographics.',
-    primaryAction: {
-      label: 'Add Language',
-      href: '/global-references/languages?language=new',
-    },
   },
   '/global-references/nationalities': {
     title: 'Nationalities',
     subtitle: 'Shared Nationality Global References used during Patient Registration.',
-    primaryAction: {
-      label: 'Add Nationality',
-      href: '/global-references/nationalities?nationality=new',
-    },
   },
   '/global-references/religions': {
     title: 'Religions',
     subtitle: 'Shared Religion Global References used in Patient demographics.',
-    primaryAction: {
-      label: 'Add Religion',
-      href: '/global-references/religions?religion=new',
-    },
   },
   '/global-references/countries': {
     title: 'Countries',
     subtitle: 'Shared Country Global References used for addresses and identity context.',
-    primaryAction: {
-      label: 'Add Country',
-      href: '/global-references/countries?country=new',
-    },
   },
   '/global-references/states': {
     title: 'States',
     subtitle: 'Shared State Global References grouped under Countries.',
-    primaryAction: {
-      label: 'Add State',
-      href: '/global-references/states?state=new',
-    },
   },
   '/clinical-masters/diagnosis-codes': {
     title: 'Diagnosis Codes',
     subtitle: 'Tenant-scoped ICD-10 diagnosis catalogue used across clinical records.',
-    primaryAction: {
-      label: 'Add Diagnosis Code',
-      href: '/clinical-masters/diagnosis-codes?create=1',
-    },
   },
   '/clinical-masters/allergens': {
     title: 'Allergens',
     subtitle: 'Tenant-scoped Allergen catalogue used when recording Patient allergies.',
-    primaryAction: {
-      label: 'Add Allergen',
-      href: '/clinical-masters/allergens?create=1',
-    },
   },
   '/clinical-masters/note-types': {
     title: 'Clinical Note Types',
     subtitle: 'Tenant-scoped classification records for Clinical Notes.',
-    primaryAction: {
-      label: 'Add Note Type',
-      href: '/clinical-masters/note-types?create=1',
-    },
   },
 };
 
@@ -902,4 +819,27 @@ export function getAppPageMeta(pathname: string): AppPageMeta {
     title: navItem?.title ?? 'Medical EMR',
     subtitle: 'Navigation shell for Tenant-scoped clinical and operational modules.',
   };
+}
+
+/**
+ * The icon of the navigation item a page belongs to, for the page title pill. The most specific
+ * item wins, and `exact` is ignored so a detail page still takes its section's icon.
+ */
+export function getAppPageIcon(pathname: string): LucideIcon {
+  const currentPath = trimTrailingSlash(pathname);
+  const owns = (href: string) => {
+    const itemPath = trimTrailingSlash(href);
+    return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
+  };
+
+  const match = appNavGroups
+    .flatMap((group) => group.items)
+    .flatMap((item) =>
+      [item.href, ...(item.items?.map((subItem) => subItem.href) ?? [])]
+        .filter(owns)
+        .map((href) => ({ icon: item.icon, depth: trimTrailingSlash(href).length }))
+    )
+    .sort((a, b) => b.depth - a.depth)[0];
+
+  return match?.icon ?? LayoutDashboard;
 }

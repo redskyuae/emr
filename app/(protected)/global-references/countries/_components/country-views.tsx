@@ -105,7 +105,7 @@ export function CountryTableView({
   onDelete: (country: Country) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="shadow-fluent-2 py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[680px]">
@@ -163,7 +163,7 @@ export function CountryCardView({
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {countries.map((country) => (
         <Card key={country.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+          <CardContent className="space-y-3">
             <CountryIcon />
 
             <div>
@@ -222,7 +222,7 @@ export function CountryListView({
     <div className="space-y-3">
       {countries.map((country) => (
         <Card key={country.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <CountryIcon />
               <h3 className="font-heading truncate text-base font-semibold">{country.name}</h3>

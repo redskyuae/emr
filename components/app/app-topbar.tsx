@@ -1,31 +1,21 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Bell, Building2, CircleHelp, Plus, Search } from 'lucide-react';
+import { Bell, CircleHelp, Search } from 'lucide-react';
 
-import {
-  useCurrentUserQuery,
-  useHasPermission,
-} from '@/app/queries/identity-access/useCurrentUser';
-import { getAppPageMeta } from '@/components/app/app-shell-config';
+import { TenantChip } from '@/components/app/tenant-chip';
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Kbd } from '@/components/ui/kbd';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+/**
+ * The utility bar above every page: the sidebar trigger, global search, the active Tenant, help
+ * and notifications. The page's own title and primary action live in `AppPageHeader` below it.
+ */
 export function AppTopbar() {
-  const pathname = usePathname();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const pageMeta = getAppPageMeta(pathname);
-  const { data: currentUser, isLoading: isCurrentUserLoading } = useCurrentUserQuery();
-  const { data: hasPrimaryActionPermission } = useHasPermission(
-    pageMeta.primaryAction?.permission ?? ''
-  );
-  const canUsePrimaryAction = !pageMeta.primaryAction?.permission || hasPrimaryActionPermission;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -44,81 +34,59 @@ export function AppTopbar() {
   }, []);
 
   return (
-    <header className="acrylic sticky top-0 z-20 border-b">
-      <div className="flex min-h-16 flex-col gap-3 px-3 py-3 sm:px-4 lg:flex-row lg:items-center lg:gap-4 lg:px-6">
-        <div className="flex min-w-0 items-center gap-2">
-          <SidebarTrigger className="md:hidden" />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h1 className="text-lg leading-tight font-semibold sm:text-xl">{pageMeta.title}</h1>
-              {isCurrentUserLoading ? (
-                <Skeleton className="h-5 w-24" aria-label="Loading Tenant" />
-              ) : currentUser ? (
-                <span className="border-border bg-muted/60 inline-flex max-w-full items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium">
-                  <Building2 className="size-3 shrink-0" aria-hidden="true" />
-                  <span className="text-muted-foreground">Tenant:</span>
-                  <span className="min-w-0 break-words">{currentUser.tenant.name}</span>
-                </span>
-              ) : null}
-            </div>
-            <p className="text-muted-foreground line-clamp-2 text-xs sm:text-sm">
-              {pageMeta.subtitle}
-            </p>
-          </div>
-        </div>
+    <header className="acrylic sticky top-0 z-20">
+      <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
+        <SidebarTrigger className="text-muted-foreground -ml-2 shrink-0" />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
-          <InputGroup className="bg-background shadow-fluent-2 h-9 sm:max-w-sm lg:max-w-md">
-            <InputGroupAddon>
-              <Search className="size-4" />
-            </InputGroupAddon>
-            <InputGroupInput
-              ref={searchInputRef}
-              type="search"
-              placeholder="Search patients, appointments, users..."
-              aria-label="Global search"
-              className="text-sm"
-            />
-            <InputGroupAddon align="inline-end">
-              <Kbd>/</Kbd>
-            </InputGroupAddon>
-          </InputGroup>
+        <InputGroup className="shadow-fluent-2 max-w-md min-w-0 flex-1 rounded-full">
+          <InputGroupAddon className="pl-4">
+            <Search className="size-4" />
+          </InputGroupAddon>
+          <InputGroupInput
+            ref={searchInputRef}
+            type="search"
+            placeholder="Search patients, appointments, users..."
+            aria-label="Global search"
+            className="text-sm"
+          />
+          <InputGroupAddon align="inline-end" className="hidden pr-4 sm:flex">
+            <Kbd>/</Kbd>
+          </InputGroupAddon>
+        </InputGroup>
 
-          <div className="flex items-center justify-end gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button type="button" variant="ghost" size="icon" aria-label="Help">
-                  <CircleHelp className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Help</TooltipContent>
-            </Tooltip>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          <TenantChip className="mr-2 hidden md:inline-flex" />
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Notifications"
-                  className="relative"
-                >
-                  <Bell className="size-4" />
-                  <span className="bg-primary ring-background absolute top-1.5 right-1.5 size-2 rounded-full ring-2" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Notifications</TooltipContent>
-            </Tooltip>
-
-            {pageMeta.primaryAction && canUsePrimaryAction ? (
-              <Button asChild className="ml-1">
-                <Link href={pageMeta.primaryAction.href}>
-                  <Plus className="size-4" />
-                  <span>{pageMeta.primaryAction.label}</span>
-                </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Help"
+                className="text-muted-foreground rounded-full"
+              >
+                <CircleHelp className="size-4.5" />
               </Button>
-            ) : null}
-          </div>
+            </TooltipTrigger>
+            <TooltipContent>Help</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Notifications"
+                className="text-muted-foreground relative rounded-full"
+              >
+                <Bell className="size-4.5" />
+                <span className="bg-primary ring-background absolute top-2 right-2 size-2 rounded-full ring-2" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Notifications</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </header>

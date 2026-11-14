@@ -106,7 +106,7 @@ export function VisitsTable({
           const status = visitStatusPresentation(visit.status);
 
           return (
-            <li key={visit.id} className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-3">
+            <li key={visit.id} className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
               <div className="flex items-start gap-3">
                 <span className="bg-primary/10 text-primary inline-flex size-9 shrink-0 items-center justify-center rounded-md text-base font-semibold tabular-nums">
                   {visit.queueToken}
@@ -135,19 +135,19 @@ export function VisitsTable({
         })}
       </ul>
 
-      <div className="bg-card shadow-fluent-2 hidden overflow-hidden rounded-lg border md:block">
+      <div className="bg-card shadow-fluent-2 hidden overflow-hidden rounded-xl border md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
-              <tr className="text-muted-foreground border-b text-left">
-                <th className="p-3 pl-4 font-medium">Token</th>
-                <th className="p-3 font-medium">Visit</th>
-                <th className="p-3 font-medium">Patient</th>
-                <th className="p-3 font-medium">Doctor</th>
-                <th className="p-3 font-medium">Type</th>
-                <th className="p-3 font-medium">Status</th>
-                <th className="p-3 font-medium">Checked in</th>
-                <th className="p-3 pr-4 text-right font-medium">Actions</th>
+              <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
+                <th className="p-3 pl-5 font-semibold">Token</th>
+                <th className="p-3 font-semibold">Visit</th>
+                <th className="p-3 font-semibold">Patient</th>
+                <th className="p-3 font-semibold">Doctor</th>
+                <th className="p-3 font-semibold">Type</th>
+                <th className="p-3 font-semibold">Status</th>
+                <th className="p-3 font-semibold">Checked in</th>
+                <th className="p-3 pr-5 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -156,12 +156,12 @@ export function VisitsTable({
 
                 return (
                   <tr key={visit.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                    <td className="p-3 pl-4">
+                    <td className="px-3 py-3.5 pl-5">
                       <span className="bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-md text-base font-semibold tabular-nums">
                         {visit.queueToken}
                       </span>
                     </td>
-                    <td className="p-3">
+                    <td className="px-3 py-3.5">
                       <Link href={`/visits/${visit.id}`} className="font-medium hover:underline">
                         {visit.visitNumber}
                       </Link>
@@ -173,26 +173,26 @@ export function VisitsTable({
                         <p className="text-muted-foreground text-xs">Walk-in</p>
                       )}
                     </td>
-                    <td className="p-3">
+                    <td className="px-3 py-3.5">
                       <p className="font-medium">
                         {visit.patient.firstName} {visit.patient.lastName}
                       </p>
                       <p className="text-muted-foreground text-xs">{visit.patient.mrn}</p>
                     </td>
-                    <td className="p-3">{visit.doctor.name}</td>
-                    <td className="p-3">
+                    <td className="px-3 py-3.5">{visit.doctor.name}</td>
+                    <td className="px-3 py-3.5">
                       <Badge variant="secondary">{visit.visitType.code}</Badge>
                     </td>
-                    <td className="p-3">
+                    <td className="px-3 py-3.5">
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </td>
-                    <td className="text-muted-foreground p-3 tabular-nums">
+                    <td className="text-muted-foreground px-3 py-3.5 tabular-nums">
                       {formatTime(visit.checkedInAt)}
                       {visit.status === 'CHECKED_IN' ? (
                         <p className="text-xs">{waitingLabel(visit.checkedInAt, now)}</p>
                       ) : null}
                     </td>
-                    <td className="p-3 pr-4 text-right">
+                    <td className="px-3 py-3.5 pr-5 text-right">
                       <VisitRowActions visit={visit} {...rowProps} />
                     </td>
                   </tr>
@@ -208,7 +208,7 @@ export function VisitsTable({
 
 export function VisitsTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
+    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
       {Array.from({ length: 6 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="size-9 rounded-md" />

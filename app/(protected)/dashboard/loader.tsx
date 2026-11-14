@@ -14,7 +14,7 @@ export default function PageLoader() {
 
       <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {[0, 1, 2, 3].map((item) => (
-          <div key={item} className="bg-card shadow-fluent-2 space-y-1 rounded-lg border p-3">
+          <div key={item} className="bg-card shadow-fluent-2 space-y-1 rounded-xl border p-4">
             <Skeleton className="h-3 w-28" />
             <Skeleton className="h-6 w-14" />
             <Skeleton className="h-3 w-32" />
@@ -23,7 +23,7 @@ export default function PageLoader() {
       </section>
 
       <section className="grid items-start gap-3 xl:grid-cols-3">
-        <div className="bg-card shadow-fluent-2 rounded-lg border xl:col-span-2">
+        <div className="bg-card shadow-fluent-2 rounded-xl border xl:col-span-2">
           <div className="space-y-1 border-b p-3">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-52 max-w-full" />
@@ -34,7 +34,7 @@ export default function PageLoader() {
             ))}
           </div>
         </div>
-        <div className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-3">
+        <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
           <Skeleton className="h-4 w-36" />
           <Skeleton className="h-2 w-full rounded-full" />
           <div className="grid grid-cols-2 gap-2">

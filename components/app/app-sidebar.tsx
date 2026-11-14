@@ -36,15 +36,28 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
-  SidebarSeparator,
 } from '@/components/ui/sidebar';
+
+/**
+ * A row on the ink sidebar: muted at rest, the primary pill when current. `SidebarMenuButton`
+ * shrinks it to an icon square while the sidebar is collapsed.
+ */
+const NAV_BUTTON_CLASS =
+  'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
+
+/** A parent row with an open submenu: the current child carries the pill, so the parent only brightens. */
+const NAV_PARENT_BUTTON_CLASS =
+  'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:text-sidebar-foreground data-active:bg-transparent data-active:hover:bg-sidebar-accent h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
+
+const NAV_SUB_BUTTON_CLASS =
+  'text-sidebar-foreground/65 hover:text-sidebar-foreground data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary h-10 translate-x-0 rounded-lg px-3 data-active:font-semibold';
 
 function NavBadge({ value }: { value: string }) {
   return (
     <SidebarMenuBadge>
       <Badge
         variant="outline"
-        className="border-sidebar-border bg-sidebar text-sidebar-foreground h-4 px-1 text-xs"
+        className="border-sidebar-border bg-sidebar-accent text-sidebar-foreground h-5 px-1.5 text-xs"
       >
         {value}
       </Badge>
@@ -64,21 +77,25 @@ function AppNavLink({ item }: { item: AppNavItem }) {
             <SidebarMenuButton
               tooltip={item.title}
               isActive={isActive}
-              className="data-[active=true]:border-sidebar-border data-[active=true]:border"
+              className={NAV_PARENT_BUTTON_CLASS}
             >
               <item.icon />
               <span>{item.title}</span>
-              <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+              <ChevronRight className="ml-auto size-4! opacity-60 transition-transform group-data-[state=open]/collapsible:rotate-90" />
             </SidebarMenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <SidebarMenuSub>
+            <SidebarMenuSub className="mx-0 translate-x-0 gap-1 border-l-0 py-1 pr-0 pl-9">
               {item.items.map((subItem) => {
                 const isSubItemActive = isNavItemActive(pathname, subItem);
 
                 return (
                   <SidebarMenuSubItem key={subItem.href}>
-                    <SidebarMenuSubButton asChild isActive={isSubItemActive}>
+                    <SidebarMenuSubButton
+                      asChild
+                      isActive={isSubItemActive}
+                      className={NAV_SUB_BUTTON_CLASS}
+                    >
                       <Link href={subItem.href}>
                         <span>{subItem.title}</span>
                       </Link>
@@ -99,7 +116,7 @@ function AppNavLink({ item }: { item: AppNavItem }) {
         asChild
         tooltip={item.title}
         isActive={isActive}
-        className="data-[active=true]:border-sidebar-border data-[active=true]:border"
+        className={NAV_BUTTON_CLASS}
       >
         <Link href={item.href}>
           <item.icon />
@@ -152,32 +169,36 @@ export function AppSidebar({
   );
 
   return (
-    <Sidebar collapsible="icon" className="border-sidebar-border">
-      <SidebarHeader className="p-3">
+    <Sidebar
+      collapsible="icon"
+      variant="floating"
+      className="[&_[data-slot=sidebar-inner]]:shadow-fluent-8 [&_[data-slot=sidebar-inner]]:rounded-2xl"
+    >
+      <SidebarHeader className="px-4 pt-5 pb-3 group-data-[collapsible=icon]:px-2">
         <Link
           href="/dashboard"
-          className="focus-visible:ring-sidebar-ring flex min-w-0 items-center gap-2 rounded-md p-1 outline-none focus-visible:ring-2"
+          className="focus-visible:ring-sidebar-ring flex min-w-0 items-center gap-3 rounded-lg outline-none group-data-[collapsible=icon]:justify-center focus-visible:ring-2"
         >
-          <LogoMark />
-          <span className="grid min-w-0 group-data-[collapsible=icon]:hidden">
-            <span className="font-heading truncate text-sm leading-none font-semibold">
+          <LogoMark className="size-9 group-data-[collapsible=icon]:size-8" />
+          <span className="grid min-w-0 gap-1 group-data-[collapsible=icon]:hidden">
+            <span className="font-heading truncate text-base leading-none font-semibold">
               {brand?.name ?? 'Medical EMR'}
             </span>
-            <span className="text-sidebar-foreground/70 truncate text-xs">
+            <span className="text-sidebar-foreground/55 truncate text-xs leading-none">
               {brand?.subtitle ?? 'Redsky Consultancy'}
             </span>
           </span>
         </Link>
       </SidebarHeader>
 
-      <SidebarSeparator />
-
-      <SidebarContent>
+      <SidebarContent className="gap-1 pb-2">
         {visibleNavGroups.map((group) => (
-          <SidebarGroup key={group.title}>
-            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+          <SidebarGroup key={group.title} className="px-3 py-1.5">
+            <SidebarGroupLabel className="text-sidebar-foreground/45 px-3 font-semibold tracking-widest uppercase">
+              {group.title}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-1">
                 {group.items.map((item) => (
                   <AppNavLink key={item.href} item={item} />
                 ))}
@@ -187,28 +208,28 @@ export function AppSidebar({
         ))}
       </SidebarContent>
 
-      <SidebarSeparator />
-
-      <SidebarFooter className="p-3">
-        <div className="flex min-w-0 items-center gap-2 rounded-md p-1 group-data-[collapsible=icon]:justify-center">
+      <SidebarFooter className="p-3 group-data-[collapsible=icon]:px-2">
+        <div className="bg-sidebar-accent/70 ring-sidebar-border/60 flex min-w-0 items-center gap-3 rounded-xl p-2.5 ring-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:ring-0">
           {isLoading || !currentUser ? (
             <>
-              <Skeleton className="size-8 shrink-0 rounded-full" />
+              <Skeleton className="bg-sidebar-foreground/15 size-8 shrink-0 rounded-full" />
               <div className="grid min-w-0 flex-1 gap-1 group-data-[collapsible=icon]:hidden">
-                <Skeleton className="h-3.5 w-24" />
-                <Skeleton className="h-3 w-32" />
+                <Skeleton className="bg-sidebar-foreground/15 h-3.5 w-24" />
+                <Skeleton className="bg-sidebar-foreground/15 h-3 w-32" />
               </div>
             </>
           ) : (
             <>
               <Avatar size="sm">
-                <AvatarFallback>
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-semibold">
                   {getInitials(currentUser.user.name, currentUser.user.email)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-                <span className="truncate text-sm font-medium">{currentUser.user.name}</span>
-                <span className="text-sidebar-foreground/70 truncate text-xs">
+                <span className="truncate text-sm leading-tight font-semibold">
+                  {currentUser.user.name}
+                </span>
+                <span className="text-sidebar-foreground/55 truncate text-xs leading-tight">
                   {currentUser.user.email}
                 </span>
               </div>

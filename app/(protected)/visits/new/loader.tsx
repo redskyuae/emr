@@ -33,10 +33,10 @@ export default function CreateVisitLoader() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">
-          <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
+          <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SectionHeadingSkeleton />
-              <Skeleton className="h-9 w-72 max-w-full" />
+              <Skeleton className="h-10 w-72 max-w-full" />
             </div>
             <Skeleton className="h-10 w-full" />
             <div className="overflow-hidden rounded-xl border">
@@ -60,7 +60,7 @@ export default function CreateVisitLoader() {
         </div>
 
         <div
-          className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4"
+          className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5"
           aria-label="Loading Patient Treatment Plans"
         >
           <SectionHeadingSkeleton />
@@ -75,8 +75,8 @@ export default function CreateVisitLoader() {
           <Skeleton className="h-6 w-40 rounded-full" />
         </div>
         <div className="flex gap-2">
-          <Skeleton className="h-9 w-20" />
-          <Skeleton className="h-9 w-36" />
+          <Skeleton className="h-10 w-20" />
+          <Skeleton className="h-10 w-36" />
         </div>
       </div>
     </div>

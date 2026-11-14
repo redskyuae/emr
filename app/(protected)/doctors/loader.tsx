@@ -13,15 +13,15 @@ export default function DoctorsPageLoader() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading Doctors page">
       <Card className="shadow-fluent-2">
-        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-          <Skeleton className="h-9 w-56" />
-          <Skeleton className="h-9 w-full lg:max-w-xs" />
-          <Skeleton className="h-9 w-full lg:w-40" />
-          <Skeleton className="h-9 w-full lg:w-48" />
+        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <Skeleton className="h-10 w-56" />
+          <Skeleton className="h-10 w-full lg:max-w-xs" />
+          <Skeleton className="h-10 w-full lg:w-40" />
+          <Skeleton className="h-10 w-full lg:w-48" />
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2">
+      <Card className="shadow-fluent-2 py-0">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table className="min-w-[920px] table-fixed">

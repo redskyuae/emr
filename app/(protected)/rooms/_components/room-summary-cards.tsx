@@ -19,7 +19,7 @@ function SummaryCard({
 }) {
   return (
     <Card className="shadow-fluent-2">
-      <CardContent className="space-y-2 p-4">
+      <CardContent className="space-y-2">
         <div className="flex items-center gap-2">
           <div className="bg-primary/10 text-primary flex size-9 items-center justify-center rounded-full">
             <Icon className="size-4" />
@@ -54,7 +54,7 @@ export function RoomSummaryCardsSkeleton() {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: 4 }, (_, i) => (
         <Card key={i} className="shadow-fluent-2">
-          <CardContent className="space-y-2 p-4">
+          <CardContent className="space-y-2">
             <div className="flex items-center gap-2">
               <Skeleton className="size-9 rounded-full" />
               <Skeleton className="h-4 w-24" />

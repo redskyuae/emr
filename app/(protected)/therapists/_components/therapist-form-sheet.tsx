@@ -128,7 +128,7 @@ export function TherapistFormSheet({ open, therapist, onClose }: Props) {
                 <FieldLabel htmlFor="therapist-gender">Gender</FieldLabel>
                 <select
                   id="therapist-gender"
-                  className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                  className="border-input bg-background h-10 rounded-md border px-3 text-sm"
                   {...form.register('gender', { setValueAs: (value) => value || undefined })}
                 >
                   <option value="">Select gender</option>

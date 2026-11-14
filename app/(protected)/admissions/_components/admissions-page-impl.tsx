@@ -115,7 +115,7 @@ export function AdmissionsPageImpl() {
     <>
       <div className="space-y-4">
         <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <Select
               value={statusParam ?? 'ADMITTED'}
               onValueChange={(value) => {
@@ -123,7 +123,7 @@ export function AdmissionsPageImpl() {
                 void setStatusParam(value === 'ADMITTED' ? null : value);
               }}
             >
-              <SelectTrigger className="h-9 lg:w-44" aria-label="Filter by status">
+              <SelectTrigger className="h-10 lg:w-44" aria-label="Filter by status">
                 <SelectValue placeholder="Admitted" />
               </SelectTrigger>
               <SelectContent>
@@ -143,7 +143,7 @@ export function AdmissionsPageImpl() {
                 void setWardParam(value === ALL_FILTER ? null : value);
               }}
             >
-              <SelectTrigger className="h-9 lg:w-48" aria-label="Filter by ward">
+              <SelectTrigger className="h-10 lg:w-48" aria-label="Filter by ward">
                 <SelectValue placeholder="All Wards" />
               </SelectTrigger>
               <SelectContent>
@@ -163,7 +163,7 @@ export function AdmissionsPageImpl() {
                 void setDoctorParam(value === ALL_FILTER ? null : value);
               }}
             >
-              <SelectTrigger className="h-9 lg:w-52" aria-label="Filter by doctor">
+              <SelectTrigger className="h-10 lg:w-52" aria-label="Filter by doctor">
                 <SelectValue placeholder="All doctors" />
               </SelectTrigger>
               <SelectContent>
@@ -176,7 +176,7 @@ export function AdmissionsPageImpl() {
               </SelectContent>
             </Select>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-xs">
+            <InputGroup className="h-10 lg:max-w-xs">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>

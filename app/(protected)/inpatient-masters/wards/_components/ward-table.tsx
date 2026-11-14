@@ -27,26 +27,26 @@ export function WardTable({
   onDelete: (ward: Ward) => void;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
+    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[600px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left">
-              <th className="p-3 pl-4 font-medium">Name</th>
-              <th className="p-3 font-medium">Code</th>
-              <th className="p-3 font-medium">Description</th>
-              <th className="p-3 pr-4 text-right font-medium">Actions</th>
+            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
+              <th className="p-3 pl-5 font-semibold">Name</th>
+              <th className="p-3 font-semibold">Code</th>
+              <th className="p-3 font-semibold">Description</th>
+              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
             {wards.map((ward) => (
               <tr key={ward.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                <td className="p-3 pl-4 font-medium">{ward.name}</td>
-                <td className="p-3">
+                <td className="px-3 py-3.5 pl-5 font-medium">{ward.name}</td>
+                <td className="px-3 py-3.5">
                   <Badge variant="secondary">{ward.code}</Badge>
                 </td>
-                <td className="text-muted-foreground p-3">{ward.description ?? '—'}</td>
-                <td className="p-3 pr-4 text-right">
+                <td className="text-muted-foreground px-3 py-3.5">{ward.description ?? '—'}</td>
+                <td className="px-3 py-3.5 pr-5 text-right">
                   {canEdit || canDelete ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -82,7 +82,7 @@ export function WardTable({
 
 export function WardTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
+    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="h-5 w-40" />

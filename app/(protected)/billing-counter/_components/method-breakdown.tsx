@@ -30,12 +30,12 @@ export function MethodBreakdown({ txns }: { txns: LedgerTxn[] }) {
       <CardContent className="overflow-x-auto p-0">
         <table className="w-full min-w-[520px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-y text-left text-xs">
-              <th className="p-2 pl-4 font-medium">Method</th>
-              <th className="p-2 font-medium">Reconciled against</th>
-              <th className="p-2 text-right font-medium">Received</th>
-              <th className="p-2 text-right font-medium">Refunded</th>
-              <th className="p-2 pr-4 text-right font-medium">Net</th>
+            <tr className="text-muted-foreground bg-muted/60 border-y text-left text-xs tracking-wider uppercase">
+              <th className="p-2 pl-4 font-semibold">Method</th>
+              <th className="p-2 font-semibold">Reconciled against</th>
+              <th className="p-2 text-right font-semibold">Received</th>
+              <th className="p-2 text-right font-semibold">Refunded</th>
+              <th className="p-2 pr-4 text-right font-semibold">Net</th>
             </tr>
           </thead>
           <tbody>

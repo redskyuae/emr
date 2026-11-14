@@ -47,7 +47,7 @@ function RoleCard({
 }) {
   return (
     <Card className="shadow-fluent-2 hover:shadow-fluent-8 transition-shadow">
-      <CardContent className="flex min-h-52 flex-col gap-4 p-4">
+      <CardContent className="flex min-h-52 flex-col gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <RoleIcon isSystem={role.isSystem} />
           <div className="min-w-0 flex-1 space-y-2">

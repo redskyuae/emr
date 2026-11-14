@@ -3,10 +3,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function UsersPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-xl border p-3 lg:flex-row lg:items-center">
-        <Skeleton className="h-9 w-full lg:max-w-sm" />
-        <Skeleton className="h-9 w-full lg:w-48" />
-        <Skeleton className="h-9 w-full lg:w-40" />
+      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
+        <Skeleton className="h-10 w-full lg:max-w-sm" />
+        <Skeleton className="h-10 w-full lg:w-48" />
+        <Skeleton className="h-10 w-full lg:w-40" />
       </div>
 
       <div className="bg-card shadow-fluent-2 rounded-xl border">
