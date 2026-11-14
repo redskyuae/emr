@@ -10,6 +10,7 @@ The design source of truth for all frontend work. Any agent or developer buildin
 - **Why shadcn/ui**: components are owned in-repo (`components/ui/`), themed centrally through CSS variables, and accessible by default (Radix primitives). We restyle tokens, not components.
 - **Why a darker blue**: Microsoft's brand blue (`#0078D4`) is too bright for long clinical sessions and too recognizable as "Microsoft". Our primary is a deeper, calmer blue — `oklch(0.43 0.118 254)` — that holds AA contrast as a text color and button fill on white.
 - **Decided**: June 2026, while building the marketing and auth pages. The product is **Medical EMR**, built by **Redsky Consultancy** (https://redskyconsultancy.com/). The brand string lives in `components/brand/logo.tsx`, the marketing header/footer, and root metadata — update it in those places only.
+- **Refreshed**: November 2026, to give the clinical app more room. The app took the shell and control sizing of our Whiteboard and Construction Management products: the Satoshi typeface, an ink floating sidebar, a large page title over a faint watermark of itself, 40px form controls, a 12px base radius, softer shadows, and tables with a header band. The deep blue primary and the semantic status colours did not change.
 - **Deployment branding**: `LOGIN_LOGO_VARIANT` selects the visible Dhathri logo across login, navigation, loading screens, and the browser icon. `none` keeps the Medical EMR mark. Product copy and metadata still identify Medical EMR and Redsky Consultancy.
 
 ## Tokens
@@ -21,13 +22,16 @@ All tokens live in `app/globals.css` as CSS variables, mapped to Tailwind utilit
 | Token                            | Value                    | Use for                                                          |
 | -------------------------------- | ------------------------ | ---------------------------------------------------------------- |
 | `--primary`                      | `oklch(0.43 0.118 254)`  | Primary actions, links, active states                            |
-| `--background`                   | `oklch(0.988 0.003 247)` | App/page background (cool near-white)                            |
-| `--foreground`                   | `oklch(0.21 0.028 256)`  | Body text (navy ink, not pure black)                             |
+| `--background`                   | `oklch(0.975 0.006 262)` | App/page background (cool tinted grey, so white cards lift off)  |
+| `--foreground`                   | `oklch(0.21 0.03 265)`   | Body text (navy ink, not pure black)                             |
 | `--card`                         | white                    | Elevated surfaces                                                |
+| `--field`                        | white                    | Fill of text boxes, Selects and Comboboxes (`bg-field`)          |
 | `--accent`                       | `oklch(0.948 0.02 248)`  | Light blue wash: hovers, selected items                          |
 | `--muted` / `--muted-foreground` | cool greys               | Secondary surfaces and text                                      |
 | `--border` / `--input`           | cool greys               | Hairlines; inputs slightly darker (Fluent visible-field borders) |
 | `--destructive`                  | red oklch                | Errors, blocked states, and destructive actions                  |
+
+The sidebar has its own tokens (`--sidebar*`) and is **ink in both themes**: a near-black panel with `--sidebar-primary`, a lifted blue, for the active row. The page keeps its own theme; the sidebar does not follow it.
 
 A full dark theme exists under `.dark` (navy-tinted darks, lighter blue primary). Every screen must work in both; never use raw `white`/`black` utilities for surfaces or text.
 
@@ -68,22 +72,28 @@ Patient has an active allergy).
 
 ### Typography
 
-| Role     | Font                                                      | Tailwind                              |
-| -------- | --------------------------------------------------------- | ------------------------------------- |
-| Headings | Urbanist                                                  | `font-heading` (automatic on `h1–h4`) |
-| Body/UI  | Urbanist                                                  | `font-sans` (default)                 |
-| Data     | Urbanist, tabular figures — codes, IDs, timestamps, slugs | `font-mono`                           |
+| Role     | Font                                                     | Tailwind                              |
+| -------- | -------------------------------------------------------- | ------------------------------------- |
+| Headings | Satoshi                                                  | `font-heading` (automatic on `h1–h4`) |
+| Body/UI  | Satoshi                                                  | `font-sans` (default)                 |
+| Data     | Satoshi, tabular figures — codes, IDs, timestamps, slugs | `font-mono`                           |
 
-Urbanist is the single global font: headings, body and data share the family, so hierarchy comes
-from weight and size rather than a second typeface. (It replaced Schibsted Grotesk headings + Public
-Sans body, and later Geist Mono for data.) `font-mono` is kept as the semantic marker for codes and
-IDs; it maps to Urbanist with tabular figures so numbers still line up in columns.
+Satoshi is the single global font: headings, body and data share the family, so hierarchy comes
+from weight and size rather than a second typeface. (It replaced Urbanist in November 2026.)
+`font-mono` is kept as the semantic marker for codes and IDs; it maps to Satoshi with tabular
+figures so numbers still line up in columns.
 
-Loaded in `app/layout.tsx` via `next/font`. Do not introduce other fonts.
+Satoshi is a variable font (weights 300–900) loaded from Fontshare's servers by `FontStylesheet`
+(`components/providers/font-stylesheet.tsx`), rendered once in `app/layout.tsx`; `--font-satoshi`
+in `globals.css` names it. Its licence allows loading it from Fontshare but not committing the
+font files to a public repository. If Fontshare is unreachable the UI falls back to the system
+sans-serif font. Do not introduce other fonts.
 
 ### Elevation (Fluent depth ramp)
 
-Custom shadow utilities defined in `globals.css`, replacing Tailwind's default shadows for surfaces:
+Custom shadow utilities defined in `globals.css`, replacing Tailwind's default shadows for surfaces.
+The steps keep their Fluent names, but the shadows are soft and low-contrast: a card at rest is
+separated mostly by its hairline ring and the tinted page behind it.
 
 | Utility            | Use for                                |
 | ------------------ | -------------------------------------- |
@@ -98,8 +108,20 @@ Depth communicates hierarchy: the more an element interrupts the user, the highe
 
 ### Radius & spacing
 
-- Base radius `--radius: 0.5rem`; shadcn scales it down for small controls. Fluent uses small radii — do not use `rounded-3xl`+ on controls (large radii are reserved for marketing artwork like the CTA banner).
+- Base radius `--radius: 0.75rem` (12px): controls are `rounded-lg` (12px), cards `rounded-xl` (16px), small chips `rounded-md` (10px). Do not use `rounded-3xl`+ on controls (large radii are reserved for marketing artwork like the CTA banner).
 - Spacing follows the 8px grid: prefer Tailwind steps that are multiples of 2 (`gap-2`, `p-4`, `py-6`); use odd steps only inside dense data UI.
+- **Leave room.** The page has 32px side gutters on desktop (`lg:px-8`), cards pad their content by 20px (16px for `size="sm"`), and sections sit 16px apart. Do not add `p-3`/`p-4` to a `CardContent` that sits directly in a `Card`: the card already pads it. A `Card` whose content is flush (a table, a list) takes `py-0`.
+- **Control sizes.** Inputs, Selects, search boxes and toolbar buttons are 40px tall so a toolbar lines up without overrides.
+
+  | Control                                 | Height                                |
+  | --------------------------------------- | ------------------------------------- |
+  | `Input`, `SelectTrigger`, `InputGroup`  | 40px (`SelectTrigger size="sm"` 32px) |
+  | `Button` `xs` / `sm` / `default` / `lg` | 28 / 32 / 36 / 40px; icon sizes match |
+  | `Toggle` `sm` / `default` / `lg`        | 32 / 36 / 40px                        |
+  | `Badge`                                 | 24px                                  |
+
+  Use `size="lg"` for a button or toggle group beside an input. Do not pin a control's height with `h-8`/`h-9`; deliberately dense grids (the Billing Counter line editor) are the exception.
+
 - Avoid arbitrary Tailwind length utilities (`w-[360px]`, `text-[15px]`, `rounded-[4px]`) in product UI when a Tailwind scale class or design-system utility exists. Arbitrary values require a clear layout reason and should be rare.
 
 ### Surfaces
@@ -134,6 +156,17 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 - Every `app/**/page.tsx` has a sibling `loader.tsx` that imports and renders `Skeleton` from `@/components/ui/skeleton`. When the page or any route-local `_components/` file changes, update that route's `loader.tsx` in the same change so the loading state remains page-shaped.
 - `components/ui/calendar.tsx` was patched for react-day-picker v10 (`month_grid` classNames key replaces v8's `table`). Re-apply if the component is regenerated.
 - Charts use `chart.tsx` (Recharts) with `--chart-1..5` (a blue-led ramp). Toasts use `sonner.tsx`.
+- **Tables** use `components/ui/table.tsx`: a muted header band with small uppercase labels, 3.5 units of vertical cell padding, and 20px insets on the first and last column. Wrap a table in a `Card` with `py-0` (or a `bg-card rounded-xl border` box) so the band meets the card edge. A hand-rolled `<table>` copies the same header row classes.
+
+## App shell
+
+The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` in `app/(protected)/layout.tsx`.
+
+- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is solid `sidebar-primary`. A parent with a submenu only brightens, and its current child carries the pill. It still collapses to icons, and is a sheet on a phone.
+- **`AppTopbar`** is a slim sticky utility bar: the sidebar trigger, global search, the active Tenant (`TenantChip`), help and notifications. It carries no page title.
+- **`AppPageHeader`** sits under the top bar on every page. It shows the page's sidebar group as a small muted eyebrow (`getAppPageGroup`), the title as a plain `h1` in the foreground colour, and the subtitle under it. The title is repeated behind the header as a large watermark at 4.5% foreground opacity that drifts in from the left on navigation (skipped under `prefers-reduced-motion`); it is `aria-hidden` and clipped by the header. Title and subtitle come from `app-shell-config.ts`; a page does not render its own `h1`, and its section headings start at `h2`.
+- A page header **primary action** (`primaryAction` in the page meta) is only for pages whose content has no always-visible button for the same action. A list page with a create button in its toolbar leaves it out, so an action never appears twice.
+- On a phone the Tenant chip moves from the top bar into the page header, so the active Tenant stays visible.
 
 ## Clinical surfaces
 
@@ -147,9 +180,9 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 1. **Light, calm, blue-accented.** Surfaces are near-white and cool-tinted; deep blue primary anchors the main action. Functional and status colors add meaning through restrained tints.
 2. **One accent at a time.** Primary blue marks the single most important action per view. Secondary actions are `outline`/`ghost`. Functional and status colors may coexist when each communicates a distinct meaning.
 3. **Depth over decoration.** Hierarchy comes from elevation, spacing, and type weight — not from colored boxes and heavy borders.
-4. **Small radii, crisp edges.** This is a tool, not a toy.
-5. **Type does the talking.** Urbanist headings carry personality through weight and size; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).
-6. **Density with breathing room.** Clinical screens may be dense (tables, schedules) but always on the 8px grid with clear group separation.
+4. **Soft corners, calm surfaces.** A 12px base radius and hairline rings; nothing bubbly.
+5. **Type does the talking.** Satoshi headings carry personality through weight and size; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).
+6. **Breathing room first.** Staff use this all day: generous gutters, 40px controls and roomy table rows come before fitting more on screen. Deliberately dense grids are the exception, and still sit on the 8px grid with clear group separation.
 
 ## UX principles (EMR-specific)
 
@@ -171,3 +204,4 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 - [ ] Loading/empty/error states designed, not defaulted
 - [ ] `page.tsx` has a matching sibling `loader.tsx`; changed route-local components update the loader too
 - [ ] Uses `components/ui/` primitives instead of bespoke equivalents
+- [ ] No second `h1`, no duplicate of the page header's title or primary action, and no pinned control heights

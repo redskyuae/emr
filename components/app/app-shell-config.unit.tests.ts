@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { appNavGroups, getAppPageMeta, getVisibleNavGroups } from './app-shell-config';
+import {
+  appNavGroups,
+  getAppPageGroup,
+  getAppPageMeta,
+  getVisibleNavGroups,
+} from './app-shell-config';
 
 function getVisibleGroup(groupTitle: string, permissions: string[]) {
   return getVisibleNavGroups(appNavGroups, permissions).find(({ title }) => title === groupTitle);
@@ -225,5 +230,20 @@ describe('App shell navigation permissions', () => {
       title: 'Asset Conditions',
       subtitle: 'Tenant-scoped physical condition records for Assets.',
     });
+  });
+
+  it('should give a page the navigation group of the item it belongs to', () => {
+    expect(getAppPageGroup('/dashboard')).toBe('Overview');
+    expect(getAppPageGroup('/patients/42')).toBe('Clinical');
+    expect(getAppPageGroup('/appointment-masters/modes')).toBe('Configuration');
+  });
+
+  it('should give a nested page the group of its section', () => {
+    expect(getAppPageGroup('/appointments/new')).toBe('Clinical');
+    expect(getAppPageGroup('/rooms/3')).toBe('Operations');
+  });
+
+  it('should have no group for a page outside the navigation', () => {
+    expect(getAppPageGroup('/somewhere-else')).toBeUndefined();
   });
 });

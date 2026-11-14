@@ -10,7 +10,7 @@ export default function SessionsPageLoader() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-5">
-        <div className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-4 xl:col-span-3">
+        <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5 xl:col-span-3">
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-4 w-72" />
           <div className="space-y-2 pt-2">
@@ -19,7 +19,7 @@ export default function SessionsPageLoader() {
             ))}
           </div>
         </div>
-        <div className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-4 xl:col-span-2">
+        <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5 xl:col-span-2">
           <Skeleton className="h-6 w-40" />
           {[0, 1, 2, 3].map((item) => (
             <Skeleton key={item} className="h-16 w-full" />

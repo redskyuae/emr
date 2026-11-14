@@ -34,7 +34,7 @@ function TimelineSkeleton() {
         <div key={group} className="space-y-2">
           <Skeleton className="h-3 w-24" />
           {[0, 1].map((entry) => (
-            <div key={entry} className="bg-card shadow-fluent-2 rounded-xl border p-3">
+            <div key={entry} className="bg-card shadow-fluent-2 rounded-xl border p-4">
               <div className="flex items-start gap-3">
                 <Skeleton className="size-8 rounded-full" />
                 <div className="flex-1 space-y-2">

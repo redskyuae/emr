@@ -72,7 +72,7 @@ function StateCountryFilter({
 }) {
   return (
     <Select value={value} onValueChange={onChange} disabled={isLoading || countries.length === 0}>
-      <SelectTrigger className="bg-background h-9 w-full lg:w-52" aria-label="Filter by Country">
+      <SelectTrigger className="bg-background h-10 w-full lg:w-52" aria-label="Filter by Country">
         <SelectValue placeholder={isLoading ? 'Loading Countries...' : 'All Countries'} />
       </SelectTrigger>
       <SelectContent>
@@ -193,7 +193,7 @@ export function StatesPageImpl() {
     <>
       <div className="space-y-4">
         <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -218,7 +218,7 @@ export function StatesPageImpl() {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+            <InputGroup className="h-10 lg:max-w-sm">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>

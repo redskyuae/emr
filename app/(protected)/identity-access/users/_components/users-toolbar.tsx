@@ -70,8 +70,8 @@ export function UsersToolbar({
 
   return (
     <Card className="shadow-fluent-2">
-      <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-        <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+      <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <InputGroup className="h-10 lg:max-w-sm">
           <InputGroupAddon>
             <Search className="size-4" />
           </InputGroupAddon>
@@ -89,7 +89,7 @@ export function UsersToolbar({
           onValueChange={(value) => onRoleChange(value === ALL ? '' : value)}
           disabled={rolesLoading}
         >
-          <SelectTrigger className="h-9 w-full lg:w-48" aria-label="Filter by Role">
+          <SelectTrigger className="h-10 w-full lg:w-48" aria-label="Filter by Role">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
           <SelectContent>
@@ -106,7 +106,7 @@ export function UsersToolbar({
           value={statusValue || ALL}
           onValueChange={(value) => onStatusChange(value === ALL ? '' : value)}
         >
-          <SelectTrigger className="h-9 w-full lg:w-40" aria-label="Filter by status">
+          <SelectTrigger className="h-10 w-full lg:w-40" aria-label="Filter by status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>

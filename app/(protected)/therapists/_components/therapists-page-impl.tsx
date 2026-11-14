@@ -103,7 +103,7 @@ export function TherapistsPageImpl() {
   return (
     <div className="space-y-4">
       <Card className="shadow-fluent-2">
-        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <ToggleGroup
             type="single"
             value={viewLayout}
@@ -127,7 +127,7 @@ export function TherapistsPageImpl() {
               List
             </ToggleGroupItem>
           </ToggleGroup>
-          <InputGroup className="h-9 lg:max-w-xs">
+          <InputGroup className="h-10 lg:max-w-xs">
             <InputGroupAddon>
               <Search className="size-4" />
             </InputGroupAddon>
@@ -142,7 +142,7 @@ export function TherapistsPageImpl() {
             />
           </InputGroup>
           <select
-            className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+            className="border-input bg-background h-10 rounded-md border px-3 text-sm"
             value={status ?? 'all'}
             aria-label="Filter by status"
             onChange={(event) => {

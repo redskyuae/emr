@@ -54,7 +54,7 @@ export function DoctorSchedulesToolbar({
 
   return (
     <Card className="shadow-fluent-2">
-      <CardContent className="flex flex-col gap-3 p-3 xl:flex-row xl:items-center">
+      <CardContent className="flex flex-col gap-3 xl:flex-row xl:items-center">
         <ToggleGroup
           type="single"
           value={viewLayout}
@@ -85,7 +85,7 @@ export function DoctorSchedulesToolbar({
             disabled={doctorsLoading}
             onValueChange={(value) => onDoctorChange(value === ALL ? '' : value)}
           >
-            <SelectTrigger className="h-9 w-full" aria-label="Filter by Doctor">
+            <SelectTrigger className="h-10 w-full" aria-label="Filter by Doctor">
               <SelectValue placeholder="All Doctors" />
             </SelectTrigger>
             <SelectContent>
@@ -103,7 +103,7 @@ export function DoctorSchedulesToolbar({
             value={fromDateValue}
             aria-label="Filter schedules from date"
             onChange={(event) => onFromDateChange(event.target.value)}
-            className="h-9"
+            className="h-10"
           />
 
           <Input
@@ -111,7 +111,7 @@ export function DoctorSchedulesToolbar({
             value={toDateValue}
             aria-label="Filter schedules to date"
             onChange={(event) => onToDateChange(event.target.value)}
-            className="h-9"
+            className="h-10"
           />
         </div>
 

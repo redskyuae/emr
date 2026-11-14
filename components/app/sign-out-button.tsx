@@ -23,7 +23,7 @@ export function SignOutButton() {
       type="button"
       variant={signOutMutation.isError ? 'destructive' : 'ghost'}
       size="icon-sm"
-      className="group-data-[collapsible=icon]:hidden"
+      className="text-sidebar-foreground/70 hover:bg-sidebar-border hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
       aria-label={signOutMutation.isError ? 'Sign out failed. Try again.' : 'Sign out'}
       title={signOutMutation.isError ? 'Sign out failed. Try again.' : 'Sign out'}
       disabled={signOutMutation.isPending}

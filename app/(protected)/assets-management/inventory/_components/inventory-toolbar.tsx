@@ -59,7 +59,7 @@ export function InventoryToolbar({
   return (
     <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
       <div className="grid gap-2 sm:grid-cols-3 2xl:w-full 2xl:max-w-xl">
-        <InputGroup className="bg-background h-9 sm:col-span-2">
+        <InputGroup className="bg-background h-10 sm:col-span-2">
           <InputGroupAddon>
             <Search className="size-4" />
           </InputGroupAddon>
@@ -77,7 +77,7 @@ export function InventoryToolbar({
           value={categoryValue || ALL}
           onValueChange={(value) => onCategoryChange(value === ALL ? '' : value)}
         >
-          <SelectTrigger className="bg-background h-9 w-full sm:col-span-1">
+          <SelectTrigger className="bg-background h-10 w-full sm:col-span-1">
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>

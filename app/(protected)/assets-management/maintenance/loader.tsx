@@ -31,7 +31,7 @@ export default function PageLoader() {
 
         <CardContent className="space-y-4 p-4">
           <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center">
-            <Skeleton className="h-9 w-full 2xl:max-w-sm" />
+            <Skeleton className="h-10 w-full 2xl:max-w-sm" />
             <div className="flex flex-wrap gap-1.5">
               {Array.from({ length: 5 }, (_, i) => (
                 <Skeleton key={i} className="h-8 w-24 rounded-md" />

@@ -104,7 +104,7 @@ export function UsersTable({
   const total = meta?.total ?? 0;
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="shadow-fluent-2 py-0">
       <CardContent className="p-0">
         {isLoading ? (
           <UsersTableSkeleton />

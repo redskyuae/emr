@@ -9,13 +9,13 @@ export default function VisitsPageLoader() {
         ))}
       </div>
 
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
-        <Skeleton className="h-9 lg:w-44" />
-        <Skeleton className="h-9 lg:w-52" aria-label="Loading Doctor filter" />
-        <Skeleton className="h-9 w-full lg:ml-auto lg:max-w-xs" />
+      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
+        <Skeleton className="h-10 lg:w-44" />
+        <Skeleton className="h-10 lg:w-52" aria-label="Loading Doctor filter" />
+        <Skeleton className="h-10 w-full lg:ml-auto lg:max-w-xs" />
       </div>
 
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
+      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
         {Array.from({ length: 6 }, (_, index) => (
           <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
             <Skeleton className="size-9 rounded-md" />

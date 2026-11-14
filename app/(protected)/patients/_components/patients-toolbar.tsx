@@ -61,8 +61,8 @@ export function PatientsToolbar({
 
   return (
     <Card className="shadow-fluent-2">
-      <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-        <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+      <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <InputGroup className="h-10 lg:max-w-sm">
           <InputGroupAddon>
             <Search className="size-4" />
           </InputGroupAddon>
@@ -79,7 +79,7 @@ export function PatientsToolbar({
           value={genderValue || ALL}
           onValueChange={(value) => onGenderChange(value === ALL ? '' : value)}
         >
-          <SelectTrigger className="h-9 w-full lg:w-40" aria-label="Filter by gender">
+          <SelectTrigger className="h-10 w-full lg:w-40" aria-label="Filter by gender">
             <SelectValue placeholder="Gender" />
           </SelectTrigger>
           <SelectContent>
@@ -96,7 +96,7 @@ export function PatientsToolbar({
           value={statusValue || ALL}
           onValueChange={(value) => onStatusChange(value === ALL ? '' : value)}
         >
-          <SelectTrigger className="h-9 w-full lg:w-40" aria-label="Filter by status">
+          <SelectTrigger className="h-10 w-full lg:w-40" aria-label="Filter by status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>

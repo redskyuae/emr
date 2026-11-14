@@ -248,10 +248,10 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-muted-foreground border-b text-left text-xs">
-                  <th className="pb-1.5 font-medium">No.</th>
-                  <th className="pb-1.5 font-medium">Type</th>
-                  <th className="pb-1.5 text-right font-medium">Amount</th>
+                <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
+                  <th className="pb-1.5 font-semibold">No.</th>
+                  <th className="pb-1.5 font-semibold">Type</th>
+                  <th className="pb-1.5 text-right font-semibold">Amount</th>
                 </tr>
               </thead>
               <tbody>

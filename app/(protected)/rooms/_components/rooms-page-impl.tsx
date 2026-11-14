@@ -142,7 +142,7 @@ export function RoomsPageImpl() {
         ) : null}
 
         <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -167,7 +167,7 @@ export function RoomsPageImpl() {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-xs">
+            <InputGroup className="h-10 lg:max-w-xs">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>
@@ -184,7 +184,7 @@ export function RoomsPageImpl() {
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as RoomStatus | typeof ALL_FILTER)}
             >
-              <SelectTrigger className="h-9 lg:w-40" aria-label="Filter by status">
+              <SelectTrigger className="h-10 lg:w-40" aria-label="Filter by status">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -198,7 +198,7 @@ export function RoomsPageImpl() {
             </Select>
 
             <Select value={roomTypeFilter} onValueChange={setRoomTypeFilter}>
-              <SelectTrigger className="h-9 lg:w-44" aria-label="Filter by Room Type">
+              <SelectTrigger className="h-10 lg:w-44" aria-label="Filter by Room Type">
                 <SelectValue placeholder="All Room Types" />
               </SelectTrigger>
               <SelectContent>

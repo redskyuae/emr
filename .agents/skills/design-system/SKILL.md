@@ -17,7 +17,9 @@ This project has a committed design system: **Microsoft Fluent-inspired, built o
 
 - **Tokens only.** `bg-primary`, `text-muted-foreground`, `shadow-fluent-8` — never raw hex/oklch in components. Theme changes happen in `app/globals.css`, nowhere else.
 - **Don't fork `components/ui/`.** Layout tweaks go through `className`; theme tweaks go through tokens. Domain composites go in `components/{brand,marketing,auth,...}/`.
-- **Fonts are fixed**: Urbanist everywhere — headings (automatic on h1–h4), body, and data. Mark codes/IDs/timestamps with `font-mono`, which maps to Urbanist with tabular figures. Do not add fonts.
+- **Fonts are fixed**: Satoshi everywhere — headings (automatic on h1–h4), body, and data. Mark codes/IDs/timestamps with `font-mono`, which maps to Satoshi with tabular figures. Do not add fonts.
+- **The shell owns the page title.** `AppPageHeader` renders the page's group eyebrow, a plain `h1` and a faint watermark of the title from `app-shell-config.ts`; a page starts at `h2` and does not repeat the title or the header's primary action.
+- **Leave room.** Don't pin control heights (`h-8`/`h-9`) or re-pad a `CardContent` that sits directly in a `Card`; see "Radius & spacing" in DESIGN.md for the control sizes.
 - **Elevation = hierarchy.** Use the `shadow-fluent-*` ramp from DESIGN.md; the more modal the element, the higher the shadow.
 - **Motion**: GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`. Ease `power3.out`, ≤ 0.9s, scroll reveals fire once, and **always** bail out under `prefers-reduced-motion`. No continuous motion inside the clinical app.
 - **Both themes.** Every screen must hold up in light and dark (`.dark`).
