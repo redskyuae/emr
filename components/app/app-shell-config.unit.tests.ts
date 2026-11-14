@@ -1,9 +1,8 @@
-import { CalendarClock, CalendarPlus, LayoutDashboard, UsersRound } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
 import {
   appNavGroups,
-  getAppPageIcon,
+  getAppPageGroup,
   getAppPageMeta,
   getVisibleNavGroups,
 } from './app-shell-config';
@@ -233,18 +232,18 @@ describe('App shell navigation permissions', () => {
     });
   });
 
-  it('should give a page the icon of the navigation item it belongs to', () => {
-    expect(getAppPageIcon('/patients')).toBe(UsersRound);
-    expect(getAppPageIcon('/patients/42')).toBe(UsersRound);
-    expect(getAppPageIcon('/appointment-masters/modes')).toBe(CalendarClock);
+  it('should give a page the navigation group of the item it belongs to', () => {
+    expect(getAppPageGroup('/dashboard')).toBe('Overview');
+    expect(getAppPageGroup('/patients/42')).toBe('Clinical');
+    expect(getAppPageGroup('/appointment-masters/modes')).toBe('Configuration');
   });
 
-  it('should prefer the most specific navigation item for a page icon', () => {
-    expect(getAppPageIcon('/appointments/new')).toBe(CalendarPlus);
-    expect(getAppPageIcon('/appointments/7/reschedule')).toBe(CalendarClock);
+  it('should give a nested page the group of its section', () => {
+    expect(getAppPageGroup('/appointments/new')).toBe('Clinical');
+    expect(getAppPageGroup('/rooms/3')).toBe('Operations');
   });
 
-  it('should fall back to a default icon for a page outside the navigation', () => {
-    expect(getAppPageIcon('/somewhere-else')).toBe(LayoutDashboard);
+  it('should have no group for a page outside the navigation', () => {
+    expect(getAppPageGroup('/somewhere-else')).toBeUndefined();
   });
 });

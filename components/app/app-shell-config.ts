@@ -822,10 +822,10 @@ export function getAppPageMeta(pathname: string): AppPageMeta {
 }
 
 /**
- * The icon of the navigation item a page belongs to, for the page title pill. The most specific
- * item wins, and `exact` is ignored so a detail page still takes its section's icon.
+ * The title of the navigation group a page belongs to, shown above the page title. The most
+ * specific item wins, and `exact` is ignored so a detail page still takes its section's group.
  */
-export function getAppPageIcon(pathname: string): LucideIcon {
+export function getAppPageGroup(pathname: string): string | undefined {
   const currentPath = trimTrailingSlash(pathname);
   const owns = (href: string) => {
     const itemPath = trimTrailingSlash(href);
@@ -833,13 +833,14 @@ export function getAppPageIcon(pathname: string): LucideIcon {
   };
 
   const match = appNavGroups
-    .flatMap((group) => group.items)
-    .flatMap((item) =>
-      [item.href, ...(item.items?.map((subItem) => subItem.href) ?? [])]
-        .filter(owns)
-        .map((href) => ({ icon: item.icon, depth: trimTrailingSlash(href).length }))
+    .flatMap((group) =>
+      group.items.flatMap((item) =>
+        [item.href, ...(item.items?.map((subItem) => subItem.href) ?? [])]
+          .filter(owns)
+          .map((href) => ({ group: group.title, depth: trimTrailingSlash(href).length }))
+      )
     )
     .sort((a, b) => b.depth - a.depth)[0];
 
-  return match?.icon ?? LayoutDashboard;
+  return match?.group;
 }
