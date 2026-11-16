@@ -134,11 +134,22 @@ export function PreviousVisitsPageImpl() {
             <EmptyMedia variant="icon">
               <History />
             </EmptyMedia>
-            <EmptyTitle>No Visits match these filters</EmptyTitle>
-            <EmptyDescription>
-              Widen the date range, clear the search, or choose a different Doctor, status or Visit
-              Type.
-            </EmptyDescription>
+            {activeCount > 0 ? (
+              <>
+                <EmptyTitle>No Visits match these filters</EmptyTitle>
+                <EmptyDescription>
+                  Widen the date range, clear the search, or choose a different Doctor, status or
+                  Visit Type.
+                </EmptyDescription>
+              </>
+            ) : (
+              <>
+                <EmptyTitle>No past Visits yet</EmptyTitle>
+                <EmptyDescription>
+                  Visits appear here once Patients have been checked in.
+                </EmptyDescription>
+              </>
+            )}
           </EmptyHeader>
           {activeCount > 0 ? (
             <EmptyContent>

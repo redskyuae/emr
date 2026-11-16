@@ -19,6 +19,8 @@ export type VitalTrend = {
   label: string;
   value: string;
   change: string | null;
+  // When the reading `change` is measured against was taken; null for a first value.
+  previousAt: Date | null;
   attention: boolean;
   series: number[];
 };
@@ -56,6 +58,20 @@ function valuesOf(readings: VitalReading[], key: NumericVital) {
   return readings.flatMap((reading) => (reading[key] === null ? [] : [reading[key] as number]));
 }
 
+function recordedAt(reading: VitalReading | undefined) {
+  return reading ? new Date(reading.recordedAt) : null;
+}
+
+// The one time every change is measured against, or null when the rows were compared with different readings.
+function sharedPreviousAt(trends: VitalTrend[]) {
+  const times = new Set(
+    trends.flatMap((trend) => (trend.previousAt ? [trend.previousAt.getTime()] : []))
+  );
+  if (times.size !== 1) return null;
+  const [only] = times;
+  return new Date(only);
+}
+
 function bloodPressure(latest: VitalReading, earlier: VitalReading[]): VitalTrend | null {
   if (latest.systolic === null || latest.diastolic === null) return null;
 
@@ -72,14 +88,16 @@ function bloodPressure(latest: VitalReading, earlier: VitalReading[]): VitalTren
           latest.diastolic - (previous.diastolic as number)
         )}`
       : null,
+    previousAt: recordedAt(previous),
     attention: latest.systolic >= 140 || latest.diastolic >= 90,
     series: [...valuesOf(earlier, 'systolic'), latest.systolic].slice(-SERIES_LENGTH),
   };
 }
 
 /**
- * The latest reading of each Vital Sign, its change since the reading before it,
+ * The latest reading of each Vital Sign, its change since that sign was last recorded,
  * and the recent values behind a sparkline. Readings may come in any order.
+ * `previousAt` is set only when every change is measured against the same earlier reading.
  */
 export function vitalTrends(readings: VitalReading[]) {
   const ordered = [...readings].sort((a, b) => time(a) - time(b));
@@ -88,7 +106,6 @@ export function vitalTrends(readings: VitalReading[]) {
   if (!latest) return null;
 
   const earlier = ordered.slice(0, -1);
-  const previousReading = earlier.at(-1) ?? null;
   const trends: VitalTrend[] = [];
   const pressure = bloodPressure(latest, earlier);
 
@@ -100,12 +117,14 @@ export function vitalTrends(readings: VitalReading[]) {
 
     const before = valuesOf(earlier, vital.key);
     const previous = before.at(-1);
+    const previousReading = earlier.findLast((reading) => reading[vital.key] !== null);
 
     trends.push({
       key: vital.key,
       label: vital.label,
       value: format(value),
       change: previous === undefined ? null : signed(value - previous),
+      previousAt: recordedAt(previousReading),
       attention: vital.attention?.(value) ?? false,
       series: [...before, value].slice(-SERIES_LENGTH),
     });
@@ -113,7 +132,7 @@ export function vitalTrends(readings: VitalReading[]) {
 
   return {
     recordedAt: new Date(latest.recordedAt),
-    previousAt: previousReading ? new Date(previousReading.recordedAt) : null,
+    previousAt: sharedPreviousAt(trends),
     trends,
   };
 }

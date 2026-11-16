@@ -190,7 +190,7 @@ export const listVisitsSchema = z
     patientId: positiveIdSchema('Patient ID').optional(),
     visitTypeId: positiveIdSchema('Visit Type ID').optional(),
     status: z.enum(VISIT_STATUSES, { error: 'Status is Invalid.' }).optional(),
-    query: z.string().trim().optional(),
+    query: z.string().trim().max(100, 'Search must be at most 100 characters').optional(),
     page: z.coerce.number().int().positive().optional(),
     limit: z.coerce.number().int().positive().optional(),
   })

@@ -26,6 +26,10 @@ function Sparkline({ series }: { series: number[] }) {
   );
 }
 
+function day(value: Date) {
+  return value.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+}
+
 function moment(value: Date) {
   return value.toLocaleString(undefined, {
     day: '2-digit',
@@ -86,6 +90,12 @@ export function VisitVitalTrends({
                     <TriangleAlert className="size-3" aria-label="Outside the usual adult range" />
                   ) : null}
                   {trend.change ?? 'First reading'}
+                  {/* Without one shared "vs" date in the header, say which reading each change is against. */}
+                  {trend.previousAt && !result.previousAt ? (
+                    <span className="text-muted-foreground font-normal">
+                      vs <span className="font-mono">{day(trend.previousAt)}</span>
+                    </span>
+                  ) : null}
                 </span>
               ) : null}
             </dd>

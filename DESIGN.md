@@ -72,22 +72,22 @@ Patient has an active allergy).
 
 ### Typography
 
-| Role     | Font                                                     | Tailwind                              |
-| -------- | -------------------------------------------------------- | ------------------------------------- |
-| Headings | Satoshi                                                  | `font-heading` (automatic on `h1–h4`) |
-| Body/UI  | Satoshi                                                  | `font-sans` (default)                 |
-| Data     | Satoshi, tabular figures — codes, IDs, timestamps, slugs | `font-mono`                           |
+| Role     | Font                                       | Tailwind                              |
+| -------- | ------------------------------------------ | ------------------------------------- |
+| Headings | Satoshi                                    | `font-heading` (automatic on `h1–h4`) |
+| Body/UI  | Satoshi                                    | `font-sans` (default)                 |
+| Data     | Geist Mono — codes, IDs, timestamps, slugs | `font-mono`                           |
 
-Satoshi is the single global font: headings, body and data share the family, so hierarchy comes
-from weight and size rather than a second typeface. (It replaced Urbanist in November 2026.)
-`font-mono` is kept as the semantic marker for codes and IDs; it maps to Satoshi with tabular
-figures so numbers still line up in columns.
+Satoshi is the single global sans: headings and body share the family, so hierarchy comes from
+weight and size rather than a second typeface. (It replaced Urbanist in November 2026.) Data stays
+on Geist Mono, a monospaced face, so digits line up in columns.
 
 Satoshi is a variable font (weights 300–900) loaded from Fontshare's servers by `FontStylesheet`
 (`components/providers/font-stylesheet.tsx`), rendered once in `app/layout.tsx`; `--font-satoshi`
 in `globals.css` names it. Its licence allows loading it from Fontshare but not committing the
 font files to a public repository. If Fontshare is unreachable the UI falls back to the system
-sans-serif font. Do not introduce other fonts.
+sans-serif font. Geist Mono is loaded in `app/layout.tsx` via `next/font`. Do not introduce other
+fonts.
 
 ### Elevation (Fluent depth ramp)
 

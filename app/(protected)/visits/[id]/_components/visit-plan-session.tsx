@@ -38,7 +38,7 @@ export function VisitPlanSession({
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 id="plan-session" className="text-base font-semibold">
-          Session {session.sessionNumber}
+          {visit.treatment ? `${visit.treatment.name} · ` : null}Session {session.sessionNumber}
         </h3>
         {timing.length ? (
           <span className="text-muted-foreground text-sm">{timing.join(' + ')}</span>

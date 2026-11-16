@@ -22,12 +22,15 @@ export default function CreateVisitLoader() {
           <Skeleton className="h-4 w-36" />
         </div>
         <div className="flex items-center gap-3">
-          {[0, 1, 2].map((step) => (
-            <div key={step} className="flex items-center gap-2">
-              <Skeleton className="size-7 rounded-full" />
-              <Skeleton className="h-4 w-14" />
-            </div>
-          ))}
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-7 rounded-full" />
+            <Skeleton className="h-4 w-14" />
+          </div>
+          <Skeleton className="hidden h-px w-8 sm:block" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-7 rounded-full" />
+            <Skeleton className="h-4 w-24" />
+          </div>
         </div>
       </div>
 

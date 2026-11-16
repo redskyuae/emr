@@ -115,8 +115,11 @@ export function VisitReviewChecklist({
       {visit.treatmentSession ? (
         <ChecklistRow
           label={`Session ${visit.treatmentSession.sessionNumber}`}
+          // This page has no record of a saved treatment response, so the row cannot turn done
+          // when one is recorded; it is optional and closes with the Visit instead.
+          optional
           done={visit.status === 'COMPLETED'}
-          detail="Record the treatment response when the Session ends"
+          detail="Record the treatment response when it ends · marked done when the Visit is completed"
           action={canRecordResponse ? action('Record', onDailyTreatment) : undefined}
         />
       ) : null}

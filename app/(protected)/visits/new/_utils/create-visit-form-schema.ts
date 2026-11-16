@@ -31,6 +31,8 @@ function validateAmount(value: string, field: string, context: z.RefinementCtx) 
   return amount;
 }
 
+export const CHIEF_COMPLAINT_MAX = 500;
+
 export const createVisitFormSchema = z
   .object({
     mode: z.enum(['appointment', 'walk-in']),
@@ -39,7 +41,13 @@ export const createVisitFormSchema = z
     doctorId: z.string(),
     visitTypeId: z.string().min(1, 'Visit type is required.'),
     admitSourceId: z.string(),
-    chiefComplaint: z.string().trim().max(500, 'Chief complaint must be at most 500 characters.'),
+    chiefComplaint: z
+      .string()
+      .trim()
+      .max(
+        CHIEF_COMPLAINT_MAX,
+        `Chief complaint must be at most ${CHIEF_COMPLAINT_MAX} characters.`
+      ),
     remarks: z.string().trim(),
     createInvoice: z.boolean(),
     paymentTiming: z.enum(['NOW', 'LATER']),

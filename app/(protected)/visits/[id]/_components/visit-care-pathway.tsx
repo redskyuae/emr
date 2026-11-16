@@ -17,6 +17,7 @@ import { VisitObjectiveVitals } from './visit-objective-vitals';
 import { VisitPlanSession } from './visit-plan-session';
 import { VisitReviewChecklist } from './visit-review-checklist';
 import { VisitTreatmentPlansPanel } from './visit-treatment-plans-panel';
+import { VisitTreatmentSessionCard } from './visit-treatment-session-card';
 
 type Props = {
   visit: Visit;
@@ -94,6 +95,7 @@ export function VisitCarePathway({
     ),
     plan: (
       <div className="space-y-4">
+        <VisitTreatmentSessionCard visit={visit} />
         <VisitPlanSession
           visit={visit}
           canRecordResponse={canRecordResponse}

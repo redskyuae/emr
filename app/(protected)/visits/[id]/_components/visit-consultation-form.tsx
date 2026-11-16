@@ -40,6 +40,7 @@ import {
   consultationToSoap,
   doctorConsultationFormSchema,
   EMPTY_CONSULTATION,
+  oneLine,
   type DoctorConsultationFormValues,
 } from '../_utils/doctor-consultation-note';
 import { SignConsultationDialog } from './_modals/sign-consultation-dialog';
@@ -90,11 +91,13 @@ export function VisitConsultationForm({
   const form = useForm<DoctorConsultationFormValues>({
     resolver: zodResolver(doctorConsultationFormSchema),
     mode: 'onTouched',
-    defaultValues: initialValues ?? {
-      ...EMPTY_CONSULTATION,
-      noteTypeId: defaultNoteTypeId ? String(defaultNoteTypeId) : '',
-      chiefComplaint: visit.chiefComplaint ?? '',
-    },
+    defaultValues: initialValues
+      ? { ...initialValues, chiefComplaint: oneLine(initialValues.chiefComplaint) }
+      : {
+          ...EMPTY_CONSULTATION,
+          noteTypeId: defaultNoteTypeId ? String(defaultNoteTypeId) : '',
+          chiefComplaint: oneLine(visit.chiefComplaint ?? ''),
+        },
   });
   const { errors, isDirty } = form.formState;
   const values = useWatch({ control: form.control });
@@ -179,19 +182,9 @@ export function VisitConsultationForm({
   }, openFirstError);
 
   function narrative(name: NarrativeName, label: string, placeholder: string, wide = false) {
-    const required = name === 'chiefComplaint';
-
     return (
       <Field data-invalid={Boolean(errors[name])} className={wide ? 'md:col-span-full' : undefined}>
-        <FieldLabel htmlFor={`consult-${name}`}>
-          {label}
-          {required ? (
-            <span aria-hidden="true" className="text-destructive">
-              {' '}
-              *
-            </span>
-          ) : null}
-        </FieldLabel>
+        <FieldLabel htmlFor={`consult-${name}`}>{label}</FieldLabel>
         <Controller
           control={form.control}
           name={name}
@@ -200,7 +193,6 @@ export function VisitConsultationForm({
               id={`consult-${name}`}
               aria-label={label}
               placeholder={placeholder}
-              required={required}
               value={field.value}
               onChange={field.onChange}
               onBlur={field.onBlur}
@@ -263,7 +255,26 @@ export function VisitConsultationForm({
               {errors.noteTypeId ? <FieldError>{errors.noteTypeId.message}</FieldError> : null}
             </Field>
           ) : null}
-          {narrative('chiefComplaint', 'Chief complaint', 'Main reason for this Visit', true)}
+          <Field data-invalid={Boolean(errors.chiefComplaint)} className="md:col-span-full">
+            <FieldLabel htmlFor="consult-chiefComplaint">
+              Chief complaint
+              <span aria-hidden="true" className="text-destructive">
+                {' '}
+                *
+              </span>
+            </FieldLabel>
+            <Input
+              id="consult-chiefComplaint"
+              aria-label="Chief complaint"
+              placeholder="Main reason for this Visit, e.g. Low back pain for 2 weeks"
+              aria-required
+              aria-invalid={Boolean(errors.chiefComplaint)}
+              {...form.register('chiefComplaint')}
+            />
+            {errors.chiefComplaint ? (
+              <FieldError>{errors.chiefComplaint.message}</FieldError>
+            ) : null}
+          </Field>
           {narrative('hpi', 'Present condition / HPI', 'Onset, duration, severity, triggers', true)}
           {narrative('medicalHistory', 'Past medical history', 'Known conditions')}
           {narrative('surgicalHistory', 'Past surgical history', 'Operations and procedures')}

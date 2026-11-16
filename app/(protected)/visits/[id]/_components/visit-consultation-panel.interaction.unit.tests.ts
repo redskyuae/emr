@@ -169,9 +169,7 @@ describe('Visit consultation', () => {
   it('should prefill the chief complaint from the Visit and create one draft', async () => {
     renderPanel();
 
-    expect((screen.getByLabelText('Chief complaint') as HTMLTextAreaElement).value).toBe(
-      'Back pain'
-    );
+    expect((screen.getByLabelText('Chief complaint') as HTMLInputElement).value).toBe('Back pain');
 
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
@@ -203,7 +201,7 @@ describe('Visit consultation', () => {
   it('should resume a saved draft instead of starting a second note', async () => {
     renderPanel({ notes: [note({})] });
 
-    const complaint = screen.getByLabelText('Chief complaint') as HTMLTextAreaElement;
+    const complaint = screen.getByLabelText('Chief complaint') as HTMLInputElement;
     expect(complaint.value).toBe('Saved complaint');
 
     fireEvent.change(complaint, { target: { value: 'Worse today' } });
