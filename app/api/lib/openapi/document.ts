@@ -4596,7 +4596,14 @@ export const openApiDocument = {
           },
           parameterRef('Page'),
           parameterRef('Limit'),
-          parameterRef('Query'),
+          {
+            name: 'query',
+            in: 'query',
+            required: false,
+            description:
+              'Search text, trimmed, at most 100 characters. Matches Visit Number, legacy Visit number, MRN, Patient phone, and Patient first, last or full name.',
+            schema: { type: 'string', maxLength: 100, example: 'asha' },
+          },
           parameterRef('Search'),
         ],
         responses: {
@@ -4631,6 +4638,13 @@ export const openApiDocument = {
                   invalidStatus: {
                     summary: 'Unknown Visit Status',
                     value: { message: 'Validation failed', errors: ['Status is Invalid.'] },
+                  },
+                  searchTooLong: {
+                    summary: 'Search longer than 100 characters',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Search must be at most 100 characters'],
+                    },
                   },
                 },
               },

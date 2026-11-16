@@ -16,22 +16,12 @@ function plain(value: string | null | undefined) {
   );
 }
 
-/**
- * What the front desk recorded at check-in, folded away so the complaint stays first.
- * It opens on its own while nothing has been recorded, so the gap is visible.
- */
+/** The Visit's handover Remarks, folded away so the complaint stays first. */
 export function VisitDetailsDisclosure({ visit }: { visit: Visit }) {
-  const purpose = plain(visit.chiefComplaint);
-  const summary = [
-    purpose || 'No purpose of visit recorded',
-    visit.treatment?.name,
-    visit.treatmentSession ? `Session ${visit.treatmentSession.sessionNumber}` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const summary = plain(visit.remarks) || 'No remarks recorded';
 
   return (
-    <Collapsible defaultOpen={!purpose} className="group/details rounded-lg border">
+    <Collapsible className="group/details rounded-lg border">
       <CollapsibleTrigger className="hover:bg-accent focus-visible:ring-ring/50 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left outline-none focus-visible:ring-3">
         <ChevronRight
           className="size-4 shrink-0 transition-transform group-data-[state=open]/details:rotate-90"

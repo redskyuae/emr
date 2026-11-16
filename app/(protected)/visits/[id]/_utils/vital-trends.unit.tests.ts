@@ -49,14 +49,43 @@ describe('vitalTrends', () => {
       reading('2026-11-01T10:00:00Z', { pulseBpm: 78 }),
     ]);
 
-    expect(result?.trends.find((trend) => trend.key === 'pulseBpm')?.change).toBe('+8');
+    expect(result?.trends.find((trend) => trend.key === 'pulseBpm')).toMatchObject({
+      change: '+8',
+      previousAt: new Date('2026-10-01T10:00:00Z'),
+    });
+  });
+
+  it('should keep the shared compared time only when every change is against the same reading', () => {
+    const result = vitalTrends([
+      reading('2026-10-01T10:00:00Z', { systolic: 130, diastolic: 85 }),
+      reading('2026-11-12T10:00:00Z', { pulseBpm: 70 }),
+      reading('2026-11-13T10:00:00Z', { systolic: 146, diastolic: 91, pulseBpm: 76 }),
+    ]);
+
+    expect(result?.previousAt).toBeNull();
+    expect(result?.trends.find((trend) => trend.key === 'bp')).toMatchObject({
+      change: '+16/+6',
+      previousAt: new Date('2026-10-01T10:00:00Z'),
+    });
+    expect(result?.trends.find((trend) => trend.key === 'pulseBpm')).toMatchObject({
+      change: '+6',
+      previousAt: new Date('2026-11-12T10:00:00Z'),
+    });
   });
 
   it('should leave out signs the latest reading did not record and have no change for a first value', () => {
     const result = vitalTrends([reading('2026-11-01T10:00:00Z', { spo2: 92 })]);
 
     expect(result?.trends).toEqual([
-      { key: 'spo2', label: 'SpO₂ %', value: '92', change: null, attention: true, series: [92] },
+      {
+        key: 'spo2',
+        label: 'SpO₂ %',
+        value: '92',
+        change: null,
+        previousAt: null,
+        attention: true,
+        series: [92],
+      },
     ]);
     expect(result?.previousAt).toBeNull();
   });

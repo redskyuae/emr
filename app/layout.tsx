@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { Urbanist } from 'next/font/google';
+import { Geist_Mono, Urbanist } from 'next/font/google';
 
 import { brandLogos, getConfiguredBrandLogoVariant } from '@/components/brand/brand-config';
 import { BrandProvider } from '@/components/brand/brand-provider';
@@ -10,6 +10,11 @@ import './globals.css';
 
 const urbanist = Urbanist({
   variable: '--font-urbanist',
+  subsets: ['latin'],
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
   subsets: ['latin'],
 });
 
@@ -39,7 +44,7 @@ export default function RootLayout({
   const variant = getConfiguredBrandLogoVariant();
 
   return (
-    <html lang="en" className={`${urbanist.variable} h-full antialiased`}>
+    <html lang="en" className={`${urbanist.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <BrandProvider variant={variant}>
           <QueryProvider>

@@ -27,8 +27,8 @@ import {
 } from '../_utils/previous-visits-filter-form-schema';
 import type { PreviousVisitsFilters } from '../_utils/previous-visits-filters';
 
-// Large enough to hold a Tenant's whole Doctor and Visit Type lists in one page.
-const OPTION_LIMIT = 100;
+// The APIs' largest page, so a Tenant's whole Doctor and Visit Type lists load at once.
+const OPTION_LIMIT = 999;
 
 function toFormValues(filters: PreviousVisitsFilters): PreviousVisitsFilterFormValues {
   return {

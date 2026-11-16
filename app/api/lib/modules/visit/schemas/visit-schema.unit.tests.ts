@@ -312,6 +312,18 @@ describe('Visit schema', () => {
         'Visit Type ID must be positive'
       );
     });
+
+    it('should trim the search and accept 100 characters', () => {
+      expect(listVisitsSchema.parse({ query: `  ${'a'.repeat(100)}  ` })).toEqual({
+        query: 'a'.repeat(100),
+      });
+    });
+
+    it('should reject a search longer than 100 characters', () => {
+      expect(errorsOf(listVisitsSchema.safeParse({ query: 'a'.repeat(101) }))).toContain(
+        'Search must be at most 100 characters'
+      );
+    });
   });
 
   describe('formatVisitDate', () => {

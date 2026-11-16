@@ -4,6 +4,7 @@ import {
   consultationToSoap,
   doctorConsultationFormSchema,
   EMPTY_CONSULTATION,
+  oneLine,
   soapToConsultation,
 } from './doctor-consultation-note';
 
@@ -148,5 +149,15 @@ describe('resuming a saved consultation draft', () => {
         plan: null,
       })
     ).toBeNull();
+  });
+
+  it('should fold a rich-text purpose of visit into one plain line', () => {
+    expect(oneLine('**Low back pain**\n\n- for 2 weeks\n- worse sitting')).toBe(
+      'Low back pain for 2 weeks worse sitting'
+    );
+  });
+
+  it('should leave a plain one-line complaint unchanged', () => {
+    expect(oneLine('  Fever 3 days, 101°F ')).toBe('Fever 3 days, 101°F');
   });
 });

@@ -52,9 +52,8 @@ export function CheckInHeader({
       <ol aria-label="Check-in progress" className="flex flex-wrap items-center gap-3">
         <Step number={1} label="Patient" state={confirmed ? 'done' : 'active'} />
         <li aria-hidden className="bg-border hidden h-px w-8 sm:block" />
-        <Step number={2} label="Visit" state={confirmed ? 'active' : 'next'} />
-        <li aria-hidden className="bg-border hidden h-px w-8 sm:block" />
-        <Step number={3} label="Billing" state={confirmed ? 'active' : 'next'} />
+        {/* Visit and Billing are filled on one screen, so they are one step: only one is ever current. */}
+        <Step number={2} label="Visit & Billing" state={confirmed ? 'active' : 'next'} />
       </ol>
     </header>
   );

@@ -68,16 +68,16 @@ Patient has an active allergy).
 
 ### Typography
 
-| Role     | Font                                                      | Tailwind                              |
-| -------- | --------------------------------------------------------- | ------------------------------------- |
-| Headings | Urbanist                                                  | `font-heading` (automatic on `h1–h4`) |
-| Body/UI  | Urbanist                                                  | `font-sans` (default)                 |
-| Data     | Urbanist, tabular figures — codes, IDs, timestamps, slugs | `font-mono`                           |
+| Role     | Font                                       | Tailwind                              |
+| -------- | ------------------------------------------ | ------------------------------------- |
+| Headings | Urbanist                                   | `font-heading` (automatic on `h1–h4`) |
+| Body/UI  | Urbanist                                   | `font-sans` (default)                 |
+| Data     | Geist Mono — codes, IDs, timestamps, slugs | `font-mono`                           |
 
-Urbanist is the single global font: headings, body and data share the family, so hierarchy comes
-from weight and size rather than a second typeface. (It replaced Schibsted Grotesk headings + Public
-Sans body, and later Geist Mono for data.) `font-mono` is kept as the semantic marker for codes and
-IDs; it maps to Urbanist with tabular figures so numbers still line up in columns.
+Urbanist is the single global sans: headings and body share the family, so hierarchy comes from
+weight and size rather than a second typeface. (It replaced Schibsted Grotesk headings + Public Sans
+body.) Data stays on Geist Mono because Urbanist has no tabular figures, so its digits would not
+line up in columns.
 
 Loaded in `app/layout.tsx` via `next/font`. Do not introduce other fonts.
 

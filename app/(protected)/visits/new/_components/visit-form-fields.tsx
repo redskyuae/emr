@@ -27,13 +27,14 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
+import {
+  CHIEF_COMPLAINT_MAX,
+  type CreateVisitFormValues,
+} from '../_utils/create-visit-form-schema';
 import { getAppointmentVisitDefaults } from '../_utils/appointment-visit-defaults';
 import { AppointmentSearch } from './appointment-search';
 import { SectionHeading } from './section-heading';
 import { WalkInPatientSearch } from './walk-in-patient-search';
-
-const CHIEF_COMPLAINT_LIMIT = 500;
 
 type FormProps = {
   control: Control<CreateVisitFormValues>;
@@ -233,6 +234,8 @@ export function VisitDetailsFields({
   const [remarksOpen, setRemarksOpen] = useState(false);
   // Once Remarks hold text (typed or prefilled), keep the field visible.
   if (remarks && !remarksOpen) setRemarksOpen(true);
+  // The schema trims before checking the limit, so count what will be saved.
+  const chiefComplaintLength = chiefComplaint.trim().length;
   const appointment = appointments.find((item) => String(item.id) === appointmentId);
   const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
   const assignedDoctor = mode === 'appointment' ? appointment?.doctor : null;
@@ -394,12 +397,12 @@ export function VisitDetailsFields({
                 <FieldError>{errors.chiefComplaint?.message}</FieldError>
                 <p
                   className={
-                    chiefComplaint.length > CHIEF_COMPLAINT_LIMIT
+                    chiefComplaintLength > CHIEF_COMPLAINT_MAX
                       ? 'text-destructive ml-auto font-mono text-xs'
                       : 'text-muted-foreground ml-auto font-mono text-xs'
                   }
                 >
-                  {chiefComplaint.length} / {CHIEF_COMPLAINT_LIMIT}
+                  {chiefComplaintLength} / {CHIEF_COMPLAINT_MAX}
                 </p>
               </div>
             </Field>
