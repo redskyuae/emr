@@ -305,6 +305,54 @@ describe('Role-Permission repository', () => {
     ]);
   });
 
+  it('should assign the Visit amend permission to the TENANT_ADMIN system role', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const roles = await roleRepository.seedSystemRolesForTenant(tenantA);
+
+    await rolePermissionRepository.seedDefaultPermissionsForSystemRoles(tenantA, roles);
+
+    const tenantAdminRole = roles.find((role) => role.code === 'TENANT_ADMIN');
+    if (!tenantAdminRole) {
+      throw new Error('TENANT_ADMIN role not found');
+    }
+
+    const assigned = await rolePermissionRepository.getAssignedPermissionsByRole(
+      tenantAdminRole.id,
+      tenantA
+    );
+
+    expect(assigned.map(({ name }) => name)).toContain('visit:amend');
+  });
+
+  it('should assign the Ayurveda Diagnosis Code permissions to the TENANT_ADMIN system role', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const roles = await roleRepository.seedSystemRolesForTenant(tenantA);
+
+    await rolePermissionRepository.seedDefaultPermissionsForSystemRoles(tenantA, roles);
+
+    const tenantAdminRole = roles.find((role) => role.code === 'TENANT_ADMIN');
+    if (!tenantAdminRole) {
+      throw new Error('TENANT_ADMIN role not found');
+    }
+
+    const assigned = await rolePermissionRepository.getAssignedPermissionsByRole(
+      tenantAdminRole.id,
+      tenantA
+    );
+
+    expect(
+      assigned
+        .filter(({ resource }) => resource === 'ayurveda-diagnosis-code')
+        .map(({ name }) => name)
+        .sort()
+    ).toEqual([
+      'ayurveda-diagnosis-code:create',
+      'ayurveda-diagnosis-code:delete',
+      'ayurveda-diagnosis-code:read',
+      'ayurveda-diagnosis-code:update',
+    ]);
+  });
+
   it('should seed exactly the Doctor System Role clinical read permissions', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const roles = await roleRepository.seedSystemRolesForTenant(tenantA);

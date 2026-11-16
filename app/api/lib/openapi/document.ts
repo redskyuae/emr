@@ -892,6 +892,281 @@ const visitExample = {
   modifiedOn: '2026-07-16T04:30:00.000Z',
 };
 
+const amendedVisitExample = {
+  ...visitExample,
+  status: 'COMPLETED',
+  admitSource: { id: 2, name: 'Doctor Referral', code: 'DOCREF' },
+  treatment: { id: 12, name: 'Abhyanga', code: 'ABH' },
+  treatmentSession: {
+    id: 31,
+    label: 'Abhyanga Session',
+    procedure: 'Abhyanga with Ksheerabala taila, full body',
+    sessionNumber: 1,
+    durationMinutes: 50,
+    setupMinutes: 10,
+    cleaningMinutes: 5,
+    roomType: 'Panchakarma room',
+    therapistSkill: 'Abhyanga',
+  },
+  chiefComplaint: 'Fever for 3 days with productive cough',
+  remarks: 'Corrected after review of the referral letter',
+  consultationStartedAt: '2026-07-16T04:45:00.000Z',
+  completedAt: '2026-07-16T05:10:00.000Z',
+  modifiedOn: '2026-07-18T06:15:00.000Z',
+};
+
+const validationOrInvalidJsonResponse = (
+  description: string,
+  examples: Record<string, { summary: string; value: unknown }>
+) => ({
+  description,
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        ...examples,
+        invalidJson: {
+          summary: 'Malformed JSON body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+});
+
+const diagnosisCodeMutationErrorResponses = {
+  ...authenticatedErrorResponses,
+  '400': validationOrInvalidJsonResponse(
+    'Invalid Diagnosis Code ID, validation failed, or the request body is not valid JSON.',
+    {
+      notIcd10Cm: {
+        summary: 'Code is not a valid ICD-10-CM code',
+        value: {
+          message: 'Validation failed',
+          errors: ['Diagnosis code must be a valid ICD-10-CM code, e.g. M54.5.'],
+        },
+      },
+    }
+  ),
+  '409': {
+    description: 'The Diagnosis Code already exists in the Tenant.',
+    content: jsonContent(schemaRef('ValidationError'), {
+      message: "Diagnosis code 'M06.9' already exists.",
+      errors: ["Diagnosis code 'M06.9' already exists."],
+    }),
+  },
+};
+
+const chargeItemValidationResponse = validationOrInvalidJsonResponse(
+  'Validation failed, including a code that does not match its codeType, or the request body is not valid JSON.',
+  {
+    invalidCpt: {
+      summary: 'Code is not a valid CPT code',
+      value: {
+        message: 'Validation failed',
+        errors: ['Charge item code must be a valid 5-character CPT code, e.g. 99213.'],
+      },
+    },
+    invalidHcpcs: {
+      summary: 'Code is not a valid HCPCS code',
+      value: {
+        message: 'Validation failed',
+        errors: ['Charge item code must be a valid HCPCS code, e.g. J1100.'],
+      },
+    },
+  }
+);
+
+const icd10CmRheumatoidArthritis = {
+  id: 5,
+  code: 'M06.9',
+  title: 'Rheumatoid arthritis, unspecified',
+};
+
+const ayurvedaDiagnosisCodeRequestExample = {
+  code: 'AYU-AMV',
+  name: 'Amavata',
+  englishName: 'Rheumatoid arthritis',
+  category: 'Vatavyadhi',
+  icdDiagnosisCodeId: 5,
+};
+
+const ayurvedaDiagnosisCodeErrorResponses = {
+  ...authenticatedErrorResponses,
+  '400': validationOrInvalidJsonResponse(
+    'Invalid Ayurveda Diagnosis Code ID, validation failed, or the request body is not valid JSON.',
+    {
+      invalidId: {
+        summary: 'Non-numeric Ayurveda Diagnosis Code ID',
+        value: {
+          message: 'Validation failed',
+          errors: ['Ayurveda diagnosis code abc is Invalid.'],
+        },
+      },
+      missingFields: {
+        summary: 'Code and name are required',
+        value: {
+          message: 'Validation failed',
+          errors: ['Ayurveda diagnosis code is required', 'Ayurveda diagnosis name is required'],
+        },
+      },
+    }
+  ),
+  '404': {
+    description: 'Ayurveda Diagnosis Code not found in the active Tenant.',
+    content: jsonContent(schemaRef('ValidationError'), {
+      message: 'Ayurveda diagnosis code not found',
+      errors: ['Ayurveda diagnosis code not found'],
+    }),
+  },
+  '409': {
+    description:
+      'The code already exists in the Tenant, or the mapped ICD-10-CM Diagnosis Code does not exist.',
+    content: {
+      'application/json': {
+        schema: schemaRef('ValidationError'),
+        examples: {
+          duplicateCode: {
+            summary: 'Code already exists',
+            value: {
+              message: 'Ayurveda diagnosis code AYU-AMV already exists.',
+              errors: ['Ayurveda diagnosis code AYU-AMV already exists.'],
+            },
+          },
+          unknownIcdMapping: {
+            summary: 'Mapped Diagnosis Code is unknown or deleted',
+            value: {
+              message: 'Diagnosis code 5 is Invalid.',
+              errors: ['Diagnosis code 5 is Invalid.'],
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+const visitDiagnosesRequestExample = {
+  diagnoses: [
+    { codeSystem: 'ICD10CM', diagnosisCodeId: 5, diagnosisType: 'PRINCIPAL' },
+    {
+      codeSystem: 'ICD10CM',
+      diagnosisCodeId: 8,
+      diagnosisType: 'SECONDARY',
+      notes: 'Morning stiffness over 1 hour',
+    },
+    { codeSystem: 'AYURVEDA', ayurvedaDiagnosisCodeId: 3, diagnosisType: 'PRINCIPAL' },
+  ],
+};
+
+const visitDiagnosesExample = [
+  {
+    id: 21,
+    visitId: 1,
+    codeSystem: 'ICD10CM',
+    diagnosisType: 'PRINCIPAL',
+    sortOrder: 1,
+    notes: null,
+    code: 'M06.9',
+    title: 'Rheumatoid arthritis, unspecified',
+    englishName: null,
+    diagnosisCodeId: 5,
+    ayurvedaDiagnosisCodeId: null,
+    icdMapping: null,
+  },
+  {
+    id: 22,
+    visitId: 1,
+    codeSystem: 'ICD10CM',
+    diagnosisType: 'SECONDARY',
+    sortOrder: 2,
+    notes: 'Morning stiffness over 1 hour',
+    code: 'M54.5',
+    title: 'Low back pain',
+    englishName: null,
+    diagnosisCodeId: 8,
+    ayurvedaDiagnosisCodeId: null,
+    icdMapping: null,
+  },
+  {
+    id: 23,
+    visitId: 1,
+    codeSystem: 'AYURVEDA',
+    diagnosisType: 'PRINCIPAL',
+    sortOrder: 3,
+    notes: null,
+    code: 'AYU-AMV',
+    title: 'Amavata',
+    englishName: 'Rheumatoid arthritis',
+    diagnosisCodeId: null,
+    ayurvedaDiagnosisCodeId: 3,
+    icdMapping: icd10CmRheumatoidArthritis,
+  },
+];
+
+const visitDiagnosesBadRequestResponse = validationOrInvalidJsonResponse(
+  'Invalid Visit ID, validation failed, or the request body is not valid JSON.',
+  {
+    invalidVisitId: {
+      summary: 'Non-numeric Visit ID',
+      value: { message: 'Validation failed', errors: ['Visit abc is Invalid.'] },
+    },
+    principalRule: {
+      summary: 'Not exactly one Principal in a code system',
+      value: {
+        message: 'Validation failed',
+        errors: ['Choose exactly one Principal ICD-10-CM diagnosis.'],
+      },
+    },
+    missingCode: {
+      summary: 'Code id does not match the code system',
+      value: {
+        message: 'Validation failed',
+        errors: ['Ayurveda diagnoses need an Ayurveda Diagnosis Code.'],
+      },
+    },
+    tooMany: {
+      summary: 'More than 20 diagnoses',
+      value: {
+        message: 'Validation failed',
+        errors: ['At most 20 diagnoses can be recorded on a Visit.'],
+      },
+    },
+    duplicateCode: {
+      summary: 'Same code listed twice in a code system',
+      value: {
+        message: 'Validation failed',
+        errors: ['Diagnosis code M06.9 is listed more than once.'],
+      },
+    },
+  }
+);
+
+const visitNotFoundResponse = {
+  description: 'Visit not found in the active Tenant.',
+  content: jsonContent(schemaRef('ValidationError'), {
+    message: 'Visit not found',
+    errors: ['Visit not found'],
+  }),
+};
+
+const visitDiagnosisReferenceConflictExamples = {
+  unknownCodes: {
+    summary: 'Referenced master rows are unknown or deleted',
+    value: {
+      message: 'Conflict',
+      errors: ['Diagnosis code 8 is Invalid.', 'Ayurveda diagnosis code 3 is Invalid.'],
+    },
+  },
+  concurrentSave: {
+    summary: 'Another save of the same Visit won the race',
+    value: {
+      message: 'Visit diagnoses were changed by another save. Reload and try again.',
+      errors: ['Visit diagnoses were changed by another save. Reload and try again.'],
+    },
+  },
+};
+
 const uploadedVisitDocumentExample = {
   fileName: 'referral.pdf',
   fileUrl:
@@ -2424,7 +2699,20 @@ export const openApiDocument = {
     { name: 'Asset', description: 'Asset inventory APIs.' },
     { name: 'Room Type', description: 'Tenant-scoped Room Type Master APIs.' },
     { name: 'Room', description: 'Tenant-scoped Room registry and occupancy APIs.' },
-    { name: 'Diagnosis Code', description: 'Tenant-scoped Diagnosis Code (ICD-10) Master APIs.' },
+    {
+      name: 'Diagnosis Code',
+      description: 'Tenant-scoped Diagnosis Code (ICD-10-CM) Master APIs.',
+    },
+    {
+      name: 'Ayurveda Diagnosis Code',
+      description:
+        'Tenant-scoped Ayurveda Diagnosis Code (Roga) Master APIs, each optionally mapped to an ICD-10-CM Diagnosis Code for claims.',
+    },
+    {
+      name: 'Visit Diagnosis',
+      description:
+        'ICD-10-CM and Ayurveda diagnoses recorded on a Visit, with one Principal per code system.',
+    },
     { name: 'Allergen', description: 'Tenant-scoped Allergen Master APIs.' },
     { name: 'Clinical Note Type', description: 'Tenant-scoped Clinical Note Type Master APIs.' },
     { name: 'Patient', description: 'Patient Registration and management APIs.' },
@@ -4846,7 +5134,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Update Visit details',
         description:
-          'Updates the chief complaint and remarks of an Active Visit. A Completed or Cancelled Visit is a historical record and cannot be edited.',
+          'Updates the chief complaint and remarks of an Active Visit. A Completed or Cancelled Visit is a historical record and cannot be edited here; a Completed Visit is corrected with PUT /api/v1/visits/{id}/amend.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         requestBody: requestBody('UpdateVisitRequest', {
@@ -4992,6 +5280,448 @@ export const openApiDocument = {
             content: jsonContent(schemaRef('ValidationError'), {
               message: 'Visit VST-1001 cannot be cancelled from its current status.',
               errors: ['Visit VST-1001 cannot be cancelled from its current status.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/amend': {
+      put: {
+        tags: ['Visit'],
+        summary: 'Amend a Completed Visit',
+        description:
+          'Corrects the encounter details of a Completed Visit: Doctor, VisitType, Admit Source, chief complaint, remarks, and Treatment with its Session. The body is a full replace: an omitted or null optional field is cleared. The Visit number, visit date, Queue Token, status, and lifecycle timestamps never change. A Doctor, VisitType, Admit Source, or Treatment the Visit already holds is kept even if it has since been deactivated or deleted; a newly chosen one must exist in the Tenant, and a newly chosen Doctor must be active. Active Visits are edited with PUT /api/v1/visits/{id}; a Cancelled Visit cannot be amended. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('AmendVisitRequest', {
+          doctorId: 42,
+          visitTypeId: 1,
+          admitSourceId: 2,
+          chiefComplaint: 'Fever for 3 days with productive cough',
+          remarks: 'Corrected after review of the referral letter',
+          treatmentId: 12,
+          treatmentSessionId: 31,
+        }),
+        responses: {
+          '200': {
+            description: 'Visit amended.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: amendedVisitExample }),
+          },
+          '400': {
+            description:
+              'Invalid Visit ID, validation failed, or the request body is not valid JSON.',
+            content: {
+              'application/json': {
+                schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+                examples: {
+                  invalidVisitId: {
+                    summary: 'Non-numeric Visit ID',
+                    value: { message: 'Validation failed', errors: ['Visit abc is Invalid.'] },
+                  },
+                  missingDoctor: {
+                    summary: 'Doctor and VisitType are required',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Doctor ID is required', 'Visit type ID is required'],
+                    },
+                  },
+                  treatmentWithoutSession: {
+                    summary: 'Treatment sent without its Session',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Treatment and Session must be provided together.'],
+                    },
+                  },
+                  invalidJson: {
+                    summary: 'Malformed JSON body',
+                    value: { message: 'Request body must be valid JSON' },
+                  },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:amend` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': {
+            description: 'Visit not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit not found',
+              errors: ['Visit not found'],
+            }),
+          },
+          '409': {
+            description:
+              'The Visit is not Completed, or a newly chosen reference is unknown, inactive, or mismatched.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  notCompleted: {
+                    summary: 'Visit is Active or Cancelled',
+                    value: {
+                      message: 'Visit VST-1001 is not completed and cannot be amended.',
+                      errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+                    },
+                  },
+                  inactiveDoctor: {
+                    summary: 'Newly chosen Doctor is inactive',
+                    value: {
+                      message: 'Doctor 57 is inactive and cannot be assigned a Visit.',
+                      errors: ['Doctor 57 is inactive and cannot be assigned a Visit.'],
+                    },
+                  },
+                  unknownReferences: {
+                    summary: 'Several newly chosen references are unknown',
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Visit type 9 is Invalid.', 'Admit source 14 is Invalid.'],
+                    },
+                  },
+                  sessionMismatch: {
+                    summary: 'Session belongs to another Treatment',
+                    value: {
+                      message: 'Treatment session does not belong to the selected Treatment.',
+                      errors: ['Treatment session does not belong to the selected Treatment.'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/diagnoses': {
+      get: {
+        tags: ['Visit Diagnosis'],
+        summary: 'List Visit diagnoses',
+        description:
+          "Returns the ICD-10-CM and Ayurveda diagnoses recorded on a Visit of any status, ICD-10-CM first, the Principal diagnosis first within each code system, then in saved order. code and title come from the referenced Diagnosis Code or Ayurveda Diagnosis Code even if it was deleted after recording; icdMapping is the Ayurveda code's current ICD-10-CM mapping. The Tenant is resolved from the active Session.",
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Visit diagnoses.',
+            content: jsonContent(dataEnvelopeArraySchema('VisitDiagnosis'), {
+              data: visitDiagnosesExample,
+            }),
+          },
+          '400': {
+            description: 'Invalid Visit ID.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Visit abc is Invalid.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': visitNotFoundResponse,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      put: {
+        tags: ['Visit Diagnosis'],
+        summary: 'Save Visit diagnoses',
+        description:
+          'Replaces the whole diagnosis list of an Active (Checked-in or In Consultation) Visit in one transaction; an empty list clears it. Each entry names its codeSystem: ICD10CM entries need diagnosisCodeId and AYURVEDA entries need ayurvedaDiagnosisCodeId (the other id is ignored). A code system with entries needs exactly one PRINCIPAL; a code may appear once per code system; at most 20 entries. sortOrder follows array position, starting at 1. Referenced codes must exist in the Tenant and not be deleted, except a code this Visit already records. Notes are trimmed, at most 500 characters, and blank notes are stored as null. A Completed Visit is corrected with PUT /api/v1/visits/{id}/diagnoses/amend. The Tenant is resolved from the active Session. Requires the `visit:update` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('SaveVisitDiagnosesRequest', visitDiagnosesRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit diagnoses saved; returns the full list.',
+            content: jsonContent(dataEnvelopeArraySchema('VisitDiagnosis'), {
+              data: visitDiagnosesExample,
+            }),
+          },
+          '400': visitDiagnosesBadRequestResponse,
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:update` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': visitNotFoundResponse,
+          '409': {
+            description:
+              'The Visit is Completed or Cancelled, a referenced code is unknown or deleted, or a concurrent save won.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  closedVisit: {
+                    summary: 'Visit is Completed or Cancelled',
+                    value: {
+                      message: 'Visit VST-1001 is closed and cannot be edited.',
+                      errors: ['Visit VST-1001 is closed and cannot be edited.'],
+                    },
+                  },
+                  ...visitDiagnosisReferenceConflictExamples,
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/diagnoses/amend': {
+      put: {
+        tags: ['Visit Diagnosis'],
+        summary: 'Amend Completed Visit diagnoses',
+        description:
+          'Replaces the whole diagnosis list of a Completed Visit with the same body and rules as PUT /api/v1/visits/{id}/diagnoses. A code the Visit already records is kept even if it has since been deleted, so older Visits stay amendable. Active Visits use PUT /api/v1/visits/{id}/diagnoses; a Cancelled Visit cannot be amended. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('SaveVisitDiagnosesRequest', visitDiagnosesRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit diagnoses amended; returns the full list.',
+            content: jsonContent(dataEnvelopeArraySchema('VisitDiagnosis'), {
+              data: visitDiagnosesExample,
+            }),
+          },
+          '400': visitDiagnosesBadRequestResponse,
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:amend` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': visitNotFoundResponse,
+          '409': {
+            description:
+              'The Visit is not Completed, a newly referenced code is unknown or deleted, or a concurrent save won.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  notCompleted: {
+                    summary: 'Visit is Active or Cancelled',
+                    value: {
+                      message: 'Visit VST-1001 is not completed and cannot be amended.',
+                      errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+                    },
+                  },
+                  ...visitDiagnosisReferenceConflictExamples,
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/notes/{noteId}/amend': {
+      put: {
+        tags: ['Visit'],
+        summary: 'Amend a Clinical Note on a Completed Visit',
+        description:
+          "Corrects the note type and SOAP sections of a Clinical Note recorded during a Completed Visit, including a signed Clinical Note. The body is a full replace of the sections: an omitted or blank section is cleared, and at least one section is required. The note's Visit link, status, signedAt, author, and recorder never change; visitId and admissionId are ignored if sent. The Clinical Note must belong to the Visit in the path. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Visit'),
+          namedNumberPathParameter('noteId', 'Clinical Note'),
+        ],
+        requestBody: requestBody('AmendVisitClinicalNoteRequest', {
+          noteTypeId: 3,
+          subjective: 'Patient reports a productive cough for three days with mild fever.',
+          objective: 'Temp 37.8C, chest clear on auscultation, throat mildly erythematous.',
+          assessment: 'Acute upper respiratory infection, viral.',
+          plan: 'Supportive care, fluids, paracetamol as needed. Review in 5 days if not improving.',
+        }),
+        responses: {
+          '200': {
+            description: 'Clinical Note amended; a signed note stays signed.',
+            content: jsonContent(dataEnvelopeSchema('ClinicalNote'), {
+              data: {
+                ...signedClinicalNoteExample,
+                visitId: 501,
+                assessment: 'Acute upper respiratory infection, viral.',
+                modifiedOn: '2026-07-18T06:20:00.000Z',
+              },
+            }),
+          },
+          '400': {
+            description:
+              'Invalid IDs, validation failed, unknown note type, or the request body is not valid JSON.',
+            content: {
+              'application/json': {
+                schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+                examples: {
+                  invalidIds: {
+                    summary: 'Non-numeric Visit and Clinical Note IDs',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Visit abc is Invalid.', 'Clinical note xyz is Invalid.'],
+                    },
+                  },
+                  noSections: {
+                    summary: 'Every SOAP section is empty',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['At least one clinical note section is required'],
+                    },
+                  },
+                  unknownNoteType: {
+                    summary: 'Note type does not exist in the Tenant',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Clinical note type 3 does not exist.'],
+                    },
+                  },
+                  invalidJson: {
+                    summary: 'Malformed JSON body',
+                    value: { message: 'Request body must be valid JSON' },
+                  },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:amend` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': {
+            description:
+              'Visit not found, or the Clinical Note does not exist or belongs to another Visit.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  visitNotFound: {
+                    value: { message: 'Visit not found', errors: ['Visit not found'] },
+                  },
+                  noteNotFound: {
+                    value: {
+                      message: 'Clinical note not found',
+                      errors: ['Clinical note not found'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'The Visit is not Completed.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 is not completed and cannot be amended.',
+              errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/vitals/{vitalId}/amend': {
+      put: {
+        tags: ['Visit'],
+        summary: 'Amend a Vital Sign on a Completed Visit',
+        description:
+          "Corrects a Vital Sign reading recorded during a Completed Visit. The body is a full replace of the measurements and notes: an omitted, null, or blank measurement is cleared, and at least one measurement is required. BMI is recomputed server-side from height and weight. recordedAt is optional; when omitted the reading keeps its original time. The reading's Visit link and recorder never change; visitId and admissionId are ignored if sent. The Vital Sign must belong to the Visit in the path. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Visit'),
+          namedNumberPathParameter('vitalId', 'Vital Sign'),
+        ],
+        requestBody: requestBody('AmendVisitVitalSignRequest', {
+          heightCm: 170,
+          weightKg: 68,
+          systolic: 128,
+          diastolic: 84,
+          pulseBpm: 76,
+          respRate: 16,
+          temperatureC: 37.8,
+          spo2: 98,
+          painScore: 2,
+          notes: 'Rechecked after five minutes of rest.',
+        }),
+        responses: {
+          '200': {
+            description: 'Vital Sign amended.',
+            content: jsonContent(dataEnvelopeSchema('PatientVitalSign'), {
+              data: {
+                ...patientVitalSignExample,
+                visitId: 501,
+                recordedAt: '2026-07-16T04:40:00.000Z',
+                weightKg: 68,
+                bmi: 23.5,
+                systolic: 128,
+                diastolic: 84,
+                pulseBpm: 76,
+                temperatureC: 37.8,
+                notes: 'Rechecked after five minutes of rest.',
+                createdOn: '2026-07-16T04:40:00.000Z',
+                modifiedOn: '2026-07-18T06:25:00.000Z',
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid IDs, validation failed, or the request body is not valid JSON.',
+            content: {
+              'application/json': {
+                schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+                examples: {
+                  invalidIds: {
+                    summary: 'Non-numeric Visit and Vital Sign IDs',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Visit abc is Invalid.', 'Vital sign xyz is Invalid.'],
+                    },
+                  },
+                  noMeasurements: {
+                    summary: 'Every measurement is empty',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['At least one vital sign measurement is required'],
+                    },
+                  },
+                  outOfRange: {
+                    summary: 'Measurement outside its range',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Vital sign SpO2 must be at most 100'],
+                    },
+                  },
+                  invalidJson: {
+                    summary: 'Malformed JSON body',
+                    value: { message: 'Request body must be valid JSON' },
+                  },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:amend` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': {
+            description:
+              'Visit not found, or the Vital Sign does not exist or belongs to another Visit.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  visitNotFound: {
+                    value: { message: 'Visit not found', errors: ['Visit not found'] },
+                  },
+                  vitalSignNotFound: {
+                    value: { message: 'Vital sign not found', errors: ['Vital sign not found'] },
+                  },
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'The Visit is not Completed.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 is not completed and cannot be amended.',
+              errors: ['Visit VST-1001 is not completed and cannot be amended.'],
             }),
           },
           '500': responseRef('InternalServerError'),
@@ -5279,6 +6009,7 @@ export const openApiDocument = {
       example: {
         name: 'Established Patient Level 3',
         code: '99213',
+        codeType: 'CPT',
         category: 'CONSULTATION',
         unitPrice: 150,
         cashPrice: 150,
@@ -5293,6 +6024,7 @@ export const openApiDocument = {
       listErrorResponses: authenticatedListErrorResponses,
       mutationErrorResponses: {
         ...authenticatedErrorResponses,
+        '400': chargeItemValidationResponse,
         '409': {
           description: 'The Charge Item name or code already exists in the Tenant.',
           content: jsonContent(schemaRef('ValidationError'), {
@@ -5326,6 +6058,7 @@ export const openApiDocument = {
       example: {
         name: 'Established Patient Level 3',
         code: '99213',
+        codeType: 'CPT',
         category: 'CONSULTATION',
         unitPrice: 150,
         cashPrice: 150,
@@ -5340,6 +6073,7 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: {
         ...authenticatedErrorResponses,
+        '400': chargeItemValidationResponse,
         '409': {
           description: 'The new name or code already exists in the Tenant.',
           content: jsonContent(schemaRef('ValidationError'), {
@@ -6145,13 +6879,13 @@ export const openApiDocument = {
       schemaName: 'DiagnosisCode',
       createSchemaName: 'CreateDiagnosisCodeRequest',
       example: {
-        code: 'I10',
-        title: 'Essential (primary) hypertension',
-        category: 'Circulatory system',
+        code: 'M06.9',
+        title: 'Rheumatoid arthritis, unspecified',
+        category: 'Musculoskeletal system',
       },
       security: [{ cookieAuth: [] }],
       listErrorResponses: authenticatedListErrorResponses,
-      mutationErrorResponses: authenticatedErrorResponses,
+      mutationErrorResponses: diagnosisCodeMutationErrorResponses,
     }),
     '/api/v1/clinical-masters/diagnosis-codes/{id}': itemOperations({
       tag: 'Diagnosis Code',
@@ -6159,13 +6893,34 @@ export const openApiDocument = {
       schemaName: 'DiagnosisCode',
       updateSchemaName: 'UpdateDiagnosisCodeRequest',
       example: {
-        code: 'I10',
-        title: 'Essential (primary) hypertension',
-        category: 'Circulatory system',
+        code: 'M06.9',
+        title: 'Rheumatoid arthritis, unspecified',
+        category: 'Musculoskeletal system',
       },
       parameters: [numberIdPathParameter('Diagnosis Code')],
       security: [{ cookieAuth: [] }],
-      operationErrorResponses: authenticatedErrorResponses,
+      operationErrorResponses: diagnosisCodeMutationErrorResponses,
+    }),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes': collectionOperations({
+      tag: 'Ayurveda Diagnosis Code',
+      entity: 'Ayurveda Diagnosis Code',
+      summaryEntity: 'Ayurveda Diagnosis Codes',
+      schemaName: 'AyurvedaDiagnosisCode',
+      createSchemaName: 'CreateAyurvedaDiagnosisCodeRequest',
+      example: ayurvedaDiagnosisCodeRequestExample,
+      security: [{ cookieAuth: [] }],
+      listErrorResponses: authenticatedListErrorResponses,
+      mutationErrorResponses: ayurvedaDiagnosisCodeErrorResponses,
+    }),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}': itemOperations({
+      tag: 'Ayurveda Diagnosis Code',
+      entity: 'Ayurveda Diagnosis Code',
+      schemaName: 'AyurvedaDiagnosisCode',
+      updateSchemaName: 'UpdateAyurvedaDiagnosisCodeRequest',
+      example: ayurvedaDiagnosisCodeRequestExample,
+      parameters: [numberIdPathParameter('Ayurveda Diagnosis Code')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: ayurvedaDiagnosisCodeErrorResponses,
     }),
     '/api/v1/clinical-masters/allergens': collectionOperations({
       tag: 'Allergen',
@@ -9675,6 +10430,48 @@ export const openApiDocument = {
           },
         },
       },
+      AmendVisitRequest: {
+        type: 'object',
+        required: ['doctorId', 'visitTypeId'],
+        description:
+          'Full replace of the encounter details of a Completed Visit. An omitted or null optional field is cleared.',
+        properties: {
+          doctorId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Doctor for the Visit. A newly chosen Doctor must exist in the Tenant and be active; the current Doctor is kept even if since deactivated.',
+          },
+          visitTypeId: { type: 'integer', minimum: 1, description: 'VisitType identifier.' },
+          admitSourceId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description: 'Admit Source identifier. Omit or send null to clear.',
+          },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description:
+              'Purpose of Visit. Plain text or Markdown formatting from the Lexical editor. Omit, null, or empty to clear.',
+          },
+          remarks: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting. Omit, null, or empty to clear.',
+          },
+          treatmentId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'Treatment identifier. Must be sent together with treatmentSessionId; omit or send null with it to clear.',
+          },
+          treatmentSessionId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'Treatment Session identifier belonging to the selected Treatment. Omit or send null with treatmentId to clear.',
+          },
+        },
+      },
       CancelVisitRequest: {
         type: 'object',
         required: ['cancellationReason'],
@@ -9862,15 +10659,27 @@ export const openApiDocument = {
         enum: ['CONSULTATION', 'PROCEDURE', 'INVESTIGATION', 'BED', 'CONSUMABLE', 'OTHER'],
         description: 'Fixed classification of a Charge Item.',
       },
+      ChargeItemCodeType: {
+        type: 'string',
+        enum: ['CPT', 'HCPCS', 'SERVICE', 'LOCAL'],
+        description:
+          'Code set of a Charge Item code. CPT and HCPCS are the activity codes UAE payers (DHA eClaimLink, DoH Shafafiya) accept; SERVICE is a UAE regulator service code; LOCAL is a Tenant code. A fixed system-defined set.',
+      },
       CreateChargeItemRequest: {
         type: 'object',
         required: ['name', 'code', 'category', 'unitPrice'],
         properties: {
           name: simpleMasterNameProperty(150),
           code: simpleMasterCodeProperty(
-            'Charge Item code. The API normalizes this value to uppercase.',
+            'Charge Item code. The API normalizes this value to uppercase. A CPT code must be 4 digits followed by a digit, F, T, or U (e.g. 99213); an HCPCS code must be a letter A-V followed by 4 digits (e.g. J1100). SERVICE and LOCAL codes use letters, numbers, hyphens, and underscores.',
             20
           ),
+          codeType: {
+            ...schemaRef('ChargeItemCodeType'),
+            default: 'LOCAL',
+            description:
+              'Defaults to LOCAL on create. On update, an omitted codeType keeps the stored one and the code is checked against it.',
+          },
           category: schemaRef('ChargeItemCategory'),
           unitPrice: {
             type: 'number',
@@ -9934,6 +10743,7 @@ export const openApiDocument = {
               'tenantId',
               'name',
               'code',
+              'codeType',
               'category',
               'unitPrice',
               'cashPrice',
@@ -11524,7 +12334,9 @@ export const openApiDocument = {
             type: 'string',
             minLength: 1,
             maxLength: 10,
-            description: 'ICD-10 diagnosis code. The API normalizes this value to uppercase.',
+            pattern: '^[A-TV-Z][0-9][0-9AB](\\.[0-9A-TV-Z]{1,4})?$',
+            description:
+              'ICD-10-CM diagnosis code, e.g. M54.5 or S72.001A, as required on UAE claims. The API trims and uppercases the value before checking the format on create and update.',
           },
           title: {
             type: 'string',
@@ -11559,6 +12371,179 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      CreateAyurvedaDiagnosisCodeRequest: {
+        type: 'object',
+        required: ['code', 'name'],
+        properties: {
+          code: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            pattern: '^[A-Za-z0-9.-]+$',
+            description:
+              'Tenant Ayurveda diagnosis code: letters, numbers, hyphens, and dots. The API trims and uppercases it; it is unique per Tenant, ignoring case.',
+          },
+          name: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 255,
+            description: 'Roga name, e.g. Amavata.',
+          },
+          englishName: {
+            type: ['string', 'null'],
+            maxLength: 255,
+            description: 'Optional English equivalent; blank is stored as null.',
+          },
+          category: {
+            type: ['string', 'null'],
+            maxLength: 100,
+            description: 'Optional grouping, e.g. Vatavyadhi; blank is stored as null.',
+          },
+          icdDiagnosisCodeId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'ICD-10-CM Diagnosis Code claimed for this Roga. Must exist in the Tenant. Omit or send null for no mapping.',
+          },
+        },
+      },
+      UpdateAyurvedaDiagnosisCodeRequest: schemaRef('CreateAyurvedaDiagnosisCodeRequest'),
+      DiagnosisCodeSummary: {
+        type: 'object',
+        required: ['id', 'code', 'title'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          code: { type: 'string', example: 'M06.9' },
+          title: { type: 'string', example: 'Rheumatoid arthritis, unspecified' },
+        },
+      },
+      AyurvedaDiagnosisCode: {
+        type: 'object',
+        required: [
+          'id',
+          'code',
+          'name',
+          'tenantId',
+          'createdOn',
+          'modifiedOn',
+          'category',
+          'englishName',
+          'icdDiagnosisCode',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          code: { type: 'string', example: 'AYU-AMV' },
+          name: { type: 'string', example: 'Amavata' },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+          category: { type: ['string', 'null'], example: 'Vatavyadhi' },
+          englishName: { type: ['string', 'null'], example: 'Rheumatoid arthritis' },
+          icdDiagnosisCode: {
+            oneOf: [schemaRef('DiagnosisCodeSummary'), { type: 'null' }],
+            description:
+              'Mapped ICD-10-CM Diagnosis Code; null when unmapped or the mapped code was deleted.',
+          },
+        },
+        example: {
+          id: 3,
+          code: 'AYU-AMV',
+          name: 'Amavata',
+          tenantId: 'org_apollo',
+          createdOn: '2026-11-16T09:30:00.000Z',
+          modifiedOn: '2026-11-16T09:30:00.000Z',
+          category: 'Vatavyadhi',
+          englishName: 'Rheumatoid arthritis',
+          icdDiagnosisCode: icd10CmRheumatoidArthritis,
+        },
+      },
+      VisitDiagnosisCodeSystem: {
+        type: 'string',
+        enum: ['ICD10CM', 'AYURVEDA'],
+        description:
+          'Code system of a Visit diagnosis: ICD-10-CM (required on UAE claims) or the Tenant Ayurveda catalogue. A fixed system-defined set.',
+      },
+      VisitDiagnosisType: {
+        type: 'string',
+        enum: ['PRINCIPAL', 'SECONDARY'],
+        description:
+          'PRINCIPAL is the main reason for the Visit (exactly one per code system with entries); SECONDARY covers the rest.',
+      },
+      SaveVisitDiagnosesRequest: {
+        type: 'object',
+        required: ['diagnoses'],
+        properties: {
+          diagnoses: {
+            type: 'array',
+            maxItems: 20,
+            description: 'Full replacement list in display order; an empty list clears it.',
+            items: {
+              type: 'object',
+              required: ['codeSystem', 'diagnosisType'],
+              properties: {
+                codeSystem: schemaRef('VisitDiagnosisCodeSystem'),
+                diagnosisCodeId: {
+                  type: 'integer',
+                  minimum: 1,
+                  description: 'Required for ICD10CM entries; ignored for AYURVEDA.',
+                },
+                ayurvedaDiagnosisCodeId: {
+                  type: 'integer',
+                  minimum: 1,
+                  description: 'Required for AYURVEDA entries; ignored for ICD10CM.',
+                },
+                diagnosisType: schemaRef('VisitDiagnosisType'),
+                notes: { type: ['string', 'null'], maxLength: 500 },
+              },
+            },
+          },
+        },
+      },
+      VisitDiagnosis: {
+        type: 'object',
+        required: [
+          'id',
+          'visitId',
+          'codeSystem',
+          'diagnosisType',
+          'sortOrder',
+          'notes',
+          'code',
+          'title',
+          'englishName',
+          'diagnosisCodeId',
+          'ayurvedaDiagnosisCodeId',
+          'icdMapping',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          visitId: { type: 'integer', minimum: 1 },
+          codeSystem: schemaRef('VisitDiagnosisCodeSystem'),
+          diagnosisType: schemaRef('VisitDiagnosisType'),
+          sortOrder: { type: 'integer', minimum: 1, description: 'Position in the saved list.' },
+          notes: { type: ['string', 'null'], maxLength: 500 },
+          code: {
+            type: 'string',
+            description: 'Code of the referenced master row, even if it was later deleted.',
+          },
+          title: { type: 'string', description: 'ICD-10-CM title, or the Ayurveda (Roga) name.' },
+          englishName: {
+            type: ['string', 'null'],
+            description: 'Ayurveda English name; null for ICD-10-CM rows.',
+          },
+          diagnosisCodeId: { type: ['integer', 'null'] },
+          ayurvedaDiagnosisCodeId: { type: ['integer', 'null'] },
+          icdMapping: {
+            oneOf: [schemaRef('DiagnosisCodeSummary'), { type: 'null' }],
+            description:
+              "The Ayurveda code's current ICD-10-CM mapping; null for ICD-10-CM rows or when unmapped.",
+          },
+        },
       },
       CreateAllergenRequest: {
         type: 'object',
@@ -11772,6 +12757,33 @@ export const openApiDocument = {
         },
       },
       UpdatePatientVitalSignRequest: schemaRef('CreatePatientVitalSignRequest'),
+      AmendVisitVitalSignRequest: {
+        type: 'object',
+        description:
+          'Full replace of a Vital Sign reading on a Completed Visit. At least one measurement must be supplied; an omitted, null, or blank measurement is cleared. BMI is computed server-side. visitId and admissionId are not accepted: the Visit link cannot change.',
+        properties: {
+          recordedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            description: 'Corrected reading time. Omit or send null to keep the original time.',
+          },
+          heightCm: { type: ['number', 'null'], minimum: 0, maximum: 300 },
+          weightKg: { type: ['number', 'null'], minimum: 0, maximum: 700 },
+          systolic: { type: ['integer', 'null'], minimum: 0, maximum: 400 },
+          diastolic: { type: ['integer', 'null'], minimum: 0, maximum: 400 },
+          pulseBpm: { type: ['integer', 'null'], minimum: 0, maximum: 400 },
+          respRate: { type: ['integer', 'null'], minimum: 0, maximum: 150 },
+          temperatureC: { type: ['number', 'null'], minimum: 20, maximum: 45 },
+          spo2: { type: ['integer', 'null'], minimum: 0, maximum: 100 },
+          painScore: { type: ['integer', 'null'], minimum: 0, maximum: 10 },
+          notes: {
+            type: 'string',
+            maxLength: 2000,
+            description:
+              'Plain text or Markdown formatting from the Lexical editor. Omit or empty to clear.',
+          },
+        },
+      },
       PatientVitalSign: {
         type: 'object',
         required: [
@@ -11901,6 +12913,35 @@ export const openApiDocument = {
         },
       },
       UpdateClinicalNoteRequest: schemaRef('CreateClinicalNoteRequest'),
+      AmendVisitClinicalNoteRequest: {
+        type: 'object',
+        required: ['noteTypeId'],
+        description:
+          'Full replace of the note type and SOAP sections of a Clinical Note on a Completed Visit. At least one SOAP section must be non-empty; an omitted or blank section is cleared. visitId and admissionId are not accepted: the Visit link cannot change. Status and signedAt are preserved.',
+        properties: {
+          noteTypeId: { type: 'integer', minimum: 1 },
+          subjective: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          objective: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          assessment: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          plan: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+        },
+      },
       ClinicalNote: {
         type: 'object',
         required: [

@@ -1,4 +1,4 @@
-import { NotebookPen } from 'lucide-react';
+import { NotebookPen, PencilLine } from 'lucide-react';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
@@ -20,6 +20,7 @@ export function VisitClinicalNotesCard({
   onAddClinicalNote,
   onNursingHandoff,
   onSignNote,
+  onAmendNote,
 }: {
   notes: ClinicalNote[];
   loading: boolean;
@@ -29,6 +30,8 @@ export function VisitClinicalNotesCard({
   onAddClinicalNote: () => void;
   onNursingHandoff: () => void;
   onSignNote: (note: ClinicalNote) => void;
+  /** Present only on a Completed Visit the user may amend. */
+  onAmendNote?: (noteId: number) => void;
 }) {
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
   const noteTypeName = (id: number) =>
@@ -80,6 +83,18 @@ export function VisitClinicalNotesCard({
                         onClick={() => onSignNote(note)}
                       >
                         Sign
+                      </Button>
+                    ) : null}
+                    {onAmendNote ? (
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="outline"
+                        aria-label={`Amend ${noteTypeName(note.noteTypeId)}`}
+                        onClick={() => onAmendNote(note.id)}
+                      >
+                        <PencilLine className="size-3" />
+                        Amend
                       </Button>
                     ) : null}
                   </div>

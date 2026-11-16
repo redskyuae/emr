@@ -23,6 +23,7 @@ const existing = {
   tenantId: 'tenant-1',
   name: 'General Consultation',
   code: 'CONS',
+  codeType: 'LOCAL' as const,
   category: 'CONSULTATION' as const,
   unitPrice: 500,
   isActive: true,
@@ -134,6 +135,42 @@ describe('ChargeItem validators', () => {
         success: true,
         data: { id: 7, payload: { name: 'General Consultation', code: 'CONS' } },
       });
+    });
+
+    it('should preserve the existing codeType when the update payload omits it', async () => {
+      repo.getChargeItemById.mockResolvedValue({ ...existing, code: '99213', codeType: 'CPT' });
+
+      const result = await validateUpdateChargeItem(
+        '1',
+        { ...validPayload, code: '99214' },
+        'tenant-1'
+      );
+
+      expect(result).toMatchObject({ success: true, data: { payload: { codeType: 'CPT' } } });
+    });
+
+    it('should check the code against the stored codeType when the payload omits it', async () => {
+      repo.getChargeItemById.mockResolvedValue({ ...existing, code: '99213', codeType: 'CPT' });
+
+      const result = await validateUpdateChargeItem('1', validPayload, 'tenant-1');
+
+      expect(result).toEqual({
+        success: false,
+        errors: ['Charge item code must be a valid 5-character CPT code, e.g. 99213.'],
+      });
+      expect(repo.findActiveByCode).not.toHaveBeenCalled();
+    });
+
+    it('should apply an explicit codeType from the update payload', async () => {
+      repo.getChargeItemById.mockResolvedValue({ ...existing, code: '99213', codeType: 'CPT' });
+
+      const result = await validateUpdateChargeItem(
+        '1',
+        { ...validPayload, codeType: 'LOCAL' },
+        'tenant-1'
+      );
+
+      expect(result).toMatchObject({ success: true, data: { payload: { codeType: 'LOCAL' } } });
     });
 
     it('should preserve the existing isActive value when the update payload omits it', async () => {

@@ -98,4 +98,39 @@ describe('Visit Treatment Plans panel', () => {
 
     expect(screen.queryByRole('button', { name: /^Start Session/ })).toBeNull();
   });
+
+  it('should show only the Sessions a Completed Visit delivered, not the current Plan', () => {
+    const completed = {
+      id: 4000,
+      status: 'COMPLETED',
+      appointment: null,
+      legacyVisitNumber: null,
+      treatment: null,
+      treatmentSession: null,
+    } as unknown as Visit;
+    renderPanel({ visit: completed });
+
+    expect(screen.getByText('Treatment Plan Sessions this Visit')).toBeTruthy();
+    expect(screen.getByText('Session 1')).toBeTruthy();
+    expect(screen.queryByText('Session 2')).toBeNull();
+    expect(screen.queryByText('Active Plan')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Start Session/ })).toBeNull();
+  });
+
+  it('should say so when a Completed Visit delivered no Plan Session', () => {
+    const completed = {
+      id: 3999,
+      status: 'COMPLETED',
+      appointment: null,
+      legacyVisitNumber: null,
+      treatment: null,
+      treatmentSession: null,
+    } as unknown as Visit;
+    renderPanel({ visit: completed });
+
+    expect(
+      screen.getByText('No Treatment Plan Sessions were delivered in this Visit.')
+    ).toBeTruthy();
+    expect(screen.queryByText('Abhyanga')).toBeNull();
+  });
 });

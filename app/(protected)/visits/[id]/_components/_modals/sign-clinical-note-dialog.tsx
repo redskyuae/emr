@@ -45,7 +45,8 @@ export function SignClinicalNoteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Sign this Clinical Note?</AlertDialogTitle>
           <AlertDialogDescription>
-            A signed Clinical Note can no longer be edited or deleted.
+            A signed Clinical Note can no longer be edited or deleted, except through Amend Visit
+            once the Visit is completed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

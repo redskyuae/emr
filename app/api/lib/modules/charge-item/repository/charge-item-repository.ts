@@ -44,6 +44,7 @@ const chargeItemColumns = {
   name: chargeItemTable.name,
   code: chargeItemTable.code,
   tenantId: chargeItemTable.tenantId,
+  codeType: chargeItemTable.codeType,
   category: chargeItemTable.category,
   unitPrice: chargeItemTable.unitPrice,
   cashPrice: chargeItemTable.cashPrice,
@@ -64,6 +65,7 @@ async function createChargeItem(data: CreateChargeItemData) {
       tenantId: data.tenantId,
       name: data.name,
       code: data.code,
+      codeType: data.codeType,
       category: data.category,
       unitPrice: data.unitPrice,
       cashPrice: data.cashPrice ?? null,
@@ -88,6 +90,7 @@ async function updateChargeItem(
     .set({
       name: data.name,
       code: data.code,
+      codeType: data.codeType,
       category: data.category,
       unitPrice: data.unitPrice,
       cashPrice: data.cashPrice,

@@ -12,6 +12,7 @@ import {
   FileText,
   Loader2,
   NotebookPen,
+  PencilLine,
   Pill,
   PlayCircle,
   ReceiptText,
@@ -44,8 +45,10 @@ export function VisitPatientHeader({
   canCreateNote,
   canAssignPlan,
   canBookAppointment,
+  canAmend,
   starting,
   onStart,
+  onAmend,
   onComplete,
   onCancel,
   onRecordVitals,
@@ -65,8 +68,10 @@ export function VisitPatientHeader({
   canCreateNote: boolean;
   canAssignPlan: boolean;
   canBookAppointment: boolean;
+  canAmend: boolean;
   starting: boolean;
   onStart: () => void;
+  onAmend: () => void;
   onComplete: () => void;
   onCancel: () => void;
   onRecordVitals: () => void;
@@ -212,6 +217,12 @@ export function VisitPatientHeader({
                 <PlayCircle className="size-4" />
               )}
               {starting ? 'Starting consultation…' : 'Start consultation'}
+            </Button>
+          ) : null}
+          {canAmend ? (
+            <Button type="button" onClick={onAmend}>
+              <PencilLine className="size-4" />
+              Amend Visit
             </Button>
           ) : null}
           {visit.status === 'IN_CONSULTATION' && canComplete ? (

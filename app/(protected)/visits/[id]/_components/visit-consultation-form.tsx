@@ -2,14 +2,12 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CheckCircle2, Save } from 'lucide-react';
 import { Controller, useForm, useWatch, type FieldErrors } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { getApiErrors } from '@/app/queries/api-error';
-import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
 import { useSignClinicalNote } from '@/app/queries/patients/chart/useSignClinicalNote';
 import { useUpdateClinicalNote } from '@/app/queries/patients/chart/useUpdateClinicalNote';
@@ -18,14 +16,6 @@ import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from '@/components/ui/combobox';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
@@ -101,19 +91,12 @@ export function VisitConsultationForm({
   });
   const { errors, isDirty } = form.formState;
   const values = useWatch({ control: form.control });
-  const selectedDiagnosis = values.modernDiagnosis;
   const [savedNoteId, setSavedNoteId] = useState(noteId);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [signOpen, setSignOpen] = useState(false);
-  const [diagnosisSearch, setDiagnosisSearch] = useState('');
-  const [debouncedDiagnosisSearch] = useDebouncedValue(diagnosisSearch, { wait: 300 });
   const createNote = useCreateClinicalNote();
   const updateNote = useUpdateClinicalNote();
   const signNote = useSignClinicalNote();
-  const diagnosisCodes = useDiagnosisCodesQuery({
-    query: debouncedDiagnosisSearch || undefined,
-    limit: 50,
-  });
   const askNoteType = defaultNoteTypeId === null && !initialValues;
   const saving = createNote.isPending || updateNote.isPending || signNote.isPending;
   const patientId = visit.patient.id;
@@ -205,13 +188,6 @@ export function VisitConsultationForm({
     );
   }
 
-  const diagnosisOptions = (diagnosisCodes.data?.data ?? []).map(
-    (item) => `${item.code} — ${item.title}`
-  );
-  const options =
-    selectedDiagnosis && !diagnosisOptions.includes(selectedDiagnosis)
-      ? [selectedDiagnosis, ...diagnosisOptions]
-      : diagnosisOptions;
   const saveStatus = isDirty
     ? 'Unsaved changes'
     : savedAt
@@ -340,48 +316,12 @@ export function VisitConsultationForm({
     assessment: (
       <div className="grid gap-4">
         {slots.assessment}
-        <Controller
-          control={form.control}
-          name="modernDiagnosis"
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="consult-diagnosis-code">Modern diagnosis code</FieldLabel>
-              <Combobox<string>
-                items={options}
-                value={field.value || null}
-                onValueChange={(value) => field.onChange(value ?? '')}
-                onInputValueChange={setDiagnosisSearch}
-              >
-                <ComboboxInput
-                  id="consult-diagnosis-code"
-                  className="w-full"
-                  placeholder="Search Diagnosis Codes by code or title"
-                  onBlur={field.onBlur}
-                  showClear
-                />
-                <ComboboxContent>
-                  <ComboboxEmpty>
-                    {diagnosisCodes.isFetching
-                      ? 'Searching Diagnosis Codes…'
-                      : 'No Diagnosis Codes found.'}
-                  </ComboboxEmpty>
-                  <ComboboxList>
-                    {options.map((option) => (
-                      <ComboboxItem key={option} value={option}>
-                        {option}
-                      </ComboboxItem>
-                    ))}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-              {diagnosisCodes.isError ? (
-                <p className="text-destructive text-sm">Diagnosis Codes could not be loaded.</p>
-              ) : null}
-            </Field>
-          )}
-        />
         {showAyurveda
-          ? narrative('ayurvedicDiagnosis', 'Ayurvedic diagnosis', 'Roga and dosha involved')
+          ? narrative(
+              'ayurvedicDiagnosis',
+              'Ayurvedic diagnosis notes',
+              'Roga, dosha and dushya involved'
+            )
           : null}
       </div>
     ),

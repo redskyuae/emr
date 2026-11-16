@@ -1,6 +1,7 @@
 import type {
   ChargeItem,
   ChargeItemCategory,
+  ChargeItemCodeType,
   VisitChargeKind,
 } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
@@ -10,6 +11,8 @@ export type ListChargeItemsResponse = Paginated<ChargeItem>;
 export type SaveChargeItemRequest = {
   name: string;
   code: string;
+  // Defaults to LOCAL. CPT and HCPCS codes must match their code set's format.
+  codeType?: ChargeItemCodeType;
   category: ChargeItemCategory;
   unitPrice: number;
   cashPrice?: number | null;

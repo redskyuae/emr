@@ -133,7 +133,17 @@ export function VisitContextPane({
 }) {
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
   const { data: canReadPlan } = useHasPermission('patient-treatment-plan:read');
-  const plans = (plansQuery.data ?? []).filter(isCurrentPlan);
+  const active = visit.status === 'CHECKED_IN' || visit.status === 'IN_CONSULTATION';
+  // A closed Visit shows the Patient as they were then: current Plans belong to today,
+  // and readings taken after the Visit closed are left out of the trends.
+  const plans = active ? (plansQuery.data ?? []).filter(isCurrentPlan) : [];
+  const closedAt = active ? null : (visit.completedAt ?? visit.cancelledAt);
+  const vitalSigns = (chart?.vitalSigns ?? []).filter(
+    (reading) =>
+      closedAt === null ||
+      reading.visitId === visit.id ||
+      new Date(reading.recordedAt).getTime() <= new Date(closedAt).getTime()
+  );
   const allergies = (chart?.allergies ?? []).filter((item) => item.status === 'active');
   const problems = (chart?.problems ?? []).filter((item) => item.clinicalStatus === 'active');
   const medications = (chart?.medications ?? []).filter((item) => item.status === 'active');
@@ -154,14 +164,14 @@ export function VisitContextPane({
         <TabsContent value="trends" className="space-y-5 p-4 xl:min-h-0 xl:overflow-y-auto">
           <PaneSection title="Vital Signs" icon={Activity} tone="bg-chart-4/12 text-chart-4">
             <VisitVitalTrends
-              readings={chart?.vitalSigns ?? []}
+              readings={vitalSigns}
               loading={chartLoading}
               error={chartError}
               emptyText="No Vital Signs recorded for this Patient."
             />
           </PaneSection>
 
-          {canReadPlan && (plansQuery.isLoading || plans.length > 0) ? (
+          {canReadPlan && active && (plansQuery.isLoading || plans.length > 0) ? (
             <PaneSection title="Treatment Plan" icon={Leaf} tone="bg-procedure/10 text-procedure">
               {plansQuery.isLoading ? (
                 <Skeleton className="h-12 w-full" aria-label="Loading Treatment Plans" />

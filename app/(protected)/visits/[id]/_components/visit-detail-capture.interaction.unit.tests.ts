@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { VisitDetailImpl } from './visit-detail-impl';
 
+const state = vi.hoisted(() => ({ status: 'CHECKED_IN', canAmend: false }));
+
 vi.mock('nuqs', async () => {
   const { useState } = await import('react');
   return {
@@ -26,7 +28,7 @@ vi.mock('@/app/queries/visits/useVisit', () => ({
       id: 7,
       visitNumber: 'VST-1007',
       visitDate: '2026-10-28',
-      status: 'CHECKED_IN',
+      status: state.status,
       queueToken: 3,
       patient: { id: 3, firstName: 'Asha', lastName: 'Rao', mrn: 'MRN-3' },
       doctor: { name: 'Dr. Iyer' },
@@ -38,7 +40,12 @@ vi.mock('@/app/queries/visits/useVisit', () => ({
 }));
 vi.mock('@/app/queries/patients/chart/usePatientChart', () => ({
   usePatientChartQuery: () => ({
-    data: { allergies: [], medications: [] },
+    data: {
+      allergies: [],
+      medications: [],
+      vitalSigns: [{ id: 61, visitId: 7 }],
+      clinicalNotes: [{ id: 55, visitId: 7, status: 'signed' }],
+    },
     isLoading: false,
     isError: false,
   }),
@@ -47,7 +54,7 @@ vi.mock('@/app/queries/clinical-masters/allergens/useAllergens', () => ({
   useAllergensQuery: () => ({ data: { data: [] }, isLoading: false, isError: false }),
 }));
 vi.mock('@/app/queries/identity-access/useCurrentUser', () => ({
-  useHasPermission: () => ({ data: false }),
+  useHasPermission: (key: string) => ({ data: key === 'visit:amend' && state.canAmend }),
 }));
 vi.mock('@/app/queries/visits/useStartConsultation', () => ({
   useStartConsultation: () => ({ isPending: false, mutateAsync: vi.fn() }),
@@ -81,11 +88,24 @@ vi.mock(
 vi.mock('./_sheets/add-note-sheet', async () => {
   const { createElement } = await import('react');
   return {
-    AddNoteSheet: ({ open }: { open: boolean }) =>
-      open ? createElement('div', { 'data-testid': 'note-sheet' }) : null,
+    AddNoteSheet: ({ open, note }: { open: boolean; note?: { id: number } | null }) =>
+      open ? createElement('div', { 'data-testid': 'note-sheet' }, note?.id ?? 'new') : null,
   };
 });
-vi.mock('./_sheets/record-vitals-sheet', () => ({ RecordVitalsSheet: () => null }));
+vi.mock('./_sheets/record-vitals-sheet', async () => {
+  const { createElement } = await import('react');
+  return {
+    RecordVitalsSheet: ({ reading }: { reading?: { id: number } | null }) =>
+      reading ? createElement('div', { 'data-testid': 'amend-vital-sheet' }, reading.id) : null,
+  };
+});
+vi.mock('./_sheets/amend-visit-sheet', async () => {
+  const { createElement } = await import('react');
+  return {
+    AmendVisitSheet: ({ open }: { open: boolean }) =>
+      open ? createElement('div', { 'data-testid': 'amend-visit-sheet' }) : null,
+  };
+});
 vi.mock('./_sheets/assign-treatment-plan-sheet', () => ({ AssignTreatmentPlanSheet: () => null }));
 vi.mock('./_sheets/daily-treatment-sheet', () => ({ DailyTreatmentSheet: () => null }));
 vi.mock('./_sheets/plan-session-sheet', async () => {
@@ -102,9 +122,13 @@ vi.mock('./visit-patient-header', async () => {
   const { createElement } = await import('react');
   return {
     VisitPatientHeader: ({
+      canAmend,
+      onAmend,
       onAddAllergy,
       onAddMedication,
     }: {
+      canAmend: boolean;
+      onAmend: () => void;
       onAddAllergy: () => void;
       onAddMedication: () => void;
     }) =>
@@ -112,7 +136,8 @@ vi.mock('./visit-patient-header', async () => {
         'div',
         null,
         createElement('button', { onClick: onAddAllergy }, 'Add allergy'),
-        createElement('button', { onClick: onAddMedication }, 'Add medication')
+        createElement('button', { onClick: onAddMedication }, 'Add medication'),
+        canAmend ? createElement('button', { onClick: onAmend }, 'Amend Visit') : null
       ),
   };
 });
@@ -120,16 +145,30 @@ vi.mock('./visit-context-pane', () => ({ VisitContextPane: () => null }));
 vi.mock('./visit-care-pathway', async () => {
   const { createElement } = await import('react');
   return {
-    VisitCarePathway: ({ onOpenPlanSession }: { onOpenPlanSession: (sessionId: number) => void }) =>
+    VisitCarePathway: ({
+      onOpenPlanSession,
+      onAmendNote,
+      onAmendVitalSign,
+    }: {
+      onOpenPlanSession: (sessionId: number) => void;
+      onAmendNote: (noteId: number) => void;
+      onAmendVitalSign: (vitalId: number) => void;
+    }) =>
       createElement(
         'div',
         null,
-        createElement('button', { onClick: () => onOpenPlanSession(902) }, 'Open Session 2')
+        createElement('button', { onClick: () => onOpenPlanSession(902) }, 'Open Session 2'),
+        createElement('button', { onClick: () => onAmendNote(55) }, 'Amend note 55'),
+        createElement('button', { onClick: () => onAmendVitalSign(61) }, 'Amend reading 61')
       ),
   };
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  state.status = 'CHECKED_IN';
+  state.canAmend = false;
+});
 
 describe('Visit detail capture routing', () => {
   it('opens the Allergy form for an Allergy action', () => {
@@ -159,5 +198,60 @@ describe('Visit detail capture routing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Session 2' }));
 
     expect(screen.getByTestId('plan-session-sheet').textContent).toBe('2');
+  });
+
+  it('should open the Amend Visit sheet on a Completed Visit for a user who may amend', () => {
+    state.status = 'COMPLETED';
+    state.canAmend = true;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Amend Visit' }));
+
+    expect(screen.getByTestId('amend-visit-sheet')).toBeTruthy();
+  });
+
+  it('should not offer Amend Visit without the visit:amend permission', () => {
+    state.status = 'COMPLETED';
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(screen.queryByRole('button', { name: 'Amend Visit' })).toBeNull();
+  });
+
+  it('should not offer Amend Visit on an active Visit', () => {
+    state.canAmend = true;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(screen.queryByRole('button', { name: 'Amend Visit' })).toBeNull();
+  });
+
+  it('should open a signed Clinical Note of a Completed Visit for amendment', () => {
+    state.status = 'COMPLETED';
+    state.canAmend = true;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Amend note 55' }));
+
+    expect(screen.getByTestId('note-sheet').textContent).toBe('55');
+  });
+
+  it('should open a Vital Sign reading of a Completed Visit for amendment', () => {
+    state.status = 'COMPLETED';
+    state.canAmend = true;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Amend reading 61' }));
+
+    expect(screen.getByTestId('amend-vital-sheet').textContent).toBe('61');
+  });
+
+  it('should not open amend sheets for a user without the visit:amend permission', () => {
+    state.status = 'COMPLETED';
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Amend note 55' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Amend reading 61' }));
+
+    expect(screen.queryByTestId('note-sheet')).toBeNull();
+    expect(screen.queryByTestId('amend-vital-sheet')).toBeNull();
   });
 });

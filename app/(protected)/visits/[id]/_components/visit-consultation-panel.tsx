@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { AlertCircle, NotebookPen, PlayCircle, Stethoscope } from 'lucide-react';
+import { AlertCircle, NotebookPen, PencilLine, PlayCircle, Stethoscope } from 'lucide-react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
@@ -68,7 +68,7 @@ function ConsultationSummary({ note, action }: { note: ClinicalNote; action?: Re
   );
 }
 
-function VisitSummary({ visit }: { visit: Visit }) {
+function VisitSummary({ visit, onAmend }: { visit: Visit; onAmend?: () => void }) {
   const sections = [
     { label: 'Purpose of visit', value: visit.chiefComplaint },
     { label: 'Treatment', value: visit.treatment?.name },
@@ -77,9 +77,17 @@ function VisitSummary({ visit }: { visit: Visit }) {
 
   return (
     <Card className="shadow-fluent-2 gap-4">
-      <CardHeader>
-        <CardTitle className="text-base">Visit summary</CardTitle>
-        <CardDescription>No consultation note was recorded for this Visit.</CardDescription>
+      <CardHeader className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1.5">
+          <CardTitle className="text-base">Visit summary</CardTitle>
+          <CardDescription>No consultation note was recorded for this Visit.</CardDescription>
+        </div>
+        {onAmend ? (
+          <Button type="button" size="sm" variant="outline" onClick={onAmend}>
+            <PencilLine className="size-4" />
+            Amend
+          </Button>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
         {sections.map(({ label, value }) =>
@@ -102,6 +110,8 @@ function RecordedNote({
   starting,
   onStart,
   onAddNote,
+  onAmendVisit,
+  onAmendNote,
 }: {
   visit: Visit;
   consultationNotes: ClinicalNote[];
@@ -110,6 +120,8 @@ function RecordedNote({
   starting: boolean;
   onStart: () => void;
   onAddNote: () => void;
+  onAmendVisit?: () => void;
+  onAmendNote?: (noteId: number) => void;
 }) {
   const inConsultation = visit.status === 'IN_CONSULTATION';
   const recorded =
@@ -127,6 +139,16 @@ function RecordedNote({
               <NotebookPen className="size-4" />
               Add note
             </Button>
+          ) : onAmendNote ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => onAmendNote(recorded.id)}
+            >
+              <PencilLine className="size-4" />
+              Amend note
+            </Button>
           ) : undefined
         }
       />
@@ -135,7 +157,7 @@ function RecordedNote({
 
   // A closed Visit with no note, such as an imported one, may still hold details.
   if (!isActiveVisit(visit.status) && (visit.chiefComplaint || visit.treatment || visit.remarks)) {
-    return <VisitSummary visit={visit} />;
+    return <VisitSummary visit={visit} onAmend={onAmendVisit} />;
   }
 
   return (
@@ -181,6 +203,8 @@ export function VisitConsultationPanel({
   starting,
   onStart,
   onAddNote,
+  onAmendVisit,
+  onAmendNote,
   onDirtyChange,
   slots = {},
 }: {
@@ -193,6 +217,8 @@ export function VisitConsultationPanel({
   starting: boolean;
   onStart: () => void;
   onAddNote: () => void;
+  onAmendVisit?: () => void;
+  onAmendNote?: (noteId: number) => void;
   onDirtyChange: (dirty: boolean) => void;
   slots?: ConsultationStepSlots;
 }) {
@@ -307,6 +333,8 @@ export function VisitConsultationPanel({
         starting={starting}
         onStart={onStart}
         onAddNote={onAddNote}
+        onAmendVisit={onAmendVisit}
+        onAmendNote={onAmendNote}
       />
     );
   }

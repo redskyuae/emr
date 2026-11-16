@@ -101,12 +101,34 @@ export const patientVitalSignPayloadSchema = z
     path: ['admissionId'],
   });
 
+// Amending a Vital Sign reading on a Completed Visit keeps its Visit link fixed,
+// so the payload carries no visitId/admissionId (unknown keys are stripped).
+export const amendVisitVitalSignSchema = z
+  .object({
+    spo2: optionalInt('Vital sign SpO2', 0, 100),
+    notes: optionalNotes,
+    pulseBpm: optionalInt('Vital sign pulse', 0, 400),
+    respRate: optionalInt('Vital sign respiratory rate', 0, 150),
+    heightCm: optionalDecimal('Vital sign height', 0, 300),
+    weightKg: optionalDecimal('Vital sign weight', 0, 700),
+    systolic: optionalInt('Vital sign systolic', 0, 400),
+    diastolic: optionalInt('Vital sign diastolic', 0, 400),
+    painScore: optionalInt('Vital sign pain score', 0, 10),
+    recordedAt: optionalRecordedAt,
+    temperatureC: optionalDecimal('Vital sign temperature', 20, 45),
+  })
+  .refine((data) => MEASUREMENT_KEYS.some((key) => data[key] !== undefined), {
+    message: 'At least one vital sign measurement is required',
+    path: ['heightCm'],
+  });
+
 export const createPatientVitalSignSchema = patientVitalSignPayloadSchema;
 export const updatePatientVitalSignSchema = patientVitalSignPayloadSchema;
 
 export type PatientVitalSignIdInput = z.infer<typeof patientVitalSignIdSchema>;
 export type CreatePatientVitalSignInput = z.infer<typeof createPatientVitalSignSchema>;
 export type UpdatePatientVitalSignInput = z.infer<typeof updatePatientVitalSignSchema>;
+export type AmendVisitVitalSignInput = z.infer<typeof amendVisitVitalSignSchema>;
 export type CreatePatientVitalSignData = CreatePatientVitalSignInput & {
   tenantId: string;
   patientId: number;

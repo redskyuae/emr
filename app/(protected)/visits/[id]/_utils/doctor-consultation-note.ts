@@ -20,7 +20,7 @@ const SOAP_SECTION_LIMIT = 20000;
 export const SOAP_SECTIONS = [
   { key: 'subjective', label: 'Subjective' },
   { key: 'objective', label: 'Objective' },
-  { key: 'assessment', label: 'Assessment' },
+  { key: 'assessment', label: 'Diagnosis' },
   { key: 'plan', label: 'Plan' },
 ] as const;
 

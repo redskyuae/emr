@@ -289,6 +289,16 @@ const permissionGroups = [
   },
   {
     module: 'clinical-masters',
+    resource: 'ayurveda-diagnosis-code',
+    actions: [
+      ['read', 'View Ayurveda Diagnosis Codes.'],
+      ['create', 'Create Ayurveda Diagnosis Codes.'],
+      ['update', 'Update Ayurveda Diagnosis Codes.'],
+      ['delete', 'Delete Ayurveda Diagnosis Codes.'],
+    ],
+  },
+  {
+    module: 'clinical-masters',
     resource: 'allergen',
     actions: [
       ['read', 'View Allergens.'],
@@ -399,6 +409,7 @@ const permissionGroups = [
       ['start', 'Start the consultation for a Visit.'],
       ['complete', 'Complete a Visit.'],
       ['cancel', 'Cancel a Visit.'],
+      ['amend', 'Amend a Completed Visit, its Clinical Notes and Vital Signs.'],
     ],
   },
   {

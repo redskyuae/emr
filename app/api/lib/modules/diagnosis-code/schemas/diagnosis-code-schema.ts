@@ -5,12 +5,17 @@ const tenantIdSchema = z
   .trim()
   .min(1, 'Tenant ID cannot be empty');
 
+// ICD-10-CM: a letter (U is reserved), a digit, a digit or A/B, then an optional
+// dot and up to four more characters. UAE payers require ICD-10-CM on claims.
+const ICD_10_CM_CODE_PATTERN = /^[A-TV-Z][0-9][0-9AB](\.[0-9A-TV-Z]{1,4})?$/;
+
 const diagnosisCodeCodeSchema = z
   .string({ error: 'Diagnosis code is required' })
   .trim()
-  .min(1, 'Diagnosis code cannot be empty')
-  .max(10, 'Diagnosis code must be at most 10 characters')
-  .transform((code) => code.toUpperCase());
+  .min(1, { error: 'Diagnosis code cannot be empty', abort: true })
+  .max(10, { error: 'Diagnosis code must be at most 10 characters', abort: true })
+  .toUpperCase()
+  .regex(ICD_10_CM_CODE_PATTERN, 'Diagnosis code must be a valid ICD-10-CM code, e.g. M54.5.');
 
 const diagnosisCodeTitleSchema = z
   .string({ error: 'Diagnosis code title is required' })

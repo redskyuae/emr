@@ -20,7 +20,10 @@ import {
   patientTreatmentPlanSessionReservation as patientTreatmentPlanSessionReservationTable,
 } from '@/app/db/schema/patient-treatment-plan';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
-import { treatment as treatmentTable } from '@/app/db/schema/treatment';
+import {
+  treatment as treatmentTable,
+  treatmentSession as treatmentSessionTable,
+} from '@/app/db/schema/treatment';
 import { visit as visitTable } from '@/app/db/schema/visit';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
 import { admitSourceRepository } from '../../admit-source/repository/admit-source-repository';
@@ -1103,6 +1106,139 @@ describe('Visit repository', () => {
 
       await expect(
         visitRepository.updateVisit(created.data.id, tenantB, { chiefComplaint: 'Hijacked' })
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('amendVisit', () => {
+    async function createCompletedVisit() {
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { chiefComplaint: 'Fever', remarks: 'Walk-in' })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+      const completed = await visitRepository.completeVisit(created.data.id, tenantA);
+      if (completed.outcome !== 'updated') throw new Error(completed.outcome);
+
+      return completed.data;
+    }
+
+    async function createTreatmentWithSession(tenantId: string) {
+      const [treatment] = await db
+        .insert(treatmentTable)
+        .values({ tenantId, name: 'Abhyanga Therapy', code: 'ABHY' })
+        .returning({ id: treatmentTable.id });
+      const [session] = await db
+        .insert(treatmentSessionTable)
+        .values({
+          tenantId,
+          treatmentId: treatment.id,
+          sessionNumber: 1,
+          label: 'Session 1',
+          procedure: 'Abhyanga Therapy',
+          durationMinutes: 50,
+          setupMinutes: 10,
+          cleaningMinutes: 5,
+        })
+        .returning({ id: treatmentSessionTable.id });
+
+      return { treatmentId: treatment.id, treatmentSessionId: session.id };
+    }
+
+    it('should rewrite every encounter detail and leave the lifecycle untouched', async () => {
+      const completed = await createCompletedVisit();
+      const doctorId = await createDoctor(tenantA, 'Dr Iyer');
+      const admitSourceId = await createAdmitSource(tenantA);
+      const [visitType] = await db
+        .insert(visitTypeTable)
+        .values({ tenantId: tenantA, name: 'Follow-up', code: 'FUP' })
+        .returning({ id: visitTypeTable.id });
+      const { treatmentId, treatmentSessionId } = await createTreatmentWithSession(tenantA);
+
+      const amended = await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId,
+        admitSourceId,
+        treatmentId,
+        treatmentSessionId,
+        remarks: 'Corrected after review',
+        visitTypeId: visitType.id,
+        chiefComplaint: 'Fever for 3 days',
+      });
+
+      expect(amended).toMatchObject({
+        id: completed.id,
+        status: 'COMPLETED',
+        visitDate: completed.visitDate,
+        queueToken: completed.queueToken,
+        visitNumber: completed.visitNumber,
+        checkedInAt: completed.checkedInAt,
+        completedAt: completed.completedAt,
+        consultationStartedAt: completed.consultationStartedAt,
+        remarks: 'Corrected after review',
+        chiefComplaint: 'Fever for 3 days',
+        doctor: { id: doctorId, name: 'Dr Iyer' },
+        visitType: { id: visitType.id, code: 'FUP' },
+        admitSource: { id: admitSourceId, code: 'DOCREF' },
+        treatment: { id: treatmentId, code: 'ABHY' },
+        treatmentSession: { id: treatmentSessionId, sessionNumber: 1 },
+      });
+    });
+
+    it('should clear the optional details when they are null or absent', async () => {
+      const completed = await createCompletedVisit();
+
+      const amended = await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId: fixturesA.doctorId,
+        visitTypeId: fixturesA.visitTypeId,
+        treatmentId: null,
+        admitSourceId: null,
+        treatmentSessionId: null,
+        remarks: undefined,
+        chiefComplaint: undefined,
+      });
+
+      expect(amended).toMatchObject({
+        remarks: null,
+        treatment: null,
+        admitSource: null,
+        chiefComplaint: null,
+        treatmentSession: null,
+      });
+    });
+
+    it('should not amend a Visit belonging to another Tenant', async () => {
+      const completed = await createCompletedVisit();
+
+      await expect(
+        visitRepository.amendVisit(completed.id, tenantB, {
+          doctorId: fixturesA.doctorId,
+          visitTypeId: fixturesA.visitTypeId,
+          treatmentId: null,
+          admitSourceId: null,
+          treatmentSessionId: null,
+          remarks: undefined,
+          chiefComplaint: 'Hijacked',
+        })
+      ).resolves.toBeUndefined();
+      await expect(visitRepository.getVisitById(completed.id, tenantA)).resolves.toMatchObject({
+        chiefComplaint: 'Fever',
+      });
+    });
+
+    it('should not amend a soft-deleted Visit', async () => {
+      const completed = await createCompletedVisit();
+      await visitRepository.deleteVisit(completed.id, tenantA);
+
+      await expect(
+        visitRepository.amendVisit(completed.id, tenantA, {
+          doctorId: fixturesA.doctorId,
+          visitTypeId: fixturesA.visitTypeId,
+          treatmentId: null,
+          admitSourceId: null,
+          treatmentSessionId: null,
+          remarks: undefined,
+          chiefComplaint: 'Too late',
+        })
       ).resolves.toBeUndefined();
     });
   });

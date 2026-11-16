@@ -146,6 +146,24 @@ describe('ClinicalNote repository', () => {
     expect(signed?.signedAt).toBeInstanceOf(Date);
   });
 
+  it('should keep a signed note signed when its content is amended', async () => {
+    const created = await createNote(tenantA);
+    const signed = await clinicalNoteRepository.signClinicalNote(created.id, tenantA);
+
+    const amended = await clinicalNoteRepository.updateClinicalNote(created.id, {
+      tenantId: tenantA,
+      noteTypeId,
+      assessment: 'Viral URTI, improving',
+    });
+
+    expect(amended).toMatchObject({
+      status: 'signed',
+      signedAt: signed?.signedAt,
+      subjective: null,
+      assessment: 'Viral URTI, improving',
+    });
+  });
+
   it('should soft-delete a note', async () => {
     const created = await createNote(tenantA);
     await clinicalNoteRepository.deleteClinicalNote(created.id, tenantA);

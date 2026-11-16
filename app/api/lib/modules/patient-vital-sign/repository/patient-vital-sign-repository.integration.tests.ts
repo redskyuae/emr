@@ -158,6 +158,25 @@ describe('PatientVitalSign repository', () => {
     expect(updated).toMatchObject({ pulseBpm: 88 });
   });
 
+  it('should keep the supplied recordedAt and recomputed BMI on update', async () => {
+    const created = await createVitalSign(tenantA, patientId);
+
+    const updated = await patientVitalSignRepository.updatePatientVitalSign(created.id, {
+      tenantId: tenantA,
+      bmi: 22.5,
+      heightCm: 170,
+      weightKg: 65,
+      recordedAt: created.recordedAt,
+    });
+
+    expect(updated).toMatchObject({
+      bmi: 22.5,
+      weightKg: 65,
+      pulseBpm: null,
+      recordedAt: new Date('2024-01-01T09:00:00Z'),
+    });
+  });
+
   it('should preserve the Admission link when an edit omits linkage fields', async () => {
     const admissionId = await createAdmission(tenantA, patientId);
     const created = await createVitalSign(tenantA, patientId, { admissionId });

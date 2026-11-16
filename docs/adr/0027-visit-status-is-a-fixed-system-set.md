@@ -12,4 +12,4 @@ Allowed transitions are enforced in validators, and each transition is its own c
 - `IN_CONSULTATION → COMPLETED` — the consultation ends.
 - `CHECKED_IN → CANCELLED` and `IN_CONSULTATION → CANCELLED` — the Patient left, or the Check-in was a mistake.
 
-No other transition is legal. A Completed or Cancelled Visit is immutable except for soft delete, which remains an administrative correction distinct from cancellation — cancellation is a clinical outcome that stays visible in the Visit history, while deletion removes the Visit from operational views under ADR 0012.
+No other transition is legal. A Completed or Cancelled Visit is immutable except for soft delete (superseded for Completed Visits by ADR 0047, which allows amendment under `visit:amend`), which remains an administrative correction distinct from cancellation — cancellation is a clinical outcome that stays visible in the Visit history, while deletion removes the Visit from operational views under ADR 0012.

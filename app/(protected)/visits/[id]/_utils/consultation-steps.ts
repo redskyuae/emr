@@ -35,9 +35,9 @@ const STEPS: (ConsultationStep & { ayurvedaFields?: ConsultationField[] })[] = [
   },
   {
     id: 'assessment',
-    title: 'Assessment',
-    description: 'The working diagnosis for this Visit.',
-    fields: ['modernDiagnosis'],
+    title: 'Diagnosis',
+    description: 'The coded diagnoses for this Visit: ICD-10-CM for claims, one Principal.',
+    fields: [],
     ayurvedaFields: ['ayurvedicDiagnosis'],
   },
   {

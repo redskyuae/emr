@@ -24,6 +24,10 @@ export const CHARGE_ITEM_CATEGORIES = [
   'OTHER',
 ] as const;
 
+// CPT and HCPCS are the activity code sets UAE payers accept on claims; SERVICE is a
+// UAE regulator service code and LOCAL is a Tenant's own code.
+export const CHARGE_ITEM_CODE_TYPES = ['CPT', 'HCPCS', 'SERVICE', 'LOCAL'] as const;
+
 export const VISIT_CHARGE_KINDS = [
   'NEW_CONSULTATION',
   'ESTABLISHED_CONSULTATION',
@@ -38,6 +42,9 @@ export const chargeItem = pgTable(
     tenantId: varchar('tenant_id', { length: 255 }).notNull(),
     name: varchar({ length: 150 }).notNull(),
     code: varchar({ length: 20 }).notNull(),
+    codeType: varchar('code_type', { length: 10, enum: CHARGE_ITEM_CODE_TYPES })
+      .notNull()
+      .default('LOCAL'),
     category: varchar({ length: 20, enum: CHARGE_ITEM_CATEGORIES }).notNull().default('OTHER'),
     unitPrice: numeric('unit_price', { precision: 12, scale: 2, mode: 'number' }).notNull(),
     cashPrice: numeric('cash_price', { precision: 12, scale: 2, mode: 'number' }),
@@ -60,6 +67,10 @@ export const chargeItem = pgTable(
     categoryCheck: check(
       'charge_item_category_check',
       sql`${table.category} in ('CONSULTATION', 'PROCEDURE', 'INVESTIGATION', 'BED', 'CONSUMABLE', 'OTHER')`
+    ),
+    codeTypeCheck: check(
+      'charge_item_code_type_check',
+      sql`${table.codeType} in ('CPT', 'HCPCS', 'SERVICE', 'LOCAL')`
     ),
     unitPriceCheck: check('charge_item_unit_price_check', sql`${table.unitPrice} >= 0`),
     cashPriceCheck: check('charge_item_cash_price_check', sql`${table.cashPrice} >= 0`),

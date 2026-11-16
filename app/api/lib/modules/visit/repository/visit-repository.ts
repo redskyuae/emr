@@ -23,6 +23,7 @@ import { visitDocumentRepository } from '../../visit-document/repository/visit-d
 import { AppointmentStatusNotConfiguredError } from '../errors/appointment-status-not-configured-error';
 import {
   formatVisitDate,
+  type AmendVisitInput,
   type ValidatedCheckInVisitData,
   type Visit,
   type VisitListParams,
@@ -714,6 +715,38 @@ async function updateVisit(
   return getVisitById(id, tenantId);
 }
 
+// Amendment rewrites only the encounter details. The Visit's identity and
+// lifecycle (visitDate, visitNumber, queueToken, status and its timestamps)
+// are history and stay untouched.
+async function amendVisit(
+  id: number,
+  tenantId: string,
+  data: AmendVisitInput
+): Promise<Visit | undefined> {
+  const [amended] = await db
+    .update(visitTable)
+    .set({
+      doctorId: data.doctorId,
+      remarks: data.remarks ?? null,
+      modifiedOn: new Date(),
+      visitTypeId: data.visitTypeId,
+      treatmentId: data.treatmentId,
+      admitSourceId: data.admitSourceId,
+      chiefComplaint: data.chiefComplaint ?? null,
+      treatmentSessionId: data.treatmentSessionId,
+    })
+    .where(
+      and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false))
+    )
+    .returning({ id: visitTable.id });
+
+  if (!amended) {
+    return undefined;
+  }
+
+  return getVisitById(id, tenantId);
+}
+
 export type DeleteVisitResult =
   | { outcome: 'deleted'; data: Visit }
   | { outcome: 'not-found' }
@@ -818,6 +851,7 @@ async function findLatestCompletedVisitForPatient(
 
 export const visitRepository = {
   getVisits,
+  amendVisit,
   updateVisit,
   deleteVisit,
   getVisitById,

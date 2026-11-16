@@ -36,6 +36,7 @@ const chargeItem = {
   tenantId: 'tenant-1',
   name: 'General Consultation',
   code: 'CONS',
+  codeType: 'LOCAL' as const,
   category: 'CONSULTATION' as const,
   unitPrice: 500,
   isActive: true,
@@ -52,6 +53,7 @@ const chargeItem = {
 const payload = {
   name: 'General Consultation',
   code: 'CONS',
+  codeType: 'LOCAL' as const,
   category: 'CONSULTATION' as const,
   unitPrice: 500,
   description: undefined,

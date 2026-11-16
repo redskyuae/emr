@@ -110,6 +110,9 @@ export function AppointmentSearch({
                   disabled={disabled}
                   aria-pressed={appointment.id === selected?.id}
                   className="h-auto w-full justify-start gap-3 px-3 py-2 text-left whitespace-normal"
+                  // Keep focus in the search box while clicking: blurring it would show the
+                  // "required" error first and shift this list under the pointer.
+                  onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
                     onSelect(String(appointment.id));
                     setSearch('');
