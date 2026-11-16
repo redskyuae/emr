@@ -1,7 +1,7 @@
 import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
 import { useEffect, useRef } from 'react';
-import { ReceiptText, RefreshCcw } from 'lucide-react';
+import { Ban, Banknote, Clock3, ReceiptText, RefreshCcw, type LucideIcon } from 'lucide-react';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import type { VisitPatientType } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
@@ -11,14 +11,23 @@ import {
 } from '@/app/(protected)/billing/_utils/invoice-display';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FieldTitle,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { billingChoiceOf, billingChoiceValues, type BillingChoice } from '../_utils/billing-choice';
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
+import { SectionHeading } from './section-heading';
 import {
   listVisitChargeItems,
   isFreeFollowUpCharge,
@@ -26,6 +35,27 @@ import {
   visitChargePrice,
   VISIT_CHARGE_OPTIONS,
 } from '../_utils/visit-charge-options';
+
+const BILLING_CHOICES = [
+  { value: 'none', label: 'No Invoice', description: 'Bill later from Billing', icon: Ban },
+  {
+    value: 'later',
+    label: 'Invoice, pay later',
+    description: 'Full amount stays due',
+    icon: Clock3,
+  },
+  {
+    value: 'now',
+    label: 'Invoice and collect now',
+    description: 'Full or partial Payment',
+    icon: Banknote,
+  },
+] as const satisfies ReadonlyArray<{
+  value: BillingChoice;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}>;
 
 type Props = {
   control: Control<CreateVisitFormValues>;
@@ -84,22 +114,22 @@ export function VisitBillingFields({
       candidates.length === 1 && !/^\d{5}$/.test(candidates[0].code) ? candidates[0] : null;
     setValue('chargeKind', match && suggestion ? suggestion : '', { shouldValidate: true });
     setValue('chargeItemId', match ? String(match.id) : '', { shouldValidate: true });
-    setValue(
-      'chargeAmount',
-      match
-        ? String(
-            isFreeFollowUpCharge(match, visitTypeCode, hasRecentDoctorVisit)
-              ? 0
-              : visitChargePrice(match)
-          )
-        : '',
-      { shouldValidate: true }
-    );
+    const amount = match
+      ? String(
+          isFreeFollowUpCharge(match, visitTypeCode, hasRecentDoctorVisit)
+            ? 0
+            : visitChargePrice(match)
+        )
+      : '';
+    setValue('chargeAmount', amount, { shouldValidate: true });
+    // Collecting now defaults to the full suggested charge.
+    if (paymentTiming === 'NOW') setValue('amountReceived', amount, { shouldValidate: true });
   }, [
     chargeItems,
     chargeKind,
     createInvoice,
     patientType,
+    paymentTiming,
     setValue,
     visitTypeCode,
     visitDate,
@@ -110,37 +140,59 @@ export function VisitBillingFields({
   const freeFollowUp =
     selectedItem && isFreeFollowUpCharge(selectedItem, visitTypeCode, hasRecentDoctorVisit);
 
+  const choice = billingChoiceOf({ createInvoice, paymentTiming });
+
+  function chooseBilling(next: BillingChoice) {
+    const values = billingChoiceValues(next, chargeAmount);
+    setValue('createInvoice', values.createInvoice, { shouldDirty: true });
+    setValue('paymentTiming', values.paymentTiming, { shouldDirty: true });
+    setValue('amountReceived', values.amountReceived, { shouldValidate: next === 'now' });
+  }
+
   return (
     <Card className="shadow-fluent-2">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ReceiptText className="text-primary size-5" /> Billing at Check-in
-        </CardTitle>
-        <CardDescription>
-          Create a Visit-linked Invoice, then collect Payment now or later from Billing.
-        </CardDescription>
+        <SectionHeading
+          icon={<ReceiptText className="size-5" />}
+          title="Billing"
+          description="Optional at Check-in. A partial Payment leaves a Balance Due."
+        />
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-start gap-3">
-          <Controller
-            control={control}
-            name="createInvoice"
-            render={({ field }) => (
-              <Checkbox
-                id="visit-create-invoice"
-                checked={field.value}
-                disabled={!canBill && !createInvoice}
-                onCheckedChange={(checked) => field.onChange(checked === true)}
-              />
-            )}
-          />
-          <label htmlFor="visit-create-invoice" className="space-y-1 text-sm">
-            <span className="block font-medium">Create Invoice with this Visit</span>
-            <span className="text-muted-foreground block">
-              A partial Payment leaves a Balance Due. Reimbursement details are documentation only.
-            </span>
-          </label>
-        </div>
+        <RadioGroup
+          aria-label="Billing at Check-in"
+          value={choice}
+          onValueChange={(value) => chooseBilling(value as BillingChoice)}
+          className="grid gap-3 md:grid-cols-3"
+        >
+          {BILLING_CHOICES.map((option) => {
+            const unavailable =
+              option.value !== 'none' &&
+              (!canBill || (option.value === 'now' && !canCollectPayment));
+            return (
+              <FieldLabel key={option.value} htmlFor={`visit-billing-${option.value}`}>
+                <Field orientation="horizontal" data-disabled={unavailable}>
+                  <RadioGroupItem
+                    id={`visit-billing-${option.value}`}
+                    value={option.value}
+                    disabled={unavailable}
+                  />
+                  <FieldContent>
+                    <FieldTitle className="flex items-center gap-2">
+                      <option.icon className="text-primary size-4" aria-hidden />
+                      {option.label}
+                    </FieldTitle>
+                    <FieldDescription className="text-xs">
+                      {option.value === 'now' && canBill && !canCollectPayment
+                        ? 'Needs Payment recording permission'
+                        : option.description}
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+              </FieldLabel>
+            );
+          })}
+        </RadioGroup>
 
         {!canBill ? (
           <Alert>
@@ -330,40 +382,6 @@ export function VisitBillingFields({
                       placeholder="0.00"
                     />
                     <FieldError>{errors.chargeAmount?.message}</FieldError>
-                  </Field>
-                )}
-              />
-              <Controller
-                control={control}
-                name="paymentTiming"
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="visit-payment-timing">Payment timing</FieldLabel>
-                    <NativeSelect
-                      {...field}
-                      id="visit-payment-timing"
-                      className="w-full"
-                      onChange={(event) => {
-                        field.onChange(event);
-                        setValue(
-                          'amountReceived',
-                          event.target.value === 'NOW' ? chargeAmount || '' : '0',
-                          { shouldValidate: true }
-                        );
-                      }}
-                    >
-                      <NativeSelectOption value="LATER">Pay later · Balance Due</NativeSelectOption>
-                      {canCollectPayment ? (
-                        <NativeSelectOption value="NOW">
-                          Pay now · Record Payment
-                        </NativeSelectOption>
-                      ) : null}
-                    </NativeSelect>
-                    {!canCollectPayment ? (
-                      <p className="text-muted-foreground text-xs">
-                        Payment recording permission is required to collect now.
-                      </p>
-                    ) : null}
                   </Field>
                 )}
               />

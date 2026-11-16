@@ -2,6 +2,18 @@ import { z } from 'zod';
 
 const narrative = z.string().trim().max(5000, 'This section must be at most 5000 characters.');
 
+/**
+ * Chief complaint is a one-line field, but the Visit's purpose of visit and older drafts
+ * may hold rich text: drop list and emphasis marks and fold line breaks into spaces.
+ */
+export function oneLine(value: string) {
+  return value
+    .replace(/^\s*(?:[-+>#]+|\d+\.)\s+/gm, '')
+    .replace(/[*`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // The API limit for one SOAP section. Five narrative fields share Subjective.
 const SOAP_SECTION_LIMIT = 20000;
 

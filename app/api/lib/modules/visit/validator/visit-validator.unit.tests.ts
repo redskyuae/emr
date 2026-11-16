@@ -522,6 +522,29 @@ describe('Visit validators', () => {
         data: { visitDate: '2026-07-16', tenantId: 'tenant-1' },
       });
     });
+
+    it('should transform the date range and Visit Type filters', () => {
+      expect(
+        validateGetVisits(
+          { fromDate: '01-07-2026', toDate: '16-07-2026', visitTypeId: '2' },
+          'tenant-1'
+        )
+      ).toEqual({
+        success: true,
+        data: {
+          fromDate: '2026-07-01',
+          toDate: '2026-07-16',
+          visitTypeId: 2,
+          tenantId: 'tenant-1',
+        },
+      });
+    });
+
+    it('should reject an inverted date range', () => {
+      expect(
+        validateGetVisits({ fromDate: '17-07-2026', toDate: '16-07-2026' }, 'tenant-1')
+      ).toEqual({ success: false, errors: ['From date must be on or before To date'] });
+    });
   });
 
   describe('validateVisitForClinicalCapture', () => {

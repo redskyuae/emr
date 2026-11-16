@@ -19,14 +19,9 @@ import { useStartConsultation } from '@/app/queries/visits/useStartConsultation'
 import { useVisit } from '@/app/queries/visits/useVisit';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
-import {
-  visitOutstandingItems,
-  visitWorkflowSteps,
-  type VisitWorkflowStepKey,
-} from '../_utils/visit-workflow';
+import { visitOutstandingItems } from '../_utils/visit-workflow';
 import { CompleteVisitDialog } from './_modals/complete-visit-dialog';
 import { SignClinicalNoteDialog } from './_modals/sign-clinical-note-dialog';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
@@ -35,24 +30,12 @@ import { DailyTreatmentSheet } from './_sheets/daily-treatment-sheet';
 import { PlanSessionSheet } from './_sheets/plan-session-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
 import { VisitCarePathway } from './visit-care-pathway';
+import { VisitContextPane } from './visit-context-pane';
 import { VisitPatientHeader } from './visit-patient-header';
-import { VisitSnapshotRail } from './visit-snapshot-rail';
-import { VisitWorkflowStepper } from './visit-workflow-stepper';
-
-// Each workflow step opens the place where that step's work is done.
-const STEP_SECTIONS: Record<VisitWorkflowStepKey, string> = {
-  vitals: 'clinical',
-  signed: 'clinical',
-  invoice: 'billing',
-  completed: 'details',
-  cancelled: 'details',
-  'checked-in': 'details',
-  consultation: 'consultation',
-};
 
 export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const [captureParam, setCaptureParam] = useQueryState('capture');
-  const [, setSectionParam] = useQueryState('section');
+  const [, setStepParam] = useQueryState('step');
   const [planSessionParam, setPlanSessionParam] = useQueryState('planSession', parseAsInteger);
   const { data: visit } = useVisit(visitId);
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
@@ -108,27 +91,40 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-screen-2xl space-y-4">
+      {/* From xl the Visit is a cockpit that fits the screen: each pane scrolls on its own. */}
+      <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 xl:h-[calc(100dvh-7.5rem)] xl:min-h-[30rem]">
         {/* The same safety banner the Patient Chart shows — the consulting
             Doctor must see allergies without leaving the Visit. */}
-        {chartQuery.isLoading || allergensQuery.isLoading ? (
-          <Skeleton className="h-14 w-full" aria-label="Loading Patient safety information" />
-        ) : chartQuery.isError ? (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Patient safety information unavailable</AlertTitle>
-            <AlertDescription>Allergies and medications could not be loaded.</AlertDescription>
-          </Alert>
-        ) : (
-          <AllergyBanner allergies={chart?.allergies ?? []} allergenName={allergenName} />
-        )}
-        {allergensQuery.isError && !chartQuery.isError ? (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Allergen names unavailable</AlertTitle>
-            <AlertDescription>Review the Patient Chart before clinical decisions.</AlertDescription>
-          </Alert>
-        ) : null}
+        <div className="flex-none space-y-3 empty:hidden">
+          {chartQuery.isLoading || allergensQuery.isLoading ? (
+            <Skeleton className="h-14 w-full" aria-label="Loading Patient safety information" />
+          ) : chartQuery.isError ? (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Patient safety information unavailable</AlertTitle>
+              <AlertDescription>Allergies and medications could not be loaded.</AlertDescription>
+            </Alert>
+          ) : (
+            <AllergyBanner allergies={chart?.allergies ?? []} allergenName={allergenName} />
+          )}
+          {allergensQuery.isError && !chartQuery.isError ? (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Allergen names unavailable</AlertTitle>
+              <AlertDescription>
+                Review the Patient Chart before clinical decisions.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          {visit.status === 'CANCELLED' && visit.cancellationReason ? (
+            <Alert>
+              <AlertTitle>Visit cancelled</AlertTitle>
+              <AlertDescription>
+                <RichTextContent value={visit.cancellationReason} />
+              </AlertDescription>
+            </Alert>
+          ) : null}
+        </div>
 
         <VisitPatientHeader
           visit={visit}
@@ -139,71 +135,57 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           canComplete={Boolean(canComplete)}
           canCancel={Boolean(canCancel)}
           canCreateInvoice={Boolean(canCreateInvoice)}
+          canRecordVitals={Boolean(canRecordVitals)}
+          canCreateNote={Boolean(canCreateNote)}
+          canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
+          canBookAppointment={Boolean(canBookAppointment)}
           starting={startMutation.isPending}
           onStart={() => void startConsultation()}
           onComplete={() => void setCaptureParam('complete')}
           onCancel={() => setCancelOpen(true)}
+          onRecordVitals={() => void setCaptureParam('vitals')}
+          onAddNote={() => void setCaptureParam('note')}
+          onAddAllergy={() => void setCaptureParam('allergy')}
+          onAddMedication={() => void setCaptureParam('medication')}
+          onAssignPlan={() => void setCaptureParam('plan')}
+          onOpenDocuments={() => {
+            void setStepParam('review');
+            requestAnimationFrame(() =>
+              document.getElementById('visit-documents')?.scrollIntoView({ block: 'start' })
+            );
+          }}
         />
 
-        <Card className="shadow-fluent-2 py-3">
-          <CardContent className="space-y-3 px-4">
-            <VisitWorkflowStepper
+        <div className="grid gap-3 xl:min-h-0 xl:flex-1 xl:grid-cols-[17rem_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)]">
+          <div className="min-w-0 xl:order-2 xl:min-h-0">
+            <VisitCarePathway
               visit={visit}
-              steps={visitWorkflowSteps(workflow)}
-              onStepSelect={(key) => void setSectionParam(STEP_SECTIONS[key])}
+              chart={chart}
+              chartLoading={chartQuery.isLoading}
+              chartError={chartQuery.isError}
+              invoices={invoices}
+              invoicesLoading={invoicesQuery.isLoading}
+              invoicesError={invoicesQuery.isError}
+              canStart={Boolean(canStart)}
+              starting={startMutation.isPending}
+              onStart={() => void startConsultation()}
+              onConsultationDirtyChange={setConsultationDirty}
+              onRecordVitals={() => void setCaptureParam('vitals')}
+              onAddNote={() => void setCaptureParam('nurse-note')}
+              onDailyTreatment={() => void setCaptureParam('session')}
+              onAssignPlan={() => void setCaptureParam('plan')}
+              onOpenPlanSession={(sessionId) => void setPlanSessionParam(sessionId)}
+              onAddClinicalNote={() => void setCaptureParam('note')}
+              onSignNote={setNoteToSign}
             />
-            {visit.status === 'CANCELLED' && visit.cancellationReason ? (
-              <div className="text-muted-foreground border-t pt-3 text-sm">
-                <span className="font-medium">Cancellation reason:</span>
-                <RichTextContent value={visit.cancellationReason} />
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <VisitCarePathway
-            visit={visit}
-            chart={chart}
-            chartLoading={chartQuery.isLoading}
-            chartError={chartQuery.isError}
-            invoices={invoices}
-            invoicesLoading={invoicesQuery.isLoading}
-            invoicesError={invoicesQuery.isError}
-            canStart={Boolean(canStart)}
-            starting={startMutation.isPending}
-            onStart={() => void startConsultation()}
-            onConsultationDirtyChange={setConsultationDirty}
-            onRecordVitals={() => void setCaptureParam('vitals')}
-            onAddNote={() => void setCaptureParam('nurse-note')}
-            onDailyTreatment={() => void setCaptureParam('session')}
-            onAssignPlan={() => void setCaptureParam('plan')}
-            onOpenPlanSession={(sessionId) => void setPlanSessionParam(sessionId)}
-            onAddClinicalNote={() => void setCaptureParam('note')}
-            onAddAllergy={() => void setCaptureParam('allergy')}
-            onAddMedication={() => void setCaptureParam('medication')}
-            onSignNote={setNoteToSign}
-          />
-          <VisitSnapshotRail
+          </div>
+          <VisitContextPane
             visit={visit}
             chart={chart}
             chartLoading={chartQuery.isLoading}
             chartError={chartQuery.isError}
             allergenName={allergenName}
-            invoiceCount={invoices.length}
-            invoiceLoading={invoicesQuery.isLoading}
-            invoiceError={invoicesQuery.isError}
-            canRecordVitals={Boolean(canRecordVitals)}
-            canCreateNote={Boolean(canCreateNote)}
-            canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
-            canCreateInvoice={Boolean(canCreateInvoice)}
-            canBookAppointment={Boolean(canBookAppointment)}
-            onRecordVitals={() => void setCaptureParam('vitals')}
-            onAddNote={() => void setCaptureParam('note')}
-            onAddAllergy={() => void setCaptureParam('allergy')}
-            onAddMedication={() => void setCaptureParam('medication')}
-            onAssignPlan={() => void setCaptureParam('plan')}
-            onOpenDocuments={() => void setSectionParam('docs')}
+            className="xl:order-1 xl:min-h-0"
           />
         </div>
       </div>

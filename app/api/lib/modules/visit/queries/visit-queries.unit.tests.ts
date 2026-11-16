@@ -87,6 +87,40 @@ describe('Visit queries', () => {
       expect(tenantRepo.getTenantById).not.toHaveBeenCalled();
     });
 
+    it('should not default the date when a date range is given', async () => {
+      await getVisitsQuery({
+        tenantId: 'tenant-1',
+        filters: { fromDate: '01-07-2026', toDate: '15-07-2026', visitTypeId: 2 },
+      });
+
+      expect(repo.getVisits).toHaveBeenCalledWith({
+        tenantId: 'tenant-1',
+        fromDate: '2026-07-01',
+        toDate: '2026-07-15',
+        visitTypeId: 2,
+      });
+      expect(tenantRepo.getTenantById).not.toHaveBeenCalled();
+    });
+
+    it('should not default the date when only one range bound is given', async () => {
+      await getVisitsQuery({ tenantId: 'tenant-1', filters: { toDate: '15-07-2026' } });
+
+      expect(repo.getVisits).toHaveBeenCalledWith({ tenantId: 'tenant-1', toDate: '2026-07-15' });
+    });
+
+    it('should not call the repository when the date range is inverted', async () => {
+      const result = await getVisitsQuery({
+        tenantId: 'tenant-1',
+        filters: { fromDate: '16-07-2026', toDate: '15-07-2026' },
+      });
+
+      expect(result).toEqual({
+        success: false,
+        errors: ['From date must be on or before To date'],
+      });
+      expect(repo.getVisits).not.toHaveBeenCalled();
+    });
+
     it('should respect an explicit visit date filter', async () => {
       await getVisitsQuery({ tenantId: 'tenant-1', filters: { visitDate: '15-07-2026' } });
 

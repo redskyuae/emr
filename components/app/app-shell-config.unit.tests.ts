@@ -106,7 +106,11 @@ describe('App shell navigation permissions', () => {
 
     const enabledGroups = getVisibleNavGroups(appNavGroups, permissions, true, true, true);
     expect(enabledGroups.map(({ title }) => title)).toEqual(['Overview', 'Clinical', 'Outpatient']);
-    expect(enabledGroups[2].items.map(({ title }) => title)).toEqual(['Visits', 'Visit List']);
+    expect(enabledGroups[2].items.map(({ title }) => title)).toEqual([
+      'Visits',
+      'Previous Visits',
+      'Visit List',
+    ]);
 
     expect(getVisibleNavGroups(appNavGroups, permissions, true, false)).not.toContainEqual(
       expect.objectContaining({ title: 'Outpatient' })
@@ -123,7 +127,9 @@ describe('App shell navigation permissions', () => {
         ({ items }) => items.map(({ title }) => title)
       );
 
-    expect(titles(false)).toEqual(expect.arrayContaining(['Visits', 'Invoices']));
+    expect(titles(false)).toEqual(
+      expect.arrayContaining(['Visits', 'Previous Visits', 'Invoices'])
+    );
     expect(titles(false)).not.toContain('Visit List');
     expect(titles(false)).not.toContain('Billing Counter');
     expect(titles(true)).toEqual(expect.arrayContaining(['Visit List', 'Billing Counter']));

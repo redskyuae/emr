@@ -62,3 +62,108 @@ export function canStartPlanSession(
           other.reservedAppointment?.bookingNumber === bookingNumber))
   );
 }
+
+type ProcedureSession = {
+  key: string;
+  sessionNumber: number;
+  label: string | null;
+  procedure: string | null;
+  durationMinutes: number | null;
+  setupMinutes: number | null;
+  cleaningMinutes: number | null;
+  preparation: string | null;
+  equipment: string | null;
+  warning: string | null;
+  conductionNote: string | null;
+  completed: boolean | null;
+};
+
+export type VisitProcedure = {
+  key: string;
+  treatmentName: string;
+  /** Plan progress, shown when the Plan was prescribed in this (imported) Visit. */
+  progress: string | null;
+  sessions: ProcedureSession[];
+};
+
+type ProcedureVisit = Pick<Visit, 'id' | 'legacyVisitNumber' | 'treatment' | 'treatmentSession'>;
+
+function procedureSession(
+  session: PatientTreatmentPlanReadSession,
+  showStatus: boolean
+): ProcedureSession {
+  return {
+    key: `plan-session-${session.id}`,
+    label: session.label,
+    warning: session.warning,
+    procedure: session.procedure,
+    equipment: session.equipment,
+    preparation: session.preparation,
+    setupMinutes: session.setupMinutes,
+    sessionNumber: session.sessionNumber,
+    conductionNote: session.legacyConductionNote,
+    durationMinutes: session.durationMinutes,
+    cleaningMinutes: session.cleaningMinutes,
+    completed: showStatus ? session.completionStatus === 'COMPLETED' : null,
+  };
+}
+
+/**
+ * The procedures behind a Visit, with their treatment details and conduction notes:
+ * a Plan imported from the source system shows every Session under the source Visit it
+ * was prescribed in; otherwise the Plan Sessions this Visit started or completed; and
+ * failing both, the Treatment Session recorded on the Visit itself.
+ */
+export function visitProcedures(visit: ProcedureVisit, plans: PatientTreatmentPlan[]) {
+  const procedures: VisitProcedure[] = plans.flatMap((plan) => {
+    const sessions = [...plan.sessions].sort((a, b) => a.sessionNumber - b.sessionNumber);
+    const prescribedHere =
+      visit.legacyVisitNumber !== null && plan.legacyVisitNumber === visit.legacyVisitNumber;
+    const delivered = prescribedHere
+      ? sessions
+      : sessions.filter(
+          (session) => session.completedVisitId === visit.id || session.startedVisitId === visit.id
+        );
+
+    if (delivered.length === 0) return [];
+
+    return [
+      {
+        key: `plan-${plan.id}`,
+        treatmentName: plan.treatmentName,
+        progress: prescribedHere
+          ? `${plan.completedSessions} of ${plan.totalSessions} Sessions completed`
+          : null,
+        sessions: delivered.map((session) => procedureSession(session, prescribedHere)),
+      },
+    ];
+  });
+
+  if (procedures.length || !visit.treatmentSession) return procedures;
+
+  const session = visit.treatmentSession;
+
+  return [
+    {
+      progress: null,
+      key: `treatment-session-${session.id}`,
+      treatmentName: visit.treatment?.name ?? 'Treatment',
+      sessions: [
+        {
+          warning: null,
+          equipment: null,
+          completed: null,
+          label: session.label,
+          preparation: null,
+          conductionNote: null,
+          key: `treatment-session-${session.id}`,
+          procedure: session.procedure,
+          setupMinutes: session.setupMinutes,
+          sessionNumber: session.sessionNumber,
+          durationMinutes: session.durationMinutes,
+          cleaningMinutes: session.cleaningMinutes,
+        },
+      ],
+    },
+  ];
+}

@@ -98,26 +98,32 @@ vi.mock('./_sheets/plan-session-sheet', async () => {
 vi.mock('../../_components/_modals/cancel-visit-dialog', () => ({ CancelVisitDialog: () => null }));
 vi.mock('./_modals/complete-visit-dialog', () => ({ CompleteVisitDialog: () => null }));
 vi.mock('./_modals/sign-clinical-note-dialog', () => ({ SignClinicalNoteDialog: () => null }));
-vi.mock('./visit-patient-header', () => ({ VisitPatientHeader: () => null }));
-vi.mock('./visit-snapshot-rail', () => ({ VisitSnapshotRail: () => null }));
-vi.mock('./visit-workflow-stepper', () => ({ VisitWorkflowStepper: () => null }));
-vi.mock('./visit-care-pathway', async () => {
+vi.mock('./visit-patient-header', async () => {
   const { createElement } = await import('react');
   return {
-    VisitCarePathway: ({
+    VisitPatientHeader: ({
       onAddAllergy,
       onAddMedication,
-      onOpenPlanSession,
     }: {
       onAddAllergy: () => void;
       onAddMedication: () => void;
-      onOpenPlanSession: (sessionId: number) => void;
     }) =>
       createElement(
         'div',
         null,
         createElement('button', { onClick: onAddAllergy }, 'Add allergy'),
-        createElement('button', { onClick: onAddMedication }, 'Add medication'),
+        createElement('button', { onClick: onAddMedication }, 'Add medication')
+      ),
+  };
+});
+vi.mock('./visit-context-pane', () => ({ VisitContextPane: () => null }));
+vi.mock('./visit-care-pathway', async () => {
+  const { createElement } = await import('react');
+  return {
+    VisitCarePathway: ({ onOpenPlanSession }: { onOpenPlanSession: (sessionId: number) => void }) =>
+      createElement(
+        'div',
+        null,
         createElement('button', { onClick: () => onOpenPlanSession(902) }, 'Open Session 2')
       ),
   };

@@ -519,6 +519,13 @@
       "when": 1794409419052,
       "tag": "0073_patient_treatment_plan_session_started_visit_index",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1794548141839,
+      "tag": "0074_visit_legacy_visit_number",
+      "breakpoints": true
     }
   ]
 }

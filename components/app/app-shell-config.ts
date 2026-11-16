@@ -14,6 +14,7 @@ import {
   Hospital,
   LayoutDashboard,
   LayoutGrid,
+  History,
   ListChecks,
   ReceiptText,
   Settings,
@@ -98,6 +99,12 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Visits',
         href: '/visits',
         icon: ClipboardList,
+        permission: 'visit',
+      },
+      {
+        title: 'Previous Visits',
+        href: '/previous-visits',
+        icon: History,
         permission: 'visit',
       },
       {
@@ -442,7 +449,7 @@ const appointmentNavHrefs = new Set([
   '/billing-masters/charge-items',
 ]);
 
-const visitNavHrefs = new Set(['/visits', '/visit-list']);
+const visitNavHrefs = new Set(['/visits', '/previous-visits', '/visit-list']);
 
 const demoNavHrefs = new Set(['/visit-list', '/billing-counter']);
 
@@ -587,6 +594,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       href: '/visits/new',
       permission: 'visit:create',
     },
+  },
+  '/previous-visits': {
+    title: 'Previous Visits',
+    subtitle: 'Search past outpatient Visits by date range, Doctor, status, and Visit Type.',
   },
   '/visit-list': {
     title: 'Visit List',
