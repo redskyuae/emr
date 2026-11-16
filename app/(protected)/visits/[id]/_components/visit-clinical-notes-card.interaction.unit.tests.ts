@@ -88,6 +88,35 @@ describe('Visit Clinical Notes', () => {
     expect(screen.queryByRole('button', { name: /Add note/ })).toBeNull();
   });
 
+  it('should show who amended a signed note and when, in the Tenant time zone', () => {
+    renderCard({
+      active: false,
+      timeZone: 'Asia/Dubai',
+      notes: [
+        {
+          ...note,
+          status: 'signed',
+          amendedAt: new Date('2026-07-18T20:30:00.000Z'),
+          amendedByUserName: 'Dr Priya Nair',
+        } as ClinicalNote,
+      ],
+    });
+
+    const expectedTime = new Date('2026-07-18T20:30:00.000Z').toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Asia/Dubai',
+    });
+    expect(screen.getByText(`Amended by Dr Priya Nair on ${expectedTime}`)).toBeTruthy();
+    expect(expectedTime).toContain('19');
+  });
+
+  it('should not show an amendment line on a note that was never amended', () => {
+    renderCard({ notes: [{ ...note, amendedAt: null } as ClinicalNote] });
+
+    expect(screen.queryByText(/Amended by/)).toBeNull();
+  });
+
   it('should show placeholders before showing an empty state', () => {
     mocks.loading = true;
     renderCard({ notes: [] });

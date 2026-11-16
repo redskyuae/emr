@@ -17,7 +17,7 @@ function plain(value: string | null | undefined) {
 }
 
 /** The Visit's handover Remarks, folded away so the complaint stays first. */
-export function VisitDetailsDisclosure({ visit }: { visit: Visit }) {
+export function VisitDetailsDisclosure({ visit, onAmend }: { visit: Visit; onAmend?: () => void }) {
   const summary = plain(visit.remarks) || 'No remarks recorded';
 
   return (
@@ -32,7 +32,7 @@ export function VisitDetailsDisclosure({ visit }: { visit: Visit }) {
         <span className="text-muted-foreground min-w-0 truncate text-sm">{summary}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="border-t p-3">
-        <VisitDetailsCard visit={visit} embedded />
+        <VisitDetailsCard visit={visit} embedded onAmend={onAmend} />
       </CollapsibleContent>
     </Collapsible>
   );

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  amendVisitSchema,
   cancelVisitSchema,
   checkInVisitSchema,
   formatVisitDate,
@@ -336,5 +337,100 @@ describe('Visit schema', () => {
     expect(visitIdSchema.safeParse('0').success).toBe(false);
     expect(visitIdSchema.parse('7')).toBe(7);
     expect(visitTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  describe('amendVisitSchema', () => {
+    const base = { doctorId: 3, visitTypeId: 2 };
+
+    it('should require the Doctor and VisitType', () => {
+      const errors = errorsOf(amendVisitSchema.safeParse({}));
+
+      expect(errors).toContain('Doctor ID is required');
+      expect(errors).toContain('Visit type ID is required');
+    });
+
+    it('should reject a Doctor ID that is not positive', () => {
+      expect(errorsOf(amendVisitSchema.safeParse({ ...base, doctorId: 0 }))).toContain(
+        'Doctor ID must be positive'
+      );
+    });
+
+    it('should clear every optional field when it is absent', () => {
+      expect(amendVisitSchema.parse(base)).toEqual({
+        doctorId: 3,
+        visitTypeId: 2,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+    });
+
+    it('should clear optional fields sent as null or blank', () => {
+      expect(
+        amendVisitSchema.parse({
+          ...base,
+          remarks: '',
+          treatmentId: null,
+          admitSourceId: null,
+          chiefComplaint: null,
+          treatmentSessionId: null,
+        })
+      ).toEqual({
+        doctorId: 3,
+        visitTypeId: 2,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+    });
+
+    it('should trim and keep the full set of amended fields', () => {
+      expect(
+        amendVisitSchema.parse({
+          ...base,
+          remarks: ' Reviewed ',
+          treatmentId: 10,
+          admitSourceId: 4,
+          chiefComplaint: ' Fever for 3 days ',
+          treatmentSessionId: 20,
+        })
+      ).toEqual({
+        doctorId: 3,
+        visitTypeId: 2,
+        remarks: 'Reviewed',
+        treatmentId: 10,
+        admitSourceId: 4,
+        chiefComplaint: 'Fever for 3 days',
+        treatmentSessionId: 20,
+      });
+    });
+
+    it('should limit the chief complaint to 500 characters', () => {
+      expect(
+        errorsOf(amendVisitSchema.safeParse({ ...base, chiefComplaint: 'a'.repeat(501) }))
+      ).toContain('Chief complaint must be at most 500 characters');
+      expect(amendVisitSchema.safeParse({ ...base, chiefComplaint: 'a'.repeat(500) }).success).toBe(
+        true
+      );
+    });
+
+    it('should reject an Admit Source ID that is not positive', () => {
+      expect(errorsOf(amendVisitSchema.safeParse({ ...base, admitSourceId: 0 }))).toContain(
+        'Admit source ID must be positive'
+      );
+    });
+
+    it('should require the Treatment and Session together', () => {
+      expect(errorsOf(amendVisitSchema.safeParse({ ...base, treatmentId: 10 }))).toEqual([
+        'Treatment and Session must be provided together.',
+      ]);
+      expect(
+        errorsOf(amendVisitSchema.safeParse({ ...base, treatmentId: null, treatmentSessionId: 20 }))
+      ).toEqual(['Treatment and Session must be provided together.']);
+    });
   });
 });

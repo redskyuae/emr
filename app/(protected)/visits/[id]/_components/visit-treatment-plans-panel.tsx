@@ -21,7 +21,9 @@ import {
   currentPlanSession,
   isCurrentPlan,
   planSessionLabel,
+  visitProcedures,
 } from '../_utils/visit-treatment-plan';
+import { VisitProcedureCard } from './visit-procedure-card';
 
 type Props = {
   visit: Visit;
@@ -85,8 +87,15 @@ function PlanCard({
         {procedures.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {procedures.map((procedure) => (
-              <Badge key={procedure} variant="outline">
-                {procedure}
+              // Imported procedures can be long descriptions: keep each badge inside the
+              // card and show the full text on hover; the Session sheet shows it in full.
+              <Badge
+                key={procedure}
+                variant="outline"
+                className="max-w-full"
+                title={procedure ?? undefined}
+              >
+                <span className="truncate">{procedure}</span>
               </Badge>
             ))}
           </div>
@@ -172,6 +181,28 @@ export function VisitTreatmentPlansPanel({
     );
   if (error)
     return <p className="text-destructive text-sm">Treatment Plans could not be loaded.</p>;
+
+  // A closed Visit is a record of what happened then: show only the Plan Sessions it
+  // started or completed, not the Patient's Plans as they stand today. The Visit's own
+  // Treatment Session is shown separately above.
+  if (!activeVisit) {
+    const delivered = visitProcedures(visit, plans).filter((procedure) =>
+      procedure.key.startsWith('plan-')
+    );
+
+    return delivered.length ? (
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold">Treatment Plan Sessions this Visit</h3>
+        {delivered.map((procedure) => (
+          <VisitProcedureCard key={procedure.key} procedure={procedure} />
+        ))}
+      </div>
+    ) : (
+      <p className="text-muted-foreground text-sm">
+        No Treatment Plan Sessions were delivered in this Visit.
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-5">

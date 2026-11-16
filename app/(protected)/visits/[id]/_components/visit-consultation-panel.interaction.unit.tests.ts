@@ -396,7 +396,7 @@ describe('Visit consultation', () => {
     renderPanel();
 
     fireEvent.change(screen.getByLabelText('Chief complaint'), { target: { value: '' } });
-    openStep(/Assessment/);
+    openStep(/Diagnosis/);
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
     await screen.findByText('Chief complaint is required.');
@@ -453,12 +453,12 @@ describe('Visit consultation', () => {
   it('should show the Ayurvedic fields only on Ayurveda deployments', () => {
     renderPanel({}, 'dhathri-ayurvedic');
     expect(screen.getByLabelText('Prakriti')).toBeTruthy();
-    expect(screen.getByLabelText('Ayurvedic diagnosis')).toBeTruthy();
+    expect(screen.getByLabelText('Ayurvedic diagnosis notes')).toBeTruthy();
     cleanup();
 
     renderPanel({}, 'none');
     expect(screen.queryByLabelText('Prakriti')).toBeNull();
-    expect(screen.queryByLabelText('Ayurvedic diagnosis')).toBeNull();
+    expect(screen.queryByLabelText('Ayurvedic diagnosis notes')).toBeNull();
     expect(screen.getByLabelText('Chief complaint')).toBeTruthy();
   });
 });

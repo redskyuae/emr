@@ -31,6 +31,9 @@ export const clinicalNote = pgTable(
     signedAt: timestamp('signed_at', { withTimezone: true }),
     authorUserId: varchar('author_user_id', { length: 255 }).notNull(),
     recordedByUserId: varchar('recorded_by_user_id', { length: 255 }).notNull(),
+    // Set by `visit:amend` on a Completed Visit; null when the note was never amended.
+    amendedAt: timestamp('amended_at', { withTimezone: true }),
+    amendedByUserId: varchar('amended_by_user_id', { length: 255 }),
     isDeleted,
     createdOn,
     modifiedOn,

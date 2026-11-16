@@ -4,6 +4,7 @@ import {
   createDiagnosisCodeSchema,
   diagnosisCodeIdSchema,
   diagnosisCodeTenantIdSchema,
+  updateDiagnosisCodeSchema,
 } from './diagnosis-code-schema';
 
 const errorsOf = (result: ReturnType<typeof createDiagnosisCodeSchema.safeParse>) =>
@@ -26,6 +27,34 @@ describe('DiagnosisCode schema', () => {
     expect(
       errorsOf(createDiagnosisCodeSchema.safeParse({ code: 'A'.repeat(11), title: 'Hypertension' }))
     ).toContain('Diagnosis code must be at most 10 characters');
+  });
+
+  it('should report only the empty error when code is blank', () => {
+    expect(
+      errorsOf(createDiagnosisCodeSchema.safeParse({ code: '   ', title: 'Hypertension' }))
+    ).toEqual(['Diagnosis code cannot be empty']);
+  });
+
+  it.each(['M54.5', 'I10', 'E11.9', 'S72.001A', 'm06.9', 'O9A.119', 'Z3A.01', 'T81.4XXA'])(
+    'should accept the ICD-10-CM code %s',
+    (code) => {
+      expect(createDiagnosisCodeSchema.safeParse({ code, title: 'Diagnosis' }).success).toBe(true);
+    }
+  );
+
+  it.each(['U07.1', 'M5', '154', 'M54.', 'M54.12345', 'M54-5', 'MM5', 'M5C', 'M54.U'])(
+    'should reject %s as not a valid ICD-10-CM code',
+    (code) => {
+      expect(errorsOf(createDiagnosisCodeSchema.safeParse({ code, title: 'Diagnosis' }))).toEqual([
+        'Diagnosis code must be a valid ICD-10-CM code, e.g. M54.5.',
+      ]);
+    }
+  );
+
+  it('should apply the ICD-10-CM rule on update', () => {
+    expect(
+      errorsOf(updateDiagnosisCodeSchema.safeParse({ code: 'HTN', title: 'Hypertension' }))
+    ).toEqual(['Diagnosis code must be a valid ICD-10-CM code, e.g. M54.5.']);
   });
 
   it('should return validation error when title is missing', () => {

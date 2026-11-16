@@ -219,3 +219,123 @@ describe('OpenAPI Therapist Schedule contracts', () => {
     ]);
   });
 });
+
+describe('OpenAPI Visit amendment contracts', () => {
+  const amendPaths = [
+    ['/api/v1/visits/{id}/amend', 'AmendVisitRequest'],
+    ['/api/v1/visits/{id}/notes/{noteId}/amend', 'AmendVisitClinicalNoteRequest'],
+    ['/api/v1/visits/{id}/vitals/{vitalId}/amend', 'AmendVisitVitalSignRequest'],
+  ] as const;
+
+  it.each(amendPaths)(
+    'should document %s behind visit:amend with its error responses',
+    (path, requestSchema) => {
+      const operation = openApiDocument.paths[path].put;
+
+      expect(operation.description).toContain('`visit:amend`');
+      expect(operation.requestBody.content['application/json'].schema).toEqual({
+        $ref: `#/components/schemas/${requestSchema}`,
+      });
+      expect(Object.keys(operation.responses)).toEqual(
+        expect.arrayContaining(['200', '400', '401', '403', '404', '409', '500'])
+      );
+    }
+  );
+
+  it('should not accept a Visit link when amending a Clinical Note or Vital Sign', () => {
+    const { schemas } = openApiDocument.components;
+
+    expect(schemas.AmendVisitClinicalNoteRequest.properties).not.toHaveProperty('visitId');
+    expect(schemas.AmendVisitVitalSignRequest.properties).not.toHaveProperty('visitId');
+    expect(schemas.AmendVisitRequest.required).toEqual(['doctorId', 'visitTypeId']);
+  });
+});
+
+describe('OpenAPI clinical coding contracts', () => {
+  it('should document ICD-10-CM validation on the Diagnosis Code Master', () => {
+    const request = openApiDocument.components.schemas.CreateDiagnosisCodeRequest;
+    const post = openApiDocument.paths['/api/v1/clinical-masters/diagnosis-codes'].post;
+
+    expect(request.properties.code.description).toContain('ICD-10-CM');
+    expect(JSON.stringify(post.responses)).toContain(
+      'Diagnosis code must be a valid ICD-10-CM code, e.g. M54.5.'
+    );
+  });
+
+  it('should document the Charge Item code type and its CPT and HCPCS rules', () => {
+    const request = openApiDocument.components.schemas.CreateChargeItemRequest;
+
+    expect(openApiDocument.components.schemas.ChargeItemCodeType.enum).toEqual([
+      'CPT',
+      'HCPCS',
+      'SERVICE',
+      'LOCAL',
+    ]);
+    expect(request.properties.codeType).toMatchObject({ default: 'LOCAL' });
+    expect(request.required).not.toContain('codeType');
+    expect(JSON.stringify(openApiDocument.components.schemas.ChargeItem.allOf)).toContain(
+      '"codeType"'
+    );
+    expect(
+      JSON.stringify(openApiDocument.paths['/api/v1/charge-items/{id}'].put.responses)
+    ).toContain('Charge item code must be a valid HCPCS code, e.g. J1100.');
+  });
+
+  it('should document the Ayurveda Diagnosis Code Master operations', () => {
+    expect(
+      Object.keys(openApiDocument.paths['/api/v1/clinical-masters/ayurveda-diagnosis-codes'])
+    ).toEqual(expect.arrayContaining(['get', 'post']));
+    expect(
+      Object.keys(openApiDocument.paths['/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}'])
+    ).toEqual(expect.arrayContaining(['get', 'put', 'delete']));
+    expect(openApiDocument.components.schemas.AyurvedaDiagnosisCode.required).toContain(
+      'icdDiagnosisCode'
+    );
+    expect(
+      JSON.stringify(
+        openApiDocument.paths['/api/v1/clinical-masters/ayurveda-diagnosis-codes'].post.responses
+      )
+    ).toContain('Ayurveda diagnosis code AYU-AMV already exists.');
+  });
+
+  it('should document who amended a Clinical Note', () => {
+    const amend = openApiDocument.paths['/api/v1/visits/{id}/notes/{noteId}/amend'].put;
+
+    expect(Object.keys(openApiDocument.components.schemas.ClinicalNote.properties)).toEqual(
+      expect.arrayContaining(['amendedAt', 'amendedByUserId', 'amendedByUserName'])
+    );
+    expect(amend.description).toContain('amendedByUserId');
+    expect(JSON.stringify(amend.responses['200'])).toContain('Dr Priya Nair');
+  });
+
+  it('should document the Ayurveda Diagnosis Code write permissions', () => {
+    const collection = openApiDocument.paths['/api/v1/clinical-masters/ayurveda-diagnosis-codes'];
+    const item = openApiDocument.paths['/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}'];
+
+    expect(collection.post.description).toContain('`ayurveda-diagnosis-code:create`');
+    expect(item.put.description).toContain('`ayurveda-diagnosis-code:update`');
+    expect(item.delete.description).toContain('`ayurveda-diagnosis-code:delete`');
+    expect(Object.keys(collection.post.responses)).toContain('403');
+    expect(Object.keys(item.put.responses)).toContain('403');
+    expect(Object.keys(item.delete.responses)).toContain('403');
+  });
+
+  it('should document Visit diagnosis list, save, and amend with their permissions', () => {
+    const diagnoses = openApiDocument.paths['/api/v1/visits/{id}/diagnoses'];
+    const amend = openApiDocument.paths['/api/v1/visits/{id}/diagnoses/amend'].put;
+
+    expect(Object.keys(diagnoses)).toEqual(expect.arrayContaining(['get', 'put']));
+    expect(diagnoses.put.description).toContain('`visit:update`');
+    expect(amend.description).toContain('`visit:amend`');
+    expect(Object.keys(amend.responses)).toEqual(
+      expect.arrayContaining(['200', '400', '401', '403', '404', '409', '500'])
+    );
+    expect(JSON.stringify(diagnoses.put.responses)).toContain(
+      'Visit VST-1001 is closed and cannot be edited.'
+    );
+    expect(JSON.stringify(amend.responses)).toContain('Request body must be valid JSON');
+    expect(openApiDocument.components.schemas.SaveVisitDiagnosesRequest.properties).toMatchObject({
+      diagnoses: { maxItems: 20 },
+    });
+  });
+});

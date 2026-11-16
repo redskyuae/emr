@@ -6,10 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Activity } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { computeBmi } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
+import {
+  computeBmi,
+  type PatientVitalSign,
+} from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { useCreatePatientVitalSign } from '@/app/queries/patients/chart/useCreatePatientVitalSign';
+import { useAmendVisitVitalSign } from '@/app/queries/visits/useAmendVisitVitalSign';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import {
@@ -72,15 +76,38 @@ const MEASUREMENT_GROUPS = [
   },
 ] as const;
 
+function fromReading(reading: PatientVitalSign): VisitVitalsFormValues {
+  const text = (value: number | null) => (value === null ? '' : String(value));
+
+  return {
+    heightCm: text(reading.heightCm),
+    weightKg: text(reading.weightKg),
+    systolic: text(reading.systolic),
+    diastolic: text(reading.diastolic),
+    pulseBpm: text(reading.pulseBpm),
+    respRate: text(reading.respRate),
+    temperatureC: text(reading.temperatureC),
+    spo2: text(reading.spo2),
+    painScore: text(reading.painScore),
+    notes: reading.notes ?? '',
+  };
+}
+
+/**
+ * Records a new reading against an active Visit, or — given `reading` — amends one
+ * already recorded on a Completed Visit. An amendment keeps the reading's time.
+ */
 export function RecordVitalsSheet({
   open,
   patientId,
   visitId,
+  reading = null,
   onClose,
 }: {
   open: boolean;
   patientId: number;
   visitId: number;
+  reading?: PatientVitalSign | null;
   onClose: () => void;
 }) {
   const form = useForm<VisitVitalsFormValues>({
@@ -89,6 +116,9 @@ export function RecordVitalsSheet({
     defaultValues: EMPTY,
   });
   const createVitals = useCreatePatientVitalSign();
+  const amendVitals = useAmendVisitVitalSign();
+  const amending = reading !== null;
+  const pending = createVitals.isPending || amendVitals.isPending;
   const [heightCm, weightKg] = useWatch({
     control: form.control,
     name: ['heightCm', 'weightKg'],
@@ -97,31 +127,42 @@ export function RecordVitalsSheet({
 
   useEffect(() => {
     if (open) {
-      form.reset(EMPTY);
+      form.reset(reading ? fromReading(reading) : EMPTY);
     }
-  }, [open, form]);
+  }, [open, reading, form]);
 
   const handleSave = form.handleSubmit(async (values) => {
+    const measurements = {
+      heightCm: toOptionalNumber(values.heightCm),
+      weightKg: toOptionalNumber(values.weightKg),
+      systolic: toOptionalNumber(values.systolic),
+      diastolic: toOptionalNumber(values.diastolic),
+      pulseBpm: toOptionalNumber(values.pulseBpm),
+      respRate: toOptionalNumber(values.respRate),
+      temperatureC: toOptionalNumber(values.temperatureC),
+      spo2: toOptionalNumber(values.spo2),
+      painScore: toOptionalNumber(values.painScore),
+      notes: values.notes || undefined,
+    };
+
     try {
-      await createVitals.mutateAsync({
-        patientId,
-        body: {
+      if (reading) {
+        await amendVitals.mutateAsync({
+          visitId,
+          patientId,
+          vitalId: reading.id,
+          body: measurements,
+        });
+        toast.success('Vital Signs amended.');
+      } else {
+        await createVitals.mutateAsync({
+          patientId,
           // Stamping the Visit is what makes this an in-visit observation
           // rather than a standalone one on the chart.
-          visitId,
-          heightCm: toOptionalNumber(values.heightCm),
-          weightKg: toOptionalNumber(values.weightKg),
-          systolic: toOptionalNumber(values.systolic),
-          diastolic: toOptionalNumber(values.diastolic),
-          pulseBpm: toOptionalNumber(values.pulseBpm),
-          respRate: toOptionalNumber(values.respRate),
-          temperatureC: toOptionalNumber(values.temperatureC),
-          spo2: toOptionalNumber(values.spo2),
-          painScore: toOptionalNumber(values.painScore),
-          notes: values.notes || undefined,
-        },
-      });
-      toast.success('Vitals recorded.');
+          body: { visitId, ...measurements },
+        });
+        toast.success('Vitals recorded.');
+      }
       onClose();
     } catch (error) {
       toast.error(getApiErrorMessage(error));
@@ -136,9 +177,11 @@ export function RecordVitalsSheet({
         style={{ width: 'min(560px, 100vw)', maxWidth: '100vw' }}
       >
         <SheetHeader className="border-b p-4 pr-12">
-          <SheetTitle className="text-xl">Record vitals</SheetTitle>
+          <SheetTitle className="text-xl">{amending ? 'Amend vitals' : 'Record vitals'}</SheetTitle>
           <SheetDescription>
-            Captured against this Visit. Record at least one measurement; BMI is computed for you.
+            {amending
+              ? 'Correct this reading on the Completed Visit. Its recorded time stays the same; BMI is recomputed.'
+              : 'Captured against this Visit. Record at least one measurement; BMI is computed for you.'}
           </SheetDescription>
         </SheetHeader>
 
@@ -214,17 +257,12 @@ export function RecordVitalsSheet({
           </div>
 
           <SheetFooter className="flex-row justify-end gap-2 border-t p-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={createVitals.isPending}
-            >
+            <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createVitals.isPending}>
+            <Button type="submit" disabled={pending} aria-busy={pending}>
               <Activity className="size-4" />
-              {createVitals.isPending ? 'Saving…' : 'Record vitals'}
+              {pending ? 'Saving…' : amending ? 'Save amendment' : 'Record vitals'}
             </Button>
           </SheetFooter>
         </form>

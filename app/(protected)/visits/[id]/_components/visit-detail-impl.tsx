@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
 import { visitOutstandingItems } from '../_utils/visit-workflow';
 import { CompleteVisitDialog } from './_modals/complete-visit-dialog';
+import { AmendVisitSheet } from './_sheets/amend-visit-sheet';
 import { SignClinicalNoteDialog } from './_modals/sign-clinical-note-dialog';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
 import { AssignTreatmentPlanSheet } from './_sheets/assign-treatment-plan-sheet';
@@ -37,6 +38,8 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const [captureParam, setCaptureParam] = useQueryState('capture');
   const [, setStepParam] = useQueryState('step');
   const [planSessionParam, setPlanSessionParam] = useQueryState('planSession', parseAsInteger);
+  const [amendNoteParam, setAmendNoteParam] = useQueryState('amendNote', parseAsInteger);
+  const [amendVitalParam, setAmendVitalParam] = useQueryState('amendVital', parseAsInteger);
   const { data: visit } = useVisit(visitId);
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
   const chartQuery = usePatientChartQuery(visit.patient.id);
@@ -59,6 +62,10 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const { data: canBookAppointment } = useHasPermission('appointment:create');
   const { data: canUpdatePlanSession } = useHasPermission('patient-treatment-plan:update');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
+  const { data: canAmendVisit, isLoading: amendPermissionLoading } =
+    useHasPermission('visit:amend');
+  // Only a Completed Visit is amended; an active one is still edited in place.
+  const canAmend = visit.status === 'COMPLETED' && Boolean(canAmendVisit);
 
   const chart = chartQuery.data;
   const allergenName = (id: number) =>
@@ -72,6 +79,29 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     draftNoteCount: visitNotes.filter((note) => note.status === 'draft').length,
     invoiceCount: invoices.length,
   };
+  const noteToAmend = canAmend ? visitNotes.find((note) => note.id === amendNoteParam) : undefined;
+  const vitalToAmend = canAmend
+    ? (chart?.vitalSigns ?? []).find(
+        (reading) => reading.id === amendVitalParam && reading.visitId === visit.id
+      )
+    : undefined;
+  // Clear-on-deny: once permission and the chart have loaded, an amend param that
+  // cannot open a sheet (no permission, Visit not Completed, or an id outside this
+  // Visit) is dropped so a stale link cannot open the sheet later.
+  const amendTargetsResolved = !amendPermissionLoading && (!canAmend || chartQuery.isSuccess);
+  const staleAmendNote = amendNoteParam !== null && amendTargetsResolved && !noteToAmend;
+  const staleAmendVital = amendVitalParam !== null && amendTargetsResolved && !vitalToAmend;
+
+  useEffect(() => {
+    if (staleAmendNote) {
+      void setAmendNoteParam(null);
+    }
+
+    if (staleAmendVital) {
+      void setAmendVitalParam(null);
+    }
+  }, [staleAmendNote, staleAmendVital, setAmendNoteParam, setAmendVitalParam]);
+
   const planSessionTarget = (plansQuery.data ?? [])
     .flatMap((plan) => plan.sessions.map((session) => ({ plan, session })))
     .find(({ session }) => session.id === planSessionParam);
@@ -139,8 +169,10 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           canCreateNote={Boolean(canCreateNote)}
           canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
           canBookAppointment={Boolean(canBookAppointment)}
+          canAmend={canAmend}
           starting={startMutation.isPending}
           onStart={() => void startConsultation()}
+          onAmend={() => void setCaptureParam('amend')}
           onComplete={() => void setCaptureParam('complete')}
           onCancel={() => setCancelOpen(true)}
           onRecordVitals={() => void setCaptureParam('vitals')}
@@ -167,8 +199,12 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
               invoicesLoading={invoicesQuery.isLoading}
               invoicesError={invoicesQuery.isError}
               canStart={Boolean(canStart)}
+              canAmend={canAmend}
               starting={startMutation.isPending}
               onStart={() => void startConsultation()}
+              onAmendVisit={() => void setCaptureParam('amend')}
+              onAmendNote={(noteId) => void setAmendNoteParam(noteId)}
+              onAmendVitalSign={(vitalId) => void setAmendVitalParam(vitalId)}
               onConsultationDirtyChange={setConsultationDirty}
               onRecordVitals={() => void setCaptureParam('vitals')}
               onAddNote={() => void setCaptureParam('nurse-note')}
@@ -249,6 +285,34 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           appointmentId={visit.appointment?.id ?? null}
           session={visit.treatmentSession}
           onClose={() => void setCaptureParam(null)}
+        />
+      ) : null}
+
+      <AmendVisitSheet
+        open={captureParam === 'amend' && canAmend}
+        visit={visit}
+        onClose={() => void setCaptureParam(null)}
+      />
+
+      {noteToAmend ? (
+        <AddNoteSheet
+          key={`amend-note-${noteToAmend.id}`}
+          open
+          patientId={visit.patient.id}
+          visitId={visit.id}
+          note={noteToAmend}
+          onClose={() => void setAmendNoteParam(null)}
+        />
+      ) : null}
+
+      {vitalToAmend ? (
+        <RecordVitalsSheet
+          key={`amend-vital-${vitalToAmend.id}`}
+          open
+          patientId={visit.patient.id}
+          visitId={visit.id}
+          reading={vitalToAmend}
+          onClose={() => void setAmendVitalParam(null)}
         />
       ) : null}
 

@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { clinicalNoteIdSchema, createClinicalNoteSchema } from './clinical-note-schema';
+import {
+  amendVisitClinicalNoteSchema,
+  clinicalNoteIdSchema,
+  createClinicalNoteSchema,
+} from './clinical-note-schema';
 
-const errorsOf = (result: ReturnType<typeof createClinicalNoteSchema.safeParse>) =>
+const errorsOf = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
 
 describe('ClinicalNote schema', () => {
@@ -59,5 +63,53 @@ describe('ClinicalNote schema', () => {
         })
       )
     ).toContain('A record may reference a Visit or an Admission, not both.');
+  });
+
+  describe('amendVisitClinicalNoteSchema', () => {
+    it('should require a note type id', () => {
+      expect(errorsOf(amendVisitClinicalNoteSchema.safeParse({ plan: 'Review' }))).toContain(
+        'Clinical note type ID is required'
+      );
+    });
+
+    it('should require at least one SOAP section', () => {
+      expect(errorsOf(amendVisitClinicalNoteSchema.safeParse({ noteTypeId: 2 }))).toContain(
+        'At least one clinical note section is required'
+      );
+    });
+
+    it('should trim sections and treat blank sections as absent', () => {
+      expect(
+        amendVisitClinicalNoteSchema.parse({
+          noteTypeId: 2,
+          subjective: '  Cough for 3 days  ',
+          objective: '   ',
+        })
+      ).toEqual({
+        noteTypeId: 2,
+        subjective: 'Cough for 3 days',
+        objective: undefined,
+        assessment: undefined,
+        plan: undefined,
+      });
+    });
+
+    it('should limit each section to 20000 characters', () => {
+      expect(
+        errorsOf(amendVisitClinicalNoteSchema.safeParse({ noteTypeId: 2, plan: 'a'.repeat(20001) }))
+      ).toContain('Clinical note plan must be at most 20000 characters');
+    });
+
+    it('should strip the Visit and Admission link so it cannot change', () => {
+      const parsed = amendVisitClinicalNoteSchema.parse({
+        noteTypeId: 2,
+        subjective: 'Cough',
+        visitId: 99,
+        admissionId: 5,
+      });
+
+      expect(parsed).not.toHaveProperty('visitId');
+      expect(parsed).not.toHaveProperty('admissionId');
+    });
   });
 });

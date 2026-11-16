@@ -69,6 +69,21 @@ export const clinicalNotePayloadSchema = z
     path: ['admissionId'],
   });
 
+// Amending a Clinical Note on a Completed Visit keeps its Visit link fixed, so
+// the payload carries no visitId/admissionId (unknown keys are stripped).
+export const amendVisitClinicalNoteSchema = z
+  .object({
+    plan: optionalSoap('plan'),
+    objective: optionalSoap('objective'),
+    noteTypeId: requiredNoteTypeId,
+    subjective: optionalSoap('subjective'),
+    assessment: optionalSoap('assessment'),
+  })
+  .refine((data) => SOAP_KEYS.some((key) => data[key] !== undefined), {
+    message: 'At least one clinical note section is required',
+    path: ['subjective'],
+  });
+
 export const createClinicalNoteSchema = clinicalNotePayloadSchema;
 export const updateClinicalNoteSchema = clinicalNotePayloadSchema;
 
@@ -76,6 +91,7 @@ export type ClinicalNoteStatus = (typeof CLINICAL_NOTE_STATUSES)[number];
 export type ClinicalNoteIdInput = z.infer<typeof clinicalNoteIdSchema>;
 export type CreateClinicalNoteInput = z.infer<typeof createClinicalNoteSchema>;
 export type UpdateClinicalNoteInput = z.infer<typeof updateClinicalNoteSchema>;
+export type AmendVisitClinicalNoteInput = z.infer<typeof amendVisitClinicalNoteSchema>;
 
 export type CreateClinicalNoteData = CreateClinicalNoteInput & {
   tenantId: string;
@@ -102,6 +118,9 @@ export type ClinicalNote = {
   signedAt: Date | null;
   authorUserId: string;
   recordedByUserId: string;
+  amendedAt: Date | null;
+  amendedByUserId: string | null;
+  amendedByUserName: string | null;
   createdOn: Date;
   modifiedOn: Date;
 };

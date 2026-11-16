@@ -381,9 +381,14 @@ export const appNavGroups: AppNavGroup[] = [
         icon: ClipboardList,
         items: [
           {
-            title: 'Diagnosis Codes',
+            title: 'ICD-10-CM Diagnosis Codes',
             href: '/clinical-masters/diagnosis-codes',
             permission: 'diagnosis-code',
+          },
+          {
+            title: 'Ayurveda Diagnosis Codes',
+            href: '/clinical-masters/ayurveda-diagnosis-codes',
+            permission: 'ayurveda-diagnosis-code',
           },
           { title: 'Allergens', href: '/clinical-masters/allergens', permission: 'allergen' },
           {
@@ -760,11 +765,21 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     },
   },
   '/clinical-masters/diagnosis-codes': {
-    title: 'Diagnosis Codes',
-    subtitle: 'Tenant-scoped ICD-10 diagnosis catalogue used across clinical records.',
+    title: 'ICD-10-CM Diagnosis Codes',
+    subtitle:
+      'Tenant-scoped ICD-10-CM diagnosis catalogue used across clinical records and claims.',
     primaryAction: {
       label: 'Add Diagnosis Code',
       href: '/clinical-masters/diagnosis-codes?create=1',
+    },
+  },
+  '/clinical-masters/ayurveda-diagnosis-codes': {
+    title: 'Ayurveda Diagnosis Codes',
+    subtitle: 'Tenant-scoped Ayurveda diagnosis catalogue, mapped to ICD-10-CM for claims.',
+    primaryAction: {
+      label: 'Add Ayurveda Diagnosis Code',
+      href: '/clinical-masters/ayurveda-diagnosis-codes?ayurvedaCode=new',
+      permission: 'ayurveda-diagnosis-code:create',
     },
   },
   '/clinical-masters/allergens': {

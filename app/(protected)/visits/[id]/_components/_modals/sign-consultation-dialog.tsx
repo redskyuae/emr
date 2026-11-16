@@ -27,7 +27,7 @@ export function SignConsultationDialog({
           <AlertDialogTitle>Sign this consultation?</AlertDialogTitle>
           <AlertDialogDescription>
             Your latest changes are saved first. A signed Clinical Note can no longer be edited or
-            deleted.
+            deleted, except through Amend Visit once the Visit is completed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

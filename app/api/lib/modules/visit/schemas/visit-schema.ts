@@ -160,6 +160,40 @@ export const updateVisitSchema = z
     }
   });
 
+// Amending a Completed Visit is a full replace: the client always sends the
+// whole form, so an absent optional field means "cleared", not "unchanged".
+export const amendVisitSchema = z
+  .object({
+    remarks: remarksSchema,
+    doctorId: positiveIdSchema('Doctor ID'),
+    visitTypeId: positiveIdSchema('Visit type ID'),
+    chiefComplaint: chiefComplaintSchema,
+    treatmentId: optionalClearableId(treatmentIdSchema),
+    admitSourceId: z.union([positiveIdSchema('Admit source ID'), z.null()]).optional(),
+    treatmentSessionId: optionalClearableId(treatmentSessionIdSchema),
+  })
+  .superRefine((data, context) => {
+    const hasTreatment = data.treatmentId != null;
+    const hasSession = data.treatmentSessionId != null;
+
+    if (hasTreatment !== hasSession) {
+      context.addIssue({
+        code: 'custom',
+        path: hasTreatment ? ['treatmentSessionId'] : ['treatmentId'],
+        message: 'Treatment and Session must be provided together.',
+      });
+    }
+  })
+  .transform((data) => ({
+    remarks: data.remarks,
+    doctorId: data.doctorId,
+    visitTypeId: data.visitTypeId,
+    treatmentId: data.treatmentId ?? null,
+    admitSourceId: data.admitSourceId ?? null,
+    chiefComplaint: data.chiefComplaint,
+    treatmentSessionId: data.treatmentSessionId ?? null,
+  }));
+
 export const cancelVisitSchema = z.object({
   cancellationReason: z
     .string({ error: 'Cancellation reason is required' })
@@ -201,6 +235,7 @@ export const listVisitsSchema = z
 
 export type CheckInVisitInput = z.infer<typeof checkInVisitSchema>;
 export type UpdateVisitInput = z.infer<typeof updateVisitSchema>;
+export type AmendVisitInput = z.infer<typeof amendVisitSchema>;
 export type CancelVisitInput = z.infer<typeof cancelVisitSchema>;
 export type ListVisitsInput = z.infer<typeof listVisitsSchema>;
 

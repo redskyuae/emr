@@ -24,8 +24,16 @@ describe('consultationSteps', () => {
   it('should cover every narrative field of the consultation exactly once', () => {
     const fields = consultationSteps(true).flatMap((step) => step.fields);
 
-    expect(fields).toHaveLength(11);
-    expect(new Set(fields).size).toBe(11);
+    // The coded diagnoses live in Visit Diagnoses, not in a consultation field.
+    expect(fields).not.toContain('modernDiagnosis');
+    expect(fields).toHaveLength(10);
+    expect(new Set(fields).size).toBe(10);
+  });
+
+  it('should name the assessment step Diagnosis', () => {
+    expect(consultationSteps(false).find((step) => step.id === 'assessment')?.title).toBe(
+      'Diagnosis'
+    );
   });
 });
 
@@ -33,7 +41,7 @@ describe('stepForField', () => {
   const steps = consultationSteps(true);
 
   it('should find the step that holds a field', () => {
-    expect(stepForField('modernDiagnosis', steps)).toBe('assessment');
+    expect(stepForField('ayurvedicDiagnosis', consultationSteps(true))).toBe('assessment');
     expect(stepForField('prakriti', steps)).toBe('objective');
   });
 

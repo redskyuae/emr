@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Save } from 'lucide-react';
+import { PencilLine, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -23,9 +23,12 @@ import { isActiveVisit, visitStatusPresentation } from '../../_utils/visit-statu
 export function VisitDetailsCard({
   visit,
   embedded = false,
+  onAmend,
 }: {
   visit: Visit;
   embedded?: boolean;
+  /** Present only on a Completed Visit the user may amend. */
+  onAmend?: () => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const { data: canUpdate } = useHasPermission('visit:update');
@@ -83,6 +86,14 @@ export function VisitDetailsCard({
             >
               <Save className="size-4" />
               {updateMutation.isPending ? 'Saving…' : 'Save details'}
+            </Button>
+          </div>
+        ) : onAmend ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-muted-foreground text-sm">This Visit is completed.</p>
+            <Button type="button" variant="outline" onClick={onAmend}>
+              <PencilLine className="size-4" />
+              Amend Visit
             </Button>
           </div>
         ) : (
