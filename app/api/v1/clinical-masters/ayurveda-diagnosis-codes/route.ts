@@ -7,7 +7,7 @@ import type {
 
 import { createAyurvedaDiagnosisCodeCommand } from '@/app/api/lib/modules/ayurveda-diagnosis-code/commands/create-ayurveda-diagnosis-code-command';
 import { getAyurvedaDiagnosisCodesQuery } from '@/app/api/lib/modules/ayurveda-diagnosis-code/queries/get-ayurveda-diagnosis-codes-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 
 function mutationMessage(status: number, errors: string[]) {
@@ -83,6 +83,14 @@ export async function POST(request: NextRequest) {
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'ayurveda-diagnosis-code:create',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     let payload: unknown;

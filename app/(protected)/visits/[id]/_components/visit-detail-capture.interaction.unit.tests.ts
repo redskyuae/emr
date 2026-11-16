@@ -6,13 +6,26 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { VisitDetailImpl } from './visit-detail-impl';
 
-const state = vi.hoisted(() => ({ status: 'CHECKED_IN', canAmend: false }));
+const state = vi.hoisted(() => ({
+  status: 'CHECKED_IN',
+  canAmend: false,
+  initialParams: {} as Record<string, number | string>,
+  paramWrites: [] as [string, unknown][],
+}));
 
 vi.mock('nuqs', async () => {
   const { useState } = await import('react');
   return {
     parseAsInteger: {},
-    useQueryState: () => useState<string | number | null>(null),
+    useQueryState: (key: string) => {
+      const [value, setValue] = useState<string | number | null>(state.initialParams[key] ?? null);
+      const write = (next: string | number | null) => {
+        state.paramWrites.push([key, next]);
+        setValue(next);
+      };
+
+      return [value, write];
+    },
   };
 });
 vi.mock('@/app/queries/patient-treatment-plans/usePatientTreatmentPlans', () => ({
@@ -46,6 +59,7 @@ vi.mock('@/app/queries/patients/chart/usePatientChart', () => ({
       vitalSigns: [{ id: 61, visitId: 7 }],
       clinicalNotes: [{ id: 55, visitId: 7, status: 'signed' }],
     },
+    isSuccess: true,
     isLoading: false,
     isError: false,
   }),
@@ -54,7 +68,10 @@ vi.mock('@/app/queries/clinical-masters/allergens/useAllergens', () => ({
   useAllergensQuery: () => ({ data: { data: [] }, isLoading: false, isError: false }),
 }));
 vi.mock('@/app/queries/identity-access/useCurrentUser', () => ({
-  useHasPermission: (key: string) => ({ data: key === 'visit:amend' && state.canAmend }),
+  useHasPermission: (key: string) => ({
+    data: key === 'visit:amend' && state.canAmend,
+    isLoading: false,
+  }),
 }));
 vi.mock('@/app/queries/visits/useStartConsultation', () => ({
   useStartConsultation: () => ({ isPending: false, mutateAsync: vi.fn() }),
@@ -168,6 +185,8 @@ afterEach(() => {
   cleanup();
   state.status = 'CHECKED_IN';
   state.canAmend = false;
+  state.initialParams = {};
+  state.paramWrites = [];
 });
 
 describe('Visit detail capture routing', () => {
@@ -253,5 +272,43 @@ describe('Visit detail capture routing', () => {
 
     expect(screen.queryByTestId('note-sheet')).toBeNull();
     expect(screen.queryByTestId('amend-vital-sheet')).toBeNull();
+  });
+
+  it('should clear amend params from a link the user may not open', () => {
+    state.status = 'COMPLETED';
+    state.initialParams = { amendNote: 55, amendVital: 61 };
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.paramWrites).toEqual(
+      expect.arrayContaining([
+        ['amendNote', null],
+        ['amendVital', null],
+      ])
+    );
+    expect(screen.queryByTestId('note-sheet')).toBeNull();
+  });
+
+  it('should clear amend params that point outside this Visit', () => {
+    state.status = 'COMPLETED';
+    state.canAmend = true;
+    state.initialParams = { amendNote: 999, amendVital: 998 };
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.paramWrites).toEqual(
+      expect.arrayContaining([
+        ['amendNote', null],
+        ['amendVital', null],
+      ])
+    );
+  });
+
+  it('should keep a valid amend param and open its sheet', () => {
+    state.status = 'COMPLETED';
+    state.canAmend = true;
+    state.initialParams = { amendNote: 55 };
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.paramWrites).toEqual([]);
+    expect(screen.getByTestId('note-sheet').textContent).toBe('55');
   });
 });

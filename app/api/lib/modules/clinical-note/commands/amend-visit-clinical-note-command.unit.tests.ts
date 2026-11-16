@@ -7,7 +7,7 @@ import { validateAmendVisitClinicalNote } from '../validator/amend-visit-clinica
 import { amendVisitClinicalNoteCommand } from './amend-visit-clinical-note-command';
 
 vi.mock('../repository/clinical-note-repository', () => ({
-  clinicalNoteRepository: { updateClinicalNote: vi.fn() },
+  clinicalNoteRepository: { amendClinicalNote: vi.fn() },
 }));
 vi.mock('../validator/amend-visit-clinical-note-validator', () => ({
   validateAmendVisitClinicalNote: vi.fn(),
@@ -29,11 +29,11 @@ describe('amendVisitClinicalNoteCommand', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     validateAmend.mockResolvedValue({ success: true, data: { id: 4, payload } });
-    repo.updateClinicalNote.mockResolvedValue(amendedNote);
+    repo.amendClinicalNote.mockResolvedValue(amendedNote);
   });
 
   it('should validate first with the raw ids, payload, and Tenant', async () => {
-    await amendVisitClinicalNoteCommand('1', '4', 'tenant-1', { noteTypeId: 2 });
+    await amendVisitClinicalNoteCommand('1', '4', 'tenant-1', { noteTypeId: 2 }, 'user-9');
 
     expect(validateAmend).toHaveBeenCalledWith('1', '4', { noteTypeId: 2 }, 'tenant-1');
   });
@@ -45,30 +45,40 @@ describe('amendVisitClinicalNoteCommand', () => {
       status: StatusCodes.NOT_FOUND,
     });
 
-    await expect(amendVisitClinicalNoteCommand('1', '4', 'tenant-1', {})).resolves.toEqual({
+    await expect(
+      amendVisitClinicalNoteCommand('1', '4', 'tenant-1', {}, 'user-9')
+    ).resolves.toEqual({
       success: false,
       errors: ['Clinical note not found'],
       status: StatusCodes.NOT_FOUND,
     });
-    expect(repo.updateClinicalNote).not.toHaveBeenCalled();
+    expect(repo.amendClinicalNote).not.toHaveBeenCalled();
   });
 
-  it('should update only the note type and sections, never the Visit link', async () => {
-    await expect(amendVisitClinicalNoteCommand('1', '4', 'tenant-1', {})).resolves.toEqual({
+  it('should update only the note type and sections and record the amending user', async () => {
+    await expect(
+      amendVisitClinicalNoteCommand('1', '4', 'tenant-1', {}, 'user-9')
+    ).resolves.toEqual({
       success: true,
       data: amendedNote,
     });
-    expect(repo.updateClinicalNote).toHaveBeenCalledWith(4, { ...payload, tenantId: 'tenant-1' });
+    expect(repo.amendClinicalNote).toHaveBeenCalledWith(
+      4,
+      { ...payload, tenantId: 'tenant-1' },
+      'user-9'
+    );
 
-    const [, data] = repo.updateClinicalNote.mock.calls[0];
+    const [, data] = repo.amendClinicalNote.mock.calls[0];
     expect(data).not.toHaveProperty('visitId');
     expect(data).not.toHaveProperty('admissionId');
   });
 
   it('should return not found when the note disappears before the write', async () => {
-    repo.updateClinicalNote.mockResolvedValue(undefined);
+    repo.amendClinicalNote.mockResolvedValue(undefined);
 
-    await expect(amendVisitClinicalNoteCommand('1', '4', 'tenant-1', {})).resolves.toEqual({
+    await expect(
+      amendVisitClinicalNoteCommand('1', '4', 'tenant-1', {}, 'user-9')
+    ).resolves.toEqual({
       success: false,
       errors: ['Clinical note not found'],
       status: StatusCodes.NOT_FOUND,

@@ -298,6 +298,28 @@ describe('OpenAPI clinical coding contracts', () => {
     ).toContain('Ayurveda diagnosis code AYU-AMV already exists.');
   });
 
+  it('should document who amended a Clinical Note', () => {
+    const amend = openApiDocument.paths['/api/v1/visits/{id}/notes/{noteId}/amend'].put;
+
+    expect(Object.keys(openApiDocument.components.schemas.ClinicalNote.properties)).toEqual(
+      expect.arrayContaining(['amendedAt', 'amendedByUserId', 'amendedByUserName'])
+    );
+    expect(amend.description).toContain('amendedByUserId');
+    expect(JSON.stringify(amend.responses['200'])).toContain('Dr Priya Nair');
+  });
+
+  it('should document the Ayurveda Diagnosis Code write permissions', () => {
+    const collection = openApiDocument.paths['/api/v1/clinical-masters/ayurveda-diagnosis-codes'];
+    const item = openApiDocument.paths['/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}'];
+
+    expect(collection.post.description).toContain('`ayurveda-diagnosis-code:create`');
+    expect(item.put.description).toContain('`ayurveda-diagnosis-code:update`');
+    expect(item.delete.description).toContain('`ayurveda-diagnosis-code:delete`');
+    expect(Object.keys(collection.post.responses)).toContain('403');
+    expect(Object.keys(item.put.responses)).toContain('403');
+    expect(Object.keys(item.delete.responses)).toContain('403');
+  });
+
   it('should document Visit diagnosis list, save, and amend with their permissions', () => {
     const diagnoses = openApiDocument.paths['/api/v1/visits/{id}/diagnoses'];
     const amend = openApiDocument.paths['/api/v1/visits/{id}/diagnoses/amend'].put;

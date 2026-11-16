@@ -23,6 +23,7 @@ function readingSummary(reading: PatientVitalSign) {
 export function VisitObjectiveVitals({
   visitId,
   readings,
+  timeZone,
   loading,
   error,
   canRecord,
@@ -31,6 +32,8 @@ export function VisitObjectiveVitals({
 }: {
   visitId: number;
   readings: PatientVitalSign[];
+  /** The Tenant's time zone, so reading times match the clinic clock. */
+  timeZone?: string;
   loading: boolean;
   error: boolean;
   canRecord: boolean;
@@ -76,6 +79,7 @@ export function VisitObjectiveVitals({
             const time = new Date(reading.recordedAt).toLocaleTimeString(undefined, {
               hour: '2-digit',
               minute: '2-digit',
+              timeZone,
             });
 
             return (

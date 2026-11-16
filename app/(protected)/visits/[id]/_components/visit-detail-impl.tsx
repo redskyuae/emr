@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -62,7 +62,8 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const { data: canBookAppointment } = useHasPermission('appointment:create');
   const { data: canUpdatePlanSession } = useHasPermission('patient-treatment-plan:update');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
-  const { data: canAmendVisit } = useHasPermission('visit:amend');
+  const { data: canAmendVisit, isLoading: amendPermissionLoading } =
+    useHasPermission('visit:amend');
   // Only a Completed Visit is amended; an active one is still edited in place.
   const canAmend = visit.status === 'COMPLETED' && Boolean(canAmendVisit);
 
@@ -84,6 +85,23 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
         (reading) => reading.id === amendVitalParam && reading.visitId === visit.id
       )
     : undefined;
+  // Clear-on-deny: once permission and the chart have loaded, an amend param that
+  // cannot open a sheet (no permission, Visit not Completed, or an id outside this
+  // Visit) is dropped so a stale link cannot open the sheet later.
+  const amendTargetsResolved = !amendPermissionLoading && (!canAmend || chartQuery.isSuccess);
+  const staleAmendNote = amendNoteParam !== null && amendTargetsResolved && !noteToAmend;
+  const staleAmendVital = amendVitalParam !== null && amendTargetsResolved && !vitalToAmend;
+
+  useEffect(() => {
+    if (staleAmendNote) {
+      void setAmendNoteParam(null);
+    }
+
+    if (staleAmendVital) {
+      void setAmendVitalParam(null);
+    }
+  }, [staleAmendNote, staleAmendVital, setAmendNoteParam, setAmendVitalParam]);
+
   const planSessionTarget = (plansQuery.data ?? [])
     .flatMap((plan) => plan.sessions.map((session) => ({ plan, session })))
     .find(({ session }) => session.id === planSessionParam);

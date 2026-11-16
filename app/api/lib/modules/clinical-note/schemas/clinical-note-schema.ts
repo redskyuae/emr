@@ -118,6 +118,9 @@ export type ClinicalNote = {
   signedAt: Date | null;
   authorUserId: string;
   recordedByUserId: string;
+  amendedAt: Date | null;
+  amendedByUserId: string | null;
+  amendedByUserName: string | null;
   createdOn: Date;
   modifiedOn: Date;
 };

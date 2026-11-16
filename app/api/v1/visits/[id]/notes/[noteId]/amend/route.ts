@@ -43,7 +43,13 @@ export async function PUT(request: NextRequest, context: AmendVisitClinicalNoteR
     }
 
     const { id, noteId } = await context.params;
-    const result = await amendVisitClinicalNoteCommand(id, noteId, tenantSession.tenantId, payload);
+    const result = await amendVisitClinicalNoteCommand(
+      id,
+      noteId,
+      tenantSession.tenantId,
+      payload,
+      tenantSession.session.user.id
+    );
 
     if (!result.success) {
       const status = result.status ?? StatusCodes.BAD_REQUEST;

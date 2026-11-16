@@ -275,6 +275,19 @@ const itemOperations = ({
   },
 });
 
+const withOperationDescriptions = <T extends Record<string, object>>(
+  operations: T,
+  descriptions: Partial<Record<keyof T, string>>
+) =>
+  Object.fromEntries(
+    Object.entries(operations).map(([method, operation]) => [
+      method,
+      descriptions[method as keyof T]
+        ? { ...operation, description: descriptions[method as keyof T] }
+        : operation,
+    ])
+  ) as { [Method in keyof T]: T[Method] & { description?: string } };
+
 const patientRecordCollectionOperations = ({
   tag,
   entity,
@@ -2300,6 +2313,9 @@ const clinicalNoteExample = {
   signedAt: null,
   authorUserId: 'user_9f3',
   recordedByUserId: 'user_9f3',
+  amendedAt: null,
+  amendedByUserId: null,
+  amendedByUserName: null,
   createdOn: '2026-03-01T09:45:00.000Z',
   modifiedOn: '2026-03-01T09:45:00.000Z',
 };
@@ -5520,7 +5536,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Amend a Clinical Note on a Completed Visit',
         description:
-          "Corrects the note type and SOAP sections of a Clinical Note recorded during a Completed Visit, including a signed Clinical Note. The body is a full replace of the sections: an omitted or blank section is cleared, and at least one section is required. The note's Visit link, status, signedAt, author, and recorder never change; visitId and admissionId are ignored if sent. The Clinical Note must belong to the Visit in the path. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.",
+          "Corrects the note type and SOAP sections of a Clinical Note recorded during a Completed Visit, including a signed Clinical Note. The body is a full replace of the sections: an omitted or blank section is cleared, and at least one section is required. The note's Visit link, status, signedAt, author, and recorder never change; visitId and admissionId are ignored if sent. amendedAt and amendedByUserId are set to the current time and the Session user, so a signed note shows that it changed after signing. The Clinical Note must belong to the Visit in the path. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.",
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Visit'),
@@ -5541,6 +5557,9 @@ export const openApiDocument = {
                 ...signedClinicalNoteExample,
                 visitId: 501,
                 assessment: 'Acute upper respiratory infection, viral.',
+                amendedAt: '2026-07-18T06:20:00.000Z',
+                amendedByUserId: 'user_2b7',
+                amendedByUserName: 'Dr Priya Nair',
                 modifiedOn: '2026-07-18T06:20:00.000Z',
               },
             }),
@@ -6901,27 +6920,41 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: diagnosisCodeMutationErrorResponses,
     }),
-    '/api/v1/clinical-masters/ayurveda-diagnosis-codes': collectionOperations({
-      tag: 'Ayurveda Diagnosis Code',
-      entity: 'Ayurveda Diagnosis Code',
-      summaryEntity: 'Ayurveda Diagnosis Codes',
-      schemaName: 'AyurvedaDiagnosisCode',
-      createSchemaName: 'CreateAyurvedaDiagnosisCodeRequest',
-      example: ayurvedaDiagnosisCodeRequestExample,
-      security: [{ cookieAuth: [] }],
-      listErrorResponses: authenticatedListErrorResponses,
-      mutationErrorResponses: ayurvedaDiagnosisCodeErrorResponses,
-    }),
-    '/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}': itemOperations({
-      tag: 'Ayurveda Diagnosis Code',
-      entity: 'Ayurveda Diagnosis Code',
-      schemaName: 'AyurvedaDiagnosisCode',
-      updateSchemaName: 'UpdateAyurvedaDiagnosisCodeRequest',
-      example: ayurvedaDiagnosisCodeRequestExample,
-      parameters: [numberIdPathParameter('Ayurveda Diagnosis Code')],
-      security: [{ cookieAuth: [] }],
-      operationErrorResponses: ayurvedaDiagnosisCodeErrorResponses,
-    }),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes': withOperationDescriptions(
+      collectionOperations({
+        tag: 'Ayurveda Diagnosis Code',
+        entity: 'Ayurveda Diagnosis Code',
+        summaryEntity: 'Ayurveda Diagnosis Codes',
+        schemaName: 'AyurvedaDiagnosisCode',
+        createSchemaName: 'CreateAyurvedaDiagnosisCodeRequest',
+        example: ayurvedaDiagnosisCodeRequestExample,
+        security: [{ cookieAuth: [] }],
+        listErrorResponses: authenticatedListErrorResponses,
+        mutationErrorResponses: ayurvedaDiagnosisCodeErrorResponses,
+      }),
+      {
+        get: 'Returns a paginated list of Ayurveda Diagnosis Codes in the active Tenant. Any authenticated Tenant member may list them, because Visit diagnosis entry uses this list. The Tenant is resolved from the active Session.',
+        post: 'Creates an Ayurveda Diagnosis Code in the active Tenant. The Tenant is resolved from the active Session. Requires the `ayurveda-diagnosis-code:create` permission.',
+      }
+    ),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}': withOperationDescriptions(
+      itemOperations({
+        tag: 'Ayurveda Diagnosis Code',
+        entity: 'Ayurveda Diagnosis Code',
+        schemaName: 'AyurvedaDiagnosisCode',
+        updateSchemaName: 'UpdateAyurvedaDiagnosisCodeRequest',
+        example: ayurvedaDiagnosisCodeRequestExample,
+        parameters: [numberIdPathParameter('Ayurveda Diagnosis Code')],
+        security: [{ cookieAuth: [] }],
+        operationErrorResponses: ayurvedaDiagnosisCodeErrorResponses,
+      }),
+      {
+        get: 'Returns one Ayurveda Diagnosis Code in the active Tenant. Any authenticated Tenant member may read it. The Tenant is resolved from the active Session.',
+        put: 'Updates an Ayurveda Diagnosis Code in the active Tenant. The Tenant is resolved from the active Session. Requires the `ayurveda-diagnosis-code:update` permission.',
+        delete:
+          'Soft-deletes an Ayurveda Diagnosis Code in the active Tenant. The Tenant is resolved from the active Session. Requires the `ayurveda-diagnosis-code:delete` permission.',
+      }
+    ),
     '/api/v1/clinical-masters/allergens': collectionOperations({
       tag: 'Allergen',
       entity: 'Allergen',
@@ -12983,6 +13016,20 @@ export const openApiDocument = {
           },
           authorUserId: { type: 'string' },
           recordedByUserId: { type: 'string' },
+          amendedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            description:
+              'When the note was last amended on a Completed Visit; null if never amended.',
+          },
+          amendedByUserId: {
+            type: ['string', 'null'],
+            description: 'User who last amended the note; null if never amended.',
+          },
+          amendedByUserName: {
+            type: ['string', 'null'],
+            description: 'Display name of amendedByUserId; null if never amended.',
+          },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
         },

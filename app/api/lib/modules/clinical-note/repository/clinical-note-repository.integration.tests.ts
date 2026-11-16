@@ -146,21 +146,47 @@ describe('ClinicalNote repository', () => {
     expect(signed?.signedAt).toBeInstanceOf(Date);
   });
 
-  it('should keep a signed note signed when its content is amended', async () => {
+  it('should keep a signed note signed and record who amended it', async () => {
+    const amenderId = randomUUID();
+    await db
+      .insert(user)
+      .values({ id: amenderId, name: 'Dr Rao', email: `${amenderId}@example.com` });
     const created = await createNote(tenantA);
     const signed = await clinicalNoteRepository.signClinicalNote(created.id, tenantA);
 
-    const amended = await clinicalNoteRepository.updateClinicalNote(created.id, {
-      tenantId: tenantA,
-      noteTypeId,
-      assessment: 'Viral URTI, improving',
-    });
+    const amended = await clinicalNoteRepository.amendClinicalNote(
+      created.id,
+      { tenantId: tenantA, noteTypeId, assessment: 'Viral URTI, improving' },
+      amenderId
+    );
 
     expect(amended).toMatchObject({
       status: 'signed',
       signedAt: signed?.signedAt,
       subjective: null,
       assessment: 'Viral URTI, improving',
+      amendedByUserId: amenderId,
+      amendedByUserName: 'Dr Rao',
+    });
+    expect(amended?.amendedAt).toBeInstanceOf(Date);
+    await expect(
+      clinicalNoteRepository.getClinicalNoteById(created.id, tenantA)
+    ).resolves.toMatchObject({ amendedByUserId: amenderId, amendedByUserName: 'Dr Rao' });
+  });
+
+  it('should leave the amendment fields empty on an ordinary update', async () => {
+    const created = await createNote(tenantA);
+
+    const updated = await clinicalNoteRepository.updateClinicalNote(created.id, {
+      tenantId: tenantA,
+      noteTypeId,
+      assessment: 'URTI, improving',
+    });
+
+    expect(updated).toMatchObject({
+      amendedAt: null,
+      amendedByUserId: null,
+      amendedByUserName: null,
     });
   });
 

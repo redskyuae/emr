@@ -4,7 +4,10 @@ import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/c
 import type { InvoiceListItem } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { useVisitDocumentsQuery } from '@/app/queries/visits/useVisitDocuments';
 import { isAyurvedaBrand } from '@/components/brand/brand-config';
@@ -78,6 +81,8 @@ export function VisitCarePathway({
 }: Props) {
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
   const documentsQuery = useVisitDocumentsQuery(visit.id);
+  const { data: currentUser } = useCurrentUserQuery();
+  const timeZone = currentUser?.tenant.timeZone;
   const { data: canAssignPlan } = useHasPermission('patient-treatment-plan:assign');
   const { data: canReadPlan } = useHasPermission('patient-treatment-plan:read');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
@@ -102,6 +107,7 @@ export function VisitCarePathway({
       <VisitObjectiveVitals
         visitId={visit.id}
         readings={vitals}
+        timeZone={timeZone}
         loading={chartLoading}
         error={chartError}
         canRecord={active && Boolean(canRecordVitals)}
@@ -159,6 +165,7 @@ export function VisitCarePathway({
         />
         <VisitClinicalNotesCard
           notes={notes}
+          timeZone={timeZone}
           loading={chartLoading}
           error={chartError}
           active={active}

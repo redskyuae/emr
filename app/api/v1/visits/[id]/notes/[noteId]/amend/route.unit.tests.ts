@@ -75,12 +75,12 @@ describe('Visit Clinical Note amend route', () => {
     expect(amendNote).not.toHaveBeenCalled();
   });
 
-  it('should pass the Visit id, note id, active Tenant, and body to the command', async () => {
+  it('should pass the Visit id, note id, active Tenant, body, and amending user to the command', async () => {
     const response = await PUT(request(), context('7', '9'));
 
     expect(response.status).toBe(StatusCodes.OK);
     await expect(response.json()).resolves.toMatchObject({ data: { id: 4, status: 'signed' } });
-    expect(amendNote).toHaveBeenCalledWith('7', '9', 'tenant-1', body);
+    expect(amendNote).toHaveBeenCalledWith('7', '9', 'tenant-1', body, 'user-1');
   });
 
   it('should map validation failures to bad request', async () => {

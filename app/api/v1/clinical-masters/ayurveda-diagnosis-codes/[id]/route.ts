@@ -8,7 +8,7 @@ import type {
 import { deleteAyurvedaDiagnosisCodeCommand } from '@/app/api/lib/modules/ayurveda-diagnosis-code/commands/delete-ayurveda-diagnosis-code-command';
 import { updateAyurvedaDiagnosisCodeCommand } from '@/app/api/lib/modules/ayurveda-diagnosis-code/commands/update-ayurveda-diagnosis-code-command';
 import { getAyurvedaDiagnosisCodeByIdQuery } from '@/app/api/lib/modules/ayurveda-diagnosis-code/queries/get-ayurveda-diagnosis-code-by-id-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 type AyurvedaDiagnosisCodeRouteContext = {
   params: Promise<{ id: string }>;
@@ -63,6 +63,14 @@ export async function PUT(request: NextRequest, context: AyurvedaDiagnosisCodeRo
       return tenantSession;
     }
 
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'ayurveda-diagnosis-code:update',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
+    }
+
     const { id } = await context.params;
     let payload: unknown;
 
@@ -101,6 +109,14 @@ export async function DELETE(_request: NextRequest, context: AyurvedaDiagnosisCo
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'ayurveda-diagnosis-code:delete',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     const { id } = await context.params;
