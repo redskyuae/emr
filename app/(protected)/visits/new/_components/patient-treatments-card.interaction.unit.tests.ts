@@ -28,20 +28,20 @@ const currentPlan = {
   ],
 } as PatientTreatmentPlan;
 
-const pastPlan = {
+const notStartedPlan = {
   id: 1,
-  status: 'COMPLETED',
+  status: 'PENDING',
   treatmentName: 'Shirodhara',
   treatmentCode: 'SD-01',
   totalSessions: 3,
-  completedSessions: 3,
+  completedSessions: 0,
   sessions: [],
 } as unknown as PatientTreatmentPlan;
 
 function renderCard(props: Partial<Parameters<typeof PatientTreatmentsCard>[0]> = {}) {
   return render(
     createElement(PatientTreatmentsCard, {
-      plans: [pastPlan, currentPlan],
+      plans: [notStartedPlan, currentPlan],
       loading: false,
       error: false,
       onRetry: vi.fn(),
@@ -54,18 +54,18 @@ function renderCard(props: Partial<Parameters<typeof PatientTreatmentsCard>[0]> 
 afterEach(cleanup);
 
 describe('Patient Treatments card', () => {
-  it('should list current Plans before treatment history with progress and status', () => {
+  it('should list ongoing and not started Plans, newest first, with progress and status', () => {
     renderCard();
 
     const names = screen
       .getAllByRole('listitem')
       .map((item) => item.querySelector('p')?.textContent);
     expect(names).toEqual(['Panchakarma', 'Shirodhara']);
-    expect(screen.getByText('1 current · 1 in history')).toBeTruthy();
+    expect(screen.getByText('2 ongoing or not started')).toBeTruthy();
     expect(screen.getByText('In progress')).toBeTruthy();
-    expect(screen.getByText('Completed')).toBeTruthy();
+    expect(screen.getByText('Pending')).toBeTruthy();
     expect(screen.getByText('2 of 6 Sessions completed')).toBeTruthy();
-    expect(screen.getByText('3 of 3 Sessions completed')).toBeTruthy();
+    expect(screen.getByText('0 of 3 Sessions completed')).toBeTruthy();
   });
 
   it('should show the next Session and its booking for a current Plan', () => {
@@ -82,10 +82,12 @@ describe('Patient Treatments card', () => {
     expect(screen.getByText('This Visit')).toBeTruthy();
   });
 
-  it('should show an empty state when the Patient has no Treatment Plans', () => {
+  it('should show an empty state when the Patient has no ongoing or not started Plans', () => {
     renderCard({ plans: [] });
 
-    expect(screen.getByText('No Treatment Plans have been assigned to this Patient.')).toBeTruthy();
+    expect(
+      screen.getByText('This Patient has no ongoing or not started Treatment Plans.')
+    ).toBeTruthy();
   });
 
   it('should show a loading state', () => {

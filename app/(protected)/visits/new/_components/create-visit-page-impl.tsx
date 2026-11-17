@@ -23,7 +23,7 @@ import {
   useCurrentUserQuery,
   useHasPermission,
 } from '@/app/queries/identity-access/useCurrentUser';
-import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
+import { useCurrentPatientTreatmentPlansQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useAdmitSourcesQuery } from '@/app/queries/visit-masters/admit-sources/useAdmitSources';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
@@ -188,7 +188,7 @@ export function CreateVisitPageImpl({
   const patientQuery = usePatientQuery(selectedPatientId);
   const patient = patientQuery.data ?? null;
   const patientTypeQuery = useVisitPatientTypeQuery(selectedPatientId);
-  const treatmentPlansQuery = usePatientTreatmentPlanHistoryQuery(
+  const treatmentPlansQuery = useCurrentPatientTreatmentPlansQuery(
     selectedPatientId,
     Boolean(canReadTreatmentPlans)
   );
