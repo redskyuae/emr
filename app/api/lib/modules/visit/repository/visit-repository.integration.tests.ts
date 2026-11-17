@@ -1211,6 +1211,54 @@ describe('Visit repository', () => {
       return { treatmentId: treatment.id, treatmentSessionId: session.id };
     }
 
+    it('should skip a Queue Token an amend moved into the unassigned queue', async () => {
+      const completed = await createCompletedVisit();
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+      const thirdPatient = await createPatient(tenantA, 'Chitra');
+
+      await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId: null,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        visitTypeId: fixturesA.visitTypeId,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+      const next = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: secondPatient, doctorId: null })
+      );
+      const after = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: thirdPatient, doctorId: null })
+      );
+
+      expect(completed.queueToken).toBe(1);
+      expect(next).toMatchObject({ success: true, data: { queueToken: 2 } });
+      expect(after).toMatchObject({ success: true, data: { queueToken: 3 } });
+    });
+
+    it("should skip a Queue Token an amend moved into another Doctor's queue", async () => {
+      const completed = await createCompletedVisit();
+      const otherDoctorId = await createDoctor(tenantA, 'Dr Iyer');
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+
+      await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId: otherDoctorId,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        visitTypeId: fixturesA.visitTypeId,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+      const next = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: secondPatient, doctorId: otherDoctorId })
+      );
+
+      expect(completed.queueToken).toBe(1);
+      expect(next).toMatchObject({ success: true, data: { queueToken: 2 } });
+    });
+
     it('should rewrite every encounter detail and leave the lifecycle untouched', async () => {
       const completed = await createCompletedVisit();
       const doctorId = await createDoctor(tenantA, 'Dr Iyer');

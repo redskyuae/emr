@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { isActiveVisit, visitStatusPresentation } from '../../_utils/visit-status';
+import { visitDoctorLabel } from '@/lib/visit-doctor-label';
 
 export function VisitPatientHeader({
   visit,
@@ -117,7 +118,7 @@ export function VisitPatientHeader({
             </div>
             <p className="text-muted-foreground text-sm">
               <span className="font-mono text-xs">{visit.patient.mrn}</span> ·{' '}
-              {visit.visitType.name} · {visit.doctor?.name ?? 'No Doctor'} ·{' '}
+              {visit.visitType.name} · {visitDoctorLabel(visit)} ·{' '}
               <span className="font-mono text-xs">{visit.visitNumber}</span> ·{' '}
               {visit.appointment?.bookingNumber ?? 'Walk-in'}
             </p>

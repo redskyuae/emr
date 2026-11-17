@@ -4,6 +4,7 @@ import type { Visit, VisitStatus } from '@/app/api/lib/modules/visit/schemas/vis
 import { Button } from '@/components/ui/button';
 import { getRecentVisits } from '../_utils/patient-visit-history';
 import { BookingStatusBadge } from './booking-status-badge';
+import { visitDoctorLabel } from '@/lib/visit-doctor-label';
 
 const statusTone: Record<VisitStatus, 'success' | 'warning' | 'danger' | 'selected'> = {
   CHECKED_IN: 'warning',
@@ -91,7 +92,7 @@ export function PatientVisitHistory({
                       })}
                     </time>
                     <span aria-hidden="true">·</span>
-                    <span>{visit.doctor?.name ?? 'No Doctor'}</span>
+                    <span>{visitDoctorLabel(visit)}</span>
                   </p>
                 </div>
                 <BookingStatusBadge tone={statusTone[visit.status]}>

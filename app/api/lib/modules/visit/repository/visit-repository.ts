@@ -412,20 +412,50 @@ export type CheckInVisitRepositoryResult =
 
 // Each Doctor's day has its own Queue Token sequence; Visits without a Doctor
 // share the Tenant's unassigned sequence for that day (ADR 0029).
+// The counters only count Check-ins, but an amend keeps a Visit's Queue Token
+// when it changes the Doctor (ADR 0047), so a token can arrive in a queue
+// another way. Each counter therefore starts past the highest token already
+// held in its queue that day, so it never hands out a number in use.
+function highestQueueTokenInUse(
+  data: Pick<ValidatedCheckInVisitData, 'tenantId' | 'doctorId' | 'visitDate'>
+) {
+  const doctorCondition =
+    data.doctorId === null
+      ? sql`${visitTable.doctorId} is null`
+      : sql`${visitTable.doctorId} = ${data.doctorId}`;
+
+  return sql<number>`(
+    select coalesce(max(${visitTable.queueToken}), 0)
+    from ${visitTable}
+    where ${visitTable.tenantId} = ${data.tenantId}
+      and ${visitTable.visitDate} = ${data.visitDate}
+      and ${doctorCondition}
+      and ${visitTable.isDeleted} = false
+  )`;
+}
+
 async function allocateQueueToken(
   tx: Transaction,
   data: Pick<ValidatedCheckInVisitData, 'tenantId' | 'doctorId' | 'visitDate'>
 ) {
+  const usedMax = highestQueueTokenInUse(data);
+
   if (data.doctorId === null) {
     const [counter] = await tx
       .insert(visitUnassignedQueueTokenCounterTable)
-      .values({ tenantId: data.tenantId, tokenDate: data.visitDate, lastNumber: 1 })
+      .values({
+        tenantId: data.tenantId,
+        tokenDate: data.visitDate,
+        lastNumber: sql`${usedMax} + 1`,
+      })
       .onConflictDoUpdate({
         target: [
           visitUnassignedQueueTokenCounterTable.tenantId,
           visitUnassignedQueueTokenCounterTable.tokenDate,
         ],
-        set: { lastNumber: sql`${visitUnassignedQueueTokenCounterTable.lastNumber} + 1` },
+        set: {
+          lastNumber: sql`greatest(${visitUnassignedQueueTokenCounterTable.lastNumber}, ${usedMax}) + 1`,
+        },
       })
       .returning({ lastNumber: visitUnassignedQueueTokenCounterTable.lastNumber });
 
@@ -438,7 +468,7 @@ async function allocateQueueToken(
       tenantId: data.tenantId,
       doctorId: data.doctorId,
       tokenDate: data.visitDate,
-      lastNumber: 1,
+      lastNumber: sql`${usedMax} + 1`,
     })
     .onConflictDoUpdate({
       target: [
@@ -446,7 +476,7 @@ async function allocateQueueToken(
         visitQueueTokenCounterTable.doctorId,
         visitQueueTokenCounterTable.tokenDate,
       ],
-      set: { lastNumber: sql`${visitQueueTokenCounterTable.lastNumber} + 1` },
+      set: { lastNumber: sql`greatest(${visitQueueTokenCounterTable.lastNumber}, ${usedMax}) + 1` },
     })
     .returning({ lastNumber: visitQueueTokenCounterTable.lastNumber });
 

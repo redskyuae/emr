@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { visitStatusPresentation } from '../../_utils/visit-status';
 import { visitProcedures } from '../_utils/visit-treatment-plan';
 import { VisitProcedureCard } from './visit-procedure-card';
+import { visitDoctorLabel } from '@/lib/visit-doctor-label';
 
 const RECENT_VISIT_LIMIT = 6;
 
@@ -71,7 +72,7 @@ export function VisitPreviousVisits({
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{item.visitDate}</span>
                   <span className="text-muted-foreground block text-xs">
-                    {item.visitType.name} · {item.doctor?.name ?? 'No Doctor'}
+                    {item.visitType.name} · {visitDoctorLabel(item)}
                   </span>
                 </span>
                 <Badge
