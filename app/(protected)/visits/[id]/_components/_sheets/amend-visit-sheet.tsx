@@ -7,6 +7,7 @@ import { PencilLine } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { visitTypeRequiresDoctor } from '@/app/api/lib/modules/visit/visit-doctor-requirement';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
@@ -81,9 +82,9 @@ export function AmendVisitSheet({
   const visitTypesQuery = useVisitTypesQuery({ limit: 100 });
   const admitSourcesQuery = useAdmitSourcesQuery({ limit: 100 });
   const treatmentsQuery = useTreatmentsQuery({ page: 1, limit: 999 }, { enabled: open });
-  const [treatmentId, chiefComplaint] = useWatch({
+  const [treatmentId, chiefComplaint, visitTypeId] = useWatch({
     control: form.control,
-    name: ['treatmentId', 'chiefComplaint'],
+    name: ['treatmentId', 'chiefComplaint', 'visitTypeId'],
   });
   const errors = form.formState.errors;
 
@@ -95,8 +96,13 @@ export function AmendVisitSheet({
 
   const doctors = withCurrent(
     (doctorsQuery.data?.data ?? []).map((doctor) => ({ id: doctor.id, label: doctor.name })),
-    { id: visit.doctor.id, label: visit.doctor.name }
+    visit.doctor ? { id: visit.doctor.id, label: visit.doctor.name } : null
   );
+  const selectedVisitTypeCode =
+    String(visit.visitType.id) === visitTypeId
+      ? visit.visitType.code
+      : visitTypesQuery.data?.data.find((type) => String(type.id) === visitTypeId)?.code;
+  const doctorRequired = visitTypeRequiresDoctor(selectedVisitTypeCode);
   const visitTypes = withCurrent(
     (visitTypesQuery.data?.data ?? []).map((type) => ({ id: type.id, label: type.name })),
     { id: visit.visitType.id, label: visit.visitType.name }
@@ -119,6 +125,11 @@ export function AmendVisitSheet({
     treatmentsQuery.isLoading;
 
   const handleSave = form.handleSubmit(async (values) => {
+    if (doctorRequired && !values.doctorId) {
+      form.setError('doctorId', { message: 'Doctor is required for an OPD Consultation.' });
+      return;
+    }
+
     try {
       await amendMutation.mutateAsync({ id: visit.id, request: toAmendVisitRequest(values) });
       toast.success(`${visit.visitNumber} amended.`);
@@ -174,7 +185,7 @@ export function AmendVisitSheet({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field data-invalid={Boolean(errors.doctorId)}>
                   <FieldLabel htmlFor="amend-doctor">
-                    Doctor <RequiredMark />
+                    Doctor {doctorRequired ? <RequiredMark /> : null}
                   </FieldLabel>
                   {doctorsQuery.isLoading ? (
                     <SelectSkeleton label="Doctors" />
@@ -182,11 +193,13 @@ export function AmendVisitSheet({
                     <NativeSelect
                       id="amend-doctor"
                       className="w-full"
-                      aria-required
+                      aria-required={doctorRequired}
                       aria-invalid={Boolean(errors.doctorId)}
                       {...form.register('doctorId')}
                     >
-                      <NativeSelectOption value="">Select a Doctor</NativeSelectOption>
+                      <NativeSelectOption value="">
+                        {doctorRequired ? 'Select a Doctor' : 'No Doctor'}
+                      </NativeSelectOption>
                       {doctors.map((doctor) => (
                         <NativeSelectOption key={doctor.id} value={String(doctor.id)}>
                           {doctor.label}

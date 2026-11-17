@@ -1,7 +1,8 @@
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 
 export type AmendVisitRequest = {
-  doctorId: number;
+  /** Required for an OPD Consultation; null or omitted leaves the Visit without a Doctor. */
+  doctorId?: number | null;
   visitTypeId: number;
   remarks?: string | null;
   treatmentId?: number | null;

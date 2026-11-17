@@ -9,6 +9,7 @@ import { AlertCircle, Leaf, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
+import { visitTypeRequiresDoctor } from '@/app/api/lib/modules/visit/visit-doctor-requirement';
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { getApiErrors } from '@/app/queries/api-error';
 import { useAppointmentQuery } from '@/app/queries/appointments/useAppointment';
@@ -23,7 +24,7 @@ import {
   useCurrentUserQuery,
   useHasPermission,
 } from '@/app/queries/identity-access/useCurrentUser';
-import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
+import { useCurrentPatientTreatmentPlansQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useAdmitSourcesQuery } from '@/app/queries/visit-masters/admit-sources/useAdmitSources';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
@@ -188,7 +189,7 @@ export function CreateVisitPageImpl({
   const patientQuery = usePatientQuery(selectedPatientId);
   const patient = patientQuery.data ?? null;
   const patientTypeQuery = useVisitPatientTypeQuery(selectedPatientId);
-  const treatmentPlansQuery = usePatientTreatmentPlanHistoryQuery(
+  const treatmentPlansQuery = useCurrentPatientTreatmentPlansQuery(
     selectedPatientId,
     Boolean(canReadTreatmentPlans)
   );
@@ -279,8 +280,12 @@ export function CreateVisitPageImpl({
       setConfirmedPatientId(null);
       return;
     }
-    if (values.mode === 'appointment' && !appointment?.doctor && !values.doctorId) {
-      form.setError('doctorId', { message: 'Doctor is required for this Appointment.' });
+    const chosenVisitType = visitTypes.find((type) => String(type.id) === values.visitTypeId);
+    const hasDoctor = Boolean(
+      (values.mode === 'appointment' && appointment?.doctor) || values.doctorId
+    );
+    if (visitTypeRequiresDoctor(chosenVisitType?.code) && !hasDoctor) {
+      form.setError('doctorId', { message: 'Doctor is required for an OPD Consultation.' });
       return;
     }
 
@@ -307,7 +312,10 @@ export function CreateVisitPageImpl({
               appointmentId: Number(values.appointmentId),
               doctorId: values.doctorId ? Number(values.doctorId) : undefined,
             }
-          : { patientId: Number(values.patientId), doctorId: Number(values.doctorId) }),
+          : {
+              patientId: Number(values.patientId),
+              doctorId: values.doctorId ? Number(values.doctorId) : undefined,
+            }),
         chiefComplaint: values.chiefComplaint || undefined,
         remarks: values.remarks || undefined,
       });
@@ -457,7 +465,6 @@ export function CreateVisitPageImpl({
                   error={patientQuery.error}
                   onRetry={() => void patientQuery.refetch()}
                   confirmed
-                  confirming={checkingHistory}
                   onConfirm={confirmPatient}
                   onChange={() => setConfirmedPatientId(null)}
                 />
@@ -517,7 +524,6 @@ export function CreateVisitPageImpl({
                 error={patientQuery.error}
                 onRetry={() => void patientQuery.refetch()}
                 confirmed={false}
-                confirming={checkingHistory}
                 onConfirm={confirmPatient}
                 onChange={() => setConfirmedPatientId(null)}
               />

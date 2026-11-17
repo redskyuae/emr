@@ -247,7 +247,18 @@ describe('OpenAPI Visit amendment contracts', () => {
 
     expect(schemas.AmendVisitClinicalNoteRequest.properties).not.toHaveProperty('visitId');
     expect(schemas.AmendVisitVitalSignRequest.properties).not.toHaveProperty('visitId');
-    expect(schemas.AmendVisitRequest.required).toEqual(['doctorId', 'visitTypeId']);
+    expect(schemas.AmendVisitRequest.required).toEqual(['visitTypeId']);
+  });
+
+  it('should document the Visit Doctor as optional outside an OPD Consultation', () => {
+    const { schemas } = openApiDocument.components;
+
+    expect(schemas.AmendVisitRequest.properties.doctorId.type).toEqual(['integer', 'null']);
+    expect(schemas.Visit.properties.doctor.oneOf).toEqual([
+      { $ref: '#/components/schemas/VisitDoctorSummary' },
+      { type: 'null' },
+    ]);
+    expect(schemas.CheckInVisitRequest.required).toEqual(['visitTypeId']);
   });
 });
 

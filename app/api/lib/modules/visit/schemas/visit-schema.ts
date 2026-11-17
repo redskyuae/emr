@@ -93,9 +93,11 @@ const remarksSchema = z
   .transform((value) => (value === null || value === '' ? undefined : value));
 
 // Check-in has two shapes: fulfil an Appointment, or a Walk-in that names the
-// Patient and Doctor directly. Supplying appointmentId together with patientId
-// is ambiguous about which Patient the Visit belongs to, so it is rejected.
-// A Doctorless Procedure Appointment may send doctorId with appointmentId.
+// Patient (and optionally the Doctor) directly. Supplying appointmentId together
+// with patientId is ambiguous about which Patient the Visit belongs to, so it is
+// rejected. A Doctorless Appointment may send doctorId with appointmentId.
+// Whether a Doctor is required depends on the Visit Type, so the validator
+// enforces it once the Visit Type is resolved.
 export const checkInVisitSchema = z
   .object({
     appointmentId: positiveIdSchema('Appointment ID').optional(),
@@ -118,19 +120,13 @@ export const checkInVisitSchema = z
       context.addIssue({
         code: 'custom',
         message:
-          'Provide either appointmentId for an Appointment check-in or patientId and doctorId for a Walk-in Visit, not both.',
+          'Provide either appointmentId for an Appointment check-in or patientId for a Walk-in Visit, not both.',
       });
       return;
     }
 
-    if (!hasAppointment) {
-      if (data.patientId === undefined) {
-        context.addIssue({ code: 'custom', message: 'Patient ID is required for a Walk-in Visit' });
-      }
-
-      if (data.doctorId === undefined) {
-        context.addIssue({ code: 'custom', message: 'Doctor ID is required for a Walk-in Visit' });
-      }
+    if (!hasAppointment && data.patientId === undefined) {
+      context.addIssue({ code: 'custom', message: 'Patient ID is required for a Walk-in Visit' });
     }
   });
 
@@ -165,7 +161,7 @@ export const updateVisitSchema = z
 export const amendVisitSchema = z
   .object({
     remarks: remarksSchema,
-    doctorId: positiveIdSchema('Doctor ID'),
+    doctorId: z.union([positiveIdSchema('Doctor ID'), z.null()]).optional(),
     visitTypeId: positiveIdSchema('Visit type ID'),
     chiefComplaint: chiefComplaintSchema,
     treatmentId: optionalClearableId(treatmentIdSchema),
@@ -186,7 +182,7 @@ export const amendVisitSchema = z
   })
   .transform((data) => ({
     remarks: data.remarks,
-    doctorId: data.doctorId,
+    doctorId: data.doctorId ?? null,
     visitTypeId: data.visitTypeId,
     treatmentId: data.treatmentId ?? null,
     admitSourceId: data.admitSourceId ?? null,
@@ -242,7 +238,7 @@ export type ListVisitsInput = z.infer<typeof listVisitsSchema>;
 export type ValidatedCheckInVisitData = {
   tenantId: string;
   patientId: number;
-  doctorId: number;
+  doctorId: number | null;
   visitTypeId: number;
   admitSourceId?: number;
   appointmentId?: number;
@@ -304,7 +300,8 @@ export type Visit = {
   createdOn: Date;
   modifiedOn: Date;
   patient: VisitPatientSummary;
-  doctor: VisitDoctorSummary;
+  /** Null when the Visit was created without a Doctor (any Visit Type but OPD Consultation). */
+  doctor: VisitDoctorSummary | null;
   visitType: VisitTypeSummary;
   admitSource: VisitAdmitSourceSummary | null;
   appointment: VisitAppointmentSummary | null;

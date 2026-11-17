@@ -52,10 +52,12 @@ export function usePatientTreatmentPlansQuery({
   });
 }
 
-export function useCurrentPatientTreatmentPlansQuery(patientId: number) {
+/** Pending and In progress Plans only — the Plans a new Visit can still deliver Sessions for. */
+export function useCurrentPatientTreatmentPlansQuery(patientId: number | null, enabled = true) {
   return useQuery({
     queryKey: patientTreatmentPlansQueryKey(patientId),
-    queryFn: () => fetchPatientTreatmentPlans(patientId),
+    queryFn: () => fetchPatientTreatmentPlans(patientId as number),
+    enabled: patientId !== null && enabled,
     select: transformPatientTreatmentPlansResponse,
   });
 }

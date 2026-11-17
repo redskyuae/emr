@@ -6,6 +6,7 @@ import { admitSourceRepository } from '../../admit-source/repository/admit-sourc
 import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { treatmentRepository } from '../../treatment/repository/treatment-repository';
 import { visitTypeRepository } from '../../visit-type/repository/visit-type-repository';
+import { visitTypeRequiresDoctor } from '../visit-doctor-requirement';
 import {
   amendVisitSchema,
   visitIdSchema,
@@ -23,11 +24,11 @@ type AmendVisitParams = {
 // at a Doctor, VisitType, Admit Source or Treatment that has since been
 // deactivated or deleted, and amending another field must not force it to change.
 async function validateDoctor(
-  doctorId: number,
+  doctorId: number | null,
   visit: Visit,
   tenantId: string
 ): Promise<string | undefined> {
-  if (doctorId === visit.doctor.id) {
+  if (doctorId === null || doctorId === visit.doctor?.id) {
     return undefined;
   }
 
@@ -44,14 +45,19 @@ async function validateDoctor(
   return undefined;
 }
 
-async function validateVisitType(visitTypeId: number, visit: Visit, tenantId: string) {
+// Resolves the amended Visit Type so the Doctor rule can read its code.
+async function validateVisitType(
+  visitTypeId: number,
+  visit: Visit,
+  tenantId: string
+): Promise<{ error?: string; code?: string }> {
   if (visitTypeId === visit.visitType.id) {
-    return undefined;
+    return { code: visit.visitType.code };
   }
 
   const visitType = await visitTypeRepository.getVisitTypeById(visitTypeId, tenantId);
 
-  return visitType ? undefined : `Visit type ${visitTypeId} is Invalid.`;
+  return visitType ? { code: visitType.code } : { error: `Visit type ${visitTypeId} is Invalid.` };
 }
 
 async function validateAdmitSource(admitSourceId: number | null, visit: Visit, tenantId: string) {
@@ -125,15 +131,23 @@ export async function validateAmendVisit(
   const visit = visitResult.data;
   const data = payloadResult.data;
 
-  const [doctorError, visitTypeError, admitSourceError, treatmentErrors] = await Promise.all([
+  const [doctorError, visitType, admitSourceError, treatmentErrors] = await Promise.all([
     validateDoctor(data.doctorId, visit, tenantId),
     validateVisitType(data.visitTypeId, visit, tenantId),
     validateAdmitSource(data.admitSourceId, visit, tenantId),
     validateTreatment(data, visit, tenantId),
   ]);
-  const errors = [doctorError, visitTypeError, admitSourceError, ...treatmentErrors].filter(
-    (error): error is string => error !== undefined
-  );
+  const doctorRequiredError =
+    data.doctorId === null && visitTypeRequiresDoctor(visitType.code)
+      ? 'Doctor ID is required for an OPD Consultation Visit'
+      : undefined;
+  const errors = [
+    doctorError,
+    doctorRequiredError,
+    visitType.error,
+    admitSourceError,
+    ...treatmentErrors,
+  ].filter((error): error is string => error !== undefined);
 
   if (errors.length > 0) {
     return { success: false, errors, status: StatusCodes.CONFLICT };

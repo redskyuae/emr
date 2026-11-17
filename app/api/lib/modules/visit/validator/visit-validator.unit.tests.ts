@@ -82,7 +82,11 @@ describe('Visit validators', () => {
       id: 'tenant-1',
       timeZone: 'Asia/Kolkata',
     } as never);
-    visitTypeRepo.getVisitTypeById.mockResolvedValue({ id: 2, name: 'OPD' } as never);
+    visitTypeRepo.getVisitTypeById.mockResolvedValue({
+      id: 2,
+      name: 'OPD Consultation',
+      code: 'OPD',
+    } as never);
     admitSourceRepo.getAdmitSourceById.mockResolvedValue({ id: 4, name: 'Emergency' } as never);
     appointmentRepo.getAppointmentById.mockResolvedValue(appointment as never);
     patientRepo.getPatientById.mockResolvedValue(registeredPatient as never);
@@ -301,6 +305,48 @@ describe('Visit validators', () => {
         errors: ['Doctor 99 is Invalid.'],
       });
     });
+
+    it('should check in a doctorless appointment without a Doctor when the Visit Type is not OPD', async () => {
+      appointmentRepo.getAppointmentById.mockResolvedValue({
+        ...appointment,
+        doctor: null,
+      } as never);
+      visitTypeRepo.getVisitTypeById.mockResolvedValue({
+        id: 6,
+        name: 'Procedure',
+        code: 'PROC',
+      } as never);
+
+      await expect(
+        validateCheckInVisit({ appointmentId: 5, visitTypeId: 6 }, 'tenant-1')
+      ).resolves.toMatchObject({
+        success: true,
+        data: { patientId: 7, doctorId: null, appointmentId: 5 },
+      });
+      expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
+    });
+
+    it('should require a Doctor for an OPD Consultation walk-in', async () => {
+      await expect(
+        validateCheckInVisit({ patientId: 7, visitTypeId: 2 }, 'tenant-1')
+      ).resolves.toEqual({
+        success: false,
+        errors: ['Doctor ID is required for an OPD Consultation Visit'],
+      });
+      expect(patientRepo.getPatientById).not.toHaveBeenCalled();
+    });
+
+    it.each(['FUP', 'PROC', 'VAC', 'EMER'])(
+      'should create a %s walk-in without a Doctor',
+      async (code) => {
+        visitTypeRepo.getVisitTypeById.mockResolvedValue({ id: 6, name: code, code } as never);
+
+        await expect(
+          validateCheckInVisit({ patientId: 7, visitTypeId: 6 }, 'tenant-1')
+        ).resolves.toMatchObject({ success: true, data: { patientId: 7, doctorId: null } });
+        expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
+      }
+    );
 
     it('should reject a provisional patient', async () => {
       patientRepo.getPatientById.mockResolvedValue({

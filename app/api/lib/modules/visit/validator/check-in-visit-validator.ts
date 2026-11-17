@@ -10,6 +10,7 @@ import { patientRepository } from '../../patient/repository/patient-repository';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { visitTypeRepository } from '../../visit-type/repository/visit-type-repository';
 import { visitRepository } from '../repository/visit-repository';
+import { visitTypeRequiresDoctor } from '../visit-doctor-requirement';
 import {
   checkInVisitSchema,
   formatVisitDate,
@@ -101,8 +102,9 @@ export async function validateCheckInVisit(
   // The Tenant owns the operational clock, so "today" is its local date (ADR 0026).
   const visitDate = tenantLocalDateTime(new Date(), tenant.timeZone).date;
 
+  const doctorRequired = visitTypeRequiresDoctor(visitType.code);
   let patientId: number;
-  let doctorId: number;
+  let doctorId: number | null = null;
   let treatmentId: number | undefined;
   let treatmentSessionId: number | undefined;
 
@@ -138,15 +140,9 @@ export async function validateCheckInVisit(
       };
     }
 
-    if (!appointment.doctor) {
-      if (data.doctorId === undefined) {
-        return {
-          success: false,
-          errors: ['A Doctor must be assigned before this Appointment can be checked in.'],
-          status: StatusCodes.CONFLICT,
-        };
-      }
-
+    if (appointment.doctor) {
+      doctorId = appointment.doctor.id;
+    } else if (data.doctorId !== undefined) {
       const assignedDoctor = await resolveActiveDoctor(data.doctorId, validatedTenantId);
 
       if (!assignedDoctor.success) {
@@ -154,8 +150,12 @@ export async function validateCheckInVisit(
       }
 
       doctorId = assignedDoctor.data;
-    } else {
-      doctorId = appointment.doctor.id;
+    } else if (doctorRequired) {
+      return {
+        success: false,
+        errors: ['A Doctor must be assigned before this Appointment can be checked in.'],
+        status: StatusCodes.CONFLICT,
+      };
     }
 
     const existingVisit = await visitRepository.findNonCancelledVisitByAppointmentId(
@@ -175,15 +175,20 @@ export async function validateCheckInVisit(
     treatmentId = appointment.treatment?.id;
     treatmentSessionId = appointment.treatmentSession?.id;
   } else {
-    // The schema guarantees both are present when appointmentId is absent.
+    // The schema guarantees patientId is present when appointmentId is absent.
     patientId = data.patientId as number;
-    const assignedDoctor = await resolveActiveDoctor(data.doctorId as number, validatedTenantId);
 
-    if (!assignedDoctor.success) {
-      return assignedDoctor;
+    if (data.doctorId !== undefined) {
+      const assignedDoctor = await resolveActiveDoctor(data.doctorId, validatedTenantId);
+
+      if (!assignedDoctor.success) {
+        return assignedDoctor;
+      }
+
+      doctorId = assignedDoctor.data;
+    } else if (doctorRequired) {
+      return { success: false, errors: ['Doctor ID is required for an OPD Consultation Visit'] };
     }
-
-    doctorId = assignedDoctor.data;
   }
 
   const patient = await patientRepository.getPatientById(patientId, validatedTenantId);

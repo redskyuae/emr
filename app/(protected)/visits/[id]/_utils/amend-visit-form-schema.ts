@@ -6,7 +6,9 @@ import { CHIEF_COMPLAINT_MAX } from '../../new/_utils/create-visit-form-schema';
 
 export const amendVisitFormSchema = z
   .object({
-    doctorId: z.string().min(1, 'Doctor is required.'),
+    // Required only for an OPD Consultation; the sheet enforces that on save
+    // because the rule reads the Visit Type's code (visitTypeRequiresDoctor).
+    doctorId: z.string(),
     visitTypeId: z.string().min(1, 'Visit type is required.'),
     admitSourceId: z.string(),
     treatmentId: z.string(),
@@ -35,7 +37,7 @@ export type AmendVisitFormValues = z.infer<typeof amendVisitFormSchema>;
 /** The form opens on what the Visit holds today. */
 export function amendVisitFormDefaults(visit: Visit): AmendVisitFormValues {
   return {
-    doctorId: String(visit.doctor.id),
+    doctorId: visit.doctor ? String(visit.doctor.id) : '',
     visitTypeId: String(visit.visitType.id),
     admitSourceId: visit.admitSource ? String(visit.admitSource.id) : '',
     treatmentId: visit.treatment ? String(visit.treatment.id) : '',
@@ -50,7 +52,7 @@ export function toAmendVisitRequest(values: AmendVisitFormValues): AmendVisitReq
   const optionalId = (value: string) => (value ? Number(value) : null);
 
   return {
-    doctorId: Number(values.doctorId),
+    doctorId: optionalId(values.doctorId),
     visitTypeId: Number(values.visitTypeId),
     admitSourceId: optionalId(values.admitSourceId),
     treatmentId: optionalId(values.treatmentId),

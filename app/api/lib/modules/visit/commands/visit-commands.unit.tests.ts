@@ -173,6 +173,18 @@ describe('Visit commands', () => {
       });
     });
 
+    it('should map an unassigned queue token collision to a retryable conflict', async () => {
+      repo.checkInVisit.mockRejectedValue({
+        cause: { code: '23505', constraint: 'visit_unassigned_day_token_idx' },
+      });
+
+      await expect(checkInVisitCommand({}, 'tenant-1')).resolves.toMatchObject({
+        success: false,
+        status: StatusCodes.CONFLICT,
+        errors: ['Queue Token allocation conflicted. Please retry.'],
+      });
+    });
+
     it('should rethrow unknown repository errors', async () => {
       const error = new Error('database down');
       repo.checkInVisit.mockRejectedValue(error);

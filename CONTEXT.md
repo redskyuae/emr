@@ -298,7 +298,7 @@ An outpatient clinical event. Occurs when a Patient attends a Facility for a con
 
 ## Queue Token
 
-A same-day ordering number assigned when a Patient checks in for a Visit. A Queue Token belongs to the arrival workflow and is not assigned when an Appointment is booked. Queue Tokens are numbered per Doctor per Tenant-local day in check-in order and are never reused within that day, including when the Visit is cancelled.
+A same-day ordering number assigned when a Patient checks in for a Visit. A Queue Token belongs to the arrival workflow and is not assigned when an Appointment is booked. Queue Tokens are numbered per Doctor per Tenant-local day in check-in order and are never reused within that day, including when the Visit is cancelled. A Visit without a Doctor takes its token from the Tenant's shared unassigned queue for that day.
 
 ## Treatment
 
@@ -362,7 +362,7 @@ A correction made to a Completed Visit after it closed, by a user holding the `v
 
 ## Walk-in Visit
 
-A Visit created at the Facility without a preceding Appointment. Identical to any other Visit once created; the Doctor is supplied directly at Check-in rather than derived from an Appointment.
+A Visit created at the Facility without a preceding Appointment. Identical to any other Visit once created; the Doctor, when there is one, is supplied directly at Check-in rather than derived from an Appointment. Only an OPD Consultation requires a Doctor; any other VisitType may be checked in without one.
 
 ## Active Visit
 

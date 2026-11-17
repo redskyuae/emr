@@ -33,14 +33,12 @@ describe('amendVisitFormSchema', () => {
     expect(amendVisitFormSchema.safeParse(values).success).toBe(true);
   });
 
-  it('should require a Doctor and a Visit Type', () => {
+  // The Doctor is required only for an OPD Consultation, which the sheet checks on save.
+  it('should require a Visit Type but leave the Doctor optional', () => {
     const result = amendVisitFormSchema.safeParse({ ...values, doctorId: '', visitTypeId: '' });
 
     expect(result.success).toBe(false);
-    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
-      'Doctor is required.',
-      'Visit type is required.',
-    ]);
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual(['Visit type is required.']);
   });
 
   it('should require a Session when a Treatment is chosen', () => {
@@ -75,6 +73,12 @@ describe('amendVisitFormDefaults', () => {
   });
 });
 
+describe('amendVisitFormDefaults for a Doctorless Visit', () => {
+  it('should open with no Doctor selected', () => {
+    expect(amendVisitFormDefaults({ ...visit, doctor: null }).doctorId).toBe('');
+  });
+});
+
 describe('toAmendVisitRequest', () => {
   it('should send blank choices as null so they are cleared', () => {
     expect(toAmendVisitRequest(values)).toEqual({
@@ -86,6 +90,10 @@ describe('toAmendVisitRequest', () => {
       chiefComplaint: 'Lower back pain',
       remarks: null,
     });
+  });
+
+  it('should send a blank Doctor as null', () => {
+    expect(toAmendVisitRequest({ ...values, doctorId: '' }).doctorId).toBeNull();
   });
 
   it('should send the Treatment and Session together', () => {

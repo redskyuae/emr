@@ -177,6 +177,36 @@ async function findActiveByCode(
   return ayurvedaDiagnosisCode;
 }
 
+type AyurvedaDiagnosisCodeSeed = {
+  code: string;
+  name: string;
+  category: string;
+  englishName: string;
+};
+
+// Seeds unmapped starter codes; a code the Tenant already holds (active) is left untouched.
+async function seedDefaultAyurvedaDiagnosisCodes(
+  tenantId: string,
+  defaults: AyurvedaDiagnosisCodeSeed[]
+) {
+  if (defaults.length === 0) {
+    return;
+  }
+
+  await db
+    .insert(ayurvedaDiagnosisCodeTable)
+    .values(
+      defaults.map((ayurvedaDiagnosisCode) => ({
+        tenantId,
+        code: ayurvedaDiagnosisCode.code,
+        name: ayurvedaDiagnosisCode.name,
+        category: ayurvedaDiagnosisCode.category,
+        englishName: ayurvedaDiagnosisCode.englishName,
+      }))
+    )
+    .onConflictDoNothing();
+}
+
 export const ayurvedaDiagnosisCodeRepository = {
   findActiveByCode,
   getAyurvedaDiagnosisCodes,
@@ -184,4 +214,5 @@ export const ayurvedaDiagnosisCodeRepository = {
   updateAyurvedaDiagnosisCode,
   deleteAyurvedaDiagnosisCode,
   getAyurvedaDiagnosisCodeById,
+  seedDefaultAyurvedaDiagnosisCodes,
 };

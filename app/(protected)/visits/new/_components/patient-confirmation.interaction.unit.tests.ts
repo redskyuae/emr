@@ -58,7 +58,6 @@ function renderConfirmation(props: Partial<Parameters<typeof PatientConfirmation
       loading: false,
       error: null,
       confirmed: false,
-      confirming: false,
       ...handlers,
       ...props,
     })
@@ -81,11 +80,14 @@ describe('Patient confirmation', () => {
     expect(screen.queryByText('Patient registration form')).toBeNull();
   });
 
-  it('should confirm the Patient from the details card', async () => {
+  it('should leave confirming the Patient to the page Confirm Patient action', () => {
     const { onConfirm } = renderConfirmation();
 
-    await userEvent.click(screen.getByRole('button', { name: /Details are correct/ }));
-    expect(onConfirm).toHaveBeenCalledOnce();
+    expect(
+      screen.getByText('Check these details with the Patient, then select Confirm Patient.')
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Details are correct/ })).toBeNull();
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 
   it('should open the registration form on request', async () => {
@@ -93,7 +95,6 @@ describe('Patient confirmation', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Edit registration' }));
     expect(screen.getByText('Patient registration form')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Details are correct/ })).toBeNull();
   });
 
   it('should require a Provisional Patient to complete registration first', () => {
@@ -101,7 +102,9 @@ describe('Patient confirmation', () => {
 
     expect(screen.getByText('Provisional')).toBeTruthy();
     expect(screen.getByText('Patient registration form')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Details are correct/ })).toBeNull();
+    expect(
+      screen.getByText('Complete and save Patient registration before creating the Visit.')
+    ).toBeTruthy();
   });
 
   it('should collapse to a confirmed summary that can be changed', async () => {

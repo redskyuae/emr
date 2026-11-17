@@ -70,21 +70,22 @@ describe('Visit schema', () => {
           })
         )
       ).toContain(
-        'Provide either appointmentId for an Appointment check-in or patientId and doctorId for a Walk-in Visit, not both.'
+        'Provide either appointmentId for an Appointment check-in or patientId for a Walk-in Visit, not both.'
       );
     });
 
-    it('should require patient and doctor for a walk-in', () => {
-      const errors = errorsOf(checkInVisitSchema.safeParse({ visitTypeId: 2 }));
-
-      expect(errors).toContain('Patient ID is required for a Walk-in Visit');
-      expect(errors).toContain('Doctor ID is required for a Walk-in Visit');
+    it('should require the patient for a walk-in', () => {
+      expect(errorsOf(checkInVisitSchema.safeParse({ visitTypeId: 2 }))).toEqual([
+        'Patient ID is required for a Walk-in Visit',
+      ]);
     });
 
-    it('should require a doctor when only a patient is supplied', () => {
-      expect(errorsOf(checkInVisitSchema.safeParse({ patientId: 7, visitTypeId: 2 }))).toContain(
-        'Doctor ID is required for a Walk-in Visit'
-      );
+    // Whether the Visit Type needs a Doctor is a repository-backed validator rule.
+    it('should accept a walk-in without a doctor', () => {
+      const result = checkInVisitSchema.safeParse({ patientId: 7, visitTypeId: 2 });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.doctorId).toBeUndefined();
     });
 
     it('should require the visit type', () => {
@@ -342,11 +343,12 @@ describe('Visit schema', () => {
   describe('amendVisitSchema', () => {
     const base = { doctorId: 3, visitTypeId: 2 };
 
-    it('should require the Doctor and VisitType', () => {
-      const errors = errorsOf(amendVisitSchema.safeParse({}));
+    it('should require the VisitType', () => {
+      expect(errorsOf(amendVisitSchema.safeParse({}))).toEqual(['Visit type ID is required']);
+    });
 
-      expect(errors).toContain('Doctor ID is required');
-      expect(errors).toContain('Visit type ID is required');
+    it.each([null, undefined])('should clear the Doctor when it is %s', (doctorId) => {
+      expect(amendVisitSchema.parse({ visitTypeId: 2, doctorId }).doctorId).toBeNull();
     });
 
     it('should reject a Doctor ID that is not positive', () => {

@@ -1,25 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createAyurvedaDiagnosisCodeSchema } from '../../ayurveda-diagnosis-code/schemas/ayurveda-diagnosis-code-schema';
 import { seedDefaultClinicalMastersCommand } from './seed-default-clinical-masters-command';
 
 describe('SeedDefaultClinicalMasters command', () => {
   const seedDiagnosisCodes = vi.fn();
   const seedAllergens = vi.fn();
   const seedClinicalNoteTypes = vi.fn();
+  const seedAyurvedaDiagnosisCodes = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     seedDiagnosisCodes.mockResolvedValue(undefined);
     seedAllergens.mockResolvedValue(undefined);
     seedClinicalNoteTypes.mockResolvedValue(undefined);
+    seedAyurvedaDiagnosisCodes.mockResolvedValue(undefined);
   });
 
-  it('should seed all three clinical master families for the validated tenant', async () => {
+  it('should seed all four clinical master families for the validated tenant', async () => {
     const result = await seedDefaultClinicalMastersCommand(
       ' tenant-a ',
       seedDiagnosisCodes,
       seedAllergens,
-      seedClinicalNoteTypes
+      seedClinicalNoteTypes,
+      seedAyurvedaDiagnosisCodes
     );
 
     expect(result).toEqual({ success: true, data: undefined });
@@ -37,6 +41,29 @@ describe('SeedDefaultClinicalMasters command', () => {
         { name: 'Progress Note', code: 'PROG', description: expect.any(String) },
       ])
     );
+    expect(seedAyurvedaDiagnosisCodes).toHaveBeenCalledWith(
+      'tenant-a',
+      expect.arrayContaining([
+        { code: 'AYU-JVARA', name: 'Jvara', englishName: 'Fever', category: 'General' },
+      ])
+    );
+  });
+
+  it('should seed 34 unique, schema-valid starter Ayurveda Diagnosis Codes', async () => {
+    await seedDefaultClinicalMastersCommand(
+      'tenant-a',
+      seedDiagnosisCodes,
+      seedAllergens,
+      seedClinicalNoteTypes,
+      seedAyurvedaDiagnosisCodes
+    );
+
+    const [, codes] = seedAyurvedaDiagnosisCodes.mock.calls[0];
+    const parsed = codes.map((code: unknown) => createAyurvedaDiagnosisCodeSchema.safeParse(code));
+
+    expect(codes).toHaveLength(34);
+    expect(new Set(codes.map(({ code }: { code: string }) => code)).size).toBe(34);
+    expect(parsed.every(({ success }: { success: boolean }) => success)).toBe(true);
   });
 
   it('should reject an invalid tenant before seeding', async () => {
@@ -44,13 +71,15 @@ describe('SeedDefaultClinicalMasters command', () => {
       '   ',
       seedDiagnosisCodes,
       seedAllergens,
-      seedClinicalNoteTypes
+      seedClinicalNoteTypes,
+      seedAyurvedaDiagnosisCodes
     );
 
     expect(result).toEqual({ success: false, errors: ['Tenant ID is required'] });
     expect(seedDiagnosisCodes).not.toHaveBeenCalled();
     expect(seedAllergens).not.toHaveBeenCalled();
     expect(seedClinicalNoteTypes).not.toHaveBeenCalled();
+    expect(seedAyurvedaDiagnosisCodes).not.toHaveBeenCalled();
   });
 
   it('should return a clean failure when seeding rejects', async () => {
@@ -60,7 +89,8 @@ describe('SeedDefaultClinicalMasters command', () => {
       'tenant-a',
       seedDiagnosisCodes,
       seedAllergens,
-      seedClinicalNoteTypes
+      seedClinicalNoteTypes,
+      seedAyurvedaDiagnosisCodes
     );
 
     expect(result).toEqual({

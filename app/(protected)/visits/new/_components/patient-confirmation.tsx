@@ -77,7 +77,6 @@ export function PatientConfirmation({
   error,
   onRetry,
   confirmed,
-  confirming,
   onConfirm,
   onChange,
 }: {
@@ -87,7 +86,7 @@ export function PatientConfirmation({
   error: unknown;
   onRetry: () => void;
   confirmed: boolean;
-  confirming: boolean;
+  /** Runs after the Patient's registration is saved from the inline form. */
   onConfirm: () => Promise<void> | void;
   onChange: () => void;
 }) {
@@ -230,18 +229,12 @@ export function PatientConfirmation({
               <Detail label="Emergency contact" value={emergencyContactSummary(patient)} />
               <Detail label="Identity" value={identity} mono />
             </dl>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
+            <div className="border-t px-4 py-3">
               <p className="text-muted-foreground text-sm">
                 {registered
-                  ? 'Check these details with the Patient before continuing.'
+                  ? 'Check these details with the Patient, then select Confirm Patient.'
                   : 'Complete and save Patient registration before creating the Visit.'}
               </p>
-              {registered && !editing ? (
-                <Button type="button" disabled={confirming} onClick={() => void onConfirm()}>
-                  <CheckCircle2 className="size-4" />
-                  {confirming ? 'Checking Visit history…' : 'Details are correct · Continue'}
-                </Button>
-              ) : null}
             </div>
           </>
         )}

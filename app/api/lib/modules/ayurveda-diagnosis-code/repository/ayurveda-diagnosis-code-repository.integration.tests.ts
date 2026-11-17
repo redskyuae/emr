@@ -194,4 +194,36 @@ describe('AyurvedaDiagnosisCode repository', () => {
     expect(secondPage.total).toBe(3);
     expect(secondPage.data.map(({ code }) => code)).toEqual(['AYU-SAN']);
   });
+
+  it('should seed unmapped starter codes per Tenant without duplicating existing codes', async () => {
+    const seed = [
+      { code: 'AYU-JVARA', name: 'Jvara', englishName: 'Fever', category: 'General' },
+      { code: 'AYU-KASA', name: 'Kasa', englishName: 'Cough', category: 'Respiratory' },
+    ];
+    await createAyurvedaCode(tenantA, 'AYU-JVARA', { name: 'Jvara (custom)' });
+
+    await ayurvedaDiagnosisCodeRepository.seedDefaultAyurvedaDiagnosisCodes(tenantA, seed);
+    await ayurvedaDiagnosisCodeRepository.seedDefaultAyurvedaDiagnosisCodes(tenantA, seed);
+    await ayurvedaDiagnosisCodeRepository.seedDefaultAyurvedaDiagnosisCodes(tenantA, []);
+
+    const tenantACodes = await ayurvedaDiagnosisCodeRepository.getAyurvedaDiagnosisCodes({
+      tenantId: tenantA,
+    });
+    const tenantBCodes = await ayurvedaDiagnosisCodeRepository.getAyurvedaDiagnosisCodes({
+      tenantId: tenantB,
+    });
+
+    expect(tenantACodes.total).toBe(2);
+    expect(tenantACodes.data).toEqual([
+      expect.objectContaining({ code: 'AYU-JVARA', name: 'Jvara (custom)' }),
+      expect.objectContaining({
+        code: 'AYU-KASA',
+        name: 'Kasa',
+        englishName: 'Cough',
+        category: 'Respiratory',
+        icdDiagnosisCode: null,
+      }),
+    ]);
+    expect(tenantBCodes.total).toBe(0);
+  });
 });

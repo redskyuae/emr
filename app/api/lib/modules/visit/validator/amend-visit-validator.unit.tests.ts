@@ -57,7 +57,7 @@ describe('Visit amendment validators', () => {
     vi.clearAllMocks();
     visitRepo.getVisitById.mockResolvedValue(completedVisit);
     doctorRepo.getDoctorById.mockResolvedValue({ id: 5, isActive: true } as never);
-    visitTypeRepo.getVisitTypeById.mockResolvedValue({ id: 6 } as never);
+    visitTypeRepo.getVisitTypeById.mockResolvedValue({ id: 6, code: 'PROC' } as never);
     admitSourceRepo.getAdmitSourceById.mockResolvedValue({ id: 7 } as never);
     treatmentRepo.getTreatmentById.mockResolvedValue({ id: 11 } as never);
     treatmentRepo.getTreatmentSessionById.mockResolvedValue({ id: 21, treatmentId: 11 } as never);
@@ -181,6 +181,46 @@ describe('Visit amendment validators', () => {
       });
       expect(admitSourceRepo.getAdmitSourceById).not.toHaveBeenCalled();
       expect(treatmentRepo.getTreatmentById).not.toHaveBeenCalled();
+    });
+
+    it('should return conflict when clearing the Doctor of an OPD Consultation', async () => {
+      await expect(
+        validateAmendVisit('1', { ...unchangedPayload, doctorId: null }, 'tenant-1')
+      ).resolves.toEqual({
+        success: false,
+        errors: ['Doctor ID is required for an OPD Consultation Visit'],
+        status: StatusCodes.CONFLICT,
+      });
+    });
+
+    it('should accept clearing the Doctor when the Visit becomes a non-OPD Visit Type', async () => {
+      const result = await validateAmendVisit(
+        '1',
+        { ...unchangedPayload, doctorId: null, visitTypeId: 6 },
+        'tenant-1'
+      );
+
+      expect(result).toMatchObject({ success: true, data: { payload: { doctorId: null } } });
+      expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
+      expect(visitTypeRepo.getVisitTypeById).toHaveBeenCalledWith(6, 'tenant-1');
+    });
+
+    it('should keep a Doctorless Visit without a Doctor lookup', async () => {
+      visitRepo.getVisitById.mockResolvedValue({
+        ...completedVisit,
+        doctor: null,
+        visitType: { id: 6, name: 'Procedure', code: 'PROC' },
+      });
+
+      const result = await validateAmendVisit(
+        '1',
+        { ...unchangedPayload, doctorId: undefined, visitTypeId: 6 },
+        'tenant-1'
+      );
+
+      expect(result).toMatchObject({ success: true, data: { payload: { doctorId: null } } });
+      expect(doctorRepo.getDoctorById).not.toHaveBeenCalled();
+      expect(visitTypeRepo.getVisitTypeById).not.toHaveBeenCalled();
     });
 
     it('should return conflict for an unknown Doctor', async () => {

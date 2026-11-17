@@ -79,8 +79,8 @@ function visitBranches({ tenantId, patientId }: Scope): Branch[] {
         null::integer as detail_count,
         null::integer as parent_id
       from visit v
-      join doctor d on d.id = v.doctor_id and d.tenant_id = v.tenant_id
-      join "user" u on u.id = d.user_id
+      left join doctor d on d.id = v.doctor_id and d.tenant_id = v.tenant_id
+      left join "user" u on u.id = d.user_id
       where v.tenant_id = ${tenantId}
         and v.patient_id = ${patientId}
         and v.is_deleted = false
