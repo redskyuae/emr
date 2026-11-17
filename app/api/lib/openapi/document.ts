@@ -905,6 +905,17 @@ const visitExample = {
   modifiedOn: '2026-07-16T04:30:00.000Z',
 };
 
+const doctorlessVisitExample = {
+  ...visitExample,
+  id: 502,
+  visitNumber: 'VST-1002',
+  queueToken: 3,
+  doctor: null,
+  visitType: { id: 3, name: 'Procedure', code: 'PROC' },
+  appointment: null,
+  chiefComplaint: 'Abhyanga session 2 of 6',
+};
+
 const amendedVisitExample = {
   ...visitExample,
   status: 'COMPLETED',
@@ -4963,7 +4974,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Check in a Patient for a Visit',
         description:
-          'Creates a Visit in the active Tenant. Send either appointmentId to fulfil an Appointment booked for today — the Patient is taken from it, the Doctor is taken from it when assigned, and the Appointment moves to its Checked In status — or patientId and doctorId for a Walk-in Visit; sending appointmentId together with patientId is invalid. A Procedure Appointment with no Doctor must include doctorId at Check-in because every Visit requires one. The server assigns the Visit Number and the Queue Token (per Doctor, per Tenant-local day). The Patient must be a Registered Patient who is active, and must not already have an Active Visit.',
+          'Creates a Visit in the active Tenant. Send either appointmentId to fulfil an Appointment booked for today — the Patient is taken from it, the Doctor is taken from it when assigned, and the Appointment moves to its Checked In status — or patientId (with an optional doctorId) for a Walk-in Visit; sending appointmentId together with patientId is invalid. A Doctor is required only when the VisitType is an OPD Consultation (code `OPD`): a Walk-in must then send doctorId, and an Appointment with no Doctor must include doctorId. Every other VisitType (Follow-up, Procedure, Vaccination, Emergency, …) may be created without a Doctor, and the Visit is returned with `doctor: null`. The server assigns the Visit Number and the Queue Token: per Doctor per Tenant-local day, or from the shared unassigned queue for that day when the Visit has no Doctor. The Patient must be a Registered Patient who is active, and must not already have an Active Visit.',
         security: [{ cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -4989,8 +5000,16 @@ export const openApiDocument = {
                     chiefComplaint: 'Abhyanga session 1 of 6',
                   },
                 },
+                walkInWithoutDoctor: {
+                  summary: 'Walk-in Procedure Visit with no Doctor',
+                  value: {
+                    patientId: 1042,
+                    visitTypeId: 3,
+                    chiefComplaint: 'Abhyanga session 2 of 6',
+                  },
+                },
                 walkIn: {
-                  summary: 'Walk-in Visit with no Appointment',
+                  summary: 'Walk-in OPD Consultation with its Doctor',
                   value: {
                     patientId: 1042,
                     doctorId: 7,
@@ -5006,16 +5025,45 @@ export const openApiDocument = {
         responses: {
           '201': {
             description: 'Visit created and Queue Token issued.',
-            content: jsonContent(dataEnvelopeSchema('Visit'), { data: visitExample }),
+            content: {
+              'application/json': {
+                schema: dataEnvelopeSchema('Visit'),
+                examples: {
+                  withDoctor: { summary: 'OPD Consultation', value: { data: visitExample } },
+                  withoutDoctor: {
+                    summary: 'Procedure Visit with no Doctor, from the unassigned queue',
+                    value: { data: doctorlessVisitExample },
+                  },
+                },
+              },
+            },
           },
           '400': {
-            description: 'The request body is invalid or mixes the two check-in shapes.',
-            content: jsonContent(schemaRef('ValidationError'), {
-              message: 'Validation failed',
-              errors: [
-                'Provide either appointmentId for an Appointment check-in or patientId and doctorId for a Walk-in Visit, not both.',
-              ],
-            }),
+            description:
+              'The request body is invalid, mixes the two check-in shapes, or omits the Doctor of an OPD Consultation Walk-in.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  mixedShapes: {
+                    summary: 'Both an Appointment and Walk-in Patient supplied',
+                    value: {
+                      message: 'Validation failed',
+                      errors: [
+                        'Provide either appointmentId for an Appointment check-in or patientId for a Walk-in Visit, not both.',
+                      ],
+                    },
+                  },
+                  opdWithoutDoctor: {
+                    summary: 'OPD Consultation Walk-in without a Doctor',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Doctor ID is required for an OPD Consultation Visit'],
+                    },
+                  },
+                },
+              },
+            },
           },
           '401': responseRef('Unauthorized'),
           '403': responseRef('Forbidden'),
@@ -5026,6 +5074,16 @@ export const openApiDocument = {
               'application/json': {
                 schema: schemaRef('ValidationError'),
                 examples: {
+                  opdAppointmentWithoutDoctor: {
+                    summary: 'OPD Consultation for an Appointment that has no Doctor',
+                    value: {
+                      message:
+                        'A Doctor must be assigned before this Appointment can be checked in.',
+                      errors: [
+                        'A Doctor must be assigned before this Appointment can be checked in.',
+                      ],
+                    },
+                  },
                   activeVisit: {
                     summary: 'Patient already has an Active Visit',
                     value: {
@@ -5307,7 +5365,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Amend a Completed Visit',
         description:
-          'Corrects the encounter details of a Completed Visit: Doctor, VisitType, Admit Source, chief complaint, remarks, and Treatment with its Session. The body is a full replace: an omitted or null optional field is cleared. The Visit number, visit date, Queue Token, status, and lifecycle timestamps never change. A Doctor, VisitType, Admit Source, or Treatment the Visit already holds is kept even if it has since been deactivated or deleted; a newly chosen one must exist in the Tenant, and a newly chosen Doctor must be active. Active Visits are edited with PUT /api/v1/visits/{id}; a Cancelled Visit cannot be amended. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.',
+          'Corrects the encounter details of a Completed Visit: Doctor, VisitType, Admit Source, chief complaint, remarks, and Treatment with its Session. The body is a full replace: an omitted or null optional field is cleared. The Doctor is optional unless the amended VisitType is an OPD Consultation (code `OPD`); omit or send null to leave the Visit without a Doctor. The Visit number, visit date, Queue Token, status, and lifecycle timestamps never change. A Doctor, VisitType, Admit Source, or Treatment the Visit already holds is kept even if it has since been deactivated or deleted; a newly chosen one must exist in the Tenant, and a newly chosen Doctor must be active. Active Visits are edited with PUT /api/v1/visits/{id}; a Cancelled Visit cannot be amended. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         requestBody: requestBody('AmendVisitRequest', {
@@ -5335,11 +5393,11 @@ export const openApiDocument = {
                     summary: 'Non-numeric Visit ID',
                     value: { message: 'Validation failed', errors: ['Visit abc is Invalid.'] },
                   },
-                  missingDoctor: {
-                    summary: 'Doctor and VisitType are required',
+                  missingVisitType: {
+                    summary: 'VisitType is required',
                     value: {
                       message: 'Validation failed',
-                      errors: ['Doctor ID is required', 'Visit type ID is required'],
+                      errors: ['Visit type ID is required'],
                     },
                   },
                   treatmentWithoutSession: {
@@ -5381,6 +5439,13 @@ export const openApiDocument = {
                     value: {
                       message: 'Visit VST-1001 is not completed and cannot be amended.',
                       errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+                    },
+                  },
+                  opdWithoutDoctor: {
+                    summary: 'OPD Consultation amended without a Doctor',
+                    value: {
+                      message: 'Doctor ID is required for an OPD Consultation Visit',
+                      errors: ['Doctor ID is required for an OPD Consultation Visit'],
                     },
                   },
                   inactiveDoctor: {
@@ -10393,7 +10458,7 @@ export const openApiDocument = {
         type: 'object',
         required: ['visitTypeId'],
         description:
-          'Send exactly one of: appointmentId (Appointment check-in, with optional doctorId when the Appointment has no Doctor), or patientId together with doctorId (Walk-in Visit).',
+          'Send exactly one of: appointmentId (Appointment check-in, with optional doctorId when the Appointment has no Doctor), or patientId with an optional doctorId (Walk-in Visit). doctorId is required only for an OPD Consultation VisitType (code `OPD`) when no Doctor comes from the Appointment.',
         properties: {
           visitTypeId: {
             type: 'integer',
@@ -10421,7 +10486,7 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description:
-              'Required for a Walk-in Visit. Required for Appointment check-in when the Appointment has no Doctor. Must be an active Doctor.',
+              'Required only for an OPD Consultation VisitType (code `OPD`): for a Walk-in, and for an Appointment with no Doctor. Optional for every other VisitType; omit it to create the Visit without a Doctor. Ignored when the Appointment already has a Doctor. Must be an active Doctor.',
           },
           chiefComplaint: {
             type: ['string', 'null'],
@@ -10465,15 +10530,15 @@ export const openApiDocument = {
       },
       AmendVisitRequest: {
         type: 'object',
-        required: ['doctorId', 'visitTypeId'],
+        required: ['visitTypeId'],
         description:
           'Full replace of the encounter details of a Completed Visit. An omitted or null optional field is cleared.',
         properties: {
           doctorId: {
-            type: 'integer',
+            type: ['integer', 'null'],
             minimum: 1,
             description:
-              'Doctor for the Visit. A newly chosen Doctor must exist in the Tenant and be active; the current Doctor is kept even if since deactivated.',
+              'Doctor for the Visit. Required when the amended VisitType is an OPD Consultation (code `OPD`); otherwise omit or send null to leave the Visit without a Doctor. A newly chosen Doctor must exist in the Tenant and be active; the current Doctor is kept even if since deactivated.',
           },
           visitTypeId: { type: 'integer', minimum: 1, description: 'VisitType identifier.' },
           admitSourceId: {
@@ -10637,10 +10702,15 @@ export const openApiDocument = {
           queueToken: {
             type: 'integer',
             minimum: 1,
-            description: 'Ordering number within the Doctor queue for this Tenant-local day.',
+            description:
+              "Ordering number within the Doctor's queue for this Tenant-local day, or within the Tenant's shared unassigned queue when the Visit has no Doctor.",
           },
           patient: schemaRef('VisitPatientSummary'),
-          doctor: schemaRef('VisitDoctorSummary'),
+          doctor: {
+            oneOf: [schemaRef('VisitDoctorSummary'), { type: 'null' }],
+            description:
+              'The Doctor for the Visit, or null when it was created without one (any VisitType except OPD Consultation).',
+          },
           visitType: schemaRef('VisitTypeSummary'),
           admitSource: {
             oneOf: [schemaRef('VisitAdmitSourceSummary'), { type: 'null' }],

@@ -91,7 +91,7 @@ export function PatientVisitHistory({
                       })}
                     </time>
                     <span aria-hidden="true">·</span>
-                    <span>{visit.doctor.name}</span>
+                    <span>{visit.doctor?.name ?? 'No Doctor'}</span>
                   </p>
                 </div>
                 <BookingStatusBadge tone={statusTone[visit.status]}>

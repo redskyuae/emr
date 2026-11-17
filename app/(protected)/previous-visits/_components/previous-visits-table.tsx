@@ -64,7 +64,7 @@ function VisitCards({ visits }: { visits: Visit[] }) {
                   {visit.legacyVisitNumber ? ` · Legacy #${visit.legacyVisitNumber}` : ''}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  {visit.doctor.name} · {visit.visitType.name}
+                  {visit.doctor?.name ?? 'No Doctor'} · {visit.visitType.name}
                 </p>
               </div>
               <Badge variant={status.variant}>{status.label}</Badge>
@@ -131,7 +131,7 @@ function VisitTable({ visits }: { visits: Visit[] }) {
                     {visit.patient.mrn} · {visit.patient.phone}
                   </p>
                 </TableCell>
-                <TableCell>{visit.doctor.name}</TableCell>
+                <TableCell>{visit.doctor?.name ?? 'No Doctor'}</TableCell>
                 <TableCell>
                   <Badge variant="secondary" title={visit.visitType.name}>
                     {visit.visitType.code}

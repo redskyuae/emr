@@ -118,7 +118,9 @@ export function VisitsTable({
                   <p className="text-muted-foreground text-xs">
                     {visit.patient.mrn} · {visit.visitNumber}
                   </p>
-                  <p className="text-muted-foreground text-xs">{visit.doctor.name}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {visit.doctor?.name ?? 'No Doctor'}
+                  </p>
                 </div>
                 <Badge variant={status.variant}>{status.label}</Badge>
               </div>
@@ -179,7 +181,7 @@ export function VisitsTable({
                       </p>
                       <p className="text-muted-foreground text-xs">{visit.patient.mrn}</p>
                     </td>
-                    <td className="p-3">{visit.doctor.name}</td>
+                    <td className="p-3">{visit.doctor?.name ?? 'No Doctor'}</td>
                     <td className="p-3">
                       <Badge variant="secondary">{visit.visitType.code}</Badge>
                     </td>

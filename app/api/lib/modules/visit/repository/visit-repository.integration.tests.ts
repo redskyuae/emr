@@ -511,6 +511,72 @@ describe('Visit repository', () => {
       expect(second).toMatchObject({ success: true, data: { queueToken: 2 } });
     });
 
+    it('should create a Visit without a Doctor and read it back with no Doctor', async () => {
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { doctorId: null })
+      );
+
+      expect(result).toMatchObject({ success: true, data: { doctor: null, queueToken: 1 } });
+      if (!result.success) throw new Error('check-in failed');
+      await expect(visitRepository.getVisitById(result.data.id, tenantA)).resolves.toMatchObject({
+        doctor: null,
+        patient: { id: fixturesA.patientId },
+      });
+    });
+
+    it('should number Doctorless Visits in their own daily queue, apart from each Doctor', async () => {
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+      const thirdPatient = await createPatient(tenantA, 'Chitra');
+
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA, { doctorId: null }));
+      const secondUnassigned = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: secondPatient, doctorId: null })
+      );
+      const doctorVisit = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: thirdPatient })
+      );
+
+      expect(secondUnassigned).toMatchObject({ success: true, data: { queueToken: 2 } });
+      expect(doctorVisit).toMatchObject({ success: true, data: { queueToken: 1 } });
+    });
+
+    it('should restart the unassigned queue per Tenant and per day', async () => {
+      const fixturesB = await createTenantFixtures(tenantB);
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA, { doctorId: null }));
+      const tenantBVisit = await visitRepository.checkInVisit(
+        checkInData(tenantB, fixturesB, { doctorId: null })
+      );
+      const nextDay = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, {
+          patientId: secondPatient,
+          doctorId: null,
+          visitDate: '2026-07-17',
+        })
+      );
+
+      expect(tenantBVisit).toMatchObject({ success: true, data: { queueToken: 1 } });
+      expect(nextDay).toMatchObject({ success: true, data: { queueToken: 1 } });
+    });
+
+    it('should list a Doctorless Visit and leave it out of a Doctor filter', async () => {
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { doctorId: null })
+      );
+      if (!created.success) throw new Error('check-in failed');
+
+      const all = await visitRepository.getVisits({ tenantId: tenantA, visitDate: TODAY });
+      const byDoctor = await visitRepository.getVisits({
+        tenantId: tenantA,
+        visitDate: TODAY,
+        doctorId: fixturesA.doctorId,
+      });
+
+      expect(all).toMatchObject({ data: [{ id: created.data.id, doctor: null }] });
+      expect(byDoctor).toMatchObject({ data: [] });
+    });
+
     it('should move the linked appointment to its checked-in status', async () => {
       const { appointmentId } = await createAppointment(tenantA, fixturesA);
 

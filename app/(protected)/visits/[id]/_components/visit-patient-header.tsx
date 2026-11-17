@@ -117,7 +117,7 @@ export function VisitPatientHeader({
             </div>
             <p className="text-muted-foreground text-sm">
               <span className="font-mono text-xs">{visit.patient.mrn}</span> ·{' '}
-              {visit.visitType.name} · {visit.doctor.name} ·{' '}
+              {visit.visitType.name} · {visit.doctor?.name ?? 'No Doctor'} ·{' '}
               <span className="font-mono text-xs">{visit.visitNumber}</span> ·{' '}
               {visit.appointment?.bookingNumber ?? 'Walk-in'}
             </p>

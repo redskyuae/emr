@@ -71,7 +71,7 @@ export function VisitPreviousVisits({
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{item.visitDate}</span>
                   <span className="text-muted-foreground block text-xs">
-                    {item.visitType.name} · {item.doctor.name}
+                    {item.visitType.name} · {item.doctor?.name ?? 'No Doctor'}
                   </span>
                 </span>
                 <Badge
