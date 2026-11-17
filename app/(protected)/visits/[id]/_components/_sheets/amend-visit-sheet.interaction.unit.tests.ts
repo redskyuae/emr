@@ -25,8 +25,8 @@ vi.mock('@/app/queries/visit-masters/visit-types/useVisitTypes', () => ({
   useVisitTypesQuery: () => ({
     data: {
       data: [
-        { id: 2, name: 'OPD Consultation' },
-        { id: 5, name: 'Follow-up' },
+        { id: 2, name: 'OPD Consultation', code: 'OPD' },
+        { id: 5, name: 'Follow-up', code: 'FUP' },
       ],
     },
     isLoading: false,
@@ -139,6 +139,21 @@ describe('Amend Visit sheet', () => {
     );
     expect(toast.success).toHaveBeenCalledWith('VST-5120 amended.');
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('should drop the Doctor error once a Visit Type that needs no Doctor is chosen', async () => {
+    const user = userEvent.setup();
+    renderSheet();
+
+    await user.selectOptions(screen.getByLabelText(/Doctor/), '');
+    await user.click(screen.getByRole('button', { name: 'Save amendment' }));
+    expect(await screen.findByText('Doctor is required for an OPD Consultation.')).toBeTruthy();
+    expect(mutateAsync).not.toHaveBeenCalled();
+
+    await user.selectOptions(screen.getByLabelText(/Visit Type/), '5');
+
+    expect(screen.queryByText('Doctor is required for an OPD Consultation.')).toBeNull();
+    expect(screen.getByLabelText(/Doctor/).getAttribute('aria-invalid')).toBe('false');
   });
 
   it('should require a Session when a Treatment is chosen', async () => {

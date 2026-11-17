@@ -103,6 +103,9 @@ export function AmendVisitSheet({
       ? visit.visitType.code
       : visitTypesQuery.data?.data.find((type) => String(type.id) === visitTypeId)?.code;
   const doctorRequired = visitTypeRequiresDoctor(selectedVisitTypeCode);
+  // The Doctor error only ever comes from the OPD Consultation check, so it lapses
+  // as soon as another Visit Type is chosen.
+  const doctorError = doctorRequired ? errors.doctorId?.message : undefined;
   const visitTypes = withCurrent(
     (visitTypesQuery.data?.data ?? []).map((type) => ({ id: type.id, label: type.name })),
     { id: visit.visitType.id, label: visit.visitType.name }
@@ -183,7 +186,7 @@ export function AmendVisitSheet({
               ) : null}
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field data-invalid={Boolean(errors.doctorId)}>
+                <Field data-invalid={Boolean(doctorError)}>
                   <FieldLabel htmlFor="amend-doctor">
                     Doctor {doctorRequired ? <RequiredMark /> : null}
                   </FieldLabel>
@@ -194,7 +197,7 @@ export function AmendVisitSheet({
                       id="amend-doctor"
                       className="w-full"
                       aria-required={doctorRequired}
-                      aria-invalid={Boolean(errors.doctorId)}
+                      aria-invalid={Boolean(doctorError)}
                       {...form.register('doctorId')}
                     >
                       <NativeSelectOption value="">
@@ -207,7 +210,7 @@ export function AmendVisitSheet({
                       ))}
                     </NativeSelect>
                   )}
-                  <FieldError>{errors.doctorId?.message}</FieldError>
+                  <FieldError>{doctorError}</FieldError>
                 </Field>
 
                 <Field data-invalid={Boolean(errors.visitTypeId)}>

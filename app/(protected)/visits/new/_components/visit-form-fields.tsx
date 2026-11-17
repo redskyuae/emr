@@ -241,6 +241,9 @@ export function VisitDetailsFields({
   const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
   const assignedDoctor = mode === 'appointment' ? appointment?.doctor : null;
   const doctorRequired = visitTypeRequiresDoctor(selectedVisitType?.code);
+  // The Doctor error only ever comes from the OPD Consultation check, so it lapses
+  // as soon as another Visit Type is chosen.
+  const doctorError = doctorRequired ? errors.doctorId?.message : undefined;
 
   return (
     <Card className="shadow-fluent-2">
@@ -353,7 +356,7 @@ export function VisitDetailsFields({
                       </NativeSelectOption>
                     ))}
                   </NativeSelect>
-                  <FieldError>{errors.doctorId?.message}</FieldError>
+                  <FieldError>{doctorError}</FieldError>
                 </Field>
               )}
             />

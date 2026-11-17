@@ -113,7 +113,16 @@ function Form({ showDetails = true }: { showDetails?: boolean }) {
     createElement('output', { 'data-testid': 'visit-type-id' }, visitTypeId),
     createElement('output', { 'data-testid': 'admit-source-id' }, admitSourceId),
     createElement('output', { 'data-testid': 'purpose' }, purpose),
-    createElement('output', { 'data-testid': 'remarks' }, remarks)
+    createElement('output', { 'data-testid': 'remarks' }, remarks),
+    createElement(
+      'button',
+      {
+        type: 'button',
+        onClick: () =>
+          form.setError('doctorId', { message: 'Doctor is required for an OPD Consultation.' }),
+      },
+      'Flag missing Doctor'
+    )
   );
 }
 
@@ -217,6 +226,19 @@ describe('Create Visit Admit source', () => {
     await userEvent.selectOptions(screen.getByRole('combobox', { name: /Visit type/ }), '3');
     expect(doctor().getAttribute('aria-required')).toBe('true');
     expect(screen.getByRole('option', { name: 'Select a Doctor' })).toBeTruthy();
+  });
+
+  it('should drop the Doctor error once a Visit Type that needs no Doctor is chosen', async () => {
+    const user = userEvent.setup();
+    render(createElement(Form));
+    const message = 'Doctor is required for an OPD Consultation.';
+
+    await user.selectOptions(screen.getByRole('combobox', { name: /Visit type/ }), '3');
+    await user.click(screen.getByRole('button', { name: 'Flag missing Doctor' }));
+    expect(screen.getByText(message)).toBeTruthy();
+
+    await user.selectOptions(screen.getByRole('combobox', { name: /Visit type/ }), '4');
+    expect(screen.queryByText(message)).toBeNull();
   });
 
   it('should offer the Admit Sources as an optional choice', () => {
