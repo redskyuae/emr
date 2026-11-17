@@ -457,7 +457,6 @@ export function CreateVisitPageImpl({
                   error={patientQuery.error}
                   onRetry={() => void patientQuery.refetch()}
                   confirmed
-                  confirming={checkingHistory}
                   onConfirm={confirmPatient}
                   onChange={() => setConfirmedPatientId(null)}
                 />
@@ -517,7 +516,6 @@ export function CreateVisitPageImpl({
                 error={patientQuery.error}
                 onRetry={() => void patientQuery.refetch()}
                 confirmed={false}
-                confirming={checkingHistory}
                 onConfirm={confirmPatient}
                 onChange={() => setConfirmedPatientId(null)}
               />
