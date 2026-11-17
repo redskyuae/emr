@@ -1237,6 +1237,38 @@ describe('Visit repository', () => {
       expect(after).toMatchObject({ success: true, data: { queueToken: 3 } });
     });
 
+    it('should skip a moved Queue Token when the unassigned counter already exists', async () => {
+      const firstUnassigned = await createPatient(tenantA, 'Bilal');
+      const doctorPatient = await createPatient(tenantA, 'Chitra');
+      const nextUnassigned = await createPatient(tenantA, 'Deepa');
+
+      // The unassigned counter row exists and stands at 1.
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: firstUnassigned, doctorId: null })
+      );
+      // The Doctor's queue holds tokens 1 and 2; token 2 then moves into the unassigned queue.
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: doctorPatient })
+      );
+      const completed = await createCompletedVisit();
+      await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId: null,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        visitTypeId: fixturesA.visitTypeId,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+
+      const next = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: nextUnassigned, doctorId: null })
+      );
+
+      expect(completed.queueToken).toBe(2);
+      expect(next).toMatchObject({ success: true, data: { queueToken: 3 } });
+    });
+
     it("should skip a Queue Token an amend moved into another Doctor's queue", async () => {
       const completed = await createCompletedVisit();
       const otherDoctorId = await createDoctor(tenantA, 'Dr Iyer');
