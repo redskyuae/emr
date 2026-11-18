@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CiCalendar, CiCircleAlert } from 'react-icons/ci';
+import { CiCircleAlert } from 'react-icons/ci';
 import { PiArrowRightLight } from 'react-icons/pi';
 
 import {
@@ -45,20 +45,15 @@ export function AppointmentDashboard() {
 
   return (
     <div className="space-y-4">
-      <section className="from-primary/10 via-card to-procedure/10 border-primary/20 shadow-fluent-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-gradient-to-br p-3 sm:p-4">
-        <div className="flex items-center gap-3">
-          <span className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-md">
-            <CiCalendar className="size-4" aria-hidden="true" />
-          </span>
-          <div>
-            <h2 className="font-heading text-base font-semibold">Today’s Appointments</h2>
-            <p className="text-muted-foreground text-xs">
-              <time dateTime={toDateInputValue(slotDate)}>{slotDate}</time> · Tenant-wide overview
-            </p>
-          </div>
+      <section className="flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-0.5">
+          <h2 className="text-lg font-semibold tracking-tight">Today’s Appointments</h2>
+          <p className="text-muted-foreground text-sm">
+            <time dateTime={toDateInputValue(slotDate)}>{slotDate}</time> · Tenant-wide overview
+          </p>
         </div>
         {canRead ? (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline">
             <Link href={appointmentsHref}>
               Open Appointments <PiArrowRightLight className="size-4" aria-hidden="true" />
             </Link>
@@ -100,7 +95,7 @@ export function AppointmentDashboard() {
               Open Appointments to review the full day.
             </p>
           ) : null}
-          <div className="grid items-start gap-3 xl:grid-cols-3">
+          <div className="grid items-start gap-4 xl:grid-cols-3">
             <div className="xl:col-span-2">
               <TodayAppointmentList
                 appointments={summary.activeAppointments}

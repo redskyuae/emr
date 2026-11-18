@@ -1,3 +1,4 @@
+import { StatCardSkeleton } from '@/components/app/stat-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -14,15 +15,7 @@ export default function RoomsPageLoader() {
     <div className="space-y-4" aria-label="Loading page">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
-          <Card key={i} className="shadow-fluent-2">
-            <CardContent className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Skeleton className="size-9 rounded-full" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <Skeleton className="h-8 w-16" />
-            </CardContent>
-          </Card>
+          <StatCardSkeleton key={i} />
         ))}
       </div>
 

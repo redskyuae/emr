@@ -1,11 +1,12 @@
+import { StatCardSkeleton } from '@/components/app/stat-card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function VisitsPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton key={index} className="h-14" aria-label="Loading Visit count" />
+          <StatCardSkeleton key={index} />
         ))}
       </div>
 

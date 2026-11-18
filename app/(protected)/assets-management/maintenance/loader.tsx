@@ -1,3 +1,4 @@
+import { StatCardSkeleton } from '@/components/app/stat-card';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -12,9 +13,9 @@ import {
 export default function PageLoader() {
   return (
     <div className="space-y-6" aria-label="Loading page">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[0, 1, 2, 3].map((item) => (
-          <Skeleton key={item} className="h-32 w-full" />
+          <StatCardSkeleton key={item} />
         ))}
       </section>
 
