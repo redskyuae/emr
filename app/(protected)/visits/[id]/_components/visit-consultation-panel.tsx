@@ -195,23 +195,20 @@ function RecordedNote({
   );
 }
 
-// Mirrors the consultation shell: the step-tone strip, the step nav, the current step's heading
-// and fields, and the Back / Continue footer. The Visit loader shows it too.
+// Mirrors the consultation shell: the step track on the page, then the step card with the
+// current step's heading and fields and the Back / Continue footer. The Visit loader shows it too.
 export function ConsultationSkeleton({ stepCount }: { stepCount: number }) {
   return (
     <div className={STEP_LAYOUT} aria-label="Loading consultation">
-      <section className="bg-card flex flex-col rounded-lg border xl:min-h-0 xl:flex-1">
-        <Skeleton className="h-1 flex-none rounded-none rounded-t-lg" />
-        <div className="border-b">
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-1 p-1.5">
-            {Array.from({ length: stepCount }, (_, index) => (
-              <div key={index} className="flex min-h-11 items-center gap-2 px-2.5">
-                <Skeleton className="size-7 shrink-0 rounded-full" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-            ))}
+      <div className="bg-card ring-border flex h-10 flex-none items-center gap-0.5 overflow-hidden rounded-full p-1 ring-1 2xl:col-span-full">
+        {Array.from({ length: stepCount }, (_, index) => (
+          <div key={index} className="flex flex-1 items-center justify-center gap-2 px-3.5">
+            <Skeleton className="size-4 shrink-0 rounded-full" />
+            <Skeleton className="h-4 w-20" />
           </div>
-        </div>
+        ))}
+      </div>
+      <section className="bg-card flex flex-col rounded-xl border xl:min-h-0 xl:flex-1">
         <div className="flex-1 space-y-4 p-5 xl:min-h-0">
           <div className="flex items-start gap-3">
             <Skeleton className="size-10 shrink-0 rounded-lg" />
@@ -227,8 +224,8 @@ export function ConsultationSkeleton({ stepCount }: { stepCount: number }) {
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-2 rounded-b-lg border-t p-3">
-          <div className="flex min-w-0 flex-1 justify-center">
+        <div className="flex flex-wrap items-center gap-2 rounded-b-xl border-t p-3">
+          <div className="min-w-0 flex-1 px-1">
             <Skeleton className="h-3 w-20" />
           </div>
           <Skeleton className="h-9 w-48" />

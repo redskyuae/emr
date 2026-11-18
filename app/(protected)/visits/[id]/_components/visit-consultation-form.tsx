@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { cn } from '@/lib/utils';
 
 import {
   filledFieldCount,
@@ -346,7 +347,7 @@ export function VisitConsultationForm({
 
   return (
     <form
-      className="flex flex-col xl:h-full xl:min-h-0"
+      className="flex flex-col gap-3 xl:h-full xl:min-h-0"
       aria-label="Doctor consultation"
       onSubmit={(event) => {
         event.preventDefault();
@@ -368,7 +369,14 @@ export function VisitConsultationForm({
           ) : null
         }
         status={
-          <p className="text-muted-foreground text-sm" role="status">
+          <p className="text-muted-foreground flex items-center gap-2 text-sm" role="status">
+            <span
+              aria-hidden="true"
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                isDirty ? 'bg-warning' : savedNoteId ? 'bg-success' : 'bg-input'
+              )}
+            />
             {saveStatus}
           </p>
         }

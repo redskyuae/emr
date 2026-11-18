@@ -51,10 +51,7 @@ export function VisitObjectiveVitals({
     : [];
 
   return (
-    <section
-      aria-labelledby="objective-vitals"
-      className="border-l-chart-4 space-y-3 rounded-lg border border-l-4 p-4"
-    >
+    <section aria-labelledby="objective-vitals" className="space-y-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="objective-vitals" className="flex items-center gap-2 text-sm font-semibold">
           <CiWavePulse1 className="text-chart-4 size-4" aria-hidden="true" />
@@ -72,6 +69,7 @@ export function VisitObjectiveVitals({
         loading={loading}
         error={error}
         emptyText="Not recorded for this Visit yet."
+        layout="tiles"
       />
       {onAmend && !loading && !error && visitReadings.length ? (
         <ul className="divide-y rounded-md border text-sm" aria-label="Readings this Visit">

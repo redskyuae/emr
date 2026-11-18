@@ -382,10 +382,7 @@ export function VisitDiagnosesPanel({
   }
 
   return (
-    <section
-      aria-labelledby="visit-diagnoses"
-      className="border-l-primary space-y-4 rounded-lg border border-l-4 p-4"
-    >
+    <section aria-labelledby="visit-diagnoses" className="space-y-4 rounded-lg border p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="visit-diagnoses" className="text-sm font-semibold">
           Coded diagnoses

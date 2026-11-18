@@ -88,7 +88,7 @@ export function VisitPatientHeader({
   const active = isActiveVisit(visit.status);
 
   return (
-    <header className="bg-card z-10 rounded-lg border p-3 lg:sticky lg:top-18 xl:static">
+    <header className="bg-card z-10 rounded-xl border p-3 lg:sticky lg:top-18 xl:static">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button asChild variant="ghost" size="icon" aria-label="Back to Visits">
@@ -118,11 +118,17 @@ export function VisitPatientHeader({
                 </Badge>
               ) : null}
             </div>
-            <p className="text-muted-foreground text-sm">
-              <span className="font-mono text-xs">{visit.patient.mrn}</span> ·{' '}
-              {visit.visitType.name} · {visitDoctorLabel(visit)} ·{' '}
-              <span className="font-mono text-xs">{visit.visitNumber}</span> ·{' '}
-              {visit.appointment?.bookingNumber ?? 'Walk-in'}
+            <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-sm">
+              <span className="bg-muted text-foreground rounded-md px-2 py-0.5 font-mono text-xs">
+                {visit.patient.mrn}
+              </span>
+              <span className="bg-muted text-foreground rounded-md px-2 py-0.5 font-mono text-xs">
+                {visit.visitNumber}
+              </span>
+              <span>
+                {visit.visitType.name} · {visitDoctorLabel(visit)} ·{' '}
+                {visit.appointment?.bookingNumber ?? 'Walk-in'}
+              </span>
             </p>
           </div>
         </div>

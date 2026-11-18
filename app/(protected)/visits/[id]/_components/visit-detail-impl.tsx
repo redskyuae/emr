@@ -211,7 +211,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           }}
         />
 
-        <div className="grid gap-3 xl:min-h-0 xl:flex-1 xl:grid-cols-[17rem_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)]">
+        <div className="grid gap-3 xl:min-h-0 xl:flex-1 xl:grid-cols-[19rem_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-x-2">
           <div className="min-w-0 xl:order-2 xl:min-h-0">
             <VisitCarePathway
               visit={visit}
@@ -244,7 +244,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
             chartLoading={chartQuery.isLoading}
             chartError={chartQuery.isError}
             allergenName={allergenName}
-            className="xl:order-1 xl:min-h-0"
+            className="xl:order-1 xl:min-h-0 xl:p-0.5"
           />
         </div>
       </div>

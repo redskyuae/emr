@@ -83,29 +83,31 @@ export function VisitPreviousVisits({
                 const procedures = visitProcedures(item, plans);
 
                 return (
-                  <Collapsible key={item.id} className="group/visit rounded-md border">
-                    <CollapsibleTrigger className="hover:bg-accent focus-visible:ring-ring/50 flex w-full items-center gap-2 rounded-md p-2 text-left outline-none focus-visible:ring-3">
+                  <Collapsible key={item.id} className="group/visit rounded-lg border">
+                    <CollapsibleTrigger className="hover:bg-accent focus-visible:ring-ring/50 flex w-full items-start gap-2 rounded-lg p-2.5 text-left outline-none focus-visible:ring-3">
                       <PiCaretRightLight
-                        className="size-4 shrink-0 transition-transform group-data-[state=open]/visit:rotate-90"
+                        className="mt-1 size-4 shrink-0 transition-transform group-data-[state=open]/visit:rotate-90"
                         aria-hidden="true"
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block font-medium">{item.visitDate}</span>
-                        <span className="text-muted-foreground block text-xs">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="font-medium">{item.visitDate}</span>
+                          <Badge
+                            variant={visitStatusPresentation(item.status).variant}
+                            className={cn(
+                              item.status === 'COMPLETED' &&
+                                'bg-success text-primary-foreground border-transparent'
+                            )}
+                          >
+                            {visitStatusPresentation(item.status).label}
+                          </Badge>
+                        </span>
+                        <span className="text-muted-foreground mt-0.5 block text-xs">
                           {item.visitType.name} · {visitDoctorLabel(item)}
                         </span>
                       </span>
-                      <Badge
-                        variant={visitStatusPresentation(item.status).variant}
-                        className={cn(
-                          item.status === 'COMPLETED' &&
-                            'bg-success text-primary-foreground border-transparent'
-                        )}
-                      >
-                        {visitStatusPresentation(item.status).label}
-                      </Badge>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-2 border-t p-2">
+                    <CollapsibleContent className="space-y-2 border-t p-2.5">
                       {procedures.map((procedure) => (
                         <VisitProcedureCard key={procedure.key} procedure={procedure} />
                       ))}
