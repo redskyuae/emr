@@ -31,11 +31,11 @@ function BookTable({
   children: ReactNode;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="shadow-fluent-2 py-0">
       <CardContent className="overflow-x-auto p-0">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left text-xs">
+            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
               {columns.map((column, index) => (
                 <th
                   key={column.label}
@@ -85,7 +85,7 @@ function TransactionBook({ txns }: { txns: LedgerTxn[] }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row">
-        <InputGroup className="bg-background shadow-fluent-2 h-9 sm:max-w-xs">
+        <InputGroup className="h-10 sm:max-w-xs">
           <InputGroupAddon>
             <Search className="size-4" />
           </InputGroupAddon>

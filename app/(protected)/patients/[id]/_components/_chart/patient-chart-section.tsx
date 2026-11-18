@@ -60,7 +60,7 @@ function ChartSkeleton() {
   return (
     <div className="space-y-4" aria-label="Loading Patient Chart">
       {[0, 1, 2, 3, 4].map((panel) => (
-        <div key={panel} className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
+        <div key={panel} className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-2/3" />

@@ -7,7 +7,7 @@ export function RoleGridSkeleton() {
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {[0, 1, 2, 3, 4, 5].map((item) => (
         <Card key={item} className="shadow-fluent-2">
-          <CardContent className="flex min-h-52 flex-col gap-4 p-4">
+          <CardContent className="flex min-h-52 flex-col gap-4">
             <div className="flex gap-3">
               <Skeleton className="size-11 rounded-lg" />
               <div className="flex-1 space-y-2">

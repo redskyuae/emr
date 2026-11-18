@@ -6,6 +6,7 @@ import { LogoMark } from '@/components/brand/logo';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { motion, useReducedMotion } from 'motion/react';
 import { ReactNode } from 'react';
 
 function AppSplashFrame({ fading, children }: { fading: boolean; children: ReactNode }) {
@@ -45,10 +46,35 @@ function AppSplashBrand({ pulse }: { pulse: boolean }) {
   );
 }
 
+// Aceternity's "Simple Loader" (three staggered bouncing dots) at half scale, in the primary color.
+function AppSplashDots() {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <div aria-hidden className="-mt-2 flex h-[13px] items-start gap-1">
+      {[0, 1, 2].map((index) => (
+        <motion.span
+          key={index}
+          initial={{ y: 0 }}
+          animate={reduceMotion ? { y: 0 } : { y: [0, 5, 0] }}
+          transition={{
+            ease: 'easeInOut',
+            duration: 1,
+            repeat: Infinity,
+            delay: index * 0.2,
+          }}
+          className="border-primary/30 from-primary to-primary/70 block size-2 rounded-full border bg-gradient-to-b"
+        />
+      ))}
+    </div>
+  );
+}
+
 export function AppSplashLoading({ fading }: { fading: boolean }) {
   return (
     <AppSplashFrame fading={fading}>
       <AppSplashBrand pulse />
+      <AppSplashDots />
       {/* The pulse is the only motion cue and is stripped under prefers-reduced-motion,
           so surface a visible caption for those sighted users; it stays sr-only otherwise. */}
       <span className="text-muted-foreground sr-only text-sm motion-reduce:not-sr-only">

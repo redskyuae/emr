@@ -111,7 +111,7 @@ export function VisitsPageImpl() {
             <Input
               type="date"
               aria-label="Visit date"
-              className="h-9 lg:w-44"
+              className="h-10 lg:w-44"
               value={toDateInputValue(visitDate)}
               onChange={(event) => {
                 setPage(1);
@@ -120,7 +120,7 @@ export function VisitsPageImpl() {
             />
 
             {doctorsQuery.isLoading ? (
-              <Skeleton className="h-9 w-full lg:w-52" aria-label="Loading Doctor filter" />
+              <Skeleton className="h-10 w-full lg:w-52" aria-label="Loading Doctor filter" />
             ) : (
               <Select
                 value={doctorParam ?? ALL_FILTER}
@@ -130,7 +130,7 @@ export function VisitsPageImpl() {
                 }}
               >
                 <SelectTrigger
-                  className="h-9 lg:w-52"
+                  className="h-10 lg:w-52"
                   aria-label="Filter by doctor"
                   disabled={doctorsQuery.isError}
                 >
@@ -147,7 +147,7 @@ export function VisitsPageImpl() {
               </Select>
             )}
 
-            <InputGroup className="bg-background h-9 lg:ml-auto lg:max-w-xs">
+            <InputGroup className="bg-background h-10 lg:ml-auto lg:max-w-xs">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>

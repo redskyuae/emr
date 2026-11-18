@@ -153,7 +153,7 @@ export function DoctorsPageImpl() {
     <>
       <div className="space-y-4">
         <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -178,7 +178,7 @@ export function DoctorsPageImpl() {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-xs">
+            <InputGroup className="h-10 lg:max-w-xs">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>
@@ -197,7 +197,7 @@ export function DoctorsPageImpl() {
                 setStatusFilter(value as DoctorStatusFilter | typeof ALL_FILTER)
               }
             >
-              <SelectTrigger className="h-9 lg:w-40" aria-label="Filter by status">
+              <SelectTrigger className="h-10 lg:w-40" aria-label="Filter by status">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -208,7 +208,7 @@ export function DoctorsPageImpl() {
             </Select>
 
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-              <SelectTrigger className="h-9 lg:w-48" aria-label="Filter by Specialty">
+              <SelectTrigger className="h-10 lg:w-48" aria-label="Filter by Specialty">
                 <SelectValue placeholder="All Specialties" />
               </SelectTrigger>
               <SelectContent>

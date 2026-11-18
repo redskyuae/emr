@@ -111,7 +111,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
         <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
 
         <Card className="shadow-fluent-2">
-          <CardContent className="space-y-4 p-4">
+          <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">

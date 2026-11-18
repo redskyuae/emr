@@ -59,22 +59,22 @@ export function AppointmentsTable({
 }) {
   return (
     <div
-      className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border"
+      className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border"
       aria-busy={isFetching}
     >
       <div className={cn('overflow-x-auto', isFetching && 'opacity-70 transition-opacity')}>
         <table aria-label={label} className="w-full min-w-[1080px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left">
-              <th className="p-3 pl-4 font-medium">Booking</th>
-              <th className="p-3 font-medium">Date / Slot</th>
-              <th className="p-3 font-medium">Patient</th>
-              <th className="p-3 font-medium">Doctor</th>
-              <th className="p-3 font-medium">Therapist</th>
-              <th className="p-3 font-medium">Type</th>
-              <th className="p-3 font-medium">Mode</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 pr-4 text-right font-medium">Actions</th>
+            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
+              <th className="p-3 pl-5 font-semibold">Booking</th>
+              <th className="p-3 font-semibold">Date / Slot</th>
+              <th className="p-3 font-semibold">Patient</th>
+              <th className="p-3 font-semibold">Doctor</th>
+              <th className="p-3 font-semibold">Therapist</th>
+              <th className="p-3 font-semibold">Type</th>
+              <th className="p-3 font-semibold">Mode</th>
+              <th className="p-3 font-semibold">Status</th>
+              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -86,7 +86,7 @@ export function AppointmentsTable({
 
               return (
                 <tr key={appointment.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                  <td className="p-3 pl-4">
+                  <td className="px-3 py-3.5 pl-5">
                     <p className="font-mono text-sm font-medium">{appointment.bookingNumber}</p>
                     <p className="text-muted-foreground text-xs">
                       {appointment.bookingPath === 'PROCEDURE'
@@ -94,13 +94,13 @@ export function AppointmentsTable({
                         : (appointment.rotaName ?? 'Consultation')}
                     </p>
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <p className="font-medium tabular-nums">{appointment.slotDate}</p>
                     <p className="text-muted-foreground text-xs tabular-nums">
                       {formatSlotRange(appointment)}
                     </p>
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <Link
                       href={`/patients/${appointment.patient.id}`}
                       className="font-medium hover:underline"
@@ -117,24 +117,24 @@ export function AppointmentsTable({
                       {appointment.patient.phone}
                     </a>
                   </td>
-                  <td className="p-3">{appointment.doctor?.name ?? 'N/A'}</td>
-                  <td className="p-3">{appointment.therapist?.name ?? 'N/A'}</td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">{appointment.doctor?.name ?? 'N/A'}</td>
+                  <td className="px-3 py-3.5">{appointment.therapist?.name ?? 'N/A'}</td>
+                  <td className="px-3 py-3.5">
                     <Badge variant="secondary">
                       {appointment.appointmentType?.code ?? appointment.bookingPath}
                     </Badge>
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <Badge variant="outline">{appointment.appointmentMode?.code ?? 'N/A'}</Badge>
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <Badge
                       variant={appointmentStatusVariant(appointment.appointmentStatus.category)}
                     >
                       {appointment.appointmentStatus.name}
                     </Badge>
                   </td>
-                  <td className="p-3 pr-4 text-right">
+                  <td className="px-3 py-3.5 pr-5 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -222,7 +222,7 @@ export function AppointmentsTable({
 
 export function AppointmentsTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
+    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="h-5 w-24" />

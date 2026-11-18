@@ -37,26 +37,32 @@ export function InvoicePaymentsCard({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
-                <tr className="text-muted-foreground border-y text-left">
-                  <th className="p-3 pl-4 font-medium">Receipt</th>
-                  <th className="p-3 font-medium">Method</th>
-                  <th className="p-3 font-medium">Reference</th>
-                  <th className="p-3 text-right font-medium">Amount</th>
-                  <th className="p-3 pr-4 font-medium">Received</th>
-                  <th className="p-3 pr-4 text-right font-medium">Receipt action</th>
+                <tr className="text-muted-foreground bg-muted/60 border-y text-left text-xs tracking-wider uppercase">
+                  <th className="p-3 pl-5 font-semibold">Receipt</th>
+                  <th className="p-3 font-semibold">Method</th>
+                  <th className="p-3 font-semibold">Reference</th>
+                  <th className="p-3 text-right font-semibold">Amount</th>
+                  <th className="p-3 pr-5 font-semibold">Received</th>
+                  <th className="p-3 pr-5 text-right font-semibold">Receipt action</th>
                 </tr>
               </thead>
               <tbody>
                 {invoice.payments.map((payment) => (
                   <tr key={payment.id} className="border-b last:border-b-0">
-                    <td className="p-3 pl-4 font-mono font-medium">{payment.receiptNumber}</td>
-                    <td className="p-3">{getPaymentMethodLabel(payment.method)}</td>
-                    <td className="text-muted-foreground p-3">{payment.reference ?? '—'}</td>
-                    <td className="p-3 text-right tabular-nums">{formatMoney(payment.amount)}</td>
-                    <td className="text-muted-foreground p-3 pr-4">
+                    <td className="px-3 py-3.5 pl-5 font-mono font-medium">
+                      {payment.receiptNumber}
+                    </td>
+                    <td className="px-3 py-3.5">{getPaymentMethodLabel(payment.method)}</td>
+                    <td className="text-muted-foreground px-3 py-3.5">
+                      {payment.reference ?? '—'}
+                    </td>
+                    <td className="px-3 py-3.5 text-right tabular-nums">
+                      {formatMoney(payment.amount)}
+                    </td>
+                    <td className="text-muted-foreground px-3 py-3.5 pr-5">
                       {new Date(payment.receivedAt).toLocaleDateString()}
                     </td>
-                    <td className="p-3 pr-4 text-right">
+                    <td className="px-3 py-3.5 pr-5 text-right">
                       <Button
                         type="button"
                         size="sm"

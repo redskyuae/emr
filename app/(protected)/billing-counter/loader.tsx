@@ -5,14 +5,14 @@ export default function BillingCounterPageLoader() {
     <div className="space-y-4" aria-label="Loading Billing Counter">
       <Skeleton className="h-16 rounded-lg" />
 
-      <div className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-3">
+      <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
         <div className="flex flex-wrap items-center gap-3">
           <Skeleton className="h-10 w-72" />
           <Skeleton className="h-6 w-40 lg:ml-auto" />
         </div>
         <div className="grid grid-cols-2 gap-3 border-t pt-3 md:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-9" />
+            <Skeleton key={index} className="h-10" />
           ))}
         </div>
       </div>

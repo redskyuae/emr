@@ -43,20 +43,20 @@ export function AdmissionsTable({
   canCancel: boolean;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
+    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[960px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left">
-              <th className="p-3 pl-4 font-medium">Admission</th>
-              <th className="p-3 font-medium">Patient</th>
-              <th className="p-3 font-medium">Ward / Bed</th>
-              <th className="p-3 font-medium">Doctor</th>
-              <th className="p-3 font-medium">Type</th>
-              <th className="p-3 font-medium">Admitted</th>
-              <th className="p-3 font-medium">Expected discharge</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 pr-4 text-right font-medium">Actions</th>
+            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
+              <th className="p-3 pl-5 font-semibold">Admission</th>
+              <th className="p-3 font-semibold">Patient</th>
+              <th className="p-3 font-semibold">Ward / Bed</th>
+              <th className="p-3 font-semibold">Doctor</th>
+              <th className="p-3 font-semibold">Type</th>
+              <th className="p-3 font-semibold">Admitted</th>
+              <th className="p-3 font-semibold">Expected discharge</th>
+              <th className="p-3 font-semibold">Status</th>
+              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -66,7 +66,7 @@ export function AdmissionsTable({
 
               return (
                 <tr key={admission.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                  <td className="p-3 pl-4">
+                  <td className="px-3 py-3.5 pl-5">
                     <Link
                       href={`/admissions/${admission.id}`}
                       className="font-medium hover:underline"
@@ -77,30 +77,30 @@ export function AdmissionsTable({
                       <p className="text-muted-foreground text-xs">{admission.visit.visitNumber}</p>
                     ) : null}
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <p className="font-medium">
                       {admission.patient.firstName} {admission.patient.lastName}
                     </p>
                     <p className="text-muted-foreground text-xs">{admission.patient.mrn}</p>
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <p>{admission.ward.name}</p>
                     <p className="text-muted-foreground text-xs">{admission.bed.bedNumber}</p>
                   </td>
-                  <td className="p-3">{admission.doctor.name}</td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">{admission.doctor.name}</td>
+                  <td className="px-3 py-3.5">
                     <Badge variant="secondary">{admission.admissionType.code}</Badge>
                   </td>
-                  <td className="text-muted-foreground p-3 tabular-nums">
+                  <td className="text-muted-foreground px-3 py-3.5 tabular-nums">
                     {formatMoment(admission.admittedAt)}
                   </td>
-                  <td className="text-muted-foreground p-3 tabular-nums">
+                  <td className="text-muted-foreground px-3 py-3.5 tabular-nums">
                     {admission.expectedDischargeDate ?? '—'}
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </td>
-                  <td className="p-3 pr-4 text-right">
+                  <td className="px-3 py-3.5 pr-5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       {active && canDischarge ? (
                         <Button type="button" size="sm" onClick={() => onDischarge(admission)}>
@@ -168,7 +168,7 @@ export function AdmissionsTable({
 
 export function AdmissionsTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
+    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
       {Array.from({ length: 6 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="h-5 w-24" />

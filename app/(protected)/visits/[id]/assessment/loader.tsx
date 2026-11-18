@@ -21,7 +21,7 @@ export default function ClinicianAssessmentLoader() {
         <Skeleton className="h-14 w-full md:col-span-2 xl:col-span-1" />
       </div>
 
-      <div className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-3 md:p-4">
+      <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4 md:p-4">
         <div className="flex justify-between gap-4">
           <div className="space-y-2">
             <Skeleton className="h-4 w-40" />
@@ -36,7 +36,7 @@ export default function ClinicianAssessmentLoader() {
         </div>
       </div>
 
-      <div className="bg-card shadow-fluent-2 space-y-4 rounded-lg border p-4">
+      <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
         <div className="space-y-2 border-b pb-4">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-3 w-80 max-w-full" />

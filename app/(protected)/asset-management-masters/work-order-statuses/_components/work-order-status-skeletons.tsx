@@ -13,7 +13,7 @@ type ViewLayout = 'table' | 'card' | 'list';
 
 function TableSkeleton() {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="shadow-fluent-2 py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[820px] table-fixed">
@@ -63,7 +63,7 @@ function CardViewSkeleton() {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }, (_, i) => (
         <Card key={i} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+          <CardContent className="space-y-3">
             <Skeleton className="size-10 rounded-full" />
             <Skeleton className="h-5 w-36" />
             <Skeleton className="h-4 w-24" />
@@ -85,7 +85,7 @@ function ListViewSkeleton() {
     <div className="space-y-3">
       {Array.from({ length: 5 }, (_, i) => (
         <Card key={i} className="shadow-fluent-2">
-          <CardContent className="flex items-center gap-4 p-4">
+          <CardContent className="flex items-center gap-4">
             <Skeleton className="size-10 shrink-0 rounded-full" />
             <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-6">
               <Skeleton className="h-5 w-36" />

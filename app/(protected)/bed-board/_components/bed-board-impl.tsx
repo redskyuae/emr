@@ -56,9 +56,9 @@ export function BedBoardImpl() {
   return (
     <div className="space-y-4">
       <Card className="shadow-fluent-2">
-        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <Select value={wardFilter} onValueChange={setWardFilter}>
-            <SelectTrigger className="h-9 lg:w-48" aria-label="Filter by ward">
+            <SelectTrigger className="h-10 lg:w-48" aria-label="Filter by ward">
               <SelectValue placeholder="All Wards" />
             </SelectTrigger>
             <SelectContent>
@@ -72,7 +72,7 @@ export function BedBoardImpl() {
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-9 lg:w-44" aria-label="Filter by status">
+            <SelectTrigger className="h-10 lg:w-44" aria-label="Filter by status">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -215,7 +215,7 @@ function BedBoardSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 2 }, (_, wardIndex) => (
-        <div key={wardIndex} className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-4">
+        <div key={wardIndex} className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5">
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-4 w-28" />

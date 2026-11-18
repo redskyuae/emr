@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function AdmissionDetailPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card shadow-fluent-2 space-y-4 rounded-lg border p-4">
+      <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -15,8 +15,8 @@ export default function AdmissionDetailPageLoader() {
             <Skeleton className="h-4 w-56" />
           </div>
           <div className="flex gap-2">
-            <Skeleton className="h-9 w-40" />
-            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-10 w-40" />
+            <Skeleton className="h-10 w-24" />
           </div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
@@ -32,7 +32,7 @@ export default function AdmissionDetailPageLoader() {
         </div>
       </div>
 
-      <div className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-4">
+      <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5">
         <Skeleton className="h-5 w-28" />
         <Skeleton className="h-16 w-full" />
         <Skeleton className="h-16 w-full" />
@@ -40,7 +40,7 @@ export default function AdmissionDetailPageLoader() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {Array.from({ length: 2 }, (_, index) => (
-          <div key={index} className="bg-card shadow-fluent-2 space-y-3 rounded-lg border p-4">
+          <div key={index} className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5">
             <div className="flex items-center justify-between">
               <Skeleton className="h-5 w-32" />
               <Skeleton className="h-8 w-24" />

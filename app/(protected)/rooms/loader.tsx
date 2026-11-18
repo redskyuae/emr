@@ -15,7 +15,7 @@ export default function RoomsPageLoader() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
           <Card key={i} className="shadow-fluent-2">
-            <CardContent className="space-y-2 p-4">
+            <CardContent className="space-y-2">
               <div className="flex items-center gap-2">
                 <Skeleton className="size-9 rounded-full" />
                 <Skeleton className="h-4 w-24" />
@@ -27,15 +27,15 @@ export default function RoomsPageLoader() {
       </div>
 
       <Card className="shadow-fluent-2">
-        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-          <Skeleton className="h-9 w-56" />
-          <Skeleton className="h-9 w-full lg:max-w-xs" />
-          <Skeleton className="h-9 w-full lg:w-40" />
-          <Skeleton className="h-9 w-full lg:w-44" />
+        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <Skeleton className="h-10 w-56" />
+          <Skeleton className="h-10 w-full lg:max-w-xs" />
+          <Skeleton className="h-10 w-full lg:w-40" />
+          <Skeleton className="h-10 w-full lg:w-44" />
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2">
+      <Card className="shadow-fluent-2 py-0">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table className="min-w-[860px] table-fixed">

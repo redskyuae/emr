@@ -42,7 +42,7 @@ function FilterSelect({
 }) {
   return (
     <Select value={value ?? ALL} onValueChange={(next) => onChange(next === ALL ? null : next)}>
-      <SelectTrigger className="h-9 w-full" aria-label={label}>
+      <SelectTrigger className="h-10 w-full" aria-label={label}>
         <SelectValue placeholder={allLabel} />
       </SelectTrigger>
       <SelectContent>
@@ -91,9 +91,9 @@ export function VisitListFiltersBar({
 
   return (
     <Card className="shadow-fluent-2">
-      <CardContent className="space-y-3 p-3">
+      <CardContent className="space-y-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-          <InputGroup className="bg-background shadow-fluent-2 h-9 xl:max-w-sm">
+          <InputGroup className="h-10 xl:max-w-sm">
             <InputGroupAddon>
               <Search className="size-4" />
             </InputGroupAddon>
@@ -142,7 +142,7 @@ export function VisitListFiltersBar({
             <Input
               type="date"
               aria-label="From date"
-              className="h-9 w-full sm:w-40"
+              className="h-10 w-full sm:w-40"
               value={filters.from ?? ''}
               max={filters.to ?? undefined}
               onChange={(event) => onFilterChange({ from: event.target.value || null })}
@@ -151,7 +151,7 @@ export function VisitListFiltersBar({
             <Input
               type="date"
               aria-label="To date"
-              className="h-9 w-full sm:w-40"
+              className="h-10 w-full sm:w-40"
               value={filters.to ?? ''}
               min={filters.from ?? undefined}
               onChange={(event) => onFilterChange({ to: event.target.value || null })}
@@ -209,7 +209,7 @@ export function VisitListFiltersBar({
           <Button
             type="button"
             variant="ghost"
-            className="h-9"
+            className="h-10"
             disabled={activeCount === 0}
             onClick={onClear}
           >

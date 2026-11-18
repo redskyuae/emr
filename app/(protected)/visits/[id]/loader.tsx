@@ -16,8 +16,8 @@ export default function VisitDetailPageLoader() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Skeleton className="h-9 w-28" />
-          <Skeleton className="h-9 w-36" />
+          <Skeleton className="h-10 w-28" />
+          <Skeleton className="h-10 w-36" />
         </div>
       </div>
 
@@ -39,20 +39,20 @@ export default function VisitDetailPageLoader() {
               <div className="flex-1 space-y-4 p-5">
                 <Skeleton className="h-7 w-40" />
                 <Skeleton className="h-4 w-80 max-w-full" />
-                <Skeleton className="h-9 w-64" />
+                <Skeleton className="h-10 w-64" />
                 <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-24 w-full" />
               </div>
               <div className="flex items-center justify-between gap-3 border-t p-3">
-                <Skeleton className="h-9 w-28" />
+                <Skeleton className="h-10 w-28" />
                 <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-9 w-48" />
+                <Skeleton className="h-10 w-48" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-card shadow-fluent-2 space-y-4 rounded-lg border p-3 xl:order-1">
+        <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4 xl:order-1">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-4 w-32" />
           {Array.from({ length: 6 }, (_, index) => (

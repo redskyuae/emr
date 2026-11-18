@@ -193,15 +193,15 @@ export function DayCloseTab() {
             <CardContent className="overflow-x-auto p-0">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
-                  <tr className="text-muted-foreground border-y text-left text-xs">
-                    <th className="p-2 pl-4 font-medium">Time</th>
-                    <th className="p-2 font-medium">No.</th>
-                    <th className="p-2 font-medium">Type</th>
-                    <th className="p-2 font-medium">Patient</th>
-                    <th className="p-2 font-medium">Tenders</th>
-                    <th className="p-2 text-right font-medium">Patient paid</th>
-                    <th className="p-2 text-right font-medium">Payer share</th>
-                    <th className="p-2 pr-4 text-right font-medium">Outstanding</th>
+                  <tr className="text-muted-foreground bg-muted/60 border-y text-left text-xs tracking-wider uppercase">
+                    <th className="p-2 pl-4 font-semibold">Time</th>
+                    <th className="p-2 font-semibold">No.</th>
+                    <th className="p-2 font-semibold">Type</th>
+                    <th className="p-2 font-semibold">Patient</th>
+                    <th className="p-2 font-semibold">Tenders</th>
+                    <th className="p-2 text-right font-semibold">Patient paid</th>
+                    <th className="p-2 text-right font-semibold">Payer share</th>
+                    <th className="p-2 pr-4 text-right font-semibold">Outstanding</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -22,7 +22,7 @@ export function CounterHeader() {
 
   return (
     <Card className="shadow-fluent-2">
-      <CardContent className="space-y-3 p-3">
+      <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="min-w-0">
             <p className="font-heading font-semibold">{COUNTER_ENTITY.legalName}</p>

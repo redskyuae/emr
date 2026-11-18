@@ -50,7 +50,7 @@ export function WorkOrderQueueToolbar({
 
   return (
     <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center">
-      <InputGroup className="bg-background h-9 2xl:max-w-sm">
+      <InputGroup className="bg-background h-10 2xl:max-w-sm">
         <InputGroupAddon>
           <Search className="size-4" />
         </InputGroupAddon>

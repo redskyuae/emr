@@ -188,7 +188,7 @@ export function InvoiceComposer() {
   return (
     <FormProvider {...form}>
       <div className="space-y-4">
-        <div className="bg-card shadow-fluent-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
+        <div className="bg-card shadow-fluent-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-5">
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="icon" aria-label="Back to Invoices">
               <Link href="/billing">
@@ -196,7 +196,7 @@ export function InvoiceComposer() {
               </Link>
             </Button>
             <div>
-              <h1 className="text-xl font-semibold">New Invoice</h1>
+              <h2 className="text-xl font-semibold">New Invoice</h2>
               <p className="text-muted-foreground text-sm">
                 Select a Patient, add Charges, and collect Payment.
               </p>

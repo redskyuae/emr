@@ -170,7 +170,7 @@ export function TherapistSkillsPageImpl({ initialCreateOpen }: { initialCreateOp
     <>
       <div className="space-y-4">
         <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -195,7 +195,7 @@ export function TherapistSkillsPageImpl({ initialCreateOpen }: { initialCreateOp
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+            <InputGroup className="h-10 lg:max-w-sm">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>

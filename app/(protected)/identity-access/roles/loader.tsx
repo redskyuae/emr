@@ -11,7 +11,7 @@ export default function RolesPageLoader() {
         {[0, 1, 2, 3, 4, 5].map((item) => (
           <div
             key={item}
-            className="bg-card shadow-fluent-2 flex min-h-52 flex-col gap-4 rounded-lg border p-4"
+            className="bg-card shadow-fluent-2 flex min-h-52 flex-col gap-4 rounded-xl border p-5"
           >
             <div className="flex gap-3">
               <Skeleton className="size-11 rounded-lg" />

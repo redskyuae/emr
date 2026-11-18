@@ -3,20 +3,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function BedsPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
-        <Skeleton className="h-9 w-full lg:max-w-sm" />
-        <Skeleton className="h-9 w-full lg:w-48" />
+      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
+        <Skeleton className="h-10 w-full lg:max-w-sm" />
+        <Skeleton className="h-10 w-full lg:w-48" />
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
-          <Skeleton className="h-9 w-36" />
+          <Skeleton className="h-10 w-36" />
         </div>
       </div>
 
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
+      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
             <thead>
-              <tr className="border-b">
-                <th className="p-3 pl-4">
+              <tr className="bg-muted/60 text-muted-foreground border-b text-xs tracking-wider uppercase">
+                <th className="p-3 pl-5">
                   <Skeleton className="h-4 w-12" />
                 </th>
                 <th className="p-3">
@@ -25,7 +25,7 @@ export default function BedsPageLoader() {
                 <th className="p-3">
                   <Skeleton className="h-4 w-20" />
                 </th>
-                <th className="p-3 pr-4 text-right">
+                <th className="p-3 pr-5 text-right">
                   <Skeleton className="ml-auto h-4 w-14" />
                 </th>
               </tr>
@@ -33,16 +33,16 @@ export default function BedsPageLoader() {
             <tbody>
               {Array.from({ length: 5 }, (_, index) => (
                 <tr key={index} className="border-b last:border-b-0">
-                  <td className="p-3 pl-4">
+                  <td className="px-3 py-3.5 pl-5">
                     <Skeleton className="h-5 w-32" />
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <Skeleton className="h-5 w-16" />
                   </td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <Skeleton className="h-5 w-48" />
                   </td>
-                  <td className="p-3 pr-4 text-right">
+                  <td className="px-3 py-3.5 pr-5 text-right">
                     <Skeleton className="ml-auto h-8 w-8" />
                   </td>
                 </tr>

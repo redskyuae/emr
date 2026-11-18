@@ -13,7 +13,7 @@ export default function RescheduleAppointmentLoader() {
         </div>
         <Skeleton className="h-10 w-48" />
       </div>
-      <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4">
+      <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
         <div className="flex justify-between gap-3">
           <Skeleton className="h-7 w-44" />
           <Skeleton className="h-6 w-28" />
@@ -28,14 +28,14 @@ export default function RescheduleAppointmentLoader() {
         <Skeleton className="h-52 w-full rounded-xl" />
         <Skeleton className="h-96 w-full rounded-xl" />
       </div>
-      <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
+      <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5">
         <Skeleton className="h-5 w-48" />
         <Skeleton className="h-4 w-72 max-w-full" />
         <Skeleton className="h-24 w-full" />
       </div>
       <div className="bg-card shadow-fluent-8 mt-auto flex items-center justify-between rounded-xl border p-4">
         <Skeleton className="h-10 w-60" />
-        <Skeleton className="h-9 w-44" />
+        <Skeleton className="h-10 w-44" />
       </div>
     </div>
   );

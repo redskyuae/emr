@@ -16,7 +16,7 @@ export function InvoiceHeader({
   actions: React.ReactNode;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="bg-card shadow-fluent-2 flex flex-col gap-4 rounded-xl border p-5 lg:flex-row lg:items-center lg:justify-between">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="icon" aria-label="Back to Invoices">
@@ -24,7 +24,7 @@ export function InvoiceHeader({
               <ArrowLeft className="size-4" />
             </Link>
           </Button>
-          <h1 className="text-xl font-semibold">{invoice.invoiceNumber}</h1>
+          <h2 className="text-xl font-semibold">{invoice.invoiceNumber}</h2>
           <Badge variant="outline" className={getInvoiceStatusClassName(invoice.status)}>
             {getInvoiceStatusLabel(invoice.status)}
           </Badge>

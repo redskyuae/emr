@@ -36,13 +36,13 @@ export function CheckInHeader({
   return (
     <header className="bg-card shadow-fluent-2 flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4">
       <div className="space-y-1">
-        <Button type="button" variant="ghost" size="sm" asChild className="-ml-2 h-7">
+        <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
           <Link href="/visits">
             <ArrowLeft className="size-4" />
             Visits
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight">Check in Patient</h1>
+        <h2 className="text-2xl font-bold tracking-tight">Check in Patient</h2>
         {referenceDate ? (
           <p className="text-muted-foreground text-sm">
             Visit date <span className="font-mono">{referenceDate}</span>

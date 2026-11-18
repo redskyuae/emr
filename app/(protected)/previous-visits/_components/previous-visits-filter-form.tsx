@@ -77,7 +77,7 @@ function FilterSelect({
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger id={id} className="h-9 w-full">
+        <SelectTrigger id={id} className="h-10 w-full">
           <SelectValue placeholder={allLabel} />
         </SelectTrigger>
         <SelectContent>
@@ -148,7 +148,7 @@ export function PreviousVisitsFilterForm({
         >
           <Field className="xl:max-w-md" data-invalid={!!errors.query}>
             <FieldLabel htmlFor="previous-visits-search">Search</FieldLabel>
-            <InputGroup className="bg-background h-9">
+            <InputGroup className="bg-background h-10">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>
@@ -169,7 +169,7 @@ export function PreviousVisitsFilterForm({
               <Input
                 id="previous-visits-from"
                 type="date"
-                className="h-9"
+                className="h-10"
                 max={to || undefined}
                 aria-invalid={!!errors.from}
                 {...register('from', { deps: ['to'] })}
@@ -183,7 +183,7 @@ export function PreviousVisitsFilterForm({
               <Input
                 id="previous-visits-to"
                 type="date"
-                className="h-9"
+                className="h-10"
                 min={from || undefined}
                 aria-invalid={!!errors.to}
                 {...register('to', { deps: ['from'] })}

@@ -59,18 +59,18 @@ export function InvoiceLinesCard({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">
               <thead>
-                <tr className="text-muted-foreground border-y text-left">
-                  <th className="p-3 pl-4 font-medium">Description</th>
-                  <th className="p-3 text-right font-medium">Qty</th>
-                  <th className="p-3 text-right font-medium">Unit Price</th>
-                  <th className="p-3 text-right font-medium">Amount</th>
-                  {showRemoveColumn ? <th className="p-3 pr-4" /> : null}
+                <tr className="text-muted-foreground bg-muted/60 border-y text-left text-xs tracking-wider uppercase">
+                  <th className="p-3 pl-5 font-semibold">Description</th>
+                  <th className="p-3 text-right font-semibold">Qty</th>
+                  <th className="p-3 text-right font-semibold">Unit Price</th>
+                  <th className="p-3 text-right font-semibold">Amount</th>
+                  {showRemoveColumn ? <th className="p-3 pr-5" /> : null}
                 </tr>
               </thead>
               <tbody>
                 {invoice.lines.map((line) => (
                   <tr key={line.id} className="border-b last:border-b-0">
-                    <td className="p-3 pl-4">
+                    <td className="px-3 py-3.5 pl-5">
                       {line.description}
                       {line.source === 'BED_AUTO' ? (
                         <Badge variant="secondary" className="ml-2">
@@ -78,11 +78,15 @@ export function InvoiceLinesCard({
                         </Badge>
                       ) : null}
                     </td>
-                    <td className="p-3 text-right tabular-nums">{line.quantity}</td>
-                    <td className="p-3 text-right tabular-nums">{formatMoney(line.unitPrice)}</td>
-                    <td className="p-3 text-right tabular-nums">{formatMoney(line.amount)}</td>
+                    <td className="px-3 py-3.5 text-right tabular-nums">{line.quantity}</td>
+                    <td className="px-3 py-3.5 text-right tabular-nums">
+                      {formatMoney(line.unitPrice)}
+                    </td>
+                    <td className="px-3 py-3.5 text-right tabular-nums">
+                      {formatMoney(line.amount)}
+                    </td>
                     {showRemoveColumn ? (
-                      <td className="p-3 pr-4 text-right">
+                      <td className="px-3 py-3.5 pr-5 text-right">
                         <Button
                           type="button"
                           variant="ghost"
