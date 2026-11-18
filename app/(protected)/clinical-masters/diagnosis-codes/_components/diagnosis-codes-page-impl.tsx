@@ -246,7 +246,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
               </EmptyMedia>
               <EmptyTitle>No Diagnosis Codes yet</EmptyTitle>
               <EmptyDescription>
-                Add ICD-10 Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.
+                Add ICD-10-CM Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.
               </EmptyDescription>
             </EmptyHeader>
             {canCreate ? (

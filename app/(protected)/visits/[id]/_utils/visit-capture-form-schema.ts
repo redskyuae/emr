@@ -33,7 +33,7 @@ export const visitNoteFormSchema = z
     noteTypeId: z.string().min(1, 'Note type is required.'),
     subjective: soapSection('Subjective'),
     objective: soapSection('Objective'),
-    assessment: soapSection('Assessment'),
+    assessment: soapSection('Diagnosis'),
     plan: soapSection('Plan'),
   })
   .refine(

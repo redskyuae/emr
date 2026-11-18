@@ -526,6 +526,48 @@
       "when": 1794548141839,
       "tag": "0074_visit_legacy_visit_number",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1794847122005,
+      "tag": "0075_visit_amend_permission",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1794852464003,
+      "tag": "0076_ayurveda_diagnosis_and_visit_diagnosis",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1794852468839,
+      "tag": "0077_ayurveda_diagnosis_code_permission",
+      "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1794862501597,
+      "tag": "0078_clinical_note_amended_by",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1794888161688,
+      "tag": "0079_seed_ayurveda_diagnosis_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1794890697261,
+      "tag": "0080_visit_doctor_optional",
+      "breakpoints": true
     }
   ]
 }

@@ -4,13 +4,19 @@ import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/c
 import type { InvoiceListItem } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { useVisitDocumentsQuery } from '@/app/queries/visits/useVisitDocuments';
+import { isAyurvedaBrand } from '@/components/brand/brand-config';
+import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 
 import { VisitBillingPanel } from './visit-billing-panel';
 import { VisitClinicalNotesCard } from './visit-clinical-notes-card';
 import { VisitConsultationPanel } from './visit-consultation-panel';
+import { VisitDiagnosesPanel } from './visit-diagnoses-panel';
 import { VisitDetailsDisclosure } from './visit-details-disclosure';
 import { VisitDocumentsCard } from './visit-documents-card';
 import { VisitObjectiveVitals } from './visit-objective-vitals';
@@ -28,8 +34,12 @@ type Props = {
   invoicesLoading: boolean;
   invoicesError: boolean;
   canStart: boolean;
+  canAmend: boolean;
   starting: boolean;
   onStart: () => void;
+  onAmendVisit: () => void;
+  onAmendNote: (noteId: number) => void;
+  onAmendVitalSign: (vitalId: number) => void;
   onConsultationDirtyChange: (dirty: boolean) => void;
   onRecordVitals: () => void;
   onAddNote: () => void;
@@ -54,8 +64,12 @@ export function VisitCarePathway({
   invoicesLoading,
   invoicesError,
   canStart,
+  canAmend,
   starting,
   onStart,
+  onAmendVisit,
+  onAmendNote,
+  onAmendVitalSign,
   onConsultationDirtyChange,
   onRecordVitals,
   onAddNote,
@@ -67,6 +81,8 @@ export function VisitCarePathway({
 }: Props) {
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
   const documentsQuery = useVisitDocumentsQuery(visit.id);
+  const { data: currentUser } = useCurrentUserQuery();
+  const timeZone = currentUser?.tenant.timeZone;
   const { data: canAssignPlan } = useHasPermission('patient-treatment-plan:assign');
   const { data: canReadPlan } = useHasPermission('patient-treatment-plan:read');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
@@ -74,6 +90,8 @@ export function VisitCarePathway({
   const { data: canCreateNote } = useHasPermission('clinical-note:create');
   const { data: canCreateInvoice } = useHasPermission('invoice:create');
   const { data: canBookAppointment } = useHasPermission('appointment:create');
+  const { data: canUpdateVisit } = useHasPermission('visit:update');
+  const showAyurveda = isAyurvedaBrand(useBrandLogoVariant());
 
   const plans = plansQuery.data ?? [];
   const notes = (chart?.clinicalNotes ?? []).filter((item) => item.visitId === visit.id);
@@ -82,15 +100,26 @@ export function VisitCarePathway({
   const canRecordResponse = active && Boolean(canCreateNote);
 
   const slots = {
-    subjective: <VisitDetailsDisclosure visit={visit} />,
+    subjective: (
+      <VisitDetailsDisclosure visit={visit} onAmend={canAmend ? onAmendVisit : undefined} />
+    ),
     objective: (
       <VisitObjectiveVitals
         visitId={visit.id}
         readings={vitals}
+        timeZone={timeZone}
         loading={chartLoading}
         error={chartError}
         canRecord={active && Boolean(canRecordVitals)}
         onRecord={onRecordVitals}
+        onAmend={canAmend ? onAmendVitalSign : undefined}
+      />
+    ),
+    assessment: (
+      <VisitDiagnosesPanel
+        visit={visit}
+        showAyurveda={showAyurveda}
+        mode={active && canUpdateVisit ? 'edit' : canAmend ? 'amend' : 'read'}
       />
     ),
     plan: (
@@ -136,6 +165,7 @@ export function VisitCarePathway({
         />
         <VisitClinicalNotesCard
           notes={notes}
+          timeZone={timeZone}
           loading={chartLoading}
           error={chartError}
           active={active}
@@ -143,6 +173,7 @@ export function VisitCarePathway({
           onAddClinicalNote={onAddClinicalNote}
           onNursingHandoff={onAddNote}
           onSignNote={onSignNote}
+          onAmendNote={canAmend ? onAmendNote : undefined}
         />
         <VisitBillingPanel
           visit={visit}
@@ -170,6 +201,8 @@ export function VisitCarePathway({
         starting={starting}
         onStart={onStart}
         onAddNote={onAddClinicalNote}
+        onAmendVisit={canAmend ? onAmendVisit : undefined}
+        onAmendNote={canAmend ? onAmendNote : undefined}
         onDirtyChange={onConsultationDirtyChange}
         slots={slots}
       />

@@ -206,6 +206,19 @@ describe('Create Visit Appointment search', () => {
 });
 
 describe('Create Visit Admit source', () => {
+  it('should mark the Doctor required only for an OPD Consultation', async () => {
+    render(createElement(Form));
+    const doctor = () => screen.getByRole('combobox', { name: /Doctor/ });
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Visit type/ }), '4');
+    expect(doctor().getAttribute('aria-required')).toBe('false');
+    expect(screen.getByRole('option', { name: 'No Doctor' })).toBeTruthy();
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: /Visit type/ }), '3');
+    expect(doctor().getAttribute('aria-required')).toBe('true');
+    expect(screen.getByRole('option', { name: 'Select a Doctor' })).toBeTruthy();
+  });
+
   it('should offer the Admit Sources as an optional choice', () => {
     render(createElement(Form));
 

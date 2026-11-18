@@ -1,4 +1,4 @@
-import { NotebookPen } from 'lucide-react';
+import { NotebookPen, PencilLine } from 'lucide-react';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
@@ -11,8 +11,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { SOAP_SECTIONS } from '../_utils/doctor-consultation-note';
 
 /** Every Clinical Note written during this Visit, including nursing notes. */
+function amendedLabel(note: ClinicalNote, timeZone?: string) {
+  if (!note.amendedAt) {
+    return null;
+  }
+
+  const when = new Date(note.amendedAt).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone,
+  });
+
+  return `Amended by ${note.amendedByUserName ?? 'a former user'} on ${when}`;
+}
+
 export function VisitClinicalNotesCard({
   notes,
+  timeZone,
   loading,
   error,
   active,
@@ -20,8 +35,11 @@ export function VisitClinicalNotesCard({
   onAddClinicalNote,
   onNursingHandoff,
   onSignNote,
+  onAmendNote,
 }: {
   notes: ClinicalNote[];
+  /** The Tenant's time zone, used for the amendment time. */
+  timeZone?: string;
   loading: boolean;
   error: boolean;
   active: boolean;
@@ -29,6 +47,8 @@ export function VisitClinicalNotesCard({
   onAddClinicalNote: () => void;
   onNursingHandoff: () => void;
   onSignNote: (note: ClinicalNote) => void;
+  /** Present only on a Completed Visit the user may amend. */
+  onAmendNote?: (noteId: number) => void;
 }) {
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
   const noteTypeName = (id: number) =>
@@ -64,42 +84,59 @@ export function VisitClinicalNotesCard({
           </p>
         ) : (
           <ul className="space-y-2 text-sm">
-            {notes.map((note) => (
-              <li key={note.id} className="rounded-md border p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium">{noteTypeName(note.noteTypeId)}</p>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={note.status === 'signed' ? 'outline' : 'secondary'}>
-                      {note.status === 'signed' ? 'Signed' : 'Draft'}
-                    </Badge>
-                    {note.status === 'draft' && canCreateNote ? (
-                      <Button
-                        type="button"
-                        size="xs"
-                        variant="outline"
-                        onClick={() => onSignNote(note)}
-                      >
-                        Sign
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-                <dl className="mt-2 space-y-2">
-                  {SOAP_SECTIONS.map(({ key, label }) => {
-                    const value = note[key];
+            {notes.map((note) => {
+              const amended = amendedLabel(note, timeZone);
 
-                    return value ? (
-                      <div key={key}>
-                        <dt className="text-xs font-semibold">{label}</dt>
-                        <dd>
-                          <RichTextContent value={value} className="text-muted-foreground" />
-                        </dd>
-                      </div>
-                    ) : null;
-                  })}
-                </dl>
-              </li>
-            ))}
+              return (
+                <li key={note.id} className="rounded-md border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium">{noteTypeName(note.noteTypeId)}</p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={note.status === 'signed' ? 'outline' : 'secondary'}>
+                        {note.status === 'signed' ? 'Signed' : 'Draft'}
+                      </Badge>
+                      {note.status === 'draft' && canCreateNote ? (
+                        <Button
+                          type="button"
+                          size="xs"
+                          variant="outline"
+                          onClick={() => onSignNote(note)}
+                        >
+                          Sign
+                        </Button>
+                      ) : null}
+                      {onAmendNote ? (
+                        <Button
+                          type="button"
+                          size="xs"
+                          variant="outline"
+                          aria-label={`Amend ${noteTypeName(note.noteTypeId)}`}
+                          onClick={() => onAmendNote(note.id)}
+                        >
+                          <PencilLine className="size-3" />
+                          Amend
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                  {amended ? <p className="text-muted-foreground mt-1 text-xs">{amended}</p> : null}
+                  <dl className="mt-2 space-y-2">
+                    {SOAP_SECTIONS.map(({ key, label }) => {
+                      const value = note[key];
+
+                      return value ? (
+                        <div key={key}>
+                          <dt className="text-xs font-semibold">{label}</dt>
+                          <dd>
+                            <RichTextContent value={value} className="text-muted-foreground" />
+                          </dd>
+                        </div>
+                      ) : null;
+                    })}
+                  </dl>
+                </li>
+              );
+            })}
           </ul>
         )}
       </CardContent>

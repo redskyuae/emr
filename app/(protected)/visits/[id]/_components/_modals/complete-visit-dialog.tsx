@@ -47,8 +47,8 @@ export function CompleteVisitDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Complete {visit.visitNumber}?</AlertDialogTitle>
           <AlertDialogDescription>
-            {visit.patient.firstName} {visit.patient.lastName} leaves the queue and this Visit can
-            no longer be edited.
+            {visit.patient.firstName} {visit.patient.lastName} leaves the queue and this Visit is
+            closed. Later corrections need Amend Visit.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {outstanding.length > 0 ? (

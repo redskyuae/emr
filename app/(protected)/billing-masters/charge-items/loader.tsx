@@ -42,7 +42,10 @@ export default function ChargeItemsPageLoader() {
                     <Skeleton className="h-5 w-40" />
                   </td>
                   <td className="px-3 py-3.5">
-                    <Skeleton className="h-5 w-16" />
+                    <div className="flex items-center gap-1.5">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-10" />
+                    </div>
                   </td>
                   <td className="px-3 py-3.5">
                     <Skeleton className="h-5 w-24" />

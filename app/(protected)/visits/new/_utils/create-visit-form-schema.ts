@@ -72,9 +72,8 @@ export const createVisitFormSchema = z
     if (values.mode === 'walk-in' && !values.patientId) {
       context.addIssue({ code: 'custom', path: ['patientId'], message: 'Patient is required.' });
     }
-    if (values.mode === 'walk-in' && !values.doctorId) {
-      context.addIssue({ code: 'custom', path: ['doctorId'], message: 'Doctor is required.' });
-    }
+    // Whether a Doctor is required depends on the Visit Type's code, which this
+    // schema cannot see; the page enforces it on submit (visitTypeRequiresDoctor).
 
     if (!values.createInvoice) return;
 

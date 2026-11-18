@@ -50,6 +50,7 @@ async function seedChargeItem(tenantId: string, code: string, unitPrice: number)
     tenantId,
     name: `Item ${code}`,
     code,
+    codeType: 'LOCAL',
     category: 'PROCEDURE',
     unitPrice,
     description: undefined,

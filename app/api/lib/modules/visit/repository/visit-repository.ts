@@ -10,6 +10,7 @@ import {
   visit as visitTable,
   visitNumberCounter as visitNumberCounterTable,
   visitQueueTokenCounter as visitQueueTokenCounterTable,
+  visitUnassignedQueueTokenCounter as visitUnassignedQueueTokenCounterTable,
 } from '@/app/db/schema/visit';
 import {
   treatment as treatmentTable,
@@ -23,6 +24,7 @@ import { visitDocumentRepository } from '../../visit-document/repository/visit-d
 import { AppointmentStatusNotConfiguredError } from '../errors/appointment-status-not-configured-error';
 import {
   formatVisitDate,
+  type AmendVisitInput,
   type ValidatedCheckInVisitData,
   type Visit,
   type VisitListParams,
@@ -100,6 +102,7 @@ const visitColumns = {
 type VisitRow = {
   status: string;
   visitDate: string;
+  doctor: { id: number | null; name: string | null } | null;
   appointment: { id: number | null; bookingNumber: string | null } | null;
   treatment: { id: number | null; name: string | null; code: string | null } | null;
   treatmentSession: {
@@ -113,13 +116,22 @@ type VisitRow = {
     roomType: string | null;
     therapistSkill: string | null;
   } | null;
-} & Omit<Visit, 'status' | 'visitDate' | 'appointment' | 'treatment' | 'treatmentSession'>;
+} & Omit<
+  Visit,
+  'status' | 'visitDate' | 'doctor' | 'appointment' | 'treatment' | 'treatmentSession'
+>;
 
 function toVisit(row: VisitRow): Visit {
   return {
     ...row,
     status: row.status as VisitStatus,
     visitDate: formatVisitDate(row.visitDate),
+    // The Doctor spans two left-joined tables (doctor + user), so Drizzle returns
+    // an object of nulls rather than null for a Doctorless Visit.
+    doctor:
+      row.doctor?.id != null && row.doctor.name != null
+        ? { id: row.doctor.id, name: row.doctor.name }
+        : null,
     appointment:
       row.appointment?.id != null && row.appointment.bookingNumber != null
         ? { id: row.appointment.id, bookingNumber: row.appointment.bookingNumber }
@@ -162,11 +174,11 @@ function visitJoins(executor: SelectExecutor = db) {
       patientTable,
       and(eq(patientTable.id, visitTable.patientId), eq(patientTable.tenantId, visitTable.tenantId))
     )
-    .innerJoin(
+    .leftJoin(
       doctorTable,
       and(eq(doctorTable.id, visitTable.doctorId), eq(doctorTable.tenantId, visitTable.tenantId))
     )
-    .innerJoin(userTable, eq(userTable.id, doctorTable.userId))
+    .leftJoin(userTable, eq(userTable.id, doctorTable.userId))
     .innerJoin(
       visitTypeTable,
       and(
@@ -398,6 +410,79 @@ export type CheckInVisitRepositoryResult =
       outcome: 'appointment-ineligible' | 'appointment-status-not-configured';
     };
 
+// Each Doctor's day has its own Queue Token sequence; Visits without a Doctor
+// share the Tenant's unassigned sequence for that day (ADR 0029).
+// The counters only count Check-ins, but an amend keeps a Visit's Queue Token
+// when it changes the Doctor (ADR 0047), so a token can arrive in a queue
+// another way. Each counter therefore starts past the highest token already
+// held in its queue that day, so it never hands out a number in use.
+function highestQueueTokenInUse(
+  data: Pick<ValidatedCheckInVisitData, 'tenantId' | 'doctorId' | 'visitDate'>
+) {
+  const doctorCondition =
+    data.doctorId === null
+      ? sql`${visitTable.doctorId} is null`
+      : sql`${visitTable.doctorId} = ${data.doctorId}`;
+
+  return sql<number>`(
+    select coalesce(max(${visitTable.queueToken}), 0)
+    from ${visitTable}
+    where ${visitTable.tenantId} = ${data.tenantId}
+      and ${visitTable.visitDate} = ${data.visitDate}
+      and ${doctorCondition}
+      and ${visitTable.isDeleted} = false
+  )`;
+}
+
+async function allocateQueueToken(
+  tx: Transaction,
+  data: Pick<ValidatedCheckInVisitData, 'tenantId' | 'doctorId' | 'visitDate'>
+) {
+  const usedMax = highestQueueTokenInUse(data);
+
+  if (data.doctorId === null) {
+    const [counter] = await tx
+      .insert(visitUnassignedQueueTokenCounterTable)
+      .values({
+        tenantId: data.tenantId,
+        tokenDate: data.visitDate,
+        lastNumber: sql`${usedMax} + 1`,
+      })
+      .onConflictDoUpdate({
+        target: [
+          visitUnassignedQueueTokenCounterTable.tenantId,
+          visitUnassignedQueueTokenCounterTable.tokenDate,
+        ],
+        set: {
+          lastNumber: sql`greatest(${visitUnassignedQueueTokenCounterTable.lastNumber}, ${usedMax}) + 1`,
+        },
+      })
+      .returning({ lastNumber: visitUnassignedQueueTokenCounterTable.lastNumber });
+
+    return counter.lastNumber;
+  }
+
+  const [counter] = await tx
+    .insert(visitQueueTokenCounterTable)
+    .values({
+      tenantId: data.tenantId,
+      doctorId: data.doctorId,
+      tokenDate: data.visitDate,
+      lastNumber: sql`${usedMax} + 1`,
+    })
+    .onConflictDoUpdate({
+      target: [
+        visitQueueTokenCounterTable.tenantId,
+        visitQueueTokenCounterTable.doctorId,
+        visitQueueTokenCounterTable.tokenDate,
+      ],
+      set: { lastNumber: sql`greatest(${visitQueueTokenCounterTable.lastNumber}, ${usedMax}) + 1` },
+    })
+    .returning({ lastNumber: visitQueueTokenCounterTable.lastNumber });
+
+  return counter.lastNumber;
+}
+
 async function runCheckInVisitTransaction(
   data: ValidatedCheckInVisitData
 ): Promise<CheckInVisitRepositoryResult> {
@@ -449,23 +534,7 @@ async function runCheckInVisitTransaction(
       })
       .returning({ lastNumber: visitNumberCounterTable.lastNumber });
 
-    const [tokenCounter] = await tx
-      .insert(visitQueueTokenCounterTable)
-      .values({
-        tenantId: data.tenantId,
-        doctorId: data.doctorId,
-        tokenDate: data.visitDate,
-        lastNumber: 1,
-      })
-      .onConflictDoUpdate({
-        target: [
-          visitQueueTokenCounterTable.tenantId,
-          visitQueueTokenCounterTable.doctorId,
-          visitQueueTokenCounterTable.tokenDate,
-        ],
-        set: { lastNumber: sql`${visitQueueTokenCounterTable.lastNumber} + 1` },
-      })
-      .returning({ lastNumber: visitQueueTokenCounterTable.lastNumber });
+    const queueToken = await allocateQueueToken(tx, data);
 
     const [createdVisit] = await tx
       .insert(visitTable)
@@ -479,7 +548,7 @@ async function runCheckInVisitTransaction(
         appointmentId: data.appointmentId ?? null,
         status: 'CHECKED_IN',
         visitDate: data.visitDate,
-        queueToken: tokenCounter.lastNumber,
+        queueToken,
         chiefComplaint: data.chiefComplaint ?? null,
         remarks: data.remarks ?? null,
         treatmentId: data.treatmentId ?? null,
@@ -497,7 +566,7 @@ async function runCheckInVisitTransaction(
         data.tenantId,
         data.appointmentId,
         'CHECKED_IN',
-        lockedAppointmentDoctorId ? {} : { doctorId: data.doctorId }
+        lockedAppointmentDoctorId || data.doctorId === null ? {} : { doctorId: data.doctorId }
       );
 
       if (!synced) {
@@ -714,6 +783,38 @@ async function updateVisit(
   return getVisitById(id, tenantId);
 }
 
+// Amendment rewrites only the encounter details. The Visit's identity and
+// lifecycle (visitDate, visitNumber, queueToken, status and its timestamps)
+// are history and stay untouched.
+async function amendVisit(
+  id: number,
+  tenantId: string,
+  data: AmendVisitInput
+): Promise<Visit | undefined> {
+  const [amended] = await db
+    .update(visitTable)
+    .set({
+      doctorId: data.doctorId,
+      remarks: data.remarks ?? null,
+      modifiedOn: new Date(),
+      visitTypeId: data.visitTypeId,
+      treatmentId: data.treatmentId,
+      admitSourceId: data.admitSourceId,
+      chiefComplaint: data.chiefComplaint ?? null,
+      treatmentSessionId: data.treatmentSessionId,
+    })
+    .where(
+      and(eq(visitTable.id, id), eq(visitTable.tenantId, tenantId), eq(visitTable.isDeleted, false))
+    )
+    .returning({ id: visitTable.id });
+
+  if (!amended) {
+    return undefined;
+  }
+
+  return getVisitById(id, tenantId);
+}
+
 export type DeleteVisitResult =
   | { outcome: 'deleted'; data: Visit }
   | { outcome: 'not-found' }
@@ -818,6 +919,7 @@ async function findLatestCompletedVisitForPatient(
 
 export const visitRepository = {
   getVisits,
+  amendVisit,
   updateVisit,
   deleteVisit,
   getVisitById,

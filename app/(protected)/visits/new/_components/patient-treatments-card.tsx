@@ -120,6 +120,7 @@ export function PatientTreatmentsCard({
   onRetry,
   linkedBookingNumber,
 }: {
+  /** The Patient's current (Pending or In progress) Plans. */
   plans: PatientTreatmentPlan[];
   loading: boolean;
   error: boolean;
@@ -128,7 +129,6 @@ export function PatientTreatmentsCard({
   linkedBookingNumber: string | null;
 }) {
   const orderedPlans = orderTreatmentPlans(plans);
-  const currentCount = plans.filter(isCurrentTreatmentPlan).length;
 
   return (
     <Card className="shadow-fluent-2">
@@ -137,13 +137,9 @@ export function PatientTreatmentsCard({
           icon={<Leaf className="size-5" />}
           title="Treatment Plans"
           description={
-            loading || error
-              ? 'Existing treatments for this Patient'
-              : currentCount
-                ? `${currentCount} current · ${plans.length - currentCount} in history`
-                : plans.length
-                  ? `${plans.length} in history`
-                  : 'Existing treatments for this Patient'
+            !loading && !error && plans.length
+              ? `${plans.length} ongoing or not started`
+              : 'Ongoing and not started treatments for this Patient'
           }
         />
       </CardHeader>
@@ -169,7 +165,7 @@ export function PatientTreatmentsCard({
           </ul>
         ) : (
           <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-sm">
-            No Treatment Plans have been assigned to this Patient.
+            This Patient has no ongoing or not started Treatment Plans.
           </p>
         )}
       </CardContent>

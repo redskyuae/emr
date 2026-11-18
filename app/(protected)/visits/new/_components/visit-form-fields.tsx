@@ -17,6 +17,7 @@ import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema'
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import type { VisitPatientTypeAssessment } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
+import { visitTypeRequiresDoctor } from '@/app/api/lib/modules/visit/visit-doctor-requirement';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -239,6 +240,7 @@ export function VisitDetailsFields({
   const appointment = appointments.find((item) => String(item.id) === appointmentId);
   const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
   const assignedDoctor = mode === 'appointment' ? appointment?.doctor : null;
+  const doctorRequired = visitTypeRequiresDoctor(selectedVisitType?.code);
 
   return (
     <Card className="shadow-fluent-2">
@@ -333,16 +335,18 @@ export function VisitDetailsFields({
                 <Field className="bg-card rounded-lg border p-3">
                   <FieldLabel htmlFor="visit-doctor">
                     Doctor
-                    <RequiredMark />
+                    {doctorRequired ? <RequiredMark /> : null}
                   </FieldLabel>
                   <NativeSelect
                     {...field}
                     id="visit-doctor"
-                    aria-required
+                    aria-required={doctorRequired}
                     className="w-full"
                     disabled={loading}
                   >
-                    <NativeSelectOption value="">Select a Doctor</NativeSelectOption>
+                    <NativeSelectOption value="">
+                      {doctorRequired ? 'Select a Doctor' : 'No Doctor'}
+                    </NativeSelectOption>
                     {doctors.map((doctor) => (
                       <NativeSelectOption key={doctor.id} value={String(doctor.id)}>
                         {doctor.name}

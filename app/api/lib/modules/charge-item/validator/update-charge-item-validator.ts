@@ -5,6 +5,7 @@ import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { chargeItemRepository } from '../repository/charge-item-repository';
 import {
   chargeItemIdSchema,
+  getChargeItemCodeFormatError,
   updateChargeItemSchema,
   type UpdateChargeItemInput,
 } from '../schemas/charge-item-schema';
@@ -47,6 +48,14 @@ export async function validateUpdateChargeItem(
     };
   }
 
+  // An omitted codeType keeps the stored one, so the code must still fit it.
+  const codeType = payloadResult.data.codeType ?? existingChargeItem.codeType;
+  const codeFormatError = getChargeItemCodeFormatError(payloadResult.data.code, codeType);
+
+  if (codeFormatError) {
+    return { success: false, errors: [codeFormatError] };
+  }
+
   const uniquenessResult = await validateChargeItemUniqueness({
     ...payloadResult.data,
     tenantId,
@@ -67,6 +76,7 @@ export async function validateUpdateChargeItem(
       id: idResult.data,
       payload: {
         ...payloadResult.data,
+        codeType,
         isActive: payloadResult.data.isActive ?? existingChargeItem.isActive,
       },
     },

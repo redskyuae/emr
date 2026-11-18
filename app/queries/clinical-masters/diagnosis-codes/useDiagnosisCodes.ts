@@ -41,8 +41,12 @@ async function fetchDiagnosisCodes(
   return response.json() as Promise<ListDiagnosisCodesResponse>;
 }
 
-export function useDiagnosisCodesQuery(params: DiagnosisCodesParams) {
+export function useDiagnosisCodesQuery(
+  params: DiagnosisCodesParams,
+  { enabled = true }: { enabled?: boolean } = {}
+) {
   return useQuery({
+    enabled,
     queryKey: diagnosisCodesQueryKey(params),
     queryFn: () => fetchDiagnosisCodes(params),
   });

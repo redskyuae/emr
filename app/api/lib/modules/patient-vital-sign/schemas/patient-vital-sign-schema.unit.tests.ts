@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  amendVisitVitalSignSchema,
   computeBmi,
   createPatientVitalSignSchema,
   patientVitalSignIdSchema,
 } from './patient-vital-sign-schema';
 
-const errorsOf = (result: ReturnType<typeof createPatientVitalSignSchema.safeParse>) =>
+const errorsOf = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
 
 describe('PatientVitalSign schema', () => {
@@ -74,5 +75,50 @@ describe('computeBmi', () => {
 
   it('should return undefined when height is zero', () => {
     expect(computeBmi(0, 70)).toBeUndefined();
+  });
+
+  describe('amendVisitVitalSignSchema', () => {
+    it('should require at least one measurement', () => {
+      expect(errorsOf(amendVisitVitalSignSchema.safeParse({ notes: 'Rechecked' }))).toContain(
+        'At least one vital sign measurement is required'
+      );
+    });
+
+    it('should apply the same measurement limits and messages', () => {
+      const errors = errorsOf(
+        amendVisitVitalSignSchema.safeParse({ spo2: 101, temperatureC: 19, painScore: 1.5 })
+      );
+
+      expect(errors).toContain('Vital sign SpO2 must be at most 100');
+      expect(errors).toContain('Vital sign temperature must be at least 20');
+      expect(errors).toContain('Vital sign pain score must be an integer');
+    });
+
+    it('should treat null and blank measurements as absent and trim notes', () => {
+      expect(
+        amendVisitVitalSignSchema.parse({ pulseBpm: 72, systolic: null, spo2: '', notes: ' Calm ' })
+      ).toMatchObject({ pulseBpm: 72, systolic: undefined, spo2: undefined, notes: 'Calm' });
+    });
+
+    it('should leave recordedAt undefined when it is omitted', () => {
+      expect(amendVisitVitalSignSchema.parse({ pulseBpm: 72 }).recordedAt).toBeUndefined();
+    });
+
+    it('should coerce a supplied recordedAt and reject an invalid one', () => {
+      expect(
+        amendVisitVitalSignSchema.parse({ pulseBpm: 72, recordedAt: '2026-07-16T04:30:00.000Z' })
+          .recordedAt
+      ).toEqual(new Date('2026-07-16T04:30:00.000Z'));
+      expect(
+        errorsOf(amendVisitVitalSignSchema.safeParse({ pulseBpm: 72, recordedAt: 'yesterday' }))
+      ).toContain('Vital sign recorded-at must be a valid date-time');
+    });
+
+    it('should strip the Visit and Admission link so it cannot change', () => {
+      const parsed = amendVisitVitalSignSchema.parse({ pulseBpm: 72, visitId: 99, admissionId: 5 });
+
+      expect(parsed).not.toHaveProperty('visitId');
+      expect(parsed).not.toHaveProperty('admissionId');
+    });
   });
 });

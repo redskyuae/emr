@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { visitStatusPresentation } from '../../visits/_utils/visit-status';
 import { formatVisitDay } from '../_utils/previous-visits-filters';
+import { visitDoctorLabel } from '@/lib/visit-doctor-label';
 
 function formatTime(value: Date | string) {
   return new Date(value).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -64,7 +65,7 @@ function VisitCards({ visits }: { visits: Visit[] }) {
                   {visit.legacyVisitNumber ? ` · Legacy #${visit.legacyVisitNumber}` : ''}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  {visit.doctor.name} · {visit.visitType.name}
+                  {visitDoctorLabel(visit)} · {visit.visitType.name}
                 </p>
               </div>
               <Badge variant={status.variant}>{status.label}</Badge>
@@ -131,7 +132,7 @@ function VisitTable({ visits }: { visits: Visit[] }) {
                     {visit.patient.mrn} · {visit.patient.phone}
                   </p>
                 </TableCell>
-                <TableCell>{visit.doctor.name}</TableCell>
+                <TableCell>{visitDoctorLabel(visit)}</TableCell>
                 <TableCell>
                   <Badge variant="secondary" title={visit.visitType.name}>
                     {visit.visitType.code}

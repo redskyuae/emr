@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatUnitPrice, getChargeItemCategoryLabel } from '../_utils/charge-item-category';
+import { getChargeItemCodeTypeDetails } from '../_utils/charge-item-code-type';
 
 export function ChargeItemTable({
   chargeItems,
@@ -34,7 +35,7 @@ export function ChargeItemTable({
           <thead>
             <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
               <th className="p-3 pl-5 font-semibold">Service Name</th>
-              <th className="p-3 font-semibold">CPT / Service Code</th>
+              <th className="p-3 font-semibold">Code</th>
               <th className="p-3 font-semibold">Category</th>
               <th className="p-3 text-right font-semibold">Standard</th>
               <th className="p-3 text-right font-semibold">Cash</th>
@@ -57,7 +58,18 @@ export function ChargeItemTable({
                   ) : null}
                 </td>
                 <td className="px-3 py-3.5">
-                  <Badge variant="secondary">{chargeItem.code}</Badge>
+                  <span className="flex items-center gap-1.5">
+                    <Badge variant="secondary" className="font-mono">
+                      {chargeItem.code}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-muted-foreground"
+                      title={getChargeItemCodeTypeDetails(chargeItem.codeType).label}
+                    >
+                      {getChargeItemCodeTypeDetails(chargeItem.codeType).badge}
+                    </Badge>
+                  </span>
                 </td>
                 <td className="text-muted-foreground px-3 py-3.5">
                   {getChargeItemCategoryLabel(chargeItem.category)}

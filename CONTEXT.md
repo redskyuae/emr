@@ -298,7 +298,7 @@ An outpatient clinical event. Occurs when a Patient attends a Facility for a con
 
 ## Queue Token
 
-A same-day ordering number assigned when a Patient checks in for a Visit. A Queue Token belongs to the arrival workflow and is not assigned when an Appointment is booked. Queue Tokens are numbered per Doctor per Tenant-local day in check-in order and are never reused within that day, including when the Visit is cancelled.
+A same-day ordering number assigned when a Patient checks in for a Visit. A Queue Token belongs to the arrival workflow and is not assigned when an Appointment is booked. Queue Tokens are numbered per Doctor per Tenant-local day in check-in order and are never reused within that day, including when the Visit is cancelled. A Visit without a Doctor takes its token from the Tenant's shared unassigned queue for that day.
 
 ## Treatment
 
@@ -344,9 +344,25 @@ The permanent, human-facing identifier assigned by the system to a Visit within 
 
 The lifecycle state of a Visit: Checked In, In Consultation, Completed, or Cancelled. Unlike AppointmentStatus, Visit Status is a fixed system-defined set rather than a Tenant-scoped Master — the same values apply to every Tenant.
 
+## Diagnosis Code
+
+A Tenant-scoped Master of ICD-10-CM codes, each with a title and optional category. ICD-10-CM is the diagnosis code set UAE payers accept on claims, so codes must match the ICD-10-CM format (for example M54.5).
+
+## Ayurveda Diagnosis Code
+
+A Tenant-scoped Master of Ayurveda diagnoses (Roga), each with a code, a name, an optional English name and category, and an optional mapping to the ICD-10-CM Diagnosis Code reported on claims for it. The UAE mandates no Ayurveda code set, so each Tenant maintains its own catalogue.
+
+## Visit Diagnosis
+
+A coded diagnosis recorded on a Visit, drawn from either the Diagnosis Code (ICD-10-CM) or the Ayurveda Diagnosis Code master. Each code system on a Visit has exactly one Principal diagnosis when any are recorded; the rest are Secondary. Visit Diagnoses are captured on the consultation's Diagnosis step (formerly Assessment), edited while the Visit is active, and changed on a Completed Visit only through Visit Amendment.
+
+## Visit Amendment
+
+A correction made to a Completed Visit after it closed, by a user holding the `visit:amend` permission. A Visit Amendment may change the Visit's Doctor, VisitType, Admit Source, Treatment and Session, Purpose of Visit and Remarks, and the Clinical Notes (including signed ones) and Vital Signs recorded on that Visit. It never changes the Visit Status, Visit date, Visit Number or Queue Token. Cancelled Visits cannot be amended. Distinct from updating an Active Visit, which needs no special permission beyond `visit:update`.
+
 ## Walk-in Visit
 
-A Visit created at the Facility without a preceding Appointment. Identical to any other Visit once created; the Doctor is supplied directly at Check-in rather than derived from an Appointment.
+A Visit created at the Facility without a preceding Appointment. Identical to any other Visit once created; the Doctor, when there is one, is supplied directly at Check-in rather than derived from an Appointment. Only an OPD Consultation requires a Doctor; any other VisitType may be checked in without one.
 
 ## Active Visit
 
@@ -406,7 +422,7 @@ The list of Admissions, defaulting to Active Admissions, used by ward staff to s
 
 ## Charge Item
 
-A Tenant-scoped Master that names a billable service or item, such as a consultation fee, a procedure, an investigation, or a consumable. Its code may be a verified CPT code or a local service code. It carries a Standard Price, optional Cash Price and Insurance Contract Price, an optional Effective Date, and Active status. An Established or Follow-up Consultation Charge Item may be marked Free Follow-up Eligible; the waiver applies only to a qualifying follow-up Visit. A Visit service designation links the Charge Item to New Consultation, Established Consultation, Follow-up Consultation, or Treatment Session; staff select the actual coded service and level. A Charge Item is the priced catalogue entry a cashier draws Invoice Lines from; it is not itself a bill. Patient-paid Invoice Lines default to Cash Price when configured, otherwise Standard Price. Insurance Contract Price is stored for future direct insurer billing and is not used for Patient reimbursement.
+A Tenant-scoped Master that names a billable service or item, such as a consultation fee, a procedure, an investigation, or a consumable. Its Charge Item Code Type says what its code is: CPT, HCPCS, a UAE regulator service code, or a Local code; CPT and HCPCS codes must match their official formats. It carries a Standard Price, optional Cash Price and Insurance Contract Price, an optional Effective Date, and Active status. An Established or Follow-up Consultation Charge Item may be marked Free Follow-up Eligible; the waiver applies only to a qualifying follow-up Visit. A Visit service designation links the Charge Item to New Consultation, Established Consultation, Follow-up Consultation, or Treatment Session; staff select the actual coded service and level. A Charge Item is the priced catalogue entry a cashier draws Invoice Lines from; it is not itself a bill. Patient-paid Invoice Lines default to Cash Price when configured, otherwise Standard Price. Insurance Contract Price is stored for future direct insurer billing and is not used for Patient reimbursement.
 
 ## Charge Item Category
 

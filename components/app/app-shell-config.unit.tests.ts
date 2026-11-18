@@ -225,6 +225,62 @@ describe('App shell navigation permissions', () => {
     ).toEqual(['Sessions']);
   });
 
+  it('should list ICD-10-CM and Ayurveda Diagnosis Codes under Clinical Masters by resource', () => {
+    expect(getVisibleParent('Configuration', 'Clinical Masters', [])).toBeUndefined();
+    expect(
+      getVisibleParent('Configuration', 'Clinical Masters', [
+        'diagnosis-code:read',
+        'ayurveda-diagnosis-code:read',
+      ])?.items
+    ).toEqual([
+      {
+        title: 'ICD-10-CM Diagnosis Codes',
+        href: '/clinical-masters/diagnosis-codes',
+        permission: 'diagnosis-code',
+      },
+      {
+        title: 'Ayurveda Diagnosis Codes',
+        href: '/clinical-masters/ayurveda-diagnosis-codes',
+        permission: 'ayurveda-diagnosis-code',
+      },
+    ]);
+    expect(
+      getVisibleParent('Configuration', 'Clinical Masters', [
+        'ayurveda-diagnosis-code:read',
+      ])?.items?.map(({ title }) => title)
+    ).toEqual(['Ayurveda Diagnosis Codes']);
+  });
+
+  it('should keep both Diagnosis Code masters out of the reduced sidebar, like before', () => {
+    const groups = getVisibleNavGroups(
+      appNavGroups,
+      ['diagnosis-code:read', 'ayurveda-diagnosis-code:read', 'therapist-skill:read'],
+      true
+    );
+
+    expect(
+      groups
+        .find(({ title }) => title === 'Configuration')
+        ?.items.find(({ title }) => title === 'Clinical Masters')
+        ?.items?.map(({ title }) => title)
+    ).toEqual(['Therapist Skills']);
+  });
+
+  it('should describe the Ayurveda Diagnosis Codes page with a permission-gated add action', () => {
+    expect(getAppPageMeta('/clinical-masters/ayurveda-diagnosis-codes')).toEqual({
+      title: 'Ayurveda Diagnosis Codes',
+      subtitle: 'Tenant-scoped Ayurveda diagnosis catalogue, mapped to ICD-10-CM for claims.',
+      primaryAction: {
+        label: 'Add Ayurveda Diagnosis Code',
+        href: '/clinical-masters/ayurveda-diagnosis-codes?ayurvedaCode=new',
+        permission: 'ayurveda-diagnosis-code:create',
+      },
+    });
+    expect(getAppPageMeta('/clinical-masters/diagnosis-codes').title).toBe(
+      'ICD-10-CM Diagnosis Codes'
+    );
+  });
+
   it('should describe the Asset Conditions page exposed by navigation', () => {
     expect(getAppPageMeta('/asset-management-masters/conditions')).toEqual({
       title: 'Asset Conditions',
