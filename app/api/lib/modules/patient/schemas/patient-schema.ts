@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { normalisePhone } from '@/lib/phone-numbers';
+
 const PATIENT_GENDERS = ['male', 'female', 'other', 'unknown'] as const;
 const PATIENT_TITLES = ['mr', 'mrs', 'miss', 'baby', 'master', 'ms', 'dr'] as const;
 const PATIENT_BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
@@ -111,12 +113,47 @@ const patientNameSchema = (fieldName: string) =>
     .min(1, `Patient ${fieldName} cannot be empty`)
     .max(100, `Patient ${fieldName} must be at most 100 characters`);
 
+// Stored as `+<country code><number>` (e.g. 0501234567 becomes +971501234567)
+// whenever the number passes its country rule. The rule itself is checked by
+// getPatientPhoneErrors, so an update can keep a saved phone that predates it.
 const patientPhoneSchema = (fieldName: string) =>
   z
     .string({ error: `Patient ${fieldName} is required` })
     .trim()
     .min(1, `Patient ${fieldName} cannot be empty`)
-    .max(20, `Patient ${fieldName} must be at most 20 characters`);
+    .max(20, `Patient ${fieldName} must be at most 20 characters`)
+    .transform((value) => {
+      const result = normalisePhone(value);
+      return result.success ? result.phone : value;
+    });
+
+const PATIENT_PHONE_FIELDS = [
+  { key: 'phone', name: 'phone' },
+  { key: 'alternatePhone', name: 'alternate phone' },
+  { key: 'emergencyContactPhone', name: 'Next of Kin phone' },
+] as const;
+
+type PatientPhones = Partial<
+  Record<(typeof PATIENT_PHONE_FIELDS)[number]['key'], string | null | undefined>
+>;
+
+/**
+ * Country-rule errors for each phone. A phone equal to its saved value is left
+ * alone, so editing an unrelated field never fails on a phone saved before the
+ * rule existed.
+ */
+export function getPatientPhoneErrors(phones: PatientPhones, saved: PatientPhones = {}) {
+  return PATIENT_PHONE_FIELDS.flatMap(({ key, name }) => {
+    const value = phones[key];
+
+    if (!value || value === saved[key]?.trim()) {
+      return [];
+    }
+
+    const result = normalisePhone(value);
+    return result.success ? [] : [{ path: key, message: `Patient ${name} ${result.rule}` }];
+  });
+}
 
 const patientEmailSchema = z
   .string()
@@ -288,12 +325,7 @@ const patientPayloadSchema = z
     maritalStatus: optionalTrimmedValue(maritalStatusSchema),
     preferredPaymentMethod: optionalTrimmedValue(paymentMethodSchema),
     phone: patientPhoneSchema('phone'),
-    alternatePhone: optionalTrimmedValue(
-      patientPhoneSchema('alternate phone').regex(
-        /^\+?\d+$/,
-        'Patient alternate phone must contain only digits, optionally starting with +'
-      )
-    ),
+    alternatePhone: optionalTrimmedValue(patientPhoneSchema('alternate phone')),
     email: optionalTrimmedValue(patientEmailSchema),
     addressLine1: optionalTrimmedValue(
       z.string().trim().max(255, 'Patient address line 1 must be at most 255 characters')
@@ -343,12 +375,7 @@ const patientPayloadSchema = z
       z.string().trim().max(50, 'Patient Next of Kin Relationship must be at most 50 characters')
     ),
     emergencyContactGender: optionalTrimmedValue(genderSchema),
-    emergencyContactPhone: optionalTrimmedValue(
-      patientPhoneSchema('Next of Kin phone').regex(
-        /^\+?\d+$/,
-        'Patient Next of Kin phone must contain only digits, optionally starting with +'
-      )
-    ),
+    emergencyContactPhone: optionalTrimmedValue(patientPhoneSchema('Next of Kin phone')),
   })
   .refine((data) => data.stateId === undefined || data.countryId !== undefined, {
     message: 'Patient country ID is required when state ID is provided',
@@ -405,7 +432,13 @@ const patientPayloadSchema = z
     }
   });
 
-export const createPatientSchema = patientPayloadSchema;
+export const createPatientSchema = patientPayloadSchema.superRefine((data, ctx) => {
+  for (const { path, message } of getPatientPhoneErrors(data)) {
+    ctx.addIssue({ code: 'custom', message, path: [path] });
+  }
+});
+// The phone country rule is checked by validateUpdatePatient against the saved
+// Patient, so an unchanged legacy phone still saves.
 export const updatePatientSchema = patientPayloadSchema;
 
 export type PatientGender = (typeof PATIENT_GENDERS)[number];

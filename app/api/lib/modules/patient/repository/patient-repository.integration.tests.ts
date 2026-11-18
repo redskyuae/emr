@@ -521,6 +521,28 @@ describe('Patient repository', () => {
     expect(byPhone.data.map((patient) => patient.id)).toEqual([other.id]);
   });
 
+  it('should find a phone saved as +<code><number> or in an older format by any spelling', async () => {
+    const canonical = await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Fatima', phone: '+971501234567' })
+    );
+    const legacy = await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Noura', phone: '0501234567' })
+    );
+    await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Other', phone: '+971551234567' })
+    );
+    await patientRepository.createPatient(
+      patientData(tenantB, { firstName: 'Fatima', phone: '+971501234567' })
+    );
+
+    for (const query of ['0501234567', '+971501234567', '050 123 4567', '501234567']) {
+      const result = await patientRepository.getPatients({ tenantId: tenantA, query });
+      expect(result.data.map((patient) => patient.id).sort()).toEqual(
+        [canonical.id, legacy.id].sort()
+      );
+    }
+  });
+
   it('should search by full name and date of birth in common date formats', async () => {
     const matching = await patientRepository.createPatient(
       patientData(tenantA, {

@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getPatientPhoneErrors,
   updatePatientSchema,
   type Patient,
 } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 
-import { patientFormSchema } from './patient-form-schema';
+import { patientFormSchema, type PatientFormValues } from './patient-form-schema';
 import { patientFormValuesToRequest, patientToFormValues } from './patient-form-values';
 
 const existingPatient: Patient = {
@@ -59,14 +60,23 @@ const existingPatient: Patient = {
   modifiedOn: new Date('2026-10-01T00:00:00Z'),
 };
 
-// Load into the Edit Patient form, change only the address, then save.
-function editAddress(patient: Patient) {
-  const values = { ...patientToFormValues(patient), addressLine1: '221B Residency Road' };
+// Load into the Edit Patient form, apply the changes (only the address by
+// default), then run what the update API checks: the schema, plus the phone
+// country rule against the saved Patient (validateUpdatePatient).
+function edit(patient: Patient, changes: Partial<PatientFormValues> = {}) {
+  const values = {
+    ...patientToFormValues(patient),
+    addressLine1: '221B Residency Road',
+    ...changes,
+  };
   const form = patientFormSchema.safeParse(values);
   const api = updatePatientSchema.safeParse(patientFormValuesToRequest(values));
+  const apiPhoneErrors = api.success ? getPatientPhoneErrors(api.data, patient) : [];
 
-  return { form, api };
+  return { form, api, apiPhoneErrors };
 }
+
+const editAddress = (patient: Patient) => edit(patient);
 
 describe('Patient form values', () => {
   it('should split a formatted alternate phone into country code and number', () => {
@@ -147,14 +157,52 @@ describe('Patient form values', () => {
     expect(api.data?.emergencyContactPhone).toBe('+919988776655');
   });
 
-  it('should flag a legacy Next of Kin phone that is not a valid UAE number', () => {
-    const { form } = editAddress({
-      ...existingPatient,
-      emergencyContactPhone: '747920843idjcksdno',
-    });
+  it('should let an unrelated edit save for a patient with a legacy phone', () => {
+    // Saved for an Indian patient before country codes; not a valid UAE number.
+    const patient = { ...existingPatient, phone: '9876543210' };
+    const { form, api, apiPhoneErrors } = editAddress(patient);
 
-    expect(form.error?.issues.map((issue) => issue.message)).toEqual([
-      'Next of Kin Phone must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number.',
-    ]);
+    expect(form.success).toBe(true);
+    expect(api.success).toBe(true);
+    expect(apiPhoneErrors).toEqual([]);
+    // Sent back exactly as saved rather than guessed into +9719876543210.
+    expect(api.data?.phone).toBe('9876543210');
+    expect(api.data?.addressLine1).toBe('221B Residency Road');
+  });
+
+  it('should let an unrelated edit save for a patient with a legacy Next of Kin phone', () => {
+    const patient = { ...existingPatient, emergencyContactPhone: '747920843idjcksdno' };
+    const { form, api, apiPhoneErrors } = editAddress(patient);
+
+    expect(form.success).toBe(true);
+    expect(apiPhoneErrors).toEqual([]);
+    expect(api.data?.emergencyContactPhone).toBe('747920843idjcksdno');
+  });
+
+  it('should apply the country rule once a legacy phone is changed', () => {
+    const patient = { ...existingPatient, phone: '9876543210' };
+    const { form, api, apiPhoneErrors } = edit(patient, { phone: '9876543211' });
+    const message =
+      'must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number';
+
+    expect(form.error?.issues.map((issue) => issue.message)).toEqual([`Phone ${message}.`]);
+    expect(api.data?.phone).toBe('+9719876543211');
+    expect(apiPhoneErrors).toEqual([{ path: 'phone', message: `Patient phone ${message}` }]);
+  });
+
+  it('should save a legacy phone in the new format once its country is picked', () => {
+    const patient = { ...existingPatient, phone: '9876543210' };
+    const { form, api, apiPhoneErrors } = edit(patient, { phoneCountry: 'IN' });
+
+    expect(form.success).toBe(true);
+    expect(apiPhoneErrors).toEqual([]);
+    expect(api.data?.phone).toBe('+919876543210');
+  });
+
+  it('should not treat a valid phone in an old format as legacy', () => {
+    const values = patientToFormValues({ ...existingPatient, phone: '+91-9876543210' });
+
+    expect(values.legacyPhones).toEqual({});
+    expect(patientFormValuesToRequest(values).phone).toBe('+919876543210');
   });
 });

@@ -1515,6 +1515,81 @@ describe('Appointment repository', () => {
     });
   });
 
+  describe('findPotentialPatientMatches', () => {
+    async function insertPatient(tenantId: string, firstName: string, phone: string) {
+      const [patient] = await db
+        .insert(patientTable)
+        .values({
+          tenantId,
+          mrn: `MRN-PHONE-${firstName}-${sequence}`,
+          firstName,
+          lastName: 'Rao',
+          gender: 'female',
+          dateOfBirth: '1990-05-14',
+          phone,
+          registrationStatus: 'registered',
+          isActive: true,
+        })
+        .returning({ id: patientTable.id });
+
+      return patient;
+    }
+
+    it('should find a patient saved as +971501234567 for a booking with 0501234567', async () => {
+      const fixtures = await createFixtures();
+      const saved = await insertPatient(fixtures.tenantId, 'Meera', '+971501234567');
+
+      // The booking API normalises 0501234567 to +971501234567 before this call;
+      // both spellings must find the same chart.
+      for (const phone of ['+971501234567', '0501234567']) {
+        await expect(
+          appointmentRepository.findPotentialPatientMatches(
+            fixtures.tenantId,
+            'Meera',
+            'Rao',
+            phone
+          )
+        ).resolves.toEqual([expect.objectContaining({ id: saved.id })]);
+      }
+    });
+
+    it('should find patients saved before the +<code><number> format', async () => {
+      const fixtures = await createFixtures();
+      const legacy = await Promise.all(
+        ['0501234567', '971501234567', '00971501234567', '050-123 4567'].map((phone, index) =>
+          insertPatient(fixtures.tenantId, `Legacy${index}`, phone)
+        )
+      );
+
+      for (const [index, patient] of legacy.entries()) {
+        await expect(
+          appointmentRepository.findPotentialPatientMatches(
+            fixtures.tenantId,
+            `Legacy${index}`,
+            'Rao',
+            '+971501234567'
+          )
+        ).resolves.toEqual([expect.objectContaining({ id: patient.id })]);
+      }
+    });
+
+    it('should not match a different number or another tenant', async () => {
+      const fixtures = await createFixtures();
+      const other = await createFixtures();
+      await insertPatient(fixtures.tenantId, 'Meera', '+971501234568');
+      await insertPatient(other.tenantId, 'Meera', '+971501234567');
+
+      await expect(
+        appointmentRepository.findPotentialPatientMatches(
+          fixtures.tenantId,
+          'Meera',
+          'Rao',
+          '+971501234567'
+        )
+      ).resolves.toEqual([]);
+    });
+  });
+
   describe('getAppointmentByBookingNumber', () => {
     it('should find an appointment by its booking number case-insensitively', async () => {
       const fixtures = await createFixtures();

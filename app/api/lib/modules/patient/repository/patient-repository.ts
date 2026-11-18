@@ -1,5 +1,6 @@
 import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
 
+import { getPhoneSearchDigits } from '@/lib/phone-numbers';
 import { db } from '@/app/db';
 import { country as countryTable } from '@/app/db/schema/country';
 import { language as languageTable } from '@/app/db/schema/language';
@@ -413,6 +414,9 @@ async function getPatients({
   // non-empty: an unguarded strip turns a name search for O'Brien into '',
   // which would match every patient in the tenant (ADR 0042).
   const normalisedQuery = trimmedQuery ? normaliseEmiratesId(trimmedQuery) : '';
+  // Saved phones mix +971501234567 and 0501234567, so a phone-like query also
+  // matches on its national digits: 0501234567 and +971501234567 both find both.
+  const phoneDigits = trimmedQuery ? getPhoneSearchDigits(trimmedQuery) : null;
   const searchPattern = `%${trimmedQuery}%`;
   const searchCondition = trimmedQuery
     ? or(
@@ -422,6 +426,12 @@ async function getPatients({
         ilike(sql`${patientTable.firstName} || ' ' || ${patientTable.lastName}`, searchPattern),
         ilike(patientTable.mrn, searchPattern),
         ilike(patientTable.phone, searchPattern),
+        phoneDigits === null
+          ? undefined
+          : ilike(
+              sql`regexp_replace(${patientTable.phone}, '[^0-9]', '', 'g')`,
+              `%${phoneDigits}%`
+            ),
         ilike(sql`${patientTable.dateOfBirth}::text`, searchPattern),
         ilike(sql`to_char(${patientTable.dateOfBirth}, 'DD/MM/YYYY')`, searchPattern),
         ilike(sql`to_char(${patientTable.dateOfBirth}, 'DD-MM-YYYY')`, searchPattern),

@@ -1,9 +1,19 @@
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import type { SavePatientRequest } from '@/app/api/v1/patients/types';
 
-import type { PatientFormValues } from './patient-form-schema';
+import {
+  DEFAULT_PHONE_COUNTRY,
+  getPhoneNumberError,
+  joinPhoneNumber,
+  splitPhoneNumber,
+} from '@/lib/phone-numbers';
+
+import {
+  isUntouchedLegacyPhone,
+  PHONE_FIELDS,
+  type PatientFormValues,
+} from './patient-form-schema';
 import { formatEmiratesId, isRealEmiratesId, normaliseEmiratesId } from './patient-value-sets';
-import { DEFAULT_PHONE_COUNTRY, joinPhoneNumber, splitPhoneNumber } from './phone-countries';
 
 export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   title: '',
@@ -46,12 +56,43 @@ export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   emergencyContactGender: '',
   emergencyContactPhone: '',
   emergencyContactPhoneCountry: DEFAULT_PHONE_COUNTRY,
+  legacyPhones: {},
 };
 
 // Phones are stored as +<country code><number>; the form edits the two parts
-// separately, and an empty optional phone is omitted.
-function toStoredPhone(country: string, number: string | undefined) {
-  return number ? joinPhoneNumber(country, number) : undefined;
+// separately. An untouched legacy phone goes back exactly as it was saved, and
+// an empty optional phone is omitted.
+function toStoredPhone(
+  values: PatientFormValues,
+  { name, countryName }: Pick<(typeof PHONE_FIELDS)[number], 'name' | 'countryName'>
+) {
+  const number = values[name];
+  const country = values[countryName];
+  const legacy = values.legacyPhones[name];
+
+  if (!number) {
+    return undefined;
+  }
+
+  return legacy !== undefined && isUntouchedLegacyPhone(legacy, country, number)
+    ? legacy
+    : joinPhoneNumber(country, number);
+}
+
+// Saved phones that fail today's country rule, e.g. 9876543210 saved for an
+// Indian patient before country codes existed. A valid number in an old format
+// (+91-9123456780) is not legacy: it is simply saved back as +919123456780.
+function getLegacyPhones(patient: Patient): PatientFormValues['legacyPhones'] {
+  return Object.fromEntries(
+    PHONE_FIELDS.map(({ name }) => [name, patient[name]?.trim()]).filter(([, saved]) => {
+      if (!saved) {
+        return false;
+      }
+
+      const { country, number } = splitPhoneNumber(saved);
+      return getPhoneNumberError(country, number) !== null;
+    })
+  );
 }
 
 export function patientToFormValues(patient: Patient): PatientFormValues {
@@ -110,6 +151,7 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     emergencyContactGender: patient.emergencyContactGender ?? '',
     emergencyContactPhone: emergencyContactPhone.number,
     emergencyContactPhoneCountry: emergencyContactPhone.country,
+    legacyPhones: getLegacyPhones(patient),
   };
 }
 
@@ -124,8 +166,12 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     bloodGroup: values.bloodGroup || undefined,
     maritalStatus: values.maritalStatus || undefined,
     preferredPaymentMethod: values.preferredPaymentMethod || undefined,
-    phone: joinPhoneNumber(values.phoneCountry, values.phone),
-    alternatePhone: toStoredPhone(values.alternatePhoneCountry, values.alternatePhone),
+    // Required, so the form never submits it empty.
+    phone: toStoredPhone(values, { name: 'phone', countryName: 'phoneCountry' }) ?? '',
+    alternatePhone: toStoredPhone(values, {
+      name: 'alternatePhone',
+      countryName: 'alternatePhoneCountry',
+    }),
     email: values.email || undefined,
     addressLine1: values.addressLine1 || undefined,
     addressLine2: values.addressLine2 || undefined,
@@ -164,9 +210,9 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     emergencyContactName: values.emergencyContactName || undefined,
     emergencyContactRelationship: values.emergencyContactRelationship || undefined,
     emergencyContactGender: values.emergencyContactGender || undefined,
-    emergencyContactPhone: toStoredPhone(
-      values.emergencyContactPhoneCountry,
-      values.emergencyContactPhone
-    ),
+    emergencyContactPhone: toStoredPhone(values, {
+      name: 'emergencyContactPhone',
+      countryName: 'emergencyContactPhoneCountry',
+    }),
   };
 }
