@@ -55,7 +55,7 @@ export function AppTopbar() {
         </InputGroup>
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
-          <TenantChip className="mr-2 hidden md:inline-flex" />
+          <TenantChip className="mr-2 hidden max-w-xs md:inline-flex" />
 
           <Tooltip>
             <TooltipTrigger asChild>
