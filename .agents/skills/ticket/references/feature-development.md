@@ -16,7 +16,7 @@ Copy this checklist into the conversation and tick it as you go:
 - [ ] F1 Context gathered (issue tree, docs, codebase), sources listed
 - [ ] F2 Questions resolved, no blocking unknowns left
 - [ ] F3 Plan presented and approved
-- [ ] F4 Plan posted to the issue and saved to plans.md
+- [ ] F4 Plan posted to the issue and saved to AGENT_PLAN.md
 - [ ] F5 Execution mode chosen, branch ready
 - [ ] F6 Implemented (one shot, or slice by slice)
 - [ ] F7 Final verification, result presented for review
@@ -271,10 +271,13 @@ it to #123?"_ Iterate until the engineer approves the plan explicitly.
    comment URL** it prints: the number after `#issuecomment-` is the comment
    ID, and F6 may need it to update this comment.
    If the engineer declines to post, note that and continue.
-3. Save the full approved plan to **`plans.md`** at the repo root. It's
-   gitignored. Include the comment URL and a slice status table. It keeps the
-   plan safe across context compaction and lets a new session resume. If
-   `plans.md` already exists, show what's in it and ask before overwriting.
+3. Save the full approved plan to **`AGENT_PLAN.md`** at the repo root. It's
+   gitignored, so it never shows up as a change or lands in a commit. Don't
+   use `plans.md`: that file is tracked and holds the team's own plans.
+   Include the issue number, the comment URL and a slice status table. It
+   keeps the plan safe across context compaction and lets a new session
+   resume. If `AGENT_PLAN.md` already exists, show what's in it and ask
+   before overwriting.
 4. Don't change the issue's state, assignees, labels or milestone unless
    asked. You may offer to assign it to the engineer
    (`gh issue edit <n> --add-assignee @me`).
@@ -325,7 +328,7 @@ the work. **Applying** one (`db:migrate`, `db:push`) changes a database: ask
 first, because the database in `.env` may be shared.
 
 Implement in the main session, so the engineer's feedback and the plan stay in
-one context. Use Explore for lookups. Update the slice table in `plans.md` as
+one context. Use Explore for lookups. Update the slice table in `AGENT_PLAN.md` as
 you go.
 
 **Stop and ask, in either mode**, when:
@@ -435,7 +438,7 @@ Follow-ups: <out-of-scope items found along the way>
 Verification: <commands run and results; what's not verified>
 ```
 
-4. Mark `plans.md` complete.
+4. Mark `AGENT_PLAN.md` complete.
 5. **Stop** and let the engineer review the diff: _"Review it in your IDE.
    When you're happy, say so and I'll commit it and open the pull request."_
 

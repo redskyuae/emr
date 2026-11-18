@@ -39,7 +39,7 @@ leave them out of the body you write.
    uncommitted work only if the author says it belongs in the PR.
 3. **Find the issue.** Look in the branch name (for example
    `arun/263-visit-coverage-at-check-in` → #263), the commit messages, an
-   existing PR body, and `plans.md` if `/ticket` wrote one. Confirm it with
+   existing PR body, and `AGENT_PLAN.md` if `/ticket` wrote one. Confirm it with
    `gh issue view <n> --json number,title,state,labels,body` and read its
    acceptance criteria. If none turns up, ask. Never make up an issue number.
 4. **Read the domain language** in `CONTEXT.md` at the repo root, and use its
