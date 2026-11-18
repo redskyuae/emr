@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
-import { Lock } from 'lucide-react';
+import { CiLock } from 'react-icons/ci';
 
 import { DemoDataBanner } from '@/components/app/demo-data-banner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -48,7 +48,7 @@ function CounterWorkspace() {
 
       {shiftOpen ? null : (
         <Alert>
-          <Lock className="size-4" />
+          <CiLock className="size-4" />
           <AlertTitle>Shift {state.shift.no} is closed</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-2">
             Posting is disabled until the next shift is opened.

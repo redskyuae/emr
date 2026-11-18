@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { AlertTriangle, Pencil, Play, Timer } from 'lucide-react';
+import { CiEdit, CiPlay1, CiTimer, CiWarning } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type {
@@ -205,7 +205,7 @@ export function PlanSessionSheet({
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           {session.startedVisitId !== null && pending ? (
             <Alert>
-              <Timer className="size-4" />
+              <CiTimer className="size-4" />
               <AlertTitle>
                 {session.startedVisitId === visit.id
                   ? 'In progress in this Visit'
@@ -233,7 +233,7 @@ export function PlanSessionSheet({
             <>
               {session.warning ? (
                 <Alert variant="destructive">
-                  <AlertTriangle className="size-4" />
+                  <CiWarning className="size-4" />
                   <AlertTitle>Warning</AlertTitle>
                   <AlertDescription className="whitespace-pre-wrap">
                     {session.warning}
@@ -269,13 +269,13 @@ export function PlanSessionSheet({
                   onClick={() => setEditing(true)}
                   disabled={busy}
                 >
-                  <Pencil className="size-4" />
+                  <CiEdit className="size-4" />
                   Edit plan
                 </Button>
               ) : null}
               {startable ? (
                 <Button type="button" onClick={() => void start()} disabled={busy}>
-                  <Play className="size-4" />
+                  <CiPlay1 className="size-4" />
                   {startSession.isPending ? 'Starting…' : 'Start Session'}
                 </Button>
               ) : null}

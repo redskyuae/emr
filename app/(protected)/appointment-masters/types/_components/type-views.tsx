@@ -1,4 +1,5 @@
-import { ClipboardList, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiClipboardTextLight } from 'react-icons/pi';
 import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +21,7 @@ import {
 function TypeIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <ClipboardList className="size-5" />
+      <PiClipboardTextLight className="size-5" />
     </div>
   );
 }
@@ -59,19 +60,19 @@ function TypeActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${type.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(type)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(type)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -174,7 +175,7 @@ export function TypeCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(type)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -186,7 +187,7 @@ export function TypeCardView({
                     onClick={() => onDelete(type)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}

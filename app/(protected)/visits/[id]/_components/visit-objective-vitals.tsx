@@ -1,4 +1,4 @@
-import { Activity, PencilLine } from 'lucide-react';
+import { CiEdit, CiWavePulse1 } from 'react-icons/ci';
 
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
 import { Button } from '@/components/ui/button';
@@ -57,12 +57,12 @@ export function VisitObjectiveVitals({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="objective-vitals" className="flex items-center gap-2 text-sm font-semibold">
-          <Activity className="text-chart-4 size-4" aria-hidden="true" />
+          <CiWavePulse1 className="text-chart-4 size-4" aria-hidden="true" />
           Vital Signs
         </h3>
         {canRecord ? (
           <Button type="button" size="sm" variant="outline" onClick={onRecord}>
-            <Activity className="size-4" />
+            <CiWavePulse1 className="size-4" />
             {visitReadings.length ? 'Record again' : 'Record Vital Signs'}
           </Button>
         ) : null}
@@ -95,7 +95,7 @@ export function VisitObjectiveVitals({
                   aria-label={`Amend the ${time} reading`}
                   onClick={() => onAmend(reading.id)}
                 >
-                  <PencilLine className="size-3" />
+                  <CiEdit className="size-3" />
                   Amend
                 </Button>
               </li>

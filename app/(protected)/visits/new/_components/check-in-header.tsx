@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Check } from 'lucide-react';
+import { PiArrowLeftLight, PiCheckLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,7 @@ function Step({ number, label, state }: { number: number; label: string; state: 
           state === 'next' && 'text-muted-foreground'
         )}
       >
-        {state === 'done' ? <Check className="size-4" aria-label="Done" /> : number}
+        {state === 'done' ? <PiCheckLight className="size-4" aria-label="Done" /> : number}
       </span>
       <span className={cn('text-sm font-semibold', state === 'next' && 'text-muted-foreground')}>
         {label}
@@ -38,7 +38,7 @@ export function CheckInHeader({
       <div className="space-y-1">
         <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
           <Link href="/visits">
-            <ArrowLeft className="size-4" />
+            <PiArrowLeftLight className="size-4" />
             Visits
           </Link>
         </Button>

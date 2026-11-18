@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Bell, CircleHelp, Search } from 'lucide-react';
+import { CiBellOn, CiCircleQuestion, CiSearch } from 'react-icons/ci';
 
 import { TenantChip } from '@/components/app/tenant-chip';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ export function AppTopbar() {
 
         <InputGroup className="shadow-fluent-2 max-w-md min-w-0 flex-1 rounded-full">
           <InputGroupAddon className="pl-4">
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             ref={searchInputRef}
@@ -66,7 +66,7 @@ export function AppTopbar() {
                 aria-label="Help"
                 className="text-muted-foreground rounded-full"
               >
-                <CircleHelp className="size-4.5" />
+                <CiCircleQuestion className="size-4.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Help</TooltipContent>
@@ -81,7 +81,7 @@ export function AppTopbar() {
                 aria-label="Notifications"
                 className="text-muted-foreground relative rounded-full"
               >
-                <Bell className="size-4.5" />
+                <CiBellOn className="size-4.5" />
                 <span className="bg-primary ring-background absolute top-2 right-2 size-2 rounded-full ring-2" />
               </Button>
             </TooltipTrigger>

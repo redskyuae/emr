@@ -1,7 +1,9 @@
 'use client';
 
 import { Suspense } from 'react';
-import { Banknote, Boxes, Wrench, type LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiBoxes, CiMoneyBill } from 'react-icons/ci';
+import { PiWrenchLight } from 'react-icons/pi';
 
 import { useSuspenseAssetSummary } from '@/app/queries/assets-management/assets-overview/useAssetSummary';
 import type { AssetSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
@@ -13,7 +15,7 @@ import { WidgetErrorBoundary } from './widget-error-boundary';
 type Stat = {
   label: string;
   value: string;
-  icon: LucideIcon;
+  icon: IconType;
 };
 
 type AssetStatCardsProps = {
@@ -42,17 +44,17 @@ export function AssetStatCards({ assetSummary }: AssetStatCardsProps) {
     {
       label: 'Total assets',
       value: assetSummary.totalAssets.toLocaleString('en-US'),
-      icon: Boxes,
+      icon: CiBoxes,
     },
     {
       label: 'Portfolio value',
       value: formatAedCompact(assetSummary.portfolioValue),
-      icon: Banknote,
+      icon: CiMoneyBill,
     },
     {
       label: 'Out of service',
       value: assetSummary.outOfServiceCount.toLocaleString('en-US'),
-      icon: Wrench,
+      icon: PiWrenchLight,
     },
   ];
 

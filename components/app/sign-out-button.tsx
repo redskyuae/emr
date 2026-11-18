@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { CiLogout } from 'react-icons/ci';
 
 import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ export function SignOutButton() {
       disabled={signOutMutation.isPending}
       onClick={handleSignOut}
     >
-      {signOutMutation.isPending ? <Spinner className="size-4" /> : <LogOut className="size-4" />}
+      {signOutMutation.isPending ? <Spinner className="size-4" /> : <CiLogout className="size-4" />}
     </Button>
   );
 }

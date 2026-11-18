@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 
 import {
   AlertDialog,
@@ -36,7 +36,7 @@ export function DeleteChartRecordDialog({
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete {entityLabel}?</AlertDialogTitle>
           <AlertDialogDescription>

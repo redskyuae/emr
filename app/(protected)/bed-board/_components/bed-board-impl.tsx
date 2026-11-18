@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, BedDouble, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import { PiBedLight } from 'react-icons/pi';
 
 import type { BedBoardBed } from '@/app/api/lib/modules/bed/schemas/bed-schema';
 import { BED_STATUSES } from '@/app/db/schema/bed';
@@ -89,7 +90,7 @@ export function BedBoardImpl() {
 
       {boardQuery.isError ? (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not load the Bed Board</AlertTitle>
           <AlertDescription>{getApiErrorMessage(boardQuery.error)}</AlertDescription>
         </Alert>
@@ -101,7 +102,7 @@ export function BedBoardImpl() {
         <Empty className="bg-card shadow-fluent-2 min-h-80 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <BedDouble />
+              <PiBedLight />
             </EmptyMedia>
             <EmptyTitle>No Beds configured</EmptyTitle>
             <EmptyDescription>
@@ -118,7 +119,7 @@ export function BedBoardImpl() {
         <Empty className="bg-card shadow-fluent-2 min-h-72 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <Search />
+              <CiSearch />
             </EmptyMedia>
             <EmptyTitle>No Beds match</EmptyTitle>
             <EmptyDescription>No Beds match the current filters.</EmptyDescription>
@@ -164,7 +165,7 @@ function BedTile({ bed, wardId }: { bed: BedBoardBed; wardId: number }) {
   const header = (
     <div className="flex items-center justify-between gap-1">
       <p className="flex items-center gap-1 font-semibold">
-        <BedDouble className="size-4" />
+        <PiBedLight className="size-4" />
         {bed.bedNumber}
       </p>
       <span className="text-xs">{getBedStatusLabel(bed.status)}</span>

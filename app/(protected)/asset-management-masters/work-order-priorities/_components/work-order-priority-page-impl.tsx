@@ -3,17 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Flag,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Table as TableIcon,
-} from 'lucide-react';
+import { CiBoxList, CiCircleAlert, CiFlag1, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 import type { WorkOrderPriority } from '@/app/api/lib/modules/work-order-priority/schemas/work-order-priority-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWorkOrderPriorityQuery } from '@/app/queries/asset-masters/work-order-priorities/useWorkOrderPriority';
@@ -135,22 +126,22 @@ export function WorkOrderPriorityPageImpl() {
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -164,7 +155,7 @@ export function WorkOrderPriorityPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={() => void setPriorityParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Work Order Priority
                 </Button>
               </div>
@@ -174,7 +165,7 @@ export function WorkOrderPriorityPageImpl() {
 
         {prioritiesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Work Order Priorities</AlertTitle>
             <AlertDescription>{getApiErrorMessage(prioritiesQuery.error)}</AlertDescription>
           </Alert>
@@ -186,7 +177,7 @@ export function WorkOrderPriorityPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Flag />
+                <CiFlag1 />
               </EmptyMedia>
               <EmptyTitle>No Work Order Priorities yet</EmptyTitle>
               <EmptyDescription>
@@ -196,7 +187,7 @@ export function WorkOrderPriorityPageImpl() {
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={() => void setPriorityParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Work Order Priority
                 </Button>
               </EmptyContent>
@@ -206,7 +197,7 @@ export function WorkOrderPriorityPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -256,7 +247,7 @@ export function WorkOrderPriorityPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -267,7 +258,7 @@ export function WorkOrderPriorityPageImpl() {
                     onClick={() => setPage((p) => p + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

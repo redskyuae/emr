@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, UserRoundX, UsersRound } from 'lucide-react';
+import { PiArrowLeftLight, PiUserMinusLight, PiUsersLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { PatientForm } from '@/app/(protected)/patients/_components/patient-form';
@@ -28,7 +28,7 @@ function BackLink({ patientId }: { patientId: number }) {
   return (
     <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
       <Link href={`/patients/${patientId}`}>
-        <ArrowLeft className="size-4" />
+        <PiArrowLeftLight className="size-4" />
         Back to Patient
       </Link>
     </Button>
@@ -48,7 +48,7 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
         <Empty className="min-h-72">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <UserRoundX className="size-5" />
+              <PiUserMinusLight className="size-5" />
             </EmptyMedia>
             <EmptyTitle>You don&apos;t have permission to edit Patients.</EmptyTitle>
             <EmptyDescription>Contact a Tenant Admin if you need access.</EmptyDescription>
@@ -82,7 +82,7 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
         <Empty className="min-h-72">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <UsersRound className="size-5" />
+              <PiUsersLight className="size-5" />
             </EmptyMedia>
             <EmptyTitle>Patient not found</EmptyTitle>
             <EmptyDescription>{getApiErrorMessage(patientQuery.error)}</EmptyDescription>

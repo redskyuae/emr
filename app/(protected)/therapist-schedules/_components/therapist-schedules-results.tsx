@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, CalendarClock } from 'lucide-react';
+import { CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
 
 import type { TherapistSchedule } from '@/app/api/lib/modules/therapist-schedule/schemas/therapist-schedule-schema';
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
@@ -56,7 +56,7 @@ export function TherapistSchedulesResults({
   if (isError) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Therapist Schedules</AlertTitle>
         <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
       </Alert>
@@ -72,7 +72,7 @@ export function TherapistSchedulesResults({
       <Empty className="bg-card shadow-fluent-2 min-h-72 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <CalendarClock className="size-5" />
+            <CiCalendarDate className="size-5" />
           </EmptyMedia>
           <EmptyTitle>No Therapist Schedules found.</EmptyTitle>
           <EmptyDescription>

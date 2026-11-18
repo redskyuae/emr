@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { Plus } from 'lucide-react';
+import { PiPlusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
@@ -202,7 +202,7 @@ function AddLineForm({ invoiceId, onClose }: { invoiceId: number; onClose: () =>
           Cancel
         </Button>
         <Button type="submit" disabled={addMutation.isPending}>
-          <Plus className="size-4" />
+          <PiPlusLight className="size-4" />
           {addMutation.isPending ? 'Adding…' : 'Add line'}
         </Button>
       </SheetFooter>

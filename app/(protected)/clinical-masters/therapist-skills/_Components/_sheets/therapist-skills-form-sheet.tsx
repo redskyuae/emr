@@ -1,7 +1,7 @@
 'use client';
 
 import type { UseFormReturn } from 'react-hook-form';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -68,7 +68,7 @@ export function TherapistSkillFormSheet({
           <div className="flex-1 overflow-y-auto p-4">
             {serverErrors.length > 0 ? (
               <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="size-4" />
+                <CiCircleAlert className="size-4" />
                 <AlertTitle>Save failed</AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc space-y-1 pl-4">
@@ -131,7 +131,7 @@ export function TherapistSkillFormSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
-              <Save className="size-4" />
+              <CiFloppyDisk className="size-4" />
               Save
             </Button>
           </SheetFooter>

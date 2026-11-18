@@ -3,19 +3,16 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryState } from 'nuqs';
+import { CiEdit, CiStethoscope, CiUser, CiWarning } from 'react-icons/ci';
 import {
-  ArrowLeft,
-  ArrowRight,
-  Building2,
-  CalendarX,
-  Check,
-  Pencil,
-  RefreshCw,
-  RotateCcw,
-  Stethoscope,
-  UserRound,
-  TriangleAlert,
-} from 'lucide-react';
+  PiArrowCounterClockwiseLight,
+  PiArrowLeftLight,
+  PiArrowRightLight,
+  PiArrowsClockwiseLight,
+  PiBuildingsLight,
+  PiCalendarXLight,
+  PiCheckLight,
+} from 'react-icons/pi';
 
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -64,14 +61,14 @@ export function BookAppointmentPageImpl() {
       <div className="space-y-4">
         <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
           <Link href="/appointments">
-            <ArrowLeft className="size-4" />
+            <PiArrowLeftLight className="size-4" />
             Appointments
           </Link>
         </Button>
         <Empty className="min-h-72">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <CalendarX className="size-5" />
+              <PiCalendarXLight className="size-5" />
             </EmptyMedia>
             <EmptyTitle>You don&apos;t have permission to book Appointments.</EmptyTitle>
             <EmptyDescription>Contact a Tenant Admin if you need access.</EmptyDescription>
@@ -133,7 +130,7 @@ function BookAppointmentWorkflow() {
           Select the Patient, Booking Path, and exact Appointment time.
         </p>
         <div className="flex items-center gap-2 text-sm">
-          <Building2 className="text-primary size-4 shrink-0" />
+          <PiBuildingsLight className="text-primary size-4 shrink-0" />
           <div>
             <p className="font-medium">{DEMO_FACILITY.name}</p>
             <p className="text-muted-foreground text-xs">
@@ -169,7 +166,7 @@ function BookAppointmentWorkflow() {
                     : 'border-border text-muted-foreground'
               )}
             >
-              {index === 0 && step === 2 ? <Check className="size-3.5" /> : index + 1}
+              {index === 0 && step === 2 ? <PiCheckLight className="size-3.5" /> : index + 1}
             </span>
             <span className="text-left whitespace-normal">{label}</span>
           </Button>
@@ -181,7 +178,7 @@ function BookAppointmentWorkflow() {
 
       {booking.confirmation ? (
         <Alert className="border-success/25 bg-success/5" role="status">
-          <Check className="size-4" />
+          <PiCheckLight className="size-4" />
           <AlertTitle>
             Appointment booked ·{' '}
             <span className="font-mono">{booking.confirmation.bookingNumber}</span>
@@ -191,7 +188,7 @@ function BookAppointmentWorkflow() {
               {booking.confirmation.patientName} · {booking.confirmation.detail}
             </span>
             <Button type="button" size="sm" variant="outline" onClick={booking.resetBooking}>
-              <RotateCcw className="size-3.5" /> Start another booking
+              <PiArrowCounterClockwiseLight className="size-3.5" /> Start another booking
             </Button>
           </AlertDescription>
         </Alert>
@@ -199,7 +196,7 @@ function BookAppointmentWorkflow() {
 
       {booking.submitError ? (
         <Alert variant="destructive" role="alert">
-          <TriangleAlert className="size-4" />
+          <CiWarning className="size-4" />
           <AlertTitle>Appointment not booked</AlertTitle>
           <AlertDescription>{booking.submitError}</AlertDescription>
         </Alert>
@@ -207,7 +204,7 @@ function BookAppointmentWorkflow() {
 
       {booking.visitType && booking.bookingDependencyError ? (
         <Alert variant="destructive" role="alert">
-          <TriangleAlert className="size-4" />
+          <CiWarning className="size-4" />
           <AlertTitle>Booking options could not be loaded</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
             <span>{booking.bookingDependencyError}</span>
@@ -217,7 +214,7 @@ function BookAppointmentWorkflow() {
               variant="outline"
               onClick={booking.retryBookingDependencies}
             >
-              <RefreshCw className="size-3.5" /> Retry
+              <PiArrowsClockwiseLight className="size-3.5" /> Retry
             </Button>
           </AlertDescription>
         </Alert>
@@ -304,7 +301,7 @@ function BookAppointmentWorkflow() {
                 />
               ) : (
                 <div className="text-muted-foreground flex items-start gap-3 px-2 py-4 text-sm">
-                  <ArrowRight className="mt-0.5 size-4 shrink-0" />
+                  <PiArrowRightLight className="mt-0.5 size-4 shrink-0" />
                   <p>
                     {booking.visitType
                       ? 'Continue to choose the date and exact Appointment time.'
@@ -317,7 +314,7 @@ function BookAppointmentWorkflow() {
         ) : (
           <>
             <div className="bg-card flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3">
-              <UserRound className="text-primary size-5 shrink-0" />
+              <CiUser className="text-primary size-5 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold break-words">{patientName}</p>
                 <p className="text-muted-foreground text-xs break-words">
@@ -338,7 +335,7 @@ function BookAppointmentWorkflow() {
                 {visitLabel}
               </Badge>
               <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                <Stethoscope className="size-3.5" aria-hidden="true" />
+                <CiStethoscope className="size-3.5" aria-hidden="true" />
                 {booking.selectedDoctor?.name ?? (isProcedurePath ? 'N/A' : 'Doctor required')}
               </span>
               {booking.selectedTreatment ? (
@@ -348,7 +345,7 @@ function BookAppointmentWorkflow() {
                 </span>
               ) : null}
               <Button type="button" variant="ghost" size="sm" onClick={() => booking.setStep(1)}>
-                <Pencil className="size-3.5" /> Edit
+                <CiEdit className="size-3.5" /> Edit
               </Button>
             </div>
             <div className="grid items-start gap-4 lg:grid-cols-2">
@@ -388,7 +385,7 @@ function BookAppointmentWorkflow() {
                 )}
                 {selectedSession ? (
                   <Alert className="border-warning/25 bg-warning/5">
-                    <TriangleAlert className="text-warning size-4" />
+                    <CiWarning className="text-warning size-4" />
                     <AlertTitle className="text-warning">Clinical warning</AlertTitle>
                     <AlertDescription>{selectedSession.warning}</AlertDescription>
                   </Alert>
@@ -447,7 +444,7 @@ function BookAppointmentWorkflow() {
           {step === 2 ? (
             <>
               <Button type="button" variant="outline" onClick={() => booking.setStep(1)}>
-                <ArrowLeft className="size-4" /> Back
+                <PiArrowLeftLight className="size-4" /> Back
               </Button>
               <BookingSummary
                 values={values}
@@ -470,11 +467,11 @@ function BookAppointmentWorkflow() {
           >
             {step === 1 ? (
               <>
-                Continue <ArrowRight className="size-4" />
+                Continue <PiArrowRightLight className="size-4" />
               </>
             ) : (
               <>
-                <Check className="size-4" />
+                <PiCheckLight className="size-4" />
                 {form.formState.isSubmitting ? 'Booking Appointment…' : `Book ${visitLabel}`}
               </>
             )}

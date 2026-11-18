@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2 } from 'lucide-react';
+import { PiBuildingsLight } from 'react-icons/pi';
 
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,7 +30,7 @@ export function TenantChip({ className }: { className?: string }) {
         className
       )}
     >
-      <Building2 className="text-muted-foreground size-3.5 shrink-0" aria-hidden="true" />
+      <PiBuildingsLight className="text-muted-foreground size-3.5 shrink-0" aria-hidden="true" />
       <span className="text-muted-foreground shrink-0">Tenant</span>
       <span className="min-w-0 font-semibold break-words">{currentUser.tenant.name}</span>
     </span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { AppointmentStatus } from '@/app/api/lib/modules/appointment-status/schemas/appointment-status-schema';
@@ -47,7 +47,7 @@ export function StatusDeleteDialog({ status, onClose, onDeleted }: StatusDeleteD
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Appointment Status?</AlertDialogTitle>
           <AlertDialogDescription>

@@ -158,12 +158,13 @@ GSAP + `@gsap/react` is the animation library; tw-animate-css is acceptable only
 
 ## Components
 
-The full shadcn/ui set (55 components) is installed in `components/ui/` (style `radix-nova`, icon library `lucide-react`). All are themed by the tokens above — **do not fork or restyle a ui component for one screen; pass `className` for layout-level tweaks, and change tokens for theme-level changes.**
+The full shadcn/ui set (55 components) is installed in `components/ui/` (style `radix-nova`). All are themed by the tokens above — **do not fork or restyle a ui component for one screen; pass `className` for layout-level tweaks, and change tokens for theme-level changes.**
 
 - Domain composites live outside `components/ui/`: `components/brand/`, `components/marketing/`, `components/auth/`.
 - Page-specific React components under `app/` live in that route's `_components/` directory. Do not create ad hoc `components/` folders beside pages or leave page clients beside `page.tsx`.
 - Every `app/**/page.tsx` has a sibling `loader.tsx` that imports and renders `Skeleton` from `@/components/ui/skeleton`. When the page or any route-local `_components/` file changes, update that route's `loader.tsx` in the same change so the loading state remains page-shaped.
 - `components/ui/calendar.tsx` was patched for react-day-picker v10 (`month_grid` classNames key replaces v8's `table`). Re-apply if the component is regenerated.
+- **Icons** come from `react-icons`. Use Circum Icons (`react-icons/ci`, `Ci*`) wherever Circum has the glyph. Circum has no plain check, X, plus, minus, chevron, arrow, spinner, eye-off, rich-text or most user-variant icons, so those use Phosphor's Light weight (`react-icons/pi`, `Pi*Light`), the closest thin line style; `PiCircleNotchLight` with `animate-spin` is the loading spinner. Type an icon prop as `IconType` from `react-icons`. Size icons with `size-*` classes; never set `strokeWidth`, because Circum draws its outlines as filled paths. A filled icon (such as rating stars) uses Phosphor's `Fill` weight, not a `fill-*` class. `components.json` still names `lucide` because the shadcn CLI accepts no other value here, so swap the icon imports in any component the CLI adds.
 - Charts use `chart.tsx` (Recharts) with `--chart-1..5` (a blue-led ramp). Toasts use `sonner.tsx`.
 - **Tables** use `components/ui/table.tsx`: a muted header band with small uppercase labels, 3.5 units of vertical cell padding, and 20px insets on the first and last column. Wrap a table in a `Card` with `py-0` (or a `bg-card rounded-xl border` box) so the band meets the card edge. A hand-rolled `<table>`, and the loader skeleton that mirrors it, takes `tableHeadRowClass`, `tableHeadCellClass` and `tableCellClass` from `components/ui/table-styles.ts` instead of repeating the class strings; `TableCell` uses the same constant. Deliberately dense tables keep their own smaller padding.
 

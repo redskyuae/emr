@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Search } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -88,7 +88,7 @@ function TransactionBook({ txns }: { txns: LedgerTxn[] }) {
       <div className="flex flex-col gap-2 sm:flex-row">
         <InputGroup className="sm:max-w-xs">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"

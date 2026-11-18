@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -149,7 +155,7 @@ export function VisitsPageImpl() {
 
             <InputGroup className="lg:ml-auto lg:max-w-xs">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -167,7 +173,7 @@ export function VisitsPageImpl() {
 
         {visitsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Visits</AlertTitle>
             <AlertDescription>{getApiErrorMessage(visitsQuery.error)}</AlertDescription>
           </Alert>
@@ -175,7 +181,7 @@ export function VisitsPageImpl() {
 
         {doctorsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Doctor filter</AlertTitle>
             <AlertDescription className="flex flex-wrap items-center gap-2">
               {getApiErrorMessage(doctorsQuery.error)}
@@ -197,7 +203,7 @@ export function VisitsPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <ClipboardList />
+                <PiClipboardTextLight />
               </EmptyMedia>
               <EmptyTitle>No Visits for {visitDate}</EmptyTitle>
               <EmptyDescription>
@@ -209,7 +215,7 @@ export function VisitsPageImpl() {
               <EmptyContent>
                 <Button asChild>
                   <Link href="/visits/new">
-                    <Plus className="size-4" />
+                    <PiPlusLight className="size-4" />
                     Create Visit
                   </Link>
                 </Button>
@@ -241,7 +247,7 @@ export function VisitsPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -252,7 +258,7 @@ export function VisitsPageImpl() {
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

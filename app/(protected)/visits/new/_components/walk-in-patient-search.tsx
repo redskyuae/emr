@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { RefreshCcw, Search, UserRound } from 'lucide-react';
+import { CiSearch, CiUser } from 'react-icons/ci';
+import { PiArrowsCounterClockwiseLight } from 'react-icons/pi';
 import type { ControllerRenderProps } from 'react-hook-form';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
@@ -46,7 +47,7 @@ export function WalkInPatientSearch({
       </FieldLabel>
       <InputGroup className="w-full">
         <InputGroupAddon>
-          <Search className="size-4" />
+          <CiSearch className="size-4" />
         </InputGroupAddon>
         <InputGroupInput
           id="visit-patient-search"
@@ -65,7 +66,7 @@ export function WalkInPatientSearch({
 
       {field.value && selectedPatient ? (
         <div className="border-primary/30 bg-primary/5 flex items-center gap-3 rounded-lg border p-3">
-          <UserRound className="text-primary size-5 shrink-0" />
+          <CiUser className="text-primary size-5 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="font-medium">
               {selectedPatient.firstName} {selectedPatient.lastName}
@@ -108,7 +109,7 @@ export function WalkInPatientSearch({
                 variant="outline"
                 onClick={() => void patientsQuery.refetch()}
               >
-                <RefreshCcw className="size-4" /> Retry search
+                <PiArrowsCounterClockwiseLight className="size-4" /> Retry search
               </Button>
             </div>
           ) : patients.length ? (
@@ -127,7 +128,7 @@ export function WalkInPatientSearch({
                     setSearch('');
                   }}
                 >
-                  <UserRound className="text-muted-foreground size-4 shrink-0" />
+                  <CiUser className="text-muted-foreground size-4 shrink-0" />
                   <span className="min-w-0">
                     <span className="block font-medium">
                       {patient.firstName} {patient.lastName}

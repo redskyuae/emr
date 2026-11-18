@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
-import { AlertCircle, History } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiClockCounterClockwiseLight } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
@@ -112,7 +113,7 @@ export function PreviousVisitsPageImpl() {
 
       {visitsQuery.isError ? (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not load Visits</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-2">
             {getApiErrorMessage(visitsQuery.error)}
@@ -132,7 +133,7 @@ export function PreviousVisitsPageImpl() {
         <Empty className="bg-card shadow-fluent-2 min-h-72 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <History />
+              <PiClockCounterClockwiseLight />
             </EmptyMedia>
             {activeCount > 0 ? (
               <>

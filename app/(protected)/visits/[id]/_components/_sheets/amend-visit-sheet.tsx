@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PencilLine } from 'lucide-react';
+import { CiEdit } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -382,7 +382,7 @@ export function AmendVisitSheet({
               disabled={amendMutation.isPending || loading || loadFailed}
               aria-busy={amendMutation.isPending}
             >
-              <PencilLine className="size-4" />
+              <CiEdit className="size-4" />
               {amendMutation.isPending ? 'Saving…' : 'Save amendment'}
             </Button>
           </SheetFooter>

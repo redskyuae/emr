@@ -1,36 +1,38 @@
-import type { LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
 import {
-  Activity,
-  BedDouble,
-  Boxes,
-  Building2,
-  CalendarClock,
-  CalendarPlus,
-  Clock3,
-  ClipboardList,
-  FileClock,
-  Gauge,
-  Globe2,
-  Hospital,
-  LayoutDashboard,
-  LayoutGrid,
-  History,
-  ListChecks,
-  ReceiptText,
-  Settings,
-  ShieldCheck,
-  Stethoscope,
-  Tag,
-  UserRoundCog,
-  UsersRound,
-  WalletCards,
-  Wrench,
-} from 'lucide-react';
+  CiBoxes,
+  CiCalendarDate,
+  CiClock1,
+  CiCreditCard1,
+  CiGlobe,
+  CiGrid41,
+  CiGrid42,
+  CiHospital1,
+  CiReceipt,
+  CiSettings,
+  CiShoppingTag,
+  CiStethoscope,
+  CiWavePulse1,
+} from 'react-icons/ci';
+import {
+  PiBedLight,
+  PiBuildingsLight,
+  PiCalendarPlusLight,
+  PiClipboardTextLight,
+  PiClockCounterClockwiseLight,
+  PiFileLight,
+  PiGaugeLight,
+  PiListChecksLight,
+  PiShieldCheckLight,
+  PiUserGearLight,
+  PiUsersLight,
+  PiWrenchLight,
+} from 'react-icons/pi';
 
 export type AppNavItem = {
   title: string;
   href: string;
-  icon: LucideIcon;
+  icon: IconType;
   badge?: string;
   exact?: boolean;
   permission?: string;
@@ -68,7 +70,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Dashboard',
         href: '/dashboard',
-        icon: Gauge,
+        icon: PiGaugeLight,
       },
     ],
   },
@@ -78,20 +80,20 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Patients',
         href: '/patients',
-        icon: UsersRound,
+        icon: PiUsersLight,
         permission: 'patient',
       },
       {
         title: 'Appointments',
         href: '/appointments',
-        icon: CalendarClock,
+        icon: CiCalendarDate,
         exact: true,
         permission: 'appointment',
       },
       {
         title: 'Book Appointment',
         href: '/appointments/new',
-        icon: CalendarPlus,
+        icon: PiCalendarPlusLight,
         permission: 'appointment',
       },
     ],
@@ -102,19 +104,19 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Visits',
         href: '/visits',
-        icon: ClipboardList,
+        icon: PiClipboardTextLight,
         permission: 'visit',
       },
       {
         title: 'Previous Visits',
         href: '/previous-visits',
-        icon: History,
+        icon: PiClockCounterClockwiseLight,
         permission: 'visit',
       },
       {
         title: 'Visit List',
         href: '/visit-list',
-        icon: ListChecks,
+        icon: PiListChecksLight,
         permission: 'visit',
       },
     ],
@@ -125,13 +127,13 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Admissions',
         href: '/admissions',
-        icon: BedDouble,
+        icon: PiBedLight,
         permission: 'admission',
       },
       {
         title: 'Bed Board',
         href: '/bed-board',
-        icon: LayoutGrid,
+        icon: CiGrid41,
         permission: 'bed',
       },
     ],
@@ -142,14 +144,14 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Invoices',
         href: '/billing',
-        icon: ReceiptText,
+        icon: CiReceipt,
         exact: true,
         permission: 'invoice',
       },
       {
         title: 'Billing Counter',
         href: '/billing-counter',
-        icon: WalletCards,
+        icon: CiCreditCard1,
         permission: 'invoice',
       },
     ],
@@ -160,31 +162,31 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Rooms',
         href: '/rooms',
-        icon: BedDouble,
+        icon: PiBedLight,
         permission: 'room',
       },
       {
         title: 'Doctors',
         href: '/doctors',
-        icon: Stethoscope,
+        icon: CiStethoscope,
         permission: 'doctor',
       },
       {
         title: 'Therapists',
         href: '/therapists',
-        icon: UserRoundCog,
+        icon: PiUserGearLight,
         permission: 'therapist',
       },
       {
         title: 'Doctor Schedules',
         href: '/doctor-schedules',
-        icon: CalendarClock,
+        icon: CiCalendarDate,
         permission: 'doctor-schedule',
       },
       {
         title: 'Therapist Schedules',
         href: '/therapist-schedules',
-        icon: CalendarClock,
+        icon: CiCalendarDate,
         permission: 'therapist-schedule',
       },
     ],
@@ -195,19 +197,19 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Users',
         href: '/identity-access/users',
-        icon: UsersRound,
+        icon: PiUsersLight,
         permission: 'staff',
       },
       {
         title: 'Roles & Permissions',
         href: '/identity-access/roles',
-        icon: ShieldCheck,
+        icon: PiShieldCheckLight,
         permission: 'role',
       },
       {
         title: 'Sessions',
         href: '/identity-access/sessions',
-        icon: FileClock,
+        icon: PiFileLight,
         permission: 'session',
       },
     ],
@@ -218,20 +220,20 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Overview',
         href: '/assets-management',
-        icon: LayoutDashboard,
+        icon: CiGrid42,
         exact: true,
         permission: 'asset',
       },
       {
         title: 'Inventory',
         href: '/assets-management/inventory',
-        icon: Boxes,
+        icon: CiBoxes,
         permission: 'asset',
       },
       {
         title: 'Maintenance',
         href: '/assets-management/maintenance',
-        icon: Wrench,
+        icon: PiWrenchLight,
         permission: 'work-order',
       },
     ],
@@ -242,7 +244,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Audit Log',
         href: '/audit-log',
-        icon: Activity,
+        icon: CiWavePulse1,
       },
     ],
   },
@@ -252,19 +254,19 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Tenant Profile',
         href: '/tenant-profile',
-        icon: Building2,
+        icon: PiBuildingsLight,
         permission: 'tenant',
       },
       {
         title: 'Rota Management',
         href: '/rota-management',
-        icon: Clock3,
+        icon: CiClock1,
         permission: 'doctor-rota',
       },
       {
         title: 'Appointment Masters',
         href: '/appointment-masters',
-        icon: CalendarClock,
+        icon: CiCalendarDate,
         items: [
           {
             title: 'Mode',
@@ -296,7 +298,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Visit Masters',
         href: '/visit-masters',
-        icon: ClipboardList,
+        icon: PiClipboardTextLight,
         items: [
           {
             title: 'Visit Type',
@@ -313,7 +315,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Inpatient Masters',
         href: '/inpatient-masters',
-        icon: Hospital,
+        icon: CiHospital1,
         items: [
           { title: 'Wards', href: '/inpatient-masters/wards', permission: 'ward' },
           { title: 'Beds', href: '/inpatient-masters/beds', permission: 'bed' },
@@ -327,7 +329,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Asset Management',
         href: '/asset-management-masters',
-        icon: Tag,
+        icon: CiShoppingTag,
         items: [
           {
             title: 'Categories',
@@ -364,13 +366,13 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Room Masters',
         href: '/room-masters',
-        icon: BedDouble,
+        icon: PiBedLight,
         items: [{ title: 'Room Type', href: '/room-masters/types', permission: 'room-type' }],
       },
       {
         title: 'Billing Masters',
         href: '/billing-masters',
-        icon: ReceiptText,
+        icon: CiReceipt,
         items: [
           {
             title: 'Charge Items',
@@ -382,7 +384,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Clinical Masters',
         href: '/clinical-masters',
-        icon: ClipboardList,
+        icon: PiClipboardTextLight,
         items: [
           {
             title: 'ICD-10-CM Diagnosis Codes',
@@ -410,7 +412,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Global References',
         href: '/global-references',
-        icon: Globe2,
+        icon: CiGlobe,
         items: [
           { title: 'Languages', href: '/global-references/languages', permission: 'language' },
           {
@@ -426,7 +428,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Settings',
         href: '/settings',
-        icon: Settings,
+        icon: CiSettings,
         badge: '404',
       },
     ],

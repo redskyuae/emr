@@ -1,4 +1,5 @@
-import { Languages, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiTranslateLight } from 'react-icons/pi';
 
 import type { Language } from '@/app/queries/global-references/languages/useLanguages';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,7 @@ function formatModifiedOn(value: Date | string) {
 function LanguageIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <Languages className="size-5" />
+      <PiTranslateLight className="size-5" />
     </div>
   );
 }
@@ -70,19 +71,19 @@ function LanguageActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${language.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(language)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(language)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -180,7 +181,7 @@ export function LanguageCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(language)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -192,7 +193,7 @@ export function LanguageCardView({
                     onClick={() => onDelete(language)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}

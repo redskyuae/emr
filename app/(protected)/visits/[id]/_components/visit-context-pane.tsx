@@ -1,6 +1,8 @@
 'use client';
 
-import { Activity, ClipboardList, Leaf, Pill, ShieldAlert, type LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiPill, CiWavePulse1 } from 'react-icons/ci';
+import { PiClipboardTextLight, PiLeafLight, PiShieldWarningLight } from 'react-icons/pi';
 
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
@@ -22,7 +24,7 @@ function PaneSection({
   children,
 }: {
   title: string;
-  icon: LucideIcon;
+  icon: IconType;
   tone: string;
   children: React.ReactNode;
 }) {
@@ -91,7 +93,7 @@ function SafetyList({
   loading,
 }: {
   title: string;
-  icon: LucideIcon;
+  icon: IconType;
   tone: string;
   items: { id: number; label: string; detail?: string | null }[];
   loading: boolean;
@@ -162,7 +164,7 @@ export function VisitContextPane({
         </div>
 
         <TabsContent value="trends" className="space-y-5 p-4 xl:min-h-0 xl:overflow-y-auto">
-          <PaneSection title="Vital Signs" icon={Activity} tone="bg-chart-4/12 text-chart-4">
+          <PaneSection title="Vital Signs" icon={CiWavePulse1} tone="bg-chart-4/12 text-chart-4">
             <VisitVitalTrends
               readings={vitalSigns}
               loading={chartLoading}
@@ -172,7 +174,11 @@ export function VisitContextPane({
           </PaneSection>
 
           {canReadPlan && active && (plansQuery.isLoading || plans.length > 0) ? (
-            <PaneSection title="Treatment Plan" icon={Leaf} tone="bg-procedure/10 text-procedure">
+            <PaneSection
+              title="Treatment Plan"
+              icon={PiLeafLight}
+              tone="bg-procedure/10 text-procedure"
+            >
               {plansQuery.isLoading ? (
                 <Skeleton className="h-12 w-full" aria-label="Loading Treatment Plans" />
               ) : (
@@ -187,7 +193,7 @@ export function VisitContextPane({
             <>
               <SafetyList
                 title="Allergies"
-                icon={ShieldAlert}
+                icon={PiShieldWarningLight}
                 tone={
                   allergies.length
                     ? 'bg-destructive/10 text-destructive'
@@ -204,14 +210,14 @@ export function VisitContextPane({
               />
               <SafetyList
                 title="Active Problems"
-                icon={ClipboardList}
+                icon={PiClipboardTextLight}
                 tone="bg-pop/10 text-pop"
                 loading={chartLoading}
                 items={problems.map((problem) => ({ id: problem.id, label: problem.title }))}
               />
               <SafetyList
                 title="Current medications"
-                icon={Pill}
+                icon={CiPill}
                 tone="bg-primary/10 text-primary"
                 loading={chartLoading}
                 items={medications.map((medication) => ({

@@ -1,4 +1,4 @@
-import { Flag, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiFlag1, CiMenuKebab, CiTrash } from 'react-icons/ci';
 
 import type { WorkOrderPriority } from '@/app/api/lib/modules/work-order-priority/schemas/work-order-priority-schema';
 import { Button } from '@/components/ui/button';
@@ -33,7 +33,7 @@ function PriorityIcon({ color }: { color: string }) {
       className="flex size-10 items-center justify-center rounded-full"
       style={{ backgroundColor: color + '22' }}
     >
-      <Flag className="size-5" style={{ color }} />
+      <CiFlag1 className="size-5" style={{ color }} />
     </div>
   );
 }
@@ -64,19 +64,19 @@ function PriorityActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${priority.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(priority)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(priority)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -181,7 +181,7 @@ export function WorkOrderPriorityCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(priority)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -193,7 +193,7 @@ export function WorkOrderPriorityCardView({
                     onClick={() => onDelete(priority)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}

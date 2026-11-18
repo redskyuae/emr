@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useQueryState } from 'nuqs';
-import { CalendarClock } from 'lucide-react';
+import { CiCalendarDate } from 'react-icons/ci';
 
 import {
   TIMELINE_FEEDS,
@@ -81,7 +81,7 @@ export function PatientTimelineSection({ patientId }: { patientId: number }) {
         <Empty className="min-h-56">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <CalendarClock className="size-5" />
+              <CiCalendarDate className="size-5" />
             </EmptyMedia>
             <EmptyTitle>Could not load the Timeline</EmptyTitle>
             <EmptyDescription>{getApiErrorMessage(timelineQuery.error)}</EmptyDescription>
@@ -93,7 +93,7 @@ export function PatientTimelineSection({ patientId }: { patientId: number }) {
         <Empty className="min-h-56">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <CalendarClock className="size-5" />
+              <CiCalendarDate className="size-5" />
             </EmptyMedia>
             <EmptyTitle>Nothing to show yet</EmptyTitle>
             <EmptyDescription>

@@ -2,7 +2,8 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
+import { PiArrowRightLight } from 'react-icons/pi';
 
 import { useSuspenseAttentionWorkOrders } from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
@@ -41,7 +42,7 @@ function AttentionRow({ workOrder }: { workOrder: WorkOrder }) {
           isCritical ? 'bg-destructive/10 text-destructive' : 'bg-chart-5/10 text-chart-5'
         )}
       >
-        <AlertTriangle className="size-4" />
+        <CiWarning className="size-4" />
       </span>
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex items-start justify-between gap-3">
@@ -75,7 +76,7 @@ export function AttentionPanel({ workOrders }: AttentionPanelProps) {
           <Button asChild variant="outline" size="sm">
             <Link href="/assets-management/maintenance">
               <span>All work orders</span>
-              <ArrowRight className="size-3.5" />
+              <PiArrowRightLight className="size-3.5" />
             </Link>
           </Button>
         </CardAction>
@@ -85,7 +86,7 @@ export function AttentionPanel({ workOrders }: AttentionPanelProps) {
           <Empty className="min-h-40 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <AlertTriangle className="size-5" />
+                <CiWarning className="size-5" />
               </EmptyMedia>
               <EmptyTitle>Nothing needs attention</EmptyTitle>
               <EmptyDescription>No overdue or critical Work Orders right now.</EmptyDescription>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PencilLine, Save } from 'lucide-react';
+import { CiEdit, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -84,7 +84,7 @@ export function VisitDetailsCard({
               disabled={!isDirty || updateMutation.isPending}
               onClick={() => void save()}
             >
-              <Save className="size-4" />
+              <CiFloppyDisk className="size-4" />
               {updateMutation.isPending ? 'Saving…' : 'Save details'}
             </Button>
           </div>
@@ -92,7 +92,7 @@ export function VisitDetailsCard({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-muted-foreground text-sm">This Visit is completed.</p>
             <Button type="button" variant="outline" onClick={onAmend}>
-              <PencilLine className="size-4" />
+              <CiEdit className="size-4" />
               Amend Visit
             </Button>
           </div>

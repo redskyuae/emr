@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Boxes } from 'lucide-react';
+import { CiBoxes } from 'react-icons/ci';
+import { PiArrowLeftLight } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetQuery } from '@/app/queries/assets-management/useAsset';
@@ -22,7 +23,7 @@ function BackLink() {
   return (
     <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
       <Link href="/assets-management/inventory">
-        <ArrowLeft className="size-4" />
+        <PiArrowLeftLight className="size-4" />
         Inventory
       </Link>
     </Button>
@@ -90,7 +91,7 @@ export function AssetDetailImpl({ assetId }: { assetId: number }) {
         <Empty className="min-h-72">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <Boxes className="size-5" />
+              <CiBoxes className="size-5" />
             </EmptyMedia>
             <EmptyTitle>Asset not found</EmptyTitle>
             <EmptyDescription>{getApiErrorMessage(assetQuery.error)}</EmptyDescription>
@@ -114,7 +115,7 @@ export function AssetDetailImpl({ assetId }: { assetId: number }) {
               style={{ backgroundColor: asset.category.color + '1a', color: asset.category.color }}
               aria-hidden="true"
             >
-              <Boxes className="size-5" />
+              <CiBoxes className="size-5" />
             </span>
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">

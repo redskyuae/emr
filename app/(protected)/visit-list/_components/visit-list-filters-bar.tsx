@@ -1,6 +1,7 @@
 'use client';
 
-import { FilterX, Search } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
+import { PiFunnelXLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -95,7 +96,7 @@ export function VisitListFiltersBar({
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
           <InputGroup className="xl:max-w-sm">
             <InputGroupAddon>
-              <Search className="size-4" />
+              <CiSearch className="size-4" />
             </InputGroupAddon>
             <InputGroupInput
               type="search"
@@ -213,7 +214,7 @@ export function VisitListFiltersBar({
             disabled={activeCount === 0}
             onClick={onClear}
           >
-            <FilterX className="size-4" />
+            <PiFunnelXLight className="size-4" />
             Clear filters{activeCount > 0 ? ` (${activeCount})` : ''}
           </Button>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
-import { AlertCircle } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
@@ -105,7 +105,7 @@ export function PatientChartSection({ patientId }: { patientId: number }) {
   if (chartQuery.isError || !chartQuery.data) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load the Patient Chart</AlertTitle>
         <AlertDescription>{getApiErrorMessage(chartQuery.error)}</AlertDescription>
       </Alert>

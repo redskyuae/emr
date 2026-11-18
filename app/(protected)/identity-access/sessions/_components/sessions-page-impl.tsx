@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertTriangle, Search, ShieldOff } from 'lucide-react';
+import { CiSearch, CiWarning } from 'react-icons/ci';
+import { PiShieldSlashLight } from 'react-icons/pi';
 
 import type { IamSession } from '@/app/(protected)/identity-access/sessions/_utils/sessions-mock';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -85,7 +86,7 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <InputGroup className="lg:max-w-sm">
             <InputGroupAddon>
-              <Search className="size-4" />
+              <CiSearch className="size-4" />
             </InputGroupAddon>
             <InputGroupInput
               type="search"
@@ -115,14 +116,14 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
                     disabled={!canRevokeAll}
                     className="w-full sm:w-auto"
                   >
-                    <ShieldOff className="size-4" />
+                    <PiShieldSlashLight className="size-4" />
                     Revoke all
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="shadow-fluent-64">
                   <AlertDialogHeader>
                     <AlertDialogMedia className="bg-destructive/10 text-destructive">
-                      <AlertTriangle className="size-5" />
+                      <CiWarning className="size-5" />
                     </AlertDialogMedia>
                     <AlertDialogTitle>Revoke all active sessions?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -212,7 +213,7 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
                             onClick={() => revokeSession(session.id)}
                             aria-label={`Revoke session for ${session.userName} on ${session.device}`}
                           >
-                            <ShieldOff className="size-3.5" />
+                            <PiShieldSlashLight className="size-3.5" />
                             Revoke
                           </Button>
                         ) : null}
@@ -226,7 +227,7 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
             <Empty className="min-h-72 border-0">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <ShieldOff className="size-5" />
+                  <PiShieldSlashLight className="size-5" />
                 </EmptyMedia>
                 <EmptyTitle>No sessions match.</EmptyTitle>
                 <EmptyDescription>

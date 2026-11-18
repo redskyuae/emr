@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
-import { AlertCircle, CalendarClock, CheckCircle2, RefreshCcw, UserRound } from 'lucide-react';
+import { CiCalendarDate, CiCircleAlert, CiCircleCheck, CiUser } from 'react-icons/ci';
+import { PiArrowsCounterClockwiseLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { PatientForm } from '@/app/(protected)/patients/_components/patient-form';
@@ -99,12 +100,12 @@ export function PatientConfirmation({
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Patient information</AlertTitle>
         <AlertDescription className="space-y-3">
           <p>{getApiErrorMessage(error)}</p>
           <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-            <RefreshCcw className="size-4" />
+            <PiArrowsCounterClockwiseLight className="size-4" />
             Retry
           </Button>
         </AlertDescription>
@@ -117,7 +118,7 @@ export function PatientConfirmation({
       <Empty className="border border-dashed py-8">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <UserRound className="size-5" />
+            <CiUser className="size-5" />
           </EmptyMedia>
           <EmptyTitle>No Patient selected</EmptyTitle>
           <EmptyDescription>
@@ -166,7 +167,7 @@ export function PatientConfirmation({
             </div>
             {appointment ? (
               <p className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm">
-                <CalendarClock className="size-4" aria-hidden />
+                <CiCalendarDate className="size-4" aria-hidden />
                 <span className="font-mono">{appointment.bookingNumber}</span>
                 <span aria-hidden>·</span>
                 <span className="font-mono">
@@ -208,7 +209,7 @@ export function PatientConfirmation({
             </p>
             <div className="flex items-center gap-2">
               <Badge className="bg-success/10 text-success gap-1">
-                <CheckCircle2 className="size-3.5" aria-hidden />
+                <CiCircleCheck className="size-3.5" aria-hidden />
                 Confirmed
               </Badge>
               <Button type="button" variant="ghost" size="sm" onClick={onChange}>

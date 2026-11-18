@@ -28,16 +28,14 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { $createHeadingNode, $isHeadingNode, HeadingNode } from '@lexical/rich-text';
+import { CiRedo, CiUndo, CiViewList } from 'react-icons/ci';
 import {
-  Bold,
-  Heading2,
-  Italic,
-  List,
-  ListOrdered,
-  Redo2,
-  Strikethrough,
-  Undo2,
-} from 'lucide-react';
+  PiListNumbersLight,
+  PiTextBLight,
+  PiTextHTwoLight,
+  PiTextItalicLight,
+  PiTextStrikethroughLight,
+} from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -166,44 +164,44 @@ function Toolbar() {
         pressed={active.bold}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')}
       >
-        <Bold className="size-4" />
+        <PiTextBLight className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         label="Italic"
         pressed={active.italic}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')}
       >
-        <Italic className="size-4" />
+        <PiTextItalicLight className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         label="Strikethrough"
         pressed={active.strike}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')}
       >
-        <Strikethrough className="size-4" />
+        <PiTextStrikethroughLight className="size-4" />
       </ToolbarButton>
       <span className="bg-border mx-1 w-px" aria-hidden="true" />
       <ToolbarButton label="Heading" pressed={active.heading} onClick={() => toggleHeading(editor)}>
-        <Heading2 className="size-4" />
+        <PiTextHTwoLight className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         label="Bulleted list"
         onClick={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)}
       >
-        <List className="size-4" />
+        <CiViewList className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         label="Numbered list"
         onClick={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)}
       >
-        <ListOrdered className="size-4" />
+        <PiListNumbersLight className="size-4" />
       </ToolbarButton>
       <span className="bg-border mx-1 w-px" aria-hidden="true" />
       <ToolbarButton label="Undo" onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}>
-        <Undo2 className="size-4" />
+        <CiUndo className="size-4" />
       </ToolbarButton>
       <ToolbarButton label="Redo" onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}>
-        <Redo2 className="size-4" />
+        <CiRedo className="size-4" />
       </ToolbarButton>
     </div>
   );

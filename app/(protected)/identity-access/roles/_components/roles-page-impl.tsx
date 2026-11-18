@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
-import { AlertCircle, Plus } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import type { RoleWithStats } from '@/app/api/lib/modules/role/schemas/role-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -69,7 +70,7 @@ export function RolesPageImpl() {
           </p>
           {canCreate ? (
             <Button type="button" onClick={() => void setRoleParam('new')}>
-              <Plus className="size-4" />
+              <PiPlusLight className="size-4" />
               Create Role
             </Button>
           ) : null}
@@ -77,7 +78,7 @@ export function RolesPageImpl() {
 
         {rolesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Roles</AlertTitle>
             <AlertDescription>{getApiErrorMessage(rolesQuery.error)}</AlertDescription>
           </Alert>

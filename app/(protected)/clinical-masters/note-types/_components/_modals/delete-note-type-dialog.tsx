@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { ClinicalNoteType } from '@/app/api/lib/modules/clinical-note-type/schemas/clinical-note-type-schema';
@@ -47,7 +47,7 @@ export function DeleteNoteTypeDialog({ noteType, onClose, onDeleted }: DeleteNot
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Clinical Note Type?</AlertDialogTitle>
           <AlertDialogDescription>

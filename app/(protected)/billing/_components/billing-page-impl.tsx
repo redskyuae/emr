@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, Plus, ReceiptText, Search } from 'lucide-react';
+import { CiCircleAlert, CiReceipt, CiSearch } from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useInvoicesQuery } from '@/app/queries/billing/invoices/useInvoices';
@@ -95,7 +96,7 @@ export function BillingPageImpl() {
     if (canCreateError)
       return (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not check Invoice access</AlertTitle>
           <AlertDescription>Refresh the page and try again.</AlertDescription>
         </Alert>
@@ -104,7 +105,7 @@ export function BillingPageImpl() {
       <InvoiceComposer />
     ) : (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Invoice access denied</AlertTitle>
         <AlertDescription>You do not have permission to create an Invoice.</AlertDescription>
       </Alert>
@@ -118,7 +119,7 @@ export function BillingPageImpl() {
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -155,7 +156,7 @@ export function BillingPageImpl() {
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button asChild>
                   <Link href="/billing?invoice=new">
-                    <Plus className="size-4" />
+                    <PiPlusLight className="size-4" />
                     New Invoice
                   </Link>
                 </Button>
@@ -166,7 +167,7 @@ export function BillingPageImpl() {
 
         {invoicesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Invoices</AlertTitle>
             <AlertDescription>{getApiErrorMessage(invoicesQuery.error)}</AlertDescription>
           </Alert>
@@ -178,7 +179,7 @@ export function BillingPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <ReceiptText />
+                <CiReceipt />
               </EmptyMedia>
               <EmptyTitle>No Invoices yet</EmptyTitle>
               <EmptyDescription>
@@ -190,7 +191,7 @@ export function BillingPageImpl() {
               <EmptyContent>
                 <Button asChild>
                   <Link href="/billing?invoice=new">
-                    <Plus className="size-4" />
+                    <PiPlusLight className="size-4" />
                     New Invoice
                   </Link>
                 </Button>
@@ -201,7 +202,7 @@ export function BillingPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -226,7 +227,7 @@ export function BillingPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -237,7 +238,7 @@ export function BillingPageImpl() {
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

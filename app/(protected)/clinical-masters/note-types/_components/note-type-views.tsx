@@ -1,4 +1,4 @@
-import { FileText, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiFileOn, CiMenuKebab, CiTrash } from 'react-icons/ci';
 import type { ClinicalNoteType } from '@/app/api/lib/modules/clinical-note-type/schemas/clinical-note-type-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +20,7 @@ import {
 function NoteTypeIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <FileText className="size-5" />
+      <CiFileOn className="size-5" />
     </div>
   );
 }
@@ -51,19 +51,19 @@ function NoteTypeActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${noteType.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(noteType)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(noteType)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -159,7 +159,7 @@ export function NoteTypeCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(noteType)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -171,7 +171,7 @@ export function NoteTypeCardView({
                     onClick={() => onDelete(noteType)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}

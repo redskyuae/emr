@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Controller, type Control, type UseFormSetValue, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, ArrowRight, Save, UserRound, UserRoundPlus } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk, CiUser } from 'react-icons/ci';
+import { PiArrowRightLight, PiUserPlusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -56,7 +57,7 @@ function RequiredMark() {
 function FormErrors({ errors }: { errors: string[] }) {
   return (
     <Alert variant="destructive">
-      <AlertCircle className="size-4" />
+      <CiCircleAlert className="size-4" />
       <AlertTitle>Save failed</AlertTitle>
       <AlertDescription>
         <ul className="list-disc space-y-1 pl-4">
@@ -149,7 +150,7 @@ function PatientPhotoPreview({ error, photoUrl }: { error?: string; photoUrl?: s
             <AvatarImage src={photoUrl} alt="Patient photo" className="rounded-md" />
           ) : null}
           <AvatarFallback className="rounded-md">
-            <UserRound className="text-muted-foreground size-7" aria-hidden="true" />
+            <CiUser className="text-muted-foreground size-7" aria-hidden="true" />
           </AvatarFallback>
         </Avatar>
         <div className="space-y-1">
@@ -1161,11 +1162,11 @@ export function PatientForm({
         </Button>
         <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
           {submitAction === 'next' ? (
-            <ArrowRight className="size-4" />
+            <PiArrowRightLight className="size-4" />
           ) : mode === 'create' ? (
-            <UserRoundPlus className="size-4" />
+            <PiUserPlusLight className="size-4" />
           ) : (
-            <Save className="size-4" />
+            <CiFloppyDisk className="size-4" />
           )}
           {submitLabel ?? (mode === 'create' ? 'Register patient' : 'Save changes')}
         </Button>

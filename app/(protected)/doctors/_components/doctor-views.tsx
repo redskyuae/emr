@@ -1,4 +1,5 @@
-import { CircleOff, MoreVertical, Pencil, RotateCcw, Stethoscope, UserRound } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiNoWaitingSign, CiStethoscope, CiUser } from 'react-icons/ci';
+import { PiArrowCounterClockwiseLight } from 'react-icons/pi';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +56,7 @@ function DoctorStatusBadge({ doctor }: { doctor: Doctor }) {
 function DoctorAvatar() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
-      <Stethoscope className="size-5" />
+      <CiStethoscope className="size-5" />
     </div>
   );
 }
@@ -91,13 +92,13 @@ function DoctorActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${doctor.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(doctor)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
@@ -106,7 +107,11 @@ function DoctorActionsMenu({
             variant={doctor.isActive ? 'destructive' : 'default'}
             onClick={() => onStatusAction(doctor, statusAction)}
           >
-            {doctor.isActive ? <CircleOff className="size-4" /> : <RotateCcw className="size-4" />}
+            {doctor.isActive ? (
+              <CiNoWaitingSign className="size-4" />
+            ) : (
+              <PiArrowCounterClockwiseLight className="size-4" />
+            )}
             {doctor.isActive ? 'Deactivate' : 'Reactivate'}
           </DropdownMenuItem>
         ) : null}
@@ -199,7 +204,7 @@ export function DoctorCardView({
               <h3 className="font-heading text-base font-semibold">{doctor.name}</h3>
               <p className="text-muted-foreground text-sm">{doctor.email}</p>
               <p className="flex items-center gap-1.5 text-sm">
-                <UserRound className="text-muted-foreground size-3.5" />
+                <CiUser className="text-muted-foreground size-3.5" />
                 {dash(doctor.specialtyName)}
               </p>
               <p className="text-muted-foreground text-sm">{dash(doctor.designation)}</p>
@@ -209,7 +214,7 @@ export function DoctorCardView({
               <div className="flex flex-wrap gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(doctor)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -226,9 +231,9 @@ export function DoctorCardView({
                     }
                   >
                     {doctor.isActive ? (
-                      <CircleOff className="size-3.5" />
+                      <CiNoWaitingSign className="size-3.5" />
                     ) : (
-                      <RotateCcw className="size-3.5" />
+                      <PiArrowCounterClockwiseLight className="size-3.5" />
                     )}
                     {doctor.isActive ? 'Deactivate' : 'Reactivate'}
                   </Button>

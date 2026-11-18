@@ -1,5 +1,6 @@
-import { BedDouble, DoorOpen, Layers, Percent } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiPercent } from 'react-icons/ci';
+import { PiBedLight, PiDoorOpenLight, PiStackLight } from 'react-icons/pi';
 
 import type { RoomSummary } from '@/app/api/lib/modules/room/schemas/room-schema';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,7 +13,7 @@ function SummaryCard({
   value,
   children,
 }: {
-  icon: LucideIcon;
+  icon: IconType;
   label: string;
   value: string;
   children?: React.ReactNode;
@@ -36,10 +37,14 @@ function SummaryCard({
 export function RoomSummaryCards({ summary }: { summary: RoomSummary }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <SummaryCard icon={Layers} label="Total Rooms" value={String(summary.totalRooms)} />
-      <SummaryCard icon={BedDouble} label="Total Beds" value={String(summary.totalBeds)} />
-      <SummaryCard icon={DoorOpen} label="Available" value={String(summary.availableRooms)} />
-      <SummaryCard icon={Percent} label="Occupancy" value={`${summary.occupancyRate}%`}>
+      <SummaryCard icon={PiStackLight} label="Total Rooms" value={String(summary.totalRooms)} />
+      <SummaryCard icon={PiBedLight} label="Total Beds" value={String(summary.totalBeds)} />
+      <SummaryCard
+        icon={PiDoorOpenLight}
+        label="Available"
+        value={String(summary.availableRooms)}
+      />
+      <SummaryCard icon={CiPercent} label="Occupancy" value={`${summary.occupancyRate}%`}>
         <Progress
           value={summary.occupancyRate}
           aria-label={`Occupancy rate ${summary.occupancyRate} percent`}

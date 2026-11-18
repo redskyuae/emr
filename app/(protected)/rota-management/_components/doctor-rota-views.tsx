@@ -1,4 +1,4 @@
-import { Clock3, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiClock1, CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
 
 import type { DoctorRota } from '@/app/api/lib/modules/doctor-rota/schemas/doctor-rota-schema';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,7 @@ function formatTimeWindow(rota: DoctorRota) {
 function DoctorRotaIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <Clock3 className="size-5" />
+      <CiClock1 className="size-5" />
     </div>
   );
 }
@@ -65,19 +65,19 @@ function DoctorRotaActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${rota.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(rota)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(rota)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -173,7 +173,7 @@ export function DoctorRotaCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(rota)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -185,7 +185,7 @@ export function DoctorRotaCardView({
                     onClick={() => onDelete(rota)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}

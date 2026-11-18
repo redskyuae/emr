@@ -1,6 +1,7 @@
 'use client';
 
-import { LayoutGrid, LayoutList, Plus, RotateCcw, Table as TableIcon } from 'lucide-react';
+import { CiBoxList, CiGrid41, CiViewTable } from 'react-icons/ci';
+import { PiArrowCounterClockwiseLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import { Button } from '@/components/ui/button';
@@ -66,15 +67,15 @@ export function DoctorSchedulesToolbar({
           spacing={0}
         >
           <ToggleGroupItem value="table" aria-label="Table view">
-            <TableIcon className="size-4" />
+            <CiViewTable className="size-4" />
             Table
           </ToggleGroupItem>
           <ToggleGroupItem value="card" aria-label="Card view">
-            <LayoutGrid className="size-4" />
+            <CiGrid41 className="size-4" />
             Card
           </ToggleGroupItem>
           <ToggleGroupItem value="list" aria-label="List view">
-            <LayoutList className="size-4" />
+            <CiBoxList className="size-4" />
             List
           </ToggleGroupItem>
         </ToggleGroup>
@@ -123,12 +124,12 @@ export function DoctorSchedulesToolbar({
             onClick={onClearFilters}
             className="bg-background"
           >
-            <RotateCcw className="size-4" />
+            <PiArrowCounterClockwiseLight className="size-4" />
             Reset
           </Button>
           {canCreate ? (
             <Button type="button" onClick={onAddSchedule}>
-              <Plus className="size-4" />
+              <PiPlusLight className="size-4" />
               New Doctor Schedule
             </Button>
           ) : null}

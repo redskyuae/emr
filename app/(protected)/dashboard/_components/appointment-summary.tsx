@@ -1,4 +1,5 @@
-import { CalendarDays, CircleCheck, Clock3, UserRoundCheck } from 'lucide-react';
+import { CiCalendar, CiCircleCheck, CiClock1 } from 'react-icons/ci';
+import { PiUserCheckLight } from 'react-icons/pi';
 
 import type { summarizeAppointmentDay } from '@/app/queries/appointments/useAppointments';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,7 +13,7 @@ export function AppointmentSummary({ summary }: { summary: AppointmentDaySummary
       title: 'Appointments today',
       value: summary.total,
       detail: 'All booking statuses',
-      icon: CalendarDays,
+      icon: CiCalendar,
       surface: 'border-primary/20 bg-primary/10',
       tone: 'bg-primary/15 text-primary',
       valueTone: 'text-primary',
@@ -21,7 +22,7 @@ export function AppointmentSummary({ summary }: { summary: AppointmentDaySummary
       title: 'Awaiting arrival',
       value: `${countPrefix}${summary.counts.scheduled + summary.counts.confirmed}`,
       detail: 'Scheduled and confirmed',
-      icon: Clock3,
+      icon: CiClock1,
       surface: 'border-warning/20 bg-warning/10',
       tone: 'bg-warning/15 text-warning',
       valueTone: 'text-warning',
@@ -30,7 +31,7 @@ export function AppointmentSummary({ summary }: { summary: AppointmentDaySummary
       title: 'Checked in',
       value: `${countPrefix}${summary.counts.checkedIn}`,
       detail: 'Patients at the Facility',
-      icon: UserRoundCheck,
+      icon: PiUserCheckLight,
       surface: 'border-primary/20 bg-accent',
       tone: 'bg-primary/15 text-primary',
       valueTone: 'text-primary',
@@ -39,7 +40,7 @@ export function AppointmentSummary({ summary }: { summary: AppointmentDaySummary
       title: 'Completed',
       value: `${countPrefix}${summary.counts.completed}`,
       detail: 'Finished Appointments',
-      icon: CircleCheck,
+      icon: CiCircleCheck,
       surface: 'border-success/20 bg-success/10',
       tone: 'bg-success/15 text-success',
       valueTone: 'text-success',

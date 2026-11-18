@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Eye, UserRound } from 'lucide-react';
+import { CiRead, CiUser } from 'react-icons/ci';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Badge } from '@/components/ui/badge';
@@ -34,13 +34,13 @@ function VisitActions({ visit }: { visit: Visit }) {
     <div className="flex items-center justify-end gap-1">
       <Button asChild variant="outline" size="sm">
         <Link href={`/visits/${visit.id}`}>
-          <Eye className="size-4" />
+          <CiRead className="size-4" />
           View
         </Link>
       </Button>
       <Button asChild variant="ghost" size="icon" aria-label={`Open Patient ${patientName(visit)}`}>
         <Link href={`/patients/${visit.patient.id}`}>
-          <UserRound className="size-4" />
+          <CiUser className="size-4" />
         </Link>
       </Button>
     </div>

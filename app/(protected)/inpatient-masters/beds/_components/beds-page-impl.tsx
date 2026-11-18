@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, BedDouble, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Bed } from '@/app/api/lib/modules/bed/schemas/bed-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -84,7 +85,7 @@ export function BedsPageImpl() {
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -121,7 +122,7 @@ export function BedsPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setBedParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Bed
                 </Button>
               </div>
@@ -131,7 +132,7 @@ export function BedsPageImpl() {
 
         {bedsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Beds</AlertTitle>
             <AlertDescription>{getApiErrorMessage(bedsQuery.error)}</AlertDescription>
           </Alert>
@@ -143,7 +144,7 @@ export function BedsPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <BedDouble />
+                <PiBedLight />
               </EmptyMedia>
               <EmptyTitle>No Beds yet</EmptyTitle>
               <EmptyDescription>
@@ -154,7 +155,7 @@ export function BedsPageImpl() {
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={() => void setBedParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Bed
                 </Button>
               </EmptyContent>
@@ -164,7 +165,7 @@ export function BedsPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -195,7 +196,7 @@ export function BedsPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -206,7 +207,7 @@ export function BedsPageImpl() {
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

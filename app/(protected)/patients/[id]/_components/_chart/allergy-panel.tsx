@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldAlert } from 'lucide-react';
+import { PiShieldWarningLight } from 'react-icons/pi';
 
 import type { PatientAllergy } from '@/app/api/lib/modules/patient-allergy/schemas/patient-allergy-schema';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,7 @@ export function AllergyPanel({
   return (
     <ChartPanel
       title="Allergies"
-      icon={<ShieldAlert className="size-4" />}
+      icon={<PiShieldWarningLight className="size-4" />}
       count={allergies.length}
       addLabel="Add Allergy"
       onAdd={onAdd}

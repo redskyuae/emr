@@ -1,6 +1,7 @@
 'use client';
 
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiTrash } from 'react-icons/ci';
+import { PiDotsThreeLight } from 'react-icons/pi';
 
 import type { Ward } from '@/app/api/lib/modules/ward/schemas/ward-schema';
 import { Badge } from '@/components/ui/badge';
@@ -59,19 +60,19 @@ export function WardTable({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" aria-label={`Actions for ${ward.name}`}>
-                          <MoreHorizontal className="size-4" />
+                          <PiDotsThreeLight className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canEdit ? (
                           <DropdownMenuItem onSelect={() => onEdit(ward)}>
-                            <Pencil className="size-4" />
+                            <CiEdit className="size-4" />
                             Edit
                           </DropdownMenuItem>
                         ) : null}
                         {canDelete ? (
                           <DropdownMenuItem variant="destructive" onSelect={() => onDelete(ward)}>
-                            <Trash2 className="size-4" />
+                            <CiTrash className="size-4" />
                             Delete
                           </DropdownMenuItem>
                         ) : null}

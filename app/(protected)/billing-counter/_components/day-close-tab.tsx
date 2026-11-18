@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CiCircleCheck } from 'react-icons/ci';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -56,7 +56,7 @@ function ClosedShiftSummary() {
     <Card className="shadow-fluent-2">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CheckCircle2 className="text-success size-4" />
+          <CiCircleCheck className="text-success size-4" />
           Shift {state.shift.no} closed at {closing.closedAt}
         </CardTitle>
         <CardDescription>

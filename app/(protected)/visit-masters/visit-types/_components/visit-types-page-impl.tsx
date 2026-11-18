@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+} from 'react-icons/pi';
 
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -71,7 +77,7 @@ export function VisitTypesPageImpl() {
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -88,7 +94,7 @@ export function VisitTypesPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setVisitTypeParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Visit Type
                 </Button>
               </div>
@@ -98,7 +104,7 @@ export function VisitTypesPageImpl() {
 
         {visitTypesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Visit Types</AlertTitle>
             <AlertDescription>{getApiErrorMessage(visitTypesQuery.error)}</AlertDescription>
           </Alert>
@@ -110,7 +116,7 @@ export function VisitTypesPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <ClipboardList />
+                <PiClipboardTextLight />
               </EmptyMedia>
               <EmptyTitle>No Visit Types yet</EmptyTitle>
               <EmptyDescription>
@@ -121,7 +127,7 @@ export function VisitTypesPageImpl() {
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={() => void setVisitTypeParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Visit Type
                 </Button>
               </EmptyContent>
@@ -131,7 +137,7 @@ export function VisitTypesPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -162,7 +168,7 @@ export function VisitTypesPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -173,7 +179,7 @@ export function VisitTypesPageImpl() {
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

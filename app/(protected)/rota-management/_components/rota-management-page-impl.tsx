@@ -4,16 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useQueryState } from 'nuqs';
 import {
-  AlertCircle,
-  CalendarClock,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Table as TableIcon,
-} from 'lucide-react';
+  CiBoxList,
+  CiCalendarDate,
+  CiCircleAlert,
+  CiGrid41,
+  CiSearch,
+  CiViewTable,
+} from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import type { DoctorRota } from '@/app/api/lib/modules/doctor-rota/schemas/doctor-rota-schema';
 import { ApiError, getApiErrorMessage } from '@/app/queries/api-error';
@@ -148,22 +146,22 @@ export function RotaManagementPageImpl() {
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -177,7 +175,7 @@ export function RotaManagementPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={openAddSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Doctor Rota
                 </Button>
               </div>
@@ -187,7 +185,7 @@ export function RotaManagementPageImpl() {
 
         {rotasQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Doctor Rotas</AlertTitle>
             <AlertDescription>{getApiErrorMessage(rotasQuery.error)}</AlertDescription>
           </Alert>
@@ -199,7 +197,7 @@ export function RotaManagementPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <CalendarClock />
+                <CiCalendarDate />
               </EmptyMedia>
               <EmptyTitle>No Doctor Rotas yet</EmptyTitle>
               <EmptyDescription>
@@ -209,7 +207,7 @@ export function RotaManagementPageImpl() {
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={openAddSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Doctor Rota
                 </Button>
               </EmptyContent>
@@ -219,7 +217,7 @@ export function RotaManagementPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -268,7 +266,7 @@ export function RotaManagementPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -279,7 +277,7 @@ export function RotaManagementPageImpl() {
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

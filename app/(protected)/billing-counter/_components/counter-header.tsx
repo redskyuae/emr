@@ -1,4 +1,4 @@
-import { RotateCcw } from 'lucide-react';
+import { PiArrowCounterClockwiseLight } from 'react-icons/pi';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ export function CounterHeader() {
               variant="ghost"
               onClick={() => dispatch({ type: 'RESET', state: createSeedState() })}
             >
-              <RotateCcw className="size-3.5" />
+              <PiArrowCounterClockwiseLight className="size-3.5" />
               Reset demo data
             </Button>
           </div>

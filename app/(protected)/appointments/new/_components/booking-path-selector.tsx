@@ -1,4 +1,5 @@
-import { CalendarClock, Sparkles } from 'lucide-react';
+import { CiCalendarDate } from 'react-icons/ci';
+import { PiSparkleLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,19 +11,19 @@ const paths: Array<{
   value: BookingPath;
   title: string;
   description: string;
-  icon: typeof CalendarClock;
+  icon: typeof CiCalendarDate;
 }> = [
   {
     value: 'CONSULTATION',
     title: 'Consultation',
     description: 'See a Doctor at an available time.',
-    icon: CalendarClock,
+    icon: CiCalendarDate,
   },
   {
     value: 'PROCEDURE',
     title: 'Procedure',
     description: 'Reserve a Treatment Session and resources.',
-    icon: Sparkles,
+    icon: PiSparkleLight,
   },
 ];
 

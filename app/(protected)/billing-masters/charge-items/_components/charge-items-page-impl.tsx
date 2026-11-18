@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, Plus, ReceiptText, Search } from 'lucide-react';
+import { CiCircleAlert, CiReceipt, CiSearch } from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -96,7 +97,7 @@ export function ChargeItemsPageImpl() {
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -133,7 +134,7 @@ export function ChargeItemsPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setChargeItemParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Charge Item
                 </Button>
               </div>
@@ -143,7 +144,7 @@ export function ChargeItemsPageImpl() {
 
         {chargeItemsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Charge Items</AlertTitle>
             <AlertDescription>{getApiErrorMessage(chargeItemsQuery.error)}</AlertDescription>
           </Alert>
@@ -155,7 +156,7 @@ export function ChargeItemsPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <ReceiptText />
+                <CiReceipt />
               </EmptyMedia>
               <EmptyTitle>No Charge Items yet</EmptyTitle>
               <EmptyDescription>
@@ -166,7 +167,7 @@ export function ChargeItemsPageImpl() {
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={() => void setChargeItemParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Charge Item
                 </Button>
               </EmptyContent>
@@ -176,7 +177,7 @@ export function ChargeItemsPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -207,7 +208,7 @@ export function ChargeItemsPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -218,7 +219,7 @@ export function ChargeItemsPageImpl() {
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

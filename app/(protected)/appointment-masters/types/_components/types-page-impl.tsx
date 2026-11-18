@@ -5,17 +5,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
 import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Table as TableIcon,
-} from 'lucide-react';
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
 import { createAppointmentTypeSchema } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
@@ -194,22 +190,22 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -223,7 +219,7 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={openAddSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Appointment Type
                 </Button>
               </div>
@@ -233,7 +229,7 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
 
         {typesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Appointment Types</AlertTitle>
             <AlertDescription>{getApiErrorMessage(typesQuery.error)}</AlertDescription>
           </Alert>
@@ -245,7 +241,7 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <ClipboardList />
+                <PiClipboardTextLight />
               </EmptyMedia>
               <EmptyTitle>No Appointment Types yet</EmptyTitle>
               <EmptyDescription>
@@ -256,7 +252,7 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={openAddSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Appointment Type
                 </Button>
               </EmptyContent>
@@ -266,7 +262,7 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -316,7 +312,7 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
                     disabled={page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -327,7 +323,7 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
                     onClick={() => setPage((p) => p + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

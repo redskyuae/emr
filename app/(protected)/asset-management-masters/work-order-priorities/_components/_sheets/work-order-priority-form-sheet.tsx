@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 import type { WorkOrderPriority } from '@/app/api/lib/modules/work-order-priority/schemas/work-order-priority-schema';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -164,7 +164,7 @@ export function WorkOrderPriorityFormSheet({
             <div className="flex-1 overflow-y-auto p-4">
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Save failed</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc space-y-1 pl-4">
@@ -304,7 +304,7 @@ export function WorkOrderPriorityFormSheet({
                 disabled={isSaving}
                 aria-busy={isSaving}
               >
-                <Save className="size-4" />
+                <CiFloppyDisk className="size-4" />
                 Save
               </Button>
             </SheetFooter>

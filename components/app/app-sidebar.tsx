@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
+import { PiCaretRightLight } from 'react-icons/pi';
 
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import {
@@ -84,7 +84,7 @@ function AppNavLink({ item }: { item: AppNavItem }) {
             >
               <item.icon />
               <span>{item.title}</span>
-              <ChevronRight className="ml-auto size-4! opacity-60 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+              <PiCaretRightLight className="ml-auto size-4! opacity-60 transition-transform group-data-[state=open]/collapsible:rotate-90" />
             </SidebarMenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent>

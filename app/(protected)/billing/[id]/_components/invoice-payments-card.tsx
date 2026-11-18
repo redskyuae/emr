@@ -1,6 +1,6 @@
 'use client';
 
-import { ReceiptText } from 'lucide-react';
+import { CiReceipt } from 'react-icons/ci';
 
 import type { Invoice, Payment } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,7 @@ export function InvoicePaymentsCard({
                         onClick={() => onViewReceipt(payment)}
                         aria-label={`View receipt ${payment.receiptNumber}`}
                       >
-                        <ReceiptText className="size-4" />
+                        <CiReceipt className="size-4" />
                         View
                       </Button>
                     </td>

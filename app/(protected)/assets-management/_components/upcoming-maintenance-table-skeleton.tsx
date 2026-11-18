@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { PiArrowRightLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +24,7 @@ export function UpcomingMaintenanceTableSkeleton() {
           <Button asChild variant="outline" size="sm">
             <Link href="/assets-management/maintenance">
               <span>All work orders</span>
-              <ArrowRight className="size-3.5" />
+              <PiArrowRightLight className="size-3.5" />
             </Link>
           </Button>
         </CardAction>

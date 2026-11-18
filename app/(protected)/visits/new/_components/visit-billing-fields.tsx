@@ -1,7 +1,9 @@
 import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
 import { useEffect, useRef } from 'react';
-import { Ban, Banknote, Clock3, ReceiptText, RefreshCcw, type LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiClock1, CiMoneyBill, CiNoWaitingSign, CiReceipt } from 'react-icons/ci';
+import { PiArrowsCounterClockwiseLight } from 'react-icons/pi';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import type { VisitPatientType } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
@@ -37,24 +39,29 @@ import {
 } from '../_utils/visit-charge-options';
 
 const BILLING_CHOICES = [
-  { value: 'none', label: 'No Invoice', description: 'Bill later from Billing', icon: Ban },
+  {
+    value: 'none',
+    label: 'No Invoice',
+    description: 'Bill later from Billing',
+    icon: CiNoWaitingSign,
+  },
   {
     value: 'later',
     label: 'Invoice, pay later',
     description: 'Full amount stays due',
-    icon: Clock3,
+    icon: CiClock1,
   },
   {
     value: 'now',
     label: 'Invoice and collect now',
     description: 'Full or partial Payment',
-    icon: Banknote,
+    icon: CiMoneyBill,
   },
 ] as const satisfies ReadonlyArray<{
   value: BillingChoice;
   label: string;
   description: string;
-  icon: LucideIcon;
+  icon: IconType;
 }>;
 
 type Props = {
@@ -153,7 +160,7 @@ export function VisitBillingFields({
     <Card className="shadow-fluent-2">
       <CardHeader>
         <SectionHeading
-          icon={<ReceiptText className="size-5" />}
+          icon={<CiReceipt className="size-5" />}
           title="Billing"
           description="Optional at Check-in. A partial Payment leaves a Balance Due."
         />
@@ -210,7 +217,7 @@ export function VisitBillingFields({
                 <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
                   Charge Items could not be loaded.
                   <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-                    <RefreshCcw className="size-4" /> Retry
+                    <PiArrowsCounterClockwiseLight className="size-4" /> Retry
                   </Button>
                 </AlertDescription>
               </Alert>

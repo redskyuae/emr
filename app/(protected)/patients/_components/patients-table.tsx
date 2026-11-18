@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertCircle, UsersRound } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiUsersLight } from 'react-icons/pi';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
@@ -89,7 +90,7 @@ export function PatientsTable({
   if (isError) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Patients</AlertTitle>
         <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
       </Alert>
@@ -108,7 +109,7 @@ export function PatientsTable({
           <Empty className="min-h-72 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <UsersRound className="size-5" />
+                <PiUsersLight className="size-5" />
               </EmptyMedia>
               <EmptyTitle>No Patients found.</EmptyTitle>
               <EmptyDescription>

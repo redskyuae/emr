@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+import { PiCheckLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ function ChecklistRow({
             !done && (optional ? 'border-border border-2' : 'border-warning border-2')
           )}
         >
-          {done ? <Check className="size-3.5" aria-hidden="true" /> : null}
+          {done ? <PiCheckLight className="size-3.5" aria-hidden="true" /> : null}
           <span className="sr-only">{done ? 'Done' : optional ? 'Optional' : 'Open'}</span>
         </span>
       )}

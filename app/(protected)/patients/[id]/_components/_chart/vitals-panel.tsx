@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity } from 'lucide-react';
+import { CiWavePulse1 } from 'react-icons/ci';
 
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
@@ -47,7 +47,7 @@ export function VitalsPanel({
   return (
     <ChartPanel
       title="Vital Signs"
-      icon={<Activity className="size-4" />}
+      icon={<CiWavePulse1 className="size-4" />}
       count={vitalSigns.length}
       addLabel="Record Vitals"
       onAdd={onAdd}

@@ -1,5 +1,6 @@
 import type { Dispatch } from 'react';
-import { PlusIcon, Trash2Icon } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -156,7 +157,7 @@ export function AssessColumn({
                         type="button"
                         variant="outline"
                       >
-                        <PlusIcon aria-hidden="true" />
+                        <PiPlusLight aria-hidden="true" />
                         Add
                       </Button>
                     </div>
@@ -191,7 +192,7 @@ export function AssessColumn({
                             type="button"
                             variant="ghost"
                           >
-                            <Trash2Icon aria-hidden="true" />
+                            <CiTrash aria-hidden="true" />
                           </Button>
                         </div>
                       ))}

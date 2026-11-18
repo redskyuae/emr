@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { AlertCircle, NotebookPen, PencilLine, PlayCircle, Stethoscope } from 'lucide-react';
+import { CiCircleAlert, CiEdit, CiMemoPad, CiStethoscope } from 'react-icons/ci';
+import { PiPlayCircleLight } from 'react-icons/pi';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
@@ -84,7 +85,7 @@ function VisitSummary({ visit, onAmend }: { visit: Visit; onAmend?: () => void }
         </div>
         {onAmend ? (
           <Button type="button" size="sm" variant="outline" onClick={onAmend}>
-            <PencilLine className="size-4" />
+            <CiEdit className="size-4" />
             Amend
           </Button>
         ) : null}
@@ -136,7 +137,7 @@ function RecordedNote({
         action={
           inConsultation && canCreateNote ? (
             <Button type="button" size="sm" variant="outline" onClick={onAddNote}>
-              <NotebookPen className="size-4" />
+              <CiMemoPad className="size-4" />
               Add note
             </Button>
           ) : onAmendNote ? (
@@ -146,7 +147,7 @@ function RecordedNote({
               variant="outline"
               onClick={() => onAmendNote(recorded.id)}
             >
-              <PencilLine className="size-4" />
+              <CiEdit className="size-4" />
               Amend note
             </Button>
           ) : undefined
@@ -164,7 +165,7 @@ function RecordedNote({
     <Empty className="bg-card shadow-fluent-2 min-h-72 border">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <Stethoscope />
+          <CiStethoscope />
         </EmptyMedia>
         <EmptyTitle>
           {visit.status === 'CHECKED_IN'
@@ -184,7 +185,7 @@ function RecordedNote({
       {visit.status === 'CHECKED_IN' && canStart ? (
         <EmptyContent>
           <Button type="button" disabled={starting} aria-busy={starting} onClick={onStart}>
-            <PlayCircle className="size-4" />
+            <PiPlayCircleLight className="size-4" />
             {starting ? 'Starting consultation…' : 'Start consultation'}
           </Button>
         </EmptyContent>
@@ -293,7 +294,7 @@ export function VisitConsultationPanel({
   if (loadFailed) {
     aside = (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Consultation could not be loaded</AlertTitle>
         <AlertDescription className="flex flex-wrap items-center gap-2">
           Do not start a new note until this loads, or you may duplicate a saved draft.
@@ -313,7 +314,7 @@ export function VisitConsultationPanel({
   } else if (available.length === 0) {
     aside = (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>No Clinical Note Types configured</AlertTitle>
         <AlertDescription>
           <Link href="/clinical-masters/note-types" className="underline">

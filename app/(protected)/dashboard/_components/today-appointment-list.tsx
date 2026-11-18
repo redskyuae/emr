@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, CalendarClock } from 'lucide-react';
+import { CiCalendarDate } from 'react-icons/ci';
+import { PiArrowRightLight } from 'react-icons/pi';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { appointmentStatusVariant } from '@/app/(protected)/appointments/_utils/appointment-status';
@@ -41,7 +42,7 @@ export function TodayAppointmentList({
           </div>
           <Button asChild variant="outline" size="sm">
             <Link href={appointmentsHref}>
-              View all <ArrowRight className="size-4" aria-hidden="true" />
+              View all <PiArrowRightLight className="size-4" aria-hidden="true" />
             </Link>
           </Button>
         </div>
@@ -51,7 +52,7 @@ export function TodayAppointmentList({
           <Empty className="py-4">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <CalendarClock aria-hidden="true" />
+                <CiCalendarDate aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>
                 {hasMore

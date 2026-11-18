@@ -1,6 +1,6 @@
 'use client';
 
-import { Pill } from 'lucide-react';
+import { CiPill } from 'react-icons/ci';
 
 import type { PatientMedication } from '@/app/api/lib/modules/patient-medication/schemas/patient-medication-schema';
 import { Badge } from '@/components/ui/badge';
@@ -65,7 +65,7 @@ export function MedicationsPanel({
   return (
     <ChartPanel
       title="Medications"
-      icon={<Pill className="size-4" />}
+      icon={<CiPill className="size-4" />}
       count={medications.length}
       addLabel="Add Medication"
       onAdd={onAdd}

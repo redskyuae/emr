@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Eye, Loader2, MoreHorizontal, PlayCircle, XCircle } from 'lucide-react';
+import { CiCircleRemove, CiRead } from 'react-icons/ci';
+import { PiCircleNotchLight, PiDotsThreeLight, PiPlayCircleLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Badge } from '@/components/ui/badge';
@@ -56,9 +57,9 @@ function VisitRowActions({
           onClick={() => onStart(visit)}
         >
           {isPending ? (
-            <Loader2 className="size-4 animate-spin" />
+            <PiCircleNotchLight className="size-4 animate-spin" />
           ) : (
-            <PlayCircle className="size-4" />
+            <PiPlayCircleLight className="size-4" />
           )}
           {isPending ? 'Starting…' : 'Start'}
         </Button>
@@ -67,19 +68,19 @@ function VisitRowActions({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" aria-label={`Actions for ${visit.visitNumber}`}>
-            <MoreHorizontal className="size-4" />
+            <PiDotsThreeLight className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
             <Link href={`/visits/${visit.id}`}>
-              <Eye className="size-4" />
+              <CiRead className="size-4" />
               View Visit
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href={`/patients/${visit.patient.id}`}>
-              <Eye className="size-4" />
+              <CiRead className="size-4" />
               Open Patient
             </Link>
           </DropdownMenuItem>
@@ -87,7 +88,7 @@ function VisitRowActions({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={() => onCancel(visit)}>
-                <XCircle className="size-4" />
+                <CiCircleRemove className="size-4" />
                 Cancel Visit
               </DropdownMenuItem>
             </>

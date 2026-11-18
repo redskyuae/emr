@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarCheck, Search } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
+import { PiCalendarCheckLight } from 'react-icons/pi';
 import type { ControllerRenderProps } from 'react-hook-form';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
@@ -66,7 +67,7 @@ export function AppointmentSearch({
       </FieldLabel>
       <InputGroup className="w-full">
         <InputGroupAddon>
-          <Search className="size-4" />
+          <CiSearch className="size-4" />
         </InputGroupAddon>
         <InputGroupInput
           id="visit-appointment-search"
@@ -86,7 +87,7 @@ export function AppointmentSearch({
 
       {selected ? (
         <div className="border-primary/30 bg-primary/5 flex items-center gap-3 rounded-lg border p-3">
-          <CalendarCheck className="text-primary size-5 shrink-0" />
+          <PiCalendarCheckLight className="text-primary size-5 shrink-0" />
           <div className="min-w-0 flex-1">
             <AppointmentSummary appointment={selected} />
           </div>
@@ -118,7 +119,7 @@ export function AppointmentSearch({
                     setSearch('');
                   }}
                 >
-                  <CalendarCheck className="text-muted-foreground size-4 shrink-0" />
+                  <PiCalendarCheckLight className="text-muted-foreground size-4 shrink-0" />
                   <AppointmentSummary appointment={appointment} />
                   <Badge variant="secondary" className="ml-auto shrink-0">
                     {appointment.appointmentStatus.name}

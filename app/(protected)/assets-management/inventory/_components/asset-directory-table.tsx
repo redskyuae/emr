@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Boxes, Eye, Search } from 'lucide-react';
+import { CiBoxes, CiCircleAlert, CiRead, CiSearch } from 'react-icons/ci';
 
 import type { Asset, AssetMasterSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
@@ -83,7 +83,7 @@ function AssetIdentity({ asset }: { asset: Asset }) {
         style={{ backgroundColor: asset.category.color + '1a', color: asset.category.color }}
         aria-hidden="true"
       >
-        <Boxes className="size-4" />
+        <CiBoxes className="size-4" />
       </span>
       <div className="min-w-0 space-y-1">
         <p className="truncate font-semibold">{asset.name}</p>
@@ -132,7 +132,7 @@ export function AssetDirectoryTable({
   if (isError) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Assets</AlertTitle>
         <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
       </Alert>
@@ -154,7 +154,7 @@ export function AssetDirectoryTable({
       <Empty className="bg-card shadow-fluent-2 min-h-72 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <Search />
+            <CiSearch />
           </EmptyMedia>
           <EmptyTitle>No assets found</EmptyTitle>
           <EmptyDescription>
@@ -213,7 +213,7 @@ export function AssetDirectoryTable({
               <TableCell className="pr-4 text-right" onClick={(event) => event.stopPropagation()}>
                 <Button type="button" variant="outline" size="sm" asChild>
                   <Link href={`/assets-management/inventory/${asset.id}`}>
-                    <Eye className="size-4" aria-hidden="true" />
+                    <CiRead className="size-4" aria-hidden="true" />
                     View
                   </Link>
                 </Button>

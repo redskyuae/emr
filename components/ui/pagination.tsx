@@ -2,7 +2,7 @@ import { ComponentProps } from 'react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react';
+import { PiCaretLeftLight, PiCaretRightLight, PiDotsThreeLight } from 'react-icons/pi';
 
 function Pagination({ className, ...props }: ComponentProps<'nav'>) {
   return (
@@ -60,7 +60,7 @@ function PaginationPrevious({
       className={cn('pl-1.5!', className)}
       {...props}
     >
-      <ChevronLeftIcon data-icon="inline-start" />
+      <PiCaretLeftLight data-icon="inline-start" />
       <span className="hidden sm:block">{text}</span>
     </PaginationLink>
   );
@@ -79,7 +79,7 @@ function PaginationNext({
       {...props}
     >
       <span className="hidden sm:block">{text}</span>
-      <ChevronRightIcon data-icon="inline-end" />
+      <PiCaretRightLight data-icon="inline-end" />
     </PaginationLink>
   );
 }
@@ -95,7 +95,7 @@ function PaginationEllipsis({ className, ...props }: ComponentProps<'span'>) {
       )}
       {...props}
     >
-      <MoreHorizontalIcon />
+      <PiDotsThreeLight />
       <span className="sr-only">More pages</span>
     </span>
   );

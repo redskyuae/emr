@@ -1,6 +1,7 @@
 'use client';
 
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiTrash } from 'react-icons/ci';
+import { PiDotsThreeLight } from 'react-icons/pi';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import { Badge } from '@/components/ui/badge';
@@ -115,13 +116,13 @@ export function ChargeItemTable({
                           size="icon"
                           aria-label={`Actions for ${chargeItem.name}`}
                         >
-                          <MoreHorizontal className="size-4" />
+                          <PiDotsThreeLight className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canEdit ? (
                           <DropdownMenuItem onSelect={() => onEdit(chargeItem)}>
-                            <Pencil className="size-4" />
+                            <CiEdit className="size-4" />
                             Edit
                           </DropdownMenuItem>
                         ) : null}
@@ -130,7 +131,7 @@ export function ChargeItemTable({
                             variant="destructive"
                             onSelect={() => onDelete(chargeItem)}
                           >
-                            <Trash2 className="size-4" />
+                            <CiTrash className="size-4" />
                             Delete
                           </DropdownMenuItem>
                         ) : null}

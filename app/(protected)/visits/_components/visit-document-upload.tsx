@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef } from 'react';
-import { Loader2, Upload } from 'lucide-react';
+import { CiExport } from 'react-icons/ci';
+import { PiCircleNotchLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { UploadVisitDocumentResponse } from '@/app/api/v1/visits/documents/types';
@@ -67,9 +68,9 @@ export function VisitDocumentUploadButton({
         onClick={() => inputRef.current?.click()}
       >
         {uploadMutation.isPending ? (
-          <Loader2 className="size-4 animate-spin" />
+          <PiCircleNotchLight className="size-4 animate-spin" />
         ) : (
-          <Upload className="size-4" />
+          <CiExport className="size-4" />
         )}
         {uploadMutation.isPending ? 'Uploading…' : label}
       </Button>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
-import { AlertCircle } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
@@ -130,7 +130,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
             <Skeleton className="h-14 w-full" aria-label="Loading Patient safety information" />
           ) : chartQuery.isError ? (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>Patient safety information unavailable</AlertTitle>
               <AlertDescription>Allergies and medications could not be loaded.</AlertDescription>
             </Alert>
@@ -139,7 +139,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           )}
           {allergensQuery.isError && !chartQuery.isError ? (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>Allergen names unavailable</AlertTitle>
               <AlertDescription>
                 Review the Patient Chart before clinical decisions.

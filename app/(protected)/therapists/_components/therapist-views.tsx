@@ -1,4 +1,5 @@
-import { CircleOff, MoreVertical, Pencil, RotateCcw, UserRound } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiNoWaitingSign, CiUser } from 'react-icons/ci';
+import { PiArrowCounterClockwiseLight } from 'react-icons/pi';
 
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
 import { Badge } from '@/components/ui/badge';
@@ -57,7 +58,7 @@ function TherapistSkills({ therapist }: { therapist: Therapist }) {
 function TherapistAvatar() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
-      <UserRound className="size-5" />
+      <CiUser className="size-5" />
     </div>
   );
 }
@@ -91,13 +92,13 @@ function TherapistActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${therapist.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(therapist)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
@@ -107,9 +108,9 @@ function TherapistActionsMenu({
             onClick={() => onStatusAction(therapist, statusAction)}
           >
             {therapist.isActive ? (
-              <CircleOff className="size-4" />
+              <CiNoWaitingSign className="size-4" />
             ) : (
-              <RotateCcw className="size-4" />
+              <PiArrowCounterClockwiseLight className="size-4" />
             )}
             {therapist.isActive ? 'Deactivate' : 'Reactivate'}
           </DropdownMenuItem>
@@ -212,7 +213,7 @@ export function TherapistCardView({
               <div className="flex flex-wrap gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(therapist)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -229,9 +230,9 @@ export function TherapistCardView({
                     }
                   >
                     {therapist.isActive ? (
-                      <CircleOff className="size-3.5" />
+                      <CiNoWaitingSign className="size-3.5" />
                     ) : (
-                      <RotateCcw className="size-3.5" />
+                      <PiArrowCounterClockwiseLight className="size-3.5" />
                     )}
                     {therapist.isActive ? 'Deactivate' : 'Reactivate'}
                   </Button>

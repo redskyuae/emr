@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarDays } from 'lucide-react';
+import { CiCalendar, CiCalendarDate } from 'react-icons/ci';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ export function AppointmentDaySection({
   onPageChange,
   onCancel,
 }: AppointmentDaySectionProps) {
-  const Icon = kind === 'today' ? CalendarDays : CalendarClock;
+  const Icon = kind === 'today' ? CiCalendar : CiCalendarDate;
 
   return (
     <section className="space-y-2" aria-labelledby={id}>

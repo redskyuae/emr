@@ -1,15 +1,13 @@
 import { useState, type ReactNode } from 'react';
 import type { Control, FieldErrors, UseFormResetField, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
+import { CiLock, CiStethoscope, CiUser } from 'react-icons/ci';
 import {
-  ClipboardList,
-  Lock,
-  Plus,
-  RefreshCcw,
-  Sparkles,
-  Stethoscope,
-  UserRound,
-} from 'lucide-react';
+  PiArrowsCounterClockwiseLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+  PiSparkleLight,
+} from 'react-icons/pi';
 
 import type { AdmitSource } from '@/app/api/lib/modules/admit-source/schemas/admit-source-schema';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
@@ -99,7 +97,7 @@ export function VisitSourceFields({
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading
           id="check-in-patient-heading"
-          icon={<UserRound className="size-5" />}
+          icon={<CiUser className="size-5" />}
           title="Confirm the Patient"
           description="Find today's Appointment or a Walk-in Patient."
         />
@@ -191,7 +189,7 @@ function PatientTypeBadge({
   if (error) {
     return (
       <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-        <RefreshCcw className="size-4" />
+        <PiArrowsCounterClockwiseLight className="size-4" />
         Retry Patient type
       </Button>
     );
@@ -247,7 +245,7 @@ export function VisitDetailsFields({
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading
           id="check-in-visit-heading"
-          icon={<ClipboardList className="size-5" />}
+          icon={<PiClipboardTextLight className="size-5" />}
           title="Visit"
           description={patientTypeDescription(patientType)}
         />
@@ -271,7 +269,7 @@ export function VisitDetailsFields({
         ) : null}
         {appointment?.bookingPath === 'PROCEDURE' ? (
           <div className="bg-success/10 text-success flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-4 py-3 text-sm">
-            <Sparkles className="size-4 shrink-0" aria-hidden />
+            <PiSparkleLight className="size-4 shrink-0" aria-hidden />
             <p className="min-w-0 flex-1">
               <span className="font-semibold">Scheduled Treatment: </span>
               {appointment.treatment?.name ?? 'Treatment'}
@@ -319,11 +317,11 @@ export function VisitDetailsFields({
             <div className="bg-muted/40 space-y-1 rounded-lg border p-3">
               <p className="text-sm font-medium">Doctor</p>
               <p className="flex items-center gap-2 text-base font-bold">
-                <Stethoscope className="text-muted-foreground size-4" aria-hidden />
+                <CiStethoscope className="text-muted-foreground size-4" aria-hidden />
                 {assignedDoctor.name}
               </p>
               <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                <Lock className="size-3" aria-hidden />
+                <CiLock className="size-3" aria-hidden />
                 Assigned by the Appointment.
               </p>
             </div>
@@ -438,7 +436,7 @@ export function VisitDetailsFields({
             className="text-primary -ml-2"
             onClick={() => setRemarksOpen(true)}
           >
-            <Plus className="size-4" />
+            <PiPlusLight className="size-4" />
             Add remarks
           </Button>
         )}

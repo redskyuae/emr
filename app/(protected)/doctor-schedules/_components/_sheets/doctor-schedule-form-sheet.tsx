@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
@@ -230,7 +230,7 @@ export function DoctorScheduleFormSheet({
               <form id="doctor-schedule-form" onSubmit={onSubmit} className="space-y-5 p-4">
                 {serverErrors.length > 0 ? (
                   <Alert variant="destructive">
-                    <AlertCircle className="size-4" />
+                    <CiCircleAlert className="size-4" />
                     <AlertTitle>Save failed</AlertTitle>
                     <AlertDescription>
                       <ul className="list-disc space-y-1 pl-4">
@@ -432,7 +432,7 @@ export function DoctorScheduleFormSheet({
                 form="doctor-schedule-form"
                 disabled={isSaving || rotas.length === 0}
               >
-                <Save className="size-4" />
+                <CiFloppyDisk className="size-4" />
                 {isSaving ? 'Saving...' : 'Save Schedule'}
               </Button>
             </SheetFooter>

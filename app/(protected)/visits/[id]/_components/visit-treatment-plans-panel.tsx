@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { CalendarPlus, Check, ClipboardList, Play, X } from 'lucide-react';
+import { CiPlay1 } from 'react-icons/ci';
+import { PiCalendarPlusLight, PiCheckLight, PiClipboardTextLight, PiXLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
@@ -77,7 +78,7 @@ function PlanCard({
           </Badge>
           {startable ? (
             <Button type="button" size="sm" onClick={() => onOpenSession(next.id)}>
-              <Play className="size-4" />
+              <CiPlay1 className="size-4" />
               Start Session {next.sessionNumber}
             </Button>
           ) : null}
@@ -222,7 +223,7 @@ export function VisitTreatmentPlansPanel({
             <Empty className="min-h-48">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <ClipboardList className="size-5" />
+                  <PiClipboardTextLight className="size-5" />
                 </EmptyMedia>
                 <EmptyTitle>No active Patient Treatment Plan</EmptyTitle>
                 <EmptyDescription>
@@ -239,7 +240,7 @@ export function VisitTreatmentPlansPanel({
           {canBookAppointment && activePlans.length ? (
             <Button asChild>
               <Link href="/appointments/new">
-                <CalendarPlus className="size-4" />
+                <PiCalendarPlusLight className="size-4" />
                 Book next Session
               </Link>
             </Button>
@@ -250,7 +251,7 @@ export function VisitTreatmentPlansPanel({
               variant={activePlans.length ? 'outline' : 'default'}
               onClick={onAssignPlan}
             >
-              <ClipboardList className="size-4" />
+              <PiClipboardTextLight className="size-4" />
               Assign Treatment Plan
             </Button>
           ) : null}
@@ -276,9 +277,9 @@ export function VisitTreatmentPlansPanel({
                     aria-hidden="true"
                   >
                     {plan.status === 'COMPLETED' ? (
-                      <Check className="size-3.5" />
+                      <PiCheckLight className="size-3.5" />
                     ) : (
-                      <X className="size-3.5" />
+                      <PiXLight className="size-3.5" />
                     )}
                   </span>
                   <span className="min-w-0 flex-1 font-medium">{plan.treatmentName}</span>

@@ -1,4 +1,5 @@
-import { MoreVertical, Pencil, Sparkles, Trash2 } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiSparkleLight } from 'react-icons/pi';
 import type { TherapistSkill } from '@/app/api/lib/modules/therapist-skill/schemas/therapist-skill-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,7 +29,7 @@ type TherapistSkillViewProps = {
 function SkillIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <Sparkles className="size-5" />
+      <PiSparkleLight className="size-5" />
     </div>
   );
 }
@@ -59,19 +60,19 @@ function SkillActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${skill.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(skill)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(skill)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -148,7 +149,7 @@ export function TherapistSkillCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(skill)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -160,7 +161,7 @@ export function TherapistSkillCardView({
                     onClick={() => onDelete(skill)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}

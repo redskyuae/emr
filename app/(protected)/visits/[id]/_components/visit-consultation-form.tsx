@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, Save } from 'lucide-react';
+import { CiCircleCheck, CiFloppyDisk } from 'react-icons/ci';
 import { Controller, useForm, useWatch, type FieldErrors } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -374,13 +374,13 @@ export function VisitConsultationForm({
         }
         actions={
           <Button type="submit" variant="outline" disabled={saving}>
-            <Save className="size-4" />
+            <CiFloppyDisk className="size-4" />
             {createNote.isPending || updateNote.isPending ? 'Saving…' : 'Save draft'}
           </Button>
         }
         finalAction={
           <Button type="button" disabled={saving} onClick={() => setSignOpen(true)}>
-            <CheckCircle2 className="size-4" />
+            <CiCircleCheck className="size-4" />
             {signNote.isPending ? 'Signing…' : 'Save and sign'}
           </Button>
         }

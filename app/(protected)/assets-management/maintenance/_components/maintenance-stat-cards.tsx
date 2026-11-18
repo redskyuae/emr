@@ -1,7 +1,9 @@
 'use client';
 
 import { Suspense } from 'react';
-import { AlertTriangle, CalendarClock, CheckCircle2, type LucideIcon, Wrench } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiCalendarDate, CiCircleCheck, CiWarning } from 'react-icons/ci';
+import { PiWrenchLight } from 'react-icons/pi';
 
 import { useSuspenseWorkOrderSummary } from '@/app/queries/assets-management/assets-overview/useWorkOrderSummary';
 import type { WorkOrderSummary } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
@@ -12,7 +14,7 @@ import { WidgetErrorBoundary } from '@/app/(protected)/assets-management/_compon
 type Stat = {
   label: string;
   value: number;
-  icon: LucideIcon;
+  icon: IconType;
 };
 
 type MaintenanceStatCardsProps = {
@@ -43,22 +45,22 @@ export function MaintenanceStatCards({ workOrderSummary }: MaintenanceStatCardsP
     {
       label: 'Active work orders',
       value: workOrderSummary.activeCount,
-      icon: Wrench,
+      icon: PiWrenchLight,
     },
     {
       label: 'Due next 7 days',
       value: workOrderSummary.dueNext7DaysCount,
-      icon: CalendarClock,
+      icon: CiCalendarDate,
     },
     {
       label: 'Overdue',
       value: workOrderSummary.overdueCount,
-      icon: AlertTriangle,
+      icon: CiWarning,
     },
     {
       label: 'Completed (30d)',
       value: workOrderSummary.completedLast30dCount,
-      icon: CheckCircle2,
+      icon: CiCircleCheck,
     },
   ];
 

@@ -1,12 +1,5 @@
-import {
-  KeyRound,
-  MoreVertical,
-  Pencil,
-  Plus,
-  ShieldCheck,
-  Trash2,
-  UsersRound,
-} from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiKeyLight, PiPlusLight, PiShieldCheckLight, PiUsersLight } from 'react-icons/pi';
 
 import type { RoleWithStats } from '@/app/api/lib/modules/role/schemas/role-schema';
 import { Badge } from '@/components/ui/badge';
@@ -72,17 +65,17 @@ function RoleCard({
 
         <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-3">
           <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
-            <UsersRound className="size-4" />
+            <PiUsersLight className="size-4" />
             {formatCount(role.assignedStaffCount, 'staff member')}
           </span>
           <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
-            <KeyRound className="size-4" />
+            <PiKeyLight className="size-4" />
             {formatCount(role.permissionAssignmentCount, 'permission')}
           </span>
           <div className="ml-auto flex items-center gap-1">
             {canEdit ? (
               <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(role)}>
-                <Pencil className="size-3.5" />
+                <CiEdit className="size-3.5" />
                 Edit
               </Button>
             ) : null}
@@ -95,7 +88,7 @@ function RoleCard({
                     size="icon-sm"
                     aria-label={`More actions for ${role.name}`}
                   >
-                    <MoreVertical className="size-4" />
+                    <CiMenuKebab className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
@@ -104,7 +97,7 @@ function RoleCard({
                   ) : null}
                   {canDelete ? (
                     <DropdownMenuItem variant="destructive" onClick={() => onDelete(role)}>
-                      <Trash2 className="size-4" />
+                      <CiTrash className="size-4" />
                       Delete Role
                     </DropdownMenuItem>
                   ) : null}
@@ -146,7 +139,7 @@ export function RoleGrid({
       <Empty className="bg-card shadow-fluent-2 min-h-80 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <ShieldCheck />
+            <PiShieldCheckLight />
           </EmptyMedia>
           <EmptyTitle>No Roles yet</EmptyTitle>
           <EmptyDescription>
@@ -156,7 +149,7 @@ export function RoleGrid({
         {canCreate ? (
           <EmptyContent>
             <Button type="button" onClick={onCreate}>
-              <Plus className="size-4" />
+              <PiPlusLight className="size-4" />
               Create Role
             </Button>
           </EmptyContent>

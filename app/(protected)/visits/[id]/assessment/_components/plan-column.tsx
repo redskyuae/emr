@@ -1,5 +1,5 @@
 import type { Dispatch, ReactNode } from 'react';
-import { PlusIcon } from 'lucide-react';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,7 +43,7 @@ function AddButton({
       type="button"
       variant="outline"
     >
-      <PlusIcon aria-hidden="true" />
+      <PiPlusLight aria-hidden="true" />
       Add
     </Button>
   );

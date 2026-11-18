@@ -1,6 +1,6 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
 
 import type { DownloadAppointmentsExportRequest } from '@/app/api/v1/appointments/export/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -108,7 +108,7 @@ export function AppointmentsTabToolbar({
 
         <InputGroup className="lg:max-w-xs">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"

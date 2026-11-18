@@ -1,6 +1,7 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +62,7 @@ export function ComposerPaymentCard({
                 ])
               }
             >
-              <Plus className="size-3.5" />
+              <PiPlusLight className="size-3.5" />
               {option.label}
             </Button>
           ))}
@@ -77,7 +78,7 @@ export function ComposerPaymentCard({
                 aria-label={`Remove Payment ${index + 1}`}
                 onClick={() => onTendersChange(tenders.filter((item) => item.key !== tender.key))}
               >
-                <Trash2 className="size-4" />
+                <CiTrash className="size-4" />
               </Button>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">

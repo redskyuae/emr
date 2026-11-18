@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Save } from 'lucide-react';
+import { CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -137,7 +137,7 @@ export function VisitTreatmentSessionCard({ visit }: { visit: Visit }) {
           }
           onClick={() => void save()}
         >
-          <Save className="size-4" />
+          <CiFloppyDisk className="size-4" />
           {updateMutation.isPending ? 'Saving…' : 'Save Treatment'}
         </Button>
       </div>

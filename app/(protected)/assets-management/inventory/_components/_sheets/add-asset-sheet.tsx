@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Plus, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -126,7 +127,7 @@ function AddAssetSheetBody({ onClose }: { onClose: () => void }) {
       <SheetHeader className="border-b p-4 pr-12">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-md">
-            <Plus className="size-4" />
+            <PiPlusLight className="size-4" />
           </span>
           <div className="min-w-0 space-y-1">
             <SheetTitle className="truncate text-xl">Add Asset</SheetTitle>
@@ -143,7 +144,7 @@ function AddAssetSheetBody({ onClose }: { onClose: () => void }) {
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {serverErrors.length > 0 ? (
             <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>Save failed</AlertTitle>
               <AlertDescription>
                 <ul className="list-disc space-y-1 pl-4">
@@ -595,7 +596,7 @@ function AddAssetSheetBody({ onClose }: { onClose: () => void }) {
             Cancel
           </Button>
           <Button type="submit" form="add-asset-form" disabled={isSaving} aria-busy={isSaving}>
-            <Save className="size-4" />
+            <CiFloppyDisk className="size-4" />
             Save asset
           </Button>
         </SheetFooter>

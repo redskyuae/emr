@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
-import { AlertCircle } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type {
@@ -73,7 +73,7 @@ export function InvoiceDetailImpl({ invoiceId }: { invoiceId: number }) {
   if (invoiceQuery.isError || !invoiceQuery.data) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load the Invoice</AlertTitle>
         <AlertDescription>{getApiErrorMessage(invoiceQuery.error)}</AlertDescription>
       </Alert>

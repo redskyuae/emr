@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { CiCircleCheck } from 'react-icons/ci';
+import { PiArrowLeftLight } from 'react-icons/pi';
 
 import { formatMoney } from '@/app/(protected)/billing/_utils/invoice-display';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +56,7 @@ export function CheckInActionBar({
         <div className="ml-auto flex gap-2">
           {onBack ? (
             <Button type="button" variant="outline" disabled={backDisabled} onClick={onBack}>
-              <ArrowLeft className="size-4" />
+              <PiArrowLeftLight className="size-4" />
               Back
             </Button>
           ) : (
@@ -64,7 +65,7 @@ export function CheckInActionBar({
             </Button>
           )}
           <Button type="button" disabled={primaryDisabled} aria-busy={busy} onClick={onPrimary}>
-            <CheckCircle2 className="size-4" />
+            <CiCircleCheck className="size-4" />
             {primaryLabel}
           </Button>
         </div>

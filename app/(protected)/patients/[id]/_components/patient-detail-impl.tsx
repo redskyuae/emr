@@ -3,16 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useQueryState } from 'nuqs';
-import {
-  ArrowLeft,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  UserRound,
-  UserRoundCheck,
-  UserRoundX,
-  UsersRound,
-} from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash, CiUser } from 'react-icons/ci';
+import { PiArrowLeftLight, PiUserCheckLight, PiUserMinusLight, PiUsersLight } from 'react-icons/pi';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -82,7 +74,7 @@ function PatientPhotoPreview({ photoUrl }: { photoUrl: string | null }) {
           <AvatarImage src={photoUrl} alt="Patient photo" className="rounded-md" />
         ) : null}
         <AvatarFallback className="rounded-md">
-          <UserRound className="text-muted-foreground size-7" aria-hidden="true" />
+          <CiUser className="text-muted-foreground size-7" aria-hidden="true" />
         </AvatarFallback>
       </Avatar>
       <div className="space-y-1">
@@ -171,7 +163,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
         <Empty className="min-h-72">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <UsersRound className="size-5" />
+              <PiUsersLight className="size-5" />
             </EmptyMedia>
             <EmptyTitle>Patient not found</EmptyTitle>
             <EmptyDescription>{getApiErrorMessage(patientQuery.error)}</EmptyDescription>
@@ -219,7 +211,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
             {canUpdate ? (
               <Button type="button" variant="outline" asChild>
                 <Link href={`/patients/${patient.id}/edit`}>
-                  <Pencil className="size-4" />
+                  <CiEdit className="size-4" />
                   Edit
                 </Link>
               </Button>
@@ -232,7 +224,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                   variant="outline"
                   onClick={() => setPatientPendingLifecycleChange(patient)}
                 >
-                  <UserRoundX className="size-4" />
+                  <PiUserMinusLight className="size-4" />
                   Deactivate
                 </Button>
               ) : (
@@ -241,7 +233,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                   variant="outline"
                   onClick={() => setPatientPendingLifecycleChange(patient)}
                 >
-                  <UserRoundCheck className="size-4" />
+                  <PiUserCheckLight className="size-4" />
                   Reactivate
                 </Button>
               )
@@ -251,7 +243,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button type="button" variant="ghost" size="icon" aria-label="More actions">
-                    <MoreVertical className="size-4" />
+                    <CiMenuKebab className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
@@ -259,7 +251,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                     variant="destructive"
                     onSelect={() => setPatientPendingDelete(patient)}
                   >
-                    <Trash2 className="size-4" />
+                    <CiTrash className="size-4" />
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -447,7 +439,7 @@ function BackLink() {
   return (
     <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
       <Link href="/patients">
-        <ArrowLeft className="size-4" />
+        <PiArrowLeftLight className="size-4" />
         Patients
       </Link>
     </Button>

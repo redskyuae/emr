@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { LayoutGrid, LayoutList, Plus, Search, Table as TableIcon, UserRound } from 'lucide-react';
+import { CiBoxList, CiGrid41, CiSearch, CiUser, CiViewTable } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 import { useQueryState } from 'nuqs';
 
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
@@ -115,21 +116,21 @@ export function TherapistsPageImpl() {
             spacing={0}
           >
             <ToggleGroupItem value="table" aria-label="Table view">
-              <TableIcon className="size-4" />
+              <CiViewTable className="size-4" />
               Table
             </ToggleGroupItem>
             <ToggleGroupItem value="card" aria-label="Card view">
-              <LayoutGrid className="size-4" />
+              <CiGrid41 className="size-4" />
               Card
             </ToggleGroupItem>
             <ToggleGroupItem value="list" aria-label="List view">
-              <LayoutList className="size-4" />
+              <CiBoxList className="size-4" />
               List
             </ToggleGroupItem>
           </ToggleGroup>
           <InputGroup className="lg:max-w-xs">
             <InputGroupAddon>
-              <Search className="size-4" />
+              <CiSearch className="size-4" />
             </InputGroupAddon>
             <InputGroupInput
               value={search}
@@ -160,7 +161,7 @@ export function TherapistsPageImpl() {
           </select>
           {canCreate ? (
             <Button className="lg:ml-auto" onClick={() => void setTherapistParam('new')}>
-              <Plus className="size-4" />
+              <PiPlusLight className="size-4" />
               Add Therapist
             </Button>
           ) : null}
@@ -179,7 +180,7 @@ export function TherapistsPageImpl() {
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <UserRound />
+              <CiUser />
             </EmptyMedia>
             <EmptyTitle>No Therapists yet</EmptyTitle>
             <EmptyDescription>
@@ -189,7 +190,7 @@ export function TherapistsPageImpl() {
           <EmptyContent>
             {canCreate ? (
               <Button onClick={() => void setTherapistParam('new')}>
-                <Plus className="size-4" />
+                <PiPlusLight className="size-4" />
                 Add Therapist
               </Button>
             ) : null}

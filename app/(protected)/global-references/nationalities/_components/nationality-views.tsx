@@ -1,4 +1,4 @@
-import { Flag, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiFlag1, CiMenuKebab, CiTrash } from 'react-icons/ci';
 
 import type { Nationality } from '@/app/queries/global-references/nationalities/useNationalities';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ function formatModifiedOn(value: Date | string) {
 function NationalityIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <Flag className="size-5" />
+      <CiFlag1 className="size-5" />
     </div>
   );
 }
@@ -70,19 +70,19 @@ function NationalityActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${nationality.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(nationality)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(nationality)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -186,7 +186,7 @@ export function NationalityCardView({
                     size="sm"
                     onClick={() => onEdit(nationality)}
                   >
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -198,7 +198,7 @@ export function NationalityCardView({
                     onClick={() => onDelete(nationality)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}

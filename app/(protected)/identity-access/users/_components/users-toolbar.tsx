@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, UserPlus } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
+import { PiUserPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -73,7 +74,7 @@ export function UsersToolbar({
       <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <InputGroup className="lg:max-w-sm">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"
@@ -118,7 +119,7 @@ export function UsersToolbar({
 
         {canCreate ? (
           <Button type="button" onClick={onAddUser} className="lg:ml-auto">
-            <UserPlus className="size-4" />
+            <PiUserPlusLight className="size-4" />
             Add user
           </Button>
         ) : null}

@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, CalendarClock } from 'lucide-react';
+import { CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import type { DoctorSchedule } from '@/app/api/lib/modules/doctor-schedule/schemas/doctor-schedule-schema';
@@ -60,7 +60,7 @@ export function DoctorSchedulesResults({
   if (isError) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Doctor Schedules</AlertTitle>
         <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
       </Alert>
@@ -76,7 +76,7 @@ export function DoctorSchedulesResults({
       <Empty className="bg-card shadow-fluent-2 min-h-72 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <CalendarClock className="size-5" />
+            <CiCalendarDate className="size-5" />
           </EmptyMedia>
           <EmptyTitle>No Doctor Schedules found.</EmptyTitle>
           <EmptyDescription>

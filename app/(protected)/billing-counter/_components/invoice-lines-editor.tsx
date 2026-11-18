@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { X } from 'lucide-react';
+import { PiXLight } from 'react-icons/pi';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -90,7 +90,7 @@ export function InvoiceLinesEditor({
                     aria-label={`Remove ${line.description}`}
                     onClick={() => onChange(lines.filter((item) => item.key !== line.key))}
                   >
-                    <X className="size-4" />
+                    <PiXLight className="size-4" />
                   </Button>
                 </div>
 

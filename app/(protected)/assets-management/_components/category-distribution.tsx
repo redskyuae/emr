@@ -2,7 +2,8 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Boxes } from 'lucide-react';
+import { CiBoxes } from 'react-icons/ci';
+import { PiArrowRightLight } from 'react-icons/pi';
 
 import { useSuspenseAssetSummary } from '@/app/queries/assets-management/assets-overview/useAssetSummary';
 import type { AssetCategoryCount } from '@/app/api/lib/modules/asset/schemas/asset-schema';
@@ -75,7 +76,7 @@ export function CategoryDistribution({ byCategory }: CategoryDistributionProps) 
           <Button asChild variant="outline" size="sm">
             <Link href="/assets-management/inventory">
               <span>Inventory</span>
-              <ArrowRight className="size-3.5" />
+              <PiArrowRightLight className="size-3.5" />
             </Link>
           </Button>
         </CardAction>
@@ -85,7 +86,7 @@ export function CategoryDistribution({ byCategory }: CategoryDistributionProps) 
           <Empty className="min-h-40 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Boxes className="size-5" />
+                <CiBoxes className="size-5" />
               </EmptyMedia>
               <EmptyTitle>No Asset Categories yet</EmptyTitle>
               <EmptyDescription>
@@ -119,7 +120,7 @@ export function CategoryDistributionSkeleton() {
           <Button asChild variant="outline" size="sm">
             <Link href="/assets-management/inventory">
               <span>Inventory</span>
-              <ArrowRight className="size-3.5" />
+              <PiArrowRightLight className="size-3.5" />
             </Link>
           </Button>
         </CardAction>

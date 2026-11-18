@@ -6,16 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
 import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Stethoscope,
-  Table as TableIcon,
-} from 'lucide-react';
+  CiBoxList,
+  CiCircleAlert,
+  CiGrid41,
+  CiSearch,
+  CiStethoscope,
+  CiViewTable,
+} from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { DiagnosisCode } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
 import { createDiagnosisCodeSchema } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
@@ -191,22 +189,22 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -220,7 +218,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={openAddSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Diagnosis Code
                 </Button>
               </div>
@@ -230,7 +228,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
 
         {diagnosisCodesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Diagnosis Codes</AlertTitle>
             <AlertDescription>{getApiErrorMessage(diagnosisCodesQuery.error)}</AlertDescription>
           </Alert>
@@ -242,7 +240,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Stethoscope />
+                <CiStethoscope />
               </EmptyMedia>
               <EmptyTitle>No Diagnosis Codes yet</EmptyTitle>
               <EmptyDescription>
@@ -252,7 +250,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={openAddSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Diagnosis Code
                 </Button>
               </EmptyContent>
@@ -262,7 +260,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -312,7 +310,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
                     disabled={page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -323,7 +321,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
                     onClick={() => setPage((p) => p + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

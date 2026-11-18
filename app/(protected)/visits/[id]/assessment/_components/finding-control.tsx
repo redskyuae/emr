@@ -1,5 +1,6 @@
 import type { Dispatch } from 'react';
-import { CheckIcon, TriangleAlertIcon } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
+import { PiCheckLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +41,7 @@ export function FindingControl({
             type="button"
             variant={finding.status === 'normal' ? 'default' : 'outline'}
           >
-            <CheckIcon aria-hidden="true" />
+            <PiCheckLight aria-hidden="true" />
             Normal
           </Button>
           <Button
@@ -54,7 +55,7 @@ export function FindingControl({
             type="button"
             variant={finding.status === 'abnormal' ? 'destructive' : 'outline'}
           >
-            <TriangleAlertIcon aria-hidden="true" />
+            <CiWarning aria-hidden="true" />
             Abnormal
           </Button>
         </div>

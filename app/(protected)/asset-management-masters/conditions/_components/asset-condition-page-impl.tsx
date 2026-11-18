@@ -3,17 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Gauge,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Table as TableIcon,
-} from 'lucide-react';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiGaugeLight, PiPlusLight } from 'react-icons/pi';
 import type { AssetCondition } from '@/app/api/lib/modules/asset-condition/schemas/asset-condition-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetConditionQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetCondition';
@@ -131,22 +122,22 @@ export function AssetConditionPageImpl() {
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -160,7 +151,7 @@ export function AssetConditionPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={() => void setConditionParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Asset Condition
                 </Button>
               </div>
@@ -170,7 +161,7 @@ export function AssetConditionPageImpl() {
 
         {conditionsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Asset Conditions</AlertTitle>
             <AlertDescription>{getApiErrorMessage(conditionsQuery.error)}</AlertDescription>
           </Alert>
@@ -182,7 +173,7 @@ export function AssetConditionPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Gauge />
+                <PiGaugeLight />
               </EmptyMedia>
               <EmptyTitle>No Asset Conditions yet</EmptyTitle>
               <EmptyDescription>
@@ -193,7 +184,7 @@ export function AssetConditionPageImpl() {
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={() => void setConditionParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Asset Condition
                 </Button>
               </EmptyContent>
@@ -203,7 +194,7 @@ export function AssetConditionPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -253,7 +244,7 @@ export function AssetConditionPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -264,7 +255,7 @@ export function AssetConditionPageImpl() {
                     onClick={() => setPage((p) => p + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

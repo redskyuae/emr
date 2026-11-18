@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -22,7 +22,7 @@ export function WidgetErrorBoundary({ title, children }: WidgetErrorBoundaryProp
           onReset={reset}
           fallbackRender={({ error, resetErrorBoundary }) => (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>{title}</AlertTitle>
               <AlertDescription className="flex flex-col items-start gap-3">
                 <span>{getApiErrorMessage(error)}</span>

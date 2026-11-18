@@ -1,6 +1,7 @@
 'use client';
 
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiTrash } from 'react-icons/ci';
+import { PiDotsThreeLight } from 'react-icons/pi';
 
 import type { AdmissionType } from '@/app/api/lib/modules/admission-type/schemas/admission-type-schema';
 import { Badge } from '@/components/ui/badge';
@@ -63,13 +64,13 @@ export function AdmissionTypeTable({
                           size="icon"
                           aria-label={`Actions for ${admissionType.name}`}
                         >
-                          <MoreHorizontal className="size-4" />
+                          <PiDotsThreeLight className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canEdit ? (
                           <DropdownMenuItem onSelect={() => onEdit(admissionType)}>
-                            <Pencil className="size-4" />
+                            <CiEdit className="size-4" />
                             Edit
                           </DropdownMenuItem>
                         ) : null}
@@ -78,7 +79,7 @@ export function AdmissionTypeTable({
                             variant="destructive"
                             onSelect={() => onDelete(admissionType)}
                           >
-                            <Trash2 className="size-4" />
+                            <CiTrash className="size-4" />
                             Delete
                           </DropdownMenuItem>
                         ) : null}

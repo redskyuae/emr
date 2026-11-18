@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
-import { AlertCircle, Leaf, RefreshCcw } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiArrowsCounterClockwiseLight, PiLeafLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
@@ -401,7 +402,7 @@ export function CreateVisitPageImpl({
 
       {dependencyError ? (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not load Visit options</AlertTitle>
           <AlertDescription className="space-y-2">
             <p>{getApiErrors(dependencyError)[0]}</p>
@@ -411,7 +412,7 @@ export function CreateVisitPageImpl({
               variant="outline"
               onClick={() => void retryDependencies()}
             >
-              <RefreshCcw className="size-4" />
+              <PiArrowsCounterClockwiseLight className="size-4" />
               Retry
             </Button>
           </AlertDescription>
@@ -420,7 +421,7 @@ export function CreateVisitPageImpl({
 
       {serverErrors.length > 0 ? (
         <Alert variant="destructive" role="alert">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>
             {createdVisit ? 'Visit created; Billing needs attention' : 'Could not create Visit'}
           </AlertTitle>
@@ -546,7 +547,7 @@ export function CreateVisitPageImpl({
             <Empty className="bg-card shadow-fluent-2 border">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <Leaf className="size-5" />
+                  <PiLeafLight className="size-5" />
                 </EmptyMedia>
                 <EmptyTitle>Treatment Plans</EmptyTitle>
                 <EmptyDescription>

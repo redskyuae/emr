@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FilterX, Search, SlidersHorizontal } from 'lucide-react';
+import { CiSearch, CiSliderHorizontal } from 'react-icons/ci';
+import { PiFunnelXLight } from 'react-icons/pi';
 
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
@@ -150,7 +151,7 @@ export function PreviousVisitsFilterForm({
             <FieldLabel htmlFor="previous-visits-search">Search</FieldLabel>
             <InputGroup>
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 id="previous-visits-search"
@@ -246,11 +247,11 @@ export function PreviousVisitsFilterForm({
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="ghost" disabled={activeCount === 0} onClick={onReset}>
-              <FilterX className="size-4" />
+              <PiFunnelXLight className="size-4" />
               Reset{activeCount > 0 ? ` (${activeCount})` : ''}
             </Button>
             <Button type="submit">
-              <SlidersHorizontal className="size-4" />
+              <CiSliderHorizontal className="size-4" />
               Apply filters
             </Button>
           </div>

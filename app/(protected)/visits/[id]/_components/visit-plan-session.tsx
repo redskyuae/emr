@@ -1,4 +1,4 @@
-import { NotebookPen } from 'lucide-react';
+import { CiMemoPad } from 'react-icons/ci';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Button } from '@/components/ui/button';
@@ -63,7 +63,7 @@ export function VisitPlanSession({
       {canRecordResponse ? (
         <div>
           <Button type="button" variant="outline" onClick={onDailyTreatment}>
-            <NotebookPen className="size-4" />
+            <CiMemoPad className="size-4" />
             Record treatment response
           </Button>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { PiCaretRightLight } from 'react-icons/pi';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
@@ -65,7 +65,7 @@ export function VisitPreviousVisits({
           return (
             <Collapsible key={item.id} className="group/visit rounded-md border">
               <CollapsibleTrigger className="hover:bg-accent focus-visible:ring-ring/50 flex w-full items-center gap-2 rounded-md p-2 text-left outline-none focus-visible:ring-3">
-                <ChevronRight
+                <PiCaretRightLight
                   className="size-4 shrink-0 transition-transform group-data-[state=open]/visit:rotate-90"
                   aria-hidden="true"
                 />

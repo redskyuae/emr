@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { NotebookPen } from 'lucide-react';
+import { CiMemoPad } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
@@ -250,7 +250,7 @@ export function AddNoteSheet({
                 pending || noteTypesQuery.isLoading || noteTypesQuery.isError || !noteTypes?.length
               }
             >
-              <NotebookPen className="size-4" />
+              <CiMemoPad className="size-4" />
               {pending ? 'Saving…' : amending ? 'Save amendment' : 'Add note'}
             </Button>
           </SheetFooter>

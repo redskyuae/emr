@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarClock, CircleX, MoreHorizontal, Phone, Plus, UserRound } from 'lucide-react';
+import { CiCalendarDate, CiCircleRemove, CiPhone, CiUser } from 'react-icons/ci';
+import { PiDotsThreeLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { Badge } from '@/components/ui/badge';
@@ -118,7 +119,7 @@ export function AppointmentsTable({
                       className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
                       aria-label={`Call ${appointment.patient.firstName} ${appointment.patient.lastName} at ${appointment.patient.phone}`}
                     >
-                      <Phone className="size-3" aria-hidden="true" />
+                      <CiPhone className="size-3" aria-hidden="true" />
                       {appointment.patient.phone}
                     </a>
                   </td>
@@ -147,20 +148,20 @@ export function AppointmentsTable({
                           size="icon"
                           aria-label={`Actions for ${appointment.bookingNumber}`}
                         >
-                          <MoreHorizontal className="size-4" />
+                          <PiDotsThreeLight className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canReschedule ? (
                           <DropdownMenuItem asChild>
                             <Link href={`/appointments/${appointment.id}/reschedule`}>
-                              <CalendarClock className="size-4" />
+                              <CiCalendarDate className="size-4" />
                               Reschedule
                             </Link>
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem disabled>
-                            <CalendarClock className="size-4" />
+                            <CiCalendarDate className="size-4" />
                             Reschedule
                           </DropdownMenuItem>
                         )}
@@ -169,18 +170,18 @@ export function AppointmentsTable({
                           className="text-destructive focus:text-destructive"
                           onSelect={() => onCancel(appointment)}
                         >
-                          <CircleX className="size-4" />
+                          <CiCircleRemove className="size-4" />
                           Cancel Appointment
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href={`/patients/${appointment.patient.id}`}>
-                            <UserRound className="size-4" />
+                            <CiUser className="size-4" />
                             Open Patient
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href={`/visits/new?appointmentId=${appointment.id}`}>
-                            <Plus className="size-4" />
+                            <PiPlusLight className="size-4" />
                             Create Visit
                           </Link>
                         </DropdownMenuItem>

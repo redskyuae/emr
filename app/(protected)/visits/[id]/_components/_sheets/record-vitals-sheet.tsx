@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Activity } from 'lucide-react';
+import { CiWavePulse1 } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import {
@@ -261,7 +261,7 @@ export function RecordVitalsSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={pending} aria-busy={pending}>
-              <Activity className="size-4" />
+              <CiWavePulse1 className="size-4" />
               {pending ? 'Saving…' : amending ? 'Save amendment' : 'Record vitals'}
             </Button>
           </SheetFooter>

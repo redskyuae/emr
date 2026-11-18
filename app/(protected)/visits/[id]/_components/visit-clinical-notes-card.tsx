@@ -1,4 +1,4 @@
-import { NotebookPen, PencilLine } from 'lucide-react';
+import { CiEdit, CiMemoPad } from 'react-icons/ci';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
@@ -64,7 +64,7 @@ export function VisitClinicalNotesCard({
               Nursing handoff
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={onAddClinicalNote}>
-              <NotebookPen className="size-4" />
+              <CiMemoPad className="size-4" />
               Add note
             </Button>
           </div>
@@ -113,7 +113,7 @@ export function VisitClinicalNotesCard({
                           aria-label={`Amend ${noteTypeName(note.noteTypeId)}`}
                           onClick={() => onAmendNote(note.id)}
                         >
-                          <PencilLine className="size-3" />
+                          <CiEdit className="size-3" />
                           Amend
                         </Button>
                       ) : null}

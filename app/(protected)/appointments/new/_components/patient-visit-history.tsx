@@ -1,4 +1,9 @@
-import { CalendarDays, History, LoaderCircle, RefreshCw } from 'lucide-react';
+import { CiCalendar } from 'react-icons/ci';
+import {
+  PiArrowsClockwiseLight,
+  PiCircleNotchLight,
+  PiClockCounterClockwiseLight,
+} from 'react-icons/pi';
 
 import type { Visit, VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Button } from '@/components/ui/button';
@@ -37,7 +42,7 @@ export function PatientVisitHistory({
     <section className="overflow-hidden rounded-lg border" aria-labelledby="previous-visits-title">
       <div className="bg-muted/35 flex items-center justify-between gap-3 border-b px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <History className="text-primary size-4" aria-hidden="true" />
+          <PiClockCounterClockwiseLight className="text-primary size-4" aria-hidden="true" />
           <h3 id="previous-visits-title" className="text-sm font-semibold">
             Previous Visits
           </h3>
@@ -50,14 +55,14 @@ export function PatientVisitHistory({
       </div>
       {isLoading ? (
         <div className="text-muted-foreground flex items-center gap-2 px-3 py-4 text-sm">
-          <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+          <PiCircleNotchLight className="size-4 animate-spin" aria-hidden="true" />
           Loading previous Visits…
         </div>
       ) : error ? (
         <div className="border-destructive/20 bg-destructive/5 px-3 py-3 text-sm">
           <p>{error}</p>
           <Button type="button" size="sm" variant="outline" className="mt-2" onClick={onRetry}>
-            <RefreshCw className="size-3.5" /> Retry
+            <PiArrowsClockwiseLight className="size-3.5" /> Retry
           </Button>
         </div>
       ) : recentVisits.length ? (
@@ -77,7 +82,7 @@ export function PatientVisitHistory({
                     </span>
                   </div>
                   <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs">
-                    <CalendarDays className="size-3" aria-hidden="true" />
+                    <CiCalendar className="size-3" aria-hidden="true" />
                     <time dateTime={date.toISOString()}>
                       {date.toLocaleDateString('en-GB', {
                         day: '2-digit',
@@ -104,7 +109,7 @@ export function PatientVisitHistory({
         </div>
       ) : (
         <div className="text-muted-foreground flex items-center gap-2 px-3 py-4 text-sm">
-          <CalendarDays className="size-4" aria-hidden="true" />
+          <CiCalendar className="size-4" aria-hidden="true" />
           No previous Visits for this Patient.
         </div>
       )}

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertCircle, ArrowLeft, Building2, CalendarClock, RefreshCw } from 'lucide-react';
+import { CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
+import { PiArrowLeftLight, PiArrowsClockwiseLight, PiBuildingsLight } from 'react-icons/pi';
 
 import { AppointmentScheduleSection } from '@/app/(protected)/appointments/new/_components/appointment-schedule-section';
 import { BookingSummary } from '@/app/(protected)/appointments/new/_components/booking-summary';
@@ -26,7 +27,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
   if (reschedule.error || !appointment) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Appointment</AlertTitle>
         <AlertDescription className="space-y-3">
           <p>{getApiErrorMessage(reschedule.error)}</p>
@@ -36,7 +37,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
             variant="outline"
             onClick={() => reschedule.retryAppointment()}
           >
-            <RefreshCw className="size-4" /> Retry
+            <PiArrowsClockwiseLight className="size-4" /> Retry
           </Button>
         </AlertDescription>
       </Alert>
@@ -50,11 +51,11 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
       <div className="space-y-4">
         <Button variant="ghost" asChild>
           <Link href={returnHref}>
-            <ArrowLeft className="size-4" /> Back to Appointments
+            <PiArrowLeftLight className="size-4" /> Back to Appointments
           </Link>
         </Button>
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Appointment cannot be rescheduled</AlertTitle>
           <AlertDescription>
             Only Scheduled or Confirmed Appointments can be rescheduled. This Appointment is{' '}
@@ -81,7 +82,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
         <div className="space-y-2">
           <Button variant="ghost" size="sm" className="-ml-2" asChild>
             <Link href={returnHref}>
-              <ArrowLeft className="size-4" /> Back to Appointments
+              <PiArrowLeftLight className="size-4" /> Back to Appointments
             </Link>
           </Button>
           <p className="text-muted-foreground text-sm">
@@ -89,7 +90,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <Building2 className="text-primary size-4 shrink-0" />
+          <PiBuildingsLight className="text-primary size-4 shrink-0" />
           <div>
             <p className="font-medium">{reschedule.tenant?.name ?? 'Current Tenant'}</p>
             <p className="text-muted-foreground text-xs">Times use the Tenant time zone</p>
@@ -132,7 +133,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
 
       {reschedule.submitError ? (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not reschedule Appointment</AlertTitle>
           <AlertDescription>{reschedule.submitError}</AlertDescription>
         </Alert>
@@ -180,7 +181,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
       <RescheduleReason control={form.control} />
 
       <footer className="bg-card shadow-fluent-8 sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
-        <CalendarClock className="text-primary hidden size-5 sm:block" />
+        <CiCalendarDate className="text-primary hidden size-5 sm:block" />
         <BookingSummary
           values={values}
           room={null}
@@ -198,7 +199,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
           disabled={reschedule.mutation.isPending}
           aria-busy={reschedule.mutation.isPending}
         >
-          <CalendarClock className="size-4" />
+          <CiCalendarDate className="size-4" />
           {reschedule.mutation.isPending ? 'Rescheduling…' : 'Reschedule Appointment'}
         </Button>
       </footer>

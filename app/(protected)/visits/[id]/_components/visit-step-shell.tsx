@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { PiArrowLeftLight, PiArrowRightLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -105,7 +105,7 @@ export function VisitStepShell({
               aria-label={`Back to ${previous.title}`}
               onClick={() => onSelect(previous.id)}
             >
-              <ArrowLeft className="size-4" />
+              <PiArrowLeftLight className="size-4" />
               {previous.title}
             </Button>
           ) : null}
@@ -119,7 +119,7 @@ export function VisitStepShell({
           {next ? (
             <Button type="button" onClick={() => onSelect(next.id)}>
               Continue to {next.title}
-              <ArrowRight className="size-4" />
+              <PiArrowRightLight className="size-4" />
             </Button>
           ) : (
             finalAction

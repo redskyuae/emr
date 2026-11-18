@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ReceiptText } from 'lucide-react';
+import { CiReceipt } from 'react-icons/ci';
 
 import type { InvoiceListItem } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -39,7 +39,7 @@ export function VisitBillingPanel({ visit, invoices, loading, error, canCreateIn
         {canCreateInvoice ? (
           <Button asChild size="sm">
             <Link href={createInvoiceUrl}>
-              <ReceiptText className="size-4" />
+              <CiReceipt className="size-4" />
               Create Invoice
             </Link>
           </Button>
@@ -64,7 +64,7 @@ export function VisitBillingPanel({ visit, invoices, loading, error, canCreateIn
           <Empty className="min-h-56 rounded-lg border border-dashed">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <ReceiptText className="size-5" />
+                <CiReceipt className="size-5" />
               </EmptyMedia>
               <EmptyTitle>No Invoice yet</EmptyTitle>
               <EmptyDescription>

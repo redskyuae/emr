@@ -1,6 +1,6 @@
 'use client';
 
-import { Stethoscope } from 'lucide-react';
+import { CiStethoscope } from 'react-icons/ci';
 import { Controller, type Control } from 'react-hook-form';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +29,7 @@ export function DoctorSelectionSection({
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <Stethoscope className="size-4" />
+            <CiStethoscope className="size-4" />
           </span>
           <div>
             <CardTitle>Doctor</CardTitle>

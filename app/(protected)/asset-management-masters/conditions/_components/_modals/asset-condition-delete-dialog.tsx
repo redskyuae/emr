@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 import { toast } from 'sonner';
 import type { AssetCondition } from '@/app/api/lib/modules/asset-condition/schemas/asset-condition-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -50,7 +50,7 @@ export function AssetConditionDeleteDialog({
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Asset Condition?</AlertDialogTitle>
           <AlertDialogDescription>

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, type Control, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Plus, Save, UserPlus, X } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
+import { PiPlusLight, PiUserPlusLight, PiXLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { SaveStaffRequest } from '@/app/api/v1/users/types';
@@ -418,7 +419,7 @@ function CreateUserForm({
           Cancel
         </Button>
         <Button type="submit" form="create-user-form" disabled={isSaving} aria-busy={isSaving}>
-          <UserPlus className="size-4" />
+          <PiUserPlusLight className="size-4" />
           Add user
         </Button>
       </SheetFooter>
@@ -479,7 +480,7 @@ function StaffRolesEditor({
 
       {assignedQuery.isError ? (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not load assigned Roles</AlertTitle>
           <AlertDescription>{getApiErrorMessage(assignedQuery.error)}</AlertDescription>
         </Alert>
@@ -502,7 +503,7 @@ function StaffRolesEditor({
                   onClick={() => handleRemove(role.id)}
                   className="hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
                 >
-                  <X className="size-3" />
+                  <PiXLight className="size-3" />
                 </button>
               </Badge>
             ))
@@ -516,7 +517,7 @@ function StaffRolesEditor({
         disabled={busy || rolesLoading || assignable.length === 0}
       >
         <SelectTrigger className="w-full sm:w-64" aria-label="Add a Role">
-          <Plus className="size-4" />
+          <PiPlusLight className="size-4" />
           <SelectValue
             placeholder={assignable.length === 0 ? 'All Roles assigned' : 'Add a Role'}
           />
@@ -614,7 +615,7 @@ function EditUserForm({
     return (
       <div className="flex-1 p-4">
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not load Staff member</AlertTitle>
           <AlertDescription>{getApiErrorMessage(staffQuery.error)}</AlertDescription>
         </Alert>
@@ -653,7 +654,7 @@ function EditUserForm({
           Cancel
         </Button>
         <Button type="submit" form="edit-user-form" disabled={isSaving} aria-busy={isSaving}>
-          <Save className="size-4" />
+          <CiFloppyDisk className="size-4" />
           Save changes
         </Button>
       </SheetFooter>
@@ -664,7 +665,7 @@ function EditUserForm({
 function FormErrors({ errors }: { errors: string[] }) {
   return (
     <Alert variant="destructive">
-      <AlertCircle className="size-4" />
+      <CiCircleAlert className="size-4" />
       <AlertTitle>Save failed</AlertTitle>
       <AlertDescription>
         <ul className="list-disc space-y-1 pl-4">

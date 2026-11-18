@@ -1,6 +1,6 @@
 'use client';
 
-import { ClipboardList } from 'lucide-react';
+import { PiClipboardTextLight } from 'react-icons/pi';
 import { Controller, type Control, type FieldPath } from 'react-hook-form';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +29,7 @@ export function AppointmentDetailsSection({
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <ClipboardList className="size-4" />
+            <PiClipboardTextLight className="size-4" />
           </span>
           <div>
             <CardTitle>Appointment details</CardTitle>

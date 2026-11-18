@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
 
 import type {
   WorkOrder,
@@ -120,7 +120,7 @@ export function WorkOrderQueueTable({
   if (isError) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Work Orders</AlertTitle>
         <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
       </Alert>
@@ -142,7 +142,7 @@ export function WorkOrderQueueTable({
       <Empty className="bg-card shadow-fluent-2 min-h-72 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <Search />
+            <CiSearch />
           </EmptyMedia>
           <EmptyTitle>No Work Orders found</EmptyTitle>
           <EmptyDescription>

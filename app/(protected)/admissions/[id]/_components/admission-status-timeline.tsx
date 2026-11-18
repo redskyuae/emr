@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, LogIn, XCircle } from 'lucide-react';
+import { CiCircleCheck, CiCircleRemove, CiLogin } from 'react-icons/ci';
 
 import type { Admission } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,7 @@ export function AdmissionStatusTimeline({ admission }: { admission: Admission })
     {
       key: 'admitted',
       label: 'Admitted',
-      icon: LogIn,
+      icon: CiLogin,
       at: formatMoment(admission.admittedAt),
       reached: true,
     },
@@ -33,7 +33,7 @@ export function AdmissionStatusTimeline({ admission }: { admission: Admission })
     steps.push({
       key: 'cancelled',
       label: 'Cancelled',
-      icon: XCircle,
+      icon: CiCircleRemove,
       at: formatMoment(admission.cancelledAt),
       reached: true,
     });
@@ -41,7 +41,7 @@ export function AdmissionStatusTimeline({ admission }: { admission: Admission })
     steps.push({
       key: 'discharged',
       label: 'Discharged',
-      icon: CheckCircle2,
+      icon: CiCircleCheck,
       at: formatMoment(admission.dischargedAt),
       reached: admission.dischargedAt !== null,
     });

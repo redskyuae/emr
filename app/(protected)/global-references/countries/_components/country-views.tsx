@@ -1,4 +1,4 @@
-import { Globe2, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiGlobe, CiMenuKebab, CiTrash } from 'react-icons/ci';
 
 import type { Country } from '@/app/queries/global-references/countries/useCountries';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ function formatModifiedOn(value: Date | string) {
 function CountryIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <Globe2 className="size-5" />
+      <CiGlobe className="size-5" />
     </div>
   );
 }
@@ -70,19 +70,19 @@ function CountryActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${country.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(country)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(country)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -180,7 +180,7 @@ export function CountryCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(country)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -192,7 +192,7 @@ export function CountryCardView({
                     onClick={() => onDelete(country)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}

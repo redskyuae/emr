@@ -1,13 +1,7 @@
 'use client';
 
-import {
-  AlertCircle,
-  MoreVertical,
-  Pencil,
-  UserRoundCheck,
-  UserRoundX,
-  UsersRound,
-} from 'lucide-react';
+import { CiCircleAlert, CiEdit, CiMenuKebab } from 'react-icons/ci';
+import { PiUserCheckLight, PiUserMinusLight, PiUsersLight } from 'react-icons/pi';
 
 import type { StaffWithRoles } from '@/app/api/lib/modules/staff/schemas/staff-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
@@ -93,7 +87,7 @@ export function UsersTable({
   if (isError) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Staff</AlertTitle>
         <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
       </Alert>
@@ -112,7 +106,7 @@ export function UsersTable({
           <Empty className="min-h-72 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <UsersRound className="size-5" />
+                <PiUsersLight className="size-5" />
               </EmptyMedia>
               <EmptyTitle>No Staff found.</EmptyTitle>
               <EmptyDescription>
@@ -179,7 +173,7 @@ export function UsersTable({
                             size="sm"
                             onClick={() => onEdit(member)}
                           >
-                            <Pencil className="size-3.5" />
+                            <CiEdit className="size-3.5" />
                             Edit
                           </Button>
                         ) : null}
@@ -192,7 +186,7 @@ export function UsersTable({
                                 size="icon-sm"
                                 aria-label={`More actions for ${member.name}`}
                               >
-                                <MoreVertical className="size-4" />
+                                <CiMenuKebab className="size-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
@@ -201,7 +195,7 @@ export function UsersTable({
                                   variant="destructive"
                                   onSelect={() => onDeactivate(member)}
                                 >
-                                  <UserRoundX className="size-4" />
+                                  <PiUserMinusLight className="size-4" />
                                   Deactivate
                                 </DropdownMenuItem>
                               ) : (
@@ -209,7 +203,7 @@ export function UsersTable({
                                   disabled={reactivatingId === member.id}
                                   onSelect={() => onReactivate(member)}
                                 >
-                                  <UserRoundCheck className="size-4" />
+                                  <PiUserCheckLight className="size-4" />
                                   Reactivate
                                 </DropdownMenuItem>
                               )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, FileText, Trash2 } from 'lucide-react';
+import { CiFileOn, CiImport, CiTrash } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { VisitDocument } from '@/app/api/lib/modules/visit-document/schemas/visit-document-schema';
@@ -63,7 +63,7 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
           <Empty className="min-h-56 rounded-lg border border-dashed">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <FileText className="size-5" />
+                <CiFileOn className="size-5" />
               </EmptyMedia>
               <EmptyTitle>No documents yet</EmptyTitle>
               <EmptyDescription>
@@ -75,7 +75,7 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
           <ul className="space-y-2 text-sm">
             {documents.map((document) => (
               <li key={document.id} className="flex items-center gap-2 rounded-md border p-2">
-                <FileText className="text-muted-foreground size-4 shrink-0" />
+                <CiFileOn className="text-muted-foreground size-4 shrink-0" />
                 <a
                   href={document.fileUrl}
                   target="_blank"
@@ -83,7 +83,7 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
                   className="inline-flex min-w-0 flex-1 items-center gap-1 truncate font-medium hover:underline"
                 >
                   <span className="truncate">{document.fileName}</span>
-                  <Download className="size-3.5 shrink-0" />
+                  <CiImport className="size-3.5 shrink-0" />
                 </a>
                 <span className="text-muted-foreground shrink-0 text-xs">
                   {formatFileSize(document.fileSize)}
@@ -97,7 +97,7 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
                     aria-label={`Remove ${document.fileName}`}
                     onClick={() => setPendingDelete(document)}
                   >
-                    <Trash2 className="size-4" />
+                    <CiTrash className="size-4" />
                   </Button>
                 ) : null}
               </li>

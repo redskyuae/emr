@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
-import { Plus } from 'lucide-react';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { getAppPageGroup, getAppPageMeta } from '@/components/app/app-shell-config';
@@ -44,7 +44,7 @@ export function AppPageHeader() {
       {pageMeta.primaryAction && canUsePrimaryAction ? (
         <Button asChild size="lg" className="relative z-10 shrink-0 self-start md:self-end">
           <Link href={pageMeta.primaryAction.href}>
-            <Plus />
+            <PiPlusLight />
             <span>{pageMeta.primaryAction.label}</span>
           </Link>
         </Button>

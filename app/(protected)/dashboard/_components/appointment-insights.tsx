@@ -1,4 +1,5 @@
-import { CircleCheck, HeartPulse, Stethoscope } from 'lucide-react';
+import { CiCircleCheck, CiStethoscope } from 'react-icons/ci';
+import { PiHeartbeatLight } from 'react-icons/pi';
 
 import type { summarizeAppointmentDay } from '@/app/queries/appointments/useAppointments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +28,7 @@ export function AppointmentInsights({ summary }: { summary: AppointmentDaySummar
 
         <div className="grid grid-cols-2 gap-2">
           <div className="border-primary/20 bg-primary/5 rounded-md border p-2">
-            <Stethoscope className="text-primary size-4" aria-hidden="true" />
+            <CiStethoscope className="text-primary size-4" aria-hidden="true" />
             <p className="text-muted-foreground mt-1 text-xs">Consultation</p>
             <p className="font-heading text-primary text-lg font-semibold tabular-nums">
               {countPrefix}
@@ -35,7 +36,7 @@ export function AppointmentInsights({ summary }: { summary: AppointmentDaySummar
             </p>
           </div>
           <div className="border-procedure/20 bg-procedure/5 rounded-md border p-2">
-            <HeartPulse className="text-procedure size-4" aria-hidden="true" />
+            <PiHeartbeatLight className="text-procedure size-4" aria-hidden="true" />
             <p className="text-muted-foreground mt-1 text-xs">Procedure</p>
             <p className="font-heading text-procedure text-lg font-semibold tabular-nums">
               {countPrefix}
@@ -48,7 +49,7 @@ export function AppointmentInsights({ summary }: { summary: AppointmentDaySummar
           <h3 className="font-heading text-sm font-semibold">Exceptions today</h3>
           {summary.counts.cancelled === 0 && summary.counts.noShow === 0 ? (
             <p className="text-success mt-2 flex items-center gap-2 text-xs">
-              <CircleCheck className="size-4" aria-hidden="true" />
+              <CiCircleCheck className="size-4" aria-hidden="true" />
               No cancellations or no-shows in loaded bookings.
             </p>
           ) : (

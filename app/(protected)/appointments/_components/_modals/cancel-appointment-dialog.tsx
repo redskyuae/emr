@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
+import { PiArrowsClockwiseLight } from 'react-icons/pi';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -101,7 +102,7 @@ export function CancelAppointmentDialog({
 
         <form className="contents" onSubmit={form.handleSubmit(confirmCancellation)}>
           <Alert>
-            <AlertTriangle className="size-4" />
+            <CiWarning className="size-4" />
             <AlertTitle>This cancellation cannot be undone here</AlertTitle>
             <AlertDescription>
               The Appointment remains in history.
@@ -120,7 +121,7 @@ export function CancelAppointmentDialog({
 
           {reasonsQuery.isError ? (
             <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
+              <CiWarning className="size-4" />
               <AlertTitle>Could not load Appointment Cancelled Reasons</AlertTitle>
               <AlertDescription className="space-y-3">
                 <p>{getApiErrorMessage(reasonsQuery.error)}</p>
@@ -131,7 +132,7 @@ export function CancelAppointmentDialog({
                     variant="outline"
                     onClick={() => void reasonsQuery.refetch()}
                   >
-                    <RefreshCw className="size-4" /> Retry
+                    <PiArrowsClockwiseLight className="size-4" /> Retry
                   </Button>
                   <Button type="button" size="sm" variant="link" asChild>
                     <Link href="/appointment-masters/cancelled-reasons">
@@ -145,7 +146,7 @@ export function CancelAppointmentDialog({
 
           {!reasonsQuery.isLoading && !reasonsQuery.isError && reasons.length === 0 ? (
             <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
+              <CiWarning className="size-4" />
               <AlertTitle>No active Appointment Cancelled Reasons</AlertTitle>
               <AlertDescription>
                 Configure a reason before cancelling this Appointment.{' '}
@@ -204,7 +205,7 @@ export function CancelAppointmentDialog({
 
           {form.formState.errors.root?.message ? (
             <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
+              <CiWarning className="size-4" />
               <AlertTitle>Could not cancel Appointment</AlertTitle>
               <AlertDescription>{form.formState.errors.root.message}</AlertDescription>
             </Alert>

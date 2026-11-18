@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { format, startOfDay } from 'date-fns';
-import { CalendarClock, Check, LoaderCircle, RefreshCw } from 'lucide-react';
+import { CiCalendarDate } from 'react-icons/ci';
+import { PiArrowsClockwiseLight, PiCheckLight, PiCircleNotchLight } from 'react-icons/pi';
 import { Controller, useFormState, type Control } from 'react-hook-form';
 
 import { addMinutesToTime, getDurationMinutes } from '../_utils/appointment-time';
@@ -88,7 +89,7 @@ export function AppointmentScheduleSection({
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <CalendarClock className="size-4" />
+            <CiCalendarDate className="size-4" />
           </span>
           <div className="min-w-0 flex-1">
             <CardTitle>Date & time</CardTitle>
@@ -126,13 +127,13 @@ export function AppointmentScheduleSection({
 
           {isLoading && doctorId && slotDate ? (
             <div className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed p-4 text-sm">
-              <LoaderCircle className="size-4 animate-spin" /> Loading Doctor slots…
+              <PiCircleNotchLight className="size-4 animate-spin" /> Loading Doctor slots…
             </div>
           ) : error && doctorId && slotDate ? (
             <div className="border-destructive/25 bg-destructive/5 rounded-lg border p-4 text-sm">
               <p>{error}</p>
               <Button type="button" size="sm" variant="outline" className="mt-2" onClick={onRetry}>
-                <RefreshCw className="size-3.5" /> Retry
+                <PiArrowsClockwiseLight className="size-3.5" /> Retry
               </Button>
             </div>
           ) : !canChooseTime ? (
@@ -165,7 +166,7 @@ export function AppointmentScheduleSection({
                               'border-success/25 bg-success/5 text-success hover:bg-success/10'
                       )}
                     >
-                      {selected ? <Check className="size-3" /> : null}
+                      {selected ? <PiCheckLight className="size-3" /> : null}
                       {option.time}
                     </Button>
                   );
@@ -256,7 +257,7 @@ function DateField({
                 {field.value
                   ? format(new Date(field.value + 'T12:00:00'), 'dd MMM yyyy')
                   : 'Choose date'}
-                <CalendarClock className="size-4" />
+                <CiCalendarDate className="size-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 motion-reduce:animate-none" align="start">

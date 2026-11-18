@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -15,7 +15,7 @@ export default function AssetOverviewError({
 }) {
   return (
     <Alert variant="destructive">
-      <AlertCircle className="size-4" />
+      <CiCircleAlert className="size-4" />
       <AlertTitle>Could not load the Asset overview</AlertTitle>
       <AlertDescription className="flex flex-col items-start gap-3">
         <span>{getApiErrorMessage(error)}</span>

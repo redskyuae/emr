@@ -1,6 +1,7 @@
 'use client';
 
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiTrash } from 'react-icons/ci';
+import { PiDotsThreeLight } from 'react-icons/pi';
 
 import type { AyurvedaDiagnosisCode } from '@/app/api/lib/modules/ayurveda-diagnosis-code/schemas/ayurveda-diagnosis-code-schema';
 import { Badge } from '@/components/ui/badge';
@@ -81,13 +82,13 @@ export function AyurvedaDiagnosisCodeTable({
                           size="icon"
                           aria-label={`Actions for ${ayurvedaDiagnosisCode.code}`}
                         >
-                          <MoreHorizontal className="size-4" />
+                          <PiDotsThreeLight className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canEdit ? (
                           <DropdownMenuItem onSelect={() => onEdit(ayurvedaDiagnosisCode)}>
-                            <Pencil className="size-4" />
+                            <CiEdit className="size-4" />
                             Edit
                           </DropdownMenuItem>
                         ) : null}
@@ -96,7 +97,7 @@ export function AyurvedaDiagnosisCodeTable({
                             variant="destructive"
                             onSelect={() => onDelete(ayurvedaDiagnosisCode)}
                           >
-                            <Trash2 className="size-4" />
+                            <CiTrash className="size-4" />
                             Delete
                           </DropdownMenuItem>
                         ) : null}

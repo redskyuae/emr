@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { CiCircleAlert, CiRead } from 'react-icons/ci';
+import { PiEyeSlashLight } from 'react-icons/pi';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { markTabSession } from '@/app/lib/tab-session';
@@ -67,7 +68,7 @@ export function SignupForm() {
       >
         {errors.length > 0 ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not create workspace</AlertTitle>
             <AlertDescription>
               {errors.length === 1 ? (
@@ -147,7 +148,11 @@ export function SignupForm() {
               disabled={signUpMutation.isPending}
               className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center px-3 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {showPassword ? (
+                <PiEyeSlashLight className="size-4" />
+              ) : (
+                <CiRead className="size-4" />
+              )}
             </button>
           </div>
         </div>

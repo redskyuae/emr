@@ -1,4 +1,4 @@
-import { TriangleAlert } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
 
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -87,7 +87,7 @@ export function VisitVitalTrends({
                   )}
                 >
                   {trend.attention ? (
-                    <TriangleAlert className="size-3" aria-label="Outside the usual adult range" />
+                    <CiWarning className="size-3" aria-label="Outside the usual adult range" />
                   ) : null}
                   {trend.change ?? 'First reading'}
                   {/* Without one shared "vs" date in the header, say which reading each change is against. */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { AppointmentReason } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
@@ -47,7 +47,7 @@ export function ReasonDeleteDialog({ reason, onClose, onDeleted }: ReasonDeleteD
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Appointment Reason?</AlertDialogTitle>
           <AlertDialogDescription>

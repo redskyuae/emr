@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { PanelLeftIcon } from 'lucide-react';
+import { PiSidebarSimpleLight } from 'react-icons/pi';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -268,7 +268,7 @@ function SidebarTrigger({ className, onClick, ...props }: ComponentProps<typeof 
       }}
       {...props}
     >
-      <PanelLeftIcon />
+      <PiSidebarSimpleLight />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

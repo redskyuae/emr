@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm, type UseFormSetError } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { DoctorRota } from '@/app/api/lib/modules/doctor-rota/schemas/doctor-rota-schema';
@@ -164,7 +164,7 @@ export function DoctorRotaFormSheet({
           <div className="flex-1 overflow-y-auto p-4">
             {serverErrors.length > 0 ? (
               <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="size-4" />
+                <CiCircleAlert className="size-4" />
                 <AlertTitle>Save failed</AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc space-y-1 pl-4">
@@ -178,7 +178,7 @@ export function DoctorRotaFormSheet({
 
             {loadError ? (
               <Alert variant="destructive">
-                <AlertCircle className="size-4" />
+                <CiCircleAlert className="size-4" />
                 <AlertTitle>Could not load Doctor Rota</AlertTitle>
                 <AlertDescription className="space-y-3">
                   <p>Something went wrong loading this rota. Please try again.</p>
@@ -275,7 +275,7 @@ export function DoctorRotaFormSheet({
               disabled={isSaving || isResolving || loadError}
               aria-busy={isSaving || isResolving}
             >
-              <Save className="size-4" />
+              <CiFloppyDisk className="size-4" />
               Save
             </Button>
           </SheetFooter>

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, UserRoundPlus } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
+import { PiUserPlusLight } from 'react-icons/pi';
 
 import { PATIENT_GENDER_OPTIONS } from '@/app/(protected)/patients/_utils/patient-value-sets';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -64,7 +65,7 @@ export function PatientsToolbar({
       <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <InputGroup className="lg:max-w-sm">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"
@@ -109,7 +110,7 @@ export function PatientsToolbar({
         {canCreate ? (
           <Button type="button" asChild className="lg:ml-auto">
             <Link href="/patients/new">
-              <UserRoundPlus className="size-4" />
+              <PiUserPlusLight className="size-4" />
               Register patient
             </Link>
           </Button>

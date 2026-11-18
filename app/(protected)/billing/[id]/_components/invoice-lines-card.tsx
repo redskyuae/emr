@@ -1,6 +1,7 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import type { Invoice, InvoiceLine } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +50,7 @@ export function InvoiceLinesCard({
             ) : null}
             {showAddLine ? (
               <Button type="button" size="sm" onClick={onAddLine}>
-                <Plus className="size-4" />
+                <PiPlusLight className="size-4" />
                 Add line
               </Button>
             ) : null}
@@ -103,7 +104,7 @@ export function InvoiceLinesCard({
                           disabled={isRemoving}
                           onClick={() => onRemoveLine(line)}
                         >
-                          <Trash2 className="size-4" />
+                          <CiTrash className="size-4" />
                         </Button>
                       </td>
                     ) : null}

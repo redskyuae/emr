@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, ArrowLeft, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
+import { PiArrowLeftLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { CreateInvoiceRequest } from '@/app/api/v1/invoices/types';
@@ -192,7 +193,7 @@ export function InvoiceComposer() {
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="icon" aria-label="Back to Invoices">
               <Link href="/billing">
-                <ArrowLeft className="size-4" />
+                <PiArrowLeftLight className="size-4" />
               </Link>
             </Button>
             <div>
@@ -206,7 +207,7 @@ export function InvoiceComposer() {
 
         {submitError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not finish the Invoice</AlertTitle>
             <AlertDescription>
               {submitError}
@@ -308,7 +309,7 @@ export function InvoiceComposer() {
                 }
                 onClick={() => void form.handleSubmit((values) => save(values, false))()}
               >
-                <Save className="size-4" /> Save Draft
+                <CiFloppyDisk className="size-4" /> Save Draft
               </Button>
               {postError ? <p className="text-muted-foreground text-xs">{postError}</p> : null}
             </div>

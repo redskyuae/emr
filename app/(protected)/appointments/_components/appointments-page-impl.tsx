@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, CalendarClock, CalendarDays, Plus } from 'lucide-react';
+import { CiCalendar, CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
@@ -190,11 +191,11 @@ export function AppointmentsPageImpl() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList aria-label="Appointment schedule views">
             <TabsTrigger value="today" className="px-3">
-              <CalendarDays className="size-4" aria-hidden="true" />
+              <CiCalendar className="size-4" aria-hidden="true" />
               Today&apos;s Appointments
             </TabsTrigger>
             <TabsTrigger value="upcoming" className="px-3">
-              <CalendarClock className="size-4" aria-hidden="true" />
+              <CiCalendarDate className="size-4" aria-hidden="true" />
               Upcoming Appointments
             </TabsTrigger>
           </TabsList>
@@ -202,7 +203,7 @@ export function AppointmentsPageImpl() {
           {canCreate ? (
             <Button type="button" asChild>
               <Link href="/appointments/new">
-                <Plus className="size-4" />
+                <PiPlusLight className="size-4" />
                 Book Appointment
               </Link>
             </Button>
@@ -226,7 +227,7 @@ export function AppointmentsPageImpl() {
 
           {todayAppointmentsQuery.isError ? (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>Could not load Today&apos;s Appointments</AlertTitle>
               <AlertDescription>
                 {getApiErrorMessage(todayAppointmentsQuery.error)}
@@ -270,7 +271,7 @@ export function AppointmentsPageImpl() {
 
           {upcomingAppointmentsQuery.isError ? (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>Could not load Upcoming Appointments</AlertTitle>
               <AlertDescription>
                 {getApiErrorMessage(upcomingAppointmentsQuery.error)}

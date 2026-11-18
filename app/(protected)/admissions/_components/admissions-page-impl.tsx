@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, BedDouble, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Admission } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -178,7 +179,7 @@ export function AdmissionsPageImpl() {
 
             <InputGroup className="lg:max-w-xs">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -195,7 +196,7 @@ export function AdmissionsPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setAdmitParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Admit Patient
                 </Button>
               </div>
@@ -205,7 +206,7 @@ export function AdmissionsPageImpl() {
 
         {admissionsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Admissions</AlertTitle>
             <AlertDescription>{getApiErrorMessage(admissionsQuery.error)}</AlertDescription>
           </Alert>
@@ -217,7 +218,7 @@ export function AdmissionsPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <BedDouble />
+                <PiBedLight />
               </EmptyMedia>
               <EmptyTitle>No Admissions match</EmptyTitle>
               <EmptyDescription>
@@ -228,7 +229,7 @@ export function AdmissionsPageImpl() {
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={() => void setAdmitParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Admit Patient
                 </Button>
               </EmptyContent>
@@ -259,7 +260,7 @@ export function AdmissionsPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -270,7 +271,7 @@ export function AdmissionsPageImpl() {
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { format, subDays } from 'date-fns';
-import { ReceiptText } from 'lucide-react';
+import { CiReceipt } from 'react-icons/ci';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -95,7 +95,7 @@ export function VisitListTable({ rows, today }: { rows: VisitListRow[]; today: D
                     {canBill ? (
                       <Button asChild size="sm" variant="outline">
                         <Link href={`/billing-counter?visit=${row.visitNumber}`}>
-                          <ReceiptText className="size-4" />
+                          <CiReceipt className="size-4" />
                           {row.billing.status === 'NOT_BILLED' ? 'Bill' : 'Billing'}
                         </Link>
                       </Button>

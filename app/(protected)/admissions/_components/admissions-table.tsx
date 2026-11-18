@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRightLeft, Eye, LogOut, MoreHorizontal, XCircle } from 'lucide-react';
+import { CiCircleRemove, CiLogout, CiRead } from 'react-icons/ci';
+import { PiArrowsLeftRightLight, PiDotsThreeLight } from 'react-icons/pi';
 
 import type { Admission } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 import { Badge } from '@/components/ui/badge';
@@ -110,7 +111,7 @@ export function AdmissionsTable({
                     <div className="flex items-center justify-end gap-2">
                       {active && canDischarge ? (
                         <Button type="button" size="sm" onClick={() => onDischarge(admission)}>
-                          <LogOut className="size-4" />
+                          <CiLogout className="size-4" />
                           Discharge
                         </Button>
                       ) : null}
@@ -122,19 +123,19 @@ export function AdmissionsTable({
                             size="icon"
                             aria-label={`Actions for ${admission.admissionNumber}`}
                           >
-                            <MoreHorizontal className="size-4" />
+                            <PiDotsThreeLight className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
                             <Link href={`/admissions/${admission.id}`}>
-                              <Eye className="size-4" />
+                              <CiRead className="size-4" />
                               View Admission
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/patients/${admission.patient.id}`}>
-                              <Eye className="size-4" />
+                              <CiRead className="size-4" />
                               Open Patient
                             </Link>
                           </DropdownMenuItem>
@@ -143,7 +144,7 @@ export function AdmissionsTable({
                               <DropdownMenuSeparator />
                               {canTransfer ? (
                                 <DropdownMenuItem onSelect={() => onTransfer(admission)}>
-                                  <ArrowRightLeft className="size-4" />
+                                  <PiArrowsLeftRightLight className="size-4" />
                                   Transfer Bed
                                 </DropdownMenuItem>
                               ) : null}
@@ -152,7 +153,7 @@ export function AdmissionsTable({
                                   variant="destructive"
                                   onSelect={() => onCancel(admission)}
                                 >
-                                  <XCircle className="size-4" />
+                                  <CiCircleRemove className="size-4" />
                                   Cancel Admission
                                 </DropdownMenuItem>
                               ) : null}

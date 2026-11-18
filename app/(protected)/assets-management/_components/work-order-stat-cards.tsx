@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { ClipboardList } from 'lucide-react';
+import { PiClipboardTextLight } from 'react-icons/pi';
 
 import { useSuspenseWorkOrderSummary } from '@/app/queries/assets-management/assets-overview/useWorkOrderSummary';
 import type { WorkOrderSummary } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
@@ -20,7 +20,7 @@ export function WorkOrderStatCards({ workOrderSummary }: WorkOrderStatCardsProps
         <div className="flex items-start justify-between gap-3">
           <p className="text-muted-foreground text-sm font-medium">Active work orders</p>
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-md">
-            <ClipboardList className="size-4" />
+            <PiClipboardTextLight className="size-4" />
           </span>
         </div>
 

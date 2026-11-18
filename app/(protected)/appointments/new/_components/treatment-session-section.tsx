@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ClipboardList, Info, Plus, RefreshCw, TriangleAlert } from 'lucide-react';
+import { CiCircleInfo, CiWarning } from 'react-icons/ci';
+import { PiArrowsClockwiseLight, PiClipboardTextLight, PiPlusLight } from 'react-icons/pi';
 import {
   Controller,
   useFormState,
@@ -102,7 +103,7 @@ export function TreatmentSessionSection({
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-procedure/10 text-procedure flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <ClipboardList className="size-4" />
+            <PiClipboardTextLight className="size-4" />
           </span>
           <div>
             <CardTitle>Treatment & Session</CardTitle>
@@ -152,7 +153,7 @@ export function TreatmentSessionSection({
           />
         ) : state === 'CATALOGUE_FORBIDDEN' ? (
           <Alert className="border-warning/25 bg-warning/5">
-            <TriangleAlert className="text-warning size-4" />
+            <CiWarning className="text-warning size-4" />
             <AlertTitle>No Current Treatment Plan</AlertTitle>
             <AlertDescription>
               You do not have permission to assign a catalogue Treatment to this Patient.
@@ -177,7 +178,7 @@ export function TreatmentSessionSection({
 
         {state === 'CONFLICT' && selectedTreatment?.selectionMode !== 'CATALOGUE' ? (
           <Alert className="border-warning/25 bg-warning/5">
-            <TriangleAlert className="text-warning size-4" />
+            <CiWarning className="text-warning size-4" />
             <AlertTitle>No Bookable Session</AlertTitle>
             <AlertDescription>
               This Patient has a current Treatment Plan, but every Session is completed or reserved
@@ -193,7 +194,7 @@ export function TreatmentSessionSection({
         selectedTreatment?.selectionMode === 'EXISTING_PLAN' &&
         !selectedSession ? (
           <Alert className="border-warning/25 bg-warning/5">
-            <Info className="size-4" />
+            <CiCircleInfo className="size-4" />
             <AlertTitle>No Bookable Session In This Plan</AlertTitle>
             <AlertDescription>
               {canAssignTreatment
@@ -206,7 +207,7 @@ export function TreatmentSessionSection({
 
         {(state === 'PLANS' || state === 'CONFLICT') && selectedDurationUnknown ? (
           <Alert className="border-warning/25 bg-warning/5">
-            <Info className="size-4" />
+            <CiCircleInfo className="size-4" />
             <AlertTitle>Session Duration Not Configured</AlertTitle>
             <AlertDescription>
               Enter the Procedure end time manually. Choose the Room from the available Room list.
@@ -463,7 +464,7 @@ export function PlanSelection({
                 className="border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 flex h-auto min-h-14 w-full min-w-0 flex-col items-start gap-2 px-3 py-2 text-left whitespace-normal"
               >
                 <span className="flex items-center gap-2 font-medium">
-                  <Plus className="size-4" /> Add Sessions
+                  <PiPlusLight className="size-4" /> Add Sessions
                 </span>
                 <span className="text-muted-foreground text-xs">Extend this Treatment Plan</span>
               </Button>
@@ -602,7 +603,7 @@ export function CatalogueSelection({
 
       {durationUnknown ? (
         <Alert className="border-warning/25 bg-warning/5">
-          <Info className="size-4" />
+          <CiCircleInfo className="size-4" />
           <AlertTitle>Session Duration Not Configured</AlertTitle>
           <AlertDescription>
             Enter the Procedure end time manually. Choose the Room from the available Room list.
@@ -713,12 +714,12 @@ function LoadError({
 }) {
   return (
     <Alert variant="destructive" role="alert">
-      <TriangleAlert className="size-4" />
+      <CiWarning className="size-4" />
       <AlertTitle>{subject} Could Not Be Loaded</AlertTitle>
       <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
         <span>{message}</span>
         <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-          <RefreshCw className="size-3.5" /> Retry
+          <PiArrowsClockwiseLight className="size-3.5" /> Retry
         </Button>
       </AlertDescription>
     </Alert>

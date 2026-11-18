@@ -1,5 +1,5 @@
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
-import { Leaf, RefreshCcw } from 'lucide-react';
+import { PiArrowsCounterClockwiseLight, PiLeafLight } from 'react-icons/pi';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -134,7 +134,7 @@ export function PatientTreatmentsCard({
     <Card className="shadow-fluent-2">
       <CardHeader className="border-b">
         <SectionHeading
-          icon={<Leaf className="size-5" />}
+          icon={<PiLeafLight className="size-5" />}
           title="Treatment Plans"
           description={
             !loading && !error && plans.length
@@ -153,7 +153,7 @@ export function PatientTreatmentsCard({
           <div className="space-y-2">
             <p className="text-destructive text-sm">Treatment Plans could not be loaded.</p>
             <Button type="button" size="sm" variant="outline" onClick={onRetry}>
-              <RefreshCcw className="size-4" />
+              <PiArrowsCounterClockwiseLight className="size-4" />
               Retry
             </Button>
           </div>

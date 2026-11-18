@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { RoleWithStats } from '@/app/api/lib/modules/role/schemas/role-schema';
@@ -227,7 +227,7 @@ export function RoleFormSheet({
               <form id="role-form" onSubmit={onSubmit} className="space-y-6 p-4">
                 {serverErrors.length > 0 ? (
                   <Alert variant="destructive">
-                    <AlertCircle className="size-4" />
+                    <CiCircleAlert className="size-4" />
                     <AlertTitle>Save failed</AlertTitle>
                     <AlertDescription>
                       <ul className="list-disc space-y-1 pl-4">
@@ -342,7 +342,7 @@ export function RoleFormSheet({
                   </div>
                   {permissionsQuery.isError ? (
                     <Alert variant="destructive">
-                      <AlertCircle className="size-4" />
+                      <CiCircleAlert className="size-4" />
                       <AlertTitle>Could not load the Permission Catalogue</AlertTitle>
                       <AlertDescription>
                         {getApiErrorMessage(permissionsQuery.error)}
@@ -351,7 +351,7 @@ export function RoleFormSheet({
                   ) : null}
                   {rolePermissionsQuery.isError ? (
                     <Alert variant="destructive">
-                      <AlertCircle className="size-4" />
+                      <CiCircleAlert className="size-4" />
                       <AlertTitle>Could not load assigned Permissions</AlertTitle>
                       <AlertDescription>
                         {getApiErrorMessage(rolePermissionsQuery.error)}
@@ -399,7 +399,7 @@ export function RoleFormSheet({
                 Cancel
               </Button>
               <Button type="submit" form="role-form" disabled={isSaving} aria-busy={isSaving}>
-                <Save className="size-4" />
+                <CiFloppyDisk className="size-4" />
                 Save changes
               </Button>
             </SheetFooter>

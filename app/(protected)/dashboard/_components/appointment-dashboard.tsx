@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertCircle, ArrowRight, CalendarDays } from 'lucide-react';
+import { CiCalendar, CiCircleAlert } from 'react-icons/ci';
+import { PiArrowRightLight } from 'react-icons/pi';
 
 import {
   toDateInputValue,
@@ -32,7 +33,7 @@ export function AppointmentDashboard() {
   if (currentUserQuery.isError || !currentUserQuery.data) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load your dashboard</AlertTitle>
         <AlertDescription>{getApiErrorMessage(currentUserQuery.error)}</AlertDescription>
       </Alert>
@@ -47,7 +48,7 @@ export function AppointmentDashboard() {
       <section className="from-primary/10 via-card to-procedure/10 border-primary/20 shadow-fluent-2 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-gradient-to-br p-3 sm:p-4">
         <div className="flex items-center gap-3">
           <span className="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-md">
-            <CalendarDays className="size-4" aria-hidden="true" />
+            <CiCalendar className="size-4" aria-hidden="true" />
           </span>
           <div>
             <h2 className="font-heading text-base font-semibold">Today’s Appointments</h2>
@@ -59,7 +60,7 @@ export function AppointmentDashboard() {
         {canRead ? (
           <Button asChild variant="outline" size="sm">
             <Link href={appointmentsHref}>
-              Open Appointments <ArrowRight className="size-4" aria-hidden="true" />
+              Open Appointments <PiArrowRightLight className="size-4" aria-hidden="true" />
             </Link>
           </Button>
         ) : null}
@@ -76,7 +77,7 @@ export function AppointmentDashboard() {
         </Card>
       ) : appointmentsQuery.isError ? (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not load Appointments</AlertTitle>
           <AlertDescription className="space-y-2">
             <p>{getApiErrorMessage(appointmentsQuery.error)}</p>

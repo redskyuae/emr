@@ -1,6 +1,6 @@
 'use client';
 
-import { TriangleAlert } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
 
 import type { PatientAllergy } from '@/app/api/lib/modules/patient-allergy/schemas/patient-allergy-schema';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,7 +28,7 @@ export function AllergyBanner({
 
   return (
     <Alert variant="destructive" role="alert">
-      <TriangleAlert className="size-4" />
+      <CiWarning className="size-4" />
       <AlertTitle>Allergy alert</AlertTitle>
       <AlertDescription>
         <div className="flex flex-wrap gap-x-4 gap-y-1">

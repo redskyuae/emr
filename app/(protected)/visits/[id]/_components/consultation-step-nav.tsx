@@ -1,19 +1,13 @@
-import {
-  BadgeCheck,
-  Check,
-  ClipboardPlus,
-  Leaf,
-  MessageSquareText,
-  Stethoscope,
-  type LucideIcon,
-} from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiMedicalClipboard, CiStethoscope } from 'react-icons/ci';
+import { PiChatTextLight, PiCheckLight, PiLeafLight, PiSealCheckLight } from 'react-icons/pi';
 
 import { cn } from '@/lib/utils';
 
 import type { ConsultationStep, ConsultationStepId } from '../_utils/consultation-steps';
 
 type StepTone = {
-  icon: LucideIcon;
+  icon: IconType;
   /** Icon and accent text. */
   text: string;
   /** Filled badge with readable foreground. */
@@ -30,35 +24,35 @@ type StepTone = {
  */
 export const STEP_TONE: Record<ConsultationStepId, StepTone> = {
   subjective: {
-    icon: MessageSquareText,
+    icon: PiChatTextLight,
     text: 'text-primary',
     solid: 'bg-primary text-primary-foreground',
     soft: 'bg-primary/10',
     bar: 'shadow-[inset_0_-3px_0_var(--primary)]',
   },
   objective: {
-    icon: Stethoscope,
+    icon: CiStethoscope,
     text: 'text-chart-4',
     solid: 'bg-chart-4 text-primary-foreground',
     soft: 'bg-chart-4/12',
     bar: 'shadow-[inset_0_-3px_0_var(--chart-4)]',
   },
   assessment: {
-    icon: ClipboardPlus,
+    icon: CiMedicalClipboard,
     text: 'text-pop',
     solid: 'bg-pop text-pop-foreground',
     soft: 'bg-pop/10',
     bar: 'shadow-[inset_0_-3px_0_var(--pop)]',
   },
   plan: {
-    icon: Leaf,
+    icon: PiLeafLight,
     text: 'text-procedure',
     solid: 'bg-procedure text-primary-foreground',
     soft: 'bg-procedure/10',
     bar: 'shadow-[inset_0_-3px_0_var(--procedure)]',
   },
   review: {
-    icon: BadgeCheck,
+    icon: PiSealCheckLight,
     text: 'text-success',
     solid: 'bg-success text-primary-foreground',
     soft: 'bg-success/10',
@@ -85,7 +79,7 @@ export function ConsultationStepNav({
           const count = filled?.(step) ?? 0;
           const done = !isCurrent && count > 0;
           const tone = STEP_TONE[step.id];
-          const Icon = done ? Check : tone.icon;
+          const Icon = done ? PiCheckLight : tone.icon;
 
           return (
             <li key={step.id}>

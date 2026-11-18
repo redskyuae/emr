@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { format, startOfDay } from 'date-fns';
-import { CalendarClock } from 'lucide-react';
+import { CiCalendarDate } from 'react-icons/ci';
 import { Controller, type Control } from 'react-hook-form';
 
 import {
@@ -50,7 +50,7 @@ export function ProcedureScheduleSection({
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-procedure/10 text-procedure flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <CalendarClock className="size-4" />
+            <CiCalendarDate className="size-4" />
           </span>
           <div className="min-w-0 flex-1">
             <CardTitle>Procedure date & time</CardTitle>
@@ -187,7 +187,7 @@ function ProcedureDateField({
                 {field.value
                   ? format(new Date(field.value + 'T12:00:00'), 'dd MMM yyyy')
                   : 'Choose date'}
-                <CalendarClock className="size-4" />
+                <CiCalendarDate className="size-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0 motion-reduce:animate-none" align="start">

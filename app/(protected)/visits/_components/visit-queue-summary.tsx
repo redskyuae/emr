@@ -1,6 +1,7 @@
 'use client';
 
-import { CheckCircle2, Clock3, Stethoscope, XCircle, type LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiCircleCheck, CiCircleRemove, CiClock1, CiStethoscope } from 'react-icons/ci';
 
 import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
@@ -9,11 +10,11 @@ import { cn } from '@/lib/utils';
 
 import { VISIT_STATUS_FILTERS } from '../_utils/visit-status';
 
-const STATUS_ICONS: Record<VisitStatus, { icon: LucideIcon; tone: string }> = {
-  CHECKED_IN: { icon: Clock3, tone: 'text-warning' },
-  IN_CONSULTATION: { icon: Stethoscope, tone: 'text-primary' },
-  COMPLETED: { icon: CheckCircle2, tone: 'text-success' },
-  CANCELLED: { icon: XCircle, tone: 'text-destructive' },
+const STATUS_ICONS: Record<VisitStatus, { icon: IconType; tone: string }> = {
+  CHECKED_IN: { icon: CiClock1, tone: 'text-warning' },
+  IN_CONSULTATION: { icon: CiStethoscope, tone: 'text-primary' },
+  COMPLETED: { icon: CiCircleCheck, tone: 'text-success' },
+  CANCELLED: { icon: CiCircleRemove, tone: 'text-destructive' },
 };
 
 function QueueTile({

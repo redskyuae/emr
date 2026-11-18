@@ -4,7 +4,7 @@ import { ComponentProps } from 'react';
 import { ContextMenu as ContextMenuPrimitive } from 'radix-ui';
 
 import { cn } from '@/lib/utils';
-import { ChevronRightIcon, CheckIcon } from 'lucide-react';
+import { PiCaretRightLight, PiCheckLight } from 'react-icons/pi';
 
 function ContextMenu({ ...props }: ComponentProps<typeof ContextMenuPrimitive.Root>) {
   return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />;
@@ -103,7 +103,7 @@ function ContextMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto" />
+      <PiCaretRightLight className="ml-auto" />
     </ContextMenuPrimitive.SubTrigger>
   );
 }
@@ -146,7 +146,7 @@ function ContextMenuCheckboxItem({
     >
       <span className="pointer-events-none absolute right-2">
         <ContextMenuPrimitive.ItemIndicator>
-          <CheckIcon />
+          <PiCheckLight />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -174,7 +174,7 @@ function ContextMenuRadioItem({
     >
       <span className="pointer-events-none absolute right-2">
         <ContextMenuPrimitive.ItemIndicator>
-          <CheckIcon />
+          <PiCheckLight />
         </ContextMenuPrimitive.ItemIndicator>
       </span>
       {children}

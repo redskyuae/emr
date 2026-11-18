@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { ChevronLeft, ChevronRight, ClipboardList, Plus } from 'lucide-react';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+} from 'react-icons/pi';
 
 import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -132,7 +137,7 @@ export function VisitListPageImpl() {
         <Empty className="bg-card shadow-fluent-2 min-h-72 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <ClipboardList />
+              <PiClipboardTextLight />
             </EmptyMedia>
             <EmptyTitle>No Visits match these filters</EmptyTitle>
             <EmptyDescription>
@@ -146,7 +151,7 @@ export function VisitListPageImpl() {
             {canCreate ? (
               <Button asChild>
                 <Link href="/visits/new">
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Create Visit
                 </Link>
               </Button>
@@ -170,7 +175,7 @@ export function VisitListPageImpl() {
                   disabled={currentPage <= 1}
                   onClick={() => setPage(currentPage - 1)}
                 >
-                  <ChevronLeft className="size-4" />
+                  <PiCaretLeftLight className="size-4" />
                   Previous
                 </Button>
                 <Button
@@ -181,7 +186,7 @@ export function VisitListPageImpl() {
                   onClick={() => setPage(currentPage + 1)}
                 >
                   Next
-                  <ChevronRight className="size-4" />
+                  <PiCaretRightLight className="size-4" />
                 </Button>
               </div>
             ) : null}

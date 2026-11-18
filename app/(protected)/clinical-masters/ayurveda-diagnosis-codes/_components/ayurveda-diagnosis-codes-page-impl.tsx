@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, Leaf, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiLeafLight, PiPlusLight } from 'react-icons/pi';
 
 import type { AyurvedaDiagnosisCode } from '@/app/api/lib/modules/ayurveda-diagnosis-code/schemas/ayurveda-diagnosis-code-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -80,7 +81,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
           <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
             <InputGroup className="h-9 lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -97,7 +98,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={openCreateSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Ayurveda Diagnosis Code
                 </Button>
               </div>
@@ -107,7 +108,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
 
         {ayurvedaDiagnosisCodesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Ayurveda Diagnosis Codes</AlertTitle>
             <AlertDescription className="flex flex-col items-start gap-2">
               <span>{getApiErrorMessage(ayurvedaDiagnosisCodesQuery.error)}</span>
@@ -130,7 +131,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Leaf />
+                <PiLeafLight />
               </EmptyMedia>
               <EmptyTitle>No Ayurveda Diagnosis Codes yet</EmptyTitle>
               <EmptyDescription>
@@ -141,7 +142,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
             {canCreate ? (
               <EmptyContent>
                 <Button type="button" onClick={openCreateSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Ayurveda Diagnosis Code
                 </Button>
               </EmptyContent>
@@ -151,7 +152,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
           <Empty className="bg-card shadow-fluent-2 min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Search />
+                <CiSearch />
               </EmptyMedia>
               <EmptyTitle>No results found</EmptyTitle>
               <EmptyDescription>
@@ -183,7 +184,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
                     disabled={page <= 1}
                     onClick={() => setPage((current) => Math.max(1, current - 1))}
                   >
-                    <ChevronLeft className="size-4" />
+                    <PiCaretLeftLight className="size-4" />
                     Previous
                   </Button>
                   <Button
@@ -194,7 +195,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Next
-                    <ChevronRight className="size-4" />
+                    <PiCaretRightLight className="size-4" />
                   </Button>
                 </div>
               </div>
