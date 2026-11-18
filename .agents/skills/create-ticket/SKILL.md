@@ -94,6 +94,8 @@ gh issue create --title "<title>" --body-file <path> --label backend --label enh
 gh issue create --title "<title>" --body-file <path> --label frontend --label enhancement --blocked-by <n>
 ```
 
+`--blocked-by` and `--parent` are recent additions to `gh`. Before publishing a set of linked tickets, check that `gh issue create --help` lists them. If it does not, follow "Older versions of `gh`" in [MULTIPLE-TICKETS.md](./MULTIPLE-TICKETS.md) so the set is never left half-published.
+
 Do not set assignees, milestones or projects unless asked, do not change the content of other issues, and do not start implementing.
 
 ## 7. Share the link

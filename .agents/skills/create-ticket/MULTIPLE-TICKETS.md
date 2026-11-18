@@ -42,14 +42,31 @@ gh issue create --title "<child title>" --body-file <path> --label frontend --la
 
 `--parent` attaches the new ticket as a sub-issue. `--blocked-by` takes a comma-separated list of the tickets that must land first. Keep the `Parent` and `Blocked by` sections in the body as well, so the ticket reads completely on its own.
 
-If `gh` rejects `--parent` as an unknown flag, it is an older version. Create the child without the flag and attach it afterwards. The API wants the child's database id, not its issue number:
+## Older versions of `gh`
+
+`--parent` and `--blocked-by` are recent flags. Check for them before publishing anything, so a missing flag does not stop the run with half the tickets created:
 
 ```bash
-gh api repos/{owner}/{repo}/issues/<parent>/sub_issues -F sub_issue_id="$(gh api repos/{owner}/{repo}/issues/<child> --jq .id)"
+gh issue create --help | grep -E -- '--parent|--blocked-by'
 ```
 
-When everything is published, confirm that every child is attached before sharing the links:
+If either is missing, create every ticket without it, then add the links through the API. Both calls want the other issue's database id, not its issue number:
+
+```bash
+# Attach <child> to <parent> as a sub-issue
+gh api repos/{owner}/{repo}/issues/<parent>/sub_issues -F sub_issue_id="$(gh api repos/{owner}/{repo}/issues/<child> --jq .id)"
+
+# Mark <ticket> as blocked by <blocker>
+gh api repos/{owner}/{repo}/issues/<ticket>/dependencies/blocked_by -F issue_id="$(gh api repos/{owner}/{repo}/issues/<blocker> --jq .id)"
+```
+
+If an API call fails as well, the `Parent` and `Blocked by` sections in the body still record the relationship. Tell the requester which native links are missing when you share the tickets.
+
+## After publishing
+
+When everything is published, confirm that every child is attached and every dependency is recorded before sharing the links:
 
 ```bash
 gh api repos/{owner}/{repo}/issues/<parent>/sub_issues --jq '.[].number'
+gh api repos/{owner}/{repo}/issues/<ticket>/dependencies/blocked_by --jq '.[].number'
 ```
