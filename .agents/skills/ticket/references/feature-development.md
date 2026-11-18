@@ -59,6 +59,10 @@ Use `gh`. One call returns the issue with its relations:
 gh issue view <n> --json number,title,body,state,labels,assignees,milestone,parent,subIssues,blockedBy,blocking,closedByPullRequestsReferences,comments,url
 ```
 
+On an older `gh` that rejects the relation fields, use the core fields and the
+API calls listed under Stage 0 in [../SKILL.md](../SKILL.md) instead. The same
+calls work for a parent or sibling issue.
+
 | What                 | How                                                                                           | Why                                                                                                   |
 | -------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | The issue            | `body` and `labels`                                                                           | A `/create-ticket` issue already carries Business rules, Implementation notes and Acceptance criteria |

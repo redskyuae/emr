@@ -88,6 +88,21 @@ The feature path has its own checklist.
    gh issue view <n> --json number,title,body,state,stateReason,labels,assignees,author,milestone,issueType,parent,subIssues,blockedBy,blocking,closedByPullRequestsReferences,comments,url
    ```
 
+   The relation fields (`issueType`, `parent`, `subIssues`, `blockedBy`,
+   `blocking`, `closedByPullRequestsReferences`) need a recent `gh`. If the
+   command fails with an unknown JSON field, don't stop: fetch the core
+   fields, then read the relations from the API. A 404 on `parent` means the
+   issue has none.
+
+   ```bash
+   gh issue view <n> --json number,title,body,state,labels,assignees,author,milestone,comments,url
+   gh api repos/{owner}/{repo}/issues/<n>/parent
+   gh api --paginate repos/{owner}/{repo}/issues/<n>/sub_issues
+   gh api --paginate repos/{owner}/{repo}/issues/<n>/dependencies/blocked_by
+   gh api --paginate repos/{owner}/{repo}/issues/<n>/dependencies/blocking
+   gh pr list --state all --search "<n> in:body"
+   ```
+
    Read the body, **all comments**, and the relations. Then check three things
    and say so if any applies, before going further:
    - The URL points at a different repository from this checkout's `origin`.
