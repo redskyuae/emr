@@ -4,7 +4,10 @@ export default function AppointmentsPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading Appointments" aria-busy="true">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Skeleton className="h-8 w-80 max-w-full" aria-label="Loading Appointment tabs" />
+        <Skeleton
+          className="h-10 w-[28rem] max-w-full rounded-full"
+          aria-label="Loading Appointment tabs"
+        />
         <Skeleton className="h-10 w-36" aria-label="Loading Book Appointment action" />
       </div>
 

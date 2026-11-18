@@ -190,12 +190,12 @@ export function AppointmentsPageImpl() {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList aria-label="Appointment schedule views">
-            <TabsTrigger value="today" className="px-3">
-              <CiCalendar className="size-4" aria-hidden="true" />
+            <TabsTrigger value="today">
+              <CiCalendar aria-hidden="true" />
               Today&apos;s Appointments
             </TabsTrigger>
-            <TabsTrigger value="upcoming" className="px-3">
-              <CiCalendarDate className="size-4" aria-hidden="true" />
+            <TabsTrigger value="upcoming">
+              <CiCalendarDate aria-hidden="true" />
               Upcoming Appointments
             </TabsTrigger>
           </TabsList>

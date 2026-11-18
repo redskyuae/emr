@@ -3,7 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useQueryState } from 'nuqs';
-import { CiEdit, CiMenuKebab, CiTrash, CiUser } from 'react-icons/ci';
+import {
+  CiEdit,
+  CiGrid41,
+  CiMedicalClipboard,
+  CiMenuKebab,
+  CiTrash,
+  CiUser,
+  CiViewTimeline,
+} from 'react-icons/ci';
 import { PiArrowLeftLight, PiUserCheckLight, PiUserMinusLight, PiUsersLight } from 'react-icons/pi';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
@@ -267,9 +275,18 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
         className="w-full"
       >
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="chart">Chart</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="overview">
+            <CiGrid41 aria-hidden="true" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="chart">
+            <CiMedicalClipboard aria-hidden="true" />
+            Chart
+          </TabsTrigger>
+          <TabsTrigger value="timeline">
+            <CiViewTimeline aria-hidden="true" />
+            Timeline
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">

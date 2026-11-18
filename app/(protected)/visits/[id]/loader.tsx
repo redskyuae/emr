@@ -53,7 +53,7 @@ export default function VisitDetailPageLoader() {
         </div>
 
         <div className="bg-card space-y-4 rounded-xl border p-4 xl:order-1">
-          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-10 w-full rounded-full" />
           <Skeleton className="h-4 w-32" />
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-7 w-full" />

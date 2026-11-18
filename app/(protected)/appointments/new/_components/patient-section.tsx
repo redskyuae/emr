@@ -1,7 +1,12 @@
 'use client';
 
 import { CiSearch, CiUser } from 'react-icons/ci';
-import { PiArrowsClockwiseLight, PiCheckLight, PiCircleNotchLight } from 'react-icons/pi';
+import {
+  PiArrowsClockwiseLight,
+  PiCheckLight,
+  PiCircleNotchLight,
+  PiUserPlusLight,
+} from 'react-icons/pi';
 import { Controller, useFormState, type Control } from 'react-hook-form';
 
 import { BookingStatusBadge } from './booking-status-badge';
@@ -82,9 +87,11 @@ export function PatientSection({
         >
           <TabsList className="w-full">
             <TabsTrigger value="existing" className="flex-1">
+              <CiUser aria-hidden="true" />
               Existing Patient
             </TabsTrigger>
             <TabsTrigger value="provisional" className="flex-1">
+              <PiUserPlusLight aria-hidden="true" />
               Provisional Patient
             </TabsTrigger>
           </TabsList>

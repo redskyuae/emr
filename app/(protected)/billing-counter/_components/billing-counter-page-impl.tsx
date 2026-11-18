@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
-import { CiLock } from 'react-icons/ci';
+import type { IconType } from 'react-icons';
+import { CiLock, CiReceipt, CiUndo, CiWallet } from 'react-icons/ci';
+import { PiBookOpenLight } from 'react-icons/pi';
 
 import { DemoDataBanner } from '@/components/app/demo-data-banner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -19,15 +21,18 @@ import { DayCloseTab } from './day-close-tab';
 import { NewInvoiceTab } from './new-invoice-tab';
 import { RefundTab } from './refund-tab';
 
-const TABS = [
-  { value: 'invoice', label: 'New invoice' },
-  { value: 'advance', label: 'Advance / deposit' },
-  { value: 'refund', label: 'Refund' },
-  { value: 'day-book', label: 'Day book' },
-  { value: 'day-close', label: 'Day close' },
-] as const;
+const TAB_VALUES = ['invoice', 'advance', 'refund', 'day-book', 'day-close'] as const;
+type TabValue = (typeof TAB_VALUES)[number];
 
-const tabParser = parseAsStringLiteral(TABS.map((tab) => tab.value)).withDefault('invoice');
+const TABS: readonly { value: TabValue; label: string; icon: IconType }[] = [
+  { value: 'invoice', label: 'New invoice', icon: CiReceipt },
+  { value: 'advance', label: 'Advance / deposit', icon: CiWallet },
+  { value: 'refund', label: 'Refund', icon: CiUndo },
+  { value: 'day-book', label: 'Day book', icon: PiBookOpenLight },
+  { value: 'day-close', label: 'Day close', icon: CiLock },
+];
+
+const tabParser = parseAsStringLiteral(TAB_VALUES).withDefault('invoice');
 
 function CounterWorkspace() {
   const { state, shiftOpen } = useCounter();
@@ -64,16 +69,11 @@ function CounterWorkspace() {
         </Alert>
       )}
 
-      <Tabs
-        value={tab}
-        onValueChange={(value) => void setTab(value as (typeof TABS)[number]['value'])}
-      >
-        <TabsList
-          variant="line"
-          className="w-full flex-wrap justify-start border-b group-data-horizontal/tabs:h-auto"
-        >
+      <Tabs value={tab} onValueChange={(value) => void setTab(value as TabValue)}>
+        <TabsList className="max-w-full [scrollbar-width:none] justify-start overflow-x-auto [&::-webkit-scrollbar]:hidden">
           {TABS.map((item) => (
-            <TabsTrigger key={item.value} value={item.value} className="flex-none px-3 py-2">
+            <TabsTrigger key={item.value} value={item.value} className="flex-none">
+              <item.icon aria-hidden="true" />
               {item.label}
             </TabsTrigger>
           ))}

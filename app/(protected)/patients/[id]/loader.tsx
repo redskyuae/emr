@@ -10,11 +10,7 @@ export default function PatientDetailLoader() {
         <Skeleton className="mt-2 h-4 w-32" />
       </div>
 
-      <div className="flex gap-2">
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-24" />
-      </div>
+      <Skeleton className="h-10 w-80 max-w-full rounded-full" aria-label="Loading Patient tabs" />
 
       {[0, 1, 2, 3, 4, 5, 6].map((section) => (
         <div key={section} className="bg-card space-y-4 rounded-xl border p-5">

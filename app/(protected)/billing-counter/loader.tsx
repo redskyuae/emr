@@ -17,11 +17,10 @@ export default function BillingCounterPageLoader() {
         </div>
       </div>
 
-      <div className="flex gap-2 border-b pb-2">
-        {Array.from({ length: 5 }, (_, index) => (
-          <Skeleton key={index} className="h-8 w-28" />
-        ))}
-      </div>
+      <Skeleton
+        className="h-10 w-[44rem] max-w-full rounded-full"
+        aria-label="Loading Billing Counter tabs"
+      />
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">

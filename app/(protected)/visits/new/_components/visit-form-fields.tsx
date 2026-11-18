@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from 'react';
 import type { Control, FieldErrors, UseFormResetField, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
-import { CiLock, CiStethoscope, CiUser } from 'react-icons/ci';
+import { CiCalendarDate, CiLock, CiStethoscope, CiUser } from 'react-icons/ci';
 import {
   PiArrowsCounterClockwiseLight,
   PiClipboardTextLight,
+  PiPersonSimpleWalkLight,
   PiPlusLight,
   PiSparkleLight,
 } from 'react-icons/pi';
@@ -114,9 +115,15 @@ export function VisitSourceFields({
             replaceField('remarks', '');
           }}
         >
-          <TabsList className="grid w-full grid-cols-2 sm:w-72">
-            <TabsTrigger value="appointment">From Appointment</TabsTrigger>
-            <TabsTrigger value="walk-in">Walk-in</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:w-80">
+            <TabsTrigger value="appointment">
+              <CiCalendarDate aria-hidden="true" />
+              From Appointment
+            </TabsTrigger>
+            <TabsTrigger value="walk-in">
+              <PiPersonSimpleWalkLight aria-hidden="true" />
+              Walk-in
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>

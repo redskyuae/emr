@@ -2,7 +2,12 @@
 
 import type { IconType } from 'react-icons';
 import { CiPill, CiWavePulse1 } from 'react-icons/ci';
-import { PiClipboardTextLight, PiLeafLight, PiShieldWarningLight } from 'react-icons/pi';
+import {
+  PiClipboardTextLight,
+  PiClockCounterClockwiseLight,
+  PiLeafLight,
+  PiShieldWarningLight,
+} from 'react-icons/pi';
 
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
@@ -158,8 +163,14 @@ export function VisitContextPane({
       <Tabs defaultValue="trends" className="min-h-0 flex-1 gap-0">
         <div className="border-b p-1.5">
           <TabsList aria-label="Patient context" className="grid w-full grid-cols-2">
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="history">Previous Visits</TabsTrigger>
+            <TabsTrigger value="trends">
+              <CiWavePulse1 aria-hidden="true" />
+              Trends
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              <PiClockCounterClockwiseLight aria-hidden="true" />
+              Previous Visits
+            </TabsTrigger>
           </TabsList>
         </div>
 

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { CiSearch } from 'react-icons/ci';
+import { CiBank, CiMoneyBill, CiSearch, CiShoppingTag, CiViewList } from 'react-icons/ci';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -369,11 +369,23 @@ export function DayBookTab() {
         connected.
       </p>
       <Tabs defaultValue="transactions">
-        <TabsList className="flex-wrap group-data-horizontal/tabs:h-auto">
-          <TabsTrigger value="transactions">Transaction book</TabsTrigger>
-          <TabsTrigger value="cash">Cash book</TabsTrigger>
-          <TabsTrigger value="bank">Bank book</TabsTrigger>
-          <TabsTrigger value="sales">Sales book</TabsTrigger>
+        <TabsList className="max-w-full [scrollbar-width:none] justify-start overflow-x-auto [&::-webkit-scrollbar]:hidden">
+          <TabsTrigger value="transactions" className="flex-none">
+            <CiViewList aria-hidden="true" />
+            Transaction book
+          </TabsTrigger>
+          <TabsTrigger value="cash" className="flex-none">
+            <CiMoneyBill aria-hidden="true" />
+            Cash book
+          </TabsTrigger>
+          <TabsTrigger value="bank" className="flex-none">
+            <CiBank aria-hidden="true" />
+            Bank book
+          </TabsTrigger>
+          <TabsTrigger value="sales" className="flex-none">
+            <CiShoppingTag aria-hidden="true" />
+            Sales book
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="transactions">
           <TransactionBook txns={txns} />

@@ -38,7 +38,7 @@ export default function CreateVisitLoader() {
           <div className="bg-card space-y-4 rounded-xl border p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SectionHeadingSkeleton />
-              <Skeleton className="h-10 w-72 max-w-full" />
+              <Skeleton className="h-10 w-80 max-w-full rounded-full" />
             </div>
             <Skeleton className="h-10 w-full" />
             <div className="overflow-hidden rounded-xl border">
