@@ -175,10 +175,10 @@ export function AppointmentDashboardContentSkeleton() {
             <div className="grid grid-cols-2 gap-4">
               {['Consultation', 'Procedure'].map((label) => (
                 <div key={label}>
-                  <p className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+                  <div className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
                     <Skeleton className="size-4 rounded-full" />
                     {label}
-                  </p>
+                  </div>
                   <Skeleton className="mt-1.5 h-6 w-10" />
                 </div>
               ))}
