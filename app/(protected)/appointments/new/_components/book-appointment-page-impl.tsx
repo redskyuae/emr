@@ -129,9 +129,12 @@ function BookAppointmentWorkflow() {
   return (
     <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col gap-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-muted-foreground text-sm">
-          Select the Patient, Booking Path, and exact Appointment time.
-        </p>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Book Appointment</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Select the Patient, Booking Path, and exact Appointment time.
+          </p>
+        </div>
         <div className="flex items-center gap-2 text-sm">
           <Building2 className="text-primary size-4 shrink-0" />
           <div>
