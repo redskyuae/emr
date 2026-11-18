@@ -73,12 +73,12 @@ We'll <pause until these are answered | proceed with the suggested answers unles
 _Raised with `/ticket` by <engineer>._
 ```
 
-## Implemented (F7, optional)
+## Implemented (F8, optional)
 
 ```markdown
 ## Implemented
 
-Implemented per the plan above; PR to follow.
+Implemented per the plan above in #<pr-number>.
 
 **Deviations from the plan:** <none / list, with the reason>
 **Follow-ups:** <none / list>

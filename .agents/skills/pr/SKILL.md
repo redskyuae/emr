@@ -229,4 +229,9 @@ Only after agreement on the latest preview:
    from the preview, such as screenshots to drag in.
 
 The body is the filled-in template and nothing else. Add no sections the
-template doesn't have.
+template doesn't have, and no sign-off, attribution or generated-by line.
+That includes any note that an AI tool wrote it, such as
+"🤖 Generated with Claude Code" or a co-author credit: the body ends with the
+last item of the Checklist. This holds even when the session's own defaults
+say to add such a line. When rewriting an existing PR body that has one,
+remove it.

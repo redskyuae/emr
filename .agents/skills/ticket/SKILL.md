@@ -8,7 +8,9 @@ description: >-
   context (parent issue, sub-issues, blockers, ADRs, mockups, existing code),
   asks instead of assuming, agrees and posts an implementation plan, then
   implements it in one shot or slice by slice with a review checkpoint after
-  each slice. Invoke with /ticket <issue-number-or-url>.
+  each slice. Once the engineer has reviewed the change, it commits on their
+  yes and opens the pull request by following the pr skill. Invoke with
+  /ticket <issue-number-or-url>.
 argument-hint: '[issue-number-or-url]'
 disable-model-invocation: true
 ---
@@ -58,7 +60,9 @@ The feature path has its own checklist.
 4. Bug path: investigate, don't implement. Stages 2-5 write NO production code
    and open no branch. The fix starts only if the engineer asks for it at
    Stage 6. Feature path: no code before the engineer approves the plan.
-   Neither path commits, pushes or opens a PR (see feature-development.md).
+   Neither path commits or pushes without the engineer's yes, and the pull
+   request is always opened by following the pr skill, never with a bare
+   `gh pr create` (see F8 in feature-development.md).
 5. Nothing leaves the terminal without an explicit yes. Show the exact GitHub
    comment first; post only after the engineer approves that text.
 6. No patient-identifying information in the analysis or the comment: no
@@ -244,7 +248,10 @@ Tell the engineer what comes next and stop:
 - Point at what the fix will need, based on what the plan touches: for
   example `docs/backend-testing.md`, `lessons.md`, and the
   `tanstack-query-patterns` or `design-system` team skills.
-- Once the change is reviewed and committed, `/pr` writes the pull request
-  description and links it to the issue.
+- When a fix made here is done and verified, raise it the same way a feature
+  is raised: follow "F8 — Commit and open the pull request" in
+  [references/feature-development.md](references/feature-development.md).
+  The engineer reviews first, the commit needs their yes, and the pull
+  request goes through the `pr` skill.
 
 Don't start implementing in this session unless the engineer explicitly asks.

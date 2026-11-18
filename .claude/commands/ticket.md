@@ -1,5 +1,5 @@
 ---
-description: Work on a GitHub issue — root-cause a bug, or plan and implement a feature
+description: Work on a GitHub issue — root-cause a bug, or plan, build and raise a PR for a feature
 argument-hint: [issue-number-or-url]
 disable-model-invocation: true
 ---

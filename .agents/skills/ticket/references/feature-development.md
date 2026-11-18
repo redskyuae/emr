@@ -1,4 +1,4 @@
-# Feature path — from a GitHub issue to reviewed, uncommitted code
+# Feature path — from a GitHub issue to a reviewed pull request
 
 The feature branch of `ticket`, entered from Stage 1 once the engineer
 confirms the issue is a feature. Same principle as the bug path: a
@@ -6,8 +6,9 @@ conversation, not a pipeline. Every stage ends at a checkpoint where you stop
 and wait.
 
 Unlike the bug path, this one **does implement**, but only after the plan is
-agreed. The output is working, verified code in the engineer's working tree,
-which the engineer reviews and commits themselves.
+agreed. The output is working, verified code in the engineer's working tree.
+The engineer reviews it first. On their yes it is committed, and the pull
+request is opened by following the `pr` skill.
 
 Copy this checklist into the conversation and tick it as you go:
 
@@ -18,7 +19,8 @@ Copy this checklist into the conversation and tick it as you go:
 - [ ] F4 Plan posted to the issue and saved to plans.md
 - [ ] F5 Execution mode chosen, branch ready
 - [ ] F6 Implemented (one shot, or slice by slice)
-- [ ] F7 Final verification and hand-off
+- [ ] F7 Final verification, result presented for review
+- [ ] F8 Committed on the engineer's yes, pull request opened with the pr skill
 ```
 
 ## Iron laws for this path
@@ -34,9 +36,10 @@ Copy this checklist into the conversation and tick it as you go:
    stop and say so. Don't quietly build something different.
 4. Green at every checkpoint. Don't present a slice, or the final result,
    without saying what was built and tested and what wasn't.
-5. Never commit, push or open a PR. The engineer reviews and commits.
-   Staging approved slices (F6) is the only git write you make, and only
-   if the engineer agreed to it.
+5. Never commit or push before the engineer has reviewed the result and
+   said yes. Until then, staging approved slices (F6) is the only git write
+   you make, and only if the engineer agreed to it. The pull request is
+   opened in F8 by following the pr skill, never with a bare `gh pr create`.
 6. Nothing goes to GitHub without an explicit yes on the exact text.
 7. No patient-identifying information and no secrets in the plan or any
    comment.
@@ -404,7 +407,7 @@ change."_
   gh api repos/{owner}/{repo}/issues/comments/<comment-id> -X PATCH -F body=@<file>
   ```
 
-## F7 — Final verification and hand-off
+## F7 — Final verification
 
 1. Run the full verification: `bunx tsc --noEmit`, `bun run lint`,
    `bun run format:check`, `bun run test:unit`, `bun run build`, and the
@@ -429,7 +432,33 @@ Verification: <commands run and results; what's not verified>
 ```
 
 4. Mark `plans.md` complete.
-5. Hand off: the engineer reviews and commits. Don't do that yourself unless
-   they ask. Once it's committed, `/pr` writes the pull request description
-   and links it to the issue. Offer to post a short "implemented" comment to
-   the issue listing any deviations from the posted plan. Same approval rule.
+5. **Stop** and let the engineer review the diff: _"Review it in your IDE.
+   When you're happy, say so and I'll commit it and open the pull request."_
+
+## F8 — Commit and open the pull request
+
+Only after the engineer has reviewed the F7 result and said yes. A fix made
+on the bug path (Stage 6) ends here too.
+
+1. **Apply any review feedback first**, re-run the checks it touches, and
+   show what changed. Don't commit over an open comment.
+2. **Commit, on the engineer's yes.** Show the files and the message you
+   will use, then commit. Add files by explicit path (never `git add -A` or
+   `.`), leave out anything that isn't part of this issue, and write a
+   message with a conventional prefix that names the change and the issue,
+   for example `feat: add Visit coverage selection at check-in (#263)`. If
+   the engineer would rather commit themselves, wait for them to do it.
+3. **Open the pull request with the `pr` skill.** Read
+   `.agents/skills/pr/SKILL.md` and follow it from its step 1, in this
+   session. Don't call `gh pr create` yourself and don't write the body from
+   memory: the skill fills in the repo's PR template, links the issue with a
+   closing keyword, shows the engineer the exact body, and pushes and
+   publishes only after their yes. Hand it what this session already knows:
+   the issue number, the acceptance criteria and how each was verified, the
+   checks you ran with their results, and anything not verified.
+4. **Close the loop on the issue.** Offer to post the short "implemented"
+   comment from
+   [feature-plan-comment-template.md](feature-plan-comment-template.md),
+   with the pull request link and any deviations from the posted plan. Same
+   approval rule. Don't close the issue: the closing keyword in the pull
+   request does that when it merges.
