@@ -15,6 +15,7 @@ import type { Ward } from '@/app/api/lib/modules/ward/schemas/ward-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -108,82 +109,85 @@ export function WardsPageImpl() {
           </Alert>
         ) : null}
 
-        {wardsQuery.isLoading ? (
-          <WardTableSkeleton />
-        ) : wards.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiClipboardTextLight />
-              </EmptyMedia>
-              <EmptyTitle>No Wards yet</EmptyTitle>
-              <EmptyDescription>
-                Create Wards to organise inpatient Beds into named sections of the Facility, such as
-                ICU, General Ward, or Maternity.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setWardParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Ward
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : wards.length === 0 ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Wards match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <WardTable
-              wards={wards}
-              canEdit={canUpdate}
-              canDelete={canDelete}
-              onEdit={(ward) => void setWardParam(String(ward.id))}
-              onDelete={setWardPendingDelete}
-            />
+        <SkeletonCrossfade
+          isLoading={wardsQuery.isLoading}
+          skeleton={<WardTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
+        >
+          {wards.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiClipboardTextLight />
+                </EmptyMedia>
+                <EmptyTitle>No Wards yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Wards to organise inpatient Beds into named sections of the Facility, such
+                  as ICU, General Ward, or Maternity.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setWardParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Ward
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : wards.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Wards match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <WardTable
+                wards={wards}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={(ward) => void setWardParam(String(ward.id))}
+                onDelete={setWardPendingDelete}
+              />
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <WardFormSheet

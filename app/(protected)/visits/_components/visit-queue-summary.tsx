@@ -5,6 +5,7 @@ import { CiCircleCheck, CiCircleRemove, CiClock1, CiStethoscope } from 'react-ic
 
 import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { StatCard, type StatTone } from '@/components/app/stat-card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -43,12 +44,15 @@ function QueueTile({
       pressed={selected}
       onPress={onToggle}
       value={
-        countQuery.isLoading ? (
-          <Skeleton className="h-7.5 w-8" aria-label={`Loading ${label} count`} />
-        ) : countQuery.isError ? (
+        countQuery.isError ? (
           '—'
         ) : (
-          (countQuery.data?.meta.total ?? 0)
+          <SkeletonCrossfade
+            isLoading={countQuery.isLoading}
+            skeleton={<Skeleton className="h-7.5 w-14" aria-label={`Loading ${label} count`} />}
+          >
+            {countQuery.data?.meta.total ?? 0}
+          </SkeletonCrossfade>
         )
       }
     />

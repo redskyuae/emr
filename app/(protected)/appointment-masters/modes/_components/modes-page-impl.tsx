@@ -21,6 +21,7 @@ import { useCreateAppointmentMode } from '@/app/queries/appointment-masters/useC
 import { useDeleteAppointmentMode } from '@/app/queries/appointment-masters/useDeleteAppointmentMode';
 import { useUpdateAppointmentMode } from '@/app/queries/appointment-masters/useUpdateAppointmentMode';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -235,101 +236,110 @@ export function ModesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
           </Alert>
         ) : null}
 
-        {modesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : modes.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiClipboardTextLight />
-              </EmptyMedia>
-              <EmptyTitle>No Appointment Modes yet</EmptyTitle>
-              <EmptyDescription>
-                Create Appointment Modes to define delivery channels or formats for Appointments in
-                this Tenant.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={openAddSheet}>
-                  <PiPlusLight className="size-4" />
-                  Add Appointment Mode
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : modes.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Appointment Modes match &ldquo;{debouncedSearch}&rdquo;. Try a different search
-                term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <ModeTableView
-                modes={modes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <ModeCardView
-                modes={modes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
-              />
-            ) : (
-              <ModeListView
-                modes={modes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setModePendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={modesQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {modes.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiClipboardTextLight />
+                </EmptyMedia>
+                <EmptyTitle>No Appointment Modes yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Appointment Modes to define delivery channels or formats for Appointments
+                  in this Tenant.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={openAddSheet}>
+                    <PiPlusLight className="size-4" />
+                    Add Appointment Mode
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : modes.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Appointment Modes match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <ModeTableView
+                  modes={modes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setModePendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <ModeCardView
+                  modes={modes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setModePendingDelete}
+                />
+              ) : (
+                <ModeListView
+                  modes={modes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setModePendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <ModeFormSheet

@@ -7,6 +7,7 @@ import { CiMemoPad } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
@@ -156,12 +157,7 @@ export function AddNoteSheet({
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <FieldGroup>
-              {noteTypesQuery.isLoading ? (
-                <div className="space-y-2" aria-label="Loading Clinical Note Types">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : noteTypesQuery.isError ? (
+              {noteTypesQuery.isError ? (
                 <Alert variant="destructive">
                   <AlertDescription>
                     Clinical Note Types could not be loaded. Retry to continue.
@@ -176,38 +172,48 @@ export function AddNoteSheet({
                   </Button>
                 </Alert>
               ) : (
-                <Controller
-                  control={form.control}
-                  name="noteTypeId"
-                  render={({ field }) => (
-                    <Field data-invalid={Boolean(form.formState.errors.noteTypeId)}>
-                      <FieldLabel htmlFor="note-type">
-                        Note type{' '}
-                        <span aria-hidden className="text-destructive">
-                          *
-                        </span>
-                      </FieldLabel>
-                      <Select
-                        value={field.value === '' ? undefined : field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger id="note-type" aria-required className="w-full">
-                          <SelectValue placeholder="Select a note type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(noteTypes ?? []).map((noteType) => (
-                            <SelectItem key={noteType.id} value={String(noteType.id)}>
-                              {noteType.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {form.formState.errors.noteTypeId ? (
-                        <FieldError>{form.formState.errors.noteTypeId.message}</FieldError>
-                      ) : null}
-                    </Field>
-                  )}
-                />
+                <SkeletonCrossfade
+                  isLoading={noteTypesQuery.isLoading}
+                  skeleton={
+                    <div className="space-y-2" aria-label="Loading Clinical Note Types">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  }
+                >
+                  <Controller
+                    control={form.control}
+                    name="noteTypeId"
+                    render={({ field }) => (
+                      <Field data-invalid={Boolean(form.formState.errors.noteTypeId)}>
+                        <FieldLabel htmlFor="note-type">
+                          Note type{' '}
+                          <span aria-hidden className="text-destructive">
+                            *
+                          </span>
+                        </FieldLabel>
+                        <Select
+                          value={field.value === '' ? undefined : field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="note-type" aria-required className="w-full">
+                            <SelectValue placeholder="Select a note type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(noteTypes ?? []).map((noteType) => (
+                              <SelectItem key={noteType.id} value={String(noteType.id)}>
+                                {noteType.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.noteTypeId ? (
+                          <FieldError>{form.formState.errors.noteTypeId.message}</FieldError>
+                        ) : null}
+                      </Field>
+                    )}
+                  />
+                </SkeletonCrossfade>
               )}
 
               {SOAP_SECTIONS.map((section) => (

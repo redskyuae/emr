@@ -9,10 +9,12 @@ import type { RoomType } from '@/app/api/lib/modules/room-type/schemas/room-type
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useCreateRoomType } from '@/app/queries/room-masters/room-types/useCreateRoomType';
 import { useUpdateRoomType } from '@/app/queries/room-masters/room-types/useUpdateRoomType';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet,
   SheetContent,
@@ -42,6 +44,37 @@ type RoomTypeFormSheetProps = {
   isResolving: boolean;
   onClose: () => void;
 };
+
+// Mirrors the form while the Room Type loads: a label and a control per field.
+function RoomTypeFormSkeleton() {
+  return (
+    <FieldGroup className="gap-4">
+      <Field>
+        <Skeleton className="h-4 w-14" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-12" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-12" />
+        <div className="flex w-fit items-center gap-2">
+          <Skeleton className="size-9 shrink-0" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-20 w-full rounded-lg" />
+      </Field>
+    </FieldGroup>
+  );
+}
 
 export function RoomTypeFormSheet({
   open,
@@ -141,21 +174,13 @@ export function RoomTypeFormSheet({
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
 
-        {isResolving ? (
-          <div className="flex-1 p-4">
-            <div className="space-y-4">
-              {Array.from({ length: 5 }, (_, i) => (
-                <div key={i} className="bg-muted h-10 animate-pulse rounded-md" />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <form
-            id="room-type-form"
-            onSubmit={onSubmit}
-            className="flex flex-1 flex-col overflow-hidden"
-          >
-            <div className="flex-1 overflow-y-auto p-4">
+        <form
+          id="room-type-form"
+          onSubmit={onSubmit}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto p-4">
+            <SkeletonCrossfade isLoading={isResolving} skeleton={<RoomTypeFormSkeleton />}>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive" className="mb-4">
                   <CiCircleAlert className="size-4" />
@@ -306,19 +331,24 @@ export function RoomTypeFormSheet({
                   )}
                 />
               </FieldGroup>
-            </div>
+            </SkeletonCrossfade>
+          </div>
 
-            <SheetFooter className="bg-background flex-row justify-end border-t p-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button type="submit" form="room-type-form" disabled={isSaving} aria-busy={isSaving}>
-                <CiFloppyDisk className="size-4" />
-                Save
-              </Button>
-            </SheetFooter>
-          </form>
-        )}
+          <SheetFooter className="bg-background flex-row justify-end border-t p-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="room-type-form"
+              disabled={isSaving || isResolving}
+              aria-busy={isSaving || isResolving}
+            >
+              <CiFloppyDisk className="size-4" />
+              Save
+            </Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
   );

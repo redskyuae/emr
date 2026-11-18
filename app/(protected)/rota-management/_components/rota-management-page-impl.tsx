@@ -18,6 +18,7 @@ import { ApiError, getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorRotaQuery } from '@/app/queries/rota-management/useDoctorRota';
 import { useDoctorRotasQuery } from '@/app/queries/rota-management/useDoctorRotas';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -191,99 +192,103 @@ export function RotaManagementPageImpl() {
           </Alert>
         ) : null}
 
-        {rotasQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : rotas.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiCalendarDate />
-              </EmptyMedia>
-              <EmptyTitle>No Doctor Rotas yet</EmptyTitle>
-              <EmptyDescription>
-                Create reusable time-window templates before assigning Doctor schedules.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={openAddSheet}>
-                  <PiPlusLight className="size-4" />
-                  Add Doctor Rota
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : rotas.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Doctor Rotas match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <DoctorRotaTableView
-                rotas={rotas}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setRotaPendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <DoctorRotaCardView
-                rotas={rotas}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setRotaPendingDelete}
-              />
-            ) : (
-              <DoctorRotaListView
-                rotas={rotas}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setRotaPendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={rotasQuery.isLoading}
+          skeleton={<ViewSkeleton layout={viewLayout} showActions={canUpdate || canDelete} />}
+        >
+          {rotas.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiCalendarDate />
+                </EmptyMedia>
+                <EmptyTitle>No Doctor Rotas yet</EmptyTitle>
+                <EmptyDescription>
+                  Create reusable time-window templates before assigning Doctor schedules.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={openAddSheet}>
+                    <PiPlusLight className="size-4" />
+                    Add Doctor Rota
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : rotas.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Doctor Rotas match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <DoctorRotaTableView
+                  rotas={rotas}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setRotaPendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <DoctorRotaCardView
+                  rotas={rotas}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setRotaPendingDelete}
+                />
+              ) : (
+                <DoctorRotaListView
+                  rotas={rotas}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setRotaPendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <DoctorRotaFormSheet

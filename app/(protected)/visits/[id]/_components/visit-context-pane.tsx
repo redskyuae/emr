@@ -14,6 +14,7 @@ import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatme
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -105,20 +106,30 @@ function SafetyList({
 }) {
   return (
     <PaneSection title={`${title} (${loading ? '…' : items.length})`} icon={icon} tone={tone}>
-      {loading ? (
-        <Skeleton className="h-8 w-full" />
-      ) : items.length ? (
-        <ul className="space-y-1 text-sm">
-          {items.map((item) => (
-            <li key={item.id}>
-              <span className="font-medium">{item.label}</span>
-              {item.detail ? <span className="text-muted-foreground"> · {item.detail}</span> : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-muted-foreground text-sm">None recorded.</p>
-      )}
+      <SkeletonCrossfade
+        isLoading={loading}
+        skeleton={
+          <div className="space-y-1" aria-label={`Loading ${title}`}>
+            <Skeleton className="h-4 w-40 max-w-full" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        }
+      >
+        {items.length ? (
+          <ul className="space-y-1 text-sm">
+            {items.map((item) => (
+              <li key={item.id}>
+                <span className="font-medium">{item.label}</span>
+                {item.detail ? (
+                  <span className="text-muted-foreground"> · {item.detail}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground text-sm">None recorded.</p>
+        )}
+      </SkeletonCrossfade>
     </PaneSection>
   );
 }
@@ -190,11 +201,22 @@ export function VisitContextPane({
               icon={PiLeafLight}
               tone="bg-procedure/10 text-procedure"
             >
-              {plansQuery.isLoading ? (
-                <Skeleton className="h-12 w-full" aria-label="Loading Treatment Plans" />
-              ) : (
-                plans.map((plan) => <PlanProgress key={plan.id} plan={plan} visit={visit} />)
-              )}
+              <SkeletonCrossfade
+                isLoading={plansQuery.isLoading}
+                skeleton={
+                  <div className="space-y-1.5" aria-label="Loading Treatment Plans">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-1.5 w-full rounded-sm" />
+                    <Skeleton className="h-3 w-40" />
+                  </div>
+                }
+              >
+                <div className="space-y-2">
+                  {plans.map((plan) => (
+                    <PlanProgress key={plan.id} plan={plan} visit={visit} />
+                  ))}
+                </div>
+              </SkeletonCrossfade>
             </PaneSection>
           ) : null}
 

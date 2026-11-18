@@ -10,6 +10,7 @@ import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapis
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -174,35 +175,43 @@ export function TherapistsPageImpl() {
           <AlertDescription>{getApiErrorMessage(list.error)}</AlertDescription>
         </Alert>
       ) : null}
-      {list.isLoading ? (
-        <TherapistViewSkeleton layout={viewLayout} />
-      ) : therapists.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiUser />
-            </EmptyMedia>
-            <EmptyTitle>No Therapists yet</EmptyTitle>
-            <EmptyDescription>
-              Create a Therapist to assign Ayurvedic Treatment Sessions.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            {canCreate ? (
-              <Button onClick={() => void setTherapistParam('new')}>
-                <PiPlusLight className="size-4" />
-                Add Therapist
-              </Button>
-            ) : null}
-          </EmptyContent>
-        </Empty>
-      ) : viewLayout === 'table' ? (
-        <TherapistTableView {...viewProps} />
-      ) : viewLayout === 'card' ? (
-        <TherapistCardView {...viewProps} />
-      ) : (
-        <TherapistListView {...viewProps} />
-      )}
+      <SkeletonCrossfade
+        isLoading={list.isLoading}
+        skeleton={
+          <TherapistViewSkeleton
+            layout={viewLayout}
+            showActions={viewProps.canEdit || viewProps.canDeactivate || viewProps.canReactivate}
+          />
+        }
+      >
+        {therapists.length === 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CiUser />
+              </EmptyMedia>
+              <EmptyTitle>No Therapists yet</EmptyTitle>
+              <EmptyDescription>
+                Create a Therapist to assign Ayurvedic Treatment Sessions.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              {canCreate ? (
+                <Button onClick={() => void setTherapistParam('new')}>
+                  <PiPlusLight className="size-4" />
+                  Add Therapist
+                </Button>
+              ) : null}
+            </EmptyContent>
+          </Empty>
+        ) : viewLayout === 'table' ? (
+          <TherapistTableView {...viewProps} />
+        ) : viewLayout === 'card' ? (
+          <TherapistCardView {...viewProps} />
+        ) : (
+          <TherapistListView {...viewProps} />
+        )}
+      </SkeletonCrossfade>
       <div className="flex items-center justify-end gap-2">
         <Button
           variant="outline"

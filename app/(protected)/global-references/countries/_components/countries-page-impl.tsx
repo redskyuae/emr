@@ -15,6 +15,7 @@ import {
 import { useCountryQuery } from '@/app/queries/global-references/countries/useCountry';
 import { useDeleteCountry } from '@/app/queries/global-references/countries/useDeleteCountry';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -181,99 +182,108 @@ export function CountriesPageImpl() {
           </Alert>
         ) : null}
 
-        {countriesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : countries.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiGlobe />
-              </EmptyMedia>
-              <EmptyTitle>No Countries yet</EmptyTitle>
-              <EmptyDescription>
-                Create Countries used in address and identity-document context.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setRecordParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Country
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : countries.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Countries match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <CountryTableView
-                countries={countries}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEdit}
-                onDelete={openDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <CountryCardView
-                countries={countries}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEdit}
-                onDelete={openDelete}
-              />
-            ) : (
-              <CountryListView
-                countries={countries}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEdit}
-                onDelete={openDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={countriesQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {countries.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiGlobe />
+                </EmptyMedia>
+                <EmptyTitle>No Countries yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Countries used in address and identity-document context.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setRecordParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Country
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : countries.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Countries match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <CountryTableView
+                  countries={countries}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <CountryCardView
+                  countries={countries}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                />
+              ) : (
+                <CountryListView
+                  countries={countries}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <CountryFormSheet

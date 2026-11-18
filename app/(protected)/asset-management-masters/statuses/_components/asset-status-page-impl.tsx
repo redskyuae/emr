@@ -16,6 +16,7 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetStatusQuery } from '@/app/queries/asset-masters/asset-statuses/useAssetStatus';
 import { useAssetStatusesQuery } from '@/app/queries/asset-masters/asset-statuses/useAssetStatuses';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -186,101 +187,110 @@ export function AssetStatusPageImpl() {
           </Alert>
         ) : null}
 
-        {statusesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : statuses.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiWavePulse1 />
-              </EmptyMedia>
-              <EmptyTitle>No Asset Statuses yet</EmptyTitle>
-              <EmptyDescription>
-                Create Asset Statuses to track the operational lifecycle state of equipment and
-                assets in this Tenant.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setStatusParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Asset Status
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : statuses.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Asset Statuses match &ldquo;{debouncedSearch}&rdquo;. Try a different search
-                term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <AssetStatusTableView
-                statuses={statuses}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(status) => void setStatusParam(String(status.id))}
-                onDelete={(status) => void setDeleteStatusParam(String(status.id))}
-              />
-            ) : viewLayout === 'card' ? (
-              <AssetStatusCardView
-                statuses={statuses}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(status) => void setStatusParam(String(status.id))}
-                onDelete={(status) => void setDeleteStatusParam(String(status.id))}
-              />
-            ) : (
-              <AssetStatusListView
-                statuses={statuses}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(status) => void setStatusParam(String(status.id))}
-                onDelete={(status) => void setDeleteStatusParam(String(status.id))}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={statusesQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {statuses.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiWavePulse1 />
+                </EmptyMedia>
+                <EmptyTitle>No Asset Statuses yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Asset Statuses to track the operational lifecycle state of equipment and
+                  assets in this Tenant.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setStatusParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Asset Status
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : statuses.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Asset Statuses match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <AssetStatusTableView
+                  statuses={statuses}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(status) => void setStatusParam(String(status.id))}
+                  onDelete={(status) => void setDeleteStatusParam(String(status.id))}
+                />
+              ) : viewLayout === 'card' ? (
+                <AssetStatusCardView
+                  statuses={statuses}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(status) => void setStatusParam(String(status.id))}
+                  onDelete={(status) => void setDeleteStatusParam(String(status.id))}
+                />
+              ) : (
+                <AssetStatusListView
+                  statuses={statuses}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(status) => void setStatusParam(String(status.id))}
+                  onDelete={(status) => void setDeleteStatusParam(String(status.id))}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <AssetStatusFormSheet

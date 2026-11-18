@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { visitStatusPresentation } from '../../visits/_utils/visit-status';
-import { formatVisitDay } from '../_utils/previous-visits-filters';
+import { PREVIOUS_VISITS_PAGE_SIZE, formatVisitDay } from '../_utils/previous-visits-filters';
 import { visitDoctorLabel } from '@/lib/visit-doctor-label';
 
 function formatTime(value: Date | string) {
@@ -209,13 +209,92 @@ export function PreviousVisitsTable({
   );
 }
 
+// Mirrors both layouts of the loaded list: the phone cards and the desktop table, with the same
+// header, one sized skeleton per cell, and the count footer.
 export function PreviousVisitsTableSkeleton() {
   return (
     <Card className="py-0" aria-label="Loading Previous Visits">
-      <CardContent className="space-y-2 p-4">
-        {Array.from({ length: 8 }, (_, index) => (
-          <Skeleton key={index} className="h-10 w-full" />
-        ))}
+      <CardContent className="p-0">
+        <ul className="divide-y md:hidden" aria-hidden="true">
+          {Array.from({ length: 5 }, (_, index) => (
+            <li key={index} className="space-y-3 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1.5">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3 w-44" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <Skeleton className="h-3 w-28" />
+                <div className="flex gap-1">
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="size-9" />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div className="hidden md:block">
+          <Table className="min-w-[960px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">Date</TableHead>
+                <TableHead>Visit</TableHead>
+                <TableHead>Patient</TableHead>
+                <TableHead>Doctor</TableHead>
+                <TableHead>Visit Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="pr-4 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: PREVIOUS_VISITS_PAGE_SIZE }, (_, index) => (
+                <TableRow key={index}>
+                  <TableCell className="pl-4">
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-28" />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-40" />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-28" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-12 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </TableCell>
+                  <TableCell className="pr-4">
+                    <div className="flex items-center justify-end gap-1">
+                      <Skeleton className="h-8 w-16" />
+                      <Skeleton className="size-9" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t p-3">
+          <Skeleton className="h-4 w-24" />
+        </div>
       </CardContent>
     </Card>
   );

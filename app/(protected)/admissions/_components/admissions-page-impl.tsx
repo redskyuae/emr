@@ -12,6 +12,7 @@ import { useAdmissionsQuery } from '@/app/queries/admissions/useAdmissions';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,14 +32,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ADMISSION_STATUS_FILTERS } from '../_utils/admission-status';
+import { ADMISSIONS_PAGE_SIZE, ADMISSION_STATUS_FILTERS } from '../_utils/admission-status';
 import { CancelAdmissionDialog } from './_modals/cancel-admission-dialog';
 import { DischargeDialog } from './_modals/discharge-dialog';
 import { TransferBedDialog } from './_modals/transfer-bed-dialog';
 import { AdmitPatientSheet } from './_sheets/admit-patient-sheet';
 import { AdmissionsTable, AdmissionsTableSkeleton } from './admissions-table';
 
-const PAGE_SIZE = 20;
 const ALL_FILTER = 'all';
 
 export function AdmissionsPageImpl() {
@@ -77,7 +77,7 @@ export function AdmissionsPageImpl() {
     doctorId,
     query: debouncedSearch || undefined,
     page,
-    limit: PAGE_SIZE,
+    limit: ADMISSIONS_PAGE_SIZE,
   });
   const wardsQuery = useWardsQuery({ page: 1, limit: 999 });
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
@@ -86,8 +86,8 @@ export function AdmissionsPageImpl() {
   const meta = admissionsQuery.data?.meta;
   const total = meta?.total ?? 0;
   const totalPages = meta?.totalPages ?? 0;
-  const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
-  const rangeEnd = Math.min(page * PAGE_SIZE, total);
+  const rangeStart = total > 0 ? (page - 1) * ADMISSIONS_PAGE_SIZE + 1 : 0;
+  const rangeEnd = Math.min(page * ADMISSIONS_PAGE_SIZE, total);
 
   // ?admit=new opens the sheet; the Bed Board deep-links ?admit=new&ward=…&bed=…
   // with the target Bed preselected.
@@ -212,72 +212,75 @@ export function AdmissionsPageImpl() {
           </Alert>
         ) : null}
 
-        {admissionsQuery.isLoading ? (
-          <AdmissionsTableSkeleton />
-        ) : admissions.length === 0 ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiBedLight />
-              </EmptyMedia>
-              <EmptyTitle>No Admissions match</EmptyTitle>
-              <EmptyDescription>
-                Admit a Patient to a free Bed to start the inpatient census. Configure Wards and
-                Beds under Inpatient Masters first.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setAdmitParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Admit Patient
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : (
-          <>
-            <AdmissionsTable
-              admissions={admissions}
-              onTransfer={setAdmissionPendingTransfer}
-              onDischarge={setAdmissionPendingDischarge}
-              onCancel={setAdmissionPendingCancel}
-              canDischarge={canDischarge}
-              canTransfer={canTransfer}
-              canCancel={canCancel}
-            />
+        <SkeletonCrossfade
+          isLoading={admissionsQuery.isLoading}
+          skeleton={<AdmissionsTableSkeleton canDischarge={canDischarge} />}
+        >
+          {admissions.length === 0 ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiBedLight />
+                </EmptyMedia>
+                <EmptyTitle>No Admissions match</EmptyTitle>
+                <EmptyDescription>
+                  Admit a Patient to a free Bed to start the inpatient census. Configure Wards and
+                  Beds under Inpatient Masters first.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setAdmitParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Admit Patient
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <AdmissionsTable
+                admissions={admissions}
+                onTransfer={setAdmissionPendingTransfer}
+                onDischarge={setAdmissionPendingDischarge}
+                onCancel={setAdmissionPendingCancel}
+                canDischarge={canDischarge}
+                canTransfer={canTransfer}
+                canCancel={canCancel}
+              />
 
-            {totalPages > 1 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 1 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <AdmitPatientSheet

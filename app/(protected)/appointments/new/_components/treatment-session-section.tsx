@@ -12,6 +12,7 @@ import {
 
 import { formatPatientTreatmentPlanSessionDisplayLabel } from '@/app/api/lib/modules/patient-treatment-plan/patient-treatment-plan-session-label';
 
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -128,52 +129,54 @@ export function TreatmentSessionSection({
           <p className="text-muted-foreground text-sm">
             Select a Registered Patient to load their current Treatment Plans.
           </p>
-        ) : state === 'LOADING' ? (
-          <PlanLoadingSkeleton />
-        ) : state === 'PLANS' || state === 'CONFLICT' ? (
-          <PlanSelection
-            control={control}
-            plans={plans}
-            treatments={treatments}
-            canAssignTreatment={canAssignTreatment}
-            selectedTreatment={selectedTreatment}
-            selectedSession={selectedSession}
-            search={treatmentSearch}
-            isLoading={isTreatmentsLoading}
-            error={treatmentsError}
-            onPlanChange={onPlanChange}
-            onTreatmentChange={onTreatmentChange}
-            onSearchChange={onTreatmentSearchChange}
-            onSessionChange={onSessionChange}
-            onRetry={onRetryTreatments}
-            onAddSessions={onAddSessions}
-            planError={errors.patientTreatmentPlanId}
-            treatmentError={errors.treatmentId}
-            sessionError={errors.patientTreatmentPlanSessionId}
-          />
-        ) : state === 'CATALOGUE_FORBIDDEN' ? (
-          <Alert className="border-warning/25 bg-warning/5">
-            <CiWarning className="text-warning size-4" />
-            <AlertTitle>No Current Treatment Plan</AlertTitle>
-            <AlertDescription>
-              You do not have permission to assign a catalogue Treatment to this Patient.
-            </AlertDescription>
-          </Alert>
         ) : (
-          <CatalogueSelection
-            control={control}
-            isProvisional={isProvisional}
-            treatments={treatments}
-            selectedTreatment={selectedTreatment}
-            selectedSession={selectedSession}
-            search={treatmentSearch}
-            isLoading={isTreatmentsLoading}
-            error={treatmentsError}
-            treatmentError={errors.treatmentId}
-            onTreatmentChange={onTreatmentChange}
-            onSearchChange={onTreatmentSearchChange}
-            onRetry={onRetryTreatments}
-          />
+          <SkeletonCrossfade isLoading={state === 'LOADING'} skeleton={<PlanLoadingSkeleton />}>
+            {state === 'PLANS' || state === 'CONFLICT' ? (
+              <PlanSelection
+                control={control}
+                plans={plans}
+                treatments={treatments}
+                canAssignTreatment={canAssignTreatment}
+                selectedTreatment={selectedTreatment}
+                selectedSession={selectedSession}
+                search={treatmentSearch}
+                isLoading={isTreatmentsLoading}
+                error={treatmentsError}
+                onPlanChange={onPlanChange}
+                onTreatmentChange={onTreatmentChange}
+                onSearchChange={onTreatmentSearchChange}
+                onSessionChange={onSessionChange}
+                onRetry={onRetryTreatments}
+                onAddSessions={onAddSessions}
+                planError={errors.patientTreatmentPlanId}
+                treatmentError={errors.treatmentId}
+                sessionError={errors.patientTreatmentPlanSessionId}
+              />
+            ) : state === 'CATALOGUE_FORBIDDEN' ? (
+              <Alert className="border-warning/25 bg-warning/5">
+                <CiWarning className="text-warning size-4" />
+                <AlertTitle>No Current Treatment Plan</AlertTitle>
+                <AlertDescription>
+                  You do not have permission to assign a catalogue Treatment to this Patient.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <CatalogueSelection
+                control={control}
+                isProvisional={isProvisional}
+                treatments={treatments}
+                selectedTreatment={selectedTreatment}
+                selectedSession={selectedSession}
+                search={treatmentSearch}
+                isLoading={isTreatmentsLoading}
+                error={treatmentsError}
+                treatmentError={errors.treatmentId}
+                onTreatmentChange={onTreatmentChange}
+                onSearchChange={onTreatmentSearchChange}
+                onRetry={onRetryTreatments}
+              />
+            )}
+          </SkeletonCrossfade>
         )}
 
         {state === 'CONFLICT' && selectedTreatment?.selectionMode !== 'CATALOGUE' ? (
@@ -726,19 +729,16 @@ function LoadError({
   );
 }
 
+// Mirrors what the Plans load into: the intro line, then the Treatment field (label,
+// combobox and helper line). The Session grid only appears once a Treatment is chosen.
 function PlanLoadingSkeleton() {
   return (
-    <div className="space-y-3" aria-label="Loading Patient Treatment Plans">
-      <Skeleton className="h-4 w-56" />
-      <div className="space-y-3 rounded-lg border p-3">
-        <div className="flex justify-between gap-4">
-          <Skeleton className="h-8 w-52" />
-          <Skeleton className="h-6 w-24" />
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-        </div>
+    <div className="space-y-4" aria-label="Loading Patient Treatment Plans">
+      <Skeleton className="h-4 w-full max-w-md" />
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-3 w-64 max-w-full" />
       </div>
     </div>
   );

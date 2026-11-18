@@ -4,6 +4,9 @@ import type {
 } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 import { DISCHARGE_DISPOSITIONS } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 
+// The Admissions census page size; its loading skeleton shows the same number of rows.
+export const ADMISSIONS_PAGE_SIZE = 20;
+
 type AdmissionStatusPresentation = {
   label: string;
   variant: 'default' | 'secondary' | 'outline' | 'destructive';

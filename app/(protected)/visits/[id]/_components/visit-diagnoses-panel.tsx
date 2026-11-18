@@ -11,6 +11,7 @@ import { useAyurvedaDiagnosisCodesQuery } from '@/app/queries/clinical-masters/a
 import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes';
 import { useSaveVisitDiagnoses } from '@/app/queries/visits/useSaveVisitDiagnoses';
 import { useVisitDiagnosesQuery } from '@/app/queries/visits/useVisitDiagnoses';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -304,6 +305,39 @@ function CodeSystemSummary({
   );
 }
 
+// Mirrors one code system per column: its heading, then either the Primary and Secondary fields
+// (label, control, hint) when editing, or the recorded Primary diagnosis lines when reading.
+function DiagnosesSkeleton({ systemCount, editable }: { systemCount: number; editable: boolean }) {
+  return (
+    <div className="grid gap-6 lg:grid-cols-2" aria-label="Loading diagnoses">
+      {Array.from({ length: systemCount }, (_, index) =>
+        editable ? (
+          <div key={index} className="space-y-3">
+            <Skeleton className="h-3 w-28" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-3 w-56 max-w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        ) : (
+          <div key={index} className="space-y-2">
+            <Skeleton className="h-3 w-28" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-56 max-w-full" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 /**
  * The coded diagnoses for this Visit: ICD-10-CM for claims and, where the clinic
  * practises Ayurveda, the Ayurveda diagnosis. Each code system has one Primary and any
@@ -359,17 +393,7 @@ export function VisitDiagnosesPanel({
         {mode === 'amend' ? <Badge variant="outline">Amending a Completed Visit</Badge> : null}
       </div>
 
-      {diagnosesQuery.isLoading ? (
-        <div className="grid gap-4 lg:grid-cols-2" aria-label="Loading diagnoses">
-          {systems.map((system) => (
-            <div key={system} className="space-y-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-          ))}
-        </div>
-      ) : diagnosesQuery.isError ? (
+      {diagnosesQuery.isError ? (
         <div className="flex flex-wrap items-center gap-2" role="alert">
           <p className="text-destructive text-sm">Diagnoses could not be loaded.</p>
           <Button
@@ -382,50 +406,55 @@ export function VisitDiagnosesPanel({
           </Button>
         </div>
       ) : (
-        <>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {systems.map((system) =>
-              editable ? (
-                <CodeSystemFields
-                  key={system}
-                  codeSystem={system}
-                  drafts={drafts}
-                  onChange={change}
-                />
-              ) : (
-                <CodeSystemSummary key={system} codeSystem={system} drafts={drafts} />
-              )
-            )}
-          </div>
-          {editable ? (
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {draft ? (
+        <SkeletonCrossfade
+          isLoading={diagnosesQuery.isLoading}
+          skeleton={<DiagnosesSkeleton systemCount={systems.length} editable={editable} />}
+        >
+          <div className="space-y-4">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {systems.map((system) =>
+                editable ? (
+                  <CodeSystemFields
+                    key={system}
+                    codeSystem={system}
+                    drafts={drafts}
+                    onChange={change}
+                  />
+                ) : (
+                  <CodeSystemSummary key={system} codeSystem={system} drafts={drafts} />
+                )
+              )}
+            </div>
+            {editable ? (
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {draft ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={saveMutation.isPending}
+                    onClick={() => setDraft(null)}
+                  >
+                    Discard changes
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
-                  variant="ghost"
-                  disabled={saveMutation.isPending}
-                  onClick={() => setDraft(null)}
+                  variant="outline"
+                  disabled={!draft || saveMutation.isPending}
+                  aria-busy={saveMutation.isPending}
+                  onClick={() => void save()}
                 >
-                  Discard changes
+                  <CiFloppyDisk className="size-4" />
+                  {saveMutation.isPending
+                    ? 'Saving…'
+                    : mode === 'amend'
+                      ? 'Save amendment'
+                      : 'Save diagnoses'}
                 </Button>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                disabled={!draft || saveMutation.isPending}
-                aria-busy={saveMutation.isPending}
-                onClick={() => void save()}
-              >
-                <CiFloppyDisk className="size-4" />
-                {saveMutation.isPending
-                  ? 'Saving…'
-                  : mode === 'amend'
-                    ? 'Save amendment'
-                    : 'Save diagnoses'}
-              </Button>
-            </div>
-          ) : null}
-        </>
+              </div>
+            ) : null}
+          </div>
+        </SkeletonCrossfade>
       )}
     </section>
   );

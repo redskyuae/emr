@@ -20,9 +20,10 @@ import { useUpdateDraftInvoice } from '@/app/queries/billing/invoices/useUpdateD
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import {
   createInvoiceFormSchema,
@@ -317,5 +318,117 @@ export function InvoiceComposer() {
         </form>
       </div>
     </FormProvider>
+  );
+}
+
+function ComposerFieldSkeleton() {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  );
+}
+
+// Mirrors the composer while Invoice access is checked: the header card, then the Patient &
+// encounter, Charges and Invoice details cards beside the Payment card and its actions.
+export function InvoiceComposerSkeleton() {
+  return (
+    <div className="space-y-4" aria-label="Loading Invoice editor">
+      <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-5">
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-9" />
+          <div>
+            <h2 className="text-xl font-semibold">New Invoice</h2>
+            <p className="text-muted-foreground text-sm">
+              Select a Patient, add Charges, and collect Payment.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Patient &amp; encounter</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <ComposerFieldSkeleton />
+                <ComposerFieldSkeleton />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Charges</CardTitle>
+              <CardDescription>
+                Add priced Charge Items. Each price is saved on its Invoice Line.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+                <ComposerFieldSkeleton />
+                <ComposerFieldSkeleton />
+                <Skeleton className="h-10 w-20" />
+              </div>
+              <Skeleton className="h-14 w-full" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Invoice details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <ComposerFieldSkeleton />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle className="text-base">Payment</CardTitle>
+              <CardDescription>
+                Split a Payment across supported methods, or leave a Balance Due.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-baseline justify-between gap-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-7 w-28" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[0, 1, 2, 3, 4, 5].map((method) => (
+                  <Skeleton key={method} className="h-8 w-20" />
+                ))}
+              </div>
+              <div className="space-y-2 border-t pt-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+              <Skeleton className="h-4 w-56" />
+            </CardContent>
+          </Card>
+          <div className="space-y-2">
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

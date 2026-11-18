@@ -16,6 +16,7 @@ import { useRemoveStaffRole } from '@/app/queries/identity-access/useRemoveStaff
 import { useStaffByIdQuery } from '@/app/queries/identity-access/useStaff';
 import { useStaffRolesQuery } from '@/app/queries/identity-access/useStaffRoles';
 import { useUpdateStaff } from '@/app/queries/identity-access/useUpdateStaff';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -486,9 +487,7 @@ function StaffRolesEditor({
         </Alert>
       ) : null}
 
-      {assignedQuery.isLoading ? (
-        <Skeleton className="h-8 w-full" />
-      ) : (
+      <SkeletonCrossfade isLoading={assignedQuery.isLoading} skeleton={<AssignedRolesSkeleton />}>
         <div className="flex flex-wrap gap-1.5">
           {assigned.length === 0 ? (
             <span className="text-muted-foreground text-sm">No Roles assigned.</span>
@@ -509,7 +508,7 @@ function StaffRolesEditor({
             ))
           )}
         </div>
-      )}
+      </SkeletonCrossfade>
 
       <Select
         value=""
@@ -601,17 +600,7 @@ function EditUserForm({
     }
   });
 
-  if (staffQuery.isLoading) {
-    return (
-      <div className="flex-1 space-y-4 p-4">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
-    );
-  }
-
-  if (staffQuery.isError || !staff) {
+  if (staffQuery.isError || (!staffQuery.isLoading && !staff)) {
     return (
       <div className="flex-1 p-4">
         <Alert variant="destructive">
@@ -626,26 +615,32 @@ function EditUserForm({
   return (
     <>
       <ScrollArea className="min-h-0 flex-1">
-        <div className="space-y-6 p-4">
-          {serverErrors.length > 0 ? <FormErrors errors={serverErrors} /> : null}
+        <div className="p-4">
+          <SkeletonCrossfade isLoading={staffQuery.isLoading} skeleton={<EditUserFormSkeleton />}>
+            {staff ? (
+              <div className="space-y-6">
+                {serverErrors.length > 0 ? <FormErrors errors={serverErrors} /> : null}
 
-          <Field>
-            <FieldLabel htmlFor="staff-email-readonly">Work email</FieldLabel>
-            <Input id="staff-email-readonly" value={staff.email} readOnly disabled />
-            <p className="text-muted-foreground text-xs">
-              Email and password cannot be changed here.
-            </p>
-          </Field>
+                <Field>
+                  <FieldLabel htmlFor="staff-email-readonly">Work email</FieldLabel>
+                  <Input id="staff-email-readonly" value={staff.email} readOnly disabled />
+                  <p className="text-muted-foreground text-xs">
+                    Email and password cannot be changed here.
+                  </p>
+                </Field>
 
-          <form id="edit-user-form" onSubmit={onSubmit}>
-            <ProfileFields
-              control={form.control as unknown as Control<StaffProfileFieldValues>}
-              disabled={isSaving}
-              nameRequired={false}
-            />
-          </form>
+                <form id="edit-user-form" onSubmit={onSubmit}>
+                  <ProfileFields
+                    control={form.control as unknown as Control<StaffProfileFieldValues>}
+                    disabled={isSaving}
+                    nameRequired={false}
+                  />
+                </form>
 
-          <StaffRolesEditor userId={userId} roles={roles} rolesLoading={rolesLoading} />
+                <StaffRolesEditor userId={userId} roles={roles} rolesLoading={rolesLoading} />
+              </div>
+            ) : null}
+          </SkeletonCrossfade>
         </div>
       </ScrollArea>
 
@@ -653,12 +648,71 @@ function EditUserForm({
         <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
           Cancel
         </Button>
-        <Button type="submit" form="edit-user-form" disabled={isSaving} aria-busy={isSaving}>
+        <Button
+          type="submit"
+          form="edit-user-form"
+          disabled={isSaving || staffQuery.isLoading}
+          aria-busy={isSaving}
+        >
           <CiFloppyDisk className="size-4" />
           Save changes
         </Button>
       </SheetFooter>
     </>
+  );
+}
+
+function AssignedRolesSkeleton() {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      <Skeleton className="h-6 w-24 rounded-full" />
+      <Skeleton className="h-6 w-20 rounded-full" />
+    </div>
+  );
+}
+
+function FieldSkeleton({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={`h-4 ${label}`} />
+      <Skeleton className="h-10 w-full rounded-lg" />
+    </div>
+  );
+}
+
+// Mirrors the edit form while the Staff member loads: read-only email with its hint, the profile
+// fields in the same grids, then the Roles section.
+function EditUserFormSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+        <Skeleton className="h-3 w-56" />
+      </div>
+      <div className="flex flex-col gap-4">
+        <FieldSkeleton label="w-14" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FieldSkeleton label="w-20" />
+          <FieldSkeleton label="w-24" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <FieldSkeleton label="w-14" />
+          <FieldSkeleton label="w-16" />
+          <FieldSkeleton label="w-24" />
+        </div>
+      </div>
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold">Roles</h2>
+          <p className="text-muted-foreground text-sm">
+            Role changes are saved immediately. A Staff member must keep at least one Role.
+          </p>
+        </div>
+        <AssignedRolesSkeleton />
+        <Skeleton className="h-10 w-full rounded-lg sm:w-64" />
+      </section>
+    </div>
   );
 }
 

@@ -13,6 +13,7 @@ import { usePermissionsQuery } from '@/app/queries/identity-access/usePermission
 import { useRolePermissionsQuery } from '@/app/queries/identity-access/useRolePermissions';
 import { useSetRolePermissions } from '@/app/queries/identity-access/useSetRolePermissions';
 import { useUpdateRole } from '@/app/queries/identity-access/useUpdateRole';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { formatCount } from '@/lib/format-count';
 
@@ -217,14 +219,10 @@ export function RoleFormSheet({
           </div>
         </SheetHeader>
 
-        {showFormSkeleton ? (
-          <div className="flex-1 space-y-6 p-4">
-            <PermissionMatrixSkeleton />
-          </div>
-        ) : (
-          <>
-            <ScrollArea className="min-h-0 flex-1">
-              <form id="role-form" onSubmit={onSubmit} className="space-y-6 p-4">
+        <ScrollArea className="min-h-0 flex-1">
+          <form id="role-form" onSubmit={onSubmit} className="p-4">
+            <SkeletonCrossfade isLoading={showFormSkeleton} skeleton={<RoleFormSkeleton />}>
+              <div className="space-y-6">
                 {serverErrors.length > 0 ? (
                   <Alert variant="destructive">
                     <CiCircleAlert className="size-4" />
@@ -358,9 +356,10 @@ export function RoleFormSheet({
                       </AlertDescription>
                     </Alert>
                   ) : null}
-                  {showPermissionSkeleton ? (
-                    <PermissionMatrixSkeleton />
-                  ) : (
+                  <SkeletonCrossfade
+                    isLoading={showPermissionSkeleton}
+                    skeleton={<PermissionMatrixSkeleton />}
+                  >
                     <Controller
                       control={form.control}
                       name="permissionIds"
@@ -389,23 +388,75 @@ export function RoleFormSheet({
                         );
                       }}
                     />
-                  )}
+                  </SkeletonCrossfade>
                 </section>
-              </form>
-            </ScrollArea>
+              </div>
+            </SkeletonCrossfade>
+          </form>
+        </ScrollArea>
 
-            <SheetFooter className="bg-background flex-row justify-end border-t p-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button type="submit" form="role-form" disabled={isSaving} aria-busy={isSaving}>
-                <CiFloppyDisk className="size-4" />
-                Save changes
-              </Button>
-            </SheetFooter>
-          </>
-        )}
+        <SheetFooter className="bg-background flex-row justify-end border-t p-4">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="role-form"
+            disabled={isSaving || showFormSkeleton}
+            aria-busy={isSaving || showFormSkeleton}
+          >
+            <CiFloppyDisk className="size-4" />
+            Save changes
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function FieldSkeleton({ label, className }: { label: string; className?: string }) {
+  return (
+    <div className={`flex flex-col gap-2 ${className ?? ''}`}>
+      <Skeleton className={`h-4 ${label}`} />
+      <Skeleton className="h-10 w-full rounded-lg" />
+    </div>
+  );
+}
+
+// Mirrors the whole form while the Role and Permission Catalogue load: name + assigned Staff,
+// code with its hint, description, then the Permissions heading and matrix.
+function RoleFormSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-4 md:grid-cols-3">
+          <FieldSkeleton label="w-24" className="md:col-span-2" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-28" />
+            <div className="flex min-h-9 items-center">
+              <Skeleton className="h-6 w-28 rounded-full" />
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-3 w-72 max-w-full" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-20 w-full rounded-lg" />
+        </div>
+      </div>
+      <section className="space-y-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold">Permissions</h2>
+          <p className="text-muted-foreground text-sm">
+            Permission changes are saved only when you choose Save changes.
+          </p>
+        </div>
+        <PermissionMatrixSkeleton />
+      </section>
+    </div>
   );
 }

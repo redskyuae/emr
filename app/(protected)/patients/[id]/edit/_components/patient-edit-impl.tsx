@@ -6,6 +6,7 @@ import { PiArrowLeftLight, PiUserMinusLight, PiUsersLight } from 'react-icons/pi
 import { toast } from 'sonner';
 
 import { PatientForm } from '@/app/(protected)/patients/_components/patient-form';
+import { PatientFormSkeleton } from '@/app/(protected)/patients/_components/patient-form-skeleton';
 import {
   patientFormValuesToRequest,
   patientToFormValues,
@@ -14,7 +15,9 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useUpdatePatient } from '@/app/queries/patients/useUpdatePatient';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
@@ -23,6 +26,27 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// The edit form: the read-only MRN card, the form cards, then Cancel / Save changes.
+export function PatientEditFormSkeleton() {
+  return (
+    <div className="space-y-6" aria-label="Loading Patient form">
+      <Card>
+        <CardContent className="flex items-center justify-between py-3">
+          <span className="text-muted-foreground text-sm">Medical Record Number</span>
+          <Skeleton className="h-4 w-24" />
+        </CardContent>
+      </Card>
+
+      <PatientFormSkeleton />
+
+      <div className="flex justify-end gap-2">
+        <Skeleton className="h-9 w-20" />
+        <Skeleton className="h-9 w-36" />
+      </div>
+    </div>
+  );
+}
 
 function BackLink({ patientId }: { patientId: number }) {
   return (
@@ -58,24 +82,7 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
     );
   }
 
-  if (patientQuery.isLoading) {
-    return (
-      <div className="space-y-6" aria-label="Loading Patient">
-        {[0, 1, 2, 3, 4].map((section) => (
-          <div key={section} className="bg-card space-y-4 rounded-xl border p-5">
-            <Skeleton className="h-5 w-40" />
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (patientQuery.isError || !patientQuery.data) {
+  if (patientQuery.isError || (!patientQuery.isLoading && !patientQuery.data)) {
     return (
       <div className="space-y-4">
         <BackLink patientId={patientId} />
@@ -98,22 +105,26 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
     <div className="space-y-4">
       <BackLink patientId={patientId} />
 
-      <PatientForm
-        key={patient.id}
-        mode="edit"
-        mrn={patient.mrn}
-        defaultValues={patientToFormValues(patient)}
-        isSaving={updatePatient.isPending}
-        onCancel={() => router.push(`/patients/${patientId}`)}
-        onSave={async (values) => {
-          await updatePatient.mutateAsync({
-            patientId,
-            request: patientFormValuesToRequest(values),
-          });
-          toast.success('Patient updated.');
-          router.push(`/patients/${patientId}`);
-        }}
-      />
+      <SkeletonCrossfade isLoading={patientQuery.isLoading} skeleton={<PatientEditFormSkeleton />}>
+        {patient ? (
+          <PatientForm
+            key={patient.id}
+            mode="edit"
+            mrn={patient.mrn}
+            defaultValues={patientToFormValues(patient)}
+            isSaving={updatePatient.isPending}
+            onCancel={() => router.push(`/patients/${patientId}`)}
+            onSave={async (values) => {
+              await updatePatient.mutateAsync({
+                patientId,
+                request: patientFormValuesToRequest(values),
+              });
+              toast.success('Patient updated.');
+              router.push(`/patients/${patientId}`);
+            }}
+          />
+        ) : null}
+      </SkeletonCrossfade>
     </div>
   );
 }

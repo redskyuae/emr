@@ -1,3 +1,4 @@
+import { BookAppointmentWorkflowSkeleton } from '@/app/(protected)/appointments/new/_components/book-appointment-page-impl';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function BookAppointmentLoader() {
@@ -8,76 +9,19 @@ export default function BookAppointmentLoader() {
       aria-busy="true"
       role="status"
     >
+      {/* The page header: the instructions and the Facility with its time zone. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Skeleton className="h-4 w-72 max-w-full" />
-        <Skeleton className="h-10 w-48" />
-      </div>
-      <div className="bg-card flex gap-4 rounded-xl border p-4">
-        <Skeleton className="bg-primary/10 h-8 w-44" />
-        <Skeleton className="h-8 w-44" />
-      </div>
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <div className="bg-card space-y-4 rounded-xl border p-5">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-8 w-full" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-4 w-40" />
-          {[0, 1, 2].map((item) => (
-            <Skeleton key={item} className="h-16 w-full" />
-          ))}
-          <div className="space-y-2 rounded-xl border p-3">
-            <div className="flex justify-between">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-4 w-12" />
-            </div>
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </div>
-        <div className="bg-card space-y-4 rounded-xl border p-5">
-          <Skeleton className="h-10 w-48" />
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="bg-primary/10 h-14 w-full" />
-            <Skeleton className="bg-procedure/10 h-14 w-full" />
-          </div>
-          <div className="space-y-2 border-t pt-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="bg-procedure/10 size-9" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-3 w-64 max-w-full" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-3 w-56" />
-            </div>
-            <Skeleton className="h-4 w-64 max-w-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-24" />
-              <div className="grid gap-2 sm:grid-cols-2">
-                {[0, 1, 2, 3, 4].map((item) => (
-                  <Skeleton key={item} className="h-20 w-full" />
-                ))}
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
+        <Skeleton className="h-4 w-80 max-w-full" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-4 shrink-0 rounded-full" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-3 w-40" />
           </div>
         </div>
       </div>
-      <div className="bg-card mt-auto flex items-center justify-between rounded-xl border p-4">
-        <Skeleton className="h-4 w-48" />
-        <Skeleton className="h-8 w-28" />
-      </div>
+
+      <BookAppointmentWorkflowSkeleton />
     </div>
   );
 }

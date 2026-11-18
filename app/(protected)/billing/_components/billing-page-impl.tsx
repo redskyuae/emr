@@ -10,6 +10,7 @@ import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useInvoicesQuery } from '@/app/queries/billing/invoices/useInvoices';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,8 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { OPEN_INVOICE_STATUSES } from '../_utils/invoice-display';
-import BillingPageLoader from '../loader';
-import { InvoiceComposer } from './invoice-composer';
+import { InvoiceComposer, InvoiceComposerSkeleton } from './invoice-composer';
 import { InvoiceTable, InvoiceTableSkeleton } from './invoice-table';
 
 const PAGE_SIZE = 10;
@@ -92,7 +92,6 @@ export function BillingPageImpl() {
   }, [invoiceAccessDenied]);
 
   if (invoiceParam === 'new') {
-    if (canCreateLoading) return <BillingPageLoader variant="composer" />;
     if (canCreateError)
       return (
         <Alert variant="destructive">
@@ -101,14 +100,18 @@ export function BillingPageImpl() {
           <AlertDescription>Refresh the page and try again.</AlertDescription>
         </Alert>
       );
-    return canCreate ? (
-      <InvoiceComposer />
-    ) : (
-      <Alert variant="destructive">
-        <CiCircleAlert className="size-4" />
-        <AlertTitle>Invoice access denied</AlertTitle>
-        <AlertDescription>You do not have permission to create an Invoice.</AlertDescription>
-      </Alert>
+    if (!canCreateLoading && !canCreate)
+      return (
+        <Alert variant="destructive">
+          <CiCircleAlert className="size-4" />
+          <AlertTitle>Invoice access denied</AlertTitle>
+          <AlertDescription>You do not have permission to create an Invoice.</AlertDescription>
+        </Alert>
+      );
+    return (
+      <SkeletonCrossfade isLoading={canCreateLoading} skeleton={<InvoiceComposerSkeleton />}>
+        {canCreate ? <InvoiceComposer /> : null}
+      </SkeletonCrossfade>
     );
   }
 
@@ -173,77 +176,82 @@ export function BillingPageImpl() {
           </Alert>
         ) : null}
 
-        {invoicesQuery.isLoading ? (
-          <InvoiceTableSkeleton />
-        ) : invoices.length === 0 && !isFiltered ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiReceipt />
-              </EmptyMedia>
-              <EmptyTitle>No Invoices yet</EmptyTitle>
-              <EmptyDescription>
-                Raise a bill for a Patient, optionally linked to a Visit or Admission, then add
-                priced Charge Items to it.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button asChild>
-                  <Link href="/billing?invoice=new">
-                    <PiPlusLight className="size-4" />
-                    New Invoice
-                  </Link>
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : invoices.length === 0 ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Invoices match the current filters. Try a different search term or status.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <InvoiceTable invoices={invoices} />
+        {invoicesQuery.isError && !invoicesQuery.data ? null : (
+          <SkeletonCrossfade
+            isLoading={invoicesQuery.isLoading}
+            skeleton={<InvoiceTableSkeleton />}
+          >
+            {invoices.length === 0 && !isFiltered ? (
+              <Empty className="bg-card min-h-80 border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <CiReceipt />
+                  </EmptyMedia>
+                  <EmptyTitle>No Invoices yet</EmptyTitle>
+                  <EmptyDescription>
+                    Raise a bill for a Patient, optionally linked to a Visit or Admission, then add
+                    priced Charge Items to it.
+                  </EmptyDescription>
+                </EmptyHeader>
+                {canCreate ? (
+                  <EmptyContent>
+                    <Button asChild>
+                      <Link href="/billing?invoice=new">
+                        <PiPlusLight className="size-4" />
+                        New Invoice
+                      </Link>
+                    </Button>
+                  </EmptyContent>
+                ) : null}
+              </Empty>
+            ) : invoices.length === 0 ? (
+              <Empty className="bg-card min-h-72 border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <CiSearch />
+                  </EmptyMedia>
+                  <EmptyTitle>No results found</EmptyTitle>
+                  <EmptyDescription>
+                    No Invoices match the current filters. Try a different search term or status.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            ) : (
+              <div className="space-y-4">
+                <InvoiceTable invoices={invoices} />
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
-                </div>
+                {totalPages > 0 ? (
+                  <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                    <p className="text-muted-foreground text-sm">
+                      Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={page <= 1}
+                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      >
+                        <PiCaretLeftLight className="size-4" />
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage((current) => current + 1)}
+                      >
+                        Next
+                        <PiCaretRightLight className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </>
+            )}
+          </SkeletonCrossfade>
         )}
       </div>
     </>

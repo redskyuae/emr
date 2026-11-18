@@ -223,27 +223,76 @@ export function AppointmentsTable({
   );
 }
 
+// Mirrors the loaded table: the same header, one sized skeleton per cell for a full page
+// (five rows), and the "Showing … of …" footer with its pager.
 export function AppointmentsTableSkeleton() {
   return (
-    <div className="bg-card overflow-hidden rounded-xl border p-4">
-      {Array.from({ length: 5 }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-32" />
-          <div className="space-y-1">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-3 w-28" />
-          </div>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="ml-auto h-8 w-10" />
-        </div>
-      ))}
-      <div className="flex items-center justify-between border-t p-3">
-        <Skeleton className="h-5 w-36" />
+    <div className="bg-card overflow-hidden rounded-xl border">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1080px] text-sm">
+          <thead>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Booking</th>
+              <th className={tableHeadCellClass}>Date / Slot</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Therapist</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Mode</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 5 }, (_, row) => (
+              <tr key={row} className="border-b last:border-b-0">
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                    <div className="flex items-center gap-1">
+                      <Skeleton className="size-3 rounded-full" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-28" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-24" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-14 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-12 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="ml-auto size-9" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-col items-center justify-between gap-3 border-t p-3 sm:flex-row">
+        <Skeleton className="h-4 w-40" />
         <div className="flex gap-2">
           <Skeleton className="h-8 w-20" />
           <Skeleton className="h-8 w-16" />

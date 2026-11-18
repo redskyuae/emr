@@ -22,6 +22,7 @@ import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis
 import { useCreateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useCreateDiagnosisCode';
 import { useUpdateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useUpdateDiagnosisCode';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -234,100 +235,103 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
           </Alert>
         ) : null}
 
-        {diagnosisCodesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : diagnosisCodes.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiStethoscope />
-              </EmptyMedia>
-              <EmptyTitle>No Diagnosis Codes yet</EmptyTitle>
-              <EmptyDescription>
-                Add ICD-10-CM Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={openAddSheet}>
-                  <PiPlusLight className="size-4" />
-                  Add Diagnosis Code
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : diagnosisCodes.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Diagnosis Codes match &ldquo;{debouncedSearch}&rdquo;. Try a different search
-                term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <DiagnosisCodeTableView
-                diagnosisCodes={diagnosisCodes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setDiagnosisCodePendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <DiagnosisCodeCardView
-                diagnosisCodes={diagnosisCodes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setDiagnosisCodePendingDelete}
-              />
-            ) : (
-              <DiagnosisCodeListView
-                diagnosisCodes={diagnosisCodes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setDiagnosisCodePendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={diagnosisCodesQuery.isLoading}
+          skeleton={<ViewSkeleton layout={viewLayout} canEdit={canUpdate} canDelete={canDelete} />}
+        >
+          {diagnosisCodes.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiStethoscope />
+                </EmptyMedia>
+                <EmptyTitle>No Diagnosis Codes yet</EmptyTitle>
+                <EmptyDescription>
+                  Add ICD-10-CM Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={openAddSheet}>
+                    <PiPlusLight className="size-4" />
+                    Add Diagnosis Code
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : diagnosisCodes.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Diagnosis Codes match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <DiagnosisCodeTableView
+                  diagnosisCodes={diagnosisCodes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setDiagnosisCodePendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <DiagnosisCodeCardView
+                  diagnosisCodes={diagnosisCodes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setDiagnosisCodePendingDelete}
+                />
+              ) : (
+                <DiagnosisCodeListView
+                  diagnosisCodes={diagnosisCodes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setDiagnosisCodePendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <DiagnosisCodeFormSheet

@@ -13,6 +13,7 @@ import {
   getBedStatusClassName,
   getBedStatusLabel,
 } from '@/app/(protected)/inpatient-masters/beds/_utils/bed-status';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -96,62 +97,64 @@ export function BedBoardImpl() {
         </Alert>
       ) : null}
 
-      {boardQuery.isLoading ? (
-        <BedBoardSkeleton />
-      ) : allWards.length === 0 ? (
-        <Empty className="bg-card min-h-80 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <PiBedLight />
-            </EmptyMedia>
-            <EmptyTitle>No Beds configured</EmptyTitle>
-            <EmptyDescription>
-              Create Wards and Beds under Inpatient Masters to see the occupancy board.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/inpatient-masters/beds">Configure Beds</Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
-      ) : wards.every((ward) => ward.visibleBeds.length === 0) ? (
-        <Empty className="bg-card min-h-72 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiSearch />
-            </EmptyMedia>
-            <EmptyTitle>No Beds match</EmptyTitle>
-            <EmptyDescription>No Beds match the current filters.</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : (
-        wards
-          .filter((ward) => ward.visibleBeds.length > 0)
-          .map((ward) => {
-            const occupied = ward.beds.filter((bed) => bed.status === 'OCCUPIED').length;
+      <SkeletonCrossfade isLoading={boardQuery.isLoading} skeleton={<BedBoardSkeleton />}>
+        {allWards.length === 0 ? (
+          <Empty className="bg-card min-h-80 border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <PiBedLight />
+              </EmptyMedia>
+              <EmptyTitle>No Beds configured</EmptyTitle>
+              <EmptyDescription>
+                Create Wards and Beds under Inpatient Masters to see the occupancy board.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild>
+                <Link href="/inpatient-masters/beds">Configure Beds</Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
+        ) : wards.every((ward) => ward.visibleBeds.length === 0) ? (
+          <Empty className="bg-card min-h-72 border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CiSearch />
+              </EmptyMedia>
+              <EmptyTitle>No Beds match</EmptyTitle>
+              <EmptyDescription>No Beds match the current filters.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <div className="space-y-4">
+            {wards
+              .filter((ward) => ward.visibleBeds.length > 0)
+              .map((ward) => {
+                const occupied = ward.beds.filter((bed) => bed.status === 'OCCUPIED').length;
 
-            return (
-              <Card key={ward.wardId}>
-                <CardHeader className="flex-row items-center justify-between">
-                  <CardTitle className="text-base">
-                    {ward.wardName} <Badge variant="secondary">{ward.wardCode}</Badge>
-                  </CardTitle>
-                  <p className="text-muted-foreground text-sm tabular-nums">
-                    {occupied}/{ward.beds.length} beds occupied
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-                    {ward.visibleBeds.map((bed) => (
-                      <BedTile key={bed.id} bed={bed} wardId={ward.wardId} />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-      )}
+                return (
+                  <Card key={ward.wardId}>
+                    <CardHeader className="flex-row items-center justify-between">
+                      <CardTitle className="text-base">
+                        {ward.wardName} <Badge variant="secondary">{ward.wardCode}</Badge>
+                      </CardTitle>
+                      <p className="text-muted-foreground text-sm tabular-nums">
+                        {occupied}/{ward.beds.length} beds occupied
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                        {ward.visibleBeds.map((bed) => (
+                          <BedTile key={bed.id} bed={bed} wardId={ward.wardId} />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+          </div>
+        )}
+      </SkeletonCrossfade>
     </div>
   );
 }
@@ -212,21 +215,36 @@ function BedTile({ bed, wardId }: { bed: BedBoardBed; wardId: number }) {
   );
 }
 
-function BedBoardSkeleton() {
+// Mirrors the loaded board: one Ward card (name, code badge, occupancy count) per Ward, each
+// holding Bed tiles with the Bed number and status, room line and occupant lines.
+export function BedBoardSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-label="Loading the Bed Board">
       {Array.from({ length: 2 }, (_, wardIndex) => (
-        <div key={wardIndex} className="bg-card space-y-3 rounded-xl border p-5">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-4 w-28" />
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-            {Array.from({ length: 6 }, (_, bedIndex) => (
-              <Skeleton key={bedIndex} className="min-h-28 rounded-lg" />
-            ))}
-          </div>
-        </div>
+        <Card key={wardIndex}>
+          <CardHeader className="flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-6 w-12 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-32" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+              {Array.from({ length: 6 }, (_, bedIndex) => (
+                <div key={bedIndex} className="flex min-h-28 flex-col gap-1 rounded-lg border p-3">
+                  <div className="flex items-center justify-between gap-1">
+                    <Skeleton className="h-4 w-14" />
+                    <Skeleton className="h-3 w-14" />
+                  </div>
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="mt-auto h-4 w-24 max-w-full" />
+                  <Skeleton className="h-3 w-28 max-w-full" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

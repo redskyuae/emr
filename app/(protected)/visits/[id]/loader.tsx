@@ -1,5 +1,21 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { ConsultationSkeleton } from './_components/visit-consultation-panel';
+
+function PaneSectionSkeleton({ lines }: { lines: number }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Skeleton className="size-6 rounded-md" />
+        <Skeleton className="h-3 w-28" />
+      </div>
+      {Array.from({ length: lines }, (_, index) => (
+        <Skeleton key={index} className="h-4 w-full max-w-48" />
+      ))}
+    </div>
+  );
+}
+
 export default function VisitDetailPageLoader() {
   return (
     <div
@@ -11,54 +27,34 @@ export default function VisitDetailPageLoader() {
           <Skeleton className="size-9" />
           <Skeleton className="size-11 rounded-lg" />
           <div className="space-y-2">
-            <Skeleton className="h-6 w-56" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-44" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
             <Skeleton className="h-4 w-80 max-w-full" />
           </div>
         </div>
         <div className="flex gap-2">
-          <Skeleton className="h-10 w-28" />
-          <Skeleton className="h-10 w-36" />
+          <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-9 w-40" />
         </div>
       </div>
 
       <div className="grid gap-3 xl:min-h-0 xl:flex-1 xl:grid-cols-[17rem_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)]">
-        <div className="flex min-w-0 flex-col gap-3 xl:order-2 xl:min-h-0">
-          <div className="grid gap-3 xl:min-h-0 xl:flex-1">
-            <div className="bg-card flex flex-col rounded-lg border">
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-1 border-b p-1.5">
-                {Array.from({ length: 5 }, (_, index) => (
-                  <div key={index} className="flex min-h-11 items-center gap-2 px-2.5">
-                    <Skeleton className="size-6 rounded-full" />
-                    <div className="space-y-1">
-                      <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-3 w-12" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex-1 space-y-4 p-5">
-                <Skeleton className="h-7 w-40" />
-                <Skeleton className="h-4 w-80 max-w-full" />
-                <Skeleton className="h-10 w-64" />
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-24 w-full" />
-              </div>
-              <div className="flex items-center justify-between gap-3 border-t p-3">
-                <Skeleton className="h-10 w-28" />
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-10 w-48" />
-              </div>
-            </div>
-          </div>
+        <div className="min-w-0 xl:order-2 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:p-0.5">
+          <ConsultationSkeleton stepCount={5} />
         </div>
 
-        <div className="bg-card space-y-4 rounded-xl border p-4 xl:order-1">
-          <Skeleton className="h-10 w-full rounded-full" />
-          <Skeleton className="h-4 w-32" />
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-7 w-full" />
-          ))}
-          <Skeleton className="h-12 w-full" />
+        <div className="bg-card flex flex-col rounded-lg border xl:order-1 xl:min-h-0">
+          <div className="border-b p-1.5">
+            <Skeleton className="h-10 w-full rounded-full" />
+          </div>
+          <div className="space-y-5 p-4">
+            <PaneSectionSkeleton lines={5} />
+            <PaneSectionSkeleton lines={1} />
+            <PaneSectionSkeleton lines={1} />
+            <PaneSectionSkeleton lines={1} />
+          </div>
         </div>
       </div>
     </div>

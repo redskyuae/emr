@@ -10,6 +10,7 @@ import type { DoctorRota } from '@/app/api/lib/modules/doctor-rota/schemas/docto
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useCreateDoctorRota } from '@/app/queries/rota-management/useCreateDoctorRota';
 import { useUpdateDoctorRota } from '@/app/queries/rota-management/useUpdateDoctorRota';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -187,82 +188,69 @@ export function DoctorRotaFormSheet({
                   </Button>
                 </AlertDescription>
               </Alert>
-            ) : isResolving ? (
-              <FieldGroup className="gap-4">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              </FieldGroup>
             ) : (
-              <FieldGroup className="gap-4">
-                <Field data-invalid={!!errors.name}>
-                  <FieldLabel htmlFor="doctor-rota-name">
-                    Name{' '}
-                    <span aria-hidden="true" className="text-destructive">
-                      *
-                    </span>
-                  </FieldLabel>
-                  <Input
-                    id="doctor-rota-name"
-                    {...register('name')}
-                    disabled={isSaving}
-                    maxLength={100}
-                    placeholder="e.g. Morning Rota"
-                    aria-required="true"
-                    aria-invalid={!!errors.name}
-                  />
-                  <FieldError errors={[errors.name]} />
-                </Field>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field data-invalid={!!errors.fromTime}>
-                    <FieldLabel htmlFor="doctor-rota-from-time">
-                      From time{' '}
+              <SkeletonCrossfade isLoading={isResolving} skeleton={<DoctorRotaFieldsSkeleton />}>
+                <FieldGroup className="gap-4">
+                  <Field data-invalid={!!errors.name}>
+                    <FieldLabel htmlFor="doctor-rota-name">
+                      Name{' '}
                       <span aria-hidden="true" className="text-destructive">
                         *
                       </span>
                     </FieldLabel>
                     <Input
-                      id="doctor-rota-from-time"
-                      type="time"
-                      {...register('fromTime')}
+                      id="doctor-rota-name"
+                      {...register('name')}
                       disabled={isSaving}
+                      maxLength={100}
+                      placeholder="e.g. Morning Rota"
                       aria-required="true"
-                      aria-invalid={!!errors.fromTime}
-                      className="font-mono"
+                      aria-invalid={!!errors.name}
                     />
-                    <FieldError errors={[errors.fromTime]} />
+                    <FieldError errors={[errors.name]} />
                   </Field>
 
-                  <Field data-invalid={!!errors.toTime}>
-                    <FieldLabel htmlFor="doctor-rota-to-time">
-                      To time{' '}
-                      <span aria-hidden="true" className="text-destructive">
-                        *
-                      </span>
-                    </FieldLabel>
-                    <Input
-                      id="doctor-rota-to-time"
-                      type="time"
-                      {...register('toTime')}
-                      disabled={isSaving}
-                      aria-required="true"
-                      aria-invalid={!!errors.toTime}
-                      className="font-mono"
-                    />
-                    <FieldError errors={[errors.toTime]} />
-                  </Field>
-                </div>
-              </FieldGroup>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field data-invalid={!!errors.fromTime}>
+                      <FieldLabel htmlFor="doctor-rota-from-time">
+                        From time{' '}
+                        <span aria-hidden="true" className="text-destructive">
+                          *
+                        </span>
+                      </FieldLabel>
+                      <Input
+                        id="doctor-rota-from-time"
+                        type="time"
+                        {...register('fromTime')}
+                        disabled={isSaving}
+                        aria-required="true"
+                        aria-invalid={!!errors.fromTime}
+                        className="font-mono"
+                      />
+                      <FieldError errors={[errors.fromTime]} />
+                    </Field>
+
+                    <Field data-invalid={!!errors.toTime}>
+                      <FieldLabel htmlFor="doctor-rota-to-time">
+                        To time{' '}
+                        <span aria-hidden="true" className="text-destructive">
+                          *
+                        </span>
+                      </FieldLabel>
+                      <Input
+                        id="doctor-rota-to-time"
+                        type="time"
+                        {...register('toTime')}
+                        disabled={isSaving}
+                        aria-required="true"
+                        aria-invalid={!!errors.toTime}
+                        className="font-mono"
+                      />
+                      <FieldError errors={[errors.toTime]} />
+                    </Field>
+                  </div>
+                </FieldGroup>
+              </SkeletonCrossfade>
             )}
           </div>
 
@@ -282,5 +270,27 @@ export function DoctorRotaFormSheet({
         </form>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function FieldSkeleton({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={`h-4 ${label}`} />
+      <Skeleton className="h-10 w-full rounded-lg" />
+    </div>
+  );
+}
+
+// Mirrors the form while the Doctor Rota resolves: Name, then From/To time side by side.
+function DoctorRotaFieldsSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <FieldSkeleton label="w-14" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FieldSkeleton label="w-24" />
+        <FieldSkeleton label="w-20" />
+      </div>
+    </div>
   );
 }

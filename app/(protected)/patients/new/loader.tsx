@@ -1,31 +1,17 @@
+import { PatientFormSkeleton } from '@/app/(protected)/patients/_components/patient-form-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 
+// Registration renders the same PatientForm as Patient edit, without the MRN card, so it
+// reuses the shared form skeleton and adds its own Cancel / Register patient row.
 export default function PatientRegistrationLoader() {
   return (
     <div className="space-y-6" aria-label="Loading Patient form">
-      {[0, 1, 2, 3, 4].map((section) => (
-        <div key={section} className="bg-card space-y-4 rounded-xl border p-5">
-          <Skeleton className="h-5 w-40" />
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          {/* The Identifiers card carries the mode-switching Emirates ID row and
-              the optional Identity Documents action, so it is taller than the others. */}
-          {section === 0 ? (
-            <>
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-24 w-full" />
-              </div>
-              <Skeleton className="h-10 w-full sm:w-1/2" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-48" />
-            </>
-          ) : null}
-        </div>
-      ))}
+      <PatientFormSkeleton />
+
+      <div className="flex justify-end gap-2">
+        <Skeleton className="h-9 w-20" />
+        <Skeleton className="h-9 w-36" />
+      </div>
     </div>
   );
 }

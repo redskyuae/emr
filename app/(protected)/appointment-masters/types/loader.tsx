@@ -1,76 +1,19 @@
+import { ViewSkeleton } from '@/app/(protected)/appointment-masters/types/_components/type-skeletons';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  tableCellClass,
-  tableHeadCellClass,
-  tableHeadRowClass,
-} from '@/components/ui/table-styles';
-import { cn } from '@/lib/utils';
 
 export default function AppointmentTypesPageLoader() {
   return (
-    <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
-        <Skeleton className="h-10 w-56" />
-        <Skeleton className="h-10 w-full lg:max-w-sm" />
-        <div className="flex gap-2 lg:ml-auto">
-          <Skeleton className="h-10 w-44" />
-        </div>
-      </div>
+    <div className="space-y-4" aria-label="Loading Appointment Types">
+      <Card>
+        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <Skeleton className="h-10 w-60" />
+          <Skeleton className="h-10 w-full lg:max-w-sm" />
+          <Skeleton className="h-10 w-full sm:ml-auto sm:w-52" />
+        </CardContent>
+      </Card>
 
-      <div className="bg-card overflow-hidden rounded-xl border">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
-            <thead>
-              <tr className={tableHeadRowClass}>
-                <th className={tableHeadCellClass}>
-                  <Skeleton className="h-4 w-12" />
-                </th>
-                <th className={tableHeadCellClass}>
-                  <Skeleton className="h-4 w-10" />
-                </th>
-                <th className={tableHeadCellClass}>
-                  <Skeleton className="h-4 w-20" />
-                </th>
-                <th className={tableHeadCellClass}>
-                  <Skeleton className="h-4 w-20" />
-                </th>
-                <th className={cn(tableHeadCellClass, 'text-right')}>
-                  <Skeleton className="ml-auto h-4 w-14" />
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 5 }, (_, i) => (
-                <tr key={i} className="border-b last:border-b-0">
-                  <td className={tableCellClass}>
-                    <Skeleton className="h-5 w-32" />
-                  </td>
-                  <td className={tableCellClass}>
-                    <Skeleton className="h-5 w-16" />
-                  </td>
-                  <td className={tableCellClass}>
-                    <Skeleton className="h-5 w-48" />
-                  </td>
-                  <td className={tableCellClass}>
-                    <Skeleton className="h-5 w-24" />
-                  </td>
-                  <td className={cn(tableCellClass, 'text-right')}>
-                    <Skeleton className="ml-auto h-8 w-8" />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-        <Skeleton className="h-5 w-36" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-8 w-20" />
-        </div>
-      </div>
+      <ViewSkeleton layout="table" canEdit canDelete />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import { type State, useStatesQuery } from '@/app/queries/global-references/stat
 import { useStateQuery } from '@/app/queries/global-references/states/useState';
 import { useDeleteState } from '@/app/queries/global-references/states/useDeleteState';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -254,111 +255,122 @@ export function StatesPageImpl() {
           </Alert>
         ) : null}
 
-        {statesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : states.length === 0 && !hasActiveFilter ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiMapPin />
-              </EmptyMedia>
-              <EmptyTitle>No States yet</EmptyTitle>
-              <EmptyDescription>
-                Create States under Countries for address context.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setRecordParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add State
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : states.length === 0 && hasActiveFilter ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                {debouncedSearch && countryFilter !== 'all' ? (
-                  <>
-                    No States match &ldquo;{debouncedSearch}&rdquo; in Country &ldquo;
-                    {selectedCountryName}&rdquo;. Try a different search term or Country.
-                  </>
-                ) : debouncedSearch ? (
-                  <>No States match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.</>
-                ) : (
-                  <>
-                    No States found for Country &ldquo;{selectedCountryName}&rdquo;. Try a different
-                    Country or clear the filter.
-                  </>
-                )}
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <StateTableView
-                states={states}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEdit}
-                onDelete={openDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <StateCardView
-                states={states}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEdit}
-                onDelete={openDelete}
-              />
-            ) : (
-              <StateListView
-                states={states}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEdit}
-                onDelete={openDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={statesQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {states.length === 0 && !hasActiveFilter ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiMapPin />
+                </EmptyMedia>
+                <EmptyTitle>No States yet</EmptyTitle>
+                <EmptyDescription>
+                  Create States under Countries for address context.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setRecordParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add State
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : states.length === 0 && hasActiveFilter ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  {debouncedSearch && countryFilter !== 'all' ? (
+                    <>
+                      No States match &ldquo;{debouncedSearch}&rdquo; in Country &ldquo;
+                      {selectedCountryName}&rdquo;. Try a different search term or Country.
+                    </>
+                  ) : debouncedSearch ? (
+                    <>
+                      No States match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
+                    </>
+                  ) : (
+                    <>
+                      No States found for Country &ldquo;{selectedCountryName}&rdquo;. Try a
+                      different Country or clear the filter.
+                    </>
+                  )}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <StateTableView
+                  states={states}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <StateCardView
+                  states={states}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                />
+              ) : (
+                <StateListView
+                  states={states}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <StateFormSheet

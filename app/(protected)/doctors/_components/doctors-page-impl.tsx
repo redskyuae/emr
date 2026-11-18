@@ -22,6 +22,7 @@ import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorQuery } from '@/app/queries/doctors/useDoctor';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useSpecialtiesQuery } from '@/app/queries/specialties/useSpecialties';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -246,102 +247,110 @@ export function DoctorsPageImpl() {
           </Alert>
         ) : null}
 
-        {doctorsQuery.isLoading ? (
-          <DoctorViewSkeleton layout={viewLayout} />
-        ) : doctors.length === 0 && !hasFilters ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiStethoscope />
-              </EmptyMedia>
-              <EmptyTitle>No Doctors yet</EmptyTitle>
-              <EmptyDescription>
-                Add Doctors in this Tenant so Doctor Schedules and Appointments can use them.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setDoctorParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Doctor
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : doctors.length === 0 ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Doctors match the current search and filters. Try widening them.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <DoctorTableView
-                doctors={doctors}
-                canEdit={canUpdate}
-                canDeactivate={canDeactivate}
-                canReactivate={canReactivate}
-                onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
-                onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
-              />
-            ) : viewLayout === 'card' ? (
-              <DoctorCardView
-                doctors={doctors}
-                canEdit={canUpdate}
-                canDeactivate={canDeactivate}
-                canReactivate={canReactivate}
-                onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
-                onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
-              />
-            ) : (
-              <DoctorListView
-                doctors={doctors}
-                canEdit={canUpdate}
-                canDeactivate={canDeactivate}
-                canReactivate={canReactivate}
-                onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
-                onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={doctorsQuery.isLoading}
+          skeleton={
+            <DoctorViewSkeleton
+              layout={viewLayout}
+              showActions={canUpdate || canDeactivate || canReactivate}
+            />
+          }
+        >
+          {doctors.length === 0 && !hasFilters ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiStethoscope />
+                </EmptyMedia>
+                <EmptyTitle>No Doctors yet</EmptyTitle>
+                <EmptyDescription>
+                  Add Doctors in this Tenant so Doctor Schedules and Appointments can use them.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setDoctorParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Doctor
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : doctors.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Doctors match the current search and filters. Try widening them.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <DoctorTableView
+                  doctors={doctors}
+                  canEdit={canUpdate}
+                  canDeactivate={canDeactivate}
+                  canReactivate={canReactivate}
+                  onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
+                  onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
+                />
+              ) : viewLayout === 'card' ? (
+                <DoctorCardView
+                  doctors={doctors}
+                  canEdit={canUpdate}
+                  canDeactivate={canDeactivate}
+                  canReactivate={canReactivate}
+                  onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
+                  onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
+                />
+              ) : (
+                <DoctorListView
+                  doctors={doctors}
+                  canEdit={canUpdate}
+                  canDeactivate={canDeactivate}
+                  canReactivate={canReactivate}
+                  onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
+                  onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}-{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}-{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <DoctorFormSheet

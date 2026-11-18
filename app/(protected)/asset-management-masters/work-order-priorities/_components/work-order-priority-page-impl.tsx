@@ -10,6 +10,7 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWorkOrderPriorityQuery } from '@/app/queries/asset-masters/work-order-priorities/useWorkOrderPriority';
 import { useWorkOrderPrioritiesQuery } from '@/app/queries/asset-masters/work-order-priorities/useWorkOrderPriorities';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -171,99 +172,110 @@ export function WorkOrderPriorityPageImpl() {
           </Alert>
         ) : null}
 
-        {prioritiesQuery.isError ? null : prioritiesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : priorities.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiFlag1 />
-              </EmptyMedia>
-              <EmptyTitle>No Work Order Priorities yet</EmptyTitle>
-              <EmptyDescription>
-                Create Work Order Priorities to rank the urgency of Work Orders in this Tenant.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setPriorityParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Work Order Priority
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : priorities.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Work Order Priorities match &ldquo;{debouncedSearch}&rdquo;. Try a different
-                search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <WorkOrderPriorityTableView
-                priorities={priorities}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(priority) => void setPriorityParam(String(priority.id))}
-                onDelete={setPriorityPendingDelete}
+        {prioritiesQuery.isError ? null : (
+          <SkeletonCrossfade
+            isLoading={prioritiesQuery.isLoading}
+            skeleton={
+              <ViewSkeleton
+                layout={viewLayout}
+                canEdit={Boolean(canUpdate)}
+                canDelete={Boolean(canDelete)}
               />
-            ) : viewLayout === 'card' ? (
-              <WorkOrderPriorityCardView
-                priorities={priorities}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(priority) => void setPriorityParam(String(priority.id))}
-                onDelete={setPriorityPendingDelete}
-              />
+            }
+          >
+            {priorities.length === 0 && !debouncedSearch ? (
+              <Empty className="bg-card min-h-80 border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <CiFlag1 />
+                  </EmptyMedia>
+                  <EmptyTitle>No Work Order Priorities yet</EmptyTitle>
+                  <EmptyDescription>
+                    Create Work Order Priorities to rank the urgency of Work Orders in this Tenant.
+                  </EmptyDescription>
+                </EmptyHeader>
+                {canCreate ? (
+                  <EmptyContent>
+                    <Button type="button" onClick={() => void setPriorityParam('new')}>
+                      <PiPlusLight className="size-4" />
+                      Add Work Order Priority
+                    </Button>
+                  </EmptyContent>
+                ) : null}
+              </Empty>
+            ) : priorities.length === 0 && debouncedSearch ? (
+              <Empty className="bg-card min-h-72 border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <CiSearch />
+                  </EmptyMedia>
+                  <EmptyTitle>No results found</EmptyTitle>
+                  <EmptyDescription>
+                    No Work Order Priorities match &ldquo;{debouncedSearch}&rdquo;. Try a different
+                    search term.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             ) : (
-              <WorkOrderPriorityListView
-                priorities={priorities}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(priority) => void setPriorityParam(String(priority.id))}
-                onDelete={setPriorityPendingDelete}
-              />
-            )}
+              <div className="space-y-4">
+                {viewLayout === 'table' ? (
+                  <WorkOrderPriorityTableView
+                    priorities={priorities}
+                    canEdit={canUpdate}
+                    canDelete={canDelete}
+                    onEdit={(priority) => void setPriorityParam(String(priority.id))}
+                    onDelete={setPriorityPendingDelete}
+                  />
+                ) : viewLayout === 'card' ? (
+                  <WorkOrderPriorityCardView
+                    priorities={priorities}
+                    canEdit={canUpdate}
+                    canDelete={canDelete}
+                    onEdit={(priority) => void setPriorityParam(String(priority.id))}
+                    onDelete={setPriorityPendingDelete}
+                  />
+                ) : (
+                  <WorkOrderPriorityListView
+                    priorities={priorities}
+                    canEdit={canUpdate}
+                    canDelete={canDelete}
+                    onEdit={(priority) => void setPriorityParam(String(priority.id))}
+                    onDelete={setPriorityPendingDelete}
+                  />
+                )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
-                </div>
+                {totalPages > 0 ? (
+                  <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                    <p className="text-muted-foreground text-sm">
+                      Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={page <= 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      >
+                        <PiCaretLeftLight className="size-4" />
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage((p) => p + 1)}
+                      >
+                        Next
+                        <PiCaretRightLight className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </>
+            )}
+          </SkeletonCrossfade>
         )}
       </div>
 

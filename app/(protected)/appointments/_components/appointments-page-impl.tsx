@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { todayDisplayDate, tomorrowDisplayDate } from '../_utils/appointment-date';
 import { getPaginationCorrection } from '../_utils/appointment-pagination';
-import { AppointmentDaySection, AppointmentDaySectionSkeleton } from './appointment-day-section';
+import { AppointmentDaySection } from './appointment-day-section';
 import { AppointmentsTabToolbar } from './appointments-tab-toolbar';
 import { CancelAppointmentDialog } from './_modals/cancel-appointment-dialog';
 import { AppointmentDetailSheet } from './_sheets/appointment-detail-sheet';
@@ -233,8 +233,6 @@ export function AppointmentsPageImpl() {
                 {getApiErrorMessage(todayAppointmentsQuery.error)}
               </AlertDescription>
             </Alert>
-          ) : todayLoading ? (
-            <AppointmentDaySectionSkeleton />
           ) : (
             <AppointmentDaySection
               id="today-appointments"
@@ -245,6 +243,7 @@ export function AppointmentsPageImpl() {
               totalPages={todayMeta?.totalPages ?? 0}
               page={todayPage}
               pageSize={PAGE_SIZE}
+              isLoading={todayLoading}
               isFetching={todayAppointmentsQuery.isFetching}
               description={`Appointments scheduled for today, ${todayDate}.`}
               emptyDescription="No Appointments scheduled for today match the current filters."
@@ -277,8 +276,6 @@ export function AppointmentsPageImpl() {
                 {getApiErrorMessage(upcomingAppointmentsQuery.error)}
               </AlertDescription>
             </Alert>
-          ) : upcomingLoading ? (
-            <AppointmentDaySectionSkeleton />
           ) : (
             <AppointmentDaySection
               id="upcoming-appointments"
@@ -289,6 +286,7 @@ export function AppointmentsPageImpl() {
               totalPages={upcomingMeta?.totalPages ?? 0}
               page={upcomingPage}
               pageSize={PAGE_SIZE}
+              isLoading={upcomingLoading}
               isFetching={upcomingAppointmentsQuery.isFetching}
               description={`Future Appointments from ${tomorrowDate} onward.`}
               emptyDescription="No future Appointments match the current filters."

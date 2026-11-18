@@ -9,6 +9,7 @@ import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-sche
 import type { Paginated } from '@/app/api/lib/utils/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { getPatientGenderLabel } from '@/app/(protected)/patients/_utils/patient-value-sets';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -139,129 +140,181 @@ export function PatientsTable({
   return (
     <Card className="py-0">
       <CardContent className="p-0">
-        {isLoading ? (
-          <PatientsTableSkeleton />
-        ) : patients.length === 0 ? (
-          <Empty className="min-h-72 border-0">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiUsersLight className="size-5" />
-              </EmptyMedia>
-              <EmptyTitle>No Patients found.</EmptyTitle>
-              <EmptyDescription>
-                Try a different search term or filter — or register a new Patient.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <Table className={cn('min-w-max', isFetching && 'opacity-70 transition-opacity')}>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-4">MRN</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Gender</TableHead>
-                  <TableHead>Age / Date of birth</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Registration</TableHead>
-                  <TableHead className="pr-4">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {patients.map((patient) => (
-                  <TableRow key={patient.id}>
-                    <TableCell className="pl-4">
-                      <Link
-                        href={`/patients/${patient.id}`}
-                        className="hover:text-primary font-mono text-sm hover:underline"
-                      >
-                        {patient.mrn}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <Link href={`/patients/${patient.id}`} className="hover:underline">
-                        {getPatientFullName(patient)}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <PatientGenderCell gender={patient.gender} />
-                    </TableCell>
-                    <TableCell>
-                      <PatientAgeCell dateOfBirth={patient.dateOfBirth} />
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-1.5">
-                        <CiPhone aria-hidden className="text-phone size-4.5 shrink-0" />
-                        {patient.phone}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          patient.registrationStatus === 'registered' ? 'secondary' : 'outline'
-                        }
-                      >
-                        {patient.registrationStatus === 'registered' ? 'Registered' : 'Provisional'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="pr-4">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          patient.isActive
-                            ? 'border-chart-4/20 bg-chart-4/10 text-chart-4'
-                            : 'bg-muted/60 text-muted-foreground'
-                        )}
-                      >
-                        {patient.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
+        <SkeletonCrossfade isLoading={isLoading} skeleton={<PatientsTableSkeleton />}>
+          {patients.length === 0 ? (
+            <Empty className="min-h-72 border-0">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiUsersLight className="size-5" />
+                </EmptyMedia>
+                <EmptyTitle>No Patients found.</EmptyTitle>
+                <EmptyDescription>
+                  Try a different search term or filter — or register a new Patient.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <>
+              <Table className={cn('min-w-max', isFetching && 'opacity-70 transition-opacity')}>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-4">MRN</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Gender</TableHead>
+                    <TableHead>Age / Date of birth</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Registration</TableHead>
+                    <TableHead className="pr-4">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {patients.map((patient) => (
+                    <TableRow key={patient.id}>
+                      <TableCell className="pl-4">
+                        <Link
+                          href={`/patients/${patient.id}`}
+                          className="hover:text-primary font-mono text-sm hover:underline"
+                        >
+                          {patient.mrn}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/patients/${patient.id}`} className="hover:underline">
+                          {getPatientFullName(patient)}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <PatientGenderCell gender={patient.gender} />
+                      </TableCell>
+                      <TableCell>
+                        <PatientAgeCell dateOfBirth={patient.dateOfBirth} />
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center gap-1.5">
+                          <CiPhone aria-hidden className="text-phone size-4.5 shrink-0" />
+                          {patient.phone}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            patient.registrationStatus === 'registered' ? 'secondary' : 'outline'
+                          }
+                        >
+                          {patient.registrationStatus === 'registered'
+                            ? 'Registered'
+                            : 'Provisional'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="pr-4">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            patient.isActive
+                              ? 'border-chart-4/20 bg-chart-4/10 text-chart-4'
+                              : 'bg-muted/60 text-muted-foreground'
+                          )}
+                        >
+                          {patient.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-            <div className="flex flex-col items-center justify-between gap-3 border-t p-3 sm:flex-row">
-              <p className="text-muted-foreground text-sm">
-                {total} {total === 1 ? 'Patient' : 'Patients'}
-                {totalPages > 1 ? ` · Page ${page} of ${totalPages}` : ''}
-              </p>
-              {totalPages > 1 ? (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1 || isFetching}
-                    onClick={() => onPageChange(page - 1)}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages || isFetching}
-                    onClick={() => onPageChange(page + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          </>
-        )}
+              <div className="flex flex-col items-center justify-between gap-3 border-t p-3 sm:flex-row">
+                <p className="text-muted-foreground text-sm">
+                  {total} {total === 1 ? 'Patient' : 'Patients'}
+                  {totalPages > 1 ? ` · Page ${page} of ${totalPages}` : ''}
+                </p>
+                {totalPages > 1 ? (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1 || isFetching}
+                      onClick={() => onPageChange(page - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages || isFetching}
+                      onClick={() => onPageChange(page + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          )}
+        </SkeletonCrossfade>
       </CardContent>
     </Card>
   );
 }
 
-function PatientsTableSkeleton() {
+// Mirrors the loaded table: the same header and one sized skeleton per cell, plus the footer.
+export function PatientsTableSkeleton() {
   return (
-    <div className="space-y-2 p-4">
-      {[0, 1, 2, 3, 4, 5].map((item) => (
-        <Skeleton key={item} className="h-10 w-full" />
-      ))}
-    </div>
+    <>
+      <Table className="min-w-max">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="pl-4">MRN</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Gender</TableHead>
+            <TableHead>Age / Date of birth</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead>Registration</TableHead>
+            <TableHead className="pr-4">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 10 }, (_, row) => (
+            <TableRow key={row}>
+              <TableCell className="pl-4">
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-36" />
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="size-4.5 rounded-full" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-baseline gap-2">
+                  <Skeleton className="h-4 w-14" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="size-4.5 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </TableCell>
+              <TableCell className="pr-4">
+                <Skeleton className="h-5 w-14 rounded-full" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <div className="flex items-center justify-between gap-3 border-t p-3">
+        <Skeleton className="h-4 w-24" />
+      </div>
+    </>
   );
 }

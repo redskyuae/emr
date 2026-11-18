@@ -4,6 +4,7 @@ import { PiBedLight, PiDoorOpenLight, PiStackLight } from 'react-icons/pi';
 import type { RoomSummary } from '@/app/api/lib/modules/room/schemas/room-schema';
 import { StatCard, StatCardSkeleton } from '@/components/app/stat-card';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function RoomSummaryCards({ summary }: { summary: RoomSummary }) {
   return (
@@ -29,9 +30,12 @@ export function RoomSummaryCards({ summary }: { summary: RoomSummary }) {
 export function RoomSummaryCardsSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {Array.from({ length: 4 }, (_, i) => (
+      {Array.from({ length: 3 }, (_, i) => (
         <StatCardSkeleton key={i} />
       ))}
+      <StatCardSkeleton>
+        <Skeleton className="h-1 w-full rounded-full" />
+      </StatCardSkeleton>
     </div>
   );
 }

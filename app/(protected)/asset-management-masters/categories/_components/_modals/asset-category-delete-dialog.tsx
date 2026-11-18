@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import type { AssetCategory } from '@/app/api/lib/modules/asset-category/schemas/asset-category-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useDeleteAssetCategory } from '@/app/queries/asset-masters/useDeleteAssetCategory';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,17 +66,27 @@ export function AssetCategoryDeleteDialog({
             <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Asset Category?</AlertDialogTitle>
-          <AlertDialogDescription asChild>
-            {isResolving ? (
-              <Skeleton className="h-4 w-3/4" />
-            ) : category ? (
-              <span>
-                Delete Asset Category &ldquo;<strong>{category.name}</strong>&rdquo;? This action
-                cannot be undone.
-              </span>
-            ) : (
-              <span>This Asset Category will be deleted.</span>
-            )}
+          <AlertDialogDescription asChild className="w-full">
+            <div>
+              <SkeletonCrossfade
+                isLoading={isResolving}
+                skeleton={
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="mx-auto h-4 w-2/3 sm:mx-0" />
+                  </div>
+                }
+              >
+                {category ? (
+                  <span>
+                    Delete Asset Category &ldquo;<strong>{category.name}</strong>&rdquo;? This
+                    action cannot be undone.
+                  </span>
+                ) : (
+                  <span>This Asset Category will be deleted.</span>
+                )}
+              </SkeletonCrossfade>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

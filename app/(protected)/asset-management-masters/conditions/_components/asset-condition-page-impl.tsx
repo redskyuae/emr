@@ -10,6 +10,7 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetConditionQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetCondition';
 import { useAssetConditionsQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetConditions';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -167,101 +168,110 @@ export function AssetConditionPageImpl() {
           </Alert>
         ) : null}
 
-        {conditionsQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : conditions.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiGaugeLight />
-              </EmptyMedia>
-              <EmptyTitle>No Asset Conditions yet</EmptyTitle>
-              <EmptyDescription>
-                Create Asset Conditions to grade the physical condition of equipment and assets in
-                this Tenant.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setConditionParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Asset Condition
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : conditions.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Asset Conditions match &ldquo;{debouncedSearch}&rdquo;. Try a different search
-                term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <AssetConditionTableView
-                conditions={conditions}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(condition) => void setConditionParam(String(condition.id))}
-                onDelete={setConditionPendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <AssetConditionCardView
-                conditions={conditions}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(condition) => void setConditionParam(String(condition.id))}
-                onDelete={setConditionPendingDelete}
-              />
-            ) : (
-              <AssetConditionListView
-                conditions={conditions}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(condition) => void setConditionParam(String(condition.id))}
-                onDelete={setConditionPendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={conditionsQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {conditions.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiGaugeLight />
+                </EmptyMedia>
+                <EmptyTitle>No Asset Conditions yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Asset Conditions to grade the physical condition of equipment and assets in
+                  this Tenant.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setConditionParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Asset Condition
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : conditions.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Asset Conditions match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <AssetConditionTableView
+                  conditions={conditions}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(condition) => void setConditionParam(String(condition.id))}
+                  onDelete={setConditionPendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <AssetConditionCardView
+                  conditions={conditions}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(condition) => void setConditionParam(String(condition.id))}
+                  onDelete={setConditionPendingDelete}
+                />
+              ) : (
+                <AssetConditionListView
+                  conditions={conditions}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(condition) => void setConditionParam(String(condition.id))}
+                  onDelete={setConditionPendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <AssetConditionFormSheet

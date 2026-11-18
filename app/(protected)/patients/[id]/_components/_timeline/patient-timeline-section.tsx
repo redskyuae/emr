@@ -10,6 +10,7 @@ import {
 } from '@/app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientTimelineQuery } from '@/app/queries/patients/timeline/usePatientTimeline';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import {
   Empty,
   EmptyDescription,
@@ -27,24 +28,29 @@ function parseFeed(value: string | null): TimelineFeed {
   return TIMELINE_FEEDS.includes(value as TimelineFeed) ? (value as TimelineFeed) : 'all';
 }
 
-function TimelineSkeleton() {
+// Mirrors the loaded feed: sticky day headings over cards of icon, title, context and time.
+export function TimelineSkeleton() {
   return (
     <div className="space-y-4" aria-label="Loading Patient Timeline">
       {[0, 1, 2].map((group) => (
         <div key={group} className="space-y-2">
-          <Skeleton className="h-3 w-24" />
-          {[0, 1].map((entry) => (
-            <div key={entry} className="bg-card rounded-xl border p-4">
-              <div className="flex items-start gap-3">
-                <Skeleton className="size-8 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-3 w-32" />
+          <div className="py-1.5">
+            <Skeleton className="h-3 w-24" />
+          </div>
+          <ul className="space-y-2">
+            {[0, 1].map((entry) => (
+              <li key={entry} className="bg-card rounded-xl border p-3">
+                <div className="flex items-start gap-3">
+                  <Skeleton className="mt-0.5 size-8 shrink-0 rounded-full" />
+                  <div className="flex-1 space-y-1.5 py-0.5">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <Skeleton className="h-3 w-10" />
                 </div>
-                <Skeleton className="h-3 w-10" />
-              </div>
-            </div>
-          ))}
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </div>
@@ -75,8 +81,6 @@ export function PatientTimelineSection({ patientId }: { patientId: number }) {
     <div className="space-y-4">
       <TimelineFilterChips feed={feed} onFeedChange={handleFeedChange} />
 
-      {timelineQuery.isLoading ? <TimelineSkeleton /> : null}
-
       {timelineQuery.isError ? (
         <Empty className="min-h-56">
           <EmptyHeader>
@@ -89,36 +93,39 @@ export function PatientTimelineSection({ patientId }: { patientId: number }) {
         </Empty>
       ) : null}
 
-      {!timelineQuery.isLoading && !timelineQuery.isError && loadedCount === 0 ? (
-        <Empty className="min-h-56">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiCalendarDate className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>Nothing to show yet</EmptyTitle>
-            <EmptyDescription>
-              {feed === 'all'
-                ? 'This Patient has no recorded activity.'
-                : 'No activity matches this filter.'}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : null}
+      {/* A failed "load more" keeps the pages already loaded on screen under the error. */}
+      {timelineQuery.isError && loadedCount === 0 ? null : (
+        <SkeletonCrossfade isLoading={timelineQuery.isLoading} skeleton={<TimelineSkeleton />}>
+          {loadedCount === 0 ? (
+            <Empty className="min-h-56">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiCalendarDate className="size-5" />
+                </EmptyMedia>
+                <EmptyTitle>Nothing to show yet</EmptyTitle>
+                <EmptyDescription>
+                  {feed === 'all'
+                    ? 'This Patient has no recorded activity.'
+                    : 'No activity matches this filter.'}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {groups.map((group) => (
+                <TimelineDayGroupSection key={group.dayKey} group={group} patientId={patientId} />
+              ))}
 
-      {loadedCount > 0 ? (
-        <div className="space-y-4">
-          {groups.map((group) => (
-            <TimelineDayGroupSection key={group.dayKey} group={group} patientId={patientId} />
-          ))}
-
-          <TimelineLoadMore
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            loadedCount={loadedCount}
-            onLoadMore={onLoadMore}
-          />
-        </div>
-      ) : null}
+              <TimelineLoadMore
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                loadedCount={loadedCount}
+                onLoadMore={onLoadMore}
+              />
+            </div>
+          )}
+        </SkeletonCrossfade>
+      )}
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-t
 import { isAyurvedaBrand } from '@/components/brand/brand-config';
 import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -194,6 +195,49 @@ function RecordedNote({
   );
 }
 
+// Mirrors the consultation shell: the step-tone strip, the step nav, the current step's heading
+// and fields, and the Back / Continue footer. The Visit loader shows it too.
+export function ConsultationSkeleton({ stepCount }: { stepCount: number }) {
+  return (
+    <div className={STEP_LAYOUT} aria-label="Loading consultation">
+      <section className="bg-card flex flex-col rounded-lg border xl:min-h-0 xl:flex-1">
+        <Skeleton className="h-1 flex-none rounded-none rounded-t-lg" />
+        <div className="border-b">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-1 p-1.5">
+            {Array.from({ length: stepCount }, (_, index) => (
+              <div key={index} className="flex min-h-11 items-center gap-2 px-2.5">
+                <Skeleton className="size-7 shrink-0 rounded-full" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 space-y-4 p-5 xl:min-h-0">
+          <div className="flex items-start gap-3">
+            <Skeleton className="size-10 shrink-0 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-72 max-w-full" />
+            </div>
+          </div>
+          {Array.from({ length: 2 }, (_, index) => (
+            <div key={index} className="space-y-2">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 rounded-b-lg border-t p-3">
+          <div className="flex min-w-0 flex-1 justify-center">
+            <Skeleton className="h-3 w-20" />
+          </div>
+          <Skeleton className="h-9 w-48" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function VisitConsultationPanel({
   visit,
   notes,
@@ -225,6 +269,7 @@ export function VisitConsultationPanel({
 }) {
   const noteTypes = useClinicalNoteTypesQuery({ limit: 100 });
   const steps = consultationSteps(isAyurvedaBrand(useBrandLogoVariant()));
+  const loading = chartLoading || noteTypes.isLoading;
   // A Treatment Session Visit opens on today's Session; every other Visit on the complaint.
   const [stepId, setStepId] = useQueryState(
     'step',
@@ -244,16 +289,6 @@ export function VisitConsultationPanel({
     });
   }
 
-  if (chartLoading || noteTypes.isLoading) {
-    return (
-      <div className="space-y-4" aria-label="Loading consultation">
-        {[120, 180, 140].map((height) => (
-          <Skeleton key={height} className="w-full" style={{ height }} />
-        ))}
-      </div>
-    );
-  }
-
   // A note written outside this form stays a separate Clinical Note: only a
   // form-shaped draft can be resumed, so it never blocks the consultation.
   const consultationNotes = notes.filter(
@@ -270,24 +305,6 @@ export function VisitConsultationPanel({
     visit.status === 'IN_CONSULTATION' &&
     canCreateNote &&
     (draft || !signed);
-
-  if (editable) {
-    return (
-      <VisitConsultationForm
-        key={visit.id}
-        visit={visit}
-        noteTypes={available}
-        defaultNoteTypeId={consultationType?.id ?? null}
-        noteId={draft?.id ?? null}
-        initialValues={draft ? soapToConsultation(draft) : null}
-        onDirtyChange={onDirtyChange}
-        steps={steps}
-        stepId={stepId}
-        onStepChange={goTo}
-        slots={slots}
-      />
-    );
-  }
 
   let aside: ReactNode;
 
@@ -340,19 +357,42 @@ export function VisitConsultationPanel({
     );
   }
 
+  // The panel fills the cockpit's height from xl, so the crossfade passes that height through.
   return (
-    <div className={STEP_LAYOUT}>
-      <VisitStepShell
-        steps={steps}
-        current={stepId}
-        onSelect={goTo}
-        renderStep={(id) =>
-          slots[id] ?? (
-            <p className="text-muted-foreground text-sm">Recorded in the consultation note.</p>
-          )
-        }
-        aside={<div className="2xl:min-h-0 2xl:overflow-y-auto">{aside}</div>}
-      />
-    </div>
+    <SkeletonCrossfade
+      isLoading={loading}
+      skeleton={<ConsultationSkeleton stepCount={steps.length} />}
+      className="xl:h-full xl:*:h-full"
+    >
+      {editable ? (
+        <VisitConsultationForm
+          key={visit.id}
+          visit={visit}
+          noteTypes={available}
+          defaultNoteTypeId={consultationType?.id ?? null}
+          noteId={draft?.id ?? null}
+          initialValues={draft ? soapToConsultation(draft) : null}
+          onDirtyChange={onDirtyChange}
+          steps={steps}
+          stepId={stepId}
+          onStepChange={goTo}
+          slots={slots}
+        />
+      ) : (
+        <div className={STEP_LAYOUT}>
+          <VisitStepShell
+            steps={steps}
+            current={stepId}
+            onSelect={goTo}
+            renderStep={(id) =>
+              slots[id] ?? (
+                <p className="text-muted-foreground text-sm">Recorded in the consultation note.</p>
+              )
+            }
+            aside={<div className="2xl:min-h-0 2xl:overflow-y-auto">{aside}</div>}
+          />
+        </div>
+      )}
+    </SkeletonCrossfade>
   );
 }

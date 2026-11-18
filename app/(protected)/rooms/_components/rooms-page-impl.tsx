@@ -12,6 +12,7 @@ import { useRoomTypesQuery } from '@/app/queries/room-masters/room-types/useRoom
 import { useRoomQuery } from '@/app/queries/rooms/useRoom';
 import { useRoomSummaryQuery } from '@/app/queries/rooms/useRoomSummary';
 import { useRoomsQuery } from '@/app/queries/rooms/useRooms';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -126,10 +127,13 @@ export function RoomsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        {summaryQuery.isLoading ? (
-          <RoomSummaryCardsSkeleton />
-        ) : summaryQuery.data ? (
-          <RoomSummaryCards summary={summaryQuery.data} />
+        {summaryQuery.isLoading || summaryQuery.data ? (
+          <SkeletonCrossfade
+            isLoading={summaryQuery.isLoading}
+            skeleton={<RoomSummaryCardsSkeleton />}
+          >
+            {summaryQuery.data ? <RoomSummaryCards summary={summaryQuery.data} /> : null}
+          </SkeletonCrossfade>
         ) : null}
 
         <Card>
@@ -221,99 +225,102 @@ export function RoomsPageImpl() {
           </Alert>
         ) : null}
 
-        {roomsQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : rooms.length === 0 && !hasFilters ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiBedLight />
-              </EmptyMedia>
-              <EmptyTitle>No Rooms yet</EmptyTitle>
-              <EmptyDescription>
-                Add the Rooms in this Tenant to track their Room Type, Beds, and availability.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setRoomParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Room
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : rooms.length === 0 ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Rooms match the current search and filters. Try widening them.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <RoomTableView
-                rooms={rooms}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(room) => void setRoomParam(String(room.id))}
-                onDelete={setRoomPendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <RoomCardView
-                rooms={rooms}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(room) => void setRoomParam(String(room.id))}
-                onDelete={setRoomPendingDelete}
-              />
-            ) : (
-              <RoomListView
-                rooms={rooms}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(room) => void setRoomParam(String(room.id))}
-                onDelete={setRoomPendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={roomsQuery.isLoading}
+          skeleton={<ViewSkeleton layout={viewLayout} showActions={canUpdate || canDelete} />}
+        >
+          {rooms.length === 0 && !hasFilters ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiBedLight />
+                </EmptyMedia>
+                <EmptyTitle>No Rooms yet</EmptyTitle>
+                <EmptyDescription>
+                  Add the Rooms in this Tenant to track their Room Type, Beds, and availability.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setRoomParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Room
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : rooms.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Rooms match the current search and filters. Try widening them.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <RoomTableView
+                  rooms={rooms}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(room) => void setRoomParam(String(room.id))}
+                  onDelete={setRoomPendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <RoomCardView
+                  rooms={rooms}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(room) => void setRoomParam(String(room.id))}
+                  onDelete={setRoomPendingDelete}
+                />
+              ) : (
+                <RoomListView
+                  rooms={rooms}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(room) => void setRoomParam(String(room.id))}
+                  onDelete={setRoomPendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <RoomFormSheet

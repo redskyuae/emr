@@ -21,7 +21,7 @@ import {
   tableHeadRowClass,
 } from '@/components/ui/table-styles';
 import { cn } from '@/lib/utils';
-import { admissionStatusPresentation } from '../_utils/admission-status';
+import { ADMISSIONS_PAGE_SIZE, admissionStatusPresentation } from '../_utils/admission-status';
 
 function formatMoment(value: Date | string) {
   return new Date(value).toLocaleString(undefined, {
@@ -173,20 +173,73 @@ export function AdmissionsTable({
   );
 }
 
-export function AdmissionsTableSkeleton() {
+// Mirrors the loaded census table: the same header and one sized skeleton per cell. The
+// Discharge button shows only when the user may discharge, as it does on Admitted rows.
+export function AdmissionsTableSkeleton({ canDischarge = false }: { canDischarge?: boolean }) {
   return (
-    <div className="bg-card overflow-hidden rounded-xl border p-4">
-      {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-5 w-28" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="ml-auto h-8 w-28" />
-        </div>
-      ))}
+    <div className="bg-card overflow-hidden rounded-xl border">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[960px] text-sm">
+          <thead>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Admission</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Ward / Bed</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Admitted</th>
+              <th className={tableHeadCellClass}>Expected discharge</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: ADMISSIONS_PAGE_SIZE }, (_, index) => (
+              <tr key={index} className="border-b last:border-b-0">
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-28" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-12 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-24" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-20" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <div className="flex items-center justify-end gap-2">
+                    {canDischarge ? <Skeleton className="h-8 w-24" /> : null}
+                    <Skeleton className="size-9" />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

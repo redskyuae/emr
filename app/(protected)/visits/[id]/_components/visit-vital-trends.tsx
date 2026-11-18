@@ -1,6 +1,7 @@
 import { CiWarning } from 'react-icons/ci';
 
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +40,31 @@ function moment(value: Date) {
   });
 }
 
+// Mirrors the loaded trends: the "Latest" line, then one row per vital with its label, value
+// and change, and sparkline.
+function VitalTrendsSkeleton() {
+  return (
+    <div className="space-y-1" aria-label="Loading Vital Signs">
+      <Skeleton className="h-3 w-40" />
+      <div>
+        {Array.from({ length: 5 }, (_, index) => (
+          <div
+            key={index}
+            className="grid grid-cols-[minmax(0,1fr)_auto_3rem] items-center gap-2 border-t py-1.5"
+          >
+            <Skeleton className="h-4 w-24" />
+            <div className="flex flex-col items-end gap-1">
+              <Skeleton className="h-4 w-14" />
+              <Skeleton className="h-3 w-10" />
+            </div>
+            <Skeleton className="h-6 w-12" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function VisitVitalTrends({
   readings,
   loading,
@@ -50,61 +76,64 @@ export function VisitVitalTrends({
   error: boolean;
   emptyText: string;
 }) {
-  if (loading) return <Skeleton className="h-40 w-full" aria-label="Loading Vital Signs" />;
-  if (error) return <p className="text-destructive text-sm">Vital Signs could not be loaded.</p>;
+  if (error && !loading) {
+    return <p className="text-destructive text-sm">Vital Signs could not be loaded.</p>;
+  }
 
   const result = vitalTrends(readings);
 
-  if (!result || result.trends.length === 0) {
-    return <p className="text-muted-foreground text-sm">{emptyText}</p>;
-  }
-
   return (
-    <div className="space-y-1">
-      <p className="text-muted-foreground text-xs">
-        Latest <span className="font-mono tabular-nums">{moment(result.recordedAt)}</span>
-        {result.previousAt ? (
-          <>
-            {' '}
-            · vs <span className="font-mono tabular-nums">{moment(result.previousAt)}</span>
-          </>
-        ) : null}
-      </p>
-      <dl>
-        {result.trends.map((trend) => (
-          <div
-            key={trend.key}
-            className="grid grid-cols-[minmax(0,1fr)_auto_3rem] items-center gap-2 border-t py-1.5"
-          >
-            <dt className="text-muted-foreground text-sm">{trend.label}</dt>
-            <dd className="flex flex-col items-end">
-              <span className="font-mono text-sm font-medium tabular-nums">{trend.value}</span>
-              {trend.change !== null || trend.attention ? (
-                <span
-                  className={cn(
-                    'flex items-center gap-1 text-xs tabular-nums',
-                    trend.attention ? 'text-warning font-semibold' : 'text-muted-foreground'
-                  )}
-                >
-                  {trend.attention ? (
-                    <CiWarning className="size-3" aria-label="Outside the usual adult range" />
-                  ) : null}
-                  {trend.change ?? 'First reading'}
-                  {/* Without one shared "vs" date in the header, say which reading each change is against. */}
-                  {trend.previousAt && !result.previousAt ? (
-                    <span className="text-muted-foreground font-normal">
-                      vs <span className="font-mono">{day(trend.previousAt)}</span>
+    <SkeletonCrossfade isLoading={loading} skeleton={<VitalTrendsSkeleton />}>
+      {!result || result.trends.length === 0 ? (
+        <p className="text-muted-foreground text-sm">{emptyText}</p>
+      ) : (
+        <div className="space-y-1">
+          <p className="text-muted-foreground text-xs">
+            Latest <span className="font-mono tabular-nums">{moment(result.recordedAt)}</span>
+            {result.previousAt ? (
+              <>
+                {' '}
+                · vs <span className="font-mono tabular-nums">{moment(result.previousAt)}</span>
+              </>
+            ) : null}
+          </p>
+          <dl>
+            {result.trends.map((trend) => (
+              <div
+                key={trend.key}
+                className="grid grid-cols-[minmax(0,1fr)_auto_3rem] items-center gap-2 border-t py-1.5"
+              >
+                <dt className="text-muted-foreground text-sm">{trend.label}</dt>
+                <dd className="flex flex-col items-end">
+                  <span className="font-mono text-sm font-medium tabular-nums">{trend.value}</span>
+                  {trend.change !== null || trend.attention ? (
+                    <span
+                      className={cn(
+                        'flex items-center gap-1 text-xs tabular-nums',
+                        trend.attention ? 'text-warning font-semibold' : 'text-muted-foreground'
+                      )}
+                    >
+                      {trend.attention ? (
+                        <CiWarning className="size-3" aria-label="Outside the usual adult range" />
+                      ) : null}
+                      {trend.change ?? 'First reading'}
+                      {/* Without one shared "vs" date in the header, say which reading each change is against. */}
+                      {trend.previousAt && !result.previousAt ? (
+                        <span className="text-muted-foreground font-normal">
+                          vs <span className="font-mono">{day(trend.previousAt)}</span>
+                        </span>
+                      ) : null}
                     </span>
                   ) : null}
-                </span>
-              ) : null}
-            </dd>
-            <dd>
-              <Sparkline series={trend.series} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+                </dd>
+                <dd>
+                  <Sparkline series={trend.series} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+    </SkeletonCrossfade>
   );
 }

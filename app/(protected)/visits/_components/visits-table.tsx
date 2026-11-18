@@ -20,7 +20,12 @@ import {
   tableHeadCellClass,
   tableHeadRowClass,
 } from '@/components/ui/table-styles';
-import { isActiveVisit, visitStatusPresentation, waitingLabel } from '../_utils/visit-status';
+import {
+  VISITS_PAGE_SIZE,
+  isActiveVisit,
+  visitStatusPresentation,
+  waitingLabel,
+} from '../_utils/visit-status';
 import { visitDoctorLabel } from '@/lib/visit-doctor-label';
 import { cn } from '@/lib/utils';
 
@@ -214,20 +219,85 @@ export function VisitsTable({
   );
 }
 
+// Mirrors both layouts of the loaded Visits: the phone card list and the desktop table, with the
+// same header and one sized skeleton per cell.
 export function VisitsTableSkeleton() {
   return (
-    <div className="bg-card overflow-hidden rounded-xl border p-4">
-      {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-          <Skeleton className="size-9 rounded-md" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="ml-auto h-8 w-28" />
+    <>
+      <ul className="space-y-3 md:hidden" aria-hidden="true">
+        {Array.from({ length: 5 }, (_, index) => (
+          <li key={index} className="bg-card space-y-3 rounded-xl border p-4">
+            <div className="flex items-start gap-3">
+              <Skeleton className="size-9 shrink-0 rounded-md" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-3 w-40" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="size-9" />
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="bg-card hidden overflow-hidden rounded-xl border md:block">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
+            <thead>
+              <tr className={tableHeadRowClass}>
+                <th className={tableHeadCellClass}>Token</th>
+                <th className={tableHeadCellClass}>Visit</th>
+                <th className={tableHeadCellClass}>Patient</th>
+                <th className={tableHeadCellClass}>Doctor</th>
+                <th className={tableHeadCellClass}>Type</th>
+                <th className={tableHeadCellClass}>Status</th>
+                <th className={tableHeadCellClass}>Checked in</th>
+                <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: VISITS_PAGE_SIZE }, (_, index) => (
+                <tr key={index} className="border-b last:border-b-0">
+                  <td className={tableCellClass}>
+                    <Skeleton className="size-9 rounded-md" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </td>
+                  <td className={tableCellClass}>
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-4 w-28" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-6 w-12 rounded-full" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-4 w-16" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="ml-auto size-9" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ))}
-    </div>
+      </div>
+    </>
   );
 }

@@ -127,7 +127,16 @@ export function CategoryDistributionSkeleton() {
       </CardHeader>
       <CardContent className="space-y-5 p-4">
         {[0, 1, 2, 3].map((item) => (
-          <Skeleton key={item} className="h-10 w-full" />
+          <div key={item} className="space-y-2">
+            <div className="flex h-5 items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="size-2.5 rounded-full" />
+                <Skeleton className="h-3.5 w-28" />
+              </div>
+              <Skeleton className="h-3.5 w-6" />
+            </div>
+            <Skeleton className="h-2 w-full rounded-full" />
+          </div>
         ))}
       </CardContent>
     </Card>

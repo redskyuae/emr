@@ -17,6 +17,7 @@ import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treat
 import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientChart';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
 import { useVisit } from '@/app/queries/visits/useVisit';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,6 +34,22 @@ import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
 import { VisitCarePathway } from './visit-care-pathway';
 import { VisitContextPane } from './visit-context-pane';
 import { VisitPatientHeader } from './visit-patient-header';
+
+// Mirrors the destructive allergy Alert: icon and title, then the allergy line.
+function AllergyBannerSkeleton() {
+  return (
+    <div
+      className="grid gap-0.5 rounded-lg border px-2.5 py-2"
+      aria-label="Loading Patient safety information"
+    >
+      <div className="flex items-center gap-2">
+        <Skeleton className="size-4 rounded-full" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <Skeleton className="ml-6 h-4 w-72 max-w-[calc(100%-1.5rem)]" />
+    </div>
+  );
+}
 
 export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const [captureParam, setCaptureParam] = useQueryState('capture');
@@ -68,6 +85,10 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const canAmend = visit.status === 'COMPLETED' && Boolean(canAmendVisit);
 
   const chart = chartQuery.data;
+  const safetyLoading = chartQuery.isLoading || allergensQuery.isLoading;
+  const activeAllergyCount = (chart?.allergies ?? []).filter(
+    (item) => item.status === 'active'
+  ).length;
   const allergenName = (id: number) =>
     allergensQuery.data?.data.find((allergen) => allergen.id === id)?.name ?? 'Allergen';
   const invoices = (invoicesQuery.data?.data ?? []).filter((item) => item.visit?.id === visit.id);
@@ -126,17 +147,19 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
         {/* The same safety banner the Patient Chart shows — the consulting
             Doctor must see allergies without leaving the Visit. */}
         <div className="flex-none space-y-3 empty:hidden">
-          {chartQuery.isLoading || allergensQuery.isLoading ? (
-            <Skeleton className="h-14 w-full" aria-label="Loading Patient safety information" />
-          ) : chartQuery.isError ? (
+          {chartQuery.isError ? (
             <Alert variant="destructive">
               <CiCircleAlert className="size-4" />
               <AlertTitle>Patient safety information unavailable</AlertTitle>
               <AlertDescription>Allergies and medications could not be loaded.</AlertDescription>
             </Alert>
-          ) : (
-            <AllergyBanner allergies={chart?.allergies ?? []} allergenName={allergenName} />
-          )}
+          ) : safetyLoading || activeAllergyCount > 0 ? (
+            // Most Patients have no allergies, so the slot is only kept while it loads or has a
+            // banner to show; otherwise the skeleton simply leaves.
+            <SkeletonCrossfade isLoading={safetyLoading} skeleton={<AllergyBannerSkeleton />}>
+              <AllergyBanner allergies={chart?.allergies ?? []} allergenName={allergenName} />
+            </SkeletonCrossfade>
+          ) : null}
           {allergensQuery.isError && !chartQuery.isError ? (
             <Alert variant="destructive">
               <CiCircleAlert className="size-4" />

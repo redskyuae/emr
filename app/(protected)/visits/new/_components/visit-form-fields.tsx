@@ -18,6 +18,7 @@ import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-t
 import type { VisitPatientTypeAssessment } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
 import { visitTypeRequiresDoctor } from '@/app/api/lib/modules/visit/visit-doctor-requirement';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -190,10 +191,7 @@ function PatientTypeBadge({
   error?: boolean;
   onRetry?: () => void;
 }) {
-  if (loading) {
-    return <Skeleton className="h-6 w-36" aria-label="Checking completed Visit history" />;
-  }
-  if (error) {
+  if (error && !loading) {
     return (
       <Button type="button" variant="outline" size="sm" onClick={onRetry}>
         <PiArrowsCounterClockwiseLight className="size-4" />
@@ -201,12 +199,19 @@ function PatientTypeBadge({
       </Button>
     );
   }
-  if (!patientType) return null;
-
   return (
-    <Badge variant="secondary" className="bg-accent text-primary h-7 px-3">
-      {patientType.patientType === 'ESTABLISHED' ? 'Established Patient' : 'New Patient'}
-    </Badge>
+    <SkeletonCrossfade
+      isLoading={Boolean(loading)}
+      skeleton={
+        <Skeleton className="h-7 w-36 rounded-full" aria-label="Checking completed Visit history" />
+      }
+    >
+      {patientType ? (
+        <Badge variant="secondary" className="bg-accent text-primary h-7 px-3">
+          {patientType.patientType === 'ESTABLISHED' ? 'Established Patient' : 'New Patient'}
+        </Badge>
+      ) : null}
+    </SkeletonCrossfade>
   );
 }
 

@@ -2,6 +2,7 @@ import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
 import { PiKeyLight, PiPlusLight, PiShieldCheckLight, PiUsersLight } from 'react-icons/pi';
 
 import type { RoleWithStats } from '@/app/api/lib/modules/role/schemas/role-schema';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -130,46 +131,42 @@ export function RoleGrid({
   canEdit: boolean;
   canDelete: boolean;
 }) {
-  if (isLoading) {
-    return <RoleGridSkeleton />;
-  }
-
-  if (roles.length === 0) {
-    return (
-      <Empty className="bg-card min-h-80 border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <PiShieldCheckLight />
-          </EmptyMedia>
-          <EmptyTitle>No Roles yet</EmptyTitle>
-          <EmptyDescription>
-            Create Roles to group Permission Assignments for Staff in this Tenant.
-          </EmptyDescription>
-        </EmptyHeader>
-        {canCreate ? (
-          <EmptyContent>
-            <Button type="button" onClick={onCreate}>
-              <PiPlusLight className="size-4" />
-              Create Role
-            </Button>
-          </EmptyContent>
-        ) : null}
-      </Empty>
-    );
-  }
-
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {roles.map((role) => (
-        <RoleCard
-          key={role.id}
-          role={role}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          canEdit={canEdit}
-          canDelete={canDelete}
-        />
-      ))}
-    </div>
+    <SkeletonCrossfade isLoading={isLoading} skeleton={<RoleGridSkeleton canEdit={canEdit} />}>
+      {roles.length === 0 ? (
+        <Empty className="bg-card min-h-80 border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <PiShieldCheckLight />
+            </EmptyMedia>
+            <EmptyTitle>No Roles yet</EmptyTitle>
+            <EmptyDescription>
+              Create Roles to group Permission Assignments for Staff in this Tenant.
+            </EmptyDescription>
+          </EmptyHeader>
+          {canCreate ? (
+            <EmptyContent>
+              <Button type="button" onClick={onCreate}>
+                <PiPlusLight className="size-4" />
+                Create Role
+              </Button>
+            </EmptyContent>
+          ) : null}
+        </Empty>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {roles.map((role) => (
+            <RoleCard
+              key={role.id}
+              role={role}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              canEdit={canEdit}
+              canDelete={canDelete}
+            />
+          ))}
+        </div>
+      )}
+    </SkeletonCrossfade>
   );
 }

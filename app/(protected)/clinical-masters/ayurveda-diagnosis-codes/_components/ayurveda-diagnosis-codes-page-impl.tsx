@@ -10,6 +10,7 @@ import type { AyurvedaDiagnosisCode } from '@/app/api/lib/modules/ayurveda-diagn
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAyurvedaDiagnosisCodesQuery } from '@/app/queries/clinical-masters/ayurveda-diagnosis-codes/useAyurvedaDiagnosisCodes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -124,84 +125,89 @@ export function AyurvedaDiagnosisCodesPageImpl() {
           </Alert>
         ) : null}
 
-        {ayurvedaDiagnosisCodesQuery.isLoading ? (
-          <AyurvedaDiagnosisCodeTableSkeleton />
-        ) : ayurvedaDiagnosisCodesQuery.isError ? null : ayurvedaDiagnosisCodes.length === 0 &&
-          !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiLeafLight />
-              </EmptyMedia>
-              <EmptyTitle>No Ayurveda Diagnosis Codes yet</EmptyTitle>
-              <EmptyDescription>
-                Build this Tenant&apos;s Ayurveda diagnosis catalogue and map each code to an
-                ICD-10-CM Diagnosis Code for insurance claims.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={openCreateSheet}>
-                  <PiPlusLight className="size-4" />
-                  Add Ayurveda Diagnosis Code
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : ayurvedaDiagnosisCodes.length === 0 ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Ayurveda Diagnosis Codes match &ldquo;{debouncedSearch}&rdquo;. Try a different
-                search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <AyurvedaDiagnosisCodeTable
-              ayurvedaDiagnosisCodes={ayurvedaDiagnosisCodes}
-              canEdit={canUpdate}
-              canDelete={canDelete}
-              onEdit={(code) => void setAyurvedaCodeParam(String(code.id))}
-              onDelete={setCodePendingDelete}
-            />
+        <SkeletonCrossfade
+          isLoading={ayurvedaDiagnosisCodesQuery.isLoading}
+          skeleton={
+            <AyurvedaDiagnosisCodeTableSkeleton canEdit={canUpdate} canDelete={canDelete} />
+          }
+        >
+          {ayurvedaDiagnosisCodesQuery.isError ? null : ayurvedaDiagnosisCodes.length === 0 &&
+            !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiLeafLight />
+                </EmptyMedia>
+                <EmptyTitle>No Ayurveda Diagnosis Codes yet</EmptyTitle>
+                <EmptyDescription>
+                  Build this Tenant&apos;s Ayurveda diagnosis catalogue and map each code to an
+                  ICD-10-CM Diagnosis Code for insurance claims.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={openCreateSheet}>
+                    <PiPlusLight className="size-4" />
+                    Add Ayurveda Diagnosis Code
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : ayurvedaDiagnosisCodes.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Ayurveda Diagnosis Codes match &ldquo;{debouncedSearch}&rdquo;. Try a different
+                  search term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <AyurvedaDiagnosisCodeTable
+                ayurvedaDiagnosisCodes={ayurvedaDiagnosisCodes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={(code) => void setAyurvedaCodeParam(String(code.id))}
+                onDelete={setCodePendingDelete}
+              />
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <AyurvedaDiagnosisCodeFormSheet

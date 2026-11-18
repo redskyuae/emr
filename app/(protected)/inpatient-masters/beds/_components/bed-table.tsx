@@ -104,19 +104,62 @@ export function BedTable({
   );
 }
 
-export function BedTableSkeleton() {
+// Mirrors BedTable: the same header and one sized skeleton per cell for a page of rows, plus the
+// pagination row the page shows below the table.
+export function BedTableSkeleton({ canEdit, canDelete }: { canEdit: boolean; canDelete: boolean }) {
   return (
-    <div className="bg-card overflow-hidden rounded-xl border p-4">
-      {Array.from({ length: 5 }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 flex-1" />
-          <Skeleton className="size-8" />
+    <div className="space-y-4">
+      <div className="bg-card overflow-hidden rounded-xl border">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px] text-sm">
+            <thead>
+              <tr className={tableHeadRowClass}>
+                <th className={tableHeadCellClass}>Bed</th>
+                <th className={tableHeadCellClass}>Ward</th>
+                <th className={tableHeadCellClass}>Room</th>
+                <th className={tableHeadCellClass}>Status</th>
+                <th className={tableHeadCellClass}>Notes</th>
+                <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 10 }, (_, index) => (
+                <tr key={index} className="border-b last:border-b-0">
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-4 w-16" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <div className="flex items-center gap-1.5">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-6 w-12 rounded-full" />
+                    </div>
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-4 w-12" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </td>
+                  <td className={cn(tableCellClass, 'max-w-56')}>
+                    <Skeleton className="h-4 w-40" />
+                  </td>
+                  <td className={cn(tableCellClass, 'text-right')}>
+                    {canEdit || canDelete ? <Skeleton className="ml-auto size-9" /> : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ))}
+      </div>
+
+      <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+        <Skeleton className="h-4 w-36" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+      </div>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapis
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useCreateTherapistSchedule } from '@/app/queries/therapist-schedules/useCreateTherapistSchedule';
 import { useUpdateTherapistSchedule } from '@/app/queries/therapist-schedules/useUpdateTherapistSchedule';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -187,16 +188,13 @@ export function TherapistScheduleFormSheet({
             Assign Rotas to a Therapist over a date range and choose the availability slot duration.
           </SheetDescription>
         </SheetHeader>
-        {showSkeleton ? (
-          <div className="flex-1 space-y-4 p-4">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-40 w-full" />
-          </div>
-        ) : (
-          <>
-            <ScrollArea className="min-h-0 flex-1">
-              <form id="therapist-schedule-form" onSubmit={onSubmit} className="space-y-5 p-4">
+        <ScrollArea className="min-h-0 flex-1">
+          <form id="therapist-schedule-form" onSubmit={onSubmit} className="p-4">
+            <SkeletonCrossfade
+              isLoading={showSkeleton}
+              skeleton={<TherapistScheduleFormFieldsSkeleton />}
+            >
+              <div className="space-y-5">
                 {serverErrors.length ? (
                   <Alert variant="destructive">
                     <CiCircleAlert className="size-4" />
@@ -343,24 +341,63 @@ export function TherapistScheduleFormSheet({
                     )}
                   />
                 </FieldGroup>
-              </form>
-            </ScrollArea>
-            <SheetFooter className="border-t p-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                form="therapist-schedule-form"
-                disabled={isSaving || rotas.length === 0}
-              >
-                <CiFloppyDisk className="size-4" />
-                {isSaving ? 'Saving...' : 'Save Schedule'}
-              </Button>
-            </SheetFooter>
-          </>
-        )}
+              </div>
+            </SkeletonCrossfade>
+          </form>
+        </ScrollArea>
+        <SheetFooter className="border-t p-4">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="therapist-schedule-form"
+            disabled={isSaving || showSkeleton || rotas.length === 0}
+          >
+            <CiFloppyDisk className="size-4" />
+            {isSaving ? 'Saving...' : 'Save Schedule'}
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function FieldSkeleton({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={`h-4 ${label}`} />
+      <Skeleton className="h-10 w-full rounded-lg" />
+    </div>
+  );
+}
+
+// Mirrors the form while its data loads: one label + control per field, the same date grid, and
+// the Rota checklist with its summary line.
+function TherapistScheduleFormFieldsSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <FieldSkeleton label="w-16" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FieldSkeleton label="w-28" />
+        <FieldSkeleton label="w-24" />
+      </div>
+      <FieldSkeleton label="w-44" />
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-4 w-28" />
+        <div className="divide-y rounded-lg border">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3">
+              <Skeleton className="size-4 rounded-[4px]" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Skeleton className="h-3 w-40" />
+      </div>
+    </div>
   );
 }

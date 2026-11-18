@@ -15,6 +15,7 @@ import type { AdmitSource } from '@/app/api/lib/modules/admit-source/schemas/adm
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAdmitSourcesQuery } from '@/app/queries/visit-masters/admit-sources/useAdmitSources';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -112,82 +113,86 @@ export function AdmitSourcesPageImpl() {
           </Alert>
         ) : null}
 
-        {admitSourcesQuery.isLoading ? (
-          <AdmitSourceTableSkeleton />
-        ) : admitSources.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiClipboardTextLight />
-              </EmptyMedia>
-              <EmptyTitle>No Admit Sources yet</EmptyTitle>
-              <EmptyDescription>
-                Create Admit Sources to record how a Patient came to a Visit, such as Doctor
-                Referral or Hospital Transfer.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setAdmitSourceParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Admit Source
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : admitSources.length === 0 ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Admit Sources match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <AdmitSourceTable
-              admitSources={admitSources}
-              canEdit={canUpdate}
-              canDelete={canDelete}
-              onEdit={(admitSource) => void setAdmitSourceParam(String(admitSource.id))}
-              onDelete={setAdmitSourcePendingDelete}
-            />
+        <SkeletonCrossfade
+          isLoading={admitSourcesQuery.isLoading}
+          skeleton={<AdmitSourceTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
+        >
+          {admitSources.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiClipboardTextLight />
+                </EmptyMedia>
+                <EmptyTitle>No Admit Sources yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Admit Sources to record how a Patient came to a Visit, such as Doctor
+                  Referral or Hospital Transfer.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setAdmitSourceParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Admit Source
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : admitSources.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Admit Sources match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <AdmitSourceTable
+                admitSources={admitSources}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={(admitSource) => void setAdmitSourceParam(String(admitSource.id))}
+                onDelete={setAdmitSourcePendingDelete}
+              />
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <AdmitSourceFormSheet

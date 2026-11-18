@@ -9,6 +9,7 @@ import type { ControllerRenderProps } from 'react-hook-form';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
 import { Button } from '@/components/ui/button';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
@@ -16,6 +17,23 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
 
 type PatientField = ControllerRenderProps<CreateVisitFormValues, 'patientId'>;
+
+// Mirrors a result row: the Patient icon, then the name over the MRN, birth date and phone line.
+function PatientResultsSkeleton() {
+  return (
+    <div className="space-y-1" aria-label="Searching Patients">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className="flex items-center gap-3 px-3 py-2">
+          <Skeleton className="size-4 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-4 w-40 max-w-full" />
+            <Skeleton className="h-3 w-56 max-w-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function WalkInPatientSearch({
   field,
@@ -88,19 +106,7 @@ export function WalkInPatientSearch({
           className="max-h-72 space-y-1 overflow-y-auto rounded-lg border p-1"
           aria-live="polite"
         >
-          {!searchReady || patientsQuery.isFetching ? (
-            <div className="space-y-2 p-2" aria-label="Searching Patients">
-              {Array.from({ length: 3 }, (_, index) => (
-                <div key={index} className="flex items-center gap-3 p-2">
-                  <Skeleton className="size-5 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-40 max-w-full" />
-                    <Skeleton className="h-3 w-56 max-w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : patientsQuery.isError ? (
+          {searchReady && !patientsQuery.isFetching && patientsQuery.isError ? (
             <div className="space-y-2 p-3 text-sm">
               <p className="text-destructive">{patientsQuery.error.message}</p>
               <Button
@@ -112,46 +118,53 @@ export function WalkInPatientSearch({
                 <PiArrowsCounterClockwiseLight className="size-4" /> Retry search
               </Button>
             </div>
-          ) : patients.length ? (
-            <>
-              {patients.map((patient) => (
-                <Button
-                  key={patient.id}
-                  type="button"
-                  variant="ghost"
-                  className="h-auto w-full justify-start gap-3 px-3 py-2 text-left whitespace-normal"
-                  // Keep focus in the search box while clicking: blurring it would show the
-                  // "required" error first and shift this list under the pointer.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    onSelect(String(patient.id));
-                    setSearch('');
-                  }}
-                >
-                  <CiUser className="text-muted-foreground size-4 shrink-0" />
-                  <span className="min-w-0">
-                    <span className="block font-medium">
-                      {patient.firstName} {patient.lastName}
-                    </span>
-                    <span className="text-muted-foreground block text-xs">
-                      <span className="font-mono">{patient.mrn}</span>
-                      {patient.dateOfBirth ? ` · DOB ${patient.dateOfBirth}` : ''}
-                      {' · '}
-                      {patient.phone}
-                    </span>
-                  </span>
-                </Button>
-              ))}
-              {(patientsQuery.data?.meta.total ?? 0) > patients.length ? (
-                <p className="text-muted-foreground px-3 py-2 text-xs">
-                  More Patients match. Enter more details to narrow the search.
-                </p>
-              ) : null}
-            </>
           ) : (
-            <p className="text-muted-foreground p-3 text-sm">
-              No active Patients match this search.
-            </p>
+            <SkeletonCrossfade
+              isLoading={!searchReady || patientsQuery.isFetching}
+              skeleton={<PatientResultsSkeleton />}
+            >
+              {patients.length ? (
+                <div className="space-y-1">
+                  {patients.map((patient) => (
+                    <Button
+                      key={patient.id}
+                      type="button"
+                      variant="ghost"
+                      className="h-auto w-full justify-start gap-3 px-3 py-2 text-left whitespace-normal"
+                      // Keep focus in the search box while clicking: blurring it would show the
+                      // "required" error first and shift this list under the pointer.
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        onSelect(String(patient.id));
+                        setSearch('');
+                      }}
+                    >
+                      <CiUser className="text-muted-foreground size-4 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block font-medium">
+                          {patient.firstName} {patient.lastName}
+                        </span>
+                        <span className="text-muted-foreground block text-xs">
+                          <span className="font-mono">{patient.mrn}</span>
+                          {patient.dateOfBirth ? ` · DOB ${patient.dateOfBirth}` : ''}
+                          {' · '}
+                          {patient.phone}
+                        </span>
+                      </span>
+                    </Button>
+                  ))}
+                  {(patientsQuery.data?.meta.total ?? 0) > patients.length ? (
+                    <p className="text-muted-foreground px-3 py-2 text-xs">
+                      More Patients match. Enter more details to narrow the search.
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-muted-foreground p-3 text-sm">
+                  No active Patients match this search.
+                </p>
+              )}
+            </SkeletonCrossfade>
           )}
         </div>
       ) : null}

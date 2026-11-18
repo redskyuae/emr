@@ -94,9 +94,16 @@ export function StatCard({
 
 /**
  * A StatCard's placeholder, built from the same card slots and line heights so the real card
- * lands in the space it held. Pass `hint` when the real card has a hint line.
+ * lands in the space it held. Pass `hint` when the real card has a hint line, and `children` for
+ * placeholders of the content the real card renders below it (such as a progress bar).
  */
-export function StatCardSkeleton({ hint = false }: { hint?: boolean }) {
+export function StatCardSkeleton({
+  hint = false,
+  children,
+}: {
+  hint?: boolean;
+  children?: ReactNode;
+}) {
   return (
     <Card aria-hidden="true" className="gap-3">
       <CardHeader>
@@ -108,11 +115,14 @@ export function StatCardSkeleton({ hint = false }: { hint?: boolean }) {
           <Skeleton className="size-10 rounded-full" />
         </CardAction>
       </CardHeader>
-      {hint ? (
-        <CardContent>
-          <div className="flex h-4 items-center">
-            <Skeleton className="h-3 w-32 max-w-full" />
-          </div>
+      {hint || children ? (
+        <CardContent className="space-y-3">
+          {hint ? (
+            <div className="flex h-4 items-center">
+              <Skeleton className="h-3 w-32 max-w-full" />
+            </div>
+          ) : null}
+          {children}
         </CardContent>
       ) : null}
     </Card>

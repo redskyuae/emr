@@ -1,28 +1,22 @@
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+
+import { AdmissionsTableSkeleton } from './_components/admissions-table';
 
 export default function AdmissionsPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
-        <Skeleton className="h-10 lg:w-44" />
-        <Skeleton className="h-10 lg:w-48" />
-        <Skeleton className="h-10 lg:w-52" />
-        <Skeleton className="h-10 w-full lg:max-w-xs" />
-      </div>
+      <Card>
+        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <Skeleton className="h-10 w-full lg:w-44" />
+          <Skeleton className="h-10 w-full lg:w-48" />
+          <Skeleton className="h-10 w-full lg:w-52" />
+          <Skeleton className="h-10 w-full lg:max-w-xs" />
+          <Skeleton className="h-9 w-full sm:w-36 lg:ml-auto" />
+        </CardContent>
+      </Card>
 
-      <div className="bg-card overflow-hidden rounded-xl border p-4">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-5 w-28" />
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="ml-auto h-8 w-28" />
-          </div>
-        ))}
-      </div>
+      <AdmissionsTableSkeleton />
     </div>
   );
 }

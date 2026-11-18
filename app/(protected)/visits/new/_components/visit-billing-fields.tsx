@@ -25,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { billingChoiceOf, billingChoiceValues, type BillingChoice } from '../_utils/billing-choice';
@@ -285,12 +286,15 @@ export function VisitBillingFields({
               </div>
             ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
-              {loading ? (
-                <div className="space-y-2" aria-label="Loading Charge Items">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : (
+              <SkeletonCrossfade
+                isLoading={loading}
+                skeleton={
+                  <div className="space-y-2" aria-label="Loading Charge Items">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                }
+              >
                 <Controller
                   control={control}
                   name="chargeItemId"
@@ -366,7 +370,7 @@ export function VisitBillingFields({
                     </Field>
                   )}
                 />
-              )}
+              </SkeletonCrossfade>
               <Controller
                 control={control}
                 name="chargeAmount"

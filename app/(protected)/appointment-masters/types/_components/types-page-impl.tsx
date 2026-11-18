@@ -21,6 +21,7 @@ import { useCreateAppointmentType } from '@/app/queries/appointment-masters/type
 import { useDeleteAppointmentType } from '@/app/queries/appointment-masters/types/useDeleteAppointmentType';
 import { useUpdateAppointmentType } from '@/app/queries/appointment-masters/types/useUpdateAppointmentType';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -235,101 +236,110 @@ export function TypesPageImpl({ initialCreateOpen }: { initialCreateOpen: boolea
           </Alert>
         ) : null}
 
-        {typesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : types.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiClipboardTextLight />
-              </EmptyMedia>
-              <EmptyTitle>No Appointment Types yet</EmptyTitle>
-              <EmptyDescription>
-                Create Appointment Types to define clinical categories or visit types for
-                Appointments in this Tenant.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={openAddSheet}>
-                  <PiPlusLight className="size-4" />
-                  Add Appointment Type
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : types.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Appointment Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search
-                term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <TypeTableView
-                types={types}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setTypePendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <TypeCardView
-                types={types}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setTypePendingDelete}
-              />
-            ) : (
-              <TypeListView
-                types={types}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setTypePendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={typesQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {types.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiClipboardTextLight />
+                </EmptyMedia>
+                <EmptyTitle>No Appointment Types yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Appointment Types to define clinical categories or visit types for
+                  Appointments in this Tenant.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={openAddSheet}>
+                    <PiPlusLight className="size-4" />
+                    Add Appointment Type
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : types.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Appointment Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <TypeTableView
+                  types={types}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setTypePendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <TypeCardView
+                  types={types}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setTypePendingDelete}
+                />
+              ) : (
+                <TypeListView
+                  types={types}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setTypePendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <TypeFormSheet

@@ -20,6 +20,7 @@ import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/s
 import { useCreateAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useCreateAppointmentStatus';
 import { useUpdateAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useUpdateAppointmentStatus';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -227,101 +228,110 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
           </Alert>
         ) : null}
 
-        {statusesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : statuses.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiClipboardTextLight />
-              </EmptyMedia>
-              <EmptyTitle>No Appointment Statuses yet</EmptyTitle>
-              <EmptyDescription>
-                Create Appointment Statuses to define lifecycle states for Appointments in this
-                Tenant.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={openAddSheet}>
-                  <PiPlusLight className="size-4" />
-                  Add Appointment Status
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : statuses.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Appointment Statuses match &ldquo;{debouncedSearch}&rdquo;. Try a different
-                search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <StatusTableView
-                statuses={statuses}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setStatusPendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <StatusCardView
-                statuses={statuses}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setStatusPendingDelete}
-              />
-            ) : (
-              <StatusListView
-                statuses={statuses}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setStatusPendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={statusesQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {statuses.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiClipboardTextLight />
+                </EmptyMedia>
+                <EmptyTitle>No Appointment Statuses yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Appointment Statuses to define lifecycle states for Appointments in this
+                  Tenant.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={openAddSheet}>
+                    <PiPlusLight className="size-4" />
+                    Add Appointment Status
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : statuses.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Appointment Statuses match &ldquo;{debouncedSearch}&rdquo;. Try a different
+                  search term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <StatusTableView
+                  statuses={statuses}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setStatusPendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <StatusCardView
+                  statuses={statuses}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setStatusPendingDelete}
+                />
+              ) : (
+                <StatusListView
+                  statuses={statuses}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setStatusPendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <PiCaretLeftLight className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <PiCaretRightLight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <StatusFormSheet

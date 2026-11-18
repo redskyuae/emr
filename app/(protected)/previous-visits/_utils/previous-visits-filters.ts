@@ -5,6 +5,9 @@ import type { VisitsParams } from '@/app/queries/visits/useVisits';
 import { VISIT_STATUS_FILTERS, toDisplayDate } from '../../visits/_utils/visit-status';
 
 /** Filters as they appear in the URL: ISO dates for `<input type="date">`, ids as strings. */
+// Previous Visits page size; the loading skeleton shows the same number of rows.
+export const PREVIOUS_VISITS_PAGE_SIZE = 10;
+
 export type PreviousVisitsUrlParams = {
   q: string | null;
   to: string | null;

@@ -16,6 +16,7 @@ import {
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentCancelledReasonsQuery } from '@/app/queries/appointment-masters/cancelled-reasons/useAppointmentCancelledReasons';
 import { useCancelAppointment } from '@/app/queries/appointments/useCancelAppointment';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -112,13 +113,6 @@ export function CancelAppointmentDialog({
             </AlertDescription>
           </Alert>
 
-          {reasonsQuery.isLoading ? (
-            <div className="space-y-2" aria-label="Loading Appointment Cancelled Reasons">
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-8 w-full" />
-            </div>
-          ) : null}
-
           {reasonsQuery.isError ? (
             <Alert variant="destructive">
               <CiWarning className="size-4" />
@@ -142,66 +136,78 @@ export function CancelAppointmentDialog({
                 </div>
               </AlertDescription>
             </Alert>
-          ) : null}
-
-          {!reasonsQuery.isLoading && !reasonsQuery.isError && reasons.length === 0 ? (
-            <Alert variant="destructive">
-              <CiWarning className="size-4" />
-              <AlertTitle>No active Appointment Cancelled Reasons</AlertTitle>
-              <AlertDescription>
-                Configure a reason before cancelling this Appointment.{' '}
-                <Link
-                  className="font-medium underline underline-offset-4"
-                  href="/appointment-masters/cancelled-reasons"
+          ) : (
+            <SkeletonCrossfade
+              isLoading={reasonsQuery.isLoading}
+              skeleton={
+                // The reason field: its label over a full-width select.
+                <div
+                  className="flex flex-col gap-2"
+                  aria-label="Loading Appointment Cancelled Reasons"
                 >
-                  Manage Cancelled Reasons
-                </Link>
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
-          {!reasonsQuery.isLoading && !reasonsQuery.isError && reasons.length > 0 ? (
-            <Controller
-              control={form.control}
-              name="appointmentCancelledReasonId"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="appointment-cancelled-reason">
-                    Appointment Cancelled Reason{' '}
-                    <span aria-hidden className="text-destructive">
-                      *
-                    </span>
-                  </FieldLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      form.clearErrors('root');
-                    }}
-                    disabled={cancelMutation.isPending}
-                  >
-                    <SelectTrigger
-                      id="appointment-cancelled-reason"
-                      className="w-full"
-                      aria-required
-                      aria-invalid={fieldState.invalid}
-                      onBlur={field.onBlur}
+                  <Skeleton className="h-4 w-56" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              }
+            >
+              {reasons.length === 0 ? (
+                <Alert variant="destructive">
+                  <CiWarning className="size-4" />
+                  <AlertTitle>No active Appointment Cancelled Reasons</AlertTitle>
+                  <AlertDescription>
+                    Configure a reason before cancelling this Appointment.{' '}
+                    <Link
+                      className="font-medium underline underline-offset-4"
+                      href="/appointment-masters/cancelled-reasons"
                     >
-                      <SelectValue placeholder="Select a cancellation reason" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {reasons.map((reason) => (
-                        <SelectItem key={reason.id} value={String(reason.id)}>
-                          {reason.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError errors={[fieldState.error]} />
-                </Field>
+                      Manage Cancelled Reasons
+                    </Link>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Controller
+                  control={form.control}
+                  name="appointmentCancelledReasonId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="appointment-cancelled-reason">
+                        Appointment Cancelled Reason{' '}
+                        <span aria-hidden className="text-destructive">
+                          *
+                        </span>
+                      </FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          form.clearErrors('root');
+                        }}
+                        disabled={cancelMutation.isPending}
+                      >
+                        <SelectTrigger
+                          id="appointment-cancelled-reason"
+                          className="w-full"
+                          aria-required
+                          aria-invalid={fieldState.invalid}
+                          onBlur={field.onBlur}
+                        >
+                          <SelectValue placeholder="Select a cancellation reason" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {reasons.map((reason) => (
+                            <SelectItem key={reason.id} value={String(reason.id)}>
+                              {reason.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  )}
+                />
               )}
-            />
-          ) : null}
+            </SkeletonCrossfade>
+          )}
 
           {form.formState.errors.root?.message ? (
             <Alert variant="destructive">
