@@ -62,11 +62,27 @@ gh api repos/{owner}/{repo}/issues/<ticket>/dependencies/blocked_by -F issue_id=
 
 If an API call fails as well, the `Parent` and `Blocked by` sections in the body still record the relationship. Tell the requester which native links are missing when you share the tickets.
 
-## After publishing
+## If a create command fails
 
-When everything is published, confirm that every child is attached and every dependency is recorded before sharing the links:
+`gh` adds the parent and blocked-by links after it has created the issue. If `gh issue create` exits with an error, the ticket may already exist, unlinked, even though no URL was printed. Running the command again would publish a duplicate. Look before retrying:
 
 ```bash
-gh api repos/{owner}/{repo}/issues/<parent>/sub_issues --jq '.[].number'
-gh api repos/{owner}/{repo}/issues/<ticket>/dependencies/blocked_by --jq '.[].number'
+gh issue list --author @me --state open --search "<title> in:title" --json number,title,createdAt
+```
+
+If the ticket is there, keep it and repair its links instead of creating it again:
+
+```bash
+gh issue edit <n> --parent <parent> --add-blocked-by <blocker>
+```
+
+Use the API calls above when `gh issue edit` lacks those flags. Create the ticket again only when the search shows it does not exist.
+
+## After publishing
+
+When everything is published, confirm that every child is attached and every dependency is recorded before sharing the links. `--paginate` matters when the parent already has many sub-issues:
+
+```bash
+gh api --paginate repos/{owner}/{repo}/issues/<parent>/sub_issues --jq '.[].number'
+gh api --paginate repos/{owner}/{repo}/issues/<ticket>/dependencies/blocked_by --jq '.[].number'
 ```
