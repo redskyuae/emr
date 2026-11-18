@@ -1,6 +1,7 @@
-import { Check } from 'lucide-react';
+import { PiCheckLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -22,9 +23,11 @@ function ChecklistRow({
 }) {
   return (
     <li className="flex items-center gap-3 border-t px-4 py-3 first:border-t-0">
-      {loading ? (
-        <Skeleton className="size-6 shrink-0 rounded-full" />
-      ) : (
+      <SkeletonCrossfade
+        isLoading={loading}
+        className="size-6 shrink-0"
+        skeleton={<Skeleton className="size-6 rounded-full" />}
+      >
         <span
           className={cn(
             'grid size-6 shrink-0 place-items-center rounded-full',
@@ -32,17 +35,15 @@ function ChecklistRow({
             !done && (optional ? 'border-border border-2' : 'border-warning border-2')
           )}
         >
-          {done ? <Check className="size-3.5" aria-hidden="true" /> : null}
+          {done ? <PiCheckLight className="size-3.5" aria-hidden="true" /> : null}
           <span className="sr-only">{done ? 'Done' : optional ? 'Optional' : 'Open'}</span>
         </span>
-      )}
+      </SkeletonCrossfade>
       <div className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{label}</span>
-        {loading ? (
-          <Skeleton className="mt-1 h-3 w-28" />
-        ) : (
+        <SkeletonCrossfade isLoading={loading} skeleton={<Skeleton className="my-0.5 h-3 w-28" />}>
           <span className="text-muted-foreground block text-xs">{detail}</span>
-        )}
+        </SkeletonCrossfade>
       </div>
       {!loading ? action : null}
     </li>

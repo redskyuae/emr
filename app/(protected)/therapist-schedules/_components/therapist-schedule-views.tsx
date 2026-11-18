@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarDays, Clock, Pencil } from 'lucide-react';
+import { CiCalendar, CiCalendarDate, CiClock2, CiEdit } from 'react-icons/ci';
 
 import type { TherapistSchedule } from '@/app/api/lib/modules/therapist-schedule/schemas/therapist-schedule-schema';
 import { Badge } from '@/components/ui/badge';
@@ -57,7 +57,7 @@ function TherapistScheduleStatusBadge({ schedule }: { schedule: TherapistSchedul
 function TherapistScheduleAvatar() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
-      <CalendarClock className="size-5" />
+      <CiCalendarDate className="size-5" />
     </div>
   );
 }
@@ -77,7 +77,7 @@ function TherapistScheduleEditButton({
       aria-label={`Edit Therapist Schedule ${schedule.id}`}
       onClick={() => onEdit(schedule)}
     >
-      <Pencil className="size-4" />
+      <CiEdit className="size-4" />
     </Button>
   );
 }
@@ -89,7 +89,7 @@ export function TherapistScheduleTableView({
   onEdit,
 }: TherapistScheduleViewProps) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-max">
@@ -144,8 +144,8 @@ export function TherapistScheduleCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {schedules.map((schedule) => (
-        <Card key={schedule.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={schedule.id}>
+          <CardContent className="space-y-3">
             <div className="flex items-start justify-between gap-2">
               <TherapistScheduleAvatar />
               <TherapistScheduleStatusBadge schedule={schedule} />
@@ -156,11 +156,11 @@ export function TherapistScheduleCardView({
                 {getTherapistName(schedule, therapistNameById)}
               </h3>
               <p className="flex items-center gap-1.5 font-mono text-sm">
-                <CalendarDays className="text-muted-foreground size-3.5 shrink-0" />
+                <CiCalendar className="text-muted-foreground size-3.5 shrink-0" />
                 {formatDateRange(schedule)}
               </p>
               <p className="flex items-center gap-1.5 text-sm">
-                <Clock className="text-muted-foreground size-3.5 shrink-0" />
+                <CiClock2 className="text-muted-foreground size-3.5 shrink-0" />
                 {schedule.slotDurationMinutes} min slots
               </p>
             </div>
@@ -177,7 +177,7 @@ export function TherapistScheduleCardView({
             {canEdit ? (
               <div className="flex flex-wrap gap-2 border-t pt-3">
                 <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(schedule)}>
-                  <Pencil className="size-3.5" />
+                  <CiEdit className="size-3.5" />
                   Edit
                 </Button>
               </div>
@@ -198,8 +198,8 @@ export function TherapistScheduleListView({
   return (
     <div className="space-y-3">
       {schedules.map((schedule) => (
-        <Card key={schedule.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={schedule.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-3 sm:w-64 sm:shrink-0">
               <TherapistScheduleAvatar />
               <div className="min-w-0">

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { PiArrowLeftLight } from 'react-icons/pi';
 
 import type { Invoice } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import { Badge } from '@/components/ui/badge';
@@ -16,15 +16,15 @@ export function InvoiceHeader({
   actions: React.ReactNode;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="bg-card flex flex-col gap-4 rounded-xl border p-5 lg:flex-row lg:items-center lg:justify-between">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="icon" aria-label="Back to Invoices">
             <Link href="/billing">
-              <ArrowLeft className="size-4" />
+              <PiArrowLeftLight className="size-4" />
             </Link>
           </Button>
-          <h1 className="text-xl font-semibold">{invoice.invoiceNumber}</h1>
+          <h2 className="text-xl font-semibold">{invoice.invoiceNumber}</h2>
           <Badge variant="outline" className={getInvoiceStatusClassName(invoice.status)}>
             {getInvoiceStatusLabel(invoice.status)}
           </Badge>

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
@@ -128,7 +128,7 @@ export function VisitTypeFormSheet({
             <FieldGroup>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Could not save the Visit Type</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc pl-4">
@@ -192,7 +192,7 @@ export function VisitTypeFormSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
-              <Save className="size-4" />
+              <CiFloppyDisk className="size-4" />
               {isSaving ? 'Saving…' : isCreating ? 'Create Visit Type' : 'Save changes'}
             </Button>
           </SheetFooter>

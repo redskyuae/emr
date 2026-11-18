@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, BedDouble } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiBedLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -164,7 +165,7 @@ function AdmitPatientSheetBody({
           <FieldGroup>
             {serverErrors.length > 0 ? (
               <Alert variant="destructive">
-                <AlertCircle className="size-4" />
+                <CiCircleAlert className="size-4" />
                 <AlertTitle>Could not admit the Patient</AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc pl-4">
@@ -265,7 +266,7 @@ function AdmitPatientSheetBody({
             Cancel
           </Button>
           <Button type="submit" disabled={admitMutation.isPending}>
-            <BedDouble className="size-4" />
+            <PiBedLight className="size-4" />
             {admitMutation.isPending ? 'Admitting…' : 'Admit Patient'}
           </Button>
         </SheetFooter>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
@@ -49,7 +49,7 @@ export function DeletePatientDialog({ patient, onClose }: DeletePatientDialogPro
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Patient?</AlertDialogTitle>
           <AlertDialogDescription>

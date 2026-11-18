@@ -62,7 +62,7 @@ export function InventoryPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardHeader className="border-b">
             <div>
               <CardTitle>Asset directory</CardTitle>

@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -28,6 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import {
   Select,
   SelectContent,
@@ -35,12 +42,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toDateInputValue, toDisplayDate, todayDisplayDate } from '../_utils/visit-status';
+import {
+  VISITS_PAGE_SIZE,
+  toDateInputValue,
+  toDisplayDate,
+  todayDisplayDate,
+} from '../_utils/visit-status';
 import { CancelVisitDialog } from './_modals/cancel-visit-dialog';
 import { VisitQueueSummary } from './visit-queue-summary';
 import { VisitsTable, VisitsTableSkeleton } from './visits-table';
 
-const PAGE_SIZE = 20;
 const ALL_FILTER = 'all';
 
 export function VisitsPageImpl() {
@@ -65,7 +76,7 @@ export function VisitsPageImpl() {
     status,
     query: debouncedSearch || undefined,
     page,
-    limit: PAGE_SIZE,
+    limit: VISITS_PAGE_SIZE,
   });
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
 
@@ -79,8 +90,8 @@ export function VisitsPageImpl() {
   const meta = visitsQuery.data?.meta;
   const total = meta?.total ?? 0;
   const totalPages = meta?.totalPages ?? 0;
-  const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
-  const rangeEnd = Math.min(page * PAGE_SIZE, total);
+  const rangeStart = total > 0 ? (page - 1) * VISITS_PAGE_SIZE + 1 : 0;
+  const rangeEnd = Math.min(page * VISITS_PAGE_SIZE, total);
   const pendingVisitId = startMutation.isPending ? startMutation.variables : null;
 
   async function handleStart(visit: Visit) {
@@ -106,12 +117,12 @@ export function VisitsPageImpl() {
           }}
         />
 
-        <Card className="shadow-fluent-2 py-0">
+        <Card className="py-0">
           <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
             <Input
               type="date"
               aria-label="Visit date"
-              className="h-9 lg:w-44"
+              className="lg:w-44"
               value={toDateInputValue(visitDate)}
               onChange={(event) => {
                 setPage(1);
@@ -119,9 +130,11 @@ export function VisitsPageImpl() {
               }}
             />
 
-            {doctorsQuery.isLoading ? (
-              <Skeleton className="h-9 w-full lg:w-52" aria-label="Loading Doctor filter" />
-            ) : (
+            <SkeletonCrossfade
+              isLoading={doctorsQuery.isLoading}
+              className="lg:w-52"
+              skeleton={<Skeleton className="h-10 w-full" aria-label="Loading Doctor filter" />}
+            >
               <Select
                 value={doctorParam ?? ALL_FILTER}
                 onValueChange={(value) => {
@@ -130,7 +143,7 @@ export function VisitsPageImpl() {
                 }}
               >
                 <SelectTrigger
-                  className="h-9 lg:w-52"
+                  className="w-full"
                   aria-label="Filter by doctor"
                   disabled={doctorsQuery.isError}
                 >
@@ -145,11 +158,11 @@ export function VisitsPageImpl() {
                   ))}
                 </SelectContent>
               </Select>
-            )}
+            </SkeletonCrossfade>
 
-            <InputGroup className="bg-background h-9 lg:ml-auto lg:max-w-xs">
+            <InputGroup className="lg:ml-auto lg:max-w-xs">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -167,7 +180,7 @@ export function VisitsPageImpl() {
 
         {visitsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Visits</AlertTitle>
             <AlertDescription>{getApiErrorMessage(visitsQuery.error)}</AlertDescription>
           </Alert>
@@ -175,7 +188,7 @@ export function VisitsPageImpl() {
 
         {doctorsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Doctor filter</AlertTitle>
             <AlertDescription className="flex flex-wrap items-center gap-2">
               {getApiErrorMessage(doctorsQuery.error)}
@@ -191,73 +204,75 @@ export function VisitsPageImpl() {
           </Alert>
         ) : null}
 
-        {visitsQuery.isLoading ? (
-          <VisitsTableSkeleton />
-        ) : visitsQuery.isError ? null : visits.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <ClipboardList />
-              </EmptyMedia>
-              <EmptyTitle>No Visits for {visitDate}</EmptyTitle>
-              <EmptyDescription>
-                Create a Visit from a booked Appointment or for a Walk-in Patient to start
-                today&apos;s queue.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button asChild>
-                  <Link href="/visits/new">
-                    <Plus className="size-4" />
-                    Create Visit
-                  </Link>
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : (
-          <>
-            <VisitsTable
-              visits={visits}
-              now={visitsQuery.dataUpdatedAt}
-              pendingVisitId={pendingVisitId}
-              canStart={canStart}
-              canCancel={canCancel}
-              onStart={(visit) => void handleStart(visit)}
-              onCancel={setVisitPendingCancel}
-            />
+        {visitsQuery.isError ? null : (
+          <SkeletonCrossfade isLoading={visitsQuery.isLoading} skeleton={<VisitsTableSkeleton />}>
+            {visits.length === 0 ? (
+              <Empty className="bg-card min-h-80 border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <PiClipboardTextLight />
+                  </EmptyMedia>
+                  <EmptyTitle>No Visits for {visitDate}</EmptyTitle>
+                  <EmptyDescription>
+                    Create a Visit from a booked Appointment or for a Walk-in Patient to start
+                    today&apos;s queue.
+                  </EmptyDescription>
+                </EmptyHeader>
+                {canCreate ? (
+                  <EmptyContent>
+                    <Button asChild>
+                      <Link href="/visits/new">
+                        <PiPlusLight className="size-4" />
+                        Create Visit
+                      </Link>
+                    </Button>
+                  </EmptyContent>
+                ) : null}
+              </Empty>
+            ) : (
+              <div className="space-y-4">
+                <VisitsTable
+                  visits={visits}
+                  now={visitsQuery.dataUpdatedAt}
+                  pendingVisitId={pendingVisitId}
+                  canStart={canStart}
+                  canCancel={canCancel}
+                  onStart={(visit) => void handleStart(visit)}
+                  onCancel={setVisitPendingCancel}
+                />
 
-            {totalPages > 1 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
-                </div>
+                {totalPages > 1 ? (
+                  <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                    <p className="text-muted-foreground text-sm">
+                      Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={page <= 1}
+                        onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      >
+                        <PiCaretLeftLight className="size-4" />
+                        Previous
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage((current) => current + 1)}
+                      >
+                        Next
+                        <PiCaretRightLight className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </>
+            )}
+          </SkeletonCrossfade>
         )}
       </div>
 

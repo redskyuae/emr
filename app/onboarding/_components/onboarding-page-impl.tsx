@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { useOnboardTenant } from '@/app/queries/auth/useOnboardTenant';
@@ -65,7 +65,7 @@ export function OnboardingPageImpl({ tenantName }: { tenantName: string }) {
       {onboardMutation.isError ? (
         <div className="space-y-4">
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not finish setup</AlertTitle>
             <AlertDescription>
               {errors.length === 1 ? (

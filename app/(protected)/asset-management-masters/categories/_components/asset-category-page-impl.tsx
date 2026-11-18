@@ -4,20 +4,19 @@ import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Table as TableIcon,
-  Tag,
-} from 'lucide-react';
+  CiBoxList,
+  CiCircleAlert,
+  CiGrid41,
+  CiSearch,
+  CiShoppingTag,
+  CiViewTable,
+} from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetCategoryQuery } from '@/app/queries/asset-masters/useAssetCategory';
 import { useAssetCategoriesQuery } from '@/app/queries/asset-masters/useAssetCategories';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -150,8 +149,8 @@ export function AssetCategoryPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -163,22 +162,22 @@ export function AssetCategoryPageImpl() {
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -192,7 +191,7 @@ export function AssetCategoryPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={() => void setCategoryParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Asset Category
                 </Button>
               </div>
@@ -202,106 +201,116 @@ export function AssetCategoryPageImpl() {
 
         {categoriesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Asset Categories</AlertTitle>
             <AlertDescription>{getApiErrorMessage(categoriesQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {categoriesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : categories.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Tag />
-              </EmptyMedia>
-              <EmptyTitle>No Asset Categories yet</EmptyTitle>
-              <EmptyDescription>
-                Create Asset Categories to classify the equipment and assets tracked in this Tenant.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setCategoryParam('new')}>
-                  <Plus className="size-4" />
-                  Add Asset Category
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : categories.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Asset Categories match &ldquo;{debouncedSearch}&rdquo;. Try a different search
-                term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <AssetCategoryTableView
-                categories={categories}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
-              />
-            ) : viewLayout === 'card' ? (
-              <AssetCategoryCardView
-                categories={categories}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
-              />
-            ) : (
-              <AssetCategoryListView
-                categories={categories}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(category) => void setCategoryParam(String(category.id))}
-                onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={categoriesQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {categories.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiShoppingTag />
+                </EmptyMedia>
+                <EmptyTitle>No Asset Categories yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Asset Categories to classify the equipment and assets tracked in this
+                  Tenant.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setCategoryParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Asset Category
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : categories.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Asset Categories match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <AssetCategoryTableView
+                  categories={categories}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(category) => void setCategoryParam(String(category.id))}
+                  onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
+                />
+              ) : viewLayout === 'card' ? (
+                <AssetCategoryCardView
+                  categories={categories}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(category) => void setCategoryParam(String(category.id))}
+                  onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
+                />
+              ) : (
+                <AssetCategoryListView
+                  categories={categories}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(category) => void setCategoryParam(String(category.id))}
+                  onDelete={(category) => void setDeleteCategoryParam(String(category.id))}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <AssetCategoryFormSheet

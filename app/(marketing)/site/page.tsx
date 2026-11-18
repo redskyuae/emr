@@ -2,32 +2,34 @@ import { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  Activity,
-  ArrowRight,
-  BarChart3,
-  BrainCircuit,
-  Building2,
-  CalendarClock,
-  CheckCircle2,
-  ClipboardList,
-  FlaskConical,
-  Gauge,
-  Hospital,
-  KeyRound,
-  Lock,
-  Microscope,
-  Network,
-  Pill,
-  Quote,
-  Receipt,
-  ScrollText,
-  ShieldCheck,
-  Smartphone,
-  Sparkles,
-  Star,
-  Stethoscope,
-  Video,
-} from 'lucide-react';
+  CiBeaker1,
+  CiCalendarDate,
+  CiCircleCheck,
+  CiHospital1,
+  CiLock,
+  CiMobile3,
+  CiPill,
+  CiReceipt,
+  CiStethoscope,
+  CiVideoOn,
+  CiWavePulse1,
+} from 'react-icons/ci';
+import {
+  PiArrowRightLight,
+  PiBrainLight,
+  PiBuildingsLight,
+  PiChartBarLight,
+  PiClipboardTextLight,
+  PiGaugeLight,
+  PiKeyLight,
+  PiMicroscopeLight,
+  PiQuotesLight,
+  PiScrollLight,
+  PiShieldCheckLight,
+  PiSparkleLight,
+  PiStarFill,
+  PiTreeStructureLight,
+} from 'react-icons/pi';
 
 import { MarketingAnimations } from '@/components/marketing/marketing-animations';
 import { Badge } from '@/components/ui/badge';
@@ -74,37 +76,37 @@ const heroStats = [
 
 const modules = [
   {
-    icon: ClipboardList,
+    icon: PiClipboardTextLight,
     title: 'Patient Registration',
     description:
       'Register patients once per tenant with demographics, identifiers, and global reference data — shared safely across every facility.',
   },
   {
-    icon: CalendarClock,
+    icon: CiCalendarDate,
     title: 'Appointments & Scheduling',
     description:
       'Facility-scoped schedules for every doctor. Slot management, walk-ins, and follow-ups without double-booking.',
   },
   {
-    icon: Stethoscope,
+    icon: CiStethoscope,
     title: 'Clinical Documentation',
     description:
       'Structured encounter notes, diagnoses, and care plans that follow the patient across facilities in your group.',
   },
   {
-    icon: Pill,
+    icon: CiPill,
     title: 'Pharmacy & Orders',
     description:
       'Medication orders with formulary control per facility, dispensing workflows, and stock visibility.',
   },
   {
-    icon: FlaskConical,
+    icon: CiBeaker1,
     title: 'Labs & Diagnostics',
     description:
       'Order tests at any facility, route to your lab units, and return results to the ordering clinician automatically.',
   },
   {
-    icon: Receipt,
+    icon: CiReceipt,
     title: 'Billing & Claims',
     description:
       'Tenant-configured tariffs, facility-level invoicing, and clean claim exports for every payer you work with.',
@@ -113,37 +115,37 @@ const modules = [
 
 const capabilities = [
   {
-    icon: Network,
+    icon: PiTreeStructureLight,
     title: 'Interoperability, built in',
     description:
       'Exchange records with labs, pharmacies, and national health stacks. FHIR R4, HL7 v2, DICOM, and ABDM-ready connectors ship out of the box.',
   },
   {
-    icon: Activity,
+    icon: CiWavePulse1,
     title: 'Real-time operations board',
     description:
       'Live bed occupancy, OT utilisation, and OPD queues across every facility in your group — updated to the second.',
   },
   {
-    icon: Video,
+    icon: CiVideoOn,
     title: 'Telehealth & e-prescriptions',
     description:
       'Run video consults, capture vitals remotely, and issue digital prescriptions without ever leaving the patient chart.',
   },
   {
-    icon: BarChart3,
+    icon: PiChartBarLight,
     title: 'Insight analytics',
     description:
       'Operational, clinical, and revenue dashboards with population-health cohorts and exportable boards for leadership.',
   },
   {
-    icon: Smartphone,
+    icon: CiMobile3,
     title: 'Clinician mobile app',
     description:
       'Rounds, results, and approvals on iOS and Android — offline-capable, syncing the moment a clinician reconnects.',
   },
   {
-    icon: Gauge,
+    icon: PiGaugeLight,
     title: '99.99% uptime SLA',
     description:
       'Multi-region infrastructure, automated encrypted backups, and a 99.99% availability commitment your operations can trust.',
@@ -152,25 +154,25 @@ const capabilities = [
 
 const securityFeatures = [
   {
-    icon: Lock,
+    icon: CiLock,
     title: 'Row-level tenant isolation',
     description:
       'Every record is scoped to your tenant at the database layer. No query crosses tenant boundaries — by architecture, not by convention.',
   },
   {
-    icon: KeyRound,
+    icon: PiKeyLight,
     title: 'Roles & Permissions',
     description:
       'A system-wide permission catalogue with tenant-scoped roles. Tenant Admins decide exactly who can do what, per facility.',
   },
   {
-    icon: ScrollText,
+    icon: PiScrollLight,
     title: 'Complete audit trails',
     description:
       'Every clinical and administrative action is attributable to a user, a facility, and a point in time.',
   },
   {
-    icon: ShieldCheck,
+    icon: PiShieldCheckLight,
     title: 'Secure by default',
     description:
       'Session-based authentication, encrypted transport, and an API-first design reviewed against healthcare data standards.',
@@ -180,28 +182,28 @@ const securityFeatures = [
 const facilities = [
   {
     image: img.facHospital,
-    icon: Hospital,
+    icon: CiHospital1,
     type: 'HOSPITAL',
     name: 'Hospital care',
     detail: 'Inpatient wards and care teams',
   },
   {
     image: img.facClinic,
-    icon: Building2,
+    icon: PiBuildingsLight,
     type: 'CLINIC',
     name: 'Riverside Clinic',
     detail: '18 consult rooms',
   },
   {
     image: img.facLab,
-    icon: Microscope,
+    icon: PiMicroscopeLight,
     type: 'LABORATORY',
     name: 'Central Diagnostics',
     detail: '1,200 tests / day',
   },
   {
     image: img.facTeam,
-    icon: Stethoscope,
+    icon: CiStethoscope,
     type: 'STAFF',
     name: 'One staff directory',
     detail: 'Roles scoped per facility',
@@ -264,7 +266,7 @@ function StarRating({ className }: { className?: string }) {
   return (
     <span className={className} aria-hidden="true">
       {Array.from({ length: 5 }).map((_, i) => (
-        <Star key={i} className="size-4 fill-current" />
+        <PiStarFill key={i} className="size-4" />
       ))}
     </span>
   );
@@ -305,7 +307,7 @@ export default function MarketingPage() {
               <Button asChild size="lg" className="h-11 px-5 text-sm">
                 <Link href="/signup">
                   Create your Tenant
-                  <ArrowRight data-icon="inline-end" />
+                  <PiArrowRightLight data-icon="inline-end" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="h-11 px-5 text-sm">
@@ -354,7 +356,7 @@ export default function MarketingPage() {
                 data-hero-chip
               >
                 <span className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-                  <Sparkles className="size-3.5" />
+                  <PiSparkleLight className="size-3.5" />
                 </span>
                 <div className="text-left">
                   <p className="text-xs leading-none font-semibold">AI note drafted</p>
@@ -366,7 +368,7 @@ export default function MarketingPage() {
                 data-hero-chip
               >
                 <span className="text-chart-4 flex size-6 items-center justify-center">
-                  <CheckCircle2 className="size-5" />
+                  <CiCircleCheck className="size-5" />
                 </span>
                 <div className="text-left">
                   <p className="text-xs leading-none font-semibold">FHIR synced</p>
@@ -391,7 +393,7 @@ export default function MarketingPage() {
                   key={`${name}-${i}`}
                   className="font-heading text-muted-foreground/80 flex shrink-0 items-center gap-2.5 pr-12 text-sm font-semibold"
                 >
-                  <Hospital className="text-primary/60 size-4" />
+                  <CiHospital1 className="text-primary/60 size-4" />
                   {name}
                 </span>
               ))}
@@ -546,7 +548,7 @@ export default function MarketingPage() {
             <Button asChild size="lg" className="mt-8 h-11 px-5 text-sm">
               <Link href="/signup">
                 Create your Tenant
-                <ArrowRight data-icon="inline-end" />
+                <PiArrowRightLight data-icon="inline-end" />
               </Link>
             </Button>
           </div>
@@ -574,7 +576,7 @@ export default function MarketingPage() {
           >
             <div className="flex flex-col justify-center gap-4 p-8 sm:p-10">
               <Badge variant="secondary" className="text-accent-foreground w-fit gap-1.5">
-                <Sparkles className="size-3.5" />
+                <PiSparkleLight className="size-3.5" />
                 AI Clinical Copilot
               </Badge>
               <h3 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
@@ -593,7 +595,7 @@ export default function MarketingPage() {
                   'One-tap chart summary',
                 ].map((point) => (
                   <li key={point} className="flex items-center gap-2 text-sm font-medium">
-                    <CheckCircle2 className="text-primary size-4 shrink-0" />
+                    <CiCircleCheck className="text-primary size-4 shrink-0" />
                     {point}
                   </li>
                 ))}
@@ -604,7 +606,7 @@ export default function MarketingPage() {
             <div className="from-accent/60 relative flex items-center bg-gradient-to-br to-transparent p-8 sm:p-10">
               <div className="bg-card shadow-fluent-16 w-full overflow-hidden rounded-xl border">
                 <div className="flex items-center gap-2 border-b px-4 py-2.5">
-                  <BrainCircuit className="text-primary size-4" />
+                  <PiBrainLight className="text-primary size-4" />
                   <span className="text-xs font-semibold">Copilot</span>
                   <span className="bg-accent text-accent-foreground ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
                     <span className="bg-primary size-1.5 animate-pulse rounded-full" />
@@ -787,7 +789,7 @@ export default function MarketingPage() {
             data-reveal
           >
             <div className="flex flex-col gap-6 p-8 sm:p-10">
-              <Quote className="text-pop size-8" aria-hidden="true" />
+              <PiQuotesLight className="text-pop size-8" aria-hidden="true" />
               <blockquote className="font-heading text-xl leading-relaxed font-medium tracking-tight text-balance sm:text-2xl">
                 “{featuredTestimonial.quote}”
               </blockquote>
@@ -877,7 +879,7 @@ export default function MarketingPage() {
                 >
                   <Link href="/signup">
                     Get started free
-                    <ArrowRight data-icon="inline-end" />
+                    <PiArrowRightLight data-icon="inline-end" />
                   </Link>
                 </Button>
                 <Button

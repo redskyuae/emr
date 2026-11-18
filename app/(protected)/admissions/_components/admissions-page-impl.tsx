@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, BedDouble, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Admission } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -11,6 +12,7 @@ import { useAdmissionsQuery } from '@/app/queries/admissions/useAdmissions';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,14 +32,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ADMISSION_STATUS_FILTERS } from '../_utils/admission-status';
+import { ADMISSIONS_PAGE_SIZE, ADMISSION_STATUS_FILTERS } from '../_utils/admission-status';
 import { CancelAdmissionDialog } from './_modals/cancel-admission-dialog';
 import { DischargeDialog } from './_modals/discharge-dialog';
 import { TransferBedDialog } from './_modals/transfer-bed-dialog';
 import { AdmitPatientSheet } from './_sheets/admit-patient-sheet';
 import { AdmissionsTable, AdmissionsTableSkeleton } from './admissions-table';
 
-const PAGE_SIZE = 20;
 const ALL_FILTER = 'all';
 
 export function AdmissionsPageImpl() {
@@ -76,7 +77,7 @@ export function AdmissionsPageImpl() {
     doctorId,
     query: debouncedSearch || undefined,
     page,
-    limit: PAGE_SIZE,
+    limit: ADMISSIONS_PAGE_SIZE,
   });
   const wardsQuery = useWardsQuery({ page: 1, limit: 999 });
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
@@ -85,8 +86,8 @@ export function AdmissionsPageImpl() {
   const meta = admissionsQuery.data?.meta;
   const total = meta?.total ?? 0;
   const totalPages = meta?.totalPages ?? 0;
-  const rangeStart = total > 0 ? (page - 1) * PAGE_SIZE + 1 : 0;
-  const rangeEnd = Math.min(page * PAGE_SIZE, total);
+  const rangeStart = total > 0 ? (page - 1) * ADMISSIONS_PAGE_SIZE + 1 : 0;
+  const rangeEnd = Math.min(page * ADMISSIONS_PAGE_SIZE, total);
 
   // ?admit=new opens the sheet; the Bed Board deep-links ?admit=new&ward=…&bed=…
   // with the target Bed preselected.
@@ -114,8 +115,8 @@ export function AdmissionsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <Select
               value={statusParam ?? 'ADMITTED'}
               onValueChange={(value) => {
@@ -123,7 +124,7 @@ export function AdmissionsPageImpl() {
                 void setStatusParam(value === 'ADMITTED' ? null : value);
               }}
             >
-              <SelectTrigger className="h-9 lg:w-44" aria-label="Filter by status">
+              <SelectTrigger className="lg:w-44" aria-label="Filter by status">
                 <SelectValue placeholder="Admitted" />
               </SelectTrigger>
               <SelectContent>
@@ -143,7 +144,7 @@ export function AdmissionsPageImpl() {
                 void setWardParam(value === ALL_FILTER ? null : value);
               }}
             >
-              <SelectTrigger className="h-9 lg:w-48" aria-label="Filter by ward">
+              <SelectTrigger className="lg:w-48" aria-label="Filter by ward">
                 <SelectValue placeholder="All Wards" />
               </SelectTrigger>
               <SelectContent>
@@ -163,7 +164,7 @@ export function AdmissionsPageImpl() {
                 void setDoctorParam(value === ALL_FILTER ? null : value);
               }}
             >
-              <SelectTrigger className="h-9 lg:w-52" aria-label="Filter by doctor">
+              <SelectTrigger className="lg:w-52" aria-label="Filter by doctor">
                 <SelectValue placeholder="All doctors" />
               </SelectTrigger>
               <SelectContent>
@@ -176,9 +177,9 @@ export function AdmissionsPageImpl() {
               </SelectContent>
             </Select>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-xs">
+            <InputGroup className="lg:max-w-xs">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -195,7 +196,7 @@ export function AdmissionsPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setAdmitParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Admit Patient
                 </Button>
               </div>
@@ -205,78 +206,81 @@ export function AdmissionsPageImpl() {
 
         {admissionsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Admissions</AlertTitle>
             <AlertDescription>{getApiErrorMessage(admissionsQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {admissionsQuery.isLoading ? (
-          <AdmissionsTableSkeleton />
-        ) : admissions.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BedDouble />
-              </EmptyMedia>
-              <EmptyTitle>No Admissions match</EmptyTitle>
-              <EmptyDescription>
-                Admit a Patient to a free Bed to start the inpatient census. Configure Wards and
-                Beds under Inpatient Masters first.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setAdmitParam('new')}>
-                  <Plus className="size-4" />
-                  Admit Patient
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : (
-          <>
-            <AdmissionsTable
-              admissions={admissions}
-              onTransfer={setAdmissionPendingTransfer}
-              onDischarge={setAdmissionPendingDischarge}
-              onCancel={setAdmissionPendingCancel}
-              canDischarge={canDischarge}
-              canTransfer={canTransfer}
-              canCancel={canCancel}
-            />
+        <SkeletonCrossfade
+          isLoading={admissionsQuery.isLoading}
+          skeleton={<AdmissionsTableSkeleton canDischarge={canDischarge} />}
+        >
+          {admissions.length === 0 ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiBedLight />
+                </EmptyMedia>
+                <EmptyTitle>No Admissions match</EmptyTitle>
+                <EmptyDescription>
+                  Admit a Patient to a free Bed to start the inpatient census. Configure Wards and
+                  Beds under Inpatient Masters first.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setAdmitParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Admit Patient
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <AdmissionsTable
+                admissions={admissions}
+                onTransfer={setAdmissionPendingTransfer}
+                onDischarge={setAdmissionPendingDischarge}
+                onCancel={setAdmissionPendingCancel}
+                canDischarge={canDischarge}
+                canTransfer={canTransfer}
+                canCancel={canCancel}
+              />
 
-            {totalPages > 1 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 1 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <AdmitPatientSheet

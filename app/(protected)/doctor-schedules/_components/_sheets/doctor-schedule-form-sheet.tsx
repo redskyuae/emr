@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
@@ -12,6 +12,7 @@ import type { DoctorSchedule } from '@/app/api/lib/modules/doctor-schedule/schem
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useCreateDoctorSchedule } from '@/app/queries/doctor-schedules/useCreateDoctorSchedule';
 import { useUpdateDoctorSchedule } from '@/app/queries/doctor-schedules/useUpdateDoctorSchedule';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -218,19 +219,16 @@ export function DoctorScheduleFormSheet({
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
 
-        {showSkeleton ? (
-          <div className="flex-1 space-y-4 p-4">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-40 w-full" />
-          </div>
-        ) : (
-          <>
-            <ScrollArea className="min-h-0 flex-1">
-              <form id="doctor-schedule-form" onSubmit={onSubmit} className="space-y-5 p-4">
+        <ScrollArea className="min-h-0 flex-1">
+          <form id="doctor-schedule-form" onSubmit={onSubmit} className="p-4">
+            <SkeletonCrossfade
+              isLoading={showSkeleton}
+              skeleton={<DoctorScheduleFormFieldsSkeleton />}
+            >
+              <div className="space-y-5">
                 {serverErrors.length > 0 ? (
                   <Alert variant="destructive">
-                    <AlertCircle className="size-4" />
+                    <CiCircleAlert className="size-4" />
                     <AlertTitle>Save failed</AlertTitle>
                     <AlertDescription>
                       <ul className="list-disc space-y-1 pl-4">
@@ -420,25 +418,64 @@ export function DoctorScheduleFormSheet({
                     )}
                   />
                 </FieldGroup>
-              </form>
-            </ScrollArea>
+              </div>
+            </SkeletonCrossfade>
+          </form>
+        </ScrollArea>
 
-            <SheetFooter className="border-t p-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                form="doctor-schedule-form"
-                disabled={isSaving || rotas.length === 0}
-              >
-                <Save className="size-4" />
-                {isSaving ? 'Saving...' : 'Save Schedule'}
-              </Button>
-            </SheetFooter>
-          </>
-        )}
+        <SheetFooter className="border-t p-4">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="doctor-schedule-form"
+            disabled={isSaving || showSkeleton || rotas.length === 0}
+          >
+            <CiFloppyDisk className="size-4" />
+            {isSaving ? 'Saving...' : 'Save Schedule'}
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function FieldSkeleton({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={`h-4 ${label}`} />
+      <Skeleton className="h-10 w-full rounded-lg" />
+    </div>
+  );
+}
+
+// Mirrors the form while its data loads: one label + control per field, the same date grid, and
+// the Doctor Rota checklist with its summary line.
+function DoctorScheduleFormFieldsSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <FieldSkeleton label="w-16" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FieldSkeleton label="w-28" />
+        <FieldSkeleton label="w-24" />
+      </div>
+      <FieldSkeleton label="w-44" />
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-4 w-28" />
+        <div className="divide-y rounded-lg border">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3">
+              <Skeleton className="size-4 rounded-[4px]" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Skeleton className="h-3 w-40" />
+      </div>
+    </div>
   );
 }

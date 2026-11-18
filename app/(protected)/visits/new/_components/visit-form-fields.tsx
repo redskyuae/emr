@@ -1,15 +1,14 @@
 import { useState, type ReactNode } from 'react';
 import type { Control, FieldErrors, UseFormResetField, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
+import { CiCalendarDate, CiLock, CiStethoscope, CiUser } from 'react-icons/ci';
 import {
-  ClipboardList,
-  Lock,
-  Plus,
-  RefreshCcw,
-  Sparkles,
-  Stethoscope,
-  UserRound,
-} from 'lucide-react';
+  PiArrowsCounterClockwiseLight,
+  PiClipboardTextLight,
+  PiPersonSimpleWalkLight,
+  PiPlusLight,
+  PiSparkleLight,
+} from 'react-icons/pi';
 
 import type { AdmitSource } from '@/app/api/lib/modules/admit-source/schemas/admit-source-schema';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
@@ -19,6 +18,7 @@ import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-t
 import type { VisitPatientTypeAssessment } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
 import { visitTypeRequiresDoctor } from '@/app/api/lib/modules/visit/visit-doctor-requirement';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -95,11 +95,11 @@ export function VisitSourceFields({
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading
           id="check-in-patient-heading"
-          icon={<UserRound className="size-5" />}
+          icon={<CiUser className="size-5" />}
           title="Confirm the Patient"
           description="Find today's Appointment or a Walk-in Patient."
         />
@@ -116,9 +116,15 @@ export function VisitSourceFields({
             replaceField('remarks', '');
           }}
         >
-          <TabsList className="grid w-full grid-cols-2 sm:w-72">
-            <TabsTrigger value="appointment">From Appointment</TabsTrigger>
-            <TabsTrigger value="walk-in">Walk-in</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:w-80">
+            <TabsTrigger value="appointment">
+              <CiCalendarDate aria-hidden="true" />
+              From Appointment
+            </TabsTrigger>
+            <TabsTrigger value="walk-in">
+              <PiPersonSimpleWalkLight aria-hidden="true" />
+              Walk-in
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>
@@ -185,23 +191,27 @@ function PatientTypeBadge({
   error?: boolean;
   onRetry?: () => void;
 }) {
-  if (loading) {
-    return <Skeleton className="h-6 w-36" aria-label="Checking completed Visit history" />;
-  }
-  if (error) {
+  if (error && !loading) {
     return (
       <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-        <RefreshCcw className="size-4" />
+        <PiArrowsCounterClockwiseLight className="size-4" />
         Retry Patient type
       </Button>
     );
   }
-  if (!patientType) return null;
-
   return (
-    <Badge variant="secondary" className="bg-accent text-primary h-7 px-3">
-      {patientType.patientType === 'ESTABLISHED' ? 'Established Patient' : 'New Patient'}
-    </Badge>
+    <SkeletonCrossfade
+      isLoading={Boolean(loading)}
+      skeleton={
+        <Skeleton className="h-7 w-36 rounded-full" aria-label="Checking completed Visit history" />
+      }
+    >
+      {patientType ? (
+        <Badge variant="secondary" className="bg-accent text-primary h-7 px-3">
+          {patientType.patientType === 'ESTABLISHED' ? 'Established Patient' : 'New Patient'}
+        </Badge>
+      ) : null}
+    </SkeletonCrossfade>
   );
 }
 
@@ -243,11 +253,11 @@ export function VisitDetailsFields({
   const doctorRequired = visitTypeRequiresDoctor(selectedVisitType?.code);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading
           id="check-in-visit-heading"
-          icon={<ClipboardList className="size-5" />}
+          icon={<PiClipboardTextLight className="size-5" />}
           title="Visit"
           description={patientTypeDescription(patientType)}
         />
@@ -271,7 +281,7 @@ export function VisitDetailsFields({
         ) : null}
         {appointment?.bookingPath === 'PROCEDURE' ? (
           <div className="bg-success/10 text-success flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-4 py-3 text-sm">
-            <Sparkles className="size-4 shrink-0" aria-hidden />
+            <PiSparkleLight className="size-4 shrink-0" aria-hidden />
             <p className="min-w-0 flex-1">
               <span className="font-semibold">Scheduled Treatment: </span>
               {appointment.treatment?.name ?? 'Treatment'}
@@ -319,11 +329,11 @@ export function VisitDetailsFields({
             <div className="bg-muted/40 space-y-1 rounded-lg border p-3">
               <p className="text-sm font-medium">Doctor</p>
               <p className="flex items-center gap-2 text-base font-bold">
-                <Stethoscope className="text-muted-foreground size-4" aria-hidden />
+                <CiStethoscope className="text-muted-foreground size-4" aria-hidden />
                 {assignedDoctor.name}
               </p>
               <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                <Lock className="size-3" aria-hidden />
+                <CiLock className="size-3" aria-hidden />
                 Assigned by the Appointment.
               </p>
             </div>
@@ -438,7 +448,7 @@ export function VisitDetailsFields({
             className="text-primary -ml-2"
             onClick={() => setRemarksOpen(true)}
           >
-            <Plus className="size-4" />
+            <PiPlusLight className="size-4" />
             Add remarks
           </Button>
         )}

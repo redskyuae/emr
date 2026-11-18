@@ -5,7 +5,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useQueryState } from 'nuqs';
-import { AlertCircle, Plus, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { Asset } from '@/app/api/lib/modules/asset/schemas/asset-schema';
@@ -65,7 +66,7 @@ function ReferenceDataAlert({
   if (isError) {
     return (
       <Alert variant="destructive" className="mb-4">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load {resourceLabel}</AlertTitle>
         <AlertDescription>{getApiErrorMessage(error)}</AlertDescription>
       </Alert>
@@ -75,7 +76,7 @@ function ReferenceDataAlert({
   if (isEmpty) {
     return (
       <Alert className="mb-4">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>No {resourceLabel} configured</AlertTitle>
         <AlertDescription>Configure {resourceLabel} before raising a Work Order.</AlertDescription>
       </Alert>
@@ -197,7 +198,7 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
       <SheetHeader className="border-b p-4 pr-12">
         <div className="flex min-w-0 items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-md">
-            <Plus className="size-4" />
+            <PiPlusLight className="size-4" />
           </span>
           <div className="min-w-0 space-y-1">
             <SheetTitle className="truncate text-xl">New work order</SheetTitle>
@@ -216,7 +217,7 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {serverErrors.length > 0 ? (
             <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>Save failed</AlertTitle>
               <AlertDescription>
                 <ul className="list-disc space-y-1 pl-4">
@@ -509,7 +510,7 @@ function NewWorkOrderSheetBody({ onClose }: { onClose: () => void }) {
             disabled={isSaving || referenceDataUnavailable}
             aria-busy={isSaving}
           >
-            <Save className="size-4" />
+            <CiFloppyDisk className="size-4" />
             Save work order
           </Button>
         </SheetFooter>
@@ -566,13 +567,13 @@ function AssetField({
 
       {isError ? (
         <Alert variant="destructive" className="mb-2">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not load Assets</AlertTitle>
           <AlertDescription>{getApiErrorMessage(queryError)}</AlertDescription>
         </Alert>
       ) : hasNoAssetsAtAll ? (
         <Alert className="mb-2">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>No Assets configured</AlertTitle>
           <AlertDescription>Add an Asset before raising a Work Order.</AlertDescription>
         </Alert>

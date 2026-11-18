@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PencilLine } from 'lucide-react';
+import { CiEdit } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -14,6 +14,7 @@ import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
 import { useAdmitSourcesQuery } from '@/app/queries/visit-masters/admit-sources/useAdmitSources';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
 import { useAmendVisit } from '@/app/queries/visits/useAmendVisit';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -53,7 +54,7 @@ function RequiredMark() {
 }
 
 function SelectSkeleton({ label }: { label: string }) {
-  return <Skeleton className="h-9 w-full" aria-label={`Loading ${label}`} />;
+  return <Skeleton className="h-10 w-full" aria-label={`Loading ${label}`} />;
 }
 
 /**
@@ -187,9 +188,10 @@ export function AmendVisitSheet({
                   <FieldLabel htmlFor="amend-doctor">
                     Doctor {doctorRequired ? <RequiredMark /> : null}
                   </FieldLabel>
-                  {doctorsQuery.isLoading ? (
-                    <SelectSkeleton label="Doctors" />
-                  ) : (
+                  <SkeletonCrossfade
+                    isLoading={doctorsQuery.isLoading}
+                    skeleton={<SelectSkeleton label="Doctors" />}
+                  >
                     <NativeSelect
                       id="amend-doctor"
                       className="w-full"
@@ -206,7 +208,7 @@ export function AmendVisitSheet({
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
-                  )}
+                  </SkeletonCrossfade>
                   <FieldError>{errors.doctorId?.message}</FieldError>
                 </Field>
 
@@ -214,9 +216,10 @@ export function AmendVisitSheet({
                   <FieldLabel htmlFor="amend-visit-type">
                     Visit Type <RequiredMark />
                   </FieldLabel>
-                  {visitTypesQuery.isLoading ? (
-                    <SelectSkeleton label="Visit Types" />
-                  ) : (
+                  <SkeletonCrossfade
+                    isLoading={visitTypesQuery.isLoading}
+                    skeleton={<SelectSkeleton label="Visit Types" />}
+                  >
                     <NativeSelect
                       id="amend-visit-type"
                       className="w-full"
@@ -231,15 +234,16 @@ export function AmendVisitSheet({
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
-                  )}
+                  </SkeletonCrossfade>
                   <FieldError>{errors.visitTypeId?.message}</FieldError>
                 </Field>
 
                 <Field className="sm:col-span-2">
                   <FieldLabel htmlFor="amend-admit-source">Admit Source</FieldLabel>
-                  {admitSourcesQuery.isLoading ? (
-                    <SelectSkeleton label="Admit Sources" />
-                  ) : (
+                  <SkeletonCrossfade
+                    isLoading={admitSourcesQuery.isLoading}
+                    skeleton={<SelectSkeleton label="Admit Sources" />}
+                  >
                     <NativeSelect
                       id="amend-admit-source"
                       className="w-full"
@@ -252,14 +256,15 @@ export function AmendVisitSheet({
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
-                  )}
+                  </SkeletonCrossfade>
                 </Field>
 
                 <Field>
                   <FieldLabel htmlFor="amend-treatment">Treatment</FieldLabel>
-                  {treatmentsQuery.isLoading ? (
-                    <SelectSkeleton label="Treatments" />
-                  ) : (
+                  <SkeletonCrossfade
+                    isLoading={treatmentsQuery.isLoading}
+                    skeleton={<SelectSkeleton label="Treatments" />}
+                  >
                     <NativeSelect
                       id="amend-treatment"
                       className="w-full"
@@ -282,14 +287,15 @@ export function AmendVisitSheet({
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
-                  )}
+                  </SkeletonCrossfade>
                 </Field>
 
                 <Field data-invalid={Boolean(errors.treatmentSessionId)}>
                   <FieldLabel htmlFor="amend-session">Session</FieldLabel>
-                  {treatmentsQuery.isLoading ? (
-                    <SelectSkeleton label="Sessions" />
-                  ) : (
+                  <SkeletonCrossfade
+                    isLoading={treatmentsQuery.isLoading}
+                    skeleton={<SelectSkeleton label="Sessions" />}
+                  >
                     <NativeSelect
                       id="amend-session"
                       className="w-full"
@@ -312,7 +318,7 @@ export function AmendVisitSheet({
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
-                  )}
+                  </SkeletonCrossfade>
                   <FieldError>{errors.treatmentSessionId?.message}</FieldError>
                 </Field>
               </div>
@@ -382,7 +388,7 @@ export function AmendVisitSheet({
               disabled={amendMutation.isPending || loading || loadFailed}
               aria-busy={amendMutation.isPending}
             >
-              <PencilLine className="size-4" />
+              <CiEdit className="size-4" />
               {amendMutation.isPending ? 'Saving…' : 'Save amendment'}
             </Button>
           </SheetFooter>

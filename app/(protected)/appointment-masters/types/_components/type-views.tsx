@@ -1,4 +1,5 @@
-import { ClipboardList, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiClipboardTextLight } from 'react-icons/pi';
 import type { AppointmentType } from '@/app/api/lib/modules/appointment-type/schemas/appointment-type-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +21,7 @@ import {
 function TypeIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <ClipboardList className="size-5" />
+      <PiClipboardTextLight className="size-5" />
     </div>
   );
 }
@@ -59,19 +60,19 @@ function TypeActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${type.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(type)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(type)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -94,7 +95,7 @@ export function TypeTableView({
   onDelete: (type: AppointmentType) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[600px]">
@@ -153,8 +154,8 @@ export function TypeCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {types.map((type) => (
-        <Card key={type.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={type.id}>
+          <CardContent className="space-y-3">
             <TypeIcon />
 
             <div>
@@ -174,7 +175,7 @@ export function TypeCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(type)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -186,7 +187,7 @@ export function TypeCardView({
                     onClick={() => onDelete(type)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}
@@ -215,8 +216,8 @@ export function TypeListView({
   return (
     <div className="space-y-3">
       {types.map((type) => (
-        <Card key={type.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={type.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <TypeIcon />
               <div className="min-w-0">

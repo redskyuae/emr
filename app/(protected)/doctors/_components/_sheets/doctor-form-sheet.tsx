@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, type Path, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Eye, EyeOff, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk, CiRead } from 'react-icons/ci';
+import { PiEyeSlashLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
@@ -11,6 +12,7 @@ import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useCreateDoctor } from '@/app/queries/doctors/useCreateDoctor';
 import { useUpdateDoctor } from '@/app/queries/doctors/useUpdateDoctor';
 import { useSpecialtiesQuery } from '@/app/queries/specialties/useSpecialties';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -30,7 +32,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 import {
   doctorFormSchema,
   DOCTOR_GENDER_OPTIONS,
@@ -203,22 +207,12 @@ export function DoctorFormSheet({
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
 
-        {isResolving ? (
-          <div className="flex-1 space-y-4 p-4">
-            {Array.from({ length: 7 }, (_, i) => (
-              <div key={i} className="bg-muted h-10 animate-pulse rounded-md" />
-            ))}
-          </div>
-        ) : (
-          <form
-            id="doctor-form"
-            onSubmit={onSubmit}
-            className="flex flex-1 flex-col overflow-hidden"
-          >
-            <div className="flex-1 overflow-y-auto p-4">
+        <form id="doctor-form" onSubmit={onSubmit} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4">
+            <SkeletonCrossfade isLoading={isResolving} skeleton={<DoctorFormFieldsSkeleton />}>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Save failed</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc space-y-1 pl-4">
@@ -232,13 +226,13 @@ export function DoctorFormSheet({
 
               {specialtiesQuery.isError ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Could not load Specialties</AlertTitle>
                   <AlertDescription>{getApiErrorMessage(specialtiesQuery.error)}</AlertDescription>
                 </Alert>
               ) : hasNoSpecialties ? (
                 <Alert className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>No Specialties configured</AlertTitle>
                   <AlertDescription>
                     Add a Specialty before creating or updating Doctors.
@@ -322,9 +316,9 @@ export function DoctorFormSheet({
                               onClick={() => setPasswordVisible((visible) => !visible)}
                             >
                               {passwordVisible ? (
-                                <EyeOff className="size-4" />
+                                <PiEyeSlashLight className="size-4" />
                               ) : (
-                                <Eye className="size-4" />
+                                <CiRead className="size-4" />
                               )}
                             </Button>
                           </div>
@@ -500,24 +494,56 @@ export function DoctorFormSheet({
                   )}
                 />
               </FieldGroup>
-            </div>
+            </SkeletonCrossfade>
+          </div>
 
-            <SheetFooter className="border-t p-4">
-              <Button type="button" variant="outline" disabled={isSaving} onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                form="doctor-form"
-                disabled={isSaving || specialtiesQuery.isLoading || hasNoSpecialties}
-              >
-                <Save className="size-4" />
-                {isSaving ? 'Saving...' : 'Save Doctor'}
-              </Button>
-            </SheetFooter>
-          </form>
-        )}
+          <SheetFooter className="border-t p-4">
+            <Button type="button" variant="outline" disabled={isSaving} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="doctor-form"
+              disabled={isSaving || isResolving || specialtiesQuery.isLoading || hasNoSpecialties}
+            >
+              <CiFloppyDisk className="size-4" />
+              {isSaving ? 'Saving...' : 'Save Doctor'}
+            </Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function FieldSkeleton({ label, control = 'h-10' }: { label: string; control?: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={cn('h-4', label)} />
+      <Skeleton className={cn('w-full rounded-lg', control)} />
+    </div>
+  );
+}
+
+// Mirrors the edit form while the Doctor resolves: one label + control per field, same grid.
+function DoctorFormFieldsSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <FieldSkeleton label="w-16" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FieldSkeleton label="w-12" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FieldSkeleton label="w-20" />
+        <FieldSkeleton label="w-16" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FieldSkeleton label="w-24" />
+        <FieldSkeleton label="w-20" />
+      </div>
+      <FieldSkeleton label="w-24" />
+      <FieldSkeleton label="w-36" />
+      <FieldSkeleton label="w-28" control="h-20" />
+    </div>
   );
 }

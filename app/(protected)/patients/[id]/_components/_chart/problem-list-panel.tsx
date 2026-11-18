@@ -1,6 +1,6 @@
 'use client';
 
-import { ClipboardList } from 'lucide-react';
+import { PiClipboardTextLight } from 'react-icons/pi';
 
 import type { PatientProblem } from '@/app/api/lib/modules/patient-problem/schemas/patient-problem-schema';
 import { Badge } from '@/components/ui/badge';
@@ -69,7 +69,7 @@ export function ProblemListPanel({
   return (
     <ChartPanel
       title="Problem List"
-      icon={<ClipboardList className="size-4" />}
+      icon={<PiClipboardTextLight className="size-4" />}
       count={problems.length}
       addLabel="Add Problem"
       onAdd={onAdd}

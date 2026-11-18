@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { PiCircleNotchLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 
@@ -61,7 +61,7 @@ export function TimelineLoadMore({
           >
             {isFetchingNextPage ? (
               <>
-                <Loader2 className="size-4 animate-spin" aria-hidden />
+                <PiCircleNotchLight className="size-4 animate-spin" aria-hidden />
                 Loading
               </>
             ) : (

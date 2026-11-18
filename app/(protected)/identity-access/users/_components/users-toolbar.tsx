@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Search, UserPlus } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
+import { PiUserPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -69,11 +70,11 @@ export function UsersToolbar({
   }, [searchDraft, search, onSearchChange]);
 
   return (
-    <Card className="shadow-fluent-2">
-      <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-        <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+    <Card>
+      <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <InputGroup className="lg:max-w-sm">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"
@@ -89,7 +90,7 @@ export function UsersToolbar({
           onValueChange={(value) => onRoleChange(value === ALL ? '' : value)}
           disabled={rolesLoading}
         >
-          <SelectTrigger className="h-9 w-full lg:w-48" aria-label="Filter by Role">
+          <SelectTrigger className="w-full lg:w-48" aria-label="Filter by Role">
             <SelectValue placeholder="Role" />
           </SelectTrigger>
           <SelectContent>
@@ -106,7 +107,7 @@ export function UsersToolbar({
           value={statusValue || ALL}
           onValueChange={(value) => onStatusChange(value === ALL ? '' : value)}
         >
-          <SelectTrigger className="h-9 w-full lg:w-40" aria-label="Filter by status">
+          <SelectTrigger className="w-full lg:w-40" aria-label="Filter by status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -118,7 +119,7 @@ export function UsersToolbar({
 
         {canCreate ? (
           <Button type="button" onClick={onAddUser} className="lg:ml-auto">
-            <UserPlus className="size-4" />
+            <PiUserPlusLight className="size-4" />
             Add user
           </Button>
         ) : null}

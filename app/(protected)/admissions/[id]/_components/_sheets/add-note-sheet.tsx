@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { NotebookPen } from 'lucide-react';
+import { CiMemoPad } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -179,7 +179,7 @@ export function AddNoteSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={createNote.isPending}>
-              <NotebookPen className="size-4" />
+              <CiMemoPad className="size-4" />
               {createNote.isPending ? 'Saving…' : 'Add note'}
             </Button>
           </SheetFooter>

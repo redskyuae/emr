@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AtSign, Clock, Globe, Mail, MapPin, Phone } from 'lucide-react';
+import { CiAt, CiClock2, CiGlobe, CiLocationOn, CiMail, CiPhone } from 'react-icons/ci';
 
 import { Logo } from '@/components/brand/logo';
 import { Button } from '@/components/ui/button';
@@ -23,25 +23,25 @@ export function SiteHeader() {
         <div className="mx-auto flex h-9 w-full max-w-6xl items-center justify-between gap-6 px-4 text-xs sm:px-6">
           <div className="flex items-center gap-5 opacity-80">
             <span className="flex items-center gap-1.5">
-              <MapPin className="size-3.5" />
+              <CiLocationOn className="size-3.5" />
               Redsky Consultancy, Dubai · UAE
             </span>
             <a
               href="mailto:hello@redskyconsultancy.com"
               className="flex items-center gap-1.5 hover:opacity-100"
             >
-              <Mail className="size-3.5" />
+              <CiMail className="size-3.5" />
               hello@redskyconsultancy.com
             </a>
           </div>
           <div className="flex items-center gap-5 opacity-80">
             <span className="flex items-center gap-1.5">
-              <Clock className="size-3.5" />
+              <CiClock2 className="size-3.5" />
               Support 24/7 · 365 days
             </span>
             <span className="flex items-center gap-3">
               <Link href="#" aria-label="Social profile" className="hover:opacity-100">
-                <AtSign className="size-3.5" />
+                <CiAt className="size-3.5" />
               </Link>
               <a
                 href={REDSKY_URL}
@@ -50,7 +50,7 @@ export function SiteHeader() {
                 aria-label="Redsky Consultancy website"
                 className="hover:opacity-100"
               >
-                <Globe className="size-3.5" />
+                <CiGlobe className="size-3.5" />
               </a>
             </span>
           </div>
@@ -80,7 +80,7 @@ export function SiteHeader() {
             </Button>
             <Button asChild className="gap-1.5">
               <Link href="/signup">
-                <Phone className="size-4" />
+                <CiPhone className="size-4" />
                 Get a demo
               </Link>
             </Button>

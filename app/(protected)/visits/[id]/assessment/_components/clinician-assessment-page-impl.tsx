@@ -64,7 +64,7 @@ export function ClinicianAssessmentPageImpl({ visit }: { visit: StaticClinicianV
 
       <section
         aria-label={consultationSteps[currentStep].label}
-        className="ring-offset-background focus-visible:ring-ring scroll-mt-96 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:scroll-mt-80 lg:scroll-mt-60 xl:scroll-mt-44"
+        className="ring-offset-background focus-visible:ring-ring scroll-mt-72 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:scroll-mt-64 lg:scroll-mt-60 xl:scroll-mt-44"
         ref={stepContentRef}
         tabIndex={-1}
       >

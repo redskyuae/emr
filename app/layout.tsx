@@ -1,17 +1,13 @@
 import { ReactNode } from 'react';
+import { preconnect } from 'react-dom';
 import type { Metadata } from 'next';
-import { Geist_Mono, Urbanist } from 'next/font/google';
+import { Geist_Mono } from 'next/font/google';
 
 import { brandLogos, getConfiguredBrandLogoVariant } from '@/components/brand/brand-config';
 import { BrandProvider } from '@/components/brand/brand-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
-
-const urbanist = Urbanist({
-  variable: '--font-urbanist',
-  subsets: ['latin'],
-});
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
@@ -43,8 +39,11 @@ export default function RootLayout({
 }>) {
   const variant = getConfiguredBrandLogoVariant();
 
+  // Satoshi's font file comes from Fontshare's CDN (see the @font-face in globals.css).
+  preconnect('https://cdn.fontshare.com', { crossOrigin: 'anonymous' });
+
   return (
-    <html lang="en" className={`${urbanist.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <BrandProvider variant={variant}>
           <QueryProvider>

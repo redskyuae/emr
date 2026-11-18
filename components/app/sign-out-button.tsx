@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { CiLogout } from 'react-icons/ci';
 
 import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { Button } from '@/components/ui/button';
@@ -23,13 +23,13 @@ export function SignOutButton() {
       type="button"
       variant={signOutMutation.isError ? 'destructive' : 'ghost'}
       size="icon-sm"
-      className="group-data-[collapsible=icon]:hidden"
+      className="text-sidebar-foreground/70 hover:bg-sidebar-border hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
       aria-label={signOutMutation.isError ? 'Sign out failed. Try again.' : 'Sign out'}
       title={signOutMutation.isError ? 'Sign out failed. Try again.' : 'Sign out'}
       disabled={signOutMutation.isPending}
       onClick={handleSignOut}
     >
-      {signOutMutation.isPending ? <Spinner className="size-4" /> : <LogOut className="size-4" />}
+      {signOutMutation.isPending ? <Spinner className="size-4" /> : <CiLogout className="size-4" />}
     </Button>
   );
 }

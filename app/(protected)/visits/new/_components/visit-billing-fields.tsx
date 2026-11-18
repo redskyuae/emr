@@ -1,7 +1,9 @@
 import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
 import { useEffect, useRef } from 'react';
-import { Ban, Banknote, Clock3, ReceiptText, RefreshCcw, type LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiClock1, CiMoneyBill, CiNoWaitingSign, CiReceipt } from 'react-icons/ci';
+import { PiArrowsCounterClockwiseLight } from 'react-icons/pi';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import type { VisitPatientType } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
@@ -23,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { billingChoiceOf, billingChoiceValues, type BillingChoice } from '../_utils/billing-choice';
@@ -37,24 +40,29 @@ import {
 } from '../_utils/visit-charge-options';
 
 const BILLING_CHOICES = [
-  { value: 'none', label: 'No Invoice', description: 'Bill later from Billing', icon: Ban },
+  {
+    value: 'none',
+    label: 'No Invoice',
+    description: 'Bill later from Billing',
+    icon: CiNoWaitingSign,
+  },
   {
     value: 'later',
     label: 'Invoice, pay later',
     description: 'Full amount stays due',
-    icon: Clock3,
+    icon: CiClock1,
   },
   {
     value: 'now',
     label: 'Invoice and collect now',
     description: 'Full or partial Payment',
-    icon: Banknote,
+    icon: CiMoneyBill,
   },
 ] as const satisfies ReadonlyArray<{
   value: BillingChoice;
   label: string;
   description: string;
-  icon: LucideIcon;
+  icon: IconType;
 }>;
 
 type Props = {
@@ -150,10 +158,10 @@ export function VisitBillingFields({
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <SectionHeading
-          icon={<ReceiptText className="size-5" />}
+          icon={<CiReceipt className="size-5" />}
           title="Billing"
           description="Optional at Check-in. A partial Payment leaves a Balance Due."
         />
@@ -210,7 +218,7 @@ export function VisitBillingFields({
                 <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
                   Charge Items could not be loaded.
                   <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-                    <RefreshCcw className="size-4" /> Retry
+                    <PiArrowsCounterClockwiseLight className="size-4" /> Retry
                   </Button>
                 </AlertDescription>
               </Alert>
@@ -278,12 +286,15 @@ export function VisitBillingFields({
               </div>
             ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
-              {loading ? (
-                <div className="space-y-2" aria-label="Loading Charge Items">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : (
+              <SkeletonCrossfade
+                isLoading={loading}
+                skeleton={
+                  <div className="space-y-2" aria-label="Loading Charge Items">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                }
+              >
                 <Controller
                   control={control}
                   name="chargeItemId"
@@ -359,7 +370,7 @@ export function VisitBillingFields({
                     </Field>
                   )}
                 />
-              )}
+              </SkeletonCrossfade>
               <Controller
                 control={control}
                 name="chargeAmount"

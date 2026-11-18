@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, CalendarClock, CalendarDays, Plus } from 'lucide-react';
+import { CiCalendar, CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/statuses/useAppointmentStatuses';
@@ -17,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { todayDisplayDate, tomorrowDisplayDate } from '../_utils/appointment-date';
 import { getPaginationCorrection } from '../_utils/appointment-pagination';
-import { AppointmentDaySection, AppointmentDaySectionSkeleton } from './appointment-day-section';
+import { AppointmentDaySection } from './appointment-day-section';
 import { AppointmentsTabToolbar } from './appointments-tab-toolbar';
 import { CancelAppointmentDialog } from './_modals/cancel-appointment-dialog';
 import { AppointmentDetailSheet } from './_sheets/appointment-detail-sheet';
@@ -189,12 +190,12 @@ export function AppointmentsPageImpl() {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList aria-label="Appointment schedule views">
-            <TabsTrigger value="today" className="px-3">
-              <CalendarDays className="size-4" aria-hidden="true" />
+            <TabsTrigger value="today">
+              <CiCalendar aria-hidden="true" />
               Today&apos;s Appointments
             </TabsTrigger>
-            <TabsTrigger value="upcoming" className="px-3">
-              <CalendarClock className="size-4" aria-hidden="true" />
+            <TabsTrigger value="upcoming">
+              <CiCalendarDate aria-hidden="true" />
               Upcoming Appointments
             </TabsTrigger>
           </TabsList>
@@ -202,7 +203,7 @@ export function AppointmentsPageImpl() {
           {canCreate ? (
             <Button type="button" asChild>
               <Link href="/appointments/new">
-                <Plus className="size-4" />
+                <PiPlusLight className="size-4" />
                 Book Appointment
               </Link>
             </Button>
@@ -226,14 +227,12 @@ export function AppointmentsPageImpl() {
 
           {todayAppointmentsQuery.isError ? (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>Could not load Today&apos;s Appointments</AlertTitle>
               <AlertDescription>
                 {getApiErrorMessage(todayAppointmentsQuery.error)}
               </AlertDescription>
             </Alert>
-          ) : todayLoading ? (
-            <AppointmentDaySectionSkeleton />
           ) : (
             <AppointmentDaySection
               id="today-appointments"
@@ -244,6 +243,7 @@ export function AppointmentsPageImpl() {
               totalPages={todayMeta?.totalPages ?? 0}
               page={todayPage}
               pageSize={PAGE_SIZE}
+              isLoading={todayLoading}
               isFetching={todayAppointmentsQuery.isFetching}
               description={`Appointments scheduled for today, ${todayDate}.`}
               emptyDescription="No Appointments scheduled for today match the current filters."
@@ -270,14 +270,12 @@ export function AppointmentsPageImpl() {
 
           {upcomingAppointmentsQuery.isError ? (
             <Alert variant="destructive">
-              <AlertCircle className="size-4" />
+              <CiCircleAlert className="size-4" />
               <AlertTitle>Could not load Upcoming Appointments</AlertTitle>
               <AlertDescription>
                 {getApiErrorMessage(upcomingAppointmentsQuery.error)}
               </AlertDescription>
             </Alert>
-          ) : upcomingLoading ? (
-            <AppointmentDaySectionSkeleton />
           ) : (
             <AppointmentDaySection
               id="upcoming-appointments"
@@ -288,6 +286,7 @@ export function AppointmentsPageImpl() {
               totalPages={upcomingMeta?.totalPages ?? 0}
               page={upcomingPage}
               pageSize={PAGE_SIZE}
+              isLoading={upcomingLoading}
               isFetching={upcomingAppointmentsQuery.isFetching}
               description={`Future Appointments from ${tomorrowDate} onward.`}
               emptyDescription="No future Appointments match the current filters."

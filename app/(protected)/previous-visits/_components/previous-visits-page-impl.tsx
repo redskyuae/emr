@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
-import { AlertCircle, History } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiClockCounterClockwiseLight } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +19,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import {
+  PREVIOUS_VISITS_PAGE_SIZE,
   countActiveFilters,
   rangeLabel,
   resolveFilters,
@@ -25,8 +28,6 @@ import {
 } from '../_utils/previous-visits-filters';
 import { PreviousVisitsFilterForm } from './previous-visits-filter-form';
 import { PreviousVisitsTable, PreviousVisitsTableSkeleton } from './previous-visits-table';
-
-const PAGE_SIZE = 10;
 
 const urlParsers = {
   q: parseAsString,
@@ -57,7 +58,11 @@ export function PreviousVisitsPageImpl() {
   // Guard against invalid URL values (?page=0, ?page=-1) reaching the query.
   const page = params.page !== null && params.page > 0 ? params.page : 1;
 
-  const visitsQuery = useVisitsQuery({ ...toVisitsParams(filters), page, limit: PAGE_SIZE });
+  const visitsQuery = useVisitsQuery({
+    ...toVisitsParams(filters),
+    page,
+    limit: PREVIOUS_VISITS_PAGE_SIZE,
+  });
 
   const visits = visitsQuery.data?.data ?? [];
   const total = visitsQuery.data?.meta.total ?? 0;
@@ -112,7 +117,7 @@ export function PreviousVisitsPageImpl() {
 
       {visitsQuery.isError ? (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not load Visits</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-2">
             {getApiErrorMessage(visitsQuery.error)}
@@ -126,48 +131,53 @@ export function PreviousVisitsPageImpl() {
             </Button>
           </AlertDescription>
         </Alert>
-      ) : visitsQuery.isLoading ? (
-        <PreviousVisitsTableSkeleton />
-      ) : visits.length === 0 ? (
-        <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <History />
-            </EmptyMedia>
-            {activeCount > 0 ? (
-              <>
-                <EmptyTitle>No Visits match these filters</EmptyTitle>
-                <EmptyDescription>
-                  Widen the date range, clear the search, or choose a different Doctor, status or
-                  Visit Type.
-                </EmptyDescription>
-              </>
-            ) : (
-              <>
-                <EmptyTitle>No past Visits yet</EmptyTitle>
-                <EmptyDescription>
-                  Visits appear here once Patients have been checked in.
-                </EmptyDescription>
-              </>
-            )}
-          </EmptyHeader>
-          {activeCount > 0 ? (
-            <EmptyContent>
-              <Button type="button" variant="outline" onClick={resetFilters}>
-                Reset filters
-              </Button>
-            </EmptyContent>
-          ) : null}
-        </Empty>
       ) : (
-        <PreviousVisitsTable
-          visits={visits}
-          total={total}
-          page={page}
-          totalPages={totalPages}
-          isFetching={visitsQuery.isFetching}
-          onPageChange={goToPage}
-        />
+        <SkeletonCrossfade
+          isLoading={visitsQuery.isLoading}
+          skeleton={<PreviousVisitsTableSkeleton />}
+        >
+          {visits.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiClockCounterClockwiseLight />
+                </EmptyMedia>
+                {activeCount > 0 ? (
+                  <>
+                    <EmptyTitle>No Visits match these filters</EmptyTitle>
+                    <EmptyDescription>
+                      Widen the date range, clear the search, or choose a different Doctor, status
+                      or Visit Type.
+                    </EmptyDescription>
+                  </>
+                ) : (
+                  <>
+                    <EmptyTitle>No past Visits yet</EmptyTitle>
+                    <EmptyDescription>
+                      Visits appear here once Patients have been checked in.
+                    </EmptyDescription>
+                  </>
+                )}
+              </EmptyHeader>
+              {activeCount > 0 ? (
+                <EmptyContent>
+                  <Button type="button" variant="outline" onClick={resetFilters}>
+                    Reset filters
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : (
+            <PreviousVisitsTable
+              visits={visits}
+              total={total}
+              page={page}
+              totalPages={totalPages}
+              isFetching={visitsQuery.isFetching}
+              onPageChange={goToPage}
+            />
+          )}
+        </SkeletonCrossfade>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
-import { DoorOpen, UserRound } from 'lucide-react';
+import { CiUser } from 'react-icons/ci';
+import { PiDoorOpenLight } from 'react-icons/pi';
 import { useFormState, type Control } from 'react-hook-form';
 import type { CSSProperties } from 'react';
 import { BookingStatusBadge } from './booking-status-badge';
@@ -59,7 +60,7 @@ export function ResourceAllocationSection({
     '--resource-span': resourceRows + 2,
   } as CSSProperties;
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-procedure/15 border-b">
         <CardTitle>Room & Therapist</CardTitle>
         <CardDescription>
@@ -98,7 +99,7 @@ export function ResourceAllocationSection({
             <div className="grid min-w-0 gap-2 sm:row-span-(--resource-span) sm:grid-rows-subgrid lg:row-auto lg:grid-rows-none xl:row-span-(--resource-span) xl:grid-rows-subgrid">
               <div className="space-y-2">
                 <h3 className="flex items-center gap-2 text-sm font-semibold">
-                  <DoorOpen className="text-primary size-4" /> Room{' '}
+                  <PiDoorOpenLight className="text-primary size-4" /> Room{' '}
                   <span className="text-destructive" aria-hidden="true">
                     *
                   </span>
@@ -155,7 +156,7 @@ export function ResourceAllocationSection({
             <div className="grid min-w-0 gap-2 sm:row-span-(--resource-span) sm:grid-rows-subgrid lg:row-auto lg:grid-rows-none xl:row-span-(--resource-span) xl:grid-rows-subgrid">
               <div className="space-y-2">
                 <h3 className="flex items-center gap-2 text-sm font-semibold">
-                  <UserRound className="text-primary size-4" /> Therapist{' '}
+                  <CiUser className="text-primary size-4" /> Therapist{' '}
                   <span className="text-destructive" aria-hidden="true">
                     *
                   </span>

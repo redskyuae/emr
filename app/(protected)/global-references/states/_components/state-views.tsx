@@ -1,4 +1,4 @@
-import { MapPinned, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiMapPin, CiMenuKebab, CiTrash } from 'react-icons/ci';
 
 import type { State } from '@/app/queries/global-references/states/useStates';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ function formatModifiedOn(value: Date | string) {
 function StateIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <MapPinned className="size-5" />
+      <CiMapPin className="size-5" />
     </div>
   );
 }
@@ -70,19 +70,19 @@ function StateActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${state.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(state)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(state)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -105,7 +105,7 @@ export function StateTableView({
   onDelete: (state: State) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[680px]">
@@ -171,8 +171,8 @@ export function StateCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {states.map((state) => (
-        <Card key={state.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={state.id}>
+          <CardContent className="space-y-3">
             <StateIcon />
 
             <div>
@@ -189,7 +189,7 @@ export function StateCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(state)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -201,7 +201,7 @@ export function StateCardView({
                     onClick={() => onDelete(state)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}
@@ -230,8 +230,8 @@ export function StateListView({
   return (
     <div className="space-y-3">
       {states.map((state) => (
-        <Card key={state.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={state.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <StateIcon />
               <h3 className="font-heading truncate text-base font-semibold">{state.name}</h3>

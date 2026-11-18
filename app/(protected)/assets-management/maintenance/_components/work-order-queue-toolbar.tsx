@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
@@ -50,9 +51,9 @@ export function WorkOrderQueueToolbar({
 
   return (
     <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center">
-      <InputGroup className="bg-background h-9 2xl:max-w-sm">
+      <InputGroup className="2xl:max-w-sm">
         <InputGroupAddon>
-          <Search className="size-4" />
+          <CiSearch className="size-4" />
         </InputGroupAddon>
         <InputGroupInput
           type="search"
@@ -96,7 +97,7 @@ export function WorkOrderQueueToolbar({
 
       {canCreate ? (
         <Button type="button" className="w-full sm:w-auto 2xl:ml-auto" onClick={onNewWorkOrder}>
-          <Plus className="size-4" />
+          <PiPlusLight className="size-4" />
           <span>New work order</span>
         </Button>
       ) : null}

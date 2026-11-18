@@ -1,4 +1,5 @@
-import { NotebookPen } from 'lucide-react';
+import { CiMemoPad } from 'react-icons/ci';
+import { PiLeafLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Button } from '@/components/ui/button';
@@ -32,13 +33,13 @@ export function VisitPlanSession({
   ].filter((item) => item.value);
 
   return (
-    <section
-      aria-labelledby="plan-session"
-      className="border-l-procedure flex flex-col gap-3 rounded-lg border border-l-4 p-4"
-    >
+    <section aria-labelledby="plan-session" className="flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 id="plan-session" className="text-base font-semibold">
-          {visit.treatment ? `${visit.treatment.name} · ` : null}Session {session.sessionNumber}
+        <h3 id="plan-session" className="flex items-start gap-2 text-base font-semibold">
+          <PiLeafLight className="text-procedure mt-1 size-4 shrink-0" aria-hidden="true" />
+          <span className="[overflow-wrap:anywhere]">
+            {visit.treatment ? `${visit.treatment.name} · ` : null}Session {session.sessionNumber}
+          </span>
         </h3>
         {timing.length ? (
           <span className="text-muted-foreground text-sm">{timing.join(' + ')}</span>
@@ -63,7 +64,7 @@ export function VisitPlanSession({
       {canRecordResponse ? (
         <div>
           <Button type="button" variant="outline" onClick={onDailyTreatment}>
-            <NotebookPen className="size-4" />
+            <CiMemoPad className="size-4" />
             Record treatment response
           </Button>
         </div>

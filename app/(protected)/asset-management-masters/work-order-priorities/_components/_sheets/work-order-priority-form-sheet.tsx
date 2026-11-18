@@ -3,16 +3,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 import type { WorkOrderPriority } from '@/app/api/lib/modules/work-order-priority/schemas/work-order-priority-schema';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useCreateWorkOrderPriority } from '@/app/queries/asset-masters/work-order-priorities/useCreateWorkOrderPriority';
 import { useUpdateWorkOrderPriority } from '@/app/queries/asset-masters/work-order-priorities/useUpdateWorkOrderPriority';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet,
   SheetContent,
@@ -42,6 +44,33 @@ type WorkOrderPriorityFormSheetProps = {
   isResolving: boolean;
   onClose: () => void;
 };
+
+// Mirrors the form while the Work Order Priority loads: a label and a control per field.
+function WorkOrderPriorityFormSkeleton() {
+  return (
+    <FieldGroup className="gap-4">
+      <Field>
+        <Skeleton className="h-4 w-14" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-12" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-12" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-9" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-20 w-full rounded-lg" />
+      </Field>
+    </FieldGroup>
+  );
+}
 
 export function WorkOrderPriorityFormSheet({
   open,
@@ -147,24 +176,16 @@ export function WorkOrderPriorityFormSheet({
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
 
-        {isResolving ? (
-          <div className="flex-1 p-4">
-            <div className="space-y-4">
-              {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="bg-muted h-10 animate-pulse rounded-md" />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <form
-            id="work-order-priority-form"
-            onSubmit={onSubmit}
-            className="flex flex-1 flex-col overflow-hidden"
-          >
-            <div className="flex-1 overflow-y-auto p-4">
+        <form
+          id="work-order-priority-form"
+          onSubmit={onSubmit}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto p-4">
+            <SkeletonCrossfade isLoading={isResolving} skeleton={<WorkOrderPriorityFormSkeleton />}>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Save failed</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc space-y-1 pl-4">
@@ -292,24 +313,24 @@ export function WorkOrderPriorityFormSheet({
                   )}
                 />
               </FieldGroup>
-            </div>
+            </SkeletonCrossfade>
+          </div>
 
-            <SheetFooter className="bg-background flex-row justify-end border-t p-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                form="work-order-priority-form"
-                disabled={isSaving}
-                aria-busy={isSaving}
-              >
-                <Save className="size-4" />
-                Save
-              </Button>
-            </SheetFooter>
-          </form>
-        )}
+          <SheetFooter className="bg-background flex-row justify-end border-t p-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="work-order-priority-form"
+              disabled={isSaving || isResolving}
+              aria-busy={isSaving || isResolving}
+            >
+              <CiFloppyDisk className="size-4" />
+              Save
+            </Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
   );

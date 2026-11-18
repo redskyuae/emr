@@ -1,6 +1,6 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
 
 import type { DownloadAppointmentsExportRequest } from '@/app/api/v1/appointments/export/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,13 +53,13 @@ export function AppointmentsTabToolbar({
   therapists: FilterOption[];
 }) {
   return (
-    <Card className="shadow-fluent-2">
-      <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:flex-wrap lg:items-center">
+    <Card>
+      <CardContent className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
         <Select
           value={doctorId ?? ALL_FILTER}
           onValueChange={(value) => onDoctorChange(value === ALL_FILTER ? null : value)}
         >
-          <SelectTrigger className="h-9 lg:w-52" aria-label="Filter by doctor">
+          <SelectTrigger className="lg:w-52" aria-label="Filter by doctor">
             <SelectValue placeholder="All doctors" />
           </SelectTrigger>
           <SelectContent>
@@ -76,7 +76,7 @@ export function AppointmentsTabToolbar({
           value={therapistId ?? ALL_FILTER}
           onValueChange={(value) => onTherapistChange(value === ALL_FILTER ? null : value)}
         >
-          <SelectTrigger className="h-9 lg:w-52" aria-label="Filter by Therapist">
+          <SelectTrigger className="lg:w-52" aria-label="Filter by Therapist">
             <SelectValue placeholder="All Therapists" />
           </SelectTrigger>
           <SelectContent>
@@ -93,7 +93,7 @@ export function AppointmentsTabToolbar({
           value={appointmentStatusId ?? ALL_FILTER}
           onValueChange={(value) => onAppointmentStatusChange(value === ALL_FILTER ? null : value)}
         >
-          <SelectTrigger className="h-9 lg:w-48" aria-label="Filter by status">
+          <SelectTrigger className="lg:w-48" aria-label="Filter by status">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -106,9 +106,9 @@ export function AppointmentsTabToolbar({
           </SelectContent>
         </Select>
 
-        <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-xs">
+        <InputGroup className="lg:max-w-xs">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"

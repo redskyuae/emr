@@ -6,6 +6,12 @@ import type { InvoiceListItem } from '@/app/api/lib/modules/invoice/schemas/invo
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
+import {
   formatMoney,
   getInvoiceStatusClassName,
   getInvoiceStatusLabel,
@@ -25,41 +31,45 @@ function encounterChip(invoice: InvoiceListItem) {
 
 export function InvoiceTable({ invoices }: { invoices: InvoiceListItem[] }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
+    <div className="bg-card overflow-hidden rounded-xl border">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[820px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left">
-              <th className="p-3 pl-4 font-medium">Invoice</th>
-              <th className="p-3 font-medium">Patient</th>
-              <th className="p-3 font-medium">Encounter</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 text-right font-medium">Grand Total</th>
-              <th className="p-3 text-right font-medium">Balance Due</th>
-              <th className="p-3 pr-4 font-medium">Created</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Invoice</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Encounter</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Grand Total</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Balance Due</th>
+              <th className={tableHeadCellClass}>Created</th>
             </tr>
           </thead>
           <tbody>
             {invoices.map((invoice) => (
               <tr key={invoice.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                <td className="p-3 pl-4 font-medium">
+                <td className={cn(tableCellClass, 'font-medium')}>
                   <Link href={`/billing/${invoice.id}`} className="hover:underline">
                     {invoice.invoiceNumber}
                   </Link>
                 </td>
-                <td className="p-3">
+                <td className={tableCellClass}>
                   {invoice.patient.firstName} {invoice.patient.lastName}
                   <span className="text-muted-foreground block text-xs">{invoice.patient.mrn}</span>
                 </td>
-                <td className="p-3">{encounterChip(invoice)}</td>
-                <td className="p-3">
+                <td className={tableCellClass}>{encounterChip(invoice)}</td>
+                <td className={tableCellClass}>
                   <Badge variant="outline" className={getInvoiceStatusClassName(invoice.status)}>
                     {getInvoiceStatusLabel(invoice.status)}
                   </Badge>
                 </td>
-                <td className="p-3 text-right tabular-nums">{formatMoney(invoice.grandTotal)}</td>
-                <td className="p-3 text-right tabular-nums">{formatMoney(invoice.balanceDue)}</td>
-                <td className="text-muted-foreground p-3 pr-4">
+                <td className={cn(tableCellClass, 'text-right tabular-nums')}>
+                  {formatMoney(invoice.grandTotal)}
+                </td>
+                <td className={cn(tableCellClass, 'text-right tabular-nums')}>
+                  {formatMoney(invoice.balanceDue)}
+                </td>
+                <td className={cn(tableCellClass, 'text-muted-foreground')}>
                   {new Date(invoice.createdOn).toLocaleDateString()}
                 </td>
               </tr>
@@ -71,19 +81,65 @@ export function InvoiceTable({ invoices }: { invoices: InvoiceListItem[] }) {
   );
 }
 
+// Mirrors the loaded list: the same header, one sized skeleton per cell for a full page
+// (ten rows), and the "Showing … of …" pager row that sits under the table.
 export function InvoiceTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
-      {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="ml-auto h-5 w-20" />
-          <Skeleton className="h-5 w-20" />
+    <div className="space-y-4">
+      <div className="bg-card overflow-hidden rounded-xl border">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[820px] text-sm">
+            <thead>
+              <tr className={tableHeadRowClass}>
+                <th className={tableHeadCellClass}>Invoice</th>
+                <th className={tableHeadCellClass}>Patient</th>
+                <th className={tableHeadCellClass}>Encounter</th>
+                <th className={tableHeadCellClass}>Status</th>
+                <th className={cn(tableHeadCellClass, 'text-right')}>Grand Total</th>
+                <th className={cn(tableHeadCellClass, 'text-right')}>Balance Due</th>
+                <th className={tableHeadCellClass}>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 10 }, (_, row) => (
+                <tr key={row} className="border-b last:border-b-0">
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-4 w-28" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="ml-auto h-4 w-20" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="ml-auto h-4 w-20" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-4 w-20" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ))}
+      </div>
+      <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+        <Skeleton className="h-4 w-36" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+      </div>
     </div>
   );
 }

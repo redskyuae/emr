@@ -1,7 +1,9 @@
-import { CircleCheck, HeartPulse, Stethoscope } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { CiCircleCheck, CiStethoscope } from 'react-icons/ci';
+import { PiHeartbeatLight } from 'react-icons/pi';
 
 import type { summarizeAppointmentDay } from '@/app/queries/appointments/useAppointments';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 type AppointmentDaySummary = ReturnType<typeof summarizeAppointmentDay>;
 
@@ -14,63 +16,68 @@ export function AppointmentInsights({ summary }: { summary: AppointmentDaySummar
   const countPrefix = summary.hasMore ? '≥' : '';
 
   return (
-    <Card size="sm" className="shadow-fluent-2">
-      <CardHeader className="border-b">
+    <Card>
+      <CardHeader>
         <CardTitle>Appointment mix</CardTitle>
-        <p className="text-muted-foreground text-xs">Consultation and Procedure bookings today.</p>
+        <CardDescription>Consultation and Procedure bookings today.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="bg-muted flex h-2 overflow-hidden rounded-full" aria-hidden="true">
+      <CardContent className="space-y-4">
+        <div className="bg-muted flex h-1.5 overflow-hidden rounded-full" aria-hidden="true">
           <span className="bg-primary h-full" style={{ width: `${consultationPercent}%` }} />
           <span className="bg-procedure h-full" style={{ width: `${procedurePercent}%` }} />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="border-primary/20 bg-primary/5 rounded-md border p-2">
-            <Stethoscope className="text-primary size-4" aria-hidden="true" />
-            <p className="text-muted-foreground mt-1 text-xs">Consultation</p>
-            <p className="font-heading text-primary text-lg font-semibold tabular-nums">
-              {countPrefix}
-              {summary.bookingPaths.consultation}
-            </p>
-          </div>
-          <div className="border-procedure/20 bg-procedure/5 rounded-md border p-2">
-            <HeartPulse className="text-procedure size-4" aria-hidden="true" />
-            <p className="text-muted-foreground mt-1 text-xs">Procedure</p>
-            <p className="font-heading text-procedure text-lg font-semibold tabular-nums">
-              {countPrefix}
-              {summary.bookingPaths.procedure}
-            </p>
-          </div>
-        </div>
+        <dl className="grid grid-cols-2 gap-4">
+          <Figure
+            label="Consultation"
+            value={`${countPrefix}${summary.bookingPaths.consultation}`}
+            marker={<CiStethoscope className="text-primary size-4" aria-hidden="true" />}
+          />
+          <Figure
+            label="Procedure"
+            value={`${countPrefix}${summary.bookingPaths.procedure}`}
+            marker={<PiHeartbeatLight className="text-procedure size-4" aria-hidden="true" />}
+          />
+        </dl>
 
-        <div className="border-t pt-3">
-          <h3 className="font-heading text-sm font-semibold">Exceptions today</h3>
+        <div className="border-t pt-4">
+          <h3 className="text-sm font-semibold">Exceptions today</h3>
           {summary.counts.cancelled === 0 && summary.counts.noShow === 0 ? (
             <p className="text-success mt-2 flex items-center gap-2 text-xs">
-              <CircleCheck className="size-4" aria-hidden="true" />
+              <CiCircleCheck className="size-4" aria-hidden="true" />
               No cancellations or no-shows in loaded bookings.
             </p>
           ) : (
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="bg-destructive/5 rounded-md p-2">
-                <p className="text-muted-foreground text-xs">Cancelled</p>
-                <p className="text-destructive font-heading text-lg font-semibold tabular-nums">
-                  {countPrefix}
-                  {summary.counts.cancelled}
-                </p>
-              </div>
-              <div className="bg-warning/5 rounded-md p-2">
-                <p className="text-muted-foreground text-xs">No Show</p>
-                <p className="text-warning font-heading text-lg font-semibold tabular-nums">
-                  {countPrefix}
-                  {summary.counts.noShow}
-                </p>
-              </div>
-            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-4">
+              <Figure
+                label="Cancelled"
+                value={`${countPrefix}${summary.counts.cancelled}`}
+                marker={<span className="bg-destructive size-2 rounded-full" aria-hidden="true" />}
+              />
+              <Figure
+                label="No Show"
+                value={`${countPrefix}${summary.counts.noShow}`}
+                marker={<span className="bg-warning size-2 rounded-full" aria-hidden="true" />}
+              />
+            </dl>
           )}
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+/** A quiet label over one figure. Only the marker beside the label carries colour. */
+function Figure({ label, value, marker }: { label: string; value: string; marker: ReactNode }) {
+  return (
+    <div>
+      <dt className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+        {marker}
+        {label}
+      </dt>
+      <dd className="font-heading mt-1.5 text-2xl leading-none font-semibold tracking-tight tabular-nums">
+        {value}
+      </dd>
+    </div>
   );
 }

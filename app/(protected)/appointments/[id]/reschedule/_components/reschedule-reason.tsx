@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageSquareText } from 'lucide-react';
+import { PiChatTextLight } from 'react-icons/pi';
 import { Controller, type Control } from 'react-hook-form';
 
 import type { BookAppointmentFormValues } from '@/app/(protected)/appointments/new/_utils/book-appointment-form-schema';
@@ -10,11 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 
 export function RescheduleReason({ control }: { control: Control<BookAppointmentFormValues> }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <MessageSquareText className="size-4" />
+            <PiChatTextLight className="size-4" />
           </span>
           <div>
             <CardTitle>Rescheduling reason</CardTitle>

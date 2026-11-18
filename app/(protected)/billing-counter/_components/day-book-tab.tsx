@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from 'react';
-import { Search } from 'lucide-react';
+import { CiBank, CiMoneyBill, CiSearch, CiShoppingTag, CiViewList } from 'react-icons/ci';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { tableHeadRowClass } from '@/components/ui/table-styles';
 import {
   buildBankBook,
   buildCashBook,
@@ -31,11 +32,11 @@ function BookTable({
   children: ReactNode;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="overflow-x-auto p-0">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left text-xs">
+            <tr className={tableHeadRowClass}>
               {columns.map((column, index) => (
                 <th
                   key={column.label}
@@ -85,9 +86,9 @@ function TransactionBook({ txns }: { txns: LedgerTxn[] }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row">
-        <InputGroup className="bg-background shadow-fluent-2 h-9 sm:max-w-xs">
+        <InputGroup className="sm:max-w-xs">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"
@@ -368,11 +369,23 @@ export function DayBookTab() {
         connected.
       </p>
       <Tabs defaultValue="transactions">
-        <TabsList className="flex-wrap group-data-horizontal/tabs:h-auto">
-          <TabsTrigger value="transactions">Transaction book</TabsTrigger>
-          <TabsTrigger value="cash">Cash book</TabsTrigger>
-          <TabsTrigger value="bank">Bank book</TabsTrigger>
-          <TabsTrigger value="sales">Sales book</TabsTrigger>
+        <TabsList className="max-w-full [scrollbar-width:none] justify-start overflow-x-auto [&::-webkit-scrollbar]:hidden">
+          <TabsTrigger value="transactions" className="flex-none">
+            <CiViewList aria-hidden="true" />
+            Transaction book
+          </TabsTrigger>
+          <TabsTrigger value="cash" className="flex-none">
+            <CiMoneyBill aria-hidden="true" />
+            Cash book
+          </TabsTrigger>
+          <TabsTrigger value="bank" className="flex-none">
+            <CiBank aria-hidden="true" />
+            Bank book
+          </TabsTrigger>
+          <TabsTrigger value="sales" className="flex-none">
+            <CiShoppingTag aria-hidden="true" />
+            Sales book
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="transactions">
           <TransactionBook txns={txns} />

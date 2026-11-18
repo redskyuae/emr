@@ -1,4 +1,4 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { StatCardSkeleton } from '@/components/app/stat-card';
 import { AssetStatCardsSkeleton } from './_components/asset-stat-cards';
 import { AttentionPanelSkeleton } from './_components/attention-panel';
 import { CategoryDistributionSkeleton } from './_components/category-distribution';
@@ -7,9 +7,9 @@ import { UpcomingMaintenanceTableSkeleton } from './_components/upcoming-mainten
 export default function PageLoader() {
   return (
     <div className="space-y-6" aria-label="Loading page">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AssetStatCardsSkeleton />
-        <Skeleton className="h-32 w-full" />
+        <StatCardSkeleton />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">

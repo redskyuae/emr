@@ -1,12 +1,20 @@
 'use client';
 
-import { Activity, ClipboardList, Leaf, Pill, ShieldAlert, type LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiPill, CiWavePulse1 } from 'react-icons/ci';
+import {
+  PiClipboardTextLight,
+  PiClockCounterClockwiseLight,
+  PiLeafLight,
+  PiShieldWarningLight,
+} from 'react-icons/pi';
 
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -22,7 +30,7 @@ function PaneSection({
   children,
 }: {
   title: string;
-  icon: LucideIcon;
+  icon: IconType;
   tone: string;
   children: React.ReactNode;
 }) {
@@ -91,27 +99,37 @@ function SafetyList({
   loading,
 }: {
   title: string;
-  icon: LucideIcon;
+  icon: IconType;
   tone: string;
   items: { id: number; label: string; detail?: string | null }[];
   loading: boolean;
 }) {
   return (
     <PaneSection title={`${title} (${loading ? '…' : items.length})`} icon={icon} tone={tone}>
-      {loading ? (
-        <Skeleton className="h-8 w-full" />
-      ) : items.length ? (
-        <ul className="space-y-1 text-sm">
-          {items.map((item) => (
-            <li key={item.id}>
-              <span className="font-medium">{item.label}</span>
-              {item.detail ? <span className="text-muted-foreground"> · {item.detail}</span> : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-muted-foreground text-sm">None recorded.</p>
-      )}
+      <SkeletonCrossfade
+        isLoading={loading}
+        skeleton={
+          <div className="space-y-1" aria-label={`Loading ${title}`}>
+            <Skeleton className="h-4 w-40 max-w-full" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        }
+      >
+        {items.length ? (
+          <ul className="space-y-1 text-sm">
+            {items.map((item) => (
+              <li key={item.id}>
+                <span className="font-medium">{item.label}</span>
+                {item.detail ? (
+                  <span className="text-muted-foreground"> · {item.detail}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground text-sm">None recorded.</p>
+        )}
+      </SkeletonCrossfade>
     </PaneSection>
   );
 }
@@ -149,88 +167,107 @@ export function VisitContextPane({
   const medications = (chart?.medications ?? []).filter((item) => item.status === 'active');
 
   return (
-    <aside
-      aria-label="Patient context"
-      className={cn('bg-card shadow-fluent-2 flex flex-col rounded-lg border', className)}
-    >
-      <Tabs defaultValue="trends" className="min-h-0 flex-1 gap-0">
-        <div className="border-b p-1.5">
-          <TabsList aria-label="Patient context" className="grid w-full grid-cols-2">
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="history">Previous Visits</TabsTrigger>
-          </TabsList>
-        </div>
+    <aside aria-label="Patient context" className={cn('flex min-w-0 flex-col', className)}>
+      {/* The tab track sits on the page, level with the step track; the records sit in a card. */}
+      <Tabs defaultValue="trends" className="min-h-0 flex-1 gap-3">
+        <TabsList aria-label="Patient context" className="grid w-full flex-none grid-cols-2">
+          <TabsTrigger value="trends" className="px-2">
+            <CiWavePulse1 aria-hidden="true" />
+            Trends
+          </TabsTrigger>
+          <TabsTrigger value="history" className="px-2">
+            <PiClockCounterClockwiseLight aria-hidden="true" />
+            Previous Visits
+          </TabsTrigger>
+        </TabsList>
 
-        <TabsContent value="trends" className="space-y-5 p-4 xl:min-h-0 xl:overflow-y-auto">
-          <PaneSection title="Vital Signs" icon={Activity} tone="bg-chart-4/12 text-chart-4">
-            <VisitVitalTrends
-              readings={vitalSigns}
-              loading={chartLoading}
-              error={chartError}
-              emptyText="No Vital Signs recorded for this Patient."
-            />
-          </PaneSection>
-
-          {canReadPlan && active && (plansQuery.isLoading || plans.length > 0) ? (
-            <PaneSection title="Treatment Plan" icon={Leaf} tone="bg-procedure/10 text-procedure">
-              {plansQuery.isLoading ? (
-                <Skeleton className="h-12 w-full" aria-label="Loading Treatment Plans" />
-              ) : (
-                plans.map((plan) => <PlanProgress key={plan.id} plan={plan} visit={visit} />)
-              )}
+        <div className="bg-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
+          <TabsContent value="trends" className="space-y-5 p-4 xl:min-h-0 xl:overflow-y-auto">
+            <PaneSection title="Vital Signs" icon={CiWavePulse1} tone="bg-chart-4/12 text-chart-4">
+              <VisitVitalTrends
+                readings={vitalSigns}
+                loading={chartLoading}
+                error={chartError}
+                emptyText="No Vital Signs recorded for this Patient."
+              />
             </PaneSection>
-          ) : null}
 
-          {chartError ? (
-            <p className="text-destructive text-sm">Safety records could not be loaded.</p>
-          ) : (
-            <>
-              <SafetyList
-                title="Allergies"
-                icon={ShieldAlert}
-                tone={
-                  allergies.length
-                    ? 'bg-destructive/10 text-destructive'
-                    : 'bg-muted text-muted-foreground'
-                }
-                loading={chartLoading}
-                items={allergies.map((allergy) => ({
-                  id: allergy.id,
-                  label:
-                    allergy.substance ??
-                    (allergy.allergenId ? allergenName(allergy.allergenId) : 'Allergen'),
-                  detail: allergy.reaction,
-                }))}
-              />
-              <SafetyList
-                title="Active Problems"
-                icon={ClipboardList}
-                tone="bg-pop/10 text-pop"
-                loading={chartLoading}
-                items={problems.map((problem) => ({ id: problem.id, label: problem.title }))}
-              />
-              <SafetyList
-                title="Current medications"
-                icon={Pill}
-                tone="bg-primary/10 text-primary"
-                loading={chartLoading}
-                items={medications.map((medication) => ({
-                  id: medication.id,
-                  label: medication.drugName,
-                  detail: medication.dose,
-                }))}
-              />
-            </>
-          )}
-        </TabsContent>
+            {canReadPlan && active && (plansQuery.isLoading || plans.length > 0) ? (
+              <PaneSection
+                title="Treatment Plan"
+                icon={PiLeafLight}
+                tone="bg-procedure/10 text-procedure"
+              >
+                <SkeletonCrossfade
+                  isLoading={plansQuery.isLoading}
+                  skeleton={
+                    <div className="space-y-1.5" aria-label="Loading Treatment Plans">
+                      <Skeleton className="h-4 w-36" />
+                      <Skeleton className="h-1.5 w-full rounded-sm" />
+                      <Skeleton className="h-3 w-40" />
+                    </div>
+                  }
+                >
+                  <div className="space-y-2">
+                    {plans.map((plan) => (
+                      <PlanProgress key={plan.id} plan={plan} visit={visit} />
+                    ))}
+                  </div>
+                </SkeletonCrossfade>
+              </PaneSection>
+            ) : null}
 
-        <TabsContent value="history" className="p-3 xl:min-h-0 xl:overflow-y-auto">
-          <VisitPreviousVisits
-            visit={visit}
-            notes={chart?.clinicalNotes ?? []}
-            plans={canReadPlan ? (plansQuery.data ?? []) : []}
-          />
-        </TabsContent>
+            {chartError ? (
+              <p className="text-destructive text-sm">Safety records could not be loaded.</p>
+            ) : (
+              <>
+                <SafetyList
+                  title="Allergies"
+                  icon={PiShieldWarningLight}
+                  tone={
+                    allergies.length
+                      ? 'bg-destructive/10 text-destructive'
+                      : 'bg-muted text-muted-foreground'
+                  }
+                  loading={chartLoading}
+                  items={allergies.map((allergy) => ({
+                    id: allergy.id,
+                    label:
+                      allergy.substance ??
+                      (allergy.allergenId ? allergenName(allergy.allergenId) : 'Allergen'),
+                    detail: allergy.reaction,
+                  }))}
+                />
+                <SafetyList
+                  title="Active Problems"
+                  icon={PiClipboardTextLight}
+                  tone="bg-pop/10 text-pop"
+                  loading={chartLoading}
+                  items={problems.map((problem) => ({ id: problem.id, label: problem.title }))}
+                />
+                <SafetyList
+                  title="Current medications"
+                  icon={CiPill}
+                  tone="bg-primary/10 text-primary"
+                  loading={chartLoading}
+                  items={medications.map((medication) => ({
+                    id: medication.id,
+                    label: medication.drugName,
+                    detail: medication.dose,
+                  }))}
+                />
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="history" className="p-3 xl:min-h-0 xl:overflow-y-auto">
+            <VisitPreviousVisits
+              visit={visit}
+              notes={chart?.clinicalNotes ?? []}
+              plans={canReadPlan ? (plansQuery.data ?? []) : []}
+            />
+          </TabsContent>
+        </div>
       </Tabs>
     </aside>
   );

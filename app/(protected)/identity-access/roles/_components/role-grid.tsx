@@ -1,14 +1,8 @@
-import {
-  KeyRound,
-  MoreVertical,
-  Pencil,
-  Plus,
-  ShieldCheck,
-  Trash2,
-  UsersRound,
-} from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiKeyLight, PiPlusLight, PiShieldCheckLight, PiUsersLight } from 'react-icons/pi';
 
 import type { RoleWithStats } from '@/app/api/lib/modules/role/schemas/role-schema';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,8 +40,8 @@ function RoleCard({
   canDelete: boolean;
 }) {
   return (
-    <Card className="shadow-fluent-2 hover:shadow-fluent-8 transition-shadow">
-      <CardContent className="flex min-h-52 flex-col gap-4 p-4">
+    <Card className=" ">
+      <CardContent className="flex min-h-52 flex-col gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <RoleIcon isSystem={role.isSystem} />
           <div className="min-w-0 flex-1 space-y-2">
@@ -72,17 +66,17 @@ function RoleCard({
 
         <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-3">
           <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
-            <UsersRound className="size-4" />
+            <PiUsersLight className="size-4" />
             {formatCount(role.assignedStaffCount, 'staff member')}
           </span>
           <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
-            <KeyRound className="size-4" />
+            <PiKeyLight className="size-4" />
             {formatCount(role.permissionAssignmentCount, 'permission')}
           </span>
           <div className="ml-auto flex items-center gap-1">
             {canEdit ? (
               <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(role)}>
-                <Pencil className="size-3.5" />
+                <CiEdit className="size-3.5" />
                 Edit
               </Button>
             ) : null}
@@ -95,7 +89,7 @@ function RoleCard({
                     size="icon-sm"
                     aria-label={`More actions for ${role.name}`}
                   >
-                    <MoreVertical className="size-4" />
+                    <CiMenuKebab className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
@@ -104,7 +98,7 @@ function RoleCard({
                   ) : null}
                   {canDelete ? (
                     <DropdownMenuItem variant="destructive" onClick={() => onDelete(role)}>
-                      <Trash2 className="size-4" />
+                      <CiTrash className="size-4" />
                       Delete Role
                     </DropdownMenuItem>
                   ) : null}
@@ -137,46 +131,42 @@ export function RoleGrid({
   canEdit: boolean;
   canDelete: boolean;
 }) {
-  if (isLoading) {
-    return <RoleGridSkeleton />;
-  }
-
-  if (roles.length === 0) {
-    return (
-      <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <ShieldCheck />
-          </EmptyMedia>
-          <EmptyTitle>No Roles yet</EmptyTitle>
-          <EmptyDescription>
-            Create Roles to group Permission Assignments for Staff in this Tenant.
-          </EmptyDescription>
-        </EmptyHeader>
-        {canCreate ? (
-          <EmptyContent>
-            <Button type="button" onClick={onCreate}>
-              <Plus className="size-4" />
-              Create Role
-            </Button>
-          </EmptyContent>
-        ) : null}
-      </Empty>
-    );
-  }
-
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {roles.map((role) => (
-        <RoleCard
-          key={role.id}
-          role={role}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          canEdit={canEdit}
-          canDelete={canDelete}
-        />
-      ))}
-    </div>
+    <SkeletonCrossfade isLoading={isLoading} skeleton={<RoleGridSkeleton canEdit={canEdit} />}>
+      {roles.length === 0 ? (
+        <Empty className="bg-card min-h-80 border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <PiShieldCheckLight />
+            </EmptyMedia>
+            <EmptyTitle>No Roles yet</EmptyTitle>
+            <EmptyDescription>
+              Create Roles to group Permission Assignments for Staff in this Tenant.
+            </EmptyDescription>
+          </EmptyHeader>
+          {canCreate ? (
+            <EmptyContent>
+              <Button type="button" onClick={onCreate}>
+                <PiPlusLight className="size-4" />
+                Create Role
+              </Button>
+            </EmptyContent>
+          ) : null}
+        </Empty>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {roles.map((role) => (
+            <RoleCard
+              key={role.id}
+              role={role}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              canEdit={canEdit}
+              canDelete={canDelete}
+            />
+          ))}
+        </div>
+      )}
+    </SkeletonCrossfade>
   );
 }

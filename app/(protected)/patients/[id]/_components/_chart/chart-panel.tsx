@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Plus } from 'lucide-react';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +22,7 @@ export function ChartPanel({
   children: ReactNode;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
           <span className="text-muted-foreground">{icon}</span>
@@ -32,7 +32,7 @@ export function ChartPanel({
           ) : null}
         </CardTitle>
         <Button type="button" variant="outline" size="sm" onClick={onAdd}>
-          <Plus className="size-4" />
+          <PiPlusLight className="size-4" />
           {addLabel}
         </Button>
       </CardHeader>

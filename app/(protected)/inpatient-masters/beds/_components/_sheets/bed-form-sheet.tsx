@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Bed } from '@/app/api/lib/modules/bed/schemas/bed-schema';
@@ -161,7 +161,7 @@ export function BedFormSheet({
             <FieldGroup>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Could not save the Bed</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc pl-4">
@@ -289,7 +289,7 @@ export function BedFormSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
-              <Save className="size-4" />
+              <CiFloppyDisk className="size-4" />
               {isSaving ? 'Saving…' : isCreating ? 'Create Bed' : 'Save changes'}
             </Button>
           </SheetFooter>

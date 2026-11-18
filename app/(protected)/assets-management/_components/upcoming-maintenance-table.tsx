@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Wrench } from 'lucide-react';
+import { PiArrowRightLight, PiWrenchLight } from 'react-icons/pi';
 
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,7 @@ function MasterBadge({ name, color }: { name: string; color: string }) {
 
 export function UpcomingMaintenanceTable({ workOrders }: UpcomingMaintenanceTableProps) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Upcoming maintenance</CardTitle>
@@ -57,7 +57,7 @@ export function UpcomingMaintenanceTable({ workOrders }: UpcomingMaintenanceTabl
           <Button asChild variant="outline" size="sm">
             <Link href="/assets-management/maintenance">
               <span>All work orders</span>
-              <ArrowRight className="size-3.5" />
+              <PiArrowRightLight className="size-3.5" />
             </Link>
           </Button>
         </CardAction>
@@ -67,7 +67,7 @@ export function UpcomingMaintenanceTable({ workOrders }: UpcomingMaintenanceTabl
           <Empty className="min-h-40 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <Wrench className="size-5" />
+                <PiWrenchLight className="size-5" />
               </EmptyMedia>
               <EmptyTitle>No upcoming maintenance</EmptyTitle>
               <EmptyDescription>

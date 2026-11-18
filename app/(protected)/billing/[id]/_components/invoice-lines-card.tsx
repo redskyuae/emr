@@ -1,11 +1,18 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import type { Invoice, InvoiceLine } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 import { formatMoney } from '../../_utils/invoice-display';
 
 export function InvoiceLinesCard({
@@ -31,7 +38,7 @@ export function InvoiceLinesCard({
   const showRemoveColumn = isDraft && canUpdate;
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Charges</CardTitle>
         {showGenerateCharges || showAddLine ? (
@@ -43,7 +50,7 @@ export function InvoiceLinesCard({
             ) : null}
             {showAddLine ? (
               <Button type="button" size="sm" onClick={onAddLine}>
-                <Plus className="size-4" />
+                <PiPlusLight className="size-4" />
                 Add line
               </Button>
             ) : null}
@@ -59,18 +66,18 @@ export function InvoiceLinesCard({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">
               <thead>
-                <tr className="text-muted-foreground border-y text-left">
-                  <th className="p-3 pl-4 font-medium">Description</th>
-                  <th className="p-3 text-right font-medium">Qty</th>
-                  <th className="p-3 text-right font-medium">Unit Price</th>
-                  <th className="p-3 text-right font-medium">Amount</th>
-                  {showRemoveColumn ? <th className="p-3 pr-4" /> : null}
+                <tr className={cn(tableHeadRowClass, 'border-y')}>
+                  <th className={tableHeadCellClass}>Description</th>
+                  <th className={cn(tableHeadCellClass, 'text-right')}>Qty</th>
+                  <th className={cn(tableHeadCellClass, 'text-right')}>Unit Price</th>
+                  <th className={cn(tableHeadCellClass, 'text-right')}>Amount</th>
+                  {showRemoveColumn ? <th className={tableHeadCellClass} /> : null}
                 </tr>
               </thead>
               <tbody>
                 {invoice.lines.map((line) => (
                   <tr key={line.id} className="border-b last:border-b-0">
-                    <td className="p-3 pl-4">
+                    <td className={tableCellClass}>
                       {line.description}
                       {line.source === 'BED_AUTO' ? (
                         <Badge variant="secondary" className="ml-2">
@@ -78,11 +85,17 @@ export function InvoiceLinesCard({
                         </Badge>
                       ) : null}
                     </td>
-                    <td className="p-3 text-right tabular-nums">{line.quantity}</td>
-                    <td className="p-3 text-right tabular-nums">{formatMoney(line.unitPrice)}</td>
-                    <td className="p-3 text-right tabular-nums">{formatMoney(line.amount)}</td>
+                    <td className={cn(tableCellClass, 'text-right tabular-nums')}>
+                      {line.quantity}
+                    </td>
+                    <td className={cn(tableCellClass, 'text-right tabular-nums')}>
+                      {formatMoney(line.unitPrice)}
+                    </td>
+                    <td className={cn(tableCellClass, 'text-right tabular-nums')}>
+                      {formatMoney(line.amount)}
+                    </td>
                     {showRemoveColumn ? (
-                      <td className="p-3 pr-4 text-right">
+                      <td className={cn(tableCellClass, 'text-right')}>
                         <Button
                           type="button"
                           variant="ghost"
@@ -91,7 +104,7 @@ export function InvoiceLinesCard({
                           disabled={isRemoving}
                           onClick={() => onRemoveLine(line)}
                         >
-                          <Trash2 className="size-4" />
+                          <CiTrash className="size-4" />
                         </Button>
                       </td>
                     ) : null}

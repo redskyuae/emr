@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { CiEdit } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Invoice } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
@@ -39,7 +39,7 @@ export function InvoiceTotalsPanel({ invoice }: { invoice: Invoice }) {
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Summary</CardTitle>
       </CardHeader>
@@ -85,7 +85,7 @@ export function InvoiceTotalsPanel({ invoice }: { invoice: Invoice }) {
                     setEditingDiscount(true);
                   }}
                 >
-                  <Pencil className="size-3.5" />
+                  <CiEdit className="size-3.5" />
                 </Button>
               ) : null}
             </span>

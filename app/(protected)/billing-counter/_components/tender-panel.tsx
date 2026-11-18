@@ -1,4 +1,5 @@
-import { AlertCircle, Plus, X } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiPlusLight, PiXLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -115,7 +116,7 @@ function TenderRow({
           aria-label={`Remove ${meta.label}`}
           onClick={onRemove}
         >
-          <X className="size-3.5" />
+          <PiXLight className="size-3.5" />
         </Button>
       </div>
 
@@ -219,7 +220,7 @@ export function TenderPanel({
   }
 
   return (
-    <Card className="shadow-fluent-4 h-fit">
+    <Card className="h-fit">
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
         <CardDescription>{subtitle}</CardDescription>
@@ -267,7 +268,7 @@ export function TenderPanel({
                 variant="outline"
                 onClick={() => onTendersChange([...tenders, newTender(method)])}
               >
-                <Plus className="size-3.5" />
+                <PiPlusLight className="size-3.5" />
                 {TENDER_META[method].label}
               </Button>
             ))}
@@ -339,7 +340,7 @@ export function TenderPanel({
           >
             {errors.map((error) => (
               <li key={error} className="flex items-start gap-1.5">
-                <AlertCircle className="mt-px size-3.5 shrink-0" />
+                <CiCircleAlert className="mt-px size-3.5 shrink-0" />
                 {error}
               </li>
             ))}

@@ -1,6 +1,7 @@
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
-import { Leaf, RefreshCcw } from 'lucide-react';
+import { PiArrowsCounterClockwiseLight, PiLeafLight } from 'react-icons/pi';
 
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -113,6 +114,29 @@ function PlanRow({
   );
 }
 
+// Mirrors PlanRow: name and code beside the status badge, the Session bar and its count line.
+function PlanListSkeleton() {
+  return (
+    <ul className="space-y-3" aria-label="Loading Treatment Plans">
+      {Array.from({ length: 2 }, (_, index) => (
+        <li key={index} className="space-y-3 rounded-lg border p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+          <div className="space-y-1.5">
+            <Skeleton className="h-2 w-full rounded-full" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function PatientTreatmentsCard({
   plans,
   loading,
@@ -131,10 +155,10 @@ export function PatientTreatmentsCard({
   const orderedPlans = orderTreatmentPlans(plans);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <SectionHeading
-          icon={<Leaf className="size-5" />}
+          icon={<PiLeafLight className="size-5" />}
           title="Treatment Plans"
           description={
             !loading && !error && plans.length
@@ -144,29 +168,28 @@ export function PatientTreatmentsCard({
         />
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="space-y-3" aria-label="Loading Treatment Plans">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-        ) : error ? (
+        {error && !loading ? (
           <div className="space-y-2">
             <p className="text-destructive text-sm">Treatment Plans could not be loaded.</p>
             <Button type="button" size="sm" variant="outline" onClick={onRetry}>
-              <RefreshCcw className="size-4" />
+              <PiArrowsCounterClockwiseLight className="size-4" />
               Retry
             </Button>
           </div>
-        ) : orderedPlans.length ? (
-          <ul className="space-y-3">
-            {orderedPlans.map((plan) => (
-              <PlanRow key={plan.id} plan={plan} linkedBookingNumber={linkedBookingNumber} />
-            ))}
-          </ul>
         ) : (
-          <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-sm">
-            This Patient has no ongoing or not started Treatment Plans.
-          </p>
+          <SkeletonCrossfade isLoading={loading} skeleton={<PlanListSkeleton />}>
+            {orderedPlans.length ? (
+              <ul className="space-y-3">
+                {orderedPlans.map((plan) => (
+                  <PlanRow key={plan.id} plan={plan} linkedBookingNumber={linkedBookingNumber} />
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-sm">
+                This Patient has no ongoing or not started Treatment Plans.
+              </p>
+            )}
+          </SkeletonCrossfade>
         )}
       </CardContent>
     </Card>

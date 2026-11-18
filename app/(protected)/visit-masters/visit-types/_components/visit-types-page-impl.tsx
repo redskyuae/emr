@@ -3,12 +3,19 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+} from 'react-icons/pi';
 
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -67,11 +74,11 @@ export function VisitTypesPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -88,7 +95,7 @@ export function VisitTypesPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setVisitTypeParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Visit Type
                 </Button>
               </div>
@@ -98,88 +105,91 @@ export function VisitTypesPageImpl() {
 
         {visitTypesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Visit Types</AlertTitle>
             <AlertDescription>{getApiErrorMessage(visitTypesQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {visitTypesQuery.isLoading ? (
-          <VisitTypeTableSkeleton />
-        ) : visitTypes.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <ClipboardList />
-              </EmptyMedia>
-              <EmptyTitle>No Visit Types yet</EmptyTitle>
-              <EmptyDescription>
-                Create Visit Types to classify the clinical nature of a Visit, such as OPD
-                Consultation or Follow-up.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setVisitTypeParam('new')}>
-                  <Plus className="size-4" />
-                  Add Visit Type
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : visitTypes.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Visit Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <VisitTypeTable
-              visitTypes={visitTypes}
-              canEdit={canUpdate}
-              canDelete={canDelete}
-              onEdit={(visitType) => void setVisitTypeParam(String(visitType.id))}
-              onDelete={setVisitTypePendingDelete}
-            />
+        <SkeletonCrossfade
+          isLoading={visitTypesQuery.isLoading}
+          skeleton={<VisitTypeTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
+        >
+          {visitTypes.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiClipboardTextLight />
+                </EmptyMedia>
+                <EmptyTitle>No Visit Types yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Visit Types to classify the clinical nature of a Visit, such as OPD
+                  Consultation or Follow-up.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setVisitTypeParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Visit Type
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : visitTypes.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Visit Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <VisitTypeTable
+                visitTypes={visitTypes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={(visitType) => void setVisitTypeParam(String(visitType.id))}
+                onDelete={setVisitTypePendingDelete}
+              />
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <VisitTypeFormSheet

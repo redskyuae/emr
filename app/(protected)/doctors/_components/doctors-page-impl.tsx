@@ -3,16 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Stethoscope,
-  Table as TableIcon,
-} from 'lucide-react';
+  CiBoxList,
+  CiCircleAlert,
+  CiGrid41,
+  CiSearch,
+  CiStethoscope,
+  CiViewTable,
+} from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 import { useQueryState } from 'nuqs';
 
 import type {
@@ -24,6 +22,7 @@ import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorQuery } from '@/app/queries/doctors/useDoctor';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useSpecialtiesQuery } from '@/app/queries/specialties/useSpecialties';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -152,8 +151,8 @@ export function DoctorsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -165,22 +164,22 @@ export function DoctorsPageImpl() {
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-xs">
+            <InputGroup className="lg:max-w-xs">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -197,7 +196,7 @@ export function DoctorsPageImpl() {
                 setStatusFilter(value as DoctorStatusFilter | typeof ALL_FILTER)
               }
             >
-              <SelectTrigger className="h-9 lg:w-40" aria-label="Filter by status">
+              <SelectTrigger className="lg:w-40" aria-label="Filter by status">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -208,7 +207,7 @@ export function DoctorsPageImpl() {
             </Select>
 
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-              <SelectTrigger className="h-9 lg:w-48" aria-label="Filter by Specialty">
+              <SelectTrigger className="lg:w-48" aria-label="Filter by Specialty">
                 <SelectValue placeholder="All Specialties" />
               </SelectTrigger>
               <SelectContent>
@@ -224,7 +223,7 @@ export function DoctorsPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={() => void setDoctorParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Doctor
                 </Button>
               </div>
@@ -234,7 +233,7 @@ export function DoctorsPageImpl() {
 
         {specialtiesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Specialties</AlertTitle>
             <AlertDescription>{getApiErrorMessage(specialtiesQuery.error)}</AlertDescription>
           </Alert>
@@ -242,108 +241,116 @@ export function DoctorsPageImpl() {
 
         {doctorsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Doctors</AlertTitle>
             <AlertDescription>{getApiErrorMessage(doctorsQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {doctorsQuery.isLoading ? (
-          <DoctorViewSkeleton layout={viewLayout} />
-        ) : doctors.length === 0 && !hasFilters ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Stethoscope />
-              </EmptyMedia>
-              <EmptyTitle>No Doctors yet</EmptyTitle>
-              <EmptyDescription>
-                Add Doctors in this Tenant so Doctor Schedules and Appointments can use them.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setDoctorParam('new')}>
-                  <Plus className="size-4" />
-                  Add Doctor
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : doctors.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Doctors match the current search and filters. Try widening them.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <DoctorTableView
-                doctors={doctors}
-                canEdit={canUpdate}
-                canDeactivate={canDeactivate}
-                canReactivate={canReactivate}
-                onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
-                onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
-              />
-            ) : viewLayout === 'card' ? (
-              <DoctorCardView
-                doctors={doctors}
-                canEdit={canUpdate}
-                canDeactivate={canDeactivate}
-                canReactivate={canReactivate}
-                onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
-                onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
-              />
-            ) : (
-              <DoctorListView
-                doctors={doctors}
-                canEdit={canUpdate}
-                canDeactivate={canDeactivate}
-                canReactivate={canReactivate}
-                onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
-                onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={doctorsQuery.isLoading}
+          skeleton={
+            <DoctorViewSkeleton
+              layout={viewLayout}
+              showActions={canUpdate || canDeactivate || canReactivate}
+            />
+          }
+        >
+          {doctors.length === 0 && !hasFilters ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiStethoscope />
+                </EmptyMedia>
+                <EmptyTitle>No Doctors yet</EmptyTitle>
+                <EmptyDescription>
+                  Add Doctors in this Tenant so Doctor Schedules and Appointments can use them.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setDoctorParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Doctor
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : doctors.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Doctors match the current search and filters. Try widening them.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <DoctorTableView
+                  doctors={doctors}
+                  canEdit={canUpdate}
+                  canDeactivate={canDeactivate}
+                  canReactivate={canReactivate}
+                  onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
+                  onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
+                />
+              ) : viewLayout === 'card' ? (
+                <DoctorCardView
+                  doctors={doctors}
+                  canEdit={canUpdate}
+                  canDeactivate={canDeactivate}
+                  canReactivate={canReactivate}
+                  onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
+                  onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
+                />
+              ) : (
+                <DoctorListView
+                  doctors={doctors}
+                  canEdit={canUpdate}
+                  canDeactivate={canDeactivate}
+                  canReactivate={canReactivate}
+                  onEdit={(doctor) => void setDoctorParam(String(doctor.id))}
+                  onStatusAction={(doctor, action) => setPendingStatusAction({ doctor, action })}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}-{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}-{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <DoctorFormSheet

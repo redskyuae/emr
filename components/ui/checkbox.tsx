@@ -4,7 +4,7 @@ import { ComponentProps } from 'react';
 import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 
 import { cn } from '@/lib/utils';
-import { CheckIcon } from 'lucide-react';
+import { PiCheckLight } from 'react-icons/pi';
 
 function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
@@ -20,7 +20,7 @@ function Checkbox({ className, ...props }: ComponentProps<typeof CheckboxPrimiti
         data-slot="checkbox-indicator"
         className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
       >
-        <CheckIcon />
+        <PiCheckLight />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

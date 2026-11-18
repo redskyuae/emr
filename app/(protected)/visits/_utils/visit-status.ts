@@ -12,6 +12,9 @@ const VISIT_STATUS_PRESENTATION: Record<VisitStatus, VisitStatusPresentation> = 
   CANCELLED: { label: 'Cancelled', variant: 'destructive' },
 };
 
+// The Visit board's page size; its loading skeleton shows the same number of rows.
+export const VISITS_PAGE_SIZE = 20;
+
 export const VISIT_STATUS_FILTERS = [
   { value: 'CHECKED_IN', label: 'Checked In' },
   { value: 'IN_CONSULTATION', label: 'In Consultation' },

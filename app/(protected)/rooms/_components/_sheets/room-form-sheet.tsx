@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 import type { Room } from '@/app/api/lib/modules/room/schemas/room-schema';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
 import { useRoomTypesQuery } from '@/app/queries/room-masters/room-types/useRoomTypes';
 import { useCreateRoom } from '@/app/queries/rooms/useCreateRoom';
 import { useUpdateRoom } from '@/app/queries/rooms/useUpdateRoom';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -29,6 +30,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { roomFormSchema, type RoomFormValues } from '../../_utils/room-form-schema';
 import { ROOM_STATUS_OPTIONS } from '../../_utils/room-status';
@@ -164,20 +166,12 @@ export function RoomFormSheet({
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
 
-        {isResolving ? (
-          <div className="flex-1 p-4">
-            <div className="space-y-4">
-              {Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className="bg-muted h-10 animate-pulse rounded-md" />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <form id="room-form" onSubmit={onSubmit} className="flex flex-1 flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-4">
+        <form id="room-form" onSubmit={onSubmit} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4">
+            <SkeletonCrossfade isLoading={isResolving} skeleton={<RoomFormFieldsSkeleton />}>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Save failed</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc space-y-1 pl-4">
@@ -191,13 +185,13 @@ export function RoomFormSheet({
 
               {roomTypesQuery.isError ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Could not load Room Types</AlertTitle>
                   <AlertDescription>{getApiErrorMessage(roomTypesQuery.error)}</AlertDescription>
                 </Alert>
               ) : hasNoRoomTypes ? (
                 <Alert className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>No Room Types configured</AlertTitle>
                   <AlertDescription>
                     Add a Room Type under Configuration before creating Rooms.
@@ -431,25 +425,54 @@ export function RoomFormSheet({
                   )}
                 />
               </FieldGroup>
-            </div>
+            </SkeletonCrossfade>
+          </div>
 
-            <SheetFooter className="bg-background flex-row justify-end border-t p-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                form="room-form"
-                disabled={isSaving || hasNoRoomTypes}
-                aria-busy={isSaving}
-              >
-                <Save className="size-4" />
-                Save
-              </Button>
-            </SheetFooter>
-          </form>
-        )}
+          <SheetFooter className="bg-background flex-row justify-end border-t p-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="room-form"
+              disabled={isSaving || isResolving || hasNoRoomTypes}
+              aria-busy={isSaving || isResolving}
+            >
+              <CiFloppyDisk className="size-4" />
+              Save
+            </Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function FieldSkeleton({ label, control = 'h-10' }: { label: string; control?: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={`h-4 ${label}`} />
+      <Skeleton className={`w-full rounded-lg ${control}`} />
+    </div>
+  );
+}
+
+// Mirrors the form while the Room resolves: one label + control per field, Floor and Wing side by
+// side, and the Notes textarea.
+function RoomFormFieldsSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <FieldSkeleton label="w-28" />
+      <FieldSkeleton label="w-24" />
+      <FieldSkeleton label="w-14" />
+      <FieldSkeleton label="w-20" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FieldSkeleton label="w-12" />
+        <FieldSkeleton label="w-12" />
+      </div>
+      <FieldSkeleton label="w-16" />
+      <FieldSkeleton label="w-24" />
+      <FieldSkeleton label="w-14" control="h-20" />
+    </div>
   );
 }

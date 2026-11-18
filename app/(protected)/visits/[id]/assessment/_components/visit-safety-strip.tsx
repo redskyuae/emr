@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock3, MapPin, Stethoscope, UserRound } from 'lucide-react';
+import { CiClock1, CiLocationOn, CiStethoscope, CiUser, CiWarning } from 'react-icons/ci';
 
 import type { StaticClinicianVisit, VisitStatus } from '../../../_data/static-clinician-visits';
 import { visitStatusPresentation } from '../../../_utils/visit-status';
@@ -27,11 +27,11 @@ export function VisitSafetyStrip({
   const allergyAlert = !currentAllergies.some((allergy) => allergy === 'No known allergies');
 
   return (
-    <Card className="acrylic shadow-fluent-8 sticky top-40 z-10 gap-0 py-0 sm:top-32 lg:top-16">
+    <Card className="sticky top-16 z-10 gap-0 py-0">
       <CardContent className="grid gap-3 p-3 md:grid-cols-2 md:p-4 xl:grid-cols-[1.35fr_1fr_1fr] xl:items-center">
         <div className="flex min-w-0 items-center gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-md">
-            <UserRound className="size-5" aria-hidden="true" />
+            <CiUser className="size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -50,17 +50,17 @@ export function VisitSafetyStrip({
 
         <div className="space-y-1 text-sm">
           <div className="flex items-center gap-1.5">
-            <MapPin className="text-muted-foreground size-3.5" aria-hidden="true" />
+            <CiLocationOn className="text-muted-foreground size-3.5" aria-hidden="true" />
             <span className="font-medium">{visit.facility}</span>
             <span className="text-muted-foreground">· {visit.tenant}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Stethoscope className="text-muted-foreground size-3.5" aria-hidden="true" />
+            <CiStethoscope className="text-muted-foreground size-3.5" aria-hidden="true" />
             <span>{visit.doctor.name}</span>
             <span className="text-muted-foreground">· {visit.doctor.specialty}</span>
           </div>
           <div className="text-muted-foreground flex items-center gap-1.5">
-            <Clock3 className="size-3.5" aria-hidden="true" />
+            <CiClock1 className="size-3.5" aria-hidden="true" />
             <span className="font-mono">{visit.visitNumber}</span>
             <span>· {visit.visitType.name}</span>
             <span>· {formatTime(visit.startedAt)}</span>
@@ -75,7 +75,7 @@ export function VisitSafetyStrip({
           }
           role="status"
         >
-          <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
+          <CiWarning className="size-4 shrink-0" aria-hidden="true" />
           <div className="min-w-0">
             <p className="text-xs font-semibold">Allergies</p>
             <p className="text-sm leading-snug">{currentAllergies.join(' · ')}</p>

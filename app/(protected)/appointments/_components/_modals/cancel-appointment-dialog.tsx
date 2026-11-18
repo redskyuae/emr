@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
+import { PiArrowsClockwiseLight } from 'react-icons/pi';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -15,6 +16,7 @@ import {
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentCancelledReasonsQuery } from '@/app/queries/appointment-masters/cancelled-reasons/useAppointmentCancelledReasons';
 import { useCancelAppointment } from '@/app/queries/appointments/useCancelAppointment';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -101,7 +103,7 @@ export function CancelAppointmentDialog({
 
         <form className="contents" onSubmit={form.handleSubmit(confirmCancellation)}>
           <Alert>
-            <AlertTriangle className="size-4" />
+            <CiWarning className="size-4" />
             <AlertTitle>This cancellation cannot be undone here</AlertTitle>
             <AlertDescription>
               The Appointment remains in history.
@@ -111,16 +113,9 @@ export function CancelAppointmentDialog({
             </AlertDescription>
           </Alert>
 
-          {reasonsQuery.isLoading ? (
-            <div className="space-y-2" aria-label="Loading Appointment Cancelled Reasons">
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-8 w-full" />
-            </div>
-          ) : null}
-
           {reasonsQuery.isError ? (
             <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
+              <CiWarning className="size-4" />
               <AlertTitle>Could not load Appointment Cancelled Reasons</AlertTitle>
               <AlertDescription className="space-y-3">
                 <p>{getApiErrorMessage(reasonsQuery.error)}</p>
@@ -131,7 +126,7 @@ export function CancelAppointmentDialog({
                     variant="outline"
                     onClick={() => void reasonsQuery.refetch()}
                   >
-                    <RefreshCw className="size-4" /> Retry
+                    <PiArrowsClockwiseLight className="size-4" /> Retry
                   </Button>
                   <Button type="button" size="sm" variant="link" asChild>
                     <Link href="/appointment-masters/cancelled-reasons">
@@ -141,70 +136,82 @@ export function CancelAppointmentDialog({
                 </div>
               </AlertDescription>
             </Alert>
-          ) : null}
-
-          {!reasonsQuery.isLoading && !reasonsQuery.isError && reasons.length === 0 ? (
-            <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
-              <AlertTitle>No active Appointment Cancelled Reasons</AlertTitle>
-              <AlertDescription>
-                Configure a reason before cancelling this Appointment.{' '}
-                <Link
-                  className="font-medium underline underline-offset-4"
-                  href="/appointment-masters/cancelled-reasons"
+          ) : (
+            <SkeletonCrossfade
+              isLoading={reasonsQuery.isLoading}
+              skeleton={
+                // The reason field: its label over a full-width select.
+                <div
+                  className="flex flex-col gap-2"
+                  aria-label="Loading Appointment Cancelled Reasons"
                 >
-                  Manage Cancelled Reasons
-                </Link>
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
-          {!reasonsQuery.isLoading && !reasonsQuery.isError && reasons.length > 0 ? (
-            <Controller
-              control={form.control}
-              name="appointmentCancelledReasonId"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="appointment-cancelled-reason">
-                    Appointment Cancelled Reason{' '}
-                    <span aria-hidden className="text-destructive">
-                      *
-                    </span>
-                  </FieldLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      form.clearErrors('root');
-                    }}
-                    disabled={cancelMutation.isPending}
-                  >
-                    <SelectTrigger
-                      id="appointment-cancelled-reason"
-                      className="w-full"
-                      aria-required
-                      aria-invalid={fieldState.invalid}
-                      onBlur={field.onBlur}
+                  <Skeleton className="h-4 w-56" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              }
+            >
+              {reasons.length === 0 ? (
+                <Alert variant="destructive">
+                  <CiWarning className="size-4" />
+                  <AlertTitle>No active Appointment Cancelled Reasons</AlertTitle>
+                  <AlertDescription>
+                    Configure a reason before cancelling this Appointment.{' '}
+                    <Link
+                      className="font-medium underline underline-offset-4"
+                      href="/appointment-masters/cancelled-reasons"
                     >
-                      <SelectValue placeholder="Select a cancellation reason" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {reasons.map((reason) => (
-                        <SelectItem key={reason.id} value={String(reason.id)}>
-                          {reason.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError errors={[fieldState.error]} />
-                </Field>
+                      Manage Cancelled Reasons
+                    </Link>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Controller
+                  control={form.control}
+                  name="appointmentCancelledReasonId"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="appointment-cancelled-reason">
+                        Appointment Cancelled Reason{' '}
+                        <span aria-hidden className="text-destructive">
+                          *
+                        </span>
+                      </FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          form.clearErrors('root');
+                        }}
+                        disabled={cancelMutation.isPending}
+                      >
+                        <SelectTrigger
+                          id="appointment-cancelled-reason"
+                          className="w-full"
+                          aria-required
+                          aria-invalid={fieldState.invalid}
+                          onBlur={field.onBlur}
+                        >
+                          <SelectValue placeholder="Select a cancellation reason" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {reasons.map((reason) => (
+                            <SelectItem key={reason.id} value={String(reason.id)}>
+                              {reason.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FieldError errors={[fieldState.error]} />
+                    </Field>
+                  )}
+                />
               )}
-            />
-          ) : null}
+            </SkeletonCrossfade>
+          )}
 
           {form.formState.errors.root?.message ? (
             <Alert variant="destructive">
-              <AlertTriangle className="size-4" />
+              <CiWarning className="size-4" />
               <AlertTitle>Could not cancel Appointment</AlertTitle>
               <AlertDescription>{form.formState.errors.root.message}</AlertDescription>
             </Alert>

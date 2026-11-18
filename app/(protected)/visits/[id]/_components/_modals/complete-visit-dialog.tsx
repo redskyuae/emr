@@ -1,6 +1,6 @@
 'use client';
 
-import { TriangleAlert } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -53,7 +53,7 @@ export function CompleteVisitDialog({
         </AlertDialogHeader>
         {outstanding.length > 0 ? (
           <Alert>
-            <TriangleAlert className="text-warning size-4" />
+            <CiWarning className="text-warning size-4" />
             <AlertTitle>Still open on this Visit</AlertTitle>
             <AlertDescription>
               <ul className="list-disc pl-4">

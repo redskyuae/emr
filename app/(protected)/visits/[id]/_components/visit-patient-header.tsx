@@ -2,23 +2,25 @@
 
 import Link from 'next/link';
 import {
-  Activity,
-  ArrowLeft,
-  CalendarPlus,
-  CheckCircle2,
-  ChevronDown,
-  ClipboardPlus,
-  FilePlus2,
-  FileText,
-  Loader2,
-  NotebookPen,
-  PencilLine,
-  Pill,
-  PlayCircle,
-  ReceiptText,
-  ShieldAlert,
-  XCircle,
-} from 'lucide-react';
+  CiCircleCheck,
+  CiCircleRemove,
+  CiEdit,
+  CiFileOn,
+  CiMedicalClipboard,
+  CiMemoPad,
+  CiPill,
+  CiReceipt,
+  CiWavePulse1,
+} from 'react-icons/ci';
+import {
+  PiArrowLeftLight,
+  PiCalendarPlusLight,
+  PiCaretDownLight,
+  PiCircleNotchLight,
+  PiFilePlusLight,
+  PiPlayCircleLight,
+  PiShieldWarningLight,
+} from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Badge } from '@/components/ui/badge';
@@ -86,12 +88,12 @@ export function VisitPatientHeader({
   const active = isActiveVisit(visit.status);
 
   return (
-    <header className="acrylic shadow-fluent-4 z-10 rounded-lg border p-3 lg:sticky lg:top-18 xl:static">
+    <header className="bg-card z-10 rounded-xl border p-3 lg:sticky lg:top-18 xl:static">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button asChild variant="ghost" size="icon" aria-label="Back to Visits">
             <Link href="/visits">
-              <ArrowLeft className="size-4" />
+              <PiArrowLeftLight className="size-4" />
             </Link>
           </Button>
           <span
@@ -111,16 +113,22 @@ export function VisitPatientHeader({
               <Badge variant={status.variant}>{status.label}</Badge>
               {allergyCount ? (
                 <Badge variant="destructive">
-                  <ShieldAlert className="size-3" aria-hidden="true" />
+                  <PiShieldWarningLight className="size-3" aria-hidden="true" />
                   {allergyCount === 1 ? '1 allergy' : `${allergyCount} allergies`}
                 </Badge>
               ) : null}
             </div>
-            <p className="text-muted-foreground text-sm">
-              <span className="font-mono text-xs">{visit.patient.mrn}</span> ·{' '}
-              {visit.visitType.name} · {visitDoctorLabel(visit)} ·{' '}
-              <span className="font-mono text-xs">{visit.visitNumber}</span> ·{' '}
-              {visit.appointment?.bookingNumber ?? 'Walk-in'}
+            <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-sm">
+              <span className="bg-muted text-foreground rounded-md px-2 py-0.5 font-mono text-xs">
+                {visit.patient.mrn}
+              </span>
+              <span className="bg-muted text-foreground rounded-md px-2 py-0.5 font-mono text-xs">
+                {visit.visitNumber}
+              </span>
+              <span>
+                {visit.visitType.name} · {visitDoctorLabel(visit)} ·{' '}
+                {visit.appointment?.bookingNumber ?? 'Walk-in'}
+              </span>
             </p>
           </div>
         </div>
@@ -134,7 +142,7 @@ export function VisitPatientHeader({
                 aria-label={`Actions for ${visit.visitNumber}`}
               >
                 Actions
-                <ChevronDown className="size-4" />
+                <PiCaretDownLight className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -143,22 +151,22 @@ export function VisitPatientHeader({
                   <DropdownMenuLabel>Record</DropdownMenuLabel>
                   {canRecordVitals ? (
                     <DropdownMenuItem onSelect={onRecordVitals}>
-                      <Activity className="size-4" />
+                      <CiWavePulse1 className="size-4" />
                       Vital Signs
                     </DropdownMenuItem>
                   ) : null}
                   {canCreateNote ? (
                     <DropdownMenuItem onSelect={onAddNote}>
-                      <NotebookPen className="size-4" />
+                      <CiMemoPad className="size-4" />
                       Clinical Note
                     </DropdownMenuItem>
                   ) : null}
                   <DropdownMenuItem onSelect={onAddAllergy}>
-                    <ShieldAlert className="size-4" />
+                    <PiShieldWarningLight className="size-4" />
                     Allergy
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={onAddMedication}>
-                    <Pill className="size-4" />
+                    <CiPill className="size-4" />
                     Medication
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -166,25 +174,25 @@ export function VisitPatientHeader({
               ) : null}
               {canAssignPlan ? (
                 <DropdownMenuItem onSelect={onAssignPlan}>
-                  <ClipboardPlus className="size-4" />
+                  <CiMedicalClipboard className="size-4" />
                   Assign Treatment Plan
                 </DropdownMenuItem>
               ) : null}
               <DropdownMenuItem onSelect={onOpenDocuments}>
-                <FilePlus2 className="size-4" />
+                <PiFilePlusLight className="size-4" />
                 Documents
               </DropdownMenuItem>
               {canBookAppointment ? (
                 <DropdownMenuItem asChild>
                   <Link href="/appointments/new">
-                    <CalendarPlus className="size-4" />
+                    <PiCalendarPlusLight className="size-4" />
                     Book follow-up
                   </Link>
                 </DropdownMenuItem>
               ) : null}
               <DropdownMenuItem asChild>
                 <Link href={`/patients/${visit.patient.id}`}>
-                  <FileText className="size-4" />
+                  <CiFileOn className="size-4" />
                   Open Patient Chart
                 </Link>
               </DropdownMenuItem>
@@ -193,7 +201,7 @@ export function VisitPatientHeader({
                   <Link
                     href={`/billing?invoice=new&patientId=${visit.patient.id}&visitId=${visit.id}`}
                   >
-                    <ReceiptText className="size-4" />
+                    <CiReceipt className="size-4" />
                     Create Invoice
                   </Link>
                 </DropdownMenuItem>
@@ -202,7 +210,7 @@ export function VisitPatientHeader({
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onSelect={onCancel}>
-                    <XCircle className="size-4" />
+                    <CiCircleRemove className="size-4" />
                     Cancel Visit
                   </DropdownMenuItem>
                 </>
@@ -213,22 +221,22 @@ export function VisitPatientHeader({
           {visit.status === 'CHECKED_IN' && canStart ? (
             <Button type="button" disabled={starting} aria-busy={starting} onClick={onStart}>
               {starting ? (
-                <Loader2 className="size-4 animate-spin" />
+                <PiCircleNotchLight className="size-4 animate-spin" />
               ) : (
-                <PlayCircle className="size-4" />
+                <PiPlayCircleLight className="size-4" />
               )}
               {starting ? 'Starting consultation…' : 'Start consultation'}
             </Button>
           ) : null}
           {canAmend ? (
             <Button type="button" onClick={onAmend}>
-              <PencilLine className="size-4" />
+              <CiEdit className="size-4" />
               Amend Visit
             </Button>
           ) : null}
           {visit.status === 'IN_CONSULTATION' && canComplete ? (
             <Button type="button" onClick={onComplete}>
-              <CheckCircle2 className="size-4" />
+              <CiCircleCheck className="size-4" />
               Complete Visit
             </Button>
           ) : null}

@@ -1,13 +1,11 @@
 import type { Dispatch } from 'react';
+import { CiCircleCheck, CiFloppyDisk, CiWarning } from 'react-icons/ci';
 import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  CheckCircle2Icon,
-  ExternalLinkIcon,
-  PrinterIcon,
-  SaveIcon,
-  TriangleAlertIcon,
-} from 'lucide-react';
+  PiArrowLeftLight,
+  PiArrowRightLight,
+  PiArrowSquareOutLight,
+  PiPrinterLight,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -70,16 +68,16 @@ export function AssessmentCommandBar({
 
   return (
     <>
-      <div className="bg-card shadow-fluent-8 flex min-w-0 flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="bg-card flex min-w-0 flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {errors.length ? (
             <Alert className="w-full min-w-0 grid-cols-[auto_1fr] py-2" variant="destructive">
-              <TriangleAlertIcon aria-hidden="true" />
+              <CiWarning aria-hidden="true" />
               <AlertDescription>{errors.join(' ')}</AlertDescription>
             </Alert>
           ) : completed ? (
             <Badge className="gap-1" variant="secondary">
-              <CheckCircle2Icon aria-hidden="true" /> Visit completed
+              <CiCircleCheck aria-hidden="true" /> Visit completed
             </Badge>
           ) : (
             <div className="flex min-w-0 items-center gap-2">
@@ -102,11 +100,11 @@ export function AssessmentCommandBar({
               toast.info('Malaffi patient history is shown as a static demo shortcut.')
             }
           >
-            <ExternalLinkIcon aria-hidden="true" />
+            <PiArrowSquareOutLight aria-hidden="true" />
             Malaffi history
           </Button>
           <Button size="sm" type="button" variant="outline" onClick={() => window.print()}>
-            <PrinterIcon aria-hidden="true" />
+            <PiPrinterLight aria-hidden="true" />
             Print
           </Button>
           <Button
@@ -116,24 +114,24 @@ export function AssessmentCommandBar({
             variant="outline"
             onClick={saveDraft}
           >
-            <SaveIcon aria-hidden="true" />
+            <CiFloppyDisk aria-hidden="true" />
             Save draft
           </Button>
           {currentStep > 0 ? (
             <Button onClick={onPrevious} size="sm" type="button" variant="outline">
-              <ArrowLeftIcon aria-hidden="true" />
+              <PiArrowLeftLight aria-hidden="true" />
               Previous
             </Button>
           ) : null}
           {finalStep ? (
             <Button disabled={completed} size="sm" type="button" onClick={onValidate}>
-              <CheckCircle2Icon aria-hidden="true" />
+              <CiCircleCheck aria-hidden="true" />
               Complete Visit
             </Button>
           ) : (
             <Button onClick={onNext} size="sm" type="button">
               Next: {nextStep?.label}
-              <ArrowRightIcon aria-hidden="true" />
+              <PiArrowRightLight aria-hidden="true" />
             </Button>
           )}
         </div>

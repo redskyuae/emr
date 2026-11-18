@@ -1,7 +1,9 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { AlertCircle, ArrowLeft, Building2, CalendarClock, RefreshCw } from 'lucide-react';
+import { CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
+import { PiArrowLeftLight, PiArrowsClockwiseLight, PiBuildingsLight } from 'react-icons/pi';
 
 import { AppointmentScheduleSection } from '@/app/(protected)/appointments/new/_components/appointment-schedule-section';
 import { BookingSummary } from '@/app/(protected)/appointments/new/_components/booking-summary';
@@ -9,24 +11,26 @@ import { DoctorSelectionSection } from '@/app/(protected)/appointments/new/_comp
 import { ProcedureScheduleSection } from '@/app/(protected)/appointments/new/_components/procedure-schedule-section';
 import { getDurationMinutes } from '@/app/(protected)/appointments/new/_utils/appointment-time';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import RescheduleAppointmentLoader from '../loader';
+import { Skeleton } from '@/components/ui/skeleton';
 import { RescheduleReason } from './reschedule-reason';
 import { useRescheduleAppointmentForm } from './use-reschedule-appointment';
 
+type RescheduleForm = ReturnType<typeof useRescheduleAppointmentForm>;
+type RescheduleTarget = NonNullable<RescheduleForm['appointment']>;
+
 export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId: number }) {
   const reschedule = useRescheduleAppointmentForm(appointmentId);
-  const { appointment, form, values } = reschedule;
+  const { appointment } = reschedule;
 
-  if (reschedule.isLoading) return <RescheduleAppointmentLoader />;
-
-  if (reschedule.error || !appointment) {
+  if (!reschedule.isLoading && (reschedule.error || !appointment)) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="size-4" />
+        <CiCircleAlert className="size-4" />
         <AlertTitle>Could not load Appointment</AlertTitle>
         <AlertDescription className="space-y-3">
           <p>{getApiErrorMessage(reschedule.error)}</p>
@@ -36,34 +40,63 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
             variant="outline"
             onClick={() => reschedule.retryAppointment()}
           >
-            <RefreshCw className="size-4" /> Retry
+            <PiArrowsClockwiseLight className="size-4" /> Retry
           </Button>
         </AlertDescription>
       </Alert>
     );
   }
 
-  const returnHref = `/appointments?date=${encodeURIComponent(appointment.slotDate)}&appointment=${appointment.id}`;
+  // The direct-child flex classes let the form keep filling the page, so its sticky footer
+  // still sits at the bottom of a short page.
+  return (
+    <SkeletonCrossfade
+      isLoading={reschedule.isLoading}
+      skeleton={<RescheduleAppointmentSkeleton />}
+      className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col *:flex *:flex-1 *:flex-col"
+    >
+      {!appointment ? null : reschedule.isEligible ? (
+        <RescheduleAppointmentForm reschedule={reschedule} appointment={appointment} />
+      ) : (
+        <IneligibleAppointment appointment={appointment} />
+      )}
+    </SkeletonCrossfade>
+  );
+}
 
-  if (!reschedule.isEligible) {
-    return (
-      <div className="space-y-4">
-        <Button variant="ghost" asChild>
-          <Link href={returnHref}>
-            <ArrowLeft className="size-4" /> Back to Appointments
-          </Link>
-        </Button>
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertTitle>Appointment cannot be rescheduled</AlertTitle>
-          <AlertDescription>
-            Only Scheduled or Confirmed Appointments can be rescheduled. This Appointment is{' '}
-            {appointment.appointmentStatus.name}.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+function getReturnHref(appointment: RescheduleTarget) {
+  return `/appointments?date=${encodeURIComponent(appointment.slotDate)}&appointment=${appointment.id}`;
+}
+
+function IneligibleAppointment({ appointment }: { appointment: RescheduleTarget }) {
+  return (
+    <div className="space-y-4">
+      <Button variant="ghost" asChild>
+        <Link href={getReturnHref(appointment)}>
+          <PiArrowLeftLight className="size-4" /> Back to Appointments
+        </Link>
+      </Button>
+      <Alert variant="destructive">
+        <CiCircleAlert className="size-4" />
+        <AlertTitle>Appointment cannot be rescheduled</AlertTitle>
+        <AlertDescription>
+          Only Scheduled or Confirmed Appointments can be rescheduled. This Appointment is{' '}
+          {appointment.appointmentStatus.name}.
+        </AlertDescription>
+      </Alert>
+    </div>
+  );
+}
+
+function RescheduleAppointmentForm({
+  reschedule,
+  appointment,
+}: {
+  reschedule: RescheduleForm;
+  appointment: RescheduleTarget;
+}) {
+  const { form, values } = reschedule;
+  const returnHref = getReturnHref(appointment);
 
   const currentTime =
     appointment.startTime && appointment.endTime
@@ -73,27 +106,20 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
     getDurationMinutes(appointment.startTime ?? '', appointment.endTime ?? '') || 15;
 
   return (
-    <form
-      onSubmit={reschedule.onSubmit}
-      className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col gap-4"
-    >
+    <form onSubmit={reschedule.onSubmit} className="flex flex-1 flex-col gap-4">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
           <Button variant="ghost" size="sm" className="-ml-2" asChild>
             <Link href={returnHref}>
-              <ArrowLeft className="size-4" /> Back to Appointments
+              <PiArrowLeftLight className="size-4" /> Back to Appointments
             </Link>
           </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Reschedule Appointment</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Change the schedule for <span className="font-mono">{appointment.bookingNumber}</span>
-              .
-            </p>
-          </div>
+          <p className="text-muted-foreground text-sm">
+            Change the schedule for <span className="font-mono">{appointment.bookingNumber}</span>.
+          </p>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <Building2 className="text-primary size-4 shrink-0" />
+          <PiBuildingsLight className="text-primary size-4 shrink-0" />
           <div>
             <p className="font-medium">{reschedule.tenant?.name ?? 'Current Tenant'}</p>
             <p className="text-muted-foreground text-xs">Times use the Tenant time zone</p>
@@ -101,7 +127,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
         </div>
       </header>
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader className="border-b">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -136,7 +162,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
 
       {reschedule.submitError ? (
         <Alert variant="destructive">
-          <AlertCircle className="size-4" />
+          <CiCircleAlert className="size-4" />
           <AlertTitle>Could not reschedule Appointment</AlertTitle>
           <AlertDescription>{reschedule.submitError}</AlertDescription>
         </Alert>
@@ -183,8 +209,8 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
 
       <RescheduleReason control={form.control} />
 
-      <footer className="bg-card shadow-fluent-8 sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
-        <CalendarClock className="text-primary hidden size-5 sm:block" />
+      <footer className="bg-card sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
+        <CiCalendarDate className="text-primary hidden size-5 sm:block" />
         <BookingSummary
           values={values}
           room={null}
@@ -202,10 +228,139 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
           disabled={reschedule.mutation.isPending}
           aria-busy={reschedule.mutation.isPending}
         >
-          <CalendarClock className="size-4" />
+          <CiCalendarDate className="size-4" />
           {reschedule.mutation.isPending ? 'Rescheduling…' : 'Reschedule Appointment'}
         </Button>
       </footer>
     </form>
+  );
+}
+
+// Mirrors the form: the header (back link, booking line and Tenant), the Patient card with
+// its badges and current schedule, the Doctor and schedule columns, the reason card and the
+// sticky footer. A Procedure reschedules in one schedule card, but the Booking Path is not
+// known until the Appointment loads, so the Consultation layout stands in.
+function RescheduleAppointmentSkeleton() {
+  return (
+    <div className="flex flex-1 flex-col gap-4" aria-label="Loading Reschedule Appointment">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-44" />
+          <Skeleton className="h-4 w-64 max-w-full" />
+        </div>
+        <RescheduleTenantSkeleton />
+      </div>
+      <RescheduleAppointmentBodySkeleton />
+    </div>
+  );
+}
+
+function FieldSkeleton() {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-4 w-20" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  );
+}
+
+// The booking section card: an icon chip, the real title and a description line over its body.
+function SectionCardSkeleton({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Card>
+      <CardHeader className="border-b">
+        <div className="flex items-start gap-3">
+          <Skeleton className="size-9 shrink-0 rounded-lg" />
+          <div className="w-full space-y-1.5">
+            <CardTitle>{title}</CardTitle>
+            <Skeleton className="h-4 w-full max-w-xs" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
+}
+
+export function RescheduleTenantSkeleton() {
+  return (
+    <div className="flex items-center gap-2">
+      <Skeleton className="size-4 shrink-0 rounded-full" />
+      <div className="space-y-1.5">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+    </div>
+  );
+}
+
+export function RescheduleAppointmentBodySkeleton() {
+  return (
+    <>
+      <Card>
+        <CardHeader className="border-b">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-28 rounded-full" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-3">
+          {['Current date', 'Current time', 'Current Doctor'].map((label) => (
+            <div key={label} className="space-y-1">
+              <p className="text-muted-foreground text-xs">{label}</p>
+              <Skeleton className="h-5 w-28" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(18rem,0.65fr)_minmax(0,1.35fr)]">
+        <SectionCardSkeleton title="Doctor">
+          <FieldSkeleton />
+        </SectionCardSkeleton>
+        <SectionCardSkeleton title="Date & time">
+          <div className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FieldSkeleton />
+              <FieldSkeleton />
+            </div>
+            <div className="bg-muted/25 space-y-4 rounded-xl border p-3 sm:p-4">
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                {Array.from({ length: 12 }, (_, slot) => (
+                  <Skeleton key={slot} className="h-8 w-full" />
+                ))}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FieldSkeleton />
+                <FieldSkeleton />
+              </div>
+            </div>
+          </div>
+        </SectionCardSkeleton>
+      </div>
+
+      <SectionCardSkeleton title="Rescheduling reason">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </SectionCardSkeleton>
+
+      <div className="bg-card mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
+        <Skeleton className="hidden size-5 rounded-full sm:block" />
+        <Skeleton className="h-4 w-60 max-w-full" />
+        <Skeleton className="ml-auto h-9 w-48" />
+      </div>
+    </>
   );
 }

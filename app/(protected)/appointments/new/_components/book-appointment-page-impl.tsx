@@ -3,24 +3,23 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useQueryState } from 'nuqs';
+import { CiEdit, CiStethoscope, CiUser, CiWarning } from 'react-icons/ci';
 import {
-  ArrowLeft,
-  ArrowRight,
-  Building2,
-  CalendarX,
-  Check,
-  Pencil,
-  RefreshCw,
-  RotateCcw,
-  Stethoscope,
-  UserRound,
-  TriangleAlert,
-} from 'lucide-react';
+  PiArrowCounterClockwiseLight,
+  PiArrowLeftLight,
+  PiArrowRightLight,
+  PiArrowsClockwiseLight,
+  PiBuildingsLight,
+  PiCalendarXLight,
+  PiCheckLight,
+} from 'react-icons/pi';
 
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
@@ -29,6 +28,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { FieldError } from '@/components/ui/field';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { shouldClearAddSessionsQueryParam } from '../_utils/add-sessions-query-state';
 import { canAllocateProcedureResources } from '../_utils/appointment-time';
@@ -46,7 +46,6 @@ import { ProcedureScheduleSection } from './procedure-schedule-section';
 import { ResourceAllocationSection } from './resource-allocation-section';
 import { TreatmentSessionSection } from './treatment-session-section';
 import { useBookAppointment } from './use-book-appointment';
-import BookAppointmentLoader from '../loader';
 
 export function BookAppointmentPageImpl() {
   const {
@@ -55,23 +54,21 @@ export function BookAppointmentPageImpl() {
     isError: canCreateError,
   } = useHasPermission('appointment:create');
 
-  if (canCreateLoading || canCreateError) {
-    return <BookAppointmentLoader />;
-  }
+  const isPermissionPending = canCreateLoading || canCreateError;
 
-  if (!canCreate) {
+  if (!isPermissionPending && !canCreate) {
     return (
       <div className="space-y-4">
         <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
           <Link href="/appointments">
-            <ArrowLeft className="size-4" />
+            <PiArrowLeftLight className="size-4" />
             Appointments
           </Link>
         </Button>
         <Empty className="min-h-72">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <CalendarX className="size-5" />
+              <PiCalendarXLight className="size-5" />
             </EmptyMedia>
             <EmptyTitle>You don&apos;t have permission to book Appointments.</EmptyTitle>
             <EmptyDescription>Contact a Tenant Admin if you need access.</EmptyDescription>
@@ -81,7 +78,113 @@ export function BookAppointmentPageImpl() {
     );
   }
 
-  return <BookAppointmentWorkflow />;
+  return (
+    <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col gap-4">
+      <BookAppointmentHeader />
+
+      {/* The direct-child flex classes let the workflow keep filling the page, so its footer
+          still sits at the bottom of a short page. */}
+      <SkeletonCrossfade
+        isLoading={isPermissionPending}
+        skeleton={<BookAppointmentWorkflowSkeleton />}
+        className="flex flex-1 flex-col *:flex *:flex-1 *:flex-col"
+      >
+        {canCreate ? <BookAppointmentWorkflow /> : null}
+      </SkeletonCrossfade>
+    </div>
+  );
+}
+
+function BookAppointmentHeader() {
+  return (
+    <header className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-muted-foreground text-sm">
+        Select the Patient, Booking Path, and exact Appointment time.
+      </p>
+      <div className="flex items-center gap-2 text-sm">
+        <PiBuildingsLight className="text-primary size-4 shrink-0" />
+        <div>
+          <p className="font-medium">{DEMO_FACILITY.name}</p>
+          <p className="text-muted-foreground text-xs">
+            {DEMO_FACILITY.emirate} · {DEMO_FACILITY.timeZone}
+          </p>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// Mirrors step 1 of the workflow below the page header: the two-step progress bar, the
+// Patient card (mode tabs and search), the Booking Path card with its two choices and the
+// hint beneath it, and the sticky footer with Continue.
+export function BookAppointmentWorkflowSkeleton() {
+  return (
+    <div className="flex flex-1 flex-col gap-4" aria-label="Loading Book Appointment">
+      <div className="bg-card flex flex-wrap items-center gap-2 rounded-xl border p-2">
+        {[0, 1].map((step) => (
+          <div
+            key={step}
+            className="flex flex-1 items-center gap-3 px-3 py-2 sm:min-w-52 sm:flex-none"
+          >
+            <Skeleton className="size-7 shrink-0 rounded-full" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        ))}
+        <Skeleton className="mr-3 ml-auto hidden h-3 w-16 sm:block" />
+      </div>
+
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-start gap-3">
+              <Skeleton className="size-9 shrink-0 rounded-lg" />
+              <div className="w-full space-y-1.5">
+                <CardTitle>Patient</CardTitle>
+                <Skeleton className="h-4 w-full max-w-sm" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Skeleton className="h-10 w-full rounded-full" />
+            <div className="flex flex-col gap-2 pt-4">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="min-w-0 space-y-4">
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle className="text-lg">Booking Path</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                {[0, 1].map((path) => (
+                  <div
+                    key={path}
+                    className="flex min-h-14 items-center gap-3 rounded-lg border p-3"
+                  >
+                    <Skeleton className="size-9 shrink-0 rounded-lg" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <div className="flex items-start gap-3 px-2 py-4">
+            <Skeleton className="mt-0.5 size-4 shrink-0" />
+            <Skeleton className="h-4 w-72 max-w-full" />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
+        <Skeleton className="h-4 w-64 max-w-full" />
+        <Skeleton className="ml-auto h-9 w-28" />
+      </div>
+    </div>
+  );
 }
 
 function BookAppointmentWorkflow() {
@@ -127,28 +230,10 @@ function BookAppointmentWorkflow() {
   }, [step]);
 
   return (
-    <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Book Appointment</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Select the Patient, Booking Path, and exact Appointment time.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Building2 className="text-primary size-4 shrink-0" />
-          <div>
-            <p className="font-medium">{DEMO_FACILITY.name}</p>
-            <p className="text-muted-foreground text-xs">
-              {DEMO_FACILITY.emirate} · {DEMO_FACILITY.timeZone}
-            </p>
-          </div>
-        </div>
-      </header>
-
+    <div className="flex flex-1 flex-col gap-4">
       <nav
         aria-label="Booking progress"
-        className="bg-card shadow-fluent-2 flex flex-wrap items-center gap-2 rounded-xl border p-2"
+        className="bg-card flex flex-wrap items-center gap-2 rounded-xl border p-2"
       >
         {(['Patient & visit', 'Schedule & book'] as const).map((label, index) => (
           <Button
@@ -172,7 +257,7 @@ function BookAppointmentWorkflow() {
                     : 'border-border text-muted-foreground'
               )}
             >
-              {index === 0 && step === 2 ? <Check className="size-3.5" /> : index + 1}
+              {index === 0 && step === 2 ? <PiCheckLight className="size-3.5" /> : index + 1}
             </span>
             <span className="text-left whitespace-normal">{label}</span>
           </Button>
@@ -184,7 +269,7 @@ function BookAppointmentWorkflow() {
 
       {booking.confirmation ? (
         <Alert className="border-success/25 bg-success/5" role="status">
-          <Check className="size-4" />
+          <PiCheckLight className="size-4" />
           <AlertTitle>
             Appointment booked ·{' '}
             <span className="font-mono">{booking.confirmation.bookingNumber}</span>
@@ -194,7 +279,7 @@ function BookAppointmentWorkflow() {
               {booking.confirmation.patientName} · {booking.confirmation.detail}
             </span>
             <Button type="button" size="sm" variant="outline" onClick={booking.resetBooking}>
-              <RotateCcw className="size-3.5" /> Start another booking
+              <PiArrowCounterClockwiseLight className="size-3.5" /> Start another booking
             </Button>
           </AlertDescription>
         </Alert>
@@ -202,7 +287,7 @@ function BookAppointmentWorkflow() {
 
       {booking.submitError ? (
         <Alert variant="destructive" role="alert">
-          <TriangleAlert className="size-4" />
+          <CiWarning className="size-4" />
           <AlertTitle>Appointment not booked</AlertTitle>
           <AlertDescription>{booking.submitError}</AlertDescription>
         </Alert>
@@ -210,7 +295,7 @@ function BookAppointmentWorkflow() {
 
       {booking.visitType && booking.bookingDependencyError ? (
         <Alert variant="destructive" role="alert">
-          <TriangleAlert className="size-4" />
+          <CiWarning className="size-4" />
           <AlertTitle>Booking options could not be loaded</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
             <span>{booking.bookingDependencyError}</span>
@@ -220,7 +305,7 @@ function BookAppointmentWorkflow() {
               variant="outline"
               onClick={booking.retryBookingDependencies}
             >
-              <RefreshCw className="size-3.5" /> Retry
+              <PiArrowsClockwiseLight className="size-3.5" /> Retry
             </Button>
           </AlertDescription>
         </Alert>
@@ -307,7 +392,7 @@ function BookAppointmentWorkflow() {
                 />
               ) : (
                 <div className="text-muted-foreground flex items-start gap-3 px-2 py-4 text-sm">
-                  <ArrowRight className="mt-0.5 size-4 shrink-0" />
+                  <PiArrowRightLight className="mt-0.5 size-4 shrink-0" />
                   <p>
                     {booking.visitType
                       ? 'Continue to choose the date and exact Appointment time.'
@@ -320,7 +405,7 @@ function BookAppointmentWorkflow() {
         ) : (
           <>
             <div className="bg-card flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3">
-              <UserRound className="text-primary size-5 shrink-0" />
+              <CiUser className="text-primary size-5 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold break-words">{patientName}</p>
                 <p className="text-muted-foreground text-xs break-words">
@@ -341,7 +426,7 @@ function BookAppointmentWorkflow() {
                 {visitLabel}
               </Badge>
               <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                <Stethoscope className="size-3.5" aria-hidden="true" />
+                <CiStethoscope className="size-3.5" aria-hidden="true" />
                 {booking.selectedDoctor?.name ?? (isProcedurePath ? 'N/A' : 'Doctor required')}
               </span>
               {booking.selectedTreatment ? (
@@ -351,7 +436,7 @@ function BookAppointmentWorkflow() {
                 </span>
               ) : null}
               <Button type="button" variant="ghost" size="sm" onClick={() => booking.setStep(1)}>
-                <Pencil className="size-3.5" /> Edit
+                <CiEdit className="size-3.5" /> Edit
               </Button>
             </div>
             <div className="grid items-start gap-4 lg:grid-cols-2">
@@ -391,7 +476,7 @@ function BookAppointmentWorkflow() {
                 )}
                 {selectedSession ? (
                   <Alert className="border-warning/25 bg-warning/5">
-                    <TriangleAlert className="text-warning size-4" />
+                    <CiWarning className="text-warning size-4" />
                     <AlertTitle className="text-warning">Clinical warning</AlertTitle>
                     <AlertDescription>{selectedSession.warning}</AlertDescription>
                   </Alert>
@@ -446,11 +531,11 @@ function BookAppointmentWorkflow() {
           </>
         )}
 
-        <footer className="bg-card shadow-fluent-8 sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
+        <footer className="bg-card sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
           {step === 2 ? (
             <>
               <Button type="button" variant="outline" onClick={() => booking.setStep(1)}>
-                <ArrowLeft className="size-4" /> Back
+                <PiArrowLeftLight className="size-4" /> Back
               </Button>
               <BookingSummary
                 values={values}
@@ -473,11 +558,11 @@ function BookAppointmentWorkflow() {
           >
             {step === 1 ? (
               <>
-                Continue <ArrowRight className="size-4" />
+                Continue <PiArrowRightLight className="size-4" />
               </>
             ) : (
               <>
-                <Check className="size-4" />
+                <PiCheckLight className="size-4" />
                 {form.formState.isSubmitting ? 'Booking Appointment…' : `Book ${visitLabel}`}
               </>
             )}

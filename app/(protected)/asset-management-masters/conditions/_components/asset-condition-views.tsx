@@ -1,4 +1,5 @@
-import { Gauge, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiGaugeLight } from 'react-icons/pi';
 
 import type { AssetCondition } from '@/app/api/lib/modules/asset-condition/schemas/asset-condition-schema';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,7 @@ function ConditionIcon({ color }: { color: string }) {
       className="flex size-10 items-center justify-center rounded-full"
       style={{ backgroundColor: color + '22' }}
     >
-      <Gauge className="size-5" style={{ color }} />
+      <PiGaugeLight className="size-5" style={{ color }} />
     </div>
   );
 }
@@ -64,19 +65,19 @@ function ConditionActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${condition.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(condition)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(condition)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -99,7 +100,7 @@ export function AssetConditionTableView({
   onDelete: (condition: AssetCondition) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[700px]">
@@ -158,8 +159,8 @@ export function AssetConditionCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {conditions.map((condition) => (
-        <Card key={condition.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={condition.id}>
+          <CardContent className="space-y-3">
             <ConditionIcon color={condition.color} />
 
             <div>
@@ -179,7 +180,7 @@ export function AssetConditionCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(condition)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -191,7 +192,7 @@ export function AssetConditionCardView({
                     onClick={() => onDelete(condition)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}
@@ -220,8 +221,8 @@ export function AssetConditionListView({
   return (
     <div className="space-y-3">
       {conditions.map((condition) => (
-        <Card key={condition.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={condition.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <ConditionIcon color={condition.color} />
               <div className="min-w-0">

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Activity } from 'lucide-react';
+import { CiWavePulse1 } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -162,7 +162,7 @@ export function RecordVitalsSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={createVitals.isPending}>
-              <Activity className="size-4" />
+              <CiWavePulse1 className="size-4" />
               {createVitals.isPending ? 'Saving…' : 'Record vitals'}
             </Button>
           </SheetFooter>

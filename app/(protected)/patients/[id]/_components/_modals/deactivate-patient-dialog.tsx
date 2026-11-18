@@ -1,6 +1,6 @@
 'use client';
 
-import { UserRoundCheck, UserRoundX } from 'lucide-react';
+import { PiUserCheckLight, PiUserMinusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
@@ -57,7 +57,7 @@ export function DeactivatePatientDialog({ patient, onClose }: DeactivatePatientD
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className={isDeactivating ? 'text-destructive' : undefined}>
-            {isDeactivating ? <UserRoundX /> : <UserRoundCheck />}
+            {isDeactivating ? <PiUserMinusLight /> : <PiUserCheckLight />}
           </AlertDialogMedia>
           <AlertDialogTitle>
             {isDeactivating ? 'Deactivate Patient?' : 'Reactivate Patient?'}

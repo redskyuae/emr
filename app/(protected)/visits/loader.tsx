@@ -1,34 +1,27 @@
+import { StatCardSkeleton } from '@/components/app/stat-card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+
+import { VisitsTableSkeleton } from './_components/visits-table';
 
 export default function VisitsPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
-          <Skeleton key={index} className="h-14" aria-label="Loading Visit count" />
+          <StatCardSkeleton key={index} />
         ))}
       </div>
 
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center">
-        <Skeleton className="h-9 lg:w-44" />
-        <Skeleton className="h-9 lg:w-52" aria-label="Loading Doctor filter" />
-        <Skeleton className="h-9 w-full lg:ml-auto lg:max-w-xs" />
-      </div>
+      <Card className="py-0">
+        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+          <Skeleton className="h-10 w-full lg:w-44" />
+          <Skeleton className="h-10 w-full lg:w-52" aria-label="Loading Doctor filter" />
+          <Skeleton className="h-10 w-full lg:ml-auto lg:max-w-xs" />
+        </CardContent>
+      </Card>
 
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-            <Skeleton className="size-9 rounded-md" />
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="ml-auto h-8 w-20" />
-            <Skeleton className="h-8 w-9" aria-label="Loading Visit actions" />
-          </div>
-        ))}
-      </div>
+      <VisitsTableSkeleton />
     </div>
   );
 }

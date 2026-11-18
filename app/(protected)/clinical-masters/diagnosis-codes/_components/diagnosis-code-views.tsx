@@ -1,4 +1,4 @@
-import { MoreVertical, Pencil, Stethoscope, Trash2 } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiStethoscope, CiTrash } from 'react-icons/ci';
 import type { DiagnosisCode } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +20,7 @@ import {
 function DiagnosisCodeIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <Stethoscope className="size-5" />
+      <CiStethoscope className="size-5" />
     </div>
   );
 }
@@ -51,19 +51,19 @@ function DiagnosisCodeActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${diagnosisCode.code}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(diagnosisCode)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(diagnosisCode)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -86,7 +86,7 @@ export function DiagnosisCodeTableView({
   onDelete: (diagnosisCode: DiagnosisCode) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[600px]">
@@ -143,8 +143,8 @@ export function DiagnosisCodeCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {diagnosisCodes.map((diagnosisCode) => (
-        <Card key={diagnosisCode.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={diagnosisCode.id}>
+          <CardContent className="space-y-3">
             <DiagnosisCodeIcon />
 
             <div>
@@ -166,7 +166,7 @@ export function DiagnosisCodeCardView({
                     size="sm"
                     onClick={() => onEdit(diagnosisCode)}
                   >
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -178,7 +178,7 @@ export function DiagnosisCodeCardView({
                     onClick={() => onDelete(diagnosisCode)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}
@@ -207,8 +207,8 @@ export function DiagnosisCodeListView({
   return (
     <div className="space-y-3">
       {diagnosisCodes.map((diagnosisCode) => (
-        <Card key={diagnosisCode.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={diagnosisCode.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <DiagnosisCodeIcon />
               <div className="min-w-0">

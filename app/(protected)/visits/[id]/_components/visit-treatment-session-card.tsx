@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Save } from 'lucide-react';
+import { CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -9,6 +9,7 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useTreatmentsQuery } from '@/app/queries/treatments/useTreatments';
 import { useUpdateVisit } from '@/app/queries/visits/useUpdateVisit';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Button } from '@/components/ui/button';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
@@ -80,9 +81,10 @@ export function VisitTreatmentSessionCard({ visit }: { visit: Visit }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <Field>
           <FieldLabel htmlFor="visit-treatment">Treatment</FieldLabel>
-          {treatmentsQuery.isLoading ? (
-            <Skeleton className="h-10 w-full" aria-label="Loading Treatments" />
-          ) : (
+          <SkeletonCrossfade
+            isLoading={treatmentsQuery.isLoading}
+            skeleton={<Skeleton className="h-10 w-full" aria-label="Loading Treatments" />}
+          >
             <NativeSelect
               id="visit-treatment"
               className="w-full"
@@ -98,13 +100,14 @@ export function VisitTreatmentSessionCard({ visit }: { visit: Visit }) {
                 </NativeSelectOption>
               ))}
             </NativeSelect>
-          )}
+          </SkeletonCrossfade>
         </Field>
         <Field>
           <FieldLabel htmlFor="visit-session">Session</FieldLabel>
-          {treatmentsQuery.isLoading ? (
-            <Skeleton className="h-10 w-full" aria-label="Loading Sessions" />
-          ) : (
+          <SkeletonCrossfade
+            isLoading={treatmentsQuery.isLoading}
+            skeleton={<Skeleton className="h-10 w-full" aria-label="Loading Sessions" />}
+          >
             <NativeSelect
               id="visit-session"
               className="w-full"
@@ -121,7 +124,7 @@ export function VisitTreatmentSessionCard({ visit }: { visit: Visit }) {
                 </NativeSelectOption>
               ))}
             </NativeSelect>
-          )}
+          </SkeletonCrossfade>
         </Field>
       </div>
       <div className="flex justify-end">
@@ -137,7 +140,7 @@ export function VisitTreatmentSessionCard({ visit }: { visit: Visit }) {
           }
           onClick={() => void save()}
         >
-          <Save className="size-4" />
+          <CiFloppyDisk className="size-4" />
           {updateMutation.isPending ? 'Saving…' : 'Save Treatment'}
         </Button>
       </div>

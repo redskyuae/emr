@@ -1,6 +1,6 @@
 'use client';
 
-import { UserRoundX } from 'lucide-react';
+import { PiUserMinusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { StaffWithRoles } from '@/app/api/lib/modules/staff/schemas/staff-schema';
@@ -48,7 +48,7 @@ export function DeactivateUserDialog({ staff, onClose, onDeactivated }: Deactiva
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <UserRoundX />
+            <PiUserMinusLight />
           </AlertDialogMedia>
           <AlertDialogTitle>Deactivate Staff member?</AlertDialogTitle>
           <AlertDialogDescription>

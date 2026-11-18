@@ -3,12 +3,19 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, ClipboardList, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+} from 'react-icons/pi';
 
 import type { AdmissionType } from '@/app/api/lib/modules/admission-type/schemas/admission-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAdmissionTypesQuery } from '@/app/queries/inpatient-masters/admission-types/useAdmissionTypes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -71,11 +78,11 @@ export function AdmissionTypesPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -92,7 +99,7 @@ export function AdmissionTypesPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setAdmissionTypeParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Admission Type
                 </Button>
               </div>
@@ -102,89 +109,92 @@ export function AdmissionTypesPageImpl() {
 
         {admissionTypesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Admission Types</AlertTitle>
             <AlertDescription>{getApiErrorMessage(admissionTypesQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {admissionTypesQuery.isLoading ? (
-          <AdmissionTypeTableSkeleton />
-        ) : admissionTypes.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <ClipboardList />
-              </EmptyMedia>
-              <EmptyTitle>No Admission Types yet</EmptyTitle>
-              <EmptyDescription>
-                Create Admission Types to classify how a Patient came to be admitted, such as
-                Emergency, Elective, or Transfer.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setAdmissionTypeParam('new')}>
-                  <Plus className="size-4" />
-                  Add Admission Type
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : admissionTypes.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Admission Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search
-                term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <AdmissionTypeTable
-              admissionTypes={admissionTypes}
-              canEdit={canUpdate}
-              canDelete={canDelete}
-              onEdit={(admissionType) => void setAdmissionTypeParam(String(admissionType.id))}
-              onDelete={setAdmissionTypePendingDelete}
-            />
+        <SkeletonCrossfade
+          isLoading={admissionTypesQuery.isLoading}
+          skeleton={<AdmissionTypeTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
+        >
+          {admissionTypes.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiClipboardTextLight />
+                </EmptyMedia>
+                <EmptyTitle>No Admission Types yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Admission Types to classify how a Patient came to be admitted, such as
+                  Emergency, Elective, or Transfer.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setAdmissionTypeParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Admission Type
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : admissionTypes.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Admission Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <AdmissionTypeTable
+                admissionTypes={admissionTypes}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={(admissionType) => void setAdmissionTypeParam(String(admissionType.id))}
+                onDelete={setAdmissionTypePendingDelete}
+              />
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <AdmissionTypeFormSheet

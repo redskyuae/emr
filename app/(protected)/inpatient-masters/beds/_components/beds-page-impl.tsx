@@ -3,13 +3,15 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, BedDouble, ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Bed } from '@/app/api/lib/modules/bed/schemas/bed-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useBedsQuery } from '@/app/queries/inpatient-masters/beds/useBeds';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -80,11 +82,11 @@ export function BedsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -121,7 +123,7 @@ export function BedsPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setBedParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Bed
                 </Button>
               </div>
@@ -131,88 +133,91 @@ export function BedsPageImpl() {
 
         {bedsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Beds</AlertTitle>
             <AlertDescription>{getApiErrorMessage(bedsQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {bedsQuery.isLoading ? (
-          <BedTableSkeleton />
-        ) : beds.length === 0 && !isFiltered ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BedDouble />
-              </EmptyMedia>
-              <EmptyTitle>No Beds yet</EmptyTitle>
-              <EmptyDescription>
-                Create Beds inside Wards so Patients can be admitted. Create a Ward first if none
-                exist.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setBedParam('new')}>
-                  <Plus className="size-4" />
-                  Add Bed
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : beds.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Beds match the current filters. Try a different search term or Ward.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <BedTable
-              beds={beds}
-              canEdit={canUpdate}
-              canDelete={canDelete}
-              onEdit={(bed) => void setBedParam(String(bed.id))}
-              onDelete={setBedPendingDelete}
-            />
+        <SkeletonCrossfade
+          isLoading={bedsQuery.isLoading}
+          skeleton={<BedTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
+        >
+          {beds.length === 0 && !isFiltered ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiBedLight />
+                </EmptyMedia>
+                <EmptyTitle>No Beds yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Beds inside Wards so Patients can be admitted. Create a Ward first if none
+                  exist.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setBedParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Bed
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : beds.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Beds match the current filters. Try a different search term or Ward.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <BedTable
+                beds={beds}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={(bed) => void setBedParam(String(bed.id))}
+                onDelete={setBedPendingDelete}
+              />
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <BedFormSheet

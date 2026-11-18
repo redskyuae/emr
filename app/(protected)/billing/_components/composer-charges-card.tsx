@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { Plus, Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { useChargeItemsQuery } from '@/app/queries/billing/charge-items/useChargeItems';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,7 @@ export function ComposerChargesCard({
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Charges</CardTitle>
         <CardDescription>
@@ -90,7 +91,7 @@ export function ComposerChargesCard({
             </NativeSelect>
           </div>
           <Button type="button" variant="outline" disabled={!selectedId} onClick={addLine}>
-            <Plus className="size-4" /> Add
+            <PiPlusLight className="size-4" /> Add
           </Button>
         </div>
         {chargeItemsQuery.isError ? (
@@ -160,7 +161,7 @@ export function ComposerChargesCard({
                   aria-label={`Remove ${line.description}`}
                   onClick={() => onChange(lines.filter((item) => item.key !== line.key))}
                 >
-                  <Trash2 className="size-4" />
+                  <CiTrash className="size-4" />
                 </Button>
               </div>
             ))}

@@ -1,6 +1,7 @@
 'use client';
 
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiTrash } from 'react-icons/ci';
+import { PiDotsThreeLight } from 'react-icons/pi';
 
 import type { Ward } from '@/app/api/lib/modules/ward/schemas/ward-schema';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 
 export function WardTable({
   wards,
@@ -27,43 +34,45 @@ export function WardTable({
   onDelete: (ward: Ward) => void;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
+    <div className="bg-card overflow-hidden rounded-xl border">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[600px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left">
-              <th className="p-3 pl-4 font-medium">Name</th>
-              <th className="p-3 font-medium">Code</th>
-              <th className="p-3 font-medium">Description</th>
-              <th className="p-3 pr-4 text-right font-medium">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Name</th>
+              <th className={tableHeadCellClass}>Code</th>
+              <th className={tableHeadCellClass}>Description</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {wards.map((ward) => (
               <tr key={ward.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                <td className="p-3 pl-4 font-medium">{ward.name}</td>
-                <td className="p-3">
+                <td className={cn(tableCellClass, 'font-medium')}>{ward.name}</td>
+                <td className={tableCellClass}>
                   <Badge variant="secondary">{ward.code}</Badge>
                 </td>
-                <td className="text-muted-foreground p-3">{ward.description ?? '—'}</td>
-                <td className="p-3 pr-4 text-right">
+                <td className={cn(tableCellClass, 'text-muted-foreground')}>
+                  {ward.description ?? '—'}
+                </td>
+                <td className={cn(tableCellClass, 'text-right')}>
                   {canEdit || canDelete ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" aria-label={`Actions for ${ward.name}`}>
-                          <MoreHorizontal className="size-4" />
+                          <PiDotsThreeLight className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canEdit ? (
                           <DropdownMenuItem onSelect={() => onEdit(ward)}>
-                            <Pencil className="size-4" />
+                            <CiEdit className="size-4" />
                             Edit
                           </DropdownMenuItem>
                         ) : null}
                         {canDelete ? (
                           <DropdownMenuItem variant="destructive" onSelect={() => onDelete(ward)}>
-                            <Trash2 className="size-4" />
+                            <CiTrash className="size-4" />
                             Delete
                           </DropdownMenuItem>
                         ) : null}
@@ -80,17 +89,57 @@ export function WardTable({
   );
 }
 
-export function WardTableSkeleton() {
+// Mirrors WardTable: the same header and one sized skeleton per cell for a page of rows, plus
+// the pagination row the page shows below the table.
+export function WardTableSkeleton({
+  canEdit,
+  canDelete,
+}: {
+  canEdit: boolean;
+  canDelete: boolean;
+}) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
-      {Array.from({ length: 5 }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-5 flex-1" />
-          <Skeleton className="size-8" />
+    <div className="space-y-4">
+      <div className="bg-card overflow-hidden rounded-xl border">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px] text-sm">
+            <thead>
+              <tr className={tableHeadRowClass}>
+                <th className={tableHeadCellClass}>Name</th>
+                <th className={tableHeadCellClass}>Code</th>
+                <th className={tableHeadCellClass}>Description</th>
+                <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 10 }, (_, index) => (
+                <tr key={index} className="border-b last:border-b-0">
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-4 w-32" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-6 w-14 rounded-full" />
+                  </td>
+                  <td className={tableCellClass}>
+                    <Skeleton className="h-4 w-48" />
+                  </td>
+                  <td className={cn(tableCellClass, 'text-right')}>
+                    {canEdit || canDelete ? <Skeleton className="ml-auto size-9" /> : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      ))}
+      </div>
+
+      <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+        <Skeleton className="h-4 w-36" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+      </div>
     </div>
   );
 }

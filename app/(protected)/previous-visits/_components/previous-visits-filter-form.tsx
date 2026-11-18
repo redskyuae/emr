@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FilterX, Search, SlidersHorizontal } from 'lucide-react';
+import { CiSearch, CiSliderHorizontal } from 'react-icons/ci';
+import { PiFunnelXLight } from 'react-icons/pi';
 
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
@@ -77,7 +78,7 @@ function FilterSelect({
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger id={id} className="h-9 w-full">
+        <SelectTrigger id={id} className="w-full">
           <SelectValue placeholder={allLabel} />
         </SelectTrigger>
         <SelectContent>
@@ -138,7 +139,7 @@ export function PreviousVisitsFilterForm({
   }));
 
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-4">
         <form
           noValidate
@@ -148,9 +149,9 @@ export function PreviousVisitsFilterForm({
         >
           <Field className="xl:max-w-md" data-invalid={!!errors.query}>
             <FieldLabel htmlFor="previous-visits-search">Search</FieldLabel>
-            <InputGroup className="bg-background h-9">
+            <InputGroup>
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 id="previous-visits-search"
@@ -169,7 +170,6 @@ export function PreviousVisitsFilterForm({
               <Input
                 id="previous-visits-from"
                 type="date"
-                className="h-9"
                 max={to || undefined}
                 aria-invalid={!!errors.from}
                 {...register('from', { deps: ['to'] })}
@@ -183,7 +183,6 @@ export function PreviousVisitsFilterForm({
               <Input
                 id="previous-visits-to"
                 type="date"
-                className="h-9"
                 min={from || undefined}
                 aria-invalid={!!errors.to}
                 {...register('to', { deps: ['from'] })}
@@ -248,11 +247,11 @@ export function PreviousVisitsFilterForm({
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="ghost" disabled={activeCount === 0} onClick={onReset}>
-              <FilterX className="size-4" />
+              <PiFunnelXLight className="size-4" />
               Reset{activeCount > 0 ? ` (${activeCount})` : ''}
             </Button>
             <Button type="submit">
-              <SlidersHorizontal className="size-4" />
+              <CiSliderHorizontal className="size-4" />
               Apply filters
             </Button>
           </div>

@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { CalendarPlus, Check, ClipboardList, Play, X } from 'lucide-react';
+import { CiPlay1 } from 'react-icons/ci';
+import { PiCalendarPlusLight, PiCheckLight, PiClipboardTextLight, PiXLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,7 +65,7 @@ function PlanCard({
   const startable = next && canStartSession && canStartPlanSession(plan, next, visit);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
@@ -77,7 +79,7 @@ function PlanCard({
           </Badge>
           {startable ? (
             <Button type="button" size="sm" onClick={() => onOpenSession(next.id)}>
-              <Play className="size-4" />
+              <CiPlay1 className="size-4" />
               Start Session {next.sessionNumber}
             </Button>
           ) : null}
@@ -144,43 +146,83 @@ function PlanCard({
   );
 }
 
-export function VisitTreatmentPlansPanel({
+// Mirrors the panel once loaded: an active Visit shows a Plan card (heading, progress badge,
+// segmented Session bar and Session tiles); a closed Visit shows its delivered Procedure cards.
+function TreatmentPlansSkeleton({ activeVisit }: { activeVisit: boolean }) {
+  if (!activeVisit) {
+    return (
+      <div className="space-y-3" aria-label="Loading Treatment Plans">
+        <Skeleton className="h-6 w-72 max-w-full" />
+        <div className="space-y-2 rounded-md border border-l-4 p-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-4 w-full max-w-md" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Card aria-label="Loading Treatment Plans">
+      <CardHeader className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-1.5">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-6 w-48" />
+        </div>
+        <Skeleton className="h-6 w-28 rounded-full" />
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-6 w-28 rounded-full" />
+          <Skeleton className="h-6 w-36 rounded-full" />
+        </div>
+        <Skeleton className="h-2.5 w-full rounded-sm" />
+        <div className="grid [grid-template-columns:repeat(auto-fill,minmax(7.5rem,1fr))] gap-2">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div key={index} className="space-y-2 rounded-md border p-3">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function VisitTreatmentPlansPanel({ loading, error, ...props }: Props) {
+  const activeVisit =
+    props.visit.status === 'CHECKED_IN' || props.visit.status === 'IN_CONSULTATION';
+
+  if (error && !loading) {
+    return <p className="text-destructive text-sm">Treatment Plans could not be loaded.</p>;
+  }
+
+  return (
+    <SkeletonCrossfade
+      isLoading={loading}
+      skeleton={<TreatmentPlansSkeleton activeVisit={activeVisit} />}
+    >
+      <TreatmentPlansContent {...props} />
+    </SkeletonCrossfade>
+  );
+}
+
+function TreatmentPlansContent({
   visit,
   plans,
-  loading,
-  error,
   canAssignPlan,
   canBookAppointment,
   canStartSession,
   onAssignPlan,
   onOpenSession,
-}: Props) {
+}: Omit<Props, 'loading' | 'error'>) {
   const activePlans = plans.filter(isCurrentPlan);
   const completedPlans = plans.filter(
     (plan) => plan.status === 'COMPLETED' || plan.status === 'STOPPED'
   );
   const activeVisit = visit.status === 'CHECKED_IN' || visit.status === 'IN_CONSULTATION';
-
-  if (loading)
-    return (
-      <Card className="shadow-fluent-2" aria-label="Loading Treatment Plans">
-        <CardHeader className="flex items-center justify-between">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-6 w-28 rounded-full" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-3 w-full" />
-          <div className="grid grid-cols-3 gap-2">
-            {Array.from({ length: 3 }, (_, index) => (
-              <Skeleton key={index} className="h-16" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  if (error)
-    return <p className="text-destructive text-sm">Treatment Plans could not be loaded.</p>;
 
   // A closed Visit is a record of what happened then: show only the Plan Sessions it
   // started or completed, not the Patient's Plans as they stand today. The Visit's own
@@ -217,12 +259,12 @@ export function VisitTreatmentPlansPanel({
           />
         ))
       ) : (
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent>
             <Empty className="min-h-48">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <ClipboardList className="size-5" />
+                  <PiClipboardTextLight className="size-5" />
                 </EmptyMedia>
                 <EmptyTitle>No active Patient Treatment Plan</EmptyTitle>
                 <EmptyDescription>
@@ -239,7 +281,7 @@ export function VisitTreatmentPlansPanel({
           {canBookAppointment && activePlans.length ? (
             <Button asChild>
               <Link href="/appointments/new">
-                <CalendarPlus className="size-4" />
+                <PiCalendarPlusLight className="size-4" />
                 Book next Session
               </Link>
             </Button>
@@ -250,7 +292,7 @@ export function VisitTreatmentPlansPanel({
               variant={activePlans.length ? 'outline' : 'default'}
               onClick={onAssignPlan}
             >
-              <ClipboardList className="size-4" />
+              <PiClipboardTextLight className="size-4" />
               Assign Treatment Plan
             </Button>
           ) : null}
@@ -258,7 +300,7 @@ export function VisitTreatmentPlansPanel({
       ) : null}
 
       {completedPlans.length ? (
-        <Card className="shadow-fluent-2 gap-0">
+        <Card className="gap-0">
           <CardHeader>
             <CardTitle className="text-base">
               Completed and stopped Plans <Badge variant="secondary">{completedPlans.length}</Badge>
@@ -276,9 +318,9 @@ export function VisitTreatmentPlansPanel({
                     aria-hidden="true"
                   >
                     {plan.status === 'COMPLETED' ? (
-                      <Check className="size-3.5" />
+                      <PiCheckLight className="size-3.5" />
                     ) : (
-                      <X className="size-3.5" />
+                      <PiXLight className="size-3.5" />
                     )}
                   </span>
                   <span className="min-w-0 flex-1 font-medium">{plan.treatmentName}</span>

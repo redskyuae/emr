@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
-import { AlertCircle, Leaf, RefreshCcw } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiArrowsCounterClockwiseLight, PiLeafLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
@@ -31,6 +32,7 @@ import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useV
 import { useCheckInVisit } from '@/app/queries/visits/useCheckInVisit';
 import { useRecentDoctorVisitQuery } from '@/app/queries/visits/useRecentDoctorVisit';
 import { useVisitPatientTypeQuery } from '@/app/queries/visits/useVisitPatientType';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -393,83 +395,117 @@ export function CreateVisitPageImpl({
     ? !patient || patient.registrationStatus !== 'registered' || checkingHistory || loading
     : !canCreate || loading || submitting || Boolean(createdVisit);
 
-  if (loading) return <CreateVisitLoader />;
-
   return (
-    <div className="space-y-4 pb-28">
-      <CheckInHeader referenceDate={referenceDate} confirmed={confirmed} />
+    <SkeletonCrossfade isLoading={loading} skeleton={<CreateVisitLoader />}>
+      <div className="space-y-4 pb-28">
+        <CheckInHeader referenceDate={referenceDate} confirmed={confirmed} />
 
-      {dependencyError ? (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertTitle>Could not load Visit options</AlertTitle>
-          <AlertDescription className="space-y-2">
-            <p>{getApiErrors(dependencyError)[0]}</p>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => void retryDependencies()}
-            >
-              <RefreshCcw className="size-4" />
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      ) : null}
+        {dependencyError ? (
+          <Alert variant="destructive">
+            <CiCircleAlert className="size-4" />
+            <AlertTitle>Could not load Visit options</AlertTitle>
+            <AlertDescription className="space-y-2">
+              <p>{getApiErrors(dependencyError)[0]}</p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void retryDependencies()}
+              >
+                <PiArrowsCounterClockwiseLight className="size-4" />
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
-      {serverErrors.length > 0 ? (
-        <Alert variant="destructive" role="alert">
-          <AlertCircle className="size-4" />
-          <AlertTitle>
-            {createdVisit ? 'Visit created; Billing needs attention' : 'Could not create Visit'}
-          </AlertTitle>
-          <AlertDescription>
-            <ul className="list-disc pl-4">
-              {serverErrors.map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
-            {createdVisit ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/visits/${createdVisit.id}`}>Open {createdVisit.visitNumber}</Link>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link
-                    href={
-                      createdInvoiceId
-                        ? `/billing/${createdInvoiceId}`
-                        : `/billing?invoice=new&patientId=${createdVisit.patientId}&visitId=${createdVisit.id}`
-                    }
-                  >
-                    {createdInvoiceId ? 'Finish Invoice' : 'Create Invoice in Billing'}
-                  </Link>
-                </Button>
-              </div>
-            ) : null}
-          </AlertDescription>
-        </Alert>
-      ) : null}
+        {serverErrors.length > 0 ? (
+          <Alert variant="destructive" role="alert">
+            <CiCircleAlert className="size-4" />
+            <AlertTitle>
+              {createdVisit ? 'Visit created; Billing needs attention' : 'Could not create Visit'}
+            </AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc pl-4">
+                {serverErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+              {createdVisit ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/visits/${createdVisit.id}`}>Open {createdVisit.visitNumber}</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      href={
+                        createdInvoiceId
+                          ? `/billing/${createdInvoiceId}`
+                          : `/billing?invoice=new&patientId=${createdVisit.patientId}&visitId=${createdVisit.id}`
+                      }
+                    >
+                      {createdInvoiceId ? 'Finish Invoice' : 'Create Invoice in Billing'}
+                    </Link>
+                  </Button>
+                </div>
+              ) : null}
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div ref={stepRef} className="scroll-mt-20 space-y-4">
-          {confirmed ? (
-            <div className="space-y-4" inert={Boolean(createdVisit)}>
-              <div className="bg-card shadow-fluent-2 rounded-xl">
-                <PatientConfirmation
-                  key={patient?.id ?? 'none'}
-                  patient={patient}
-                  appointment={appointment}
-                  loading={patientQuery.isLoading}
-                  error={patientQuery.error}
-                  onRetry={() => void patientQuery.refetch()}
-                  confirmed
-                  onConfirm={confirmPatient}
-                  onChange={() => setConfirmedPatientId(null)}
+        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div ref={stepRef} className="scroll-mt-20 space-y-4">
+            {confirmed ? (
+              <div className="space-y-4" inert={Boolean(createdVisit)}>
+                <div className="bg-card rounded-xl">
+                  <PatientConfirmation
+                    key={patient?.id ?? 'none'}
+                    patient={patient}
+                    appointment={appointment}
+                    loading={patientQuery.isLoading}
+                    error={patientQuery.error}
+                    onRetry={() => void patientQuery.refetch()}
+                    confirmed
+                    onConfirm={confirmPatient}
+                    onChange={() => setConfirmedPatientId(null)}
+                  />
+                </div>
+                <VisitDetailsFields
+                  control={form.control}
+                  errors={form.formState.errors}
+                  setValue={form.setValue}
+                  resetField={form.resetField}
+                  appointments={appointments}
+                  selectedPatient={patient}
+                  doctors={doctors}
+                  visitTypes={visitTypes}
+                  admitSources={admitSources}
+                  loading={loading}
+                  historyError={historyError}
+                  recentDoctorVisit={recentDoctorVisitQuery.data}
+                  patientType={patientTypeQuery.data ?? null}
+                  patientTypeLoading={patientTypeQuery.isLoading || patientTypeQuery.isFetching}
+                  patientTypeError={patientTypeQuery.isError}
+                  onRetryPatientType={() => void patientTypeQuery.refetch()}
+                />
+                <VisitBillingFields
+                  control={form.control}
+                  errors={form.formState.errors}
+                  setValue={form.setValue}
+                  chargeItems={chargeItems}
+                  canBill={canBill}
+                  canCollectPayment={Boolean(canRecordPayment)}
+                  visitTypeCode={selectedVisitType?.code.toUpperCase() ?? null}
+                  patientType={patientTypeQuery.data?.patientType ?? null}
+                  visitDate={referenceDate}
+                  hasRecentDoctorVisit={Boolean(recentDoctorVisitQuery.data)}
+                  loading={chargeItemsQuery.isLoading}
+                  error={chargeItemsQuery.isError}
+                  onRetry={() => void chargeItemsQuery.refetch()}
                 />
               </div>
-              <VisitDetailsFields
+            ) : (
+              <VisitSourceFields
                 control={form.control}
                 errors={form.formState.errors}
                 setValue={form.setValue}
@@ -480,107 +516,73 @@ export function CreateVisitPageImpl({
                 visitTypes={visitTypes}
                 admitSources={admitSources}
                 loading={loading}
-                historyError={historyError}
-                recentDoctorVisit={recentDoctorVisitQuery.data}
-                patientType={patientTypeQuery.data ?? null}
-                patientTypeLoading={patientTypeQuery.isLoading || patientTypeQuery.isFetching}
-                patientTypeError={patientTypeQuery.isError}
-                onRetryPatientType={() => void patientTypeQuery.refetch()}
+              >
+                <PatientConfirmation
+                  key={patient?.id ?? 'none'}
+                  patient={patient}
+                  appointment={appointment}
+                  loading={patientQuery.isLoading}
+                  error={patientQuery.error}
+                  onRetry={() => void patientQuery.refetch()}
+                  confirmed={false}
+                  onConfirm={confirmPatient}
+                  onChange={() => setConfirmedPatientId(null)}
+                />
+              </VisitSourceFields>
+            )}
+          </div>
+          <aside
+            aria-label="Patient context"
+            className="space-y-4 xl:sticky xl:top-20 xl:-mx-1 xl:max-h-[calc(100svh-10rem)] xl:overflow-y-auto xl:px-1 xl:pb-1"
+          >
+            {selectedPatientId !== null && canReadTreatmentPlans ? (
+              <PatientTreatmentsCard
+                plans={treatmentPlansQuery.data ?? []}
+                loading={treatmentPlansQuery.isLoading}
+                error={treatmentPlansQuery.isError}
+                onRetry={() => void treatmentPlansQuery.refetch()}
+                linkedBookingNumber={appointment?.bookingNumber ?? null}
               />
-              <VisitBillingFields
-                control={form.control}
-                errors={form.formState.errors}
-                setValue={form.setValue}
-                chargeItems={chargeItems}
-                canBill={canBill}
-                canCollectPayment={Boolean(canRecordPayment)}
-                visitTypeCode={selectedVisitType?.code.toUpperCase() ?? null}
-                patientType={patientTypeQuery.data?.patientType ?? null}
-                visitDate={referenceDate}
-                hasRecentDoctorVisit={Boolean(recentDoctorVisitQuery.data)}
-                loading={chargeItemsQuery.isLoading}
-                error={chargeItemsQuery.isError}
-                onRetry={() => void chargeItemsQuery.refetch()}
-              />
-            </div>
-          ) : (
-            <VisitSourceFields
-              control={form.control}
-              errors={form.formState.errors}
-              setValue={form.setValue}
-              resetField={form.resetField}
-              appointments={appointments}
-              selectedPatient={patient}
-              doctors={doctors}
-              visitTypes={visitTypes}
-              admitSources={admitSources}
-              loading={loading}
-            >
-              <PatientConfirmation
-                key={patient?.id ?? 'none'}
-                patient={patient}
-                appointment={appointment}
-                loading={patientQuery.isLoading}
-                error={patientQuery.error}
-                onRetry={() => void patientQuery.refetch()}
-                confirmed={false}
-                onConfirm={confirmPatient}
-                onChange={() => setConfirmedPatientId(null)}
-              />
-            </VisitSourceFields>
-          )}
+            ) : (
+              <Empty className="bg-card border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <PiLeafLight className="size-5" />
+                  </EmptyMedia>
+                  <EmptyTitle>Treatment Plans</EmptyTitle>
+                  <EmptyDescription>
+                    {selectedPatientId === null
+                      ? "The Patient's Treatment Plans appear here once a Patient is selected."
+                      : 'You do not have permission to view Treatment Plans.'}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+          </aside>
         </div>
-        <aside
-          aria-label="Patient context"
-          className="space-y-4 xl:sticky xl:top-20 xl:-mx-1 xl:max-h-[calc(100svh-10rem)] xl:overflow-y-auto xl:px-1 xl:pb-1"
-        >
-          {selectedPatientId !== null && canReadTreatmentPlans ? (
-            <PatientTreatmentsCard
-              plans={treatmentPlansQuery.data ?? []}
-              loading={treatmentPlansQuery.isLoading}
-              error={treatmentPlansQuery.isError}
-              onRetry={() => void treatmentPlansQuery.refetch()}
-              linkedBookingNumber={appointment?.bookingNumber ?? null}
-            />
-          ) : (
-            <Empty className="bg-card shadow-fluent-2 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Leaf className="size-5" />
-                </EmptyMedia>
-                <EmptyTitle>Treatment Plans</EmptyTitle>
-                <EmptyDescription>
-                  {selectedPatientId === null
-                    ? "The Patient's Treatment Plans appear here once a Patient is selected."
-                    : 'You do not have permission to view Treatment Plans.'}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )}
-        </aside>
-      </div>
 
-      <CheckInActionBar
-        patientName={patient ? patientDisplayName(patient) : null}
-        visitSummary={
-          confirmed
-            ? [selectedVisitType?.name, assignedDoctorName].filter(Boolean).join(' · ') || null
-            : null
-        }
-        totals={billingTotals({
-          createInvoice: includeInvoice,
-          paymentTiming,
-          chargeAmount,
-          amountReceived,
-        })}
-        showTotals={confirmed}
-        primaryLabel={primaryLabel}
-        primaryDisabled={primaryDisabled}
-        busy={checkInMutation.isPending || billingPending || checkingHistory}
-        backDisabled={checkInMutation.isPending || billingPending || Boolean(createdVisit)}
-        onBack={confirmed ? () => setConfirmedPatientId(null) : undefined}
-        onPrimary={() => (confirmed ? void submit() : void confirmPatient())}
-      />
-    </div>
+        <CheckInActionBar
+          patientName={patient ? patientDisplayName(patient) : null}
+          visitSummary={
+            confirmed
+              ? [selectedVisitType?.name, assignedDoctorName].filter(Boolean).join(' · ') || null
+              : null
+          }
+          totals={billingTotals({
+            createInvoice: includeInvoice,
+            paymentTiming,
+            chargeAmount,
+            amountReceived,
+          })}
+          showTotals={confirmed}
+          primaryLabel={primaryLabel}
+          primaryDisabled={primaryDisabled}
+          busy={checkInMutation.isPending || billingPending || checkingHistory}
+          backDisabled={checkInMutation.isPending || billingPending || Boolean(createdVisit)}
+          onBack={confirmed ? () => setConfirmedPatientId(null) : undefined}
+          onPrimary={() => (confirmed ? void submit() : void confirmPatient())}
+        />
+      </div>
+    </SkeletonCrossfade>
   );
 }

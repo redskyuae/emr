@@ -4,16 +4,15 @@ import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import Link from 'next/link';
 import {
-  Activity,
-  ArrowRightLeft,
-  BedDouble,
-  LogOut,
-  NotebookPen,
-  ReceiptText,
-  Save,
-  User,
-  XCircle,
-} from 'lucide-react';
+  CiCircleRemove,
+  CiFloppyDisk,
+  CiLogout,
+  CiMemoPad,
+  CiReceipt,
+  CiUser,
+  CiWavePulse1,
+} from 'react-icons/ci';
+import { PiArrowsLeftRightLight, PiBedLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { AllergyBanner } from '@/app/(protected)/patients/[id]/_components/_chart/allergy-banner';
@@ -110,8 +109,8 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             allergies without leaving the Admission. */}
         <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
 
-        <Card className="shadow-fluent-2">
-          <CardContent className="space-y-4 p-4">
+        <Card>
+          <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -119,7 +118,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                   <Badge variant={status.variant}>{status.label}</Badge>
                 </div>
                 <p className="text-muted-foreground flex items-center gap-1 text-sm">
-                  <BedDouble className="size-4" />
+                  <PiBedLight className="size-4" />
                   {admission.ward.name} · {admission.bed.bedNumber} · {admission.admissionType.name}{' '}
                   · {admission.doctor.name}
                   {admission.visit ? ` · from ${admission.visit.visitNumber}` : ''}
@@ -128,7 +127,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                   href={`/patients/${admission.patient.id}`}
                   className="inline-flex items-center gap-1 text-sm font-medium hover:underline"
                 >
-                  <User className="size-4" />
+                  <CiUser className="size-4" />
                   {admission.patient.firstName} {admission.patient.lastName} ·{' '}
                   {admission.patient.mrn}
                 </Link>
@@ -137,19 +136,19 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
               <div className="flex flex-wrap gap-2">
                 {active && canDischarge ? (
                   <Button type="button" onClick={() => setDischargeOpen(true)}>
-                    <LogOut className="size-4" />
+                    <CiLogout className="size-4" />
                     Discharge
                   </Button>
                 ) : null}
                 {active && canTransfer ? (
                   <Button type="button" variant="outline" onClick={() => setTransferOpen(true)}>
-                    <ArrowRightLeft className="size-4" />
+                    <PiArrowsLeftRightLight className="size-4" />
                     Transfer Bed
                   </Button>
                 ) : null}
                 {active && canCancel ? (
                   <Button type="button" variant="outline" onClick={() => setCancelOpen(true)}>
-                    <XCircle className="size-4" />
+                    <CiCircleRemove className="size-4" />
                     Cancel
                   </Button>
                 ) : null}
@@ -157,7 +156,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                   <Link
                     href={`/billing?invoice=new&patientId=${admission.patient.id}&admissionId=${admission.id}`}
                   >
-                    <ReceiptText className="size-4" />
+                    <CiReceipt className="size-4" />
                     Create Invoice
                   </Link>
                 </Button>
@@ -189,7 +188,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
         </Card>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">Admission details</CardTitle>
             </CardHeader>
@@ -232,7 +231,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                     disabled={!isDirty || updateMutation.isPending}
                     onClick={() => void handleSaveDetails()}
                   >
-                    <Save className="size-4" />
+                    <CiFloppyDisk className="size-4" />
                     {updateMutation.isPending ? 'Saving…' : 'Save details'}
                   </Button>
                 </div>
@@ -244,7 +243,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">Bed history</CardTitle>
             </CardHeader>
@@ -273,7 +272,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="text-base">Vitals this Admission</CardTitle>
               {active ? (
@@ -283,7 +282,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                   variant="outline"
                   onClick={() => void setCaptureParam('vitals')}
                 >
-                  <Activity className="size-4" />
+                  <CiWavePulse1 className="size-4" />
                   Record
                 </Button>
               ) : null}
@@ -320,7 +319,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="text-base">Notes this Admission</CardTitle>
               {active ? (
@@ -330,7 +329,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
                   variant="outline"
                   onClick={() => void setCaptureParam('note')}
                 >
-                  <NotebookPen className="size-4" />
+                  <CiMemoPad className="size-4" />
                   Add note
                 </Button>
               ) : null}

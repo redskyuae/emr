@@ -1,18 +1,19 @@
 import type { ReactNode } from 'react';
-import { Check, CircleCheck, CircleMinus, Clock3, ShieldAlert } from 'lucide-react';
+import { CiCircleCheck, CiCircleMinus, CiClock1 } from 'react-icons/ci';
+import { PiCheckLight, PiShieldWarningLight } from 'react-icons/pi';
 
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const tones = {
-  selected: { icon: Check, className: 'border-primary/25 bg-primary/10 text-primary' },
-  success: { icon: CircleCheck, className: 'border-success/25 bg-success/10 text-success' },
-  warning: { icon: Clock3, className: 'border-warning/25 bg-warning/10 text-warning' },
+  selected: { icon: PiCheckLight, className: 'border-primary/25 bg-primary/10 text-primary' },
+  success: { icon: CiCircleCheck, className: 'border-success/25 bg-success/10 text-success' },
+  warning: { icon: CiClock1, className: 'border-warning/25 bg-warning/10 text-warning' },
   danger: {
-    icon: ShieldAlert,
+    icon: PiShieldWarningLight,
     className: 'border-destructive/25 bg-destructive/10 text-destructive',
   },
-  neutral: { icon: CircleMinus, className: 'border-border bg-muted/50 text-muted-foreground' },
+  neutral: { icon: CiCircleMinus, className: 'border-border bg-muted/50 text-muted-foreground' },
 };
 
 export function BookingStatusBadge({

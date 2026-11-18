@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Info } from 'lucide-react';
+import { CiCircleInfo } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -63,7 +63,7 @@ export function AdvanceTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void })
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">Collect advance / deposit</CardTitle>
           <CardDescription>
@@ -128,7 +128,7 @@ export function AdvanceTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void })
           </div>
 
           <Alert>
-            <Info className="size-4" />
+            <CiCircleInfo className="size-4" />
             <AlertDescription>
               Advances for taxable services are treated as VAT-inclusive, and the receipt shows the
               VAT portion, because receiving an advance creates the tax point. The later Invoice

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2, Save } from 'lucide-react';
+import { CiCircleCheck, CiFloppyDisk } from 'react-icons/ci';
 import { Controller, useForm, useWatch, type FieldErrors } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { cn } from '@/lib/utils';
 
 import {
   filledFieldCount,
@@ -346,7 +347,7 @@ export function VisitConsultationForm({
 
   return (
     <form
-      className="flex flex-col xl:h-full xl:min-h-0"
+      className="flex flex-col gap-3 xl:h-full xl:min-h-0"
       aria-label="Doctor consultation"
       onSubmit={(event) => {
         event.preventDefault();
@@ -368,19 +369,26 @@ export function VisitConsultationForm({
           ) : null
         }
         status={
-          <p className="text-muted-foreground text-sm" role="status">
+          <p className="text-muted-foreground flex items-center gap-2 text-sm" role="status">
+            <span
+              aria-hidden="true"
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                isDirty ? 'bg-warning' : savedNoteId ? 'bg-success' : 'bg-input'
+              )}
+            />
             {saveStatus}
           </p>
         }
         actions={
           <Button type="submit" variant="outline" disabled={saving}>
-            <Save className="size-4" />
+            <CiFloppyDisk className="size-4" />
             {createNote.isPending || updateNote.isPending ? 'Saving…' : 'Save draft'}
           </Button>
         }
         finalAction={
           <Button type="button" disabled={saving} onClick={() => setSignOpen(true)}>
-            <CheckCircle2 className="size-4" />
+            <CiCircleCheck className="size-4" />
             {signNote.isPending ? 'Signing…' : 'Save and sign'}
           </Button>
         }

@@ -2,7 +2,8 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
+import { PiArrowRightLight } from 'react-icons/pi';
 
 import { useSuspenseAttentionWorkOrders } from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
@@ -41,7 +42,7 @@ function AttentionRow({ workOrder }: { workOrder: WorkOrder }) {
           isCritical ? 'bg-destructive/10 text-destructive' : 'bg-chart-5/10 text-chart-5'
         )}
       >
-        <AlertTriangle className="size-4" />
+        <CiWarning className="size-4" />
       </span>
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex items-start justify-between gap-3">
@@ -65,7 +66,7 @@ function AttentionRow({ workOrder }: { workOrder: WorkOrder }) {
 
 export function AttentionPanel({ workOrders }: AttentionPanelProps) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Attention required</CardTitle>
@@ -75,7 +76,7 @@ export function AttentionPanel({ workOrders }: AttentionPanelProps) {
           <Button asChild variant="outline" size="sm">
             <Link href="/assets-management/maintenance">
               <span>All work orders</span>
-              <ArrowRight className="size-3.5" />
+              <PiArrowRightLight className="size-3.5" />
             </Link>
           </Button>
         </CardAction>
@@ -85,7 +86,7 @@ export function AttentionPanel({ workOrders }: AttentionPanelProps) {
           <Empty className="min-h-40 border-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <AlertTriangle className="size-5" />
+                <CiWarning className="size-5" />
               </EmptyMedia>
               <EmptyTitle>Nothing needs attention</EmptyTitle>
               <EmptyDescription>No overdue or critical Work Orders right now.</EmptyDescription>
@@ -99,18 +100,43 @@ export function AttentionPanel({ workOrders }: AttentionPanelProps) {
   );
 }
 
+// Mirrors the loaded panel: the same header and action, then one row per Work Order with its
+// warning tile, Asset name, code and note.
 export function AttentionPanelSkeleton() {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Attention required</CardTitle>
           <CardDescription>Overdue &amp; critical items</CardDescription>
         </div>
+        <CardAction>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/assets-management/maintenance">
+              <span>All work orders</span>
+              <PiArrowRightLight className="size-3.5" />
+            </Link>
+          </Button>
+        </CardAction>
       </CardHeader>
-      <CardContent className="space-y-3 p-4">
+      <CardContent className="divide-y p-0">
         {[0, 1, 2].map((item) => (
-          <Skeleton key={item} className="h-14 w-full" />
+          <div key={item} className="flex items-start gap-3 p-4">
+            <Skeleton className="size-9 shrink-0 rounded-md" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex h-6 items-center">
+                  <Skeleton className="h-4 w-40" />
+                </div>
+                <div className="flex h-4 items-center">
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+              <div className="flex h-5 items-center">
+                <Skeleton className="h-3.5 w-3/4" />
+              </div>
+            </div>
+          </div>
         ))}
       </CardContent>
     </Card>

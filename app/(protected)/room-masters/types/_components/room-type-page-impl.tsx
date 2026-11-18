@@ -3,23 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import {
-  AlertCircle,
-  BedDouble,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Table as TableIcon,
-} from 'lucide-react';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
+import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { RoomType } from '@/app/api/lib/modules/room-type/schemas/room-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useRoomTypeQuery } from '@/app/queries/room-masters/room-types/useRoomType';
 import { useRoomTypesQuery } from '@/app/queries/room-masters/room-types/useRoomTypes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -117,8 +109,8 @@ export function RoomTypePageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -130,22 +122,22 @@ export function RoomTypePageImpl() {
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -159,7 +151,7 @@ export function RoomTypePageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={() => void setRoomTypeParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Room Type
                 </Button>
               </div>
@@ -169,105 +161,114 @@ export function RoomTypePageImpl() {
 
         {roomTypesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Room Types</AlertTitle>
             <AlertDescription>{getApiErrorMessage(roomTypesQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {roomTypesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : roomTypes.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BedDouble />
-              </EmptyMedia>
-              <EmptyTitle>No Room Types yet</EmptyTitle>
-              <EmptyDescription>
-                Create Room Types to classify the Rooms in this Tenant and set their daily rate.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setRoomTypeParam('new')}>
-                  <Plus className="size-4" />
-                  Add Room Type
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : roomTypes.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Room Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <RoomTypeTableView
-                roomTypes={roomTypes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
-                onDelete={setRoomTypePendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <RoomTypeCardView
-                roomTypes={roomTypes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
-                onDelete={setRoomTypePendingDelete}
-              />
-            ) : (
-              <RoomTypeListView
-                roomTypes={roomTypes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
-                onDelete={setRoomTypePendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={roomTypesQuery.isLoading}
+          skeleton={
+            <ViewSkeleton
+              layout={viewLayout}
+              canEdit={Boolean(canUpdate)}
+              canDelete={Boolean(canDelete)}
+            />
+          }
+        >
+          {roomTypes.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiBedLight />
+                </EmptyMedia>
+                <EmptyTitle>No Room Types yet</EmptyTitle>
+                <EmptyDescription>
+                  Create Room Types to classify the Rooms in this Tenant and set their daily rate.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setRoomTypeParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Room Type
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : roomTypes.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Room Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <RoomTypeTableView
+                  roomTypes={roomTypes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
+                  onDelete={setRoomTypePendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <RoomTypeCardView
+                  roomTypes={roomTypes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
+                  onDelete={setRoomTypePendingDelete}
+                />
+              ) : (
+                <RoomTypeListView
+                  roomTypes={roomTypes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(roomType) => void setRoomTypeParam(String(roomType.id))}
+                  onDelete={setRoomTypePendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <RoomTypeFormSheet

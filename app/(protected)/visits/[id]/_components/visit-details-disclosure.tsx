@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, ClipboardList } from 'lucide-react';
+import { PiCaretRightLight, PiClipboardTextLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -23,11 +23,11 @@ export function VisitDetailsDisclosure({ visit, onAmend }: { visit: Visit; onAme
   return (
     <Collapsible className="group/details rounded-lg border">
       <CollapsibleTrigger className="hover:bg-accent focus-visible:ring-ring/50 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left outline-none focus-visible:ring-3">
-        <ChevronRight
+        <PiCaretRightLight
           className="size-4 shrink-0 transition-transform group-data-[state=open]/details:rotate-90"
           aria-hidden="true"
         />
-        <ClipboardList className="text-primary size-4 shrink-0" aria-hidden="true" />
+        <PiClipboardTextLight className="text-primary size-4 shrink-0" aria-hidden="true" />
         <span className="shrink-0 text-sm font-semibold">Visit details</span>
         <span className="text-muted-foreground min-w-0 truncate text-sm">{summary}</span>
       </CollapsibleTrigger>
