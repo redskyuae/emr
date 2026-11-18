@@ -32,7 +32,7 @@ All tokens live in `app/globals.css` as CSS variables, mapped to Tailwind utilit
 | `--border` / `--input`           | cool greys               | Hairlines; inputs slightly darker (Fluent visible-field borders) |
 | `--destructive`                  | red oklch                | Errors, blocked states, and destructive actions                  |
 
-The sidebar has its own tokens (`--sidebar*`) and is **ink in both themes**: a near-black panel with `--sidebar-primary`, a lifted blue, for the active row. The page keeps its own theme; the sidebar does not follow it.
+The sidebar has its own tokens (`--sidebar*`) and is **ink in both themes**: a near-black panel whose current row is `--sidebar-selected`, a black inset pill darker than the panel, edged by `--sidebar-selected-border`. `--sidebar-primary` is kept for solid accents such as the avatar. The page keeps its own theme; the sidebar does not follow it.
 
 A full dark theme exists under `.dark` (navy-tinted darks, lighter blue primary). Every screen must work in both; never use raw `white`/`black` utilities for surfaces or text.
 
@@ -49,6 +49,8 @@ Clinical booking uses semantic color to distinguish functionality and resource s
 | `--success`     | Ready, available, verified, or completed                   |
 | `--warning`     | Pending work, cleaning, maintenance, and clinical warnings |
 | `--destructive` | Blocked or unavailable resources and errors                |
+
+Identity accents colour a decorative icon beside a text label in list cells, never on their own: `--gender-male` (dark blue) and `--gender-female` (hot pink) for the gender glyphs, and `--phone` (green) for the phone glyph in the Patients table.
 
 These tokens have light and dark values in `app/globals.css`. Use restrained tinted backgrounds,
 borders, icons, and badges; reserve solid primary for the main action. Status text and an icon must
@@ -173,7 +175,7 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 
 The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` in `app/(protected)/layout.tsx`.
 
-- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is solid `sidebar-primary`. A parent with a submenu only brightens, and its current child carries the pill; collapsed to icons the submenu is hidden, so the parent takes the pill instead. Group labels are `sidebar-foreground/60`, which keeps them above 4.5:1 on the panel. It is a sheet on a phone.
+- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is a black `sidebar-selected` pill with a 1px inset `sidebar-selected-border` ring and white text, rather than a solid blue fill, which shouted on the ink panel; hover lifts lighter (`sidebar-accent`), so the two never look alike. A parent with a submenu only brightens, and its current child carries the selection; collapsed to icons the submenu is hidden, so the parent takes the selection instead. Group labels are `sidebar-foreground/60`, which keeps them above 4.5:1 on the panel. It is a sheet on a phone.
 - **`AppTopbar`** is a slim sticky utility bar: the sidebar trigger, global search, the active Tenant (`TenantChip`), help and notifications. It carries no page title.
 - **`AppPageHeader`** sits under the top bar on every page. It shows the page's sidebar group as a small muted eyebrow (`getAppPageGroup`), the title as a plain `h1` in the foreground colour, and the subtitle under it. The title is repeated behind the header as a large watermark at 4.5% foreground opacity that drifts in from the left on navigation, inside the motion rule (0.7s, `power3.out`; skipped under `prefers-reduced-motion`); it is `aria-hidden` and clipped by the header. Title and subtitle come from `app-shell-config.ts`; a page does not render its own `h1`, and its section headings start at `h2`. A task page that needs its own name (Check in Patient, Reschedule Appointment) gets its own page meta there instead of a second, larger heading in the page.
 - A page header **primary action** (`primaryAction` in the page meta) is only for pages whose content has no always-visible button for the same action. A list page with a create button in its toolbar leaves it out, so an action never appears twice.

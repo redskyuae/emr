@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { CiCircleAlert } from 'react-icons/ci';
-import { PiUsersLight } from 'react-icons/pi';
+import type { IconType } from 'react-icons';
+import { CiCircleAlert, CiCircleInfo, CiPhone } from 'react-icons/ci';
+import { PiGenderFemaleLight, PiGenderMaleLight, PiUsersLight } from 'react-icons/pi';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
@@ -28,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 type PatientsTableProps = {
@@ -45,9 +47,13 @@ function getPatientFullName(patient: Patient) {
   return [patient.firstName, patient.middleName, patient.lastName].filter(Boolean).join(' ');
 }
 
-function getPatientAge(dateOfBirth: string) {
+function parseDateOfBirth(dateOfBirth: string) {
+  // Parse the YYYY-MM-DD parts as a local date so the day never shifts with the time zone.
   const [year, month, day] = dateOfBirth.split('-').map(Number);
-  const birthDate = new Date(year, month - 1, day);
+  return new Date(year, month - 1, day);
+}
+
+function getPatientAge(birthDate: Date) {
   const today = new Date();
 
   let age = today.getFullYear() - birthDate.getFullYear();
@@ -60,20 +66,58 @@ function getPatientAge(dateOfBirth: string) {
   return age;
 }
 
-function getPatientGenderDisplay(patient: Patient) {
-  return patient.gender ? getPatientGenderLabel(patient.gender) : 'Not provided';
-}
+const GENDER_ICONS: Partial<
+  Record<NonNullable<Patient['gender']>, { icon: IconType; className: string }>
+> = {
+  male: { icon: PiGenderMaleLight, className: 'text-gender-male' },
+  female: { icon: PiGenderFemaleLight, className: 'text-gender-female' },
+};
 
-function getPatientDateOfBirthDisplay(patient: Patient) {
-  if (!patient.dateOfBirth) {
+function PatientGenderCell({ gender }: { gender: Patient['gender'] }) {
+  if (!gender) {
     return <span className="text-muted-foreground">Not provided</span>;
   }
 
+  const genderIcon = GENDER_ICONS[gender];
+  const Icon = genderIcon?.icon;
+
   return (
-    <>
-      {patient.dateOfBirth}{' '}
-      <span className="text-muted-foreground">({getPatientAge(patient.dateOfBirth)}y)</span>
-    </>
+    <span className="inline-flex items-center gap-1.5">
+      {Icon ? <Icon aria-hidden className={cn('size-4.5 shrink-0', genderIcon.className)} /> : null}
+      {getPatientGenderLabel(gender)}
+    </span>
+  );
+}
+
+function PatientAgeCell({ dateOfBirth }: { dateOfBirth: Patient['dateOfBirth'] }) {
+  if (!dateOfBirth) {
+    return <span className="text-muted-foreground">Not provided</span>;
+  }
+
+  const birthDate = parseDateOfBirth(dateOfBirth);
+  const age = getPatientAge(birthDate);
+  const formattedDateOfBirth = birthDate.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {age} {age === 1 ? 'year' : 'years'}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={`Date of birth ${formattedDateOfBirth}`}
+            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 inline-flex rounded-full outline-none focus-visible:ring-[3px]"
+          >
+            <CiCircleInfo aria-hidden className="size-4" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>Date of birth: {formattedDateOfBirth}</TooltipContent>
+      </Tooltip>
+    </span>
   );
 }
 
@@ -125,7 +169,7 @@ export function PatientsTable({
                   <TableHead className="pl-4">MRN</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Gender</TableHead>
-                  <TableHead>Date of birth</TableHead>
+                  <TableHead>Age</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Registration</TableHead>
                   <TableHead className="pr-4">Status</TableHead>
@@ -147,9 +191,18 @@ export function PatientsTable({
                         {getPatientFullName(patient)}
                       </Link>
                     </TableCell>
-                    <TableCell>{getPatientGenderDisplay(patient)}</TableCell>
-                    <TableCell>{getPatientDateOfBirthDisplay(patient)}</TableCell>
-                    <TableCell>{patient.phone}</TableCell>
+                    <TableCell>
+                      <PatientGenderCell gender={patient.gender} />
+                    </TableCell>
+                    <TableCell>
+                      <PatientAgeCell dateOfBirth={patient.dateOfBirth} />
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5">
+                        <CiPhone aria-hidden className="text-phone size-4.5 shrink-0" />
+                        {patient.phone}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant={
