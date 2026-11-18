@@ -69,7 +69,7 @@ export function VisitTypesPageImpl() {
       <div className="space-y-4">
         <Card className="shadow-fluent-2">
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <InputGroup className="h-10 lg:max-w-sm">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>

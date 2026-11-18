@@ -127,7 +127,7 @@ export function TherapistsPageImpl() {
               List
             </ToggleGroupItem>
           </ToggleGroup>
-          <InputGroup className="h-10 lg:max-w-xs">
+          <InputGroup className="lg:max-w-xs">
             <InputGroupAddon>
               <Search className="size-4" />
             </InputGroupAddon>

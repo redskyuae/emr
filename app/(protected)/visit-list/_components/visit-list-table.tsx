@@ -4,6 +4,12 @@ import { ReceiptText } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 import { formatMoney } from '../../billing/_utils/invoice-display';
 import { visitStatusPresentation } from '../../visits/_utils/visit-status';
 import type { VisitListRow } from '../_data/static-visit-list';
@@ -15,16 +21,16 @@ export function VisitListTable({ rows, today }: { rows: VisitListRow[]; today: D
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1080px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
-              <th className="p-3 pl-5 font-semibold">Token</th>
-              <th className="p-3 font-semibold">Visit</th>
-              <th className="p-3 font-semibold">Patient</th>
-              <th className="p-3 font-semibold">Date</th>
-              <th className="p-3 font-semibold">Doctor</th>
-              <th className="p-3 font-semibold">Type</th>
-              <th className="p-3 font-semibold">Status</th>
-              <th className="p-3 font-semibold">Billing</th>
-              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Token</th>
+              <th className={tableHeadCellClass}>Visit</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Date</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={tableHeadCellClass}>Billing</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -35,18 +41,18 @@ export function VisitListTable({ rows, today }: { rows: VisitListRow[]; today: D
 
               return (
                 <tr key={row.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                  <td className="px-3 py-3.5 pl-5">
+                  <td className={tableCellClass}>
                     <span className="bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-md text-base font-semibold tabular-nums">
                       {row.queueToken}
                     </span>
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <p className="font-mono font-medium">{row.visitNumber}</p>
                     <p className="text-muted-foreground text-xs">
                       {row.bookingNumber ?? 'Walk-in'}
                     </p>
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <p className="font-medium">{row.patient.name}</p>
                     <p className="text-muted-foreground text-xs">
                       <span className="font-mono">{row.patient.mrn}</span> · {row.patient.age}
@@ -54,12 +60,12 @@ export function VisitListTable({ rows, today }: { rows: VisitListRow[]; today: D
                       {row.patientType === 'New' ? ' · New' : ''}
                     </p>
                   </td>
-                  <td className="px-3 py-3.5 tabular-nums">
+                  <td className={cn(tableCellClass, 'tabular-nums')}>
                     <p>{format(subDays(today, row.dayOffset), 'dd MMM yyyy')}</p>
                     <p className="text-muted-foreground text-xs">{row.checkedInAt}</p>
                   </td>
-                  <td className="px-3 py-3.5">{row.doctor.name}</td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>{row.doctor.name}</td>
+                  <td className={tableCellClass}>
                     <Badge variant="secondary">{row.visitType.code}</Badge>
                     {row.treatment ? (
                       <p className="text-muted-foreground mt-1 max-w-48 truncate text-xs">
@@ -67,10 +73,10 @@ export function VisitListTable({ rows, today }: { rows: VisitListRow[]; today: D
                       </p>
                     ) : null}
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <Badge variant="outline" className={billing.className}>
                       {billing.label}
                     </Badge>
@@ -85,7 +91,7 @@ export function VisitListTable({ rows, today }: { rows: VisitListRow[]; today: D
                       </p>
                     ) : null}
                   </td>
-                  <td className="px-3 py-3.5 pr-5 text-right">
+                  <td className={cn(tableCellClass, 'text-right')}>
                     {canBill ? (
                       <Button asChild size="sm" variant="outline">
                         <Link href={`/billing-counter?visit=${row.visitNumber}`}>

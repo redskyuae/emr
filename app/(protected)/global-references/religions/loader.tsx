@@ -1,4 +1,10 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 
 export default function ReligionsPageLoader() {
   return <ReligionLoader />;
@@ -19,17 +25,17 @@ function ReligionLoader() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[680px]">
             <thead>
-              <tr className="bg-muted/60 text-muted-foreground border-b text-xs tracking-wider uppercase">
-                <th className="p-3 pl-5">
+              <tr className={tableHeadRowClass}>
+                <th className={tableHeadCellClass}>
                   <Skeleton className="h-4 w-12" />
                 </th>
-                <th className="p-3">
+                <th className={tableHeadCellClass}>
                   <Skeleton className="h-4 w-10" />
                 </th>
-                <th className="p-3">
+                <th className={tableHeadCellClass}>
                   <Skeleton className="h-4 w-24" />
                 </th>
-                <th className="p-3 pr-5 text-right">
+                <th className={cn(tableHeadCellClass, 'text-right')}>
                   <Skeleton className="ml-auto h-4 w-14" />
                 </th>
               </tr>
@@ -37,16 +43,16 @@ function ReligionLoader() {
             <tbody>
               {Array.from({ length: 5 }, (_, i) => (
                 <tr key={i} className="border-b last:border-b-0">
-                  <td className="px-3 py-3.5 pl-5">
+                  <td className={tableCellClass}>
                     <Skeleton className="h-5 w-32" />
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <Skeleton className="h-5 w-16" />
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <Skeleton className="h-5 w-28" />
                   </td>
-                  <td className="px-3 py-3.5 pr-5 text-right">
+                  <td className={cn(tableCellClass, 'text-right')}>
                     <Skeleton className="ml-auto h-8 w-8" />
                   </td>
                 </tr>

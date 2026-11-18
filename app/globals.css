@@ -5,6 +5,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Satoshi (Indian Type Foundry), one variable font, weights 300–900. The font file is served by
+ * Fontshare's CDN, which the ITF Free Font License allows; it is not committed to the repository.
+ * This block is copied from https://api.fontshare.com/v2/css?f[]=satoshi@1 so that no third-party
+ * stylesheet blocks first paint: with `swap`, text shows in the fallback font until Satoshi
+ * arrives, or stays in it if the CDN is unreachable. If Fontshare ever moves the file, copy the
+ * block again.
+ */
+@font-face {
+  font-family: 'Satoshi';
+  src:
+    url('https://cdn.fontshare.com/wf/NWBQYJIM7GCZ5XWD7D26ARB3VDY55ZRT/K63EV2KZIGKLE7RANQ2U42S6SVHU5RJ7/X6XYTKIVDUW7GZTZPZNN4EUM5KH54KHF.woff2')
+      format('woff2'),
+    url('https://cdn.fontshare.com/wf/NWBQYJIM7GCZ5XWD7D26ARB3VDY55ZRT/K63EV2KZIGKLE7RANQ2U42S6SVHU5RJ7/X6XYTKIVDUW7GZTZPZNN4EUM5KH54KHF.woff')
+      format('woff');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,6 +60,8 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-cta-foreground: var(--cta-foreground);
+  --color-cta: var(--cta);
   --color-pop-foreground: var(--pop-foreground);
   --color-pop: var(--pop);
   --color-popover-foreground: var(--popover-foreground);
@@ -66,7 +88,7 @@
 }
 
 :root {
-  /* Satoshi is loaded from Fontshare by FontStylesheet in the root layout. */
+  /* Satoshi is declared in the @font-face at the top of this file. */
   --font-satoshi: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
   --background: oklch(0.975 0.006 262);
   --foreground: oklch(0.21 0.03 265);
@@ -76,6 +98,10 @@
   --popover-foreground: oklch(0.21 0.03 265);
   --primary: oklch(0.43 0.118 254);
   --primary-foreground: oklch(0.985 0.005 247);
+  /* Solid call-to-action fill (Button default): a cool near-black ink, not pure black. Blue
+     --primary still marks links, selection and the current step. */
+  --cta: oklch(0.225 0.018 268);
+  --cta-foreground: oklch(0.985 0.004 270);
   /* Marketing-only warm pop accent (stat badges, decorative dots). Never used in the clinical app. */
   --pop: oklch(0.64 0.2 354);
   --pop-foreground: oklch(0.99 0.005 320);
@@ -121,6 +147,9 @@
   --popover-foreground: oklch(0.96 0.008 247);
   --primary: oklch(0.64 0.125 250);
   --primary-foreground: oklch(0.14 0.025 256);
+  /* Inverted in dark: an off-white fill so the main action still stands out on navy. */
+  --cta: oklch(0.94 0.008 265);
+  --cta-foreground: oklch(0.2 0.02 268);
   --pop: oklch(0.7 0.18 354);
   --pop-foreground: oklch(0.14 0.02 320);
   --secondary: oklch(0.27 0.03 256);

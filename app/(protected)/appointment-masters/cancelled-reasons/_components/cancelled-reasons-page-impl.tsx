@@ -161,7 +161,7 @@ export function CancelledReasonsPageImpl() {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="h-10 lg:max-w-sm">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>

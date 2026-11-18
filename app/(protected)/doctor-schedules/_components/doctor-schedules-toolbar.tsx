@@ -85,7 +85,7 @@ export function DoctorSchedulesToolbar({
             disabled={doctorsLoading}
             onValueChange={(value) => onDoctorChange(value === ALL ? '' : value)}
           >
-            <SelectTrigger className="h-10 w-full" aria-label="Filter by Doctor">
+            <SelectTrigger className="w-full" aria-label="Filter by Doctor">
               <SelectValue placeholder="All Doctors" />
             </SelectTrigger>
             <SelectContent>

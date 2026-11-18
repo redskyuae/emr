@@ -576,13 +576,19 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/visit-list': {
     title: 'Visit List',
     subtitle: 'Search every outpatient Visit by date, Doctor, status, type, source, and billing.',
+    // The page's only other Create Visit link is in its empty state.
+    primaryAction: {
+      label: 'Create Visit',
+      href: '/visits/new',
+      permission: 'visit:create',
+    },
   },
   '/billing-counter': {
     title: 'Billing Counter',
     subtitle: 'Invoice, collect advances, refund, and close the shift for this Counter.',
   },
   '/visits/new': {
-    title: 'Create Visit',
+    title: 'Check in Patient',
     subtitle: 'Review Patient, Appointment, card, and Visit details in one workspace.',
   },
   '/admissions': {
@@ -809,6 +815,13 @@ export function getAppPageMeta(pathname: string): AppPageMeta {
     return {
       title: 'Clinician assessment',
       subtitle: 'Complete this Visit in the active Facility context.',
+    };
+  }
+
+  if (/^\/appointments\/\d+\/reschedule$/.test(currentPath)) {
+    return {
+      title: 'Reschedule Appointment',
+      subtitle: 'Move a booked Appointment to another date, time, or resource.',
     };
   }
 

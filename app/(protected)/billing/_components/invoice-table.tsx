@@ -6,6 +6,12 @@ import type { InvoiceListItem } from '@/app/api/lib/modules/invoice/schemas/invo
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
+import {
   formatMoney,
   getInvoiceStatusClassName,
   getInvoiceStatusLabel,
@@ -29,41 +35,41 @@ export function InvoiceTable({ invoices }: { invoices: InvoiceListItem[] }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[820px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
-              <th className="p-3 pl-5 font-semibold">Invoice</th>
-              <th className="p-3 font-semibold">Patient</th>
-              <th className="p-3 font-semibold">Encounter</th>
-              <th className="p-3 font-semibold">Status</th>
-              <th className="p-3 text-right font-semibold">Grand Total</th>
-              <th className="p-3 text-right font-semibold">Balance Due</th>
-              <th className="p-3 pr-5 font-semibold">Created</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Invoice</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Encounter</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Grand Total</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Balance Due</th>
+              <th className={tableHeadCellClass}>Created</th>
             </tr>
           </thead>
           <tbody>
             {invoices.map((invoice) => (
               <tr key={invoice.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                <td className="px-3 py-3.5 pl-5 font-medium">
+                <td className={cn(tableCellClass, 'font-medium')}>
                   <Link href={`/billing/${invoice.id}`} className="hover:underline">
                     {invoice.invoiceNumber}
                   </Link>
                 </td>
-                <td className="px-3 py-3.5">
+                <td className={tableCellClass}>
                   {invoice.patient.firstName} {invoice.patient.lastName}
                   <span className="text-muted-foreground block text-xs">{invoice.patient.mrn}</span>
                 </td>
-                <td className="px-3 py-3.5">{encounterChip(invoice)}</td>
-                <td className="px-3 py-3.5">
+                <td className={tableCellClass}>{encounterChip(invoice)}</td>
+                <td className={tableCellClass}>
                   <Badge variant="outline" className={getInvoiceStatusClassName(invoice.status)}>
                     {getInvoiceStatusLabel(invoice.status)}
                   </Badge>
                 </td>
-                <td className="px-3 py-3.5 text-right tabular-nums">
+                <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                   {formatMoney(invoice.grandTotal)}
                 </td>
-                <td className="px-3 py-3.5 text-right tabular-nums">
+                <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                   {formatMoney(invoice.balanceDue)}
                 </td>
-                <td className="text-muted-foreground px-3 py-3.5 pr-5">
+                <td className={cn(tableCellClass, 'text-muted-foreground')}>
                   {new Date(invoice.createdOn).toLocaleDateString()}
                 </td>
               </tr>

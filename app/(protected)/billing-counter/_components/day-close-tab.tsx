@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { NativeSelect } from '@/components/ui/native-select';
+import { tableHeadRowClass } from '@/components/ui/table-styles';
 import { cn } from '@/lib/utils';
 import { APPROVERS } from '../_data/counter-seed';
 import {
@@ -193,7 +194,7 @@ export function DayCloseTab() {
             <CardContent className="overflow-x-auto p-0">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
-                  <tr className="text-muted-foreground bg-muted/60 border-y text-left text-xs tracking-wider uppercase">
+                  <tr className={cn(tableHeadRowClass, 'border-y')}>
                     <th className="p-2 pl-4 font-semibold">Time</th>
                     <th className="p-2 font-semibold">No.</th>
                     <th className="p-2 font-semibold">Type</th>

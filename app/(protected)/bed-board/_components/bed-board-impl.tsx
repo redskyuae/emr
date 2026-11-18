@@ -58,7 +58,7 @@ export function BedBoardImpl() {
       <Card className="shadow-fluent-2">
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <Select value={wardFilter} onValueChange={setWardFilter}>
-            <SelectTrigger className="h-10 lg:w-48" aria-label="Filter by ward">
+            <SelectTrigger className="lg:w-48" aria-label="Filter by ward">
               <SelectValue placeholder="All Wards" />
             </SelectTrigger>
             <SelectContent>
@@ -72,7 +72,7 @@ export function BedBoardImpl() {
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-10 lg:w-44" aria-label="Filter by status">
+            <SelectTrigger className="lg:w-44" aria-label="Filter by status">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>

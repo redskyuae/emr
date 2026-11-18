@@ -12,6 +12,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 import { formatUnitPrice, getChargeItemCategoryLabel } from '../_utils/charge-item-category';
 import { getChargeItemCodeTypeDetails } from '../_utils/charge-item-code-type';
 
@@ -33,23 +39,23 @@ export function ChargeItemTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1000px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
-              <th className="p-3 pl-5 font-semibold">Service Name</th>
-              <th className="p-3 font-semibold">Code</th>
-              <th className="p-3 font-semibold">Category</th>
-              <th className="p-3 text-right font-semibold">Standard</th>
-              <th className="p-3 text-right font-semibold">Cash</th>
-              <th className="p-3 text-right font-semibold">Insurance</th>
-              <th className="p-3 font-semibold">Effective</th>
-              <th className="p-3 font-semibold">Free follow-up</th>
-              <th className="p-3 font-semibold">Status</th>
-              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Service Name</th>
+              <th className={tableHeadCellClass}>Code</th>
+              <th className={tableHeadCellClass}>Category</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Standard</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Cash</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Insurance</th>
+              <th className={tableHeadCellClass}>Effective</th>
+              <th className={tableHeadCellClass}>Free follow-up</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {chargeItems.map((chargeItem) => (
               <tr key={chargeItem.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                <td className="px-3 py-3.5 pl-5 font-medium">
+                <td className={cn(tableCellClass, 'font-medium')}>
                   {chargeItem.name}
                   {chargeItem.description ? (
                     <span className="text-muted-foreground block max-w-64 truncate text-xs font-normal">
@@ -57,7 +63,7 @@ export function ChargeItemTable({
                     </span>
                   ) : null}
                 </td>
-                <td className="px-3 py-3.5">
+                <td className={tableCellClass}>
                   <span className="flex items-center gap-1.5">
                     <Badge variant="secondary" className="font-mono">
                       {chargeItem.code}
@@ -71,25 +77,27 @@ export function ChargeItemTable({
                     </Badge>
                   </span>
                 </td>
-                <td className="text-muted-foreground px-3 py-3.5">
+                <td className={cn(tableCellClass, 'text-muted-foreground')}>
                   {getChargeItemCategoryLabel(chargeItem.category)}
                 </td>
-                <td className="px-3 py-3.5 text-right tabular-nums">
+                <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                   {formatUnitPrice(chargeItem.unitPrice)}
                 </td>
-                <td className="px-3 py-3.5 text-right tabular-nums">
+                <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                   {chargeItem.cashPrice === null ? '—' : formatUnitPrice(chargeItem.cashPrice)}
                 </td>
-                <td className="px-3 py-3.5 text-right tabular-nums">
+                <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                   {chargeItem.insuranceContractPrice === null
                     ? '—'
                     : formatUnitPrice(chargeItem.insuranceContractPrice)}
                 </td>
-                <td className="px-3 py-3.5 font-mono text-xs">{chargeItem.effectiveDate ?? '—'}</td>
-                <td className="px-3 py-3.5">
+                <td className={cn(tableCellClass, 'font-mono text-xs')}>
+                  {chargeItem.effectiveDate ?? '—'}
+                </td>
+                <td className={tableCellClass}>
                   {chargeItem.freeFollowUpEligible ? 'Eligible' : '—'}
                 </td>
-                <td className="px-3 py-3.5">
+                <td className={tableCellClass}>
                   {chargeItem.isActive ? (
                     <Badge variant="outline">Active</Badge>
                   ) : (
@@ -98,7 +106,7 @@ export function ChargeItemTable({
                     </Badge>
                   )}
                 </td>
-                <td className="px-3 py-3.5 pr-5 text-right">
+                <td className={cn(tableCellClass, 'text-right')}>
                   {canEdit || canDelete ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

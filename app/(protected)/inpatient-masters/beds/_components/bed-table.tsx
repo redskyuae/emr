@@ -12,6 +12,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 import { getBedStatusClassName, getBedStatusLabel } from '../_utils/bed-status';
 
 export function BedTable({
@@ -32,32 +38,34 @@ export function BedTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
-              <th className="p-3 pl-5 font-semibold">Bed</th>
-              <th className="p-3 font-semibold">Ward</th>
-              <th className="p-3 font-semibold">Room</th>
-              <th className="p-3 font-semibold">Status</th>
-              <th className="p-3 font-semibold">Notes</th>
-              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Bed</th>
+              <th className={tableHeadCellClass}>Ward</th>
+              <th className={tableHeadCellClass}>Room</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={tableHeadCellClass}>Notes</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {beds.map((bed) => (
               <tr key={bed.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                <td className="px-3 py-3.5 pl-5 font-medium">{bed.bedNumber}</td>
-                <td className="px-3 py-3.5">
+                <td className={cn(tableCellClass, 'font-medium')}>{bed.bedNumber}</td>
+                <td className={tableCellClass}>
                   {bed.ward.name} <Badge variant="secondary">{bed.ward.code}</Badge>
                 </td>
-                <td className="text-muted-foreground px-3 py-3.5">{bed.room?.roomNumber ?? '—'}</td>
-                <td className="px-3 py-3.5">
+                <td className={cn(tableCellClass, 'text-muted-foreground')}>
+                  {bed.room?.roomNumber ?? '—'}
+                </td>
+                <td className={tableCellClass}>
                   <Badge variant="outline" className={getBedStatusClassName(bed.status)}>
                     {getBedStatusLabel(bed.status)}
                   </Badge>
                 </td>
-                <td className="text-muted-foreground max-w-56 truncate px-3 py-3.5">
+                <td className={cn(tableCellClass, 'text-muted-foreground max-w-56 truncate')}>
                   {bed.notes ?? '—'}
                 </td>
-                <td className="px-3 py-3.5 pr-5 text-right">
+                <td className={cn(tableCellClass, 'text-right')}>
                   {canEdit || canDelete ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

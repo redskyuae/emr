@@ -1,4 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { tableHeadRowClass } from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 import { computeMethodBreakdown } from '../_utils/counter-ledger';
 import type { LedgerTxn } from '../_utils/counter-types';
 import { TENDER_META } from '../_utils/tender';
@@ -30,7 +32,7 @@ export function MethodBreakdown({ txns }: { txns: LedgerTxn[] }) {
       <CardContent className="overflow-x-auto p-0">
         <table className="w-full min-w-[520px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-y text-left text-xs tracking-wider uppercase">
+            <tr className={cn(tableHeadRowClass, 'border-y')}>
               <th className="p-2 pl-4 font-semibold">Method</th>
               <th className="p-2 font-semibold">Reconciled against</th>
               <th className="p-2 text-right font-semibold">Received</th>

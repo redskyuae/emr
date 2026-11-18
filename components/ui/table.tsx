@@ -2,6 +2,7 @@
 
 import { ComponentProps } from 'react';
 
+import { tableCellClass } from '@/components/ui/table-styles';
 import { cn } from '@/lib/utils';
 
 function Table({ className, ...props }: ComponentProps<'table'>) {
@@ -77,7 +78,8 @@ function TableCell({ className, ...props }: ComponentProps<'td'>) {
     <td
       data-slot="table-cell"
       className={cn(
-        'px-3 py-3.5 align-middle whitespace-nowrap first:pl-5 last:pr-5 [&:has([role=checkbox])]:pr-0',
+        tableCellClass,
+        'align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0',
         className
       )}
       {...props}

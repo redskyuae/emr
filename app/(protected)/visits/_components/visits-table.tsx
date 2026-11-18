@@ -14,8 +14,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
 import { isActiveVisit, visitStatusPresentation, waitingLabel } from '../_utils/visit-status';
 import { visitDoctorLabel } from '@/lib/visit-doctor-label';
+import { cn } from '@/lib/utils';
 
 function formatTime(value: Date | string) {
   return new Date(value).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -140,15 +146,15 @@ export function VisitsTable({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
-              <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
-                <th className="p-3 pl-5 font-semibold">Token</th>
-                <th className="p-3 font-semibold">Visit</th>
-                <th className="p-3 font-semibold">Patient</th>
-                <th className="p-3 font-semibold">Doctor</th>
-                <th className="p-3 font-semibold">Type</th>
-                <th className="p-3 font-semibold">Status</th>
-                <th className="p-3 font-semibold">Checked in</th>
-                <th className="p-3 pr-5 text-right font-semibold">Actions</th>
+              <tr className={tableHeadRowClass}>
+                <th className={tableHeadCellClass}>Token</th>
+                <th className={tableHeadCellClass}>Visit</th>
+                <th className={tableHeadCellClass}>Patient</th>
+                <th className={tableHeadCellClass}>Doctor</th>
+                <th className={tableHeadCellClass}>Type</th>
+                <th className={tableHeadCellClass}>Status</th>
+                <th className={tableHeadCellClass}>Checked in</th>
+                <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -157,12 +163,12 @@ export function VisitsTable({
 
                 return (
                   <tr key={visit.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                    <td className="px-3 py-3.5 pl-5">
+                    <td className={tableCellClass}>
                       <span className="bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-md text-base font-semibold tabular-nums">
                         {visit.queueToken}
                       </span>
                     </td>
-                    <td className="px-3 py-3.5">
+                    <td className={tableCellClass}>
                       <Link href={`/visits/${visit.id}`} className="font-medium hover:underline">
                         {visit.visitNumber}
                       </Link>
@@ -174,26 +180,26 @@ export function VisitsTable({
                         <p className="text-muted-foreground text-xs">Walk-in</p>
                       )}
                     </td>
-                    <td className="px-3 py-3.5">
+                    <td className={tableCellClass}>
                       <p className="font-medium">
                         {visit.patient.firstName} {visit.patient.lastName}
                       </p>
                       <p className="text-muted-foreground text-xs">{visit.patient.mrn}</p>
                     </td>
-                    <td className="px-3 py-3.5">{visitDoctorLabel(visit)}</td>
-                    <td className="px-3 py-3.5">
+                    <td className={tableCellClass}>{visitDoctorLabel(visit)}</td>
+                    <td className={tableCellClass}>
                       <Badge variant="secondary">{visit.visitType.code}</Badge>
                     </td>
-                    <td className="px-3 py-3.5">
+                    <td className={tableCellClass}>
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </td>
-                    <td className="text-muted-foreground px-3 py-3.5 tabular-nums">
+                    <td className={cn(tableCellClass, 'text-muted-foreground tabular-nums')}>
                       {formatTime(visit.checkedInAt)}
                       {visit.status === 'CHECKED_IN' ? (
                         <p className="text-xs">{waitingLabel(visit.checkedInAt, now)}</p>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3.5 pr-5 text-right">
+                    <td className={cn(tableCellClass, 'text-right')}>
                       <VisitRowActions visit={visit} {...rowProps} />
                     </td>
                   </tr>

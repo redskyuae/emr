@@ -83,7 +83,7 @@ export function TherapistSchedulesToolbar({
             disabled={therapistsLoading}
             onValueChange={(value) => onTherapistChange(value === ALL ? '' : value)}
           >
-            <SelectTrigger className="h-10 w-full" aria-label="Filter by Therapist">
+            <SelectTrigger className="w-full" aria-label="Filter by Therapist">
               <SelectValue placeholder="All Therapists" />
             </SelectTrigger>
             <SelectContent>

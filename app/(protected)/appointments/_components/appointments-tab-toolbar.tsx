@@ -59,7 +59,7 @@ export function AppointmentsTabToolbar({
           value={doctorId ?? ALL_FILTER}
           onValueChange={(value) => onDoctorChange(value === ALL_FILTER ? null : value)}
         >
-          <SelectTrigger className="h-10 lg:w-52" aria-label="Filter by doctor">
+          <SelectTrigger className="lg:w-52" aria-label="Filter by doctor">
             <SelectValue placeholder="All doctors" />
           </SelectTrigger>
           <SelectContent>
@@ -76,7 +76,7 @@ export function AppointmentsTabToolbar({
           value={therapistId ?? ALL_FILTER}
           onValueChange={(value) => onTherapistChange(value === ALL_FILTER ? null : value)}
         >
-          <SelectTrigger className="h-10 lg:w-52" aria-label="Filter by Therapist">
+          <SelectTrigger className="lg:w-52" aria-label="Filter by Therapist">
             <SelectValue placeholder="All Therapists" />
           </SelectTrigger>
           <SelectContent>
@@ -93,7 +93,7 @@ export function AppointmentsTabToolbar({
           value={appointmentStatusId ?? ALL_FILTER}
           onValueChange={(value) => onAppointmentStatusChange(value === ALL_FILTER ? null : value)}
         >
-          <SelectTrigger className="h-10 lg:w-48" aria-label="Filter by status">
+          <SelectTrigger className="lg:w-48" aria-label="Filter by status">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -106,7 +106,7 @@ export function AppointmentsTabToolbar({
           </SelectContent>
         </Select>
 
-        <InputGroup className="h-10 lg:max-w-xs">
+        <InputGroup className="lg:max-w-xs">
           <InputGroupAddon>
             <Search className="size-4" />
           </InputGroupAddon>

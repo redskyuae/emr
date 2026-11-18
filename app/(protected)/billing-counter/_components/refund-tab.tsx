@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
+import { tableHeadRowClass } from '@/components/ui/table-styles';
 import { cn } from '@/lib/utils';
 import { APPROVERS, REFUND_REASONS } from '../_data/counter-seed';
 import {
@@ -248,7 +249,7 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
+                <tr className={tableHeadRowClass}>
                   <th className="pb-1.5 font-semibold">No.</th>
                   <th className="pb-1.5 font-semibold">Type</th>
                   <th className="pb-1.5 text-right font-semibold">Amount</th>

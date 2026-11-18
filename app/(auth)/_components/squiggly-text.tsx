@@ -1,7 +1,7 @@
 'use client';
 
-import { useId, type ReactNode } from 'react';
-import { motion, useReducedMotion, useTime, useTransform } from 'motion/react';
+import { useEffect, useId, type ReactNode } from 'react';
+import { motion, useMotionValue } from 'motion/react';
 
 import { cn } from '@/lib/utils';
 
@@ -13,13 +13,19 @@ type SquigglyTextProps = {
   numOctaves?: number;
   stepDuration?: number;
   baseFrequency?: number;
+  /** How long the wobble runs before the text settles, in milliseconds. */
+  duration?: number;
 };
 
 /**
  * Hand-drawn "wobble" effect, after Aceternity UI's Squiggly Text.
  * A set of SVG turbulence filters (one noise seed each) is cycled on a fixed
  * cadence, so the glyph edges jitter like a looping animation drawing.
- * Renders plain text when the user prefers reduced motion.
+ *
+ * The wobble runs for `duration` and then settles into plain text, so nothing
+ * moves indefinitely beside the sign-in form. The markup is the same on the
+ * server and the client: the filter starts at `none` and is only cycled from an
+ * effect, which never starts when the user prefers reduced motion.
  */
 export function SquigglyText({
   children,
@@ -29,18 +35,35 @@ export function SquigglyText({
   numOctaves = 3,
   stepDuration = 80,
   baseFrequency = 0.02,
+  duration = 4000,
 }: SquigglyTextProps) {
-  const reduceMotion = useReducedMotion();
   const baseId = `squiggly-${useId().replace(/[:_«»]/g, '')}`;
-  const time = useTime();
-  const filter = useTransform(time, (t) => {
-    const step = Math.floor(t / stepDuration) % steps;
-    return `url(#${baseId}-${step})`;
-  });
+  const filter = useMotionValue('none');
 
-  if (reduceMotion) {
-    return <span className={className}>{children}</span>;
-  }
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    const startedAt = performance.now();
+    let step = 0;
+
+    const timer = window.setInterval(() => {
+      if (performance.now() - startedAt >= duration) {
+        window.clearInterval(timer);
+        filter.set('none');
+        return;
+      }
+
+      filter.set(`url(#${baseId}-${step})`);
+      step = (step + 1) % steps;
+    }, stepDuration);
+
+    return () => {
+      window.clearInterval(timer);
+      filter.set('none');
+    };
+  }, [baseId, duration, filter, stepDuration, steps]);
 
   return (
     <>
@@ -64,7 +87,11 @@ export function SquigglyText({
           ))}
         </defs>
       </svg>
-      <motion.span className={cn('inline-block', className)} style={{ filter }}>
+      {/* motion-reduce:filter-none! also covers a preference switched on after the page loaded. */}
+      <motion.span
+        className={cn('inline-block motion-reduce:filter-none!', className)}
+        style={{ filter }}
+      >
         {children}
       </motion.span>
     </>

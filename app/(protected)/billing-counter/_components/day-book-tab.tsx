@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { tableHeadRowClass } from '@/components/ui/table-styles';
 import {
   buildBankBook,
   buildCashBook,
@@ -35,7 +36,7 @@ function BookTable({
       <CardContent className="overflow-x-auto p-0">
         <table className="w-full min-w-[760px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
+            <tr className={tableHeadRowClass}>
               {columns.map((column, index) => (
                 <th
                   key={column.label}
@@ -85,7 +86,7 @@ function TransactionBook({ txns }: { txns: LedgerTxn[] }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row">
-        <InputGroup className="h-10 sm:max-w-xs">
+        <InputGroup className="sm:max-w-xs">
           <InputGroupAddon>
             <Search className="size-4" />
           </InputGroupAddon>

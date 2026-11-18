@@ -18,7 +18,6 @@ export default function CreateVisitLoader() {
       <div className="bg-card shadow-fluent-2 flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4">
         <div className="space-y-2">
           <Skeleton className="h-6 w-20" />
-          <Skeleton className="h-8 w-56" />
           <Skeleton className="h-4 w-36" />
         </div>
         <div className="flex items-center gap-3">

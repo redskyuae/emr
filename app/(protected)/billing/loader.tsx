@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { tableHeadRowClass } from '@/components/ui/table-styles';
 
 export default function BillingPageLoader({ variant = 'list' }: { variant?: 'list' | 'composer' }) {
   if (variant === 'composer') {
@@ -30,7 +31,7 @@ export default function BillingPageLoader({ variant = 'list' }: { variant?: 'lis
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px]">
             <thead>
-              <tr className="bg-muted/60 text-muted-foreground border-b text-xs tracking-wider uppercase">
+              <tr className={tableHeadRowClass}>
                 {Array.from({ length: 6 }, (_, index) => (
                   <th key={index} className="p-3">
                     <Skeleton className="h-4 w-20" />

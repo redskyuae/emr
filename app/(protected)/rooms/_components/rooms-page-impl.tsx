@@ -167,7 +167,7 @@ export function RoomsPageImpl() {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="h-10 lg:max-w-xs">
+            <InputGroup className="lg:max-w-xs">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>
@@ -184,7 +184,7 @@ export function RoomsPageImpl() {
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as RoomStatus | typeof ALL_FILTER)}
             >
-              <SelectTrigger className="h-10 lg:w-40" aria-label="Filter by status">
+              <SelectTrigger className="lg:w-40" aria-label="Filter by status">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -198,7 +198,7 @@ export function RoomsPageImpl() {
             </Select>
 
             <Select value={roomTypeFilter} onValueChange={setRoomTypeFilter}>
-              <SelectTrigger className="h-10 lg:w-44" aria-label="Filter by Room Type">
+              <SelectTrigger className="lg:w-44" aria-label="Filter by Room Type">
                 <SelectValue placeholder="All Room Types" />
               </SelectTrigger>
               <SelectContent>

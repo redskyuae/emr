@@ -178,7 +178,7 @@ export function DoctorsPageImpl() {
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="h-10 lg:max-w-xs">
+            <InputGroup className="lg:max-w-xs">
               <InputGroupAddon>
                 <Search className="size-4" />
               </InputGroupAddon>
@@ -197,7 +197,7 @@ export function DoctorsPageImpl() {
                 setStatusFilter(value as DoctorStatusFilter | typeof ALL_FILTER)
               }
             >
-              <SelectTrigger className="h-10 lg:w-40" aria-label="Filter by status">
+              <SelectTrigger className="lg:w-40" aria-label="Filter by status">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -208,7 +208,7 @@ export function DoctorsPageImpl() {
             </Select>
 
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-              <SelectTrigger className="h-10 lg:w-48" aria-label="Filter by Specialty">
+              <SelectTrigger className="lg:w-48" aria-label="Filter by Specialty">
                 <SelectValue placeholder="All Specialties" />
               </SelectTrigger>
               <SelectContent>

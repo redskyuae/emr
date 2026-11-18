@@ -97,7 +97,7 @@ export function PatientSection({
                     *
                   </span>
                 </FieldLabel>
-                <InputGroup className="bg-background shadow-fluent-2">
+                <InputGroup>
                   <InputGroupAddon>
                     <Search className="size-4" />
                   </InputGroupAddon>

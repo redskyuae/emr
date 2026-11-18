@@ -14,6 +14,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 import { admissionStatusPresentation } from '../_utils/admission-status';
 
 function formatMoment(value: Date | string) {
@@ -47,16 +53,16 @@ export function AdmissionsTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[960px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
-              <th className="p-3 pl-5 font-semibold">Admission</th>
-              <th className="p-3 font-semibold">Patient</th>
-              <th className="p-3 font-semibold">Ward / Bed</th>
-              <th className="p-3 font-semibold">Doctor</th>
-              <th className="p-3 font-semibold">Type</th>
-              <th className="p-3 font-semibold">Admitted</th>
-              <th className="p-3 font-semibold">Expected discharge</th>
-              <th className="p-3 font-semibold">Status</th>
-              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Admission</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Ward / Bed</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Admitted</th>
+              <th className={tableHeadCellClass}>Expected discharge</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -66,7 +72,7 @@ export function AdmissionsTable({
 
               return (
                 <tr key={admission.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                  <td className="px-3 py-3.5 pl-5">
+                  <td className={tableCellClass}>
                     <Link
                       href={`/admissions/${admission.id}`}
                       className="font-medium hover:underline"
@@ -77,30 +83,30 @@ export function AdmissionsTable({
                       <p className="text-muted-foreground text-xs">{admission.visit.visitNumber}</p>
                     ) : null}
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <p className="font-medium">
                       {admission.patient.firstName} {admission.patient.lastName}
                     </p>
                     <p className="text-muted-foreground text-xs">{admission.patient.mrn}</p>
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <p>{admission.ward.name}</p>
                     <p className="text-muted-foreground text-xs">{admission.bed.bedNumber}</p>
                   </td>
-                  <td className="px-3 py-3.5">{admission.doctor.name}</td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>{admission.doctor.name}</td>
+                  <td className={tableCellClass}>
                     <Badge variant="secondary">{admission.admissionType.code}</Badge>
                   </td>
-                  <td className="text-muted-foreground px-3 py-3.5 tabular-nums">
+                  <td className={cn(tableCellClass, 'text-muted-foreground tabular-nums')}>
                     {formatMoment(admission.admittedAt)}
                   </td>
-                  <td className="text-muted-foreground px-3 py-3.5 tabular-nums">
+                  <td className={cn(tableCellClass, 'text-muted-foreground tabular-nums')}>
                     {admission.expectedDischargeDate ?? '—'}
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </td>
-                  <td className="px-3 py-3.5 pr-5 text-right">
+                  <td className={cn(tableCellClass, 'text-right')}>
                     <div className="flex items-center justify-end gap-2">
                       {active && canDischarge ? (
                         <Button type="button" size="sm" onClick={() => onDischarge(admission)}>

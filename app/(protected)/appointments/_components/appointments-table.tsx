@@ -13,6 +13,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
 import { cn } from '@/lib/utils';
 import { canCancelAppointment } from '../_utils/appointment-cancellation';
 import { appointmentStatusVariant } from '../_utils/appointment-status';
@@ -65,16 +70,16 @@ export function AppointmentsTable({
       <div className={cn('overflow-x-auto', isFetching && 'opacity-70 transition-opacity')}>
         <table aria-label={label} className="w-full min-w-[1080px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
-              <th className="p-3 pl-5 font-semibold">Booking</th>
-              <th className="p-3 font-semibold">Date / Slot</th>
-              <th className="p-3 font-semibold">Patient</th>
-              <th className="p-3 font-semibold">Doctor</th>
-              <th className="p-3 font-semibold">Therapist</th>
-              <th className="p-3 font-semibold">Type</th>
-              <th className="p-3 font-semibold">Mode</th>
-              <th className="p-3 font-semibold">Status</th>
-              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Booking</th>
+              <th className={tableHeadCellClass}>Date / Slot</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Therapist</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Mode</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -86,7 +91,7 @@ export function AppointmentsTable({
 
               return (
                 <tr key={appointment.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                  <td className="px-3 py-3.5 pl-5">
+                  <td className={tableCellClass}>
                     <p className="font-mono text-sm font-medium">{appointment.bookingNumber}</p>
                     <p className="text-muted-foreground text-xs">
                       {appointment.bookingPath === 'PROCEDURE'
@@ -94,13 +99,13 @@ export function AppointmentsTable({
                         : (appointment.rotaName ?? 'Consultation')}
                     </p>
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <p className="font-medium tabular-nums">{appointment.slotDate}</p>
                     <p className="text-muted-foreground text-xs tabular-nums">
                       {formatSlotRange(appointment)}
                     </p>
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <Link
                       href={`/patients/${appointment.patient.id}`}
                       className="font-medium hover:underline"
@@ -117,24 +122,24 @@ export function AppointmentsTable({
                       {appointment.patient.phone}
                     </a>
                   </td>
-                  <td className="px-3 py-3.5">{appointment.doctor?.name ?? 'N/A'}</td>
-                  <td className="px-3 py-3.5">{appointment.therapist?.name ?? 'N/A'}</td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>{appointment.doctor?.name ?? 'N/A'}</td>
+                  <td className={tableCellClass}>{appointment.therapist?.name ?? 'N/A'}</td>
+                  <td className={tableCellClass}>
                     <Badge variant="secondary">
                       {appointment.appointmentType?.code ?? appointment.bookingPath}
                     </Badge>
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <Badge variant="outline">{appointment.appointmentMode?.code ?? 'N/A'}</Badge>
                   </td>
-                  <td className="px-3 py-3.5">
+                  <td className={tableCellClass}>
                     <Badge
                       variant={appointmentStatusVariant(appointment.appointmentStatus.category)}
                     >
                       {appointment.appointmentStatus.name}
                     </Badge>
                   </td>
-                  <td className="px-3 py-3.5 pr-5 text-right">
+                  <td className={cn(tableCellClass, 'text-right')}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button

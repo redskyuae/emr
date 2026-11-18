@@ -42,7 +42,6 @@ export function CheckInHeader({
             Visits
           </Link>
         </Button>
-        <h2 className="text-2xl font-bold tracking-tight">Check in Patient</h2>
         {referenceDate ? (
           <p className="text-muted-foreground text-sm">
             Visit date <span className="font-mono">{referenceDate}</span>

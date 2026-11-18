@@ -45,9 +45,12 @@ import {
 const NAV_BUTTON_CLASS =
   'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
 
-/** A parent row with an open submenu: the current child carries the pill, so the parent only brightens. */
+/**
+ * A parent row with a submenu: the current child carries the pill, so the parent only brightens.
+ * Collapsed to icons the submenu is hidden, so the parent takes the pill instead.
+ */
 const NAV_PARENT_BUTTON_CLASS =
-  'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:text-sidebar-foreground data-active:bg-transparent data-active:hover:bg-sidebar-accent h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
+  'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:text-sidebar-foreground data-active:bg-transparent data-active:hover:bg-sidebar-accent group-data-[collapsible=icon]:data-active:bg-sidebar-primary group-data-[collapsible=icon]:data-active:text-sidebar-primary-foreground group-data-[collapsible=icon]:data-active:hover:bg-sidebar-primary h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
 
 const NAV_SUB_BUTTON_CLASS =
   'text-sidebar-foreground/65 hover:text-sidebar-foreground data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:hover:bg-sidebar-primary h-10 translate-x-0 rounded-lg px-3 data-active:font-semibold';
@@ -194,7 +197,7 @@ export function AppSidebar({
       <SidebarContent className="gap-1 pb-2">
         {visibleNavGroups.map((group) => (
           <SidebarGroup key={group.title} className="px-3 py-1.5">
-            <SidebarGroupLabel className="text-sidebar-foreground/45 px-3 font-semibold tracking-widest uppercase">
+            <SidebarGroupLabel className="text-sidebar-foreground/60 px-3 font-semibold tracking-widest uppercase">
               {group.title}
             </SidebarGroupLabel>
             <SidebarGroupContent>

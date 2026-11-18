@@ -21,7 +21,8 @@ All tokens live in `app/globals.css` as CSS variables, mapped to Tailwind utilit
 
 | Token                            | Value                    | Use for                                                          |
 | -------------------------------- | ------------------------ | ---------------------------------------------------------------- |
-| `--primary`                      | `oklch(0.43 0.118 254)`  | Primary actions, links, active states                            |
+| `--primary`                      | `oklch(0.43 0.118 254)`  | Links, selection, active states                                  |
+| `--cta`                          | `oklch(0.225 0.018 268)` | Solid call-to-action fill (`Button` default): near-black ink     |
 | `--background`                   | `oklch(0.975 0.006 262)` | App/page background (cool tinted grey, so white cards lift off)  |
 | `--foreground`                   | `oklch(0.21 0.03 265)`   | Body text (navy ink, not pure black)                             |
 | `--card`                         | white                    | Elevated surfaces                                                |
@@ -34,6 +35,8 @@ All tokens live in `app/globals.css` as CSS variables, mapped to Tailwind utilit
 The sidebar has its own tokens (`--sidebar*`) and is **ink in both themes**: a near-black panel with `--sidebar-primary`, a lifted blue, for the active row. The page keeps its own theme; the sidebar does not follow it.
 
 A full dark theme exists under `.dark` (navy-tinted darks, lighter blue primary). Every screen must work in both; never use raw `white`/`black` utilities for surfaces or text.
+
+One exception: photo scrims (the auth brand panel) use fixed black and white, so text stays legible on any image in both themes.
 
 ### Functional and status colors
 
@@ -82,12 +85,18 @@ Satoshi is the single global sans: headings and body share the family, so hierar
 weight and size rather than a second typeface. (It replaced Urbanist in November 2026.) Data stays
 on Geist Mono, a monospaced face, so digits line up in columns.
 
-Satoshi is a variable font (weights 300–900) loaded from Fontshare's servers by `FontStylesheet`
-(`components/providers/font-stylesheet.tsx`), rendered once in `app/layout.tsx`; `--font-satoshi`
-in `globals.css` names it. Its licence allows loading it from Fontshare but not committing the
-font files to a public repository. If Fontshare is unreachable the UI falls back to the system
-sans-serif font. Geist Mono is loaded in `app/layout.tsx` via `next/font`. Do not introduce other
-fonts.
+Satoshi is a variable font (weights 300–900). Its `@font-face` is declared at the top of
+`globals.css` and points at the font file on Fontshare's CDN; `--font-satoshi` names it and
+`app/layout.tsx` preconnects to the CDN. Its licence allows loading it from Fontshare but not
+committing the font files to a public repository. No third-party stylesheet is loaded, so the font
+never blocks first paint: with `font-display: swap` the UI shows in the system sans-serif font
+until Satoshi arrives, and stays in it if the CDN is unreachable. Geist Mono is loaded in
+`app/layout.tsx` via `next/font`. Do not introduce other fonts.
+
+Using Fontshare is a deliberate choice: every staff browser requests the font file from
+`cdn.fontshare.com`. A deployment's network must allow that host, and any future
+Content-Security-Policy must list `https://cdn.fontshare.com` under `font-src`. A deployment that
+cannot make third-party requests runs in the system font.
 
 ### Elevation (Fluent depth ramp)
 
@@ -156,15 +165,15 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 - Every `app/**/page.tsx` has a sibling `loader.tsx` that imports and renders `Skeleton` from `@/components/ui/skeleton`. When the page or any route-local `_components/` file changes, update that route's `loader.tsx` in the same change so the loading state remains page-shaped.
 - `components/ui/calendar.tsx` was patched for react-day-picker v10 (`month_grid` classNames key replaces v8's `table`). Re-apply if the component is regenerated.
 - Charts use `chart.tsx` (Recharts) with `--chart-1..5` (a blue-led ramp). Toasts use `sonner.tsx`.
-- **Tables** use `components/ui/table.tsx`: a muted header band with small uppercase labels, 3.5 units of vertical cell padding, and 20px insets on the first and last column. Wrap a table in a `Card` with `py-0` (or a `bg-card rounded-xl border` box) so the band meets the card edge. A hand-rolled `<table>` copies the same header row classes.
+- **Tables** use `components/ui/table.tsx`: a muted header band with small uppercase labels, 3.5 units of vertical cell padding, and 20px insets on the first and last column. Wrap a table in a `Card` with `py-0` (or a `bg-card rounded-xl border` box) so the band meets the card edge. A hand-rolled `<table>`, and the loader skeleton that mirrors it, takes `tableHeadRowClass`, `tableHeadCellClass` and `tableCellClass` from `components/ui/table-styles.ts` instead of repeating the class strings; `TableCell` uses the same constant. Deliberately dense tables keep their own smaller padding.
 
 ## App shell
 
 The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` in `app/(protected)/layout.tsx`.
 
-- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is solid `sidebar-primary`. A parent with a submenu only brightens, and its current child carries the pill. It still collapses to icons, and is a sheet on a phone.
+- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is solid `sidebar-primary`. A parent with a submenu only brightens, and its current child carries the pill; collapsed to icons the submenu is hidden, so the parent takes the pill instead. Group labels are `sidebar-foreground/60`, which keeps them above 4.5:1 on the panel. It is a sheet on a phone.
 - **`AppTopbar`** is a slim sticky utility bar: the sidebar trigger, global search, the active Tenant (`TenantChip`), help and notifications. It carries no page title.
-- **`AppPageHeader`** sits under the top bar on every page. It shows the page's sidebar group as a small muted eyebrow (`getAppPageGroup`), the title as a plain `h1` in the foreground colour, and the subtitle under it. The title is repeated behind the header as a large watermark at 4.5% foreground opacity that drifts in from the left on navigation (skipped under `prefers-reduced-motion`); it is `aria-hidden` and clipped by the header. Title and subtitle come from `app-shell-config.ts`; a page does not render its own `h1`, and its section headings start at `h2`.
+- **`AppPageHeader`** sits under the top bar on every page. It shows the page's sidebar group as a small muted eyebrow (`getAppPageGroup`), the title as a plain `h1` in the foreground colour, and the subtitle under it. The title is repeated behind the header as a large watermark at 4.5% foreground opacity that drifts in from the left on navigation, inside the motion rule (0.7s, `power3.out`; skipped under `prefers-reduced-motion`); it is `aria-hidden` and clipped by the header. Title and subtitle come from `app-shell-config.ts`; a page does not render its own `h1`, and its section headings start at `h2`. A task page that needs its own name (Check in Patient, Reschedule Appointment) gets its own page meta there instead of a second, larger heading in the page.
 - A page header **primary action** (`primaryAction` in the page meta) is only for pages whose content has no always-visible button for the same action. A list page with a create button in its toolbar leaves it out, so an action never appears twice.
 - On a phone the Tenant chip moves from the top bar into the page header, so the active Tenant stays visible.
 
@@ -177,8 +186,8 @@ The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` i
 
 ## UI principles (Fluent-inspired)
 
-1. **Light, calm, blue-accented.** Surfaces are near-white and cool-tinted; deep blue primary anchors the main action. Functional and status colors add meaning through restrained tints.
-2. **One accent at a time.** Primary blue marks the single most important action per view. Secondary actions are `outline`/`ghost`. Functional and status colors may coexist when each communicates a distinct meaning.
+1. **Light, calm, blue-accented.** Surfaces are near-white and cool-tinted; the main action is a near-black ink button (`--cta`, off-white in dark), and deep blue primary marks links, selection and the current step. Functional and status colors add meaning through restrained tints.
+2. **One accent at a time.** One solid ink button marks the single most important action per view. Secondary actions are `outline`/`ghost`. Functional and status colors may coexist when each communicates a distinct meaning.
 3. **Depth over decoration.** Hierarchy comes from elevation, spacing, and type weight — not from colored boxes and heavy borders.
 4. **Soft corners, calm surfaces.** A 12px base radius and hairline rings; nothing bubbly.
 5. **Type does the talking.** Satoshi headings carry personality through weight and size; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).

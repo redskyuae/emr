@@ -8,7 +8,7 @@ export default function RescheduleAppointmentLoader() {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-64 max-w-full" />
+          <Skeleton className="h-8 w-40" />
           <Skeleton className="h-4 w-72 max-w-full" />
         </div>
         <Skeleton className="h-10 w-48" />

@@ -12,6 +12,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 
 export function VisitTypeTable({
   visitTypes,
@@ -31,24 +37,24 @@ export function VisitTypeTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[600px] text-sm">
           <thead>
-            <tr className="text-muted-foreground bg-muted/60 border-b text-left text-xs tracking-wider uppercase">
-              <th className="p-3 pl-5 font-semibold">Name</th>
-              <th className="p-3 font-semibold">Code</th>
-              <th className="p-3 font-semibold">Description</th>
-              <th className="p-3 pr-5 text-right font-semibold">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Name</th>
+              <th className={tableHeadCellClass}>Code</th>
+              <th className={tableHeadCellClass}>Description</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {visitTypes.map((visitType) => (
               <tr key={visitType.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                <td className="px-3 py-3.5 pl-5 font-medium">{visitType.name}</td>
-                <td className="px-3 py-3.5">
+                <td className={cn(tableCellClass, 'font-medium')}>{visitType.name}</td>
+                <td className={tableCellClass}>
                   <Badge variant="secondary">{visitType.code}</Badge>
                 </td>
-                <td className="text-muted-foreground px-3 py-3.5">
+                <td className={cn(tableCellClass, 'text-muted-foreground')}>
                   {visitType.description ?? '—'}
                 </td>
-                <td className="px-3 py-3.5 pr-5 text-right">
+                <td className={cn(tableCellClass, 'text-right')}>
                   {canEdit || canDelete ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

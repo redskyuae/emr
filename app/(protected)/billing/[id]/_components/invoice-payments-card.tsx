@@ -5,6 +5,12 @@ import { ReceiptText } from 'lucide-react';
 import type { Invoice, Payment } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 import { formatMoney, getPaymentMethodLabel } from '../../_utils/invoice-display';
 
 export function InvoicePaymentsCard({
@@ -37,32 +43,32 @@ export function InvoicePaymentsCard({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
-                <tr className="text-muted-foreground bg-muted/60 border-y text-left text-xs tracking-wider uppercase">
-                  <th className="p-3 pl-5 font-semibold">Receipt</th>
-                  <th className="p-3 font-semibold">Method</th>
-                  <th className="p-3 font-semibold">Reference</th>
-                  <th className="p-3 text-right font-semibold">Amount</th>
-                  <th className="p-3 pr-5 font-semibold">Received</th>
-                  <th className="p-3 pr-5 text-right font-semibold">Receipt action</th>
+                <tr className={cn(tableHeadRowClass, 'border-y')}>
+                  <th className={tableHeadCellClass}>Receipt</th>
+                  <th className={tableHeadCellClass}>Method</th>
+                  <th className={tableHeadCellClass}>Reference</th>
+                  <th className={cn(tableHeadCellClass, 'text-right')}>Amount</th>
+                  <th className={tableHeadCellClass}>Received</th>
+                  <th className={cn(tableHeadCellClass, 'text-right')}>Receipt action</th>
                 </tr>
               </thead>
               <tbody>
                 {invoice.payments.map((payment) => (
                   <tr key={payment.id} className="border-b last:border-b-0">
-                    <td className="px-3 py-3.5 pl-5 font-mono font-medium">
+                    <td className={cn(tableCellClass, 'font-mono font-medium')}>
                       {payment.receiptNumber}
                     </td>
-                    <td className="px-3 py-3.5">{getPaymentMethodLabel(payment.method)}</td>
-                    <td className="text-muted-foreground px-3 py-3.5">
+                    <td className={tableCellClass}>{getPaymentMethodLabel(payment.method)}</td>
+                    <td className={cn(tableCellClass, 'text-muted-foreground')}>
                       {payment.reference ?? '—'}
                     </td>
-                    <td className="px-3 py-3.5 text-right tabular-nums">
+                    <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                       {formatMoney(payment.amount)}
                     </td>
-                    <td className="text-muted-foreground px-3 py-3.5 pr-5">
+                    <td className={cn(tableCellClass, 'text-muted-foreground')}>
                       {new Date(payment.receivedAt).toLocaleDateString()}
                     </td>
-                    <td className="px-3 py-3.5 pr-5 text-right">
+                    <td className={cn(tableCellClass, 'text-right')}>
                       <Button
                         type="button"
                         size="sm"

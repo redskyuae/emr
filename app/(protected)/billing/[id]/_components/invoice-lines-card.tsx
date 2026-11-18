@@ -6,6 +6,12 @@ import type { Invoice, InvoiceLine } from '@/app/api/lib/modules/invoice/schemas
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
 import { formatMoney } from '../../_utils/invoice-display';
 
 export function InvoiceLinesCard({
@@ -59,18 +65,18 @@ export function InvoiceLinesCard({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">
               <thead>
-                <tr className="text-muted-foreground bg-muted/60 border-y text-left text-xs tracking-wider uppercase">
-                  <th className="p-3 pl-5 font-semibold">Description</th>
-                  <th className="p-3 text-right font-semibold">Qty</th>
-                  <th className="p-3 text-right font-semibold">Unit Price</th>
-                  <th className="p-3 text-right font-semibold">Amount</th>
-                  {showRemoveColumn ? <th className="p-3 pr-5" /> : null}
+                <tr className={cn(tableHeadRowClass, 'border-y')}>
+                  <th className={tableHeadCellClass}>Description</th>
+                  <th className={cn(tableHeadCellClass, 'text-right')}>Qty</th>
+                  <th className={cn(tableHeadCellClass, 'text-right')}>Unit Price</th>
+                  <th className={cn(tableHeadCellClass, 'text-right')}>Amount</th>
+                  {showRemoveColumn ? <th className={tableHeadCellClass} /> : null}
                 </tr>
               </thead>
               <tbody>
                 {invoice.lines.map((line) => (
                   <tr key={line.id} className="border-b last:border-b-0">
-                    <td className="px-3 py-3.5 pl-5">
+                    <td className={tableCellClass}>
                       {line.description}
                       {line.source === 'BED_AUTO' ? (
                         <Badge variant="secondary" className="ml-2">
@@ -78,15 +84,17 @@ export function InvoiceLinesCard({
                         </Badge>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3.5 text-right tabular-nums">{line.quantity}</td>
-                    <td className="px-3 py-3.5 text-right tabular-nums">
+                    <td className={cn(tableCellClass, 'text-right tabular-nums')}>
+                      {line.quantity}
+                    </td>
+                    <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                       {formatMoney(line.unitPrice)}
                     </td>
-                    <td className="px-3 py-3.5 text-right tabular-nums">
+                    <td className={cn(tableCellClass, 'text-right tabular-nums')}>
                       {formatMoney(line.amount)}
                     </td>
                     {showRemoveColumn ? (
-                      <td className="px-3 py-3.5 pr-5 text-right">
+                      <td className={cn(tableCellClass, 'text-right')}>
                         <Button
                           type="button"
                           variant="ghost"

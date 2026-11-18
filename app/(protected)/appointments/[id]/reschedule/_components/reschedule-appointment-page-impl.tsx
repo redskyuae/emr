@@ -84,13 +84,9 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
               <ArrowLeft className="size-4" /> Back to Appointments
             </Link>
           </Button>
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">Reschedule Appointment</h2>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Change the schedule for <span className="font-mono">{appointment.bookingNumber}</span>
-              .
-            </p>
-          </div>
+          <p className="text-muted-foreground text-sm">
+            Change the schedule for <span className="font-mono">{appointment.bookingNumber}</span>.
+          </p>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Building2 className="text-primary size-4 shrink-0" />

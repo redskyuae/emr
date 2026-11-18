@@ -68,7 +68,7 @@ function GhostTitle({ text }: { text: string }) {
       gsap.fromTo(
         el,
         { x: -24, autoAlpha: 0 },
-        { x: 0, autoAlpha: 1, duration: 1.6, ease: 'expo.out', clearProps: 'all' }
+        { x: 0, autoAlpha: 1, duration: 0.7, ease: 'power3.out', clearProps: 'all' }
       );
     },
     { dependencies: [text] }
