@@ -28,7 +28,7 @@ import { Money, TenderChips, TxnTypeBadge } from './txn-cells';
 
 function Kpi({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className={cn('bg-card shadow-fluent-2 rounded-lg border border-t-2 p-3', accent)}>
+    <div className={cn('bg-card rounded-lg border border-t-2 p-3', accent)}>
       <p className="text-muted-foreground text-xs">{label}</p>
       <p className="font-heading text-lg font-semibold tabular-nums">{value}</p>
     </div>
@@ -53,7 +53,7 @@ function ClosedShiftSummary() {
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <CiCircleCheck className="text-success size-4" />
@@ -182,7 +182,7 @@ export function DayCloseTab() {
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">
                 Transactions · {totals.invoices} Invoices · {txns.length} entries
@@ -248,7 +248,7 @@ export function DayCloseTab() {
           <MethodBreakdown txns={txns} />
 
           {outstandingTxns.length > 0 ? (
-            <Card className="shadow-fluent-2">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-base">Outstanding Invoices carried forward</CardTitle>
                 <CardDescription>
@@ -271,7 +271,7 @@ export function DayCloseTab() {
           ) : null}
 
           {state.closedShifts.length > 0 ? (
-            <Card className="shadow-fluent-2">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-base">Earlier shifts today</CardTitle>
               </CardHeader>
@@ -295,7 +295,7 @@ export function DayCloseTab() {
         </div>
 
         {shiftOpen ? (
-          <Card className="shadow-fluent-4">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">
                 Cash reconciliation · {state.shift.counter}

@@ -70,7 +70,7 @@ export function TimelineEntry({ event, patientId }: { event: TimelineEvent; pati
     </div>
   );
 
-  const shell = 'bg-card shadow-fluent-2 block rounded-xl border p-3 transition-colors';
+  const shell = 'bg-card block rounded-xl border p-3 transition-colors';
 
   if (!href) {
     return <li className={shell}>{body}</li>;

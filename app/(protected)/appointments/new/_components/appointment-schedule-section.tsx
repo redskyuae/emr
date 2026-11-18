@@ -85,7 +85,7 @@ export function AppointmentScheduleSection({
   }
 
   return (
-    <Card className="shadow-fluent-2 overflow-hidden">
+    <Card className="overflow-hidden">
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">

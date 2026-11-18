@@ -457,7 +457,7 @@ export function CreateVisitPageImpl({
         <div ref={stepRef} className="scroll-mt-20 space-y-4">
           {confirmed ? (
             <div className="space-y-4" inert={Boolean(createdVisit)}>
-              <div className="bg-card shadow-fluent-2 rounded-xl">
+              <div className="bg-card rounded-xl">
                 <PatientConfirmation
                   key={patient?.id ?? 'none'}
                   patient={patient}
@@ -544,7 +544,7 @@ export function CreateVisitPageImpl({
               linkedBookingNumber={appointment?.bookingNumber ?? null}
             />
           ) : (
-            <Empty className="bg-card shadow-fluent-2 border">
+            <Empty className="bg-card border">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <PiLeafLight className="size-5" />

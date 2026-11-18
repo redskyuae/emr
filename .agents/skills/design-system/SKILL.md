@@ -15,12 +15,12 @@ This project has a committed design system: **Microsoft Fluent-inspired, built o
 
 ## Hard rules
 
-- **Tokens only.** `bg-primary`, `text-muted-foreground`, `shadow-fluent-8` — never raw hex/oklch in components. Theme changes happen in `app/globals.css`, nowhere else.
+- **Tokens only.** `bg-primary`, `text-muted-foreground`, `bg-card` — never raw hex/oklch in components. Theme changes happen in `app/globals.css`, nowhere else.
 - **Don't fork `components/ui/`.** Layout tweaks go through `className`; theme tweaks go through tokens. Domain composites go in `components/{brand,marketing,auth,...}/`.
 - **Fonts are fixed**: Satoshi (headings — automatic on h1–h4 — and body), Geist Mono (codes/IDs/timestamps). Do not add fonts.
 - **The shell owns the page title.** `AppPageHeader` renders the page's group eyebrow, a plain `h1` and a faint watermark of the title from `app-shell-config.ts`; a page starts at `h2` and does not repeat the title or the header's primary action.
 - **Leave room.** Don't pin control heights (`h-8`/`h-9`) or re-pad a `CardContent` that sits directly in a `Card`; see "Radius & spacing" in DESIGN.md for the control sizes.
-- **Elevation = hierarchy.** Use the `shadow-fluent-*` ramp from DESIGN.md; the more modal the element, the higher the shadow.
+- **Flat surfaces.** In-page surfaces (cards, headers, toolbars, command bars, sticky bars) are solid `bg-card` with a hairline border and no shadow, not even on hover. Only overlays (menus, popovers, sheets, dialogs) are elevated; see Elevation in DESIGN.md.
 - **Motion**: GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`. Ease `power3.out`, ≤ 0.9s, scroll reveals fire once, and **always** bail out under `prefers-reduced-motion`. No continuous motion inside the clinical app.
 - **Both themes.** Every screen must hold up in light and dark (`.dark`).
 - **Route-local components.** Page-specific React components under `app/` must live in that route's `_components/` directory. Do not create ad hoc `components/` folders beside pages or leave page clients beside `page.tsx`.

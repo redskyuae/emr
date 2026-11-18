@@ -27,7 +27,7 @@ export function InvoicePaymentsCard({
   const isPayable = invoice.status === 'FINALIZED' || invoice.status === 'PARTIALLY_PAID';
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Payments</CardTitle>
         {isPayable && canRecordPayment ? (

@@ -99,7 +99,7 @@ export function AssetCategoryTableView({
   onDelete: (category: AssetCategory) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[700px]">
@@ -158,7 +158,7 @@ export function AssetCategoryCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {categories.map((category) => (
-        <Card key={category.id} className="shadow-fluent-2">
+        <Card key={category.id}>
           <CardContent className="space-y-3">
             <CategoryIcon color={category.color} />
 
@@ -222,7 +222,7 @@ export function AssetCategoryListView({
   return (
     <div className="space-y-3">
       {categories.map((category) => (
-        <Card key={category.id} className="shadow-fluent-2">
+        <Card key={category.id}>
           <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <CategoryIcon color={category.color} />

@@ -88,7 +88,7 @@ export function VisitPatientHeader({
   const active = isActiveVisit(visit.status);
 
   return (
-    <header className="acrylic shadow-fluent-4 z-10 rounded-lg border p-3 lg:sticky lg:top-18 xl:static">
+    <header className="bg-card z-10 rounded-lg border p-3 lg:sticky lg:top-18 xl:static">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button asChild variant="ghost" size="icon" aria-label="Back to Visits">

@@ -41,7 +41,7 @@ export function TodayAppointmentList({
   const appointmentsHref = `/appointments?date=${encodeURIComponent(slotDate)}`;
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Active schedule</CardTitle>
         <CardDescription>First six active Appointments by time.</CardDescription>

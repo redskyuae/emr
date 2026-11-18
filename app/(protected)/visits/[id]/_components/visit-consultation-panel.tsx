@@ -51,7 +51,7 @@ function ConsultationSummary({ note, action }: { note: ClinicalNote; action?: Re
   const signed = note.status === 'signed';
 
   return (
-    <Card className="shadow-fluent-2 gap-4">
+    <Card className="gap-4">
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <CardTitle className="text-base">Consultation note</CardTitle>
@@ -77,7 +77,7 @@ function VisitSummary({ visit, onAmend }: { visit: Visit; onAmend?: () => void }
   ];
 
   return (
-    <Card className="shadow-fluent-2 gap-4">
+    <Card className="gap-4">
       <CardHeader className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1.5">
           <CardTitle className="text-base">Visit summary</CardTitle>
@@ -162,7 +162,7 @@ function RecordedNote({
   }
 
   return (
-    <Empty className="bg-card shadow-fluent-2 min-h-72 border">
+    <Empty className="bg-card min-h-72 border">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <CiStethoscope />

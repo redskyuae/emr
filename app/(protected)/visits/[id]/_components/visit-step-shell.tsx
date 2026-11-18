@@ -69,7 +69,7 @@ export function VisitStepShell({
 
   return (
     <>
-      <section className="bg-card shadow-fluent-8 flex flex-col rounded-lg border xl:min-h-0 xl:flex-1">
+      <section className="bg-card flex flex-col rounded-lg border xl:min-h-0 xl:flex-1">
         <div
           aria-hidden="true"
           className={cn('h-1 flex-none rounded-t-lg', STEP_TONE[steps[index].id].solid)}

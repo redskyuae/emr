@@ -157,7 +157,7 @@ export function VisitBillingFields({
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <SectionHeading
           icon={<CiReceipt className="size-5" />}

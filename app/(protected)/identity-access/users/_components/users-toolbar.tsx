@@ -70,7 +70,7 @@ export function UsersToolbar({
   }, [searchDraft, search, onSearchChange]);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <InputGroup className="lg:max-w-sm">
           <InputGroupAddon>

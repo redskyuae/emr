@@ -46,7 +46,7 @@ export function ProcedureScheduleSection({
   const duration = getDurationMinutes(startTime, endTime);
 
   return (
-    <Card className="shadow-fluent-2 overflow-hidden">
+    <Card className="overflow-hidden">
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-procedure/10 text-procedure flex size-9 shrink-0 items-center justify-center rounded-lg">

@@ -109,7 +109,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             allergies without leaving the Admission. */}
         <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
 
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
@@ -188,7 +188,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
         </Card>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">Admission details</CardTitle>
             </CardHeader>
@@ -243,7 +243,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">Bed history</CardTitle>
             </CardHeader>
@@ -272,7 +272,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="text-base">Vitals this Admission</CardTitle>
               {active ? (
@@ -319,7 +319,7 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader className="flex-row items-center justify-between">
               <CardTitle className="text-base">Notes this Admission</CardTitle>
               {active ? (

@@ -93,7 +93,7 @@ export function ChargeItemsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
@@ -153,7 +153,7 @@ export function ChargeItemsPageImpl() {
         {chargeItemsQuery.isLoading ? (
           <ChargeItemTableSkeleton />
         ) : chargeItems.length === 0 && !isFiltered ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+          <Empty className="bg-card min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <CiReceipt />
@@ -174,7 +174,7 @@ export function ChargeItemsPageImpl() {
             ) : null}
           </Empty>
         ) : chargeItems.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
+          <Empty className="bg-card min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <CiSearch />

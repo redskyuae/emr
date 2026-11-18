@@ -12,14 +12,14 @@ import {
 export default function WorkOrderTypesPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <Skeleton className="h-10 w-56" />
           <Skeleton className="h-10 w-full lg:max-w-sm" />
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2 py-0">
+      <Card className="py-0">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table className="min-w-[700px] table-fixed">

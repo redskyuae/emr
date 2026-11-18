@@ -29,7 +29,7 @@ function Tile({
     </>
   );
   const className = cn(
-    'bg-card shadow-fluent-2 flex flex-col items-start gap-1.5 rounded-lg border p-3 text-left',
+    'bg-card flex flex-col items-start gap-1.5 rounded-lg border p-3 text-left',
     onClick &&
       'hover:bg-accent focus-visible:ring-ring transition-colors outline-none focus-visible:ring-2',
     active && 'border-primary bg-accent'

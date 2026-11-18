@@ -68,7 +68,7 @@ export function AssessmentCommandBar({
 
   return (
     <>
-      <div className="bg-card shadow-fluent-8 flex min-w-0 flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="bg-card flex min-w-0 flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {errors.length ? (
             <Alert className="w-full min-w-0 grid-cols-[auto_1fr] py-2" variant="destructive">

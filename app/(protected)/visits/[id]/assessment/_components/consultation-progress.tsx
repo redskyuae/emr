@@ -31,7 +31,7 @@ export function ConsultationProgress({
   const step = consultationSteps[currentStep];
 
   return (
-    <Card className="shadow-fluent-2 gap-0 py-0">
+    <Card className="gap-0 py-0">
       <CardContent className="space-y-3 p-3 md:p-4">
         <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-end">
           <div>

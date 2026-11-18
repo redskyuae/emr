@@ -21,7 +21,7 @@ export function CounterHeader() {
   const { shift } = state;
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="min-w-0">

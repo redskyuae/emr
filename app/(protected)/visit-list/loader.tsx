@@ -11,7 +11,7 @@ export default function VisitListPageLoader() {
         ))}
       </div>
 
-      <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
+      <div className="bg-card space-y-3 rounded-xl border p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <Skeleton className="h-10 w-full lg:max-w-sm" />
           <Skeleton className="h-10 w-full lg:w-96" />
@@ -23,7 +23,7 @@ export default function VisitListPageLoader() {
         </div>
       </div>
 
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
+      <div className="bg-card overflow-hidden rounded-xl border p-4">
         {Array.from({ length: 8 }, (_, index) => (
           <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
             <Skeleton className="size-9 rounded-md" />

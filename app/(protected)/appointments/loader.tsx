@@ -8,7 +8,7 @@ export default function AppointmentsPageLoader() {
         <Skeleton className="h-10 w-36" aria-label="Loading Book Appointment action" />
       </div>
 
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:flex-wrap lg:items-center">
+      <div className="bg-card flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:flex-wrap lg:items-center">
         <Skeleton className="h-10 lg:w-52" />
         <Skeleton className="h-10 lg:w-52" aria-label="Loading Therapist filter" />
         <Skeleton className="h-10 lg:w-48" aria-label="Loading Appointment status filter" />
@@ -27,7 +27,7 @@ export default function AppointmentsPageLoader() {
           </div>
           <Skeleton className="h-5 w-8" />
         </div>
-        <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
+        <div className="bg-card overflow-hidden rounded-xl border p-4">
           {Array.from({ length: 5 }, (_, index) => (
             <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
               <Skeleton className="h-5 w-24" />

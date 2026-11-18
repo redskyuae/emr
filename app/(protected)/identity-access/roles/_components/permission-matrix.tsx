@@ -42,7 +42,7 @@ export function PermissionMatrix({
 }) {
   if (sections.length === 0) {
     return (
-      <Empty className="bg-card shadow-fluent-2 min-h-64 border">
+      <Empty className="bg-card min-h-64 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <PiKeyLight />

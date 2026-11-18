@@ -34,7 +34,7 @@ export function CheckInHeader({
   confirmed: boolean;
 }) {
   return (
-    <header className="bg-card shadow-fluent-2 flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4">
+    <header className="bg-card flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4">
       <div className="space-y-1">
         <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
           <Link href="/visits">

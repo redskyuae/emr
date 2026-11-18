@@ -6,7 +6,7 @@ export default function VisitDetailPageLoader() {
       className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 xl:h-[calc(100dvh-7.5rem)] xl:min-h-[30rem]"
       aria-label="Loading Visit"
     >
-      <div className="bg-card shadow-fluent-4 flex flex-none flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+      <div className="bg-card flex flex-none flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
         <div className="flex items-center gap-3">
           <Skeleton className="size-9" />
           <Skeleton className="size-11 rounded-lg" />
@@ -24,7 +24,7 @@ export default function VisitDetailPageLoader() {
       <div className="grid gap-3 xl:min-h-0 xl:flex-1 xl:grid-cols-[17rem_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-3 xl:order-2 xl:min-h-0">
           <div className="grid gap-3 xl:min-h-0 xl:flex-1">
-            <div className="bg-card shadow-fluent-8 flex flex-col rounded-lg border">
+            <div className="bg-card flex flex-col rounded-lg border">
               <div className="grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-1 border-b p-1.5">
                 {Array.from({ length: 5 }, (_, index) => (
                   <div key={index} className="flex min-h-11 items-center gap-2 px-2.5">
@@ -52,7 +52,7 @@ export default function VisitDetailPageLoader() {
           </div>
         </div>
 
-        <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-4 xl:order-1">
+        <div className="bg-card space-y-4 rounded-xl border p-4 xl:order-1">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-4 w-32" />
           {Array.from({ length: 6 }, (_, index) => (

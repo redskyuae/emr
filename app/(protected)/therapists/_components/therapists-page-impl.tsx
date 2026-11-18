@@ -103,7 +103,7 @@ export function TherapistsPageImpl() {
 
   return (
     <div className="space-y-4">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <ToggleGroup
             type="single"

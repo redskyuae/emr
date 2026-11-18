@@ -64,10 +64,7 @@ export function AppointmentsTable({
   label?: string;
 }) {
   return (
-    <div
-      className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border"
-      aria-busy={isFetching}
-    >
+    <div className="bg-card overflow-hidden rounded-xl border" aria-busy={isFetching}>
       <div className={cn('overflow-x-auto', isFetching && 'opacity-70 transition-opacity')}>
         <table aria-label={label} className="w-full min-w-[1080px] text-sm">
           <thead>
@@ -228,7 +225,7 @@ export function AppointmentsTable({
 
 export function AppointmentsTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
+    <div className="bg-card overflow-hidden rounded-xl border p-4">
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="h-5 w-24" />

@@ -39,7 +39,7 @@ export function InvoiceTotalsPanel({ invoice }: { invoice: Invoice }) {
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Summary</CardTitle>
       </CardHeader>

@@ -33,7 +33,7 @@
   --font-heading: var(--font-satoshi);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-selected: var(--sidebar-selected);
-  --color-sidebar-selected-border: var(--sidebar-selected-border);
+  --color-sidebar-selected-indicator: var(--sidebar-selected-indicator);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
@@ -135,8 +135,8 @@
   --chart-4: oklch(0.62 0.14 180);
   --chart-5: oklch(0.55 0.15 290);
   --radius: 0.75rem;
-  /* The ink sidebar: a near-black floating panel in both themes. The current row is a black inset
-     pill with a hairline border, darker than the panel; hover lifts lighter. */
+  /* The ink sidebar: a near-black floating panel in both themes. The current row lifts a step above
+     the hover grey and carries a white indicator bar on its left edge. */
   --sidebar: oklch(0.195 0.016 268);
   --sidebar-foreground: oklch(0.955 0.008 280);
   --sidebar-primary: oklch(0.55 0.165 257);
@@ -145,8 +145,8 @@
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.3 0.024 270);
   --sidebar-ring: oklch(0.72 0.12 257);
-  --sidebar-selected: oklch(0.125 0.01 268);
-  --sidebar-selected-border: oklch(0.32 0.014 270);
+  --sidebar-selected: oklch(0.32 0.012 268);
+  --sidebar-selected-indicator: oklch(1 0 0);
 }
 
 .dark {
@@ -194,8 +194,8 @@
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.27 0.022 270);
   --sidebar-ring: oklch(0.72 0.12 257);
-  --sidebar-selected: oklch(0.085 0.008 268);
-  --sidebar-selected-border: oklch(0.28 0.014 270);
+  --sidebar-selected: oklch(0.29 0.012 268);
+  --sidebar-selected-indicator: oklch(1 0 0);
 }
 
 @layer base {

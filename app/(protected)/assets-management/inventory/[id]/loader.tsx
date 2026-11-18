@@ -6,7 +6,7 @@ export default function AssetDetailLoader() {
     <div className="space-y-4" aria-label="Loading page">
       <Skeleton className="h-8 w-24" />
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <Skeleton className="h-6 w-48" />
@@ -17,7 +17,7 @@ export default function AssetDetailLoader() {
       </Card>
 
       {[0, 1, 2].map((section) => (
-        <Card key={section} className="shadow-fluent-2">
+        <Card key={section}>
           <CardContent className="space-y-4">
             <Skeleton className="h-5 w-40" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

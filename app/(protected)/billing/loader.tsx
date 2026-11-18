@@ -5,7 +5,7 @@ export default function BillingPageLoader({ variant = 'list' }: { variant?: 'lis
   if (variant === 'composer') {
     return (
       <div className="space-y-4" aria-label="Loading Invoice editor">
-        <div className="bg-card shadow-fluent-2 rounded-xl border p-5">
+        <div className="bg-card rounded-xl border p-5">
           <Skeleton className="h-7 w-44" />
           <Skeleton className="mt-2 h-4 w-72" />
         </div>
@@ -22,12 +22,12 @@ export default function BillingPageLoader({ variant = 'list' }: { variant?: 'lis
   }
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
+      <div className="bg-card flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
         <Skeleton className="h-10 w-full lg:max-w-sm" />
         <Skeleton className="h-10 w-full lg:w-48" />
       </div>
 
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
+      <div className="bg-card overflow-hidden rounded-xl border">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px]">
             <thead>

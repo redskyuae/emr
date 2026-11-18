@@ -64,7 +64,7 @@ function PlanCard({
   const startable = next && canStartSession && canStartPlanSession(plan, next, visit);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
@@ -164,7 +164,7 @@ export function VisitTreatmentPlansPanel({
 
   if (loading)
     return (
-      <Card className="shadow-fluent-2" aria-label="Loading Treatment Plans">
+      <Card aria-label="Loading Treatment Plans">
         <CardHeader className="flex items-center justify-between">
           <Skeleton className="h-5 w-48" />
           <Skeleton className="h-6 w-28 rounded-full" />
@@ -218,7 +218,7 @@ export function VisitTreatmentPlansPanel({
           />
         ))
       ) : (
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent>
             <Empty className="min-h-48">
               <EmptyHeader>
@@ -259,7 +259,7 @@ export function VisitTreatmentPlansPanel({
       ) : null}
 
       {completedPlans.length ? (
-        <Card className="shadow-fluent-2 gap-0">
+        <Card className="gap-0">
           <CardHeader>
             <CardTitle className="text-base">
               Completed and stopped Plans <Badge variant="secondary">{completedPlans.length}</Badge>

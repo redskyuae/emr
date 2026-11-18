@@ -39,7 +39,7 @@ function RoleCard({
   canDelete: boolean;
 }) {
   return (
-    <Card className="shadow-fluent-2 hover:shadow-fluent-8 transition-shadow">
+    <Card className=" ">
       <CardContent className="flex min-h-52 flex-col gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <RoleIcon isSystem={role.isSystem} />
@@ -136,7 +136,7 @@ export function RoleGrid({
 
   if (roles.length === 0) {
     return (
-      <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+      <Empty className="bg-card min-h-80 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <PiShieldCheckLight />

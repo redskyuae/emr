@@ -34,7 +34,7 @@ export function ComposerPaymentCard({
   }
 
   return (
-    <Card className="shadow-fluent-4 h-fit">
+    <Card className="h-fit">
       <CardHeader>
         <CardTitle className="text-base">Payment</CardTitle>
         <CardDescription>

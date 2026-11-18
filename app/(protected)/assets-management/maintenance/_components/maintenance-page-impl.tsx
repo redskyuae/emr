@@ -90,7 +90,7 @@ export function MaintenancePageImpl() {
           ) : null}
         </div>
 
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardHeader className="border-b">
             <div>
               <CardTitle>Maintenance queue</CardTitle>

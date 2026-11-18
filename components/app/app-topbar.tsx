@@ -38,7 +38,7 @@ export function AppTopbar() {
       <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
         <SidebarTrigger className="text-muted-foreground -ml-2 shrink-0" />
 
-        <InputGroup className="shadow-fluent-2 max-w-md min-w-0 flex-1 rounded-full">
+        <InputGroup className="max-w-md min-w-0 flex-1 rounded-full">
           <InputGroupAddon className="pl-4">
             <CiSearch className="size-4" />
           </InputGroupAddon>

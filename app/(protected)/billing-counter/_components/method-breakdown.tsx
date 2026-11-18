@@ -21,7 +21,7 @@ export function MethodBreakdown({ txns }: { txns: LedgerTxn[] }) {
   );
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Collections by payment method</CardTitle>
         <CardDescription>

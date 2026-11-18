@@ -93,7 +93,7 @@ export function VisitSourceFields({
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading
           id="check-in-patient-heading"
@@ -241,7 +241,7 @@ export function VisitDetailsFields({
   const doctorRequired = visitTypeRequiresDoctor(selectedVisitType?.code);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading
           id="check-in-visit-heading"

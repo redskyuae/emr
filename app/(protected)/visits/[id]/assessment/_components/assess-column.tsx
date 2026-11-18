@@ -38,7 +38,7 @@ export function AssessColumn({
   const disabled = state.status === 'COMPLETED';
 
   return (
-    <Card className="shadow-fluent-2 gap-0 py-0">
+    <Card className="gap-0 py-0">
       <CardHeader className="border-b py-4">
         <CardTitle className="text-lg">
           <h2>Intake</h2>

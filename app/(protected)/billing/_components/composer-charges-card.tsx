@@ -56,7 +56,7 @@ export function ComposerChargesCard({
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Charges</CardTitle>
         <CardDescription>

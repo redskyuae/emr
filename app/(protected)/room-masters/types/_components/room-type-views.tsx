@@ -103,7 +103,7 @@ export function RoomTypeTableView({
   onDelete,
 }: RoomTypeViewProps) {
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[760px] table-fixed">
@@ -160,7 +160,7 @@ export function RoomTypeCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {roomTypes.map((roomType) => (
-        <Card key={roomType.id} className="shadow-fluent-2">
+        <Card key={roomType.id}>
           <CardContent className="space-y-3">
             <RoomTypeIcon color={roomType.color} />
 
@@ -219,7 +219,7 @@ export function RoomTypeListView({
   return (
     <div className="space-y-3">
       {roomTypes.map((roomType) => (
-        <Card key={roomType.id} className="shadow-fluent-2">
+        <Card key={roomType.id}>
           <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <RoomTypeIcon color={roomType.color} />

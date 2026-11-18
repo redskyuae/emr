@@ -60,7 +60,7 @@ export function ResourceAllocationSection({
     '--resource-span': resourceRows + 2,
   } as CSSProperties;
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-procedure/15 border-b">
         <CardTitle>Room & Therapist</CardTitle>
         <CardDescription>

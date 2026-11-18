@@ -48,7 +48,7 @@ function formatMoney(value: number | null) {
 function AssetDetailSkeleton() {
   return (
     <div className="space-y-4" aria-label="Loading Asset">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardContent className="flex items-center gap-4 py-4">
           <Skeleton className="size-12 shrink-0 rounded-md" />
           <div className="space-y-2">
@@ -59,7 +59,7 @@ function AssetDetailSkeleton() {
       </Card>
 
       {[0, 1, 2].map((section) => (
-        <Card key={section} className="shadow-fluent-2">
+        <Card key={section}>
           <CardContent className="space-y-4">
             <Skeleton className="h-5 w-40" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -107,7 +107,7 @@ export function AssetDetailImpl({ assetId }: { assetId: number }) {
     <div className="space-y-4">
       <BackLink />
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <span
@@ -137,7 +137,7 @@ export function AssetDetailImpl({ assetId }: { assetId: number }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader>
           <CardTitle>Identity</CardTitle>
         </CardHeader>
@@ -152,7 +152,7 @@ export function AssetDetailImpl({ assetId }: { assetId: number }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader>
           <CardTitle>Assignment</CardTitle>
         </CardHeader>
@@ -164,7 +164,7 @@ export function AssetDetailImpl({ assetId }: { assetId: number }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader>
           <CardTitle>Service &amp; value</CardTitle>
         </CardHeader>

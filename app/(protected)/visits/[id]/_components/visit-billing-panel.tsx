@@ -33,7 +33,7 @@ export function VisitBillingPanel({ visit, invoices, loading, error, canCreateIn
   const createInvoiceUrl = `/billing?invoice=new&patientId=${visit.patient.id}&visitId=${visit.id}`;
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle className="text-base">Billing for this Visit</CardTitle>
         {canCreateInvoice ? (

@@ -62,7 +62,7 @@ export function AppointmentDashboard() {
       </section>
 
       {!canRead ? (
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent>
             <p className="font-medium">Appointment access required</p>
             <p className="text-muted-foreground mt-1 text-sm">

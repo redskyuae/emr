@@ -39,25 +39,26 @@ import {
 } from '@/components/ui/sidebar';
 
 /**
- * A row on the ink sidebar: muted at rest, lifted on hover, and a black inset pill with a hairline
- * border when current. `SidebarMenuButton` shrinks it to an icon square while collapsed.
+ * A row on the ink sidebar: muted at rest, grey on hover, and when current a step lighter than hover
+ * with a white indicator bar on its left edge. `SidebarMenuButton` shrinks it to an icon square
+ * while collapsed, where the bar is dropped.
  *
  * `data-active:` in these row classes is not Tailwind's presence check. The shadcn stylesheet
  * imported in `app/globals.css` defines it as a custom variant that excludes
  * `data-active="false"`, so it matches the current row only, as in `components/ui/sidebar.tsx`.
  */
 const NAV_BUTTON_CLASS =
-  'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:bg-sidebar-selected data-active:text-sidebar-foreground data-active:hover:bg-sidebar-selected data-active:ring-sidebar-selected-border data-active:ring-1 data-active:ring-inset h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
+  'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:bg-sidebar-selected data-active:text-sidebar-foreground data-active:hover:bg-sidebar-selected relative data-active:before:bg-sidebar-selected-indicator before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full group-data-[collapsible=icon]:before:hidden h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
 
 /**
  * A parent row with a submenu: the current child carries the selection, so the parent only
  * brightens. Collapsed to icons the submenu is hidden, so the parent takes the selection instead.
  */
 const NAV_PARENT_BUTTON_CLASS =
-  'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:text-sidebar-foreground data-active:bg-transparent data-active:hover:bg-sidebar-accent group-data-[collapsible=icon]:data-active:bg-sidebar-selected group-data-[collapsible=icon]:data-active:hover:bg-sidebar-selected group-data-[collapsible=icon]:data-active:ring-sidebar-selected-border group-data-[collapsible=icon]:data-active:ring-1 group-data-[collapsible=icon]:data-active:ring-inset h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
+  'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:text-sidebar-foreground data-active:bg-transparent data-active:hover:bg-sidebar-accent group-data-[collapsible=icon]:data-active:bg-sidebar-selected group-data-[collapsible=icon]:data-active:hover:bg-sidebar-selected h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';
 
 const NAV_SUB_BUTTON_CLASS =
-  'text-sidebar-foreground/65 hover:text-sidebar-foreground data-active:bg-sidebar-selected data-active:text-sidebar-foreground data-active:hover:bg-sidebar-selected data-active:ring-sidebar-selected-border data-active:ring-1 data-active:ring-inset h-10 translate-x-0 rounded-lg px-3 data-active:font-semibold';
+  'text-sidebar-foreground/65 hover:text-sidebar-foreground data-active:bg-sidebar-selected data-active:text-sidebar-foreground data-active:hover:bg-sidebar-selected relative data-active:before:bg-sidebar-selected-indicator before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full h-10 translate-x-0 rounded-lg px-3 data-active:font-semibold';
 
 function NavBadge({ value }: { value: string }) {
   return (
@@ -179,7 +180,7 @@ export function AppSidebar({
     <Sidebar
       collapsible="icon"
       variant="floating"
-      className="[&_[data-slot=sidebar-inner]]:shadow-fluent-8 [&_[data-slot=sidebar-inner]]:rounded-2xl"
+      className="[&_[data-slot=sidebar-inner]]:rounded-2xl"
     >
       <SidebarHeader className="px-4 pt-5 pb-3 group-data-[collapsible=icon]:px-2">
         <Link

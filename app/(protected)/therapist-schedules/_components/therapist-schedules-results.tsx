@@ -69,7 +69,7 @@ export function TherapistSchedulesResults({
 
   if (schedules.length === 0) {
     return (
-      <Empty className="bg-card shadow-fluent-2 min-h-72 border">
+      <Empty className="bg-card min-h-72 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <CiCalendarDate className="size-5" />

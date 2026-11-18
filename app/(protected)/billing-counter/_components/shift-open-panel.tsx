@@ -36,7 +36,7 @@ export function ShiftOpenPanel() {
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Open next shift · {state.shift.counter}</CardTitle>
         <CardDescription>

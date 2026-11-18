@@ -95,7 +95,7 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">Refund</CardTitle>
           <CardDescription>
@@ -236,7 +236,7 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2 h-fit">
+      <Card className="h-fit">
         <CardHeader>
           <CardTitle className="text-base">Payment history for this Patient</CardTitle>
           <CardDescription>Current shift only.</CardDescription>

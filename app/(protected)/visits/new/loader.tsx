@@ -15,7 +15,7 @@ function SectionHeadingSkeleton() {
 export default function CreateVisitLoader() {
   return (
     <div className="space-y-4 pb-28" aria-label="Loading Create Visit options">
-      <div className="bg-card shadow-fluent-2 flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4">
+      <div className="bg-card flex flex-wrap items-center justify-between gap-4 rounded-xl border px-5 py-4">
         <div className="space-y-2">
           <Skeleton className="h-6 w-20" />
           <Skeleton className="h-4 w-36" />
@@ -35,7 +35,7 @@ export default function CreateVisitLoader() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">
-          <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
+          <div className="bg-card space-y-4 rounded-xl border p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SectionHeadingSkeleton />
               <Skeleton className="h-10 w-72 max-w-full" />
@@ -62,7 +62,7 @@ export default function CreateVisitLoader() {
         </div>
 
         <div
-          className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5"
+          className="bg-card space-y-3 rounded-xl border p-5"
           aria-label="Loading Patient Treatment Plans"
         >
           <SectionHeadingSkeleton />
@@ -71,7 +71,7 @@ export default function CreateVisitLoader() {
         </div>
       </div>
 
-      <div className="bg-card shadow-fluent-16 fixed right-4 bottom-4 left-4 z-20 flex items-center justify-between gap-3 rounded-xl border p-3 lg:left-[calc(var(--sidebar-width)+1rem)]">
+      <div className="bg-card fixed right-4 bottom-4 left-4 z-20 flex items-center justify-between gap-3 rounded-xl border p-3 lg:left-[calc(var(--sidebar-width)+1rem)]">
         <div className="flex gap-2">
           <Skeleton className="h-6 w-28 rounded-full" />
           <Skeleton className="h-6 w-40 rounded-full" />

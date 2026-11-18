@@ -142,7 +142,7 @@ function BookAppointmentWorkflow() {
 
       <nav
         aria-label="Booking progress"
-        className="bg-card shadow-fluent-2 flex flex-wrap items-center gap-2 rounded-xl border p-2"
+        className="bg-card flex flex-wrap items-center gap-2 rounded-xl border p-2"
       >
         {(['Patient & visit', 'Schedule & book'] as const).map((label, index) => (
           <Button
@@ -440,7 +440,7 @@ function BookAppointmentWorkflow() {
           </>
         )}
 
-        <footer className="bg-card shadow-fluent-8 sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
+        <footer className="bg-card sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
           {step === 2 ? (
             <>
               <Button type="button" variant="outline" onClick={() => booking.setStep(1)}>

@@ -77,7 +77,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
             <InputGroup className="h-9 lg:max-w-sm">
               <InputGroupAddon>
@@ -128,7 +128,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
           <AyurvedaDiagnosisCodeTableSkeleton />
         ) : ayurvedaDiagnosisCodesQuery.isError ? null : ayurvedaDiagnosisCodes.length === 0 &&
           !debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+          <Empty className="bg-card min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <PiLeafLight />
@@ -149,7 +149,7 @@ export function AyurvedaDiagnosisCodesPageImpl() {
             ) : null}
           </Empty>
         ) : ayurvedaDiagnosisCodes.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
+          <Empty className="bg-card min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <CiSearch />

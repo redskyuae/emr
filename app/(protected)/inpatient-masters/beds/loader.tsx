@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 export default function BedsPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
+      <div className="bg-card flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
         <Skeleton className="h-10 w-full lg:max-w-sm" />
         <Skeleton className="h-10 w-full lg:w-48" />
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
@@ -17,7 +17,7 @@ export default function BedsPageLoader() {
         </div>
       </div>
 
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
+      <div className="bg-card overflow-hidden rounded-xl border">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
             <thead>

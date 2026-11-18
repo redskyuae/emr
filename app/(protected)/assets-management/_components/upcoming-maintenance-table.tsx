@@ -47,7 +47,7 @@ function MasterBadge({ name, color }: { name: string; color: string }) {
 
 export function UpcomingMaintenanceTable({ workOrders }: UpcomingMaintenanceTableProps) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Upcoming maintenance</CardTitle>

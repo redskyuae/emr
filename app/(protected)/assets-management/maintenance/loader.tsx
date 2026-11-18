@@ -24,7 +24,7 @@ export default function PageLoader() {
         <Skeleton className="h-4 w-56" />
       </div>
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader className="gap-1.5 border-b">
           <Skeleton className="h-5 w-44" />
           <Skeleton className="h-4 w-72 max-w-full" />

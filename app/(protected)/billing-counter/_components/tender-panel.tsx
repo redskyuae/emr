@@ -220,7 +220,7 @@ export function TenderPanel({
   }
 
   return (
-    <Card className="shadow-fluent-4 h-fit">
+    <Card className="h-fit">
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
         <CardDescription>{subtitle}</CardDescription>

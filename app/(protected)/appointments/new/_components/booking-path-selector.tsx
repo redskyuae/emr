@@ -37,7 +37,7 @@ export function BookingPathSelector({
   disabled?: boolean;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

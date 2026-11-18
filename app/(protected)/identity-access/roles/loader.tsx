@@ -9,10 +9,7 @@ export default function RolesPageLoader() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {[0, 1, 2, 3, 4, 5].map((item) => (
-          <div
-            key={item}
-            className="bg-card shadow-fluent-2 flex min-h-52 flex-col gap-4 rounded-xl border p-5"
-          >
+          <div key={item} className="bg-card flex min-h-52 flex-col gap-4 rounded-xl border p-5">
             <div className="flex gap-3">
               <Skeleton className="size-11 rounded-lg" />
               <div className="flex-1 space-y-2">

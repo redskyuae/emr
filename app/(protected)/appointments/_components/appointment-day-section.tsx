@@ -69,7 +69,7 @@ export function AppointmentDaySection({
           onCancel={onCancel}
         />
       ) : (
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent>
             <p className="text-muted-foreground text-sm">{emptyDescription}</p>
           </CardContent>

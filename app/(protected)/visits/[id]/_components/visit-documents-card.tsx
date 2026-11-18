@@ -41,7 +41,7 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex items-center justify-between">
         <CardTitle className="text-base">Documents this Visit</CardTitle>
         {active ? <VisitDocumentUploadButton label="Upload" onUploaded={handleUploaded} /> : null}

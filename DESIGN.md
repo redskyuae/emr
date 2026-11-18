@@ -6,11 +6,11 @@ The design source of truth for all frontend work. Any agent or developer buildin
 
 **Microsoft Fluent-inspired, built on shadcn/ui, with a deep blue primary.**
 
-- **Why Fluent**: EMR software is enterprise productivity software. Fluent's vocabulary — clean light surfaces, restrained color, depth through elevation, small radii, dense-but-breathable layouts — signals "professional tool", which is the right tone for hospital staff using this 8 hours a day.
+- **Why Fluent**: EMR software is enterprise productivity software. Fluent's vocabulary — clean light surfaces, restrained color, flat surfaces with elevation reserved for overlays, small radii, dense-but-breathable layouts — signals "professional tool", which is the right tone for hospital staff using this 8 hours a day.
 - **Why shadcn/ui**: components are owned in-repo (`components/ui/`), themed centrally through CSS variables, and accessible by default (Radix primitives). We restyle tokens, not components.
 - **Why a darker blue**: Microsoft's brand blue (`#0078D4`) is too bright for long clinical sessions and too recognizable as "Microsoft". Our primary is a deeper, calmer blue — `oklch(0.43 0.118 254)` — that holds AA contrast as a text color and button fill on white.
 - **Decided**: June 2026, while building the marketing and auth pages. The product is **Medical EMR**, built by **Redsky Consultancy** (https://redskyconsultancy.com/). The brand string lives in `components/brand/logo.tsx`, the marketing header/footer, and root metadata — update it in those places only.
-- **Refreshed**: November 2026, to give the clinical app more room. The app took the shell and control sizing of our Whiteboard and Construction Management products: the Satoshi typeface, an ink floating sidebar, a large page title over a faint watermark of itself, 40px form controls, a 12px base radius, softer shadows, and tables with a header band. The deep blue primary and the semantic status colours did not change.
+- **Refreshed**: November 2026, to give the clinical app more room. The app took the shell and control sizing of our Whiteboard and Construction Management products: the Satoshi typeface, an ink floating sidebar, a large page title over a faint watermark of itself, 40px form controls, a 12px base radius, flat shadowless surfaces, and tables with a header band. The deep blue primary and the semantic status colours did not change.
 - **Deployment branding**: `LOGIN_LOGO_VARIANT` selects the visible Dhathri logo across login, navigation, loading screens, and the browser icon. `none` keeps the Medical EMR mark. Product copy and metadata still identify Medical EMR and Redsky Consultancy.
 
 ## Tokens
@@ -32,7 +32,7 @@ All tokens live in `app/globals.css` as CSS variables, mapped to Tailwind utilit
 | `--border` / `--input`           | cool greys               | Hairlines; inputs slightly darker (Fluent visible-field borders) |
 | `--destructive`                  | red oklch                | Errors, blocked states, and destructive actions                  |
 
-The sidebar has its own tokens (`--sidebar*`) and is **ink in both themes**: a near-black panel whose current row is `--sidebar-selected`, a pure black pill darker than the panel, edged in black by `--sidebar-selected-border`. `--sidebar-primary` is kept for solid accents such as the avatar. The page keeps its own theme; the sidebar does not follow it.
+The sidebar has its own tokens (`--sidebar*`) and is **ink in both themes**: a near-black panel whose current row is `--sidebar-selected`, a grey a step lighter than the hover grey, marked by a white `--sidebar-selected-indicator` bar. `--sidebar-primary` is kept for solid accents such as the avatar. The page keeps its own theme; the sidebar does not follow it.
 
 A full dark theme exists under `.dark` (navy-tinted darks, lighter blue primary). Every screen must work in both; never use raw `white`/`black` utilities for surfaces or text.
 
@@ -102,20 +102,16 @@ cannot make third-party requests runs in the system font.
 
 ### Elevation (Fluent depth ramp)
 
-Custom shadow utilities defined in `globals.css`, replacing Tailwind's default shadows for surfaces.
-The steps keep their Fluent names, but the shadows are soft and low-contrast: a card at rest is
-separated mostly by its hairline ring and the tinted page behind it.
+**The clinical app is flat.** Nothing that sits in the page casts a shadow: cards, headers, toolbars, stat cards, command bars, sticky and fixed bars, the active tab and the sidebar panel are separated only by a solid `bg-card` (white) surface, its hairline border, and the tinted page behind it. Do not add `shadow-*` to an in-page surface, including on hover; a hover state changes the border or background instead.
 
-| Utility            | Use for                                |
-| ------------------ | -------------------------------------- |
-| `shadow-fluent-2`  | Cards at rest, small chips             |
-| `shadow-fluent-4`  | Raised cards                           |
-| `shadow-fluent-8`  | Hover states, dropdowns, command bars  |
-| `shadow-fluent-16` | Popovers, tooltips, teaching callouts  |
-| `shadow-fluent-28` | Hero artwork, marketing feature panels |
-| `shadow-fluent-64` | Dialogs, panels, anything modal        |
+Shadows are kept only for surfaces that float over the page and must read as on top of it: menus, selects, popovers, hover cards and combobox lists (the shadcn defaults in `components/ui/`), and sheets and dialogs (`shadow-fluent-64`).
 
-Depth communicates hierarchy: the more an element interrupts the user, the higher its elevation. Prefer elevation + hairline border over heavy borders.
+The custom Fluent steps in `globals.css` remain for those overlays and for the marketing site:
+
+| Utility                                | Use for                                                    |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `shadow-fluent-2` … `shadow-fluent-28` | Marketing pages only (hero artwork, feature panels, chips) |
+| `shadow-fluent-64`                     | Sheets and dialogs                                         |
 
 ### Radius & spacing
 
@@ -137,7 +133,8 @@ Depth communicates hierarchy: the more an element interrupts the user, the highe
 
 ### Surfaces
 
-- `.acrylic` — translucent blurred light surface (sticky headers, floating bars).
+- In-page surfaces (cards, page and record headers, command bars, sticky or fixed action bars) are solid `bg-card`, never translucent or tinted.
+- `.acrylic` — translucent blurred light surface. In the app it is used only by the page-coloured `AppTopbar`, which has no border and must blend with the page; the marketing site header also uses it.
 - `.acrylic-dark` — navy translucent variant for dark bands.
 
 ### Marketing surfaces (editorial layout)
@@ -177,7 +174,7 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 
 The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` in `app/(protected)/layout.tsx`.
 
-- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is a black `sidebar-selected` pill with a 1px black inset `sidebar-selected-border` ring and white text, rather than a solid blue fill, which shouted on the ink panel; hover lifts lighter (`sidebar-accent`), so the two never look alike. A parent with a submenu only brightens, and its current child carries the selection; collapsed to icons the submenu is hidden, so the parent takes the selection instead. Group labels are `sidebar-foreground/60`, which keeps them above 4.5:1 on the panel. It is a sheet on a phone.
+- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is `sidebar-selected`, a grey a step lighter than the hover grey (`sidebar-accent`), with white semibold text and a 3px white `sidebar-selected-indicator` bar on its left edge. A solid blue fill shouted on the ink panel, and a black one disappeared into it. Collapsed to icons, the bar is dropped. A parent with a submenu only brightens, and its current child carries the selection; collapsed to icons the submenu is hidden, so the parent takes the selection instead. Group labels are `sidebar-foreground/60`, which keeps them above 4.5:1 on the panel. It is a sheet on a phone.
 - **`AppTopbar`** is a slim sticky utility bar: the sidebar trigger, global search, the active Tenant (`TenantChip`), help and notifications. It carries no page title.
 - **`AppPageHeader`** sits under the top bar on every page. It shows the page's sidebar group as a small muted eyebrow (`getAppPageGroup`), the title as a plain `h1` in the foreground colour, and the subtitle under it. The title is repeated behind the header as a large watermark at 4.5% foreground opacity that drifts in from the left on navigation, inside the motion rule (0.7s, `power3.out`; skipped under `prefers-reduced-motion`); it is `aria-hidden` and clipped by the header. Title and subtitle come from `app-shell-config.ts`; a page does not render its own `h1`, and its section headings start at `h2`. A task page that needs its own name (Check in Patient, Reschedule Appointment) gets its own page meta there instead of a second, larger heading in the page.
 - A page header **primary action** (`primaryAction` in the page meta) is only for pages whose content has no always-visible button for the same action. A list page with a create button in its toolbar leaves it out, so an action never appears twice.
@@ -194,7 +191,7 @@ The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` i
 
 1. **Light, calm, blue-accented.** Surfaces are near-white and cool-tinted; the main action is a near-black ink button (`--cta`, off-white in dark), and deep blue primary marks links, selection and the current step. Functional and status colors add meaning through restrained tints.
 2. **One accent at a time.** One solid ink button marks the single most important action per view. Secondary actions are `outline`/`ghost`. Functional and status colors may coexist when each communicates a distinct meaning.
-3. **Depth over decoration.** Hierarchy comes from elevation, spacing, and type weight — not from colored boxes and heavy borders.
+3. **Flat, not decorated.** Hierarchy comes from white surfaces on the tinted page, hairline borders, spacing, and type weight — not from shadows, colored boxes or heavy borders. Only overlays (menus, popovers, sheets, dialogs) are elevated.
 4. **Soft corners, calm surfaces.** A 12px base radius and hairline rings; nothing bubbly.
 5. **Type does the talking.** Satoshi headings carry personality through weight and size; body text stays quiet. Mono for anything machine-like (codes, MRNs, timestamps, slugs).
 6. **Breathing room first.** Staff use this all day: generous gutters, 40px controls and roomy table rows come before fitting more on screen. Deliberately dense grids are the exception, and still sit on the 8px grid with clear group separation.

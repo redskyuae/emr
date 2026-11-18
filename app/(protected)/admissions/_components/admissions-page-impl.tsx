@@ -115,7 +115,7 @@ export function AdmissionsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <Select
               value={statusParam ?? 'ADMITTED'}
@@ -215,7 +215,7 @@ export function AdmissionsPageImpl() {
         {admissionsQuery.isLoading ? (
           <AdmissionsTableSkeleton />
         ) : admissions.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+          <Empty className="bg-card min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <PiBedLight />

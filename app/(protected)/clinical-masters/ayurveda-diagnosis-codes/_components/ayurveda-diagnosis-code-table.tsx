@@ -28,7 +28,7 @@ export function AyurvedaDiagnosisCodeTable({
   onDelete: (ayurvedaDiagnosisCode: AyurvedaDiagnosisCode) => void;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
+    <div className="bg-card overflow-hidden rounded-lg border">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[840px] text-sm">
           <thead>
@@ -116,7 +116,7 @@ export function AyurvedaDiagnosisCodeTable({
 
 export function AyurvedaDiagnosisCodeTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
+    <div className="bg-card overflow-hidden rounded-lg border p-3">
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="h-5 w-20" />

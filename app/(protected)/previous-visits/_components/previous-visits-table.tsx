@@ -169,7 +169,7 @@ export function PreviousVisitsTable({
   onPageChange: (next: number) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className={cn(isFetching && 'opacity-70 transition-opacity')}>
           <VisitCards visits={visits} />
@@ -211,7 +211,7 @@ export function PreviousVisitsTable({
 
 export function PreviousVisitsTableSkeleton() {
   return (
-    <Card className="shadow-fluent-2 py-0" aria-label="Loading Previous Visits">
+    <Card className="py-0" aria-label="Loading Previous Visits">
       <CardContent className="space-y-2 p-4">
         {Array.from({ length: 8 }, (_, index) => (
           <Skeleton key={index} className="h-10 w-full" />

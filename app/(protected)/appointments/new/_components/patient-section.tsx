@@ -59,7 +59,7 @@ export function PatientSection({
   const showResults =
     !selectedPatient || search !== selectedPatient.firstName + ' ' + selectedPatient.lastName;
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">

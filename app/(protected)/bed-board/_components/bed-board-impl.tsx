@@ -56,7 +56,7 @@ export function BedBoardImpl() {
 
   return (
     <div className="space-y-4">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <Select value={wardFilter} onValueChange={setWardFilter}>
             <SelectTrigger className="lg:w-48" aria-label="Filter by ward">
@@ -99,7 +99,7 @@ export function BedBoardImpl() {
       {boardQuery.isLoading ? (
         <BedBoardSkeleton />
       ) : allWards.length === 0 ? (
-        <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+        <Empty className="bg-card min-h-80 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <PiBedLight />
@@ -116,7 +116,7 @@ export function BedBoardImpl() {
           </EmptyContent>
         </Empty>
       ) : wards.every((ward) => ward.visibleBeds.length === 0) ? (
-        <Empty className="bg-card shadow-fluent-2 min-h-72 border">
+        <Empty className="bg-card min-h-72 border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <CiSearch />
@@ -132,7 +132,7 @@ export function BedBoardImpl() {
             const occupied = ward.beds.filter((bed) => bed.status === 'OCCUPIED').length;
 
             return (
-              <Card key={ward.wardId} className="shadow-fluent-2">
+              <Card key={ward.wardId}>
                 <CardHeader className="flex-row items-center justify-between">
                   <CardTitle className="text-base">
                     {ward.wardName} <Badge variant="secondary">{ward.wardCode}</Badge>
@@ -158,7 +158,7 @@ export function BedBoardImpl() {
 
 function BedTile({ bed, wardId }: { bed: BedBoardBed; wardId: number }) {
   const tileClassName = cn(
-    'flex min-h-28 flex-col gap-1 rounded-lg border p-3 text-left text-sm transition-shadow hover:shadow-fluent-2',
+    'flex min-h-28 flex-col gap-1 rounded-lg border p-3 text-left text-sm',
     getBedStatusClassName(bed.status)
   );
 
@@ -216,7 +216,7 @@ function BedBoardSkeleton() {
   return (
     <div className="space-y-4">
       {Array.from({ length: 2 }, (_, wardIndex) => (
-        <div key={wardIndex} className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-5">
+        <div key={wardIndex} className="bg-card space-y-3 rounded-xl border p-5">
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-4 w-28" />

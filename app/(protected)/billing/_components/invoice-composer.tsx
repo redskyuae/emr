@@ -189,7 +189,7 @@ export function InvoiceComposer() {
   return (
     <FormProvider {...form}>
       <div className="space-y-4">
-        <div className="bg-card shadow-fluent-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-5">
+        <div className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-5">
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="icon" aria-label="Back to Invoices">
               <Link href="/billing">
@@ -232,7 +232,7 @@ export function InvoiceComposer() {
           <div className="space-y-4">
             <ComposerPatientCard />
             <ComposerChargesCard lines={lines} onChange={setLines} />
-            <Card className="shadow-fluent-2">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-base">Invoice details</CardTitle>
               </CardHeader>

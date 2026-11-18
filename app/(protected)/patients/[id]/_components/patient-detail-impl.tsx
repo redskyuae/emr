@@ -94,12 +94,12 @@ function getRegistrationStatusLabel(status: Patient['registrationStatus']) {
 function PatientDetailSkeleton() {
   return (
     <div className="space-y-6" aria-label="Loading Patient">
-      <div className="bg-card shadow-fluent-2 rounded-xl border p-5">
+      <div className="bg-card rounded-xl border p-5">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="mt-2 h-4 w-32" />
       </div>
       {[0, 1, 2, 3, 4, 5, 6].map((section) => (
-        <div key={section} className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
+        <div key={section} className="bg-card space-y-4 rounded-xl border p-5">
           <Skeleton className="h-5 w-40" />
           {section === 1 ? (
             <div className="space-y-2">
@@ -180,7 +180,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
     <div className="space-y-4">
       <BackLink />
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardContent className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -273,7 +273,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 space-y-4">
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle>Identifiers</CardTitle>
             </CardHeader>
@@ -317,7 +317,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle>Identity documents</CardTitle>
             </CardHeader>
@@ -326,7 +326,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle>Demographics</CardTitle>
             </CardHeader>
@@ -350,7 +350,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle>Contact</CardTitle>
             </CardHeader>
@@ -361,7 +361,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle>Address</CardTitle>
             </CardHeader>
@@ -375,7 +375,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle>Billing</CardTitle>
             </CardHeader>
@@ -391,7 +391,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle>Next of Kin</CardTitle>
             </CardHeader>

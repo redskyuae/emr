@@ -55,7 +55,7 @@ export function VisitClinicalNotesCard({
     noteTypesQuery.data?.data.find((item) => item.id === id)?.name ?? 'Clinical Note';
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle className="text-base">Clinical Notes this Visit</CardTitle>
         {active && canCreateNote ? (

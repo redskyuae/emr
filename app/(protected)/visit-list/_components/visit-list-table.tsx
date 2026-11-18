@@ -17,7 +17,7 @@ import { BILLING_PRESENTATION } from '../_utils/visit-list-presentation';
 
 export function VisitListTable({ rows, today }: { rows: VisitListRow[]; today: Date }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
+    <div className="bg-card overflow-hidden rounded-xl border">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1080px] text-sm">
           <thead>

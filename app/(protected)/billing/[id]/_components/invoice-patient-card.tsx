@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function InvoicePatientCard({ invoice }: { invoice: Invoice }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Patient &amp; encounter</CardTitle>
       </CardHeader>

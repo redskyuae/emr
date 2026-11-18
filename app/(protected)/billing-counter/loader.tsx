@@ -5,7 +5,7 @@ export default function BillingCounterPageLoader() {
     <div className="space-y-4" aria-label="Loading Billing Counter">
       <Skeleton className="h-16 rounded-lg" />
 
-      <div className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
+      <div className="bg-card space-y-3 rounded-xl border p-4">
         <div className="flex flex-wrap items-center gap-3">
           <Skeleton className="h-10 w-72" />
           <Skeleton className="h-6 w-40 lg:ml-auto" />

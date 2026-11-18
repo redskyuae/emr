@@ -13,7 +13,7 @@ export default function LanguagesPageLoader() {
 function LanguageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card shadow-fluent-2 flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
+      <div className="bg-card flex flex-col gap-3 rounded-xl border p-4 lg:flex-row lg:items-center">
         <Skeleton className="h-10 w-56" />
         <Skeleton className="h-10 w-full lg:max-w-sm" />
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
@@ -21,7 +21,7 @@ function LanguageLoader() {
         </div>
       </div>
 
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
+      <div className="bg-card overflow-hidden rounded-xl border">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[680px]">
             <thead>

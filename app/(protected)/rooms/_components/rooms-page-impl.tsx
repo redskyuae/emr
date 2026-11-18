@@ -132,7 +132,7 @@ export function RoomsPageImpl() {
           <RoomSummaryCards summary={summaryQuery.data} />
         ) : null}
 
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
@@ -224,7 +224,7 @@ export function RoomsPageImpl() {
         {roomsQuery.isLoading ? (
           <ViewSkeleton layout={viewLayout} />
         ) : rooms.length === 0 && !hasFilters ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+          <Empty className="bg-card min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <PiBedLight />
@@ -244,7 +244,7 @@ export function RoomsPageImpl() {
             ) : null}
           </Empty>
         ) : rooms.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
+          <Empty className="bg-card min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <CiSearch />

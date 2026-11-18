@@ -53,7 +53,7 @@ export function TherapistSchedulesToolbar({
 }: Props) {
   const hasFilters = Boolean(therapistValue || fromDateValue || toDateValue);
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardContent className="flex flex-col gap-3 xl:flex-row xl:items-center">
         <ToggleGroup
           type="single"

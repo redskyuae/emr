@@ -105,7 +105,7 @@ export function ReligionTableView({
   onDelete: (religion: Religion) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[680px]">
@@ -162,7 +162,7 @@ export function ReligionCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {religions.map((religion) => (
-        <Card key={religion.id} className="shadow-fluent-2">
+        <Card key={religion.id}>
           <CardContent className="space-y-3">
             <ReligionIcon />
 
@@ -221,7 +221,7 @@ export function ReligionListView({
   return (
     <div className="space-y-3">
       {religions.map((religion) => (
-        <Card key={religion.id} className="shadow-fluent-2">
+        <Card key={religion.id}>
           <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <ReligionIcon />

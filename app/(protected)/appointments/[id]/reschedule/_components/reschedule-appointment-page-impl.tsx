@@ -98,7 +98,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
         </div>
       </header>
 
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader className="border-b">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -180,7 +180,7 @@ export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId
 
       <RescheduleReason control={form.control} />
 
-      <footer className="bg-card shadow-fluent-8 sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
+      <footer className="bg-card sticky bottom-0 z-20 mt-auto flex flex-wrap items-center gap-3 rounded-xl border p-3 sm:p-4">
         <CiCalendarDate className="text-primary hidden size-5 sm:block" />
         <BookingSummary
           values={values}

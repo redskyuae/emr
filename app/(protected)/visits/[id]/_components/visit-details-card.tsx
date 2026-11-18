@@ -54,7 +54,7 @@ export function VisitDetailsCard({
   return (
     <Card
       className={cn(
-        'shadow-fluent-2 gap-4',
+        'gap-4',
         embedded &&
           'gap-0 overflow-visible rounded-none border-0 bg-transparent py-0 shadow-none ring-0'
       )}

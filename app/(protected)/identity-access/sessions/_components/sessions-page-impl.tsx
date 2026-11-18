@@ -82,7 +82,7 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
 
   return (
     <div className="space-y-4">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <InputGroup className="lg:max-w-sm">
             <InputGroupAddon>
@@ -144,7 +144,7 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2 py-0">
+      <Card className="py-0">
         <CardContent className="p-0">
           {filteredSessions.length ? (
             <Table className="min-w-max">

@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function PreviousVisitsPageLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
+      <div className="bg-card space-y-4 rounded-xl border p-5">
         <div className="w-full space-y-2 xl:max-w-md">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-10 w-full" />
@@ -27,7 +27,7 @@ export default function PreviousVisitsPageLoader() {
         <Skeleton className="h-4 w-48" />
       </div>
 
-      <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
+      <div className="bg-card overflow-hidden rounded-xl border">
         <div className="space-y-2 p-4">
           {Array.from({ length: 8 }, (_, index) => (
             <Skeleton key={index} className="h-10 w-full" />

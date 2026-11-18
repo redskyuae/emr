@@ -12,7 +12,7 @@ import {
 export default function InventoryLoader() {
   return (
     <div className="space-y-4" aria-label="Loading asset inventory">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader className="gap-1.5 border-b">
           <Skeleton className="h-5 w-36" />
           <Skeleton className="h-4 w-64" />

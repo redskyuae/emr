@@ -66,7 +66,7 @@ function AttentionRow({ workOrder }: { workOrder: WorkOrder }) {
 
 export function AttentionPanel({ workOrders }: AttentionPanelProps) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Attention required</CardTitle>
@@ -102,7 +102,7 @@ export function AttentionPanel({ workOrders }: AttentionPanelProps) {
 
 export function AttentionPanelSkeleton() {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Attention required</CardTitle>

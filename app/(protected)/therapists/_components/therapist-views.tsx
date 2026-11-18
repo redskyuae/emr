@@ -129,7 +129,7 @@ export function TherapistTableView({
   onStatusAction,
 }: TherapistViewProps) {
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[900px]">
@@ -189,7 +189,7 @@ export function TherapistCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {therapists.map((therapist) => (
-        <Card key={therapist.id} className="shadow-fluent-2">
+        <Card key={therapist.id}>
           <CardContent className="space-y-3">
             <div className="flex items-start justify-between gap-2">
               <TherapistAvatar />
@@ -257,7 +257,7 @@ export function TherapistListView({
   return (
     <div className="space-y-3">
       {therapists.map((therapist) => (
-        <Card key={therapist.id} className="shadow-fluent-2">
+        <Card key={therapist.id}>
           <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-3 sm:w-64 sm:shrink-0">
               <TherapistAvatar />

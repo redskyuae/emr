@@ -131,7 +131,7 @@ export function PatientTreatmentsCard({
   const orderedPlans = orderTreatmentPlans(plans);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <SectionHeading
           icon={<PiLeafLight className="size-5" />}

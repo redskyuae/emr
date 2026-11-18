@@ -73,7 +73,7 @@ export function VisitTypesPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
@@ -113,7 +113,7 @@ export function VisitTypesPageImpl() {
         {visitTypesQuery.isLoading ? (
           <VisitTypeTableSkeleton />
         ) : visitTypes.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+          <Empty className="bg-card min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <PiClipboardTextLight />
@@ -134,7 +134,7 @@ export function VisitTypesPageImpl() {
             ) : null}
           </Empty>
         ) : visitTypes.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
+          <Empty className="bg-card min-h-72 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <CiSearch />

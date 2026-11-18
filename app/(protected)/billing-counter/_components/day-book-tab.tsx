@@ -32,7 +32,7 @@ function BookTable({
   children: ReactNode;
 }) {
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="overflow-x-auto p-0">
         <table className="w-full min-w-[760px] text-sm">
           <thead>

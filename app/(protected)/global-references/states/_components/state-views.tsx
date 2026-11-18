@@ -105,7 +105,7 @@ export function StateTableView({
   onDelete: (state: State) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[680px]">
@@ -171,7 +171,7 @@ export function StateCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {states.map((state) => (
-        <Card key={state.id} className="shadow-fluent-2">
+        <Card key={state.id}>
           <CardContent className="space-y-3">
             <StateIcon />
 
@@ -230,7 +230,7 @@ export function StateListView({
   return (
     <div className="space-y-3">
       {states.map((state) => (
-        <Card key={state.id} className="shadow-fluent-2">
+        <Card key={state.id}>
           <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <StateIcon />

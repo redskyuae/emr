@@ -153,7 +153,7 @@ export function VisitContextPane({
   return (
     <aside
       aria-label="Patient context"
-      className={cn('bg-card shadow-fluent-2 flex flex-col rounded-lg border', className)}
+      className={cn('bg-card flex flex-col rounded-lg border', className)}
     >
       <Tabs defaultValue="trends" className="min-h-0 flex-1 gap-0">
         <div className="border-b p-1.5">

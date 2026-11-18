@@ -50,9 +50,9 @@ export function StatCard({
   return (
     <Card
       className={cn(
-        'shadow-fluent-2 gap-3',
+        'gap-3',
         onPress &&
-          'hover:shadow-fluent-8 has-[button:focus-visible]:ring-ring/50 relative transition-shadow has-[button:focus-visible]:ring-3',
+          'has-[button:focus-visible]:ring-ring/50 relative has-[button:focus-visible]:ring-3',
         pressed && 'ring-primary ring-2'
       )}
     >
@@ -98,7 +98,7 @@ export function StatCard({
  */
 export function StatCardSkeleton({ hint = false }: { hint?: boolean }) {
   return (
-    <Card aria-hidden="true" className="shadow-fluent-2 gap-3">
+    <Card aria-hidden="true" className="gap-3">
       <CardHeader>
         <div className="flex h-4 items-center">
           <Skeleton className="h-3 w-28 max-w-full" />

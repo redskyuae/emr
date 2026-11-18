@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function InvoiceDetailLoader() {
   return (
     <div className="space-y-4" aria-label="Loading page">
-      <div className="bg-card shadow-fluent-2 flex items-center justify-between rounded-xl border p-5">
+      <div className="bg-card flex items-center justify-between rounded-xl border p-5">
         <div className="space-y-2">
           <Skeleton className="h-6 w-40" />
           <Skeleton className="h-4 w-56" />

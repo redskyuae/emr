@@ -35,7 +35,7 @@ export function BedTable({
   onDelete: (bed: Bed) => void;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border">
+    <div className="bg-card overflow-hidden rounded-xl border">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-sm">
           <thead>
@@ -106,7 +106,7 @@ export function BedTable({
 
 export function BedTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
+    <div className="bg-card overflow-hidden rounded-xl border p-4">
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="h-5 w-24" />

@@ -66,7 +66,7 @@ export function CategoryDistribution({ byCategory }: CategoryDistributionProps) 
   const maxCount = Math.max(...byCategory.map((category) => category.count), 1);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Assets by category</CardTitle>
@@ -110,7 +110,7 @@ export function CategoryDistribution({ byCategory }: CategoryDistributionProps) 
 
 export function CategoryDistributionSkeleton() {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Assets by category</CardTitle>

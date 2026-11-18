@@ -114,7 +114,7 @@ export function VisitsTable({
           const status = visitStatusPresentation(visit.status);
 
           return (
-            <li key={visit.id} className="bg-card shadow-fluent-2 space-y-3 rounded-xl border p-4">
+            <li key={visit.id} className="bg-card space-y-3 rounded-xl border p-4">
               <div className="flex items-start gap-3">
                 <span className="bg-primary/10 text-primary inline-flex size-9 shrink-0 items-center justify-center rounded-md text-base font-semibold tabular-nums">
                   {visit.queueToken}
@@ -143,7 +143,7 @@ export function VisitsTable({
         })}
       </ul>
 
-      <div className="bg-card shadow-fluent-2 hidden overflow-hidden rounded-xl border md:block">
+      <div className="bg-card hidden overflow-hidden rounded-xl border md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
@@ -216,7 +216,7 @@ export function VisitsTable({
 
 export function VisitsTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-xl border p-4">
+    <div className="bg-card overflow-hidden rounded-xl border p-4">
       {Array.from({ length: 6 }, (_, index) => (
         <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
           <Skeleton className="size-9 rounded-md" />

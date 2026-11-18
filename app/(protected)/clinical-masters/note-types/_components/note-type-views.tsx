@@ -86,7 +86,7 @@ export function NoteTypeTableView({
   onDelete: (noteType: ClinicalNoteType) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[600px]">
@@ -141,7 +141,7 @@ export function NoteTypeCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {noteTypes.map((noteType) => (
-        <Card key={noteType.id} className="shadow-fluent-2">
+        <Card key={noteType.id}>
           <CardContent className="space-y-3">
             <NoteTypeIcon />
 
@@ -200,7 +200,7 @@ export function NoteTypeListView({
   return (
     <div className="space-y-3">
       {noteTypes.map((noteType) => (
-        <Card key={noteType.id} className="shadow-fluent-2">
+        <Card key={noteType.id}>
           <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <NoteTypeIcon />

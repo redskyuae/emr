@@ -63,7 +63,7 @@ export function AdvanceTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void })
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">Collect advance / deposit</CardTitle>
           <CardDescription>

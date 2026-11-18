@@ -169,7 +169,7 @@ function DemographicsSection({ control }: { control: Control<PatientFormValues> 
   const religionsQuery = useReligionOptionsQuery();
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Demographics</CardTitle>
         <CardDescription>The Patient&apos;s legal name and core identity details.</CardDescription>
@@ -485,7 +485,7 @@ function DemographicsSection({ control }: { control: Control<PatientFormValues> 
 
 function ContactSection({ control }: { control: Control<PatientFormValues> }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Contact</CardTitle>
         <CardDescription>How this Patient can be reached.</CardDescription>
@@ -575,7 +575,7 @@ function AddressSection({
   const states = statesQuery.data ?? [];
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Address</CardTitle>
         <CardDescription>Where this Patient can be found or reached by mail.</CardDescription>
@@ -717,7 +717,7 @@ function IdentifiersSection({
     : null;
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Identifiers</CardTitle>
         <CardDescription>
@@ -968,7 +968,7 @@ function IdentifiersSection({
 
 function NextOfKinSection({ control }: { control: Control<PatientFormValues> }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Next of Kin</CardTitle>
         <CardDescription>The person to reach on this Patient&apos;s behalf.</CardDescription>
@@ -1137,7 +1137,7 @@ export function PatientForm({
       {serverErrors.length > 0 ? <FormErrors errors={serverErrors} /> : null}
 
       {mrn ? (
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardContent className="flex items-center justify-between py-3">
             <span className="text-muted-foreground text-sm">Medical Record Number</span>
             <span className="font-mono text-sm font-medium">{mrn}</span>

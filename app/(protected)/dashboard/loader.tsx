@@ -24,7 +24,7 @@ export default function PageLoader() {
       </section>
 
       <section className="grid items-start gap-4 xl:grid-cols-3">
-        <Card className="shadow-fluent-2 xl:col-span-2">
+        <Card className="xl:col-span-2">
           <CardHeader>
             <div className="flex h-5.5 items-center">
               <Skeleton className="h-4 w-32" />
@@ -44,7 +44,7 @@ export default function PageLoader() {
             ))}
           </CardContent>
         </Card>
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardHeader>
             <div className="flex h-5.5 items-center">
               <Skeleton className="h-4 w-36" />

@@ -38,7 +38,7 @@ export function InvoiceLinesCard({
   const showRemoveColumn = isDraft && canUpdate;
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Charges</CardTitle>
         {showGenerateCharges || showAddLine ? (

@@ -22,7 +22,7 @@ export function ChartPanel({
   children: ReactNode;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
           <span className="text-muted-foreground">{icon}</span>

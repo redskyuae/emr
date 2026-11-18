@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function UpcomingMaintenanceTableSkeleton() {
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div>
           <CardTitle>Upcoming maintenance</CardTitle>

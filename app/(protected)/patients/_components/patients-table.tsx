@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { IconType } from 'react-icons';
-import { CiCircleAlert, CiCircleInfo, CiPhone } from 'react-icons/ci';
+import { CiCircleAlert, CiPhone } from 'react-icons/ci';
 import { PiGenderFemaleLight, PiGenderMaleLight, PiUsersLight } from 'react-icons/pi';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
@@ -29,7 +29,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 type PatientsTableProps = {
@@ -102,21 +101,14 @@ function PatientAgeCell({ dateOfBirth }: { dateOfBirth: Patient['dateOfBirth'] }
     year: 'numeric',
   });
 
+  // The date of birth identifies a Patient, so it stays in view beside the age, never behind a hover.
   return (
-    <span className="inline-flex items-center gap-1.5">
+    <span className="inline-flex items-baseline gap-2">
       {age} {age === 1 ? 'year' : 'years'}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label={`Date of birth ${formattedDateOfBirth}`}
-            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 inline-flex rounded-full outline-none focus-visible:ring-[3px]"
-          >
-            <CiCircleInfo aria-hidden className="size-4" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>Date of birth: {formattedDateOfBirth}</TooltipContent>
-      </Tooltip>
+      <span className="text-muted-foreground text-xs">
+        <span className="sr-only">Date of birth </span>
+        {formattedDateOfBirth}
+      </span>
     </span>
   );
 }
@@ -145,7 +137,7 @@ export function PatientsTable({
   const total = meta?.total ?? 0;
 
   return (
-    <Card className="shadow-fluent-2 py-0">
+    <Card className="py-0">
       <CardContent className="p-0">
         {isLoading ? (
           <PatientsTableSkeleton />
@@ -169,7 +161,7 @@ export function PatientsTable({
                   <TableHead className="pl-4">MRN</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Gender</TableHead>
-                  <TableHead>Age</TableHead>
+                  <TableHead>Age / Date of birth</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Registration</TableHead>
                   <TableHead className="pr-4">Status</TableHead>

@@ -12,12 +12,12 @@ export default function BookAppointmentLoader() {
         <Skeleton className="h-4 w-72 max-w-full" />
         <Skeleton className="h-10 w-48" />
       </div>
-      <div className="bg-card shadow-fluent-2 flex gap-4 rounded-xl border p-4">
+      <div className="bg-card flex gap-4 rounded-xl border p-4">
         <Skeleton className="bg-primary/10 h-8 w-44" />
         <Skeleton className="h-8 w-44" />
       </div>
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
+        <div className="bg-card space-y-4 rounded-xl border p-5">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-8 w-full" />
           <div className="grid gap-3 sm:grid-cols-2">
@@ -39,7 +39,7 @@ export default function BookAppointmentLoader() {
             <Skeleton className="h-10 w-full" />
           </div>
         </div>
-        <div className="bg-card shadow-fluent-2 space-y-4 rounded-xl border p-5">
+        <div className="bg-card space-y-4 rounded-xl border p-5">
           <Skeleton className="h-10 w-48" />
           <div className="grid grid-cols-2 gap-3">
             <Skeleton className="bg-primary/10 h-14 w-full" />
@@ -74,7 +74,7 @@ export default function BookAppointmentLoader() {
           </div>
         </div>
       </div>
-      <div className="bg-card shadow-fluent-8 mt-auto flex items-center justify-between rounded-xl border p-4">
+      <div className="bg-card mt-auto flex items-center justify-between rounded-xl border p-4">
         <Skeleton className="h-4 w-48" />
         <Skeleton className="h-8 w-28" />
       </div>

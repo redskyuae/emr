@@ -112,7 +112,7 @@ export function VisitsPageImpl() {
           }}
         />
 
-        <Card className="shadow-fluent-2 py-0">
+        <Card className="py-0">
           <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
             <Input
               type="date"
@@ -200,7 +200,7 @@ export function VisitsPageImpl() {
         {visitsQuery.isLoading ? (
           <VisitsTableSkeleton />
         ) : visitsQuery.isError ? null : visits.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
+          <Empty className="bg-card min-h-80 border">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <PiClipboardTextLight />

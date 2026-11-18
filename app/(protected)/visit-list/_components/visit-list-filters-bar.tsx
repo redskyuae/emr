@@ -91,7 +91,7 @@ export function VisitListFiltersBar({
   const preset = activePreset(filters, today);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardContent className="space-y-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
           <InputGroup className="xl:max-w-sm">

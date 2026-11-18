@@ -16,7 +16,7 @@ export function AppointmentInsights({ summary }: { summary: AppointmentDaySummar
   const countPrefix = summary.hasMore ? '≥' : '';
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle>Appointment mix</CardTitle>
         <CardDescription>Consultation and Procedure bookings today.</CardDescription>
