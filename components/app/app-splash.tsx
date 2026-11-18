@@ -47,6 +47,8 @@ function AppSplashBrand({ pulse }: { pulse: boolean }) {
 }
 
 // Aceternity's "Simple Loader" (three staggered bouncing dots) at half scale, in the primary color.
+// It loops only while the splash is on screen, which DESIGN.md allows for loading indicators, and
+// it holds still under prefers-reduced-motion.
 function AppSplashDots() {
   const reduceMotion = useReducedMotion();
 
@@ -75,8 +77,9 @@ export function AppSplashLoading({ fading }: { fading: boolean }) {
     <AppSplashFrame fading={fading}>
       <AppSplashBrand pulse />
       <AppSplashDots />
-      {/* The pulse is the only motion cue and is stripped under prefers-reduced-motion,
-          so surface a visible caption for those sighted users; it stays sr-only otherwise. */}
+      {/* The logo pulse and the bouncing dots are the motion cues, and both stop under
+          prefers-reduced-motion, so surface a visible caption for those sighted users; it stays
+          sr-only otherwise. */}
       <span className="text-muted-foreground sr-only text-sm motion-reduce:not-sr-only">
         Loading your workspace…
       </span>

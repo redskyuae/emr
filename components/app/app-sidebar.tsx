@@ -41,6 +41,10 @@ import {
 /**
  * A row on the ink sidebar: muted at rest, lifted on hover, and a black inset pill with a hairline
  * border when current. `SidebarMenuButton` shrinks it to an icon square while collapsed.
+ *
+ * `data-active:` in these row classes is not Tailwind's presence check. The shadcn stylesheet
+ * imported in `app/globals.css` defines it as a custom variant that excludes
+ * `data-active="false"`, so it matches the current row only, as in `components/ui/sidebar.tsx`.
  */
 const NAV_BUTTON_CLASS =
   'text-sidebar-foreground/70 hover:text-sidebar-foreground data-active:bg-sidebar-selected data-active:text-sidebar-foreground data-active:hover:bg-sidebar-selected data-active:ring-sidebar-selected-border data-active:ring-1 data-active:ring-inset h-10 gap-3 rounded-xl px-3 data-active:font-semibold [&_svg]:size-4.5';

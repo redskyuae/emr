@@ -32,7 +32,7 @@ All tokens live in `app/globals.css` as CSS variables, mapped to Tailwind utilit
 | `--border` / `--input`           | cool greys               | Hairlines; inputs slightly darker (Fluent visible-field borders) |
 | `--destructive`                  | red oklch                | Errors, blocked states, and destructive actions                  |
 
-The sidebar has its own tokens (`--sidebar*`) and is **ink in both themes**: a near-black panel whose current row is `--sidebar-selected`, a black inset pill darker than the panel, edged by `--sidebar-selected-border`. `--sidebar-primary` is kept for solid accents such as the avatar. The page keeps its own theme; the sidebar does not follow it.
+The sidebar has its own tokens (`--sidebar*`) and is **ink in both themes**: a near-black panel whose current row is `--sidebar-selected`, a pure black pill darker than the panel, edged in black by `--sidebar-selected-border`. `--sidebar-primary` is kept for solid accents such as the avatar. The page keeps its own theme; the sidebar does not follow it.
 
 A full dark theme exists under `.dark` (navy-tinted darks, lighter blue primary). Every screen must work in both; never use raw `white`/`black` utilities for surfaces or text.
 
@@ -157,6 +157,8 @@ GSAP + `@gsap/react` is the animation library; tw-animate-css is acceptable only
 - **Scroll reveals fire once** (`once: true`); scrolling back up must not replay the page.
 - **Always respect `prefers-reduced-motion`** — bail out before creating any tween. This is non-negotiable in a healthcare product.
 - Continuous motion (floats, parallax) is for marketing surfaces only — never inside the clinical app.
+- **Loading indicators are the one exception.** A `Spinner`, a `Skeleton` pulse and the dots and logo pulse on the app splash may loop, because they are only on screen while something is loading. They still stop under `prefers-reduced-motion`, and the splash then shows its "Loading your workspace…" caption instead.
+- Small component-level effects that are not page choreography (the splash dots, the auth headline wobble) use the `motion` library; they follow the same rules.
 
 ## Components
 
@@ -175,7 +177,7 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 
 The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` in `app/(protected)/layout.tsx`.
 
-- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is a black `sidebar-selected` pill with a 1px inset `sidebar-selected-border` ring and white text, rather than a solid blue fill, which shouted on the ink panel; hover lifts lighter (`sidebar-accent`), so the two never look alike. A parent with a submenu only brightens, and its current child carries the selection; collapsed to icons the submenu is hidden, so the parent takes the selection instead. Group labels are `sidebar-foreground/60`, which keeps them above 4.5:1 on the panel. It is a sheet on a phone.
+- **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is a black `sidebar-selected` pill with a 1px black inset `sidebar-selected-border` ring and white text, rather than a solid blue fill, which shouted on the ink panel; hover lifts lighter (`sidebar-accent`), so the two never look alike. A parent with a submenu only brightens, and its current child carries the selection; collapsed to icons the submenu is hidden, so the parent takes the selection instead. Group labels are `sidebar-foreground/60`, which keeps them above 4.5:1 on the panel. It is a sheet on a phone.
 - **`AppTopbar`** is a slim sticky utility bar: the sidebar trigger, global search, the active Tenant (`TenantChip`), help and notifications. It carries no page title.
 - **`AppPageHeader`** sits under the top bar on every page. It shows the page's sidebar group as a small muted eyebrow (`getAppPageGroup`), the title as a plain `h1` in the foreground colour, and the subtitle under it. The title is repeated behind the header as a large watermark at 4.5% foreground opacity that drifts in from the left on navigation, inside the motion rule (0.7s, `power3.out`; skipped under `prefers-reduced-motion`); it is `aria-hidden` and clipped by the header. Title and subtitle come from `app-shell-config.ts`; a page does not render its own `h1`, and its section headings start at `h2`. A task page that needs its own name (Check in Patient, Reschedule Appointment) gets its own page meta there instead of a second, larger heading in the page.
 - A page header **primary action** (`primaryAction` in the page meta) is only for pages whose content has no always-visible button for the same action. A list page with a create button in its toolbar leaves it out, so an action never appears twice.
