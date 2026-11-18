@@ -70,7 +70,7 @@ export function AppointmentDaySection({
         />
       ) : (
         <Card className="shadow-fluent-2">
-          <CardContent>
+          <CardContent className="p-4">
             <p className="text-muted-foreground text-sm">{emptyDescription}</p>
           </CardContent>
         </Card>

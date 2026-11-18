@@ -7,7 +7,6 @@ import { Logo } from '@/components/brand/logo';
 import { ExistingSessionGate } from '@/components/auth/existing-session-gate';
 import { ReactNode } from 'react';
 import { getAuthLinkFlags } from './_utils/auth-link-flags';
-import { SquigglyText } from './_components/squiggly-text';
 
 export default async function AuthLayout({ children }: { children: ReactNode }) {
   const session = await getSession();
@@ -23,8 +22,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
   return (
     <div className="grid min-h-full flex-1 lg:grid-cols-2">
       {/* ── Brand panel ──────────────────────────────────────── */}
-      {/* Neutral black scrim + white text, independent of theme, so any photo stays legible. */}
-      <div className="relative hidden overflow-hidden bg-neutral-950 text-white lg:flex">
+      <div className="bg-primary text-primary-foreground relative hidden overflow-hidden lg:flex">
         <Image
           src="/brand/dhathri-ayurvedic-care.jpg"
           alt="A welcoming Ayurvedic care room with a wooden treatment table and botanical surroundings"
@@ -35,20 +33,20 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-linear-to-t from-black/85 via-black/25 via-55% to-black/45"
+          className="from-primary/95 via-primary/45 to-primary/35 absolute inset-0 bg-gradient-to-t"
         />
 
         <div className="relative flex w-full flex-col justify-between gap-16 p-10 xl:p-12">
-          <Logo href={logoHref} inverted className="text-white" />
+          <Logo href={logoHref} inverted className="text-primary-foreground" />
 
           <div className="max-w-lg space-y-4 pb-4">
-            <p className="text-sm font-semibold tracking-widest text-white/80 uppercase">
+            <p className="text-primary-foreground/80 text-sm font-semibold tracking-widest uppercase">
               {brand?.wordmarkAlt ?? 'Ayurvedic hospital care'}
             </p>
             <h2 className="font-heading text-4xl leading-tight font-semibold text-balance xl:text-5xl">
-              <SquigglyText>Care rooted in Ayurveda.</SquigglyText>
+              Care rooted in Ayurveda.
             </h2>
-            <p className="max-w-md text-base leading-relaxed text-white/90">
+            <p className="text-primary-foreground/90 max-w-md text-base leading-relaxed">
               A calm, welcoming setting for Ayurvedic consultations, traditional therapies, and
               thoughtful ongoing care.
             </p>
