@@ -1859,7 +1859,7 @@ const patientRequestExample = {
   maritalStatus: 'married',
   preferredPaymentMethod: 'insurance',
   phone: '+91-9876543210',
-  alternatePhone: '9123456780',
+  alternatePhone: '+919123456780',
   email: 'asha.rao@example.com',
   addressLine1: '221B Residency Road',
   addressLine2: 'Near City Hospital',
@@ -1893,7 +1893,7 @@ const patientRequestExample = {
   emergencyContactName: 'Kiran Rao',
   emergencyContactRelationship: 'Spouse',
   emergencyContactGender: 'male',
-  emergencyContactPhone: '919988776655',
+  emergencyContactPhone: '+919988776655',
 };
 
 const patientExample = {
@@ -2064,17 +2064,21 @@ const patientValidationFailed = {
           },
         },
         invalidAlternatePhone: {
-          summary: 'Alternate phone contains non-digit characters',
+          summary: 'Alternate phone contains characters other than digits and a leading +',
           value: {
             message: 'Validation failed',
-            errors: ['Patient alternate phone must contain only digits'],
+            errors: [
+              'Patient alternate phone must contain only digits, optionally starting with +',
+            ],
           },
         },
         invalidNextOfKinPhone: {
-          summary: 'Next of Kin phone contains non-digit characters',
+          summary: 'Next of Kin phone contains characters other than digits and a leading +',
           value: {
             message: 'Validation failed',
-            errors: ['Patient Next of Kin phone must contain only digits'],
+            errors: [
+              'Patient Next of Kin phone must contain only digits, optionally starting with +',
+            ],
           },
         },
         missingIdentificationCategory: {
@@ -10498,7 +10502,7 @@ export const openApiDocument = {
             enum: ['single', 'married', 'divorced', 'widowed', 'other'],
           },
           phone: { type: 'string', minLength: 1, maxLength: 20 },
-          alternatePhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          alternatePhone: { type: 'string', pattern: '^\\+?\\d+$', maxLength: 20 },
           email: { type: 'string', format: 'email', maxLength: 255 },
           addressLine1: { type: 'string', maxLength: 255 },
           addressLine2: { type: 'string', maxLength: 255 },
@@ -10544,7 +10548,7 @@ export const openApiDocument = {
             enum: ['male', 'female', 'other', 'unknown'],
             description: 'Next of Kin Gender in Patient Registration UI.',
           },
-          emergencyContactPhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          emergencyContactPhone: { type: 'string', pattern: '^\\+?\\d+$', maxLength: 20 },
         },
       },
       CreateAppointmentRequest: {
@@ -11785,7 +11789,7 @@ export const openApiDocument = {
               'Default payment means for front-desk registration. A convenience hint only — actual insurance coverage is captured per Visit.',
           },
           phone: { type: 'string', minLength: 1, maxLength: 20 },
-          alternatePhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          alternatePhone: { type: 'string', pattern: '^\\+?\\d+$', maxLength: 20 },
           email: { type: 'string', format: 'email', maxLength: 255 },
           addressLine1: { type: 'string', maxLength: 255 },
           addressLine2: { type: 'string', maxLength: 255 },
@@ -11856,7 +11860,7 @@ export const openApiDocument = {
           },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
-          emergencyContactPhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          emergencyContactPhone: { type: 'string', pattern: '^\\+?\\d+$', maxLength: 20 },
         },
       },
       UpdatePatientRequest: schemaRef('CreatePatientRequest'),

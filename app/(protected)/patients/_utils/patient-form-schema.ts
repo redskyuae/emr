@@ -13,6 +13,7 @@ import {
   PATIENT_ETHNIC_GROUPS,
   PATIENT_RACES,
 } from './patient-value-sets';
+import { getPhoneNumberError } from './phone-countries';
 
 function isNotFutureDate(value: string) {
   const [year, month, day] = value.split('-').map(Number);
@@ -113,10 +114,9 @@ export const patientFormSchema = z
     maritalStatus: z.enum(PATIENT_MARITAL_STATUSES).optional().or(z.literal('')),
     preferredPaymentMethod: z.enum(PATIENT_PAYMENT_METHODS).optional().or(z.literal('')),
     phone: requiredPhoneField('Phone'),
-    alternatePhone: optionalPhoneField('Alternate phone').refine(
-      (value) => !value || /^\d+$/.test(value),
-      'Alternate phone must contain only digits.'
-    ),
+    phoneCountry: z.string(),
+    alternatePhone: optionalPhoneField('Alternate phone'),
+    alternatePhoneCountry: z.string(),
     email: z
       .email('Email must be valid.')
       .trim()
@@ -167,10 +167,8 @@ export const patientFormSchema = z
     emergencyContactName: optionalNameField('Next of Kin', 150),
     emergencyContactRelationship: optionalNameField('Next of Kin Relationship', 50),
     emergencyContactGender: z.enum(PATIENT_GENDERS).optional().or(z.literal('')),
-    emergencyContactPhone: optionalPhoneField('Next of Kin Phone').refine(
-      (value) => !value || /^\d+$/.test(value),
-      'Next of Kin Phone must contain only digits.'
-    ),
+    emergencyContactPhone: optionalPhoneField('Next of Kin Phone'),
+    emergencyContactPhoneCountry: z.string(),
   })
   .superRefine((data, ctx) => {
     if (data.title === '') {
@@ -179,6 +177,32 @@ export const patientFormSchema = z
 
     if (data.gender === '') {
       ctx.addIssue({ code: 'custom', message: 'Gender is required.', path: ['gender'] });
+    }
+
+    // Each phone is checked against its own country code. An empty Phone already
+    // fails the required rule above; the other two are optional.
+    const phones = [
+      { path: 'phone', label: 'Phone', country: data.phoneCountry, value: data.phone },
+      {
+        path: 'alternatePhone',
+        label: 'Alternate phone',
+        country: data.alternatePhoneCountry,
+        value: data.alternatePhone,
+      },
+      {
+        path: 'emergencyContactPhone',
+        label: 'Next of Kin Phone',
+        country: data.emergencyContactPhoneCountry,
+        value: data.emergencyContactPhone,
+      },
+    ];
+
+    for (const { path, label, country, value } of phones) {
+      const phoneError = value ? getPhoneNumberError(country, value, label) : null;
+
+      if (phoneError) {
+        ctx.addIssue({ code: 'custom', message: phoneError, path: [path] });
+      }
     }
 
     const normalisedEmiratesId = data.emiratesId ? normaliseEmiratesId(data.emiratesId) : '';

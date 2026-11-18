@@ -3,6 +3,7 @@ import type { SavePatientRequest } from '@/app/api/v1/patients/types';
 
 import type { PatientFormValues } from './patient-form-schema';
 import { formatEmiratesId, isRealEmiratesId, normaliseEmiratesId } from './patient-value-sets';
+import { DEFAULT_PHONE_COUNTRY, joinPhoneNumber, splitPhoneNumber } from './phone-countries';
 
 export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   title: '',
@@ -15,7 +16,9 @@ export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   maritalStatus: '',
   preferredPaymentMethod: '',
   phone: '',
+  phoneCountry: DEFAULT_PHONE_COUNTRY,
   alternatePhone: '',
+  alternatePhoneCountry: DEFAULT_PHONE_COUNTRY,
   email: '',
   addressLine1: '',
   addressLine2: '',
@@ -42,9 +45,20 @@ export const EMPTY_PATIENT_FORM_VALUES: PatientFormValues = {
   emergencyContactRelationship: '',
   emergencyContactGender: '',
   emergencyContactPhone: '',
+  emergencyContactPhoneCountry: DEFAULT_PHONE_COUNTRY,
 };
 
+// Phones are stored as +<country code><number>; the form edits the two parts
+// separately, and an empty optional phone is omitted.
+function toStoredPhone(country: string, number: string | undefined) {
+  return number ? joinPhoneNumber(country, number) : undefined;
+}
+
 export function patientToFormValues(patient: Patient): PatientFormValues {
+  const phone = splitPhoneNumber(patient.phone);
+  const alternatePhone = splitPhoneNumber(patient.alternatePhone ?? '');
+  const emergencyContactPhone = splitPhoneNumber(patient.emergencyContactPhone ?? '');
+
   return {
     title: patient.title ?? '',
     firstName: patient.firstName,
@@ -55,10 +69,10 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     bloodGroup: patient.bloodGroup ?? '',
     maritalStatus: patient.maritalStatus ?? '',
     preferredPaymentMethod: patient.preferredPaymentMethod ?? '',
-    phone: patient.phone,
-    // Saved before the digits-only rule, e.g. +91-9123456780; stripped here so an
-    // unrelated edit still saves. The country code stays, only formatting goes.
-    alternatePhone: (patient.alternatePhone ?? '').replace(/\D/g, ''),
+    phone: phone.number,
+    phoneCountry: phone.country,
+    alternatePhone: alternatePhone.number,
+    alternatePhoneCountry: alternatePhone.country,
     email: patient.email ?? '',
     addressLine1: patient.addressLine1 ?? '',
     addressLine2: patient.addressLine2 ?? '',
@@ -94,8 +108,8 @@ export function patientToFormValues(patient: Patient): PatientFormValues {
     emergencyContactName: patient.emergencyContactName ?? '',
     emergencyContactRelationship: patient.emergencyContactRelationship ?? '',
     emergencyContactGender: patient.emergencyContactGender ?? '',
-    // Same legacy clean-up as alternatePhone: saved before the digits-only rule.
-    emergencyContactPhone: (patient.emergencyContactPhone ?? '').replace(/\D/g, ''),
+    emergencyContactPhone: emergencyContactPhone.number,
+    emergencyContactPhoneCountry: emergencyContactPhone.country,
   };
 }
 
@@ -110,8 +124,8 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     bloodGroup: values.bloodGroup || undefined,
     maritalStatus: values.maritalStatus || undefined,
     preferredPaymentMethod: values.preferredPaymentMethod || undefined,
-    phone: values.phone,
-    alternatePhone: values.alternatePhone || undefined,
+    phone: joinPhoneNumber(values.phoneCountry, values.phone),
+    alternatePhone: toStoredPhone(values.alternatePhoneCountry, values.alternatePhone),
     email: values.email || undefined,
     addressLine1: values.addressLine1 || undefined,
     addressLine2: values.addressLine2 || undefined,
@@ -150,6 +164,9 @@ export function patientFormValuesToRequest(values: PatientFormValues): SavePatie
     emergencyContactName: values.emergencyContactName || undefined,
     emergencyContactRelationship: values.emergencyContactRelationship || undefined,
     emergencyContactGender: values.emergencyContactGender || undefined,
-    emergencyContactPhone: values.emergencyContactPhone || undefined,
+    emergencyContactPhone: toStoredPhone(
+      values.emergencyContactPhoneCountry,
+      values.emergencyContactPhone
+    ),
   };
 }

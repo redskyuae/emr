@@ -290,8 +290,8 @@ const patientPayloadSchema = z
     phone: patientPhoneSchema('phone'),
     alternatePhone: optionalTrimmedValue(
       patientPhoneSchema('alternate phone').regex(
-        /^\d+$/,
-        'Patient alternate phone must contain only digits'
+        /^\+?\d+$/,
+        'Patient alternate phone must contain only digits, optionally starting with +'
       )
     ),
     email: optionalTrimmedValue(patientEmailSchema),
@@ -345,8 +345,8 @@ const patientPayloadSchema = z
     emergencyContactGender: optionalTrimmedValue(genderSchema),
     emergencyContactPhone: optionalTrimmedValue(
       patientPhoneSchema('Next of Kin phone').regex(
-        /^\d+$/,
-        'Patient Next of Kin phone must contain only digits'
+        /^\+?\d+$/,
+        'Patient Next of Kin phone must contain only digits, optionally starting with +'
       )
     ),
   })

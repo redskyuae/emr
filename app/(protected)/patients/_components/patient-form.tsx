@@ -1,7 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Controller, type Control, type UseFormSetValue, useForm, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  type Control,
+  type UseFormSetValue,
+  type UseFormTrigger,
+  useForm,
+  useWatch,
+} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, ArrowRight, Save, UserRound, UserRoundPlus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -41,6 +48,7 @@ import {
   PATIENT_TITLE_OPTIONS,
 } from '../_utils/patient-value-sets';
 import { IdentityDocumentsFieldArray } from './identity-documents-field-array';
+import { PhoneCountryCodePicker } from './phone-country-code-picker';
 
 const NONE = 'none';
 
@@ -482,7 +490,71 @@ function DemographicsSection({ control }: { control: Control<PatientFormValues> 
   );
 }
 
-function ContactSection({ control }: { control: Control<PatientFormValues> }) {
+type PhoneFieldProps = {
+  id: string;
+  label: string;
+  name: 'phone' | 'alternatePhone' | 'emergencyContactPhone';
+  countryName: 'phoneCountry' | 'alternatePhoneCountry' | 'emergencyContactPhoneCountry';
+  control: Control<PatientFormValues>;
+  trigger: UseFormTrigger<PatientFormValues>;
+  required?: boolean;
+};
+
+/** Country code picker plus digits-only number; the number is validated per country. */
+function PhoneField({ id, label, name, countryName, control, trigger, required }: PhoneFieldProps) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <Field>
+          <FieldLabel htmlFor={id}>
+            {label}
+            {required ? <RequiredMark /> : null}
+          </FieldLabel>
+          <div className="flex gap-2">
+            <Controller
+              control={control}
+              name={countryName}
+              render={({ field: countryField }) => (
+                <PhoneCountryCodePicker
+                  value={countryField.value}
+                  onChange={(iso) => {
+                    countryField.onChange(iso);
+                    // The length rule depends on the country, so re-check what was typed.
+                    if (field.value) {
+                      void trigger(name);
+                    }
+                  }}
+                />
+              )}
+            />
+            <Input
+              id={id}
+              type="tel"
+              inputMode="numeric"
+              {...field}
+              value={field.value ?? ''}
+              onChange={(event) => field.onChange(event.target.value.replace(/\D/g, ''))}
+              aria-required={required}
+              aria-invalid={fieldState.invalid}
+            />
+          </div>
+          {fieldState.error ? (
+            <p className="text-destructive text-xs">{fieldState.error.message}</p>
+          ) : null}
+        </Field>
+      )}
+    />
+  );
+}
+
+type PhoneSectionProps = {
+  control: Control<PatientFormValues>;
+  trigger: UseFormTrigger<PatientFormValues>;
+};
+
+function ContactSection({ control, trigger }: PhoneSectionProps) {
   return (
     <Card className="shadow-fluent-2">
       <CardHeader>
@@ -491,48 +563,23 @@ function ContactSection({ control }: { control: Control<PatientFormValues> }) {
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Controller
-            control={control}
+          <PhoneField
+            id="patient-phone"
+            label="Phone"
             name="phone"
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel htmlFor="patient-phone">
-                  Phone
-                  <RequiredMark />
-                </FieldLabel>
-                <Input
-                  id="patient-phone"
-                  type="tel"
-                  {...field}
-                  aria-required={true}
-                  aria-invalid={fieldState.invalid}
-                />
-                {fieldState.error ? (
-                  <p className="text-destructive text-xs">{fieldState.error.message}</p>
-                ) : null}
-              </Field>
-            )}
+            countryName="phoneCountry"
+            control={control}
+            trigger={trigger}
+            required
           />
 
-          <Controller
-            control={control}
+          <PhoneField
+            id="patient-alternate-phone"
+            label="Alternate phone"
             name="alternatePhone"
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel htmlFor="patient-alternate-phone">Alternate phone</FieldLabel>
-                <Input
-                  id="patient-alternate-phone"
-                  type="tel"
-                  inputMode="numeric"
-                  {...field}
-                  onChange={(event) => field.onChange(event.target.value.replace(/\D/g, ''))}
-                  aria-invalid={fieldState.invalid}
-                />
-                {fieldState.error ? (
-                  <p className="text-destructive text-xs">{fieldState.error.message}</p>
-                ) : null}
-              </Field>
-            )}
+            countryName="alternatePhoneCountry"
+            control={control}
+            trigger={trigger}
           />
 
           <Controller
@@ -965,7 +1012,7 @@ function IdentifiersSection({
   );
 }
 
-function NextOfKinSection({ control }: { control: Control<PatientFormValues> }) {
+function NextOfKinSection({ control, trigger }: PhoneSectionProps) {
   return (
     <Card className="shadow-fluent-2">
       <CardHeader>
@@ -1053,25 +1100,13 @@ function NextOfKinSection({ control }: { control: Control<PatientFormValues> }) 
             )}
           />
 
-          <Controller
-            control={control}
+          <PhoneField
+            id="patient-ec-phone"
+            label="Next of Kin Phone"
             name="emergencyContactPhone"
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel htmlFor="patient-ec-phone">Next of Kin Phone</FieldLabel>
-                <Input
-                  id="patient-ec-phone"
-                  type="tel"
-                  inputMode="numeric"
-                  {...field}
-                  onChange={(event) => field.onChange(event.target.value.replace(/\D/g, ''))}
-                  aria-invalid={fieldState.invalid}
-                />
-                {fieldState.error ? (
-                  <p className="text-destructive text-xs">{fieldState.error.message}</p>
-                ) : null}
-              </Field>
-            )}
+            countryName="emergencyContactPhoneCountry"
+            control={control}
+            trigger={trigger}
           />
         </div>
       </CardContent>
@@ -1151,9 +1186,9 @@ export function PatientForm({
         photoError={form.formState.errors.photoUrl?.message}
       />
       <DemographicsSection control={form.control} />
-      <ContactSection control={form.control} />
+      <ContactSection control={form.control} trigger={form.trigger} />
       <AddressSection control={form.control} setValue={form.setValue} />
-      <NextOfKinSection control={form.control} />
+      <NextOfKinSection control={form.control} trigger={form.trigger} />
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>
