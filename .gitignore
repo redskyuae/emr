@@ -45,5 +45,5 @@ next-env.d.ts
 *.idea
 package-lock.json
 
-# /ticket skill working plan (see .agents/skills/ticket)
+# /ticket skill working plan (see .claude/skills/ticket)
 AGENT_PLAN.md

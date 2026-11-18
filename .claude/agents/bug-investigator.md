@@ -21,7 +21,7 @@ complete.
 
 ## Before anything else
 
-Read `.agents/skills/ticket/references/bug-investigation.md` and follow it. It
+Read `.claude/skills/ticket/references/bug-investigation.md` and follow it. It
 is the method: context to load, code path, when it broke, reproduction,
 hypotheses, symptom / trigger / root cause, blast radius, confidence.
 

@@ -30,7 +30,7 @@ GitHub. The deep investigation runs in the **`bug-investigator`** subagent
 (`.claude/agents/bug-investigator.md`), which is pinned to Opus at high
 effort whatever model this session is on. Don't investigate inline yourself.
 
-The issue reference is whatever was passed with the command.
+Ticket argument: `$ARGUMENTS`
 
 For a bug, copy this checklist into the conversation and tick it as you go.
 The feature path has its own checklist.
@@ -74,7 +74,7 @@ The feature path has its own checklist.
 
 ## Stage 0 — Get the issue
 
-1. Take the issue from the command argument. Accept a URL
+1. Take the issue from `$ARGUMENTS`. Accept a URL
    (`https://github.com/<owner>/<repo>/issues/123`), `#123`, or a bare `123`.
 2. If it is empty or not recognisable as a GitHub issue, ask exactly:
 
@@ -255,14 +255,13 @@ to post that instead.
 Tell the engineer what comes next and stop:
 
 - Fixing is a separate step, and it is theirs to start. If they ask for the
-  fix here, follow the `tdd` team skill: write the regression test from the
-  agreed plan and watch it fail, make the fix, then verify it as described
+  fix here, work test-first: write the regression test from the agreed plan
+  and watch it fail, make the fix, then verify it as described
   under "Verifying a slice" in
   [references/feature-development.md](references/feature-development.md).
   Leave the result uncommitted for their review.
 - Point at what the fix will need, based on what the plan touches: for
-  example `docs/backend-testing.md`, `lessons.md`, and the
-  `tanstack-query-patterns` or `design-system` team skills.
+  example `docs/backend-testing.md`, `lessons.md` and `DESIGN.md`.
 - When a fix made here is done and verified, raise it the same way a feature
   is raised: follow "F8 — Commit and open the pull request" in
   [references/feature-development.md](references/feature-development.md).

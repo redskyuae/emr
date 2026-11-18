@@ -127,9 +127,9 @@ and ask each for `file:line` conclusions only. Cover:
 4. **Tests around it.** Existing unit and integration coverage of the touched
    code.
 
-Load the team skills for the layer the feature touches (`design-system`,
-`tanstack-query-patterns`, `tdd`). You need them to plan in the project's
-idiom, not only to write code later.
+Read an existing example of each kind of file the feature will add: a hook in
+`app/queries/`, a module of the same shape, a screen with the same layout.
+You need the project's idiom to plan, not only to write code later.
 
 ## F2 — Present your understanding, then ask
 
@@ -164,8 +164,8 @@ How to ask:
   reading code.
 - At most about 7 at a time, ordered by impact. For each, give your
   recommended answer, the reason, and what changes depending on the answer.
-- Use the session's question tool for multiple-choice questions, if it has
-  one. Use plain text for open ones.
+- Use AskUserQuestion for multiple-choice questions. Use plain text for
+  open ones.
 - A contradiction (the issue says X, a later comment or an ADR says Y) is
   always a question. Quote both sources.
 
@@ -284,8 +284,7 @@ it to #123?"_ Iterate until the engineer approves the plan explicitly.
 
 ## F5 — Choose the execution mode, prepare the branch
 
-Ask with the session's question tool. Put your recommendation first, with
-its reason:
+Ask with AskUserQuestion. Put your recommendation first, with its reason:
 
 - **One shot.** Implement all slices in one run, verify, then present one
   summary. Faster. The engineer reviews the whole diff at the end.
@@ -316,9 +315,9 @@ The engineer can switch modes at any time ("do the rest in one go").
 ## F6 — Implement
 
 Before writing code, load what `CLAUDE.md` requires for the layer in the
-plan: `DESIGN.md` and the `design-system` skill for any UI, the
-`tanstack-query-patterns` skill for query hooks and mutations,
-`docs/backend-testing.md` for backend tests, and `lessons.md` before adding a
+plan: `DESIGN.md` for any UI, the existing hooks in `app/queries/` as the
+pattern for query hooks and mutations, `docs/backend-testing.md` for backend
+tests, and `lessons.md` before adding a
 unique constraint. Follow the project's conventions: the CQRS module layout,
 `tenantId` from the Session on every repository query, result types instead
 of throwing, `types.ts` beside every route, a `loader.tsx` beside every page.
@@ -349,9 +348,11 @@ Run what applies, and report what you actually ran:
   test database (`bun run test:db:migrate`), and they truncate that
   database's tables.
 - Frontend: open the changed screen in the running app (`bun run dev`, with
-  the browser tools if the session has them) and check the behaviour, the
-  loader skeleton and the empty and error states. Then run
-  `bun .agents/skills/prepare-to-merge-to-main/scripts/check-prepare-to-merge.mjs`.
+  the browser preview tools) and check the behaviour, the
+  loader skeleton and the empty and error states. Then confirm the route
+  conventions from `CLAUDE.md` by hand: the route's `loader.tsx` changed with
+  the page, page-specific components sit in `_components/`, and every
+  `route.ts` has a type-only sibling `types.ts`.
 
 If something fails, say so with the output. Don't present a slice as done
 while its checks fail.
@@ -417,12 +418,12 @@ change."_
 ## F7 — Final verification
 
 1. Run the full verification: `bunx tsc --noEmit`, `bun run lint`,
-   `bun run format:check`, `bun run test:unit`, `bun run build`, and the
-   prepare-to-merge script. Run `bun run test:integration` if the engineer
+   `bun run format:check`, `bun run test:unit` and `bun run build`. Run
+   `bun run test:integration` if the engineer
    agreed to it; otherwise say CI will be the first run.
 2. Review your own diff (`git diff`, including staged): leftover debug code,
    TODOs, dead code, exports nothing imports, files outside the plan. Offer
-   the `review` team skill for a deeper pass.
+   `/code-review` for a deeper pass.
 3. Present the result:
 
 ```
@@ -456,7 +457,7 @@ on the bug path (Stage 6) ends here too.
    for example `feat: add Visit coverage selection at check-in (#263)`. If
    the engineer would rather commit themselves, wait for them to do it.
 3. **Open the pull request with the `pr` skill.** Read
-   `.agents/skills/pr/SKILL.md` and follow it from its step 1, in this
+   `.claude/skills/pr/SKILL.md` and follow it from its step 1, in this
    session. Don't call `gh pr create` yourself and don't write the body from
    memory: the skill fills in the repo's PR template, links the issue with a
    closing keyword, shows the engineer the exact body, and pushes and

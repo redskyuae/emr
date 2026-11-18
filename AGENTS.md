@@ -14,28 +14,17 @@ Any backend change (anything under `app/api/lib/modules/**` or `app/db/schema/**
 
 # Team Skills
 
-The `.agents/skills/` directory contains shared workflow skills for this project. Each skill is a directory with a `SKILL.md` that describes what it does and when to use it.
+This repository is set up for Claude Code. The `.claude/skills/` directory contains the project's workflow skills. Each skill is a directory with a `SKILL.md` that describes what it does and when to use it.
 
 Key skills for this project:
 
-| Skill                           | When to use                                                                        |
-| ------------------------------- | ---------------------------------------------------------------------------------- |
-| `tdd`                           | Building new features or fixing bugs using red-green-refactor                      |
-| `diagnose`                      | Debugging errors, unexpected behaviour, or regressions                             |
-| `to-issues`                     | Breaking a plan or spec into independently-grabbable tickets                       |
-| `to-prd`                        | Turning a conversation into a PRD on the issue tracker                             |
-| `triage`                        | Creating or triaging issues                                                        |
-| `create-ticket`                 | Turning a business requirement into a GitHub ticket (`/create-ticket` only)        |
-| `ticket`                        | Working a GitHub issue: bug root cause, or feature plan and build (`/ticket` only) |
-| `pr`                            | Writing a pull request description from the PR template (`/pr` only)               |
-| `review`                        | Pre-merge code review                                                              |
-| `prepare-to-merge-to-main`      | Running branch readiness checks before PR/merge to main                            |
-| `prototype`                     | Exploring a design or data model before committing                                 |
-| `grill-with-docs`               | Stress-testing a plan and updating domain documentation                            |
-| `improve-codebase-architecture` | Finding refactoring and architecture improvements                                  |
-| `design-system`                 | Building or changing any frontend UI (see also `DESIGN.md`)                        |
+| Skill           | When to use                                                                        |
+| --------------- | ---------------------------------------------------------------------------------- |
+| `create-ticket` | Turning a business requirement into a GitHub ticket (`/create-ticket` only)        |
+| `ticket`        | Working a GitHub issue: bug root cause, or feature plan and build (`/ticket` only) |
+| `pr`            | Writing a pull request description from the PR template (`/pr` only)               |
 
-If you are Claude Code, invoke a skill with `/skill-name`. If you are another agent, read the skill's `SKILL.md` directly and follow its instructions.
+Each one runs only when typed as a slash command, for example `/ticket 263`. The `bug-investigator` agent that `/ticket` uses lives in `.claude/agents/`.
 
 # Issue labels
 

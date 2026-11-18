@@ -1,6 +1,7 @@
 ---
 name: create-ticket
 description: Turns a business requirement into a ready-to-build GitHub ticket for this project. Interviews the requester in business language, works out the implementation from the codebase, publishes the issue and returns the link. Runs only when the user types /create-ticket.
+argument-hint: '[the requirement, in plain words]'
 disable-model-invocation: true
 ---
 
@@ -25,7 +26,9 @@ You are oriented when you can say in a couple of sentences what the product does
 
 ## 2. Get the requirement
 
-If none was given, ask for it in one line: what do they need, and who is it for? Let them describe it in their own words. Do not hand them a form to fill in.
+Requirement passed with the command: `$ARGUMENTS`
+
+If that is empty, ask for it in one line: what do they need, and who is it for? Let them describe it in their own words. Do not hand them a form to fill in.
 
 ## 3. Research the affected area
 
@@ -36,7 +39,7 @@ Go deep on the part of the system the requirement touches. Read the code itself,
 - **ADRs and glossary entries** that constrain the area.
 - **Overlapping tickets**: `gh issue list --state all --search "<terms>"`. If the requirement is already covered, say so and link the ticket instead of creating a duplicate.
 
-If you can run sub-agents, give this reading to one with a fresh context (several in parallel when the areas are separate) and have it report findings with the evidence for each.
+Give this reading to a sub-agent with a fresh context (several in parallel when the areas are separate) and have it report findings with the evidence for each.
 
 **If what they asked for already exists**, stop there. Tell the requester where it is and how it behaves today, and ask what prompted the request: perhaps it did not work for someone, they could not find it, or it falls short in a way they have not said yet. The default outcome is no ticket. Do not go looking for gaps to fill so that there is something to publish.
 

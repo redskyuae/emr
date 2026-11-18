@@ -23,8 +23,8 @@ a root cause you can defend with evidence, not the first plausible story.
 | "Already exists" errors, a deleted record coming back, duplicates    | `lessons.md` (partial unique indexes with soft delete), ADR 0012                           |
 | Sign-in, sign-out, Tenant selection, being sent back to login        | The auth sections of `CLAUDE.md` (`TabSessionGate`, `ExistingSessionGate`), ADRs 0017-0018 |
 | "Forbidden", an action missing for a role                            | ADRs 0005, 0007 and 0014 (Permission Catalogue, Tenant Admins)                             |
-| Stale UI after a save, lists not refreshing                          | The `tanstack-query-patterns` team skill                                                   |
-| Layout, styling, form behaviour, a sheet or dialog not opening       | `DESIGN.md`, the `design-system` team skill, ADRs 0009 and 0010                            |
+| Stale UI after a save, lists not refreshing                          | The hooks in `app/queries/`: the query keys, and what each mutation invalidates            |
+| Layout, styling, form behaviour, a sheet or dialog not opening       | `DESIGN.md`, ADRs 0009 and 0010                                                            |
 | A page that 404s or a missing sidebar item                           | The environment flags in `CLAUDE.md` and `.env.example`                                    |
 | A date or time that is off by hours or by a day                      | ADR 0026 (Tenant time zone)                                                                |
 | Generated numbers (MRN, Booking, Visit, Invoice) wrong or duplicated | The ADR for that sequence (0019, 0024, 0028, 0036)                                         |
