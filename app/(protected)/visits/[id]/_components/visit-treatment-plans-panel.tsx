@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { CiPlay1 } from 'react-icons/ci';
 import { PiCalendarPlusLight, PiCheckLight, PiClipboardTextLight, PiXLight } from 'react-icons/pi';
-
+import { Plus } from 'lucide-react';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
@@ -36,6 +36,7 @@ type Props = {
   canBookAppointment: boolean;
   canStartSession: boolean;
   onAssignPlan: () => void;
+  onAddSessions: (planId: number) => void;
   onOpenSession: (sessionId: number) => void;
 };
 
@@ -51,11 +52,15 @@ function PlanCard({
   plan,
   visit,
   canStartSession,
+  canAddSessions,
+  onAddSessions,
   onOpenSession,
 }: {
   plan: PatientTreatmentPlan;
   visit: Visit;
   canStartSession: boolean;
+  canAddSessions: boolean;
+  onAddSessions: (planId: number) => void;
   onOpenSession: (sessionId: number) => void;
 }) {
   const procedures = [
@@ -77,6 +82,18 @@ function PlanCard({
           <Badge variant="secondary">
             {plan.completedSessions} of {plan.totalSessions} completed
           </Badge>
+          {canAddSessions ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-label={`Add Sessions to ${plan.treatmentName}`}
+              onClick={() => onAddSessions(plan.id)}
+            >
+              <Plus className="size-4" />
+              Add Sessions
+            </Button>
+          ) : null}
           {startable ? (
             <Button type="button" size="sm" onClick={() => onOpenSession(next.id)}>
               <CiPlay1 className="size-4" />
@@ -216,6 +233,7 @@ function TreatmentPlansContent({
   canBookAppointment,
   canStartSession,
   onAssignPlan,
+  onAddSessions,
   onOpenSession,
 }: Omit<Props, 'loading' | 'error'>) {
   const activePlans = plans.filter(isCurrentPlan);
@@ -255,6 +273,8 @@ function TreatmentPlansContent({
             plan={plan}
             visit={visit}
             canStartSession={canStartSession}
+            canAddSessions={canAssignPlan}
+            onAddSessions={onAddSessions}
             onOpenSession={onOpenSession}
           />
         ))

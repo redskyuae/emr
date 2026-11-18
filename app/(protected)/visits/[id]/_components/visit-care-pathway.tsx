@@ -23,7 +23,6 @@ import { VisitObjectiveVitals } from './visit-objective-vitals';
 import { VisitPlanSession } from './visit-plan-session';
 import { VisitReviewChecklist } from './visit-review-checklist';
 import { VisitTreatmentPlansPanel } from './visit-treatment-plans-panel';
-import { VisitTreatmentSessionCard } from './visit-treatment-session-card';
 
 type Props = {
   visit: Visit;
@@ -46,6 +45,7 @@ type Props = {
   onAddClinicalNote: () => void;
   onDailyTreatment: () => void;
   onAssignPlan: () => void;
+  onAddPlanSessions: (planId: number) => void;
   onOpenPlanSession: (sessionId: number) => void;
   onSignNote: (note: ClinicalNote) => void;
 };
@@ -76,6 +76,7 @@ export function VisitCarePathway({
   onAddClinicalNote,
   onDailyTreatment,
   onAssignPlan,
+  onAddPlanSessions,
   onOpenPlanSession,
   onSignNote,
 }: Props) {
@@ -124,7 +125,6 @@ export function VisitCarePathway({
     ),
     plan: (
       <div className="space-y-4">
-        <VisitTreatmentSessionCard visit={visit} />
         <VisitPlanSession
           visit={visit}
           canRecordResponse={canRecordResponse}
@@ -140,6 +140,7 @@ export function VisitCarePathway({
             canBookAppointment={Boolean(canBookAppointment)}
             canStartSession={Boolean(canStartPlanSession && canReadPlan)}
             onAssignPlan={onAssignPlan}
+            onAddSessions={onAddPlanSessions}
             onOpenSession={onOpenPlanSession}
           />
         ) : null}
