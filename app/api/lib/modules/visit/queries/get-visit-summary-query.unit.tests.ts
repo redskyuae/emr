@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { appointmentRepository } from '../../appointment/repository/appointment-repository';
 import type { Appointment } from '../../appointment/schemas/appointment-schema';
@@ -162,8 +162,15 @@ const appointment = {
 } as unknown as Appointment;
 
 describe('getVisitSummaryQuery', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // 08:00 in Dubai on the Visit date, so "today" for the Tenant is 18-11-2026.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-18T04:00:00Z'));
     vi.mocked(visitRepository.getVisitById).mockResolvedValue(visit);
     vi.mocked(tenantRepository.getTenantById).mockResolvedValue({
       id: TENANT,
@@ -230,17 +237,22 @@ describe('getVisitSummaryQuery', () => {
     expect(visitSummaryRepository.getActivePatientAllergies).toHaveBeenCalledWith(TENANT, 5);
   });
 
-  it('should print only active medications', async () => {
+  it('should read only active medications from the repository', async () => {
     vi.mocked(patientMedicationRepository.getPatientMedications).mockResolvedValue({
       data: [
         { id: 1, drugName: 'Metformin', dose: '500 mg', route: 'Oral', status: 'active' },
-        { id: 2, drugName: 'Ibuprofen', dose: '400 mg', route: 'Oral', status: 'stopped' },
       ] as PatientMedication[],
-      total: 2,
+      total: 1,
     });
 
     const result = await getVisitSummaryQuery('10', TENANT, options);
 
+    expect(patientMedicationRepository.getPatientMedications).toHaveBeenCalledWith({
+      patientId: 5,
+      status: 'active',
+      tenantId: TENANT,
+      limit: 1000,
+    });
     expect(result.success && result.data.medications).toEqual([
       { id: 1, drugName: 'Metformin', dose: '500 mg', route: 'Oral', frequency: undefined },
     ]);
@@ -301,6 +313,17 @@ describe('getVisitSummaryQuery', () => {
       sessionNumber: 1,
       totalSessions: 7,
     });
+  });
+
+  it('should not look for the next Appointment before today for an older Visit', async () => {
+    // 01:30 on 25-11-2026 in Dubai is still 24-11-2026 in UTC: "today" follows the Tenant.
+    vi.setSystemTime(new Date('2026-11-24T21:30:00Z'));
+
+    await getVisitSummaryQuery('10', TENANT, options);
+
+    expect(appointmentRepository.getAppointments).toHaveBeenCalledWith(
+      expect.objectContaining({ fromDate: '2026-11-25' })
+    );
   });
 
   it('should include the Visit Invoice with its lines and payments', async () => {

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ne, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
 import { allergen as allergenTable } from '@/app/db/schema/allergen';
@@ -123,7 +123,11 @@ async function getActivePatientAllergies(
     .orderBy(asc(severityRank), asc(patientAllergyTable.id));
 }
 
-// The latest Invoice raised for one Visit, ignoring Void Invoices.
+// Invoices a Patient copy may print. A Draft's prices can still change and a Void Invoice was
+// cancelled, so neither is shown as the Patient's bill.
+const PRINTABLE_INVOICE_STATUSES = ['FINALIZED', 'PARTIALLY_PAID', 'PAID'] as const;
+
+// The latest finalized Invoice raised for one Visit.
 async function getVisitInvoiceId(tenantId: string, visitId: number): Promise<number | undefined> {
   const [row] = await db
     .select({ id: invoiceTable.id })
@@ -132,7 +136,7 @@ async function getVisitInvoiceId(tenantId: string, visitId: number): Promise<num
       and(
         eq(invoiceTable.tenantId, tenantId),
         eq(invoiceTable.visitId, visitId),
-        ne(invoiceTable.status, 'VOID'),
+        inArray(invoiceTable.status, PRINTABLE_INVOICE_STATUSES),
         eq(invoiceTable.isDeleted, false)
       )
     )

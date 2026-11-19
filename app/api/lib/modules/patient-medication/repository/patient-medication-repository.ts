@@ -122,12 +122,14 @@ async function getPatientMedications({
   patientId,
   page = 1,
   limit = 100,
+  status,
 }: PatientMedicationListParams) {
   const offset = (page - 1) * limit;
   const whereClause = and(
     eq(patientMedicationTable.tenantId, tenantId),
     eq(patientMedicationTable.patientId, patientId),
-    eq(patientMedicationTable.isDeleted, false)
+    eq(patientMedicationTable.isDeleted, false),
+    status ? eq(patientMedicationTable.status, status) : undefined
   );
 
   const [data, [{ total }]] = await Promise.all([

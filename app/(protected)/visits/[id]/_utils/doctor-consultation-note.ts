@@ -58,27 +58,42 @@ export const EMPTY_CONSULTATION: DoctorConsultationFormValues = {
 
 type NarrativeField = Exclude<keyof DoctorConsultationFormValues, 'modernDiagnosis' | 'noteTypeId'>;
 
-const SUBJECTIVE_LABELS: [NarrativeField, string][] = [
-  ['chiefComplaint', 'Chief complaint'],
-  ['hpi', 'Present condition / HPI'],
-  ['medicalHistory', 'Past medical history'],
-  ['surgicalHistory', 'Past surgical history'],
-  ['familySocialHistory', 'Family / social history'],
-];
+/**
+ * The `**Label:**` headings this form writes into a note. The Visit Summary reads notes back by
+ * these labels, so rename a label here, never in a copy.
+ */
+export const CONSULTATION_LABELS = {
+  hpi: 'Present condition / HPI',
+  vikriti: 'Vikriti / body condition',
+  prakriti: 'Prakriti',
+  examination: 'Examination / red flags',
+  precautions: 'Treatment precautions',
+  chiefComplaint: 'Chief complaint',
+  medicalHistory: 'Past medical history',
+  surgicalHistory: 'Past surgical history',
+  ayurvedicDiagnosis: 'Ayurvedic diagnosis',
+  familySocialHistory: 'Family / social history',
+} as const satisfies Record<NarrativeField, string>;
 
-const OBJECTIVE_LABELS: [NarrativeField, string][] = [
-  ['examination', 'Examination / red flags'],
-  ['prakriti', 'Prakriti'],
-  ['vikriti', 'Vikriti / body condition'],
-];
+function labelsFor(fields: NarrativeField[]): [NarrativeField, string][] {
+  return fields.map((field) => [field, CONSULTATION_LABELS[field]]);
+}
 
-const ASSESSMENT_LABELS: [NarrativeField, string][] = [
-  ['ayurvedicDiagnosis', 'Ayurvedic diagnosis'],
-];
+const SUBJECTIVE_LABELS = labelsFor([
+  'chiefComplaint',
+  'hpi',
+  'medicalHistory',
+  'surgicalHistory',
+  'familySocialHistory',
+]);
 
-const PLAN_LABELS: [NarrativeField, string][] = [['precautions', 'Treatment precautions']];
+const OBJECTIVE_LABELS = labelsFor(['examination', 'prakriti', 'vikriti']);
 
-const MODERN_DIAGNOSIS_PREFIX = 'Modern diagnosis: ';
+const ASSESSMENT_LABELS = labelsFor(['ayurvedicDiagnosis']);
+
+const PLAN_LABELS = labelsFor(['precautions']);
+
+export const MODERN_DIAGNOSIS_PREFIX = 'Modern diagnosis: ';
 
 function labelled(label: string, value: string) {
   return value ? `**${label}:**\n\n${value}` : null;

@@ -1,3 +1,13 @@
+import {
+  ACTUAL_DURATION_PATTERN,
+  DAILY_TREATMENT_LABELS,
+  PAIN_SCORE_PATTERN,
+} from '../../_utils/daily-treatment-note';
+import {
+  CONSULTATION_LABELS,
+  MODERN_DIAGNOSIS_PREFIX,
+} from '../../_utils/doctor-consultation-note';
+
 type SoapNote = {
   plan: string | null;
   objective: string | null;
@@ -31,20 +41,18 @@ export function parseLabelled(text: string | null): { lead: string; sections: La
 
 // The consultation form's labels, shortened for the Patient copy.
 const DISPLAY_LABELS: Record<string, string> = {
-  'Present condition / HPI': 'Present condition',
-  'Examination / red flags': 'Examination',
-  'Vikriti / body condition': 'Vikriti',
-  'Treatment precautions': 'Precautions',
+  [CONSULTATION_LABELS.hpi]: 'Present condition',
+  [CONSULTATION_LABELS.examination]: 'Examination',
+  [CONSULTATION_LABELS.vikriti]: 'Vikriti',
+  [CONSULTATION_LABELS.precautions]: 'Precautions',
 };
 
 // History stays in the Clinical record; the Patient copy leaves it out.
-const PATIENT_COPY_HIDDEN = new Set([
-  'Past medical history',
-  'Past surgical history',
-  'Family / social history',
+const PATIENT_COPY_HIDDEN = new Set<string>([
+  CONSULTATION_LABELS.medicalHistory,
+  CONSULTATION_LABELS.surgicalHistory,
+  CONSULTATION_LABELS.familySocialHistory,
 ]);
-
-const MODERN_DIAGNOSIS_PREFIX = 'Modern diagnosis: ';
 
 type ConsultationRow = { label: string; value: string };
 
@@ -83,7 +91,8 @@ export function consultationGroups(note: SoapNote): ConsultationGroup[] {
   return groups.filter((group) => group.rows.length > 0);
 }
 
-const TREATMENT_RESPONSE_LABEL = '**Treatment response:**';
+const TREATMENT_RESPONSE_LABEL = `**${DAILY_TREATMENT_LABELS.response}:**`;
+const CHIEF_COMPLAINT_LABEL = `**${CONSULTATION_LABELS.chiefComplaint}:**`;
 
 function isTreatmentNote(note: SoapNote) {
   return (note.subjective ?? '').startsWith(TREATMENT_RESPONSE_LABEL);
@@ -94,7 +103,7 @@ export function latestConsultationNote<T extends SoapNote>(notes: T[]): T | null
   const candidates = notes.filter(
     (note) =>
       !isTreatmentNote(note) &&
-      (note.noteType.code === 'CONS' || (note.subjective ?? '').includes('**Chief complaint:**'))
+      (note.noteType.code === 'CONS' || (note.subjective ?? '').includes(CHIEF_COMPLAINT_LABEL))
   );
   return candidates.at(-1) ?? null;
 }
@@ -115,20 +124,20 @@ type TreatmentResponse = {
 /** Reads back what the Daily Treatment Session sheet wrote into a note. */
 export function treatmentResponse(note: SoapNote): TreatmentResponse {
   const subjective = parseLabelled(note.subjective).sections.find(
-    (section) => section.label === 'Treatment response'
+    (section) => section.label === DAILY_TREATMENT_LABELS.response
   );
   const responseText = subjective?.value ?? '';
-  const pain = /\n*Pain score: (\d+)\/10$/.exec(responseText);
+  const pain = PAIN_SCORE_PATTERN.exec(responseText);
   const objective = parseLabelled(note.objective);
-  const minutes = /Actual duration: (\d+) minutes/.exec(objective.lead);
+  const minutes = ACTUAL_DURATION_PATTERN.exec(objective.lead);
   const section = (label: string) =>
     objective.sections.find((item) => item.label === label)?.value || null;
 
   return {
     response: pain ? responseText.slice(0, pain.index).trim() : responseText,
     painScore: pain ? Number(pain[1]) : null,
-    variations: section('Variations'),
+    variations: section(DAILY_TREATMENT_LABELS.variations),
     actualMinutes: minutes ? Number(minutes[1]) : null,
-    adverseEvents: section('Adverse events'),
+    adverseEvents: section(DAILY_TREATMENT_LABELS.adverseEvents),
   };
 }

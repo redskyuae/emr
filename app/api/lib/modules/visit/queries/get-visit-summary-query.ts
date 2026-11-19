@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
+import { tenantLocalDateTime } from '../../appointment/schemas/appointment-slot';
 import { appointmentRepository } from '../../appointment/repository/appointment-repository';
 import { invoiceRepository } from '../../invoice/repository/invoice-repository';
 import type { Invoice } from '../../invoice/schemas/invoice-schema';
@@ -24,7 +25,7 @@ import type {
 import { validateGetVisitById } from '../validator/get-visit-by-id-validator';
 
 // Medications are a Patient-level list; one summary prints every active one.
-const MEDICATION_LIMIT = 1000;
+const ACTIVE_MEDICATION_LIMIT = 1000;
 
 // Visit dates are DD-MM-YYYY; Appointment filters take ISO dates.
 function dayAfter(visitDate: string) {
@@ -32,6 +33,14 @@ function dayAfter(visitDate: string) {
   const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + 1);
   return date.toISOString().slice(0, 10);
+}
+
+// The next Appointment is the first one after the Visit that has not already passed, so an
+// old Visit never prints a missed or never-updated Appointment as the one to come back for.
+function nextAppointmentFrom(visitDate: string, timeZone: string, now: Date) {
+  const from = dayAfter(visitDate);
+  const today = tenantLocalDateTime(now, timeZone).date;
+  return from > today ? from : today;
 }
 
 function treatmentGivenIn(
@@ -121,13 +130,15 @@ async function getBilling(tenantId: string, visitId: number) {
 async function getNextAppointment(
   tenantId: string,
   visit: Visit,
-  plans: PatientTreatmentPlan[]
+  plans: PatientTreatmentPlan[],
+  timeZone: string,
+  now: Date
 ): Promise<VisitSummaryNextAppointment | null> {
   const { data } = await appointmentRepository.getAppointments({
     tenantId,
     limit: 1,
     patientId: visit.patient.id,
-    fromDate: dayAfter(visit.visitDate),
+    fromDate: nextAppointmentFrom(visit.visitDate, timeZone, now),
     statusCategories: ['SCHEDULED', 'CONFIRMED'],
   });
   const [appointment] = data;
@@ -180,8 +191,9 @@ export async function getVisitSummaryQuery(
       visitDiagnosisRepository.listByVisit(validTenantId, visitId),
       patientMedicationRepository.getPatientMedications({
         patientId,
+        status: 'active',
         tenantId: validTenantId,
-        limit: MEDICATION_LIMIT,
+        limit: ACTIVE_MEDICATION_LIMIT,
       }),
       patientTreatmentPlanRepository.getAllByPatientId(patientId, validTenantId),
       options.includeBilling ? getBilling(validTenantId, visitId) : Promise.resolve(null),
@@ -191,7 +203,14 @@ export async function getVisitSummaryQuery(
     return { success: false, errors: ['Visit not found'], status: StatusCodes.NOT_FOUND };
   }
 
-  const nextAppointment = await getNextAppointment(validTenantId, visit, plans);
+  const generatedAt = new Date();
+  const nextAppointment = await getNextAppointment(
+    validTenantId,
+    visit,
+    plans,
+    tenant.timeZone,
+    generatedAt
+  );
 
   return {
     success: true,
@@ -202,22 +221,20 @@ export async function getVisitSummaryQuery(
       allergies,
       diagnoses,
       timeZone: tenant.timeZone,
-      generatedAt: new Date(),
+      generatedAt,
       generatedBy: options.generatedBy,
       nextAppointment,
       billingIncluded: options.includeBilling,
       treatmentPlans: plansForVisit(visit, plans),
       treatmentGiven: treatmentGivenIn(visitId, plans),
       tenant: { name: tenant.name, logo: tenant.logo },
-      medications: medications.data
-        .filter((medication) => medication.status === 'active')
-        .map((medication) => ({
-          id: medication.id,
-          dose: medication.dose,
-          route: medication.route,
-          drugName: medication.drugName,
-          frequency: medication.frequency,
-        })),
+      medications: medications.data.map((medication) => ({
+        id: medication.id,
+        dose: medication.dose,
+        route: medication.route,
+        drugName: medication.drugName,
+        frequency: medication.frequency,
+      })),
       patient: {
         id: patient.id,
         mrn: patient.mrn,

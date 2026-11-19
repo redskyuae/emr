@@ -208,7 +208,7 @@ describe('Visit summary repository', () => {
   });
 
   describe('getVisitInvoiceId', () => {
-    it('should return the latest non-Void Invoice of the Visit', async () => {
+    it('should return the latest finalized Invoice of the Visit, skipping Void and Draft', async () => {
       const invoice = { tenantId: tenantA, patientId: a.patientId, visitId: a.visitId };
       const [paid] = await db
         .insert(invoiceTable)
@@ -221,10 +221,27 @@ describe('Visit summary repository', () => {
         voidedAt: new Date(),
         voidReason: 'Raised twice',
       });
+      await db
+        .insert(invoiceTable)
+        .values({ ...invoice, invoiceNumber: 'INV-1003', status: 'DRAFT' });
 
       await expect(visitSummaryRepository.getVisitInvoiceId(tenantA, a.visitId)).resolves.toBe(
         paid.id
       );
+    });
+
+    it('should return undefined when the Visit has only a Draft Invoice', async () => {
+      await db.insert(invoiceTable).values({
+        tenantId: tenantA,
+        patientId: a.patientId,
+        visitId: a.visitId,
+        invoiceNumber: 'INV-1004',
+        status: 'DRAFT',
+      });
+
+      await expect(
+        visitSummaryRepository.getVisitInvoiceId(tenantA, a.visitId)
+      ).resolves.toBeUndefined();
     });
 
     it('should return undefined for another Tenant Visit', async () => {
@@ -233,6 +250,7 @@ describe('Visit summary repository', () => {
         patientId: b.patientId,
         visitId: b.visitId,
         invoiceNumber: 'INV-2001',
+        status: 'FINALIZED',
       });
 
       await expect(

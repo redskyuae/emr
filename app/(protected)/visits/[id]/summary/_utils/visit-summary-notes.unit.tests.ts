@@ -80,6 +80,21 @@ describe('consultationGroups', () => {
     ]);
   });
 
+  it('should leave every history section written by the form off the Patient copy', () => {
+    const soap = consultationToSoap({
+      ...EMPTY_CONSULTATION,
+      noteTypeId: '1',
+      chiefComplaint: 'Low back pain',
+      medicalHistory: 'Diabetes since 2015',
+      surgicalHistory: 'Appendectomy 2010',
+      familySocialHistory: 'Father hypertensive',
+    });
+
+    expect(consultationGroups(note(soap))).toEqual([
+      { key: 'subjective', rows: [{ label: 'Chief complaint', value: 'Low back pain' }] },
+    ]);
+  });
+
   it('should show a free-text note without row labels and drop empty sections', () => {
     expect(
       consultationGroups({
@@ -119,6 +134,23 @@ describe('treatment notes', () => {
       actualMinutes: 50,
       adverseEvents: null,
     });
+  });
+
+  it('should read back adverse events the Daily Treatment Session sheet wrote', () => {
+    const withEvent = dailyTreatmentToSoap(
+      {
+        actualMinutes: '',
+        response: 'Improved',
+        painScore: '',
+        variations: '',
+        adverseEvents: 'Mild dizziness after Swedana.',
+      },
+      session
+    );
+
+    expect(
+      treatmentResponse({ ...withEvent, plan: null, assessment: null, noteType: { code: 'PROG' } })
+    ).toMatchObject({ adverseEvents: 'Mild dizziness after Swedana.', variations: null });
   });
 
   it('should leave out pain score and duration when they were not recorded', () => {
