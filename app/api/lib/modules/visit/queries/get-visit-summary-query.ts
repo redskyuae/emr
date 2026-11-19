@@ -35,8 +35,8 @@ function dayAfter(visitDate: string) {
   return date.toISOString().slice(0, 10);
 }
 
-// The next Appointment is the first one after the Visit that has not already passed, so an
-// old Visit never prints a missed or never-updated Appointment as the one to come back for.
+// The next Appointment is the first one after the Visit and not on a day that has already
+// passed (an Appointment earlier today can still show if it was never updated).
 function nextAppointmentFrom(visitDate: string, timeZone: string, now: Date) {
   const from = dayAfter(visitDate);
   const today = tenantLocalDateTime(now, timeZone).date;
