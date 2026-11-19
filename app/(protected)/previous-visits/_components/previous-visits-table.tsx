@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { CiRead, CiUser } from 'react-icons/ci';
-import { MoreHorizontal, Pencil } from 'lucide-react';
+import { CiEdit, CiRead, CiUser } from 'react-icons/ci';
+import { PiDotsThreeLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -49,7 +49,7 @@ function VisitActions({ visit, permissions }: { visit: Visit; permissions: EditP
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" aria-label={`Actions for ${visit.visitNumber}`}>
-            <MoreHorizontal className="size-4" />
+            <PiDotsThreeLight className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -62,7 +62,7 @@ function VisitActions({ visit, permissions }: { visit: Visit; permissions: EditP
           {editHref ? (
             <DropdownMenuItem asChild>
               <Link href={editHref}>
-                <Pencil className="size-4" />
+                <CiEdit className="size-4" />
                 Edit Visit
               </Link>
             </DropdownMenuItem>

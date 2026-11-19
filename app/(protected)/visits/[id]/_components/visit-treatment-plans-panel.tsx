@@ -1,7 +1,13 @@
 import Link from 'next/link';
 import { CiPlay1 } from 'react-icons/ci';
-import { PiCalendarPlusLight, PiCheckLight, PiClipboardTextLight, PiXLight } from 'react-icons/pi';
-import { Plus } from 'lucide-react';
+import {
+  PiCalendarPlusLight,
+  PiCheckLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+  PiXLight,
+} from 'react-icons/pi';
+
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
@@ -90,7 +96,7 @@ function PlanCard({
               aria-label={`Add Sessions to ${plan.treatmentName}`}
               onClick={() => onAddSessions(plan.id)}
             >
-              <Plus className="size-4" />
+              <PiPlusLight className="size-4" />
               Add Sessions
             </Button>
           ) : null}
@@ -243,8 +249,7 @@ function TreatmentPlansContent({
   const activeVisit = visit.status === 'CHECKED_IN' || visit.status === 'IN_CONSULTATION';
 
   // A closed Visit is a record of what happened then: show only the Plan Sessions it
-  // started or completed, not the Patient's Plans as they stand today. The Visit's own
-  // Treatment Session is shown separately above.
+  // started or completed, not the Patient's Plans as they stand today.
   if (!activeVisit) {
     const delivered = visitProcedures(visit, plans).filter((procedure) =>
       procedure.key.startsWith('plan-')
