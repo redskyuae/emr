@@ -114,6 +114,7 @@ describe('App shell navigation permissions', () => {
     expect(enabledGroups[2].items.map(({ title }) => title)).toEqual([
       'Visits',
       'Previous Visits',
+      'Reports',
       'Visit List',
     ]);
 
@@ -135,9 +136,41 @@ describe('App shell navigation permissions', () => {
     expect(titles(false)).toEqual(
       expect.arrayContaining(['Visits', 'Previous Visits', 'Invoices'])
     );
+    expect(titles(false)).not.toContain('Reports');
     expect(titles(false)).not.toContain('Visit List');
     expect(titles(false)).not.toContain('Billing Counter');
-    expect(titles(true)).toEqual(expect.arrayContaining(['Visit List', 'Billing Counter']));
+    expect(titles(true)).toEqual(
+      expect.arrayContaining(['Reports', 'Visit List', 'Billing Counter'])
+    );
+  });
+
+  it('should show Reports below Previous Visits only with Visit permission', () => {
+    const outpatientTitles = (
+      permissions: string[],
+      appointmentsOnly: boolean,
+      showVisits: boolean
+    ) =>
+      getVisibleNavGroups(appNavGroups, permissions, appointmentsOnly, showVisits, true)
+        .find(({ title }) => title === 'Outpatient')
+        ?.items.map(({ title }) => title) ?? [];
+
+    expect(outpatientTitles(['visit:read'], false, false)).toEqual([
+      'Visits',
+      'Previous Visits',
+      'Reports',
+      'Visit List',
+    ]);
+    expect(outpatientTitles(['appointment:read'], false, false)).not.toContain('Reports');
+    expect(outpatientTitles(['visit:read'], true, false)).not.toContain('Reports');
+    expect(outpatientTitles(['visit:read'], true, true)).toContain('Reports');
+  });
+
+  it('should describe the Reports page and place it in Outpatient', () => {
+    expect(getAppPageMeta('/reports')).toEqual({
+      title: 'Reports',
+      subtitle: 'Generate Outpatient reports for a date range or a month.',
+    });
+    expect(getAppPageGroup('/reports')).toBe('Outpatient');
   });
 
   it('should restore the full sidebar when the flag is off', () => {

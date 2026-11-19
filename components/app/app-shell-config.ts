@@ -4,6 +4,7 @@ import {
   CiCalendarDate,
   CiClock1,
   CiCreditCard1,
+  CiFileOn,
   CiGlobe,
   CiGrid41,
   CiGrid42,
@@ -111,6 +112,12 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Previous Visits',
         href: '/previous-visits',
         icon: PiClockCounterClockwiseLight,
+        permission: 'visit',
+      },
+      {
+        title: 'Reports',
+        href: '/reports',
+        icon: CiFileOn,
         permission: 'visit',
       },
       {
@@ -460,9 +467,9 @@ const appointmentNavHrefs = new Set([
   '/billing-masters/charge-items',
 ]);
 
-const visitNavHrefs = new Set(['/visits', '/previous-visits', '/visit-list']);
+const visitNavHrefs = new Set(['/visits', '/previous-visits', '/reports', '/visit-list']);
 
-const demoNavHrefs = new Set(['/visit-list', '/billing-counter']);
+const demoNavHrefs = new Set(['/reports', '/visit-list', '/billing-counter']);
 
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
@@ -574,6 +581,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/previous-visits': {
     title: 'Previous Visits',
     subtitle: 'Search past outpatient Visits by date range, Doctor, status, and Visit Type.',
+  },
+  '/reports': {
+    title: 'Reports',
+    subtitle: 'Generate Outpatient reports for a date range or a month.',
   },
   '/visit-list': {
     title: 'Visit List',

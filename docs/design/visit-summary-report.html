@@ -1,0 +1,753 @@
+<title>Visit Summary Report</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a planning document in the EMR design system (DESIGN.md tokens); the proposed screen is a
+   framed app surface holding an A4 summary sheet. Satoshi is the app face; Manrope stands in. */
+:root {
+  --bg: oklch(0.975 0.006 262);
+  --card: oklch(1 0 0);
+  --fg: oklch(0.21 0.03 265);
+  --muted: oklch(0.958 0.009 262);
+  --muted-fg: oklch(0.5 0.032 265);
+  --border: oklch(0.915 0.012 265);
+  --primary: oklch(0.43 0.118 254);
+  --cta: oklch(0.225 0.018 268);
+  --cta-fg: oklch(0.985 0.003 265);
+  --accent: oklch(0.948 0.02 248);
+  --success: oklch(0.43 0.11 155);
+  --warning: oklch(0.48 0.105 70);
+  --destructive: oklch(0.577 0.245 27.325);
+  --procedure: oklch(0.48 0.145 300);
+  --pop: oklch(0.64 0.2 354);
+  --teal: oklch(0.62 0.14 180);
+  --font-sans: 'Satoshi', 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: oklch(0.165 0.02 256);
+    --card: oklch(0.205 0.024 256);
+    --fg: oklch(0.96 0.008 247);
+    --muted: oklch(0.255 0.028 256);
+    --muted-fg: oklch(0.69 0.02 252);
+    --border: oklch(1 0 0 / 12%);
+    --primary: oklch(0.64 0.125 250);
+    --cta: oklch(0.94 0.008 265);
+    --cta-fg: oklch(0.2 0.02 265);
+    --accent: oklch(0.29 0.045 254);
+    --success: oklch(0.76 0.13 155);
+    --warning: oklch(0.8 0.13 80);
+    --destructive: oklch(0.704 0.191 22.216);
+    --procedure: oklch(0.76 0.12 300);
+    --pop: oklch(0.7 0.18 354);
+    --teal: oklch(0.68 0.13 180);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: oklch(0.165 0.02 256);
+  --card: oklch(0.205 0.024 256);
+  --fg: oklch(0.96 0.008 247);
+  --muted: oklch(0.255 0.028 256);
+  --muted-fg: oklch(0.69 0.02 252);
+  --border: oklch(1 0 0 / 12%);
+  --primary: oklch(0.64 0.125 250);
+  --cta: oklch(0.94 0.008 265);
+  --cta-fg: oklch(0.2 0.02 265);
+  --accent: oklch(0.29 0.045 254);
+  --success: oklch(0.76 0.13 155);
+  --warning: oklch(0.8 0.13 80);
+  --destructive: oklch(0.704 0.191 22.216);
+  --procedure: oklch(0.76 0.12 300);
+  --pop: oklch(0.7 0.18 354);
+  --teal: oklch(0.68 0.13 180);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-sans);
+  font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 1180px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px;
+}
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; line-height: 1.2; }
+h1 { font-size: clamp(30px, 4.4vw, 44px); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 26px; font-weight: 750; letter-spacing: -0.01em; }
+h3 { font-size: 17px; font-weight: 700; }
+h4 { font-size: 14px; font-weight: 700; }
+p { margin: 0; }
+.lede { max-width: 70ch; color: var(--muted-fg); font-size: 16px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primary); }
+.mono { font-family: var(--font-mono); font-size: 0.92em; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted-fg); }
+.small { font-size: 13px; }
+a { color: var(--primary); }
+a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+header.doc-head { display: grid; gap: 18px; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.meta { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--border); color: var(--muted-fg); }
+.meta b { color: var(--fg); font-weight: 600; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; }
+nav.toc a { text-decoration: none; color: var(--fg); font-weight: 600; }
+nav.toc a span { color: var(--muted-fg); font-family: var(--font-mono); font-size: 12px; margin-right: 6px; }
+nav.toc a:hover { color: var(--primary); }
+
+section.part { display: grid; gap: 24px; scroll-margin-top: 16px; }
+.part-head { display: grid; gap: 8px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+.pad { padding: 20px; }
+.grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); align-items: start; }
+.grid-3 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); align-items: start; }
+.stack { display: grid; gap: 12px; }
+.scroll { overflow-x: auto; min-width: 0; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 8px 12px; vertical-align: top; }
+thead th { background: var(--muted); color: var(--muted-fg); font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+thead th:first-child { border-top-left-radius: 8px; }
+thead th:last-child { border-top-right-radius: 8px; }
+tbody tr + tr td { border-top: 1px solid var(--border); }
+td.r, th.r { text-align: right; }
+td.c, th.c { text-align: center; }
+td .sub { display: block; color: var(--muted-fg); font-size: 12.5px; }
+
+/* inventory */
+.cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 16px 20px 12px; flex-wrap: wrap; }
+.cat-head p { font-size: 12.5px; color: var(--muted-fg); }
+.inv td:first-child { font-weight: 600; min-width: 170px; }
+.inv td:nth-child(2) { color: var(--muted-fg); min-width: 220px; }
+.inv td.c { width: 74px; }
+.opt { display: inline-block; font-family: var(--font-mono); font-size: 11.5px; padding: 0 6px; border-radius: 5px; background: var(--muted); color: var(--fg); margin: 1px 2px 1px 0; }
+.yes, .no, .cl { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 800; }
+.yes { color: var(--success); background: color-mix(in oklch, var(--success) 14%, transparent); }
+.cl { color: var(--primary); background: color-mix(in oklch, var(--primary) 12%, transparent); }
+.no { color: var(--muted-fg); background: var(--muted); }
+.legend-row { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 13px; color: var(--muted-fg); }
+.legend-row span { display: inline-flex; gap: 6px; align-items: center; }
+.group-row td { background: color-mix(in oklch, var(--primary) 5%, var(--card)); font-weight: 700; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--primary) !important; }
+
+.sections td:first-child { font-family: var(--font-mono); font-weight: 600; color: var(--primary); width: 36px; }
+.sections td:nth-child(2) { font-weight: 700; white-space: nowrap; }
+.sections td:nth-child(3) { min-width: 300px; }
+.sections td:nth-child(4) { color: var(--muted-fg); min-width: 240px; }
+ul.tight { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+
+/* screen frame */
+.screen { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--bg); }
+.screen-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--muted); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted-fg); }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--border); display: block; }
+.url { font-family: var(--font-mono); background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 2px 10px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.screen-body { padding: 24px; display: grid; gap: 20px; min-width: 0; }
+.annots { display: grid; gap: 6px; }
+.annot { font-size: 12px; color: var(--pop); font-weight: 700; display: flex; gap: 6px; align-items: baseline; }
+.annot::before { content: attr(data-n); display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--pop); color: var(--card); font-size: 11px; flex: none; }
+.pin { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--pop); color: var(--card); font-size: 11px; font-weight: 800; vertical-align: middle; margin-left: 6px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 10px; font: 600 14px var(--font-sans); border: 1px solid transparent; white-space: nowrap; }
+.btn.ink { background: var(--cta); color: var(--cta-fg); }
+.btn.outline { background: var(--card); border-color: var(--border); color: var(--fg); }
+.btn.ghost-b { background: transparent; color: var(--fg); }
+.btn.sm { height: 34px; padding: 0 12px; font-size: 13px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge.ok { color: var(--success); background: color-mix(in oklch, var(--success) 13%, transparent); }
+.badge.bad { color: var(--destructive); background: color-mix(in oklch, var(--destructive) 12%, transparent); }
+.badge.warn { color: var(--warning); background: color-mix(in oklch, var(--warning) 14%, transparent); }
+.badge.info { color: var(--primary); background: color-mix(in oklch, var(--primary) 12%, transparent); }
+
+/* workspace header mock */
+.ws { padding: 16px 20px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: center; }
+.ws .who { display: grid; gap: 2px; min-width: 0; }
+.ws .who b { font-size: 17px; }
+
+/* toolbar */
+.toolbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; padding: 12px 16px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; padding: 3px; background: var(--muted); }
+.seg span { padding: 6px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--muted-fg); }
+.seg span.on { background: var(--card); color: var(--fg); box-shadow: 0 0 0 1px var(--border); }
+.switch { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 600; }
+.switch i { width: 32px; height: 18px; border-radius: 999px; background: var(--cta); position: relative; flex: none; }
+.switch i::after { content: ""; position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--cta-fg); }
+
+/* A4 sheet */
+.sheet-wrap { display: grid; justify-items: center; min-width: 0; }
+.sheet {
+  width: 100%; max-width: 820px; background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+  padding: clamp(18px, 4vw, 44px); display: grid; gap: 22px; min-width: 0;
+}
+.lh { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; padding-bottom: 16px; border-bottom: 2px solid var(--fg); }
+.lh-brand { display: flex; gap: 12px; align-items: center; }
+.logo { width: 44px; height: 44px; border-radius: 10px; background: var(--primary); display: grid; place-items: center; color: var(--cta-fg); font-weight: 800; font-size: 18px; flex: none; }
+.lh-brand b { font-size: 17px; display: block; }
+.lh-brand span { font-size: 12.5px; color: var(--muted-fg); }
+.lh-doc { text-align: right; display: grid; gap: 3px; }
+.lh-doc .t { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.lh-doc .n { font-family: var(--font-mono); font-size: 13px; }
+
+.idgrid { display: grid; gap: 1px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.idcell { background: var(--card); padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.idcell h5 { margin: 0; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted-fg); }
+dl.kv { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
+dl.kv dt { color: var(--muted-fg); white-space: nowrap; }
+dl.kv dd { margin: 0; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+
+.alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: 10px; font-size: 13.5px;
+  background: color-mix(in oklch, var(--destructive) 8%, var(--card)); border: 1px solid color-mix(in oklch, var(--destructive) 35%, transparent); }
+.alert b { color: var(--destructive); }
+.alert svg { flex: none; color: var(--destructive); margin-top: 2px; }
+
+.sec { display: grid; gap: 10px; }
+.sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.sec-h h4 { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.sec-h h4 i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.sec-h span { font-size: 12px; color: var(--muted-fg); }
+
+.vitals { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 112px), 1fr)); gap: 8px; }
+.vt { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: grid; gap: 1px; }
+.vt span { font-size: 11.5px; color: var(--muted-fg); }
+.vt b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.vt b small { font-size: 11.5px; font-weight: 500; color: var(--muted-fg); margin-left: 2px; }
+.vt.flag b { color: var(--warning); }
+
+.soap { display: grid; gap: 12px; }
+.soap-row { display: grid; grid-template-columns: minmax(0, 150px) 1fr; gap: 12px; font-size: 13.5px; }
+.soap-row dt { color: var(--muted-fg); font-weight: 600; }
+.soap-row dd { margin: 0; min-width: 0; }
+.soap-block { display: grid; gap: 8px; }
+.soap-block > .lbl { font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.sign { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 12.5px; color: var(--muted-fg); padding-top: 8px; border-top: 1px dashed var(--border); }
+
+.sheet table { font-size: 13px; }
+.sheet thead th { font-size: 10.5px; }
+.code { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
+.totals td { padding-top: 4px; padding-bottom: 4px; border: 0 !important; }
+.totals tr.strong td { font-weight: 800; border-top: 1.5px solid var(--fg) !important; padding-top: 8px; }
+
+.next { display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--accent); flex-wrap: wrap; }
+.date-chip { display: grid; place-items: center; width: 52px; height: 56px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); flex: none; line-height: 1.05; }
+.date-chip b { font-size: 20px; }
+.date-chip span { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-fg); }
+
+.sheet-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted-fg); border-top: 1px solid var(--border); padding-top: 10px; }
+
+/* states */
+.state-row { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.state { padding: 16px; display: grid; gap: 10px; align-content: start; }
+.state .lbl { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-fg); }
+.banner { padding: 10px 12px; border-radius: 8px; font-size: 13px; display: grid; gap: 2px; }
+.banner.bad { background: color-mix(in oklch, var(--destructive) 9%, var(--card)); border: 1px solid color-mix(in oklch, var(--destructive) 30%, transparent); }
+.banner.warn { background: color-mix(in oklch, var(--warning) 10%, var(--card)); border: 1px solid color-mix(in oklch, var(--warning) 35%, transparent); }
+.banner b { font-size: 13.5px; }
+
+.decisions { display: grid; gap: 12px; }
+.decision { padding: 16px 20px; display: grid; gap: 6px; }
+.decision h3 { font-size: 15.5px; }
+.decision p { color: var(--muted-fg); font-size: 14px; max-width: 82ch; }
+.decision p b { color: var(--fg); }
+footer { font-size: 13px; color: var(--muted-fg); border-top: 1px solid var(--border); padding-top: 20px; }
+
+@media (max-width: 640px) {
+  .screen-body { padding: 12px; }
+  .pad { padding: 16px; }
+  .soap-row { grid-template-columns: 1fr; gap: 2px; }
+  .lh-doc { text-align: left; }
+}
+</style>
+
+<div class="page">
+
+  <header class="doc-head">
+    <div class="eyebrow">Visit workspace · plan and UI design</div>
+    <h1>Visit Summary Report</h1>
+    <p class="lede">A printable summary of one Visit: who the Patient is, who saw them and when, what was found, what was diagnosed and planned, what treatment was given, and what was billed. It is produced from a single Visit and can be handed to the Patient or kept on file.</p>
+    <div class="meta-row">
+      <span class="meta">Status <b>Proposal</b></span>
+      <span class="meta">Drafted <b>19 Nov 2026</b></span>
+      <span class="meta">Route <b class="mono">/visits/[id]/summary</b></span>
+      <span class="meta">API <b class="mono">GET /api/v1/visits/[id]/summary</b></span>
+    </div>
+    <nav class="toc" aria-label="Contents">
+      <a href="#fields"><span>1</span>What one Visit holds</a>
+      <a href="#plan"><span>2</span>Summary plan</a>
+      <a href="#design"><span>3</span>UI design</a>
+      <a href="#decisions"><span>4</span>Open decisions</a>
+    </nav>
+  </header>
+
+  <!-- ===================== 1. FIELDS ===================== -->
+  <section class="part" id="fields">
+    <div class="part-head">
+      <div class="eyebrow">1 · Inventory</div>
+      <h2>What one Visit holds</h2>
+      <p class="lede">Every field the app records for a Visit or can reach from it, read from <span class="mono">app/db/schema</span>, the Visit modules and the Visit workspace forms. The last two columns say which copy of the summary prints it.</p>
+      <div class="legend-row">
+        <span><i class="yes">✓</i> Printed on both copies</span>
+        <span><i class="cl">C</i> Clinical copy only</span>
+        <span><i class="no">–</i> Not printed</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="scroll"><table class="inv">
+        <thead><tr><th>Field</th><th>Source and options</th><th class="c">Patient copy</th><th class="c">Clinical copy</th></tr></thead>
+        <tbody>
+          <tr class="group-row"><td colspan="4">Visit</td></tr>
+          <tr><td>Visit Number</td><td><span class="opt">VST-1001</span> onward, never reused</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Visit date</td><td><span class="mono">visitDate</span>, DD-MM-YYYY</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Visit Status</td><td><span class="opt">CHECKED_IN</span><span class="opt">IN_CONSULTATION</span><span class="opt">COMPLETED</span><span class="opt">CANCELLED</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Visit Type</td><td>VisitType master: name, code</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Appointment</td><td>Booking Number, e.g. <span class="opt">APT-2391</span>; none means Walk-in</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Admit Source</td><td>Admit Source master, optional: Self / Walk-in, Doctor Referral, Hospital Transfer…</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+          <tr><td>Queue Token</td><td>same-day number per Doctor</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+          <tr><td>Check-in, consultation start, completed</td><td><span class="mono">checkedInAt</span>, <span class="mono">consultationStartedAt</span>, <span class="mono">completedAt</span>; wait and consultation length derived</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Cancelled at, cancellation reason</td><td>free text ≤ 255</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Remarks</td><td>free text from Check-in</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+          <tr><td>Legacy Visit Number</td><td>set only on imported Visits</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+
+          <tr class="group-row"><td colspan="4">Patient</td></tr>
+          <tr><td>Name</td><td>title, first, middle, last</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Medical Record Number</td><td><span class="opt">MRN-1284</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Age and gender</td><td>age at the Visit date from <span class="mono">dateOfBirth</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Phone, blood group</td><td><span class="mono">phone</span>, <span class="mono">bloodGroup</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Visit Patient Type</td><td><span class="opt">NEW</span><span class="opt">ESTABLISHED</span>, three-year rule; not stored today</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+          <tr><td>Emirates ID, passport, VIP, Medical Tourist</td><td>registration identifiers and flags</td><td class="c"><i class="no">–</i></td><td class="c"><i class="no">–</i></td></tr>
+
+          <tr class="group-row"><td colspan="4">Doctor</td></tr>
+          <tr><td>Doctor name</td><td>nullable; required only for Visit Type <span class="opt">OPD</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Specialty, qualifications, registration number</td><td><span class="mono">specialtyId</span>, <span class="mono">qualifications</span>, <span class="mono">registrationNumber</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+
+          <tr class="group-row"><td colspan="4">Patient safety (Patient-level, printed as of today)</td></tr>
+          <tr><td>Allergies</td><td>allergen or substance, reaction, severity <span class="opt">mild</span><span class="opt">moderate</span><span class="opt">severe</span>, status <span class="opt">active</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Current medications</td><td>drug, dose, route, frequency, status <span class="opt">active</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Active problems</td><td>title, ICD-10-CM code, onset date</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+
+          <tr class="group-row"><td colspan="4">Vital Signs (recorded in this Visit)</td></tr>
+          <tr><td>Height, weight, BMI</td><td>cm, kg, derived BMI</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Blood pressure, pulse, respiratory rate</td><td>mmHg, bpm, breaths/min</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Temperature, SpO₂, pain score</td><td>°C, %, 0–10</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Recorded at, recorded by, notes</td><td>timestamp, user, text</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+
+          <tr class="group-row"><td colspan="4">Consultation (signed Clinical Note, SOAP)</td></tr>
+          <tr><td>Chief complaint</td><td>Subjective</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Present condition / HPI</td><td>Subjective</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Past medical, surgical, family / social history</td><td>Subjective</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+          <tr><td>Examination / red flags</td><td>Objective</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Prakriti, Vikriti / body condition</td><td>Objective</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Modern diagnosis, Ayurvedic diagnosis</td><td>Assessment (narrative)</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Treatment precautions</td><td>Plan</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Note Type, status, signed by and at</td><td><span class="opt">draft</span><span class="opt">signed</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Amended at, amended by</td><td>set when a Completed Visit is amended</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+
+          <tr class="group-row"><td colspan="4">Coded diagnoses</td></tr>
+          <tr><td>ICD-10-CM diagnoses</td><td>code, title, <span class="opt">PRINCIPAL</span><span class="opt">SECONDARY</span>, notes</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Ayurveda diagnoses</td><td>code, name (Roga), English name, Principal / Secondary</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+
+          <tr class="group-row"><td colspan="4">Treatment</td></tr>
+          <tr><td>Treatment and Session on the Visit</td><td><span class="mono">treatmentId</span>, <span class="mono">treatmentSessionId</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Session delivered in this Visit</td><td>Session n of N, label, procedure, planned minutes</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Daily treatment note</td><td>actual minutes (1–480), treatment response, pain score, variations, adverse events</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Treatment Plans assigned</td><td>Treatment, <span class="opt">REPEATABLE</span><span class="opt">SEQUENCED</span>, Sessions done of total</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Room type, Therapist Skill, equipment, preparation, warning</td><td>Session plan snapshot</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+
+          <tr class="group-row"><td colspan="4">Documents, billing and follow-up</td></tr>
+          <tr><td>Documents</td><td>file name, type, size</td><td class="c"><i class="no">–</i></td><td class="c"><i class="cl">C</i></td></tr>
+          <tr><td>Invoice</td><td>Invoice Number, status <span class="opt">DRAFT</span><span class="opt">FINALIZED</span><span class="opt">PARTIALLY_PAID</span><span class="opt">PAID</span><span class="opt">VOID</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Invoice lines</td><td>description, quantity, unit price, amount</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Totals and payments</td><td>subtotal, discount, grand total, paid, Balance Due; receipt, method <span class="opt">CASH</span><span class="opt">CARD</span><span class="opt">UPI</span><span class="opt">BANK_TRANSFER</span><span class="opt">CHEQUE</span><span class="opt">OTHER</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Next Appointment</td><td>the Patient's next Scheduled or Confirmed Appointment after this Visit</td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+          <tr><td>Admission from this Visit</td><td><span class="mono">admission.visitId</span></td><td class="c"><i class="yes">✓</i></td><td class="c"><i class="yes">✓</i></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- ===================== 2. PLAN ===================== -->
+  <section class="part" id="plan">
+    <div class="part-head">
+      <div class="eyebrow">2 · Plan</div>
+      <h2>Summary plan</h2>
+      <p class="lede">One summary, two copies. The <b>Patient copy</b> is what the Patient takes home. The <b>Clinical copy</b> adds history, audit detail and documents for the file, a referral, or another Doctor.</p>
+    </div>
+
+    <div class="card">
+      <div class="cat-head"><h3>Sections in print order</h3><p>The screen, PDF and print share this order</p></div>
+      <div class="scroll"><table class="sections">
+        <thead><tr><th>#</th><th>Section</th><th>Fields</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Letterhead</td><td>Tenant name and logo, "Visit Summary", Visit Number, Visit Status, copy type</td><td>Logo from the Tenant's <span class="mono">organization.logo</span>; falls back to the brand mark.</td></tr>
+          <tr><td>2</td><td>Patient and Visit</td><td>Patient name, MRN, age / gender, phone, blood group · Visit date, Visit Type, Appointment or Walk-in, Doctor with Specialty and registration number · check-in, start and completion times</td><td>Times in the Tenant time zone. Wait and consultation length shown in minutes.</td></tr>
+          <tr><td>3</td><td>Allergy alert</td><td>Active allergies with reaction and severity</td><td>Always printed, even when empty ("No known allergies"). Red only when an active allergy exists.</td></tr>
+          <tr><td>4</td><td>Vital Signs</td><td>Height, weight, BMI, BP, pulse, respiratory rate, temperature, SpO₂, pain score</td><td>Latest set recorded in this Visit. Clinical copy lists every set with its time.</td></tr>
+          <tr><td>5</td><td>Consultation</td><td>Chief complaint, HPI, examination, Prakriti, Vikriti, diagnosis narrative, treatment precautions; signed by and when</td><td>Signed notes only. Rendered from the labelled SOAP sections the consultation form writes.</td></tr>
+          <tr><td>6</td><td>Diagnoses</td><td>ICD-10-CM and Ayurveda, Principal first, with notes</td><td>Grouped by code system; Principal marked.</td></tr>
+          <tr><td>7</td><td>Treatment</td><td>Session delivered (with daily treatment note), Treatment Plans assigned with progress</td><td>Left out when the Visit has no Treatment and assigned no Plan.</td></tr>
+          <tr><td>8</td><td>Current medications</td><td>Drug, dose, route, frequency</td><td>Active medications on the day the summary is printed.</td></tr>
+          <tr><td>9</td><td>Next Appointment</td><td>Date, time, Doctor or Treatment Session, Booking Number</td><td>The next Scheduled or Confirmed Appointment after the Visit date.</td></tr>
+          <tr><td>10</td><td>Billing</td><td>Invoice Number, status, lines, subtotal, discount, total, paid, Balance Due, payments</td><td>Hidden without Billing permission and when "Include billing" is off. Void Invoices are not printed.</td></tr>
+          <tr><td>11</td><td>Clinical detail</td><td>Past medical, surgical, family / social history; active problems; Admit Source, Queue Token, remarks; Documents; amendment trail</td><td>Clinical copy only.</td></tr>
+          <tr><td>12</td><td>Footer</td><td>Generated on and by, "Amended on …" when amended, page x of y</td><td>Printed on every page.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card pad stack">
+        <h3>Never printed</h3>
+        <ul class="tight muted small">
+          <li><b>Emirates ID, passport and other identifiers.</b> MRN and name are enough to match the record.</li>
+          <li><b>VIP and Medical Tourist flags.</b> Internal handling flags, not part of the clinical record.</li>
+          <li><b>Draft notes.</b> Only signed notes describe what the Doctor stands behind.</li>
+          <li><b>File URLs.</b> Blob links would hand out documents to anyone holding the paper.</li>
+        </ul>
+      </div>
+      <div class="card pad stack">
+        <h3>Build outline</h3>
+        <ul class="tight muted small">
+          <li><span class="mono">GET /api/v1/visits/[id]/summary</span> returns the whole summary in one response, with a <span class="mono">types.ts</span> and Swagger entry. Billing is dropped server-side without permission.</li>
+          <li>One query, <span class="mono">get-visit-summary-query.ts</span>, in the <span class="mono">visit</span> module, reading through existing repositories; every read filters by <span class="mono">tenantId</span>.</li>
+          <li>Screen at <span class="mono">app/(protected)/visits/[id]/summary/</span> with a page-shaped <span class="mono">loader.tsx</span>; copy type and billing toggle live in the URL via <span class="mono">nuqs</span>.</li>
+          <li>The PDF is rendered from the same response, so the screen and the file never disagree.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 3. DESIGN ===================== -->
+  <section class="part" id="design">
+    <div class="part-head">
+      <div class="eyebrow">3 · Design</div>
+      <h2>UI design</h2>
+      <p class="lede">The summary opens from the Visit itself and shows an A4 sheet that prints the way it looks. The Patient, Doctor and clinical content below are example data.</p>
+    </div>
+
+    <!-- 3a entry point -->
+    <div class="stack">
+      <h3>3a · Where it opens</h3>
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">/visits/1847</span></div>
+        <div class="screen-body">
+          <div class="card ws">
+            <div class="who">
+              <b>Mrs. Lakshmi Raghavan</b>
+              <span class="muted small"><span class="mono">MRN-1284</span> · F, 52 y · <span class="mono">VST-1847</span> · OPD Consultation · Dr. Anjali Menon</span>
+            </div>
+            <div class="btn-row">
+              <span class="badge ok">Completed</span>
+              <span class="btn outline sm">Amend</span>
+              <span class="btn ink sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Visit summary</span><span class="pin">1</span>
+            </div>
+          </div>
+          <div class="annots">
+            <span class="annot" data-n="1">"Visit summary" sits in the Visit header. On a Completed Visit it is the main action; on an active Visit it opens a provisional preview.</span>
+            <span class="annot" data-n="2">Previous Visits gets a "Summary" row action, so front desk can reprint without opening the workspace.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3b summary screen -->
+    <div class="stack">
+      <h3>3b · Summary screen</h3>
+      <div class="screen">
+        <div class="screen-bar"><div class="dots"><i></i><i></i><i></i></div><span class="url">/visits/1847/summary?copy=patient&amp;billing=1</span></div>
+        <div class="screen-body">
+
+          <div class="card toolbar">
+            <div class="btn-row">
+              <span class="btn ghost-b sm">← Back to Visit</span>
+              <span class="seg" role="img" aria-label="Copy type: Patient copy selected"><span class="on">Patient copy</span><span>Clinical copy</span></span><span class="pin">1</span>
+              <span class="switch"><i></i>Include billing</span><span class="pin">2</span>
+            </div>
+            <div class="btn-row">
+              <span class="btn outline sm">Print</span>
+              <span class="btn ink sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Download PDF</span>
+            </div>
+          </div>
+
+          <div class="sheet-wrap">
+            <article class="sheet" aria-label="Example Visit Summary sheet">
+
+              <!-- 1 letterhead -->
+              <div class="lh">
+                <div class="lh-brand">
+                  <div class="logo">D</div>
+                  <div><b>Dhathri Ayurveda Clinic</b><span>Patient copy</span></div>
+                </div>
+                <div class="lh-doc">
+                  <span class="t">Visit Summary</span>
+                  <span class="n">VST-1847 · <span class="badge ok">Completed</span></span>
+                </div>
+              </div>
+
+              <!-- 2 patient + visit -->
+              <div class="idgrid">
+                <div class="idcell">
+                  <h5>Patient</h5>
+                  <dl class="kv">
+                    <dt>Name</dt><dd>Mrs. Lakshmi Raghavan</dd>
+                    <dt>MRN</dt><dd class="mono">MRN-1284</dd>
+                    <dt>Age / Gender</dt><dd>52 y · Female</dd>
+                    <dt>Phone</dt><dd class="num">+971 50 000 4127</dd>
+                    <dt>Blood group</dt><dd>B+</dd>
+                  </dl>
+                </div>
+                <div class="idcell">
+                  <h5>Visit</h5>
+                  <dl class="kv">
+                    <dt>Date</dt><dd class="num">18-11-2026</dd>
+                    <dt>Visit Type</dt><dd>OPD Consultation</dd>
+                    <dt>Booking</dt><dd class="mono">APT-2391</dd>
+                    <dt>Checked in</dt><dd class="num">09:52 · seen 10:08</dd>
+                    <dt>Completed</dt><dd class="num">10:41 · 33 min</dd>
+                  </dl>
+                </div>
+                <div class="idcell">
+                  <h5>Doctor</h5>
+                  <dl class="kv">
+                    <dt>Name</dt><dd>Dr. Anjali Menon</dd>
+                    <dt>Specialty</dt><dd>Kayachikitsa</dd>
+                    <dt>Qualifications</dt><dd>BAMS, MD (Ayu)</dd>
+                    <dt>Reg. no.</dt><dd class="mono">DHA-P-0048213</dd>
+                  </dl>
+                </div>
+              </div>
+
+              <!-- 3 allergy -->
+              <div class="alert" role="note">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+                <div><b>Allergy:</b> Ibuprofen · skin rash · moderate</div>
+              </div>
+
+              <!-- 4 vitals -->
+              <div class="sec">
+                <div class="sec-h"><h4><i style="background:var(--teal)"></i>Vital Signs</h4><span class="num">Recorded 09:58</span></div>
+                <div class="vitals">
+                  <div class="vt"><span>Height</span><b>158<small>cm</small></b></div>
+                  <div class="vt"><span>Weight</span><b>71.4<small>kg</small></b></div>
+                  <div class="vt"><span>BMI</span><b>28.6</b></div>
+                  <div class="vt flag"><span>Blood pressure</span><b>138/86<small>mmHg</small></b></div>
+                  <div class="vt"><span>Pulse</span><b>78<small>bpm</small></b></div>
+                  <div class="vt"><span>Resp. rate</span><b>16<small>/min</small></b></div>
+                  <div class="vt"><span>Temperature</span><b>36.8<small>°C</small></b></div>
+                  <div class="vt"><span>SpO₂</span><b>98<small>%</small></b></div>
+                  <div class="vt flag"><span>Pain</span><b>6<small>/10</small></b></div>
+                </div>
+              </div>
+
+              <!-- 5 consultation -->
+              <div class="sec">
+                <div class="sec-h"><h4><i style="background:var(--primary)"></i>Consultation</h4><span>Doctor Consultation note</span></div>
+                <div class="soap">
+                  <div class="soap-block">
+                    <span class="lbl" style="color:var(--primary)">Subjective</span>
+                    <dl class="soap-row"><dt>Chief complaint</dt><dd>Low back pain spreading to the left leg for 3 weeks.</dd></dl>
+                    <dl class="soap-row"><dt>Present condition</dt><dd>Worse in the morning and after sitting for more than 30 minutes; eases with walking. No numbness, no change in bladder or bowel habit.</dd></dl>
+                  </div>
+                  <div class="soap-block">
+                    <span class="lbl" style="color:var(--teal)">Objective</span>
+                    <dl class="soap-row"><dt>Examination</dt><dd>Straight leg raise positive at 60° on the left. Tender at L4–L5. No red flags.</dd></dl>
+                    <dl class="soap-row"><dt>Prakriti</dt><dd>Vata-Pitta</dd></dl>
+                    <dl class="soap-row"><dt>Vikriti</dt><dd>Vata aggravation with Ama</dd></dl>
+                  </div>
+                  <div class="soap-block">
+                    <span class="lbl" style="color:var(--pop)">Diagnosis</span>
+                    <dl class="soap-row"><dt>Modern</dt><dd>Lumbar radiculopathy, L4–L5</dd></dl>
+                    <dl class="soap-row"><dt>Ayurvedic</dt><dd>Gridhrasi (Vataja)</dd></dl>
+                  </div>
+                  <div class="soap-block">
+                    <span class="lbl" style="color:var(--procedure)">Plan</span>
+                    <dl class="soap-row"><dt>Precautions</dt><dd>Avoid bending forward and lifting more than 5 kg. Warm water bath after oil application. Avoid cold and dry foods.</dd></dl>
+                  </div>
+                  <div class="sign"><span>Signed by Dr. Anjali Menon</span><span class="num">18-11-2026 10:39</span></div>
+                </div>
+              </div>
+
+              <!-- 6 diagnoses -->
+              <div class="sec">
+                <div class="sec-h"><h4><i style="background:var(--pop)"></i>Diagnoses</h4><span>Principal first</span></div>
+                <div class="scroll"><table>
+                  <thead><tr><th>Code</th><th>Diagnosis</th><th>System</th><th>Type</th></tr></thead>
+                  <tbody>
+                    <tr><td class="code">M54.16</td><td>Radiculopathy, lumbar region</td><td>ICD-10-CM</td><td><span class="badge info">Principal</span></td></tr>
+                    <tr><td class="code">E11.9</td><td>Type 2 diabetes mellitus without complications</td><td>ICD-10-CM</td><td class="muted">Secondary</td></tr>
+                    <tr><td class="code">I10</td><td>Essential (primary) hypertension</td><td>ICD-10-CM</td><td class="muted">Secondary</td></tr>
+                    <tr><td class="code">AY-GDH</td><td>Gridhrasi <span class="sub">Sciatica</span></td><td>Ayurveda</td><td><span class="badge info">Principal</span></td></tr>
+                  </tbody>
+                </table></div>
+              </div>
+
+              <!-- 7 treatment -->
+              <div class="sec">
+                <div class="sec-h"><h4><i style="background:var(--procedure)"></i>Treatment plan</h4><span>Assigned in this Visit</span></div>
+                <div class="scroll"><table>
+                  <thead><tr><th>Treatment</th><th>Sessions</th><th class="r">Progress</th></tr></thead>
+                  <tbody class="num">
+                    <tr><td>Kati Basti</td><td>7 · Repeatable</td><td class="r">0 of 7 done</td></tr>
+                    <tr><td>Abhyanga + Swedana</td><td>7 · Repeatable</td><td class="r">0 of 7 done</td></tr>
+                  </tbody>
+                </table></div>
+              </div>
+
+              <!-- 8 medications -->
+              <div class="sec">
+                <div class="sec-h"><h4><i style="background:var(--muted-fg)"></i>Current medications</h4><span>As on 19-11-2026</span></div>
+                <div class="scroll"><table>
+                  <thead><tr><th>Medicine</th><th>Dose</th><th>Route</th><th>Frequency</th></tr></thead>
+                  <tbody>
+                    <tr><td>Metformin</td><td>500 mg</td><td>Oral</td><td>Twice daily</td></tr>
+                    <tr><td>Telmisartan</td><td>40 mg</td><td>Oral</td><td>Once daily</td></tr>
+                  </tbody>
+                </table></div>
+              </div>
+
+              <!-- 9 next appointment -->
+              <div class="next">
+                <div class="date-chip"><b>20</b><span>Nov</span></div>
+                <div class="small" style="display:grid;gap:2px">
+                  <b>Next Appointment · Friday 09:30</b>
+                  <span class="muted">Procedure · Kati Basti, Session 1 of 7 · <span class="mono">APT-2410</span></span>
+                </div>
+              </div>
+
+              <!-- 10 billing -->
+              <div class="sec">
+                <div class="sec-h"><h4><i style="background:var(--success)"></i>Billing</h4><span><span class="mono">INV-1953</span> · <span class="badge ok">Paid</span></span></div>
+                <div class="scroll"><table>
+                  <thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit price</th><th class="r">Amount (AED)</th></tr></thead>
+                  <tbody class="num">
+                    <tr><td>OPD Consultation, Specialist</td><td class="r">1</td><td class="r">250.00</td><td class="r">250.00</td></tr>
+                  </tbody>
+                </table></div>
+                <div class="scroll"><table class="totals num">
+                  <tbody>
+                    <tr><td class="r muted">Subtotal</td><td class="r" style="width:140px">250.00</td></tr>
+                    <tr><td class="r muted">Discount</td><td class="r">− 25.00</td></tr>
+                    <tr class="strong"><td class="r">Total</td><td class="r">225.00</td></tr>
+                    <tr><td class="r muted">Paid by Card, 18-11-2026</td><td class="r">225.00</td></tr>
+                    <tr><td class="r muted">Balance Due</td><td class="r">0.00</td></tr>
+                  </tbody>
+                </table></div>
+              </div>
+
+              <!-- 12 footer -->
+              <div class="sheet-foot">
+                <span>Generated 19-11-2026 09:42 by Front Desk · Times in Asia/Dubai</span>
+                <span>Page 1 of 1</span>
+              </div>
+            </article>
+          </div>
+
+          <div class="annots">
+            <span class="annot" data-n="1">Patient copy is the default. Clinical copy adds section 11 below the billing block.</span>
+            <span class="annot" data-n="2">"Include billing" is not rendered without Billing permission; the API leaves the block out too.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3c clinical copy + states -->
+    <div class="stack">
+      <h3>3c · Clinical copy, other Visit types, and states</h3>
+      <div class="grid-2">
+        <div class="card pad stack">
+          <div class="sec-h"><h4><i style="background:var(--primary)"></i>Clinical detail</h4><span>Clinical copy only</span></div>
+          <dl class="kv">
+            <dt>Past medical</dt><dd>Type 2 diabetes for 6 years. Hypertension.</dd>
+            <dt>Past surgical</dt><dd>Laparoscopic cholecystectomy, 2015</dd>
+            <dt>Family / social</dt><dd>Desk job, non-smoker. Mother had osteoarthritis.</dd>
+            <dt>Active problems</dt><dd>E11.9 Type 2 diabetes · I10 Hypertension</dd>
+            <dt>Admit Source</dt><dd>Doctor Referral</dd>
+            <dt>Queue Token</dt><dd>7</dd>
+            <dt>Patient Type</dt><dd>Established · last Visit VST-1622, 02-09-2026</dd>
+            <dt>Documents</dt><dd>MRI lumbar spine, PDF 2.4 MB · Referral letter, PDF 180 KB</dd>
+            <dt>Amended</dt><dd class="muted">Not amended</dd>
+          </dl>
+        </div>
+        <div class="card pad stack">
+          <div class="sec-h"><h4><i style="background:var(--procedure)"></i>Treatment given</h4><span>On a Procedure Visit</span></div>
+          <dl class="kv">
+            <dt>Session</dt><dd>Kati Basti · Session 3 of 7</dd>
+            <dt>Procedure</dt><dd>Warm medicated oil pooled over L4–L5</dd>
+            <dt>Duration</dt><dd class="num">45 min (planned 40)</dd>
+            <dt>Response</dt><dd>Stiffness eased; able to sit for 40 minutes.</dd>
+            <dt>Pain score</dt><dd class="num">4/10 (was 6)</dd>
+            <dt>Variations</dt><dd>Oil temperature lowered for comfort.</dd>
+            <dt>Adverse events</dt><dd>None</dd>
+          </dl>
+          <p class="muted small">Replaces the Consultation section when the Visit has a Session and only a daily treatment note.</p>
+        </div>
+      </div>
+      <div class="state-row">
+        <div class="card state">
+          <span class="lbl">Active Visit</span>
+          <div class="banner warn"><b>Provisional summary</b><span class="muted">This Visit is still In Consultation. The final summary is ready once it is completed.</span></div>
+          <p class="muted small">"PROVISIONAL" is printed across each page. Unsigned notes are left out and listed as "1 draft note not shown".</p>
+        </div>
+        <div class="card state">
+          <span class="lbl">Cancelled Visit</span>
+          <div class="banner bad"><b>Visit cancelled 18-11-2026 10:15</b><span class="muted">Reason: Patient left before consultation</span></div>
+          <p class="muted small">Prints letterhead, Patient and Visit details, and the cancellation only. Clinical and billing sections are left out.</p>
+        </div>
+        <div class="card state">
+          <span class="lbl">Amended Visit</span>
+          <div class="banner warn"><b>Amended 20-11-2026 by Dr. Anjali Menon</b><span class="muted">This summary replaces any copy printed before that date.</span></div>
+          <p class="muted small">The footer of both copies carries the amendment date; the Clinical copy also lists what changed.</p>
+        </div>
+      </div>
+      <div class="card pad stack">
+        <h4>Print, PDF and phone</h4>
+        <ul class="tight muted small">
+          <li><b>Print and PDF:</b> A4 portrait, the letterhead on page 1, Visit Number and Patient name repeated in each page header, and "Page x of y" in the footer. Sections never split a table row across pages.</li>
+          <li><b>Phone width:</b> the toolbar wraps, the Patient / Visit / Doctor block stacks, Vital Signs show three per row, and tables scroll inside the sheet.</li>
+          <li><b>Loading:</b> <span class="mono">loader.tsx</span> draws the toolbar and an A4 sheet of <span class="mono">Skeleton</span> bars in the same section order.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 4. DECISIONS ===================== -->
+  <section class="part" id="decisions">
+    <div class="part-head">
+      <div class="eyebrow">4 · Before building</div>
+      <h2>Open decisions</h2>
+      <p class="lede">Gaps found in the schema that change what the summary can say.</p>
+    </div>
+    <div class="decisions">
+      <div class="card decision">
+        <h3>Medicines prescribed in the Visit are not recorded</h3>
+        <p>Patient medications are a Patient-level list with no link to a Visit, so the summary can only print <b>current medications</b>, not "prescribed today". If the clinic hands Patients a prescription with this summary, a Visit-linked prescription is a separate feature.</p>
+      </div>
+      <div class="card decision">
+        <h3>Allergies and medications are printed as of today</h3>
+        <p>They are not snapshotted per Visit, so reprinting an old Visit shows today's lists. The sheet labels them "As on &lt;print date&gt;". Confirm that is acceptable for a historical record.</p>
+      </div>
+      <div class="card decision">
+        <h3>No follow-up instruction field</h3>
+        <p>The Plan holds only Treatment precautions. The summary shows the next booked Appointment instead. Decide whether the consultation form should gain a <b>"Review after"</b> field.</p>
+      </div>
+      <div class="card decision">
+        <h3>Letterhead has no Facility address</h3>
+        <p>Visits do not record a Facility, and the Tenant holds only a name and logo. Until a Facility is on the Visit, the letterhead prints the Tenant name and logo only.</p>
+      </div>
+      <div class="card decision">
+        <h3>Who can print which copy</h3>
+        <p>Proposed: Visit read permission prints the Patient copy; Clinical copy needs the clinical read permission used by the Visit workspace; billing needs Billing permission. Confirm the permission names.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Sources: <span class="mono">app/db/schema/visit*.ts</span>, <span class="mono">clinical-note.ts</span>, <span class="mono">patient-vital-sign.ts</span>, <span class="mono">patient-allergy.ts</span>, <span class="mono">patient-medication.ts</span>, <span class="mono">patient-problem.ts</span>, <span class="mono">patient-treatment-plan.ts</span>, <span class="mono">invoice*.ts</span>, <span class="mono">payment.ts</span>; <span class="mono">app/(protected)/visits/[id]/_utils/doctor-consultation-note.ts</span> and <span class="mono">daily-treatment-note.ts</span>; <span class="mono">CONTEXT.md</span>, <span class="mono">DESIGN.md</span>. Patient, Doctor and clinical content in section 3 are example data.</footer>
+</div>
