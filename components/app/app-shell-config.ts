@@ -831,6 +831,13 @@ export function getAppPageMeta(pathname: string): AppPageMeta {
     };
   }
 
+  if (/^\/visits\/\d+\/summary$/.test(currentPath)) {
+    return {
+      title: 'Visit Summary',
+      subtitle: 'Print the Patient copy of this Visit.',
+    };
+  }
+
   if (/^\/appointments\/\d+\/reschedule$/.test(currentPath)) {
     return {
       title: 'Reschedule Appointment',

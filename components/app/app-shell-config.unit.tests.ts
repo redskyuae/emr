@@ -321,6 +321,13 @@ describe('App shell navigation permissions', () => {
     });
   });
 
+  it('should title the Visit Summary page after its own task', () => {
+    expect(getAppPageMeta('/visits/12/summary')).toEqual({
+      title: 'Visit Summary',
+      subtitle: 'Print the Patient copy of this Visit.',
+    });
+  });
+
   it('should title the Check-in and Reschedule pages after their own task', () => {
     expect(getAppPageMeta('/visits/new').title).toBe('Check in Patient');
     expect(getAppPageMeta('/appointments/7/reschedule')).toEqual({

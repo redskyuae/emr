@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { CiEdit, CiRead, CiUser } from 'react-icons/ci';
-import { PiDotsThreeLight } from 'react-icons/pi';
+import { PiDotsThreeLight, PiPrinterLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -57,6 +57,12 @@ function VisitActions({ visit, permissions }: { visit: Visit; permissions: EditP
             <Link href={`/visits/${visit.id}`}>
               <CiRead className="size-4" />
               View Visit
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/visits/${visit.id}/summary`}>
+              <PiPrinterLight className="size-4" />
+              Visit Summary
             </Link>
           </DropdownMenuItem>
           {editHref ? (

@@ -350,3 +350,18 @@ describe('OpenAPI clinical coding contracts', () => {
     });
   });
 });
+
+describe('OpenAPI Visit Summary contract', () => {
+  it('should document the Visit Summary read with its permission and billing rule', () => {
+    const operation = openApiDocument.paths['/api/v1/visits/{id}/summary'].get;
+
+    expect(operation.description).toContain('`visit:read`');
+    expect(operation.description).toContain('`invoice:read`');
+    expect(Object.keys(operation.responses)).toEqual(
+      expect.arrayContaining(['200', '400', '401', '403', '404', '500'])
+    );
+    expect(openApiDocument.components.schemas.VisitSummary.required).toEqual(
+      expect.arrayContaining(['billing', 'billingIncluded', 'notes', 'diagnoses'])
+    );
+  });
+});

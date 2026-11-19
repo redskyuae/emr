@@ -39,6 +39,7 @@ export default function VisitDetailPageLoader() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Skeleton className="h-9 w-36" />
           <Skeleton className="h-9 w-28" />
           <Skeleton className="h-9 w-40" />
         </div>
