@@ -521,6 +521,52 @@ describe('Patient repository', () => {
     expect(byPhone.data.map((patient) => patient.id)).toEqual([other.id]);
   });
 
+  it('should find a phone saved as +<code><number> or in an older format by any spelling', async () => {
+    const canonical = await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Fatima', phone: '+971501234567' })
+    );
+    const legacy = await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Noura', phone: '0501234567' })
+    );
+    await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Other', phone: '+971551234567' })
+    );
+    await patientRepository.createPatient(
+      patientData(tenantB, { firstName: 'Fatima', phone: '+971501234567' })
+    );
+
+    for (const query of ['0501234567', '+971501234567', '050 123 4567', '501234567']) {
+      const result = await patientRepository.getPatients({ tenantId: tenantA, query });
+      expect(result.data.map((patient) => patient.id).sort()).toEqual(
+        [canonical.id, legacy.id].sort()
+      );
+    }
+  });
+
+  it('should match a short phone query only at the start of a number', async () => {
+    const canonical = await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Fatima', phone: '+971501234567' })
+    );
+    const legacy = await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Noura', phone: '0501234567' })
+    );
+    await patientRepository.createPatient(
+      patientData(tenantA, { firstName: 'Other', phone: '+971551234567' })
+    );
+    const search = async (query: string) =>
+      (await patientRepository.getPatients({ tenantId: tenantA, query })).data
+        .map((patient) => patient.id)
+        .sort();
+
+    expect(await search('0501')).toEqual([canonical.id, legacy.id].sort());
+    expect(await search('+97155')).toHaveLength(1);
+    // Digits found only inside numbers, a bare 971, or a country code alone
+    // would otherwise list every patient here.
+    for (const query of ['1234', '971', '+971']) {
+      expect(await search(query)).toEqual([]);
+    }
+  });
+
   it('should search by full name and date of birth in common date formats', async () => {
     const matching = await patientRepository.createPatient(
       patientData(tenantA, {

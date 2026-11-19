@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { createPatientSchema, emiratesIdSchema } from '../../patient/schemas/patient-schema';
+import {
+  createPatientSchema,
+  emiratesIdSchema,
+  getPatientPhoneErrors,
+} from '../../patient/schemas/patient-schema';
 import type { PatientRegistrationStatus } from '../../patient/schemas/patient-schema';
 import {
   APPOINTMENT_STATUS_CATEGORIES,
@@ -128,6 +132,13 @@ const provisionalPatientSchema = z
   .refine((data) => data.stateId === undefined || data.countryId !== undefined, {
     message: 'Patient country ID is required when state ID is provided',
     path: ['countryId'],
+  })
+  // Same phone country rule as Patient Registration, so a booking saves the
+  // same +<code><number> format the duplicate check compares against.
+  .superRefine((data, ctx) => {
+    for (const { path, message } of getPatientPhoneErrors(data)) {
+      ctx.addIssue({ code: 'custom', message, path: [path] });
+    }
   });
 
 const commonAppointmentShape = {

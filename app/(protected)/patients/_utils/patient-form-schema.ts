@@ -13,6 +13,7 @@ import {
   PATIENT_ETHNIC_GROUPS,
   PATIENT_RACES,
 } from './patient-value-sets';
+import { getPhoneNumberError, splitPhoneNumber } from '@/lib/phone-numbers';
 
 function isNotFutureDate(value: string) {
   const [year, month, day] = value.split('-').map(Number);
@@ -60,6 +61,30 @@ const requiredPhoneField = (label: string) =>
 
 const optionalPhoneField = (label: string) =>
   z.string().trim().max(20, `${label} must be at most 20 characters.`).optional().or(z.literal(''));
+
+export const PHONE_FIELDS = [
+  { name: 'phone', countryName: 'phoneCountry', label: 'Phone' },
+  { name: 'alternatePhone', countryName: 'alternatePhoneCountry', label: 'Alternate phone' },
+  {
+    name: 'emergencyContactPhone',
+    countryName: 'emergencyContactPhoneCountry',
+    label: 'Next of Kin Phone',
+  },
+] as const;
+
+/** True while the field still shows the saved legacy phone the form loaded. */
+export function isUntouchedLegacyPhone(
+  legacy: string | undefined,
+  country: string,
+  number: string
+) {
+  if (legacy === undefined) {
+    return false;
+  }
+
+  const saved = splitPhoneNumber(legacy);
+  return saved.country === country && saved.number === number;
+}
 
 // Flat rather than a discriminated union: useFieldArray needs a stable row
 // shape as the user switches type mid-edit. The per-type rules the API enforces
@@ -113,10 +138,9 @@ export const patientFormSchema = z
     maritalStatus: z.enum(PATIENT_MARITAL_STATUSES).optional().or(z.literal('')),
     preferredPaymentMethod: z.enum(PATIENT_PAYMENT_METHODS).optional().or(z.literal('')),
     phone: requiredPhoneField('Phone'),
-    alternatePhone: optionalPhoneField('Alternate phone').refine(
-      (value) => !value || /^\d+$/.test(value),
-      'Alternate phone must contain only digits.'
-    ),
+    phoneCountry: z.string(),
+    alternatePhone: optionalPhoneField('Alternate phone'),
+    alternatePhoneCountry: z.string(),
     email: z
       .email('Email must be valid.')
       .trim()
@@ -167,10 +191,15 @@ export const patientFormSchema = z
     emergencyContactName: optionalNameField('Next of Kin', 150),
     emergencyContactRelationship: optionalNameField('Next of Kin Relationship', 50),
     emergencyContactGender: z.enum(PATIENT_GENDERS).optional().or(z.literal('')),
-    emergencyContactPhone: optionalPhoneField('Next of Kin Phone').refine(
-      (value) => !value || /^\d+$/.test(value),
-      'Next of Kin Phone must contain only digits.'
-    ),
+    emergencyContactPhone: optionalPhoneField('Next of Kin Phone'),
+    emergencyContactPhoneCountry: z.string(),
+    // Saved phones that fail the country rule, kept as saved so an untouched one
+    // is sent back unchanged and never blocks an unrelated edit.
+    legacyPhones: z.object({
+      phone: z.string().optional(),
+      alternatePhone: z.string().optional(),
+      emergencyContactPhone: z.string().optional(),
+    }),
   })
   .superRefine((data, ctx) => {
     if (data.title === '') {
@@ -179,6 +208,24 @@ export const patientFormSchema = z
 
     if (data.gender === '') {
       ctx.addIssue({ code: 'custom', message: 'Gender is required.', path: ['gender'] });
+    }
+
+    // Each phone is checked against its own country code. An empty Phone already
+    // fails the required rule above; the other two are optional. A saved phone
+    // that predates the rule is skipped until the user changes it.
+    for (const { name, countryName, label } of PHONE_FIELDS) {
+      const value = data[name];
+      const country = data[countryName];
+
+      if (!value || isUntouchedLegacyPhone(data.legacyPhones[name], country, value)) {
+        continue;
+      }
+
+      const phoneError = getPhoneNumberError(country, value, label);
+
+      if (phoneError) {
+        ctx.addIssue({ code: 'custom', message: phoneError, path: [name] });
+      }
     }
 
     const normalisedEmiratesId = data.emiratesId ? normaliseEmiratesId(data.emiratesId) : '';

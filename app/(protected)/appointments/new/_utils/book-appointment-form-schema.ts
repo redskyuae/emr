@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { UAE_MOBILE_PATTERN } from '@/lib/phone-numbers';
+
 import { PROCEDURE_SELECTION_MODE_VALUES } from './book-appointment-types';
 
 const patientModeValues = ['existing', 'provisional'] as const;
@@ -23,7 +25,9 @@ function isIsoDate(value: string) {
 const optionalTrimmedString = (maxLength: number, message: string) =>
   z.string().trim().max(maxLength, message);
 
-const UAE_MOBILE_PATTERN = /^(?:0|\+971)5[0234568]\d{7}$/;
+// 0501234567 or +971501234567, using the same UAE mobile rule as Patient
+// Registration; the API stores either as +971501234567.
+const BOOKING_PHONE_PATTERN = new RegExp(`^(?:0|\\+971)${UAE_MOBILE_PATTERN.source.slice(1)}`);
 
 export const bookAppointmentFormSchema = z
   .object({
@@ -119,7 +123,7 @@ export const bookAppointmentFormSchema = z
           path: ['phone'],
           message: 'Patient phone is required',
         });
-      } else if (!UAE_MOBILE_PATTERN.test(data.phone)) {
+      } else if (!BOOKING_PHONE_PATTERN.test(data.phone)) {
         context.addIssue({
           code: 'custom',
           path: ['phone'],
