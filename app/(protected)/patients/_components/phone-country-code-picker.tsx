@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronsUpDown } from 'lucide-react';
+import { PiCaretUpDown } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +39,7 @@ export function PhoneCountryCodePicker({ value, onChange }: PhoneCountryCodePick
           <span className="truncate tabular-nums">
             {selected ? `${selected.iso} +${selected.dialCode}` : 'Code'}
           </span>
-          <ChevronsUpDown className="text-muted-foreground size-4" />
+          <PiCaretUpDown className="text-muted-foreground size-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 p-0">
