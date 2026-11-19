@@ -207,9 +207,8 @@ export function PreviousVisitsTable({
   isFetching: boolean;
   onPageChange: (next: number) => void;
 }) {
-  const { data: canUpdate } = useHasPermission('visit:update');
   const { data: canAmend } = useHasPermission('visit:amend');
-  const permissions = { canUpdate: Boolean(canUpdate), canAmend: Boolean(canAmend) };
+  const permissions = { canAmend: Boolean(canAmend) };
 
   return (
     <Card className="py-0">

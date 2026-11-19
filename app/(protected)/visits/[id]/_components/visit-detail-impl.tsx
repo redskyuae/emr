@@ -22,6 +22,7 @@ import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
+import { isActiveVisit } from '../../_utils/visit-status';
 import { isCurrentPlan } from '../_utils/visit-treatment-plan';
 import { visitOutstandingItems } from '../_utils/visit-workflow';
 import { AddPlanSessionsDialog } from './_modals/add-plan-sessions-dialog';
@@ -132,16 +133,16 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
 
   // Sessions are added only to a current Plan, from an active Visit, by a user who may
   // assign Plans (the API requires both read and assign). A param that cannot open the
-  // dialog is dropped once permissions and Plans have loaded.
-  const activeVisit = visit.status === 'CHECKED_IN' || visit.status === 'IN_CONSULTATION';
-  const canAddPlanSessions = activeVisit && Boolean(canAssignPlan && canReadPlan);
+  // dialog is dropped once permissions and Plans have loaded successfully; a failed Plans
+  // request leaves it in place so a network error cannot drop a valid link.
+  const canAddPlanSessions = isActiveVisit(visit.status) && Boolean(canAssignPlan && canReadPlan);
   const addSessionsTarget = canAddPlanSessions
     ? (plansQuery.data ?? []).find((plan) => plan.id === addSessionsParam && isCurrentPlan(plan))
     : undefined;
   const addSessionsResolved =
     !assignPermissionLoading &&
     !readPermissionLoading &&
-    (!canAddPlanSessions || !plansQuery.isLoading);
+    (!canAddPlanSessions || plansQuery.isSuccess);
   const staleAddSessions = addSessionsParam !== null && addSessionsResolved && !addSessionsTarget;
 
   useEffect(() => {

@@ -10,6 +10,7 @@ const state = vi.hoisted(() => ({
   status: 'CHECKED_IN',
   canAmend: false,
   canAssignPlan: false,
+  plansFailed: false,
   initialParams: {} as Record<string, number | string>,
   paramWrites: [] as [string, unknown][],
 }));
@@ -31,12 +32,15 @@ vi.mock('nuqs', async () => {
 });
 vi.mock('@/app/queries/patient-treatment-plans/usePatientTreatmentPlans', () => ({
   usePatientTreatmentPlanHistoryQuery: () => ({
-    data: [
-      { id: 81, status: 'IN_PROGRESS', sessions: [{ id: 902, sessionNumber: 2 }] },
-      { id: 82, status: 'COMPLETED', sessions: [{ id: 903, sessionNumber: 1 }] },
-    ],
+    data: state.plansFailed
+      ? undefined
+      : [
+          { id: 81, status: 'IN_PROGRESS', sessions: [{ id: 902, sessionNumber: 2 }] },
+          { id: 82, status: 'COMPLETED', sessions: [{ id: 903, sessionNumber: 1 }] },
+        ],
+    isSuccess: !state.plansFailed,
     isLoading: false,
-    isError: false,
+    isError: state.plansFailed,
   }),
 }));
 vi.mock('@/app/queries/visits/useVisit', () => ({
@@ -202,6 +206,7 @@ afterEach(() => {
   state.status = 'CHECKED_IN';
   state.canAmend = false;
   state.canAssignPlan = false;
+  state.plansFailed = false;
   state.initialParams = {};
   state.paramWrites = [];
 });
@@ -262,6 +267,15 @@ describe('Visit detail capture routing', () => {
 
     expect(state.paramWrites).toEqual([['addSessions', null]]);
     expect(screen.queryByTestId('add-plan-sessions-dialog')).toBeNull();
+  });
+
+  it('should keep an Add Sessions link when the Plans request fails', () => {
+    state.canAssignPlan = true;
+    state.plansFailed = true;
+    state.initialParams = { addSessions: 81 };
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.paramWrites).toEqual([]);
   });
 
   it('should clear an Add Sessions link on a Completed Visit', () => {
