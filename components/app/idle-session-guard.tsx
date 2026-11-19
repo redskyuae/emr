@@ -1,0 +1,193 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { clearTabSession } from '@/app/lib/tab-session';
+import { useSignOut } from '@/app/queries/auth/useSignOut';
+import { AppSplashError } from '@/components/app/app-splash';
+import { IdleWarningDialog } from '@/components/app/idle-warning-dialog';
+import {
+  getIdleState,
+  recordActivity,
+  IDLE_WARNING_MS,
+  broadcastSignOut,
+  readLastActivity,
+  getSignedOutPath,
+  LAST_ACTIVITY_KEY,
+  readSignOutBroadcast,
+  ACTIVITY_WRITE_INTERVAL_MS,
+  type SignOutReason,
+} from '@/app/lib/idle-session';
+
+type Phase = 'active' | 'warning' | 'expired';
+
+// Only direct user input counts. Background polling and programmatic scrolling never
+// produce these, and `scroll` is left out because code can trigger it.
+const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'wheel', 'touchstart'] as const;
+
+export function IdleSessionGuard({ timeoutMinutes }: { timeoutMinutes: number }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const timeoutMs = timeoutMinutes * 60_000;
+
+  const [phase, setPhase] = useState<Phase>('active');
+  const [expiresAt, setExpiresAt] = useState(0);
+  const reasonRef = useRef<SignOutReason>('idle');
+  const actionsRef = useRef<{ continueSession: () => void; signOutNow: () => void } | null>(null);
+
+  const signOutMutation = useSignOut(() => {
+    broadcastSignOut(reasonRef.current);
+    router.replace(getSignedOutPath(reasonRef.current));
+    router.refresh();
+  });
+  const { mutate: signOut } = signOutMutation;
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let currentPhase: Phase = 'active';
+    let lastActivity = Date.now();
+    let lastWrite = lastActivity;
+
+    function changePhase(next: Phase) {
+      currentPhase = next;
+      setPhase(next);
+    }
+
+    function expire(reason: SignOutReason) {
+      clearTimeout(timer);
+      reasonRef.current = reason;
+      // Drop this tab's marker first: if the sign-out request fails, a reload must not
+      // bring the app back. TabSessionGate will then retry ending the Session.
+      clearTabSession();
+      changePhase('expired');
+      signOut();
+    }
+
+    // Recomputes the phase from the newest activity in any tab, using wall-clock time so
+    // throttled background timers and laptop sleep cannot extend the Session.
+    function evaluate() {
+      if (currentPhase === 'expired') return;
+
+      clearTimeout(timer);
+      const now = Date.now();
+      lastActivity = Math.max(lastActivity, readLastActivity() ?? 0);
+      const state = getIdleState(lastActivity, now, timeoutMs);
+
+      if (state.status === 'expired') {
+        expire('idle');
+      } else if (state.status === 'warning') {
+        setExpiresAt(state.expiresAt);
+        if (currentPhase !== 'warning') changePhase('warning');
+        timer = setTimeout(evaluate, state.expiresAt - now);
+      } else {
+        if (currentPhase !== 'active') changePhase('active');
+        timer = setTimeout(evaluate, state.warnAt - now);
+      }
+    }
+
+    function markActive(now: number) {
+      lastActivity = now;
+      lastWrite = now;
+      recordActivity(now);
+    }
+
+    function handleActivity(event: Event) {
+      if (!event.isTrusted || currentPhase !== 'active') return;
+
+      // Layout changes under a still cursor fire mousemove with no movement.
+      if (event instanceof MouseEvent && event.type === 'mousemove') {
+        if (event.movementX === 0 && event.movementY === 0) return;
+      }
+
+      const now = Date.now();
+
+      // The timer may not have fired yet (sleeping laptop, throttled tab). Once the warning
+      // is due, input must not silently extend the Session; only Continue Session can.
+      if (now - lastActivity >= timeoutMs - IDLE_WARNING_MS) {
+        evaluate();
+        if (currentPhase !== 'active') return;
+      }
+
+      lastActivity = now;
+      if (now - lastWrite >= ACTIVITY_WRITE_INTERVAL_MS) markActive(now);
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key === LAST_ACTIVITY_KEY) {
+        // Continue Session in another tab closes this tab's warning too.
+        if (currentPhase === 'warning') evaluate();
+        return;
+      }
+
+      const reason = readSignOutBroadcast(event.key, event.newValue);
+      if (!reason) return;
+
+      // Another tab already ended the shared Session on the server.
+      clearTimeout(timer);
+      currentPhase = 'expired';
+      clearTabSession();
+      queryClient.clear();
+      router.replace(getSignedOutPath(reason));
+      router.refresh();
+    }
+
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') evaluate();
+    }
+
+    actionsRef.current = {
+      continueSession: () => {
+        markActive(Date.now());
+        evaluate();
+      },
+      signOutNow: () => expire('manual'),
+    };
+
+    const listenerOptions = { capture: true, passive: true } as const;
+
+    ACTIVITY_EVENTS.forEach((type) =>
+      window.addEventListener(type, handleActivity, listenerOptions)
+    );
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', evaluate);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Entering the app shell (sign-in or reload) is itself user activity.
+    markActive(lastActivity);
+    timer = setTimeout(evaluate, timeoutMs - IDLE_WARNING_MS);
+
+    return () => {
+      clearTimeout(timer);
+      actionsRef.current = null;
+      ACTIVITY_EVENTS.forEach((type) =>
+        window.removeEventListener(type, handleActivity, listenerOptions)
+      );
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', evaluate);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [timeoutMs, signOut, queryClient, router]);
+
+  if (signOutMutation.isError) {
+    return (
+      <AppSplashError
+        message="We couldn't end your Session on the server. Check your connection and try again."
+        isRetrying={signOutMutation.isPending}
+        onRetry={() => signOut()}
+      />
+    );
+  }
+
+  if (phase === 'active') return null;
+
+  return (
+    <IdleWarningDialog
+      expiresAt={phase === 'expired' ? 0 : expiresAt}
+      isSigningOut={phase === 'expired'}
+      onSignOut={() => actionsRef.current?.signOutNow()}
+      onContinue={() => actionsRef.current?.continueSession()}
+    />
+  );
+}
