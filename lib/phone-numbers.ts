@@ -286,17 +286,41 @@ export function getPhoneMatchKeys(phone: string) {
   return [...new Set([`${dialCode}${number}`, `00${dialCode}${number}`, `0${number}`, number])];
 }
 
-/**
- * National digits to search saved phones by, or null when the query does not
- * look like a phone number. 0501234567 and +971501234567 both search 501234567.
- */
-export function getPhoneSearchDigits(query: string) {
-  const trimmed = query.trim();
-  const compact = trimmed.replace(/[\s()-]/g, '');
+// Fewer national digits than this are too common inside other numbers to match
+// anywhere, so a short query only matches phones that start with it.
+const MIN_PHONE_CONTAINS_DIGITS = 6;
 
-  if (!/^\+?\d{3,}$/.test(compact)) {
+/**
+ * How to match saved phones (compared with non-digits stripped) for a search:
+ * - `contains`: the national digits anywhere, so 0501234567 and +971501234567
+ *   both find both spellings, and a long partial number still matches.
+ * - `prefix`: a short query matches only the start of the number. `anyFormat`
+ *   prefixes apply to every saved phone; `withoutCode` prefixes only to phones
+ *   saved without a country code, so 971 does not match every +971 number.
+ * - `none`: a country code on its own (+971) says nothing about the patient.
+ * Returns null when the query does not look like a phone number.
+ */
+export function getPhoneSearch(query: string) {
+  const compact = query.trim().replace(/[\s()-]/g, '');
+
+  // A leading + always means a phone; bare digits need three to count as one.
+  if (!/^(\+\d+|\d{3,})$/.test(compact)) {
     return null;
   }
 
-  return splitPhoneNumber(compact).number || null;
+  const { country, number, codeMatched } = parsePhone(compact);
+
+  if (!codeMatched || number === '') {
+    return { match: 'none' } as const;
+  }
+
+  if (number.length >= MIN_PHONE_CONTAINS_DIGITS) {
+    return { match: 'contains', digits: number } as const;
+  }
+
+  return {
+    match: 'prefix',
+    anyFormat: [`${country.dialCode}${number}`, `00${country.dialCode}${number}`],
+    withoutCode: [`0${number}`, number],
+  } as const;
 }

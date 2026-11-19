@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getPhoneMatchKeys,
   getPhoneNumberError,
-  getPhoneSearchDigits,
+  getPhoneSearch,
   joinPhoneNumber,
   normalisePhone,
   PHONE_COUNTRIES,
@@ -206,20 +206,99 @@ describe('getPhoneMatchKeys', () => {
   });
 });
 
-describe('getPhoneSearchDigits', () => {
-  it('should search the national digits for any spelling of a phone', () => {
+describe('getPhoneSearch', () => {
+  // Mirrors the SQL in the Patient repository's phone search condition.
+  function matches(query: string, saved: string) {
+    const search = getPhoneSearch(query);
+    const digits = saved.replace(/\D/g, '');
+
+    if (search === null) {
+      return saved.toLowerCase().includes(query.trim().toLowerCase());
+    }
+
+    switch (search.match) {
+      case 'none':
+        return false;
+      case 'contains':
+        return digits.includes(search.digits);
+      case 'prefix': {
+        const savedWithoutCode = !saved.startsWith('+') && !saved.startsWith('00');
+
+        return (
+          search.anyFormat.some((prefix) => digits.startsWith(prefix)) ||
+          (savedWithoutCode && search.withoutCode.some((prefix) => digits.startsWith(prefix)))
+        );
+      }
+    }
+  }
+
+  const SAVED_PHONES = [
+    '+971501234567',
+    '0501234567',
+    '971501234567',
+    '+971551234567',
+    '+919876543210',
+    '9876543210',
+    '+971423450123',
+  ];
+  const found = (query: string) => SAVED_PHONES.filter((saved) => matches(query, saved));
+
+  it('should match an exact number in every saved format by any spelling', () => {
     for (const query of ['0501234567', '+971501234567', '050 123 4567', '501234567']) {
-      expect(getPhoneSearchDigits(query)).toBe('501234567');
+      expect(getPhoneSearch(query)).toEqual({ match: 'contains', digits: '501234567' });
+      expect(found(query)).toEqual(['+971501234567', '0501234567', '971501234567']);
     }
   });
 
-  it('should search a partial number', () => {
-    expect(getPhoneSearchDigits('050123')).toBe('50123');
+  it('should match a long partial number anywhere in the number', () => {
+    expect(getPhoneSearch('234567')).toEqual({ match: 'contains', digits: '234567' });
+    expect(found('234567')).toEqual([
+      '+971501234567',
+      '0501234567',
+      '971501234567',
+      '+971551234567',
+    ]);
   });
 
-  it('should ignore queries that are not phone-like', () => {
-    for (const query of ['Asha', 'MRN-1001', '12', "O'Brien", '']) {
-      expect(getPhoneSearchDigits(query)).toBeNull();
+  it('should match a short query only at the start of a number', () => {
+    expect(getPhoneSearch('0501')).toEqual({
+      match: 'prefix',
+      anyFormat: ['971501', '00971501'],
+      withoutCode: ['0501', '501'],
+    });
+    expect(found('0501')).toEqual(['+971501234567', '0501234567', '971501234567']);
+    expect(found('+97155')).toEqual(['+971551234567']);
+    // Also the Indian number saved before country codes, which starts with 98765.
+    expect(found('+9198765')).toEqual(['+919876543210', '9876543210']);
+    // Without a code the query is read as UAE, so only the legacy number matches.
+    expect(found('98765')).toEqual(['9876543210']);
+  });
+
+  it('should not match a short query found only in the middle of a number', () => {
+    // 1234 and 50 sit inside many numbers; neither is the start of one.
+    expect(found('1234')).toEqual([]);
+    expect(found('450')).toEqual([]);
+  });
+
+  it('should not treat 971 typed without + as every UAE number', () => {
+    // Only the number saved literally starting with 971, not every +971 number.
+    expect(found('971')).toEqual(['971501234567']);
+  });
+
+  it('should not match on a country code alone', () => {
+    for (const query of ['+971', '00971', '+91', '+1']) {
+      expect(getPhoneSearch(query)).toEqual({ match: 'none' });
+      expect(found(query)).toEqual([]);
+    }
+  });
+
+  it('should not match on an unsupported country code', () => {
+    expect(getPhoneSearch('+999123')).toEqual({ match: 'none' });
+  });
+
+  it('should leave queries that are not phone-like to the plain text match', () => {
+    for (const query of ['Asha', 'MRN-1001', '12', "O'Brien", '', '23/11/1988']) {
+      expect(getPhoneSearch(query)).toBeNull();
     }
   });
 });
