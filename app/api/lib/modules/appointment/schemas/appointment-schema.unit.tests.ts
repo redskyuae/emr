@@ -185,7 +185,7 @@ describe('Appointment schema', () => {
     expect(
       errorsOf({
         ...validPayload,
-        provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+        provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '+971501234567' },
       })
     ).toContain('Exactly one of patientId or provisionalPatient is required');
   });
@@ -195,11 +195,37 @@ describe('Appointment schema', () => {
       createAppointmentSchema.parse({
         ...validPayload,
         patientId: undefined,
-        provisionalPatient: { firstName: ' Asha ', lastName: ' Rao ', phone: ' 9876543210 ' },
+        provisionalPatient: { firstName: ' Asha ', lastName: ' Rao ', phone: ' 0501234567 ' },
       })
     ).toMatchObject({
-      provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+      provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '+971501234567' },
     });
+  });
+
+  it('should save a booked phone in the same +<code><number> format as Patient Registration', () => {
+    for (const phone of ['0501234567', '+971501234567', '00971501234567']) {
+      expect(
+        createAppointmentSchema.parse({
+          ...validPayload,
+          patientId: undefined,
+          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone },
+        })
+      ).toMatchObject({ provisionalPatient: { phone: '+971501234567' } });
+    }
+  });
+
+  it('should reject a booked phone that breaks its country rule', () => {
+    const book = (phone: string) =>
+      errorsOf({
+        ...validPayload,
+        patientId: undefined,
+        provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone },
+      });
+
+    expect(book('0571234567')).toContain(
+      'Patient phone must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number'
+    );
+    expect(book('+91987654321')).toContain('Patient phone must be 10 digits for India (+91)');
   });
 
   it('should reject a provisional Patient Emirates ID that does not begin with 784', () => {
@@ -210,7 +236,7 @@ describe('Appointment schema', () => {
         provisionalPatient: {
           firstName: 'Asha',
           lastName: 'Rao',
-          phone: '9876543210',
+          phone: '0501234567',
           emiratesId: '123456789012345',
         },
       })
@@ -227,7 +253,7 @@ describe('Appointment schema', () => {
           firstName: 'Asha',
           lastName: 'Rao',
           ethnicGroup: 'south-asian',
-          phone: '9876543210',
+          phone: '0501234567',
           emergencyContactGender: 'female',
         },
       })
@@ -348,7 +374,7 @@ describe('Appointment schema', () => {
   });
 
   it('should accept a new Provisional Patient with a catalogue Treatment', () => {
-    const provisionalPatient = { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' };
+    const provisionalPatient = { firstName: 'Asha', lastName: 'Rao', phone: '+971501234567' };
     expect(
       createAppointmentSchema.parse({
         ...validCatalogueProcedurePayload,
@@ -373,7 +399,7 @@ describe('Appointment schema', () => {
     expect(
       errorsOf({
         ...withoutPatient,
-        provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+        provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '+971501234567' },
       })
     ).toContain('An existing Patient is required for a Patient Treatment Plan Session');
     expect(

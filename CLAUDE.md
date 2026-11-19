@@ -20,7 +20,7 @@ API-first hospital management platform. A **Tenant** is a hospital group (e.g., 
 
 ## Frontend
 
-All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI, and use the `design-system` team skill.
+All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI.
 
 Key facts:
 
@@ -34,7 +34,6 @@ Key facts:
 - Sign-in and signup mark the current browser tab in `sessionStorage` after creating a Session. `TabSessionGate` protects the app shell and onboarding; `ExistingSessionGate` handles a cookie Session found at `/login` or `/signup`. Without a tab marker, these gates revoke that Session before showing login. Explicit sign-out clears the marker. Any new flow that creates a Session must mark the tab before navigating to protected UI. Browsers do not reliably report tab closure, so revocation happens on the next launch of a fresh tab; a browser that restores a closed tab's `sessionStorage` may also restore its marker.
 - Animations use GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`; always respect `prefers-reduced-motion`.
 - Every `app/**/page.tsx` outside `app/api/` must have a sibling `loader.tsx` that imports and renders `Skeleton` from `@/components/ui/skeleton`. When a page or route-local `_components/` file changes, update that route's `loader.tsx` in the same change so the skeleton stays page-shaped.
-- TanStack Query work must use the `tanstack-query-patterns` team skill. Claude Code should invoke `/tanstack-query-patterns`; other agents should read `.agents/skills/tanstack-query-patterns/SKILL.md` before adding or modifying API calls, query hooks, mutations, optimistic updates, query keys, `useQuery`, `useSuspenseQuery`, or `useMutation` code.
 
 ### Screen composition
 

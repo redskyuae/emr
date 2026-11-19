@@ -100,7 +100,7 @@ const validPayload = {
   lastName: 'Rao',
   gender: 'female',
   dateOfBirth: '1990-05-14',
-  phone: '9876543210',
+  phone: '+919876543210',
   emiratesId: '784199012345671',
 };
 
@@ -222,6 +222,21 @@ describe('Patient create validator', () => {
     );
     expect(result).toMatchObject({ success: false, status: StatusCodes.CONFLICT });
   });
+
+  it('should reject a phone that breaks its country rule without reading repositories', async () => {
+    const result = await validateCreatePatient(
+      { ...validPayload, phone: '9876543210' },
+      'tenant-1'
+    );
+
+    expect(result).toEqual({
+      success: false,
+      errors: [
+        'Patient phone must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number',
+      ],
+    });
+    expect(repo.findActiveByEmiratesId).not.toHaveBeenCalled();
+  });
 });
 
 describe('Patient update validator', () => {
@@ -251,6 +266,45 @@ describe('Patient update validator', () => {
     const result = await validateUpdatePatient('bad', 'tenant-1', validPayload);
     expect(result.success).toBe(false);
     expect(repo.getPatientById).not.toHaveBeenCalled();
+  });
+
+  it('should let an unrelated edit save for a patient with a legacy phone', async () => {
+    // The saved 9876543210 predates country codes and is not a valid UAE number.
+    const result = await validateUpdatePatient('1', 'tenant-1', {
+      ...validPayload,
+      phone: '9876543210',
+      addressLine1: '221B Residency Road',
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { payload: { phone: '9876543210', addressLine1: '221B Residency Road' } },
+    });
+  });
+
+  it('should reject a changed phone that breaks its country rule before reference checks', async () => {
+    const result = await validateUpdatePatient('1', 'tenant-1', {
+      ...validPayload,
+      phone: '9876543211',
+      nationalityId: 5,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      errors: [
+        'Patient phone must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number',
+      ],
+    });
+    expect(nationality.getNationalityById).not.toHaveBeenCalled();
+  });
+
+  it('should store a changed valid phone as +<code><number>', async () => {
+    const result = await validateUpdatePatient('1', 'tenant-1', {
+      ...validPayload,
+      phone: '0501234567',
+    });
+
+    expect(result).toMatchObject({ success: true, data: { payload: { phone: '+971501234567' } } });
   });
 });
 

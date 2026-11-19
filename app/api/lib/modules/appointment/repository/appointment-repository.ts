@@ -16,6 +16,7 @@ import {
   sql,
 } from 'drizzle-orm';
 
+import { getPhoneMatchKeys } from '@/lib/phone-numbers';
 import { db } from '@/app/db';
 import {
   appointment as appointmentTable,
@@ -600,7 +601,12 @@ async function findPotentialPatientMatches(
           and(
             sql`lower(trim(${patientTable.firstName})) = ${firstName.trim().toLowerCase()}`,
             sql`lower(trim(${patientTable.lastName})) = ${lastName.trim().toLowerCase()}`,
-            sql`trim(${patientTable.phone}) = ${phone.trim()}`
+            // Saved phones mix +971501234567, 971501234567 and 0501234567, so
+            // compare digits against every form the same number can take.
+            inArray(
+              sql`regexp_replace(${patientTable.phone}, '[^0-9]', '', 'g')`,
+              getPhoneMatchKeys(phone)
+            )
           ),
           emiratesId ? eq(patientTable.emiratesId, emiratesId) : undefined
         )

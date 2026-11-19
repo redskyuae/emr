@@ -347,7 +347,7 @@ describe('validateCreateAppointment', () => {
   });
 
   it('should validate a new Provisional Patient catalogue Procedure without a Patient ID', async () => {
-    const provisionalPatient = { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' };
+    const provisionalPatient = { firstName: 'Asha', lastName: 'Rao', phone: '+971501234567' };
 
     await expect(
       validateCreateAppointment(
@@ -365,7 +365,26 @@ describe('validateCreateAppointment', () => {
       'tenant-1',
       'Asha',
       'Rao',
-      '9876543210',
+      '+971501234567',
+      undefined
+    );
+  });
+
+  it('should run the duplicate check on the +<code><number> phone when booking with 0501234567', async () => {
+    await validateCreateAppointment(
+      {
+        ...catalogueProcedurePayload,
+        patientId: undefined,
+        provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '0501234567' },
+      },
+      'tenant-1'
+    );
+
+    expect(appointmentRepo.findPotentialPatientMatches).toHaveBeenCalledWith(
+      'tenant-1',
+      'Asha',
+      'Rao',
+      '+971501234567',
       undefined
     );
   });
@@ -380,7 +399,7 @@ describe('validateCreateAppointment', () => {
         {
           ...catalogueProcedurePayload,
           patientId: undefined,
-          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '+971501234567' },
         },
         'tenant-1'
       )
@@ -529,7 +548,7 @@ describe('validateCreateAppointment', () => {
         {
           ...payload,
           patientId: undefined,
-          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '+971501234567' },
         },
         'tenant-1'
       )
@@ -558,7 +577,7 @@ describe('validateCreateAppointment', () => {
         {
           ...payload,
           patientId: undefined,
-          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+          provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '+971501234567' },
         },
         'tenant-1'
       )

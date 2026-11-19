@@ -4,6 +4,7 @@ import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { patientRepository } from '../repository/patient-repository';
 import {
+  getPatientPhoneErrors,
   patientIdSchema,
   type UpdatePatientInput,
   updatePatientSchema,
@@ -47,6 +48,14 @@ export async function validateUpdatePatient(
       errors: ['Patient not found'],
       status: StatusCodes.NOT_FOUND,
     };
+  }
+
+  // Phones the client changed must pass their country rule; an unchanged saved
+  // phone that predates the rule is kept so unrelated edits still save.
+  const phoneErrors = getPatientPhoneErrors(payloadResult.data, existingPatient);
+
+  if (phoneErrors.length > 0) {
+    return { success: false, errors: phoneErrors.map(({ message }) => message) };
   }
 
   const referenceResult = await validatePatientReferences(payloadResult.data);

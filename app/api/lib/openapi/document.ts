@@ -27,6 +27,17 @@ const jsonContent = (schema: unknown, example?: unknown) => ({
   },
 });
 
+// Patient phone fields on create, update and booking requests.
+const patientPhoneRequestSchema = (required: boolean) => ({
+  type: 'string',
+  ...(required ? { minLength: 1 } : {}),
+  maxLength: 20,
+  pattern: '^\\+?\\d+$',
+  description:
+    'Accepts +<country code><number>, 00<country code><number>, or a UAE number without a code (0501234567); a leading trunk 0 is dropped. Stored as +<country code><number>, e.g. +971501234567. The number must pass its country rule: UAE is a 9-digit mobile starting with 5 (50, 52, 53, 54, 55, 56, 58) or an 8-digit landline; other countries are checked by length, e.g. India is 10 digits. On Patient update, a value equal to the saved phone is accepted unchanged even if it predates these rules.',
+  examples: ['+971501234567', '0501234567', '+919876543210'],
+});
+
 const schemaRef = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const responseRef = (name: string) => ({ $ref: `#/components/responses/${name}` });
 const parameterRef = (name: string) => ({ $ref: `#/components/parameters/${name}` });
@@ -682,7 +693,7 @@ const createProcedureAppointmentRequestExample = {
 
 const createProvisionalProcedureAppointmentRequestExample = {
   bookingPath: 'PROCEDURE',
-  provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+  provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '0501234567' },
   slotDate: '31-12-2099',
   startTime: '11:30',
   endTime: '12:15',
@@ -724,7 +735,7 @@ const appointmentExample = {
     mrn: 'MRN-1042',
     firstName: 'Asha',
     lastName: 'Rao',
-    phone: '+91-9876543210',
+    phone: '+919876543210',
     registrationStatus: 'registered',
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
@@ -762,7 +773,7 @@ const procedureAppointmentExample = {
     mrn: 'MRN-1042',
     firstName: 'Asha',
     lastName: 'Rao',
-    phone: '+91-9876543210',
+    phone: '+919876543210',
     registrationStatus: 'registered',
   },
   doctor: null,
@@ -825,7 +836,7 @@ const admissionExample = {
     mrn: 'MRN-1042',
     firstName: 'Asha',
     lastName: 'Rao',
-    phone: '+91-9876543210',
+    phone: '+919876543210',
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
   admissionType: { id: 1, name: 'Emergency', code: 'EMER' },
@@ -885,7 +896,7 @@ const visitExample = {
     mrn: 'MRN-1042',
     firstName: 'Asha',
     lastName: 'Rao',
-    phone: '+91-9876543210',
+    phone: '+919876543210',
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
   visitType: { id: 1, name: 'OPD Consultation', code: 'OPD' },
@@ -2159,8 +2170,8 @@ const patientRequestExample = {
   bloodGroup: 'B+',
   maritalStatus: 'married',
   preferredPaymentMethod: 'insurance',
-  phone: '+91-9876543210',
-  alternatePhone: '9123456780',
+  phone: '+919876543210',
+  alternatePhone: '+919123456780',
   email: 'asha.rao@example.com',
   addressLine1: '221B Residency Road',
   addressLine2: 'Near City Hospital',
@@ -2194,7 +2205,7 @@ const patientRequestExample = {
   emergencyContactName: 'Kiran Rao',
   emergencyContactRelationship: 'Spouse',
   emergencyContactGender: 'male',
-  emergencyContactPhone: '919988776655',
+  emergencyContactPhone: '+919988776655',
 };
 
 const patientExample = {
@@ -2367,18 +2378,45 @@ const patientValidationFailed = {
             ],
           },
         },
-        invalidAlternatePhone: {
-          summary: 'Alternate phone contains non-digit characters',
+        invalidUaePhone: {
+          summary: 'Phone breaks the UAE numbering rule',
           value: {
             message: 'Validation failed',
-            errors: ['Patient alternate phone must contain only digits'],
+            errors: [
+              'Patient phone must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number',
+            ],
+          },
+        },
+        invalidPhoneLengthForCountry: {
+          summary: 'Phone has the wrong length for its country code',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient phone must be 10 digits for India (+91)'],
+          },
+        },
+        unsupportedPhoneCountryCode: {
+          summary: 'Phone starts with a country code that is not supported',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient phone must start with a supported country code'],
+          },
+        },
+        invalidAlternatePhone: {
+          summary: 'Alternate phone contains characters other than digits and a leading +',
+          value: {
+            message: 'Validation failed',
+            errors: [
+              'Patient alternate phone must contain only digits, optionally starting with +',
+            ],
           },
         },
         invalidNextOfKinPhone: {
-          summary: 'Next of Kin phone contains non-digit characters',
+          summary: 'Next of Kin phone contains characters other than digits and a leading +',
           value: {
             message: 'Validation failed',
-            errors: ['Patient Next of Kin phone must contain only digits'],
+            errors: [
+              'Patient Next of Kin phone must contain only digits, optionally starting with +',
+            ],
           },
         },
         missingIdentificationCategory: {
@@ -4445,7 +4483,7 @@ export const openApiDocument = {
                           mrn: 'MRN-1084',
                           firstName: 'Asha',
                           lastName: 'Rao',
-                          phone: '9876543210',
+                          phone: '+971501234567',
                           registrationStatus: 'provisional',
                         },
                       },
@@ -4516,7 +4554,7 @@ export const openApiDocument = {
                           mrn: 'MRN-1042',
                           firstName: 'Asha',
                           lastName: 'Rao',
-                          phone: '+91-9876543210',
+                          phone: '+919876543210',
                           registrationStatus: 'registered',
                           isActive: true,
                         },
@@ -8246,7 +8284,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'List Patients',
         description:
-          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, full first and last name, MRN, phone, Emirates ID, and date of birth (YYYY-MM-DD, DD/MM/YYYY, or DD-MM-YYYY). Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
+          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, full first and last name, MRN, phone (a phone-like query also matches on its national digits, so 0501234567 and +971501234567 find the same Patient), Emirates ID, and date of birth (YYYY-MM-DD, DD/MM/YYYY, or DD-MM-YYYY). Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
         security: [{ cookieAuth: [] }],
         parameters: [
           ...listParameters,
@@ -11793,8 +11831,8 @@ export const openApiDocument = {
             type: 'string',
             enum: ['single', 'married', 'divorced', 'widowed', 'other'],
           },
-          phone: { type: 'string', minLength: 1, maxLength: 20 },
-          alternatePhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          phone: patientPhoneRequestSchema(true),
+          alternatePhone: patientPhoneRequestSchema(false),
           email: { type: 'string', format: 'email', maxLength: 255 },
           addressLine1: { type: 'string', maxLength: 255 },
           addressLine2: { type: 'string', maxLength: 255 },
@@ -11840,7 +11878,7 @@ export const openApiDocument = {
             enum: ['male', 'female', 'other', 'unknown'],
             description: 'Next of Kin Gender in Patient Registration UI.',
           },
-          emergencyContactPhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          emergencyContactPhone: patientPhoneRequestSchema(false),
         },
       },
       CreateAppointmentRequest: {
@@ -13366,8 +13404,8 @@ export const openApiDocument = {
             description:
               'Default payment means for front-desk registration. A convenience hint only — actual insurance coverage is captured per Visit.',
           },
-          phone: { type: 'string', minLength: 1, maxLength: 20 },
-          alternatePhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          phone: patientPhoneRequestSchema(true),
+          alternatePhone: patientPhoneRequestSchema(false),
           email: { type: 'string', format: 'email', maxLength: 255 },
           addressLine1: { type: 'string', maxLength: 255 },
           addressLine2: { type: 'string', maxLength: 255 },
@@ -13438,7 +13476,7 @@ export const openApiDocument = {
           },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
-          emergencyContactPhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          emergencyContactPhone: patientPhoneRequestSchema(false),
         },
       },
       UpdatePatientRequest: schemaRef('CreatePatientRequest'),
@@ -13546,7 +13584,13 @@ export const openApiDocument = {
               { type: 'null' },
             ],
           },
-          phone: { type: 'string', minLength: 1, maxLength: 20 },
+          phone: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            description:
+              'Usually +<country code><number>. Phones saved before country codes were introduced keep their original form until edited.',
+          },
           alternatePhone: { type: ['string', 'null'], maxLength: 20 },
           email: { type: ['string', 'null'], format: 'email', maxLength: 255 },
           addressLine1: { type: ['string', 'null'], maxLength: 255 },
