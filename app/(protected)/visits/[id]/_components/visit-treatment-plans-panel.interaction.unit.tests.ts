@@ -41,6 +41,7 @@ function plans(...sessions: ReturnType<typeof session>[]) {
 
 function renderPanel(props: Partial<Parameters<typeof VisitTreatmentPlansPanel>[0]> = {}) {
   const onOpenSession = vi.fn();
+  const onAddSessions = vi.fn();
   render(
     createElement(VisitTreatmentPlansPanel, {
       visit,
@@ -54,11 +55,12 @@ function renderPanel(props: Partial<Parameters<typeof VisitTreatmentPlansPanel>[
       canBookAppointment: false,
       canStartSession: true,
       onAssignPlan: vi.fn(),
+      onAddSessions,
       onOpenSession,
       ...props,
     })
   );
-  return onOpenSession;
+  return Object.assign(onOpenSession, { onAddSessions });
 }
 
 afterEach(cleanup);
@@ -99,6 +101,21 @@ describe('Visit Treatment Plans panel', () => {
     expect(screen.queryByRole('button', { name: /^Start Session/ })).toBeNull();
   });
 
+  it('should offer Add Sessions on an active Plan to a user who may assign Plans', async () => {
+    const user = userEvent.setup();
+    const { onAddSessions } = renderPanel({ canAssignPlan: true });
+
+    await user.click(screen.getByRole('button', { name: 'Add Sessions to Abhyanga' }));
+
+    expect(onAddSessions).toHaveBeenCalledWith(81);
+  });
+
+  it('should not offer Add Sessions without permission to assign Plans', () => {
+    renderPanel({ canAssignPlan: false });
+
+    expect(screen.queryByRole('button', { name: /^Add Sessions/ })).toBeNull();
+  });
+
   it('should show only the Sessions a Completed Visit delivered, not the current Plan', () => {
     const completed = {
       id: 4000,
@@ -108,13 +125,14 @@ describe('Visit Treatment Plans panel', () => {
       treatment: null,
       treatmentSession: null,
     } as unknown as Visit;
-    renderPanel({ visit: completed });
+    renderPanel({ visit: completed, canAssignPlan: true });
 
     expect(screen.getByText('Treatment Plan Sessions this Visit')).toBeTruthy();
     expect(screen.getByText('Session 1')).toBeTruthy();
     expect(screen.queryByText('Session 2')).toBeNull();
     expect(screen.queryByText('Active Plan')).toBeNull();
     expect(screen.queryByRole('button', { name: /Start Session/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Add Sessions/ })).toBeNull();
   });
 
   it('should say so when a Completed Visit delivered no Plan Session', () => {

@@ -1,6 +1,12 @@
 import Link from 'next/link';
 import { CiPlay1 } from 'react-icons/ci';
-import { PiCalendarPlusLight, PiCheckLight, PiClipboardTextLight, PiXLight } from 'react-icons/pi';
+import {
+  PiCalendarPlusLight,
+  PiCheckLight,
+  PiClipboardTextLight,
+  PiPlusLight,
+  PiXLight,
+} from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
@@ -36,6 +42,7 @@ type Props = {
   canBookAppointment: boolean;
   canStartSession: boolean;
   onAssignPlan: () => void;
+  onAddSessions: (planId: number) => void;
   onOpenSession: (sessionId: number) => void;
 };
 
@@ -51,11 +58,15 @@ function PlanCard({
   plan,
   visit,
   canStartSession,
+  canAddSessions,
+  onAddSessions,
   onOpenSession,
 }: {
   plan: PatientTreatmentPlan;
   visit: Visit;
   canStartSession: boolean;
+  canAddSessions: boolean;
+  onAddSessions: (planId: number) => void;
   onOpenSession: (sessionId: number) => void;
 }) {
   const procedures = [
@@ -77,6 +88,18 @@ function PlanCard({
           <Badge variant="secondary">
             {plan.completedSessions} of {plan.totalSessions} completed
           </Badge>
+          {canAddSessions ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-label={`Add Sessions to ${plan.treatmentName}`}
+              onClick={() => onAddSessions(plan.id)}
+            >
+              <PiPlusLight className="size-4" />
+              Add Sessions
+            </Button>
+          ) : null}
           {startable ? (
             <Button type="button" size="sm" onClick={() => onOpenSession(next.id)}>
               <CiPlay1 className="size-4" />
@@ -216,6 +239,7 @@ function TreatmentPlansContent({
   canBookAppointment,
   canStartSession,
   onAssignPlan,
+  onAddSessions,
   onOpenSession,
 }: Omit<Props, 'loading' | 'error'>) {
   const activePlans = plans.filter(isCurrentPlan);
@@ -225,8 +249,7 @@ function TreatmentPlansContent({
   const activeVisit = visit.status === 'CHECKED_IN' || visit.status === 'IN_CONSULTATION';
 
   // A closed Visit is a record of what happened then: show only the Plan Sessions it
-  // started or completed, not the Patient's Plans as they stand today. The Visit's own
-  // Treatment Session is shown separately above.
+  // started or completed, not the Patient's Plans as they stand today.
   if (!activeVisit) {
     const delivered = visitProcedures(visit, plans).filter((procedure) =>
       procedure.key.startsWith('plan-')
@@ -255,6 +278,8 @@ function TreatmentPlansContent({
             plan={plan}
             visit={visit}
             canStartSession={canStartSession}
+            canAddSessions={canAssignPlan}
+            onAddSessions={onAddSessions}
             onOpenSession={onOpenSession}
           />
         ))

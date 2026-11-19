@@ -20,7 +20,7 @@ API-first hospital management platform. A **Tenant** is a hospital group (e.g., 
 
 ## Frontend
 
-All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI, and use the `design-system` team skill.
+All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired, shadcn/ui, deep blue primary) — read it before building or changing any UI.
 
 Key facts:
 
@@ -29,12 +29,11 @@ Key facts:
 - `AUTH_SHOW_CREATE_WORKSPACE_LINK` and `AUTH_SHOW_BACK_TO_SITE_LINK` independently enable the optional links on auth screens. Both are hidden unless set to `true`.
 - `SIDEBAR_APPOINTMENTS_ONLY` defaults to enabled. Set it to `false` to restore the full sidebar; the reduced sidebar shows the Appointment Dashboard, Appointments, booking resources and their Masters, plus Billing Masters > Charge Items, subject to the usual permissions. This changes navigation visibility only, not route authorization.
 - `SIDEBAR_SHOW_VISITS=true` adds Visits, Previous Visits and Visit List to the reduced sidebar when the user has Visit permission. It defaults to hidden and has no effect when the full sidebar is enabled.
-- `ENABLE_DEMO_PAGES=true` enables the static-data demo pages: `/visit-list`, `/billing-counter`, and `/visits/[id]/assessment`. They default to `notFound()` and are hidden from the sidebar, and they show `DemoDataBanner` when enabled. Keep it off in production. Remove a page from the gate only once it reads real data through the API.
+- `ENABLE_DEMO_PAGES=true` enables the static-data demo pages: `/visit-list`, `/billing-counter`, and `/visits/[id]/assessment`, plus `/reports`, whose Generate does not produce a file yet. They default to `notFound()` and are hidden from the sidebar, and they show `DemoDataBanner` when enabled. Keep it off in production. Remove a page from the gate only once it reads real data through the API.
 - Pages: marketing in `app/(marketing)/`, auth in `app/(auth)/` (login, signup), and authenticated clinical/app pages in `app/(protected)/`. New protected pages must go in `app/(protected)/`; do not create another protected route group for app pages. Signup is wired to public Tenant Provisioning; login is wired to public sign-in and selects the active Tenant before entering the app. The app shell requires a valid Session and uses sign-out to end the current Session.
 - Sign-in and signup mark the current browser tab in `sessionStorage` after creating a Session. `TabSessionGate` protects the app shell and onboarding; `ExistingSessionGate` handles a cookie Session found at `/login` or `/signup`. Without a tab marker, these gates revoke that Session before showing login. Explicit sign-out clears the marker. Any new flow that creates a Session must mark the tab before navigating to protected UI. Browsers do not reliably report tab closure, so revocation happens on the next launch of a fresh tab; a browser that restores a closed tab's `sessionStorage` may also restore its marker.
 - Animations use GSAP via the data-attribute pattern in `components/marketing/marketing-animations.tsx`; always respect `prefers-reduced-motion`.
 - Every `app/**/page.tsx` outside `app/api/` must have a sibling `loader.tsx` that imports and renders `Skeleton` from `@/components/ui/skeleton`. When a page or route-local `_components/` file changes, update that route's `loader.tsx` in the same change so the skeleton stays page-shaped.
-- TanStack Query work must use the `tanstack-query-patterns` team skill. Claude Code should invoke `/tanstack-query-patterns`; other agents should read `.agents/skills/tanstack-query-patterns/SKILL.md` before adding or modifying API calls, query hooks, mutations, optimistic updates, query keys, `useQuery`, `useSuspenseQuery`, or `useMutation` code.
 
 ### Screen composition
 

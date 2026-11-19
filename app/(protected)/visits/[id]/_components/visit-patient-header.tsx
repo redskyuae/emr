@@ -19,6 +19,7 @@ import {
   PiCircleNotchLight,
   PiFilePlusLight,
   PiPlayCircleLight,
+  PiPrinterLight,
   PiShieldWarningLight,
 } from 'react-icons/pi';
 
@@ -134,6 +135,12 @@ export function VisitPatientHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/visits/${visit.id}/summary`}>
+              <PiPrinterLight className="size-4" />
+              Visit Summary
+            </Link>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

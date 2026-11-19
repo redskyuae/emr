@@ -61,6 +61,25 @@ describe('PatientMedication repository', () => {
     expect(result.total).toBe(2);
   });
 
+  it('should list only medications with the requested status', async () => {
+    const stopped = await createMedication(tenantA, patientId, 'Ibuprofen');
+    await createMedication(tenantA, patientId, 'Metformin');
+    await patientMedicationRepository.updatePatientMedication(stopped.id, {
+      tenantId: tenantA,
+      drugName: 'Ibuprofen',
+      status: 'stopped',
+    });
+
+    const result = await patientMedicationRepository.getPatientMedications({
+      tenantId: tenantA,
+      patientId,
+      status: 'active',
+    });
+
+    expect(result.total).toBe(1);
+    expect(result.data.map((medication) => medication.drugName)).toEqual(['Metformin']);
+  });
+
   it('should not read a medication from another tenant', async () => {
     const created = await createMedication(tenantA, patientId);
     await expect(

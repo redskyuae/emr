@@ -1,5 +1,6 @@
-import { and, asc, count, eq, ilike, ne, or, sql } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, like, ne, notLike, or, sql } from 'drizzle-orm';
 
+import { getPhoneSearch } from '@/lib/phone-numbers';
 import { db } from '@/app/db';
 import { country as countryTable } from '@/app/db/schema/country';
 import { language as languageTable } from '@/app/db/schema/language';
@@ -397,6 +398,39 @@ async function setPatientActive(
   return getPatientById(updatedPatient.id, tenantId);
 }
 
+// Saved phones mix +971501234567 and 0501234567, so phone-like queries match on
+// digits; a short one only matches the start of a number (see getPhoneSearch).
+// Any other query keeps the plain text match.
+function getPhoneSearchCondition(query: string, searchPattern: string) {
+  const search = getPhoneSearch(query);
+  const phoneDigits = sql`regexp_replace(${patientTable.phone}, '[^0-9]', '', 'g')`;
+
+  if (search === null) {
+    return ilike(patientTable.phone, searchPattern);
+  }
+
+  if (search.match === 'none') {
+    return undefined;
+  }
+
+  if (search.match === 'contains') {
+    return like(phoneDigits, `%${search.digits}%`);
+  }
+
+  const savedWithoutCode = and(
+    notLike(patientTable.phone, '+%'),
+    notLike(patientTable.phone, '00%')
+  );
+
+  return or(
+    ...search.anyFormat.map((prefix) => like(phoneDigits, `${prefix}%`)),
+    and(
+      savedWithoutCode,
+      or(...search.withoutCode.map((prefix) => like(phoneDigits, `${prefix}%`)))
+    )
+  );
+}
+
 async function getPatients({
   tenantId,
   page = 1,
@@ -414,6 +448,9 @@ async function getPatients({
   // which would match every patient in the tenant (ADR 0042).
   const normalisedQuery = trimmedQuery ? normaliseEmiratesId(trimmedQuery) : '';
   const searchPattern = `%${trimmedQuery}%`;
+  const phoneCondition = trimmedQuery
+    ? getPhoneSearchCondition(trimmedQuery, searchPattern)
+    : undefined;
   const searchCondition = trimmedQuery
     ? or(
         ilike(patientTable.firstName, searchPattern),
@@ -421,7 +458,7 @@ async function getPatients({
         ilike(patientTable.lastName, searchPattern),
         ilike(sql`${patientTable.firstName} || ' ' || ${patientTable.lastName}`, searchPattern),
         ilike(patientTable.mrn, searchPattern),
-        ilike(patientTable.phone, searchPattern),
+        phoneCondition,
         ilike(sql`${patientTable.dateOfBirth}::text`, searchPattern),
         ilike(sql`to_char(${patientTable.dateOfBirth}, 'DD/MM/YYYY')`, searchPattern),
         ilike(sql`to_char(${patientTable.dateOfBirth}, 'DD-MM-YYYY')`, searchPattern),

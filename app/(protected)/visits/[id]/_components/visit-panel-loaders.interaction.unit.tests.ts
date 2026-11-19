@@ -25,6 +25,7 @@ describe('Visit panel loaders', () => {
         canBookAppointment: false,
         canStartSession: false,
         onAssignPlan: () => {},
+        onAddSessions: () => {},
         onOpenSession: () => {},
       })
     );

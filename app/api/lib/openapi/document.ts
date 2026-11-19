@@ -27,6 +27,17 @@ const jsonContent = (schema: unknown, example?: unknown) => ({
   },
 });
 
+// Patient phone fields on create, update and booking requests.
+const patientPhoneRequestSchema = (required: boolean) => ({
+  type: 'string',
+  ...(required ? { minLength: 1 } : {}),
+  maxLength: 20,
+  pattern: '^\\+?\\d+$',
+  description:
+    'Accepts +<country code><number>, 00<country code><number>, or a UAE number without a code (0501234567); a leading trunk 0 is dropped. Stored as +<country code><number>, e.g. +971501234567. The number must pass its country rule: UAE is a 9-digit mobile starting with 5 (50, 52, 53, 54, 55, 56, 58) or an 8-digit landline; other countries are checked by length, e.g. India is 10 digits. On Patient update, a value equal to the saved phone is accepted unchanged even if it predates these rules.',
+  examples: ['+971501234567', '0501234567', '+919876543210'],
+});
+
 const schemaRef = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const responseRef = (name: string) => ({ $ref: `#/components/responses/${name}` });
 const parameterRef = (name: string) => ({ $ref: `#/components/parameters/${name}` });
@@ -682,7 +693,7 @@ const createProcedureAppointmentRequestExample = {
 
 const createProvisionalProcedureAppointmentRequestExample = {
   bookingPath: 'PROCEDURE',
-  provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '9876543210' },
+  provisionalPatient: { firstName: 'Asha', lastName: 'Rao', phone: '0501234567' },
   slotDate: '31-12-2099',
   startTime: '11:30',
   endTime: '12:15',
@@ -724,7 +735,7 @@ const appointmentExample = {
     mrn: 'MRN-1042',
     firstName: 'Asha',
     lastName: 'Rao',
-    phone: '+91-9876543210',
+    phone: '+919876543210',
     registrationStatus: 'registered',
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
@@ -762,7 +773,7 @@ const procedureAppointmentExample = {
     mrn: 'MRN-1042',
     firstName: 'Asha',
     lastName: 'Rao',
-    phone: '+91-9876543210',
+    phone: '+919876543210',
     registrationStatus: 'registered',
   },
   doctor: null,
@@ -825,7 +836,7 @@ const admissionExample = {
     mrn: 'MRN-1042',
     firstName: 'Asha',
     lastName: 'Rao',
-    phone: '+91-9876543210',
+    phone: '+919876543210',
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
   admissionType: { id: 1, name: 'Emergency', code: 'EMER' },
@@ -873,6 +884,155 @@ const bedBoardExample = [
   },
 ];
 
+const visitSummaryExample = {
+  timeZone: 'Asia/Dubai',
+  generatedAt: '2026-11-19T05:42:00.000Z',
+  generatedBy: 'Front Desk',
+  billingIncluded: true,
+  tenant: { name: 'Dhathri Ayurveda Clinic', logo: null },
+  patient: {
+    id: 1284,
+    mrn: 'MRN-1284',
+    phone: '+971500004127',
+    title: 'mrs',
+    gender: 'female',
+    lastName: 'Raghavan',
+    firstName: 'Lakshmi',
+    middleName: null,
+    bloodGroup: 'B+',
+    dateOfBirth: '1974-03-02',
+  },
+  visit: {
+    id: 1847,
+    status: 'COMPLETED',
+    visitDate: '18-11-2026',
+    doctorName: 'Dr. Anjali Menon',
+    visitNumber: 'VST-1847',
+    checkedInAt: '2026-11-18T05:52:00.000Z',
+    completedAt: '2026-11-18T07:42:00.000Z',
+    cancelledAt: null,
+    bookingNumber: 'APT-2391',
+    chiefComplaint: 'Low back pain spreading to the left leg for 3 weeks.',
+    cancellationReason: null,
+    consultationStartedAt: '2026-11-18T06:08:00.000Z',
+    visitType: { name: 'OPD Consultation', code: 'OPD' },
+  },
+  allergies: [
+    { id: 31, name: 'Ibuprofen', reaction: 'skin rash', severity: 'moderate' },
+    { id: 32, name: 'Sesame oil', reaction: 'itching', severity: 'mild' },
+  ],
+  vitalSign: {
+    id: 501,
+    bmi: 28.6,
+    spo2: 98,
+    heightCm: 158,
+    weightKg: 71.4,
+    systolic: 132,
+    pulseBpm: 74,
+    respRate: 16,
+    diastolic: 84,
+    painScore: 4,
+    recordedAt: '2026-11-18T07:38:00.000Z',
+    temperatureC: 36.8,
+  },
+  notes: [
+    {
+      id: 77,
+      plan: '**Treatment precautions:**\n\nAvoid bending forward and lifting more than 5 kg.',
+      signedAt: '2026-11-18T06:39:00.000Z',
+      amendedAt: null,
+      objective: '**Examination / red flags:**\n\nStraight leg raise positive at 60° on the left.',
+      subjective: '**Chief complaint:**\n\nLow back pain spreading to the left leg for 3 weeks.',
+      assessment: 'Modern diagnosis: Lumbar radiculopathy, L4-L5',
+      authorName: 'Dr. Anjali Menon',
+      noteType: { name: 'Doctor Consultation', code: 'CONS' },
+    },
+  ],
+  diagnoses: [
+    {
+      id: 91,
+      visitId: 1847,
+      codeSystem: 'ICD10CM',
+      diagnosisType: 'PRINCIPAL',
+      sortOrder: 0,
+      notes: 'Left side, L4-L5',
+      code: 'M54.16',
+      title: 'Radiculopathy, lumbar region',
+      englishName: null,
+      diagnosisCodeId: 4410,
+      ayurvedaDiagnosisCodeId: null,
+      icdMapping: null,
+    },
+  ],
+  treatmentGiven: {
+    planId: 61,
+    label: 'Day 1',
+    procedure: 'Abhyanga + Swedana',
+    sessionNumber: 1,
+    treatmentName: 'Abhyanga + Swedana',
+    totalSessions: 7,
+    plannedMinutes: 45,
+  },
+  treatmentPlans: [
+    {
+      id: 61,
+      status: 'IN_PROGRESS',
+      treatmentName: 'Abhyanga + Swedana',
+      totalSessions: 7,
+      completedSessions: 1,
+      sessionStructure: 'REPEATABLE',
+    },
+  ],
+  medications: [
+    { id: 12, dose: '500 mg', route: 'Oral', drugName: 'Metformin', frequency: 'Twice daily' },
+  ],
+  nextAppointment: {
+    id: 2410,
+    slotDate: '2026-11-20',
+    startTime: '09:30',
+    statusName: 'Confirmed',
+    doctorName: null,
+    bookingNumber: 'APT-2410',
+    treatmentName: 'Kati Basti',
+    sessionNumber: 1,
+    totalSessions: 7,
+  },
+  billing: {
+    status: 'PAID',
+    subtotal: 430,
+    grandTotal: 405,
+    amountPaid: 405,
+    balanceDue: 0,
+    invoiceNumber: 'INV-1953',
+    discountAmount: 25,
+    lines: [
+      {
+        id: 1,
+        amount: 250,
+        quantity: 1,
+        unitPrice: 250,
+        description: 'OPD Consultation, Specialist',
+      },
+      {
+        id: 2,
+        amount: 180,
+        quantity: 1,
+        unitPrice: 180,
+        description: 'Abhyanga + Swedana, Session 1',
+      },
+    ],
+    payments: [
+      {
+        id: 7,
+        amount: 405,
+        method: 'CARD',
+        receivedAt: '2026-11-18T07:46:00.000Z',
+        receiptNumber: 'RCP-2210',
+      },
+    ],
+  },
+};
+
 const visitExample = {
   id: 501,
   tenantId: 'org_apollo',
@@ -885,7 +1045,7 @@ const visitExample = {
     mrn: 'MRN-1042',
     firstName: 'Asha',
     lastName: 'Rao',
-    phone: '+91-9876543210',
+    phone: '+919876543210',
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
   visitType: { id: 1, name: 'OPD Consultation', code: 'OPD' },
@@ -2159,8 +2319,8 @@ const patientRequestExample = {
   bloodGroup: 'B+',
   maritalStatus: 'married',
   preferredPaymentMethod: 'insurance',
-  phone: '+91-9876543210',
-  alternatePhone: '9123456780',
+  phone: '+919876543210',
+  alternatePhone: '+919123456780',
   email: 'asha.rao@example.com',
   addressLine1: '221B Residency Road',
   addressLine2: 'Near City Hospital',
@@ -2194,7 +2354,7 @@ const patientRequestExample = {
   emergencyContactName: 'Kiran Rao',
   emergencyContactRelationship: 'Spouse',
   emergencyContactGender: 'male',
-  emergencyContactPhone: '919988776655',
+  emergencyContactPhone: '+919988776655',
 };
 
 const patientExample = {
@@ -2367,18 +2527,45 @@ const patientValidationFailed = {
             ],
           },
         },
-        invalidAlternatePhone: {
-          summary: 'Alternate phone contains non-digit characters',
+        invalidUaePhone: {
+          summary: 'Phone breaks the UAE numbering rule',
           value: {
             message: 'Validation failed',
-            errors: ['Patient alternate phone must contain only digits'],
+            errors: [
+              'Patient phone must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number',
+            ],
+          },
+        },
+        invalidPhoneLengthForCountry: {
+          summary: 'Phone has the wrong length for its country code',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient phone must be 10 digits for India (+91)'],
+          },
+        },
+        unsupportedPhoneCountryCode: {
+          summary: 'Phone starts with a country code that is not supported',
+          value: {
+            message: 'Validation failed',
+            errors: ['Patient phone must start with a supported country code'],
+          },
+        },
+        invalidAlternatePhone: {
+          summary: 'Alternate phone contains characters other than digits and a leading +',
+          value: {
+            message: 'Validation failed',
+            errors: [
+              'Patient alternate phone must contain only digits, optionally starting with +',
+            ],
           },
         },
         invalidNextOfKinPhone: {
-          summary: 'Next of Kin phone contains non-digit characters',
+          summary: 'Next of Kin phone contains characters other than digits and a leading +',
           value: {
             message: 'Validation failed',
-            errors: ['Patient Next of Kin phone must contain only digits'],
+            errors: [
+              'Patient Next of Kin phone must contain only digits, optionally starting with +',
+            ],
           },
         },
         missingIdentificationCategory: {
@@ -4445,7 +4632,7 @@ export const openApiDocument = {
                           mrn: 'MRN-1084',
                           firstName: 'Asha',
                           lastName: 'Rao',
-                          phone: '9876543210',
+                          phone: '+971501234567',
                           registrationStatus: 'provisional',
                         },
                       },
@@ -4516,7 +4703,7 @@ export const openApiDocument = {
                           mrn: 'MRN-1042',
                           firstName: 'Asha',
                           lastName: 'Rao',
-                          phone: '+91-9876543210',
+                          phone: '+919876543210',
                           registrationStatus: 'registered',
                           isActive: true,
                         },
@@ -5244,6 +5431,39 @@ export const openApiDocument = {
         responses: {
           '204': { description: 'Visit deleted.' },
           ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits/{id}/summary': {
+      get: {
+        tags: ['Visit'],
+        summary: 'Get Visit Summary',
+        description:
+          'Reads everything needed to print the Patient copy of one Visit Summary in the active Tenant: Patient and Visit details, active allergies, the latest Vital Signs set of the Visit, signed Clinical Notes (drafts are never included), Visit Diagnoses, the Treatment Session given and the Patient Treatment Plans, active medications as of now, the next Scheduled or Confirmed Appointment after the Visit date (never one before today in the Tenant time zone), and the latest finalized Visit Invoice. Requires `visit:read`. `billing` is null and `billingIncluded` is false when the user lacks `invoice:read`; the billing block is left out on the server. Only Finalized, Partially Paid and Paid Invoices are included; Draft and Void Invoices never are, so `billing` is null when the Visit has only a Draft. Identity documents, Emirates ID, passport, VIP and Medical Tourist flags are never returned. Times are UTC; `timeZone` is the Tenant operational time zone to display them in.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Visit Summary.',
+            content: jsonContent(dataEnvelopeSchema('VisitSummary'), { data: visitSummaryExample }),
+          },
+          '400': {
+            description: 'The Visit ID is not a positive integer.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Visit abc is Invalid.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'No Visit with this ID in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit not found',
+              errors: ['Visit not found'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -8246,7 +8466,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'List Patients',
         description:
-          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, full first and last name, MRN, phone, Emirates ID, and date of birth (YYYY-MM-DD, DD/MM/YYYY, or DD-MM-YYYY). Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
+          'Returns a paginated list of Patients for the active Tenant. The tenantId is resolved from the active authenticated Session. Search matches first name, middle name, last name, full first and last name, MRN, phone (a phone-like query also matches on its national digits, so 0501234567 and +971501234567 find the same Patient), Emirates ID, and date of birth (YYYY-MM-DD, DD/MM/YYYY, or DD-MM-YYYY). Optional filters include active and registration status. Each Patient embeds its resolved State, Country, Nationality, Language, and Religion summaries.',
         security: [{ cookieAuth: [] }],
         parameters: [
           ...listParameters,
@@ -11793,8 +12013,8 @@ export const openApiDocument = {
             type: 'string',
             enum: ['single', 'married', 'divorced', 'widowed', 'other'],
           },
-          phone: { type: 'string', minLength: 1, maxLength: 20 },
-          alternatePhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          phone: patientPhoneRequestSchema(true),
+          alternatePhone: patientPhoneRequestSchema(false),
           email: { type: 'string', format: 'email', maxLength: 255 },
           addressLine1: { type: 'string', maxLength: 255 },
           addressLine2: { type: 'string', maxLength: 255 },
@@ -11840,7 +12060,7 @@ export const openApiDocument = {
             enum: ['male', 'female', 'other', 'unknown'],
             description: 'Next of Kin Gender in Patient Registration UI.',
           },
-          emergencyContactPhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          emergencyContactPhone: patientPhoneRequestSchema(false),
         },
       },
       CreateAppointmentRequest: {
@@ -12607,6 +12827,262 @@ export const openApiDocument = {
           },
         },
       },
+      VisitSummary: {
+        type: 'object',
+        description: 'Patient copy of one Visit Summary.',
+        required: [
+          'notes',
+          'visit',
+          'tenant',
+          'patient',
+          'timeZone',
+          'billing',
+          'vitalSign',
+          'allergies',
+          'diagnoses',
+          'generatedAt',
+          'generatedBy',
+          'medications',
+          'treatmentGiven',
+          'treatmentPlans',
+          'nextAppointment',
+          'billingIncluded',
+        ],
+        properties: {
+          timeZone: { type: 'string', example: 'Asia/Dubai' },
+          generatedAt: { type: 'string', format: 'date-time' },
+          generatedBy: {
+            type: ['string', 'null'],
+            description: 'Name of the signed-in user who generated the summary.',
+          },
+          billingIncluded: {
+            type: 'boolean',
+            description: 'False when the user lacks `invoice:read`; `billing` is then null.',
+          },
+          tenant: {
+            type: 'object',
+            required: ['name', 'logo'],
+            properties: { name: { type: 'string' }, logo: { type: ['string', 'null'] } },
+          },
+          patient: {
+            type: 'object',
+            required: ['id', 'mrn', 'phone', 'title', 'gender', 'firstName', 'lastName'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              mrn: { type: 'string', example: 'MRN-1284' },
+              phone: { type: 'string' },
+              title: { type: ['string', 'null'] },
+              gender: { type: ['string', 'null'] },
+              lastName: { type: 'string' },
+              firstName: { type: 'string' },
+              middleName: { type: ['string', 'null'] },
+              bloodGroup: { type: ['string', 'null'] },
+              dateOfBirth: { type: ['string', 'null'], format: 'date' },
+            },
+          },
+          visit: {
+            type: 'object',
+            required: ['id', 'status', 'visitDate', 'visitNumber', 'checkedInAt', 'visitType'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              status: schemaRef('VisitStatus'),
+              visitDate: { type: 'string', description: 'DD-MM-YYYY', example: '18-11-2026' },
+              doctorName: { type: ['string', 'null'] },
+              visitNumber: { type: 'string', example: 'VST-1847' },
+              checkedInAt: { type: 'string', format: 'date-time' },
+              completedAt: { type: ['string', 'null'], format: 'date-time' },
+              cancelledAt: { type: ['string', 'null'], format: 'date-time' },
+              bookingNumber: {
+                type: ['string', 'null'],
+                description: 'Booking Number of the fulfilled Appointment, or null for a Walk-in.',
+              },
+              chiefComplaint: { type: ['string', 'null'] },
+              cancellationReason: { type: ['string', 'null'] },
+              consultationStartedAt: { type: ['string', 'null'], format: 'date-time' },
+              visitType: {
+                type: 'object',
+                required: ['name', 'code'],
+                properties: { name: { type: 'string' }, code: { type: 'string' } },
+              },
+            },
+          },
+          allergies: {
+            type: 'array',
+            description: 'Active allergies, most severe first.',
+            items: {
+              type: 'object',
+              required: ['id', 'name', 'reaction', 'severity'],
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string', description: 'Allergen name or free-text substance.' },
+                reaction: { type: ['string', 'null'] },
+                severity: { type: 'string', enum: ['mild', 'moderate', 'severe'] },
+              },
+            },
+          },
+          vitalSign: {
+            description: 'Latest Vital Signs set recorded in this Visit, or null.',
+            oneOf: [
+              {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  bmi: { type: ['number', 'null'] },
+                  spo2: { type: ['integer', 'null'] },
+                  heightCm: { type: ['number', 'null'] },
+                  weightKg: { type: ['number', 'null'] },
+                  systolic: { type: ['integer', 'null'] },
+                  pulseBpm: { type: ['integer', 'null'] },
+                  respRate: { type: ['integer', 'null'] },
+                  diastolic: { type: ['integer', 'null'] },
+                  painScore: { type: ['integer', 'null'] },
+                  recordedAt: { type: 'string', format: 'date-time' },
+                  temperatureC: { type: ['number', 'null'] },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+          notes: {
+            type: 'array',
+            description: 'Signed Clinical Notes of this Visit, oldest first.',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                plan: { type: ['string', 'null'] },
+                signedAt: { type: ['string', 'null'], format: 'date-time' },
+                amendedAt: { type: ['string', 'null'], format: 'date-time' },
+                objective: { type: ['string', 'null'] },
+                subjective: { type: ['string', 'null'] },
+                assessment: { type: ['string', 'null'] },
+                authorName: { type: ['string', 'null'] },
+                noteType: {
+                  type: 'object',
+                  properties: { name: { type: 'string' }, code: { type: 'string' } },
+                },
+              },
+            },
+          },
+          diagnoses: { type: 'array', items: schemaRef('VisitDiagnosis') },
+          treatmentGiven: {
+            description: 'Patient Treatment Plan Session started or completed in this Visit.',
+            oneOf: [
+              {
+                type: 'object',
+                properties: {
+                  planId: { type: 'integer' },
+                  label: { type: ['string', 'null'] },
+                  procedure: { type: ['string', 'null'] },
+                  sessionNumber: { type: 'integer' },
+                  treatmentName: { type: 'string' },
+                  totalSessions: { type: 'integer' },
+                  plannedMinutes: { type: ['integer', 'null'] },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+          treatmentPlans: {
+            type: 'array',
+            description:
+              'Patient Treatment Plans held by the end of this Visit that are open or were worked on in it.',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                status: {
+                  type: 'string',
+                  enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'STOPPED'],
+                },
+                treatmentName: { type: 'string' },
+                totalSessions: { type: 'integer' },
+                completedSessions: { type: 'integer' },
+                sessionStructure: { type: 'string', enum: ['REPEATABLE', 'SEQUENCED'] },
+              },
+            },
+          },
+          medications: {
+            type: 'array',
+            description: 'Active medications at the time the summary is generated.',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                dose: { type: ['string', 'null'] },
+                route: { type: ['string', 'null'] },
+                drugName: { type: 'string' },
+                frequency: { type: ['string', 'null'] },
+              },
+            },
+          },
+          nextAppointment: {
+            description: 'Next Scheduled or Confirmed Appointment after the Visit date, or null.',
+            oneOf: [
+              {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  slotDate: { type: 'string', format: 'date' },
+                  startTime: { type: ['string', 'null'], example: '09:30' },
+                  statusName: { type: 'string' },
+                  doctorName: { type: ['string', 'null'] },
+                  bookingNumber: { type: 'string' },
+                  treatmentName: { type: ['string', 'null'] },
+                  sessionNumber: { type: ['integer', 'null'] },
+                  totalSessions: { type: ['integer', 'null'] },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+          billing: {
+            description:
+              'Latest non-Void Invoice of this Visit; null when there is none or billing is not included.',
+            oneOf: [
+              {
+                type: 'object',
+                properties: {
+                  status: schemaRef('InvoiceStatus'),
+                  subtotal: { type: 'number' },
+                  grandTotal: { type: 'number' },
+                  amountPaid: { type: 'number' },
+                  balanceDue: { type: 'number' },
+                  invoiceNumber: { type: 'string', example: 'INV-1953' },
+                  discountAmount: { type: 'number' },
+                  lines: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        amount: { type: 'number' },
+                        quantity: { type: 'number' },
+                        unitPrice: { type: 'number' },
+                        description: { type: 'string' },
+                      },
+                    },
+                  },
+                  payments: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        amount: { type: 'number' },
+                        method: schemaRef('PaymentMethod'),
+                        receivedAt: { type: 'string', format: 'date-time' },
+                        receiptNumber: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+        },
+      },
       VisitDiagnosis: {
         type: 'object',
         required: [
@@ -13366,8 +13842,8 @@ export const openApiDocument = {
             description:
               'Default payment means for front-desk registration. A convenience hint only — actual insurance coverage is captured per Visit.',
           },
-          phone: { type: 'string', minLength: 1, maxLength: 20 },
-          alternatePhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          phone: patientPhoneRequestSchema(true),
+          alternatePhone: patientPhoneRequestSchema(false),
           email: { type: 'string', format: 'email', maxLength: 255 },
           addressLine1: { type: 'string', maxLength: 255 },
           addressLine2: { type: 'string', maxLength: 255 },
@@ -13438,7 +13914,7 @@ export const openApiDocument = {
           },
           emergencyContactName: { type: 'string', maxLength: 150 },
           emergencyContactRelationship: { type: 'string', maxLength: 50 },
-          emergencyContactPhone: { type: 'string', pattern: '^\\d+$', maxLength: 20 },
+          emergencyContactPhone: patientPhoneRequestSchema(false),
         },
       },
       UpdatePatientRequest: schemaRef('CreatePatientRequest'),
@@ -13546,7 +14022,13 @@ export const openApiDocument = {
               { type: 'null' },
             ],
           },
-          phone: { type: 'string', minLength: 1, maxLength: 20 },
+          phone: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            description:
+              'Usually +<country code><number>. Phones saved before country codes were introduced keep their original form until edited.',
+          },
           alternatePhone: { type: ['string', 'null'], maxLength: 20 },
           email: { type: ['string', 'null'], format: 'email', maxLength: 255 },
           addressLine1: { type: ['string', 'null'], maxLength: 255 },

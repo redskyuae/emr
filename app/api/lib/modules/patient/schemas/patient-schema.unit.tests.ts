@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createPatientSchema,
+  getPatientPhoneErrors,
   patientIdSchema,
   patientTenantIdSchema,
   updatePatientSchema,
@@ -16,7 +17,7 @@ const validPayload = {
   lastName: 'Rao',
   gender: 'female',
   dateOfBirth: '1990-05-14',
-  phone: '9876543210',
+  phone: '+919876543210',
   emiratesId: '784199012345671',
 };
 
@@ -123,23 +124,71 @@ describe('Patient schema', () => {
     expect(result.data?.preferredPaymentMethod).toBeUndefined();
   });
 
-  it('should accept a digits-only alternate phone', () => {
+  it('should store a UAE phone sent without a country code as +971', () => {
     const result = createPatientSchema.safeParse({ ...validPayload, alternatePhone: '0501234567' });
     expect(result.success).toBe(true);
-    expect(result.data?.alternatePhone).toBe('0501234567');
+    expect(result.data?.alternatePhone).toBe('+971501234567');
+  });
+
+  it('should store every accepted spelling of a phone in one +<code><number> format', () => {
+    for (const phone of ['+971501234567', '00971501234567', '0501234567', '501234567']) {
+      expect(createPatientSchema.parse({ ...validPayload, phone }).phone).toBe('+971501234567');
+    }
+  });
+
+  it('should reject a UAE phone that breaks the UAE numbering rule', () => {
+    for (const phone of ['0571234567', '050123456', '+9711234567']) {
+      expect(errorsOf(createPatientSchema.safeParse({ ...validPayload, phone }))).toContain(
+        'Patient phone must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number'
+      );
+    }
+  });
+
+  it('should reject a phone with the wrong length for its country code', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, phone: '+91987654321' }))
+    ).toContain('Patient phone must be 10 digits for India (+91)');
+  });
+
+  it('should reject a phone with an unsupported country code', () => {
+    expect(
+      errorsOf(createPatientSchema.safeParse({ ...validPayload, phone: '+999123456789' }))
+    ).toContain('Patient phone must start with a supported country code');
+  });
+
+  it('should reject a phone containing letters or separators', () => {
+    for (const phone of ['abc', '050-123 4567']) {
+      expect(errorsOf(createPatientSchema.safeParse({ ...validPayload, phone }))).toContain(
+        'Patient phone must contain only digits, optionally starting with +'
+      );
+    }
+  });
+
+  it('should accept an alternate phone with a leading + country code', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      alternatePhone: '+971501234567',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.alternatePhone).toBe('+971501234567');
   });
 
   it('should reject an alternate phone containing letters', () => {
     expect(
       errorsOf(createPatientSchema.safeParse({ ...validPayload, alternatePhone: 'sadhfoiaeifjvo' }))
-    ).toContain('Patient alternate phone must contain only digits');
+    ).toContain('Patient alternate phone must contain only digits, optionally starting with +');
   });
 
   it('should reject an alternate phone containing special characters', () => {
-    for (const alternatePhone of ['+971501234567', '050-123-4567', '050 123 4567']) {
+    for (const alternatePhone of [
+      '971+501234567',
+      '++971501234567',
+      '050-123-4567',
+      '050 123 4567',
+    ]) {
       expect(
         errorsOf(createPatientSchema.safeParse({ ...validPayload, alternatePhone }))
-      ).toContain('Patient alternate phone must contain only digits');
+      ).toContain('Patient alternate phone must contain only digits, optionally starting with +');
     }
   });
 
@@ -149,32 +198,99 @@ describe('Patient schema', () => {
     expect(result.data?.alternatePhone).toBeUndefined();
   });
 
-  it('should accept a digits-only Next of Kin phone', () => {
+  it('should accept a UAE Next of Kin phone without a country code', () => {
     const result = createPatientSchema.safeParse({
       ...validPayload,
       emergencyContactPhone: '0501234567',
     });
     expect(result.success).toBe(true);
+    expect(result.data?.emergencyContactPhone).toBe('+971501234567');
+  });
+
+  it('should check each phone against its own country code', () => {
+    expect(
+      errorsOf(
+        createPatientSchema.safeParse({ ...validPayload, emergencyContactPhone: '+9198877665' })
+      )
+    ).toEqual(['Patient Next of Kin phone must be 10 digits for India (+91)']);
+  });
+
+  it('should accept a Next of Kin phone with a leading + country code', () => {
+    const result = createPatientSchema.safeParse({
+      ...validPayload,
+      emergencyContactPhone: '+919988776655',
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.emergencyContactPhone).toBe('+919988776655');
   });
 
   it('should reject a Next of Kin phone containing letters or special characters', () => {
-    for (const emergencyContactPhone of ['747920843idjcksdno', '+971501234567', '050 123 4567']) {
+    for (const emergencyContactPhone of ['747920843idjcksdno', '971+501234567', '050 123 4567']) {
       expect(
         errorsOf(createPatientSchema.safeParse({ ...validPayload, emergencyContactPhone }))
-      ).toContain('Patient Next of Kin phone must contain only digits');
+      ).toContain('Patient Next of Kin phone must contain only digits, optionally starting with +');
     }
   });
 
-  it('should reject a non-digit Next of Kin phone on update', () => {
-    expect(
-      errorsOf(updatePatientSchema.safeParse({ ...validPayload, emergencyContactPhone: 'abc123' }))
-    ).toContain('Patient Next of Kin phone must contain only digits');
+  it('should keep a phone that fails its country rule as sent on update for the validator to judge', () => {
+    const result = updatePatientSchema.safeParse({
+      ...validPayload,
+      phone: '9876543210',
+      alternatePhone: 'abc123',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.phone).toBe('9876543210');
+    expect(result.data?.alternatePhone).toBe('abc123');
   });
 
-  it('should reject a non-digit alternate phone on update', () => {
-    expect(
-      errorsOf(updatePatientSchema.safeParse({ ...validPayload, alternatePhone: 'abc123' }))
-    ).toContain('Patient alternate phone must contain only digits');
+  it('should still normalise a valid phone on update', () => {
+    expect(updatePatientSchema.parse({ ...validPayload, phone: '0501234567' }).phone).toBe(
+      '+971501234567'
+    );
+  });
+
+  describe('getPatientPhoneErrors', () => {
+    it('should report each phone that breaks its country rule', () => {
+      expect(
+        getPatientPhoneErrors({
+          phone: '9876543210',
+          alternatePhone: 'abc123',
+          emergencyContactPhone: '+971501234567',
+        })
+      ).toEqual([
+        {
+          path: 'phone',
+          message:
+            'Patient phone must be a 9-digit UAE mobile number starting with 5, or an 8-digit landline number',
+        },
+        {
+          path: 'alternatePhone',
+          message: 'Patient alternate phone must contain only digits, optionally starting with +',
+        },
+      ]);
+    });
+
+    it('should leave a phone equal to its saved value alone', () => {
+      expect(
+        getPatientPhoneErrors(
+          { phone: '9876543210', alternatePhone: 'abc123' },
+          { phone: '9876543210', alternatePhone: ' abc123 ' }
+        )
+      ).toEqual([]);
+    });
+
+    it('should still check a phone that differs from its saved value', () => {
+      expect(getPatientPhoneErrors({ phone: '9876543211' }, { phone: '9876543210' })).toHaveLength(
+        1
+      );
+    });
+
+    it('should skip empty phones', () => {
+      expect(
+        getPatientPhoneErrors({ alternatePhone: undefined, emergencyContactPhone: null })
+      ).toEqual([]);
+    });
   });
 
   it('should reject a future date of birth', () => {

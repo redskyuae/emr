@@ -9,6 +9,8 @@ import { VisitDetailImpl } from './visit-detail-impl';
 const state = vi.hoisted(() => ({
   status: 'CHECKED_IN',
   canAmend: false,
+  canAssignPlan: false,
+  plansFailed: false,
   initialParams: {} as Record<string, number | string>,
   paramWrites: [] as [string, unknown][],
 }));
@@ -30,9 +32,15 @@ vi.mock('nuqs', async () => {
 });
 vi.mock('@/app/queries/patient-treatment-plans/usePatientTreatmentPlans', () => ({
   usePatientTreatmentPlanHistoryQuery: () => ({
-    data: [{ id: 81, sessions: [{ id: 902, sessionNumber: 2 }] }],
+    data: state.plansFailed
+      ? undefined
+      : [
+          { id: 81, status: 'IN_PROGRESS', sessions: [{ id: 902, sessionNumber: 2 }] },
+          { id: 82, status: 'COMPLETED', sessions: [{ id: 903, sessionNumber: 1 }] },
+        ],
+    isSuccess: !state.plansFailed,
     isLoading: false,
-    isError: false,
+    isError: state.plansFailed,
   }),
 }));
 vi.mock('@/app/queries/visits/useVisit', () => ({
@@ -69,7 +77,9 @@ vi.mock('@/app/queries/clinical-masters/allergens/useAllergens', () => ({
 }));
 vi.mock('@/app/queries/identity-access/useCurrentUser', () => ({
   useHasPermission: (key: string) => ({
-    data: key === 'visit:amend' && state.canAmend,
+    data:
+      (key === 'visit:amend' && state.canAmend) ||
+      (key.startsWith('patient-treatment-plan:') && state.canAssignPlan),
     isLoading: false,
   }),
 }));
@@ -133,6 +143,13 @@ vi.mock('./_sheets/plan-session-sheet', async () => {
   };
 });
 vi.mock('../../_components/_modals/cancel-visit-dialog', () => ({ CancelVisitDialog: () => null }));
+vi.mock('./_modals/add-plan-sessions-dialog', async () => {
+  const { createElement } = await import('react');
+  return {
+    AddPlanSessionsDialog: ({ plan }: { plan: { id: number } }) =>
+      createElement('div', { 'data-testid': 'add-plan-sessions-dialog' }, plan.id),
+  };
+});
 vi.mock('./_modals/complete-visit-dialog', () => ({ CompleteVisitDialog: () => null }));
 vi.mock('./_modals/sign-clinical-note-dialog', () => ({ SignClinicalNoteDialog: () => null }));
 vi.mock('./visit-patient-header', async () => {
@@ -163,10 +180,12 @@ vi.mock('./visit-care-pathway', async () => {
   const { createElement } = await import('react');
   return {
     VisitCarePathway: ({
+      onAddPlanSessions,
       onOpenPlanSession,
       onAmendNote,
       onAmendVitalSign,
     }: {
+      onAddPlanSessions: (planId: number) => void;
       onOpenPlanSession: (sessionId: number) => void;
       onAmendNote: (noteId: number) => void;
       onAmendVitalSign: (vitalId: number) => void;
@@ -174,6 +193,7 @@ vi.mock('./visit-care-pathway', async () => {
       createElement(
         'div',
         null,
+        createElement('button', { onClick: () => onAddPlanSessions(81) }, 'Add Sessions to 81'),
         createElement('button', { onClick: () => onOpenPlanSession(902) }, 'Open Session 2'),
         createElement('button', { onClick: () => onAmendNote(55) }, 'Amend note 55'),
         createElement('button', { onClick: () => onAmendVitalSign(61) }, 'Amend reading 61')
@@ -185,6 +205,8 @@ afterEach(() => {
   cleanup();
   state.status = 'CHECKED_IN';
   state.canAmend = false;
+  state.canAssignPlan = false;
+  state.plansFailed = false;
   state.initialParams = {};
   state.paramWrites = [];
 });
@@ -217,6 +239,52 @@ describe('Visit detail capture routing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Session 2' }));
 
     expect(screen.getByTestId('plan-session-sheet').textContent).toBe('2');
+  });
+
+  it('should open Add Sessions for a current Patient Treatment Plan', () => {
+    state.canAssignPlan = true;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(screen.queryByTestId('add-plan-sessions-dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Add Sessions to 81' }));
+
+    expect(screen.getByTestId('add-plan-sessions-dialog').textContent).toBe('81');
+    expect(state.paramWrites).toEqual([['addSessions', 81]]);
+  });
+
+  it('should clear an Add Sessions link the user may not open', () => {
+    state.initialParams = { addSessions: 81 };
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.paramWrites).toEqual([['addSessions', null]]);
+    expect(screen.queryByTestId('add-plan-sessions-dialog')).toBeNull();
+  });
+
+  it('should clear an Add Sessions link to a Plan that is no longer current', () => {
+    state.canAssignPlan = true;
+    state.initialParams = { addSessions: 82 };
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.paramWrites).toEqual([['addSessions', null]]);
+    expect(screen.queryByTestId('add-plan-sessions-dialog')).toBeNull();
+  });
+
+  it('should keep an Add Sessions link when the Plans request fails', () => {
+    state.canAssignPlan = true;
+    state.plansFailed = true;
+    state.initialParams = { addSessions: 81 };
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.paramWrites).toEqual([]);
+  });
+
+  it('should clear an Add Sessions link on a Completed Visit', () => {
+    state.status = 'COMPLETED';
+    state.canAssignPlan = true;
+    state.initialParams = { addSessions: 81 };
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.paramWrites).toEqual([['addSessions', null]]);
   });
 
   it('should open the Amend Visit sheet on a Completed Visit for a user who may amend', () => {

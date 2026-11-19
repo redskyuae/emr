@@ -1,12 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { CiRead, CiUser } from 'react-icons/ci';
+import { CiEdit, CiRead, CiUser } from 'react-icons/ci';
+import { PiDotsThreeLight, PiPrinterLight } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -20,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { visitStatusPresentation } from '../../visits/_utils/visit-status';
 import { PREVIOUS_VISITS_PAGE_SIZE, formatVisitDay } from '../_utils/previous-visits-filters';
 import { visitDoctorLabel } from '@/lib/visit-doctor-label';
+import { visitEditHref } from '../_utils/visit-edit-href';
 
 function formatTime(value: Date | string) {
   return new Date(value).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
@@ -29,25 +39,54 @@ function patientName(visit: Visit) {
   return `${visit.patient.firstName} ${visit.patient.lastName}`;
 }
 
-function VisitActions({ visit }: { visit: Visit }) {
+type EditPermissions = Parameters<typeof visitEditHref>[1];
+
+function VisitActions({ visit, permissions }: { visit: Visit; permissions: EditPermissions }) {
+  const editHref = visitEditHref(visit, permissions);
+
   return (
-    <div className="flex items-center justify-end gap-1">
-      <Button asChild variant="outline" size="sm">
-        <Link href={`/visits/${visit.id}`}>
-          <CiRead className="size-4" />
-          View
-        </Link>
-      </Button>
-      <Button asChild variant="ghost" size="icon" aria-label={`Open Patient ${patientName(visit)}`}>
-        <Link href={`/patients/${visit.patient.id}`}>
-          <CiUser className="size-4" />
-        </Link>
-      </Button>
+    <div className="flex items-center justify-end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label={`Actions for ${visit.visitNumber}`}>
+            <PiDotsThreeLight className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/visits/${visit.id}`}>
+              <CiRead className="size-4" />
+              View Visit
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/visits/${visit.id}/summary`}>
+              <PiPrinterLight className="size-4" />
+              Visit Summary
+            </Link>
+          </DropdownMenuItem>
+          {editHref ? (
+            <DropdownMenuItem asChild>
+              <Link href={editHref}>
+                <CiEdit className="size-4" />
+                Edit Visit
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href={`/patients/${visit.patient.id}`}>
+              <CiUser className="size-4" />
+              Open Patient
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
 
-function VisitCards({ visits }: { visits: Visit[] }) {
+function VisitCards({ visits, permissions }: { visits: Visit[]; permissions: EditPermissions }) {
   return (
     <ul className="divide-y md:hidden" aria-label="Previous Visits">
       {visits.map((visit) => {
@@ -74,7 +113,7 @@ function VisitCards({ visits }: { visits: Visit[] }) {
               <span className="text-muted-foreground font-mono text-xs">
                 {formatVisitDay(visit.visitDate)} · {formatTime(visit.checkedInAt)}
               </span>
-              <VisitActions visit={visit} />
+              <VisitActions visit={visit} permissions={permissions} />
             </div>
           </li>
         );
@@ -83,7 +122,7 @@ function VisitCards({ visits }: { visits: Visit[] }) {
   );
 }
 
-function VisitTable({ visits }: { visits: Visit[] }) {
+function VisitTable({ visits, permissions }: { visits: Visit[]; permissions: EditPermissions }) {
   return (
     <div className="hidden md:block">
       <Table className="min-w-[960px]">
@@ -142,7 +181,7 @@ function VisitTable({ visits }: { visits: Visit[] }) {
                   <Badge variant={status.variant}>{status.label}</Badge>
                 </TableCell>
                 <TableCell className="pr-4 text-right">
-                  <VisitActions visit={visit} />
+                  <VisitActions visit={visit} permissions={permissions} />
                 </TableCell>
               </TableRow>
             );
@@ -168,12 +207,15 @@ export function PreviousVisitsTable({
   isFetching: boolean;
   onPageChange: (next: number) => void;
 }) {
+  const { data: canAmend } = useHasPermission('visit:amend');
+  const permissions = { canAmend: Boolean(canAmend) };
+
   return (
     <Card className="py-0">
       <CardContent className="p-0">
         <div className={cn(isFetching && 'opacity-70 transition-opacity')}>
-          <VisitCards visits={visits} />
-          <VisitTable visits={visits} />
+          <VisitCards visits={visits} permissions={permissions} />
+          <VisitTable visits={visits} permissions={permissions} />
         </div>
 
         <div className="flex flex-col items-center justify-between gap-3 border-t p-3 sm:flex-row">
@@ -228,10 +270,7 @@ export function PreviousVisitsTableSkeleton() {
               </div>
               <div className="flex items-center justify-between gap-2">
                 <Skeleton className="h-3 w-28" />
-                <div className="flex gap-1">
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="size-9" />
-                </div>
+                <Skeleton className="size-9" />
               </div>
             </li>
           ))}
@@ -281,8 +320,7 @@ export function PreviousVisitsTableSkeleton() {
                     <Skeleton className="h-6 w-24 rounded-full" />
                   </TableCell>
                   <TableCell className="pr-4">
-                    <div className="flex items-center justify-end gap-1">
-                      <Skeleton className="h-8 w-16" />
+                    <div className="flex items-center justify-end">
                       <Skeleton className="size-9" />
                     </div>
                   </TableCell>

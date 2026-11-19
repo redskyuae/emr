@@ -22,7 +22,10 @@ import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
+import { isActiveVisit } from '../../_utils/visit-status';
+import { isCurrentPlan } from '../_utils/visit-treatment-plan';
 import { visitOutstandingItems } from '../_utils/visit-workflow';
+import { AddPlanSessionsDialog } from './_modals/add-plan-sessions-dialog';
 import { CompleteVisitDialog } from './_modals/complete-visit-dialog';
 import { AmendVisitSheet } from './_sheets/amend-visit-sheet';
 import { SignClinicalNoteDialog } from './_modals/sign-clinical-note-dialog';
@@ -55,6 +58,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const [captureParam, setCaptureParam] = useQueryState('capture');
   const [, setStepParam] = useQueryState('step');
   const [planSessionParam, setPlanSessionParam] = useQueryState('planSession', parseAsInteger);
+  const [addSessionsParam, setAddSessionsParam] = useQueryState('addSessions', parseAsInteger);
   const [amendNoteParam, setAmendNoteParam] = useQueryState('amendNote', parseAsInteger);
   const [amendVitalParam, setAmendVitalParam] = useQueryState('amendVital', parseAsInteger);
   const { data: visit } = useVisit(visitId);
@@ -74,8 +78,12 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const { data: canCreateInvoice } = useHasPermission('invoice:create');
   const { data: canRecordVitals } = useHasPermission('vital-sign:create');
   const { data: canCreateNote } = useHasPermission('clinical-note:create');
-  const { data: canAssignPlan } = useHasPermission('patient-treatment-plan:assign');
-  const { data: canReadPlan } = useHasPermission('patient-treatment-plan:read');
+  const { data: canAssignPlan, isLoading: assignPermissionLoading } = useHasPermission(
+    'patient-treatment-plan:assign'
+  );
+  const { data: canReadPlan, isLoading: readPermissionLoading } = useHasPermission(
+    'patient-treatment-plan:read'
+  );
   const { data: canBookAppointment } = useHasPermission('appointment:create');
   const { data: canUpdatePlanSession } = useHasPermission('patient-treatment-plan:update');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
@@ -122,6 +130,26 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
       void setAmendVitalParam(null);
     }
   }, [staleAmendNote, staleAmendVital, setAmendNoteParam, setAmendVitalParam]);
+
+  // Sessions are added only to a current Plan, from an active Visit, by a user who may
+  // assign Plans (the API requires both read and assign). A param that cannot open the
+  // dialog is dropped once permissions and Plans have loaded successfully; a failed Plans
+  // request leaves it in place so a network error cannot drop a valid link.
+  const canAddPlanSessions = isActiveVisit(visit.status) && Boolean(canAssignPlan && canReadPlan);
+  const addSessionsTarget = canAddPlanSessions
+    ? (plansQuery.data ?? []).find((plan) => plan.id === addSessionsParam && isCurrentPlan(plan))
+    : undefined;
+  const addSessionsResolved =
+    !assignPermissionLoading &&
+    !readPermissionLoading &&
+    (!canAddPlanSessions || plansQuery.isSuccess);
+  const staleAddSessions = addSessionsParam !== null && addSessionsResolved && !addSessionsTarget;
+
+  useEffect(() => {
+    if (staleAddSessions) {
+      void setAddSessionsParam(null);
+    }
+  }, [staleAddSessions, setAddSessionsParam]);
 
   const planSessionTarget = (plansQuery.data ?? [])
     .flatMap((plan) => plan.sessions.map((session) => ({ plan, session })))
@@ -233,6 +261,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
               onAddNote={() => void setCaptureParam('nurse-note')}
               onDailyTreatment={() => void setCaptureParam('session')}
               onAssignPlan={() => void setCaptureParam('plan')}
+              onAddPlanSessions={(planId) => void setAddSessionsParam(planId)}
               onOpenPlanSession={(sessionId) => void setPlanSessionParam(sessionId)}
               onAddClinicalNote={() => void setCaptureParam('note')}
               onSignNote={setNoteToSign}
@@ -286,6 +315,15 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
         patientId={visit.patient.id}
         onClose={() => void setCaptureParam(null)}
       />
+
+      {addSessionsTarget ? (
+        <AddPlanSessionsDialog
+          key={addSessionsTarget.id}
+          patientId={visit.patient.id}
+          plan={addSessionsTarget}
+          onClose={() => void setAddSessionsParam(null)}
+        />
+      ) : null}
 
       {planSessionTarget ? (
         <PlanSessionSheet
