@@ -9,7 +9,10 @@ import { SurfaceAnalytics } from '@/components/analytics/surface-analytics';
 import { AppPageHeader } from '@/components/app/app-page-header';
 import { AppShellGate } from '@/components/app/app-shell-gate';
 import { AppSidebar } from '@/components/app/app-sidebar';
+import { AppTopbar } from '@/components/app/app-topbar';
+import { parseIdleTimeoutMinutes } from '@/app/lib/idle-session';
 import { TabSessionGate } from '@/components/app/tab-session-gate';
+import { IdleSessionGuard } from '@/components/app/idle-session-guard';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -37,10 +40,12 @@ export default async function AppLayout({
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
   const appointmentsOnly = process.env.SIDEBAR_APPOINTMENTS_ONLY !== 'false';
   const showVisits = process.env.SIDEBAR_SHOW_VISITS === 'true';
+  const idleTimeoutMinutes = parseIdleTimeoutMinutes(process.env.IDLE_TIMEOUT_MINUTES);
 
   return (
     <TabSessionGate>
       <AppShellGate>
+        <IdleSessionGuard timeoutMinutes={idleTimeoutMinutes} />
         <Suspense fallback={null}>
           <SurfaceAnalytics />
         </Suspense>

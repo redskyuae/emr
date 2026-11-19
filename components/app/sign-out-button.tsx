@@ -4,12 +4,14 @@ import { useRouter } from 'next/navigation';
 import { CiLogout } from 'react-icons/ci';
 
 import { useSignOut } from '@/app/queries/auth/useSignOut';
+import { broadcastSignOut } from '@/app/lib/idle-session';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
 export function SignOutButton() {
   const router = useRouter();
-  const signOutMutation = useSignOut('user', () => {
+  const signOutMutation = useSignOut(() => {
+    broadcastSignOut('manual');
     router.replace('/login');
     router.refresh();
   });

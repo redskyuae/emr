@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CiRead } from 'react-icons/ci';
 import { PiEyeSlashLight } from 'react-icons/pi';
+import { AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { markTabSession } from '@/app/lib/tab-session';
@@ -20,11 +21,13 @@ import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { signInFailureKind } from '@/app/(auth)/login/_utils/sign-in-failure-kind';
 
 type LoginFormProps = {
+  notice?: string;
   redirectTo?: string;
   showCreateWorkspaceLink?: boolean;
 };
 
 export function LoginForm({
+  notice,
   redirectTo = '/dashboard',
   showCreateWorkspaceLink = false,
 }: LoginFormProps) {
@@ -82,11 +85,26 @@ export function LoginForm({
         }}
       >
         {errors.length > 0 ? (
-          <AuthErrorCallout
-            key={signInMutation.submittedAt}
-            leadIn="Could not sign in:"
-            messages={errors}
-          />
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Could not sign in</AlertTitle>
+            <AlertDescription>
+              {errors.length === 1 ? (
+                errors[0]
+              ) : (
+                <ul className="list-disc space-y-1 pl-4">
+                  {errors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              )}
+            </AlertDescription>
+          </Alert>
+        ) : notice ? (
+          <Alert>
+            <Info className="size-4" />
+            <AlertDescription>{notice}</AlertDescription>
+          </Alert>
         ) : null}
 
         <div className="space-y-2">
