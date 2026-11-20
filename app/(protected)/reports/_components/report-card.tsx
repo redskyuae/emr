@@ -1,7 +1,6 @@
 'use client';
 
 import { useId, type FormEventHandler, type ReactNode } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,11 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-
-/** Generate has no output yet; a valid request only says so. */
-export function notifyReportNotAvailable() {
-  toast('This report is not available yet');
-}
 
 /** Red asterisk beside a required label; the input carries `aria-required`. */
 export function RequiredMark() {

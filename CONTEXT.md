@@ -628,6 +628,10 @@ A Work Order Status provided to every Tenant for one Work Order Status Category.
 
 The reverse-chronological record of everything that happened to one Patient across the Tenant, merging operational, financial, and document activity into a single feed. Distinct from the Patient Chart, which presents longitudinal clinical records grouped by kind rather than ordered by time.
 
+## Consolidated Patient Report
+
+A printable report of one Patient's care over a chosen period of at most 366 days: the period's diagnoses, the Patient Treatment Plans and medications that ran in it, and one row per non-cancelled Visit with the Treatment Sessions given and the progress recorded in its signed Clinical Notes and Vital Signs. It is derived at read time from those records and never stored. Distinct from the Visit Summary, which covers a single Visit, and from the Patient Timeline, which lists events rather than care.
+
 ## Timeline Event
 
 A single lifecycle transition that appears on the Patient Timeline, such as a Visit being checked in, an Admission being discharged, or an Invoice being finalized. One record yields one Timeline Event per transition it has undergone — a Visit that was checked in, seen, and completed contributes three Timeline Events, not one. A Timeline Event is derived at read time from the transition timestamps already stored on the underlying record; it is never independently persisted or edited.

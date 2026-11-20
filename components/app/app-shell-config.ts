@@ -469,7 +469,7 @@ const appointmentNavHrefs = new Set([
 
 const visitNavHrefs = new Set(['/visits', '/previous-visits', '/reports', '/visit-list']);
 
-const demoNavHrefs = new Set(['/reports', '/visit-list', '/billing-counter']);
+const demoNavHrefs = new Set(['/visit-list', '/billing-counter']);
 
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
@@ -584,7 +584,11 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   },
   '/reports': {
     title: 'Reports',
-    subtitle: 'Generate Outpatient reports for a date range or a month.',
+    subtitle: 'Generate printable reports from recorded Visits.',
+  },
+  '/reports/consolidated': {
+    title: 'Consolidated Patient Report',
+    subtitle: "One Patient's diagnoses, Treatment Plans and Visit-wise progress over a period.",
   },
   '/visit-list': {
     title: 'Visit List',
