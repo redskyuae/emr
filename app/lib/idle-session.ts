@@ -34,13 +34,30 @@ export function getIdleState(lastActivity: number, now: number, timeoutMs: numbe
   return { status: 'active', warnAt };
 }
 
+function parseActivity(value: string | null) {
+  const at = Number(value);
+
+  return Number.isFinite(at) && at > 0 ? at : null;
+}
+
 export function readLastActivity() {
   try {
-    const value = Number(window.localStorage.getItem(LAST_ACTIVITY_KEY));
-
-    return Number.isFinite(value) && value > 0 ? value : null;
+    return parseActivity(window.localStorage.getItem(LAST_ACTIVITY_KEY));
   } catch {
     return null;
+  }
+}
+
+// Where the idle clock starts when the app shell loads. Loading is not user activity: a
+// reload, a restored crashed tab or a discarded background tab coming back must not earn a
+// fresh timeout, so the stored time is used as is. Sign-in records a fresh time and sign-out
+// clears it, so a missing record cannot prove recent activity and returns null (sign out).
+// Without storage nothing can be kept or shared, so the load is the only reference left.
+export function getStartingActivity(now: number) {
+  try {
+    return parseActivity(window.localStorage.getItem(LAST_ACTIVITY_KEY));
+  } catch {
+    return now;
   }
 }
 
@@ -49,6 +66,14 @@ export function recordActivity(at: number) {
     window.localStorage.setItem(LAST_ACTIVITY_KEY, String(at));
   } catch {
     // Without storage each tab still tracks its own activity.
+  }
+}
+
+export function clearLastActivity() {
+  try {
+    window.localStorage.removeItem(LAST_ACTIVITY_KEY);
+  } catch {
+    // Nothing was stored without storage.
   }
 }
 

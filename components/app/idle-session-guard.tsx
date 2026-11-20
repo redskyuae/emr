@@ -15,6 +15,7 @@ import {
   broadcastSignOut,
   readLastActivity,
   getSignedOutPath,
+  getStartingActivity,
   LAST_ACTIVITY_KEY,
   readSignOutBroadcast,
   ACTIVITY_WRITE_INTERVAL_MS,
@@ -47,7 +48,8 @@ export function IdleSessionGuard({ timeoutMinutes }: { timeoutMinutes: number })
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let currentPhase: Phase = 'active';
-    let lastActivity = Date.now();
+    const startingActivity = getStartingActivity(Date.now());
+    let lastActivity = startingActivity ?? 0;
     let lastWrite = lastActivity;
 
     function changePhase(next: Phase) {
@@ -154,9 +156,13 @@ export function IdleSessionGuard({ timeoutMinutes }: { timeoutMinutes: number })
     window.addEventListener('focus', evaluate);
     document.addEventListener('visibilitychange', handleVisibility);
 
-    // Entering the app shell (sign-in or reload) is itself user activity.
-    markActive(lastActivity);
-    timer = setTimeout(evaluate, timeoutMs - IDLE_WARNING_MS);
+    // Mounting is not activity, so the stored time is kept: a reload after a long idle spell
+    // signs out at once, and one inside the warning period shows the warning straight away.
+    if (startingActivity === null) {
+      expire('idle');
+    } else {
+      evaluate();
+    }
 
     return () => {
       clearTimeout(timer);

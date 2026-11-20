@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   broadcastSignOut,
+  clearLastActivity,
+  getStartingActivity,
   getIdleSignOutMessage,
   getIdleState,
   getSignedOutPath,
@@ -70,6 +72,7 @@ describe('shared activity and sign-out storage', () => {
       localStorage: {
         getItem: (key: string) => values.get(key) ?? null,
         setItem: (key: string, value: string) => values.set(key, value),
+        removeItem: (key: string) => values.delete(key),
       },
     });
   });
@@ -90,6 +93,28 @@ describe('shared activity and sign-out storage', () => {
 
   it('should ignore a corrupt activity value', () => {
     values.set(LAST_ACTIVITY_KEY, 'not-a-time');
+
+    expect(readLastActivity()).toBeNull();
+  });
+
+  it('should start the idle clock from the stored time, not the load time', () => {
+    values.set(LAST_ACTIVITY_KEY, '1000');
+
+    expect(getStartingActivity(999_999)).toBe(1000);
+    expect(values.get(LAST_ACTIVITY_KEY)).toBe('1000');
+  });
+
+  it('should give no starting time when nothing proves recent activity', () => {
+    expect(getStartingActivity(999_999)).toBeNull();
+
+    values.set(LAST_ACTIVITY_KEY, 'not-a-time');
+    expect(getStartingActivity(999_999)).toBeNull();
+  });
+
+  it('should remove the stored time on sign-out', () => {
+    recordActivity(1234);
+
+    clearLastActivity();
 
     expect(readLastActivity()).toBeNull();
   });
@@ -135,7 +160,9 @@ describe('shared activity and sign-out storage', () => {
     });
 
     expect(readLastActivity()).toBeNull();
+    expect(getStartingActivity(5000)).toBe(5000);
     expect(() => recordActivity(1)).not.toThrow();
+    expect(() => clearLastActivity()).not.toThrow();
     expect(() => broadcastSignOut('idle')).not.toThrow();
   });
 });
