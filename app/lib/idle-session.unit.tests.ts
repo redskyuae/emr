@@ -98,6 +98,8 @@ describe('shared activity and sign-out storage', () => {
         removeItem: (key: string) => values.delete(key),
       },
     });
+    // Resets this module's in-memory time between tests.
+    clearLastActivity();
   });
 
   afterEach(() => {
@@ -187,6 +189,58 @@ describe('shared activity and sign-out storage', () => {
     expect(() => recordActivity(1)).not.toThrow();
     expect(() => clearLastActivity()).not.toThrow();
     expect(() => broadcastSignOut('idle')).not.toThrow();
+  });
+});
+
+describe('activity time when storage reads work but writes fail', () => {
+  const values = new Map<string, string>();
+
+  beforeEach(() => {
+    values.clear();
+    vi.stubGlobal('window', {
+      localStorage: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: () => {
+          throw new Error('QuotaExceededError');
+        },
+        removeItem: (key: string) => values.delete(key),
+      },
+    });
+    clearLastActivity();
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('should keep a fresh sign-in time in memory when it cannot be stored', () => {
+    expect(() => recordActivity(5000)).not.toThrow();
+
+    expect(values.has(LAST_ACTIVITY_KEY)).toBe(false);
+    expect(readLastActivity()).toBe(5000);
+  });
+
+  it('should start the idle clock from the in-memory time instead of signing out', () => {
+    recordActivity(5000);
+
+    expect(getStartingActivity(999_999)).toBe(5000);
+  });
+
+  it('should prefer the newer of the stored and in-memory times', () => {
+    recordActivity(5000);
+
+    values.set(LAST_ACTIVITY_KEY, '4000');
+    expect(getStartingActivity(999_999)).toBe(5000);
+
+    values.set(LAST_ACTIVITY_KEY, '6000');
+    expect(getStartingActivity(999_999)).toBe(6000);
+  });
+
+  it('should forget the in-memory time on sign-out', () => {
+    recordActivity(5000);
+
+    clearLastActivity();
+
+    expect(readLastActivity()).toBeNull();
+    expect(getStartingActivity(999_999)).toBeNull();
   });
 });
 

@@ -46,36 +46,52 @@ function parseActivity(value: string | null) {
   return Number.isFinite(at) && at > 0 ? at : null;
 }
 
+// This tab's own latest activity. localStorage can refuse writes (for example when full)
+// while reads still work, so a recorded time is kept here too. It lives only as long as
+// the page's JavaScript, so a reload still depends on the stored value.
+let memoryActivity: number | null = null;
+
+function newest(stored: number | null) {
+  if (stored === null) return memoryActivity;
+  if (memoryActivity === null) return stored;
+
+  return Math.max(stored, memoryActivity);
+}
+
 export function readLastActivity() {
   try {
-    return parseActivity(window.localStorage.getItem(LAST_ACTIVITY_KEY));
+    return newest(parseActivity(window.localStorage.getItem(LAST_ACTIVITY_KEY)));
   } catch {
-    return null;
+    return memoryActivity;
   }
 }
 
 // Where the idle clock starts when the app shell loads. Loading is not user activity: a
 // reload, a restored crashed tab or a discarded background tab coming back must not earn a
-// fresh timeout, so the stored time is used as is. Sign-in records a fresh time and sign-out
-// clears it, so a missing record cannot prove recent activity and returns null (sign out).
-// Without storage nothing can be kept or shared, so the load is the only reference left.
+// fresh timeout, so the recorded time is used as is. Sign-in records a fresh time and
+// sign-out clears it, so a missing record cannot prove recent activity and returns null
+// (sign out). Without readable storage or a recorded time, the load is the only reference.
 export function getStartingActivity(now: number) {
   try {
-    return parseActivity(window.localStorage.getItem(LAST_ACTIVITY_KEY));
+    return newest(parseActivity(window.localStorage.getItem(LAST_ACTIVITY_KEY)));
   } catch {
-    return now;
+    return memoryActivity ?? now;
   }
 }
 
 export function recordActivity(at: number) {
+  memoryActivity = at;
+
   try {
     window.localStorage.setItem(LAST_ACTIVITY_KEY, String(at));
   } catch {
-    // Without storage each tab still tracks its own activity.
+    // The in-memory time still covers this tab; other tabs just cannot see it.
   }
 }
 
 export function clearLastActivity() {
+  memoryActivity = null;
+
   try {
     window.localStorage.removeItem(LAST_ACTIVITY_KEY);
   } catch {

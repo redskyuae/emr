@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { ComponentProps, createElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { LAST_ACTIVITY_KEY } from '@/app/lib/idle-session';
+import { clearLastActivity, LAST_ACTIVITY_KEY, recordActivity } from '@/app/lib/idle-session';
 
 import { IdleSessionGuard } from './idle-session-guard';
 
@@ -52,6 +52,7 @@ function failSignOut() {
 
 describe('IdleSessionGuard on mount', () => {
   beforeEach(() => {
+    clearLastActivity();
     window.localStorage.clear();
     window.sessionStorage.setItem('emr-tab-session', 'active');
   });
@@ -100,8 +101,60 @@ describe('IdleSessionGuard on mount', () => {
   });
 });
 
+describe('IdleSessionGuard when localStorage refuses writes', () => {
+  beforeEach(() => {
+    clearLastActivity();
+    window.localStorage.clear();
+    window.sessionStorage.setItem('emr-tab-session', 'active');
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    vi.clearAllMocks();
+    window.sessionStorage.clear();
+  });
+
+  function failStorageWrites() {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage is full', 'QuotaExceededError');
+    });
+  }
+
+  it('should keep the user signed in after login when the fresh time cannot be stored', () => {
+    failStorageWrites();
+
+    // What the login form does right after sign-in.
+    recordActivity(Date.now());
+    mountGuard();
+
+    expect(window.localStorage.getItem(LAST_ACTIVITY_KEY)).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Save Patient' })).toBeTruthy();
+  });
+
+  it('should still sign out when the in-memory time is past the timeout', () => {
+    failStorageWrites();
+
+    recordActivity(Date.now() - (TIMEOUT_MINUTES + 1) * MINUTE);
+    mountGuard();
+
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Save Patient' })).toBeNull();
+  });
+
+  it('should still sign out when nothing was recorded in this tab or storage', () => {
+    failStorageWrites();
+
+    mountGuard();
+
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('IdleSessionGuard after the Session expires', () => {
   beforeEach(() => {
+    clearLastActivity();
     window.localStorage.clear();
     storeLastActivity(TIMEOUT_MINUTES + 1);
   });
