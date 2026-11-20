@@ -7,6 +7,9 @@ const SIGN_OUT_KEY = 'emr-sign-out';
 export const IDLE_WARNING_MS = 60_000;
 export const ACTIVITY_WRITE_INTERVAL_MS = 5_000;
 const DEFAULT_IDLE_TIMEOUT_MINUTES = 10;
+// 24 hours keeps every timer delay far below the browser's setTimeout limit (about 24.8
+// days); a larger delay fires at once and would make the guard reschedule in a tight loop.
+export const MAX_IDLE_TIMEOUT_MINUTES = 24 * 60;
 
 export type SignOutReason = 'idle' | 'manual';
 
@@ -15,11 +18,14 @@ type IdleState =
   | { status: 'warning'; expiresAt: number }
   | { status: 'expired' };
 
-// The warning lasts IDLE_WARNING_MS, so the timeout must be longer than that.
+// Whole minutes only, longer than the 60-second warning and at most 24 hours. Anything
+// else, including a huge value meant to switch the feature off, falls back to the default.
 export function parseIdleTimeoutMinutes(value: string | undefined) {
   const minutes = Number(value);
 
-  return Number.isFinite(minutes) && minutes * 60_000 > IDLE_WARNING_MS
+  return Number.isInteger(minutes) &&
+    minutes * 60_000 > IDLE_WARNING_MS &&
+    minutes <= MAX_IDLE_TIMEOUT_MINUTES
     ? minutes
     : DEFAULT_IDLE_TIMEOUT_MINUTES;
 }

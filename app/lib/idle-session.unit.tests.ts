@@ -10,6 +10,7 @@ import {
   IDLE_WARNING_MS,
   LAST_ACTIVITY_KEY,
   parseIdleTimeoutMinutes,
+  MAX_IDLE_TIMEOUT_MINUTES,
   readLastActivity,
   readSignOutBroadcast,
   recordActivity,
@@ -18,21 +19,43 @@ import {
 const TEN_MINUTES = 10 * 60_000;
 
 describe('idle timeout configuration', () => {
-  it('should default to 10 minutes when the value is missing or invalid', () => {
+  it('should default to 10 minutes when the value is missing', () => {
     expect(parseIdleTimeoutMinutes(undefined)).toBe(10);
     expect(parseIdleTimeoutMinutes('')).toBe(10);
+  });
+
+  it('should accept a valid custom timeout', () => {
+    expect(parseIdleTimeoutMinutes('15')).toBe(15);
+  });
+
+  it('should fall back to the default for invalid input', () => {
     expect(parseIdleTimeoutMinutes('abc')).toBe(10);
+    expect(parseIdleTimeoutMinutes('Infinity')).toBe(10);
+    expect(parseIdleTimeoutMinutes('2.5')).toBe(10);
+  });
+
+  it('should fall back to the default for a negative value', () => {
     expect(parseIdleTimeoutMinutes('-5')).toBe(10);
   });
 
-  it('should reject a timeout that is not longer than the warning period', () => {
-    expect(parseIdleTimeoutMinutes('1')).toBe(10);
-    expect(parseIdleTimeoutMinutes('0.5')).toBe(10);
+  it('should fall back to the default for zero', () => {
+    expect(parseIdleTimeoutMinutes('0')).toBe(10);
   });
 
-  it('should accept a configured timeout', () => {
-    expect(parseIdleTimeoutMinutes('15')).toBe(15);
+  it('should fall back to the default when the timeout is not longer than the warning', () => {
+    expect(parseIdleTimeoutMinutes('1')).toBe(10);
     expect(parseIdleTimeoutMinutes('2')).toBe(2);
+  });
+
+  it('should fall back to the default for a value above the 24-hour maximum', () => {
+    expect(parseIdleTimeoutMinutes(String(MAX_IDLE_TIMEOUT_MINUTES + 1))).toBe(10);
+    expect(parseIdleTimeoutMinutes('100000')).toBe(10);
+  });
+
+  it('should accept the 24-hour maximum and keep its timer delay within the browser limit', () => {
+    expect(MAX_IDLE_TIMEOUT_MINUTES).toBe(1440);
+    expect(parseIdleTimeoutMinutes('1440')).toBe(1440);
+    expect(MAX_IDLE_TIMEOUT_MINUTES * 60_000).toBeLessThan(2 ** 31 - 1);
   });
 });
 
