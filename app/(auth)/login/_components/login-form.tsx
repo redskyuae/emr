@@ -9,6 +9,7 @@ import { AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { markTabSession } from '@/app/lib/tab-session';
+import { recordActivity } from '@/app/lib/idle-session';
 import { useSignIn } from '@/app/queries/auth/useSignIn';
 import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { AuthErrorCallout } from '@/components/auth/auth-error-callout';
@@ -45,6 +46,7 @@ export function LoginForm({
         return;
       }
 
+      recordActivity(Date.now());
       router.replace(redirectTo);
       router.refresh();
     },

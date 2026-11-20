@@ -4,8 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { SignoutResponse } from '@/app/api/v1/signout/types';
 import { clearTabSession } from '@/app/lib/tab-session';
-import { resetAnalyticsUser } from '@/lib/analytics/analytics-client';
-import type { SignOutTrigger } from '@/lib/analytics/events/foundation-events';
+import { clearLastActivity } from '@/app/lib/idle-session';
 
 async function signOut(trigger: SignOutTrigger): Promise<SignoutResponse> {
   // The trigger tells the Audit Log why the Session ended.
@@ -28,6 +27,8 @@ export function useSignOut(trigger: SignOutTrigger, onSuccess?: () => void) {
     onSuccess: () => {
       resetAnalyticsUser(trigger);
       clearTabSession();
+      // The next sign-in records a fresh time; an old one must never carry over.
+      clearLastActivity();
       queryClient.clear();
       onSuccess?.();
     },

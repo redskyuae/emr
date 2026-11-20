@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CiCircleAlert } from 'react-icons/ci';
 
+import { recordActivity } from '@/app/lib/idle-session';
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { useOnboardTenant } from '@/app/queries/auth/useOnboardTenant';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -25,6 +26,8 @@ export function OnboardingPageImpl({ tenantName }: { tenantName: string }) {
 
   const onboardMutation = useOnboardTenant({
     onSuccess: () => {
+      // Onboarding has no idle tracking, so the app shell's clock starts here.
+      recordActivity(Date.now());
       router.replace('/dashboard');
       router.refresh();
     },
