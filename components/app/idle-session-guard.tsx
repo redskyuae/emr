@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -28,13 +28,20 @@ type Phase = 'active' | 'warning' | 'expired';
 // produce these, and `scroll` is left out because code can trigger it.
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'wheel', 'touchstart'] as const;
 
-export function IdleSessionGuard({ timeoutMinutes }: { timeoutMinutes: number }) {
+type IdleSessionGuardProps = {
+  children: ReactNode;
+  timeoutMinutes: number;
+};
+
+export function IdleSessionGuard({ children, timeoutMinutes }: IdleSessionGuardProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const timeoutMs = timeoutMinutes * 60_000;
 
   const [phase, setPhase] = useState<Phase>('active');
   const [expiresAt, setExpiresAt] = useState(0);
+  // Sticky: a retry briefly clears the mutation's error state, but the error screen must stay.
+  const [signOutFailed, setSignOutFailed] = useState(false);
   const reasonRef = useRef<SignOutReason>('idle');
   const actionsRef = useRef<{ continueSession: () => void; signOutNow: () => void } | null>(null);
 
@@ -43,7 +50,11 @@ export function IdleSessionGuard({ timeoutMinutes }: { timeoutMinutes: number })
     router.replace(getSignedOutPath(reasonRef.current));
     router.refresh();
   });
-  const { mutate: signOut } = signOutMutation;
+  const { mutate } = signOutMutation;
+  const signOut = useCallback(
+    () => mutate(undefined, { onError: () => setSignOutFailed(true) }),
+    [mutate]
+  );
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -176,24 +187,37 @@ export function IdleSessionGuard({ timeoutMinutes }: { timeoutMinutes: number })
     };
   }, [timeoutMs, signOut, queryClient, router]);
 
-  if (signOutMutation.isError) {
+  // Once the Session has expired the app is unmounted, not just covered: open forms, their
+  // Sheet/Dialog portals and focus traps are all gone, so nothing behind the sign-out
+  // screens can be clicked, typed into or focused. Only a successful sign-out leaves this
+  // state, by redirecting to /login.
+  if (signOutFailed) {
     return (
       <AppSplashError
         message="We couldn't end your Session on the server. Check your connection and try again."
         isRetrying={signOutMutation.isPending}
-        onRetry={() => signOut()}
+        onRetry={signOut}
       />
     );
   }
 
-  if (phase === 'active') return null;
+  if (phase === 'expired') {
+    return <IdleWarningDialog expiresAt={0} isSigningOut onSignOut={noop} onContinue={noop} />;
+  }
 
   return (
-    <IdleWarningDialog
-      expiresAt={phase === 'expired' ? 0 : expiresAt}
-      isSigningOut={phase === 'expired'}
-      onSignOut={() => actionsRef.current?.signOutNow()}
-      onContinue={() => actionsRef.current?.continueSession()}
-    />
+    <>
+      {children}
+      {phase === 'warning' ? (
+        <IdleWarningDialog
+          expiresAt={expiresAt}
+          isSigningOut={false}
+          onSignOut={() => actionsRef.current?.signOutNow()}
+          onContinue={() => actionsRef.current?.continueSession()}
+        />
+      ) : null}
+    </>
   );
 }
+
+function noop() {}
