@@ -45,28 +45,23 @@ export default async function AppLayout({
   return (
     <TabSessionGate>
       <AppShellGate>
-        <IdleSessionGuard timeoutMinutes={idleTimeoutMinutes} />
-        <Suspense fallback={null}>
-          <SurfaceAnalytics />
-        </Suspense>
-        <TooltipProvider>
-          <SidebarProvider
-            defaultOpen={defaultOpen}
-            style={{ '--sidebar-width': '16.5rem' } as CSSProperties}
-          >
-            <AppSidebar
-              appointmentsOnly={appointmentsOnly}
-              showVisits={showVisits}
-              showDemoPages={demoPagesEnabled()}
-            />
-            <SidebarInset>
-              <AppPageHeader />
-              <div className="flex min-w-0 flex-1 flex-col px-4 pt-4 pb-10 sm:px-6 lg:px-8">
-                {children}
-              </div>
-            </SidebarInset>
-          </SidebarProvider>
-        </TooltipProvider>
+        <IdleSessionGuard timeoutMinutes={idleTimeoutMinutes}>
+          <TooltipProvider>
+            <SidebarProvider defaultOpen={defaultOpen}>
+              <AppSidebar
+                appointmentsOnly={appointmentsOnly}
+                showVisits={showVisits}
+                showDemoPages={demoPagesEnabled()}
+              />
+              <SidebarInset>
+                <AppTopbar />
+                <div className="flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+                  {children}
+                </div>
+              </SidebarInset>
+            </SidebarProvider>
+          </TooltipProvider>
+        </IdleSessionGuard>
       </AppShellGate>
     </TabSessionGate>
   );
