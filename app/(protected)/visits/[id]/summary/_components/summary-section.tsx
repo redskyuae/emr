@@ -2,7 +2,17 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
-/** A printed section: an uppercase title over a heavy rule, with an optional note on the right. */
+/** An uppercase section title over a heavy rule, with an optional note on the right. */
+export function SummarySectionHeading({ title, aside }: { title: string; aside?: ReactNode }) {
+  return (
+    <div className="border-foreground flex items-end justify-between gap-3 border-b-2 pb-1.5">
+      <h2 className="text-[12px] font-bold tracking-[0.12em] uppercase">{title}</h2>
+      {aside ? <div className="text-muted-foreground text-[11px]">{aside}</div> : null}
+    </div>
+  );
+}
+
+/** A printed section that always stays on one page: its heading and everything under it. */
 export function SummarySection({
   title,
   aside,
@@ -16,10 +26,7 @@ export function SummarySection({
 }) {
   return (
     <section className={className}>
-      <div className="border-foreground flex items-end justify-between gap-3 border-b-2 pb-1.5">
-        <h2 className="text-[12px] font-bold tracking-[0.12em] uppercase">{title}</h2>
-        {aside ? <div className="text-muted-foreground text-[11px]">{aside}</div> : null}
-      </div>
+      <SummarySectionHeading title={title} aside={aside} />
       {children}
     </section>
   );

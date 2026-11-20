@@ -6,6 +6,7 @@ import {
   consultationGroups,
   latestConsultationNote,
   latestTreatmentNote,
+  otherClinicalNotes,
   parseLabelled,
   treatmentResponse,
 } from './visit-summary-notes';
@@ -16,6 +17,17 @@ function note(sections: ReturnType<typeof consultationToSoap>, code = 'CONS') {
     objective: sections.objective ?? null,
     subjective: sections.subjective,
     assessment: sections.assessment ?? null,
+    noteType: { code },
+  };
+}
+
+// A free-text note, as the Clinical notes sheet writes it.
+function freeNote(code: string) {
+  return {
+    subjective: 'Reviewed after Abhyanga',
+    objective: null,
+    assessment: null,
+    plan: 'Continue Rasnadi kashaya',
     noteType: { code },
   };
 }
@@ -176,5 +188,31 @@ describe('treatment notes', () => {
     expect(latestTreatmentNote(notes)).toBe(treatment);
     expect(latestConsultationNote([treatment])).toBeNull();
     expect(latestTreatmentNote([first])).toBeNull();
+  });
+
+  it('should print only Patient-facing note types, not consultations, Treatment Sessions or care-team notes', () => {
+    const consultation = note(
+      consultationToSoap({ ...EMPTY_CONSULTATION, chiefComplaint: 'Pain' })
+    );
+    const progress = freeNote('PROG');
+    const discharge = freeNote('DISCH');
+    const handoff = freeNote('NURS');
+
+    expect(
+      otherClinicalNotes([consultation, progress, treatment, handoff, discharge, freeNote('CONS')])
+    ).toEqual([progress, discharge]);
+    expect(otherClinicalNotes([consultation, treatment, handoff])).toEqual([]);
+  });
+
+  it('should leave out a note type the Patient copy does not list', () => {
+    expect(otherClinicalNotes([freeNote('INTERNAL'), freeNote('PSYCH')])).toEqual([]);
+  });
+
+  it('should match Patient-facing note type codes case-insensitively', () => {
+    const progress = freeNote('prog');
+    const discharge = freeNote('Disch');
+    const handoff = freeNote('nurs');
+
+    expect(otherClinicalNotes([progress, handoff, discharge])).toEqual([progress, discharge]);
   });
 });

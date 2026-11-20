@@ -5,15 +5,11 @@ import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from '
 import type { VisitSummary } from '@/app/api/lib/modules/visit/schemas/visit-summary-schema';
 
 import { dateTimeIn } from '../_utils/visit-summary-format';
-import { latestConsultationNote } from '../_utils/visit-summary-notes';
+import { latestConsultationNote, otherClinicalNotes } from '../_utils/visit-summary-notes';
 import { paginate } from '../_utils/visit-summary-pages';
 import { SummaryBilling, SummaryMedicationsAndFollowUp, SummaryTreatment } from './summary-care';
-import {
-  SummaryAllergies,
-  SummaryConsultation,
-  SummaryDiagnoses,
-  SummaryVitals,
-} from './summary-clinical';
+import { SummaryAllergies, SummaryDiagnoses, SummaryVitals } from './summary-clinical';
+import { type SummaryBlock, clinicalNoteBlocks, consultationBlocks } from './summary-notes';
 import {
   SummaryFooter,
   SummaryLetterhead,
@@ -25,11 +21,11 @@ import { SummaryPatientCard, SummaryStateBanner } from './summary-patient-card';
 // A4 is 210mm (794px at 96 dpi); narrower screens shrink the sheet to fit.
 const A4_WIDTH_PX = 794;
 
-type Block = { key: string; node: ReactNode };
-
-function summaryBlocks(summary: VisitSummary): Block[] {
-  const blocks: Block[] = [{ key: 'patient', node: <SummaryPatientCard summary={summary} /> }];
-  const push = (key: string, node: ReactNode) => blocks.push({ key, node });
+function summaryBlocks(summary: VisitSummary): SummaryBlock[] {
+  const blocks: SummaryBlock[] = [
+    { key: 'patient', spacing: 'section', node: <SummaryPatientCard summary={summary} /> },
+  ];
+  const push = (key: string, node: ReactNode) => blocks.push({ key, spacing: 'section', node });
 
   if (summary.visit.status !== 'COMPLETED') {
     push('state', <SummaryStateBanner summary={summary} />);
@@ -46,19 +42,25 @@ function summaryBlocks(summary: VisitSummary): Block[] {
 
   const consultation = latestConsultationNote(summary.notes);
   if (consultation || summary.visit.chiefComplaint) {
-    push(
-      'consultation',
-      <SummaryConsultation
-        note={consultation}
-        chiefComplaint={summary.visit.chiefComplaint}
-        timeZone={summary.timeZone}
-      />
+    blocks.push(
+      ...consultationBlocks({
+        note: consultation,
+        chiefComplaint: summary.visit.chiefComplaint,
+        timeZone: summary.timeZone,
+      })
     );
   }
 
   if (summary.diagnoses.length > 0) {
     push('diagnoses', <SummaryDiagnoses diagnoses={summary.diagnoses} />);
   }
+
+  blocks.push(
+    ...clinicalNoteBlocks({
+      notes: otherClinicalNotes(summary.notes),
+      timeZone: summary.timeZone,
+    })
+  );
 
   if (summary.treatmentGiven || summary.treatmentPlans.length > 0) {
     push('treatment', <SummaryTreatment summary={summary} />);
@@ -79,10 +81,31 @@ function summaryBlocks(summary: VisitSummary): Block[] {
   return blocks;
 }
 
+const BLOCK_SPACING: Record<SummaryBlock['spacing'], string> = {
+  section: 'pt-[18px]',
+  group: 'pt-3.5',
+  row: 'pt-1.5',
+};
+
 // Each block carries its own top spacing, so a measured height is exactly the room it takes.
-function BlockFrame({ children }: { children: ReactNode }) {
+function BlockFrame({
+  spacing,
+  children,
+}: {
+  spacing: SummaryBlock['spacing'];
+  children: ReactNode;
+}) {
   return (
-    <div data-summary-block className="pt-[18px]">
+    <div data-summary-block className={BLOCK_SPACING[spacing]}>
+      {children}
+    </div>
+  );
+}
+
+// Printed above a block that opens a later page; padded, not margined, so it measures whole.
+function ContinuedFrame({ index, children }: { index?: number; children: ReactNode }) {
+  return (
+    <div data-summary-continued={index} className="pb-1.5">
       {children}
     </div>
   );
@@ -125,8 +148,12 @@ export function VisitSummarySheet({ summary }: { summary: VisitSummary }) {
     const firstPage = height(root.querySelector('[data-measure="first"]'));
     const laterPage = height(root.querySelector('[data-measure="later"]'));
     const blockHeights = [...root.querySelectorAll('[data-summary-block]')].map(height);
+    const continuedHeights: number[] = [];
+    root.querySelectorAll<HTMLElement>('[data-summary-continued]').forEach((element) => {
+      continuedHeights[Number(element.dataset.summaryContinued)] = height(element);
+    });
 
-    setPages(paginate(blockHeights, firstPage, laterPage));
+    setPages(paginate(blockHeights, firstPage, laterPage, continuedHeights));
   }, []);
 
   useLayoutEffect(() => {
@@ -164,8 +191,17 @@ export function VisitSummarySheet({ summary }: { summary: VisitSummary }) {
         </SummaryPage>
         <div className="w-[210mm] px-12">
           {blocks.map((block) => (
-            <BlockFrame key={block.key}>{block.node}</BlockFrame>
+            <BlockFrame key={block.key} spacing={block.spacing}>
+              {block.node}
+            </BlockFrame>
           ))}
+          {blocks.map((block, index) =>
+            block.continued ? (
+              <ContinuedFrame key={block.key} index={index}>
+                {block.continued}
+              </ContinuedFrame>
+            ) : null
+          )}
         </div>
       </div>
 
@@ -190,8 +226,13 @@ export function VisitSummarySheet({ summary }: { summary: VisitSummary }) {
                 <SummaryFooter summary={summary} page={pageIndex + 1} pageCount={pageCount} />
               }
             >
-              {indexes.map((index) => (
-                <BlockFrame key={blocks[index].key}>{blocks[index].node}</BlockFrame>
+              {indexes.map((index, position) => (
+                <BlockFrame key={blocks[index].key} spacing={blocks[index].spacing}>
+                  {pageIndex > 0 && position === 0 && blocks[index].continued ? (
+                    <ContinuedFrame>{blocks[index].continued}</ContinuedFrame>
+                  ) : null}
+                  {blocks[index].node}
+                </BlockFrame>
               ))}
             </SummaryPage>
           ))}

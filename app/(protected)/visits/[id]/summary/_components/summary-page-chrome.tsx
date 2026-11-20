@@ -2,6 +2,9 @@ import type { ReactNode } from 'react';
 
 import type { VisitSummary } from '@/app/api/lib/modules/visit/schemas/visit-summary-schema';
 import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { brandLogos } from '@/components/brand/brand-config';
+import { useBrandLogoVariant } from '@/components/brand/brand-provider';
+import { LogoMark } from '@/components/brand/logo';
 import { cn } from '@/lib/utils';
 
 import { dateTimeIn, patientFullName } from '../_utils/visit-summary-format';
@@ -41,8 +44,21 @@ export function SummaryPage({
   );
 }
 
+/** The configured brand (`LOGIN_LOGO_VARIANT`), or `null` when the variant is `none`. */
+function useSummaryBrand() {
+  const variant = useBrandLogoVariant();
+
+  return variant === 'none' ? null : brandLogos[variant];
+}
+
+/** Brand mark when a brand is configured; otherwise the Tenant's logo or initial. */
 function TenantMark({ tenant, size }: { tenant: VisitSummary['tenant']; size: 'lg' | 'sm' }) {
+  const brand = useSummaryBrand();
   const box = size === 'lg' ? 'size-12 rounded-xl text-2xl' : 'size-7 rounded-md text-sm';
+
+  if (brand) {
+    return <LogoMark className={box} />;
+  }
 
   if (tenant.logo) {
     // eslint-disable-next-line @next/next/no-img-element -- Tenant logos are arbitrary uploaded URLs.
@@ -70,8 +86,12 @@ function CopyLabel() {
   );
 }
 
-/** First-page letterhead: Tenant, copy type, title, Visit Number and Visit Status. */
+/**
+ * First-page letterhead: brand and Tenant name (or the Tenant alone), copy type, title,
+ * Visit Number and Visit Status.
+ */
 export function SummaryLetterhead({ summary }: { summary: VisitSummary }) {
+  const brand = useSummaryBrand();
   const status = VISIT_STATUS[summary.visit.status];
 
   return (
@@ -80,8 +100,14 @@ export function SummaryLetterhead({ summary }: { summary: VisitSummary }) {
         <TenantMark tenant={summary.tenant} size="lg" />
         <div className="min-w-0">
           <p className="font-heading truncate text-[19px] leading-tight font-bold">
-            {summary.tenant.name}
+            {brand?.name ?? summary.tenant.name}
           </p>
+          {brand ? (
+            // The Tenant is the clinic the Patient visited, so it stays on the page under the brand.
+            <p className="text-muted-foreground truncate text-[13px] leading-tight">
+              {summary.tenant.name === brand.name ? brand.subtitle : summary.tenant.name}
+            </p>
+          ) : null}
           <div className="mt-1.5">
             <CopyLabel />
           </div>
