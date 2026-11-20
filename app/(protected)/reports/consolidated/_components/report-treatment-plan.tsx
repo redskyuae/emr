@@ -41,11 +41,11 @@ export function ReportTreatmentPlan({
         {plans.length > 0 ? (
           <ReportTable
             head={[
-              { label: 'Treatment' },
+              { label: 'Treatment', className: 'w-[26%]' },
               { label: 'Procedure' },
-              { label: 'Status' },
-              { label: 'In period', className: 'text-right tabular-nums' },
-              { label: 'Sessions done', className: 'text-right tabular-nums' },
+              { label: 'Status', className: 'w-[13%]' },
+              { label: 'In period', className: 'w-[10%] text-right tabular-nums' },
+              { label: 'Sessions done', className: 'w-[12%] text-right tabular-nums' },
             ]}
             rows={plans.map((plan) => [
               plan.treatmentName,

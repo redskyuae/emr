@@ -59,7 +59,7 @@ describe('consolidated report format', () => {
       'Pain 6/10'
     );
     expect(noteText({ assessment: ' ', subjective: 'Knee pain.', objective: 'Crepitus.' })).toBe(
-      'Knee pain. Crepitus.'
+      'Knee pain.\n\nCrepitus.'
     );
   });
 });

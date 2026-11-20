@@ -102,7 +102,7 @@ type NoteText = {
   assessment: string | null;
 };
 
-/** The note's assessment, else its subjective and objective findings, as one line. */
+/** The note's assessment, else its subjective and objective findings, as markdown paragraphs. */
 export function noteText(note: NoteText) {
   const assessment = note.assessment?.trim();
   if (assessment) return assessment;
@@ -110,5 +110,5 @@ export function noteText(note: NoteText) {
   return [note.subjective, note.objective]
     .map((value) => value?.trim())
     .filter(Boolean)
-    .join(' ');
+    .join('\n\n');
 }

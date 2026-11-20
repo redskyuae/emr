@@ -584,7 +584,7 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   },
   '/reports': {
     title: 'Reports',
-    subtitle: 'Generate Outpatient reports for a date range or a month.',
+    subtitle: 'Generate printable reports from recorded Visits.',
   },
   '/reports/consolidated': {
     title: 'Consolidated Patient Report',

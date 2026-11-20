@@ -189,7 +189,7 @@ describe('App shell navigation permissions', () => {
   it('should describe the Reports page and place it in Outpatient', () => {
     expect(getAppPageMeta('/reports')).toEqual({
       title: 'Reports',
-      subtitle: 'Generate Outpatient reports for a date range or a month.',
+      subtitle: 'Generate printable reports from recorded Visits.',
     });
     expect(getAppPageGroup('/reports')).toBe('Outpatient');
   });

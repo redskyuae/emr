@@ -1,4 +1,5 @@
 import type { ConsolidatedReportVisit } from '@/app/api/lib/modules/consolidated-patient-report/schemas/consolidated-patient-report-schema';
+import { RichTextContent } from '@/components/clinical/rich-text-content';
 
 import { displayDate, noteText, sessionText } from '../../_utils/consolidated-report-format';
 import { ReportSectionHeading, ReportTable } from './report-document-parts';
@@ -34,11 +35,18 @@ function ProgressNotes({ visit }: { visit: ConsolidatedReportVisit }) {
       {visit.painScore !== null ? (
         <span className="block font-medium">Pain {visit.painScore}/10.</span>
       ) : null}
-      {notes.map((note) => (
-        <span key={note.id} className="block">
-          {noteText(note)}
-        </span>
-      ))}
+      {notes.length > 0 ? (
+        <div className="space-y-1.5">
+          {notes.map((note) => (
+            // Clinical Notes are written as rich text (markdown), so they print formatted.
+            <RichTextContent
+              key={note.id}
+              value={noteText(note)}
+              className="text-[11.5px] whitespace-normal [&_p+p]:mt-1"
+            />
+          ))}
+        </div>
+      ) : null}
       {authors.length > 0 ? (
         <span className="text-muted-foreground mt-1 block text-[10.5px]">
           Recorded by {authors.join(', ')}
@@ -64,9 +72,9 @@ export function ReportVisitProgress({ visits }: { visits: ConsolidatedReportVisi
         <ReportTable
           headClassName="bg-primary text-primary-foreground"
           head={[
-            { label: 'Visit date', className: 'w-[15%] whitespace-nowrap' },
-            { label: 'Visit', className: 'w-[14%]' },
-            { label: 'Treatment details', className: 'w-[38%]' },
+            { label: 'Visit date', className: 'w-[14%]' },
+            { label: 'Visit', className: 'w-[13%]' },
+            { label: 'Treatment details', className: 'w-[36%]' },
             { label: 'Progress notes' },
           ]}
           rows={visits.map((visit, index) => [

@@ -26,7 +26,8 @@ export function ReportTable({
 }) {
   return (
     <div className={cn('border-border overflow-x-auto border', className)}>
-      <table className="w-full border-collapse text-[11.5px] leading-snug">
+      {/* Fixed layout keeps each column at its set width however long the text in it is. */}
+      <table className="w-full table-fixed border-collapse text-[11.5px] leading-snug [overflow-wrap:anywhere]">
         <thead className={cn('bg-muted text-left text-[11.5px]', headClassName)}>
           <tr>
             {head.map((cell) => (

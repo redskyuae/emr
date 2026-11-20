@@ -1,4 +1,5 @@
 import type { ConsolidatedPatientReport } from '@/app/api/lib/modules/consolidated-patient-report/schemas/consolidated-patient-report-schema';
+import { RichTextContent } from '@/components/clinical/rich-text-content';
 
 import { patientFullName } from '../../_utils/consolidated-report-format';
 import { ReportSectionHeading } from './report-document-parts';
@@ -26,9 +27,10 @@ export function ConsolidatedReportDocument({ report }: { report: ConsolidatedPat
       {report.latestPlan ? (
         <section className="bg-primary/5 border-primary/20 break-inside-avoid rounded-lg border px-4 py-3.5">
           <ReportSectionHeading title="Advice" aside={`From ${report.latestPlan.visitNumber}`} />
-          <p className="text-[12px] leading-relaxed whitespace-pre-line">
-            {report.latestPlan.plan}
-          </p>
+          <RichTextContent
+            value={report.latestPlan.plan}
+            className="text-[12px] leading-relaxed whitespace-normal [&_p+p]:mt-1.5"
+          />
         </section>
       ) : null}
 
