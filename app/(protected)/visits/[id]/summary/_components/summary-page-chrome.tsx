@@ -86,7 +86,10 @@ function CopyLabel() {
   );
 }
 
-/** First-page letterhead: brand (or Tenant), copy type, title, Visit Number and Visit Status. */
+/**
+ * First-page letterhead: brand and Tenant name (or the Tenant alone), copy type, title,
+ * Visit Number and Visit Status.
+ */
 export function SummaryLetterhead({ summary }: { summary: VisitSummary }) {
   const brand = useSummaryBrand();
   const status = VISIT_STATUS[summary.visit.status];
@@ -100,8 +103,9 @@ export function SummaryLetterhead({ summary }: { summary: VisitSummary }) {
             {brand?.name ?? summary.tenant.name}
           </p>
           {brand ? (
+            // The Tenant is the clinic the Patient visited, so it stays on the page under the brand.
             <p className="text-muted-foreground truncate text-[13px] leading-tight">
-              {brand.subtitle}
+              {summary.tenant.name === brand.name ? brand.subtitle : summary.tenant.name}
             </p>
           ) : null}
           <div className="mt-1.5">

@@ -9,9 +9,15 @@ import { SummarySectionHeading } from './summary-section';
 
 /**
  * A piece of the Patient copy that is placed whole on one page. `spacing` is the room above it:
- * a new section, a new SOAP group or note, or the next row of the same group.
+ * a new section, a new SOAP group or note, or the next row of the same group. `continued` is
+ * printed above the block when it starts a later page, so the reader can tell what it continues.
  */
-export type SummaryBlock = { key: string; node: ReactNode; spacing: 'section' | 'group' | 'row' };
+export type SummaryBlock = {
+  key: string;
+  node: ReactNode;
+  continued?: ReactNode;
+  spacing: 'section' | 'group' | 'row';
+};
 
 type SummaryNote = VisitSummary['notes'][number];
 
@@ -32,6 +38,16 @@ function GroupHeading({ group }: { group: ConsultationGroup['key'] }) {
     >
       {GROUP_STYLE[group].title}
     </h3>
+  );
+}
+
+// Names the note (and SOAP group) a block belongs to when it opens a new page.
+function ContinuedHeading({ title, group }: { title: string; group?: ConsultationGroup['key'] }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      {group ? <GroupHeading group={group} /> : null}
+      <p className="text-muted-foreground text-[11px] italic">{title} (continued)</p>
+    </div>
   );
 }
 
@@ -56,6 +72,7 @@ function NoteRow({ label, value }: { label: string; value: string }) {
  */
 function noteBodyBlocks(
   key: string,
+  title: string,
   groups: ConsultationGroup[],
   lead: ReactNode,
   leadSpacing: SummaryBlock['spacing']
@@ -65,7 +82,14 @@ function noteBodyBlocks(
       const blockKey = `${key}-${group.key}-${rowIndex}`;
       const rowNode = <NoteRow label={row.label} value={row.value} />;
 
-      if (rowIndex > 0) return { key: blockKey, spacing: 'row', node: rowNode };
+      if (rowIndex > 0) {
+        return {
+          key: blockKey,
+          node: rowNode,
+          spacing: 'row',
+          continued: <ContinuedHeading title={title} group={group.key} />,
+        };
+      }
 
       const opening = (
         <>
@@ -74,7 +98,14 @@ function noteBodyBlocks(
         </>
       );
 
-      if (groupIndex > 0) return { key: blockKey, spacing: 'group', node: opening };
+      if (groupIndex > 0) {
+        return {
+          key: blockKey,
+          node: opening,
+          spacing: 'group',
+          continued: <ContinuedHeading title={title} />,
+        };
+      }
 
       return {
         key: blockKey,
@@ -111,12 +142,13 @@ export function consultationBlocks({
     />
   );
 
-  const blocks = noteBodyBlocks('consultation', groups, heading, 'section');
+  const blocks = noteBodyBlocks('consultation', 'Consultation', groups, heading, 'section');
 
   if (note) {
     blocks.push({
       key: 'consultation-signature',
       spacing: 'group',
+      continued: <ContinuedHeading title="Consultation" />,
       node: (
         <div className="border-border flex items-center justify-between gap-3 border-t border-dashed pt-3 text-[12px]">
           <p className="text-muted-foreground">
@@ -173,6 +205,6 @@ export function clinicalNoteBlocks({
         heading
       );
 
-    return noteBodyBlocks(`note-${note.id}`, groups, lead, 'section');
+    return noteBodyBlocks(`note-${note.id}`, note.noteType.name, groups, lead, 'section');
   });
 }

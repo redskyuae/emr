@@ -21,6 +21,17 @@ function note(sections: ReturnType<typeof consultationToSoap>, code = 'CONS') {
   };
 }
 
+// A free-text note, as the Clinical notes sheet writes it.
+function freeNote(code: string) {
+  return {
+    subjective: 'Reviewed after Abhyanga',
+    objective: null,
+    assessment: null,
+    plan: 'Continue Rasnadi kashaya',
+    noteType: { code },
+  };
+}
+
 describe('parseLabelled', () => {
   it('should split labelled blocks and keep text before the first label as lead', () => {
     expect(parseLabelled('Intro\n\n**One:**\n\nFirst\n\nmore\n\n**Two:**\n\nSecond')).toEqual({
@@ -178,24 +189,30 @@ describe('treatment notes', () => {
     expect(latestConsultationNote([treatment])).toBeNull();
     expect(latestTreatmentNote([first])).toBeNull();
   });
-  it('should print other signed notes but not consultations, Treatment Sessions or nursing handoffs', () => {
+
+  it('should print only Patient-facing note types, not consultations, Treatment Sessions or care-team notes', () => {
     const consultation = note(
       consultationToSoap({ ...EMPTY_CONSULTATION, chiefComplaint: 'Pain' })
     );
-    const free = (code: string) => ({
-      subjective: 'Reviewed after Abhyanga',
-      objective: null,
-      assessment: null,
-      plan: 'Continue Rasnadi kashaya',
-      noteType: { code },
-    });
-    const progress = free('PROG');
-    const discharge = free('DISC');
-    const handoff = free('NURS');
+    const progress = freeNote('PROG');
+    const discharge = freeNote('DISCH');
+    const handoff = freeNote('NURS');
 
     expect(
-      otherClinicalNotes([consultation, progress, treatment, handoff, discharge, free('CONS')])
+      otherClinicalNotes([consultation, progress, treatment, handoff, discharge, freeNote('CONS')])
     ).toEqual([progress, discharge]);
     expect(otherClinicalNotes([consultation, treatment, handoff])).toEqual([]);
+  });
+
+  it('should leave out a note type the Patient copy does not list', () => {
+    expect(otherClinicalNotes([freeNote('INTERNAL'), freeNote('PSYCH')])).toEqual([]);
+  });
+
+  it('should match Patient-facing note type codes case-insensitively', () => {
+    const progress = freeNote('prog');
+    const discharge = freeNote('Disch');
+    const handoff = freeNote('nurs');
+
+    expect(otherClinicalNotes([progress, handoff, discharge])).toEqual([progress, discharge]);
   });
 });

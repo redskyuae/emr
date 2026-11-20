@@ -102,6 +102,15 @@ function BlockFrame({
   );
 }
 
+// Printed above a block that opens a later page; padded, not margined, so it measures whole.
+function ContinuedFrame({ index, children }: { index?: number; children: ReactNode }) {
+  return (
+    <div data-summary-continued={index} className="pb-1.5">
+      {children}
+    </div>
+  );
+}
+
 function useFitScale() {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -139,8 +148,12 @@ export function VisitSummarySheet({ summary }: { summary: VisitSummary }) {
     const firstPage = height(root.querySelector('[data-measure="first"]'));
     const laterPage = height(root.querySelector('[data-measure="later"]'));
     const blockHeights = [...root.querySelectorAll('[data-summary-block]')].map(height);
+    const continuedHeights: number[] = [];
+    root.querySelectorAll<HTMLElement>('[data-summary-continued]').forEach((element) => {
+      continuedHeights[Number(element.dataset.summaryContinued)] = height(element);
+    });
 
-    setPages(paginate(blockHeights, firstPage, laterPage));
+    setPages(paginate(blockHeights, firstPage, laterPage, continuedHeights));
   }, []);
 
   useLayoutEffect(() => {
@@ -182,6 +195,13 @@ export function VisitSummarySheet({ summary }: { summary: VisitSummary }) {
               {block.node}
             </BlockFrame>
           ))}
+          {blocks.map((block, index) =>
+            block.continued ? (
+              <ContinuedFrame key={block.key} index={index}>
+                {block.continued}
+              </ContinuedFrame>
+            ) : null
+          )}
         </div>
       </div>
 
@@ -206,8 +226,11 @@ export function VisitSummarySheet({ summary }: { summary: VisitSummary }) {
                 <SummaryFooter summary={summary} page={pageIndex + 1} pageCount={pageCount} />
               }
             >
-              {indexes.map((index) => (
+              {indexes.map((index, position) => (
                 <BlockFrame key={blocks[index].key} spacing={blocks[index].spacing}>
+                  {pageIndex > 0 && position === 0 && blocks[index].continued ? (
+                    <ContinuedFrame>{blocks[index].continued}</ContinuedFrame>
+                  ) : null}
                   {blocks[index].node}
                 </BlockFrame>
               ))}

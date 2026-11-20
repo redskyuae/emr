@@ -111,19 +111,23 @@ export function latestConsultationNote<T extends SoapNote>(notes: T[]): T | null
   return notes.filter(isConsultationNote).at(-1) ?? null;
 }
 
-// Nursing handoffs are written for the care team, not for the Patient.
-const CARE_TEAM_NOTE_TYPES = new Set(['NURS']);
+/**
+ * The Clinical Note Types written for the Patient to read. Every other type (nursing handoffs,
+ * and any type a Tenant adds to the master) stays off the Patient copy until it is listed here.
+ * Codes are matched case-insensitively, as the Clinical Note Type code index is.
+ */
+const PATIENT_COPY_NOTE_TYPES = new Set(['PROG', 'DISCH']);
 
 /**
- * Signed notes printed under Clinical notes, oldest first: everything except consultation notes,
- * Treatment Session records and nursing handoffs, which the Patient copy shows elsewhere or not at all.
+ * Signed notes printed under Clinical notes, oldest first: the Patient-facing note types only,
+ * less consultation notes and Treatment Session records, which the Patient copy shows elsewhere.
  */
 export function otherClinicalNotes<T extends SoapNote>(notes: T[]): T[] {
   return notes.filter(
     (note) =>
       !isConsultationNote(note) &&
       !isTreatmentNote(note) &&
-      !CARE_TEAM_NOTE_TYPES.has(note.noteType.code)
+      PATIENT_COPY_NOTE_TYPES.has(note.noteType.code.toUpperCase())
   );
 }
 

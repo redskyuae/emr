@@ -1,12 +1,14 @@
 /**
  * Packs blocks of known height onto pages, in order. A block that does not fit in the space
  * left moves to the next page; a block taller than a whole page gets a page of its own.
- * Returns the block indexes on each page.
+ * `continuedHeights[i]` is the extra room block `i` takes when it opens a later page (its
+ * "continued" heading). Returns the block indexes on each page.
  */
 export function paginate(
   blockHeights: number[],
   firstPageHeight: number,
-  pageHeight: number
+  pageHeight: number,
+  continuedHeights: number[] = []
 ): number[][] {
   const pages: number[][] = [[]];
   let remaining = firstPageHeight;
@@ -16,7 +18,7 @@ export function paginate(
 
     if (height > remaining && current.length > 0) {
       pages.push([index]);
-      remaining = pageHeight - height;
+      remaining = pageHeight - height - (continuedHeights[index] ?? 0);
       return;
     }
 
