@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { markTabSession } from '@/app/lib/tab-session';
+import { recordActivity } from '@/app/lib/idle-session';
 import { useSignIn } from '@/app/queries/auth/useSignIn';
 import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -16,11 +17,13 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 
 type LoginFormProps = {
+  notice?: string;
   redirectTo?: string;
   showCreateWorkspaceLink?: boolean;
 };
 
 export function LoginForm({
+  notice,
   redirectTo = '/dashboard',
   showCreateWorkspaceLink = false,
 }: LoginFormProps) {
@@ -38,6 +41,7 @@ export function LoginForm({
         return;
       }
 
+      recordActivity(Date.now());
       router.replace(redirectTo);
       router.refresh();
     },
@@ -86,6 +90,11 @@ export function LoginForm({
                 </ul>
               )}
             </AlertDescription>
+          </Alert>
+        ) : notice ? (
+          <Alert>
+            <Info className="size-4" />
+            <AlertDescription>{notice}</AlertDescription>
           </Alert>
         ) : null}
 
