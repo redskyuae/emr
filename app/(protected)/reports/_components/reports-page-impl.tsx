@@ -1,8 +1,6 @@
 import type { ComponentType } from 'react';
 
-import { DemoDataBanner } from '@/components/app/demo-data-banner';
-import { DoctorVisitSummaryReportCard } from './doctor-visit-summary-report-card';
-import { VisitRegisterReportCard } from './visit-register-report-card';
+import { ConsolidatedReportCard } from './consolidated-report-card';
 
 type ReportSection = {
   id: string;
@@ -14,18 +12,17 @@ type ReportSection = {
 // New report groups are added here as further sections.
 const REPORT_SECTIONS: ReportSection[] = [
   {
-    id: 'outpatient-reports',
-    heading: 'Outpatient reports',
-    description: 'Each report will be produced as an Excel workbook and a PDF.',
-    reports: [VisitRegisterReportCard, DoctorVisitSummaryReportCard],
+    id: 'patient-reports',
+    heading: 'Patient reports',
+    description:
+      'Reports for one Patient from their recorded Visits, opened on their own page for printing.',
+    reports: [ConsolidatedReportCard],
   },
 ];
 
 export function ReportsPageImpl() {
   return (
     <div className="space-y-6">
-      <DemoDataBanner description="These reports are previews. Generate checks the period you choose but does not produce a file yet." />
-
       {REPORT_SECTIONS.map((section) => (
         <section key={section.id} aria-labelledby={section.id} className="space-y-4">
           <div className="space-y-1">

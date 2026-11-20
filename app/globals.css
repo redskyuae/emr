@@ -305,6 +305,43 @@
   }
 }
 
+/* Consolidated Patient Report: print only the report, letting it flow across A4 pages. */
+@page consolidated-report {
+  size: A4;
+  margin: 14mm 12mm;
+}
+
+@media print {
+  body:has([data-consolidated-report])
+    :not(:has([data-consolidated-report])):not(
+      [data-consolidated-report],
+      [data-consolidated-report] *
+    ) {
+    display: none !important;
+  }
+
+  body:has([data-consolidated-report]) :has([data-consolidated-report]) {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+
+  [data-consolidated-report] {
+    page: consolidated-report;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
 @media print {
   body.payment-receipt-printing > * {
     visibility: hidden !important;
