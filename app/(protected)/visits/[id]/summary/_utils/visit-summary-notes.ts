@@ -98,14 +98,33 @@ function isTreatmentNote(note: SoapNote) {
   return (note.subjective ?? '').startsWith(TREATMENT_RESPONSE_LABEL);
 }
 
-/** The latest signed consultation note: a CONS note, or one written by the consultation form. */
-export function latestConsultationNote<T extends SoapNote>(notes: T[]): T | null {
-  const candidates = notes.filter(
-    (note) =>
-      !isTreatmentNote(note) &&
-      (note.noteType.code === 'CONS' || (note.subjective ?? '').includes(CHIEF_COMPLAINT_LABEL))
+// A CONS note, or one written by the consultation form.
+function isConsultationNote(note: SoapNote) {
+  return (
+    !isTreatmentNote(note) &&
+    (note.noteType.code === 'CONS' || (note.subjective ?? '').includes(CHIEF_COMPLAINT_LABEL))
   );
-  return candidates.at(-1) ?? null;
+}
+
+/** The latest signed consultation note. */
+export function latestConsultationNote<T extends SoapNote>(notes: T[]): T | null {
+  return notes.filter(isConsultationNote).at(-1) ?? null;
+}
+
+// Nursing handoffs are written for the care team, not for the Patient.
+const CARE_TEAM_NOTE_TYPES = new Set(['NURS']);
+
+/**
+ * Signed notes printed under Clinical notes, oldest first: everything except consultation notes,
+ * Treatment Session records and nursing handoffs, which the Patient copy shows elsewhere or not at all.
+ */
+export function otherClinicalNotes<T extends SoapNote>(notes: T[]): T[] {
+  return notes.filter(
+    (note) =>
+      !isConsultationNote(note) &&
+      !isTreatmentNote(note) &&
+      !CARE_TEAM_NOTE_TYPES.has(note.noteType.code)
+  );
 }
 
 /** The latest signed Daily Treatment Session note. */

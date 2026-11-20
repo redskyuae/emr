@@ -9,6 +9,7 @@ export function VisitSummarySheetSkeleton() {
           <Skeleton className="size-12 rounded-xl" />
           <div className="space-y-2">
             <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-36" />
             <Skeleton className="h-5 w-24" />
           </div>
         </div>

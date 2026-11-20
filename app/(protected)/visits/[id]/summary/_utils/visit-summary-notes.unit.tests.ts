@@ -6,6 +6,7 @@ import {
   consultationGroups,
   latestConsultationNote,
   latestTreatmentNote,
+  otherClinicalNotes,
   parseLabelled,
   treatmentResponse,
 } from './visit-summary-notes';
@@ -176,5 +177,25 @@ describe('treatment notes', () => {
     expect(latestTreatmentNote(notes)).toBe(treatment);
     expect(latestConsultationNote([treatment])).toBeNull();
     expect(latestTreatmentNote([first])).toBeNull();
+  });
+  it('should print other signed notes but not consultations, Treatment Sessions or nursing handoffs', () => {
+    const consultation = note(
+      consultationToSoap({ ...EMPTY_CONSULTATION, chiefComplaint: 'Pain' })
+    );
+    const free = (code: string) => ({
+      subjective: 'Reviewed after Abhyanga',
+      objective: null,
+      assessment: null,
+      plan: 'Continue Rasnadi kashaya',
+      noteType: { code },
+    });
+    const progress = free('PROG');
+    const discharge = free('DISC');
+    const handoff = free('NURS');
+
+    expect(
+      otherClinicalNotes([consultation, progress, treatment, handoff, discharge, free('CONS')])
+    ).toEqual([progress, discharge]);
+    expect(otherClinicalNotes([consultation, treatment, handoff])).toEqual([]);
   });
 });

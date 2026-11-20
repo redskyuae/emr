@@ -4,13 +4,7 @@ import { PiWarningLight } from 'react-icons/pi';
 import type { VisitSummary } from '@/app/api/lib/modules/visit/schemas/visit-summary-schema';
 import { cn } from '@/lib/utils';
 
-import {
-  bloodPressureIsHigh,
-  dateTimeIn,
-  measurement,
-  timeIn,
-} from '../_utils/visit-summary-format';
-import { type ConsultationGroup, consultationGroups } from '../_utils/visit-summary-notes';
+import { bloodPressureIsHigh, measurement, timeIn } from '../_utils/visit-summary-format';
 import { StatusPill, SummarySection, SummaryTable, SummaryTh } from './summary-section';
 
 const SEVERITY = {
@@ -127,70 +121,6 @@ export function SummaryVitals({
       aside={`Latest set · recorded ${timeIn(vitalSign.recordedAt, timeZone)}`}
     >
       <div className="mt-3 grid grid-cols-5 gap-2">{tiles}</div>
-    </SummarySection>
-  );
-}
-
-const GROUP_STYLE: Record<ConsultationGroup['key'], { title: string; className: string }> = {
-  subjective: { title: 'Subjective', className: 'text-primary' },
-  objective: { title: 'Objective', className: 'text-chart-4' },
-  assessment: { title: 'Assessment', className: 'text-pop' },
-  plan: { title: 'Plan', className: 'text-procedure' },
-};
-
-type SummaryNote = VisitSummary['notes'][number];
-
-export function SummaryConsultation({
-  note,
-  chiefComplaint,
-  timeZone,
-}: {
-  note: SummaryNote | null;
-  chiefComplaint: string | null;
-  timeZone: string;
-}) {
-  const groups: ConsultationGroup[] = note
-    ? consultationGroups(note)
-    : [{ key: 'subjective', rows: [{ label: 'Chief complaint', value: chiefComplaint ?? '' }] }];
-
-  return (
-    <SummarySection
-      title="Consultation"
-      aside={note ? `${note.noteType.name} note · signed` : 'Chief complaint at check-in'}
-    >
-      <div className="mt-3 space-y-3.5">
-        {groups.map((group) => (
-          <div key={group.key}>
-            <h3
-              className={cn(
-                'text-[11.5px] font-bold tracking-[0.12em] uppercase',
-                GROUP_STYLE[group.key].className
-              )}
-            >
-              {GROUP_STYLE[group.key].title}
-            </h3>
-            <dl className="mt-1.5 space-y-1.5 text-[13px] leading-snug">
-              {group.rows.map((row, index) => (
-                <div key={`${row.label}-${index}`} className="grid grid-cols-[10.5rem_1fr] gap-x-4">
-                  <dt className="text-muted-foreground">{row.label}</dt>
-                  <dd className="whitespace-pre-line">{row.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        ))}
-      </div>
-      {note ? (
-        <div className="border-border mt-4 flex items-center justify-between gap-3 border-t border-dashed pt-3 text-[12px]">
-          <p className="text-muted-foreground">
-            Signed by{' '}
-            <span className="text-foreground font-semibold">{note.authorName ?? 'Unknown'}</span>
-          </p>
-          {note.signedAt ? (
-            <p className="text-muted-foreground font-mono">{dateTimeIn(note.signedAt, timeZone)}</p>
-          ) : null}
-        </div>
-      ) : null}
     </SummarySection>
   );
 }
