@@ -5,6 +5,7 @@ import {
   CANNOT_REVOKE_CURRENT_SESSION_MESSAGE,
   revokeSessionCommand,
 } from '@/app/api/lib/modules/session/commands/revoke-session-command';
+import { recordOwnSessionsRevoked } from '@/app/api/lib/analytics/access-session-event';
 import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 
 type SessionRouteContext = {
@@ -27,7 +28,7 @@ function errorMessage(status: number) {
   return 'Validation failed';
 }
 
-export async function DELETE(_request: NextRequest, context: SessionRouteContext) {
+export async function DELETE(request: NextRequest, context: SessionRouteContext) {
   try {
     const session = await requireAuth();
 
@@ -48,6 +49,8 @@ export async function DELETE(_request: NextRequest, context: SessionRouteContext
 
       return NextResponse.json({ message, errors: result.errors }, { status });
     }
+
+    recordOwnSessionsRevoked(session, request, 'single');
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

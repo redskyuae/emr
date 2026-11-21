@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListUserSessionsResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { revokeUserSessionsCommand } from '@/app/api/lib/modules/session/commands/revoke-user-sessions-command';
 import { getUserSessionsQuery } from '@/app/api/lib/modules/session/queries/get-user-sessions-query';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
@@ -54,7 +58,7 @@ export async function GET(_request: NextRequest, context: UserSessionsRouteConte
   }
 }
 
-export async function DELETE(_request: NextRequest, context: UserSessionsRouteContext) {
+export async function DELETE(request: NextRequest, context: UserSessionsRouteContext) {
   try {
     const tenantSession = await requireTenantAdminSession();
 
@@ -73,6 +77,10 @@ export async function DELETE(_request: NextRequest, context: UserSessionsRouteCo
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'sessions_revoked', {
+      scope: 'user',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

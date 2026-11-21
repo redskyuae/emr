@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { recordStaffRoleRemoved } from '@/app/api/lib/analytics/access-assignment-event';
 import { removeRoleCommand } from '@/app/api/lib/modules/user-role/commands/remove-role-command';
 import { USER_MUST_HAVE_ROLE_MESSAGE } from '@/app/api/lib/modules/user-role/validator/remove-role-validator';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
@@ -29,7 +30,7 @@ function errorMessage(status: number, errors: string[]) {
   return 'Validation failed';
 }
 
-export async function DELETE(_request: NextRequest, context: UserRoleRouteContext) {
+export async function DELETE(request: NextRequest, context: UserRoleRouteContext) {
   try {
     const tenantSession = await requireTenantAdminSession();
 
@@ -50,6 +51,8 @@ export async function DELETE(_request: NextRequest, context: UserRoleRouteContex
 
       return NextResponse.json({ message, errors: result.errors }, { status });
     }
+
+    recordStaffRoleRemoved(tenantSession, request, result.data.userId);
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

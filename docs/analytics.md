@@ -129,7 +129,42 @@ Added by #358 (`lib/analytics/events/server-lifecycle-events.ts`).
 
 ### Server outcome events: Tenant, access and configuration
 
-Added by #358 (`lib/analytics/events/server-access-events.ts`).
+Declared in `lib/analytics/events/server-access-events.ts` and recorded from the route handler's
+success branch. Helpers for these events live in `app/api/lib/analytics/access-*.ts`.
+
+| Event                                                                  | When                                                                                                     | Properties                                                                                                      |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `tenant_signed_up`                                                     | signup creates a Tenant (`POST /signup`)                                                                 | none; also sets the Tenant group                                                                                |
+| `tenant_onboarded`                                                     | Tenant Onboarding completes (`POST /onboarding`); a repeated call on an onboarded Tenant records nothing | `minutes_since_signup`; also sets the Tenant group                                                              |
+| `user_signed_in`                                                       | sign-in succeeds (`POST /signin`)                                                                        | `remember_me`; also sets the Tenant group                                                                       |
+| `tenant_profile_updated` / `tenant_deactivated` / `tenant_reactivated` | a Tenant Owner changes the Tenant (`PUT /tenants/{id}`, `PATCH .../deactivate`, `.../reactivate`)        | none; attached to the changed Tenant, and the Tenant group is refreshed                                         |
+| `staff_changed`                                                        | Staff, a Doctor or a Therapist is created, updated, deactivated or reactivated                           | `profile_kind`: `staff`, `doctor`, `therapist`; `action`: `created`, `updated`, `deactivated`, `reactivated`    |
+| `role_changed`                                                         | a Role is created, updated or deleted                                                                    | `action`: `created`, `updated`, `deleted`; `is_system_role`                                                     |
+| `role_permissions_changed`                                             | a Role's Permission Assignments are added, replaced or one is removed                                    | `permission_count`: the Role's Permission Assignments after the change                                          |
+| `staff_roles_changed`                                                  | Role Assignments are added to a Staff member or one is removed                                           | `role_count`: the Staff member's Role Assignments after the change                                              |
+| `sessions_revoked`                                                     | Sessions are revoked                                                                                     | `scope`: `single` (one own Session), `all` (all other own Sessions), `user` (an admin revokes a Staff member's) |
+| `schedule_changed`                                                     | a DoctorSchedule or TherapistSchedule is created or updated                                              | `schedule_kind`: `doctor`, `therapist`; `action`: `created`, `updated`; `rota_count`; `span_days`               |
+| `master_record_changed`                                                | a Master or Global Reference record is created, updated or deleted                                       | `master` (see below); `action`: `created`, `updated`, `deleted`; `charge_item_category` for `charge-item`       |
+| `asset_changed`                                                        | an Asset is created, updated or deleted                                                                  | `action`: `created`, `updated`, `deleted`                                                                       |
+| `work_order_created`                                                   | a Work Order is created                                                                                  | `work_order_type_code`, `work_order_priority_code`                                                              |
+
+- The Tenant group is set with `name`, `slug`, `time_zone`, `is_active` and `created_at`.
+- `span_days` counts the calendar days from the schedule's first to its last date, both included.
+- `master` is the module name: `appointment-mode`, `appointment-type`, `appointment-status`,
+  `appointment-reason`, `appointment-cancelled-reason`, `visit-type`, `admit-source`,
+  `admission-type`, `ward`, `bed`, `room`, `room-type`, `specialty`, `therapist-skill`, `allergen`,
+  `diagnosis-code`, `ayurveda-diagnosis-code`, `clinical-note-type`, `doctor-rota`, `treatment`,
+  `charge-item`, `asset-category`, `asset-condition`, `asset-status`, `work-order-type`,
+  `work-order-priority`, `work-order-status`, and the Global References `country`, `state`,
+  `language`, `nationality` and `religion`. No record name or code is sent for any Master.
+- Global Reference routes resolve no Session. The event is recorded only when the request carries
+  a Session with an Active Tenant, read after the response; recording adds no authorization.
+- `sessions_revoked` with scope `single` or `all` is recorded only when the Session has an Active
+  Tenant.
+- Some properties are read after the response is sent, because neither the payload nor the command
+  result carries them: the counts after removing one Role or Permission Assignment, and the Work
+  Order type and priority codes (the Work Order holds only their names). If that read fails, the
+  removal records nothing and a Work Order is recorded without the missing code.
 
 ### Workflow funnel events
 

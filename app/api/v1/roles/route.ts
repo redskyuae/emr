@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListRolesResponse, SaveRoleResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { createRoleCommand } from '@/app/api/lib/modules/role/commands/create-role-command';
 import { getRolesQuery } from '@/app/api/lib/modules/role/queries/get-roles-query';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
@@ -94,6 +98,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'role_changed', {
+      action: 'created',
+      is_system_role: result.data.isSystem,
+    });
 
     return NextResponse.json<SaveRoleResponse>(
       { data: result.data },

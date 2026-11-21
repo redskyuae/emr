@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { recordRolePermissionRemoved } from '@/app/api/lib/analytics/access-assignment-event';
 import { removePermissionCommand } from '@/app/api/lib/modules/role-permission/commands/remove-permission-command';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
@@ -20,7 +21,7 @@ function errorMessage(status: number, errors: string[]) {
   return 'Validation failed';
 }
 
-export async function DELETE(_request: NextRequest, context: RolePermissionRouteContext) {
+export async function DELETE(request: NextRequest, context: RolePermissionRouteContext) {
   try {
     const tenantSession = await requireTenantAdminSession();
 
@@ -39,6 +40,8 @@ export async function DELETE(_request: NextRequest, context: RolePermissionRoute
         { status }
       );
     }
+
+    recordRolePermissionRemoved(tenantSession, request, result.data.roleId);
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

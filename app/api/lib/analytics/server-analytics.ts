@@ -7,7 +7,7 @@ import { after } from 'next/server';
 import { PostHog } from 'posthog-node';
 
 import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
-import type { TenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { getSession, type TenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { getAnalyticsSettings, type AnalyticsSettings } from '@/lib/analytics/analytics-settings';
 import {
   sanitizeEventProperties,
@@ -110,6 +110,41 @@ export function analyticsSessionIdFromRequest(request: Request): string | null {
   return request.headers.get(SESSION_ID_HEADER);
 }
 
+function sanitizeServerEvent<E extends ServerEventName>(
+  actor: AnalyticsActor,
+  event: E,
+  properties: AnalyticsEventProperties<E>
+) {
+  return sanitizeEventProperties(event, {
+    ...properties,
+    source: 'server',
+    tenant_id: actor.tenantId,
+    is_impersonated: actor.isImpersonated ?? false,
+  });
+}
+
+async function capture(
+  posthog: PostHog,
+  actor: AnalyticsActor,
+  event: ServerEventName,
+  sanitized: Record<string, unknown>
+) {
+  const sessionId = actor.sessionId ? coercePropertyValue(prop.code(), actor.sessionId) : undefined;
+  const tenantSlug = await getTenantSlug(actor.tenantId);
+
+  await posthog.captureImmediate({
+    distinctId: actor.userId,
+    event,
+    groups: { [TENANT_GROUP_TYPE]: actor.tenantId },
+    disableGeoip: true,
+    properties: {
+      ...sanitized,
+      ...(tenantSlug ? { tenant_slug: tenantSlug } : {}),
+      ...(sessionId ? { $session_id: sessionId } : {}),
+    },
+  });
+}
+
 /**
  * Records one server Analytics Event for the actor, after the response is sent. Call it only from
  * the success branch, once per outcome. Undeclared properties are dropped as in the browser.
@@ -119,33 +154,58 @@ export function recordServerEvent<E extends ServerEventName>(
   event: E,
   properties: AnalyticsEventProperties<E>
 ) {
-  const sanitized = sanitizeEventProperties(event, {
-    ...properties,
-    source: 'server',
-    tenant_id: actor.tenantId,
-    is_impersonated: actor.isImpersonated ?? false,
-  });
+  const sanitized = sanitizeServerEvent(actor, event, properties);
 
   if (!sanitized) {
     return;
   }
 
-  const sessionId = actor.sessionId ? coercePropertyValue(prop.code(), actor.sessionId) : undefined;
+  schedule((posthog) => capture(posthog, actor, event, sanitized));
+}
 
+/**
+ * Like `recordServerEvent`, but the properties are read after the response is sent, for a property
+ * that neither the payload nor the command result carries (a count after a removal, a Master code
+ * behind an id). Return `null` to record nothing, for example when the read fails.
+ */
+export function recordServerEventAfterLookup<E extends ServerEventName>(
+  actor: AnalyticsActor,
+  event: E,
+  lookupProperties: () => Promise<AnalyticsEventProperties<E> | null>
+) {
   schedule(async (posthog) => {
-    const tenantSlug = await getTenantSlug(actor.tenantId);
+    const properties = await lookupProperties();
+    const sanitized = properties ? sanitizeServerEvent(actor, event, properties) : null;
 
-    await posthog.captureImmediate({
-      distinctId: actor.userId,
-      event,
-      groups: { [TENANT_GROUP_TYPE]: actor.tenantId },
-      disableGeoip: true,
-      properties: {
-        ...sanitized,
-        ...(tenantSlug ? { tenant_slug: tenantSlug } : {}),
-        ...(sessionId ? { $session_id: sessionId } : {}),
-      },
-    });
+    if (sanitized) {
+      await capture(posthog, actor, event, sanitized);
+    }
+  });
+}
+
+/**
+ * For a route that resolves no Session (the Global References): reads the Session after the response
+ * is sent and records the event only when it has an Active Tenant. It adds no authorization.
+ */
+export function recordServerEventForCurrentSession<E extends ServerEventName>(
+  request: Request,
+  event: E,
+  properties: AnalyticsEventProperties<E>
+) {
+  schedule(async (posthog) => {
+    const session = await getSession();
+    const tenantId = session?.session.activeOrganizationId;
+
+    if (!session || !tenantId) {
+      return;
+    }
+
+    const actor = analyticsActorFromSession({ session, tenantId }, request);
+    const sanitized = sanitizeServerEvent(actor, event, properties);
+
+    if (sanitized) {
+      await capture(posthog, actor, event, sanitized);
+    }
   });
 }
 

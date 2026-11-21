@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ReactivateStaffResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { reactivateStaffCommand } from '@/app/api/lib/modules/staff/commands/reactivate-staff-command';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
@@ -17,7 +21,7 @@ function errorMessage(status: number) {
   return 'Validation failed';
 }
 
-export async function PATCH(_request: NextRequest, context: StaffRouteContext) {
+export async function PATCH(request: NextRequest, context: StaffRouteContext) {
   try {
     const tenantSession = await requireTenantAdminSession();
 
@@ -36,6 +40,11 @@ export async function PATCH(_request: NextRequest, context: StaffRouteContext) {
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_changed', {
+      profile_kind: 'staff',
+      action: 'reactivated',
+    });
 
     return NextResponse.json<ReactivateStaffResponse>({ data: result.data });
   } catch {

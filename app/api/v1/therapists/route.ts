@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListTherapistsResponse, SaveTherapistResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { createTherapistCommand } from '@/app/api/lib/modules/therapist/commands/create-therapist-command';
 import { getTherapistsQuery } from '@/app/api/lib/modules/therapist/queries/get-therapists-query';
 import { requireTenantAdminSession, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -84,6 +88,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+    recordServerEvent(analyticsActorFromSession(session, request), 'staff_changed', {
+      profile_kind: 'therapist',
+      action: 'created',
+    });
+
     return NextResponse.json<SaveTherapistResponse>(
       { data: result.data },
       { status: StatusCodes.CREATED }

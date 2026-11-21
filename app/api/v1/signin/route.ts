@@ -2,9 +2,9 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { SigninResponse } from './types';
 
+import { identifyTenantGroup } from '@/app/api/lib/analytics/access-tenant-event';
 import {
   analyticsSessionIdFromRequest,
-  identifyServerTenantGroup,
   recordServerEvent,
 } from '@/app/api/lib/analytics/server-analytics';
 import { signinCommand } from '@/app/api/lib/modules/auth/commands/signin-command';
@@ -64,13 +64,7 @@ export async function POST(request: NextRequest) {
       'user_signed_in',
       { remember_me: rememberMe }
     );
-    identifyServerTenantGroup(tenant.id, {
-      name: tenant.name,
-      slug: tenant.slug,
-      time_zone: tenant.timeZone,
-      is_active: tenant.isActive,
-      created_at: tenant.createdAt.toISOString(),
-    });
+    identifyTenantGroup(tenant);
 
     return response;
   } catch {

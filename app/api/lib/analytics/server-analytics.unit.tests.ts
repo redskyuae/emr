@@ -30,13 +30,18 @@ vi.mock('@/app/api/lib/modules/tenant/repository/tenant-repository', () => ({
   tenantRepository: { getTenantById: vi.fn() },
 }));
 
+vi.mock('@/app/api/lib/utils/auth-helpers', () => ({ getSession: vi.fn() }));
+
 import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
-import type { TenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { getSession, type TenantSession } from '@/app/api/lib/utils/auth-helpers';
+import type { Session } from '@/app/lib/auth';
 
 import {
   analyticsActorFromSession,
   identifyServerTenantGroup,
   recordServerEvent,
+  recordServerEventAfterLookup,
+  recordServerEventForCurrentSession,
 } from './server-analytics';
 
 async function runAfterCallbacks() {
@@ -175,5 +180,89 @@ describe('server analytics', () => {
       isImpersonated: true,
       sessionId: 'session_1',
     });
+  });
+
+  it('should look properties up only after the response and send what the lookup returns', async () => {
+    const lookup = vi.fn().mockResolvedValue({ role_count: 2 });
+
+    recordServerEventAfterLookup(actor, 'staff_roles_changed', lookup);
+
+    expect(lookup).not.toHaveBeenCalled();
+    await runAfterCallbacks();
+
+    expect(lookup).toHaveBeenCalledTimes(1);
+    expect(posthogMocks.captureImmediate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'staff_roles_changed',
+        properties: expect.objectContaining({ role_count: 2, source: 'server' }),
+      })
+    );
+  });
+
+  it('should record nothing when the lookup returns null or fails', async () => {
+    recordServerEventAfterLookup(actor, 'staff_roles_changed', async () => null);
+    recordServerEventAfterLookup(actor, 'staff_roles_changed', async () => {
+      throw new Error('Database is down');
+    });
+
+    await expect(runAfterCallbacks()).resolves.toBeUndefined();
+    expect(posthogMocks.captureImmediate).not.toHaveBeenCalled();
+  });
+
+  it('should not look properties up when the analytics switch is off', async () => {
+    vi.stubEnv('ANALYTICS_ENABLED', 'false');
+    const lookup = vi.fn().mockResolvedValue({ role_count: 2 });
+
+    recordServerEventAfterLookup(actor, 'staff_roles_changed', lookup);
+    await runAfterCallbacks();
+
+    expect(lookup).not.toHaveBeenCalled();
+  });
+
+  it('should read the Session after the response and record for its Active Tenant', async () => {
+    vi.mocked(getSession).mockResolvedValue({
+      user: { id: 'user_1' },
+      session: { activeOrganizationId: 'tenant_1', impersonatedBy: null },
+    } as unknown as Session);
+
+    recordServerEventForCurrentSession(
+      new Request('http://localhost/api/v1/countries'),
+      'master_record_changed',
+      { master: 'country', action: 'created' }
+    );
+
+    expect(getSession).not.toHaveBeenCalled();
+    await runAfterCallbacks();
+
+    expect(posthogMocks.captureImmediate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        distinctId: 'user_1',
+        event: 'master_record_changed',
+        groups: { tenant: 'tenant_1' },
+        properties: expect.objectContaining({ master: 'country', action: 'created' }),
+      })
+    );
+  });
+
+  it('should record nothing for a request without a Session or an Active Tenant', async () => {
+    vi.mocked(getSession).mockResolvedValueOnce(null);
+    vi.mocked(getSession).mockResolvedValueOnce({
+      user: { id: 'user_1' },
+      session: { activeOrganizationId: null },
+    } as unknown as Session);
+    const request = new Request('http://localhost/api/v1/countries');
+
+    recordServerEventForCurrentSession(request, 'master_record_changed', {
+      master: 'country',
+      action: 'created',
+    });
+    recordServerEventForCurrentSession(request, 'master_record_changed', {
+      master: 'country',
+      action: 'deleted',
+    });
+    await runAfterCallbacks();
+
+    expect(getSession).toHaveBeenCalledTimes(2);
+    expect(posthogMocks.captureImmediate).not.toHaveBeenCalled();
   });
 });

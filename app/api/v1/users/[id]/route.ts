@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetStaffResponse, UpdateStaffResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { updateStaffCommand } from '@/app/api/lib/modules/staff/commands/update-staff-command';
 import { getStaffByIdQuery } from '@/app/api/lib/modules/staff/queries/get-staff-by-id-query';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
@@ -81,6 +85,11 @@ export async function PUT(request: NextRequest, context: StaffRouteContext) {
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_changed', {
+      profile_kind: 'staff',
+      action: 'updated',
+    });
 
     return NextResponse.json<UpdateStaffResponse>({ data: result.data });
   } catch {

@@ -133,6 +133,7 @@ export async function provisionTenantCommand(
       data: {
         tenant: createdTenant,
         setCookies: [...signInSetCookies, ...setActiveSetCookies],
+        userId: createdUser.user.id,
       },
     };
   } catch (error) {

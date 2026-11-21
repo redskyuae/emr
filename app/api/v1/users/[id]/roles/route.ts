@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { AssignUserRolesResponse, GetUserRolesResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { assignRolesCommand } from '@/app/api/lib/modules/user-role/commands/assign-roles-command';
 import { getUserRolesQuery } from '@/app/api/lib/modules/user-role/queries/get-user-roles-query';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
@@ -89,6 +93,10 @@ export async function POST(request: NextRequest, context: UserRolesRouteContext)
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_roles_changed', {
+      role_count: result.data.length,
+    });
 
     return NextResponse.json<AssignUserRolesResponse>({ data: result.data });
   } catch {

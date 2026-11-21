@@ -2,6 +2,11 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { SignupResponse } from './types';
 
+import { identifyTenantGroup } from '@/app/api/lib/analytics/access-tenant-event';
+import {
+  analyticsSessionIdFromRequest,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { provisionTenantCommand } from '@/app/api/lib/modules/tenant-provisioning/commands/provision-tenant-command';
 
 function mutationMessage(status: number, errors: string[]) {
@@ -54,6 +59,16 @@ export async function POST(request: NextRequest) {
     );
 
     appendSetCookies(response, result.data.setCookies);
+
+    // No Session exists before signup, so the actor is the new Tenant Owner and Tenant.
+    const { tenant, userId } = result.data;
+
+    recordServerEvent(
+      { userId, tenantId: tenant.id, sessionId: analyticsSessionIdFromRequest(request) },
+      'tenant_signed_up',
+      {}
+    );
+    identifyTenantGroup(tenant);
 
     return response;
   } catch {

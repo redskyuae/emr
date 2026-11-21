@@ -2,6 +2,11 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListTherapistSchedulesResponse, SaveTherapistScheduleResponse } from './types';
 
+import { scheduleChangedProperties } from '@/app/api/lib/analytics/access-schedule-event';
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { createTherapistScheduleCommand } from '@/app/api/lib/modules/therapist-schedule/commands/create-therapist-schedule-command';
 import { updateTherapistScheduleCommand } from '@/app/api/lib/modules/therapist-schedule/commands/update-therapist-schedule-command';
 import { getTherapistSchedulesQuery } from '@/app/api/lib/modules/therapist-schedule/queries/get-therapist-schedules-query';
@@ -83,6 +88,12 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+    recordServerEvent(
+      analyticsActorFromSession(session, request),
+      'schedule_changed',
+      scheduleChangedProperties('therapist', 'created', result.data)
+    );
+
     return NextResponse.json<SaveTherapistScheduleResponse>(
       { data: result.data },
       { status: StatusCodes.CREATED }
@@ -113,6 +124,12 @@ export async function PUT(request: NextRequest) {
         { status }
       );
     }
+    recordServerEvent(
+      analyticsActorFromSession(session, request),
+      'schedule_changed',
+      scheduleChangedProperties('therapist', 'updated', result.data)
+    );
+
     return NextResponse.json<SaveTherapistScheduleResponse>({ data: result.data });
   } catch {
     return NextResponse.json(

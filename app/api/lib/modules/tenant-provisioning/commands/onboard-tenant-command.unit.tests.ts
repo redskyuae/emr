@@ -156,7 +156,10 @@ describe('OnboardTenant command', () => {
 
     const result = await onboardTenantCommand('org-1');
 
-    expect(result).toEqual({ success: true, data: onboardedTenant });
+    expect(result).toEqual({
+      success: true,
+      data: { tenant: onboardedTenant, isNewlyOnboarded: false },
+    });
     expect(permissionRepo.seedPermissionCatalogue).not.toHaveBeenCalled();
     expect(seedSystemRoles).not.toHaveBeenCalled();
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
@@ -169,7 +172,10 @@ describe('OnboardTenant command', () => {
   it('should seed the catalogue and all default masters then mark the tenant onboarded', async () => {
     const result = await onboardTenantCommand('org-1');
 
-    expect(result).toEqual({ success: true, data: onboardedTenant });
+    expect(result).toEqual({
+      success: true,
+      data: { tenant: onboardedTenant, isNewlyOnboarded: true },
+    });
     expect(permissionRepo.seedPermissionCatalogue).toHaveBeenCalledTimes(1);
     expect(seedSystemRoles).toHaveBeenCalledWith('org-1');
     expect(seedSpecialties).toHaveBeenCalledWith('org-1');
@@ -193,7 +199,10 @@ describe('OnboardTenant command', () => {
 
     const result = await onboardTenantCommand('org-1');
 
-    expect(result).toEqual({ success: true, data: onboardedTenant });
+    expect(result).toEqual({
+      success: true,
+      data: { tenant: onboardedTenant, isNewlyOnboarded: true },
+    });
     expect(permissionRepo.seedPermissionCatalogue).toHaveBeenCalledTimes(1);
     expect(seedSystemRoles).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();
@@ -212,7 +221,10 @@ describe('OnboardTenant command', () => {
 
     const result = await onboardTenantCommand('org-1');
 
-    expect(result).toEqual({ success: true, data: onboardedTenant });
+    expect(result).toEqual({
+      success: true,
+      data: { tenant: onboardedTenant, isNewlyOnboarded: true },
+    });
     expect(seedSpecialties).toHaveBeenCalledWith('org-1');
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
@@ -226,7 +238,10 @@ describe('OnboardTenant command', () => {
 
     const result = await onboardTenantCommand('org-1');
 
-    expect(result).toEqual({ success: true, data: onboardedTenant });
+    expect(result).toEqual({
+      success: true,
+      data: { tenant: onboardedTenant, isNewlyOnboarded: true },
+    });
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedSpecialties).not.toHaveBeenCalled();

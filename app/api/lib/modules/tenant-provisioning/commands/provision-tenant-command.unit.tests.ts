@@ -135,6 +135,7 @@ describe('ProvisionTenant command', () => {
       data: {
         tenant,
         setCookies: ['session=abc', 'active-org=org-1'],
+        userId: 'user-1',
       },
     });
     expect(api.createUser).toHaveBeenCalledTimes(1);

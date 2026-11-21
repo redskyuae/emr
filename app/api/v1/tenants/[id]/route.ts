@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetTenantResponse, UpdateTenantResponse } from './types';
 
+import { recordTenantChanged } from '@/app/api/lib/analytics/access-tenant-event';
 import { updateTenantCommand } from '@/app/api/lib/modules/tenant/commands/update-tenant-command';
 import { getTenantByIdQuery } from '@/app/api/lib/modules/tenant/queries/get-tenant-by-id-query';
 import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
@@ -85,6 +86,8 @@ export async function PUT(request: NextRequest, context: TenantRouteContext) {
         { status }
       );
     }
+
+    recordTenantChanged(session, request, result.data, 'tenant_profile_updated');
 
     return NextResponse.json<UpdateTenantResponse>({ data: result.data });
   } catch {

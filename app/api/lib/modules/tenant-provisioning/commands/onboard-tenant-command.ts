@@ -4,7 +4,7 @@ import type { CommandResult } from '@/app/api/lib/utils/types';
 import { permissionRepository } from '../../permission/repository/permission-repository';
 import { seedSystemRolesCommand } from '../../role/commands/seed-system-roles-command';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
-import type { Tenant } from '../../tenant/schemas/tenant-schema';
+import type { TenantOnboardingResult } from '../schemas/tenant-provisioning-schema';
 import { tenantProvisioningRepository } from '../repository/tenant-provisioning-repository';
 import { validateTenantOnboarding } from '../validator/tenant-onboarding-validator';
 import { seedDefaultAssetMastersCommand } from './seed-default-asset-masters-command';
@@ -61,7 +61,9 @@ const seedDefaultMastersOperations = [
   },
 ] as const;
 
-export async function onboardTenantCommand(tenantId: unknown): Promise<CommandResult<Tenant>> {
+export async function onboardTenantCommand(
+  tenantId: unknown
+): Promise<CommandResult<TenantOnboardingResult>> {
   const validationResult = await validateTenantOnboarding(tenantId);
 
   if (!validationResult.success) {
@@ -75,7 +77,7 @@ export async function onboardTenantCommand(tenantId: unknown): Promise<CommandRe
   const tenant = validationResult.data;
 
   if (tenant.isOnboarded) {
-    return { success: true, data: tenant };
+    return { success: true, data: { tenant, isNewlyOnboarded: false } };
   }
 
   try {
@@ -147,7 +149,7 @@ export async function onboardTenantCommand(tenantId: unknown): Promise<CommandRe
       };
     }
 
-    return { success: true, data: onboardedTenant };
+    return { success: true, data: { tenant: onboardedTenant, isNewlyOnboarded: true } };
   } catch {
     return {
       success: false,

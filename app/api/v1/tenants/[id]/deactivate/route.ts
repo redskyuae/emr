@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { DeactivateTenantResponse } from './types';
 
+import { recordTenantChanged } from '@/app/api/lib/analytics/access-tenant-event';
 import { deactivateTenantCommand } from '@/app/api/lib/modules/tenant/commands/deactivate-tenant-command';
 import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 
@@ -21,7 +22,7 @@ function errorMessage(status: number) {
   return 'Validation failed';
 }
 
-export async function PATCH(_request: NextRequest, context: TenantRouteContext) {
+export async function PATCH(request: NextRequest, context: TenantRouteContext) {
   try {
     const session = await requireAuth();
 
@@ -40,6 +41,8 @@ export async function PATCH(_request: NextRequest, context: TenantRouteContext) 
         { status }
       );
     }
+
+    recordTenantChanged(session, request, result.data, 'tenant_deactivated');
 
     return NextResponse.json<DeactivateTenantResponse>({ data: result.data });
   } catch {

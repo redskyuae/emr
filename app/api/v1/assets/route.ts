@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListAssetsResponse, SaveAssetResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { createAssetCommand } from '@/app/api/lib/modules/asset/commands/create-asset-command';
 import { getAssetsQuery } from '@/app/api/lib/modules/asset/queries/get-assets-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -121,6 +125,10 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'asset_changed', {
+      action: 'created',
+    });
 
     return NextResponse.json<SaveAssetResponse>(
       { data: result.data },
