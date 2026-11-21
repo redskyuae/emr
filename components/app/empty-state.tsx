@@ -189,7 +189,11 @@ export function EmptyState({
         )}
       >
         {showOrbit ? (
-          <div data-slot="empty-state-orbit" className={orbitVariants({ size })}>
+          // Hidden in print as a whole, so the orbit's box leaves no blank space above the title.
+          <div
+            data-slot="empty-state-orbit"
+            className={cn(orbitVariants({ size }), 'print:hidden')}
+          >
             <EmptyStateOrbit />
             <div className="absolute inset-0 flex items-center justify-center">{icon}</div>
           </div>

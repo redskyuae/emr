@@ -56,6 +56,14 @@ describe('EmptyState', () => {
     expect(orbit?.getAttribute('aria-hidden')).toBe('true');
   });
 
+  it('should leave the whole orbit, not only its drawing, out of print', () => {
+    const { container } = renderEmptyState();
+
+    const orbit = container.querySelector('[data-slot="empty-state-orbit"]');
+
+    expect(orbit?.className).toContain('print:hidden');
+  });
+
   it('should render the title, description, children and actions in reading order', () => {
     const { container } = renderEmptyState({
       children: createElement('p', null, 'A hint'),
