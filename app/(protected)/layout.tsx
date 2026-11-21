@@ -8,7 +8,6 @@ import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant
 import { AppPageHeader } from '@/components/app/app-page-header';
 import { AppShellGate } from '@/components/app/app-shell-gate';
 import { AppSidebar } from '@/components/app/app-sidebar';
-import { AppTopbar } from '@/components/app/app-topbar';
 import { TabSessionGate } from '@/components/app/tab-session-gate';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -52,7 +51,6 @@ export default async function AppLayout({
               showDemoPages={demoPagesEnabled()}
             />
             <SidebarInset>
-              <AppTopbar />
               <AppPageHeader />
               <div className="flex min-w-0 flex-1 flex-col px-4 pt-4 pb-10 sm:px-6 lg:px-8">
                 {children}

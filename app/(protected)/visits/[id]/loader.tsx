@@ -19,7 +19,7 @@ function PaneSectionSkeleton({ lines }: { lines: number }) {
 export default function VisitDetailPageLoader() {
   return (
     <div
-      className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 xl:h-[calc(100dvh-7.5rem)] xl:min-h-[30rem]"
+      className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 xl:h-[calc(100dvh-3.5rem)] xl:min-h-[30rem]"
       aria-label="Loading Visit"
     >
       <div className="bg-card flex flex-none flex-wrap items-center justify-between gap-3 rounded-xl border p-3">
