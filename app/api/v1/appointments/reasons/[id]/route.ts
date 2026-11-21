@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAppointmentReasonResponse, UpdateAppointmentReasonResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAppointmentReasonCommand } from '@/app/api/lib/modules/appointment-reason/commands/delete-appointment-reason-command';
 import { updateAppointmentReasonCommand } from '@/app/api/lib/modules/appointment-reason/commands/update-appointment-reason-command';
 import { getAppointmentReasonByIdQuery } from '@/app/api/lib/modules/appointment-reason/queries/get-appointment-reason-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: AppointmentReasonRouteC
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-reason',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAppointmentReasonResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: AppointmentReasonRouteC
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AppointmentReasonRouteContext) {
+export async function DELETE(request: NextRequest, context: AppointmentReasonRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: AppointmentReasonRo
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-reason',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

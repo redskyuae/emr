@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListWorkOrderTypesResponse, SaveWorkOrderTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createWorkOrderTypeCommand } from '@/app/api/lib/modules/work-order-type/commands/create-work-order-type-command';
 import { getWorkOrderTypesQuery } from '@/app/api/lib/modules/work-order-type/queries/get-work-order-types-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'work-order-type',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveWorkOrderTypeResponse>(
       { data: result.data },

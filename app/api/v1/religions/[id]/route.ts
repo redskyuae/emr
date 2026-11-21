@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetReligionResponse, UpdateReligionResponse } from './types';
 
+import { recordGlobalReferenceChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteReligionCommand } from '@/app/api/lib/modules/religion/commands/delete-religion-command';
 import { updateReligionCommand } from '@/app/api/lib/modules/religion/commands/update-religion-command';
 import { getReligionByIdQuery } from '@/app/api/lib/modules/religion/queries/get-religion-by-id-query';
@@ -70,6 +71,8 @@ export async function PUT(request: NextRequest, context: ReligionRouteContext) {
       );
     }
 
+    recordGlobalReferenceChanged(request, { master: 'religion', action: 'updated' });
+
     return NextResponse.json<UpdateReligionResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -79,7 +82,7 @@ export async function PUT(request: NextRequest, context: ReligionRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: ReligionRouteContext) {
+export async function DELETE(request: NextRequest, context: ReligionRouteContext) {
   try {
     const { id } = await context.params;
     const result = await deleteReligionCommand(id);
@@ -92,6 +95,8 @@ export async function DELETE(_request: NextRequest, context: ReligionRouteContex
         { status }
       );
     }
+
+    recordGlobalReferenceChanged(request, { master: 'religion', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

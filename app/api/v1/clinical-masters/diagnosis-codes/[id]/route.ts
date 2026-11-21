@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetDiagnosisCodeResponse, UpdateDiagnosisCodeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteDiagnosisCodeCommand } from '@/app/api/lib/modules/diagnosis-code/commands/delete-diagnosis-code-command';
 import { updateDiagnosisCodeCommand } from '@/app/api/lib/modules/diagnosis-code/commands/update-diagnosis-code-command';
 import { getDiagnosisCodeByIdQuery } from '@/app/api/lib/modules/diagnosis-code/queries/get-diagnosis-code-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: DiagnosisCodeRouteConte
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'diagnosis-code',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateDiagnosisCodeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: DiagnosisCodeRouteConte
   }
 }
 
-export async function DELETE(_request: NextRequest, context: DiagnosisCodeRouteContext) {
+export async function DELETE(request: NextRequest, context: DiagnosisCodeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: DiagnosisCodeRouteC
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'diagnosis-code',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListStatesResponse, SaveStateResponse } from './types';
 
+import { recordGlobalReferenceChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createStateCommand } from '@/app/api/lib/modules/state/commands/create-state-command';
 import { getStatesQuery } from '@/app/api/lib/modules/state/queries/get-states-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
@@ -81,6 +82,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordGlobalReferenceChanged(request, { master: 'state', action: 'created' });
 
     return NextResponse.json<SaveStateResponse>(
       { data: result.data },

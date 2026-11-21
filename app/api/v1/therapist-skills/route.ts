@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListTherapistSkillsResponse, SaveTherapistSkillResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createTherapistSkillCommand } from '@/app/api/lib/modules/therapist-skill/commands/create-therapist-skill-command';
 import { getTherapistSkillsQuery } from '@/app/api/lib/modules/therapist-skill/queries/get-therapist-skills-query';
 import { requireTenantAdminSession, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -74,6 +75,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+    recordMasterRecordChanged(session, request, { master: 'therapist-skill', action: 'created' });
+
     return NextResponse.json<SaveTherapistSkillResponse>(
       { data: result.data },
       { status: StatusCodes.CREATED }

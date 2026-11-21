@@ -5,6 +5,7 @@ import type {
   SaveAppointmentCancelledReasonResponse,
 } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createAppointmentCancelledReasonCommand } from '@/app/api/lib/modules/appointment-cancelled-reason/commands/create-appointment-cancelled-reason-command';
 import { getAppointmentCancelledReasonsQuery } from '@/app/api/lib/modules/appointment-cancelled-reason/queries/get-appointment-cancelled-reasons-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -106,6 +107,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-cancelled-reason',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveAppointmentCancelledReasonResponse>(
       { data: result.data },

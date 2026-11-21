@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListDiagnosisCodesResponse, SaveDiagnosisCodeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createDiagnosisCodeCommand } from '@/app/api/lib/modules/diagnosis-code/commands/create-diagnosis-code-command';
 import { getDiagnosisCodesQuery } from '@/app/api/lib/modules/diagnosis-code/queries/get-diagnosis-codes-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'diagnosis-code',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveDiagnosisCodeResponse>(
       { data: result.data },

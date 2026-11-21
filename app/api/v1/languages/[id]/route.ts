@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetLanguageResponse, UpdateLanguageResponse } from './types';
 
+import { recordGlobalReferenceChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteLanguageCommand } from '@/app/api/lib/modules/language/commands/delete-language-command';
 import { updateLanguageCommand } from '@/app/api/lib/modules/language/commands/update-language-command';
 import { getLanguageByIdQuery } from '@/app/api/lib/modules/language/queries/get-language-by-id-query';
@@ -70,6 +71,8 @@ export async function PUT(request: NextRequest, context: LanguageRouteContext) {
       );
     }
 
+    recordGlobalReferenceChanged(request, { master: 'language', action: 'updated' });
+
     return NextResponse.json<UpdateLanguageResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -79,7 +82,7 @@ export async function PUT(request: NextRequest, context: LanguageRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: LanguageRouteContext) {
+export async function DELETE(request: NextRequest, context: LanguageRouteContext) {
   try {
     const { id } = await context.params;
     const result = await deleteLanguageCommand(id);
@@ -92,6 +95,8 @@ export async function DELETE(_request: NextRequest, context: LanguageRouteContex
         { status }
       );
     }
+
+    recordGlobalReferenceChanged(request, { master: 'language', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

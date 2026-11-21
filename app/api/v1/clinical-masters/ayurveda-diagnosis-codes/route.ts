@@ -5,6 +5,7 @@ import type {
   SaveAyurvedaDiagnosisCodeResponse,
 } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createAyurvedaDiagnosisCodeCommand } from '@/app/api/lib/modules/ayurveda-diagnosis-code/commands/create-ayurveda-diagnosis-code-command';
 import { getAyurvedaDiagnosisCodesQuery } from '@/app/api/lib/modules/ayurveda-diagnosis-code/queries/get-ayurveda-diagnosis-codes-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -114,6 +115,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'ayurveda-diagnosis-code',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveAyurvedaDiagnosisCodeResponse>(
       { data: result.data },

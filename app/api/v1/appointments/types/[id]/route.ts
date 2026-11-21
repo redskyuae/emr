@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAppointmentTypeResponse, UpdateAppointmentTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAppointmentTypeCommand } from '@/app/api/lib/modules/appointment-type/commands/delete-appointment-type-command';
 import { updateAppointmentTypeCommand } from '@/app/api/lib/modules/appointment-type/commands/update-appointment-type-command';
 import { getAppointmentTypeByIdQuery } from '@/app/api/lib/modules/appointment-type/queries/get-appointment-type-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: AppointmentTypeRouteCon
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-type',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAppointmentTypeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: AppointmentTypeRouteCon
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AppointmentTypeRouteContext) {
+export async function DELETE(request: NextRequest, context: AppointmentTypeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: AppointmentTypeRout
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-type',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

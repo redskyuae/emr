@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetRoomResponse, UpdateRoomResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteRoomCommand } from '@/app/api/lib/modules/room/commands/delete-room-command';
 import { updateRoomCommand } from '@/app/api/lib/modules/room/commands/update-room-command';
 import { getRoomByIdQuery } from '@/app/api/lib/modules/room/queries/get-room-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: RoomRouteContext) {
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'room', action: 'updated' });
+
     return NextResponse.json<UpdateRoomResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: RoomRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: RoomRouteContext) {
+export async function DELETE(request: NextRequest, context: RoomRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: RoomRouteContext) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'room', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListAllergensResponse, SaveAllergenResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createAllergenCommand } from '@/app/api/lib/modules/allergen/commands/create-allergen-command';
 import { getAllergensQuery } from '@/app/api/lib/modules/allergen/queries/get-allergens-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'allergen', action: 'created' });
 
     return NextResponse.json<SaveAllergenResponse>(
       { data: result.data },

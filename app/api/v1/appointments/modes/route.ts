@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListAppointmentModesResponse, SaveAppointmentModeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createAppointmentModeCommand } from '@/app/api/lib/modules/appointment-mode/commands/create-appointment-mode-command';
 import { getAppointmentModesQuery } from '@/app/api/lib/modules/appointment-mode/queries/get-appointment-modes-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-mode',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveAppointmentModeResponse>(
       { data: result.data },

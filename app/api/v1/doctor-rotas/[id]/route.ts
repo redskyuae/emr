@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetDoctorRotaResponse, UpdateDoctorRotaResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteDoctorRotaCommand } from '@/app/api/lib/modules/doctor-rota/commands/delete-doctor-rota-command';
 import { updateDoctorRotaCommand } from '@/app/api/lib/modules/doctor-rota/commands/update-doctor-rota-command';
 import { getDoctorRotaByIdQuery } from '@/app/api/lib/modules/doctor-rota/queries/get-doctor-rota-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: DoctorRotaRouteContext)
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'doctor-rota', action: 'updated' });
+
     return NextResponse.json<UpdateDoctorRotaResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: DoctorRotaRouteContext)
   }
 }
 
-export async function DELETE(_request: NextRequest, context: DoctorRotaRouteContext) {
+export async function DELETE(request: NextRequest, context: DoctorRotaRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: DoctorRotaRouteCont
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'doctor-rota', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetTherapistSkillResponse, UpdateTherapistSkillResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteTherapistSkillCommand } from '@/app/api/lib/modules/therapist-skill/commands/delete-therapist-skill-command';
 import { updateTherapistSkillCommand } from '@/app/api/lib/modules/therapist-skill/commands/update-therapist-skill-command';
 import { getTherapistSkillByIdQuery } from '@/app/api/lib/modules/therapist-skill/queries/get-therapist-skill-by-id-query';
@@ -61,6 +62,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         { status }
       );
     }
+    recordMasterRecordChanged(session, request, { master: 'therapist-skill', action: 'updated' });
+
     return NextResponse.json<UpdateTherapistSkillResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -70,7 +73,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const session = await requireTenantAdminSession();
     if (session instanceof Response) return session;
@@ -82,6 +85,8 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
         { status }
       );
     }
+    recordMasterRecordChanged(session, request, { master: 'therapist-skill', action: 'deleted' });
+
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {
     return NextResponse.json(

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetBedResponse, UpdateBedResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteBedCommand } from '@/app/api/lib/modules/bed/commands/delete-bed-command';
 import { updateBedCommand } from '@/app/api/lib/modules/bed/commands/update-bed-command';
 import { getBedByIdQuery } from '@/app/api/lib/modules/bed/queries/get-bed-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: BedRouteContext) {
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'bed', action: 'updated' });
+
     return NextResponse.json<UpdateBedResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: BedRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: BedRouteContext) {
+export async function DELETE(request: NextRequest, context: BedRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: BedRouteContext) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'bed', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListChargeItemsResponse, SaveChargeItemResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createChargeItemCommand } from '@/app/api/lib/modules/charge-item/commands/create-charge-item-command';
 import { getChargeItemsQuery } from '@/app/api/lib/modules/charge-item/queries/get-charge-items-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -119,6 +120,12 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'charge-item',
+      action: 'created',
+      charge_item_category: result.data.category,
+    });
 
     return NextResponse.json<SaveChargeItemResponse>(
       { data: result.data },

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAssetConditionResponse, UpdateAssetConditionResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAssetConditionCommand } from '@/app/api/lib/modules/asset-condition/commands/delete-asset-condition-command';
 import { updateAssetConditionCommand } from '@/app/api/lib/modules/asset-condition/commands/update-asset-condition-command';
 import { getAssetConditionByIdQuery } from '@/app/api/lib/modules/asset-condition/queries/get-asset-condition-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: AssetConditionRouteCont
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'asset-condition',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAssetConditionResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: AssetConditionRouteCont
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AssetConditionRouteContext) {
+export async function DELETE(request: NextRequest, context: AssetConditionRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: AssetConditionRoute
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'asset-condition',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListDoctorRotasResponse, SaveDoctorRotaResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createDoctorRotaCommand } from '@/app/api/lib/modules/doctor-rota/commands/create-doctor-rota-command';
 import { getDoctorRotasQuery } from '@/app/api/lib/modules/doctor-rota/queries/get-doctor-rotas-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'doctor-rota', action: 'created' });
 
     return NextResponse.json<SaveDoctorRotaResponse>(
       { data: result.data },

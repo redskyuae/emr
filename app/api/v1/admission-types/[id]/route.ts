@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAdmissionTypeResponse, UpdateAdmissionTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAdmissionTypeCommand } from '@/app/api/lib/modules/admission-type/commands/delete-admission-type-command';
 import { updateAdmissionTypeCommand } from '@/app/api/lib/modules/admission-type/commands/update-admission-type-command';
 import { getAdmissionTypeByIdQuery } from '@/app/api/lib/modules/admission-type/queries/get-admission-type-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: AdmissionTypeRouteConte
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'admission-type',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAdmissionTypeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: AdmissionTypeRouteConte
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AdmissionTypeRouteContext) {
+export async function DELETE(request: NextRequest, context: AdmissionTypeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: AdmissionTypeRouteC
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'admission-type',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

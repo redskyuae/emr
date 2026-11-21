@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListAssetConditionsResponse, SaveAssetConditionResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createAssetConditionCommand } from '@/app/api/lib/modules/asset-condition/commands/create-asset-condition-command';
 import { getAssetConditionsQuery } from '@/app/api/lib/modules/asset-condition/queries/get-asset-conditions-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'asset-condition',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveAssetConditionResponse>(
       { data: result.data },

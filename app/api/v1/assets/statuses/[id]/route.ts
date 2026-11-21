@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAssetStatusResponse, UpdateAssetStatusResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAssetStatusCommand } from '@/app/api/lib/modules/asset-status/commands/delete-asset-status-command';
 import { updateAssetStatusCommand } from '@/app/api/lib/modules/asset-status/commands/update-asset-status-command';
 import { getAssetStatusByIdQuery } from '@/app/api/lib/modules/asset-status/queries/get-asset-status-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: AssetStatusRouteContext
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'asset-status',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAssetStatusResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: AssetStatusRouteContext
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AssetStatusRouteContext) {
+export async function DELETE(request: NextRequest, context: AssetStatusRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: AssetStatusRouteCon
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'asset-status',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

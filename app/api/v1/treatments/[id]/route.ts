@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetTreatmentResponse, UpdateTreatmentResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteTreatmentCommand } from '@/app/api/lib/modules/treatment/commands/delete-treatment-command';
 import { updateTreatmentCommand } from '@/app/api/lib/modules/treatment/commands/update-treatment-command';
 import { getTreatmentByIdQuery } from '@/app/api/lib/modules/treatment/queries/get-treatment-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: TreatmentRouteContext) 
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'treatment', action: 'updated' });
+
     return NextResponse.json<UpdateTreatmentResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: TreatmentRouteContext) 
   }
 }
 
-export async function DELETE(_request: NextRequest, context: TreatmentRouteContext) {
+export async function DELETE(request: NextRequest, context: TreatmentRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: TreatmentRouteConte
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'treatment', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {
