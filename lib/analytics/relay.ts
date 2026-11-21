@@ -14,6 +14,13 @@ const FORWARDED_RESPONSE_HEADERS = ['content-type', 'cache-control'];
 const ASSET_PREFIXES = new Set(['static', 'array']);
 
 /**
+ * The largest body the relay accepts. `/relay` is public (anonymous login and signup events must
+ * reach it), so an unbounded body would let any caller make the server buffer arbitrary payloads.
+ * A PostHog batch from one browser is far below this.
+ */
+export const RELAY_MAX_BODY_BYTES = 1024 * 1024;
+
+/**
  * PostHog's asset paths (`static/*`, `array/*`) go to the asset host; everything else to the
  * ingestion host. Next drops the trailing slash PostHog's ingestion paths end with (`/e/`,
  * `/flags/`) before the relay sees them, so it is restored for those.
@@ -43,6 +50,57 @@ function pickHeaders(source: Headers, names: readonly string[]) {
   }
 
   return headers;
+}
+
+/**
+ * Reads the request body, or returns `null` as soon as it exceeds `limit`: a declared
+ * `content-length` over the limit is refused before reading, and a body that streams past the
+ * limit is cancelled rather than buffered whole.
+ */
+export async function readRelayBody(
+  request: Request,
+  limit: number = RELAY_MAX_BODY_BYTES
+): Promise<ArrayBuffer | null> {
+  const declaredLength = Number(request.headers.get('content-length'));
+
+  if (Number.isFinite(declaredLength) && declaredLength > limit) {
+    return null;
+  }
+
+  if (!request.body) {
+    return new ArrayBuffer(0);
+  }
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+
+    if (done) {
+      break;
+    }
+
+    size += value.byteLength;
+
+    if (size > limit) {
+      await reader.cancel();
+      return null;
+    }
+
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(size);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return body.buffer;
 }
 
 export function buildRelayRequestHeaders(incoming: Headers): Headers {

@@ -5,6 +5,7 @@ import {
   buildRelayRequestHeaders,
   buildRelayResponseHeaders,
   buildRelayTarget,
+  readRelayBody,
 } from '@/lib/analytics/relay';
 
 // Forwards browser analytics to PostHog without the session cookie (see lib/analytics/relay.ts).
@@ -27,10 +28,16 @@ async function relay(request: NextRequest, context: RelayContext) {
   const target = buildRelayTarget(settings, path, request.nextUrl.search);
 
   try {
+    const body = request.method === 'GET' ? undefined : await readRelayBody(request);
+
+    if (body === null) {
+      return new NextResponse(null, { status: 413 });
+    }
+
     const upstream = await fetch(target, {
       method: request.method,
       headers: buildRelayRequestHeaders(request.headers),
-      body: request.method === 'GET' ? undefined : await request.arrayBuffer(),
+      body,
       cache: 'no-store',
       redirect: 'manual',
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),

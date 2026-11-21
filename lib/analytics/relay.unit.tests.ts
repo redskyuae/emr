@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildRelayRequestHeaders, buildRelayResponseHeaders, buildRelayTarget } from './relay';
+import {
+  buildRelayRequestHeaders,
+  buildRelayResponseHeaders,
+  buildRelayTarget,
+  readRelayBody,
+} from './relay';
 
 const settings = {
   host: 'https://eu.i.posthog.com',
@@ -59,5 +64,51 @@ describe('buildRelayResponseHeaders', () => {
     );
 
     expect([...headers.entries()]).toEqual([['content-type', 'application/json']]);
+  });
+});
+
+describe('readRelayBody', () => {
+  function streamOf(chunks: string[]) {
+    const encoder = new TextEncoder();
+
+    return new ReadableStream<Uint8Array>({
+      start(controller) {
+        chunks.forEach((chunk) => controller.enqueue(encoder.encode(chunk)));
+        controller.close();
+      },
+    });
+  }
+
+  it('should return a body within the limit unchanged', async () => {
+    const request = new Request('http://localhost/relay/e/', {
+      method: 'POST',
+      body: streamOf(['{"batch":', '[]}']),
+      duplex: 'half',
+    } as RequestInit);
+
+    const body = await readRelayBody(request, 64);
+
+    expect(new TextDecoder().decode(body ?? undefined)).toBe('{"batch":[]}');
+  });
+
+  it('should refuse a declared length over the limit without reading', async () => {
+    const request = new Request('http://localhost/relay/e/', {
+      method: 'POST',
+      headers: { 'content-length': '2048' },
+      body: 'x'.repeat(2048),
+    });
+
+    expect(await readRelayBody(request, 1024)).toBeNull();
+    expect(request.bodyUsed).toBe(false);
+  });
+
+  it('should stop reading a streamed body once it passes the limit', async () => {
+    const request = new Request('http://localhost/relay/e/', {
+      method: 'POST',
+      body: streamOf(['x'.repeat(600), 'x'.repeat(600)]),
+      duplex: 'half',
+    } as RequestInit);
+
+    expect(await readRelayBody(request, 1024)).toBeNull();
   });
 });
