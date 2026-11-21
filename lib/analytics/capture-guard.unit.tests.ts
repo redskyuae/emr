@@ -67,6 +67,24 @@ describe('guardCapture', () => {
     });
   });
 
+  it('should not give a queued public page view the title and group of the page it is sent from', () => {
+    const guarded = guardCapture(
+      capture({
+        properties: {
+          is_demo_page: false,
+          route: '/login',
+          $current_url: 'https://emr.example.com/appointments',
+          $pathname: '/appointments',
+        },
+      }),
+      { route: '/appointments', page_title: 'Appointments', page_group: 'Clinical' }
+    );
+
+    expect(guarded?.properties).toMatchObject({ route: '/login', $pathname: '/login' });
+    expect(guarded?.properties).not.toHaveProperty('page_title');
+    expect(guarded?.properties).not.toHaveProperty('page_group');
+  });
+
   it('should clean the initial address and referrer kept on the person', () => {
     const guarded = guardCapture(
       capture({

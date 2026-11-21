@@ -128,9 +128,12 @@ export function guardCapture<T extends GuardedCapture>(
   const eventSpecs: PropertySpecs = spec
     ? { ...commonProperties, ...spec.properties }
     : commonProperties;
+  // An event that carries the route it was recorded on carries that page's complete context: a
+  // public page has no title or group, and must not borrow them from the page open when it is sent.
+  const sendTimePage = typeof custom.route === 'string' ? {} : page;
   const properties: Record<string, unknown> = {
     ...sdk,
-    ...pickDeclaredProperties(eventSpecs, { ...page, ...custom }),
+    ...pickDeclaredProperties(eventSpecs, { ...sendTimePage, ...custom }),
   };
 
   if (capture.event === '$groupidentify') {
