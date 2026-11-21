@@ -27,4 +27,7 @@ export type SigninInput = z.infer<typeof signinSchema>;
 export type SigninResult = {
   tenant: Tenant;
   setCookies: string[];
+  /** Internal only (analytics); the sign-in response returns `tenant` alone. */
+  userId: string;
+  rememberMe: boolean;
 };

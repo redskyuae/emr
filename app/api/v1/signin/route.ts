@@ -2,6 +2,11 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { SigninResponse } from './types';
 
+import {
+  analyticsSessionIdFromRequest,
+  identifyServerTenantGroup,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { signinCommand } from '@/app/api/lib/modules/auth/commands/signin-command';
 
 function mutationMessage(status: number, errors: string[]) {
@@ -51,6 +56,21 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json<SigninResponse>({ data: { tenant: result.data.tenant } });
 
     appendSetCookies(response, result.data.setCookies);
+
+    const { tenant, userId, rememberMe } = result.data;
+
+    recordServerEvent(
+      { userId, tenantId: tenant.id, sessionId: analyticsSessionIdFromRequest(request) },
+      'user_signed_in',
+      { remember_me: rememberMe }
+    );
+    identifyServerTenantGroup(tenant.id, {
+      name: tenant.name,
+      slug: tenant.slug,
+      time_zone: tenant.timeZone,
+      is_active: tenant.isActive,
+      created_at: tenant.createdAt.toISOString(),
+    });
 
     return response;
   } catch {

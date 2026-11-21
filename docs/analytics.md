@@ -149,6 +149,13 @@ Added by #360 (`lib/analytics/events/usage-events.ts`).
    `snake_case`; durations are whole numbers with the unit in the name (`minutes_since_check_in`).
 3. Record it with `captureAnalyticsEvent(name, properties)` in the browser. Never call PostHog
    directly. Keep the call in a route-local hook or container, not a presentational component.
+   A server outcome is recorded from the route handler's success branch, after the command
+   succeeded, with
+   `recordServerEvent(analyticsActorFromSession(tenantSession, request), name, properties)` from
+   `app/api/lib/analytics/server-analytics.ts`. It sends after the response (`after`), swallows
+   every failure and is a no-op when analytics is off. Commands stay free of analytics; when a
+   property is not in the payload or the result, surface it on the command's internal result
+   without changing the public response (see `userId` on `SigninResult`).
 4. Check the value against the never-send list above. `bun run test` fails if a non-boolean
    property's name looks like Patient data, an id, money or text.
 5. Add it to the tables in this file.
