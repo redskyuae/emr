@@ -29,10 +29,7 @@ export default function LoginLoader() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-4">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-3 w-24" />
-            </div>
+            <Skeleton className="h-4 w-20" />
             <Skeleton className="h-10 w-full" />
           </div>
 
