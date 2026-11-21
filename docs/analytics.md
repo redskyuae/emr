@@ -340,7 +340,6 @@ callback and add the form to the enum.
 | `patient_detail_tab_viewed`    | a Patient page tab is shown, the first one included                                                        | `tab`: `overview`, `chart`, `timeline`                                                                                 |
 | `patient_timeline_filtered`    | the Patient Timeline feed filter changes                                                                   | `feed`: `all`, `billing`, `records`, `encounters`                                                                      |
 | `patient_timeline_more_loaded` | another page of Timeline Events has loaded                                                                 | `pages_loaded` (pages now on screen; 2 after the first load)                                                           |
-| `global_search_attempted`      | the user pauses typing in the top-bar search box (which does nothing yet)                                  | `query_length`                                                                                                         |
 
 Searches, filters, prints and exports are recorded in each list's container; the shared search
 hook is `hooks/use-list-search-analytics.ts`. `surface_opened` is recorded by one listener in the

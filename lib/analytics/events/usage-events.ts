@@ -145,8 +145,4 @@ export const usageEvents = {
     source: 'client',
     properties: { pages_loaded: prop.count() },
   },
-  global_search_attempted: {
-    source: 'client',
-    properties: { query_length: prop.count() },
-  },
 } as const satisfies Record<string, EventSpec>;
