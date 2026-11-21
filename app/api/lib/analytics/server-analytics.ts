@@ -97,11 +97,15 @@ export function analyticsActorFromSession(
   tenantSession: TenantSession,
   request?: Request
 ): AnalyticsActor {
+  // Read defensively: building the actor runs in the route's success branch, and analytics must
+  // never turn a successful action into an error. An actor without a user id records nothing.
+  const session = tenantSession.session as Partial<TenantSession['session']> | undefined;
+
   return {
-    userId: tenantSession.session.user.id,
+    userId: session?.user?.id ?? '',
     tenantId: tenantSession.tenantId,
-    isImpersonated: Boolean(tenantSession.session.session.impersonatedBy),
-    sessionId: request?.headers.get(SESSION_ID_HEADER),
+    isImpersonated: Boolean(session?.session?.impersonatedBy),
+    sessionId: request?.headers?.get(SESSION_ID_HEADER) ?? null,
   };
 }
 
@@ -115,6 +119,10 @@ function sanitizeServerEvent<E extends ServerEventName>(
   event: E,
   properties: AnalyticsEventProperties<E>
 ) {
+  if (!actor.userId || !actor.tenantId) {
+    return null;
+  }
+
   return sanitizeEventProperties(event, {
     ...properties,
     source: 'server',

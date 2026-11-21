@@ -165,6 +165,18 @@ describe('server analytics', () => {
     });
   });
 
+  it('should record nothing for a session without a user, rather than throw', async () => {
+    const tenantSession = { tenantId: 'tenant_1', session: {} } as unknown as TenantSession;
+
+    expect(() =>
+      recordServerEvent(analyticsActorFromSession(tenantSession), 'user_signed_in', {
+        remember_me: true,
+      })
+    ).not.toThrow();
+    await runAfterCallbacks();
+    expect(posthogMocks.captureImmediate).not.toHaveBeenCalled();
+  });
+
   it('should mark an impersonated Session and read the browser session header', () => {
     const tenantSession = {
       tenantId: 'tenant_1',
