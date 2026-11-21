@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { markTabSession } from '@/app/lib/tab-session';
 import { useSignUp } from '@/app/queries/auth/useSignUp';
 import { useSignOut } from '@/app/queries/auth/useSignOut';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AuthErrorCallout } from '@/components/auth/auth-error-callout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -66,21 +66,11 @@ export function SignupForm() {
         }}
       >
         {errors.length > 0 ? (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Could not create workspace</AlertTitle>
-            <AlertDescription>
-              {errors.length === 1 ? (
-                errors[0]
-              ) : (
-                <ul className="list-disc space-y-1 pl-4">
-                  {errors.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-                </ul>
-              )}
-            </AlertDescription>
-          </Alert>
+          <AuthErrorCallout
+            key={signUpMutation.submittedAt}
+            leadIn="Could not create workspace:"
+            messages={errors}
+          />
         ) : null}
 
         <div className="space-y-2">
