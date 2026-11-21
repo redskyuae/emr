@@ -27,7 +27,7 @@ export function VisitSafetyStrip({
   const allergyAlert = !currentAllergies.some((allergy) => allergy === 'No known allergies');
 
   return (
-    <Card className="sticky top-16 z-10 gap-0 py-0">
+    <Card className="sticky top-0 z-10 gap-0 py-0">
       <CardContent className="grid gap-3 p-3 md:grid-cols-2 md:p-4 xl:grid-cols-[1.35fr_1fr_1fr] xl:items-center">
         <div className="flex min-w-0 items-center gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-md">

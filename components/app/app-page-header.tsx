@@ -9,15 +9,17 @@ import { PiPlusLight } from 'react-icons/pi';
 
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { getAppPageGroup, getAppPageMeta } from '@/components/app/app-shell-config';
-import { TenantChip } from '@/components/app/tenant-chip';
 import { Button } from '@/components/ui/button';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 gsap.registerPlugin(useGSAP);
 
 /**
  * The title of the current page: the sidebar group it belongs to as an eyebrow, a plain `h1`, and
  * the subtitle, with the title repeated behind them as a large, faint watermark. The page's
- * primary action sits at the end of the row.
+ * primary action sits at the end of the row. It is the first thing on every page and scrolls
+ * with the content. On a phone it starts with the menu button that opens the sidebar; on wider
+ * screens the sidebar rail and Ctrl/⌘+B do that instead.
  */
 export function AppPageHeader() {
   const pathname = usePathname();
@@ -33,12 +35,12 @@ export function AppPageHeader() {
       <GhostTitle text={pageMeta.title} />
 
       <div className="relative z-10 flex min-w-0 flex-col items-start gap-1.5">
+        <SidebarTrigger className="text-muted-foreground -ml-2 md:hidden" />
         {group ? <p className="text-muted-foreground text-xs font-medium">{group}</p> : null}
         <h1 className="text-[1.75rem] leading-tight font-semibold tracking-[-0.03em] break-words md:text-[2rem]">
           {pageMeta.title}
         </h1>
         <p className="text-muted-foreground max-w-prose text-sm">{pageMeta.subtitle}</p>
-        <TenantChip className="mt-1 md:hidden" />
       </div>
 
       {pageMeta.primaryAction && canUsePrimaryAction ? (

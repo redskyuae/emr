@@ -554,7 +554,7 @@ export function CreateVisitPageImpl({
           </div>
           <aside
             aria-label="Patient context"
-            className="space-y-4 xl:sticky xl:top-20 xl:-mx-1 xl:max-h-[calc(100svh-10rem)] xl:overflow-y-auto xl:px-1 xl:pb-1"
+            className="space-y-4 xl:sticky xl:top-4 xl:-mx-1 xl:max-h-[calc(100svh-6rem)] xl:overflow-y-auto xl:px-1 xl:pb-1"
           >
             {selectedPatientId !== null && canReadTreatmentPlans ? (
               <PatientTreatmentsCard

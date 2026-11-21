@@ -134,7 +134,7 @@ The custom Fluent steps in `globals.css` remain for those overlays and for the m
 ### Surfaces
 
 - In-page surfaces (cards, page and record headers, command bars, sticky or fixed action bars) are solid `bg-card`, never translucent or tinted.
-- `.acrylic` — translucent blurred light surface. In the app it is used only by the page-coloured `AppTopbar`, which has no border and must blend with the page; the marketing site header also uses it.
+- `.acrylic` — translucent blurred light surface, used by the marketing site header. The app shell does not use it.
 - `.acrylic-dark` — navy translucent variant for dark bands.
 
 ### Marketing surfaces (editorial layout)
@@ -176,10 +176,10 @@ The full shadcn/ui set (55 components) is installed in `components/ui/` (style `
 The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` in `app/(protected)/layout.tsx`.
 
 - **`AppSidebar`** is a floating ink panel (`variant="floating"`, 2xl radius). Rows are 40px pills; the current row is `sidebar-selected`, a grey a step lighter than the hover grey (`sidebar-accent`), with white semibold text and a 3px white `sidebar-selected-indicator` bar on its left edge. A solid blue fill shouted on the ink panel, and a black one disappeared into it. Collapsed to icons, the bar is dropped. A parent with a submenu only brightens, and its current child carries the selection; collapsed to icons the submenu is hidden, so the parent takes the selection instead. Group labels are `sidebar-foreground/60`, which keeps them above 4.5:1 on the panel. It is a sheet on a phone.
-- **`AppTopbar`** is a slim sticky utility bar: the sidebar trigger, global search, the active Tenant (`TenantChip`), help and notifications. It carries no page title.
-- **`AppPageHeader`** sits under the top bar on every page. It shows the page's sidebar group as a small muted eyebrow (`getAppPageGroup`), the title as a plain `h1` in the foreground colour, and the subtitle under it. The title is repeated behind the header as a large watermark at 4.5% foreground opacity that drifts in from the left on navigation, inside the motion rule (0.7s, `power3.out`; skipped under `prefers-reduced-motion`); it is `aria-hidden` and clipped by the header. Title and subtitle come from `app-shell-config.ts`; a page does not render its own `h1`, and its section headings start at `h2`. A task page that needs its own name (Check in Patient, Reschedule Appointment) gets its own page meta there instead of a second, larger heading in the page.
+- **There is no top bar.** `AppPageHeader` is the first thing on every page and scrolls away with the content; nothing is pinned above it, so a sticky element inside a page measures its offset from the top of the viewport. The shell has no global search, Help or Notifications.
+- **`AppPageHeader`** shows the page's sidebar group as a small muted eyebrow (`getAppPageGroup`), the title as a plain `h1` in the foreground colour, and the subtitle under it. The title is repeated behind the header as a large watermark at 4.5% foreground opacity that drifts in from the left on navigation, inside the motion rule (0.7s, `power3.out`; skipped under `prefers-reduced-motion`); it is `aria-hidden` and clipped by the header. Title and subtitle come from `app-shell-config.ts`; a page does not render its own `h1`, and its section headings start at `h2`. A task page that needs its own name (Check in Patient, Reschedule Appointment) gets its own page meta there instead of a second, larger heading in the page.
 - A page header **primary action** (`primaryAction` in the page meta) is only for pages whose content has no always-visible button for the same action. A list page with a create button in its toolbar leaves it out, so an action never appears twice.
-- On a phone the Tenant chip moves from the top bar into the page header, so the active Tenant stays visible.
+- **Opening the sidebar.** On a phone (below `md`, where the sidebar becomes a sheet) the page header starts with the themed `SidebarTrigger`, which opens it. From `md` up the trigger is hidden; the sidebar rail and Ctrl/⌘+B collapse and expand the sidebar.
 
 ## Clinical surfaces
 
@@ -199,7 +199,7 @@ The authenticated shell is `SidebarProvider` → `AppSidebar` + `SidebarInset` i
 
 ## UX principles (EMR-specific)
 
-1. **Context is safety.** Show the active Tenant in the shell. When Facility selection is available, show the selected Facility too. Never substitute a sample Facility name for missing session context; staff must not have to guess where an action lands.
+1. **Context is safety.** The shell does not name the active Tenant, which is chosen at sign-in. When Facility selection is available, show the selected Facility. Never substitute a sample Facility name for missing session context; staff must not have to guess where an action lands.
 2. **Clarity over cleverness.** No information critical to patient care hidden behind hover, truncation, or low-contrast text. Tooltips supplement; they never carry sole meaning.
 3. **Forgiving forms.** Labels above fields, inline validation on blur (not on keystroke), exact API error messages surfaced verbatim, nothing blocks typing. Password fields get visibility toggles. Required fields are marked with a red asterisk; which fields are required is read from the API/DTO contract for that operation (not decided ad hoc), so the asterisk is `aria-hidden` and the input carries `aria-required`.
 4. **Destructive actions confirm.** Deactivate/delete always goes through `alert-dialog` with the entity named in the prompt.

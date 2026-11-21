@@ -177,7 +177,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   return (
     <>
       {/* From xl the Visit is a cockpit that fits the screen: each pane scrolls on its own. */}
-      <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 xl:h-[calc(100dvh-7.5rem)] xl:min-h-[30rem]">
+      <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 xl:h-[calc(100dvh-3.5rem)] xl:min-h-[30rem]">
         {/* The same safety banner the Patient Chart shows — the consulting
             Doctor must see allergies without leaving the Visit. */}
         <div className="flex-none space-y-3 empty:hidden">
