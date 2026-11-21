@@ -1,10 +1,11 @@
-import { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, ReactNode, Suspense } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { demoPagesEnabled } from '@/lib/demo-pages';
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
 import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
+import { SurfaceAnalytics } from '@/components/analytics/surface-analytics';
 import { AppPageHeader } from '@/components/app/app-page-header';
 import { AppShellGate } from '@/components/app/app-shell-gate';
 import { AppSidebar } from '@/components/app/app-sidebar';
@@ -41,6 +42,9 @@ export default async function AppLayout({
   return (
     <TabSessionGate>
       <AppShellGate>
+        <Suspense fallback={null}>
+          <SurfaceAnalytics />
+        </Suspense>
         <TooltipProvider>
           <SidebarProvider
             defaultOpen={defaultOpen}

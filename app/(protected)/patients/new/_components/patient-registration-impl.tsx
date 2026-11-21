@@ -12,6 +12,7 @@ import {
 } from '@/app/(protected)/patients/_utils/patient-form-values';
 import { useRegisterPatient } from '@/app/queries/patients/useRegisterPatient';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { usePatientFormAnalytics } from '@/app/(protected)/patients/_components/use-patient-form-analytics';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -25,6 +26,7 @@ export function PatientRegistrationImpl() {
   const router = useRouter();
   const registerPatient = useRegisterPatient();
   const { data: canCreate } = useHasPermission('patient:create');
+  const analytics = usePatientFormAnalytics(canCreate ? 'register' : null);
 
   if (!canCreate) {
     return (
@@ -54,8 +56,11 @@ export function PatientRegistrationImpl() {
       defaultValues={EMPTY_PATIENT_FORM_VALUES}
       isSaving={registerPatient.isPending}
       onCancel={() => router.push('/patients')}
+      onInvalid={analytics.recordInvalid}
       onSave={async (values) => {
+        analytics.recordSubmitted(values);
         const result = await registerPatient.mutateAsync(patientFormValuesToRequest(values));
+        analytics.recordSaved();
         toast.success(`Patient registered as ${result.data.mrn}.`);
         router.push(`/patients/${result.data.id}`);
       }}

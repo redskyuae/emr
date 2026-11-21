@@ -10,6 +10,8 @@ import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useReactivateStaff } from '@/app/queries/identity-access/useReactivateStaff';
 import { useRolesQuery } from '@/app/queries/identity-access/useRoles';
 import { useStaffQuery } from '@/app/queries/identity-access/useStaff';
+import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
 import { DeactivateUserDialog } from './_modals/deactivate-user-dialog';
 import { UserFormSheet } from './_sheets/user-form-sheet';
@@ -59,6 +61,8 @@ export function UsersPageImpl() {
 
   const staff = staffQuery.data?.data ?? [];
   const meta = staffQuery.data?.meta;
+
+  useListSearchAnalytics('users', { term: search, query: staffQuery, resultCount: meta?.total });
 
   // Re-sync the URL when the requested page is invalid or now out of range (e.g. a
   // deactivate/reactivate shrank the filtered set past the current page), so the
@@ -113,11 +117,13 @@ export function UsersPageImpl() {
           onRoleChange={(value) => {
             void setRoleParam(value || null);
             goToFirstPage();
+            if (value) captureAnalyticsEvent('list_filtered', { list: 'users', filter: 'role' });
           }}
           statusValue={statusParam}
           onStatusChange={(value) => {
             void setStatusParam(value || null);
             goToFirstPage();
+            if (value) captureAnalyticsEvent('list_filtered', { list: 'users', filter: 'status' });
           }}
           roles={roles}
           rolesLoading={rolesQuery.isLoading}

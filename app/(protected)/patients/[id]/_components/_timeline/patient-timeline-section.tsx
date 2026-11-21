@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { useQueryState } from 'nuqs';
 import { CiCalendarDate } from 'react-icons/ci';
 
@@ -8,8 +9,12 @@ import {
   TIMELINE_FEEDS,
   type TimelineFeed,
 } from '@/app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema';
+import type { GetPatientTimelineResponse } from '@/app/api/v1/patients/[id]/timeline/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { usePatientTimelineQuery } from '@/app/queries/patients/timeline/usePatientTimeline';
+import {
+  patientTimelineQueryKey,
+  usePatientTimelineQuery,
+} from '@/app/queries/patients/timeline/usePatientTimeline';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import {
   Empty,
@@ -19,6 +24,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
 import { TimelineDayGroupSection } from './timeline-day-group';
 import { TimelineFilterChips } from './timeline-filter-chips';
@@ -61,17 +67,30 @@ export function PatientTimelineSection({ patientId }: { patientId: number }) {
   const [feedParam, setFeedParam] = useQueryState('feed');
   const feed = parseFeed(feedParam);
   const timelineQuery = usePatientTimelineQuery(patientId, feed);
+  const queryClient = useQueryClient();
 
   const { fetchNextPage, hasNextPage, isFetchingNextPage } = timelineQuery;
   const onLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
+      void fetchNextPage().then((result) => {
+        const pages = queryClient.getQueryData<InfiniteData<GetPatientTimelineResponse>>(
+          patientTimelineQueryKey(patientId, feed)
+        )?.pages.length;
+
+        if (!result.isError && pages) {
+          captureAnalyticsEvent('patient_timeline_more_loaded', { pages_loaded: pages });
+        }
+      });
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [feed, fetchNextPage, hasNextPage, isFetchingNextPage, patientId, queryClient]);
 
   const handleFeedChange = (nextFeed: TimelineFeed) => {
     // `all` is the default, so it is cleared from the URL rather than pinned.
     void setFeedParam(nextFeed === 'all' ? null : nextFeed);
+
+    if (nextFeed !== feed) {
+      captureAnalyticsEvent('patient_timeline_filtered', { feed: nextFeed });
+    }
   };
 
   const groups = timelineQuery.data ?? [];

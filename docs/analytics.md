@@ -287,7 +287,70 @@ sent.
 
 ### Usage and friction events
 
-Added by #360 (`lib/analytics/events/usage-events.ts`).
+Declared in `lib/analytics/events/usage-events.ts`, recorded by the browser.
+
+**Friction.** `action_rejected` and `data_load_failed` are recorded by the shared query client's
+`MutationCache` and `QueryCache` (`components/providers/query-provider.tsx`), so no query hook
+records them itself. `parseApiError` keeps the response address on `ApiError`, and
+`lib/analytics/request-failure.ts` turns it into the cleaned route (every segment that is not a
+lowercase word becomes `:id`), the status and the kind. A 401 (the Session expired: `signed_out`),
+a cancelled request, an error that is not an API rejection, and the sign-in and signup hooks (their
+`meta` is `SKIP_FAILURE_ANALYTICS`; `sign_in_failed` and `signup_failed` count them) are skipped.
+
+| Event                    | When                                   | Properties                                                                                                                                               |
+| ------------------------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `action_rejected`        | a mutation request fails               | `api_route` (e.g. `/api/v1/appointments/:id/reschedule`), `status`, `rejection_kind`                                                                     |
+| `data_load_failed`       | a query fails, once, after its retries | `api_route`, `status`, `rejection_kind`                                                                                                                  |
+| `form_validation_failed` | a submit is blocked by invalid fields  | `form`: `patient_registration`, `patient_edit`, `invoice_composer`; `invalid_field_count`; `invalid_fields` (top-level field names from the form schema) |
+
+`rejection_kind` is `validation` (400, 422), `forbidden` (403), `not_found` (404), `conflict`
+(409), `server_error` (5xx), `network` (the request never got an answer, or timed out, so no
+`api_route` or `status`) or `other` (any other status). `unauthorized` (401) is declared but never
+sent, because 401s are skipped. To record `form_validation_failed` for another form, pass
+`formValidationFailure(form, errors)` (`lib/analytics/form-validation.ts`) from its invalid-submit
+callback and add the form to the enum.
+
+**Patient form** (`/patients/new`, `/patients/[id]/edit`; `patients/_components/use-patient-form-analytics.ts`).
+
+| Event                    | When                                            | Properties                                                                         |
+| ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `patient_form_started`   | the form is shown                               | `mode`: `register`, `edit`, `complete_provisional` (edit of a Provisional Patient) |
+| `patient_form_submitted` | a valid submit, before the save request         | `mode`, `has_emirates_id`, `seconds_since_started`                                 |
+| `patient_form_abandoned` | the user leaves or closes the tab before a save | `mode`, `seconds_since_started`                                                    |
+
+**Invoice composer** (`/billing?invoice=new`; `billing/_components/use-invoice-composer-analytics.ts`).
+
+| Event                          | When                                            | Properties                                                                                                   |
+| ------------------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `invoice_composer_started`     | the composer opens                              | `linked_to`: `visit`, `admission`, `none` (from the address)                                                 |
+| `invoice_composer_submitted`   | Finalize/Post or Save Draft passes its checks   | `linked_to`, `line_count`, `tender_count`, `finalize_now`, `has_discount`, `seconds_since_started`           |
+| `invoice_composer_step_failed` | one of the chained calls fails                  | `failed_step`: `create_invoice`, `add_line`, `update_draft`, `finalize`, `record_payment`; `status` (if any) |
+| `invoice_composer_abandoned`   | the user leaves before every call has succeeded | `linked_to` (the encounter chosen then), `seconds_since_started`                                             |
+
+**Feature usage.**
+
+| Event                          | When                                                                                                       | Properties                                                                                                             |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `list_searched`                | a list's applied (debounced) search term has its own results; a term in the opening address is not counted | `list`: `patients`, `previous_visits`, `users`, `assets`, `work_orders`, `appointments`; `query_length`; `has_results` |
+| `list_filtered`                | a list filter is set to a value (clearing it is not counted)                                               | `list`; `filter`: `status`, `gender`, `doctor`, `therapist`, `date_range`, `type`, `role`, `category`                  |
+| `surface_opened`               | a sheet or dialog whose state is in the URL opens                                                          | `surface` (see below); `mode`: `create`, `edit`, `view`, `delete`                                                      |
+| `document_printed`             | a print button is used                                                                                     | `document`: `visit_summary`, `consolidated_report`, `payment_receipt`                                                  |
+| `export_downloaded`            | the Appointment export has downloaded                                                                      | `export`: `appointments`; `format`: `excel`, `pdf`                                                                     |
+| `consolidated_report_opened`   | a Consolidated Patient Report is shown                                                                     | `period_days` (both ends counted)                                                                                      |
+| `patient_detail_tab_viewed`    | a Patient page tab is shown, the first one included                                                        | `tab`: `overview`, `chart`, `timeline`                                                                                 |
+| `patient_timeline_filtered`    | the Patient Timeline feed filter changes                                                                   | `feed`: `all`, `billing`, `records`, `encounters`                                                                      |
+| `patient_timeline_more_loaded` | another page of Timeline Events has loaded                                                                 | `pages_loaded` (pages now on screen; 2 after the first load)                                                           |
+| `global_search_attempted`      | the user pauses typing in the top-bar search box (which does nothing yet)                                  | `query_length`                                                                                                         |
+
+Searches, filters, prints and exports are recorded in each list's container; the shared search
+hook is `hooks/use-list-search-analytics.ts`. `surface_opened` is recorded by one listener in the
+app shell (`components/analytics/surface-analytics.tsx`) from the map in
+`lib/analytics/surfaces.ts`, which says, page by page, which URL parameter opens which surface:
+`new` is `create` and a record id is the surface's existing-record mode (`edit` for most, `view` for
+the Appointment detail sheet and the Payment receipt, `delete` for the Master delete dialogs). The
+map is keyed by the cleaned page route because a name can mean different things on different pages
+(`status` is a filter on most lists but the Asset Status sheet on its Master page). A new sheet or
+dialog is one line in that map. Sheets and dialogs kept in component state are not recorded.
 
 ## Adding an event
 

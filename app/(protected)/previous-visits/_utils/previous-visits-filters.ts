@@ -97,6 +97,24 @@ export function countActiveFilters(filters: PreviousVisitsFilters, today: Date) 
 }
 
 /**
+ * The names of the filters an Apply changed to a chosen value, for `list_filtered`. The search
+ * term is not a filter (it is counted as a search), and clearing a filter is not applying one.
+ */
+export function appliedFilterNames(
+  applied: PreviousVisitsFilters,
+  next: PreviousVisitsFilters
+): ('date_range' | 'status' | 'doctor' | 'type')[] {
+  const names: ('date_range' | 'status' | 'doctor' | 'type')[] = [];
+
+  if (next.from !== applied.from || next.to !== applied.to) names.push('date_range');
+  if (next.status !== null && next.status !== applied.status) names.push('status');
+  if (next.doctorId !== null && next.doctorId !== applied.doctorId) names.push('doctor');
+  if (next.visitTypeId !== null && next.visitTypeId !== applied.visitTypeId) names.push('type');
+
+  return names;
+}
+
+/**
  * The upper bound is always sent: a bound is what tells the API this is a
  * history search rather than today's queue, which it would otherwise default to.
  */

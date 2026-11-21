@@ -7,6 +7,8 @@ import { useAssetCategoriesQuery } from '@/app/queries/asset-masters/useAssetCat
 import { useAssetStatusesQuery } from '@/app/queries/asset-masters/asset-statuses/useAssetStatuses';
 import { useAssetsQuery } from '@/app/queries/assets-management/useAssets';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { AssetDirectoryTable } from './asset-directory-table';
 import { InventoryToolbar } from './inventory-toolbar';
 import { AddAssetSheet } from './_sheets/add-asset-sheet';
@@ -43,6 +45,8 @@ export function InventoryPageImpl() {
 
   const assets = assetsQuery.data?.data ?? [];
   const meta = assetsQuery.data?.meta;
+
+  useListSearchAnalytics('assets', { term: search, query: assetsQuery, resultCount: meta?.total });
 
   useEffect(() => {
     if (pageParam !== page) {
@@ -81,12 +85,18 @@ export function InventoryPageImpl() {
               onCategoryChange={(value) => {
                 void setCategoryParam(value || null);
                 goToFirstPage();
+                if (value) {
+                  captureAnalyticsEvent('list_filtered', { list: 'assets', filter: 'category' });
+                }
               }}
               statusOptions={statusOptions}
               statusValue={statusParam}
               onStatusChange={(value) => {
                 void setStatusParam(value || null);
                 goToFirstPage();
+                if (value) {
+                  captureAnalyticsEvent('list_filtered', { list: 'assets', filter: 'status' });
+                }
               }}
               onAddAsset={() => void setAssetParam('new')}
             />

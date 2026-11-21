@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useQueryState } from 'nuqs';
 import {
@@ -18,6 +18,7 @@ import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-sche
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import {
   formatEmiratesId,
   getPatientGenderLabel,
@@ -260,6 +261,18 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
   const { data: canDelete } = useHasPermission('patient:delete');
 
   const tab = parsePatientTab(tabParam);
+  const shownTab = patientQuery.data ? `${patientId}|${tab}` : null;
+  const recordedTab = useRef<string | null>(null);
+
+  // Each tab as it is shown, the first one included. The Patient is never part of the event.
+  useEffect(() => {
+    if (!shownTab || recordedTab.current === shownTab) {
+      return;
+    }
+
+    recordedTab.current = shownTab;
+    captureAnalyticsEvent('patient_detail_tab_viewed', { tab });
+  }, [shownTab, tab]);
 
   if (patientQuery.isError || (!patientQuery.isLoading && !patientQuery.data)) {
     return (

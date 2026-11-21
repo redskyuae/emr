@@ -9,6 +9,41 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Kbd } from '@/components/ui/kbd';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
+
+// How long typing must pause before an attempt counts, so one search is one event.
+const SEARCH_PAUSE_MS = 1000;
+
+/**
+ * The search box does nothing yet; this measures whether staff expect it to. It records the
+ * length of what was typed, once per pause, never the text.
+ */
+function useGlobalSearchAttempts() {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    []
+  );
+
+  return (value: string) => {
+    if (timer.current) clearTimeout(timer.current);
+
+    const queryLength = value.trim().length;
+
+    if (queryLength === 0) {
+      timer.current = null;
+      return;
+    }
+
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      captureAnalyticsEvent('global_search_attempted', { query_length: queryLength });
+    }, SEARCH_PAUSE_MS);
+  };
+}
 
 /**
  * The utility bar above every page: the sidebar trigger, global search, the active Tenant, help
@@ -16,6 +51,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
  */
 export function AppTopbar() {
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const recordSearchAttempt = useGlobalSearchAttempts();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -48,6 +84,7 @@ export function AppTopbar() {
             placeholder="Search patients, appointments, users..."
             aria-label="Global search"
             className="text-sm"
+            onChange={(event) => recordSearchAttempt(event.target.value)}
           />
           <InputGroupAddon align="inline-end" className="hidden pr-4 sm:flex">
             <Kbd>/</Kbd>

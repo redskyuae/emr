@@ -15,6 +15,8 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
 import { useUpdatePatient } from '@/app/queries/patients/useUpdatePatient';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { usePatientFormAnalytics } from '@/app/(protected)/patients/_components/use-patient-form-analytics';
+import { patientEditFormMode } from '@/app/(protected)/patients/_utils/patient-form-analytics';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -64,6 +66,12 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
   const patientQuery = usePatientQuery(patientId);
   const updatePatient = useUpdatePatient();
   const { data: canUpdate } = useHasPermission('patient:update');
+  // The mode is known once the Patient loads: completing a Provisional Patient or an edit.
+  const analytics = usePatientFormAnalytics(
+    canUpdate && patientQuery.data
+      ? patientEditFormMode(patientQuery.data.registrationStatus)
+      : null
+  );
 
   if (!canUpdate) {
     return (
@@ -114,11 +122,14 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
             defaultValues={patientToFormValues(patient)}
             isSaving={updatePatient.isPending}
             onCancel={() => router.push(`/patients/${patientId}`)}
+            onInvalid={analytics.recordInvalid}
             onSave={async (values) => {
+              analytics.recordSubmitted(values);
               await updatePatient.mutateAsync({
                 patientId,
                 request: patientFormValuesToRequest(values),
               });
+              analytics.recordSaved();
               toast.success('Patient updated.');
               router.push(`/patients/${patientId}`);
             }}

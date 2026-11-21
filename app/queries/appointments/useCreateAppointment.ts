@@ -28,9 +28,10 @@ export class AppointmentApiError extends ApiError {
     message: string,
     errors: string[],
     status: number,
-    patientMatches: PotentialPatientMatch[]
+    patientMatches: PotentialPatientMatch[],
+    url?: string
   ) {
-    super(message, errors, status);
+    super(message, errors, status, url);
     this.name = 'AppointmentApiError';
     this.patientMatches = patientMatches;
   }
@@ -82,7 +83,8 @@ async function parseAppointmentApiError(response: Response, fallbackMessage: str
     message,
     errors.length > 0 ? errors : [message],
     response.status,
-    patientMatches
+    patientMatches,
+    response.url || undefined
   );
 }
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { isValidPeriod, thisMonthPeriod, toApiDate } from './consolidated-report-period';
+import {
+  isValidPeriod,
+  periodDays,
+  thisMonthPeriod,
+  toApiDate,
+} from './consolidated-report-period';
 
 describe('consolidated report period', () => {
   it('should run this month from the first to today', () => {
@@ -20,6 +25,13 @@ describe('consolidated report period', () => {
     expect(isValidPeriod({ from: '2026-11-01', to: '20/11/2026' })).toBe(false);
     expect(isValidPeriod({ from: '2026-02-30', to: '2026-03-01' })).toBe(false);
     expect(isValidPeriod({ from: '2026-11-21', to: '2026-11-20' })).toBe(false);
+  });
+
+  it('should count the days in a period, both ends included', () => {
+    expect(periodDays({ from: '2026-11-20', to: '2026-11-20' })).toBe(1);
+    expect(periodDays({ from: '2026-11-01', to: '2026-11-20' })).toBe(20);
+    expect(periodDays({ from: '2026-03-28', to: '2026-04-03' })).toBe(7);
+    expect(periodDays({ from: '2024-01-01', to: '2024-12-31' })).toBe(366);
   });
 
   it('should turn an ISO date into the DD-MM-YYYY the API takes', () => {

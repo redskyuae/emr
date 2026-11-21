@@ -9,6 +9,8 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
+import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +23,7 @@ import {
 } from '@/components/ui/empty';
 import {
   PREVIOUS_VISITS_PAGE_SIZE,
+  appliedFilterNames,
   countActiveFilters,
   rangeLabel,
   resolveFilters,
@@ -72,6 +75,12 @@ export function PreviousVisitsPageImpl() {
   const total = visitsQuery.data?.meta.total ?? 0;
   const totalPages = visitsQuery.data?.meta.totalPages ?? 0;
 
+  useListSearchAnalytics('previous_visits', {
+    term: filters.query,
+    query: visitsQuery,
+    resultCount: visitsQuery.data?.meta.total,
+  });
+
   // Re-sync the URL when the requested page is invalid or now out of range, so
   // the list never sticks on an empty page with pagination hidden.
   useEffect(() => {
@@ -86,6 +95,10 @@ export function PreviousVisitsPageImpl() {
   }, [page, params.page, setParams, totalPages]);
 
   function applyFilters(next: PreviousVisitsFilters) {
+    for (const filter of appliedFilterNames(filters, next)) {
+      captureAnalyticsEvent('list_filtered', { list: 'previous_visits', filter });
+    }
+
     void setParams({
       q: next.query || null,
       to: next.to,

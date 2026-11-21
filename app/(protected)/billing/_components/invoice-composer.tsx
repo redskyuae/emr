@@ -29,6 +29,7 @@ import {
   createInvoiceFormSchema,
   type CreateInvoiceFormValues,
 } from '../_utils/create-invoice-form-schema';
+import { composerLinkFromParams } from '../_utils/invoice-composer-analytics';
 import { formatMoney } from '../_utils/invoice-display';
 import {
   invoiceComposerTotals,
@@ -40,6 +41,7 @@ import {
 import { ComposerChargesCard } from './composer-charges-card';
 import { ComposerPatientCard } from './composer-patient-card';
 import { ComposerPaymentCard } from './composer-payment-card';
+import { type ComposerStep, useInvoiceComposerAnalytics } from './use-invoice-composer-analytics';
 
 export function InvoiceComposer() {
   const router = useRouter();
@@ -73,6 +75,10 @@ export function InvoiceComposer() {
   const { data: canUpdate } = useHasPermission('invoice:update');
   const { data: canFinalize } = useHasPermission('invoice:finalize');
   const { data: canRecordPayment } = useHasPermission('payment:record');
+  const analytics = useInvoiceComposerAnalytics({
+    openedFor: composerLinkFromParams({ visitId: visitIdParam, admissionId: admissionIdParam }),
+    currentLink: () => form.getValues('encounterKind'),
+  });
 
   useEffect(() => {
     const patientId = patientIdParam && /^\d+$/.test(patientIdParam) ? patientIdParam : '';
@@ -137,11 +143,23 @@ export function InvoiceComposer() {
       notes: values.notes || undefined,
     };
 
+    analytics.recordSubmitted({
+      linked_to: values.encounterKind,
+      line_count: lines.length,
+      tender_count: post ? payment.resolved.length : 0,
+      finalize_now: post,
+      has_discount: discount > 0,
+    });
+
+    // The chained call in flight, so a failure says which step it was.
+    let step: ComposerStep = 'create_invoice';
+
     setSubmitting(true);
     try {
       const created = await createMutation.mutateAsync(request);
       const id = created.data.id;
       setCreatedId(id);
+      step = 'add_line';
       for (const line of lines) {
         await addLineMutation.mutateAsync({
           id,
@@ -153,14 +171,17 @@ export function InvoiceComposer() {
         });
       }
       if (discount > 0) {
+        step = 'update_draft';
         await updateMutation.mutateAsync({
           id,
           request: { discountAmount: discount, notes: values.notes || undefined },
         });
       }
       if (post) {
+        step = 'finalize';
         await finalizeMutation.mutateAsync(id);
         let receiptId: number | null = null;
+        step = 'record_payment';
         for (const tender of payment.resolved) {
           const recorded = await paymentMutation.mutateAsync({
             id,
@@ -172,13 +193,16 @@ export function InvoiceComposer() {
           });
           receiptId = recorded.data.payment.id;
         }
+        analytics.recordCompleted();
         toast.success(receiptId ? 'Invoice posted and Payment recorded.' : 'Invoice finalized.');
         router.push(`/billing/${id}${receiptId ? `?receipt=${receiptId}` : ''}`);
       } else {
+        analytics.recordCompleted();
         toast.success('Draft Invoice saved.');
         router.push(`/billing/${id}`);
       }
     } catch (error) {
+      analytics.recordStepFailed(step, error);
       const message = getApiErrorMessage(error);
       setSubmitError(message);
       toast.error(message);
@@ -293,7 +317,9 @@ export function InvoiceComposer() {
                 disabled={
                   submitting || Boolean(chargeError || discountError || postError || createdId)
                 }
-                onClick={() => void form.handleSubmit((values) => save(values, true))()}
+                onClick={() =>
+                  void form.handleSubmit((values) => save(values, true), analytics.recordInvalid)()
+                }
               >
                 {submitting
                   ? 'Posting…'
@@ -308,7 +334,9 @@ export function InvoiceComposer() {
                 disabled={
                   submitting || Boolean(chargeError || discountError || editError || createdId)
                 }
-                onClick={() => void form.handleSubmit((values) => save(values, false))()}
+                onClick={() =>
+                  void form.handleSubmit((values) => save(values, false), analytics.recordInvalid)()
+                }
               >
                 <CiFloppyDisk className="size-4" /> Save Draft
               </Button>
