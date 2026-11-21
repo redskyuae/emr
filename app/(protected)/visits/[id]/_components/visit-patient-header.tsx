@@ -129,6 +129,7 @@ export function VisitPatientHeader({
               <span>
                 {visit.visitType.name} · {visitDoctorLabel(visit)} ·{' '}
                 {visit.appointment?.bookingNumber ?? 'Walk-in'}
+                {visit.admitSource ? <> · {visit.admitSource.name}</> : null}
               </span>
             </p>
           </div>

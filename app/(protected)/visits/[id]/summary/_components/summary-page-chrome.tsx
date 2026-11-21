@@ -17,7 +17,14 @@ const VISIT_STATUS: Record<VisitStatus, { label: string; tone: PillTone }> = {
   CANCELLED: { label: 'Cancelled', tone: 'destructive' },
 };
 
-/** One A4 sheet: header, the blocks placed on it, and the page footer pinned to the bottom. */
+/**
+ * One A4 sheet: header, the blocks placed on it, and the page footer pinned to the bottom.
+ *
+ * The Visit Summary files use fixed pixel text sizes (`text-[13px]` and similar) on
+ * purpose: the sheet is a fixed 210 × 297 mm print layout, and fixed sizes keep the
+ * page breaks and the printed page the same on every screen and browser. Normal app
+ * pages use the type scale instead (DESIGN.md › Typography).
+ */
 export function SummaryPage({
   header,
   footer,
@@ -114,9 +121,10 @@ export function SummaryLetterhead({ summary }: { summary: VisitSummary }) {
         </div>
       </div>
       <div className="flex-none text-right">
-        <h1 className="font-heading text-[25px] leading-tight font-bold tracking-[-0.01em]">
+        {/* A paragraph, not an h1: the app shell already renders the page title. */}
+        <p className="font-heading text-[25px] leading-tight font-bold tracking-[-0.01em]">
           Visit Summary
-        </h1>
+        </p>
         <p className="mt-1.5 flex items-center justify-end gap-2.5">
           <span className="font-mono text-[13px] font-medium">{summary.visit.visitNumber}</span>
           <StatusPill tone={status.tone}>{status.label}</StatusPill>

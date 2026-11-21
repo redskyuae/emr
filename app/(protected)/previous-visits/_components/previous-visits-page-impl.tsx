@@ -6,6 +6,7 @@ import { CiCircleAlert } from 'react-icons/ci';
 import { PiClockCounterClockwiseLight } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -23,6 +24,7 @@ import {
   countActiveFilters,
   rangeLabel,
   resolveFilters,
+  tenantToday,
   toVisitsParams,
   type PreviousVisitsFilters,
 } from '../_utils/previous-visits-filters';
@@ -50,7 +52,9 @@ const CLEARED_PARAMS = {
 };
 
 export function PreviousVisitsPageImpl() {
-  const [today] = useState(() => new Date());
+  const [now] = useState(() => new Date());
+  const { data: currentUser } = useCurrentUserQuery();
+  const today = tenantToday(now, currentUser?.tenant.timeZone);
   const [params, setParams] = useQueryStates(urlParsers, { history: 'push' });
 
   const filters = resolveFilters(params, today);

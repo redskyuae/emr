@@ -229,6 +229,12 @@ export const listVisitsSchema = z
     path: ['toDate'],
   });
 
+// The Visits board tiles count one day's queue, optionally for one Doctor.
+export const visitStatusCountsSchema = z.object({
+  visitDate: visitDateSchema,
+  doctorId: positiveIdSchema('Doctor ID').optional(),
+});
+
 export type CheckInVisitInput = z.infer<typeof checkInVisitSchema>;
 export type UpdateVisitInput = z.infer<typeof updateVisitSchema>;
 export type AmendVisitInput = z.infer<typeof amendVisitSchema>;
@@ -251,6 +257,12 @@ export type ValidatedCheckInVisitData = {
 };
 
 export type VisitListParams = ListVisitsInput & { tenantId: string };
+
+export type VisitStatusCountsParams = z.infer<typeof visitStatusCountsSchema> & {
+  tenantId: string;
+};
+
+export type VisitStatusCounts = Record<VisitStatus, number>;
 
 export type VisitPatientSummary = {
   id: number;

@@ -1,5 +1,6 @@
 import { format, isValid, parse, parseISO } from 'date-fns';
 
+import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
 import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { VisitsParams } from '@/app/queries/visits/useVisits';
 import { VISIT_STATUS_FILTERS, toDisplayDate } from '../../visits/_utils/visit-status';
@@ -38,6 +39,15 @@ function isIsoDate(value: string | null): value is string {
 
 function isPositiveId(value: string | null): value is string {
   return value !== null && /^[1-9]\d*$/.test(value);
+}
+
+/**
+ * "Today" is the Tenant's operational day (ADR 0026), not the browser's, so a
+ * laptop in another time zone still sees the Visits checked in today. Until the
+ * Tenant time zone is known it falls back to the browser's date.
+ */
+export function tenantToday(now: Date, timeZone: string | undefined): Date {
+  return timeZone ? parseISO(tenantLocalDateTime(now, timeZone).date) : now;
 }
 
 /**

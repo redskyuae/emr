@@ -7,6 +7,7 @@ import {
   formatVisitDay,
   rangeLabel,
   resolveFilters,
+  tenantToday,
   toVisitsParams,
   type PreviousVisitsUrlParams,
 } from './previous-visits-filters';
@@ -23,6 +24,20 @@ const emptyParams: PreviousVisitsUrlParams = {
 };
 
 describe('previous visits filters', () => {
+  describe('tenantToday', () => {
+    // 20:00 UTC on 16 July is already 17 July in Dubai and still 16 July in New York.
+    const now = new Date('2026-07-16T20:00:00Z');
+
+    it('should use the Tenant calendar date rather than the browser one', () => {
+      expect(defaultRange(tenantToday(now, 'Asia/Dubai')).to).toBe('2026-07-17');
+      expect(defaultRange(tenantToday(now, 'America/New_York')).to).toBe('2026-07-16');
+    });
+
+    it('should fall back to the given date until the Tenant time zone is known', () => {
+      expect(tenantToday(now, undefined)).toBe(now);
+    });
+  });
+
   describe('defaultRange', () => {
     it('should default to all dates up to today', () => {
       expect(defaultRange(today)).toEqual({ from: null, to: '2026-07-16' });

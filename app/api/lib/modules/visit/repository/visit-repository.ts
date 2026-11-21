@@ -23,12 +23,15 @@ import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/rep
 import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
 import { AppointmentStatusNotConfiguredError } from '../errors/appointment-status-not-configured-error';
 import {
+  VISIT_STATUSES,
   formatVisitDate,
   type AmendVisitInput,
   type ValidatedCheckInVisitData,
   type Visit,
   type VisitListParams,
   type VisitStatus,
+  type VisitStatusCounts,
+  type VisitStatusCountsParams,
 } from '../schemas/visit-schema';
 import { formatVisitNumber } from './visit-number';
 
@@ -298,6 +301,32 @@ async function getVisits({
   ]);
 
   return { data: rows.map((row) => toVisit(row as VisitRow)), total };
+}
+
+// One GROUP BY for every status tile, so the tiles always agree with each other.
+async function countVisitsByStatus({
+  tenantId,
+  visitDate,
+  doctorId,
+}: VisitStatusCountsParams): Promise<VisitStatusCounts> {
+  const rows = await db
+    .select({ status: visitTable.status, total: count() })
+    .from(visitTable)
+    .where(
+      and(
+        eq(visitTable.tenantId, tenantId),
+        eq(visitTable.isDeleted, false),
+        eq(visitTable.visitDate, visitDate),
+        doctorId ? eq(visitTable.doctorId, doctorId) : undefined
+      )
+    )
+    .groupBy(visitTable.status);
+
+  const totals = new Map(rows.map((row) => [row.status, row.total]));
+
+  return Object.fromEntries(
+    VISIT_STATUSES.map((status) => [status, totals.get(status) ?? 0])
+  ) as VisitStatusCounts;
 }
 
 async function findActiveVisitByPatientId(
@@ -927,6 +956,7 @@ export const visitRepository = {
   cancelVisit,
   completeVisit,
   startConsultation,
+  countVisitsByStatus,
   findActiveVisitByPatientId,
   getVisitForClinicalCapture,
   findLatestCompletedVisitForPatient,

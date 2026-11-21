@@ -1357,6 +1357,57 @@ describe('Visit repository', () => {
     });
   });
 
+  describe('countVisitsByStatus', () => {
+    it('should count one day of the tenant by status with zeros for missing statuses', async () => {
+      const fixturesB = await createTenantFixtures(tenantB);
+      const [bilal, chitra] = await Promise.all([
+        createPatient(tenantA, 'Bilal'),
+        createPatient(tenantA, 'Chitra'),
+      ]);
+
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      const started = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: bilal })
+      );
+      if (!started.success) throw new Error(started.outcome);
+      await visitRepository.startConsultation(started.data.id, tenantA);
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: chitra, visitDate: '2026-07-17' })
+      );
+      await visitRepository.checkInVisit(checkInData(tenantB, fixturesB));
+
+      await expect(
+        visitRepository.countVisitsByStatus({ tenantId: tenantA, visitDate: TODAY })
+      ).resolves.toEqual({ CHECKED_IN: 1, IN_CONSULTATION: 1, COMPLETED: 0, CANCELLED: 0 });
+    });
+
+    it('should filter by Doctor and skip deleted Visits', async () => {
+      const otherDoctor = await createDoctor(tenantA, 'Dr Rao');
+      const [bilal, chitra] = await Promise.all([
+        createPatient(tenantA, 'Bilal'),
+        createPatient(tenantA, 'Chitra'),
+      ]);
+
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: bilal, doctorId: otherDoctor })
+      );
+      const deleted = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: chitra })
+      );
+      if (!deleted.success) throw new Error(deleted.outcome);
+      await visitRepository.deleteVisit(deleted.data.id, tenantA);
+
+      await expect(
+        visitRepository.countVisitsByStatus({
+          tenantId: tenantA,
+          visitDate: TODAY,
+          doctorId: fixturesA.doctorId,
+        })
+      ).resolves.toEqual({ CHECKED_IN: 1, IN_CONSULTATION: 0, COMPLETED: 0, CANCELLED: 0 });
+    });
+  });
+
   describe('getVisits', () => {
     it('should list only the tenant visits for a day ordered by queue token', async () => {
       const fixturesB = await createTenantFixtures(tenantB);

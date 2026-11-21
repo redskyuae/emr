@@ -8,6 +8,7 @@ import {
   listVisitsSchema,
   updateVisitSchema,
   visitIdSchema,
+  visitStatusCountsSchema,
   visitTenantIdSchema,
 } from './visit-schema';
 
@@ -325,6 +326,31 @@ describe('Visit schema', () => {
       expect(errorsOf(listVisitsSchema.safeParse({ query: 'a'.repeat(101) }))).toContain(
         'Search must be at most 100 characters'
       );
+    });
+  });
+
+  describe('visitStatusCountsSchema', () => {
+    it('should require a visit date', () => {
+      expect(errorsOf(visitStatusCountsSchema.safeParse({}))).toContain('Visit date is required');
+    });
+
+    it('should reject a malformed visit date', () => {
+      expect(errorsOf(visitStatusCountsSchema.safeParse({ visitDate: '2026-07-16' }))).toContain(
+        'Visit date must be in DD-MM-YYYY format'
+      );
+    });
+
+    it('should transform the visit date to ISO and coerce the Doctor ID', () => {
+      expect(visitStatusCountsSchema.parse({ visitDate: ' 16-07-2026 ', doctorId: '4' })).toEqual({
+        visitDate: '2026-07-16',
+        doctorId: 4,
+      });
+    });
+
+    it('should reject a non-positive Doctor ID', () => {
+      expect(
+        errorsOf(visitStatusCountsSchema.safeParse({ visitDate: '16-07-2026', doctorId: '0' }))
+      ).toContain('Doctor ID must be positive');
     });
   });
 

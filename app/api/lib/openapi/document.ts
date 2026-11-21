@@ -5571,6 +5571,65 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/visits/status-counts': {
+      get: {
+        tags: ['Visit'],
+        summary: 'Count Visits by status for one day',
+        description:
+          'Returns how many non-deleted Visits in the active Tenant have each Visit status on one visit date, optionally for one Doctor. The Visits board status tiles read all four counts from this one request. Every status is always present, with 0 when no Visit has it. `tenantId` is resolved from the session, never from the request. Requires the `visit:read` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'visitDate',
+            in: 'query',
+            required: true,
+            description: 'Visit date to count, in DD-MM-YYYY format.',
+            schema: { type: 'string', example: '21-11-2026' },
+          },
+          {
+            name: 'doctorId',
+            in: 'query',
+            required: false,
+            description: 'Count only Visits assigned to this Doctor.',
+            schema: { type: 'integer', minimum: 1, example: 12 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Visit counts keyed by Visit status.',
+            content: jsonContent(
+              {
+                type: 'object',
+                required: ['data'],
+                properties: {
+                  data: {
+                    type: 'object',
+                    required: ['CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED'],
+                    properties: {
+                      CHECKED_IN: { type: 'integer', minimum: 0 },
+                      IN_CONSULTATION: { type: 'integer', minimum: 0 },
+                      COMPLETED: { type: 'integer', minimum: 0 },
+                      CANCELLED: { type: 'integer', minimum: 0 },
+                    },
+                  },
+                },
+              },
+              { data: { CHECKED_IN: 8, IN_CONSULTATION: 2, COMPLETED: 14, CANCELLED: 1 } }
+            ),
+          },
+          '400': {
+            description: 'Missing or malformed visit date, or an invalid Doctor ID.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Visit date must be in DD-MM-YYYY format'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/visits/{id}': {
       get: {
         tags: ['Visit'],

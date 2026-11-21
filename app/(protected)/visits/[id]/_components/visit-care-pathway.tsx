@@ -83,7 +83,8 @@ export function VisitCarePathway({
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
   const documentsQuery = useVisitDocumentsQuery(visit.id);
   const { data: currentUser } = useCurrentUserQuery();
-  const timeZone = currentUser?.tenant.timeZone;
+  // Same fallback as the other Tenant-time pages, so times never show in the browser's zone.
+  const timeZone = currentUser?.tenant.timeZone ?? 'Asia/Kolkata';
   const { data: canAssignPlan } = useHasPermission('patient-treatment-plan:assign');
   const { data: canReadPlan } = useHasPermission('patient-treatment-plan:read');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');

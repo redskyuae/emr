@@ -3,8 +3,11 @@
 import type { IconType } from 'react-icons';
 import { CiCircleCheck, CiCircleRemove, CiClock1, CiStethoscope } from 'react-icons/ci';
 
-import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
-import { useVisitsQuery } from '@/app/queries/visits/useVisits';
+import type {
+  VisitStatus,
+  VisitStatusCounts,
+} from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { useVisitStatusCountsQuery } from '@/app/queries/visits/useVisitStatusCounts';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { StatCard, type StatTone } from '@/components/app/stat-card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,19 +24,20 @@ const STATUS_ICONS: Record<VisitStatus, { icon: IconType; tone: StatTone }> = {
 function QueueTile({
   label,
   status,
-  visitDate,
-  doctorId,
+  counts,
+  isError,
+  isLoading,
   selected,
   onToggle,
 }: {
   label: string;
   status: VisitStatus;
-  visitDate: string;
-  doctorId: number | undefined;
+  counts: VisitStatusCounts | undefined;
+  isError: boolean;
+  isLoading: boolean;
   selected: boolean;
   onToggle: () => void;
 }) {
-  const countQuery = useVisitsQuery({ visitDate, doctorId, status, page: 1, limit: 1 });
   const { icon, tone } = STATUS_ICONS[status];
 
   return (
@@ -44,14 +48,14 @@ function QueueTile({
       pressed={selected}
       onPress={onToggle}
       value={
-        countQuery.isError ? (
+        isError ? (
           '—'
         ) : (
           <SkeletonCrossfade
-            isLoading={countQuery.isLoading}
+            isLoading={isLoading}
             skeleton={<Skeleton className="h-7.5 w-14" aria-label={`Loading ${label} count`} />}
           >
-            {countQuery.data?.meta.total ?? 0}
+            {counts?.[status] ?? 0}
           </SkeletonCrossfade>
         )
       }
@@ -70,6 +74,9 @@ export function VisitQueueSummary({
   status: string | undefined;
   onStatusChange: (status: VisitStatus | null) => void;
 }) {
+  // One request feeds every tile, so the counts always come from the same moment.
+  const countsQuery = useVisitStatusCountsQuery({ visitDate, doctorId });
+
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Visits by status">
       {VISIT_STATUS_FILTERS.map((filter) => (
@@ -77,8 +84,9 @@ export function VisitQueueSummary({
           key={filter.value}
           label={filter.label}
           status={filter.value}
-          visitDate={visitDate}
-          doctorId={doctorId}
+          counts={countsQuery.data}
+          isError={countsQuery.isError}
+          isLoading={countsQuery.isLoading}
           selected={status === filter.value}
           onToggle={() => onStatusChange(status === filter.value ? null : filter.value)}
         />
