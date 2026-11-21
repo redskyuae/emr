@@ -639,3 +639,7 @@ A single lifecycle transition that appears on the Patient Timeline, such as a Vi
 ## Timeline Event Source
 
 The kind of record a Timeline Event was derived from: Appointment, Visit, Admission, Bed Transfer, Invoice, Payment, Visit Document, Clinical Note, or Patient. Distinct from Visit Status or Admission Status, which are lifecycle states of one record rather than a classification of feed entries.
+
+## Analytics Event
+
+A record of one thing a signed-in user did in the EMR, sent to the vendor's product analytics (PostHog) so the product and customer-success team can see how the product is used. It names the Tenant, the user's internal id and Role codes, and carries only fixed categories, workflow Master codes, yes/no flags, counts and durations: never Patient data, a record identifier, a money amount or anything a user typed. Every Analytics Event is declared in one typed catalogue (`lib/analytics/catalogue.ts`), and anything not declared there is not sent. Distinct from a Timeline Event, which is derived from a Patient's records and shown to staff, and from the Audit Log, which records who did what to which Patient.

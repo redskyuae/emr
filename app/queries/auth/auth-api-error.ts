@@ -5,11 +5,13 @@ type AuthApiErrorBody = {
 
 export class AuthApiError extends Error {
   errors: string[];
+  status?: number;
 
-  constructor(message: string, errors: string[] = [message]) {
+  constructor(message: string, errors: string[] = [message], status?: number) {
     super(message);
     this.name = 'AuthApiError';
     this.errors = errors;
+    this.status = status;
   }
 }
 
@@ -34,7 +36,7 @@ export async function parseAuthApiError(response: Response, fallbackMessage: str
     typeof body?.message === 'string' && body.message.length > 0 ? body.message : fallbackMessage;
   const errors = getStringErrors(body?.errors);
 
-  return new AuthApiError(message, errors.length > 0 ? errors : [message]);
+  return new AuthApiError(message, errors.length > 0 ? errors : [message], response.status);
 }
 
 export function getAuthMutationErrors(error: unknown) {

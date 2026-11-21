@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 
 export function SignOutButton() {
   const router = useRouter();
-  const signOutMutation = useSignOut(() => {
+  const signOutMutation = useSignOut('user', () => {
     router.replace('/login');
     router.refresh();
   });

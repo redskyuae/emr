@@ -4,6 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { SignoutResponse } from '@/app/api/v1/signout/types';
 import { clearTabSession } from '@/app/lib/tab-session';
+import { resetAnalyticsUser } from '@/lib/analytics/analytics-client';
+import type { SignOutTrigger } from '@/lib/analytics/events/foundation-events';
 
 async function signOut(): Promise<SignoutResponse> {
   const response = await fetch('/api/v1/signout', {
@@ -16,12 +18,14 @@ async function signOut(): Promise<SignoutResponse> {
   }
 }
 
-export function useSignOut(onSuccess?: () => void) {
+/** `trigger` says why the Session ends; it is recorded as `signed_out` before identity is cleared. */
+export function useSignOut(trigger: SignOutTrigger, onSuccess?: () => void) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: signOut,
     onSuccess: () => {
+      resetAnalyticsUser(trigger);
       clearTabSession();
       queryClient.clear();
       onSuccess?.();

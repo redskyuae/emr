@@ -8,6 +8,7 @@ import {
   useCurrentUserQuery,
 } from '@/app/queries/identity-access/useCurrentUser';
 import { clearTabSession } from '@/app/lib/tab-session';
+import { identifyAnalyticsUser, resetAnalyticsUser } from '@/lib/analytics/analytics-client';
 import { AppSplashError, AppSplashLoading } from '@/components/app/app-splash';
 
 type Phase = 'loading' | 'fading' | 'ready';
@@ -31,10 +32,18 @@ export function AppShellGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isError && isSessionExpiredError(error) && !redirectedRef.current) {
       redirectedRef.current = true;
+      resetAnalyticsUser('session_expired');
       clearTabSession();
       router.replace('/login');
     }
   }, [isError, error, router]);
+
+  // The first place the Current User is known. The query is cached, so this runs once per app entry.
+  useEffect(() => {
+    if (data) {
+      identifyAnalyticsUser(data);
+    }
+  }, [data]);
 
   useEffect(() => {
     if (phase !== 'loading' || data === undefined) {

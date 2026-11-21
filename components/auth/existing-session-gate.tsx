@@ -10,7 +10,7 @@ import { AppSplashError, AppSplashLoading } from '@/components/app/app-splash';
 
 export function ExistingSessionGate() {
   const router = useRouter();
-  const signOutMutation = useSignOut(() => router.refresh());
+  const signOutMutation = useSignOut('stale_tab', () => router.refresh());
   const checkedRef = useRef(false);
   const { mutate: signOutStaleSession } = signOutMutation;
 
