@@ -5,6 +5,12 @@ import type { ListPaymentsResponse, RecordPaymentResponse } from './types';
 import { recordPaymentCommand } from '@/app/api/lib/modules/invoice/commands/record-payment-command';
 import { getInvoiceByIdQuery } from '@/app/api/lib/modules/invoice/queries/get-invoice-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import {
+  analyticsActorFromSession,
+  recordServerEventAfterLookup,
+} from '@/app/api/lib/analytics/server-analytics';
+import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
+import { paymentRecordedProperties } from '@/app/api/lib/analytics/lifecycle-billing-properties';
 
 type PaymentsRouteContext = {
   params: Promise<{ id: string }>;
@@ -80,6 +86,26 @@ export async function POST(request: NextRequest, context: PaymentsRouteContext) 
         { status }
       );
     }
+
+    // The linked Visit's check-in time is read after the response: the Payment is already
+    // committed, and an analytics read must never delay this request into a client retry.
+    const { invoice, payment } = result.data;
+
+    recordServerEventAfterLookup(
+      analyticsActorFromSession(tenantSession, request),
+      'payment_recorded',
+      async () => {
+        const visit = invoice.visit
+          ? await getVisitByIdQuery(invoice.visit.id, tenantSession.tenantId)
+          : null;
+
+        return paymentRecordedProperties(
+          invoice,
+          payment,
+          visit?.success ? visit.data.checkedInAt : null
+        );
+      }
+    );
 
     return NextResponse.json<RecordPaymentResponse>(
       { data: result.data },

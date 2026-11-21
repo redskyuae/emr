@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListRoomTypesResponse, SaveRoomTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createRoomTypeCommand } from '@/app/api/lib/modules/room-type/commands/create-room-type-command';
 import { getRoomTypesQuery } from '@/app/api/lib/modules/room-type/queries/get-room-types-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'room-type', action: 'created' });
 
     return NextResponse.json<SaveRoomTypeResponse>(
       { data: result.data },

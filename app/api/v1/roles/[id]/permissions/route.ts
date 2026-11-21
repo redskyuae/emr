@@ -6,6 +6,10 @@ import type {
   SetRolePermissionsResponse,
 } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { assignPermissionsCommand } from '@/app/api/lib/modules/role-permission/commands/assign-permissions-command';
 import { setPermissionsCommand } from '@/app/api/lib/modules/role-permission/commands/set-permissions-command';
 import { getRolePermissionsQuery } from '@/app/api/lib/modules/role-permission/queries/get-role-permissions-query';
@@ -83,6 +87,12 @@ export async function POST(request: NextRequest, context: RolePermissionsRouteCo
       );
     }
 
+    recordServerEvent(
+      analyticsActorFromSession(tenantSession, request),
+      'role_permissions_changed',
+      { permission_count: result.data.length }
+    );
+
     return NextResponse.json<AssignRolePermissionsResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -122,6 +132,12 @@ export async function PUT(request: NextRequest, context: RolePermissionsRouteCon
         { status }
       );
     }
+
+    recordServerEvent(
+      analyticsActorFromSession(tenantSession, request),
+      'role_permissions_changed',
+      { permission_count: result.data.length }
+    );
 
     return NextResponse.json<SetRolePermissionsResponse>({ data: result.data });
   } catch {

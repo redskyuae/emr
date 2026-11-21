@@ -86,11 +86,19 @@ describe('validateAmendVisitVitalSign', () => {
   });
 
   it('should carry the existing recordedAt forward with the validated payload', async () => {
+    const completedAt = new Date('2026-07-15T11:00:00.000Z');
+    validateVisit.mockResolvedValue({ success: true, data: { id: 1, completedAt } as Visit });
+
     const result = await validateAmendVisitVitalSign('1', '8', { pulseBpm: 72 }, 'tenant-1');
 
     expect(result).toMatchObject({
       success: true,
-      data: { id: 8, payload: { pulseBpm: 72 }, existingRecordedAt: recordedAt },
+      data: {
+        id: 8,
+        payload: { pulseBpm: 72 },
+        existingRecordedAt: recordedAt,
+        visitCompletedAt: completedAt,
+      },
     });
     expect(repo.getPatientVitalSignById).toHaveBeenCalledWith(8, 'tenant-1');
   });

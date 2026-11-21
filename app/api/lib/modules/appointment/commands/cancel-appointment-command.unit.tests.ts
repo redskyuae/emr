@@ -20,7 +20,12 @@ describe('Cancel Appointment command', () => {
     vi.clearAllMocks();
     validateCancel.mockResolvedValue({
       success: true,
-      data: { id: 12, tenantId: 'tenant-1', appointmentCancelledReasonId: 7 },
+      data: {
+        id: 12,
+        tenantId: 'tenant-1',
+        appointmentCancelledReasonId: 7,
+        timeZone: 'Asia/Dubai',
+      },
     });
     repo.cancelAppointment.mockResolvedValue({
       success: true,
@@ -43,12 +48,13 @@ describe('Cancel Appointment command', () => {
     expect(repo.cancelAppointment).not.toHaveBeenCalled();
   });
 
-  it('should return the cancelled Appointment', async () => {
+  it('should return the cancelled Appointment with the Tenant time zone beside it', async () => {
     await expect(
       cancelAppointmentCommand('12', { appointmentCancelledReasonId: 7 }, 'tenant-1')
-    ).resolves.toMatchObject({
+    ).resolves.toEqual({
       success: true,
       data: { id: 12, bookingNumber: 'APT-1012' },
+      timeZone: 'Asia/Dubai',
     });
     expect(repo.cancelAppointment).toHaveBeenCalledWith({
       id: 12,

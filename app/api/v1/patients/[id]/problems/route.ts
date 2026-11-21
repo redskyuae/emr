@@ -6,6 +6,7 @@ import { createPatientProblemCommand } from '@/app/api/lib/modules/patient-probl
 import { getPatientProblemsQuery } from '@/app/api/lib/modules/patient-problem/queries/get-patient-problems-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type PatientProblemsRouteContext = {
   params: Promise<{ id: string }>;
@@ -104,6 +105,11 @@ export async function POST(request: NextRequest, context: PatientProblemsRouteCo
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'patient_chart_item_changed', () => ({
+      kind: 'problem',
+      action: 'created',
+    }));
 
     return NextResponse.json<SavePatientProblemResponse>(
       { data: result.data },

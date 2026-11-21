@@ -5,6 +5,8 @@ import type { SignClinicalNoteResponse } from './types';
 import { signClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/commands/sign-clinical-note-command';
 import { getClinicalNoteByIdQuery } from '@/app/api/lib/modules/clinical-note/queries/get-clinical-note-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { clinicalNoteSignedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type SignClinicalNoteRouteContext = {
   params: Promise<{ id: string; noteId: string }>;
@@ -18,7 +20,7 @@ function errorMessage(status: number, errors: string[]) {
   return status === StatusCodes.CONFLICT ? (errors[0] ?? 'Conflict') : 'Validation failed';
 }
 
-export async function POST(_request: NextRequest, context: SignClinicalNoteRouteContext) {
+export async function POST(request: NextRequest, context: SignClinicalNoteRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -46,6 +48,10 @@ export async function POST(_request: NextRequest, context: SignClinicalNoteRoute
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'clinical_note_signed', () =>
+      clinicalNoteSignedProperties(result.data, result.noteTypeCode)
+    );
 
     return NextResponse.json<SignClinicalNoteResponse>({ data: result.data });
   } catch {

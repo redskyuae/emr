@@ -5,7 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { startPatientTreatmentPlanSessionCommand } from '@/app/api/lib/modules/patient-treatment-plan/commands/start-patient-treatment-plan-session-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { POST } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock(
   '@/app/api/lib/modules/patient-treatment-plan/commands/start-patient-treatment-plan-session-command',
   () => ({ startPatientTreatmentPlanSessionCommand: vi.fn() })
@@ -89,6 +93,13 @@ describe('Start Patient Treatment Plan Session route', () => {
         patientTreatmentPlanSessionId: '102',
       },
       { visitId: 5120 }
+    );
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'treatment_plan_session_started',
+      expect.any(Function)
     );
   });
 

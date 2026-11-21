@@ -46,13 +46,41 @@ describe('rescheduleAppointmentCommand', () => {
       startTime: '11:00',
       endTime: '12:00',
     };
-    const updated = { id: 10, bookingNumber: 'APT-1001' } as never;
-    validate.mockResolvedValue({ success: true, data });
+    const updated = { id: 10, bookingNumber: 'APT-1001', doctor: null } as never;
+    validate.mockResolvedValue({ success: true, data: { ...data, previousDoctorId: null } });
     repo.rescheduleAppointment.mockResolvedValue({ success: true, data: updated });
 
     await expect(
       rescheduleAppointmentCommand('10', { bookingPath: 'PROCEDURE' }, 'tenant-1')
-    ).resolves.toEqual({ success: true, data: updated });
+    ).resolves.toEqual({
+      success: true,
+      data: updated,
+      timeZone: 'Asia/Kolkata',
+      doctorChanged: false,
+    });
+    expect(repo.rescheduleAppointment).toHaveBeenCalledWith(data);
+  });
+
+  it('should report whether the rescheduled Consultation moved to another Doctor', async () => {
+    const data = {
+      id: 10,
+      tenantId: 'tenant-1',
+      timeZone: 'Asia/Kolkata',
+      bookingPath: 'CONSULTATION' as const,
+      rescheduleReason: 'Doctor requested a schedule change',
+      doctorId: 2,
+      slotDate: '2099-12-31',
+      doctorRotaId: 8,
+      slotTimes: ['14:00'],
+    };
+    const updated = { id: 10, doctor: { id: 2, name: 'Dr. Iqbal' } } as never;
+    validate.mockResolvedValue({ success: true, data: { ...data, previousDoctorId: 1 } });
+    repo.rescheduleAppointment.mockResolvedValue({ success: true, data: updated });
+
+    await expect(rescheduleAppointmentCommand('10', {}, 'tenant-1')).resolves.toMatchObject({
+      success: true,
+      doctorChanged: true,
+    });
     expect(repo.rescheduleAppointment).toHaveBeenCalledWith(data);
   });
 
@@ -63,6 +91,7 @@ describe('rescheduleAppointmentCommand', () => {
         id: 10,
         tenantId: 'tenant-1',
         timeZone: 'Asia/Kolkata',
+        previousDoctorId: null,
         bookingPath: 'CONSULTATION',
         rescheduleReason: 'Doctor requested a schedule change',
         doctorId: 2,
@@ -87,6 +116,7 @@ describe('rescheduleAppointmentCommand', () => {
         id: 10,
         tenantId: 'tenant-1',
         timeZone: 'Asia/Kolkata',
+        previousDoctorId: null,
         bookingPath: 'PROCEDURE',
         rescheduleReason: 'Therapist is unavailable',
         slotDate: '2099-12-31',
@@ -113,6 +143,7 @@ describe('rescheduleAppointmentCommand', () => {
         id: 10,
         tenantId: 'tenant-1',
         timeZone: 'Asia/Kolkata',
+        previousDoctorId: null,
         bookingPath: 'PROCEDURE',
         rescheduleReason: 'Therapist is unavailable',
         slotDate: '2099-12-31',
@@ -139,6 +170,7 @@ describe('rescheduleAppointmentCommand', () => {
         id: 10,
         tenantId: 'tenant-1',
         timeZone: 'Asia/Kolkata',
+        previousDoctorId: null,
         bookingPath: 'CONSULTATION',
         rescheduleReason: 'Doctor requested a schedule change',
         doctorId: 2,
@@ -169,6 +201,7 @@ describe('rescheduleAppointmentCommand', () => {
         id: 10,
         tenantId: 'tenant-1',
         timeZone: 'Asia/Kolkata',
+        previousDoctorId: null,
         bookingPath: 'PROCEDURE',
         rescheduleReason: 'Patient requested a later time',
         slotDate: '2099-12-31',

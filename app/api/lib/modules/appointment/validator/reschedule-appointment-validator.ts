@@ -17,7 +17,10 @@ export async function validateRescheduleAppointment(
   id: unknown,
   payload: unknown,
   tenantId: unknown
-): Promise<ValidationResult<ValidatedRescheduleAppointmentData>> {
+): Promise<
+  // `previousDoctorId` lets the command report whether the Doctor changed; it is not written.
+  ValidationResult<ValidatedRescheduleAppointmentData & { previousDoctorId: number | null }>
+> {
   const idResult = appointmentIdSchema.safeParse(id);
   const tenantIdResult = appointmentTenantIdSchema.safeParse(tenantId);
   const payloadResult = rescheduleAppointmentSchema.safeParse(payload);
@@ -164,6 +167,7 @@ export async function validateRescheduleAppointment(
       id: idResult.data,
       tenantId: tenantIdResult.data,
       timeZone: tenant.timeZone,
+      previousDoctorId: appointment.doctor?.id ?? null,
       ...payloadResult.data,
     },
   };

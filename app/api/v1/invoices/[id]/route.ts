@@ -6,6 +6,7 @@ import { deleteInvoiceCommand } from '@/app/api/lib/modules/invoice/commands/del
 import { updateDraftInvoiceCommand } from '@/app/api/lib/modules/invoice/commands/update-draft-invoice-command';
 import { getInvoiceByIdQuery } from '@/app/api/lib/modules/invoice/queries/get-invoice-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type InvoiceRouteContext = {
   params: Promise<{ id: string }>;
@@ -92,7 +93,7 @@ export async function PUT(request: NextRequest, context: InvoiceRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: InvoiceRouteContext) {
+export async function DELETE(request: NextRequest, context: InvoiceRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +112,8 @@ export async function DELETE(_request: NextRequest, context: InvoiceRouteContext
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'invoice_deleted', () => ({}));
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

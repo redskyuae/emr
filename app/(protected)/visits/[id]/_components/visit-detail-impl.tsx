@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
 import { isActiveVisit } from '../../_utils/visit-status';
 import { isCurrentPlan } from '../_utils/visit-treatment-plan';
-import { visitOutstandingItems } from '../_utils/visit-workflow';
+import { visitOutstandingItems, visitOutstandingKinds } from '../_utils/visit-workflow';
 import { AddPlanSessionsDialog } from './_modals/add-plan-sessions-dialog';
 import { CompleteVisitDialog } from './_modals/complete-visit-dialog';
 import { AmendVisitSheet } from './_sheets/amend-visit-sheet';
@@ -34,6 +34,7 @@ import { AssignTreatmentPlanSheet } from './_sheets/assign-treatment-plan-sheet'
 import { DailyTreatmentSheet } from './_sheets/daily-treatment-sheet';
 import { PlanSessionSheet } from './_sheets/plan-session-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
+import { useCompleteVisitAnalytics } from './use-complete-visit-analytics';
 import { VisitCarePathway } from './visit-care-pathway';
 import { VisitContextPane } from './visit-context-pane';
 import { VisitPatientHeader } from './visit-patient-header';
@@ -107,6 +108,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     noteCount: visitNotes.length,
     draftNoteCount: visitNotes.filter((note) => note.status === 'draft').length,
     invoiceCount: invoices.length,
+    consultationDirty,
   };
   const noteToAmend = canAmend ? visitNotes.find((note) => note.id === amendNoteParam) : undefined;
   const vitalToAmend = canAmend
@@ -154,10 +156,14 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const planSessionTarget = (plansQuery.data ?? [])
     .flatMap((plan) => plan.sessions.map((session) => ({ plan, session })))
     .find(({ session }) => session.id === planSessionParam);
-  const outstanding = [
-    ...(consultationDirty ? ['The consultation has unsaved changes.'] : []),
-    ...visitOutstandingItems(workflow),
-  ];
+  const outstanding = visitOutstandingItems(workflow);
+  const completeOpen =
+    captureParam === 'complete' && visit.status === 'IN_CONSULTATION' && !!canComplete;
+  useCompleteVisitAnalytics({
+    open: completeOpen,
+    outstandingKinds: visitOutstandingKinds(workflow),
+    visitStatus: visit.status,
+  });
 
   async function startConsultation() {
     try {
@@ -379,7 +385,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
 
       <CompleteVisitDialog
         visit={visit}
-        open={captureParam === 'complete' && visit.status === 'IN_CONSULTATION' && !!canComplete}
+        open={completeOpen}
         outstanding={outstanding}
         onClose={() => void setCaptureParam(null)}
       />

@@ -5,6 +5,7 @@ import type {
   UpdateAppointmentCancelledReasonResponse,
 } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAppointmentCancelledReasonCommand } from '@/app/api/lib/modules/appointment-cancelled-reason/commands/delete-appointment-cancelled-reason-command';
 import { updateAppointmentCancelledReasonCommand } from '@/app/api/lib/modules/appointment-cancelled-reason/commands/update-appointment-cancelled-reason-command';
 import { getAppointmentCancelledReasonByIdQuery } from '@/app/api/lib/modules/appointment-cancelled-reason/queries/get-appointment-cancelled-reason-by-id-query';
@@ -90,6 +91,11 @@ export async function PUT(request: NextRequest, context: AppointmentCancelledRea
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-cancelled-reason',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAppointmentCancelledReasonResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -100,7 +106,7 @@ export async function PUT(request: NextRequest, context: AppointmentCancelledRea
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: AppointmentCancelledReasonRouteContext
 ) {
   try {
@@ -121,6 +127,11 @@ export async function DELETE(
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-cancelled-reason',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

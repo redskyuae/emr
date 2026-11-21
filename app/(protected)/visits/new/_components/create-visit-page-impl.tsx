@@ -42,6 +42,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
+import type { CheckInBillingStep } from '@/lib/analytics/events/funnel-events';
 
 import {
   createVisitFormSchema,
@@ -61,6 +62,7 @@ import { PatientTreatmentsCard } from './patient-treatments-card';
 import { VisitBillingFields } from './visit-billing-fields';
 import { VisitDetailsFields, VisitSourceFields } from './visit-form-fields';
 import { useAppointmentVisitPrefill } from './use-appointment-visit-prefill';
+import { useCheckInAnalytics } from './use-check-in-analytics';
 import CreateVisitLoader from '../loader';
 
 const DEFAULT_VALUES: CreateVisitFormValues = {
@@ -230,6 +232,14 @@ export function CreateVisitPageImpl({
   // for a different Patient re-locks the Visit and Billing sections.
   const confirmed = selectedPatientId !== null && confirmedPatientId === selectedPatientId;
   const stepRef = useRef<HTMLDivElement>(null);
+  const analytics = useCheckInAnalytics({
+    mode,
+    prefilledFromAppointment: initialAppointmentId !== null,
+    confirmed,
+    createInvoice: includeInvoice,
+    provisionalPatientId:
+      patient && patient.registrationStatus !== 'registered' ? patient.id : null,
+  });
 
   // Moving between the Patient step and the Visit step swaps the page content,
   // so bring the new step into view instead of leaving staff mid-scroll.
@@ -258,6 +268,7 @@ export function CreateVisitPageImpl({
       }
 
       setConfirmedPatientId(selectedPatientId);
+      analytics.recordPatientConfirmed();
     } finally {
       setCheckingHistory(false);
     }
@@ -304,6 +315,8 @@ export function CreateVisitPageImpl({
       return;
     }
 
+    analytics.recordSubmitted(values);
+
     let result;
     try {
       result = await checkInMutation.mutateAsync({
@@ -322,10 +335,12 @@ export function CreateVisitPageImpl({
         remarks: values.remarks || undefined,
       });
     } catch (error) {
+      analytics.recordRejected(error);
       setServerErrors(getApiErrors(error));
       return;
     }
 
+    analytics.recordCheckedIn();
     setCreatedVisit({
       id: result.data.id,
       patientId: result.data.patient.id,
@@ -334,6 +349,8 @@ export function CreateVisitPageImpl({
     });
 
     if (values.createInvoice) {
+      let billingStep: CheckInBillingStep = 'create_invoice';
+
       try {
         const invoice = await createInvoiceMutation.mutateAsync({
           patientId: result.data.patient.id,
@@ -341,6 +358,7 @@ export function CreateVisitPageImpl({
           notes: checkInInvoiceNotes(values),
         });
         setCreatedInvoiceId(invoice.data.id);
+        billingStep = 'add_line';
         await addInvoiceLineMutation.mutateAsync({
           id: invoice.data.id,
           request: {
@@ -349,8 +367,10 @@ export function CreateVisitPageImpl({
             unitPrice: Number(values.chargeAmount),
           },
         });
+        billingStep = 'finalize';
         await finalizeInvoiceMutation.mutateAsync(invoice.data.id);
         if (values.paymentTiming === 'NOW') {
+          billingStep = 'record_payment';
           const recordedPayment = await recordPaymentMutation.mutateAsync({
             id: invoice.data.id,
             request: {
@@ -362,6 +382,7 @@ export function CreateVisitPageImpl({
           paymentReceiptPath = `/billing/${invoice.data.id}?receipt=${recordedPayment.data.payment.id}`;
         }
       } catch (error) {
+        analytics.recordPaymentStepFailed(billingStep, error);
         setServerErrors(getApiErrors(error));
         return;
       }

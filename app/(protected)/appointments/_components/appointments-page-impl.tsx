@@ -16,6 +16,8 @@ import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { todayDisplayDate, tomorrowDisplayDate } from '../_utils/appointment-date';
 import { getPaginationCorrection } from '../_utils/appointment-pagination';
 import { AppointmentDaySection } from './appointment-day-section';
@@ -95,6 +97,12 @@ export function AppointmentsPageImpl() {
   const appointments = [...todayAppointments, ...upcomingAppointments];
   const todayMeta = todayAppointmentsQuery.data?.meta;
   const upcomingMeta = upcomingAppointmentsQuery.data?.meta;
+
+  useListSearchAnalytics('appointments', {
+    term: debouncedSearch,
+    query: activeView === 'today' ? todayAppointmentsQuery : upcomingAppointmentsQuery,
+    resultCount: (activeView === 'today' ? todayMeta : upcomingMeta)?.total,
+  });
   const cancellingAppointmentId =
     cancelParam && /^\d+$/.test(cancelParam) ? Number(cancelParam) : null;
   const cancellingAppointment =
@@ -143,6 +151,12 @@ export function AppointmentsPageImpl() {
     void setUpcomingPage(1);
   }
 
+  function recordFilter(filter: 'status' | 'doctor' | 'therapist', value: string | null) {
+    if (value) {
+      captureAnalyticsEvent('list_filtered', { list: 'appointments', filter });
+    }
+  }
+
   const toolbarDisabled =
     doctorsQuery.isLoading || therapistsQuery.isLoading || statusesQuery.isLoading;
 
@@ -164,10 +178,12 @@ export function AppointmentsPageImpl() {
     onAppointmentStatusChange: (value: string | null) => {
       void setStatusParam(value);
       resetPages();
+      recordFilter('status', value);
     },
     onDoctorChange: (value: string | null) => {
       void setDoctorParam(value);
       resetPages();
+      recordFilter('doctor', value);
     },
     onSearchChange: (value: string) => {
       setSearchTerm(value);
@@ -176,6 +192,7 @@ export function AppointmentsPageImpl() {
     onTherapistChange: (value: string | null) => {
       void setTherapistParam(value);
       resetPages();
+      recordFilter('therapist', value);
     },
     searchTerm,
     therapistId: therapistParam,

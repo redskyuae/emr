@@ -2,11 +2,15 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ReactivateTherapistResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { reactivateTherapistCommand } from '@/app/api/lib/modules/therapist/commands/reactivate-therapist-command';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
 type RouteContext = { params: Promise<{ id: string }> };
-export async function POST(_request: NextRequest, context: RouteContext) {
+export async function POST(request: NextRequest, context: RouteContext) {
   try {
     const session = await requireTenantAdminSession();
     if (session instanceof Response) return session;
@@ -21,6 +25,11 @@ export async function POST(_request: NextRequest, context: RouteContext) {
         { status }
       );
     }
+    recordServerEvent(analyticsActorFromSession(session, request), 'staff_changed', {
+      profile_kind: 'therapist',
+      action: 'reactivated',
+    });
+
     return NextResponse.json<ReactivateTherapistResponse>({ data: result.data });
   } catch {
     return NextResponse.json(

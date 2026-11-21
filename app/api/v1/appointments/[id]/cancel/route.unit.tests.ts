@@ -5,7 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cancelAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/cancel-appointment-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { POST } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/appointment/commands/cancel-appointment-command', () => ({
   cancelAppointmentCommand: vi.fn(),
 }));
@@ -34,6 +38,7 @@ describe('Cancel Appointment route', () => {
         bookingNumber: 'APT-1012',
         appointmentStatus: { category: 'cancelled' },
       } as never,
+      timeZone: 'Asia/Dubai',
     });
   });
 
@@ -48,6 +53,13 @@ describe('Cancel Appointment route', () => {
       '12',
       { appointmentCancelledReasonId: 7 },
       'tenant-1'
+    );
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'appointment_cancelled',
+      expect.any(Function)
     );
   });
 
@@ -91,5 +103,6 @@ describe('Cancel Appointment route', () => {
       message: 'Only Scheduled or Confirmed Appointments can be cancelled.',
       errors: ['Only Scheduled or Confirmed Appointments can be cancelled.'],
     });
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 });

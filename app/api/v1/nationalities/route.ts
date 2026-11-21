@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListNationalitiesResponse, SaveNationalityResponse } from './types';
 
+import { recordGlobalReferenceChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createNationalityCommand } from '@/app/api/lib/modules/nationality/commands/create-nationality-command';
 import { getNationalitiesQuery } from '@/app/api/lib/modules/nationality/queries/get-nationalities-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
@@ -81,6 +82,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordGlobalReferenceChanged(request, { master: 'nationality', action: 'created' });
 
     return NextResponse.json<SaveNationalityResponse>(
       { data: result.data },

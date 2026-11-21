@@ -5,6 +5,7 @@ import type {
   UpdateAyurvedaDiagnosisCodeResponse,
 } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAyurvedaDiagnosisCodeCommand } from '@/app/api/lib/modules/ayurveda-diagnosis-code/commands/delete-ayurveda-diagnosis-code-command';
 import { updateAyurvedaDiagnosisCodeCommand } from '@/app/api/lib/modules/ayurveda-diagnosis-code/commands/update-ayurveda-diagnosis-code-command';
 import { getAyurvedaDiagnosisCodeByIdQuery } from '@/app/api/lib/modules/ayurveda-diagnosis-code/queries/get-ayurveda-diagnosis-code-by-id-query';
@@ -94,6 +95,11 @@ export async function PUT(request: NextRequest, context: AyurvedaDiagnosisCodeRo
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'ayurveda-diagnosis-code',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAyurvedaDiagnosisCodeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -103,7 +109,7 @@ export async function PUT(request: NextRequest, context: AyurvedaDiagnosisCodeRo
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AyurvedaDiagnosisCodeRouteContext) {
+export async function DELETE(request: NextRequest, context: AyurvedaDiagnosisCodeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -130,6 +136,11 @@ export async function DELETE(_request: NextRequest, context: AyurvedaDiagnosisCo
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'ayurveda-diagnosis-code',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

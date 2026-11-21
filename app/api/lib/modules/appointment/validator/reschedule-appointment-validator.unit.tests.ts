@@ -185,6 +185,7 @@ describe('validateRescheduleAppointment', () => {
         id: 10,
         tenantId: 'tenant-1',
         timeZone: 'Asia/Kolkata',
+        previousDoctorId: null,
         bookingPath: 'PROCEDURE',
         rescheduleReason: 'Patient requested a later time',
         slotDate: '2099-12-31',
@@ -234,6 +235,7 @@ describe('validateRescheduleAppointment', () => {
       success: true,
       data: {
         id: 10,
+        previousDoctorId: 1,
         doctorId: 2,
         doctorRotaId: 8,
         slotDate: '2099-12-31',

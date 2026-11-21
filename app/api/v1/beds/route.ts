@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListBedsResponse, SaveBedResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createBedCommand } from '@/app/api/lib/modules/bed/commands/create-bed-command';
 import { getBedsQuery } from '@/app/api/lib/modules/bed/queries/get-beds-query';
 import type { BedStatus } from '@/app/api/lib/modules/bed/schemas/bed-schema';
@@ -133,6 +134,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'bed', action: 'created' });
 
     return NextResponse.json<SaveBedResponse>(
       { data: result.data },

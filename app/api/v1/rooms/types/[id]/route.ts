@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetRoomTypeResponse, UpdateRoomTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteRoomTypeCommand } from '@/app/api/lib/modules/room-type/commands/delete-room-type-command';
 import { updateRoomTypeCommand } from '@/app/api/lib/modules/room-type/commands/update-room-type-command';
 import { getRoomTypeByIdQuery } from '@/app/api/lib/modules/room-type/queries/get-room-type-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: RoomTypeRouteContext) {
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'room-type', action: 'updated' });
+
     return NextResponse.json<UpdateRoomTypeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: RoomTypeRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: RoomTypeRouteContext) {
+export async function DELETE(request: NextRequest, context: RoomTypeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: RoomTypeRouteContex
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'room-type', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

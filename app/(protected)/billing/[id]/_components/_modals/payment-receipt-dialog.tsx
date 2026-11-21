@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { formatMoney, getPaymentMethodLabel } from '../../../_utils/invoice-display';
 
 function formatReceivedAt(receivedAt: Date, timeZone: string) {
@@ -54,6 +55,7 @@ export function PaymentReceiptDialog({
       document.body.classList.remove('payment-receipt-printing');
     };
 
+    captureAnalyticsEvent('document_printed', { document: 'payment_receipt' });
     document.body.classList.add('payment-receipt-printing');
     window.addEventListener('afterprint', finishPrinting, { once: true });
 

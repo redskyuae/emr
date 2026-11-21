@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListStaffResponse, SaveStaffResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { createStaffCommand } from '@/app/api/lib/modules/staff/commands/create-staff-command';
 import { getStaffQuery } from '@/app/api/lib/modules/staff/queries/get-staff-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
@@ -115,6 +119,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_changed', {
+      profile_kind: 'staff',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveStaffResponse>(
       { data: result.data },

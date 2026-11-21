@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { patientVitalSignRepository } from '../repository/patient-vital-sign-repository';
 import { computeBmi, type PatientVitalSign } from '../schemas/patient-vital-sign-schema';
 import { validateAmendVisitVitalSign } from '../validator/amend-visit-vital-sign-validator';
@@ -10,14 +10,15 @@ export async function amendVisitVitalSignCommand(
   vitalId: unknown,
   tenantId: string,
   payload: unknown
-): Promise<CommandResult<PatientVitalSign>> {
+  // `visitCompletedAt` is internal only (analytics); the response returns `data` alone.
+): Promise<CommandResultWith<PatientVitalSign, { visitCompletedAt: Date | null }>> {
   const validationResult = await validateAmendVisitVitalSign(visitId, vitalId, payload, tenantId);
 
   if (!validationResult.success) {
     return { success: false, errors: validationResult.errors, status: validationResult.status };
   }
 
-  const { id, payload: data, existingRecordedAt } = validationResult.data;
+  const { id, payload: data, existingRecordedAt, visitCompletedAt } = validationResult.data;
   const bmi = computeBmi(data.heightCm, data.weightKg);
 
   // The repository stamps "now" when recordedAt is absent; an amendment must
@@ -33,5 +34,5 @@ export async function amendVisitVitalSignCommand(
     return { success: false, errors: ['Vital sign not found'], status: StatusCodes.NOT_FOUND };
   }
 
-  return { success: true, data: amended };
+  return { success: true, data: amended, visitCompletedAt };
 }

@@ -5,6 +5,8 @@ import { saveVisitDiagnosesCommand } from '@/app/api/lib/modules/visit-diagnosis
 import { listVisitDiagnosesQuery } from '@/app/api/lib/modules/visit-diagnosis/queries/list-visit-diagnoses-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { ListVisitDiagnosesResponse, SaveVisitDiagnosesResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitDiagnosesSavedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type VisitDiagnosesRouteContext = {
   params: Promise<{ id: string }>;
@@ -87,6 +89,10 @@ export async function PUT(request: NextRequest, context: VisitDiagnosesRouteCont
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_diagnoses_saved', () =>
+      visitDiagnosesSavedProperties(result.data)
+    );
 
     return NextResponse.json<SaveVisitDiagnosesResponse>({ data: result.data });
   } catch {

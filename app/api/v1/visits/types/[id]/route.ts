@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetVisitTypeResponse, UpdateVisitTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteVisitTypeCommand } from '@/app/api/lib/modules/visit-type/commands/delete-visit-type-command';
 import { updateVisitTypeCommand } from '@/app/api/lib/modules/visit-type/commands/update-visit-type-command';
 import { getVisitTypeByIdQuery } from '@/app/api/lib/modules/visit-type/queries/get-visit-type-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: VisitTypeRouteContext) 
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'visit-type', action: 'updated' });
+
     return NextResponse.json<UpdateVisitTypeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: VisitTypeRouteContext) 
   }
 }
 
-export async function DELETE(_request: NextRequest, context: VisitTypeRouteContext) {
+export async function DELETE(request: NextRequest, context: VisitTypeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: VisitTypeRouteConte
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'visit-type', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

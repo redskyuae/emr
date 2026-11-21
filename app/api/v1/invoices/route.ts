@@ -6,6 +6,8 @@ import { createInvoiceCommand } from '@/app/api/lib/modules/invoice/commands/cre
 import { getInvoicesQuery } from '@/app/api/lib/modules/invoice/queries/get-invoices-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { invoiceLink } from '@/app/api/lib/analytics/lifecycle-billing-properties';
 
 function mutationMessage(status: number, errors: string[]) {
   if (
@@ -106,6 +108,10 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'invoice_created', () => ({
+      linked_to: invoiceLink(result.data),
+    }));
 
     return NextResponse.json<SaveInvoiceResponse>(
       { data: result.data },

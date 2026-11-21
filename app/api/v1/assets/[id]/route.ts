@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAssetResponse, UpdateAssetResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { deleteAssetCommand } from '@/app/api/lib/modules/asset/commands/delete-asset-command';
 import { updateAssetCommand } from '@/app/api/lib/modules/asset/commands/update-asset-command';
 import { getAssetByIdQuery } from '@/app/api/lib/modules/asset/queries/get-asset-by-id-query';
@@ -83,6 +87,10 @@ export async function PUT(request: NextRequest, context: AssetRouteContext) {
       );
     }
 
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'asset_changed', {
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAssetResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +100,7 @@ export async function PUT(request: NextRequest, context: AssetRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AssetRouteContext) {
+export async function DELETE(request: NextRequest, context: AssetRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +119,10 @@ export async function DELETE(_request: NextRequest, context: AssetRouteContext) 
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'asset_changed', {
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

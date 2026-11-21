@@ -4,6 +4,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { cancelAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/cancel-appointment-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { CancelAppointmentResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { appointmentCancelledProperties } from '@/app/api/lib/analytics/lifecycle-appointment-properties';
 
 type AppointmentRouteContext = { params: Promise<{ id: string }> };
 
@@ -39,6 +41,10 @@ export async function POST(request: NextRequest, context: AppointmentRouteContex
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'appointment_cancelled', () =>
+      appointmentCancelledProperties(result.data, result.timeZone ?? 'UTC')
+    );
 
     return NextResponse.json<CancelAppointmentResponse>({ data: result.data });
   } catch {

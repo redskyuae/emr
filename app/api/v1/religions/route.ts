@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListReligionsResponse, SaveReligionResponse } from './types';
 
+import { recordGlobalReferenceChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createReligionCommand } from '@/app/api/lib/modules/religion/commands/create-religion-command';
 import { getReligionsQuery } from '@/app/api/lib/modules/religion/queries/get-religions-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
@@ -81,6 +82,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordGlobalReferenceChanged(request, { master: 'religion', action: 'created' });
 
     return NextResponse.json<SaveReligionResponse>(
       { data: result.data },

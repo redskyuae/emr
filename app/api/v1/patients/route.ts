@@ -10,6 +10,8 @@ import type {
 } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { patientRegisteredProperties } from '@/app/api/lib/analytics/lifecycle-patient-properties';
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -147,6 +149,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { message: mutationMessage(status, result.errors), errors: result.errors },
         { status }
+      );
+    }
+
+    if (result.data.registrationStatus === 'registered') {
+      recordLifecycleEvent(tenantSession, request, 'patient_registered', () =>
+        patientRegisteredProperties(result.data, 'direct')
       );
     }
 

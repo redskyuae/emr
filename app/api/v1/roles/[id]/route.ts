@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetRoleResponse, UpdateRoleResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { deleteRoleCommand } from '@/app/api/lib/modules/role/commands/delete-role-command';
 import { updateRoleCommand } from '@/app/api/lib/modules/role/commands/update-role-command';
 import { getRoleByIdQuery } from '@/app/api/lib/modules/role/queries/get-role-by-id-query';
@@ -90,6 +94,11 @@ export async function PUT(request: NextRequest, context: RoleRouteContext) {
       );
     }
 
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'role_changed', {
+      action: 'updated',
+      is_system_role: result.data.isSystem,
+    });
+
     return NextResponse.json<UpdateRoleResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -99,7 +108,7 @@ export async function PUT(request: NextRequest, context: RoleRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: RoleRouteContext) {
+export async function DELETE(request: NextRequest, context: RoleRouteContext) {
   try {
     const tenantSession = await requireTenantAdminSession();
 
@@ -122,6 +131,11 @@ export async function DELETE(_request: NextRequest, context: RoleRouteContext) {
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'role_changed', {
+      action: 'deleted',
+      is_system_role: result.data.isSystem,
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

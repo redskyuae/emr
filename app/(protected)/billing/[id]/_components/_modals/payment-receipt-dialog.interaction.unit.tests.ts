@@ -6,7 +6,10 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { Invoice, Payment } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { PaymentReceiptDialog } from './payment-receipt-dialog';
+
+vi.mock('@/lib/analytics/analytics-client', () => ({ captureAnalyticsEvent: vi.fn() }));
 
 const payment: Payment = {
   id: 19,
@@ -73,8 +76,13 @@ describe('Payment receipt dialog', () => {
     expect(screen.getByText('Thank you for choosing Dhathri Ayurvedic.')).toBeTruthy();
     expect(screen.getByText(/does not require a signature/)).toBeTruthy();
 
+    expect(captureAnalyticsEvent).not.toHaveBeenCalled();
+
     await user.click(screen.getByRole('button', { name: 'Print receipt' }));
     expect(print).toHaveBeenCalledOnce();
+    expect(captureAnalyticsEvent).toHaveBeenCalledWith('document_printed', {
+      document: 'payment_receipt',
+    });
     expect(document.body.classList.contains('payment-receipt-printing')).toBe(true);
 
     window.dispatchEvent(new Event('afterprint'));

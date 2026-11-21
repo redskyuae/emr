@@ -134,6 +134,8 @@ export async function signinCommand(
       data: {
         tenant: activeTenant,
         setCookies: [...signInSetCookies, ...setActiveSetCookies],
+        userId: signInResult.response.user.id,
+        rememberMe: validationResult.data.rememberMe,
       },
     };
   } catch (error) {

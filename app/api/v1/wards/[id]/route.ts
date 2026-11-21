@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetWardResponse, UpdateWardResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteWardCommand } from '@/app/api/lib/modules/ward/commands/delete-ward-command';
 import { updateWardCommand } from '@/app/api/lib/modules/ward/commands/update-ward-command';
 import { getWardByIdQuery } from '@/app/api/lib/modules/ward/queries/get-ward-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: WardRouteContext) {
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'ward', action: 'updated' });
+
     return NextResponse.json<UpdateWardResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: WardRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: WardRouteContext) {
+export async function DELETE(request: NextRequest, context: WardRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: WardRouteContext) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'ward', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

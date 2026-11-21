@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { DeactivateDoctorResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { deactivateDoctorCommand } from '@/app/api/lib/modules/doctor/commands/deactivate-doctor-command';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 
@@ -9,7 +13,7 @@ type DoctorRouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function POST(_request: NextRequest, context: DoctorRouteContext) {
+export async function POST(request: NextRequest, context: DoctorRouteContext) {
   try {
     const tenantSession = await requireTenantAdminSession();
 
@@ -31,6 +35,11 @@ export async function POST(_request: NextRequest, context: DoctorRouteContext) {
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_changed', {
+      profile_kind: 'doctor',
+      action: 'deactivated',
+    });
 
     return NextResponse.json<DeactivateDoctorResponse>({ data: result.data });
   } catch {

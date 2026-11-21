@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListAdmitSourcesResponse, SaveAdmitSourceResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createAdmitSourceCommand } from '@/app/api/lib/modules/admit-source/commands/create-admit-source-command';
 import { getAdmitSourcesQuery } from '@/app/api/lib/modules/admit-source/queries/get-admit-sources-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'admit-source',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveAdmitSourceResponse>(
       { data: result.data },

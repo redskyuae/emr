@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListCountriesResponse, SaveCountryResponse } from './types';
 
+import { recordGlobalReferenceChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createCountryCommand } from '@/app/api/lib/modules/country/commands/create-country-command';
 import { getCountriesQuery } from '@/app/api/lib/modules/country/queries/get-countries-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
@@ -81,6 +82,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordGlobalReferenceChanged(request, { master: 'country', action: 'created' });
 
     return NextResponse.json<SaveCountryResponse>(
       { data: result.data },

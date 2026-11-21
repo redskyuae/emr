@@ -4,6 +4,8 @@ import type { DischargeAdmissionResponse } from './types';
 
 import { dischargeAdmissionCommand } from '@/app/api/lib/modules/admission/commands/discharge-admission-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { admissionDischargedProperties } from '@/app/api/lib/analytics/lifecycle-patient-properties';
 
 type AdmissionRouteContext = {
   params: Promise<{ id: string }>;
@@ -51,6 +53,10 @@ export async function POST(request: NextRequest, context: AdmissionRouteContext)
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'admission_discharged', () =>
+      admissionDischargedProperties(result.data)
+    );
 
     return NextResponse.json<DischargeAdmissionResponse>({ data: result.data });
   } catch {

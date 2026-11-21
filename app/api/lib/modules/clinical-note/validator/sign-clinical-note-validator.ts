@@ -2,12 +2,15 @@ import { StatusCodes } from 'http-status-codes';
 
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
+import { clinicalNoteTypeRepository } from '../../clinical-note-type/repository/clinical-note-type-repository';
 import { clinicalNoteRepository } from '../repository/clinical-note-repository';
 import { clinicalNoteIdSchema, clinicalNoteTenantIdSchema } from '../schemas/clinical-note-schema';
 
 export type SignClinicalNoteInput = {
   id: number;
   tenantId: string;
+  /** The note type's code, reported with the signature; not written. Null if the type is gone. */
+  noteTypeCode: string | null;
 };
 
 export async function validateSignClinicalNote(
@@ -48,5 +51,17 @@ export async function validateSignClinicalNote(
     };
   }
 
-  return { success: true, data: { id: idResult.data, tenantId: tenantIdResult.data } };
+  // Best-effort: the code is only reported to analytics, so a failed read never blocks signing.
+  const noteType = await clinicalNoteTypeRepository
+    .getClinicalNoteTypeById(existing.noteTypeId, tenantIdResult.data)
+    .catch(() => undefined);
+
+  return {
+    success: true,
+    data: {
+      id: idResult.data,
+      tenantId: tenantIdResult.data,
+      noteTypeCode: noteType?.code ?? null,
+    },
+  };
 }

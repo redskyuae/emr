@@ -2,6 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListDoctorsResponse, SaveDoctorResponse } from './types';
 
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { createDoctorCommand } from '@/app/api/lib/modules/doctor/commands/create-doctor-command';
 import { getDoctorsQuery } from '@/app/api/lib/modules/doctor/queries/get-doctors-query';
 import { requireTenantAdminSession, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -110,6 +114,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_changed', {
+      profile_kind: 'doctor',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveDoctorResponse>(
       { data: result.data },

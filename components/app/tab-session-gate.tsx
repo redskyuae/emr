@@ -13,7 +13,7 @@ function subscribeToTabSession() {
 
 export function TabSessionGate({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const signOutMutation = useSignOut(() => {
+  const signOutMutation = useSignOut('stale_tab', () => {
     router.replace('/login');
     router.refresh();
   });

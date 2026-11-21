@@ -1,4 +1,4 @@
-import { format, isValid, parseISO, startOfMonth } from 'date-fns';
+import { differenceInCalendarDays, format, isValid, parseISO, startOfMonth } from 'date-fns';
 
 type Period = { from: string; to: string };
 
@@ -15,6 +15,11 @@ export function isValidPeriod(period: { from: string | null; to: string | null }
     !!value && /^\d{4}-\d{2}-\d{2}$/.test(value) && isValid(parseISO(value));
 
   return isIsoDate(period.from) && isIsoDate(period.to) && period.from <= period.to;
+}
+
+/** How many days a valid period covers, counting both ends (a single day is 1). */
+export function periodDays(period: Period) {
+  return differenceInCalendarDays(parseISO(period.to), parseISO(period.from)) + 1;
 }
 
 /** An ISO `yyyy-MM-dd` date as the `DD-MM-YYYY` the API takes. */

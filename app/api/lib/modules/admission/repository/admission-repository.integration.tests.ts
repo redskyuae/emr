@@ -246,6 +246,7 @@ describe('Admission repository', () => {
     expect(result).toMatchObject({
       outcome: 'transferred',
       data: { bed: { id: bed2.id, bedNumber: bed2.bedNumber } },
+      fromBedId: fixturesA.bedId,
     });
     await expect(bedRepository.getBedById(fixturesA.bedId, tenantA)).resolves.toMatchObject({
       status: 'AVAILABLE',
@@ -262,6 +263,26 @@ describe('Admission repository', () => {
         toBed: { id: bed2.id },
       },
     ]);
+  });
+
+  it('should report the bed left when transferring to another Ward', async () => {
+    const created = await admissionRepository.admitPatient(admitData(tenantA, fixturesA));
+    const id = created.success ? created.data.id : 0;
+    const generalWard = await wardRepository.createWard({
+      tenantId: tenantA,
+      name: 'General Ward',
+      code: 'GEN',
+      description: undefined,
+    });
+    const generalBed = await createBed(tenantA, generalWard.id);
+
+    await expect(
+      admissionRepository.transferBed(id, tenantA, generalBed.id, undefined)
+    ).resolves.toMatchObject({
+      outcome: 'transferred',
+      data: { ward: { id: generalWard.id } },
+      fromBedId: fixturesA.bedId,
+    });
   });
 
   it('should refuse transfers to the same bed, an occupied bed, and on closed admissions', async () => {

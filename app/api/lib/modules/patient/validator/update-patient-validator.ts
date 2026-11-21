@@ -6,6 +6,7 @@ import { patientRepository } from '../repository/patient-repository';
 import {
   getPatientPhoneErrors,
   patientIdSchema,
+  type PatientRegistrationStatus,
   type UpdatePatientInput,
   updatePatientSchema,
 } from '../schemas/patient-schema';
@@ -16,6 +17,11 @@ import { validatePatientIdentityDocumentOwnership } from './validate-patient-ide
 export type UpdatePatientParams = {
   id: number;
   payload: UpdatePatientInput;
+  /**
+   * The Registration Status before this update. Updating always writes Registered, so the command
+   * reports whether this update completed a Provisional Patient's registration. Not written.
+   */
+  previousRegistrationStatus: PatientRegistrationStatus;
 };
 
 export async function validateUpdatePatient(
@@ -103,6 +109,7 @@ export async function validateUpdatePatient(
     data: {
       id: idResult.data,
       payload: payloadResult.data,
+      previousRegistrationStatus: existingPatient.registrationStatus,
     },
   };
 }

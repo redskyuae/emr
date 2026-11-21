@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListTreatmentsResponse, SaveTreatmentResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createTreatmentCommand } from '@/app/api/lib/modules/treatment/commands/create-treatment-command';
 import { getTreatmentsQuery } from '@/app/api/lib/modules/treatment/queries/get-treatments-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'treatment', action: 'created' });
 
     return NextResponse.json<SaveTreatmentResponse>(
       { data: result.data },

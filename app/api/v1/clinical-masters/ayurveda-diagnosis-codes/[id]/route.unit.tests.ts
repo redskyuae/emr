@@ -31,7 +31,10 @@ const getCode = vi.mocked(getAyurvedaDiagnosisCodeByIdQuery);
 const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
 
-const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'user-1' } } };
+const tenantSession = {
+  tenantId: 'tenant-1',
+  session: { user: { id: 'user-1' }, session: { impersonatedBy: null } },
+};
 const body = { code: 'AYU-JWR', name: 'Jwara', icdDiagnosisCodeId: 12 };
 const code = { id: 7, code: 'AYU-JWR', name: 'Jwara' };
 const url = 'http://localhost/api/v1/clinical-masters/ayurveda-diagnosis-codes/7';

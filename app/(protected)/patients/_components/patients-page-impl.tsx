@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
+import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
 import { PatientsTable } from './patients-table';
 import { PatientsToolbar } from './patients-toolbar';
@@ -38,6 +40,12 @@ export function PatientsPageImpl() {
   const patients = patientsQuery.data?.data ?? [];
   const meta = patientsQuery.data?.meta;
 
+  useListSearchAnalytics('patients', {
+    term: search,
+    query: patientsQuery,
+    resultCount: meta?.total,
+  });
+
   // Re-sync the URL when the requested page is invalid or now out of range (e.g. a
   // filter change shrank the result set past the current page), so the table
   // doesn't get stuck on an empty page with pagination hidden.
@@ -68,11 +76,13 @@ export function PatientsPageImpl() {
         onGenderChange={(value) => {
           void setGenderParam(value || null);
           goToFirstPage();
+          if (value) captureAnalyticsEvent('list_filtered', { list: 'patients', filter: 'gender' });
         }}
         statusValue={statusParam}
         onStatusChange={(value) => {
           void setStatusParam(value || null);
           goToFirstPage();
+          if (value) captureAnalyticsEvent('list_filtered', { list: 'patients', filter: 'status' });
         }}
       />
 

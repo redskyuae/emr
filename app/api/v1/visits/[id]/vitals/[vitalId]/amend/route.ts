@@ -4,6 +4,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { amendVisitVitalSignCommand } from '@/app/api/lib/modules/patient-vital-sign/commands/amend-visit-vital-sign-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { AmendVisitVitalSignResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitAmendedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type AmendVisitVitalSignRouteContext = {
   params: Promise<{ id: string; vitalId: string }>;
@@ -53,6 +55,10 @@ export async function PUT(request: NextRequest, context: AmendVisitVitalSignRout
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_amended', () =>
+      visitAmendedProperties('vital_sign', result.visitCompletedAt)
+    );
 
     return NextResponse.json<AmendVisitVitalSignResponse>({ data: result.data });
   } catch {

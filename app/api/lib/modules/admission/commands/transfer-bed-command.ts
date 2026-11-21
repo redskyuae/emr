@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { admissionRepository } from '../repository/admission-repository';
 import type { Admission } from '../schemas/admission-schema';
@@ -10,7 +10,8 @@ export async function transferBedCommand(
   id: unknown,
   tenantId: string,
   payload: unknown
-): Promise<CommandResult<Admission>> {
+  // `fromBedId` is internal only (analytics); the transfer response returns `data` alone.
+): Promise<CommandResultWith<Admission, { fromBedId: number }>> {
   const validationResult = await validateTransferBed(id, payload, tenantId);
 
   if (!validationResult.success) {
@@ -63,7 +64,11 @@ export async function transferBedCommand(
       };
     }
 
-    return { success: true, data: result.data };
+    return {
+      success: true,
+      data: result.data,
+      fromBedId: result.fromBedId,
+    };
   } catch (error) {
     const dbError = getDatabaseError(error);
 

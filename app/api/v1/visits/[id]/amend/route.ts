@@ -4,6 +4,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { amendVisitCommand } from '@/app/api/lib/modules/visit/commands/amend-visit-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { AmendVisitResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitAmendedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type AmendVisitRouteContext = {
   params: Promise<{ id: string }>;
@@ -57,6 +59,10 @@ export async function PUT(request: NextRequest, context: AmendVisitRouteContext)
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_amended', () =>
+      visitAmendedProperties('visit', result.data.completedAt)
+    );
 
     return NextResponse.json<AmendVisitResponse>({ data: result.data });
   } catch {

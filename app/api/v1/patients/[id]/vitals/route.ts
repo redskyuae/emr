@@ -6,6 +6,8 @@ import { createPatientVitalSignCommand } from '@/app/api/lib/modules/patient-vit
 import { getPatientVitalSignsQuery } from '@/app/api/lib/modules/patient-vital-sign/queries/get-patient-vital-signs-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { vitalSignsRecordedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type PatientVitalSignsRouteContext = {
   params: Promise<{ id: string }>;
@@ -104,6 +106,10 @@ export async function POST(request: NextRequest, context: PatientVitalSignsRoute
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'vital_signs_recorded', () =>
+      vitalSignsRecordedProperties(result.data)
+    );
 
     return NextResponse.json<SavePatientVitalSignResponse>(
       { data: result.data },

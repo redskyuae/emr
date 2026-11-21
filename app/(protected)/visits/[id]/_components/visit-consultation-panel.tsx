@@ -34,6 +34,7 @@ import {
   type ConsultationStepId,
 } from '../_utils/consultation-steps';
 import { SOAP_SECTIONS, soapToConsultation } from '../_utils/doctor-consultation-note';
+import { useConsultationStepAnalytics } from './use-consultation-step-analytics';
 import { VisitConsultationForm, type ConsultationStepSlots } from './visit-consultation-form';
 import { STEP_LAYOUT, VisitStepShell } from './visit-step-shell';
 
@@ -265,7 +266,8 @@ export function VisitConsultationPanel({
   slots?: ConsultationStepSlots;
 }) {
   const noteTypes = useClinicalNoteTypesQuery({ limit: 100 });
-  const steps = consultationSteps(isAyurvedaBrand(useBrandLogoVariant()));
+  const showAyurveda = isAyurvedaBrand(useBrandLogoVariant());
+  const steps = consultationSteps(showAyurveda);
   const loading = chartLoading || noteTypes.isLoading;
   // A Treatment Session Visit opens on today's Session; every other Visit on the complaint.
   const [stepId, setStepId] = useQueryState(
@@ -274,6 +276,11 @@ export function VisitConsultationPanel({
       visit.treatmentSession ? 'plan' : 'subjective'
     )
   );
+  useConsultationStepAnalytics({
+    stepId,
+    visitStatus: visit.status,
+    isAyurvedaBrand: showAyurveda,
+  });
   const available = noteTypes.data?.data ?? [];
   const consultationType = available.find((type) => type.code === 'CONS');
 

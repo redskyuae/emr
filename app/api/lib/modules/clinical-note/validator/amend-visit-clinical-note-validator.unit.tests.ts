@@ -93,6 +93,9 @@ describe('validateAmendVisitClinicalNote', () => {
   });
 
   it('should allow amending a signed note on the Completed Visit', async () => {
+    const completedAt = new Date('2026-07-15T11:00:00.000Z');
+    validateVisit.mockResolvedValue({ success: true, data: { id: 1, completedAt } as Visit });
+
     await expect(validateAmendVisitClinicalNote('1', '4', payload, 'tenant-1')).resolves.toEqual({
       success: true,
       data: {
@@ -104,6 +107,7 @@ describe('validateAmendVisitClinicalNote', () => {
           assessment: 'Vata imbalance',
           plan: undefined,
         },
+        visitCompletedAt: completedAt,
       },
     });
     expect(noteRepo.getClinicalNoteById).toHaveBeenCalledWith(4, 'tenant-1');

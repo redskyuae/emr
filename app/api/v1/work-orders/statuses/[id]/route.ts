@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetWorkOrderStatusResponse, UpdateWorkOrderStatusResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteWorkOrderStatusCommand } from '@/app/api/lib/modules/work-order-status/commands/delete-work-order-status-command';
 import { updateWorkOrderStatusCommand } from '@/app/api/lib/modules/work-order-status/commands/update-work-order-status-command';
 import { getWorkOrderStatusByIdQuery } from '@/app/api/lib/modules/work-order-status/queries/get-work-order-status-by-id-query';
@@ -79,6 +80,11 @@ export async function PUT(request: NextRequest, context: WorkOrderStatusRouteCon
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'work-order-status',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateWorkOrderStatusResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -88,7 +94,7 @@ export async function PUT(request: NextRequest, context: WorkOrderStatusRouteCon
   }
 }
 
-export async function DELETE(_request: NextRequest, context: WorkOrderStatusRouteContext) {
+export async function DELETE(request: NextRequest, context: WorkOrderStatusRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -106,6 +112,11 @@ export async function DELETE(_request: NextRequest, context: WorkOrderStatusRout
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'work-order-status',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

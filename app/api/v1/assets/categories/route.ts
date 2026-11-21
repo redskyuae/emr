@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListAssetCategoriesResponse, SaveAssetCategoryResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createAssetCategoryCommand } from '@/app/api/lib/modules/asset-category/commands/create-asset-category-command';
 import { getAssetCategoriesQuery } from '@/app/api/lib/modules/asset-category/queries/get-asset-categories-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'asset-category',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveAssetCategoryResponse>(
       { data: result.data },

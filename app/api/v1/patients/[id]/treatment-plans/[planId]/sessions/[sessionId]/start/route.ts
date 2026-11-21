@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { startPatientTreatmentPlanSessionCommand } from '@/app/api/lib/modules/patient-treatment-plan/commands/start-patient-treatment-plan-session-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { StartPatientTreatmentPlanSessionResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 export async function POST(
   request: NextRequest,
@@ -57,6 +58,10 @@ export async function POST(
 
       return NextResponse.json({ message, errors: result.errors }, { status });
     }
+
+    recordLifecycleEvent(tenantSession, request, 'treatment_plan_session_started', () => ({
+      session_structure: result.data.sessionStructure,
+    }));
 
     return NextResponse.json<StartPatientTreatmentPlanSessionResponse>({ data: result.data });
   } catch {

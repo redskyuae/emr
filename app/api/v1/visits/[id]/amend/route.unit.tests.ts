@@ -6,7 +6,11 @@ import { amendVisitCommand } from '@/app/api/lib/modules/visit/commands/amend-vi
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { PUT } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/visit/commands/amend-visit-command', () => ({
   amendVisitCommand: vi.fn(),
 }));
@@ -81,6 +85,13 @@ describe('Visit amend route', () => {
     expect(response.status).toBe(StatusCodes.OK);
     await expect(response.json()).resolves.toMatchObject({ data: { id: 1, status: 'COMPLETED' } });
     expect(amendVisit).toHaveBeenCalledWith('42', 'tenant-1', body);
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'visit_amended',
+      expect.any(Function)
+    );
   });
 
   it('should map validation failures to bad request', async () => {
@@ -93,6 +104,7 @@ describe('Visit amend route', () => {
       message: 'Validation failed',
       errors: ['Doctor ID is required'],
     });
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 
   it('should map a missing Visit to not found', async () => {

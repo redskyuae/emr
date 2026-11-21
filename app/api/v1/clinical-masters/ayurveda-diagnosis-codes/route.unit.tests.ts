@@ -25,7 +25,10 @@ const listCodes = vi.mocked(getAyurvedaDiagnosisCodesQuery);
 const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
 
-const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'user-1' } } };
+const tenantSession = {
+  tenantId: 'tenant-1',
+  session: { user: { id: 'user-1' }, session: { impersonatedBy: null } },
+};
 const body = { code: 'AYU-JWR', name: 'Jwara', icdDiagnosisCodeId: 12 };
 const code = { id: 1, code: 'AYU-JWR', name: 'Jwara' };
 

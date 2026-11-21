@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListAdmissionTypesResponse, SaveAdmissionTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createAdmissionTypeCommand } from '@/app/api/lib/modules/admission-type/commands/create-admission-type-command';
 import { getAdmissionTypesQuery } from '@/app/api/lib/modules/admission-type/queries/get-admission-types-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,11 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'admission-type',
+      action: 'created',
+    });
 
     return NextResponse.json<SaveAdmissionTypeResponse>(
       { data: result.data },

@@ -5,6 +5,8 @@ import type { AddVisitDocumentResponse, ListVisitDocumentsResponse } from './typ
 import { addVisitDocumentCommand } from '@/app/api/lib/modules/visit-document/commands/add-visit-document-command';
 import { listVisitDocumentsQuery } from '@/app/api/lib/modules/visit-document/queries/list-visit-documents-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitDocumentProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type VisitDocumentsRouteContext = {
   params: Promise<{ id: string }>;
@@ -81,6 +83,10 @@ export async function POST(request: NextRequest, context: VisitDocumentsRouteCon
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_document_added', () =>
+      visitDocumentProperties(result.data)
+    );
 
     return NextResponse.json<AddVisitDocumentResponse>(
       { data: result.data },

@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { clinicalNoteRepository } from '../repository/clinical-note-repository';
 import type { ClinicalNote } from '../schemas/clinical-note-schema';
 import { validateAmendVisitClinicalNote } from '../validator/amend-visit-clinical-note-validator';
@@ -14,7 +14,8 @@ export async function amendVisitClinicalNoteCommand(
   tenantId: string,
   payload: unknown,
   amendedByUserId: string
-): Promise<CommandResult<ClinicalNote>> {
+  // `visitCompletedAt` is internal only (analytics); the response returns `data` alone.
+): Promise<CommandResultWith<ClinicalNote, { visitCompletedAt: Date | null }>> {
   const validationResult = await validateAmendVisitClinicalNote(visitId, noteId, payload, tenantId);
 
   if (!validationResult.success) {
@@ -31,5 +32,5 @@ export async function amendVisitClinicalNoteCommand(
     return { success: false, errors: ['Clinical note not found'], status: StatusCodes.NOT_FOUND };
   }
 
-  return { success: true, data: amended };
+  return { success: true, data: amended, visitCompletedAt: validationResult.data.visitCompletedAt };
 }

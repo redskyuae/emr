@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
+
+import { signInFailureKind } from '@/app/(auth)/login/_utils/sign-in-failure-kind';
 
 type LoginFormProps = {
   redirectTo?: string;
@@ -29,7 +32,7 @@ export function LoginForm({
 
   const [showPassword, setShowPassword] = useState(false);
   const [storageError, setStorageError] = useState(false);
-  const signOutMutation = useSignOut();
+  const signOutMutation = useSignOut('tab_storage_unavailable');
 
   const signInMutation = useSignIn({
     onSuccess: () => {
@@ -41,6 +44,12 @@ export function LoginForm({
 
       router.replace(redirectTo);
       router.refresh();
+    },
+    onError: (error) => {
+      captureAnalyticsEvent('sign_in_failed', {
+        status: error.status,
+        failure_kind: signInFailureKind(error.status),
+      });
     },
   });
 

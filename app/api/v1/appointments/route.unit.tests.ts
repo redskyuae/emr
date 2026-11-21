@@ -6,7 +6,11 @@ import { createAppointmentCommand } from '@/app/api/lib/modules/appointment/comm
 import { getAppointmentsQuery } from '@/app/api/lib/modules/appointment/queries/get-appointments-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { GET, POST } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/appointment/commands/create-appointment-command', () => ({
   createAppointmentCommand: vi.fn(),
 }));
@@ -51,6 +55,11 @@ function getRequest(search = '') {
   return new NextRequest(`http://localhost/api/v1/appointments${search}`);
 }
 
+function recordedProperties() {
+  const [, , , buildProperties] = vi.mocked(recordLifecycleEvent).mock.calls[0];
+  return buildProperties();
+}
+
 describe('Appointments route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -90,6 +99,7 @@ describe('Appointments route', () => {
         treatment: null,
         treatmentSession: null,
       },
+      timeZone: 'Asia/Kolkata',
     });
     getAppointments.mockResolvedValue({
       success: true,
@@ -281,6 +291,17 @@ describe('Appointments route', () => {
         data: { id: 10, bookingNumber: 'APT-1001' },
       });
       expect(requirePermissions).toHaveBeenCalledTimes(1);
+      expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+      expect(recordLifecycleEvent).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'appointment_booked',
+        expect.any(Function)
+      );
+      expect(recordedProperties()).toMatchObject({
+        booking_path: 'CONSULTATION',
+        patient_kind: 'existing',
+      });
     });
 
     it('should require read permission for an existing-Plan Procedure selection', async () => {
@@ -432,6 +453,7 @@ describe('Appointments route', () => {
         errors: ['Potential Patient match found. Retry with patientId.'],
         patientMatches,
       });
+      expect(recordLifecycleEvent).not.toHaveBeenCalled();
     });
   });
 });

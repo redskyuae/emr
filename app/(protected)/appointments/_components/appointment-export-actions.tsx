@@ -11,6 +11,7 @@ import type {
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useDownloadAppointmentsExport } from '@/app/queries/appointments/useDownloadAppointmentsExport';
 import { Button } from '@/components/ui/button';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
 export function AppointmentExportActions({
   disabled,
@@ -27,6 +28,7 @@ export function AppointmentExportActions({
   async function download(format: AppointmentExportFormat) {
     try {
       await exportMutation.mutateAsync({ ...filters, format });
+      captureAnalyticsEvent('export_downloaded', { export: 'appointments', format });
       toast.success(`${format === 'excel' ? 'Excel' : 'PDF'} downloaded.`);
     } catch (error) {
       toast.error(getApiErrorMessage(error));

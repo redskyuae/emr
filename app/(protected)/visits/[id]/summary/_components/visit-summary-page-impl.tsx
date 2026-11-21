@@ -6,9 +6,15 @@ import { PiArrowLeftLight, PiPrinterLight } from 'react-icons/pi';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useVisitSummaryQuery } from '@/app/queries/visits/useVisitSummary';
 import { Button } from '@/components/ui/button';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
 import { VisitSummarySheet } from './visit-summary-sheet';
 import { VisitSummarySheetSkeleton } from './visit-summary-skeleton';
+
+function printSummary() {
+  captureAnalyticsEvent('document_printed', { document: 'visit_summary' });
+  window.print();
+}
 
 export function VisitSummaryPageImpl({ visitId }: { visitId: number }) {
   const summary = useVisitSummaryQuery(visitId);
@@ -23,7 +29,7 @@ export function VisitSummaryPageImpl({ visitId }: { visitId: number }) {
           </Link>
         </Button>
         {summary.data ? (
-          <Button type="button" onClick={() => window.print()}>
+          <Button type="button" onClick={printSummary}>
             <PiPrinterLight className="size-4" />
             Print or save as PDF
           </Button>

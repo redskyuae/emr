@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListVisitTypesResponse, SaveVisitTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createVisitTypeCommand } from '@/app/api/lib/modules/visit-type/commands/create-visit-type-command';
 import { getVisitTypesQuery } from '@/app/api/lib/modules/visit-type/queries/get-visit-types-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'visit-type', action: 'created' });
 
     return NextResponse.json<SaveVisitTypeResponse>(
       { data: result.data },

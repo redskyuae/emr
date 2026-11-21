@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   Controller,
   type Control,
+  type FieldErrors,
   type UseFormSetValue,
   type UseFormTrigger,
   useForm,
@@ -1124,6 +1125,8 @@ type PatientFormProps = {
   onCancel: () => void;
   submitAction?: 'save' | 'next';
   submitLabel?: string;
+  /** Called when a submit is blocked by invalid fields. */
+  onInvalid?: (errors: FieldErrors<PatientFormValues>) => void;
 };
 
 export function PatientForm({
@@ -1135,6 +1138,7 @@ export function PatientForm({
   onCancel,
   submitAction = 'save',
   submitLabel,
+  onInvalid,
 }: PatientFormProps) {
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const form = useForm<PatientFormValues>({
@@ -1165,7 +1169,7 @@ export function PatientForm({
 
       toast.error(getApiErrorMessage(error));
     }
-  });
+  }, onInvalid);
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">

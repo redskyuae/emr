@@ -19,6 +19,7 @@ import {
 import { getSlotTimes } from '@/app/(protected)/appointments/new/_utils/appointment-time';
 import { rescheduleAppointmentFormSchema } from '../_utils/reschedule-appointment-form-schema';
 import { rescheduleAppointmentFormValuesToRequest } from '../_utils/reschedule-appointment-request';
+import { useRescheduleAnalytics } from './use-reschedule-analytics';
 
 function toIsoDate(value: string) {
   const [day, month, year] = value.split('-');
@@ -60,6 +61,12 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
   const selectedRota = rotas.find((rota) => rota.id === values.doctorRotaId) ?? null;
   const selectedDoctor = doctors.find((doctor) => String(doctor.id) === values.doctorId) ?? null;
   const mutation = useRescheduleAppointment();
+  const isEligible =
+    appointment?.appointmentStatus.category === 'scheduled' ||
+    appointment?.appointmentStatus.category === 'confirmed';
+  const analytics = useRescheduleAnalytics(
+    appointment && isEligible ? appointment.bookingPath : null
+  );
 
   useEffect(() => {
     if (!appointment) return;
@@ -147,12 +154,14 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
 
   const onSubmit = form.handleSubmit(async (submitted) => {
     setSubmitError(null);
+    analytics.recordSubmitted();
 
     try {
       const response = await mutation.mutateAsync({
         appointmentId,
         request: rescheduleAppointmentFormValuesToRequest(submitted),
       });
+      analytics.recordRescheduled();
       toast.success(`${response.data.bookingNumber} rescheduled.`);
       router.push(`/appointments?date=${encodeURIComponent(response.data.slotDate)}`);
     } catch (error) {
@@ -181,9 +190,7 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
       appointmentQuery.error ??
       (!isProcedure ? doctorsQuery.error : null) ??
       currentUserQuery.error,
-    isEligible:
-      appointment?.appointmentStatus.category === 'scheduled' ||
-      appointment?.appointmentStatus.category === 'confirmed',
+    isEligible,
     isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
     doctorSlotsError: doctorSlotsQuery.error ? getApiErrorMessage(doctorSlotsQuery.error) : null,
     mutation,

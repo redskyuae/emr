@@ -6,12 +6,15 @@ type ApiErrorBody = {
 export class ApiError extends Error {
   errors: string[];
   status?: number;
+  /** The address the rejected request went to, kept so analytics can record its cleaned route. */
+  url?: string;
 
-  constructor(message: string, errors: string[] = [message], status?: number) {
+  constructor(message: string, errors: string[] = [message], status?: number, url?: string) {
     super(message);
     this.name = 'ApiError';
     this.errors = errors;
     this.status = status;
+    this.url = url;
   }
 }
 
@@ -36,7 +39,12 @@ export async function parseApiError(response: Response, fallbackMessage: string)
     typeof body?.message === 'string' && body.message.length > 0 ? body.message : fallbackMessage;
   const errors = getStringErrors(body?.errors);
 
-  return new ApiError(message, errors.length > 0 ? errors : [message], response.status);
+  return new ApiError(
+    message,
+    errors.length > 0 ? errors : [message],
+    response.status,
+    response.url || undefined
+  );
 }
 
 export function getApiErrors(error: unknown) {

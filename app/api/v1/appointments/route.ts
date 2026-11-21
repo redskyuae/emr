@@ -6,6 +6,8 @@ import { getAppointmentsQuery } from '@/app/api/lib/modules/appointment/queries/
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 import type { CreateAppointmentResponse, ListAppointmentsResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { appointmentBookedProperties } from '@/app/api/lib/analytics/lifecycle-appointment-properties';
 
 export async function GET(request: NextRequest) {
   try {
@@ -136,6 +138,10 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'appointment_booked', () =>
+      appointmentBookedProperties(payload, result.data, result.timeZone)
+    );
 
     return NextResponse.json<CreateAppointmentResponse>(
       { data: result.data },

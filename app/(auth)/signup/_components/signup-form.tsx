@@ -16,12 +16,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
+
+import { signupFailureKind } from '@/app/(auth)/signup/_utils/signup-failure-kind';
 
 export function SignupForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [storageError, setStorageError] = useState(false);
-  const signOutMutation = useSignOut();
+  const signOutMutation = useSignOut('tab_storage_unavailable');
 
   const signUpMutation = useSignUp({
     onSuccess: () => {
@@ -33,6 +36,12 @@ export function SignupForm() {
 
       router.replace('/onboarding');
       router.refresh();
+    },
+    onError: (error) => {
+      captureAnalyticsEvent('signup_failed', {
+        status: error.status,
+        failure_kind: signupFailureKind(error.status),
+      });
     },
   });
 

@@ -44,4 +44,15 @@ export type ValidatedTenantProvisioningInput = SignupInput & {
 export type TenantProvisioningResult = {
   tenant: Tenant;
   setCookies: string[];
+  /** Internal only (analytics): the new Tenant Owner. The signup response returns `tenant` alone. */
+  userId: string;
+};
+
+export type TenantOnboardingResult = {
+  tenant: Tenant;
+  /**
+   * Internal only (analytics): false when the Tenant was already onboarded and nothing changed.
+   * The onboarding response returns `tenant` alone.
+   */
+  isNewlyOnboarded: boolean;
 };

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetCountryResponse, UpdateCountryResponse } from './types';
 
+import { recordGlobalReferenceChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteCountryCommand } from '@/app/api/lib/modules/country/commands/delete-country-command';
 import { updateCountryCommand } from '@/app/api/lib/modules/country/commands/update-country-command';
 import { getCountryByIdQuery } from '@/app/api/lib/modules/country/queries/get-country-by-id-query';
@@ -70,6 +71,8 @@ export async function PUT(request: NextRequest, context: CountryRouteContext) {
       );
     }
 
+    recordGlobalReferenceChanged(request, { master: 'country', action: 'updated' });
+
     return NextResponse.json<UpdateCountryResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -79,7 +82,7 @@ export async function PUT(request: NextRequest, context: CountryRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: CountryRouteContext) {
+export async function DELETE(request: NextRequest, context: CountryRouteContext) {
   try {
     const { id } = await context.params;
     const result = await deleteCountryCommand(id);
@@ -92,6 +95,8 @@ export async function DELETE(_request: NextRequest, context: CountryRouteContext
         { status }
       );
     }
+
+    recordGlobalReferenceChanged(request, { master: 'country', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

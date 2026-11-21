@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { visitDiagnosisRepository } from '../repository/visit-diagnosis-repository';
 import type { VisitDiagnosis } from '../schemas/visit-diagnosis-schema';
 import { validateAmendVisitDiagnoses } from '../validator/amend-visit-diagnoses-validator';
@@ -10,7 +10,8 @@ export async function amendVisitDiagnosesCommand(
   visitId: unknown,
   tenantId: string,
   payload: unknown
-): Promise<CommandResult<VisitDiagnosis[]>> {
+  // `visitCompletedAt` is internal only (analytics); the response returns `data` alone.
+): Promise<CommandResultWith<VisitDiagnosis[], { visitCompletedAt: Date | null }>> {
   const validationResult = await validateAmendVisitDiagnoses(visitId, payload, tenantId);
 
   if (!validationResult.success) {
@@ -24,7 +25,7 @@ export async function amendVisitDiagnosesCommand(
       validationResult.data.diagnoses
     );
 
-    return { success: true, data: saved };
+    return { success: true, data: saved, visitCompletedAt: validationResult.data.visitCompletedAt };
   } catch (error) {
     const constraintErrors = getVisitDiagnosisConstraintErrors(error);
 

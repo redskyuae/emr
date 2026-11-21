@@ -68,6 +68,7 @@ const appointment = {
   id: 5,
   bookingNumber: 'APT-1042',
   slotDate: TODAY_DDMMYYYY,
+  startTime: '10:15',
   patient: { id: 7 },
   doctor: { id: 3 },
   appointmentStatus: { category: 'scheduled' },
@@ -120,7 +121,18 @@ describe('Visit validators', () => {
           chiefComplaint: undefined,
           remarks: undefined,
           visitDate: '2026-07-16',
+          timeZone: 'Asia/Kolkata',
+          appointmentStartTime: '10:15',
         },
+      });
+    });
+
+    it('should carry no booked start for a Walk-in', async () => {
+      await expect(
+        validateCheckInVisit({ patientId: 7, doctorId: 3, visitTypeId: 2 }, 'tenant-1')
+      ).resolves.toMatchObject({
+        success: true,
+        data: { timeZone: 'Asia/Kolkata', appointmentStartTime: null },
       });
     });
 

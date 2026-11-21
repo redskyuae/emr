@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAppointmentModeResponse, UpdateAppointmentModeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAppointmentModeCommand } from '@/app/api/lib/modules/appointment-mode/commands/delete-appointment-mode-command';
 import { updateAppointmentModeCommand } from '@/app/api/lib/modules/appointment-mode/commands/update-appointment-mode-command';
 import { getAppointmentModeByIdQuery } from '@/app/api/lib/modules/appointment-mode/queries/get-appointment-mode-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: AppointmentModeRouteCon
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-mode',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAppointmentModeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: AppointmentModeRouteCon
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AppointmentModeRouteContext) {
+export async function DELETE(request: NextRequest, context: AppointmentModeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: AppointmentModeRout
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'appointment-mode',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

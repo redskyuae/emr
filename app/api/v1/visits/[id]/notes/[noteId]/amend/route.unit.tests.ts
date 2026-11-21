@@ -6,7 +6,11 @@ import { amendVisitClinicalNoteCommand } from '@/app/api/lib/modules/clinical-no
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { PUT } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/clinical-note/commands/amend-visit-clinical-note-command', () => ({
   amendVisitClinicalNoteCommand: vi.fn(),
 }));
@@ -35,12 +39,21 @@ function context(id = '1', noteId = '4') {
   return { params: Promise.resolve({ id, noteId }) };
 }
 
+function recordedProperties() {
+  const [, , , buildProperties] = vi.mocked(recordLifecycleEvent).mock.calls[0];
+  return buildProperties();
+}
+
 describe('Visit Clinical Note amend route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireSession.mockResolvedValue(tenantSession as never);
     requirePermissions.mockResolvedValue(null);
-    amendNote.mockResolvedValue({ success: true, data: note });
+    amendNote.mockResolvedValue({
+      success: true,
+      data: note,
+      visitCompletedAt: new Date('2026-07-15T11:00:00.000Z'),
+    });
   });
 
   it('should return unauthorized without checking permission or amending', async () => {
@@ -81,6 +94,14 @@ describe('Visit Clinical Note amend route', () => {
     expect(response.status).toBe(StatusCodes.OK);
     await expect(response.json()).resolves.toMatchObject({ data: { id: 4, status: 'signed' } });
     expect(amendNote).toHaveBeenCalledWith('7', '9', 'tenant-1', body, 'user-1');
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'visit_amended',
+      expect.any(Function)
+    );
+    expect(recordedProperties()).toMatchObject({ amended_part: 'clinical_note' });
   });
 
   it('should map validation failures to bad request', async () => {
@@ -97,6 +118,7 @@ describe('Visit Clinical Note amend route', () => {
       message: 'Validation failed',
       errors: ['Clinical note type 2 does not exist.'],
     });
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 
   it.each(['Visit not found', 'Clinical note not found'])(

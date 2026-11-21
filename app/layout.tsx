@@ -5,8 +5,10 @@ import { Geist_Mono } from 'next/font/google';
 
 import { brandLogos, getConfiguredBrandLogoVariant } from '@/components/brand/brand-config';
 import { BrandProvider } from '@/components/brand/brand-provider';
+import { AnalyticsProvider } from '@/components/analytics/analytics-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { getClientAnalyticsSettings, getSidebarMode } from '@/lib/analytics/analytics-settings';
 import './globals.css';
 
 const geistMono = Geist_Mono({
@@ -46,10 +48,12 @@ export default function RootLayout({
     <html lang="en" className={`${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <BrandProvider variant={variant}>
-          <QueryProvider>
-            {children}
-            <Toaster />
-          </QueryProvider>
+          <AnalyticsProvider settings={getClientAnalyticsSettings()} sidebarMode={getSidebarMode()}>
+            <QueryProvider>
+              {children}
+              <Toaster />
+            </QueryProvider>
+          </AnalyticsProvider>
         </BrandProvider>
       </body>
     </html>

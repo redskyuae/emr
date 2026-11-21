@@ -4,6 +4,7 @@ import type { CancelAdmissionResponse } from './types';
 
 import { cancelAdmissionCommand } from '@/app/api/lib/modules/admission/commands/cancel-admission-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type AdmissionRouteContext = {
   params: Promise<{ id: string }>;
@@ -51,6 +52,8 @@ export async function POST(request: NextRequest, context: AdmissionRouteContext)
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'admission_cancelled', () => ({}));
 
     return NextResponse.json<CancelAdmissionResponse>({ data: result.data });
   } catch {

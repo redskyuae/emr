@@ -4,6 +4,7 @@ import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
 
 import type { SignupRequest, SignupResponse } from '@/app/api/v1/signup/types';
 import { parseAuthApiError, type AuthApiError } from '@/app/queries/auth/auth-api-error';
+import { SKIP_FAILURE_ANALYTICS } from '@/lib/analytics/request-failure';
 
 async function signUp(request: SignupRequest): Promise<SignupResponse> {
   const response = await fetch('/api/v1/signup', {
@@ -26,5 +27,6 @@ type UseSignUpOptions = Omit<
 >;
 
 export function useSignUp(options?: UseSignUpOptions) {
-  return useMutation({ mutationFn: signUp, ...options });
+  // A rejection is recorded by the form's own failure event, not as `action_rejected`.
+  return useMutation({ mutationFn: signUp, meta: SKIP_FAILURE_ANALYTICS, ...options });
 }

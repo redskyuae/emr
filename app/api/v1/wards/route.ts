@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListWardsResponse, SaveWardResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createWardCommand } from '@/app/api/lib/modules/ward/commands/create-ward-command';
 import { getWardsQuery } from '@/app/api/lib/modules/ward/queries/get-wards-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -103,6 +104,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'ward', action: 'created' });
 
     return NextResponse.json<SaveWardResponse>(
       { data: result.data },

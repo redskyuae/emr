@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { previousVisitsFilterFormSchema } from './previous-visits-filter-form-schema';
 import {
+  appliedFilterNames,
   countActiveFilters,
   defaultRange,
   formatVisitDay,
@@ -192,6 +193,29 @@ describe('previous visits filters', () => {
           message: 'From date must be on or before To date',
         }),
       ]);
+    });
+  });
+
+  describe('appliedFilterNames', () => {
+    const applied = resolveFilters(emptyParams, today);
+
+    it('should name each filter an Apply changed, never its value', () => {
+      expect(
+        appliedFilterNames(applied, {
+          ...applied,
+          from: '2026-07-01',
+          status: 'COMPLETED',
+          doctorId: '4',
+          visitTypeId: '2',
+        })
+      ).toEqual(['date_range', 'status', 'doctor', 'type']);
+    });
+
+    it('should leave out the search term, unchanged filters and cleared filters', () => {
+      const filtered = { ...applied, status: 'COMPLETED' as const, doctorId: '4' };
+
+      expect(appliedFilterNames(applied, { ...applied, query: 'Asha' })).toEqual([]);
+      expect(appliedFilterNames(filtered, { ...filtered, doctorId: null })).toEqual([]);
     });
   });
 });

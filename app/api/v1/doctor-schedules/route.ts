@@ -2,6 +2,11 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListDoctorSchedulesResponse, SaveDoctorScheduleResponse } from './types';
 
+import { scheduleChangedProperties } from '@/app/api/lib/analytics/access-schedule-event';
+import {
+  analyticsActorFromSession,
+  recordServerEvent,
+} from '@/app/api/lib/analytics/server-analytics';
 import { createDoctorScheduleCommand } from '@/app/api/lib/modules/doctor-schedule/commands/create-doctor-schedule-command';
 import { updateDoctorScheduleCommand } from '@/app/api/lib/modules/doctor-schedule/commands/update-doctor-schedule-command';
 import { getDoctorSchedulesQuery } from '@/app/api/lib/modules/doctor-schedule/queries/get-doctor-schedules-query';
@@ -102,6 +107,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    recordServerEvent(
+      analyticsActorFromSession(tenantSession, request),
+      'schedule_changed',
+      scheduleChangedProperties('doctor', 'created', result.data)
+    );
+
     return NextResponse.json<SaveDoctorScheduleResponse>(
       { data: result.data },
       { status: StatusCodes.CREATED }
@@ -143,6 +154,12 @@ export async function PUT(request: NextRequest) {
         { status }
       );
     }
+
+    recordServerEvent(
+      analyticsActorFromSession(tenantSession, request),
+      'schedule_changed',
+      scheduleChangedProperties('doctor', 'updated', result.data)
+    );
 
     return NextResponse.json<SaveDoctorScheduleResponse>({ data: result.data });
   } catch {

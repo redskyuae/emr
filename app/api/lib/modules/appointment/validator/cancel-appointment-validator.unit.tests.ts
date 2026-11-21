@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StatusCodes } from 'http-status-codes';
 
 import { appointmentCancelledReasonRepository } from '../../appointment-cancelled-reason/repository/appointment-cancelled-reason-repository';
+import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { appointmentRepository } from '../repository/appointment-repository';
 import { validateCancelAppointment } from './cancel-appointment-validator';
 
@@ -13,7 +14,12 @@ vi.mock(
   () => ({ appointmentCancelledReasonRepository: { getAppointmentCancelledReasonById: vi.fn() } })
 );
 
+vi.mock('../../tenant/repository/tenant-repository', () => ({
+  tenantRepository: { getTenantById: vi.fn() },
+}));
+
 const appointmentRepo = vi.mocked(appointmentRepository);
+const tenantRepo = vi.mocked(tenantRepository);
 const reasonRepo = vi.mocked(appointmentCancelledReasonRepository);
 
 describe('Cancel Appointment validator', () => {
@@ -24,6 +30,7 @@ describe('Cancel Appointment validator', () => {
       appointmentStatus: { category: 'scheduled' },
     } as never);
     reasonRepo.getAppointmentCancelledReasonById.mockResolvedValue({ id: 7 } as never);
+    tenantRepo.getTenantById.mockResolvedValue({ id: 'tenant-1', timeZone: 'Asia/Dubai' } as never);
   });
 
   it('should validate an eligible Appointment and active Tenant cancellation reason', async () => {
@@ -31,10 +38,32 @@ describe('Cancel Appointment validator', () => {
       validateCancelAppointment('12', { appointmentCancelledReasonId: '7' }, 'tenant-1')
     ).resolves.toEqual({
       success: true,
-      data: { id: 12, tenantId: 'tenant-1', appointmentCancelledReasonId: 7 },
+      data: {
+        id: 12,
+        tenantId: 'tenant-1',
+        appointmentCancelledReasonId: 7,
+        timeZone: 'Asia/Dubai',
+      },
     });
     expect(appointmentRepo.getAppointmentById).toHaveBeenCalledWith(12, 'tenant-1');
     expect(reasonRepo.getAppointmentCancelledReasonById).toHaveBeenCalledWith(7, 'tenant-1');
+    expect(tenantRepo.getTenantById).toHaveBeenCalledWith('tenant-1');
+  });
+
+  it('should pass a null time zone when the Tenant cannot be read', async () => {
+    tenantRepo.getTenantById.mockResolvedValue(undefined);
+
+    await expect(
+      validateCancelAppointment('12', { appointmentCancelledReasonId: 7 }, 'tenant-1')
+    ).resolves.toMatchObject({ success: true, data: { timeZone: null } });
+  });
+
+  it('should still validate the cancellation when reading the Tenant fails', async () => {
+    tenantRepo.getTenantById.mockRejectedValue(new Error('database down'));
+
+    await expect(
+      validateCancelAppointment('12', { appointmentCancelledReasonId: 7 }, 'tenant-1')
+    ).resolves.toMatchObject({ success: true });
   });
 
   it('should stop before repositories when the request contract is invalid', async () => {
@@ -43,6 +72,7 @@ describe('Cancel Appointment validator', () => {
     });
     expect(appointmentRepo.getAppointmentById).not.toHaveBeenCalled();
     expect(reasonRepo.getAppointmentCancelledReasonById).not.toHaveBeenCalled();
+    expect(tenantRepo.getTenantById).not.toHaveBeenCalled();
   });
 
   it('should reject another Tenant or missing Appointment without checking the reason', async () => {

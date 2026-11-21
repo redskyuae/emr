@@ -6,6 +6,7 @@ import { deletePatientProblemCommand } from '@/app/api/lib/modules/patient-probl
 import { updatePatientProblemCommand } from '@/app/api/lib/modules/patient-problem/commands/update-patient-problem-command';
 import { getPatientProblemByIdQuery } from '@/app/api/lib/modules/patient-problem/queries/get-patient-problem-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type PatientProblemRouteContext = {
   params: Promise<{ id: string; problemId: string }>;
@@ -89,6 +90,11 @@ export async function PUT(request: NextRequest, context: PatientProblemRouteCont
       );
     }
 
+    recordLifecycleEvent(tenantSession, request, 'patient_chart_item_changed', () => ({
+      kind: 'problem',
+      action: 'updated',
+    }));
+
     return NextResponse.json<UpdatePatientProblemResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -98,7 +104,7 @@ export async function PUT(request: NextRequest, context: PatientProblemRouteCont
   }
 }
 
-export async function DELETE(_request: NextRequest, context: PatientProblemRouteContext) {
+export async function DELETE(request: NextRequest, context: PatientProblemRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -123,6 +129,11 @@ export async function DELETE(_request: NextRequest, context: PatientProblemRoute
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'patient_chart_item_changed', () => ({
+      kind: 'problem',
+      action: 'removed',
+    }));
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

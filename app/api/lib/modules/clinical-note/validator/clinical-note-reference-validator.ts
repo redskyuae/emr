@@ -17,10 +17,11 @@ export async function validatePatientExistsForNote(
   return { success: true, data: undefined };
 }
 
+/** Returns the Clinical Note type's code, which the create path reports with the new note. */
 export async function validateNoteTypeReference(
   noteTypeId: number,
   tenantId: string
-): Promise<ValidationResult<void>> {
+): Promise<ValidationResult<{ code: string }>> {
   const noteType = await clinicalNoteTypeRepository.getClinicalNoteTypeById(noteTypeId, tenantId);
 
   if (!noteType) {
@@ -31,5 +32,5 @@ export async function validateNoteTypeReference(
     };
   }
 
-  return { success: true, data: undefined };
+  return { success: true, data: { code: noteType.code } };
 }

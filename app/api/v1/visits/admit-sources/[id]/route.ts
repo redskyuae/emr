@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAdmitSourceResponse, UpdateAdmitSourceResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAdmitSourceCommand } from '@/app/api/lib/modules/admit-source/commands/delete-admit-source-command';
 import { updateAdmitSourceCommand } from '@/app/api/lib/modules/admit-source/commands/update-admit-source-command';
 import { getAdmitSourceByIdQuery } from '@/app/api/lib/modules/admit-source/queries/get-admit-source-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: AdmitSourceRouteContext
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'admit-source',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateAdmitSourceResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: AdmitSourceRouteContext
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AdmitSourceRouteContext) {
+export async function DELETE(request: NextRequest, context: AdmitSourceRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: AdmitSourceRouteCon
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'admit-source',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

@@ -36,8 +36,12 @@ describe('ClinicalNote validators', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     patientRepo.getPatientById.mockResolvedValue({ id: 1 } as never);
-    noteTypeRepo.getClinicalNoteTypeById.mockResolvedValue({ id: 2 } as never);
-    noteRepo.getClinicalNoteById.mockResolvedValue({ id: 4, status: 'draft' } as never);
+    noteTypeRepo.getClinicalNoteTypeById.mockResolvedValue({ id: 2, code: 'SOAP' } as never);
+    noteRepo.getClinicalNoteById.mockResolvedValue({
+      id: 4,
+      status: 'draft',
+      noteTypeId: 2,
+    } as never);
   });
 
   it('should skip reference checks when the payload is invalid', async () => {
@@ -62,7 +66,7 @@ describe('ClinicalNote validators', () => {
 
   it('should pass on a valid create', async () => {
     const result = await validateCreateClinicalNote('1', 'tenant-1', validPayload);
-    expect(result).toMatchObject({ success: true, data: { patientId: 1 } });
+    expect(result).toMatchObject({ success: true, data: { patientId: 1, noteTypeCode: 'SOAP' } });
   });
 
   it('should reject editing a signed note', async () => {
@@ -80,9 +84,31 @@ describe('ClinicalNote validators', () => {
     expect(result).toMatchObject({ success: false, status: StatusCodes.CONFLICT });
   });
 
-  it('should pass signing a draft note', async () => {
+  it('should pass signing a draft note with its note type code', async () => {
     const result = await validateSignClinicalNote('4', 'tenant-1');
-    expect(result).toMatchObject({ success: true, data: { id: 4, tenantId: 'tenant-1' } });
+    expect(result).toEqual({
+      success: true,
+      data: { id: 4, tenantId: 'tenant-1', noteTypeCode: 'SOAP' },
+    });
+    expect(noteTypeRepo.getClinicalNoteTypeById).toHaveBeenCalledWith(2, 'tenant-1');
+  });
+
+  it('should still sign a note whose type is no longer available', async () => {
+    noteTypeRepo.getClinicalNoteTypeById.mockResolvedValue(undefined);
+    const result = await validateSignClinicalNote('4', 'tenant-1');
+    expect(result).toMatchObject({ success: true, data: { noteTypeCode: null } });
+  });
+
+  it('should still sign a note when its note type cannot be read', async () => {
+    noteTypeRepo.getClinicalNoteTypeById.mockRejectedValue(new Error('database down'));
+    const result = await validateSignClinicalNote('4', 'tenant-1');
+    expect(result).toMatchObject({ success: true, data: { noteTypeCode: null } });
+  });
+
+  it('should not look up the note type when the note is already signed', async () => {
+    noteRepo.getClinicalNoteById.mockResolvedValue({ id: 4, status: 'signed' } as never);
+    await validateSignClinicalNote('4', 'tenant-1');
+    expect(noteTypeRepo.getClinicalNoteTypeById).not.toHaveBeenCalled();
   });
 
   it('should reject deleting a signed note', async () => {

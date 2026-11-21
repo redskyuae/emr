@@ -4,6 +4,8 @@ import type { CompleteVisitResponse } from './types';
 
 import { completeVisitCommand } from '@/app/api/lib/modules/visit/commands/complete-visit-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitCompletedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type VisitRouteContext = {
   params: Promise<{ id: string }>;
@@ -21,7 +23,7 @@ function errorMessage(status: number, errors: string[]) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
-export async function POST(_request: NextRequest, context: VisitRouteContext) {
+export async function POST(request: NextRequest, context: VisitRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -40,6 +42,10 @@ export async function POST(_request: NextRequest, context: VisitRouteContext) {
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_completed', () =>
+      visitCompletedProperties(result.data)
+    );
 
     return NextResponse.json<CompleteVisitResponse>({ data: result.data });
   } catch {

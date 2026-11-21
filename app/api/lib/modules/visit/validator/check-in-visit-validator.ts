@@ -47,10 +47,16 @@ async function resolveActiveDoctor(
   return { success: true, data: doctorId };
 }
 
+/**
+ * The Tenant clock and the booked start of the Appointment being fulfilled, so the command can
+ * report how early or late the Patient arrived. Neither is written with the Visit.
+ */
+type CheckInTiming = { timeZone: string; appointmentStartTime: string | null };
+
 export async function validateCheckInVisit(
   payload: unknown,
   tenantId: unknown
-): Promise<ValidationResult<ValidatedCheckInVisitData>> {
+): Promise<ValidationResult<ValidatedCheckInVisitData & CheckInTiming>> {
   const tenantIdResult = visitTenantIdSchema.safeParse(tenantId);
   const payloadResult = checkInVisitSchema.safeParse(payload);
 
@@ -107,6 +113,7 @@ export async function validateCheckInVisit(
   let doctorId: number | null = null;
   let treatmentId: number | undefined;
   let treatmentSessionId: number | undefined;
+  let appointmentStartTime: string | null = null;
 
   if (data.appointmentId !== undefined) {
     const appointment = await appointmentRepository.getAppointmentById(
@@ -172,6 +179,7 @@ export async function validateCheckInVisit(
     }
 
     patientId = appointment.patient.id;
+    appointmentStartTime = appointment.startTime;
     treatmentId = appointment.treatment?.id;
     treatmentSessionId = appointment.treatmentSession?.id;
   } else {
@@ -248,6 +256,8 @@ export async function validateCheckInVisit(
       remarks: data.remarks,
       visitDate,
       documents: data.documents,
+      timeZone: tenant.timeZone,
+      appointmentStartTime,
     },
   };
 }

@@ -6,7 +6,11 @@ import { amendVisitVitalSignCommand } from '@/app/api/lib/modules/patient-vital-
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { PUT } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/patient-vital-sign/commands/amend-visit-vital-sign-command', () => ({
   amendVisitVitalSignCommand: vi.fn(),
 }));
@@ -35,12 +39,21 @@ function context(id = '1', vitalId = '4') {
   return { params: Promise.resolve({ id, vitalId }) };
 }
 
+function recordedProperties() {
+  const [, , , buildProperties] = vi.mocked(recordLifecycleEvent).mock.calls[0];
+  return buildProperties();
+}
+
 describe('Visit Vital Sign amend route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireSession.mockResolvedValue(tenantSession as never);
     requirePermissions.mockResolvedValue(null);
-    amendVital.mockResolvedValue({ success: true, data: reading });
+    amendVital.mockResolvedValue({
+      success: true,
+      data: reading,
+      visitCompletedAt: new Date('2026-07-15T11:00:00.000Z'),
+    });
   });
 
   it('should return unauthorized without checking permission or amending', async () => {
@@ -81,6 +94,14 @@ describe('Visit Vital Sign amend route', () => {
     expect(response.status).toBe(StatusCodes.OK);
     await expect(response.json()).resolves.toMatchObject({ data: { id: 4, pulseBpm: 72 } });
     expect(amendVital).toHaveBeenCalledWith('7', '9', 'tenant-1', body);
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'visit_amended',
+      expect.any(Function)
+    );
+    expect(recordedProperties()).toMatchObject({ amended_part: 'vital_sign' });
   });
 
   it('should map validation failures to bad request', async () => {
@@ -97,6 +118,7 @@ describe('Visit Vital Sign amend route', () => {
       message: 'Validation failed',
       errors: ['At least one vital sign measurement is required'],
     });
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 
   it.each(['Visit not found', 'Vital sign not found'])(

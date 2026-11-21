@@ -4,6 +4,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { amendVisitDiagnosesCommand } from '@/app/api/lib/modules/visit-diagnosis/commands/amend-visit-diagnoses-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { SaveVisitDiagnosesResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitAmendedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type AmendVisitDiagnosesRouteContext = {
   params: Promise<{ id: string }>;
@@ -57,6 +59,10 @@ export async function PUT(request: NextRequest, context: AmendVisitDiagnosesRout
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_amended', () =>
+      visitAmendedProperties('diagnoses', result.visitCompletedAt)
+    );
 
     return NextResponse.json<SaveVisitDiagnosesResponse>({ data: result.data });
   } catch {

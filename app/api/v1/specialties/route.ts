@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListSpecialtiesResponse, SaveSpecialtyResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createSpecialtyCommand } from '@/app/api/lib/modules/specialty/commands/create-specialty-command';
 import { getSpecialtiesQuery } from '@/app/api/lib/modules/specialty/queries/get-specialties-query';
 import { requireTenantAdminSession, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -96,6 +97,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'specialty', action: 'created' });
 
     return NextResponse.json<SaveSpecialtyResponse>(
       { data: result.data },

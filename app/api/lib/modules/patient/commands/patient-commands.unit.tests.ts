@@ -92,7 +92,10 @@ describe('Patient commands', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     validateCreate.mockResolvedValue({ success: true, data: createInput });
-    validateUpdate.mockResolvedValue({ success: true, data: { id: 1, payload: createInput } });
+    validateUpdate.mockResolvedValue({
+      success: true,
+      data: { id: 1, payload: createInput, previousRegistrationStatus: 'provisional' },
+    });
     validateExists.mockResolvedValue({ success: true, data: 1 });
     repo.createPatient.mockResolvedValue(patient);
     repo.updatePatient.mockResolvedValue(patient);
@@ -151,6 +154,7 @@ describe('Patient commands', () => {
     await expect(updatePatientCommand('1', 'tenant-1', {})).resolves.toEqual({
       success: true,
       data: patient,
+      previousRegistrationStatus: 'provisional',
     });
   });
 

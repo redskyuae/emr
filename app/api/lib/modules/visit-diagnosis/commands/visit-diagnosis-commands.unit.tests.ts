@@ -105,3 +105,20 @@ describe.each([
     await expect(command('9', 'tenant-1', {})).rejects.toThrow(error);
   });
 });
+
+describe('amendVisitDiagnosesCommand internals', () => {
+  it('should return when the amended Visit was completed beside the saved list', async () => {
+    const visitCompletedAt = new Date('2026-07-15T11:00:00.000Z');
+    validateAmend.mockResolvedValue({
+      success: true,
+      data: { visitId: 9, diagnoses, visitCompletedAt },
+    });
+    repo.replaceVisitDiagnoses.mockResolvedValue(saved);
+
+    await expect(amendVisitDiagnosesCommand('9', 'tenant-1', {})).resolves.toEqual({
+      success: true,
+      data: saved,
+      visitCompletedAt,
+    });
+  });
+});

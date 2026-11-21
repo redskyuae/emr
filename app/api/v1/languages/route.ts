@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { ListLanguagesResponse, SaveLanguageResponse } from './types';
 
+import { recordGlobalReferenceChanged } from '@/app/api/lib/analytics/access-master-event';
 import { createLanguageCommand } from '@/app/api/lib/modules/language/commands/create-language-command';
 import { getLanguagesQuery } from '@/app/api/lib/modules/language/queries/get-languages-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
@@ -81,6 +82,8 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordGlobalReferenceChanged(request, { master: 'language', action: 'created' });
 
     return NextResponse.json<SaveLanguageResponse>(
       { data: result.data },

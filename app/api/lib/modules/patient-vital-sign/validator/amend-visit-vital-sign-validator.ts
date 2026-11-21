@@ -15,6 +15,8 @@ type AmendVisitVitalSignParams = {
   id: number;
   payload: AmendVisitVitalSignInput;
   existingRecordedAt: Date;
+  /** When the amended Visit was completed; reported with the amendment, not written. */
+  visitCompletedAt: Date | null;
 };
 
 /**
@@ -71,6 +73,7 @@ export async function validateAmendVisitVitalSign(
       id: vitalIdResult.data,
       payload: payloadResult.data,
       existingRecordedAt: existing.recordedAt,
+      visitCompletedAt: visitResult.data.completedAt,
     },
   };
 }

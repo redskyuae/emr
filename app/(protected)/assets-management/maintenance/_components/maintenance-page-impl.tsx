@@ -7,6 +7,8 @@ import { useWorkOrderTypesQuery } from '@/app/queries/asset-masters/work-order-t
 import { useWorkOrdersQuery } from '@/app/queries/assets-management/work-orders/useWorkOrders';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { formatCount } from '@/lib/format-count';
 import { NewWorkOrderSheet } from './_sheets/new-work-order-sheet';
 import { MaintenanceStatCardsWidget } from './maintenance-stat-cards';
@@ -42,6 +44,12 @@ export function MaintenancePageImpl() {
 
   const workOrders = workOrdersQuery.data?.data ?? [];
   const meta = workOrdersQuery.data?.meta;
+
+  useListSearchAnalytics('work_orders', {
+    term: search,
+    query: workOrdersQuery,
+    resultCount: meta?.total,
+  });
 
   useEffect(() => {
     if (pageParam !== page) {
@@ -109,6 +117,9 @@ export function MaintenancePageImpl() {
               onTypeChange={(value) => {
                 void setTypeParam(value || null);
                 goToFirstPage();
+                if (value) {
+                  captureAnalyticsEvent('list_filtered', { list: 'work_orders', filter: 'type' });
+                }
               }}
               onNewWorkOrder={() => void setWorkOrderParam('new')}
               canCreate={canCreate}

@@ -1,4 +1,4 @@
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { clinicalNoteRepository } from '../repository/clinical-note-repository';
 import type { ClinicalNote } from '../schemas/clinical-note-schema';
 import { validateCreateClinicalNote } from '../validator/create-clinical-note-validator';
@@ -8,7 +8,8 @@ export async function createClinicalNoteCommand(
   tenantId: string,
   authorUserId: string,
   payload: unknown
-): Promise<CommandResult<ClinicalNote>> {
+  // `noteTypeCode` is internal only (analytics); the response returns `data` alone.
+): Promise<CommandResultWith<ClinicalNote, { noteTypeCode: string }>> {
   const validationResult = await validateCreateClinicalNote(patientId, tenantId, payload);
 
   if (!validationResult.success) {
@@ -27,5 +28,5 @@ export async function createClinicalNoteCommand(
     recordedByUserId: authorUserId,
   });
 
-  return { success: true, data: created };
+  return { success: true, data: created, noteTypeCode: validationResult.data.noteTypeCode };
 }

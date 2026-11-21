@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { NextResponse } from 'next/server';
 import type { ListSessionsResponse } from './types';
 
+import { recordOwnSessionsRevoked } from '@/app/api/lib/analytics/access-session-event';
 import { revokeAllSessionsCommand } from '@/app/api/lib/modules/session/commands/revoke-all-sessions-command';
 import { getSessionsQuery } from '@/app/api/lib/modules/session/queries/get-sessions-query';
 import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
@@ -35,7 +36,7 @@ export async function GET() {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
     const session = await requireAuth();
 
@@ -51,6 +52,8 @@ export async function DELETE() {
         { status: result.status ?? StatusCodes.BAD_REQUEST }
       );
     }
+
+    recordOwnSessionsRevoked(session, request, 'all');
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

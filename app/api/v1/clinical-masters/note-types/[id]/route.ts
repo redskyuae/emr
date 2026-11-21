@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetClinicalNoteTypeResponse, UpdateClinicalNoteTypeResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteClinicalNoteTypeCommand } from '@/app/api/lib/modules/clinical-note-type/commands/delete-clinical-note-type-command';
 import { updateClinicalNoteTypeCommand } from '@/app/api/lib/modules/clinical-note-type/commands/update-clinical-note-type-command';
 import { getClinicalNoteTypeByIdQuery } from '@/app/api/lib/modules/clinical-note-type/queries/get-clinical-note-type-by-id-query';
@@ -83,6 +84,11 @@ export async function PUT(request: NextRequest, context: ClinicalNoteTypeRouteCo
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'clinical-note-type',
+      action: 'updated',
+    });
+
     return NextResponse.json<UpdateClinicalNoteTypeResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +98,7 @@ export async function PUT(request: NextRequest, context: ClinicalNoteTypeRouteCo
   }
 }
 
-export async function DELETE(_request: NextRequest, context: ClinicalNoteTypeRouteContext) {
+export async function DELETE(request: NextRequest, context: ClinicalNoteTypeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +117,11 @@ export async function DELETE(_request: NextRequest, context: ClinicalNoteTypeRou
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'clinical-note-type',
+      action: 'deleted',
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

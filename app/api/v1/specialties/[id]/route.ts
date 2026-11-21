@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetSpecialtyResponse, UpdateSpecialtyResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteSpecialtyCommand } from '@/app/api/lib/modules/specialty/commands/delete-specialty-command';
 import { updateSpecialtyCommand } from '@/app/api/lib/modules/specialty/commands/update-specialty-command';
 import { getSpecialtyByIdQuery } from '@/app/api/lib/modules/specialty/queries/get-specialty-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: SpecialtyRouteContext) 
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'specialty', action: 'updated' });
+
     return NextResponse.json<UpdateSpecialtyResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: SpecialtyRouteContext) 
   }
 }
 
-export async function DELETE(_request: NextRequest, context: SpecialtyRouteContext) {
+export async function DELETE(request: NextRequest, context: SpecialtyRouteContext) {
   try {
     const tenantSession = await requireTenantAdminSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: SpecialtyRouteConte
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'specialty', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

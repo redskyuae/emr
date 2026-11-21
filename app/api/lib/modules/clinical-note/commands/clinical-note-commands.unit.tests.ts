@@ -51,13 +51,20 @@ describe('ClinicalNote commands', () => {
     vi.clearAllMocks();
     validateCreate.mockResolvedValue({
       success: true,
-      data: { patientId: 1, payload: { noteTypeId: 2, subjective: 'Cough' } },
+      data: {
+        patientId: 1,
+        payload: { noteTypeId: 2, subjective: 'Cough' },
+        noteTypeCode: 'SOAP',
+      },
     });
     validateUpdate.mockResolvedValue({
       success: true,
       data: { id: 4, payload: { noteTypeId: 2, subjective: 'Cough' } },
     });
-    validateSign.mockResolvedValue({ success: true, data: { id: 4, tenantId: 'tenant-1' } });
+    validateSign.mockResolvedValue({
+      success: true,
+      data: { id: 4, tenantId: 'tenant-1', noteTypeCode: 'SOAP' },
+    });
     validateDelete.mockResolvedValue({ success: true, data: { id: 4, tenantId: 'tenant-1' } });
     repo.createClinicalNote.mockResolvedValue(note);
     repo.updateClinicalNote.mockResolvedValue(note);
@@ -83,11 +90,21 @@ describe('ClinicalNote commands', () => {
     });
   });
 
-  it('should sign a note', async () => {
-    await expect(signClinicalNoteCommand('4', 'tenant-1')).resolves.toMatchObject({
+  it('should return the created note with its note type code beside it', async () => {
+    await expect(createClinicalNoteCommand('1', 'tenant-1', 'user-1', {})).resolves.toEqual({
       success: true,
-      data: { status: 'signed' },
+      data: note,
+      noteTypeCode: 'SOAP',
     });
+  });
+
+  it('should sign a note and return its note type code beside it', async () => {
+    await expect(signClinicalNoteCommand('4', 'tenant-1')).resolves.toEqual({
+      success: true,
+      data: signedNote,
+      noteTypeCode: 'SOAP',
+    });
+    expect(repo.signClinicalNote).toHaveBeenCalledWith(4, 'tenant-1');
   });
 
   it('should not sign when validation fails', async () => {

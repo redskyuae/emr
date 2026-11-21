@@ -1,17 +1,24 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PiArrowLeftLight } from 'react-icons/pi';
 
 import { useConsolidatedPatientReportQuery } from '@/app/queries/patients/useConsolidatedPatientReport';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { Button } from '@/components/ui/button';
+import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
-import { isValidPeriod, toApiDate } from '../../_utils/consolidated-report-period';
+import { isValidPeriod, periodDays, toApiDate } from '../../_utils/consolidated-report-period';
 import { ConsolidatedReportDocument } from './consolidated-report-document';
 import { useConsolidatedReportCriteria } from './consolidated-report-criteria';
 import { ReportDocumentSkeleton } from './report-document-skeleton';
 import { ReportToolbar } from './report-toolbar';
+
+function printReport() {
+  captureAnalyticsEvent('document_printed', { document: 'consolidated_report' });
+  window.print();
+}
 
 function BackToReports() {
   return (
@@ -37,6 +44,22 @@ export function ConsolidatedReportPageImpl() {
         }
       : null
   );
+
+  // Once per report shown: the length of its period, never the Patient or the dates.
+  const recordedReport = useRef<string | null>(null);
+  const shownReport =
+    ready && report.isSuccess ? `${criteria.patient}|${criteria.from}|${criteria.to}` : null;
+
+  useEffect(() => {
+    if (!shownReport || recordedReport.current === shownReport) {
+      return;
+    }
+
+    recordedReport.current = shownReport;
+    captureAnalyticsEvent('consolidated_report_opened', {
+      period_days: periodDays({ from: criteria.from!, to: criteria.to! }),
+    });
+  }, [shownReport, criteria.from, criteria.to]);
 
   if (!ready) {
     return (
@@ -70,7 +93,7 @@ export function ConsolidatedReportPageImpl() {
         </div>
       ) : (
         <>
-          <ReportToolbar report={report.data} back={<BackToReports />} />
+          <ReportToolbar report={report.data} back={<BackToReports />} onPrint={printReport} />
           <ConsolidatedReportDocument report={report.data} />
         </>
       )}

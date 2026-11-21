@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetAllergenResponse, UpdateAllergenResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteAllergenCommand } from '@/app/api/lib/modules/allergen/commands/delete-allergen-command';
 import { updateAllergenCommand } from '@/app/api/lib/modules/allergen/commands/update-allergen-command';
 import { getAllergenByIdQuery } from '@/app/api/lib/modules/allergen/queries/get-allergen-by-id-query';
@@ -83,6 +84,8 @@ export async function PUT(request: NextRequest, context: AllergenRouteContext) {
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, { master: 'allergen', action: 'updated' });
+
     return NextResponse.json<UpdateAllergenResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +95,7 @@ export async function PUT(request: NextRequest, context: AllergenRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: AllergenRouteContext) {
+export async function DELETE(request: NextRequest, context: AllergenRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +114,8 @@ export async function DELETE(_request: NextRequest, context: AllergenRouteContex
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, { master: 'allergen', action: 'deleted' });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

@@ -1,12 +1,16 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { appointmentRepository } from '../repository/appointment-repository';
 import type { Appointment, PotentialPatientMatch } from '../schemas/appointment-schema';
 import { validateCreateAppointment } from '../validator/create-appointment-validator';
 
-export type CreateAppointmentCommandResult = CommandResult<Appointment> & {
+// `timeZone` is internal only (analytics); the booking response returns `data` alone.
+export type CreateAppointmentCommandResult = CommandResultWith<
+  Appointment,
+  { timeZone: string }
+> & {
   patientMatches?: PotentialPatientMatch[];
 };
 
@@ -29,7 +33,7 @@ export async function createAppointmentCommand(
     const result = await appointmentRepository.createAppointment(validationResult.data);
 
     if (result.success) {
-      return result;
+      return { ...result, timeZone: validationResult.data.timeZone };
     }
 
     if (result.outcome === 'potential-patient-match') {

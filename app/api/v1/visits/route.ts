@@ -6,6 +6,8 @@ import { checkInVisitCommand } from '@/app/api/lib/modules/visit/commands/check-
 import { getVisitsQuery } from '@/app/api/lib/modules/visit/queries/get-visits-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitCheckedInProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -108,6 +110,10 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_checked_in', () =>
+      visitCheckedInProperties(result.data, result)
+    );
 
     return NextResponse.json<CheckInVisitResponse>(
       { data: result.data },

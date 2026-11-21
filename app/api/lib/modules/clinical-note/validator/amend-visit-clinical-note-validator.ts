@@ -15,6 +15,8 @@ import { validateNoteTypeReference } from './clinical-note-reference-validator';
 type AmendVisitClinicalNoteParams = {
   id: number;
   payload: AmendVisitClinicalNoteInput;
+  /** When the amended Visit was completed; reported with the amendment, not written. */
+  visitCompletedAt: Date | null;
 };
 
 /**
@@ -68,5 +70,12 @@ export async function validateAmendVisitClinicalNote(
     return noteTypeResult;
   }
 
-  return { success: true, data: { id: noteIdResult.data, payload: payloadResult.data } };
+  return {
+    success: true,
+    data: {
+      id: noteIdResult.data,
+      payload: payloadResult.data,
+      visitCompletedAt: visitResult.data.completedAt,
+    },
+  };
 }

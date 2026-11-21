@@ -12,9 +12,11 @@ import { displayDate, patientFullName } from '../../_utils/consolidated-report-f
 export function ReportToolbar({
   back,
   report,
+  onPrint,
 }: {
   back: ReactNode;
   report: ConsolidatedPatientReport;
+  onPrint: () => void;
 }) {
   const visitCount = report.visits.length;
 
@@ -29,7 +31,7 @@ export function ReportToolbar({
           {visitCount} {visitCount === 1 ? 'Visit' : 'Visits'}
         </p>
       </div>
-      <Button type="button" onClick={() => window.print()}>
+      <Button type="button" onClick={onPrint}>
         <PiPrinterLight className="size-4" />
         Print or save as PDF
       </Button>

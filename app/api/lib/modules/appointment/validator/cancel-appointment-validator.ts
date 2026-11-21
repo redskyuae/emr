@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 
 import { appointmentCancelledReasonRepository } from '../../appointment-cancelled-reason/repository/appointment-cancelled-reason-repository';
+import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import type { ValidationResult } from '@/app/api/lib/utils/types';
 import { formatValidationErrors } from '@/app/api/lib/utils/utils';
 import { appointmentRepository } from '../repository/appointment-repository';
@@ -15,7 +16,7 @@ export async function validateCancelAppointment(
   id: unknown,
   payload: unknown,
   tenantId: unknown
-): Promise<ValidationResult<ValidatedCancelAppointmentData>> {
+): Promise<ValidationResult<ValidatedCancelAppointmentData & { timeZone: string | null }>> {
   const idResult = appointmentIdSchema.safeParse(id);
   const tenantIdResult = appointmentTenantIdSchema.safeParse(tenantId);
   const payloadResult = cancelAppointmentSchema.safeParse(payload);
@@ -55,11 +56,15 @@ export async function validateCancelAppointment(
     };
   }
 
-  const cancellationReason =
-    await appointmentCancelledReasonRepository.getAppointmentCancelledReasonById(
+  // The Tenant's clock is read alongside the reason only to report the cancellation's lead time.
+  const [cancellationReason, tenant] = await Promise.all([
+    appointmentCancelledReasonRepository.getAppointmentCancelledReasonById(
       payloadResult.data.appointmentCancelledReasonId,
       tenantIdResult.data
-    );
+    ),
+    // Best-effort: a failed read falls back to UTC rather than blocking the cancellation.
+    tenantRepository.getTenantById(tenantIdResult.data).catch(() => undefined),
+  ]);
 
   if (!cancellationReason) {
     return {
@@ -75,6 +80,7 @@ export async function validateCancelAppointment(
       id: idResult.data,
       tenantId: tenantIdResult.data,
       appointmentCancelledReasonId: payloadResult.data.appointmentCancelledReasonId,
+      timeZone: tenant?.timeZone ?? null,
     },
   };
 }

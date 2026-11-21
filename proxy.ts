@@ -19,7 +19,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // `relay` is the same-origin analytics ingestion path (app/relay); it must reach the route
+  // handler without a Session, or the anonymous login and signup events are lost.
   matcher: [
-    '/((?!api(?:/|$)|_next(?:/|$)|favicon.ico$|robots.txt$|sitemap.xml$|manifest.json$|.*\\.(?:avif|bmp|css|gif|ico|jpeg|jpg|js|json|map|png|svg|txt|webp|xml)$).*)',
+    '/((?!api(?:/|$)|relay(?:/|$)|_next(?:/|$)|favicon.ico$|robots.txt$|sitemap.xml$|manifest.json$|.*\\.(?:avif|bmp|css|gif|ico|jpeg|jpg|js|json|map|png|svg|txt|webp|xml)$).*)',
   ],
 };

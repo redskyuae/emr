@@ -6,7 +6,11 @@ import { addPatientTreatmentPlanSessionsCommand } from '@/app/api/lib/modules/pa
 import { getPatientTreatmentPlansQuery } from '@/app/api/lib/modules/patient-treatment-plan/queries/get-patient-treatment-plans-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { GET, POST } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock(
   '@/app/api/lib/modules/patient-treatment-plan/commands/add-patient-treatment-plan-sessions-command',
   () => ({ addPatientTreatmentPlanSessionsCommand: vi.fn() })
@@ -218,6 +222,13 @@ describe('Patient Treatment Plans route', () => {
     await expect(response.json()).resolves.toMatchObject({
       data: { id: 1, totalSessions: 4 },
     });
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'treatment_plan_sessions_added',
+      expect.any(Function)
+    );
   });
 
   it('should map an unavailable Plan to conflict', async () => {
@@ -234,5 +245,6 @@ describe('Patient Treatment Plans route', () => {
       message: 'Conflict',
       errors: ['Patient Treatment Plan is no longer available.'],
     });
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 });

@@ -9,6 +9,8 @@ import {
 type AmendVisitDiagnosesParams = {
   visitId: number;
   diagnoses: VisitDiagnosisEntry[];
+  /** When the amended Visit was completed; reported with the amendment, not written. */
+  visitCompletedAt: Date | null;
 };
 
 // Only a Completed Visit's diagnoses are amended; Active Visits use the save path.
@@ -39,5 +41,8 @@ export async function validateAmendVisitDiagnoses(
     return referenceResult;
   }
 
-  return { success: true, data: parsed.data };
+  return {
+    success: true,
+    data: { ...parsed.data, visitCompletedAt: visitResult.data.completedAt },
+  };
 }

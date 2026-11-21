@@ -24,11 +24,12 @@ const payload = {
   plan: undefined,
 };
 const amendedNote = { id: 4, visitId: 1, status: 'signed' } as ClinicalNote;
+const visitCompletedAt = new Date('2026-07-15T11:00:00.000Z');
 
 describe('amendVisitClinicalNoteCommand', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    validateAmend.mockResolvedValue({ success: true, data: { id: 4, payload } });
+    validateAmend.mockResolvedValue({ success: true, data: { id: 4, payload, visitCompletedAt } });
     repo.amendClinicalNote.mockResolvedValue(amendedNote);
   });
 
@@ -61,6 +62,7 @@ describe('amendVisitClinicalNoteCommand', () => {
     ).resolves.toEqual({
       success: true,
       data: amendedNote,
+      visitCompletedAt,
     });
     expect(repo.amendClinicalNote).toHaveBeenCalledWith(
       4,

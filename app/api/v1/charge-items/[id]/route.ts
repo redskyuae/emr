@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { GetChargeItemResponse, UpdateChargeItemResponse } from './types';
 
+import { recordMasterRecordChanged } from '@/app/api/lib/analytics/access-master-event';
 import { deleteChargeItemCommand } from '@/app/api/lib/modules/charge-item/commands/delete-charge-item-command';
 import { updateChargeItemCommand } from '@/app/api/lib/modules/charge-item/commands/update-charge-item-command';
 import { getChargeItemByIdQuery } from '@/app/api/lib/modules/charge-item/queries/get-charge-item-by-id-query';
@@ -83,6 +84,12 @@ export async function PUT(request: NextRequest, context: ChargeItemRouteContext)
       );
     }
 
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'charge-item',
+      action: 'updated',
+      charge_item_category: result.data.category,
+    });
+
     return NextResponse.json<UpdateChargeItemResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +99,7 @@ export async function PUT(request: NextRequest, context: ChargeItemRouteContext)
   }
 }
 
-export async function DELETE(_request: NextRequest, context: ChargeItemRouteContext) {
+export async function DELETE(request: NextRequest, context: ChargeItemRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -111,6 +118,12 @@ export async function DELETE(_request: NextRequest, context: ChargeItemRouteCont
         { status }
       );
     }
+
+    recordMasterRecordChanged(tenantSession, request, {
+      master: 'charge-item',
+      action: 'deleted',
+      charge_item_category: result.data.category,
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {
