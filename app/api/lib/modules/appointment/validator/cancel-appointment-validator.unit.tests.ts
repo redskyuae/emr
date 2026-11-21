@@ -58,6 +58,14 @@ describe('Cancel Appointment validator', () => {
     ).resolves.toMatchObject({ success: true, data: { timeZone: null } });
   });
 
+  it('should still validate the cancellation when reading the Tenant fails', async () => {
+    tenantRepo.getTenantById.mockRejectedValue(new Error('database down'));
+
+    await expect(
+      validateCancelAppointment('12', { appointmentCancelledReasonId: 7 }, 'tenant-1')
+    ).resolves.toMatchObject({ success: true });
+  });
+
   it('should stop before repositories when the request contract is invalid', async () => {
     await expect(validateCancelAppointment('bad', {}, ' ')).resolves.toMatchObject({
       success: false,

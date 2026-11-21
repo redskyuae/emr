@@ -407,8 +407,8 @@ async function admitPatient(
 }
 
 export type TransferBedResult =
-  // `fromWardId` is the Ward of the Bed the Patient left, so callers can tell a same-Ward move.
-  | { outcome: 'transferred'; data: Admission; fromWardId: number | null }
+  // `fromBedId` is the Bed the Patient left (already read, no extra query), for analytics.
+  | { outcome: 'transferred'; data: Admission; fromBedId: number }
   | { outcome: 'not-found' }
   | { outcome: 'invalid-status'; data: Admission }
   | { outcome: 'same-bed'; data: Admission }
@@ -468,12 +468,6 @@ async function runTransferBedTransaction(
       throw new BedNotAvailableError();
     }
 
-    const [fromBed] = await tx
-      .select({ wardId: bedTable.wardId })
-      .from(bedTable)
-      .where(and(eq(bedTable.id, existing.bedId), eq(bedTable.tenantId, tenantId)))
-      .limit(1);
-
     await releaseBed(tx, tenantId, existing.bedId);
 
     const now = new Date();
@@ -498,7 +492,7 @@ async function runTransferBedTransaction(
       throw new Error('Transferred Admission could not be read');
     }
 
-    return { outcome: 'transferred', data: updated, fromWardId: fromBed?.wardId ?? null };
+    return { outcome: 'transferred', data: updated, fromBedId: existing.bedId };
   });
 }
 

@@ -99,6 +99,12 @@ describe('ClinicalNote validators', () => {
     expect(result).toMatchObject({ success: true, data: { noteTypeCode: null } });
   });
 
+  it('should still sign a note when its note type cannot be read', async () => {
+    noteTypeRepo.getClinicalNoteTypeById.mockRejectedValue(new Error('database down'));
+    const result = await validateSignClinicalNote('4', 'tenant-1');
+    expect(result).toMatchObject({ success: true, data: { noteTypeCode: null } });
+  });
+
   it('should not look up the note type when the note is already signed', async () => {
     noteRepo.getClinicalNoteById.mockResolvedValue({ id: 4, status: 'signed' } as never);
     await validateSignClinicalNote('4', 'tenant-1');

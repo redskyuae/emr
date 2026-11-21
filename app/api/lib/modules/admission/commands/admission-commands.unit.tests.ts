@@ -102,7 +102,7 @@ describe('Admission commands', () => {
     });
     validateById.mockReturnValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
     repo.admitPatient.mockResolvedValue({ success: true, data: admission });
-    repo.transferBed.mockResolvedValue({ outcome: 'transferred', data: admission, fromWardId: 6 });
+    repo.transferBed.mockResolvedValue({ outcome: 'transferred', data: admission, fromBedId: 6 });
     repo.dischargeAdmission.mockResolvedValue({ outcome: 'updated', data: admission });
     repo.cancelAdmission.mockResolvedValue({ outcome: 'updated', data: admission });
     repo.updateAdmission.mockResolvedValue(admission);
@@ -200,22 +200,22 @@ describe('Admission commands', () => {
       });
 
       const moved = { ...admission, ward: { id: 6, name: 'ICU', code: 'ICU' } };
-      repo.transferBed.mockResolvedValue({ outcome: 'transferred', data: moved, fromWardId: 6 });
+      repo.transferBed.mockResolvedValue({ outcome: 'transferred', data: moved, fromBedId: 6 });
       await expect(transferBedCommand('1', 'tenant-1', {})).resolves.toEqual({
         success: true,
         data: moved,
-        sameWard: true,
+        fromBedId: 6,
       });
       expect(repo.transferBed).toHaveBeenLastCalledWith(1, 'tenant-1', 4, undefined);
     });
 
-    it('should report a move to a Bed in another Ward', async () => {
+    it('should return the Bed the Patient left beside the transferred Admission', async () => {
       const moved = { ...admission, ward: { id: 8, name: 'General Ward', code: 'GEN' } };
-      repo.transferBed.mockResolvedValue({ outcome: 'transferred', data: moved, fromWardId: 6 });
+      repo.transferBed.mockResolvedValue({ outcome: 'transferred', data: moved, fromBedId: 3 });
 
       await expect(transferBedCommand('1', 'tenant-1', {})).resolves.toMatchObject({
         success: true,
-        sameWard: false,
+        fromBedId: 3,
       });
     });
 

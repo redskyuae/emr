@@ -62,7 +62,8 @@ export async function validateCancelAppointment(
       payloadResult.data.appointmentCancelledReasonId,
       tenantIdResult.data
     ),
-    tenantRepository.getTenantById(tenantIdResult.data),
+    // Best-effort: a failed read falls back to UTC rather than blocking the cancellation.
+    tenantRepository.getTenantById(tenantIdResult.data).catch(() => undefined),
   ]);
 
   if (!cancellationReason) {

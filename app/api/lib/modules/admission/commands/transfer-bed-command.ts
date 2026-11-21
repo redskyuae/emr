@@ -10,8 +10,8 @@ export async function transferBedCommand(
   id: unknown,
   tenantId: string,
   payload: unknown
-  // `sameWard` is internal only (analytics); the transfer response returns `data` alone.
-): Promise<CommandResultWith<Admission, { sameWard: boolean }>> {
+  // `fromBedId` is internal only (analytics); the transfer response returns `data` alone.
+): Promise<CommandResultWith<Admission, { fromBedId: number }>> {
   const validationResult = await validateTransferBed(id, payload, tenantId);
 
   if (!validationResult.success) {
@@ -67,7 +67,7 @@ export async function transferBedCommand(
     return {
       success: true,
       data: result.data,
-      sameWard: result.fromWardId !== null && result.fromWardId === result.data.ward.id,
+      fromBedId: result.fromBedId,
     };
   } catch (error) {
     const dbError = getDatabaseError(error);

@@ -51,10 +51,10 @@ export async function validateSignClinicalNote(
     };
   }
 
-  const noteType = await clinicalNoteTypeRepository.getClinicalNoteTypeById(
-    existing.noteTypeId,
-    tenantIdResult.data
-  );
+  // Best-effort: the code is only reported to analytics, so a failed read never blocks signing.
+  const noteType = await clinicalNoteTypeRepository
+    .getClinicalNoteTypeById(existing.noteTypeId, tenantIdResult.data)
+    .catch(() => undefined);
 
   return {
     success: true,

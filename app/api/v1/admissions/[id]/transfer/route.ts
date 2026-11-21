@@ -4,7 +4,11 @@ import type { TransferBedResponse } from './types';
 
 import { transferBedCommand } from '@/app/api/lib/modules/admission/commands/transfer-bed-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
-import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import {
+  analyticsActorFromSession,
+  recordServerEventAfterLookup,
+} from '@/app/api/lib/analytics/server-analytics';
+import { getBedByIdQuery } from '@/app/api/lib/modules/bed/queries/get-bed-by-id-query';
 
 type AdmissionRouteContext = {
   params: Promise<{ id: string }>;
@@ -53,9 +57,19 @@ export async function POST(request: NextRequest, context: AdmissionRouteContext)
       );
     }
 
-    recordLifecycleEvent(tenantSession, request, 'bed_transferred', () => ({
-      same_ward: result.sameWard,
-    }));
+    // The Ward of the Bed left is read after the response, so an analytics read can never fail or
+    // slow the transfer. If it cannot be read, nothing is recorded.
+    const { data: admission, fromBedId } = result;
+
+    recordServerEventAfterLookup(
+      analyticsActorFromSession(tenantSession, request),
+      'bed_transferred',
+      async () => {
+        const fromBed = await getBedByIdQuery(fromBedId, tenantSession.tenantId);
+
+        return fromBed.success ? { same_ward: fromBed.data.wardId === admission.ward.id } : null;
+      }
+    );
 
     return NextResponse.json<TransferBedResponse>({ data: result.data });
   } catch {
