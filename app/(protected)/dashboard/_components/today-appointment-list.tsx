@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { CiCalendarDate } from 'react-icons/ci';
-import { PiArrowRightLight } from 'react-icons/pi';
+import { PiArrowRightLight, PiCalendarBlankDuotone } from 'react-icons/pi';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { appointmentStatusVariant } from '@/app/(protected)/appointments/_utils/appointment-status';
+import { EmptyState } from '@/components/app/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,13 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
 
 function appointmentTime(appointment: Appointment) {
@@ -55,27 +48,25 @@ export function TodayAppointmentList({
       </CardHeader>
       <CardContent>
         {appointments.length === 0 ? (
-          <Empty className="py-4">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiCalendarDate aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>
-                {hasMore
-                  ? 'No active Appointments in the loaded bookings'
-                  : hasAppointments
-                    ? 'No active Appointments'
-                    : 'No Appointments scheduled today'}
-              </EmptyTitle>
-              <EmptyDescription>
-                {hasMore
-                  ? 'Open the full Appointment list to review the remaining bookings.'
-                  : hasAppointments
-                    ? 'Review completed, cancelled, and no-show bookings in the full Appointment list.'
-                    : 'New bookings for today will appear here.'}
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <EmptyState
+            size="md"
+            tone="teal"
+            icon={PiCalendarBlankDuotone}
+            title={
+              hasMore
+                ? 'No active Appointments in the loaded bookings'
+                : hasAppointments
+                  ? 'No active Appointments'
+                  : 'No Appointments scheduled today'
+            }
+            description={
+              hasMore
+                ? 'Open the full Appointment list to review the remaining bookings.'
+                : hasAppointments
+                  ? 'Review completed, cancelled, and no-show bookings in the full Appointment list.'
+                  : 'New bookings for today will appear here.'
+            }
+          />
         ) : (
           <ul className="divide-border divide-y">
             {appointments.map((appointment) => {

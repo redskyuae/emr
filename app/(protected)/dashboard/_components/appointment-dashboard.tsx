@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { CiCircleAlert } from 'react-icons/ci';
-import { PiArrowRightLight } from 'react-icons/pi';
+import { PiArrowRightLight, PiLockKeyDuotone } from 'react-icons/pi';
 
 import {
   toDateInputValue,
@@ -11,6 +11,7 @@ import {
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAppointmentDashboardQuery } from '@/app/queries/appointments/useAppointments';
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { StatCardSkeleton } from '@/components/app/stat-card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -72,14 +73,14 @@ export function AppointmentDashboard() {
         skeleton={<AppointmentDashboardContentSkeleton />}
       >
         {!canRead ? (
-          <Card>
-            <CardContent>
-              <p className="font-medium">Appointment access required</p>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Your Role does not include permission to view Appointments.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            tone="danger"
+            orbit={false}
+            className="min-h-72"
+            icon={PiLockKeyDuotone}
+            title="Appointment access required"
+            description="Your Role does not include permission to view Appointments."
+          />
         ) : appointmentsQuery.isError ? (
           <Alert variant="destructive">
             <CiCircleAlert className="size-4" />
