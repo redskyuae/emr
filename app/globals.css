@@ -57,6 +57,9 @@
   --color-gender-male: var(--gender-male);
   --color-gender-female: var(--gender-female);
   --color-phone: var(--phone);
+  --color-tone-sky: var(--tone-sky);
+  --color-tone-orange: var(--tone-orange);
+  --color-tone-amber: var(--tone-amber);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -124,6 +127,11 @@
   --gender-male: oklch(0.42 0.15 262);
   --gender-female: oklch(0.62 0.24 355);
   --phone: oklch(0.55 0.15 150);
+  /* Subject tones for the EmptyState centre icon only, the hues no other token carries (sky for
+     inpatient and rooms, orange for assets, amber for Masters lists). Decorative: the title says it. */
+  --tone-sky: oklch(0.6 0.13 230);
+  --tone-orange: oklch(0.64 0.17 50);
+  --tone-amber: oklch(0.7 0.15 75);
   --border: oklch(0.915 0.012 265);
   --input: oklch(0.875 0.016 265);
   /* Text box, Select and Combobox fill: opaque, so a field never takes the colour of the surface behind it. */
@@ -176,6 +184,9 @@
   --gender-male: oklch(0.7 0.14 255);
   --gender-female: oklch(0.74 0.19 355);
   --phone: oklch(0.76 0.15 150);
+  --tone-sky: oklch(0.76 0.11 230);
+  --tone-orange: oklch(0.76 0.14 55);
+  --tone-amber: oklch(0.82 0.13 80);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
   --field: oklch(0.225 0.024 256);

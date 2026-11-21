@@ -68,6 +68,10 @@ export function AppointmentsPageImpl() {
     appointmentStatusId,
     query: debouncedSearch || undefined,
   };
+  // The same values the queries use, so the empty state always agrees with the list on screen.
+  const isFiltered = Boolean(
+    doctorId || therapistId || appointmentStatusId || debouncedSearch.trim()
+  );
   const todayAppointmentsQuery = useAppointmentsQuery(
     {
       ...sharedFilters,
@@ -263,7 +267,8 @@ export function AppointmentsPageImpl() {
               isLoading={todayLoading}
               isFetching={todayAppointmentsQuery.isFetching}
               description={`Appointments scheduled for today, ${todayDate}.`}
-              emptyDescription="No Appointments scheduled for today match the current filters."
+              isFiltered={isFiltered}
+              canCreate={canCreate}
               onPageChange={(page) => void setTodayPage(page)}
               onCancel={(appointment) => void setCancelParam(String(appointment.id))}
             />
@@ -306,7 +311,8 @@ export function AppointmentsPageImpl() {
               isLoading={upcomingLoading}
               isFetching={upcomingAppointmentsQuery.isFetching}
               description={`Future Appointments from ${tomorrowDate} onward.`}
-              emptyDescription="No future Appointments match the current filters."
+              isFiltered={isFiltered}
+              canCreate={canCreate}
               onPageChange={(page) => void setUpcomingPage(page)}
               onCancel={(appointment) => void setCancelParam(String(appointment.id))}
             />
