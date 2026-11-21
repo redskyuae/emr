@@ -50,10 +50,11 @@ describe('usePatientFormAnalytics', () => {
     unmount();
     act(() => vi.runAllTimers());
 
-    expect(captureAnalyticsEvent).toHaveBeenLastCalledWith('patient_form_abandoned', {
-      mode: 'register',
-      seconds_since_started: 12,
-    });
+    expect(captureAnalyticsEvent).toHaveBeenLastCalledWith(
+      'patient_form_abandoned',
+      { mode: 'register', seconds_since_started: 12 },
+      undefined
+    );
   });
 
   it('should record a blocked Registration submit with field names only', () => {

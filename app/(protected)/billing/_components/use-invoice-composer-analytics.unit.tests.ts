@@ -80,10 +80,11 @@ describe('useInvoiceComposerAnalytics', () => {
     unmount();
     act(() => vi.runAllTimers());
 
-    expect(captureAnalyticsEvent).toHaveBeenLastCalledWith('invoice_composer_abandoned', {
-      linked_to: 'none',
-      seconds_since_started: 0,
-    });
+    expect(captureAnalyticsEvent).toHaveBeenLastCalledWith(
+      'invoice_composer_abandoned',
+      { linked_to: 'none', seconds_since_started: 0 },
+      undefined
+    );
   });
 
   it('should not record abandoned after every step succeeded', () => {
@@ -93,9 +94,8 @@ describe('useInvoiceComposerAnalytics', () => {
     unmount();
     act(() => vi.runAllTimers());
 
-    expect(captureAnalyticsEvent).not.toHaveBeenCalledWith(
-      'invoice_composer_abandoned',
-      expect.anything()
+    expect(vi.mocked(captureAnalyticsEvent).mock.calls.map(([event]) => event)).not.toContain(
+      'invoice_composer_abandoned'
     );
   });
 });

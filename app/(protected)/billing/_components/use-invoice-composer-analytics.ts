@@ -3,10 +3,10 @@
 import type { FieldErrors } from 'react-hook-form';
 
 import { ApiError } from '@/app/queries/api-error';
-import { useFormFunnelAnalytics } from '@/hooks/use-form-funnel-analytics';
 import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import type { AnalyticsEventProperties } from '@/lib/analytics/catalogue';
 import { formValidationFailure } from '@/lib/analytics/form-validation';
+import { useWorkflowAnalytics } from '@/lib/analytics/use-workflow-analytics';
 
 import type { CreateInvoiceFormValues } from '../_utils/create-invoice-form-schema';
 
@@ -32,14 +32,14 @@ export function useInvoiceComposerAnalytics({
   /** The encounter kind chosen in the form now. */
   currentLink: () => InvoiceLink;
 }) {
-  const funnel = useFormFunnelAnalytics({
-    active: true,
-    onStarted: () => captureAnalyticsEvent('invoice_composer_started', { linked_to: openedFor }),
-    onAbandoned: (seconds) =>
-      captureAnalyticsEvent('invoice_composer_abandoned', {
-        linked_to: currentLink(),
-        seconds_since_started: seconds,
-      }),
+  const funnel = useWorkflowAnalytics({
+    onStart: () => captureAnalyticsEvent('invoice_composer_started', { linked_to: openedFor }),
+    onAbandon: ({ secondsSinceStarted, options }) =>
+      captureAnalyticsEvent(
+        'invoice_composer_abandoned',
+        { linked_to: currentLink(), seconds_since_started: secondsSinceStarted },
+        options
+      ),
   });
 
   return {
@@ -54,7 +54,7 @@ export function useInvoiceComposerAnalytics({
         status: error instanceof ApiError ? error.status : undefined,
       }),
     /** Every chained call succeeded, so leaving now is not an abandonment. */
-    recordCompleted: funnel.finish,
+    recordCompleted: funnel.markSucceeded,
     recordInvalid: (errors: FieldErrors<CreateInvoiceFormValues>) =>
       captureAnalyticsEvent(
         'form_validation_failed',
