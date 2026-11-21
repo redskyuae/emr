@@ -24,7 +24,7 @@ All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired,
 
 Key facts:
 
-- Themed shadcn components live in `components/ui/` (do not fork them); domain composites in `components/{brand,marketing,auth}/`. Page-specific React components under `app/` must live in the route-local `_components/` directory. Design tokens live only in `app/globals.css`.
+- Themed shadcn components live in `components/ui/` (do not fork them); domain composite in `components/{brand,marketing,auth}/`. Page-specific React components under `app/` must live in the route-local `_components/` directory. Design tokens live only in `app/globals.css`.
 - `LOGIN_LOGO_VARIANT` selects `dhathri-ayurvedic`, `dhathri-gram`, or `none` throughout the UI. Shared brand data lives in `components/brand/brand-config.ts`; `BrandProvider` carries the server-selected variant to client components. Use `Logo` or `LogoMark` for new visual brand placements rather than reading the environment variable in client code.
 - `AUTH_SHOW_CREATE_WORKSPACE_LINK` and `AUTH_SHOW_BACK_TO_SITE_LINK` independently enable the optional links on auth screens. Both are hidden unless set to `true`.
 - `SIDEBAR_APPOINTMENTS_ONLY` defaults to enabled. Set it to `false` to restore the full sidebar; the reduced sidebar shows the Appointment Dashboard, Appointments, booking resources and their Masters, plus Billing Masters > Charge Items, subject to the usual permissions. This changes navigation visibility only, not route authorization.
