@@ -154,7 +154,18 @@ export function startAnalytics(options: StartOptions) {
     });
 }
 
-function capture(event: ClientEventName, properties: object, essential: boolean) {
+/**
+ * `transport: 'sendBeacon'` sends the event at once by beacon, so it survives the page closing; use
+ * it for an event recorded while the page hides.
+ */
+export type AnalyticsCaptureOptions = { transport?: 'sendBeacon' };
+
+function capture(
+  event: ClientEventName,
+  properties: object,
+  essential: boolean,
+  options?: AnalyticsCaptureOptions
+) {
   // Read now: a call queued while PostHog loads must keep the page it happened on, not the page
   // open when the queue drains. The guard aligns `$current_url` and `$pathname` with `route`.
   const page = currentPageContext();
@@ -164,7 +175,7 @@ function capture(event: ClientEventName, properties: object, essential: boolean)
       const sanitized = sanitizeEventProperties(event, { ...page, ...properties });
 
       if (sanitized) {
-        posthog.capture(event, sanitized);
+        posthog.capture(event, sanitized, options);
       }
     },
     { essential }
@@ -173,9 +184,10 @@ function capture(event: ClientEventName, properties: object, essential: boolean)
 
 export function captureAnalyticsEvent<E extends ClientEventName>(
   event: E,
-  properties: AnalyticsEventProperties<E>
+  properties: AnalyticsEventProperties<E>,
+  options?: AnalyticsCaptureOptions
 ) {
-  capture(event, properties, false);
+  capture(event, properties, false, options);
 }
 
 /** Identifies the browser as the Current User and attaches it to their Tenant. */

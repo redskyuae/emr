@@ -52,6 +52,7 @@ import {
   toBookingTreatment,
 } from './book-appointment-demo-data';
 import type { TreatmentSelectionState } from './book-appointment-demo-data';
+import { useBookingAnalytics } from './use-booking-analytics';
 
 const initialValues: BookAppointmentFormValues = {
   patientId: '',
@@ -124,6 +125,7 @@ export function useBookAppointment() {
   const visitType = values.visitType ?? '';
   const isConsultationPath = visitType === 'CONSULTATION';
   const isProcedurePath = visitType === 'PROCEDURE';
+  const analytics = useBookingAnalytics(values);
 
   const patientsQuery = usePatientsQuery({
     page: 1,
@@ -603,18 +605,21 @@ export function useBookAppointment() {
   const onSubmit = form.handleSubmit(
     async (submitted) => {
       setSubmitError(null);
+      analytics.recordSubmitted();
 
       try {
         await submitBookAppointmentAndNavigate(
           submitted,
           createAppointment.mutateAsync,
           (bookingConfirmation) => {
+            analytics.recordBooked();
             setConfirmation(bookingConfirmation);
             toast.success(`${bookingConfirmation.bookingNumber} booked.`);
           },
           router.push
         );
       } catch (error) {
+        analytics.recordRejected(error);
         const message = getApiErrorMessage(error);
         setSubmitError(message);
 

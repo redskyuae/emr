@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { visitOutstandingItems, type VisitWorkflowInput } from './visit-workflow';
+import {
+  visitOutstandingItems,
+  visitOutstandingKinds,
+  type VisitWorkflowInput,
+} from './visit-workflow';
 
 const base: VisitWorkflowInput = {
   status: 'IN_CONSULTATION',
@@ -23,11 +27,40 @@ describe('visitOutstandingItems', () => {
     expect(visitOutstandingItems({ ...base, noteCount: 2, draftNoteCount: 2 })).toContain(
       '2 Clinical Notes are still drafts.'
     );
+    expect(visitOutstandingItems({ ...base, noteCount: 1, draftNoteCount: 1 })).toContain(
+      '1 Clinical Note is still a draft.'
+    );
+  });
+
+  it('should warn first about unsaved consultation changes', () => {
+    expect(visitOutstandingItems({ ...base, consultationDirty: true })[0]).toBe(
+      'The consultation has unsaved changes.'
+    );
   });
 
   it('should be empty when the Visit is ready to complete', () => {
     expect(
       visitOutstandingItems({ ...base, vitalsCount: 1, noteCount: 1, invoiceCount: 1 })
+    ).toEqual([]);
+  });
+});
+
+describe('visitOutstandingKinds', () => {
+  it('should give one fixed kind per open item, in the order the items are listed', () => {
+    const input = { ...base, consultationDirty: true, noteCount: 3, draftNoteCount: 2 };
+
+    expect(visitOutstandingKinds(input)).toEqual([
+      'unsaved_consultation',
+      'no_vital_signs',
+      'draft_clinical_notes',
+      'no_invoice',
+    ]);
+    expect(visitOutstandingKinds(input)).toHaveLength(visitOutstandingItems(input).length);
+  });
+
+  it('should be empty when nothing is open', () => {
+    expect(
+      visitOutstandingKinds({ ...base, vitalsCount: 2, noteCount: 1, invoiceCount: 1 })
     ).toEqual([]);
   });
 });

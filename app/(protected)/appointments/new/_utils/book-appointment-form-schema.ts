@@ -27,7 +27,9 @@ const optionalTrimmedString = (maxLength: number, message: string) =>
 
 // 0501234567 or +971501234567, using the same UAE mobile rule as Patient
 // Registration; the API stores either as +971501234567.
-const BOOKING_PHONE_PATTERN = new RegExp(`^(?:0|\\+971)${UAE_MOBILE_PATTERN.source.slice(1)}`);
+export const BOOKING_PHONE_PATTERN = new RegExp(
+  `^(?:0|\\+971)${UAE_MOBILE_PATTERN.source.slice(1)}`
+);
 
 export const bookAppointmentFormSchema = z
   .object({

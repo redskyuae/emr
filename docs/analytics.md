@@ -234,7 +234,56 @@ success branch. Helpers for these events live in `app/api/lib/analytics/access-*
 
 ### Workflow funnel events
 
-Added by #359 (`lib/analytics/events/funnel-events.ts`).
+Recorded by the browser inside three workflows (`lib/analytics/events/funnel-events.ts`), so a
+funnel can run from "started" to the outcome the server records (`appointment_booked`,
+`visit_checked_in`, `visit_completed`, `payment_recorded`), which the browser never records again.
+No event carries a record id, a Doctor or Therapist id, a name, an amount, typed text or an error
+message.
+
+**Started and abandoned.** `_started` is recorded when the screen opens (Reschedule: once the
+Appointment has loaded and may be rescheduled). `_abandoned` is recorded at most once per screen
+instance, when the screen unmounts or the page is hidden or closed after `_started` and before the
+outcome succeeded; a page that is closing sends it by beacon. A successful submit never also
+records an abandon, and React strict mode's development remount is not counted.
+`seconds_since_started` runs from that screen instance's `_started` (`lib/analytics/use-workflow-analytics.ts`).
+
+#### Book Appointment (`/appointments/new`) and Appointment Rescheduling
+
+| Event                                | When                                                       | Properties                                                                                                                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `appointment_booking_started`        | the screen opens                                           | `prefilled_from_plan` (opened with `?add-sessions=`)                                                                                                                                                |
+| `appointment_booking_patient_chosen` | a Patient is selected, or a Provisional Patient is entered | `patient_kind`: `existing`, `provisional_new`                                                                                                                                                       |
+| `appointment_booking_path_selected`  | the Booking Path is chosen or changed                      | `booking_path`: `CONSULTATION`, `PROCEDURE`                                                                                                                                                         |
+| `appointment_booking_step_completed` | the booking state first makes a section valid              | `step`: `patient`, `doctor`, `schedule`, `details` (Consultation), `treatment_session`, `procedure_schedule`, `resources` (Procedure); `booking_path` (absent for a Patient chosen before the path) |
+| `appointment_booking_submitted`      | a valid booking is sent                                    | `booking_path`, `seconds_since_started`                                                                                                                                                             |
+| `appointment_booking_rejected`       | the server rejects the booking                             | `booking_path`, `status`, `rejection_kind`: `duplicate_patient_match` (a 409 with Patient matches), `conflict`, `validation`, `forbidden`, `server_error`                                           |
+| `appointment_booking_abandoned`      | the user leaves without a booking                          | `booking_path` (absent before one is chosen), `last_step` (the step most recently completed), `seconds_since_started`                                                                               |
+| `appointment_reschedule_started`     | the Reschedule screen shows the Appointment                | `booking_path`                                                                                                                                                                                      |
+| `appointment_reschedule_submitted`   | a valid reschedule is sent                                 | `booking_path`, `seconds_since_started`                                                                                                                                                             |
+| `appointment_reschedule_abandoned`   | the user leaves without rescheduling                       | `booking_path`, `seconds_since_started`                                                                                                                                                             |
+
+#### Check-in (`/visits/new`)
+
+| Event                          | When                                                       | Properties                                                                                                                                                                             |
+| ------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `check_in_started`             | the screen opens                                           | `check_in_mode`: `appointment`, `walk_in`; `prefilled_from_appointment` (opened with `?appointmentId=`)                                                                                |
+| `check_in_patient_confirmed`   | the Patient is confirmed                                   | `check_in_mode`                                                                                                                                                                        |
+| `check_in_blocked`             | the screen or the server stops this Patient or Appointment | `check_in_mode`, `block_kind`: `provisional_patient`, `inactive_patient`, `active_visit_exists`, `appointment_already_checked_in`, `appointment_not_today`, `appointment_not_eligible` |
+| `check_in_submitted`           | the Check-in request is sent                               | `check_in_mode`, `creates_invoice`, `payment_timing`: `NOW`, `LATER` (only with an Invoice), `seconds_since_started`                                                                   |
+| `check_in_payment_step_failed` | the Visit was checked in but a later billing step failed   | `failed_step`: `create_invoice`, `add_line`, `finalize`, `record_payment`; `status`                                                                                                    |
+| `check_in_abandoned`           | the user leaves without checking in                        | `check_in_mode`, `last_section`: `patient`, `visit_details`, `billing`; `seconds_since_started`                                                                                        |
+
+A Provisional Patient is recorded as blocked once per Patient selected, since Confirm Patient stays
+disabled. The other kinds are read from the server's Check-in rejection; the message itself is not
+sent.
+
+#### Consultation (`/visits/[id]`)
+
+| Event                             | When                                      | Properties                                                                                                                                          |
+| --------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `consultation_step_viewed`        | the consultation step (`?step=`) is shown | `step`, `previous_step`: `subjective`, `objective`, `assessment`, `plan`, `review`; `seconds_on_previous_step`; `visit_status`; `is_ayurveda_brand` |
+| `consultation_complete_opened`    | the complete-Visit dialog opens           | `outstanding_item_count`, `outstanding_kinds`: `unsaved_consultation`, `no_vital_signs`, `no_clinical_note`, `draft_clinical_notes`, `no_invoice`   |
+| `consultation_complete_dismissed` | the dialog closes without completing      | `outstanding_item_count` (as when it opened)                                                                                                        |
 
 ### Usage and friction events
 
