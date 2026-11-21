@@ -34,7 +34,9 @@ Tenant is its id, name, slug and time zone.
 
 Also:
 
-- Page addresses are cleaned: every id segment becomes `:id` and the query string is dropped.
+- Page addresses are cleaned: every id segment (plain or percent-encoded) becomes `:id` and the
+  query string is dropped. The referrer and first page address are not collected, because
+  PostHog would store them raw in localStorage first.
 - Session replay, autocapture, heatmaps, surveys, exception and performance capture are off.
 - Before sign-in nothing is stored in the browser; signing out clears what PostHog stored.
 - Analytics must never slow down, block or change an action. A PostHog outage is silent.

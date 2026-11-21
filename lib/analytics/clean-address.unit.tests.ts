@@ -21,6 +21,15 @@ describe('cleanPath', () => {
     expect(cleanPath(path)).toBe(expected);
   });
 
+  it('should replace a percent-encoded record id', () => {
+    expect(cleanPath('/patients/%34%32')).toBe('/patients/:id');
+    expect(cleanPath('/patients/%34%32/edit')).toBe('/patients/:id/edit');
+  });
+
+  it('should keep a segment with a malformed escape without throwing', () => {
+    expect(cleanPath('/patients/%E0%A4%A')).toBe('/patients/%E0%A4%A');
+  });
+
   it('should replace a UUID segment', () => {
     expect(cleanPath('/things/3f2504e0-4f89-11d3-9a0c-0305e82c3301')).toBe('/things/:id');
   });

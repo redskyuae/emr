@@ -89,6 +89,30 @@ function guardPropertyBag(specs: PropertySpecs, bag: Record<string, unknown> | u
   return { ...sdk, ...pickDeclaredProperties(specs, custom) };
 }
 
+/**
+ * The SDK reads the address when an event is sent; `route` is read when it was recorded. They differ
+ * for an event queued while PostHog loads, so the recorded route wins.
+ */
+function alignAddressWithRoute(properties: Record<string, unknown>) {
+  const route = properties.route;
+
+  if (typeof route !== 'string') {
+    return;
+  }
+
+  if (typeof properties.$pathname === 'string') {
+    properties.$pathname = route;
+  }
+
+  if (typeof properties.$current_url === 'string') {
+    try {
+      properties.$current_url = `${new URL(properties.$current_url).origin}${route}`;
+    } catch {
+      properties.$current_url = route;
+    }
+  }
+}
+
 export function guardCapture<T extends GuardedCapture>(
   capture: T,
   page: CapturePageContext = {}
@@ -115,6 +139,8 @@ export function guardCapture<T extends GuardedCapture>(
       capture.properties?.$group_set as Record<string, unknown> | undefined
     );
   }
+
+  alignAddressWithRoute(properties);
 
   const guarded: T = { ...capture, properties };
 

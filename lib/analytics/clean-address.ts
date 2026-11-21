@@ -6,8 +6,20 @@ const ID_PLACEHOLDER = ':id';
 const ALL_DIGITS = /^\d+$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function decodeSegment(segment: string) {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    // A malformed escape is classified as written.
+    return segment;
+  }
+}
+
+/** Plain or percent-encoded (`%34%32` is `42`) record ids. */
 function isIdSegment(segment: string) {
-  return ALL_DIGITS.test(segment) || UUID.test(segment);
+  const decoded = decodeSegment(segment);
+
+  return ALL_DIGITS.test(decoded) || UUID.test(decoded);
 }
 
 /** `/patients/42/edit?q=Asha#notes` → `/patients/:id/edit` */

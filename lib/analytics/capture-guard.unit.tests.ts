@@ -47,6 +47,26 @@ describe('guardCapture', () => {
     expect(JSON.stringify(guarded)).not.toMatch(/42|anything/);
   });
 
+  it('should send the address of the page the event was recorded on', () => {
+    const guarded = guardCapture(
+      capture({
+        properties: {
+          is_demo_page: false,
+          route: '/patients/:id',
+          $current_url: 'https://emr.example.com/appointments',
+          $pathname: '/appointments',
+        },
+      }),
+      { route: '/appointments' }
+    );
+
+    expect(guarded?.properties).toMatchObject({
+      route: '/patients/:id',
+      $current_url: 'https://emr.example.com/patients/:id',
+      $pathname: '/patients/:id',
+    });
+  });
+
   it('should clean the initial address and referrer kept on the person', () => {
     const guarded = guardCapture(
       capture({

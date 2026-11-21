@@ -39,11 +39,15 @@ export function AppShellGate({ children }: { children: ReactNode }) {
   }, [isError, error, router]);
 
   // The first place the Current User is known. The query is cached, so this runs once per app entry.
+  // A remount can find the last Current User still cached beside a 401; never identify it then,
+  // or the expired user would be identified again right after the reset below.
+  const sessionExpired = isError && isSessionExpiredError(error);
+
   useEffect(() => {
-    if (data) {
+    if (data && !sessionExpired) {
       identifyAnalyticsUser(data);
     }
-  }, [data]);
+  }, [data, sessionExpired]);
 
   useEffect(() => {
     if (phase !== 'loading' || data === undefined) {

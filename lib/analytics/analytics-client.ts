@@ -7,6 +7,7 @@ import type { CaptureResult, PostHog, PostHogConfig } from 'posthog-js';
 
 import type { ClientAnalyticsSettings } from '@/lib/analytics/analytics-settings';
 import { guardCapture } from '@/lib/analytics/capture-guard';
+import { cleanUrl } from '@/lib/analytics/clean-address';
 import {
   sanitizeEventProperties,
   TENANT_GROUP_TYPE,
@@ -37,7 +38,8 @@ let posthogClient: PostHog | null = null;
 /** `null` until analytics starts; calls made while PostHog is loading wait here. */
 let queuedCalls: Call[] | null = null;
 let baseProperties: Record<string, string> = {};
-let identifiedUserId: string | null = null;
+/** `<user id>:<Tenant id>` of the identified Current User; a Tenant switch identifies again. */
+let identifiedAs: string | null = null;
 
 function safely(call: () => void) {
   try {
@@ -47,15 +49,25 @@ function safely(call: () => void) {
   }
 }
 
-function run(call: Call) {
+/**
+ * Runs the call now, or queues it while PostHog loads. Ordinary captures are dropped once the queue
+ * is full; identity calls (`essential`) are always kept, in order, so a sign-out can never be lost
+ * behind a burst of events and leave the browser identified as the previous user.
+ */
+function run(call: Call, { essential = false }: { essential?: boolean } = {}) {
   safely(() => {
     if (posthogClient) {
       const client = posthogClient;
       call(client);
-    } else if (queuedCalls && queuedCalls.length < MAX_QUEUED_CALLS) {
+    } else if (queuedCalls && (essential || queuedCalls.length < MAX_QUEUED_CALLS)) {
       queuedCalls.push(call);
     }
   });
+}
+
+/** The page an event belongs to, read when the event is recorded rather than when it is sent. */
+function currentPageContext() {
+  return typeof window === 'undefined' ? {} : buildPageContext(window.location.pathname);
 }
 
 function beforeSend(capture: CaptureResult | null): CaptureResult | null {
@@ -99,6 +111,11 @@ function buildConfig({ settings, signedIn }: StartOptions): Partial<PostHogConfi
     // localStorage before sign-in.
     debug: false,
     save_campaign_params: false,
+    // With either of these on, PostHog stores the raw referrer and first page address (record ids,
+    // search terms) in localStorage before before_send can clean them. In-app navigation is still
+    // visible through `route` and `$prev_pageview_pathname`.
+    save_referrer: false,
+    get_current_url: (url) => cleanUrl(url),
     mask_personal_data_properties: true,
     // Adds PostHog's session and person ids as headers on same-origin API calls, so the server's
     // outcome events join the browser session that caused them.
@@ -137,38 +154,53 @@ export function startAnalytics(options: StartOptions) {
     });
 }
 
+function capture(event: ClientEventName, properties: object, essential: boolean) {
+  // Read now: a call queued while PostHog loads must keep the page it happened on, not the page
+  // open when the queue drains. The guard aligns `$current_url` and `$pathname` with `route`.
+  const page = currentPageContext();
+
+  run(
+    (posthog) => {
+      const sanitized = sanitizeEventProperties(event, { ...page, ...properties });
+
+      if (sanitized) {
+        posthog.capture(event, sanitized);
+      }
+    },
+    { essential }
+  );
+}
+
 export function captureAnalyticsEvent<E extends ClientEventName>(
   event: E,
   properties: AnalyticsEventProperties<E>
 ) {
-  run((posthog) => {
-    const sanitized = sanitizeEventProperties(event, properties);
-
-    if (sanitized) {
-      posthog.capture(event, sanitized);
-    }
-  });
+  capture(event, properties, false);
 }
 
 /** Identifies the browser as the Current User and attaches it to their Tenant. */
 export function identifyAnalyticsUser(source: IdentitySource) {
   const identity = buildAnalyticsIdentity(source);
+  const key = `${identity.distinctId}:${identity.tenant.id}`;
 
-  if (identifiedUserId === identity.distinctId) {
+  if (identifiedAs === key) {
     return;
   }
 
-  identifiedUserId = identity.distinctId;
+  identifiedAs = key;
 
-  run((posthog) => {
-    if (posthog.config.persistence === 'memory') {
-      posthog.set_config({ persistence: 'localStorage' });
-    }
+  run(
+    (posthog) => {
+      if (posthog.config.persistence === 'memory') {
+        posthog.set_config({ persistence: 'localStorage' });
+      }
 
-    posthog.identify(identity.distinctId, identity.person);
-    posthog.group(TENANT_GROUP_TYPE, identity.tenant.id, identity.tenant.properties);
-    posthog.register({ tenant_id: identity.tenant.id, tenant_slug: identity.tenant.slug });
-  });
+      posthog.identify(identity.distinctId, identity.person);
+      posthog.group(TENANT_GROUP_TYPE, identity.tenant.id, identity.tenant.properties);
+      posthog.register({ tenant_id: identity.tenant.id, tenant_slug: identity.tenant.slug });
+    },
+    { essential: true }
+  );
 }
 
 /**
@@ -176,12 +208,15 @@ export function identifyAnalyticsUser(source: IdentitySource) {
  * the next sign-in on this browser, as anyone, is a new person.
  */
 export function resetAnalyticsUser(trigger: SignOutTrigger) {
-  captureAnalyticsEvent('signed_out', { trigger });
-  identifiedUserId = null;
+  capture('signed_out', { trigger }, true);
+  identifiedAs = null;
 
-  run((posthog) => {
-    posthog.reset();
-    posthog.set_config({ persistence: 'memory' });
-    posthog.register(baseProperties);
-  });
+  run(
+    (posthog) => {
+      posthog.reset();
+      posthog.set_config({ persistence: 'memory' });
+      posthog.register(baseProperties);
+    },
+    { essential: true }
+  );
 }
