@@ -1,4 +1,4 @@
-import { Flag, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiFlag1, CiMenuKebab, CiTrash } from 'react-icons/ci';
 
 import type { Nationality } from '@/app/queries/global-references/nationalities/useNationalities';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ function formatModifiedOn(value: Date | string) {
 function NationalityIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <Flag className="size-5" />
+      <CiFlag1 className="size-5" />
     </div>
   );
 }
@@ -70,19 +70,19 @@ function NationalityActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${nationality.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(nationality)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(nationality)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -105,7 +105,7 @@ export function NationalityTableView({
   onDelete: (nationality: Nationality) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[680px]">
@@ -162,8 +162,8 @@ export function NationalityCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {nationalities.map((nationality) => (
-        <Card key={nationality.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={nationality.id}>
+          <CardContent className="space-y-3">
             <NationalityIcon />
 
             <div>
@@ -186,7 +186,7 @@ export function NationalityCardView({
                     size="sm"
                     onClick={() => onEdit(nationality)}
                   >
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -198,7 +198,7 @@ export function NationalityCardView({
                     onClick={() => onDelete(nationality)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}
@@ -227,8 +227,8 @@ export function NationalityListView({
   return (
     <div className="space-y-3">
       {nationalities.map((nationality) => (
-        <Card key={nationality.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={nationality.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <NationalityIcon />
               <h3 className="font-heading truncate text-base font-semibold">{nationality.name}</h3>

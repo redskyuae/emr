@@ -72,7 +72,10 @@ export async function checkInVisitCommand(
         };
       }
 
-      if (dbError.constraint === 'visit_doctor_day_token_idx') {
+      if (
+        dbError.constraint === 'visit_doctor_day_token_idx' ||
+        dbError.constraint === 'visit_unassigned_day_token_idx'
+      ) {
         return {
           success: false,
           errors: ['Queue Token allocation conflicted. Please retry.'],

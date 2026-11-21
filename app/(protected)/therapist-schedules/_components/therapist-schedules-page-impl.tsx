@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
 import { parseAsInteger, useQueryState } from 'nuqs';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -119,14 +119,14 @@ export function TherapistSchedulesPageImpl() {
         />
         {therapistsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Therapists</AlertTitle>
             <AlertDescription>{getApiErrorMessage(therapistsQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
         {rotasQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Rotas</AlertTitle>
             <AlertDescription>{getApiErrorMessage(rotasQuery.error)}</AlertDescription>
           </Alert>

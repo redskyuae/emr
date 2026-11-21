@@ -1,4 +1,5 @@
-import { MoreVertical, Pencil, Trash2, Workflow } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiFlowArrowLight } from 'react-icons/pi';
 
 import type { WorkOrderStatus } from '@/app/api/lib/modules/work-order-status/schemas/work-order-status-schema';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +36,7 @@ function StatusIcon({ color }: { color: string }) {
       className="flex size-10 items-center justify-center rounded-full"
       style={{ backgroundColor: color + '22' }}
     >
-      <Workflow className="size-5" style={{ color }} />
+      <PiFlowArrowLight className="size-5" style={{ color }} />
     </div>
   );
 }
@@ -84,19 +85,19 @@ function StatusActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${status.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(status)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDeleteStatus ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(status)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -119,7 +120,7 @@ export function WorkOrderStatusTableView({
   onDelete: (status: WorkOrderStatus) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[820px] table-fixed">
@@ -187,8 +188,8 @@ export function WorkOrderStatusCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {statuses.map((status) => (
-        <Card key={status.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={status.id}>
+          <CardContent className="space-y-3">
             <StatusIcon color={status.color} />
 
             <div>
@@ -214,7 +215,7 @@ export function WorkOrderStatusCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(status)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -226,7 +227,7 @@ export function WorkOrderStatusCardView({
                     onClick={() => onDelete(status)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}
@@ -255,8 +256,8 @@ export function WorkOrderStatusListView({
   return (
     <div className="space-y-3">
       {statuses.map((status) => (
-        <Card key={status.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={status.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <StatusIcon color={status.color} />
               <div className="min-w-0">

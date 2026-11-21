@@ -266,6 +266,73 @@ describe('Permission repository', () => {
         action: 'assign',
         description: 'Assign Treatments to Patients and create Patient Treatment Plans.',
       },
+      {
+        name: 'patient-treatment-plan:update',
+        action: 'update',
+        description: 'Edit the plan of Patient Treatment Plan Sessions.',
+      },
+      {
+        name: 'patient-treatment-plan:start',
+        action: 'start',
+        description: 'Start Patient Treatment Plan Sessions in a Visit.',
+      },
+    ]);
+  });
+
+  it('should seed the Visit permissions including amend in the visits module', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const permissions = await permissionRepository.getPermissions({ module: 'visits' });
+
+    expect(
+      permissions
+        .filter(({ resource }) => resource === 'visit')
+        .map(({ name }) => name)
+        .sort()
+    ).toEqual([
+      'visit:amend',
+      'visit:cancel',
+      'visit:complete',
+      'visit:create',
+      'visit:delete',
+      'visit:read',
+      'visit:start',
+      'visit:update',
+    ]);
+    expect(permissions.find(({ name }) => name === 'visit:amend')).toMatchObject({
+      action: 'amend',
+      description: 'Amend a Completed Visit, its Clinical Notes and Vital Signs.',
+    });
+  });
+
+  it('should seed the Ayurveda Diagnosis Code permissions in the clinical-masters module', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const permissions = await permissionRepository.getPermissions({ module: 'clinical-masters' });
+
+    expect(
+      permissions
+        .filter(({ resource }) => resource === 'ayurveda-diagnosis-code')
+        .map(({ name, action, description }) => ({ name, action, description }))
+    ).toEqual([
+      {
+        name: 'ayurveda-diagnosis-code:read',
+        action: 'read',
+        description: 'View Ayurveda Diagnosis Codes.',
+      },
+      {
+        name: 'ayurveda-diagnosis-code:create',
+        action: 'create',
+        description: 'Create Ayurveda Diagnosis Codes.',
+      },
+      {
+        name: 'ayurveda-diagnosis-code:update',
+        action: 'update',
+        description: 'Update Ayurveda Diagnosis Codes.',
+      },
+      {
+        name: 'ayurveda-diagnosis-code:delete',
+        action: 'delete',
+        description: 'Delete Ayurveda Diagnosis Codes.',
+      },
     ]);
   });
 

@@ -1,7 +1,8 @@
 'use client';
 
 import { Controller, type Control, useFieldArray } from 'react-hook-form';
-import { Plus, Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { useCountryOptionsQuery } from '@/app/queries/global-references/countries/useCountries';
 import { Button } from '@/components/ui/button';
@@ -64,7 +65,7 @@ export function IdentityDocumentsFieldArray({ control }: { control: Control<Pati
           })
         }
       >
-        <Plus className="size-4" />
+        <PiPlusLight className="size-4" />
         Add identity document
       </Button>
     </div>
@@ -213,7 +214,7 @@ function IdentityDocumentRow({
 
             <div className="mt-4 flex justify-end">
               <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
-                <Trash2 className="size-4" />
+                <CiTrash className="size-4" />
                 Remove
               </Button>
             </div>

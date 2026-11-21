@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -12,10 +12,12 @@ import type { SaveStateRequest } from '@/app/api/v1/states/types';
 import { type State } from '@/app/queries/global-references/states/useStates';
 import { useCreateState } from '@/app/queries/global-references/states/useCreateState';
 import { useUpdateState } from '@/app/queries/global-references/states/useUpdateState';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -40,6 +42,22 @@ const EMPTY_DEFAULTS: StateFormValues = {
 
 function hasCountryId(record: State): record is State & { countryId: number } {
   return 'countryId' in record;
+}
+
+// Mirrors the form while the State loads: a label and an input per field.
+function StateFormSkeleton() {
+  return (
+    <FieldGroup className="gap-4">
+      <Field>
+        <Skeleton className="h-4 w-14" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+    </FieldGroup>
+  );
 }
 
 export function StateFormSheet({
@@ -145,24 +163,12 @@ export function StateFormSheet({
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
 
-        {isResolving ? (
-          <div className="flex-1 p-4">
-            <div className="space-y-4">
-              {Array.from({ length: 2 }, (_, i) => (
-                <div key={i} className="bg-muted h-10 animate-pulse rounded-md" />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <form
-            id="state-form"
-            onSubmit={onSubmit}
-            className="flex flex-1 flex-col overflow-hidden"
-          >
-            <div className="flex-1 overflow-y-auto p-4">
+        <form id="state-form" onSubmit={onSubmit} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4">
+            <SkeletonCrossfade isLoading={isResolving} skeleton={<StateFormSkeleton />}>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Save failed</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc space-y-1 pl-4">
@@ -176,13 +182,13 @@ export function StateFormSheet({
 
               {countriesQuery.isError ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Could not load Countries</AlertTitle>
                   <AlertDescription>{getApiErrorMessage(countriesQuery.error)}</AlertDescription>
                 </Alert>
               ) : hasNoCountries ? (
                 <Alert className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>No Countries configured</AlertTitle>
                   <AlertDescription>Create a Country before adding States.</AlertDescription>
                 </Alert>
@@ -255,19 +261,23 @@ export function StateFormSheet({
                   )}
                 />
               </FieldGroup>
-            </div>
+            </SkeletonCrossfade>
+          </div>
 
-            <SheetFooter className="bg-background flex-row justify-end border-t p-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
-                <Save className="size-4" />
-                Save
-              </Button>
-            </SheetFooter>
-          </form>
-        )}
+          <SheetFooter className="bg-background flex-row justify-end border-t p-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving || isResolving}
+              aria-busy={isSaving || isResolving}
+            >
+              <CiFloppyDisk className="size-4" />
+              Save
+            </Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
   );

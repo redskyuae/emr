@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
@@ -33,6 +33,10 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { CHARGE_ITEM_CATEGORY_OPTIONS } from '../../_utils/charge-item-category';
+import {
+  CHARGE_ITEM_CODE_TYPE_OPTIONS,
+  getChargeItemCodeTypeDetails,
+} from '../../_utils/charge-item-code-type';
 import { VISIT_CHARGE_OPTIONS } from '@/lib/visit-charge-options';
 import {
   chargeItemFormSchema,
@@ -42,6 +46,7 @@ import {
 const EMPTY_FORM: ChargeItemFormValues = {
   name: '',
   code: '',
+  codeType: 'LOCAL',
   category: 'CONSULTATION',
   unitPrice: '',
   cashPrice: '',
@@ -75,11 +80,15 @@ export function ChargeItemFormSheet({
 
   const {
     control,
+    trigger,
     register,
     reset,
     setError,
+    getFieldState,
     formState: { errors },
   } = form;
+  const codeType = useWatch({ control, name: 'codeType' });
+  const codeTypeDetails = getChargeItemCodeTypeDetails(codeType);
 
   useEffect(() => {
     if (!open) {
@@ -91,6 +100,7 @@ export function ChargeItemFormSheet({
         ? {
             name: chargeItem.name,
             code: chargeItem.code,
+            codeType: chargeItem.codeType,
             category: chargeItem.category,
             unitPrice: String(chargeItem.unitPrice),
             cashPrice: chargeItem.cashPrice === null ? '' : String(chargeItem.cashPrice),
@@ -112,6 +122,7 @@ export function ChargeItemFormSheet({
     const request: SaveChargeItemRequest = {
       name: values.name,
       code: values.code,
+      codeType: values.codeType,
       category: values.category,
       unitPrice: Number(values.unitPrice),
       cashPrice: values.cashPrice === '' ? null : Number(values.cashPrice),
@@ -139,6 +150,8 @@ export function ChargeItemFormSheet({
       for (const message of getApiErrors(error)) {
         if (message.startsWith('Charge item name')) {
           setError('name', { message });
+        } else if (message.startsWith('Charge item code type')) {
+          setError('codeType', { message });
         } else if (message.startsWith('Charge item code')) {
           setError('code', { message });
         }
@@ -179,7 +192,7 @@ export function ChargeItemFormSheet({
             <FieldGroup>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Could not save the Charge Item</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc pl-4">
@@ -207,9 +220,41 @@ export function ChargeItemFormSheet({
                 {errors.name ? <FieldError>{errors.name.message}</FieldError> : null}
               </Field>
 
+              <Controller
+                control={control}
+                name="codeType"
+                render={({ field }) => (
+                  <Field data-invalid={Boolean(errors.codeType)}>
+                    <FieldLabel htmlFor="charge-item-code-type">Code type</FieldLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        // Re-check an entered code against the newly chosen code type.
+                        if (getFieldState('code').isTouched) {
+                          void trigger('code');
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="charge-item-code-type" className="w-full">
+                        <SelectValue placeholder="Select a code type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CHARGE_ITEM_CODE_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.codeType ? <FieldError>{errors.codeType.message}</FieldError> : null}
+                  </Field>
+                )}
+              />
+
               <Field data-invalid={Boolean(errors.code)}>
                 <FieldLabel htmlFor="charge-item-code">
-                  CPT / service code{' '}
+                  {codeTypeDetails.codeLabel}{' '}
                   <span aria-hidden className="text-destructive">
                     *
                   </span>
@@ -217,16 +262,15 @@ export function ChargeItemFormSheet({
                 <Input
                   id="charge-item-code"
                   aria-required
-                  placeholder="99213 or CONS_EST"
+                  aria-invalid={Boolean(errors.code)}
+                  className="font-mono"
+                  placeholder={codeTypeDetails.placeholder}
                   {...register('code')}
                 />
                 {errors.code ? (
                   <FieldError>{errors.code.message}</FieldError>
                 ) : (
-                  <p className="text-muted-foreground text-xs">
-                    Enter the verified CPT code for coded services, or a local service code. A Visit
-                    type does not determine a CPT level.
-                  </p>
+                  <p className="text-muted-foreground text-xs">{codeTypeDetails.help}</p>
                 )}
               </Field>
 
@@ -418,7 +462,7 @@ export function ChargeItemFormSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
-              <Save className="size-4" />
+              <CiFloppyDisk className="size-4" />
               {isSaving ? 'Saving…' : isCreating ? 'Create Charge Item' : 'Save changes'}
             </Button>
           </SheetFooter>

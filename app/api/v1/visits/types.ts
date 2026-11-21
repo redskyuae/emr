@@ -12,6 +12,7 @@ export type ListVisitsResponse = Paginated<Visit>;
  */
 export type CheckInVisitRequest = {
   visitTypeId: number;
+  admitSourceId?: number;
   appointmentId?: number;
   patientId?: number;
   doctorId?: number;

@@ -1,6 +1,7 @@
 'use client';
 
-import { CircleOff, RotateCcw } from 'lucide-react';
+import { CiNoWaitingSign } from 'react-icons/ci';
+import { PiArrowCounterClockwiseLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
@@ -64,7 +65,7 @@ export function TherapistStatusDialog({ pendingAction, onClose }: TherapistStatu
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className={isDeactivate ? 'text-destructive' : 'text-primary'}>
-            {isDeactivate ? <CircleOff /> : <RotateCcw />}
+            {isDeactivate ? <CiNoWaitingSign /> : <PiArrowCounterClockwiseLight />}
           </AlertDialogMedia>
           <AlertDialogTitle>
             {isDeactivate ? 'Deactivate Therapist?' : 'Reactivate Therapist?'}

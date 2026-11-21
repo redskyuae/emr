@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { AlertCircle, ChevronLeft, ChevronRight, Plus, ReceiptText, Search } from 'lucide-react';
+import { CiCircleAlert, CiReceipt, CiSearch } from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useChargeItemsQuery } from '@/app/queries/billing/charge-items/useChargeItems';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -92,11 +94,11 @@ export function ChargeItemsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -133,7 +135,7 @@ export function ChargeItemsPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" onClick={() => void setChargeItemParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Charge Item
                 </Button>
               </div>
@@ -143,88 +145,92 @@ export function ChargeItemsPageImpl() {
 
         {chargeItemsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Charge Items</AlertTitle>
             <AlertDescription>{getApiErrorMessage(chargeItemsQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {chargeItemsQuery.isLoading ? (
-          <ChargeItemTableSkeleton />
-        ) : chargeItems.length === 0 && !isFiltered ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <ReceiptText />
-              </EmptyMedia>
-              <EmptyTitle>No Charge Items yet</EmptyTitle>
-              <EmptyDescription>
-                Build your priced catalogue of consultations, procedures, investigations and
-                consumables so cashiers can add them to Invoices.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setChargeItemParam('new')}>
-                  <Plus className="size-4" />
-                  Add Charge Item
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : chargeItems.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Charge Items match the current filters. Try a different search term or category.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            <ChargeItemTable
-              chargeItems={chargeItems}
-              canEdit={canUpdate}
-              canDelete={canDelete}
-              onEdit={(chargeItem) => void setChargeItemParam(String(chargeItem.id))}
-              onDelete={setChargeItemPendingDelete}
-            />
+        <SkeletonCrossfade
+          isLoading={chargeItemsQuery.isLoading}
+          skeleton={<ChargeItemTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
+        >
+          {chargeItems.length === 0 && !isFiltered ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiReceipt />
+                </EmptyMedia>
+                <EmptyTitle>No Charge Items yet</EmptyTitle>
+                <EmptyDescription>
+                  Build your priced catalogue of consultations, procedures, investigations and
+                  consumables so cashiers can add them to Invoices.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setChargeItemParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Charge Item
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : chargeItems.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Charge Items match the current filters. Try a different search term or
+                  category.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              <ChargeItemTable
+                chargeItems={chargeItems}
+                canEdit={canUpdate}
+                canDelete={canDelete}
+                onEdit={(chargeItem) => void setChargeItemParam(String(chargeItem.id))}
+                onDelete={setChargeItemPendingDelete}
+              />
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <ChargeItemFormSheet

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, UserRoundPlus } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
+import { PiUserPlusLight } from 'react-icons/pi';
 
 import { PATIENT_GENDER_OPTIONS } from '@/app/(protected)/patients/_utils/patient-value-sets';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -60,11 +61,11 @@ export function PatientsToolbar({
   }, [searchDraft, search, onSearchChange]);
 
   return (
-    <Card className="shadow-fluent-2">
-      <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-        <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+    <Card>
+      <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <InputGroup className="lg:max-w-sm">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"
@@ -79,7 +80,7 @@ export function PatientsToolbar({
           value={genderValue || ALL}
           onValueChange={(value) => onGenderChange(value === ALL ? '' : value)}
         >
-          <SelectTrigger className="h-9 w-full lg:w-40" aria-label="Filter by gender">
+          <SelectTrigger className="w-full lg:w-40" aria-label="Filter by gender">
             <SelectValue placeholder="Gender" />
           </SelectTrigger>
           <SelectContent>
@@ -96,7 +97,7 @@ export function PatientsToolbar({
           value={statusValue || ALL}
           onValueChange={(value) => onStatusChange(value === ALL ? '' : value)}
         >
-          <SelectTrigger className="h-9 w-full lg:w-40" aria-label="Filter by status">
+          <SelectTrigger className="w-full lg:w-40" aria-label="Filter by status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -109,7 +110,7 @@ export function PatientsToolbar({
         {canCreate ? (
           <Button type="button" asChild className="lg:ml-auto">
             <Link href="/patients/new">
-              <UserRoundPlus className="size-4" />
+              <PiUserPlusLight className="size-4" />
               Register patient
             </Link>
           </Button>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
-import { AlertCircle } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -142,7 +142,7 @@ export function DoctorSchedulesPageImpl() {
 
         {doctorsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Doctors</AlertTitle>
             <AlertDescription>{getApiErrorMessage(doctorsQuery.error)}</AlertDescription>
           </Alert>
@@ -150,7 +150,7 @@ export function DoctorSchedulesPageImpl() {
 
         {rotasQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Doctor Rotas</AlertTitle>
             <AlertDescription>{getApiErrorMessage(rotasQuery.error)}</AlertDescription>
           </Alert>

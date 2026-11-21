@@ -1,35 +1,39 @@
-import type { LucideIcon } from 'lucide-react';
+import type { IconType } from 'react-icons';
 import {
-  Activity,
-  BedDouble,
-  Boxes,
-  Building2,
-  CalendarClock,
-  CalendarPlus,
-  Clock3,
-  ClipboardList,
-  FileClock,
-  Gauge,
-  Globe2,
-  Hospital,
-  LayoutDashboard,
-  LayoutGrid,
-  ListChecks,
-  ReceiptText,
-  Settings,
-  ShieldCheck,
-  Stethoscope,
-  Tag,
-  UserRoundCog,
-  UsersRound,
-  WalletCards,
-  Wrench,
-} from 'lucide-react';
+  CiBoxes,
+  CiCalendarDate,
+  CiClock1,
+  CiCreditCard1,
+  CiFileOn,
+  CiGlobe,
+  CiGrid41,
+  CiGrid42,
+  CiHospital1,
+  CiReceipt,
+  CiSettings,
+  CiShoppingTag,
+  CiStethoscope,
+  CiWavePulse1,
+} from 'react-icons/ci';
+import {
+  PiBedLight,
+  PiBuildingsLight,
+  PiCalendarPlusLight,
+  PiClipboardTextLight,
+  PiClockCounterClockwiseLight,
+  PiFileLight,
+  PiGaugeLight,
+  PiListChecksLight,
+  PiShieldCheckLight,
+  PiUserGearLight,
+  PiUsersLight,
+  PiWrenchLight,
+} from 'react-icons/pi';
 
 export type AppNavItem = {
   title: string;
   href: string;
-  icon: LucideIcon;
+  icon: IconType;
   badge?: string;
   exact?: boolean;
   permission?: string;
@@ -49,6 +53,10 @@ export type AppNavGroup = {
 export type AppPageMeta = {
   title: string;
   subtitle: string;
+  /**
+   * Shown at the end of the page header. Only for pages whose own content has no always-visible
+   * button for the same action; a list page with a create button in its toolbar leaves this out.
+   */
   primaryAction?: {
     label: string;
     href: string;
@@ -63,7 +71,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Dashboard',
         href: '/dashboard',
-        icon: Gauge,
+        icon: PiGaugeLight,
       },
     ],
   },
@@ -73,20 +81,20 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Patients',
         href: '/patients',
-        icon: UsersRound,
+        icon: PiUsersLight,
         permission: 'patient',
       },
       {
         title: 'Appointments',
         href: '/appointments',
-        icon: CalendarClock,
+        icon: CiCalendarDate,
         exact: true,
         permission: 'appointment',
       },
       {
         title: 'Book Appointment',
         href: '/appointments/new',
-        icon: CalendarPlus,
+        icon: PiCalendarPlusLight,
         permission: 'appointment',
       },
     ],
@@ -97,13 +105,25 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Visits',
         href: '/visits',
-        icon: ClipboardList,
+        icon: PiClipboardTextLight,
+        permission: 'visit',
+      },
+      {
+        title: 'Previous Visits',
+        href: '/previous-visits',
+        icon: PiClockCounterClockwiseLight,
+        permission: 'visit',
+      },
+      {
+        title: 'Reports',
+        href: '/reports',
+        icon: CiFileOn,
         permission: 'visit',
       },
       {
         title: 'Visit List',
         href: '/visit-list',
-        icon: ListChecks,
+        icon: PiListChecksLight,
         permission: 'visit',
       },
     ],
@@ -114,13 +134,13 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Admissions',
         href: '/admissions',
-        icon: BedDouble,
+        icon: PiBedLight,
         permission: 'admission',
       },
       {
         title: 'Bed Board',
         href: '/bed-board',
-        icon: LayoutGrid,
+        icon: CiGrid41,
         permission: 'bed',
       },
     ],
@@ -131,14 +151,14 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Invoices',
         href: '/billing',
-        icon: ReceiptText,
+        icon: CiReceipt,
         exact: true,
         permission: 'invoice',
       },
       {
         title: 'Billing Counter',
         href: '/billing-counter',
-        icon: WalletCards,
+        icon: CiCreditCard1,
         permission: 'invoice',
       },
     ],
@@ -149,31 +169,31 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Rooms',
         href: '/rooms',
-        icon: BedDouble,
+        icon: PiBedLight,
         permission: 'room',
       },
       {
         title: 'Doctors',
         href: '/doctors',
-        icon: Stethoscope,
+        icon: CiStethoscope,
         permission: 'doctor',
       },
       {
         title: 'Therapists',
         href: '/therapists',
-        icon: UserRoundCog,
+        icon: PiUserGearLight,
         permission: 'therapist',
       },
       {
         title: 'Doctor Schedules',
         href: '/doctor-schedules',
-        icon: CalendarClock,
+        icon: CiCalendarDate,
         permission: 'doctor-schedule',
       },
       {
         title: 'Therapist Schedules',
         href: '/therapist-schedules',
-        icon: CalendarClock,
+        icon: CiCalendarDate,
         permission: 'therapist-schedule',
       },
     ],
@@ -184,19 +204,19 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Users',
         href: '/identity-access/users',
-        icon: UsersRound,
+        icon: PiUsersLight,
         permission: 'staff',
       },
       {
         title: 'Roles & Permissions',
         href: '/identity-access/roles',
-        icon: ShieldCheck,
+        icon: PiShieldCheckLight,
         permission: 'role',
       },
       {
         title: 'Sessions',
         href: '/identity-access/sessions',
-        icon: FileClock,
+        icon: PiFileLight,
         permission: 'session',
       },
     ],
@@ -207,20 +227,20 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Overview',
         href: '/assets-management',
-        icon: LayoutDashboard,
+        icon: CiGrid42,
         exact: true,
         permission: 'asset',
       },
       {
         title: 'Inventory',
         href: '/assets-management/inventory',
-        icon: Boxes,
+        icon: CiBoxes,
         permission: 'asset',
       },
       {
         title: 'Maintenance',
         href: '/assets-management/maintenance',
-        icon: Wrench,
+        icon: PiWrenchLight,
         permission: 'work-order',
       },
     ],
@@ -231,7 +251,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Audit Log',
         href: '/audit-log',
-        icon: Activity,
+        icon: CiWavePulse1,
       },
     ],
   },
@@ -241,19 +261,19 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Tenant Profile',
         href: '/tenant-profile',
-        icon: Building2,
+        icon: PiBuildingsLight,
         permission: 'tenant',
       },
       {
         title: 'Rota Management',
         href: '/rota-management',
-        icon: Clock3,
+        icon: CiClock1,
         permission: 'doctor-rota',
       },
       {
         title: 'Appointment Masters',
         href: '/appointment-masters',
-        icon: CalendarClock,
+        icon: CiCalendarDate,
         items: [
           {
             title: 'Mode',
@@ -285,19 +305,24 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Visit Masters',
         href: '/visit-masters',
-        icon: ClipboardList,
+        icon: PiClipboardTextLight,
         items: [
           {
             title: 'Visit Type',
             href: '/visit-masters/visit-types',
             permission: 'visit-type',
           },
+          {
+            title: 'Admit Source',
+            href: '/visit-masters/admit-sources',
+            permission: 'admit-source',
+          },
         ],
       },
       {
         title: 'Inpatient Masters',
         href: '/inpatient-masters',
-        icon: Hospital,
+        icon: CiHospital1,
         items: [
           { title: 'Wards', href: '/inpatient-masters/wards', permission: 'ward' },
           { title: 'Beds', href: '/inpatient-masters/beds', permission: 'bed' },
@@ -311,7 +336,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Asset Management',
         href: '/asset-management-masters',
-        icon: Tag,
+        icon: CiShoppingTag,
         items: [
           {
             title: 'Categories',
@@ -348,13 +373,13 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Room Masters',
         href: '/room-masters',
-        icon: BedDouble,
+        icon: PiBedLight,
         items: [{ title: 'Room Type', href: '/room-masters/types', permission: 'room-type' }],
       },
       {
         title: 'Billing Masters',
         href: '/billing-masters',
-        icon: ReceiptText,
+        icon: CiReceipt,
         items: [
           {
             title: 'Charge Items',
@@ -366,12 +391,17 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Clinical Masters',
         href: '/clinical-masters',
-        icon: ClipboardList,
+        icon: PiClipboardTextLight,
         items: [
           {
-            title: 'Diagnosis Codes',
+            title: 'ICD-10-CM Diagnosis Codes',
             href: '/clinical-masters/diagnosis-codes',
             permission: 'diagnosis-code',
+          },
+          {
+            title: 'Ayurveda Diagnosis Codes',
+            href: '/clinical-masters/ayurveda-diagnosis-codes',
+            permission: 'ayurveda-diagnosis-code',
           },
           { title: 'Allergens', href: '/clinical-masters/allergens', permission: 'allergen' },
           {
@@ -389,7 +419,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Global References',
         href: '/global-references',
-        icon: Globe2,
+        icon: CiGlobe,
         items: [
           { title: 'Languages', href: '/global-references/languages', permission: 'language' },
           {
@@ -405,7 +435,7 @@ export const appNavGroups: AppNavGroup[] = [
       {
         title: 'Settings',
         href: '/settings',
-        icon: Settings,
+        icon: CiSettings,
         badge: '404',
       },
     ],
@@ -437,7 +467,7 @@ const appointmentNavHrefs = new Set([
   '/billing-masters/charge-items',
 ]);
 
-const visitNavHrefs = new Set(['/visits', '/visit-list']);
+const visitNavHrefs = new Set(['/visits', '/previous-visits', '/reports', '/visit-list']);
 
 const demoNavHrefs = new Set(['/visit-list', '/billing-counter']);
 
@@ -454,11 +484,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/patients': {
     title: 'Patients',
     subtitle: 'Patient registry and demographics for this Tenant.',
-    primaryAction: {
-      label: 'Register patient',
-      href: '/patients/new',
-      permission: 'patient:create',
-    },
   },
   '/patients/new': {
     title: 'Register patient',
@@ -475,11 +500,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/identity-access/users': {
     title: 'Users',
     subtitle: 'Staff user access within this Tenant.',
-    primaryAction: {
-      label: 'Add user',
-      href: '/identity-access/users?user=new',
-      permission: 'staff:create',
-    },
   },
   '/identity-access/roles': {
     title: 'Roles & Permissions',
@@ -508,47 +528,22 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/doctor-schedules': {
     title: 'Doctor Schedules',
     subtitle: 'Doctor availability assignments built from Doctor Rotas.',
-    primaryAction: {
-      label: 'New schedule',
-      href: '/doctor-schedules?schedule=new',
-      permission: 'doctor-schedule:create',
-    },
   },
   '/therapist-schedules': {
     title: 'Therapist Schedules',
     subtitle: 'Therapist availability assignments built from reusable Rota templates.',
-    primaryAction: {
-      label: 'New schedule',
-      href: '/therapist-schedules?schedule=new',
-      permission: 'therapist-schedule:create',
-    },
   },
   '/doctors': {
     title: 'Doctors',
     subtitle: 'Staff-backed Doctors, Specialties, and clinical profile details.',
-    primaryAction: {
-      label: 'Add Doctor',
-      href: '/doctors?doctor=new',
-      permission: 'doctor:create',
-    },
   },
   '/therapists': {
     title: 'Therapists',
-    subtitle: 'Staff-backed Therapists and their Ayurvedic treatment skills.',
-    primaryAction: {
-      label: 'Add Therapist',
-      href: '/therapists?therapist=new',
-      permission: 'therapist:create',
-    },
+    subtitle: 'Staff-backed Therapists and their treatment skills.',
   },
   '/clinical-masters/therapist-skills': {
     title: 'Therapist Skills',
     subtitle: 'Tenant-scoped skills used to qualify Therapists for Treatment Sessions.',
-    primaryAction: {
-      label: 'Add Therapist Skill',
-      href: '/clinical-masters/therapist-skills?create=1',
-      permission: 'therapist-skill:create',
-    },
   },
   '/audit-log': {
     title: 'Audit Log',
@@ -583,9 +578,22 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
       permission: 'visit:create',
     },
   },
+  '/previous-visits': {
+    title: 'Previous Visits',
+    subtitle: 'Search past outpatient Visits by date range, Doctor, status, and Visit Type.',
+  },
+  '/reports': {
+    title: 'Reports',
+    subtitle: 'Generate printable reports from recorded Visits.',
+  },
+  '/reports/consolidated': {
+    title: 'Consolidated Patient Report',
+    subtitle: "One Patient's diagnoses, Treatment Plans and Visit-wise progress over a period.",
+  },
   '/visit-list': {
     title: 'Visit List',
     subtitle: 'Search every outpatient Visit by date, Doctor, status, type, source, and billing.',
+    // The page's only other Create Visit link is in its empty state.
     primaryAction: {
       label: 'Create Visit',
       href: '/visits/new',
@@ -597,17 +605,12 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     subtitle: 'Invoice, collect advances, refund, and close the shift for this Counter.',
   },
   '/visits/new': {
-    title: 'Create Visit',
+    title: 'Check in Patient',
     subtitle: 'Review Patient, Appointment, card, and Visit details in one workspace.',
   },
   '/admissions': {
     title: 'Admissions',
     subtitle: 'The inpatient census. Admit Patients to Beds, transfer, and discharge.',
-    primaryAction: {
-      label: 'Admit patient',
-      href: '/admissions?admit=new',
-      permission: 'admission:create',
-    },
   },
   '/bed-board': {
     title: 'Bed Board',
@@ -616,11 +619,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/billing': {
     title: 'Invoices',
     subtitle: 'Raise, finalize, and collect payment on patient Invoices.',
-    primaryAction: {
-      label: 'New Invoice',
-      href: '/billing?invoice=new',
-      permission: 'invoice:create',
-    },
   },
   '/inpatient-masters': {
     title: 'Inpatient Masters',
@@ -641,6 +639,10 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/visit-masters/visit-types': {
     title: 'Visit Types',
     subtitle: 'Tenant-scoped records classifying the clinical nature of a Visit.',
+  },
+  '/visit-masters/admit-sources': {
+    title: 'Admit Sources',
+    subtitle: 'Tenant-scoped records of how a Patient came to a Visit.',
   },
   '/appointment-masters/statuses': {
     title: 'Appointment Statuses',
@@ -685,11 +687,6 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/rooms': {
     title: 'Rooms',
     subtitle: 'Room registry, Bed capacity, and availability across this Tenant.',
-    primaryAction: {
-      label: 'Add room',
-      href: '/rooms?room=new',
-      permission: 'room:create',
-    },
   },
   '/room-masters/types': {
     title: 'Room Types',
@@ -702,66 +699,44 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
   '/global-references/languages': {
     title: 'Languages',
     subtitle: 'Shared Language Global References used in Patient demographics.',
-    primaryAction: {
-      label: 'Add Language',
-      href: '/global-references/languages?language=new',
-    },
   },
   '/global-references/nationalities': {
     title: 'Nationalities',
     subtitle: 'Shared Nationality Global References used during Patient Registration.',
-    primaryAction: {
-      label: 'Add Nationality',
-      href: '/global-references/nationalities?nationality=new',
-    },
   },
   '/global-references/religions': {
     title: 'Religions',
     subtitle: 'Shared Religion Global References used in Patient demographics.',
-    primaryAction: {
-      label: 'Add Religion',
-      href: '/global-references/religions?religion=new',
-    },
   },
   '/global-references/countries': {
     title: 'Countries',
     subtitle: 'Shared Country Global References used for addresses and identity context.',
-    primaryAction: {
-      label: 'Add Country',
-      href: '/global-references/countries?country=new',
-    },
   },
   '/global-references/states': {
     title: 'States',
     subtitle: 'Shared State Global References grouped under Countries.',
-    primaryAction: {
-      label: 'Add State',
-      href: '/global-references/states?state=new',
-    },
   },
   '/clinical-masters/diagnosis-codes': {
-    title: 'Diagnosis Codes',
-    subtitle: 'Tenant-scoped ICD-10 diagnosis catalogue used across clinical records.',
+    title: 'ICD-10-CM Diagnosis Codes',
+    subtitle:
+      'Tenant-scoped ICD-10-CM diagnosis catalogue used across clinical records and claims.',
+  },
+  '/clinical-masters/ayurveda-diagnosis-codes': {
+    title: 'Ayurveda Diagnosis Codes',
+    subtitle: 'Tenant-scoped Ayurveda diagnosis catalogue, mapped to ICD-10-CM for claims.',
     primaryAction: {
-      label: 'Add Diagnosis Code',
-      href: '/clinical-masters/diagnosis-codes?create=1',
+      label: 'Add Ayurveda Diagnosis Code',
+      href: '/clinical-masters/ayurveda-diagnosis-codes?ayurvedaCode=new',
+      permission: 'ayurveda-diagnosis-code:create',
     },
   },
   '/clinical-masters/allergens': {
     title: 'Allergens',
     subtitle: 'Tenant-scoped Allergen catalogue used when recording Patient allergies.',
-    primaryAction: {
-      label: 'Add Allergen',
-      href: '/clinical-masters/allergens?create=1',
-    },
   },
   '/clinical-masters/note-types': {
     title: 'Clinical Note Types',
     subtitle: 'Tenant-scoped classification records for Clinical Notes.',
-    primaryAction: {
-      label: 'Add Note Type',
-      href: '/clinical-masters/note-types?create=1',
-    },
   },
 };
 
@@ -860,6 +835,20 @@ export function getAppPageMeta(pathname: string): AppPageMeta {
     };
   }
 
+  if (/^\/visits\/\d+\/summary$/.test(currentPath)) {
+    return {
+      title: 'Visit Summary',
+      subtitle: 'Print the Patient copy of this Visit.',
+    };
+  }
+
+  if (/^\/appointments\/\d+\/reschedule$/.test(currentPath)) {
+    return {
+      title: 'Reschedule Appointment',
+      subtitle: 'Move a booked Appointment to another date, time, or resource.',
+    };
+  }
+
   const exactMeta = pageMetaByHref[currentPath];
 
   if (exactMeta) {
@@ -882,4 +871,28 @@ export function getAppPageMeta(pathname: string): AppPageMeta {
     title: navItem?.title ?? 'Medical EMR',
     subtitle: 'Navigation shell for Tenant-scoped clinical and operational modules.',
   };
+}
+
+/**
+ * The title of the navigation group a page belongs to, shown above the page title. The most
+ * specific item wins, and `exact` is ignored so a detail page still takes its section's group.
+ */
+export function getAppPageGroup(pathname: string): string | undefined {
+  const currentPath = trimTrailingSlash(pathname);
+  const owns = (href: string) => {
+    const itemPath = trimTrailingSlash(href);
+    return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
+  };
+
+  const match = appNavGroups
+    .flatMap((group) =>
+      group.items.flatMap((item) =>
+        [item.href, ...(item.items?.map((subItem) => subItem.href) ?? [])]
+          .filter(owns)
+          .map((href) => ({ group: group.title, depth: trimTrailingSlash(href).length }))
+      )
+    )
+    .sort((a, b) => b.depth - a.depth)[0];
+
+  return match?.group;
 }

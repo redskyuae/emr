@@ -12,6 +12,9 @@ const VISIT_STATUS_PRESENTATION: Record<VisitStatus, VisitStatusPresentation> = 
   CANCELLED: { label: 'Cancelled', variant: 'destructive' },
 };
 
+// The Visit board's page size; its loading skeleton shows the same number of rows.
+export const VISITS_PAGE_SIZE = 20;
+
 export const VISIT_STATUS_FILTERS = [
   { value: 'CHECKED_IN', label: 'Checked In' },
   { value: 'IN_CONSULTATION', label: 'In Consultation' },
@@ -25,6 +28,16 @@ export function visitStatusPresentation(status: VisitStatus) {
 
 export function isActiveVisit(status: VisitStatus) {
   return status === 'CHECKED_IN' || status === 'IN_CONSULTATION';
+}
+
+/** How long a checked-in Patient has been waiting, as of the last queue refresh. */
+export function waitingLabel(checkedInAt: Date | string, now: number) {
+  const minutes = Math.max(0, Math.floor((now - new Date(checkedInAt).getTime()) / 60_000));
+
+  if (minutes < 1) return 'Just arrived';
+  if (minutes < 60) return `Waiting ${minutes} min`;
+
+  return `Waiting ${Math.floor(minutes / 60)} h ${minutes % 60} min`;
 }
 
 /** The board and the API speak DD-MM-YYYY; `<input type="date">` speaks ISO. */

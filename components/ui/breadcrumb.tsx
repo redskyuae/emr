@@ -2,7 +2,7 @@ import { ComponentProps } from 'react';
 import { Slot } from 'radix-ui';
 
 import { cn } from '@/lib/utils';
-import { ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react';
+import { PiCaretRightLight, PiDotsThreeLight } from 'react-icons/pi';
 
 function Breadcrumb({ className, ...props }: ComponentProps<'nav'>) {
   return (
@@ -73,7 +73,7 @@ function BreadcrumbSeparator({ children, className, ...props }: ComponentProps<'
       className={cn('[&>svg]:size-3.5', className)}
       {...props}
     >
-      {children ?? <ChevronRightIcon />}
+      {children ?? <PiCaretRightLight />}
     </li>
   );
 }
@@ -87,7 +87,7 @@ function BreadcrumbEllipsis({ className, ...props }: ComponentProps<'span'>) {
       className={cn('flex size-5 items-center justify-center [&>svg]:size-4', className)}
       {...props}
     >
-      <MoreHorizontalIcon />
+      <PiDotsThreeLight />
       <span className="sr-only">More</span>
     </span>
   );

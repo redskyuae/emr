@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
-import type { GetChargeItemResponse, UpdateChargeItemResponse } from '../types';
+import type { GetChargeItemResponse, UpdateChargeItemResponse } from './types';
 
 import { deleteChargeItemCommand } from '@/app/api/lib/modules/charge-item/commands/delete-charge-item-command';
 import { updateChargeItemCommand } from '@/app/api/lib/modules/charge-item/commands/update-charge-item-command';

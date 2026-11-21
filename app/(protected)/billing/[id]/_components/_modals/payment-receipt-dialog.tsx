@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { CheckCircle2, Printer } from 'lucide-react';
+import { CiCircleCheck } from 'react-icons/ci';
+import { PiPrinterLight } from 'react-icons/pi';
 
 import type { Invoice, Payment } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import { LogoMark } from '@/components/brand/logo';
@@ -81,7 +82,7 @@ export function PaymentReceiptDialog({
                 </div>
               </div>
               <Badge variant="outline" className="border-success/40 text-success gap-1">
-                <CheckCircle2 className="size-3.5" />
+                <CiCircleCheck className="size-3.5" />
                 Payment recorded
               </Badge>
             </div>
@@ -158,7 +159,7 @@ export function PaymentReceiptDialog({
             Close
           </Button>
           <Button type="button" onClick={handlePrint}>
-            <Printer className="size-4" />
+            <PiPrinterLight className="size-4" />
             Print receipt
           </Button>
         </DialogFooter>

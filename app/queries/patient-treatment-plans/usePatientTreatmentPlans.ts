@@ -16,7 +16,7 @@ export const patientTreatmentPlansQueryKey = (patientId: number | null) =>
 export const patientTreatmentPlansBaseKey = (patientId: number | null) =>
   ['patients', patientId, 'treatment-plans'] as const;
 
-export const patientTreatmentPlanHistoryQueryKey = (patientId: number) =>
+export const patientTreatmentPlanHistoryQueryKey = (patientId: number | null) =>
   [...patientTreatmentPlansBaseKey(patientId), { status: 'all' }] as const;
 
 async function fetchPatientTreatmentPlans(
@@ -52,18 +52,21 @@ export function usePatientTreatmentPlansQuery({
   });
 }
 
-export function useCurrentPatientTreatmentPlansQuery(patientId: number) {
+/** Pending and In progress Plans only — the Plans a new Visit can still deliver Sessions for. */
+export function useCurrentPatientTreatmentPlansQuery(patientId: number | null, enabled = true) {
   return useQuery({
     queryKey: patientTreatmentPlansQueryKey(patientId),
-    queryFn: () => fetchPatientTreatmentPlans(patientId),
+    queryFn: () => fetchPatientTreatmentPlans(patientId as number),
+    enabled: patientId !== null && enabled,
     select: transformPatientTreatmentPlansResponse,
   });
 }
 
-export function usePatientTreatmentPlanHistoryQuery(patientId: number) {
+export function usePatientTreatmentPlanHistoryQuery(patientId: number | null, enabled = true) {
   return useQuery({
     queryKey: patientTreatmentPlanHistoryQueryKey(patientId),
-    queryFn: () => fetchPatientTreatmentPlans(patientId, 'all'),
+    queryFn: () => fetchPatientTreatmentPlans(patientId as number, 'all'),
+    enabled: patientId !== null && enabled,
     select: transformPatientTreatmentPlansResponse,
   });
 }

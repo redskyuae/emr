@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Activity, Download, Search } from 'lucide-react';
+import { CiImport, CiSearch, CiWavePulse1 } from 'react-icons/ci';
 
 import type { IamAuditEvent } from '@/app/(protected)/audit-log/_utils/audit-log-mock';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -100,11 +100,11 @@ export function AuditLogPageImpl({ events }: { events: IamAuditEvent[] }) {
 
   return (
     <div className="space-y-4">
-      <Card className="shadow-fluent-2">
-        <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
-          <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+      <Card>
+        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <InputGroup className="lg:max-w-sm">
             <InputGroupAddon>
-              <Search className="size-4" />
+              <CiSearch className="size-4" />
             </InputGroupAddon>
             <InputGroupInput
               type="search"
@@ -135,14 +135,14 @@ export function AuditLogPageImpl({ events }: { events: IamAuditEvent[] }) {
               {formatCount(filteredEvents.length, 'event')} shown
             </span>
             <Button type="button" variant="outline" className="w-full sm:w-auto">
-              <Download className="size-4" />
+              <CiImport className="size-4" />
               Export
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2">
+      <Card className="py-0">
         <CardContent className="p-0">
           {filteredEvents.length ? (
             <Table className="min-w-max">
@@ -200,7 +200,7 @@ export function AuditLogPageImpl({ events }: { events: IamAuditEvent[] }) {
             <Empty className="min-h-72 border-0">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  <Activity className="size-5" />
+                  <CiWavePulse1 className="size-5" />
                 </EmptyMedia>
                 <EmptyTitle>No events match.</EmptyTitle>
                 <EmptyDescription>Try a different search term or type filter.</EmptyDescription>

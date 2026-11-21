@@ -1,0 +1,74 @@
+import { CiMemoPad } from 'react-icons/ci';
+import { PiLeafLight } from 'react-icons/pi';
+
+import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { Button } from '@/components/ui/button';
+
+function minutes(value: number | null) {
+  return value ? `${value} min` : null;
+}
+
+/** The Treatment Session this Visit delivers, beside the Plan of the note. */
+export function VisitPlanSession({
+  visit,
+  canRecordResponse,
+  onDailyTreatment,
+}: {
+  visit: Visit;
+  canRecordResponse: boolean;
+  onDailyTreatment: () => void;
+}) {
+  const session = visit.treatmentSession;
+
+  if (!session) return null;
+
+  const timing = [
+    minutes(session.durationMinutes),
+    session.setupMinutes ? `${session.setupMinutes} setup` : null,
+    session.cleaningMinutes ? `${session.cleaningMinutes} cleaning` : null,
+  ].filter(Boolean);
+  const details = [
+    { label: 'Room type', value: session.roomType },
+    { label: 'Therapist skill', value: session.therapistSkill },
+  ].filter((item) => item.value);
+
+  return (
+    <section aria-labelledby="plan-session" className="flex flex-col gap-3 rounded-lg border p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 id="plan-session" className="flex items-start gap-2 text-base font-semibold">
+          <PiLeafLight className="text-procedure mt-1 size-4 shrink-0" aria-hidden="true" />
+          <span className="[overflow-wrap:anywhere]">
+            {visit.treatment ? `${visit.treatment.name} · ` : null}Session {session.sessionNumber}
+          </span>
+        </h3>
+        {timing.length ? (
+          <span className="text-muted-foreground text-sm">{timing.join(' + ')}</span>
+        ) : null}
+      </div>
+      <p className="text-sm">
+        <span className="font-medium">{session.label}</span>
+        {session.procedure ? (
+          <span className="text-muted-foreground"> · {session.procedure}</span>
+        ) : null}
+      </p>
+      {details.length ? (
+        <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+          {details.map((item) => (
+            <div key={item.label}>
+              <dt className="text-muted-foreground">{item.label}</dt>
+              <dd>{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {canRecordResponse ? (
+        <div>
+          <Button type="button" variant="outline" onClick={onDailyTreatment}>
+            <CiMemoPad className="size-4" />
+            Record treatment response
+          </Button>
+        </div>
+      ) : null}
+    </section>
+  );
+}

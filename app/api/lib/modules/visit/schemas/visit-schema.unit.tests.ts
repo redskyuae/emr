@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  amendVisitSchema,
   cancelVisitSchema,
   checkInVisitSchema,
   formatVisitDate,
   listVisitsSchema,
   updateVisitSchema,
   visitIdSchema,
+  visitStatusCountsSchema,
   visitTenantIdSchema,
 } from './visit-schema';
 
@@ -20,6 +22,22 @@ describe('Visit schema', () => {
         appointmentId: 5,
         visitTypeId: 2,
       });
+    });
+
+    it('should accept an optional Admit Source', () => {
+      expect(
+        checkInVisitSchema.parse({ appointmentId: 5, visitTypeId: 2, admitSourceId: 4 })
+          .admitSourceId
+      ).toBe(4);
+      expect(
+        checkInVisitSchema.parse({ appointmentId: 5, visitTypeId: 2 }).admitSourceId
+      ).toBeUndefined();
+    });
+
+    it('should reject an Admit Source ID that is not positive', () => {
+      expect(
+        checkInVisitSchema.safeParse({ appointmentId: 5, visitTypeId: 2, admitSourceId: 0 }).success
+      ).toBe(false);
     });
 
     it('should accept a doctor assignment on an appointment check-in', () => {
@@ -53,21 +71,22 @@ describe('Visit schema', () => {
           })
         )
       ).toContain(
-        'Provide either appointmentId for an Appointment check-in or patientId and doctorId for a Walk-in Visit, not both.'
+        'Provide either appointmentId for an Appointment check-in or patientId for a Walk-in Visit, not both.'
       );
     });
 
-    it('should require patient and doctor for a walk-in', () => {
-      const errors = errorsOf(checkInVisitSchema.safeParse({ visitTypeId: 2 }));
-
-      expect(errors).toContain('Patient ID is required for a Walk-in Visit');
-      expect(errors).toContain('Doctor ID is required for a Walk-in Visit');
+    it('should require the patient for a walk-in', () => {
+      expect(errorsOf(checkInVisitSchema.safeParse({ visitTypeId: 2 }))).toEqual([
+        'Patient ID is required for a Walk-in Visit',
+      ]);
     });
 
-    it('should require a doctor when only a patient is supplied', () => {
-      expect(errorsOf(checkInVisitSchema.safeParse({ patientId: 7, visitTypeId: 2 }))).toContain(
-        'Doctor ID is required for a Walk-in Visit'
-      );
+    // Whether the Visit Type needs a Doctor is a repository-backed validator rule.
+    it('should accept a walk-in without a doctor', () => {
+      const result = checkInVisitSchema.safeParse({ patientId: 7, visitTypeId: 2 });
+
+      expect(result.success).toBe(true);
+      expect(result.data?.doctorId).toBeUndefined();
     });
 
     it('should require the visit type', () => {
@@ -251,6 +270,88 @@ describe('Visit schema', () => {
     it('should accept an empty filter object', () => {
       expect(listVisitsSchema.parse({})).toEqual({});
     });
+
+    it('should transform a DD-MM-YYYY date range to ISO', () => {
+      expect(listVisitsSchema.parse({ fromDate: ' 01-07-2026 ', toDate: '16-07-2026' })).toEqual({
+        fromDate: '2026-07-01',
+        toDate: '2026-07-16',
+      });
+    });
+
+    it('should accept a single-day range', () => {
+      expect(
+        listVisitsSchema.safeParse({ fromDate: '16-07-2026', toDate: '16-07-2026' }).success
+      ).toBe(true);
+    });
+
+    it('should accept an open-ended range', () => {
+      expect(listVisitsSchema.parse({ fromDate: '01-07-2026' })).toEqual({
+        fromDate: '2026-07-01',
+      });
+      expect(listVisitsSchema.parse({ toDate: '16-07-2026' })).toEqual({ toDate: '2026-07-16' });
+    });
+
+    it('should reject malformed range dates with field-specific messages', () => {
+      const errors = errorsOf(
+        listVisitsSchema.safeParse({ fromDate: '2026-07-01', toDate: '31-02-2026' })
+      );
+
+      expect(errors).toContain('From date must be in DD-MM-YYYY format');
+      expect(errors).toContain('To date must be in DD-MM-YYYY format');
+    });
+
+    it('should reject a from date after the to date', () => {
+      expect(
+        errorsOf(listVisitsSchema.safeParse({ fromDate: '17-07-2026', toDate: '16-07-2026' }))
+      ).toContain('From date must be on or before To date');
+    });
+
+    it('should coerce a Visit Type filter', () => {
+      expect(listVisitsSchema.parse({ visitTypeId: '4' })).toEqual({ visitTypeId: 4 });
+    });
+
+    it('should reject a non-positive Visit Type filter', () => {
+      expect(errorsOf(listVisitsSchema.safeParse({ visitTypeId: '0' }))).toContain(
+        'Visit Type ID must be positive'
+      );
+    });
+
+    it('should trim the search and accept 100 characters', () => {
+      expect(listVisitsSchema.parse({ query: `  ${'a'.repeat(100)}  ` })).toEqual({
+        query: 'a'.repeat(100),
+      });
+    });
+
+    it('should reject a search longer than 100 characters', () => {
+      expect(errorsOf(listVisitsSchema.safeParse({ query: 'a'.repeat(101) }))).toContain(
+        'Search must be at most 100 characters'
+      );
+    });
+  });
+
+  describe('visitStatusCountsSchema', () => {
+    it('should require a visit date', () => {
+      expect(errorsOf(visitStatusCountsSchema.safeParse({}))).toContain('Visit date is required');
+    });
+
+    it('should reject a malformed visit date', () => {
+      expect(errorsOf(visitStatusCountsSchema.safeParse({ visitDate: '2026-07-16' }))).toContain(
+        'Visit date must be in DD-MM-YYYY format'
+      );
+    });
+
+    it('should transform the visit date to ISO and coerce the Doctor ID', () => {
+      expect(visitStatusCountsSchema.parse({ visitDate: ' 16-07-2026 ', doctorId: '4' })).toEqual({
+        visitDate: '2026-07-16',
+        doctorId: 4,
+      });
+    });
+
+    it('should reject a non-positive Doctor ID', () => {
+      expect(
+        errorsOf(visitStatusCountsSchema.safeParse({ visitDate: '16-07-2026', doctorId: '0' }))
+      ).toContain('Doctor ID must be positive');
+    });
   });
 
   describe('formatVisitDate', () => {
@@ -263,5 +364,101 @@ describe('Visit schema', () => {
     expect(visitIdSchema.safeParse('0').success).toBe(false);
     expect(visitIdSchema.parse('7')).toBe(7);
     expect(visitTenantIdSchema.safeParse('   ').success).toBe(false);
+  });
+
+  describe('amendVisitSchema', () => {
+    const base = { doctorId: 3, visitTypeId: 2 };
+
+    it('should require the VisitType', () => {
+      expect(errorsOf(amendVisitSchema.safeParse({}))).toEqual(['Visit type ID is required']);
+    });
+
+    it.each([null, undefined])('should clear the Doctor when it is %s', (doctorId) => {
+      expect(amendVisitSchema.parse({ visitTypeId: 2, doctorId }).doctorId).toBeNull();
+    });
+
+    it('should reject a Doctor ID that is not positive', () => {
+      expect(errorsOf(amendVisitSchema.safeParse({ ...base, doctorId: 0 }))).toContain(
+        'Doctor ID must be positive'
+      );
+    });
+
+    it('should clear every optional field when it is absent', () => {
+      expect(amendVisitSchema.parse(base)).toEqual({
+        doctorId: 3,
+        visitTypeId: 2,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+    });
+
+    it('should clear optional fields sent as null or blank', () => {
+      expect(
+        amendVisitSchema.parse({
+          ...base,
+          remarks: '',
+          treatmentId: null,
+          admitSourceId: null,
+          chiefComplaint: null,
+          treatmentSessionId: null,
+        })
+      ).toEqual({
+        doctorId: 3,
+        visitTypeId: 2,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+    });
+
+    it('should trim and keep the full set of amended fields', () => {
+      expect(
+        amendVisitSchema.parse({
+          ...base,
+          remarks: ' Reviewed ',
+          treatmentId: 10,
+          admitSourceId: 4,
+          chiefComplaint: ' Fever for 3 days ',
+          treatmentSessionId: 20,
+        })
+      ).toEqual({
+        doctorId: 3,
+        visitTypeId: 2,
+        remarks: 'Reviewed',
+        treatmentId: 10,
+        admitSourceId: 4,
+        chiefComplaint: 'Fever for 3 days',
+        treatmentSessionId: 20,
+      });
+    });
+
+    it('should limit the chief complaint to 500 characters', () => {
+      expect(
+        errorsOf(amendVisitSchema.safeParse({ ...base, chiefComplaint: 'a'.repeat(501) }))
+      ).toContain('Chief complaint must be at most 500 characters');
+      expect(amendVisitSchema.safeParse({ ...base, chiefComplaint: 'a'.repeat(500) }).success).toBe(
+        true
+      );
+    });
+
+    it('should reject an Admit Source ID that is not positive', () => {
+      expect(errorsOf(amendVisitSchema.safeParse({ ...base, admitSourceId: 0 }))).toContain(
+        'Admit source ID must be positive'
+      );
+    });
+
+    it('should require the Treatment and Session together', () => {
+      expect(errorsOf(amendVisitSchema.safeParse({ ...base, treatmentId: 10 }))).toEqual([
+        'Treatment and Session must be provided together.',
+      ]);
+      expect(
+        errorsOf(amendVisitSchema.safeParse({ ...base, treatmentId: null, treatmentSessionId: 20 }))
+      ).toEqual(['Treatment and Session must be provided together.']);
+    });
   });
 });

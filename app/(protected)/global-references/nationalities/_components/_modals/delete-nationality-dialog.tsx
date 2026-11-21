@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 
 import type { Nationality } from '@/app/queries/global-references/nationalities/useNationalities';
 import {
@@ -32,7 +32,7 @@ export function NationalityDeleteDialog({
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Nationality?</AlertDialogTitle>
           <AlertDialogDescription>

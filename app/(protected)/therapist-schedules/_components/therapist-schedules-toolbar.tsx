@@ -1,6 +1,7 @@
 'use client';
 
-import { LayoutGrid, LayoutList, Plus, RotateCcw, Table as TableIcon } from 'lucide-react';
+import { CiBoxList, CiGrid41, CiViewTable } from 'react-icons/ci';
+import { PiArrowCounterClockwiseLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
 import { Button } from '@/components/ui/button';
@@ -52,8 +53,8 @@ export function TherapistSchedulesToolbar({
 }: Props) {
   const hasFilters = Boolean(therapistValue || fromDateValue || toDateValue);
   return (
-    <Card className="shadow-fluent-2">
-      <CardContent className="flex flex-col gap-3 p-3 xl:flex-row xl:items-center">
+    <Card>
+      <CardContent className="flex flex-col gap-3 xl:flex-row xl:items-center">
         <ToggleGroup
           type="single"
           value={viewLayout}
@@ -65,15 +66,15 @@ export function TherapistSchedulesToolbar({
           spacing={0}
         >
           <ToggleGroupItem value="table" aria-label="Table view">
-            <TableIcon className="size-4" />
+            <CiViewTable className="size-4" />
             Table
           </ToggleGroupItem>
           <ToggleGroupItem value="card" aria-label="Card view">
-            <LayoutGrid className="size-4" />
+            <CiGrid41 className="size-4" />
             Card
           </ToggleGroupItem>
           <ToggleGroupItem value="list" aria-label="List view">
-            <LayoutList className="size-4" />
+            <CiBoxList className="size-4" />
             List
           </ToggleGroupItem>
         </ToggleGroup>
@@ -83,7 +84,7 @@ export function TherapistSchedulesToolbar({
             disabled={therapistsLoading}
             onValueChange={(value) => onTherapistChange(value === ALL ? '' : value)}
           >
-            <SelectTrigger className="h-9 w-full" aria-label="Filter by Therapist">
+            <SelectTrigger className="w-full" aria-label="Filter by Therapist">
               <SelectValue placeholder="All Therapists" />
             </SelectTrigger>
             <SelectContent>
@@ -100,14 +101,14 @@ export function TherapistSchedulesToolbar({
             value={fromDateValue}
             aria-label="Filter schedules from date"
             onChange={(event) => onFromDateChange(event.target.value)}
-            className="h-9"
+            className="h-10"
           />
           <Input
             type="date"
             value={toDateValue}
             aria-label="Filter schedules to date"
             onChange={(event) => onToDateChange(event.target.value)}
-            className="h-9"
+            className="h-10"
           />
         </div>
         <div className="flex flex-col gap-2 sm:flex-row xl:ml-auto">
@@ -118,12 +119,12 @@ export function TherapistSchedulesToolbar({
             onClick={onClearFilters}
             className="bg-background"
           >
-            <RotateCcw className="size-4" />
+            <PiArrowCounterClockwiseLight className="size-4" />
             Reset
           </Button>
           {canCreate ? (
             <Button type="button" onClick={onAddSchedule}>
-              <Plus className="size-4" />
+              <PiPlusLight className="size-4" />
               New Therapist Schedule
             </Button>
           ) : null}

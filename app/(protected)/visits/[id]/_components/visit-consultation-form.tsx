@@ -1,0 +1,404 @@
+'use client';
+
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CiCircleCheck, CiFloppyDisk } from 'react-icons/ci';
+import { Controller, useForm, useWatch, type FieldErrors } from 'react-hook-form';
+import { toast } from 'sonner';
+
+import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { getApiErrors } from '@/app/queries/api-error';
+import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
+import { useSignClinicalNote } from '@/app/queries/patients/chart/useSignClinicalNote';
+import { useUpdateClinicalNote } from '@/app/queries/patients/chart/useUpdateClinicalNote';
+import { isAyurvedaBrand } from '@/components/brand/brand-config';
+import { useBrandLogoVariant } from '@/components/brand/brand-provider';
+import { RichTextEditor } from '@/components/clinical/rich-text-editor';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { cn } from '@/lib/utils';
+
+import {
+  filledFieldCount,
+  stepForField,
+  type ConsultationStep,
+  type ConsultationStepId,
+} from '../_utils/consultation-steps';
+import {
+  consultationToSoap,
+  doctorConsultationFormSchema,
+  EMPTY_CONSULTATION,
+  oneLine,
+  type DoctorConsultationFormValues,
+} from '../_utils/doctor-consultation-note';
+import { SignConsultationDialog } from './_modals/sign-consultation-dialog';
+import { VisitStepShell } from './visit-step-shell';
+
+type NarrativeName = Exclude<
+  keyof DoctorConsultationFormValues,
+  'modernDiagnosis' | 'noteTypeId' | 'prakriti' | 'vikriti'
+>;
+
+const PRAKRITI_SUGGESTIONS = [
+  'Vata',
+  'Pitta',
+  'Kapha',
+  'Vata-Pitta',
+  'Pitta-Kapha',
+  'Vata-Kapha',
+  'Tridosha',
+];
+
+/** Visit records shown in a step beside the note, such as Vital Signs or today's Session. */
+export type ConsultationStepSlots = Partial<Record<ConsultationStepId, ReactNode>>;
+
+export function VisitConsultationForm({
+  visit,
+  noteTypes,
+  defaultNoteTypeId,
+  noteId,
+  initialValues,
+  onDirtyChange,
+  steps,
+  stepId,
+  onStepChange,
+  slots = {},
+}: {
+  visit: Visit;
+  noteTypes: { id: number; name: string }[];
+  defaultNoteTypeId: number | null;
+  noteId: number | null;
+  initialValues: DoctorConsultationFormValues | null;
+  onDirtyChange: (dirty: boolean) => void;
+  steps: ConsultationStep[];
+  stepId: ConsultationStepId;
+  onStepChange: (id: ConsultationStepId) => void;
+  slots?: ConsultationStepSlots;
+}) {
+  const showAyurveda = isAyurvedaBrand(useBrandLogoVariant());
+  const form = useForm<DoctorConsultationFormValues>({
+    resolver: zodResolver(doctorConsultationFormSchema),
+    mode: 'onTouched',
+    defaultValues: initialValues
+      ? { ...initialValues, chiefComplaint: oneLine(initialValues.chiefComplaint) }
+      : {
+          ...EMPTY_CONSULTATION,
+          noteTypeId: defaultNoteTypeId ? String(defaultNoteTypeId) : '',
+          chiefComplaint: oneLine(visit.chiefComplaint ?? ''),
+        },
+  });
+  const { errors, isDirty } = form.formState;
+  const values = useWatch({ control: form.control });
+  const [savedNoteId, setSavedNoteId] = useState(noteId);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [signOpen, setSignOpen] = useState(false);
+  const createNote = useCreateClinicalNote();
+  const updateNote = useUpdateClinicalNote();
+  const signNote = useSignClinicalNote();
+  const askNoteType = defaultNoteTypeId === null && !initialValues;
+  const saving = createNote.isPending || updateNote.isPending || signNote.isPending;
+  const patientId = visit.patient.id;
+  function openFirstError(fieldErrors: FieldErrors<DoctorConsultationFormValues>) {
+    setSignOpen(false);
+    const target = Object.keys(fieldErrors)
+      .map((field) => stepForField(field, steps))
+      .find(Boolean);
+    if (target && target !== stepId) onStepChange(target);
+  }
+
+  const dirtyRef = useRef(onDirtyChange);
+  useEffect(() => {
+    dirtyRef.current = onDirtyChange;
+  }, [onDirtyChange]);
+
+  useEffect(() => {
+    dirtyRef.current(isDirty);
+    if (!isDirty) return;
+
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [isDirty]);
+
+  useEffect(() => () => dirtyRef.current(false), []);
+
+  async function persist(values: DoctorConsultationFormValues) {
+    const body = {
+      noteTypeId: Number(values.noteTypeId),
+      visitId: visit.id,
+      ...consultationToSoap(values),
+    };
+
+    if (savedNoteId) {
+      await updateNote.mutateAsync({ patientId, noteId: savedNoteId, body });
+      return savedNoteId;
+    }
+
+    const created = await createNote.mutateAsync({ patientId, body });
+    setSavedNoteId(created.data.id);
+    return created.data.id;
+  }
+
+  const saveDraft = form.handleSubmit(async (values) => {
+    try {
+      await persist(values);
+      form.reset(values);
+      setSavedAt(new Date());
+      toast.success('Consultation draft saved.');
+    } catch (error) {
+      form.setError('root', { message: getApiErrors(error).join(' ') });
+    }
+  }, openFirstError);
+
+  const saveAndSign = form.handleSubmit(async (values) => {
+    setSignOpen(false);
+    try {
+      const id = await persist(values);
+      form.reset(values);
+      await signNote.mutateAsync({ patientId, noteId: id });
+      toast.success('Consultation signed.');
+    } catch (error) {
+      form.setError('root', { message: getApiErrors(error).join(' ') });
+    }
+  }, openFirstError);
+
+  function narrative(name: NarrativeName, label: string, placeholder: string, wide = false) {
+    return (
+      <Field data-invalid={Boolean(errors[name])} className={wide ? 'md:col-span-full' : undefined}>
+        <FieldLabel htmlFor={`consult-${name}`}>{label}</FieldLabel>
+        <Controller
+          control={form.control}
+          name={name}
+          render={({ field }) => (
+            <RichTextEditor
+              id={`consult-${name}`}
+              aria-label={label}
+              placeholder={placeholder}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              invalid={Boolean(errors[name])}
+            />
+          )}
+        />
+        {errors[name] ? <FieldError>{errors[name]?.message}</FieldError> : null}
+      </Field>
+    );
+  }
+
+  const saveStatus = isDirty
+    ? 'Unsaved changes'
+    : savedAt
+      ? `Draft saved at ${savedAt.toLocaleTimeString(undefined, {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`
+      : savedNoteId
+        ? 'Draft saved'
+        : 'Not saved yet';
+
+  const content: Record<ConsultationStepId, ReactNode> = {
+    subjective: (
+      <div className="space-y-4">
+        {slots.subjective}
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* The note is saved as a Consultation; only a tenant without that type must choose. */}
+          {askNoteType ? (
+            <Field data-invalid={Boolean(errors.noteTypeId)}>
+              <FieldLabel htmlFor="consult-note-type">
+                Clinical Note Type
+                <span aria-hidden="true" className="text-destructive">
+                  {' '}
+                  *
+                </span>
+              </FieldLabel>
+              <NativeSelect
+                id="consult-note-type"
+                className="w-full"
+                aria-required
+                aria-invalid={Boolean(errors.noteTypeId)}
+                {...form.register('noteTypeId')}
+              >
+                <NativeSelectOption value="">Select a note type</NativeSelectOption>
+                {noteTypes.map((type) => (
+                  <NativeSelectOption key={type.id} value={String(type.id)}>
+                    {type.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              {errors.noteTypeId ? <FieldError>{errors.noteTypeId.message}</FieldError> : null}
+            </Field>
+          ) : null}
+          <Field data-invalid={Boolean(errors.chiefComplaint)} className="md:col-span-full">
+            <FieldLabel htmlFor="consult-chiefComplaint">
+              Chief complaint
+              <span aria-hidden="true" className="text-destructive">
+                {' '}
+                *
+              </span>
+            </FieldLabel>
+            <Input
+              id="consult-chiefComplaint"
+              aria-label="Chief complaint"
+              placeholder="Main reason for this Visit, e.g. Low back pain for 2 weeks"
+              aria-required
+              aria-invalid={Boolean(errors.chiefComplaint)}
+              {...form.register('chiefComplaint')}
+            />
+            {errors.chiefComplaint ? (
+              <FieldError>{errors.chiefComplaint.message}</FieldError>
+            ) : null}
+          </Field>
+          {narrative('hpi', 'Present condition / HPI', 'Onset, duration, severity, triggers', true)}
+          {narrative('medicalHistory', 'Past medical history', 'Known conditions')}
+          {narrative('surgicalHistory', 'Past surgical history', 'Operations and procedures')}
+          {narrative('familySocialHistory', 'Family / social history', 'Family, work, habits')}
+        </div>
+      </div>
+    ),
+    objective: (
+      <div className="space-y-4">
+        {slots.objective}
+        <div className="grid gap-4 md:grid-cols-2">
+          {narrative('examination', 'Examination / red flags', 'Findings and any red flags', true)}
+          {showAyurveda ? (
+            <>
+              <Field data-invalid={Boolean(errors.prakriti)}>
+                <FieldLabel htmlFor="consult-prakriti">Prakriti</FieldLabel>
+                <Input
+                  id="consult-prakriti"
+                  placeholder="Constitution"
+                  aria-invalid={Boolean(errors.prakriti)}
+                  {...form.register('prakriti')}
+                />
+                <div
+                  className="flex flex-wrap gap-1"
+                  role="group"
+                  aria-label="Prakriti suggestions"
+                >
+                  {PRAKRITI_SUGGESTIONS.map((suggestion) => (
+                    <Button
+                      key={suggestion}
+                      type="button"
+                      size="xs"
+                      variant={values.prakriti === suggestion ? 'default' : 'outline'}
+                      aria-pressed={values.prakriti === suggestion}
+                      onClick={() =>
+                        form.setValue('prakriti', suggestion, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      {suggestion}
+                    </Button>
+                  ))}
+                </div>
+                {errors.prakriti ? <FieldError>{errors.prakriti.message}</FieldError> : null}
+              </Field>
+              <Field data-invalid={Boolean(errors.vikriti)}>
+                <FieldLabel htmlFor="consult-vikriti">Vikriti / body condition</FieldLabel>
+                <Input
+                  id="consult-vikriti"
+                  placeholder="Current imbalance"
+                  aria-invalid={Boolean(errors.vikriti)}
+                  {...form.register('vikriti')}
+                />
+                {errors.vikriti ? <FieldError>{errors.vikriti.message}</FieldError> : null}
+              </Field>
+            </>
+          ) : null}
+        </div>
+      </div>
+    ),
+    assessment: (
+      <div className="grid gap-4">
+        {slots.assessment}
+        {showAyurveda
+          ? narrative(
+              'ayurvedicDiagnosis',
+              'Ayurvedic diagnosis notes',
+              'Roga, dosha and dushya involved'
+            )
+          : null}
+      </div>
+    ),
+    plan: (
+      <div className="space-y-4">
+        <div className="grid gap-4">
+          {narrative('precautions', 'Treatment precautions', 'Precautions and advice')}
+        </div>
+        {slots.plan}
+      </div>
+    ),
+    review: (
+      <div className="space-y-4">
+        <p className="text-sm">
+          Check each step, then save and sign. Signing locks the consultation; add anything later as
+          a separate Clinical Note.
+        </p>
+        {slots.review}
+      </div>
+    ),
+  };
+
+  return (
+    <form
+      className="flex flex-col gap-3 xl:h-full xl:min-h-0"
+      aria-label="Doctor consultation"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void saveDraft();
+      }}
+    >
+      <VisitStepShell
+        steps={steps}
+        current={stepId}
+        onSelect={onStepChange}
+        filled={(step) => filledFieldCount(step, values)}
+        renderStep={(id) => content[id]}
+        alert={
+          errors.root ? (
+            <Alert variant="destructive">
+              <AlertTitle>Could not save consultation</AlertTitle>
+              <AlertDescription>{errors.root.message}</AlertDescription>
+            </Alert>
+          ) : null
+        }
+        status={
+          <p className="text-muted-foreground flex items-center gap-2 text-sm" role="status">
+            <span
+              aria-hidden="true"
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                isDirty ? 'bg-warning' : savedNoteId ? 'bg-success' : 'bg-input'
+              )}
+            />
+            {saveStatus}
+          </p>
+        }
+        actions={
+          <Button type="submit" variant="outline" disabled={saving}>
+            <CiFloppyDisk className="size-4" />
+            {createNote.isPending || updateNote.isPending ? 'Saving…' : 'Save draft'}
+          </Button>
+        }
+        finalAction={
+          <Button type="button" disabled={saving} onClick={() => setSignOpen(true)}>
+            <CiCircleCheck className="size-4" />
+            {signNote.isPending ? 'Signing…' : 'Save and sign'}
+          </Button>
+        }
+      />
+
+      <SignConsultationDialog
+        open={signOpen}
+        onClose={() => setSignOpen(false)}
+        onConfirm={() => void saveAndSign()}
+      />
+    </form>
+  );
+}

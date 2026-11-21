@@ -3,17 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import {
-  AlertCircle,
-  BedDouble,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Table as TableIcon,
-} from 'lucide-react';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
+import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 import type { Room, RoomStatus } from '@/app/api/lib/modules/room/schemas/room-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -21,6 +12,7 @@ import { useRoomTypesQuery } from '@/app/queries/room-masters/room-types/useRoom
 import { useRoomQuery } from '@/app/queries/rooms/useRoom';
 import { useRoomSummaryQuery } from '@/app/queries/rooms/useRoomSummary';
 import { useRoomsQuery } from '@/app/queries/rooms/useRooms';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -135,14 +127,17 @@ export function RoomsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        {summaryQuery.isLoading ? (
-          <RoomSummaryCardsSkeleton />
-        ) : summaryQuery.data ? (
-          <RoomSummaryCards summary={summaryQuery.data} />
+        {summaryQuery.isLoading || summaryQuery.data ? (
+          <SkeletonCrossfade
+            isLoading={summaryQuery.isLoading}
+            skeleton={<RoomSummaryCardsSkeleton />}
+          >
+            {summaryQuery.data ? <RoomSummaryCards summary={summaryQuery.data} /> : null}
+          </SkeletonCrossfade>
         ) : null}
 
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -154,22 +149,22 @@ export function RoomsPageImpl() {
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-xs">
+            <InputGroup className="lg:max-w-xs">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -184,7 +179,7 @@ export function RoomsPageImpl() {
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as RoomStatus | typeof ALL_FILTER)}
             >
-              <SelectTrigger className="h-9 lg:w-40" aria-label="Filter by status">
+              <SelectTrigger className="lg:w-40" aria-label="Filter by status">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -198,7 +193,7 @@ export function RoomsPageImpl() {
             </Select>
 
             <Select value={roomTypeFilter} onValueChange={setRoomTypeFilter}>
-              <SelectTrigger className="h-9 lg:w-44" aria-label="Filter by Room Type">
+              <SelectTrigger className="lg:w-44" aria-label="Filter by Room Type">
                 <SelectValue placeholder="All Room Types" />
               </SelectTrigger>
               <SelectContent>
@@ -214,7 +209,7 @@ export function RoomsPageImpl() {
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={() => void setRoomParam('new')}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Room
                 </Button>
               </div>
@@ -224,105 +219,108 @@ export function RoomsPageImpl() {
 
         {roomsQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Rooms</AlertTitle>
             <AlertDescription>{getApiErrorMessage(roomsQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {roomsQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : rooms.length === 0 && !hasFilters ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BedDouble />
-              </EmptyMedia>
-              <EmptyTitle>No Rooms yet</EmptyTitle>
-              <EmptyDescription>
-                Add the Rooms in this Tenant to track their Room Type, Beds, and availability.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={() => void setRoomParam('new')}>
-                  <Plus className="size-4" />
-                  Add Room
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : rooms.length === 0 ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Rooms match the current search and filters. Try widening them.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <RoomTableView
-                rooms={rooms}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(room) => void setRoomParam(String(room.id))}
-                onDelete={setRoomPendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <RoomCardView
-                rooms={rooms}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(room) => void setRoomParam(String(room.id))}
-                onDelete={setRoomPendingDelete}
-              />
-            ) : (
-              <RoomListView
-                rooms={rooms}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={(room) => void setRoomParam(String(room.id))}
-                onDelete={setRoomPendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={roomsQuery.isLoading}
+          skeleton={<ViewSkeleton layout={viewLayout} showActions={canUpdate || canDelete} />}
+        >
+          {rooms.length === 0 && !hasFilters ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <PiBedLight />
+                </EmptyMedia>
+                <EmptyTitle>No Rooms yet</EmptyTitle>
+                <EmptyDescription>
+                  Add the Rooms in this Tenant to track their Room Type, Beds, and availability.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={() => void setRoomParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Room
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : rooms.length === 0 ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Rooms match the current search and filters. Try widening them.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <RoomTableView
+                  rooms={rooms}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(room) => void setRoomParam(String(room.id))}
+                  onDelete={setRoomPendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <RoomCardView
+                  rooms={rooms}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(room) => void setRoomParam(String(room.id))}
+                  onDelete={setRoomPendingDelete}
+                />
+              ) : (
+                <RoomListView
+                  rooms={rooms}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={(room) => void setRoomParam(String(room.id))}
+                  onDelete={setRoomPendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((current) => current + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((current) => current + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <RoomFormSheet

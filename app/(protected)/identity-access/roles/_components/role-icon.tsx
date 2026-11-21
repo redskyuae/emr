@@ -1,4 +1,4 @@
-import { ShieldCheck } from 'lucide-react';
+import { PiShieldCheckLight } from 'react-icons/pi';
 
 import { cn } from '@/lib/utils';
 
@@ -13,7 +13,7 @@ export function RoleIcon({ isSystem, className }: { isSystem: boolean; className
         className
       )}
     >
-      <ShieldCheck className="size-5" />
+      <PiShieldCheckLight className="size-5" />
     </span>
   );
 }

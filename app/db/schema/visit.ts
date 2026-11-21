@@ -12,6 +12,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
+import { admitSource as admitSourceTable } from './admit-source';
 import { appointment as appointmentTable } from './appointment';
 import { doctor as doctorTable } from './doctor';
 import { masterColumns } from './helpers';
@@ -33,12 +34,12 @@ export const visit = pgTable(
     patientId: integer('patient_id')
       .notNull()
       .references(() => patientTable.id),
-    doctorId: integer('doctor_id')
-      .notNull()
-      .references(() => doctorTable.id),
+    // Null for a Visit created without a Doctor; only an OPD Consultation requires one.
+    doctorId: integer('doctor_id').references(() => doctorTable.id),
     visitTypeId: integer('visit_type_id')
       .notNull()
       .references(() => visitTypeTable.id),
+    admitSourceId: integer('admit_source_id').references(() => admitSourceTable.id),
     appointmentId: integer('appointment_id').references(() => appointmentTable.id),
     treatmentId: integer('treatment_id').references(() => treatmentTable.id),
     treatmentSessionId: integer('treatment_session_id').references(() => treatmentSessionTable.id),
@@ -47,6 +48,8 @@ export const visit = pgTable(
     queueToken: integer('queue_token').notNull(),
     chiefComplaint: varchar('chief_complaint', { length: 500 }),
     remarks: text(),
+    // The Visit's number in the source system it was imported from; null for Visits created here.
+    legacyVisitNumber: text('legacy_visit_number'),
     checkedInAt: timestamp('checked_in_at', { withTimezone: true }).notNull().defaultNow(),
     consultationStartedAt: timestamp('consultation_started_at', { withTimezone: true }),
     completedAt: timestamp('completed_at', { withTimezone: true }),
@@ -82,6 +85,11 @@ export const visit = pgTable(
     doctorDayTokenUniqueIdx: uniqueIndex('visit_doctor_day_token_idx')
       .on(table.tenantId, table.doctorId, table.visitDate, table.queueToken)
       .where(sql`${table.isDeleted} = false`),
+    // Doctorless Visits share one unassigned queue per day; NULL Doctor IDs are
+    // distinct to the index above, so this index keeps those tokens unique.
+    unassignedDayTokenUniqueIdx: uniqueIndex('visit_unassigned_day_token_idx')
+      .on(table.tenantId, table.visitDate, table.queueToken)
+      .where(sql`${table.isDeleted} = false and ${table.doctorId} is null`),
     tenantVisitDateIdx: index('visit_tenant_visit_date_idx').on(table.tenantId, table.visitDate),
     tenantPatientIdx: index('visit_tenant_patient_idx').on(table.tenantId, table.patientId),
   })
@@ -102,5 +110,18 @@ export const visitQueueTokenCounter = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.tenantId, table.doctorId, table.tokenDate] }),
+  })
+);
+
+// The daily Queue Token counter for Visits checked in without a Doctor (ADR 0029).
+export const visitUnassignedQueueTokenCounter = pgTable(
+  'visit_unassigned_queue_token_counter',
+  {
+    tenantId: varchar('tenant_id', { length: 255 }).notNull(),
+    tokenDate: date('token_date').notNull(),
+    lastNumber: integer('last_number').notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.tenantId, table.tokenDate] }),
   })
 );

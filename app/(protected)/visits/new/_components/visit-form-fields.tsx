@@ -1,21 +1,40 @@
+import { useState, type ReactNode } from 'react';
 import type { Control, FieldErrors, UseFormResetField, UseFormSetValue } from 'react-hook-form';
 import { Controller, useWatch } from 'react-hook-form';
+import { CiCalendarDate, CiLock, CiStethoscope, CiUser } from 'react-icons/ci';
+import {
+  PiArrowsCounterClockwiseLight,
+  PiClipboardTextLight,
+  PiPersonSimpleWalkLight,
+  PiPlusLight,
+  PiSparkleLight,
+} from 'react-icons/pi';
 
+import type { AdmitSource } from '@/app/api/lib/modules/admit-source/schemas/admit-source-schema';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import type { VisitPatientTypeAssessment } from '@/app/api/lib/modules/visit/schemas/visit-patient-type';
+import { visitTypeRequiresDoctor } from '@/app/api/lib/modules/visit/visit-doctor-requirement';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import type { CreateVisitFormValues } from '../_utils/create-visit-form-schema';
+import {
+  CHIEF_COMPLAINT_MAX,
+  type CreateVisitFormValues,
+} from '../_utils/create-visit-form-schema';
 import { getAppointmentVisitDefaults } from '../_utils/appointment-visit-defaults';
+import { AppointmentSearch } from './appointment-search';
+import { SectionHeading } from './section-heading';
 import { WalkInPatientSearch } from './walk-in-patient-search';
 
 type FormProps = {
@@ -27,6 +46,7 @@ type FormProps = {
   selectedPatient: Patient | null;
   doctors: Doctor[];
   visitTypes: VisitType[];
+  admitSources: AdmitSource[];
   loading: boolean;
   historyError?: boolean;
   recentDoctorVisit?: { visitDate: string; visitNumber: string } | null;
@@ -54,25 +74,35 @@ export function VisitSourceFields({
   selectedPatient,
   visitTypes,
   loading,
-}: FormProps) {
+  children,
+}: FormProps & { children?: ReactNode }) {
   const mode = useWatch({ control, name: 'mode' });
   function replaceField(
-    name: 'appointmentId' | 'patientId' | 'doctorId' | 'visitTypeId' | 'chiefComplaint' | 'remarks',
+    name:
+      | 'appointmentId'
+      | 'patientId'
+      | 'doctorId'
+      | 'visitTypeId'
+      | 'admitSourceId'
+      | 'chiefComplaint'
+      | 'remarks',
     value: string
   ) {
     resetField(name, { defaultValue: value });
-    // Visit detail fields are mounted only on the next step. Keep their values
-    // in form state even when resetField has no registered input to update.
+    // Visit detail fields may not be mounted yet. Keep their values in form
+    // state even when resetField has no registered input to update.
     setValue(name, value);
   }
 
   return (
-    <Card className="shadow-fluent-2">
-      <CardHeader>
-        <CardTitle>Visit source</CardTitle>
-        <CardDescription>Select today&apos;s Appointment or start a Walk-in Visit.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Card>
+      <CardHeader className="flex flex-wrap items-center justify-between gap-3">
+        <SectionHeading
+          id="check-in-patient-heading"
+          icon={<CiUser className="size-5" />}
+          title="Confirm the Patient"
+          description="Find today's Appointment or a Walk-in Patient."
+        />
         <Tabs
           value={mode}
           onValueChange={(value) => {
@@ -81,54 +111,47 @@ export function VisitSourceFields({
             replaceField('patientId', '');
             replaceField('doctorId', '');
             replaceField('visitTypeId', '');
+            replaceField('admitSourceId', '');
             replaceField('chiefComplaint', '');
             replaceField('remarks', '');
           }}
         >
-          <TabsList className="grid w-full grid-cols-2 sm:w-96">
-            <TabsTrigger value="appointment">From Appointment</TabsTrigger>
-            <TabsTrigger value="walk-in">Walk-in</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:w-80">
+            <TabsTrigger value="appointment">
+              <CiCalendarDate aria-hidden="true" />
+              From Appointment
+            </TabsTrigger>
+            <TabsTrigger value="walk-in">
+              <PiPersonSimpleWalkLight aria-hidden="true" />
+              Walk-in
+            </TabsTrigger>
           </TabsList>
         </Tabs>
-
+      </CardHeader>
+      <CardContent className="space-y-4">
         {mode === 'appointment' ? (
           <Controller
             control={control}
             name="appointmentId"
             render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="visit-appointment">
-                  Appointment
-                  <RequiredMark />
-                </FieldLabel>
-                <NativeSelect
-                  {...field}
-                  id="visit-appointment"
-                  aria-required
-                  className="w-full"
-                  disabled={loading}
-                  onChange={(event) => {
-                    field.onChange(event);
-                    const selected = appointments.find(
-                      (appointment) => String(appointment.id) === event.target.value
-                    );
-                    const defaults = getAppointmentVisitDefaults(selected, visitTypes);
-                    replaceField('visitTypeId', defaults.visitTypeId);
-                    replaceField('chiefComplaint', defaults.chiefComplaint);
-                    replaceField('remarks', defaults.remarks);
-                    replaceField('doctorId', '');
-                  }}
-                >
-                  <NativeSelectOption value="">Select an Appointment</NativeSelectOption>
-                  {appointments.map((appointment) => (
-                    <NativeSelectOption key={appointment.id} value={String(appointment.id)}>
-                      {appointment.bookingNumber} · {appointment.patient.firstName}{' '}
-                      {appointment.patient.lastName}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-                <FieldError>{errors.appointmentId?.message}</FieldError>
-              </Field>
+              <AppointmentSearch
+                field={field}
+                error={errors.appointmentId?.message}
+                appointments={appointments}
+                disabled={loading}
+                onSelect={(appointmentId) => {
+                  field.onChange(appointmentId);
+                  const selected = appointments.find(
+                    (appointment) => String(appointment.id) === appointmentId
+                  );
+                  const defaults = getAppointmentVisitDefaults(selected, visitTypes);
+                  replaceField('visitTypeId', defaults.visitTypeId);
+                  replaceField('admitSourceId', '');
+                  replaceField('chiefComplaint', defaults.chiefComplaint);
+                  replaceField('remarks', defaults.remarks);
+                  replaceField('doctorId', '');
+                }}
+              />
             )}
           />
         ) : (
@@ -143,6 +166,7 @@ export function VisitSourceFields({
                 onSelect={(patientId) => {
                   field.onChange(patientId);
                   replaceField('visitTypeId', '');
+                  replaceField('admitSourceId', '');
                   replaceField('chiefComplaint', '');
                   replaceField('remarks', '');
                 }}
@@ -150,9 +174,52 @@ export function VisitSourceFields({
             )}
           />
         )}
+        {children}
       </CardContent>
     </Card>
   );
+}
+
+function PatientTypeBadge({
+  patientType,
+  loading,
+  error,
+  onRetry,
+}: {
+  patientType?: VisitPatientTypeAssessment | null;
+  loading?: boolean;
+  error?: boolean;
+  onRetry?: () => void;
+}) {
+  if (error && !loading) {
+    return (
+      <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+        <PiArrowsCounterClockwiseLight className="size-4" />
+        Retry Patient type
+      </Button>
+    );
+  }
+  return (
+    <SkeletonCrossfade
+      isLoading={Boolean(loading)}
+      skeleton={
+        <Skeleton className="h-7 w-36 rounded-full" aria-label="Checking completed Visit history" />
+      }
+    >
+      {patientType ? (
+        <Badge variant="secondary" className="bg-accent text-primary h-7 px-3">
+          {patientType.patientType === 'ESTABLISHED' ? 'Established Patient' : 'New Patient'}
+        </Badge>
+      ) : null}
+    </SkeletonCrossfade>
+  );
+}
+
+function patientTypeDescription(patientType?: VisitPatientTypeAssessment | null) {
+  if (!patientType) return 'Prefilled from the Appointment and Visit history.';
+  return patientType.lastCompletedVisit
+    ? `Last completed Visit ${patientType.lastCompletedVisit.visitNumber} on ${patientType.lastCompletedVisit.visitDate}.`
+    : `Patient record opened ${patientType.patientRecordDate}. No completed Visit in the past three years.`;
 }
 
 export function VisitDetailsFields({
@@ -160,6 +227,7 @@ export function VisitDetailsFields({
   errors,
   doctors,
   visitTypes,
+  admitSources,
   loading,
   appointments,
   historyError,
@@ -172,46 +240,37 @@ export function VisitDetailsFields({
   const mode = useWatch({ control, name: 'mode' });
   const appointmentId = useWatch({ control, name: 'appointmentId' });
   const visitTypeId = useWatch({ control, name: 'visitTypeId' });
+  const chiefComplaint = useWatch({ control, name: 'chiefComplaint' });
+  const remarks = useWatch({ control, name: 'remarks' });
+  const [remarksOpen, setRemarksOpen] = useState(false);
+  // Once Remarks hold text (typed or prefilled), keep the field visible.
+  if (remarks && !remarksOpen) setRemarksOpen(true);
+  // The schema trims before checking the limit, so count what will be saved.
+  const chiefComplaintLength = chiefComplaint.trim().length;
   const appointment = appointments.find((item) => String(item.id) === appointmentId);
   const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
+  const assignedDoctor = mode === 'appointment' ? appointment?.doctor : null;
+  const doctorRequired = visitTypeRequiresDoctor(selectedVisitType?.code);
 
   return (
-    <Card className="shadow-fluent-2">
-      <CardHeader>
-        <CardTitle>Visit details</CardTitle>
-        <CardDescription>Verify Patient history and enter details for this Visit.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-muted/50 rounded-md border p-4 text-sm" aria-live="polite">
-          <p className="font-medium">Patient type</p>
-          {patientTypeLoading ? (
-            <div className="mt-2 space-y-2" aria-label="Checking completed Visit history">
-              <Skeleton className="h-5 w-40" />
-              <Skeleton className="h-3 w-72 max-w-full" />
-            </div>
-          ) : patientTypeError ? (
-            <p className="text-destructive mt-1">
-              Could not verify Patient type.{' '}
-              <button type="button" className="underline" onClick={onRetryPatientType}>
-                Retry
-              </button>
-            </p>
-          ) : patientType ? (
-            <>
-              <p className="mt-1 font-semibold">
-                {patientType.patientType === 'ESTABLISHED' ? 'Established Patient' : 'New Patient'}
-              </p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Patient record opened {patientType.patientRecordDate}.{' '}
-                {patientType.lastCompletedVisit
-                  ? `Last completed Visit ${patientType.lastCompletedVisit.visitNumber} on ${patientType.lastCompletedVisit.visitDate}.`
-                  : 'No completed Visit in the past three years.'}
-              </p>
-            </>
-          ) : (
-            <p className="text-muted-foreground mt-1">Select a Patient to verify type.</p>
-          )}
+    <Card>
+      <CardHeader className="flex flex-wrap items-center justify-between gap-3">
+        <SectionHeading
+          id="check-in-visit-heading"
+          icon={<PiClipboardTextLight className="size-5" />}
+          title="Visit"
+          description={patientTypeDescription(patientType)}
+        />
+        <div aria-live="polite">
+          <PatientTypeBadge
+            patientType={patientType}
+            loading={patientTypeLoading}
+            error={patientTypeError}
+            onRetry={onRetryPatientType}
+          />
         </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
         {historyError ? (
           <Alert>
             <AlertTitle>Recent Visit history could not be checked</AlertTitle>
@@ -221,24 +280,23 @@ export function VisitDetailsFields({
           </Alert>
         ) : null}
         {appointment?.bookingPath === 'PROCEDURE' ? (
-          <div className="bg-muted/50 rounded-md border p-4 text-sm">
-            <p className="font-medium">Scheduled Treatment</p>
-            <p className="text-muted-foreground mt-1">
+          <div className="bg-success/10 text-success flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-4 py-3 text-sm">
+            <PiSparkleLight className="size-4 shrink-0" aria-hidden />
+            <p className="min-w-0 flex-1">
+              <span className="font-semibold">Scheduled Treatment: </span>
               {appointment.treatment?.name ?? 'Treatment'}
               {appointment.treatmentSession ? ` · ${appointment.treatmentSession.label}` : ''}
             </p>
-            <p className="text-muted-foreground mt-2 text-xs">
-              This Treatment and Session will be linked to the Visit at Check-in. Review the
-              prefilled details below.
-            </p>
+            <p className="text-xs font-medium">Links to this Visit at Check-in</p>
           </div>
         ) : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+
+        <div className="grid gap-4 md:grid-cols-3">
           <Controller
             control={control}
             name="visitTypeId"
             render={({ field }) => (
-              <Field>
+              <Field className="bg-card rounded-lg border p-3">
                 <FieldLabel htmlFor="visit-type">
                   Visit type
                   <RequiredMark />
@@ -259,46 +317,82 @@ export function VisitDetailsFields({
                 </NativeSelect>
                 <FieldError>{errors.visitTypeId?.message}</FieldError>
                 {recentDoctorVisit && selectedVisitType?.code.toUpperCase() === 'FUP' ? (
-                  <p className="text-muted-foreground text-xs">
-                    Follow-up suggested from completed Doctor Visit {recentDoctorVisit.visitNumber}{' '}
-                    on {recentDoctorVisit.visitDate}. You can change the Visit type if this is a new
-                    concern.
+                  <p className="text-primary text-xs font-medium">
+                    Suggested from {recentDoctorVisit.visitNumber} on {recentDoctorVisit.visitDate}.
+                    Change it if this is a new concern.
                   </p>
                 ) : null}
               </Field>
             )}
           />
+          {assignedDoctor ? (
+            <div className="bg-muted/40 space-y-1 rounded-lg border p-3">
+              <p className="text-sm font-medium">Doctor</p>
+              <p className="flex items-center gap-2 text-base font-bold">
+                <CiStethoscope className="text-muted-foreground size-4" aria-hidden />
+                {assignedDoctor.name}
+              </p>
+              <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                <CiLock className="size-3" aria-hidden />
+                Assigned by the Appointment.
+              </p>
+            </div>
+          ) : (
+            <Controller
+              control={control}
+              name="doctorId"
+              render={({ field }) => (
+                <Field className="bg-card rounded-lg border p-3">
+                  <FieldLabel htmlFor="visit-doctor">
+                    Doctor
+                    {doctorRequired ? <RequiredMark /> : null}
+                  </FieldLabel>
+                  <NativeSelect
+                    {...field}
+                    id="visit-doctor"
+                    aria-required={doctorRequired}
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    <NativeSelectOption value="">
+                      {doctorRequired ? 'Select a Doctor' : 'No Doctor'}
+                    </NativeSelectOption>
+                    {doctors.map((doctor) => (
+                      <NativeSelectOption key={doctor.id} value={String(doctor.id)}>
+                        {doctor.name}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                  <FieldError>{errors.doctorId?.message}</FieldError>
+                </Field>
+              )}
+            />
+          )}
           <Controller
             control={control}
-            name="doctorId"
+            name="admitSourceId"
             render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="visit-doctor">
-                  Doctor{!appointment?.doctor && <RequiredMark />}
-                </FieldLabel>
+              <Field className="bg-card rounded-lg border border-dashed p-3">
+                <FieldLabel htmlFor="visit-admit-source">Admit source</FieldLabel>
                 <NativeSelect
                   {...field}
-                  id="visit-doctor"
-                  aria-required={!appointment?.doctor}
+                  id="visit-admit-source"
                   className="w-full"
-                  disabled={loading || Boolean(appointment?.doctor)}
-                  value={appointment?.doctor ? String(appointment.doctor.id) : field.value}
+                  disabled={loading}
                 >
-                  <NativeSelectOption value="">Select a Doctor</NativeSelectOption>
-                  {doctors.map((doctor) => (
-                    <NativeSelectOption key={doctor.id} value={String(doctor.id)}>
-                      {doctor.name}
+                  <NativeSelectOption value="">Select an Admit source</NativeSelectOption>
+                  {admitSources.map((source) => (
+                    <NativeSelectOption key={source.id} value={String(source.id)}>
+                      {source.name}
                     </NativeSelectOption>
                   ))}
                 </NativeSelect>
-                <FieldError>{errors.doctorId?.message}</FieldError>
-                {mode === 'appointment' && appointment?.doctor ? (
-                  <p className="text-muted-foreground text-xs">Assigned by the Appointment.</p>
-                ) : null}
+                <FieldError>{errors.admitSourceId?.message}</FieldError>
               </Field>
             )}
           />
         </div>
+
         <Controller
           control={control}
           name="chiefComplaint"
@@ -313,26 +407,51 @@ export function VisitDetailsFields({
                 onBlur={field.onBlur}
                 placeholder="Patient's presenting concern"
               />
-              <FieldError>{errors.chiefComplaint?.message}</FieldError>
+              <div className="flex items-start justify-between gap-3">
+                <FieldError>{errors.chiefComplaint?.message}</FieldError>
+                <p
+                  className={
+                    chiefComplaintLength > CHIEF_COMPLAINT_MAX
+                      ? 'text-destructive ml-auto font-mono text-xs'
+                      : 'text-muted-foreground ml-auto font-mono text-xs'
+                  }
+                >
+                  {chiefComplaintLength} / {CHIEF_COMPLAINT_MAX}
+                </p>
+              </div>
             </Field>
           )}
         />
-        <Controller
-          control={control}
-          name="remarks"
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="visit-remarks">Remarks</FieldLabel>
-              <RichTextEditor
-                id="visit-remarks"
-                aria-label="Remarks"
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-              />
-            </Field>
-          )}
-        />
+        {remarksOpen ? (
+          <Controller
+            control={control}
+            name="remarks"
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="visit-remarks">Remarks</FieldLabel>
+                <RichTextEditor
+                  id="visit-remarks"
+                  aria-label="Remarks"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder="Front desk notes for the Doctor"
+                />
+              </Field>
+            )}
+          />
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-primary -ml-2"
+            onClick={() => setRemarksOpen(true)}
+          >
+            <PiPlusLight className="size-4" />
+            Add remarks
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

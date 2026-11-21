@@ -1,0 +1,255 @@
+'use client';
+
+import Link from 'next/link';
+import {
+  CiCircleCheck,
+  CiCircleRemove,
+  CiEdit,
+  CiFileOn,
+  CiMedicalClipboard,
+  CiMemoPad,
+  CiPill,
+  CiReceipt,
+  CiWavePulse1,
+} from 'react-icons/ci';
+import {
+  PiArrowLeftLight,
+  PiCalendarPlusLight,
+  PiCaretDownLight,
+  PiCircleNotchLight,
+  PiFilePlusLight,
+  PiPlayCircleLight,
+  PiPrinterLight,
+  PiShieldWarningLight,
+} from 'react-icons/pi';
+
+import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+import { isActiveVisit, visitStatusPresentation } from '../../_utils/visit-status';
+import { visitDoctorLabel } from '@/lib/visit-doctor-label';
+
+export function VisitPatientHeader({
+  visit,
+  allergyCount,
+  canStart,
+  canComplete,
+  canCancel,
+  canCreateInvoice,
+  canRecordVitals,
+  canCreateNote,
+  canAssignPlan,
+  canBookAppointment,
+  canAmend,
+  starting,
+  onStart,
+  onAmend,
+  onComplete,
+  onCancel,
+  onRecordVitals,
+  onAddNote,
+  onAddAllergy,
+  onAddMedication,
+  onAssignPlan,
+  onOpenDocuments,
+}: {
+  visit: Visit;
+  allergyCount: number | null;
+  canStart: boolean;
+  canComplete: boolean;
+  canCancel: boolean;
+  canCreateInvoice: boolean;
+  canRecordVitals: boolean;
+  canCreateNote: boolean;
+  canAssignPlan: boolean;
+  canBookAppointment: boolean;
+  canAmend: boolean;
+  starting: boolean;
+  onStart: () => void;
+  onAmend: () => void;
+  onComplete: () => void;
+  onCancel: () => void;
+  onRecordVitals: () => void;
+  onAddNote: () => void;
+  onAddAllergy: () => void;
+  onAddMedication: () => void;
+  onAssignPlan: () => void;
+  onOpenDocuments: () => void;
+}) {
+  const status = visitStatusPresentation(visit.status);
+  const active = isActiveVisit(visit.status);
+
+  return (
+    <header className="bg-card z-10 rounded-xl border p-3 lg:sticky lg:top-18 xl:static">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button asChild variant="ghost" size="icon" aria-label="Back to Visits">
+            <Link href="/visits">
+              <PiArrowLeftLight className="size-4" />
+            </Link>
+          </Button>
+          <span
+            className="bg-primary/10 text-primary grid size-11 shrink-0 place-items-center rounded-lg font-mono text-base font-semibold tabular-nums"
+            aria-label={`Queue Token ${visit.queueToken}`}
+          >
+            {visit.queueToken}
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href={`/patients/${visit.patient.id}`}
+                className="font-heading text-lg font-semibold hover:underline"
+              >
+                {visit.patient.firstName} {visit.patient.lastName}
+              </Link>
+              <Badge variant={status.variant}>{status.label}</Badge>
+              {allergyCount ? (
+                <Badge variant="destructive">
+                  <PiShieldWarningLight className="size-3" aria-hidden="true" />
+                  {allergyCount === 1 ? '1 allergy' : `${allergyCount} allergies`}
+                </Badge>
+              ) : null}
+            </div>
+            <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1.5 text-sm">
+              <span className="bg-muted text-foreground rounded-md px-2 py-0.5 font-mono text-xs">
+                {visit.patient.mrn}
+              </span>
+              <span className="bg-muted text-foreground rounded-md px-2 py-0.5 font-mono text-xs">
+                {visit.visitNumber}
+              </span>
+              <span>
+                {visit.visitType.name} · {visitDoctorLabel(visit)} ·{' '}
+                {visit.appointment?.bookingNumber ?? 'Walk-in'}
+                {visit.admitSource ? <> · {visit.admitSource.name}</> : null}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/visits/${visit.id}/summary`}>
+              <PiPrinterLight className="size-4" />
+              Visit Summary
+            </Link>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                aria-label={`Actions for ${visit.visitNumber}`}
+              >
+                Actions
+                <PiCaretDownLight className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {active ? (
+                <>
+                  <DropdownMenuLabel>Record</DropdownMenuLabel>
+                  {canRecordVitals ? (
+                    <DropdownMenuItem onSelect={onRecordVitals}>
+                      <CiWavePulse1 className="size-4" />
+                      Vital Signs
+                    </DropdownMenuItem>
+                  ) : null}
+                  {canCreateNote ? (
+                    <DropdownMenuItem onSelect={onAddNote}>
+                      <CiMemoPad className="size-4" />
+                      Clinical Note
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem onSelect={onAddAllergy}>
+                    <PiShieldWarningLight className="size-4" />
+                    Allergy
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={onAddMedication}>
+                    <CiPill className="size-4" />
+                    Medication
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
+              {canAssignPlan ? (
+                <DropdownMenuItem onSelect={onAssignPlan}>
+                  <CiMedicalClipboard className="size-4" />
+                  Assign Treatment Plan
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem onSelect={onOpenDocuments}>
+                <PiFilePlusLight className="size-4" />
+                Documents
+              </DropdownMenuItem>
+              {canBookAppointment ? (
+                <DropdownMenuItem asChild>
+                  <Link href="/appointments/new">
+                    <PiCalendarPlusLight className="size-4" />
+                    Book follow-up
+                  </Link>
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem asChild>
+                <Link href={`/patients/${visit.patient.id}`}>
+                  <CiFileOn className="size-4" />
+                  Open Patient Chart
+                </Link>
+              </DropdownMenuItem>
+              {canCreateInvoice ? (
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/billing?invoice=new&patientId=${visit.patient.id}&visitId=${visit.id}`}
+                  >
+                    <CiReceipt className="size-4" />
+                    Create Invoice
+                  </Link>
+                </DropdownMenuItem>
+              ) : null}
+              {active && canCancel ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onSelect={onCancel}>
+                    <CiCircleRemove className="size-4" />
+                    Cancel Visit
+                  </DropdownMenuItem>
+                </>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {visit.status === 'CHECKED_IN' && canStart ? (
+            <Button type="button" disabled={starting} aria-busy={starting} onClick={onStart}>
+              {starting ? (
+                <PiCircleNotchLight className="size-4 animate-spin" />
+              ) : (
+                <PiPlayCircleLight className="size-4" />
+              )}
+              {starting ? 'Starting consultation…' : 'Start consultation'}
+            </Button>
+          ) : null}
+          {canAmend ? (
+            <Button type="button" onClick={onAmend}>
+              <CiEdit className="size-4" />
+              Amend Visit
+            </Button>
+          ) : null}
+          {visit.status === 'IN_CONSULTATION' && canComplete ? (
+            <Button type="button" onClick={onComplete}>
+              <CiCircleCheck className="size-4" />
+              Complete Visit
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </header>
+  );
+}

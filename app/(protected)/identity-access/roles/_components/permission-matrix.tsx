@@ -1,4 +1,4 @@
-import { KeyRound } from 'lucide-react';
+import { PiKeyLight } from 'react-icons/pi';
 
 import type { PermissionListItem } from '@/app/api/lib/modules/permission/schemas/permission-schema';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,10 +42,10 @@ export function PermissionMatrix({
 }) {
   if (sections.length === 0) {
     return (
-      <Empty className="bg-card shadow-fluent-2 min-h-64 border">
+      <Empty className="bg-card min-h-64 border">
         <EmptyHeader>
           <EmptyMedia variant="icon">
-            <KeyRound />
+            <PiKeyLight />
           </EmptyMedia>
           <EmptyTitle>No Permissions in the catalogue</EmptyTitle>
           <EmptyDescription>

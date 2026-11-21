@@ -34,7 +34,7 @@ export function ComposerPatientCard() {
   const selectedPatient = selectedPatientQuery.data;
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Patient &amp; encounter</CardTitle>
       </CardHeader>

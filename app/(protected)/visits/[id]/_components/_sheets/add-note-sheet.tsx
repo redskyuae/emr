@@ -3,13 +3,16 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { NotebookPen } from 'lucide-react';
+import { CiMemoPad } from 'react-icons/ci';
 import { toast } from 'sonner';
 
+import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
+import { useAmendVisitClinicalNote } from '@/app/queries/visits/useAmendVisitClinicalNote';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -45,21 +48,37 @@ const EMPTY: VisitNoteFormValues = {
 const SOAP_SECTIONS = [
   { name: 'subjective', label: 'Subjective', placeholder: 'What the Patient reports' },
   { name: 'objective', label: 'Objective', placeholder: 'Examination findings' },
-  { name: 'assessment', label: 'Assessment', placeholder: 'Clinical impression' },
+  { name: 'assessment', label: 'Diagnosis', placeholder: 'Clinical impression and diagnosis' },
   { name: 'plan', label: 'Plan', placeholder: 'Treatment and follow-up' },
 ] as const;
 
+function fromNote(note: ClinicalNote): VisitNoteFormValues {
+  return {
+    noteTypeId: String(note.noteTypeId),
+    subjective: note.subjective ?? '',
+    objective: note.objective ?? '',
+    assessment: note.assessment ?? '',
+    plan: note.plan ?? '',
+  };
+}
+
+/**
+ * Adds a draft Clinical Note to an active Visit, or — given `note` — amends a note
+ * already on a Completed Visit. An amended note keeps its status and signature.
+ */
 export function AddNoteSheet({
   open,
   patientId,
   visitId,
   preferredNoteTypeCode,
+  note = null,
   onClose,
 }: {
   open: boolean;
   patientId: number;
   visitId: number;
   preferredNoteTypeCode?: string;
+  note?: ClinicalNote | null;
   onClose: () => void;
 }) {
   const form = useForm<VisitNoteFormValues>({
@@ -70,12 +89,15 @@ export function AddNoteSheet({
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
   const noteTypes = noteTypesQuery.data?.data;
   const createNote = useCreateClinicalNote();
+  const amendNote = useAmendVisitClinicalNote();
+  const amending = note !== null;
+  const pending = createNote.isPending || amendNote.isPending;
 
   useEffect(() => {
     if (open) {
-      form.reset(EMPTY);
+      form.reset(note ? fromNote(note) : EMPTY);
     }
-  }, [open, form]);
+  }, [open, note, form]);
 
   useEffect(() => {
     if (!open || !preferredNoteTypeCode || form.getValues('noteTypeId')) return;
@@ -84,19 +106,22 @@ export function AddNoteSheet({
   }, [open, preferredNoteTypeCode, noteTypes, form]);
 
   const handleSave = form.handleSubmit(async (values) => {
+    const content = {
+      noteTypeId: Number(values.noteTypeId),
+      subjective: values.subjective || undefined,
+      objective: values.objective || undefined,
+      assessment: values.assessment || undefined,
+      plan: values.plan || undefined,
+    };
+
     try {
-      await createNote.mutateAsync({
-        patientId,
-        body: {
-          noteTypeId: Number(values.noteTypeId),
-          visitId,
-          subjective: values.subjective || undefined,
-          objective: values.objective || undefined,
-          assessment: values.assessment || undefined,
-          plan: values.plan || undefined,
-        },
-      });
-      toast.success('Clinical note added as a draft.');
+      if (note) {
+        await amendNote.mutateAsync({ visitId, patientId, noteId: note.id, body: content });
+        toast.success('Clinical note amended.');
+      } else {
+        await createNote.mutateAsync({ patientId, body: { visitId, ...content } });
+        toast.success('Clinical note added as a draft.');
+      }
       onClose();
     } catch (error) {
       toast.error(getApiErrorMessage(error));
@@ -111,9 +136,15 @@ export function AddNoteSheet({
         style={{ width: 'min(620px, 100vw)', maxWidth: '100vw' }}
       >
         <SheetHeader className="border-b p-4 pr-12">
-          <SheetTitle className="text-xl">Add clinical note</SheetTitle>
+          <SheetTitle className="text-xl">
+            {amending ? 'Amend clinical note' : 'Add clinical note'}
+          </SheetTitle>
           <SheetDescription>
-            Authored against this Visit and saved as a draft. Sign it from the Patient Chart.
+            {note
+              ? note.status === 'signed'
+                ? 'This note is signed. Your correction replaces the recorded text and the note stays signed.'
+                : 'Correct this draft note on the Completed Visit.'
+              : 'Authored against this Visit and saved as a draft. Sign it under Clinical records.'}
           </SheetDescription>
         </SheetHeader>
 
@@ -126,12 +157,7 @@ export function AddNoteSheet({
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <FieldGroup>
-              {noteTypesQuery.isLoading ? (
-                <div className="space-y-2" aria-label="Loading Clinical Note Types">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : noteTypesQuery.isError ? (
+              {noteTypesQuery.isError ? (
                 <Alert variant="destructive">
                   <AlertDescription>
                     Clinical Note Types could not be loaded. Retry to continue.
@@ -146,38 +172,48 @@ export function AddNoteSheet({
                   </Button>
                 </Alert>
               ) : (
-                <Controller
-                  control={form.control}
-                  name="noteTypeId"
-                  render={({ field }) => (
-                    <Field data-invalid={Boolean(form.formState.errors.noteTypeId)}>
-                      <FieldLabel htmlFor="note-type">
-                        Note type{' '}
-                        <span aria-hidden className="text-destructive">
-                          *
-                        </span>
-                      </FieldLabel>
-                      <Select
-                        value={field.value === '' ? undefined : field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger id="note-type" aria-required className="w-full">
-                          <SelectValue placeholder="Select a note type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(noteTypes ?? []).map((noteType) => (
-                            <SelectItem key={noteType.id} value={String(noteType.id)}>
-                              {noteType.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {form.formState.errors.noteTypeId ? (
-                        <FieldError>{form.formState.errors.noteTypeId.message}</FieldError>
-                      ) : null}
-                    </Field>
-                  )}
-                />
+                <SkeletonCrossfade
+                  isLoading={noteTypesQuery.isLoading}
+                  skeleton={
+                    <div className="space-y-2" aria-label="Loading Clinical Note Types">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  }
+                >
+                  <Controller
+                    control={form.control}
+                    name="noteTypeId"
+                    render={({ field }) => (
+                      <Field data-invalid={Boolean(form.formState.errors.noteTypeId)}>
+                        <FieldLabel htmlFor="note-type">
+                          Note type{' '}
+                          <span aria-hidden className="text-destructive">
+                            *
+                          </span>
+                        </FieldLabel>
+                        <Select
+                          value={field.value === '' ? undefined : field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="note-type" aria-required className="w-full">
+                            <SelectValue placeholder="Select a note type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(noteTypes ?? []).map((noteType) => (
+                              <SelectItem key={noteType.id} value={String(noteType.id)}>
+                                {noteType.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.noteTypeId ? (
+                          <FieldError>{form.formState.errors.noteTypeId.message}</FieldError>
+                        ) : null}
+                      </Field>
+                    )}
+                  />
+                </SkeletonCrossfade>
               )}
 
               {SOAP_SECTIONS.map((section) => (
@@ -210,25 +246,18 @@ export function AddNoteSheet({
           </div>
 
           <SheetFooter className="flex-row justify-end gap-2 border-t p-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={createNote.isPending}
-            >
+            <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
               Cancel
             </Button>
             <Button
               type="submit"
+              aria-busy={pending}
               disabled={
-                createNote.isPending ||
-                noteTypesQuery.isLoading ||
-                noteTypesQuery.isError ||
-                !noteTypes?.length
+                pending || noteTypesQuery.isLoading || noteTypesQuery.isError || !noteTypes?.length
               }
             >
-              <NotebookPen className="size-4" />
-              {createNote.isPending ? 'Saving…' : 'Add note'}
+              <CiMemoPad className="size-4" />
+              {pending ? 'Saving…' : amending ? 'Save amendment' : 'Add note'}
             </Button>
           </SheetFooter>
         </form>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 import { toast } from 'sonner';
 import type { AssetStatus } from '@/app/api/lib/modules/asset-status/schemas/asset-status-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -50,7 +50,7 @@ export function AssetStatusDeleteDialog({
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Asset Status?</AlertDialogTitle>
           <AlertDialogDescription>

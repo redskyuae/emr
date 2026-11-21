@@ -5,8 +5,11 @@ import type { ListVisitsResponse } from '@/app/api/v1/visits/types';
 
 export type VisitsParams = {
   visitDate?: string;
+  fromDate?: string;
+  toDate?: string;
   doctorId?: number;
   patientId?: number;
+  visitTypeId?: number;
   status?: string;
   query?: string;
   page?: number;
@@ -21,8 +24,11 @@ async function fetchVisits(params: VisitsParams): Promise<ListVisitsResponse> {
   const searchParams = new URLSearchParams();
 
   if (params.visitDate) searchParams.set('visitDate', params.visitDate);
+  if (params.fromDate) searchParams.set('fromDate', params.fromDate);
+  if (params.toDate) searchParams.set('toDate', params.toDate);
   if (params.doctorId) searchParams.set('doctorId', String(params.doctorId));
   if (params.patientId) searchParams.set('patientId', String(params.patientId));
+  if (params.visitTypeId) searchParams.set('visitTypeId', String(params.visitTypeId));
   if (params.status) searchParams.set('status', params.status);
   if (params.query) searchParams.set('query', params.query);
   if (params.page) searchParams.set('page', String(params.page));

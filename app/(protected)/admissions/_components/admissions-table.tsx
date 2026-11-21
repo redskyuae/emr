@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRightLeft, Eye, LogOut, MoreHorizontal, XCircle } from 'lucide-react';
+import { CiCircleRemove, CiLogout, CiRead } from 'react-icons/ci';
+import { PiArrowsLeftRightLight, PiDotsThreeLight } from 'react-icons/pi';
 
 import type { Admission } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
-import { admissionStatusPresentation } from '../_utils/admission-status';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
+import { cn } from '@/lib/utils';
+import { ADMISSIONS_PAGE_SIZE, admissionStatusPresentation } from '../_utils/admission-status';
 
 function formatMoment(value: Date | string) {
   return new Date(value).toLocaleString(undefined, {
@@ -43,20 +50,20 @@ export function AdmissionsTable({
   canCancel: boolean;
 }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border">
+    <div className="bg-card overflow-hidden rounded-xl border">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[960px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left">
-              <th className="p-3 pl-4 font-medium">Admission</th>
-              <th className="p-3 font-medium">Patient</th>
-              <th className="p-3 font-medium">Ward / Bed</th>
-              <th className="p-3 font-medium">Doctor</th>
-              <th className="p-3 font-medium">Type</th>
-              <th className="p-3 font-medium">Admitted</th>
-              <th className="p-3 font-medium">Expected discharge</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 pr-4 text-right font-medium">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Admission</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Ward / Bed</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Admitted</th>
+              <th className={tableHeadCellClass}>Expected discharge</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -66,7 +73,7 @@ export function AdmissionsTable({
 
               return (
                 <tr key={admission.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                  <td className="p-3 pl-4">
+                  <td className={tableCellClass}>
                     <Link
                       href={`/admissions/${admission.id}`}
                       className="font-medium hover:underline"
@@ -77,34 +84,34 @@ export function AdmissionsTable({
                       <p className="text-muted-foreground text-xs">{admission.visit.visitNumber}</p>
                     ) : null}
                   </td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>
                     <p className="font-medium">
                       {admission.patient.firstName} {admission.patient.lastName}
                     </p>
                     <p className="text-muted-foreground text-xs">{admission.patient.mrn}</p>
                   </td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>
                     <p>{admission.ward.name}</p>
                     <p className="text-muted-foreground text-xs">{admission.bed.bedNumber}</p>
                   </td>
-                  <td className="p-3">{admission.doctor.name}</td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>{admission.doctor.name}</td>
+                  <td className={tableCellClass}>
                     <Badge variant="secondary">{admission.admissionType.code}</Badge>
                   </td>
-                  <td className="text-muted-foreground p-3 tabular-nums">
+                  <td className={cn(tableCellClass, 'text-muted-foreground tabular-nums')}>
                     {formatMoment(admission.admittedAt)}
                   </td>
-                  <td className="text-muted-foreground p-3 tabular-nums">
+                  <td className={cn(tableCellClass, 'text-muted-foreground tabular-nums')}>
                     {admission.expectedDischargeDate ?? '—'}
                   </td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </td>
-                  <td className="p-3 pr-4 text-right">
+                  <td className={cn(tableCellClass, 'text-right')}>
                     <div className="flex items-center justify-end gap-2">
                       {active && canDischarge ? (
                         <Button type="button" size="sm" onClick={() => onDischarge(admission)}>
-                          <LogOut className="size-4" />
+                          <CiLogout className="size-4" />
                           Discharge
                         </Button>
                       ) : null}
@@ -116,19 +123,19 @@ export function AdmissionsTable({
                             size="icon"
                             aria-label={`Actions for ${admission.admissionNumber}`}
                           >
-                            <MoreHorizontal className="size-4" />
+                            <PiDotsThreeLight className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
                             <Link href={`/admissions/${admission.id}`}>
-                              <Eye className="size-4" />
+                              <CiRead className="size-4" />
                               View Admission
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/patients/${admission.patient.id}`}>
-                              <Eye className="size-4" />
+                              <CiRead className="size-4" />
                               Open Patient
                             </Link>
                           </DropdownMenuItem>
@@ -137,7 +144,7 @@ export function AdmissionsTable({
                               <DropdownMenuSeparator />
                               {canTransfer ? (
                                 <DropdownMenuItem onSelect={() => onTransfer(admission)}>
-                                  <ArrowRightLeft className="size-4" />
+                                  <PiArrowsLeftRightLight className="size-4" />
                                   Transfer Bed
                                 </DropdownMenuItem>
                               ) : null}
@@ -146,7 +153,7 @@ export function AdmissionsTable({
                                   variant="destructive"
                                   onSelect={() => onCancel(admission)}
                                 >
-                                  <XCircle className="size-4" />
+                                  <CiCircleRemove className="size-4" />
                                   Cancel Admission
                                 </DropdownMenuItem>
                               ) : null}
@@ -166,20 +173,73 @@ export function AdmissionsTable({
   );
 }
 
-export function AdmissionsTableSkeleton() {
+// Mirrors the loaded census table: the same header and one sized skeleton per cell. The
+// Discharge button shows only when the user may discharge, as it does on Admitted rows.
+export function AdmissionsTableSkeleton({ canDischarge = false }: { canDischarge?: boolean }) {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
-      {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-5 w-28" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="ml-auto h-8 w-28" />
-        </div>
-      ))}
+    <div className="bg-card overflow-hidden rounded-xl border">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[960px] text-sm">
+          <thead>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Admission</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Ward / Bed</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Admitted</th>
+              <th className={tableHeadCellClass}>Expected discharge</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: ADMISSIONS_PAGE_SIZE }, (_, index) => (
+              <tr key={index} className="border-b last:border-b-0">
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-28" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-12 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-24" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-20" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <div className="flex items-center justify-end gap-2">
+                    {canDischarge ? <Skeleton className="h-8 w-24" /> : null}
+                    <Skeleton className="size-9" />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

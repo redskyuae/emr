@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ClipboardList, Info, Plus, RefreshCw, TriangleAlert } from 'lucide-react';
+import { CiCircleInfo, CiWarning } from 'react-icons/ci';
+import { PiArrowsClockwiseLight, PiClipboardTextLight, PiPlusLight } from 'react-icons/pi';
 import {
   Controller,
   useFormState,
@@ -11,6 +12,7 @@ import {
 
 import { formatPatientTreatmentPlanSessionDisplayLabel } from '@/app/api/lib/modules/patient-treatment-plan/patient-treatment-plan-session-label';
 
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,11 +100,11 @@ export function TreatmentSessionSection({
       selectedSession.cleaningMinutes === null);
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-procedure/10 text-procedure flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <ClipboardList className="size-4" />
+            <PiClipboardTextLight className="size-4" />
           </span>
           <div>
             <CardTitle>Treatment & Session</CardTitle>
@@ -127,57 +129,59 @@ export function TreatmentSessionSection({
           <p className="text-muted-foreground text-sm">
             Select a Registered Patient to load their current Treatment Plans.
           </p>
-        ) : state === 'LOADING' ? (
-          <PlanLoadingSkeleton />
-        ) : state === 'PLANS' || state === 'CONFLICT' ? (
-          <PlanSelection
-            control={control}
-            plans={plans}
-            treatments={treatments}
-            canAssignTreatment={canAssignTreatment}
-            selectedTreatment={selectedTreatment}
-            selectedSession={selectedSession}
-            search={treatmentSearch}
-            isLoading={isTreatmentsLoading}
-            error={treatmentsError}
-            onPlanChange={onPlanChange}
-            onTreatmentChange={onTreatmentChange}
-            onSearchChange={onTreatmentSearchChange}
-            onSessionChange={onSessionChange}
-            onRetry={onRetryTreatments}
-            onAddSessions={onAddSessions}
-            planError={errors.patientTreatmentPlanId}
-            treatmentError={errors.treatmentId}
-            sessionError={errors.patientTreatmentPlanSessionId}
-          />
-        ) : state === 'CATALOGUE_FORBIDDEN' ? (
-          <Alert className="border-warning/25 bg-warning/5">
-            <TriangleAlert className="text-warning size-4" />
-            <AlertTitle>No Current Treatment Plan</AlertTitle>
-            <AlertDescription>
-              You do not have permission to assign a catalogue Treatment to this Patient.
-            </AlertDescription>
-          </Alert>
         ) : (
-          <CatalogueSelection
-            control={control}
-            isProvisional={isProvisional}
-            treatments={treatments}
-            selectedTreatment={selectedTreatment}
-            selectedSession={selectedSession}
-            search={treatmentSearch}
-            isLoading={isTreatmentsLoading}
-            error={treatmentsError}
-            treatmentError={errors.treatmentId}
-            onTreatmentChange={onTreatmentChange}
-            onSearchChange={onTreatmentSearchChange}
-            onRetry={onRetryTreatments}
-          />
+          <SkeletonCrossfade isLoading={state === 'LOADING'} skeleton={<PlanLoadingSkeleton />}>
+            {state === 'PLANS' || state === 'CONFLICT' ? (
+              <PlanSelection
+                control={control}
+                plans={plans}
+                treatments={treatments}
+                canAssignTreatment={canAssignTreatment}
+                selectedTreatment={selectedTreatment}
+                selectedSession={selectedSession}
+                search={treatmentSearch}
+                isLoading={isTreatmentsLoading}
+                error={treatmentsError}
+                onPlanChange={onPlanChange}
+                onTreatmentChange={onTreatmentChange}
+                onSearchChange={onTreatmentSearchChange}
+                onSessionChange={onSessionChange}
+                onRetry={onRetryTreatments}
+                onAddSessions={onAddSessions}
+                planError={errors.patientTreatmentPlanId}
+                treatmentError={errors.treatmentId}
+                sessionError={errors.patientTreatmentPlanSessionId}
+              />
+            ) : state === 'CATALOGUE_FORBIDDEN' ? (
+              <Alert className="border-warning/25 bg-warning/5">
+                <CiWarning className="text-warning size-4" />
+                <AlertTitle>No Current Treatment Plan</AlertTitle>
+                <AlertDescription>
+                  You do not have permission to assign a catalogue Treatment to this Patient.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <CatalogueSelection
+                control={control}
+                isProvisional={isProvisional}
+                treatments={treatments}
+                selectedTreatment={selectedTreatment}
+                selectedSession={selectedSession}
+                search={treatmentSearch}
+                isLoading={isTreatmentsLoading}
+                error={treatmentsError}
+                treatmentError={errors.treatmentId}
+                onTreatmentChange={onTreatmentChange}
+                onSearchChange={onTreatmentSearchChange}
+                onRetry={onRetryTreatments}
+              />
+            )}
+          </SkeletonCrossfade>
         )}
 
         {state === 'CONFLICT' && selectedTreatment?.selectionMode !== 'CATALOGUE' ? (
           <Alert className="border-warning/25 bg-warning/5">
-            <TriangleAlert className="text-warning size-4" />
+            <CiWarning className="text-warning size-4" />
             <AlertTitle>No Bookable Session</AlertTitle>
             <AlertDescription>
               This Patient has a current Treatment Plan, but every Session is completed or reserved
@@ -193,7 +197,7 @@ export function TreatmentSessionSection({
         selectedTreatment?.selectionMode === 'EXISTING_PLAN' &&
         !selectedSession ? (
           <Alert className="border-warning/25 bg-warning/5">
-            <Info className="size-4" />
+            <CiCircleInfo className="size-4" />
             <AlertTitle>No Bookable Session In This Plan</AlertTitle>
             <AlertDescription>
               {canAssignTreatment
@@ -206,7 +210,7 @@ export function TreatmentSessionSection({
 
         {(state === 'PLANS' || state === 'CONFLICT') && selectedDurationUnknown ? (
           <Alert className="border-warning/25 bg-warning/5">
-            <Info className="size-4" />
+            <CiCircleInfo className="size-4" />
             <AlertTitle>Session Duration Not Configured</AlertTitle>
             <AlertDescription>
               Enter the Procedure end time manually. Choose the Room from the available Room list.
@@ -463,7 +467,7 @@ export function PlanSelection({
                 className="border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 flex h-auto min-h-14 w-full min-w-0 flex-col items-start gap-2 px-3 py-2 text-left whitespace-normal"
               >
                 <span className="flex items-center gap-2 font-medium">
-                  <Plus className="size-4" /> Add Sessions
+                  <PiPlusLight className="size-4" /> Add Sessions
                 </span>
                 <span className="text-muted-foreground text-xs">Extend this Treatment Plan</span>
               </Button>
@@ -602,7 +606,7 @@ export function CatalogueSelection({
 
       {durationUnknown ? (
         <Alert className="border-warning/25 bg-warning/5">
-          <Info className="size-4" />
+          <CiCircleInfo className="size-4" />
           <AlertTitle>Session Duration Not Configured</AlertTitle>
           <AlertDescription>
             Enter the Procedure end time manually. Choose the Room from the available Room list.
@@ -713,31 +717,28 @@ function LoadError({
 }) {
   return (
     <Alert variant="destructive" role="alert">
-      <TriangleAlert className="size-4" />
+      <CiWarning className="size-4" />
       <AlertTitle>{subject} Could Not Be Loaded</AlertTitle>
       <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
         <span>{message}</span>
         <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-          <RefreshCw className="size-3.5" /> Retry
+          <PiArrowsClockwiseLight className="size-3.5" /> Retry
         </Button>
       </AlertDescription>
     </Alert>
   );
 }
 
+// Mirrors what the Plans load into: the intro line, then the Treatment field (label,
+// combobox and helper line). The Session grid only appears once a Treatment is chosen.
 function PlanLoadingSkeleton() {
   return (
-    <div className="space-y-3" aria-label="Loading Patient Treatment Plans">
-      <Skeleton className="h-4 w-56" />
-      <div className="space-y-3 rounded-lg border p-3">
-        <div className="flex justify-between gap-4">
-          <Skeleton className="h-8 w-52" />
-          <Skeleton className="h-6 w-24" />
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-        </div>
+    <div className="space-y-4" aria-label="Loading Patient Treatment Plans">
+      <Skeleton className="h-4 w-full max-w-md" />
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-3 w-64 max-w-full" />
       </div>
     </div>
   );

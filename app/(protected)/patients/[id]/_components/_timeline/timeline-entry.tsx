@@ -1,18 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  ArrowRightLeft,
-  BedDouble,
-  CalendarDays,
-  FileText,
-  Paperclip,
-  Receipt,
-  Stethoscope,
-  UserRound,
-  Wallet,
-  type LucideIcon,
-} from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { CiCalendar, CiFileOn, CiReceipt, CiStethoscope, CiUser, CiWallet } from 'react-icons/ci';
+import { PiArrowsLeftRightLight, PiBedLight, PiPaperclipLight } from 'react-icons/pi';
 
 import type { TimelineEvent } from '@/app/api/lib/modules/patient-timeline/schemas/patient-timeline-schema';
 import {
@@ -23,16 +14,16 @@ import {
 } from '@/app/(protected)/patients/[id]/_utils/timeline-presentation';
 import { cn } from '@/lib/utils';
 
-const SOURCE_ICONS: Record<TimelineEvent['sourceType'], LucideIcon> = {
-  PATIENT: UserRound,
-  VISIT: Stethoscope,
-  PAYMENT: Wallet,
-  INVOICE: Receipt,
-  ADMISSION: BedDouble,
-  APPOINTMENT: CalendarDays,
-  BED_TRANSFER: ArrowRightLeft,
-  CLINICAL_NOTE: FileText,
-  VISIT_DOCUMENT: Paperclip,
+const SOURCE_ICONS: Record<TimelineEvent['sourceType'], IconType> = {
+  PATIENT: CiUser,
+  VISIT: CiStethoscope,
+  PAYMENT: CiWallet,
+  INVOICE: CiReceipt,
+  ADMISSION: PiBedLight,
+  APPOINTMENT: CiCalendar,
+  BED_TRANSFER: PiArrowsLeftRightLight,
+  CLINICAL_NOTE: CiFileOn,
+  VISIT_DOCUMENT: PiPaperclipLight,
 };
 
 // Cancellations and voids are the only entries that read as negative; everything
@@ -79,7 +70,7 @@ export function TimelineEntry({ event, patientId }: { event: TimelineEvent; pati
     </div>
   );
 
-  const shell = 'bg-card shadow-fluent-2 block rounded-xl border p-3 transition-colors';
+  const shell = 'bg-card block rounded-xl border p-3 transition-colors';
 
   if (!href) {
     return <li className={shell}>{body}</li>;

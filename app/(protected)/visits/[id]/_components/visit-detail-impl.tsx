@@ -1,66 +1,168 @@
 'use client';
 
-import { useState } from 'react';
-import { useQueryState } from 'nuqs';
-import Link from 'next/link';
-import { AlertCircle, CheckCircle2, Loader2, PlayCircle, ReceiptText, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
+import { CiCircleAlert } from 'react-icons/ci';
 import { toast } from 'sonner';
 
+import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import { AllergyBanner } from '@/app/(protected)/patients/[id]/_components/_chart/allergy-banner';
 import { AllergyFormSheet } from '@/app/(protected)/patients/[id]/_components/_chart/_sheets/allergy-form-sheet';
 import { MedicationFormSheet } from '@/app/(protected)/patients/[id]/_components/_chart/_sheets/medication-form-sheet';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useInvoicesQuery } from '@/app/queries/billing/invoices/useInvoices';
 import { useAllergensQuery } from '@/app/queries/clinical-masters/allergens/useAllergens';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientChart';
-import { useCompleteVisit } from '@/app/queries/visits/useCompleteVisit';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
 import { useVisit } from '@/app/queries/visits/useVisit';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
-import { isActiveVisit, visitStatusPresentation } from '../../_utils/visit-status';
+import { isActiveVisit } from '../../_utils/visit-status';
+import { isCurrentPlan } from '../_utils/visit-treatment-plan';
+import { visitOutstandingItems } from '../_utils/visit-workflow';
+import { AddPlanSessionsDialog } from './_modals/add-plan-sessions-dialog';
+import { CompleteVisitDialog } from './_modals/complete-visit-dialog';
+import { AmendVisitSheet } from './_sheets/amend-visit-sheet';
+import { SignClinicalNoteDialog } from './_modals/sign-clinical-note-dialog';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
 import { AssignTreatmentPlanSheet } from './_sheets/assign-treatment-plan-sheet';
-import { DoctorConsultationSheet } from './_sheets/doctor-consultation-sheet';
 import { DailyTreatmentSheet } from './_sheets/daily-treatment-sheet';
+import { PlanSessionSheet } from './_sheets/plan-session-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
 import { VisitCarePathway } from './visit-care-pathway';
-import { VisitStatusTimeline } from './visit-status-timeline';
+import { VisitContextPane } from './visit-context-pane';
+import { VisitPatientHeader } from './visit-patient-header';
+
+// Mirrors the destructive allergy Alert: icon and title, then the allergy line.
+function AllergyBannerSkeleton() {
+  return (
+    <div
+      className="grid gap-0.5 rounded-lg border px-2.5 py-2"
+      aria-label="Loading Patient safety information"
+    >
+      <div className="flex items-center gap-2">
+        <Skeleton className="size-4 rounded-full" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <Skeleton className="ml-6 h-4 w-72 max-w-[calc(100%-1.5rem)]" />
+    </div>
+  );
+}
 
 export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const [captureParam, setCaptureParam] = useQueryState('capture');
+  const [, setStepParam] = useQueryState('step');
+  const [planSessionParam, setPlanSessionParam] = useQueryState('planSession', parseAsInteger);
+  const [addSessionsParam, setAddSessionsParam] = useQueryState('addSessions', parseAsInteger);
+  const [amendNoteParam, setAmendNoteParam] = useQueryState('amendNote', parseAsInteger);
+  const [amendVitalParam, setAmendVitalParam] = useQueryState('amendVital', parseAsInteger);
   const { data: visit } = useVisit(visitId);
+  const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
   const chartQuery = usePatientChartQuery(visit.patient.id);
   const allergensQuery = useAllergensQuery({ limit: 100 });
+  const invoicesQuery = useInvoicesQuery({ patientId: visit.patient.id, page: 1, limit: 999 });
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [noteToSign, setNoteToSign] = useState<ClinicalNote | null>(null);
+  const [consultationDirty, setConsultationDirty] = useState(false);
 
   const startMutation = useStartConsultation();
-  const completeMutation = useCompleteVisit();
 
   const { data: canStart } = useHasPermission('visit:start');
   const { data: canComplete } = useHasPermission('visit:complete');
   const { data: canCancel } = useHasPermission('visit:cancel');
   const { data: canCreateInvoice } = useHasPermission('invoice:create');
+  const { data: canRecordVitals } = useHasPermission('vital-sign:create');
+  const { data: canCreateNote } = useHasPermission('clinical-note:create');
+  const { data: canAssignPlan, isLoading: assignPermissionLoading } = useHasPermission(
+    'patient-treatment-plan:assign'
+  );
+  const { data: canReadPlan, isLoading: readPermissionLoading } = useHasPermission(
+    'patient-treatment-plan:read'
+  );
+  const { data: canBookAppointment } = useHasPermission('appointment:create');
+  const { data: canUpdatePlanSession } = useHasPermission('patient-treatment-plan:update');
+  const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
+  const { data: canAmendVisit, isLoading: amendPermissionLoading } =
+    useHasPermission('visit:amend');
+  // Only a Completed Visit is amended; an active one is still edited in place.
+  const canAmend = visit.status === 'COMPLETED' && Boolean(canAmendVisit);
 
-  const status = visitStatusPresentation(visit.status);
-  const active = isActiveVisit(visit.status);
+  const chart = chartQuery.data;
+  const safetyLoading = chartQuery.isLoading || allergensQuery.isLoading;
+  const activeAllergyCount = (chart?.allergies ?? []).filter(
+    (item) => item.status === 'active'
+  ).length;
   const allergenName = (id: number) =>
     allergensQuery.data?.data.find((allergen) => allergen.id === id)?.name ?? 'Allergen';
+  const invoices = (invoicesQuery.data?.data ?? []).filter((item) => item.visit?.id === visit.id);
+  const visitNotes = (chart?.clinicalNotes ?? []).filter((item) => item.visitId === visit.id);
+  const workflow = {
+    status: visit.status,
+    vitalsCount: (chart?.vitalSigns ?? []).filter((item) => item.visitId === visit.id).length,
+    noteCount: visitNotes.length,
+    draftNoteCount: visitNotes.filter((note) => note.status === 'draft').length,
+    invoiceCount: invoices.length,
+  };
+  const noteToAmend = canAmend ? visitNotes.find((note) => note.id === amendNoteParam) : undefined;
+  const vitalToAmend = canAmend
+    ? (chart?.vitalSigns ?? []).find(
+        (reading) => reading.id === amendVitalParam && reading.visitId === visit.id
+      )
+    : undefined;
+  // Clear-on-deny: once permission and the chart have loaded, an amend param that
+  // cannot open a sheet (no permission, Visit not Completed, or an id outside this
+  // Visit) is dropped so a stale link cannot open the sheet later.
+  const amendTargetsResolved = !amendPermissionLoading && (!canAmend || chartQuery.isSuccess);
+  const staleAmendNote = amendNoteParam !== null && amendTargetsResolved && !noteToAmend;
+  const staleAmendVital = amendVitalParam !== null && amendTargetsResolved && !vitalToAmend;
 
-  async function runTransition(action: 'start' | 'complete') {
+  useEffect(() => {
+    if (staleAmendNote) {
+      void setAmendNoteParam(null);
+    }
+
+    if (staleAmendVital) {
+      void setAmendVitalParam(null);
+    }
+  }, [staleAmendNote, staleAmendVital, setAmendNoteParam, setAmendVitalParam]);
+
+  // Sessions are added only to a current Plan, from an active Visit, by a user who may
+  // assign Plans (the API requires both read and assign). A param that cannot open the
+  // dialog is dropped once permissions and Plans have loaded successfully; a failed Plans
+  // request leaves it in place so a network error cannot drop a valid link.
+  const canAddPlanSessions = isActiveVisit(visit.status) && Boolean(canAssignPlan && canReadPlan);
+  const addSessionsTarget = canAddPlanSessions
+    ? (plansQuery.data ?? []).find((plan) => plan.id === addSessionsParam && isCurrentPlan(plan))
+    : undefined;
+  const addSessionsResolved =
+    !assignPermissionLoading &&
+    !readPermissionLoading &&
+    (!canAddPlanSessions || plansQuery.isSuccess);
+  const staleAddSessions = addSessionsParam !== null && addSessionsResolved && !addSessionsTarget;
+
+  useEffect(() => {
+    if (staleAddSessions) {
+      void setAddSessionsParam(null);
+    }
+  }, [staleAddSessions, setAddSessionsParam]);
+
+  const planSessionTarget = (plansQuery.data ?? [])
+    .flatMap((plan) => plan.sessions.map((session) => ({ plan, session })))
+    .find(({ session }) => session.id === planSessionParam);
+  const outstanding = [
+    ...(consultationDirty ? ['The consultation has unsaved changes.'] : []),
+    ...visitOutstandingItems(workflow),
+  ];
+
+  async function startConsultation() {
     try {
-      if (action === 'start') {
-        await startMutation.mutateAsync(visit.id);
-        toast.success(`${visit.visitNumber} is now in consultation.`);
-      } else {
-        await completeMutation.mutateAsync(visit.id);
-        toast.success(`${visit.visitNumber} completed.`);
-      }
+      await startMutation.mutateAsync(visit.id);
+      toast.success(`${visit.visitNumber} is now in consultation.`);
     } catch (error) {
       toast.error(getApiErrorMessage(error));
     }
@@ -68,134 +170,112 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-6xl space-y-5">
+      {/* From xl the Visit is a cockpit that fits the screen: each pane scrolls on its own. */}
+      <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 xl:h-[calc(100dvh-7.5rem)] xl:min-h-[30rem]">
         {/* The same safety banner the Patient Chart shows — the consulting
             Doctor must see allergies without leaving the Visit. */}
-        {chartQuery.isLoading || allergensQuery.isLoading ? (
-          <Skeleton className="h-14 w-full" aria-label="Loading Patient safety information" />
-        ) : chartQuery.isError ? (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Patient safety information unavailable</AlertTitle>
-            <AlertDescription>Allergies and medications could not be loaded.</AlertDescription>
-          </Alert>
-        ) : (
-          <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
-        )}
-        {allergensQuery.isError && !chartQuery.isError ? (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Allergen names unavailable</AlertTitle>
-            <AlertDescription>Review the Patient Chart before clinical decisions.</AlertDescription>
-          </Alert>
-        ) : null}
-
-        <Card className="shadow-fluent-2">
-          <CardContent className="space-y-5 p-5">
-            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-              <div className="flex min-w-0 items-start gap-4">
-                <span
-                  className="bg-primary/10 text-primary grid size-12 shrink-0 place-items-center rounded-xl text-base font-semibold"
-                  aria-hidden="true"
-                >
-                  {visit.patient.firstName.charAt(0)}
-                  {visit.patient.lastName.charAt(0)}
-                </span>
-                <div className="min-w-0 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={`/patients/${visit.patient.id}`}
-                      className="text-xl font-semibold hover:underline"
-                    >
-                      {visit.patient.firstName} {visit.patient.lastName}
-                    </Link>
-                    <Badge variant={status.variant}>{status.label}</Badge>
-                  </div>
-                  <p className="text-muted-foreground text-sm">
-                    {visit.patient.mrn} · {visit.visitType.name} · {visit.doctor.name}
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    {visit.visitDate} · {visit.visitNumber} ·{' '}
-                    {visit.appointment?.bookingNumber ?? 'Walk-in'}
-                    <span className="text-primary ml-2 font-medium">Token {visit.queueToken}</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 md:justify-end">
-                {active && canCancel ? (
-                  <Button type="button" variant="outline" onClick={() => setCancelOpen(true)}>
-                    <XCircle className="size-4" />
-                    Cancel Visit
-                  </Button>
-                ) : null}
-                {canCreateInvoice ? (
-                  <Button asChild variant="outline">
-                    <Link
-                      href={`/billing?invoice=new&patientId=${visit.patient.id}&visitId=${visit.id}`}
-                    >
-                      <ReceiptText className="size-4" />
-                      Create Invoice
-                    </Link>
-                  </Button>
-                ) : null}
-                {visit.status === 'CHECKED_IN' && canStart ? (
-                  <Button
-                    type="button"
-                    disabled={startMutation.isPending}
-                    aria-busy={startMutation.isPending}
-                    onClick={() => void runTransition('start')}
-                  >
-                    {startMutation.isPending ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <PlayCircle className="size-4" />
-                    )}
-                    {startMutation.isPending ? 'Starting consultation…' : 'Start consultation'}
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-            <div className="border-t pt-5">
-              <VisitStatusTimeline visit={visit} />
-            </div>
-
-            {visit.status === 'CANCELLED' && visit.cancellationReason ? (
-              <div className="text-muted-foreground text-sm">
-                <span className="font-medium">Cancellation reason:</span>
+        <div className="flex-none space-y-3 empty:hidden">
+          {chartQuery.isError ? (
+            <Alert variant="destructive">
+              <CiCircleAlert className="size-4" />
+              <AlertTitle>Patient safety information unavailable</AlertTitle>
+              <AlertDescription>Allergies and medications could not be loaded.</AlertDescription>
+            </Alert>
+          ) : safetyLoading || activeAllergyCount > 0 ? (
+            // Most Patients have no allergies, so the slot is only kept while it loads or has a
+            // banner to show; otherwise the skeleton simply leaves.
+            <SkeletonCrossfade isLoading={safetyLoading} skeleton={<AllergyBannerSkeleton />}>
+              <AllergyBanner allergies={chart?.allergies ?? []} allergenName={allergenName} />
+            </SkeletonCrossfade>
+          ) : null}
+          {allergensQuery.isError && !chartQuery.isError ? (
+            <Alert variant="destructive">
+              <CiCircleAlert className="size-4" />
+              <AlertTitle>Allergen names unavailable</AlertTitle>
+              <AlertDescription>
+                Review the Patient Chart before clinical decisions.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          {visit.status === 'CANCELLED' && visit.cancellationReason ? (
+            <Alert>
+              <AlertTitle>Visit cancelled</AlertTitle>
+              <AlertDescription>
                 <RichTextContent value={visit.cancellationReason} />
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+        </div>
 
-        <VisitCarePathway
+        <VisitPatientHeader
           visit={visit}
-          chart={chartQuery.data}
-          chartLoading={chartQuery.isLoading}
-          chartError={chartQuery.isError}
+          allergyCount={
+            chart ? chart.allergies.filter((item) => item.status === 'active').length : null
+          }
+          canStart={Boolean(canStart)}
+          canComplete={Boolean(canComplete)}
+          canCancel={Boolean(canCancel)}
+          canCreateInvoice={Boolean(canCreateInvoice)}
+          canRecordVitals={Boolean(canRecordVitals)}
+          canCreateNote={Boolean(canCreateNote)}
+          canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
+          canBookAppointment={Boolean(canBookAppointment)}
+          canAmend={canAmend}
+          starting={startMutation.isPending}
+          onStart={() => void startConsultation()}
+          onAmend={() => void setCaptureParam('amend')}
+          onComplete={() => void setCaptureParam('complete')}
+          onCancel={() => setCancelOpen(true)}
           onRecordVitals={() => void setCaptureParam('vitals')}
-          onAddNote={() => void setCaptureParam('nurse-note')}
-          onDoctorConsultation={() => void setCaptureParam('consultation')}
-          onDailyTreatment={() => void setCaptureParam('session')}
-          onAssignPlan={() => void setCaptureParam('plan')}
-          onAddClinicalNote={() => void setCaptureParam('note')}
+          onAddNote={() => void setCaptureParam('note')}
           onAddAllergy={() => void setCaptureParam('allergy')}
           onAddMedication={() => void setCaptureParam('medication')}
+          onAssignPlan={() => void setCaptureParam('plan')}
+          onOpenDocuments={() => {
+            void setStepParam('review');
+            requestAnimationFrame(() =>
+              document.getElementById('visit-documents')?.scrollIntoView({ block: 'start' })
+            );
+          }}
         />
 
-        {visit.status === 'IN_CONSULTATION' && canComplete ? (
-          <div className="flex justify-end border-t pt-5">
-            <Button
-              type="button"
-              disabled={completeMutation.isPending}
-              onClick={() => void runTransition('complete')}
-            >
-              <CheckCircle2 className="size-4" />
-              {completeMutation.isPending ? 'Completing Visit…' : 'Complete Visit'}
-            </Button>
+        <div className="grid gap-3 xl:min-h-0 xl:flex-1 xl:grid-cols-[19rem_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] xl:gap-x-2">
+          <div className="min-w-0 xl:order-2 xl:min-h-0">
+            <VisitCarePathway
+              visit={visit}
+              chart={chart}
+              chartLoading={chartQuery.isLoading}
+              chartError={chartQuery.isError}
+              invoices={invoices}
+              invoicesLoading={invoicesQuery.isLoading}
+              invoicesError={invoicesQuery.isError}
+              canStart={Boolean(canStart)}
+              canAmend={canAmend}
+              starting={startMutation.isPending}
+              onStart={() => void startConsultation()}
+              onAmendVisit={() => void setCaptureParam('amend')}
+              onAmendNote={(noteId) => void setAmendNoteParam(noteId)}
+              onAmendVitalSign={(vitalId) => void setAmendVitalParam(vitalId)}
+              onConsultationDirtyChange={setConsultationDirty}
+              onRecordVitals={() => void setCaptureParam('vitals')}
+              onAddNote={() => void setCaptureParam('nurse-note')}
+              onDailyTreatment={() => void setCaptureParam('session')}
+              onAssignPlan={() => void setCaptureParam('plan')}
+              onAddPlanSessions={(planId) => void setAddSessionsParam(planId)}
+              onOpenPlanSession={(sessionId) => void setPlanSessionParam(sessionId)}
+              onAddClinicalNote={() => void setCaptureParam('note')}
+              onSignNote={setNoteToSign}
+            />
           </div>
-        ) : null}
+          <VisitContextPane
+            visit={visit}
+            chart={chart}
+            chartLoading={chartQuery.isLoading}
+            chartError={chartQuery.isError}
+            allergenName={allergenName}
+            className="xl:order-1 xl:min-h-0 xl:p-0.5"
+          />
+        </div>
       </div>
 
       <RecordVitalsSheet
@@ -236,13 +316,27 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
         onClose={() => void setCaptureParam(null)}
       />
 
-      <DoctorConsultationSheet
-        open={captureParam === 'consultation'}
-        patientId={visit.patient.id}
-        visitId={visit.id}
-        chiefComplaint={visit.chiefComplaint}
-        onClose={() => void setCaptureParam(null)}
-      />
+      {addSessionsTarget ? (
+        <AddPlanSessionsDialog
+          key={addSessionsTarget.id}
+          patientId={visit.patient.id}
+          plan={addSessionsTarget}
+          onClose={() => void setAddSessionsParam(null)}
+        />
+      ) : null}
+
+      {planSessionTarget ? (
+        <PlanSessionSheet
+          key={planSessionTarget.session.id}
+          open
+          visit={visit}
+          plan={planSessionTarget.plan}
+          session={planSessionTarget.session}
+          canUpdate={Boolean(canUpdatePlanSession && canReadPlan)}
+          canStart={Boolean(canStartPlanSession && canReadPlan)}
+          onClose={() => void setPlanSessionParam(null)}
+        />
+      ) : null}
 
       {visit.treatmentSession ? (
         <DailyTreatmentSheet
@@ -254,6 +348,47 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           onClose={() => void setCaptureParam(null)}
         />
       ) : null}
+
+      <AmendVisitSheet
+        open={captureParam === 'amend' && canAmend}
+        visit={visit}
+        onClose={() => void setCaptureParam(null)}
+      />
+
+      {noteToAmend ? (
+        <AddNoteSheet
+          key={`amend-note-${noteToAmend.id}`}
+          open
+          patientId={visit.patient.id}
+          visitId={visit.id}
+          note={noteToAmend}
+          onClose={() => void setAmendNoteParam(null)}
+        />
+      ) : null}
+
+      {vitalToAmend ? (
+        <RecordVitalsSheet
+          key={`amend-vital-${vitalToAmend.id}`}
+          open
+          patientId={visit.patient.id}
+          visitId={visit.id}
+          reading={vitalToAmend}
+          onClose={() => void setAmendVitalParam(null)}
+        />
+      ) : null}
+
+      <CompleteVisitDialog
+        visit={visit}
+        open={captureParam === 'complete' && visit.status === 'IN_CONSULTATION' && !!canComplete}
+        outstanding={outstanding}
+        onClose={() => void setCaptureParam(null)}
+      />
+
+      <SignClinicalNoteDialog
+        patientId={visit.patient.id}
+        note={noteToSign}
+        onClose={() => setNoteToSign(null)}
+      />
 
       <CancelVisitDialog visit={cancelOpen ? visit : null} onClose={() => setCancelOpen(false)} />
     </>

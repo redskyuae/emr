@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 import { toast } from 'sonner';
 import type { RoomType } from '@/app/api/lib/modules/room-type/schemas/room-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -46,7 +46,7 @@ export function RoomTypeDeleteDialog({ roomType, onClose, onDeleted }: RoomTypeD
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Room Type?</AlertDialogTitle>
           <AlertDialogDescription>

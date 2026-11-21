@@ -117,6 +117,9 @@ export const patientTreatmentPlanSession = pgTable(
     }),
     completedVisitId: integer('completed_visit_id').references((): AnyPgColumn => visitTable.id),
     completedAt: timestamp('completed_at', { withTimezone: true }),
+    // A Session started in a Visit is completed with that Visit, or released if it is cancelled.
+    startedVisitId: integer('started_visit_id').references((): AnyPgColumn => visitTable.id),
+    startedAt: timestamp('started_at', { withTimezone: true }),
   },
   (table) => ({
     sessionNumberCheck: check(
@@ -135,6 +138,10 @@ export const patientTreatmentPlanSession = pgTable(
     )
   )`
     ),
+    startedCheck: check(
+      'patient_treatment_plan_session_started_check',
+      sql`(${table.startedVisitId} is null) = (${table.startedAt} is null)`
+    ),
     tenantPlanNumberUniqueIdx: uniqueIndex('patient_treatment_plan_session_tenant_plan_number_idx')
       .on(table.tenantId, table.patientTreatmentPlanId, table.sessionNumber)
       .where(sql`${table.isDeleted} = false`),
@@ -142,6 +149,16 @@ export const patientTreatmentPlanSession = pgTable(
       table.tenantId,
       table.completedVisitId
     ),
+    // Visit complete/cancel/delete look up the Sessions started in that Visit.
+    tenantStartedVisitIdx: index('patient_treatment_plan_session_tenant_started_visit_idx')
+      .on(table.tenantId, table.startedVisitId)
+      .where(sql`${table.startedVisitId} is not null`),
+    // A Visit delivers at most one Session of each Patient Treatment Plan.
+    tenantPlanStartedVisitUniqueIdx: uniqueIndex(
+      'patient_treatment_plan_session_tenant_plan_started_visit_idx'
+    )
+      .on(table.tenantId, table.patientTreatmentPlanId, table.startedVisitId)
+      .where(sql`${table.startedVisitId} is not null and ${table.isDeleted} = false`),
   })
 );
 

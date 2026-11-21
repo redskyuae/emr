@@ -286,6 +286,19 @@ const itemOperations = ({
   },
 });
 
+const withOperationDescriptions = <T extends Record<string, object>>(
+  operations: T,
+  descriptions: Partial<Record<keyof T, string>>
+) =>
+  Object.fromEntries(
+    Object.entries(operations).map(([method, operation]) => [
+      method,
+      descriptions[method as keyof T]
+        ? { ...operation, description: descriptions[method as keyof T] }
+        : operation,
+    ])
+  ) as { [Method in keyof T]: T[Method] & { description?: string } };
+
 const patientRecordCollectionOperations = ({
   tag,
   entity,
@@ -871,6 +884,350 @@ const bedBoardExample = [
   },
 ];
 
+const visitSummaryExample = {
+  timeZone: 'Asia/Dubai',
+  generatedAt: '2026-11-19T05:42:00.000Z',
+  generatedBy: 'Front Desk',
+  billingIncluded: true,
+  tenant: { name: 'Dhathri Ayurveda Clinic', logo: null },
+  patient: {
+    id: 1284,
+    mrn: 'MRN-1284',
+    phone: '+971500004127',
+    title: 'mrs',
+    gender: 'female',
+    lastName: 'Raghavan',
+    firstName: 'Lakshmi',
+    middleName: null,
+    bloodGroup: 'B+',
+    dateOfBirth: '1974-03-02',
+  },
+  visit: {
+    id: 1847,
+    status: 'COMPLETED',
+    visitDate: '18-11-2026',
+    doctorName: 'Dr. Anjali Menon',
+    visitNumber: 'VST-1847',
+    checkedInAt: '2026-11-18T05:52:00.000Z',
+    completedAt: '2026-11-18T07:42:00.000Z',
+    cancelledAt: null,
+    bookingNumber: 'APT-2391',
+    chiefComplaint: 'Low back pain spreading to the left leg for 3 weeks.',
+    cancellationReason: null,
+    consultationStartedAt: '2026-11-18T06:08:00.000Z',
+    visitType: { name: 'OPD Consultation', code: 'OPD' },
+  },
+  allergies: [
+    { id: 31, name: 'Ibuprofen', reaction: 'skin rash', severity: 'moderate' },
+    { id: 32, name: 'Sesame oil', reaction: 'itching', severity: 'mild' },
+  ],
+  vitalSign: {
+    id: 501,
+    bmi: 28.6,
+    spo2: 98,
+    heightCm: 158,
+    weightKg: 71.4,
+    systolic: 132,
+    pulseBpm: 74,
+    respRate: 16,
+    diastolic: 84,
+    painScore: 4,
+    recordedAt: '2026-11-18T07:38:00.000Z',
+    temperatureC: 36.8,
+  },
+  notes: [
+    {
+      id: 77,
+      plan: '**Treatment precautions:**\n\nAvoid bending forward and lifting more than 5 kg.',
+      signedAt: '2026-11-18T06:39:00.000Z',
+      amendedAt: null,
+      objective: '**Examination / red flags:**\n\nStraight leg raise positive at 60° on the left.',
+      subjective: '**Chief complaint:**\n\nLow back pain spreading to the left leg for 3 weeks.',
+      assessment: 'Modern diagnosis: Lumbar radiculopathy, L4-L5',
+      authorName: 'Dr. Anjali Menon',
+      noteType: { name: 'Doctor Consultation', code: 'CONS' },
+    },
+  ],
+  diagnoses: [
+    {
+      id: 91,
+      visitId: 1847,
+      codeSystem: 'ICD10CM',
+      diagnosisType: 'PRINCIPAL',
+      sortOrder: 0,
+      notes: 'Left side, L4-L5',
+      code: 'M54.16',
+      title: 'Radiculopathy, lumbar region',
+      englishName: null,
+      diagnosisCodeId: 4410,
+      ayurvedaDiagnosisCodeId: null,
+      icdMapping: null,
+    },
+  ],
+  treatmentGiven: {
+    planId: 61,
+    label: 'Day 1',
+    procedure: 'Abhyanga + Swedana',
+    sessionNumber: 1,
+    treatmentName: 'Abhyanga + Swedana',
+    totalSessions: 7,
+    plannedMinutes: 45,
+  },
+  treatmentPlans: [
+    {
+      id: 61,
+      status: 'IN_PROGRESS',
+      treatmentName: 'Abhyanga + Swedana',
+      totalSessions: 7,
+      completedSessions: 1,
+      sessionStructure: 'REPEATABLE',
+    },
+  ],
+  medications: [
+    { id: 12, dose: '500 mg', route: 'Oral', drugName: 'Metformin', frequency: 'Twice daily' },
+  ],
+  nextAppointment: {
+    id: 2410,
+    slotDate: '2026-11-20',
+    startTime: '09:30',
+    statusName: 'Confirmed',
+    doctorName: null,
+    bookingNumber: 'APT-2410',
+    treatmentName: 'Kati Basti',
+    sessionNumber: 1,
+    totalSessions: 7,
+  },
+  billing: {
+    status: 'PAID',
+    subtotal: 430,
+    grandTotal: 405,
+    amountPaid: 405,
+    balanceDue: 0,
+    invoiceNumber: 'INV-1953',
+    discountAmount: 25,
+    lines: [
+      {
+        id: 1,
+        amount: 250,
+        quantity: 1,
+        unitPrice: 250,
+        description: 'OPD Consultation, Specialist',
+      },
+      {
+        id: 2,
+        amount: 180,
+        quantity: 1,
+        unitPrice: 180,
+        description: 'Abhyanga + Swedana, Session 1',
+      },
+    ],
+    payments: [
+      {
+        id: 7,
+        amount: 405,
+        method: 'CARD',
+        receivedAt: '2026-11-18T07:46:00.000Z',
+        receiptNumber: 'RCP-2210',
+      },
+    ],
+  },
+};
+
+const consolidatedPatientReportExample = {
+  timeZone: 'Asia/Dubai',
+  generatedAt: '2026-11-20T06:15:00.000Z',
+  generatedBy: 'Dr. Anjali Menon',
+  tenant: { name: 'Dhathri Ayurveda Clinic', logo: null },
+  period: { fromDate: '01-10-2026', toDate: '31-10-2026' },
+  patient: {
+    id: 1302,
+    mrn: 'MRN-1302',
+    city: 'Dubai',
+    phone: '+971500004388',
+    state: 'Dubai',
+    title: 'mr',
+    gender: 'male',
+    lastName: 'K',
+    firstName: 'Rajesh',
+    middleName: 'Kumar',
+    bloodGroup: 'O+',
+    dateOfBirth: '1968-07-14',
+    registeredOn: '2026-09-28T05:10:00.000Z',
+  },
+  consultingDoctor: {
+    name: 'Dr. Anjali Menon',
+    specialtyName: 'Kayachikitsa',
+    qualifications: 'BAMS, MD (Ayu)',
+  },
+  chiefComplaint: 'Pain and stiffness in both knees for 6 months, worse on climbing stairs.',
+  diagnoses: [
+    {
+      code: 'AYU-SV-01',
+      title: 'Sandhigata Vata',
+      codeSystem: 'AYURVEDA',
+      englishName: 'Osteoarthritis',
+      diagnosisType: 'PRINCIPAL',
+      firstRecordedOn: '02-10-2026',
+    },
+    {
+      code: 'M17.0',
+      title: 'Bilateral primary osteoarthritis of knee',
+      codeSystem: 'ICD10CM',
+      englishName: null,
+      diagnosisType: 'PRINCIPAL',
+      firstRecordedOn: '02-10-2026',
+    },
+  ],
+  treatmentPlans: [
+    {
+      id: 74,
+      status: 'COMPLETED',
+      procedures: ['Janu Basti'],
+      treatmentName: 'Janu Basti',
+      totalSessions: 7,
+      sessionsInPeriod: 7,
+      completedSessions: 7,
+    },
+    {
+      id: 75,
+      status: 'IN_PROGRESS',
+      procedures: ['Matra Basti'],
+      treatmentName: 'Matra Basti',
+      totalSessions: 8,
+      sessionsInPeriod: 3,
+      completedSessions: 3,
+    },
+  ],
+  medications: [
+    {
+      id: 41,
+      dose: '2 tablets',
+      route: 'Oral',
+      status: 'active',
+      endDate: null,
+      drugName: 'Yogaraja Guggulu',
+      frequency: 'Twice daily after food',
+      startDate: '2026-10-02',
+    },
+    {
+      id: 42,
+      dose: '15 ml',
+      route: 'Oral',
+      status: 'completed',
+      endDate: '2026-10-16',
+      drugName: 'Maharasnadi Kashayam',
+      frequency: 'Twice daily before food',
+      startDate: '2026-10-02',
+    },
+  ],
+  visits: [
+    {
+      id: 2014,
+      status: 'COMPLETED',
+      visitDate: '02-10-2026',
+      painScore: 8,
+      doctorName: 'Dr. Anjali Menon',
+      visitNumber: 'VST-1014',
+      chiefComplaint: 'Pain and stiffness in both knees for 6 months, worse on climbing stairs.',
+      treatments: [
+        {
+          label: 'Day 1',
+          planId: 74,
+          completed: true,
+          procedure: 'Janu Basti',
+          sessionNumber: 1,
+          treatmentName: 'Janu Basti',
+          totalSessions: 7,
+        },
+      ],
+      notes: [
+        {
+          id: 301,
+          plan: 'Janu Basti for 7 days with Murivenna. Yogaraja Guggulu and Maharasnadi Kashayam.',
+          visitId: 2014,
+          signedAt: '2026-10-02T06:40:00.000Z',
+          objective: 'Crepitus in both knees; tenderness over the medial joint line.',
+          subjective: 'Knee pain on walking more than 15 minutes and on climbing stairs.',
+          assessment: 'Sandhigata Vata, both knees.',
+          authorName: 'Dr. Anjali Menon',
+          noteType: { name: 'Doctor Consultation', code: 'CONS' },
+        },
+      ],
+    },
+    {
+      id: 2061,
+      status: 'COMPLETED',
+      visitDate: '16-10-2026',
+      painScore: 5,
+      doctorName: 'Dr. Anjali Menon',
+      visitNumber: 'VST-1061',
+      chiefComplaint: 'Review after Janu Basti.',
+      treatments: [
+        {
+          label: 'Day 1',
+          planId: 75,
+          completed: true,
+          procedure: 'Matra Basti',
+          sessionNumber: 1,
+          treatmentName: 'Matra Basti',
+          totalSessions: 8,
+        },
+      ],
+      notes: [
+        {
+          id: 342,
+          plan: 'Start Matra Basti with Sahacharadi Taila for 8 days. Continue Yogaraja Guggulu.',
+          visitId: 2061,
+          signedAt: '2026-10-16T07:05:00.000Z',
+          objective: 'Knee flexion improved; mild crepitus remains.',
+          subjective: 'Pain eased after Janu Basti; morning stiffness under 10 minutes.',
+          assessment: 'Sandhigata Vata, improving.',
+          authorName: 'Dr. Anjali Menon',
+          noteType: { name: 'Doctor Consultation', code: 'CONS' },
+        },
+      ],
+    },
+    {
+      id: 2098,
+      status: 'COMPLETED',
+      visitDate: '29-10-2026',
+      painScore: 3,
+      doctorName: 'Dr. Anjali Menon',
+      visitNumber: 'VST-1098',
+      chiefComplaint: 'Follow-up review.',
+      treatments: [
+        {
+          label: 'Day 3',
+          planId: 75,
+          completed: true,
+          procedure: 'Matra Basti',
+          sessionNumber: 3,
+          treatmentName: 'Matra Basti',
+          totalSessions: 8,
+        },
+      ],
+      notes: [
+        {
+          id: 377,
+          plan: 'Complete the remaining Matra Basti sessions. Gentle knee strengthening exercises daily.',
+          visitId: 2098,
+          signedAt: '2026-10-29T06:50:00.000Z',
+          objective: 'Walks without a limp; no joint effusion.',
+          subjective: 'Climbs stairs with mild discomfort only.',
+          assessment: 'Sandhigata Vata, responding well.',
+          authorName: 'Dr. Anjali Menon',
+          noteType: { name: 'Doctor Consultation', code: 'CONS' },
+        },
+      ],
+    },
+  ],
+  latestPlan: {
+    plan: 'Complete the remaining Matra Basti sessions. Gentle knee strengthening exercises daily.',
+    authorName: 'Dr. Anjali Menon',
+    visitNumber: 'VST-1098',
+  },
+};
+
 const visitExample = {
   id: 501,
   tenantId: 'org_apollo',
@@ -887,11 +1244,13 @@ const visitExample = {
   },
   doctor: { id: 42, name: 'Dr. Meera Iyer' },
   visitType: { id: 1, name: 'OPD Consultation', code: 'OPD' },
+  admitSource: { id: 2, name: 'Doctor Referral', code: 'DOCREF' },
   appointment: { id: 101, bookingNumber: 'APT-1042' },
   treatment: null,
   treatmentSession: null,
   chiefComplaint: 'Fever for 3 days',
   remarks: null,
+  legacyVisitNumber: null,
   checkedInAt: '2026-07-16T04:30:00.000Z',
   consultationStartedAt: null,
   completedAt: null,
@@ -899,6 +1258,292 @@ const visitExample = {
   cancellationReason: null,
   createdOn: '2026-07-16T04:30:00.000Z',
   modifiedOn: '2026-07-16T04:30:00.000Z',
+};
+
+const doctorlessVisitExample = {
+  ...visitExample,
+  id: 502,
+  visitNumber: 'VST-1002',
+  queueToken: 3,
+  doctor: null,
+  visitType: { id: 3, name: 'Procedure', code: 'PROC' },
+  appointment: null,
+  chiefComplaint: 'Abhyanga session 2 of 6',
+};
+
+const amendedVisitExample = {
+  ...visitExample,
+  status: 'COMPLETED',
+  admitSource: { id: 2, name: 'Doctor Referral', code: 'DOCREF' },
+  treatment: { id: 12, name: 'Abhyanga', code: 'ABH' },
+  treatmentSession: {
+    id: 31,
+    label: 'Abhyanga Session',
+    procedure: 'Abhyanga with Ksheerabala taila, full body',
+    sessionNumber: 1,
+    durationMinutes: 50,
+    setupMinutes: 10,
+    cleaningMinutes: 5,
+    roomType: 'Panchakarma room',
+    therapistSkill: 'Abhyanga',
+  },
+  chiefComplaint: 'Fever for 3 days with productive cough',
+  remarks: 'Corrected after review of the referral letter',
+  consultationStartedAt: '2026-07-16T04:45:00.000Z',
+  completedAt: '2026-07-16T05:10:00.000Z',
+  modifiedOn: '2026-07-18T06:15:00.000Z',
+};
+
+const validationOrInvalidJsonResponse = (
+  description: string,
+  examples: Record<string, { summary: string; value: unknown }>
+) => ({
+  description,
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        ...examples,
+        invalidJson: {
+          summary: 'Malformed JSON body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+});
+
+const diagnosisCodeMutationErrorResponses = {
+  ...authenticatedErrorResponses,
+  '400': validationOrInvalidJsonResponse(
+    'Invalid Diagnosis Code ID, validation failed, or the request body is not valid JSON.',
+    {
+      notIcd10Cm: {
+        summary: 'Code is not a valid ICD-10-CM code',
+        value: {
+          message: 'Validation failed',
+          errors: ['Diagnosis code must be a valid ICD-10-CM code, e.g. M54.5.'],
+        },
+      },
+    }
+  ),
+  '409': {
+    description: 'The Diagnosis Code already exists in the Tenant.',
+    content: jsonContent(schemaRef('ValidationError'), {
+      message: "Diagnosis code 'M06.9' already exists.",
+      errors: ["Diagnosis code 'M06.9' already exists."],
+    }),
+  },
+};
+
+const chargeItemValidationResponse = validationOrInvalidJsonResponse(
+  'Validation failed, including a code that does not match its codeType, or the request body is not valid JSON.',
+  {
+    invalidCpt: {
+      summary: 'Code is not a valid CPT code',
+      value: {
+        message: 'Validation failed',
+        errors: ['Charge item code must be a valid 5-character CPT code, e.g. 99213.'],
+      },
+    },
+    invalidHcpcs: {
+      summary: 'Code is not a valid HCPCS code',
+      value: {
+        message: 'Validation failed',
+        errors: ['Charge item code must be a valid HCPCS code, e.g. J1100.'],
+      },
+    },
+  }
+);
+
+const icd10CmRheumatoidArthritis = {
+  id: 5,
+  code: 'M06.9',
+  title: 'Rheumatoid arthritis, unspecified',
+};
+
+const ayurvedaDiagnosisCodeRequestExample = {
+  code: 'AYU-AMV',
+  name: 'Amavata',
+  englishName: 'Rheumatoid arthritis',
+  category: 'Vatavyadhi',
+  icdDiagnosisCodeId: 5,
+};
+
+const ayurvedaDiagnosisCodeErrorResponses = {
+  ...authenticatedErrorResponses,
+  '400': validationOrInvalidJsonResponse(
+    'Invalid Ayurveda Diagnosis Code ID, validation failed, or the request body is not valid JSON.',
+    {
+      invalidId: {
+        summary: 'Non-numeric Ayurveda Diagnosis Code ID',
+        value: {
+          message: 'Validation failed',
+          errors: ['Ayurveda diagnosis code abc is Invalid.'],
+        },
+      },
+      missingFields: {
+        summary: 'Code and name are required',
+        value: {
+          message: 'Validation failed',
+          errors: ['Ayurveda diagnosis code is required', 'Ayurveda diagnosis name is required'],
+        },
+      },
+    }
+  ),
+  '404': {
+    description: 'Ayurveda Diagnosis Code not found in the active Tenant.',
+    content: jsonContent(schemaRef('ValidationError'), {
+      message: 'Ayurveda diagnosis code not found',
+      errors: ['Ayurveda diagnosis code not found'],
+    }),
+  },
+  '409': {
+    description:
+      'The code already exists in the Tenant, or the mapped ICD-10-CM Diagnosis Code does not exist.',
+    content: {
+      'application/json': {
+        schema: schemaRef('ValidationError'),
+        examples: {
+          duplicateCode: {
+            summary: 'Code already exists',
+            value: {
+              message: 'Ayurveda diagnosis code AYU-AMV already exists.',
+              errors: ['Ayurveda diagnosis code AYU-AMV already exists.'],
+            },
+          },
+          unknownIcdMapping: {
+            summary: 'Mapped Diagnosis Code is unknown or deleted',
+            value: {
+              message: 'Diagnosis code 5 is Invalid.',
+              errors: ['Diagnosis code 5 is Invalid.'],
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+const visitDiagnosesRequestExample = {
+  diagnoses: [
+    { codeSystem: 'ICD10CM', diagnosisCodeId: 5, diagnosisType: 'PRINCIPAL' },
+    {
+      codeSystem: 'ICD10CM',
+      diagnosisCodeId: 8,
+      diagnosisType: 'SECONDARY',
+      notes: 'Morning stiffness over 1 hour',
+    },
+    { codeSystem: 'AYURVEDA', ayurvedaDiagnosisCodeId: 3, diagnosisType: 'PRINCIPAL' },
+  ],
+};
+
+const visitDiagnosesExample = [
+  {
+    id: 21,
+    visitId: 1,
+    codeSystem: 'ICD10CM',
+    diagnosisType: 'PRINCIPAL',
+    sortOrder: 1,
+    notes: null,
+    code: 'M06.9',
+    title: 'Rheumatoid arthritis, unspecified',
+    englishName: null,
+    diagnosisCodeId: 5,
+    ayurvedaDiagnosisCodeId: null,
+    icdMapping: null,
+  },
+  {
+    id: 22,
+    visitId: 1,
+    codeSystem: 'ICD10CM',
+    diagnosisType: 'SECONDARY',
+    sortOrder: 2,
+    notes: 'Morning stiffness over 1 hour',
+    code: 'M54.5',
+    title: 'Low back pain',
+    englishName: null,
+    diagnosisCodeId: 8,
+    ayurvedaDiagnosisCodeId: null,
+    icdMapping: null,
+  },
+  {
+    id: 23,
+    visitId: 1,
+    codeSystem: 'AYURVEDA',
+    diagnosisType: 'PRINCIPAL',
+    sortOrder: 3,
+    notes: null,
+    code: 'AYU-AMV',
+    title: 'Amavata',
+    englishName: 'Rheumatoid arthritis',
+    diagnosisCodeId: null,
+    ayurvedaDiagnosisCodeId: 3,
+    icdMapping: icd10CmRheumatoidArthritis,
+  },
+];
+
+const visitDiagnosesBadRequestResponse = validationOrInvalidJsonResponse(
+  'Invalid Visit ID, validation failed, or the request body is not valid JSON.',
+  {
+    invalidVisitId: {
+      summary: 'Non-numeric Visit ID',
+      value: { message: 'Validation failed', errors: ['Visit abc is Invalid.'] },
+    },
+    principalRule: {
+      summary: 'Not exactly one Principal in a code system',
+      value: {
+        message: 'Validation failed',
+        errors: ['Choose exactly one Principal ICD-10-CM diagnosis.'],
+      },
+    },
+    missingCode: {
+      summary: 'Code id does not match the code system',
+      value: {
+        message: 'Validation failed',
+        errors: ['Ayurveda diagnoses need an Ayurveda Diagnosis Code.'],
+      },
+    },
+    tooMany: {
+      summary: 'More than 20 diagnoses',
+      value: {
+        message: 'Validation failed',
+        errors: ['At most 20 diagnoses can be recorded on a Visit.'],
+      },
+    },
+    duplicateCode: {
+      summary: 'Same code listed twice in a code system',
+      value: {
+        message: 'Validation failed',
+        errors: ['Diagnosis code M06.9 is listed more than once.'],
+      },
+    },
+  }
+);
+
+const visitNotFoundResponse = {
+  description: 'Visit not found in the active Tenant.',
+  content: jsonContent(schemaRef('ValidationError'), {
+    message: 'Visit not found',
+    errors: ['Visit not found'],
+  }),
+};
+
+const visitDiagnosisReferenceConflictExamples = {
+  unknownCodes: {
+    summary: 'Referenced master rows are unknown or deleted',
+    value: {
+      message: 'Conflict',
+      errors: ['Diagnosis code 8 is Invalid.', 'Ayurveda diagnosis code 3 is Invalid.'],
+    },
+  },
+  concurrentSave: {
+    summary: 'Another save of the same Visit won the race',
+    value: {
+      message: 'Visit diagnoses were changed by another save. Reload and try again.',
+      errors: ['Visit diagnoses were changed by another save. Reload and try again.'],
+    },
+  },
 };
 
 const uploadedVisitDocumentExample = {
@@ -2034,6 +2679,9 @@ const clinicalNoteExample = {
   signedAt: null,
   authorUserId: 'user_9f3',
   recordedByUserId: 'user_9f3',
+  amendedAt: null,
+  amendedByUserId: null,
+  amendedByUserName: null,
   createdOn: '2026-03-01T09:45:00.000Z',
   modifiedOn: '2026-03-01T09:45:00.000Z',
 };
@@ -2402,6 +3050,7 @@ export const openApiDocument = {
     { name: 'Appointment Mode', description: 'Appointment Mode Master APIs.' },
     { name: 'Appointment Status', description: 'Appointment Status Master APIs.' },
     { name: 'Visit Type', description: 'Visit Type Master APIs.' },
+    { name: 'Admit Source', description: 'Admit Source Master APIs.' },
     {
       name: 'Treatment',
       description: 'Tenant-scoped Treatment catalogue and Session APIs used for Procedure booking.',
@@ -2459,7 +3108,20 @@ export const openApiDocument = {
     { name: 'Asset', description: 'Asset inventory APIs.' },
     { name: 'Room Type', description: 'Tenant-scoped Room Type Master APIs.' },
     { name: 'Room', description: 'Tenant-scoped Room registry and occupancy APIs.' },
-    { name: 'Diagnosis Code', description: 'Tenant-scoped Diagnosis Code (ICD-10) Master APIs.' },
+    {
+      name: 'Diagnosis Code',
+      description: 'Tenant-scoped Diagnosis Code (ICD-10-CM) Master APIs.',
+    },
+    {
+      name: 'Ayurveda Diagnosis Code',
+      description:
+        'Tenant-scoped Ayurveda Diagnosis Code (Roga) Master APIs, each optionally mapped to an ICD-10-CM Diagnosis Code for claims.',
+    },
+    {
+      name: 'Visit Diagnosis',
+      description:
+        'ICD-10-CM and Ayurveda diagnoses recorded on a Visit, with one Principal per code system.',
+    },
     { name: 'Allergen', description: 'Tenant-scoped Allergen Master APIs.' },
     { name: 'Clinical Note Type', description: 'Tenant-scoped Clinical Note Type Master APIs.' },
     { name: 'Patient', description: 'Patient Registration and management APIs.' },
@@ -4575,7 +5237,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'List Visits',
         description:
-          "Lists Visits in the active Tenant. With no visitDate or patientId filter, the list defaults to today's queue in the Tenant Time Zone and is ordered by Queue Token; otherwise it is ordered most recently checked in first.",
+          "Lists Visits in the active Tenant. With no visitDate, fromDate, toDate or patientId filter, the list defaults to today's queue in the Tenant Time Zone. A single visitDate is ordered by Queue Token; any other list (a date range or one Patient's history) is ordered most recently checked in first. The query term matches Visit Number, legacy Visit number of an imported Visit, MRN, Patient phone, and Patient first, last or full name.",
         security: [{ cookieAuth: [] }],
         parameters: [
           {
@@ -4583,6 +5245,22 @@ export const openApiDocument = {
             in: 'query',
             required: false,
             description: 'Tenant-local Visit date in DD-MM-YYYY format. Defaults to today.',
+            schema: { type: 'string', example: '16-07-2026' },
+          },
+          {
+            name: 'fromDate',
+            in: 'query',
+            required: false,
+            description:
+              'Inclusive start of a Visit date range in DD-MM-YYYY format. Suppresses the today default. Must be on or before toDate.',
+            schema: { type: 'string', example: '01-07-2026' },
+          },
+          {
+            name: 'toDate',
+            in: 'query',
+            required: false,
+            description:
+              'Inclusive end of a Visit date range in DD-MM-YYYY format. Suppresses the today default.',
             schema: { type: 'string', example: '16-07-2026' },
           },
           {
@@ -4606,27 +5284,79 @@ export const openApiDocument = {
             description: 'Filter by Visit Status.',
             schema: schemaRef('VisitStatus'),
           },
+          {
+            name: 'visitTypeId',
+            in: 'query',
+            required: false,
+            description: 'Filter by VisitType.',
+            schema: { type: 'integer', minimum: 1 },
+          },
           parameterRef('Page'),
           parameterRef('Limit'),
-          parameterRef('Query'),
+          {
+            name: 'query',
+            in: 'query',
+            required: false,
+            description:
+              'Search text, trimmed, at most 100 characters. Matches Visit Number, legacy Visit number, MRN, Patient phone, and Patient first, last or full name.',
+            schema: { type: 'string', maxLength: 100, example: 'asha' },
+          },
           parameterRef('Search'),
         ],
         responses: {
           '200': {
-            description: "Today's Visit queue.",
+            description:
+              "Today's Visit queue, or the Visits matching the date range and filters (for example GET /api/v1/visits?fromDate=01-07-2026&toDate=16-07-2026&status=COMPLETED&query=asha).",
             content: jsonContent(paginatedSchema('Visit'), {
               data: [visitExample],
               meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
             }),
           },
-          ...authenticatedListErrorResponses,
+          '400': {
+            description: 'A filter is invalid.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  invalidDate: {
+                    summary: 'Malformed range date',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['From date must be in DD-MM-YYYY format'],
+                    },
+                  },
+                  invertedRange: {
+                    summary: 'From date after To date',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['From date must be on or before To date'],
+                    },
+                  },
+                  invalidStatus: {
+                    summary: 'Unknown Visit Status',
+                    value: { message: 'Validation failed', errors: ['Status is Invalid.'] },
+                  },
+                  searchTooLong: {
+                    summary: 'Search longer than 100 characters',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Search must be at most 100 characters'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
         },
       },
       post: {
         tags: ['Visit'],
         summary: 'Check in a Patient for a Visit',
         description:
-          'Creates a Visit in the active Tenant. Send either appointmentId to fulfil an Appointment booked for today — the Patient is taken from it, the Doctor is taken from it when assigned, and the Appointment moves to its Checked In status — or patientId and doctorId for a Walk-in Visit; sending appointmentId together with patientId is invalid. A Procedure Appointment with no Doctor must include doctorId at Check-in because every Visit requires one. The server assigns the Visit Number and the Queue Token (per Doctor, per Tenant-local day). The Patient must be a Registered Patient who is active, and must not already have an Active Visit.',
+          'Creates a Visit in the active Tenant. Send either appointmentId to fulfil an Appointment booked for today — the Patient is taken from it, the Doctor is taken from it when assigned, and the Appointment moves to its Checked In status — or patientId (with an optional doctorId) for a Walk-in Visit; sending appointmentId together with patientId is invalid. A Doctor is required only when the VisitType is an OPD Consultation (code `OPD`): a Walk-in must then send doctorId, and an Appointment with no Doctor must include doctorId. Every other VisitType (Follow-up, Procedure, Vaccination, Emergency, …) may be created without a Doctor, and the Visit is returned with `doctor: null`. The server assigns the Visit Number and the Queue Token: per Doctor per Tenant-local day, or from the shared unassigned queue for that day when the Visit has no Doctor. The Patient must be a Registered Patient who is active, and must not already have an Active Visit.',
         security: [{ cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -4636,7 +5366,12 @@ export const openApiDocument = {
               examples: {
                 fromAppointment: {
                   summary: 'Check in against a booked Appointment',
-                  value: { appointmentId: 42, visitTypeId: 1, chiefComplaint: 'Fever for 3 days' },
+                  value: {
+                    appointmentId: 42,
+                    visitTypeId: 1,
+                    admitSourceId: 2,
+                    chiefComplaint: 'Fever for 3 days',
+                  },
                 },
                 fromDoctorlessProcedure: {
                   summary: 'Check in a Procedure Appointment that has no Doctor',
@@ -4647,8 +5382,16 @@ export const openApiDocument = {
                     chiefComplaint: 'Abhyanga session 1 of 6',
                   },
                 },
+                walkInWithoutDoctor: {
+                  summary: 'Walk-in Procedure Visit with no Doctor',
+                  value: {
+                    patientId: 1042,
+                    visitTypeId: 3,
+                    chiefComplaint: 'Abhyanga session 2 of 6',
+                  },
+                },
                 walkIn: {
-                  summary: 'Walk-in Visit with no Appointment',
+                  summary: 'Walk-in OPD Consultation with its Doctor',
                   value: {
                     patientId: 1042,
                     doctorId: 7,
@@ -4664,26 +5407,82 @@ export const openApiDocument = {
         responses: {
           '201': {
             description: 'Visit created and Queue Token issued.',
-            content: jsonContent(dataEnvelopeSchema('Visit'), { data: visitExample }),
+            content: {
+              'application/json': {
+                schema: dataEnvelopeSchema('Visit'),
+                examples: {
+                  withDoctor: { summary: 'OPD Consultation', value: { data: visitExample } },
+                  withoutDoctor: {
+                    summary: 'Procedure Visit with no Doctor, from the unassigned queue',
+                    value: { data: doctorlessVisitExample },
+                  },
+                },
+              },
+            },
           },
           '400': {
-            description: 'The request body is invalid or mixes the two check-in shapes.',
-            content: jsonContent(schemaRef('ValidationError'), {
-              message: 'Validation failed',
-              errors: [
-                'Provide either appointmentId for an Appointment check-in or patientId and doctorId for a Walk-in Visit, not both.',
-              ],
-            }),
+            description:
+              'The request body is invalid, mixes the two check-in shapes, or omits the Doctor of an OPD Consultation Walk-in.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  mixedShapes: {
+                    summary: 'Both an Appointment and Walk-in Patient supplied',
+                    value: {
+                      message: 'Validation failed',
+                      errors: [
+                        'Provide either appointmentId for an Appointment check-in or patientId for a Walk-in Visit, not both.',
+                      ],
+                    },
+                  },
+                  opdWithoutDoctor: {
+                    summary: 'OPD Consultation Walk-in without a Doctor',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Doctor ID is required for an OPD Consultation Visit'],
+                    },
+                  },
+                },
+              },
+            },
           },
           '401': responseRef('Unauthorized'),
           '403': responseRef('Forbidden'),
           '409': {
             description:
-              'A referenced record is invalid, the Appointment is not checkable today, the Patient is provisional or inactive, or the Patient already has an Active Visit.',
-            content: jsonContent(schemaRef('ValidationError'), {
-              message: 'Patient 1042 already has an active visit.',
-              errors: ['Patient 1042 already has an active visit.'],
-            }),
+              'A referenced record such as the Visit Type or Admit Source is invalid, the Appointment is not checkable today, the Patient is provisional or inactive, or the Patient already has an Active Visit.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  opdAppointmentWithoutDoctor: {
+                    summary: 'OPD Consultation for an Appointment that has no Doctor',
+                    value: {
+                      message:
+                        'A Doctor must be assigned before this Appointment can be checked in.',
+                      errors: [
+                        'A Doctor must be assigned before this Appointment can be checked in.',
+                      ],
+                    },
+                  },
+                  activeVisit: {
+                    summary: 'Patient already has an Active Visit',
+                    value: {
+                      message: 'Patient 1042 already has an active visit.',
+                      errors: ['Patient 1042 already has an active visit.'],
+                    },
+                  },
+                  invalidAdmitSource: {
+                    summary: 'Admit Source is unknown or deleted in this Tenant',
+                    value: {
+                      message: 'Admit source 99 is Invalid.',
+                      errors: ['Admit source 99 is Invalid.'],
+                    },
+                  },
+                },
+              },
+            },
           },
           '500': responseRef('InternalServerError'),
         },
@@ -4772,6 +5571,65 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/visits/status-counts': {
+      get: {
+        tags: ['Visit'],
+        summary: 'Count Visits by status for one day',
+        description:
+          'Returns how many non-deleted Visits in the active Tenant have each Visit status on one visit date, optionally for one Doctor. The Visits board status tiles read all four counts from this one request. Every status is always present, with 0 when no Visit has it. `tenantId` is resolved from the session, never from the request. Requires the `visit:read` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'visitDate',
+            in: 'query',
+            required: true,
+            description: 'Visit date to count, in DD-MM-YYYY format.',
+            schema: { type: 'string', example: '21-11-2026' },
+          },
+          {
+            name: 'doctorId',
+            in: 'query',
+            required: false,
+            description: 'Count only Visits assigned to this Doctor.',
+            schema: { type: 'integer', minimum: 1, example: 12 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Visit counts keyed by Visit status.',
+            content: jsonContent(
+              {
+                type: 'object',
+                required: ['data'],
+                properties: {
+                  data: {
+                    type: 'object',
+                    required: ['CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED'],
+                    properties: {
+                      CHECKED_IN: { type: 'integer', minimum: 0 },
+                      IN_CONSULTATION: { type: 'integer', minimum: 0 },
+                      COMPLETED: { type: 'integer', minimum: 0 },
+                      CANCELLED: { type: 'integer', minimum: 0 },
+                    },
+                  },
+                },
+              },
+              { data: { CHECKED_IN: 8, IN_CONSULTATION: 2, COMPLETED: 14, CANCELLED: 1 } }
+            ),
+          },
+          '400': {
+            description: 'Missing or malformed visit date, or an invalid Doctor ID.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Visit date must be in DD-MM-YYYY format'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/visits/{id}': {
       get: {
         tags: ['Visit'],
@@ -4791,7 +5649,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Update Visit details',
         description:
-          'Updates the chief complaint and remarks of an Active Visit. A Completed or Cancelled Visit is a historical record and cannot be edited.',
+          'Updates the chief complaint and remarks of an Active Visit. A Completed or Cancelled Visit is a historical record and cannot be edited here; a Completed Visit is corrected with PUT /api/v1/visits/{id}/amend.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         requestBody: requestBody('UpdateVisitRequest', {
@@ -4827,6 +5685,39 @@ export const openApiDocument = {
         responses: {
           '204': { description: 'Visit deleted.' },
           ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/visits/{id}/summary': {
+      get: {
+        tags: ['Visit'],
+        summary: 'Get Visit Summary',
+        description:
+          'Reads everything needed to print the Patient copy of one Visit Summary in the active Tenant: Patient and Visit details, active allergies, the latest Vital Signs set of the Visit, signed Clinical Notes (drafts are never included), Visit Diagnoses, the Treatment Session given and the Patient Treatment Plans, active medications as of now, the next Scheduled or Confirmed Appointment after the Visit date (never one before today in the Tenant time zone), and the latest finalized Visit Invoice. Requires `visit:read`. `billing` is null and `billingIncluded` is false when the user lacks `invoice:read`; the billing block is left out on the server. Only Finalized, Partially Paid and Paid Invoices are included; Draft and Void Invoices never are, so `billing` is null when the Visit has only a Draft. Identity documents, Emirates ID, passport, VIP and Medical Tourist flags are never returned. Times are UTC; `timeZone` is the Tenant operational time zone to display them in.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Visit Summary.',
+            content: jsonContent(dataEnvelopeSchema('VisitSummary'), { data: visitSummaryExample }),
+          },
+          '400': {
+            description: 'The Visit ID is not a positive integer.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Visit abc is Invalid.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'No Visit with this ID in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit not found',
+              errors: ['Visit not found'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -4937,6 +5828,458 @@ export const openApiDocument = {
             content: jsonContent(schemaRef('ValidationError'), {
               message: 'Visit VST-1001 cannot be cancelled from its current status.',
               errors: ['Visit VST-1001 cannot be cancelled from its current status.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/amend': {
+      put: {
+        tags: ['Visit'],
+        summary: 'Amend a Completed Visit',
+        description:
+          'Corrects the encounter details of a Completed Visit: Doctor, VisitType, Admit Source, chief complaint, remarks, and Treatment with its Session. The body is a full replace: an omitted or null optional field is cleared. The Doctor is optional unless the amended VisitType is an OPD Consultation (code `OPD`); omit or send null to leave the Visit without a Doctor. The Visit number, visit date, Queue Token, status, and lifecycle timestamps never change. A Doctor, VisitType, Admit Source, or Treatment the Visit already holds is kept even if it has since been deactivated or deleted; a newly chosen one must exist in the Tenant, and a newly chosen Doctor must be active. Active Visits are edited with PUT /api/v1/visits/{id}; a Cancelled Visit cannot be amended. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('AmendVisitRequest', {
+          doctorId: 42,
+          visitTypeId: 1,
+          admitSourceId: 2,
+          chiefComplaint: 'Fever for 3 days with productive cough',
+          remarks: 'Corrected after review of the referral letter',
+          treatmentId: 12,
+          treatmentSessionId: 31,
+        }),
+        responses: {
+          '200': {
+            description: 'Visit amended.',
+            content: jsonContent(dataEnvelopeSchema('Visit'), { data: amendedVisitExample }),
+          },
+          '400': {
+            description:
+              'Invalid Visit ID, validation failed, or the request body is not valid JSON.',
+            content: {
+              'application/json': {
+                schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+                examples: {
+                  invalidVisitId: {
+                    summary: 'Non-numeric Visit ID',
+                    value: { message: 'Validation failed', errors: ['Visit abc is Invalid.'] },
+                  },
+                  missingVisitType: {
+                    summary: 'VisitType is required',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Visit type ID is required'],
+                    },
+                  },
+                  treatmentWithoutSession: {
+                    summary: 'Treatment sent without its Session',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Treatment and Session must be provided together.'],
+                    },
+                  },
+                  invalidJson: {
+                    summary: 'Malformed JSON body',
+                    value: { message: 'Request body must be valid JSON' },
+                  },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:amend` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': {
+            description: 'Visit not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit not found',
+              errors: ['Visit not found'],
+            }),
+          },
+          '409': {
+            description:
+              'The Visit is not Completed, or a newly chosen reference is unknown, inactive, or mismatched.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  notCompleted: {
+                    summary: 'Visit is Active or Cancelled',
+                    value: {
+                      message: 'Visit VST-1001 is not completed and cannot be amended.',
+                      errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+                    },
+                  },
+                  opdWithoutDoctor: {
+                    summary: 'OPD Consultation amended without a Doctor',
+                    value: {
+                      message: 'Doctor ID is required for an OPD Consultation Visit',
+                      errors: ['Doctor ID is required for an OPD Consultation Visit'],
+                    },
+                  },
+                  inactiveDoctor: {
+                    summary: 'Newly chosen Doctor is inactive',
+                    value: {
+                      message: 'Doctor 57 is inactive and cannot be assigned a Visit.',
+                      errors: ['Doctor 57 is inactive and cannot be assigned a Visit.'],
+                    },
+                  },
+                  unknownReferences: {
+                    summary: 'Several newly chosen references are unknown',
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Visit type 9 is Invalid.', 'Admit source 14 is Invalid.'],
+                    },
+                  },
+                  sessionMismatch: {
+                    summary: 'Session belongs to another Treatment',
+                    value: {
+                      message: 'Treatment session does not belong to the selected Treatment.',
+                      errors: ['Treatment session does not belong to the selected Treatment.'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/diagnoses': {
+      get: {
+        tags: ['Visit Diagnosis'],
+        summary: 'List Visit diagnoses',
+        description:
+          "Returns the ICD-10-CM and Ayurveda diagnoses recorded on a Visit of any status, ICD-10-CM first, the Principal diagnosis first within each code system, then in saved order. code and title come from the referenced Diagnosis Code or Ayurveda Diagnosis Code even if it was deleted after recording; icdMapping is the Ayurveda code's current ICD-10-CM mapping. The Tenant is resolved from the active Session.",
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        responses: {
+          '200': {
+            description: 'Visit diagnoses.',
+            content: jsonContent(dataEnvelopeArraySchema('VisitDiagnosis'), {
+              data: visitDiagnosesExample,
+            }),
+          },
+          '400': {
+            description: 'Invalid Visit ID.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Visit abc is Invalid.'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': visitNotFoundResponse,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      put: {
+        tags: ['Visit Diagnosis'],
+        summary: 'Save Visit diagnoses',
+        description:
+          'Replaces the whole diagnosis list of an Active (Checked-in or In Consultation) Visit in one transaction; an empty list clears it. Each entry names its codeSystem: ICD10CM entries need diagnosisCodeId and AYURVEDA entries need ayurvedaDiagnosisCodeId (the other id is ignored). A code system with entries needs exactly one PRINCIPAL; a code may appear once per code system; at most 20 entries. sortOrder follows array position, starting at 1. Referenced codes must exist in the Tenant and not be deleted, except a code this Visit already records. Notes are trimmed, at most 500 characters, and blank notes are stored as null. A Completed Visit is corrected with PUT /api/v1/visits/{id}/diagnoses/amend. The Tenant is resolved from the active Session. Requires the `visit:update` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('SaveVisitDiagnosesRequest', visitDiagnosesRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit diagnoses saved; returns the full list.',
+            content: jsonContent(dataEnvelopeArraySchema('VisitDiagnosis'), {
+              data: visitDiagnosesExample,
+            }),
+          },
+          '400': visitDiagnosesBadRequestResponse,
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:update` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': visitNotFoundResponse,
+          '409': {
+            description:
+              'The Visit is Completed or Cancelled, a referenced code is unknown or deleted, or a concurrent save won.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  closedVisit: {
+                    summary: 'Visit is Completed or Cancelled',
+                    value: {
+                      message: 'Visit VST-1001 is closed and cannot be edited.',
+                      errors: ['Visit VST-1001 is closed and cannot be edited.'],
+                    },
+                  },
+                  ...visitDiagnosisReferenceConflictExamples,
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/diagnoses/amend': {
+      put: {
+        tags: ['Visit Diagnosis'],
+        summary: 'Amend Completed Visit diagnoses',
+        description:
+          'Replaces the whole diagnosis list of a Completed Visit with the same body and rules as PUT /api/v1/visits/{id}/diagnoses. A code the Visit already records is kept even if it has since been deleted, so older Visits stay amendable. Active Visits use PUT /api/v1/visits/{id}/diagnoses; a Cancelled Visit cannot be amended. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Visit')],
+        requestBody: requestBody('SaveVisitDiagnosesRequest', visitDiagnosesRequestExample),
+        responses: {
+          '200': {
+            description: 'Visit diagnoses amended; returns the full list.',
+            content: jsonContent(dataEnvelopeArraySchema('VisitDiagnosis'), {
+              data: visitDiagnosesExample,
+            }),
+          },
+          '400': visitDiagnosesBadRequestResponse,
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:amend` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': visitNotFoundResponse,
+          '409': {
+            description:
+              'The Visit is not Completed, a newly referenced code is unknown or deleted, or a concurrent save won.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  notCompleted: {
+                    summary: 'Visit is Active or Cancelled',
+                    value: {
+                      message: 'Visit VST-1001 is not completed and cannot be amended.',
+                      errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+                    },
+                  },
+                  ...visitDiagnosisReferenceConflictExamples,
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/notes/{noteId}/amend': {
+      put: {
+        tags: ['Visit'],
+        summary: 'Amend a Clinical Note on a Completed Visit',
+        description:
+          "Corrects the note type and SOAP sections of a Clinical Note recorded during a Completed Visit, including a signed Clinical Note. The body is a full replace of the sections: an omitted or blank section is cleared, and at least one section is required. The note's Visit link, status, signedAt, author, and recorder never change; visitId and admissionId are ignored if sent. amendedAt and amendedByUserId are set to the current time and the Session user, so a signed note shows that it changed after signing. The Clinical Note must belong to the Visit in the path. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Visit'),
+          namedNumberPathParameter('noteId', 'Clinical Note'),
+        ],
+        requestBody: requestBody('AmendVisitClinicalNoteRequest', {
+          noteTypeId: 3,
+          subjective: 'Patient reports a productive cough for three days with mild fever.',
+          objective: 'Temp 37.8C, chest clear on auscultation, throat mildly erythematous.',
+          assessment: 'Acute upper respiratory infection, viral.',
+          plan: 'Supportive care, fluids, paracetamol as needed. Review in 5 days if not improving.',
+        }),
+        responses: {
+          '200': {
+            description: 'Clinical Note amended; a signed note stays signed.',
+            content: jsonContent(dataEnvelopeSchema('ClinicalNote'), {
+              data: {
+                ...signedClinicalNoteExample,
+                visitId: 501,
+                assessment: 'Acute upper respiratory infection, viral.',
+                amendedAt: '2026-07-18T06:20:00.000Z',
+                amendedByUserId: 'user_2b7',
+                amendedByUserName: 'Dr Priya Nair',
+                modifiedOn: '2026-07-18T06:20:00.000Z',
+              },
+            }),
+          },
+          '400': {
+            description:
+              'Invalid IDs, validation failed, unknown note type, or the request body is not valid JSON.',
+            content: {
+              'application/json': {
+                schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+                examples: {
+                  invalidIds: {
+                    summary: 'Non-numeric Visit and Clinical Note IDs',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Visit abc is Invalid.', 'Clinical note xyz is Invalid.'],
+                    },
+                  },
+                  noSections: {
+                    summary: 'Every SOAP section is empty',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['At least one clinical note section is required'],
+                    },
+                  },
+                  unknownNoteType: {
+                    summary: 'Note type does not exist in the Tenant',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Clinical note type 3 does not exist.'],
+                    },
+                  },
+                  invalidJson: {
+                    summary: 'Malformed JSON body',
+                    value: { message: 'Request body must be valid JSON' },
+                  },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:amend` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': {
+            description:
+              'Visit not found, or the Clinical Note does not exist or belongs to another Visit.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  visitNotFound: {
+                    value: { message: 'Visit not found', errors: ['Visit not found'] },
+                  },
+                  noteNotFound: {
+                    value: {
+                      message: 'Clinical note not found',
+                      errors: ['Clinical note not found'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'The Visit is not Completed.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 is not completed and cannot be amended.',
+              errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/visits/{id}/vitals/{vitalId}/amend': {
+      put: {
+        tags: ['Visit'],
+        summary: 'Amend a Vital Sign on a Completed Visit',
+        description:
+          "Corrects a Vital Sign reading recorded during a Completed Visit. The body is a full replace of the measurements and notes: an omitted, null, or blank measurement is cleared, and at least one measurement is required. BMI is recomputed server-side from height and weight. recordedAt is optional; when omitted the reading keeps its original time. The reading's Visit link and recorder never change; visitId and admissionId are ignored if sent. The Vital Sign must belong to the Visit in the path. The Tenant is resolved from the active Session. Requires the `visit:amend` permission.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Visit'),
+          namedNumberPathParameter('vitalId', 'Vital Sign'),
+        ],
+        requestBody: requestBody('AmendVisitVitalSignRequest', {
+          heightCm: 170,
+          weightKg: 68,
+          systolic: 128,
+          diastolic: 84,
+          pulseBpm: 76,
+          respRate: 16,
+          temperatureC: 37.8,
+          spo2: 98,
+          painScore: 2,
+          notes: 'Rechecked after five minutes of rest.',
+        }),
+        responses: {
+          '200': {
+            description: 'Vital Sign amended.',
+            content: jsonContent(dataEnvelopeSchema('PatientVitalSign'), {
+              data: {
+                ...patientVitalSignExample,
+                visitId: 501,
+                recordedAt: '2026-07-16T04:40:00.000Z',
+                weightKg: 68,
+                bmi: 23.5,
+                systolic: 128,
+                diastolic: 84,
+                pulseBpm: 76,
+                temperatureC: 37.8,
+                notes: 'Rechecked after five minutes of rest.',
+                createdOn: '2026-07-16T04:40:00.000Z',
+                modifiedOn: '2026-07-18T06:25:00.000Z',
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid IDs, validation failed, or the request body is not valid JSON.',
+            content: {
+              'application/json': {
+                schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+                examples: {
+                  invalidIds: {
+                    summary: 'Non-numeric Visit and Vital Sign IDs',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Visit abc is Invalid.', 'Vital sign xyz is Invalid.'],
+                    },
+                  },
+                  noMeasurements: {
+                    summary: 'Every measurement is empty',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['At least one vital sign measurement is required'],
+                    },
+                  },
+                  outOfRange: {
+                    summary: 'Measurement outside its range',
+                    value: {
+                      message: 'Validation failed',
+                      errors: ['Vital sign SpO2 must be at most 100'],
+                    },
+                  },
+                  invalidJson: {
+                    summary: 'Malformed JSON body',
+                    value: { message: 'Request body must be valid JSON' },
+                  },
+                },
+              },
+            },
+          },
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `visit:amend` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': {
+            description:
+              'Visit not found, or the Vital Sign does not exist or belongs to another Visit.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  visitNotFound: {
+                    value: { message: 'Visit not found', errors: ['Visit not found'] },
+                  },
+                  vitalSignNotFound: {
+                    value: { message: 'Vital sign not found', errors: ['Vital sign not found'] },
+                  },
+                },
+              },
+            },
+          },
+          '409': {
+            description: 'The Visit is not Completed.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit VST-1001 is not completed and cannot be amended.',
+              errors: ['Visit VST-1001 is not completed and cannot be amended.'],
             }),
           },
           '500': responseRef('InternalServerError'),
@@ -5139,6 +6482,31 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: authenticatedErrorResponses,
     }),
+    '/api/v1/visits/admit-sources': appointmentMasterCollection({
+      tag: 'Admit Source',
+      entity: 'Admit Source',
+      schemaName: 'AdmitSource',
+      createSchemaName: 'CreateAdmitSourceRequest',
+      example: {
+        name: 'Doctor Referral',
+        code: 'DOCREF',
+        description: 'Referred by an external Doctor',
+      },
+    }),
+    '/api/v1/visits/admit-sources/{id}': itemOperations({
+      tag: 'Admit Source',
+      entity: 'Admit Source',
+      schemaName: 'AdmitSource',
+      updateSchemaName: 'UpdateAdmitSourceRequest',
+      example: {
+        name: 'Doctor Referral',
+        code: 'DOCREF',
+        description: 'Referred by an external Doctor',
+      },
+      parameters: [numberIdPathParameter('Admit Source')],
+      security: [{ cookieAuth: [] }],
+      operationErrorResponses: authenticatedErrorResponses,
+    }),
     '/api/v1/wards': appointmentMasterCollection({
       tag: 'Ward',
       entity: 'Ward',
@@ -5199,6 +6567,7 @@ export const openApiDocument = {
       example: {
         name: 'Established Patient Level 3',
         code: '99213',
+        codeType: 'CPT',
         category: 'CONSULTATION',
         unitPrice: 150,
         cashPrice: 150,
@@ -5213,6 +6582,7 @@ export const openApiDocument = {
       listErrorResponses: authenticatedListErrorResponses,
       mutationErrorResponses: {
         ...authenticatedErrorResponses,
+        '400': chargeItemValidationResponse,
         '409': {
           description: 'The Charge Item name or code already exists in the Tenant.',
           content: jsonContent(schemaRef('ValidationError'), {
@@ -5246,6 +6616,7 @@ export const openApiDocument = {
       example: {
         name: 'Established Patient Level 3',
         code: '99213',
+        codeType: 'CPT',
         category: 'CONSULTATION',
         unitPrice: 150,
         cashPrice: 150,
@@ -5260,6 +6631,7 @@ export const openApiDocument = {
       security: [{ cookieAuth: [] }],
       operationErrorResponses: {
         ...authenticatedErrorResponses,
+        '400': chargeItemValidationResponse,
         '409': {
           description: 'The new name or code already exists in the Tenant.',
           content: jsonContent(schemaRef('ValidationError'), {
@@ -6065,13 +7437,13 @@ export const openApiDocument = {
       schemaName: 'DiagnosisCode',
       createSchemaName: 'CreateDiagnosisCodeRequest',
       example: {
-        code: 'I10',
-        title: 'Essential (primary) hypertension',
-        category: 'Circulatory system',
+        code: 'M06.9',
+        title: 'Rheumatoid arthritis, unspecified',
+        category: 'Musculoskeletal system',
       },
       security: [{ cookieAuth: [] }],
       listErrorResponses: authenticatedListErrorResponses,
-      mutationErrorResponses: authenticatedErrorResponses,
+      mutationErrorResponses: diagnosisCodeMutationErrorResponses,
     }),
     '/api/v1/clinical-masters/diagnosis-codes/{id}': itemOperations({
       tag: 'Diagnosis Code',
@@ -6079,14 +7451,49 @@ export const openApiDocument = {
       schemaName: 'DiagnosisCode',
       updateSchemaName: 'UpdateDiagnosisCodeRequest',
       example: {
-        code: 'I10',
-        title: 'Essential (primary) hypertension',
-        category: 'Circulatory system',
+        code: 'M06.9',
+        title: 'Rheumatoid arthritis, unspecified',
+        category: 'Musculoskeletal system',
       },
       parameters: [numberIdPathParameter('Diagnosis Code')],
       security: [{ cookieAuth: [] }],
-      operationErrorResponses: authenticatedErrorResponses,
+      operationErrorResponses: diagnosisCodeMutationErrorResponses,
     }),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes': withOperationDescriptions(
+      collectionOperations({
+        tag: 'Ayurveda Diagnosis Code',
+        entity: 'Ayurveda Diagnosis Code',
+        summaryEntity: 'Ayurveda Diagnosis Codes',
+        schemaName: 'AyurvedaDiagnosisCode',
+        createSchemaName: 'CreateAyurvedaDiagnosisCodeRequest',
+        example: ayurvedaDiagnosisCodeRequestExample,
+        security: [{ cookieAuth: [] }],
+        listErrorResponses: authenticatedListErrorResponses,
+        mutationErrorResponses: ayurvedaDiagnosisCodeErrorResponses,
+      }),
+      {
+        get: 'Returns a paginated list of Ayurveda Diagnosis Codes in the active Tenant. Any authenticated Tenant member may list them, because Visit diagnosis entry uses this list. The Tenant is resolved from the active Session.',
+        post: 'Creates an Ayurveda Diagnosis Code in the active Tenant. The Tenant is resolved from the active Session. Requires the `ayurveda-diagnosis-code:create` permission.',
+      }
+    ),
+    '/api/v1/clinical-masters/ayurveda-diagnosis-codes/{id}': withOperationDescriptions(
+      itemOperations({
+        tag: 'Ayurveda Diagnosis Code',
+        entity: 'Ayurveda Diagnosis Code',
+        schemaName: 'AyurvedaDiagnosisCode',
+        updateSchemaName: 'UpdateAyurvedaDiagnosisCodeRequest',
+        example: ayurvedaDiagnosisCodeRequestExample,
+        parameters: [numberIdPathParameter('Ayurveda Diagnosis Code')],
+        security: [{ cookieAuth: [] }],
+        operationErrorResponses: ayurvedaDiagnosisCodeErrorResponses,
+      }),
+      {
+        get: 'Returns one Ayurveda Diagnosis Code in the active Tenant. Any authenticated Tenant member may read it. The Tenant is resolved from the active Session.',
+        put: 'Updates an Ayurveda Diagnosis Code in the active Tenant. The Tenant is resolved from the active Session. Requires the `ayurveda-diagnosis-code:update` permission.',
+        delete:
+          'Soft-deletes an Ayurveda Diagnosis Code in the active Tenant. The Tenant is resolved from the active Session. Requires the `ayurveda-diagnosis-code:delete` permission.',
+      }
+    ),
     '/api/v1/clinical-masters/allergens': collectionOperations({
       tag: 'Allergen',
       entity: 'Allergen',
@@ -6346,6 +7753,63 @@ export const openApiDocument = {
         },
       },
     },
+    '/api/v1/patients/{id}/consolidated-report': {
+      get: {
+        tags: ['Patient'],
+        summary: 'Get Consolidated Patient Report',
+        description:
+          'Reads everything needed to print one Consolidated Patient Report: the course of care of one Patient in the active Tenant across a report period. Requires `visit:read`. The period is given as `fromDate` and `toDate` in DD-MM-YYYY, both ends inclusive, and may be at most 366 days; `period` echoes it back in DD-MM-YYYY. Cancelled Visits are left out and Visits are listed oldest first. Each Visit carries its signed Clinical Notes (drafts are never included), the Treatment Sessions given in it, and `painScore` from the latest Vital Signs set of that Visit that recorded one. `diagnoses` lists each Visit Diagnosis once across the period, in the order first recorded, with `firstRecordedOn` as DD-MM-YYYY. `treatmentPlans` lists the Patient Treatment Plans worked on in the period plus Pending and In Progress plans that existed by the period end. `medications` lists those taken at any time in the period; a stopped or completed medication without an end date is treated as ending when it was last changed. `consultingDoctor` is the Doctor of the latest Visit that had one, or null. `latestPlan` is the plan text of the latest signed Clinical Note that has one, or null. Identity documents, Emirates ID and passport are never returned. Times are UTC; `timeZone` is the Tenant operational time zone to display them in. The tenantId is resolved from the active authenticated Session.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Patient'),
+          {
+            name: 'fromDate',
+            in: 'query',
+            required: true,
+            description: 'First day of the report period in DD-MM-YYYY format, inclusive.',
+            schema: { type: 'string', example: '01-10-2026' },
+          },
+          {
+            name: 'toDate',
+            in: 'query',
+            required: true,
+            description:
+              'Last day of the report period in DD-MM-YYYY format, inclusive. At most 366 days after `fromDate`, counting both ends.',
+            schema: { type: 'string', example: '31-10-2026' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Consolidated Patient Report.',
+            content: jsonContent(dataEnvelopeSchema('ConsolidatedPatientReport'), {
+              data: consolidatedPatientReportExample,
+            }),
+          },
+          '400': {
+            description:
+              'The Patient ID is not a positive integer, or the report period is missing, not in DD-MM-YYYY format, reversed, or longer than 366 days.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: [
+                'Patient abc is Invalid.',
+                'From date must be in DD-MM-YYYY format',
+                'To date is required',
+              ],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description: 'No Patient with this ID in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient not found',
+              errors: ['Patient not found'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/patients/{id}/treatment-plans': {
       get: {
         tags: ['Patient'],
@@ -6421,6 +7885,8 @@ export const openApiDocument = {
                     completionSource: null,
                     completedVisitId: null,
                     completedAt: null,
+                    startedVisitId: null,
+                    startedAt: null,
                     isReserved: false,
                     isBookable: true,
                     unavailableReason: null,
@@ -6446,6 +7912,8 @@ export const openApiDocument = {
                     completionSource: null,
                     completedVisitId: null,
                     completedAt: null,
+                    startedVisitId: null,
+                    startedAt: null,
                     isReserved: false,
                     isBookable: true,
                     unavailableReason: null,
@@ -6456,6 +7924,236 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedErrorResponses,
+        },
+      },
+    },
+    '/api/v1/patients/{id}/treatment-plans/{planId}/sessions/{sessionId}': {
+      patch: {
+        tags: ['Patient'],
+        summary: 'Edit a Patient Treatment Plan Session plan',
+        description:
+          'Edits the plan of one pending Patient Treatment Plan Session: procedure, durations, preparation, warning, equipment, Room type, and Therapist Skill. Only the Patient-specific snapshot changes; the Treatment Session template and booking rules are unchanged. Send only the fields to change; text fields are trimmed and an empty string or null clears an optional field. Completed Sessions, Sessions already In Progress in a Visit, and Sessions of stopped Plans cannot be edited; the plan is frozen once the Session is started. The Tenant is resolved from the active Session. Requires patient-treatment-plan:read and patient-treatment-plan:update permissions.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Patient'),
+          namedNumberPathParameter('planId', 'Patient Treatment Plan'),
+          namedNumberPathParameter('sessionId', 'Patient Treatment Plan Session'),
+        ],
+        requestBody: requestBody('UpdatePatientTreatmentPlanSessionRequest', {
+          procedure: 'Abhyanga with Ksheerabala taila, full body',
+          durationMinutes: 50,
+          preparation: 'Warm the oil to body temperature.',
+          warning: 'Avoid pressure over the left knee.',
+          equipment: 'Droni and warm oil',
+        }),
+        responses: {
+          '200': {
+            description: 'Session plan updated and the current Patient Treatment Plan returned.',
+            content: jsonContent(dataEnvelopeSchema('PatientTreatmentPlan'), {
+              data: {
+                id: 81,
+                patientId: 42,
+                treatmentId: 12,
+                treatmentName: 'Abhyanga',
+                treatmentCode: 'ABH',
+                sessionStructure: 'REPEATABLE',
+                totalSessions: 2,
+                status: 'IN_PROGRESS',
+                completedSessions: 1,
+                sessions: [
+                  {
+                    id: 902,
+                    patientTreatmentPlanId: 81,
+                    treatmentSessionId: 12,
+                    sessionNumber: 2,
+                    label: 'Abhyanga Session',
+                    procedure: 'Abhyanga with Ksheerabala taila, full body',
+                    durationMinutes: 50,
+                    setupMinutes: 10,
+                    cleaningMinutes: 5,
+                    preparation: 'Warm the oil to body temperature.',
+                    warning: 'Avoid pressure over the left knee.',
+                    equipment: 'Droni and warm oil',
+                    roomType: 'Panchakarma room',
+                    therapistSkill: 'Abhyanga',
+                    legacyConductionNote: null,
+                    completionStatus: 'PENDING',
+                    completionSource: null,
+                    completedVisitId: null,
+                    completedAt: null,
+                    startedVisitId: null,
+                    startedAt: null,
+                    isReserved: false,
+                    isBookable: true,
+                    unavailableReason: null,
+                    reservedAppointment: null,
+                  },
+                ],
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid path parameters, invalid JSON, or an invalid Session plan.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Duration minutes must be at most 480', 'Procedure cannot be empty'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description:
+              'Patient, current Patient Treatment Plan, or Session not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Patient Treatment Plan Session not found',
+              errors: ['Patient Treatment Plan Session not found'],
+            }),
+          },
+          '409': {
+            description:
+              'The Session is completed, In Progress in a Visit, or no longer available.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  completed: {
+                    value: { message: 'Conflict', errors: ['Session 1 is already completed.'] },
+                  },
+                  inProgress: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Session 2 is in progress and cannot be edited.'],
+                    },
+                  },
+                  noLongerAvailable: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Patient Treatment Plan Session is no longer available.'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/patients/{id}/treatment-plans/{planId}/sessions/{sessionId}/start': {
+      post: {
+        tags: ['Patient'],
+        summary: 'Start a Patient Treatment Plan Session',
+        description:
+          "Starts one pending Patient Treatment Plan Session in an active Visit of the same Patient. The Visit must be Checked In or In Consultation. A started Session is In Progress and cannot be booked; completing the Visit completes it, and cancelling or deleting the Visit returns it to pending. A Visit delivers at most one Session of each Plan, and a Session reserved for an Appointment can only be started in that Appointment's Visit. The Tenant is resolved from the active Session. Requires patient-treatment-plan:read and patient-treatment-plan:start permissions.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          numberIdPathParameter('Patient'),
+          namedNumberPathParameter('planId', 'Patient Treatment Plan'),
+          namedNumberPathParameter('sessionId', 'Patient Treatment Plan Session'),
+        ],
+        requestBody: requestBody('StartPatientTreatmentPlanSessionRequest', { visitId: 5120 }),
+        responses: {
+          '200': {
+            description: 'Session started and the current Patient Treatment Plan returned.',
+            content: jsonContent(dataEnvelopeSchema('PatientTreatmentPlan'), {
+              data: {
+                id: 81,
+                patientId: 42,
+                treatmentId: 12,
+                treatmentName: 'Abhyanga',
+                treatmentCode: 'ABH',
+                sessionStructure: 'REPEATABLE',
+                totalSessions: 2,
+                status: 'IN_PROGRESS',
+                completedSessions: 1,
+                sessions: [
+                  {
+                    id: 902,
+                    patientTreatmentPlanId: 81,
+                    treatmentSessionId: 12,
+                    sessionNumber: 2,
+                    label: 'Abhyanga Session',
+                    procedure: 'Abhyanga with Ksheerabala taila, full body',
+                    durationMinutes: 50,
+                    setupMinutes: 10,
+                    cleaningMinutes: 5,
+                    preparation: 'Warm the oil to body temperature.',
+                    warning: 'Avoid pressure over the left knee.',
+                    equipment: 'Droni and warm oil',
+                    roomType: 'Panchakarma room',
+                    therapistSkill: 'Abhyanga',
+                    legacyConductionNote: null,
+                    completionStatus: 'PENDING',
+                    completionSource: null,
+                    completedVisitId: null,
+                    completedAt: null,
+                    startedVisitId: 5120,
+                    startedAt: '2026-11-10T04:30:00.000Z',
+                    isReserved: false,
+                    isBookable: false,
+                    unavailableReason: 'IN_PROGRESS',
+                    reservedAppointment: null,
+                  },
+                ],
+              },
+            }),
+          },
+          '400': {
+            description: 'Invalid path parameters, invalid JSON, or a missing Visit ID.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Validation failed',
+              errors: ['Visit ID is required'],
+            }),
+          },
+          '401': responseRef('Unauthorized'),
+          '403': responseRef('Forbidden'),
+          '404': {
+            description:
+              'Patient, Plan, Session, or a Visit of this Patient not found in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'Visit not found',
+              errors: ['Visit not found'],
+            }),
+          },
+          '409': {
+            description:
+              'The Visit is not active (including a Visit completed, cancelled, or deleted while the Session was being started), or the Session is completed, already in progress, booked for another Appointment, or the Visit already has a Session of this Plan.',
+            content: {
+              'application/json': {
+                schema: schemaRef('ValidationError'),
+                examples: {
+                  inactiveVisit: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Visit must be Checked In or In Consultation to start a Session.'],
+                    },
+                  },
+                  alreadyStarted: {
+                    value: { message: 'Conflict', errors: ['Session 2 is already in progress.'] },
+                  },
+                  bookedElsewhere: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Session 2 is booked for Appointment APT-2026-0042.'],
+                    },
+                  },
+                  visitHasPlanSession: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['This Visit already has Session 1 of this Patient Treatment Plan.'],
+                    },
+                  },
+                  visitClosedConcurrently: {
+                    value: {
+                      message: 'Conflict',
+                      errors: ['Patient Treatment Plan Session is no longer available.'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '500': responseRef('InternalServerError'),
         },
       },
     },
@@ -6509,6 +8207,8 @@ export const openApiDocument = {
                     completionSource: null,
                     completedVisitId: null,
                     completedAt: null,
+                    startedVisitId: null,
+                    startedAt: null,
                     isReserved: false,
                     isBookable: true,
                     unavailableReason: null,
@@ -9103,6 +10803,9 @@ export const openApiDocument = {
       CreateVisitTypeRequest: appointmentMasterCreateSchema('Visit Type', true),
       UpdateVisitTypeRequest: appointmentMasterCreateSchema('Visit Type', true),
       VisitType: appointmentMasterSchema('CreateVisitTypeRequest'),
+      CreateAdmitSourceRequest: appointmentMasterCreateSchema('Admit Source', true),
+      UpdateAdmitSourceRequest: appointmentMasterCreateSchema('Admit Source', true),
+      AdmitSource: appointmentMasterSchema('CreateAdmitSourceRequest'),
       TreatmentSessionInput: {
         type: 'object',
         required: ['label', 'procedure', 'sessionNumber', 'durationMinutes'],
@@ -9286,12 +10989,18 @@ export const openApiDocument = {
         type: 'object',
         required: ['visitTypeId'],
         description:
-          'Send exactly one of: appointmentId (Appointment check-in, with optional doctorId when the Appointment has no Doctor), or patientId together with doctorId (Walk-in Visit).',
+          'Send exactly one of: appointmentId (Appointment check-in, with optional doctorId when the Appointment has no Doctor), or patientId with an optional doctorId (Walk-in Visit). doctorId is required only for an OPD Consultation VisitType (code `OPD`) when no Doctor comes from the Appointment.',
         properties: {
           visitTypeId: {
             type: 'integer',
             minimum: 1,
             description: 'VisitType classifying the Visit.',
+          },
+          admitSourceId: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional Admit Source recording how the Patient came to this Visit. Must be an existing, non-deleted Admit Source in the Tenant.',
           },
           appointmentId: {
             type: 'integer',
@@ -9308,7 +11017,7 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description:
-              'Required for a Walk-in Visit. Required for Appointment check-in when the Appointment has no Doctor. Must be an active Doctor.',
+              'Required only for an OPD Consultation VisitType (code `OPD`): for a Walk-in, and for an Appointment with no Doctor. Optional for every other VisitType; omit it to create the Visit without a Doctor. Ignored when the Appointment already has a Doctor. Must be an active Doctor.',
           },
           chiefComplaint: {
             type: ['string', 'null'],
@@ -9350,6 +11059,48 @@ export const openApiDocument = {
           },
         },
       },
+      AmendVisitRequest: {
+        type: 'object',
+        required: ['visitTypeId'],
+        description:
+          'Full replace of the encounter details of a Completed Visit. An omitted or null optional field is cleared.',
+        properties: {
+          doctorId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'Doctor for the Visit. Required when the amended VisitType is an OPD Consultation (code `OPD`); otherwise omit or send null to leave the Visit without a Doctor. A newly chosen Doctor must exist in the Tenant and be active; the current Doctor is kept even if since deactivated.',
+          },
+          visitTypeId: { type: 'integer', minimum: 1, description: 'VisitType identifier.' },
+          admitSourceId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description: 'Admit Source identifier. Omit or send null to clear.',
+          },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description:
+              'Purpose of Visit. Plain text or Markdown formatting from the Lexical editor. Omit, null, or empty to clear.',
+          },
+          remarks: {
+            type: ['string', 'null'],
+            description: 'Plain text or Markdown formatting. Omit, null, or empty to clear.',
+          },
+          treatmentId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'Treatment identifier. Must be sent together with treatmentSessionId; omit or send null with it to clear.',
+          },
+          treatmentSessionId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'Treatment Session identifier belonging to the selected Treatment. Omit or send null with treatmentId to clear.',
+          },
+        },
+      },
       CancelVisitRequest: {
         type: 'object',
         required: ['cancellationReason'],
@@ -9382,6 +11133,15 @@ export const openApiDocument = {
         },
       },
       VisitTypeSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string' },
+          code: { type: 'string' },
+        },
+      },
+      VisitAdmitSourceSummary: {
         type: 'object',
         required: ['id', 'name', 'code'],
         properties: {
@@ -9447,6 +11207,7 @@ export const openApiDocument = {
           'patient',
           'doctor',
           'visitType',
+          'admitSource',
           'appointment',
           'checkedInAt',
           'createdOn',
@@ -9472,11 +11233,20 @@ export const openApiDocument = {
           queueToken: {
             type: 'integer',
             minimum: 1,
-            description: 'Ordering number within the Doctor queue for this Tenant-local day.',
+            description:
+              "Ordering number within the Doctor's queue for this Tenant-local day, or within the Tenant's shared unassigned queue when the Visit has no Doctor.",
           },
           patient: schemaRef('VisitPatientSummary'),
-          doctor: schemaRef('VisitDoctorSummary'),
+          doctor: {
+            oneOf: [schemaRef('VisitDoctorSummary'), { type: 'null' }],
+            description:
+              'The Doctor for the Visit, or null when it was created without one (any VisitType except OPD Consultation).',
+          },
           visitType: schemaRef('VisitTypeSummary'),
+          admitSource: {
+            oneOf: [schemaRef('VisitAdmitSourceSummary'), { type: 'null' }],
+            description: 'How the Patient came to this Visit, or null when not recorded.',
+          },
           appointment: {
             oneOf: [schemaRef('VisitAppointmentSummary'), { type: 'null' }],
             description: 'The fulfilled Appointment, or null for a Walk-in Visit.',
@@ -9494,6 +11264,12 @@ export const openApiDocument = {
             description: 'Plain text or Markdown formatting.',
           },
           remarks: { type: ['string', 'null'], description: 'Plain text or Markdown formatting.' },
+          legacyVisitNumber: {
+            type: ['string', 'null'],
+            description:
+              'Visit number in the source system this Visit was imported from, or null for a Visit created in this system. Matches `legacyVisitNumber` on the Patient Treatment Plans prescribed in that source Visit.',
+            example: null,
+          },
           checkedInAt: { type: 'string', format: 'date-time' },
           consultationStartedAt: { type: ['string', 'null'], format: 'date-time' },
           completedAt: { type: ['string', 'null'], format: 'date-time' },
@@ -9517,15 +11293,27 @@ export const openApiDocument = {
         enum: ['CONSULTATION', 'PROCEDURE', 'INVESTIGATION', 'BED', 'CONSUMABLE', 'OTHER'],
         description: 'Fixed classification of a Charge Item.',
       },
+      ChargeItemCodeType: {
+        type: 'string',
+        enum: ['CPT', 'HCPCS', 'SERVICE', 'LOCAL'],
+        description:
+          'Code set of a Charge Item code. CPT and HCPCS are the activity codes UAE payers (DHA eClaimLink, DoH Shafafiya) accept; SERVICE is a UAE regulator service code; LOCAL is a Tenant code. A fixed system-defined set.',
+      },
       CreateChargeItemRequest: {
         type: 'object',
         required: ['name', 'code', 'category', 'unitPrice'],
         properties: {
           name: simpleMasterNameProperty(150),
           code: simpleMasterCodeProperty(
-            'Charge Item code. The API normalizes this value to uppercase.',
+            'Charge Item code. The API normalizes this value to uppercase. A CPT code must be 4 digits followed by a digit, F, T, or U (e.g. 99213); an HCPCS code must be a letter A-V followed by 4 digits (e.g. J1100). SERVICE and LOCAL codes use letters, numbers, hyphens, and underscores.',
             20
           ),
+          codeType: {
+            ...schemaRef('ChargeItemCodeType'),
+            default: 'LOCAL',
+            description:
+              'Defaults to LOCAL on create. On update, an omitted codeType keeps the stored one and the code is checked against it.',
+          },
           category: schemaRef('ChargeItemCategory'),
           unitPrice: {
             type: 'number',
@@ -9589,6 +11377,7 @@ export const openApiDocument = {
               'tenantId',
               'name',
               'code',
+              'codeType',
               'category',
               'unitPrice',
               'cashPrice',
@@ -10826,6 +12615,8 @@ export const openApiDocument = {
           'completionSource',
           'completedVisitId',
           'completedAt',
+          'startedVisitId',
+          'startedAt',
           'isReserved',
           'isBookable',
           'unavailableReason',
@@ -10851,9 +12642,18 @@ export const openApiDocument = {
           completionSource: { type: ['string', 'null'], enum: ['VISIT', 'LEGACY_IMPORT', null] },
           completedVisitId: { type: ['integer', 'null'], minimum: 1 },
           completedAt: { type: ['string', 'null'], format: 'date-time' },
+          startedVisitId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description: 'Visit in which the Session was started; null until started.',
+          },
+          startedAt: { type: ['string', 'null'], format: 'date-time' },
           isReserved: { type: 'boolean' },
           isBookable: { type: 'boolean' },
-          unavailableReason: { type: ['string', 'null'], enum: ['COMPLETED', 'RESERVED', null] },
+          unavailableReason: {
+            type: ['string', 'null'],
+            enum: ['COMPLETED', 'RESERVED', 'IN_PROGRESS', null],
+          },
           reservedAppointment: {
             type: ['object', 'null'],
             required: ['bookingNumber', 'slotDate', 'startTime', 'endTime'],
@@ -10909,6 +12709,36 @@ export const openApiDocument = {
             type: 'integer',
             minimum: 1,
             description: 'Number of additional Patient Treatment Plan Sessions to append.',
+          },
+        },
+      },
+      UpdatePatientTreatmentPlanSessionRequest: {
+        type: 'object',
+        additionalProperties: false,
+        minProperties: 1,
+        description:
+          'Send at least one field. An empty string or null clears an optional text field.',
+        properties: {
+          procedure: { type: 'string', minLength: 1, maxLength: 5000 },
+          durationMinutes: { type: ['integer', 'null'], minimum: 1, maximum: 480 },
+          setupMinutes: { type: ['integer', 'null'], minimum: 0, maximum: 480 },
+          cleaningMinutes: { type: ['integer', 'null'], minimum: 0, maximum: 480 },
+          preparation: { type: ['string', 'null'], maxLength: 5000 },
+          warning: { type: ['string', 'null'], maxLength: 5000 },
+          equipment: { type: ['string', 'null'], maxLength: 5000 },
+          roomType: { type: ['string', 'null'], maxLength: 5000 },
+          therapistSkill: { type: ['string', 'null'], maxLength: 5000 },
+        },
+      },
+      StartPatientTreatmentPlanSessionRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['visitId'],
+        properties: {
+          visitId: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Checked In or In Consultation Visit of the same Patient.',
           },
         },
       },
@@ -11138,7 +12968,9 @@ export const openApiDocument = {
             type: 'string',
             minLength: 1,
             maxLength: 10,
-            description: 'ICD-10 diagnosis code. The API normalizes this value to uppercase.',
+            pattern: '^[A-TV-Z][0-9][0-9AB](\\.[0-9A-TV-Z]{1,4})?$',
+            description:
+              'ICD-10-CM diagnosis code, e.g. M54.5 or S72.001A, as required on UAE claims. The API trims and uppercases the value before checking the format on create and update.',
           },
           title: {
             type: 'string',
@@ -11173,6 +13005,729 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      CreateAyurvedaDiagnosisCodeRequest: {
+        type: 'object',
+        required: ['code', 'name'],
+        properties: {
+          code: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 20,
+            pattern: '^[A-Za-z0-9.-]+$',
+            description:
+              'Tenant Ayurveda diagnosis code: letters, numbers, hyphens, and dots. The API trims and uppercases it; it is unique per Tenant, ignoring case.',
+          },
+          name: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 255,
+            description: 'Roga name, e.g. Amavata.',
+          },
+          englishName: {
+            type: ['string', 'null'],
+            maxLength: 255,
+            description: 'Optional English equivalent; blank is stored as null.',
+          },
+          category: {
+            type: ['string', 'null'],
+            maxLength: 100,
+            description: 'Optional grouping, e.g. Vatavyadhi; blank is stored as null.',
+          },
+          icdDiagnosisCodeId: {
+            type: ['integer', 'null'],
+            minimum: 1,
+            description:
+              'ICD-10-CM Diagnosis Code claimed for this Roga. Must exist in the Tenant. Omit or send null for no mapping.',
+          },
+        },
+      },
+      UpdateAyurvedaDiagnosisCodeRequest: schemaRef('CreateAyurvedaDiagnosisCodeRequest'),
+      DiagnosisCodeSummary: {
+        type: 'object',
+        required: ['id', 'code', 'title'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          code: { type: 'string', example: 'M06.9' },
+          title: { type: 'string', example: 'Rheumatoid arthritis, unspecified' },
+        },
+      },
+      AyurvedaDiagnosisCode: {
+        type: 'object',
+        required: [
+          'id',
+          'code',
+          'name',
+          'tenantId',
+          'createdOn',
+          'modifiedOn',
+          'category',
+          'englishName',
+          'icdDiagnosisCode',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          code: { type: 'string', example: 'AYU-AMV' },
+          name: { type: 'string', example: 'Amavata' },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the active authenticated Session.',
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+          category: { type: ['string', 'null'], example: 'Vatavyadhi' },
+          englishName: { type: ['string', 'null'], example: 'Rheumatoid arthritis' },
+          icdDiagnosisCode: {
+            oneOf: [schemaRef('DiagnosisCodeSummary'), { type: 'null' }],
+            description:
+              'Mapped ICD-10-CM Diagnosis Code; null when unmapped or the mapped code was deleted.',
+          },
+        },
+        example: {
+          id: 3,
+          code: 'AYU-AMV',
+          name: 'Amavata',
+          tenantId: 'org_apollo',
+          createdOn: '2026-11-16T09:30:00.000Z',
+          modifiedOn: '2026-11-16T09:30:00.000Z',
+          category: 'Vatavyadhi',
+          englishName: 'Rheumatoid arthritis',
+          icdDiagnosisCode: icd10CmRheumatoidArthritis,
+        },
+      },
+      VisitDiagnosisCodeSystem: {
+        type: 'string',
+        enum: ['ICD10CM', 'AYURVEDA'],
+        description:
+          'Code system of a Visit diagnosis: ICD-10-CM (required on UAE claims) or the Tenant Ayurveda catalogue. A fixed system-defined set.',
+      },
+      VisitDiagnosisType: {
+        type: 'string',
+        enum: ['PRINCIPAL', 'SECONDARY'],
+        description:
+          'PRINCIPAL is the main reason for the Visit (exactly one per code system with entries); SECONDARY covers the rest.',
+      },
+      SaveVisitDiagnosesRequest: {
+        type: 'object',
+        required: ['diagnoses'],
+        properties: {
+          diagnoses: {
+            type: 'array',
+            maxItems: 20,
+            description: 'Full replacement list in display order; an empty list clears it.',
+            items: {
+              type: 'object',
+              required: ['codeSystem', 'diagnosisType'],
+              properties: {
+                codeSystem: schemaRef('VisitDiagnosisCodeSystem'),
+                diagnosisCodeId: {
+                  type: 'integer',
+                  minimum: 1,
+                  description: 'Required for ICD10CM entries; ignored for AYURVEDA.',
+                },
+                ayurvedaDiagnosisCodeId: {
+                  type: 'integer',
+                  minimum: 1,
+                  description: 'Required for AYURVEDA entries; ignored for ICD10CM.',
+                },
+                diagnosisType: schemaRef('VisitDiagnosisType'),
+                notes: { type: ['string', 'null'], maxLength: 500 },
+              },
+            },
+          },
+        },
+      },
+      VisitSummary: {
+        type: 'object',
+        description: 'Patient copy of one Visit Summary.',
+        required: [
+          'notes',
+          'visit',
+          'tenant',
+          'patient',
+          'timeZone',
+          'billing',
+          'vitalSign',
+          'allergies',
+          'diagnoses',
+          'generatedAt',
+          'generatedBy',
+          'medications',
+          'treatmentGiven',
+          'treatmentPlans',
+          'nextAppointment',
+          'billingIncluded',
+        ],
+        properties: {
+          timeZone: { type: 'string', example: 'Asia/Dubai' },
+          generatedAt: { type: 'string', format: 'date-time' },
+          generatedBy: {
+            type: ['string', 'null'],
+            description: 'Name of the signed-in user who generated the summary.',
+          },
+          billingIncluded: {
+            type: 'boolean',
+            description: 'False when the user lacks `invoice:read`; `billing` is then null.',
+          },
+          tenant: {
+            type: 'object',
+            required: ['name', 'logo'],
+            properties: { name: { type: 'string' }, logo: { type: ['string', 'null'] } },
+          },
+          patient: {
+            type: 'object',
+            required: ['id', 'mrn', 'phone', 'title', 'gender', 'firstName', 'lastName'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              mrn: { type: 'string', example: 'MRN-1284' },
+              phone: { type: 'string' },
+              title: { type: ['string', 'null'] },
+              gender: { type: ['string', 'null'] },
+              lastName: { type: 'string' },
+              firstName: { type: 'string' },
+              middleName: { type: ['string', 'null'] },
+              bloodGroup: { type: ['string', 'null'] },
+              dateOfBirth: { type: ['string', 'null'], format: 'date' },
+            },
+          },
+          visit: {
+            type: 'object',
+            required: ['id', 'status', 'visitDate', 'visitNumber', 'checkedInAt', 'visitType'],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              status: schemaRef('VisitStatus'),
+              visitDate: { type: 'string', description: 'DD-MM-YYYY', example: '18-11-2026' },
+              doctorName: { type: ['string', 'null'] },
+              visitNumber: { type: 'string', example: 'VST-1847' },
+              checkedInAt: { type: 'string', format: 'date-time' },
+              completedAt: { type: ['string', 'null'], format: 'date-time' },
+              cancelledAt: { type: ['string', 'null'], format: 'date-time' },
+              bookingNumber: {
+                type: ['string', 'null'],
+                description: 'Booking Number of the fulfilled Appointment, or null for a Walk-in.',
+              },
+              chiefComplaint: { type: ['string', 'null'] },
+              cancellationReason: { type: ['string', 'null'] },
+              consultationStartedAt: { type: ['string', 'null'], format: 'date-time' },
+              visitType: {
+                type: 'object',
+                required: ['name', 'code'],
+                properties: { name: { type: 'string' }, code: { type: 'string' } },
+              },
+            },
+          },
+          allergies: {
+            type: 'array',
+            description: 'Active allergies, most severe first.',
+            items: {
+              type: 'object',
+              required: ['id', 'name', 'reaction', 'severity'],
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string', description: 'Allergen name or free-text substance.' },
+                reaction: { type: ['string', 'null'] },
+                severity: { type: 'string', enum: ['mild', 'moderate', 'severe'] },
+              },
+            },
+          },
+          vitalSign: {
+            description: 'Latest Vital Signs set recorded in this Visit, or null.',
+            oneOf: [
+              {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  bmi: { type: ['number', 'null'] },
+                  spo2: { type: ['integer', 'null'] },
+                  heightCm: { type: ['number', 'null'] },
+                  weightKg: { type: ['number', 'null'] },
+                  systolic: { type: ['integer', 'null'] },
+                  pulseBpm: { type: ['integer', 'null'] },
+                  respRate: { type: ['integer', 'null'] },
+                  diastolic: { type: ['integer', 'null'] },
+                  painScore: { type: ['integer', 'null'] },
+                  recordedAt: { type: 'string', format: 'date-time' },
+                  temperatureC: { type: ['number', 'null'] },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+          notes: {
+            type: 'array',
+            description: 'Signed Clinical Notes of this Visit, oldest first.',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                plan: { type: ['string', 'null'] },
+                signedAt: { type: ['string', 'null'], format: 'date-time' },
+                amendedAt: { type: ['string', 'null'], format: 'date-time' },
+                objective: { type: ['string', 'null'] },
+                subjective: { type: ['string', 'null'] },
+                assessment: { type: ['string', 'null'] },
+                authorName: { type: ['string', 'null'] },
+                noteType: {
+                  type: 'object',
+                  properties: { name: { type: 'string' }, code: { type: 'string' } },
+                },
+              },
+            },
+          },
+          diagnoses: { type: 'array', items: schemaRef('VisitDiagnosis') },
+          treatmentGiven: {
+            description: 'Patient Treatment Plan Session started or completed in this Visit.',
+            oneOf: [
+              {
+                type: 'object',
+                properties: {
+                  planId: { type: 'integer' },
+                  label: { type: ['string', 'null'] },
+                  procedure: { type: ['string', 'null'] },
+                  sessionNumber: { type: 'integer' },
+                  treatmentName: { type: 'string' },
+                  totalSessions: { type: 'integer' },
+                  plannedMinutes: { type: ['integer', 'null'] },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+          treatmentPlans: {
+            type: 'array',
+            description:
+              'Patient Treatment Plans held by the end of this Visit that are open or were worked on in it.',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                status: {
+                  type: 'string',
+                  enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'STOPPED'],
+                },
+                treatmentName: { type: 'string' },
+                totalSessions: { type: 'integer' },
+                completedSessions: { type: 'integer' },
+                sessionStructure: { type: 'string', enum: ['REPEATABLE', 'SEQUENCED'] },
+              },
+            },
+          },
+          medications: {
+            type: 'array',
+            description: 'Active medications at the time the summary is generated.',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                dose: { type: ['string', 'null'] },
+                route: { type: ['string', 'null'] },
+                drugName: { type: 'string' },
+                frequency: { type: ['string', 'null'] },
+              },
+            },
+          },
+          nextAppointment: {
+            description: 'Next Scheduled or Confirmed Appointment after the Visit date, or null.',
+            oneOf: [
+              {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  slotDate: { type: 'string', format: 'date' },
+                  startTime: { type: ['string', 'null'], example: '09:30' },
+                  statusName: { type: 'string' },
+                  doctorName: { type: ['string', 'null'] },
+                  bookingNumber: { type: 'string' },
+                  treatmentName: { type: ['string', 'null'] },
+                  sessionNumber: { type: ['integer', 'null'] },
+                  totalSessions: { type: ['integer', 'null'] },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+          billing: {
+            description:
+              'Latest non-Void Invoice of this Visit; null when there is none or billing is not included.',
+            oneOf: [
+              {
+                type: 'object',
+                properties: {
+                  status: schemaRef('InvoiceStatus'),
+                  subtotal: { type: 'number' },
+                  grandTotal: { type: 'number' },
+                  amountPaid: { type: 'number' },
+                  balanceDue: { type: 'number' },
+                  invoiceNumber: { type: 'string', example: 'INV-1953' },
+                  discountAmount: { type: 'number' },
+                  lines: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        amount: { type: 'number' },
+                        quantity: { type: 'number' },
+                        unitPrice: { type: 'number' },
+                        description: { type: 'string' },
+                      },
+                    },
+                  },
+                  payments: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        amount: { type: 'number' },
+                        method: schemaRef('PaymentMethod'),
+                        receivedAt: { type: 'string', format: 'date-time' },
+                        receiptNumber: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+        },
+      },
+      ConsolidatedPatientReport: {
+        type: 'object',
+        description: 'Course of care of one Patient across a report period.',
+        required: [
+          'tenant',
+          'period',
+          'visits',
+          'patient',
+          'timeZone',
+          'diagnoses',
+          'latestPlan',
+          'generatedAt',
+          'generatedBy',
+          'medications',
+          'chiefComplaint',
+          'treatmentPlans',
+          'consultingDoctor',
+        ],
+        properties: {
+          timeZone: { type: 'string', example: 'Asia/Dubai' },
+          generatedAt: { type: 'string', format: 'date-time' },
+          generatedBy: {
+            type: ['string', 'null'],
+            description: 'Name of the signed-in user who generated the report.',
+          },
+          tenant: {
+            type: 'object',
+            required: ['name', 'logo'],
+            properties: { name: { type: 'string' }, logo: { type: ['string', 'null'] } },
+          },
+          period: {
+            type: 'object',
+            description: 'The requested report period, both ends inclusive.',
+            required: ['fromDate', 'toDate'],
+            properties: {
+              toDate: { type: 'string', description: 'DD-MM-YYYY', example: '31-10-2026' },
+              fromDate: { type: 'string', description: 'DD-MM-YYYY', example: '01-10-2026' },
+            },
+          },
+          patient: {
+            type: 'object',
+            required: [
+              'id',
+              'mrn',
+              'city',
+              'phone',
+              'state',
+              'title',
+              'gender',
+              'lastName',
+              'firstName',
+              'middleName',
+              'bloodGroup',
+              'dateOfBirth',
+              'registeredOn',
+            ],
+            properties: {
+              id: { type: 'integer', minimum: 1 },
+              mrn: { type: 'string', example: 'MRN-1302' },
+              city: { type: ['string', 'null'] },
+              phone: { type: 'string' },
+              state: { type: ['string', 'null'], description: 'State name.' },
+              title: { type: ['string', 'null'] },
+              gender: { type: ['string', 'null'] },
+              lastName: { type: 'string' },
+              firstName: { type: 'string' },
+              middleName: { type: ['string', 'null'] },
+              bloodGroup: { type: ['string', 'null'] },
+              dateOfBirth: { type: ['string', 'null'], format: 'date' },
+              registeredOn: { type: 'string', format: 'date-time' },
+            },
+          },
+          consultingDoctor: {
+            description: 'Doctor of the latest Visit in the period that had one, or null.',
+            oneOf: [
+              {
+                type: 'object',
+                required: ['name', 'specialtyName', 'qualifications'],
+                properties: {
+                  name: { type: 'string' },
+                  specialtyName: { type: ['string', 'null'] },
+                  qualifications: { type: ['string', 'null'], example: 'BAMS, MD (Ayu)' },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+          chiefComplaint: {
+            type: ['string', 'null'],
+            description: 'Chief complaint of the earliest Visit in the period that recorded one.',
+          },
+          diagnoses: {
+            type: 'array',
+            description:
+              'Each Visit Diagnosis once across the period, in the order first recorded.',
+            items: {
+              type: 'object',
+              required: [
+                'code',
+                'title',
+                'codeSystem',
+                'englishName',
+                'diagnosisType',
+                'firstRecordedOn',
+              ],
+              properties: {
+                code: { type: 'string' },
+                title: { type: 'string' },
+                codeSystem: schemaRef('VisitDiagnosisCodeSystem'),
+                englishName: { type: ['string', 'null'] },
+                diagnosisType: schemaRef('VisitDiagnosisType'),
+                firstRecordedOn: {
+                  type: 'string',
+                  description: 'Visit date it was first recorded on, DD-MM-YYYY.',
+                  example: '02-10-2026',
+                },
+              },
+            },
+          },
+          treatmentPlans: {
+            type: 'array',
+            description:
+              'Patient Treatment Plans worked on in the period, plus Pending and In Progress plans that existed by the period end.',
+            items: {
+              type: 'object',
+              required: [
+                'id',
+                'status',
+                'procedures',
+                'treatmentName',
+                'totalSessions',
+                'sessionsInPeriod',
+                'completedSessions',
+              ],
+              properties: {
+                id: { type: 'integer' },
+                status: {
+                  type: 'string',
+                  enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'STOPPED'],
+                },
+                procedures: {
+                  type: 'array',
+                  description: 'Distinct procedures across the plan sessions.',
+                  items: { type: 'string' },
+                },
+                treatmentName: { type: 'string' },
+                totalSessions: { type: 'integer' },
+                sessionsInPeriod: {
+                  type: 'integer',
+                  description: 'Sessions completed in Visits within the period.',
+                },
+                completedSessions: {
+                  type: 'integer',
+                  description: 'Sessions completed overall.',
+                },
+              },
+            },
+          },
+          medications: {
+            type: 'array',
+            description:
+              'Medications taken at any time in the period. A stopped or completed medication without an end date is treated as ending when it was last changed.',
+            items: {
+              type: 'object',
+              required: [
+                'id',
+                'dose',
+                'route',
+                'status',
+                'endDate',
+                'drugName',
+                'frequency',
+                'startDate',
+              ],
+              properties: {
+                id: { type: 'integer' },
+                dose: { type: ['string', 'null'] },
+                route: { type: ['string', 'null'] },
+                status: { type: 'string', enum: ['active', 'stopped', 'completed'] },
+                endDate: { type: ['string', 'null'], format: 'date' },
+                drugName: { type: 'string' },
+                frequency: { type: ['string', 'null'] },
+                startDate: { type: ['string', 'null'], format: 'date' },
+              },
+            },
+          },
+          visits: {
+            type: 'array',
+            description: 'Visits in the period, oldest first. Cancelled Visits are left out.',
+            items: {
+              type: 'object',
+              required: [
+                'id',
+                'notes',
+                'status',
+                'visitDate',
+                'painScore',
+                'treatments',
+                'doctorName',
+                'visitNumber',
+                'chiefComplaint',
+              ],
+              properties: {
+                id: { type: 'integer' },
+                status: schemaRef('VisitStatus'),
+                visitDate: { type: 'string', description: 'DD-MM-YYYY', example: '02-10-2026' },
+                painScore: {
+                  type: ['integer', 'null'],
+                  description:
+                    'Pain score from the latest Vital Signs set of this Visit that recorded one.',
+                },
+                doctorName: { type: ['string', 'null'] },
+                visitNumber: { type: 'string', example: 'VST-1014' },
+                chiefComplaint: { type: ['string', 'null'] },
+                treatments: {
+                  type: 'array',
+                  description:
+                    'Patient Treatment Plan Sessions started or completed in this Visit.',
+                  items: {
+                    type: 'object',
+                    required: [
+                      'label',
+                      'planId',
+                      'completed',
+                      'procedure',
+                      'sessionNumber',
+                      'treatmentName',
+                      'totalSessions',
+                    ],
+                    properties: {
+                      label: { type: ['string', 'null'] },
+                      planId: { type: 'integer' },
+                      completed: { type: 'boolean' },
+                      procedure: { type: ['string', 'null'] },
+                      sessionNumber: { type: 'integer' },
+                      treatmentName: { type: 'string' },
+                      totalSessions: { type: 'integer' },
+                    },
+                  },
+                },
+                notes: {
+                  type: 'array',
+                  description: 'Signed Clinical Notes of this Visit; drafts are never included.',
+                  items: {
+                    type: 'object',
+                    required: [
+                      'id',
+                      'plan',
+                      'visitId',
+                      'signedAt',
+                      'objective',
+                      'subjective',
+                      'assessment',
+                      'authorName',
+                      'noteType',
+                    ],
+                    properties: {
+                      id: { type: 'integer' },
+                      plan: { type: ['string', 'null'] },
+                      visitId: { type: 'integer' },
+                      signedAt: { type: ['string', 'null'], format: 'date-time' },
+                      objective: { type: ['string', 'null'] },
+                      subjective: { type: ['string', 'null'] },
+                      assessment: { type: ['string', 'null'] },
+                      authorName: { type: ['string', 'null'] },
+                      noteType: {
+                        type: 'object',
+                        required: ['name', 'code'],
+                        properties: { name: { type: 'string' }, code: { type: 'string' } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          latestPlan: {
+            description:
+              'Plan text of the latest signed Clinical Note in the period that has one, or null.',
+            oneOf: [
+              {
+                type: 'object',
+                required: ['plan', 'authorName', 'visitNumber'],
+                properties: {
+                  plan: { type: 'string' },
+                  authorName: { type: ['string', 'null'] },
+                  visitNumber: { type: 'string', example: 'VST-1098' },
+                },
+              },
+              { type: 'null' },
+            ],
+          },
+        },
+      },
+      VisitDiagnosis: {
+        type: 'object',
+        required: [
+          'id',
+          'visitId',
+          'codeSystem',
+          'diagnosisType',
+          'sortOrder',
+          'notes',
+          'code',
+          'title',
+          'englishName',
+          'diagnosisCodeId',
+          'ayurvedaDiagnosisCodeId',
+          'icdMapping',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          visitId: { type: 'integer', minimum: 1 },
+          codeSystem: schemaRef('VisitDiagnosisCodeSystem'),
+          diagnosisType: schemaRef('VisitDiagnosisType'),
+          sortOrder: { type: 'integer', minimum: 1, description: 'Position in the saved list.' },
+          notes: { type: ['string', 'null'], maxLength: 500 },
+          code: {
+            type: 'string',
+            description: 'Code of the referenced master row, even if it was later deleted.',
+          },
+          title: { type: 'string', description: 'ICD-10-CM title, or the Ayurveda (Roga) name.' },
+          englishName: {
+            type: ['string', 'null'],
+            description: 'Ayurveda English name; null for ICD-10-CM rows.',
+          },
+          diagnosisCodeId: { type: ['integer', 'null'] },
+          ayurvedaDiagnosisCodeId: { type: ['integer', 'null'] },
+          icdMapping: {
+            oneOf: [schemaRef('DiagnosisCodeSummary'), { type: 'null' }],
+            description:
+              "The Ayurveda code's current ICD-10-CM mapping; null for ICD-10-CM rows or when unmapped.",
+          },
+        },
       },
       CreateAllergenRequest: {
         type: 'object',
@@ -11386,6 +13941,33 @@ export const openApiDocument = {
         },
       },
       UpdatePatientVitalSignRequest: schemaRef('CreatePatientVitalSignRequest'),
+      AmendVisitVitalSignRequest: {
+        type: 'object',
+        description:
+          'Full replace of a Vital Sign reading on a Completed Visit. At least one measurement must be supplied; an omitted, null, or blank measurement is cleared. BMI is computed server-side. visitId and admissionId are not accepted: the Visit link cannot change.',
+        properties: {
+          recordedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            description: 'Corrected reading time. Omit or send null to keep the original time.',
+          },
+          heightCm: { type: ['number', 'null'], minimum: 0, maximum: 300 },
+          weightKg: { type: ['number', 'null'], minimum: 0, maximum: 700 },
+          systolic: { type: ['integer', 'null'], minimum: 0, maximum: 400 },
+          diastolic: { type: ['integer', 'null'], minimum: 0, maximum: 400 },
+          pulseBpm: { type: ['integer', 'null'], minimum: 0, maximum: 400 },
+          respRate: { type: ['integer', 'null'], minimum: 0, maximum: 150 },
+          temperatureC: { type: ['number', 'null'], minimum: 20, maximum: 45 },
+          spo2: { type: ['integer', 'null'], minimum: 0, maximum: 100 },
+          painScore: { type: ['integer', 'null'], minimum: 0, maximum: 10 },
+          notes: {
+            type: 'string',
+            maxLength: 2000,
+            description:
+              'Plain text or Markdown formatting from the Lexical editor. Omit or empty to clear.',
+          },
+        },
+      },
       PatientVitalSign: {
         type: 'object',
         required: [
@@ -11515,6 +14097,35 @@ export const openApiDocument = {
         },
       },
       UpdateClinicalNoteRequest: schemaRef('CreateClinicalNoteRequest'),
+      AmendVisitClinicalNoteRequest: {
+        type: 'object',
+        required: ['noteTypeId'],
+        description:
+          'Full replace of the note type and SOAP sections of a Clinical Note on a Completed Visit. At least one SOAP section must be non-empty; an omitted or blank section is cleared. visitId and admissionId are not accepted: the Visit link cannot change. Status and signedAt are preserved.',
+        properties: {
+          noteTypeId: { type: 'integer', minimum: 1 },
+          subjective: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          objective: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          assessment: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+          plan: {
+            type: 'string',
+            maxLength: 20000,
+            description: 'Plain text or Markdown formatting.',
+          },
+        },
+      },
       ClinicalNote: {
         type: 'object',
         required: [
@@ -11556,6 +14167,20 @@ export const openApiDocument = {
           },
           authorUserId: { type: 'string' },
           recordedByUserId: { type: 'string' },
+          amendedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            description:
+              'When the note was last amended on a Completed Visit; null if never amended.',
+          },
+          amendedByUserId: {
+            type: ['string', 'null'],
+            description: 'User who last amended the note; null if never amended.',
+          },
+          amendedByUserName: {
+            type: ['string', 'null'],
+            description: 'Display name of amendedByUserId; null if never amended.',
+          },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },
         },

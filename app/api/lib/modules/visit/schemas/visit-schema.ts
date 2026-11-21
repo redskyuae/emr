@@ -93,15 +93,18 @@ const remarksSchema = z
   .transform((value) => (value === null || value === '' ? undefined : value));
 
 // Check-in has two shapes: fulfil an Appointment, or a Walk-in that names the
-// Patient and Doctor directly. Supplying appointmentId together with patientId
-// is ambiguous about which Patient the Visit belongs to, so it is rejected.
-// A Doctorless Procedure Appointment may send doctorId with appointmentId.
+// Patient (and optionally the Doctor) directly. Supplying appointmentId together
+// with patientId is ambiguous about which Patient the Visit belongs to, so it is
+// rejected. A Doctorless Appointment may send doctorId with appointmentId.
+// Whether a Doctor is required depends on the Visit Type, so the validator
+// enforces it once the Visit Type is resolved.
 export const checkInVisitSchema = z
   .object({
     appointmentId: positiveIdSchema('Appointment ID').optional(),
     patientId: positiveIdSchema('Patient ID').optional(),
     doctorId: positiveIdSchema('Doctor ID').optional(),
     visitTypeId: positiveIdSchema('Visit type ID'),
+    admitSourceId: positiveIdSchema('Admit source ID').optional(),
     chiefComplaint: chiefComplaintSchema,
     remarks: remarksSchema,
     documents: z
@@ -117,19 +120,13 @@ export const checkInVisitSchema = z
       context.addIssue({
         code: 'custom',
         message:
-          'Provide either appointmentId for an Appointment check-in or patientId and doctorId for a Walk-in Visit, not both.',
+          'Provide either appointmentId for an Appointment check-in or patientId for a Walk-in Visit, not both.',
       });
       return;
     }
 
-    if (!hasAppointment) {
-      if (data.patientId === undefined) {
-        context.addIssue({ code: 'custom', message: 'Patient ID is required for a Walk-in Visit' });
-      }
-
-      if (data.doctorId === undefined) {
-        context.addIssue({ code: 'custom', message: 'Doctor ID is required for a Walk-in Visit' });
-      }
+    if (!hasAppointment && data.patientId === undefined) {
+      context.addIssue({ code: 'custom', message: 'Patient ID is required for a Walk-in Visit' });
     }
   });
 
@@ -159,6 +156,40 @@ export const updateVisitSchema = z
     }
   });
 
+// Amending a Completed Visit is a full replace: the client always sends the
+// whole form, so an absent optional field means "cleared", not "unchanged".
+export const amendVisitSchema = z
+  .object({
+    remarks: remarksSchema,
+    doctorId: z.union([positiveIdSchema('Doctor ID'), z.null()]).optional(),
+    visitTypeId: positiveIdSchema('Visit type ID'),
+    chiefComplaint: chiefComplaintSchema,
+    treatmentId: optionalClearableId(treatmentIdSchema),
+    admitSourceId: z.union([positiveIdSchema('Admit source ID'), z.null()]).optional(),
+    treatmentSessionId: optionalClearableId(treatmentSessionIdSchema),
+  })
+  .superRefine((data, context) => {
+    const hasTreatment = data.treatmentId != null;
+    const hasSession = data.treatmentSessionId != null;
+
+    if (hasTreatment !== hasSession) {
+      context.addIssue({
+        code: 'custom',
+        path: hasTreatment ? ['treatmentSessionId'] : ['treatmentId'],
+        message: 'Treatment and Session must be provided together.',
+      });
+    }
+  })
+  .transform((data) => ({
+    remarks: data.remarks,
+    doctorId: data.doctorId ?? null,
+    visitTypeId: data.visitTypeId,
+    treatmentId: data.treatmentId ?? null,
+    admitSourceId: data.admitSourceId ?? null,
+    chiefComplaint: data.chiefComplaint,
+    treatmentSessionId: data.treatmentSessionId ?? null,
+  }));
+
 export const cancelVisitSchema = z.object({
   cancellationReason: z
     .string({ error: 'Cancellation reason is required' })
@@ -167,26 +198,55 @@ export const cancelVisitSchema = z.object({
     .max(255, 'Cancellation reason must be at most 255 characters'),
 });
 
-export const listVisitsSchema = z.object({
-  visitDate: visitDateSchema.optional(),
+// Range bounds for searching past Visits; inclusive on both ends.
+const dateFilterSchema = (fieldName: string) =>
+  z.string().transform((value, context) => {
+    const isoDate = toIsoDate(value.trim());
+
+    if (!isoDate) {
+      context.addIssue({ code: 'custom', message: `${fieldName} must be in DD-MM-YYYY format` });
+      return z.NEVER;
+    }
+
+    return isoDate;
+  });
+
+export const listVisitsSchema = z
+  .object({
+    visitDate: visitDateSchema.optional(),
+    toDate: dateFilterSchema('To date').optional(),
+    fromDate: dateFilterSchema('From date').optional(),
+    doctorId: positiveIdSchema('Doctor ID').optional(),
+    patientId: positiveIdSchema('Patient ID').optional(),
+    visitTypeId: positiveIdSchema('Visit Type ID').optional(),
+    status: z.enum(VISIT_STATUSES, { error: 'Status is Invalid.' }).optional(),
+    query: z.string().trim().max(100, 'Search must be at most 100 characters').optional(),
+    page: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().optional(),
+  })
+  .refine((filters) => !filters.fromDate || !filters.toDate || filters.fromDate <= filters.toDate, {
+    message: 'From date must be on or before To date',
+    path: ['toDate'],
+  });
+
+// The Visits board tiles count one day's queue, optionally for one Doctor.
+export const visitStatusCountsSchema = z.object({
+  visitDate: visitDateSchema,
   doctorId: positiveIdSchema('Doctor ID').optional(),
-  patientId: positiveIdSchema('Patient ID').optional(),
-  status: z.enum(VISIT_STATUSES, { error: 'Status is Invalid.' }).optional(),
-  query: z.string().trim().optional(),
-  page: z.coerce.number().int().positive().optional(),
-  limit: z.coerce.number().int().positive().optional(),
 });
 
 export type CheckInVisitInput = z.infer<typeof checkInVisitSchema>;
 export type UpdateVisitInput = z.infer<typeof updateVisitSchema>;
+export type AmendVisitInput = z.infer<typeof amendVisitSchema>;
 export type CancelVisitInput = z.infer<typeof cancelVisitSchema>;
 export type ListVisitsInput = z.infer<typeof listVisitsSchema>;
 
 export type ValidatedCheckInVisitData = {
   tenantId: string;
   patientId: number;
-  doctorId: number;
+  doctorId: number | null;
   visitTypeId: number;
+  admitSourceId?: number;
   appointmentId?: number;
   treatmentId?: number;
   treatmentSessionId?: number;
@@ -197,6 +257,12 @@ export type ValidatedCheckInVisitData = {
 };
 
 export type VisitListParams = ListVisitsInput & { tenantId: string };
+
+export type VisitStatusCountsParams = z.infer<typeof visitStatusCountsSchema> & {
+  tenantId: string;
+};
+
+export type VisitStatusCounts = Record<VisitStatus, number>;
 
 export type VisitPatientSummary = {
   id: number;
@@ -217,6 +283,12 @@ export type VisitTypeSummary = {
   code: string;
 };
 
+type VisitAdmitSourceSummary = {
+  id: number;
+  name: string;
+  code: string;
+};
+
 export type VisitAppointmentSummary = {
   id: number;
   bookingNumber: string;
@@ -231,6 +303,7 @@ export type Visit = {
   queueToken: number;
   chiefComplaint: string | null;
   remarks: string | null;
+  legacyVisitNumber: string | null;
   checkedInAt: Date;
   consultationStartedAt: Date | null;
   completedAt: Date | null;
@@ -239,8 +312,10 @@ export type Visit = {
   createdOn: Date;
   modifiedOn: Date;
   patient: VisitPatientSummary;
-  doctor: VisitDoctorSummary;
+  /** Null when the Visit was created without a Doctor (any Visit Type but OPD Consultation). */
+  doctor: VisitDoctorSummary | null;
   visitType: VisitTypeSummary;
+  admitSource: VisitAdmitSourceSummary | null;
   appointment: VisitAppointmentSummary | null;
   treatment: TreatmentSummary | null;
   treatmentSession: TreatmentSessionSummary | null;

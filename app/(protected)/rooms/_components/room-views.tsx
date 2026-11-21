@@ -1,4 +1,5 @@
-import { BedDouble, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
+import { PiBedLight } from 'react-icons/pi';
 
 import type { Room } from '@/app/api/lib/modules/room/schemas/room-schema';
 import { Badge } from '@/components/ui/badge';
@@ -59,7 +60,7 @@ function RoomIcon({ color }: { color: string }) {
       className="flex size-10 shrink-0 items-center justify-center rounded-full"
       style={{ backgroundColor: color + '22' }}
     >
-      <BedDouble className="size-5" style={{ color }} />
+      <PiBedLight className="size-5" style={{ color }} />
     </div>
   );
 }
@@ -90,19 +91,19 @@ function RoomActionsMenu({
           size="icon-sm"
           aria-label={`Actions for Room ${room.roomNumber}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(room)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(room)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -113,7 +114,7 @@ function RoomActionsMenu({
 
 export function RoomTableView({ rooms, canEdit, canDelete, onEdit, onDelete }: RoomViewProps) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[860px] table-fixed">
@@ -168,8 +169,8 @@ export function RoomCardView({ rooms, canEdit, canDelete, onEdit, onDelete }: Ro
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {rooms.map((room) => (
-        <Card key={room.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={room.id}>
+          <CardContent className="space-y-3">
             <div className="flex items-start justify-between gap-2">
               <RoomIcon color={room.roomType.color} />
               <RoomStatusBadge status={room.status} />
@@ -192,7 +193,7 @@ export function RoomCardView({ rooms, canEdit, canDelete, onEdit, onDelete }: Ro
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(room)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -204,7 +205,7 @@ export function RoomCardView({ rooms, canEdit, canDelete, onEdit, onDelete }: Ro
                     onClick={() => onDelete(room)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}
@@ -221,8 +222,8 @@ export function RoomListView({ rooms, canEdit, canDelete, onEdit, onDelete }: Ro
   return (
     <div className="space-y-3">
       {rooms.map((room) => (
-        <Card key={room.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={room.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <RoomIcon color={room.roomType.color} />
               <div className="min-w-0">

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, UserRoundX } from 'lucide-react';
+import { PiArrowLeftLight, PiUserMinusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { PatientForm } from '@/app/(protected)/patients/_components/patient-form';
@@ -31,14 +31,14 @@ export function PatientRegistrationImpl() {
       <div className="space-y-4">
         <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
           <Link href="/patients">
-            <ArrowLeft className="size-4" />
+            <PiArrowLeftLight className="size-4" />
             Patients
           </Link>
         </Button>
         <Empty className="min-h-72">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <UserRoundX className="size-5" />
+              <PiUserMinusLight className="size-5" />
             </EmptyMedia>
             <EmptyTitle>You don&apos;t have permission to register Patients.</EmptyTitle>
             <EmptyDescription>Contact a Tenant Admin if you need access.</EmptyDescription>

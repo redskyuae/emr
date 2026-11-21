@@ -31,6 +31,8 @@ function validateAmount(value: string, field: string, context: z.RefinementCtx) 
   return amount;
 }
 
+export const CHIEF_COMPLAINT_MAX = 500;
+
 export const createVisitFormSchema = z
   .object({
     mode: z.enum(['appointment', 'walk-in']),
@@ -38,7 +40,14 @@ export const createVisitFormSchema = z
     patientId: z.string(),
     doctorId: z.string(),
     visitTypeId: z.string().min(1, 'Visit type is required.'),
-    chiefComplaint: z.string().trim().max(500, 'Chief complaint must be at most 500 characters.'),
+    admitSourceId: z.string(),
+    chiefComplaint: z
+      .string()
+      .trim()
+      .max(
+        CHIEF_COMPLAINT_MAX,
+        `Chief complaint must be at most ${CHIEF_COMPLAINT_MAX} characters.`
+      ),
     remarks: z.string().trim(),
     createInvoice: z.boolean(),
     paymentTiming: z.enum(['NOW', 'LATER']),
@@ -63,9 +72,8 @@ export const createVisitFormSchema = z
     if (values.mode === 'walk-in' && !values.patientId) {
       context.addIssue({ code: 'custom', path: ['patientId'], message: 'Patient is required.' });
     }
-    if (values.mode === 'walk-in' && !values.doctorId) {
-      context.addIssue({ code: 'custom', path: ['doctorId'], message: 'Doctor is required.' });
-    }
+    // Whether a Doctor is required depends on the Visit Type's code, which this
+    // schema cannot see; the page enforces it on submit (visitTypeRequiresDoctor).
 
     if (!values.createInvoice) return;
 

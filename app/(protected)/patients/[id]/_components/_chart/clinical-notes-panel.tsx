@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText } from 'lucide-react';
+import { CiFileOn } from 'react-icons/ci';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
@@ -118,7 +118,7 @@ export function ClinicalNotesPanel({
   return (
     <ChartPanel
       title="Clinical Notes"
-      icon={<FileText className="size-4" />}
+      icon={<CiFileOn className="size-4" />}
       count={notes.length}
       addLabel="New Note"
       onAdd={onAdd}

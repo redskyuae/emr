@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  CHARGE_ITEM_CODE_TYPES,
   chargeItemIdSchema,
   chargeItemTenantIdSchema,
   createChargeItemSchema,
@@ -111,6 +112,74 @@ describe('ChargeItem schema', () => {
       createChargeItemSchema.parse({ ...validPayload, description: ' Standard OPD fee ' })
         .description
     ).toBe('Standard OPD fee');
+  });
+
+  it('should export the fixed Charge Item code types', () => {
+    expect(CHARGE_ITEM_CODE_TYPES).toEqual(['CPT', 'HCPCS', 'SERVICE', 'LOCAL']);
+  });
+
+  it('should default codeType to LOCAL on create', () => {
+    expect(createChargeItemSchema.parse(validPayload).codeType).toBe('LOCAL');
+  });
+
+  it('should leave codeType undefined on update when omitted', () => {
+    expect(updateChargeItemSchema.parse(validPayload).codeType).toBeUndefined();
+  });
+
+  it('should reject an unknown codeType', () => {
+    expect(
+      errorsOf(createChargeItemSchema.safeParse({ ...validPayload, codeType: 'ICD' }))
+    ).toContain('Charge item code type must be one of CPT, HCPCS, SERVICE, LOCAL');
+  });
+
+  it.each(['99213', '0001F', '0042T', '0001U'])('should accept the CPT code %s', (code) => {
+    expect(
+      createChargeItemSchema.safeParse({ ...validPayload, code, codeType: 'CPT' }).success
+    ).toBe(true);
+  });
+
+  it.each(['9921', '992133', 'J1100', '9921A', 'CONS'])(
+    'should reject %s as a CPT code',
+    (code) => {
+      expect(
+        errorsOf(createChargeItemSchema.safeParse({ ...validPayload, code, codeType: 'CPT' }))
+      ).toEqual(['Charge item code must be a valid 5-character CPT code, e.g. 99213.']);
+    }
+  );
+
+  it('should apply the code format rule on update', () => {
+    expect(
+      updateChargeItemSchema
+        .safeParse({ ...validPayload, code: 'W1100', codeType: 'HCPCS' })
+        .error?.issues.map(({ message }) => message)
+    ).toEqual(['Charge item code must be a valid HCPCS code, e.g. J1100.']);
+  });
+
+  it('should validate the CPT format after uppercasing the code', () => {
+    expect(
+      createChargeItemSchema.parse({ ...validPayload, code: '0001f', codeType: 'CPT' }).code
+    ).toBe('0001F');
+  });
+
+  it('should accept an HCPCS code after uppercasing', () => {
+    expect(
+      createChargeItemSchema.parse({ ...validPayload, code: 'j1100', codeType: 'HCPCS' })
+    ).toMatchObject({ code: 'J1100', codeType: 'HCPCS' });
+  });
+
+  it.each(['W1100', 'J110', 'J11000', '99213'])('should reject %s as an HCPCS code', (code) => {
+    expect(
+      errorsOf(createChargeItemSchema.safeParse({ ...validPayload, code, codeType: 'HCPCS' }))
+    ).toEqual(['Charge item code must be a valid HCPCS code, e.g. J1100.']);
+  });
+
+  it('should keep the general code rule for SERVICE and LOCAL codes', () => {
+    expect(
+      createChargeItemSchema.parse({ ...validPayload, code: '17-01', codeType: 'SERVICE' })
+    ).toMatchObject({ code: '17-01', codeType: 'SERVICE' });
+    expect(
+      createChargeItemSchema.parse({ ...validPayload, code: 'cons_new', codeType: 'LOCAL' })
+    ).toMatchObject({ code: 'CONS_NEW', codeType: 'LOCAL' });
   });
 
   it('should accept the same shape for update as for create', () => {

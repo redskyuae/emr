@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
+import { tableHeadRowClass } from '@/components/ui/table-styles';
 import { cn } from '@/lib/utils';
 import { APPROVERS, REFUND_REASONS } from '../_data/counter-seed';
 import {
@@ -94,7 +95,7 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <Card className="shadow-fluent-2">
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">Refund</CardTitle>
           <CardDescription>
@@ -235,7 +236,7 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
         </CardContent>
       </Card>
 
-      <Card className="shadow-fluent-2 h-fit">
+      <Card className="h-fit">
         <CardHeader>
           <CardTitle className="text-base">Payment history for this Patient</CardTitle>
           <CardDescription>Current shift only.</CardDescription>
@@ -248,10 +249,10 @@ export function RefundTab({ onPosted }: { onPosted: (txn: LedgerTxn) => void }) 
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-muted-foreground border-b text-left text-xs">
-                  <th className="pb-1.5 font-medium">No.</th>
-                  <th className="pb-1.5 font-medium">Type</th>
-                  <th className="pb-1.5 text-right font-medium">Amount</th>
+                <tr className={tableHeadRowClass}>
+                  <th className="pb-1.5 font-semibold">No.</th>
+                  <th className="pb-1.5 font-semibold">Type</th>
+                  <th className="pb-1.5 text-right font-semibold">Amount</th>
                 </tr>
               </thead>
               <tbody>

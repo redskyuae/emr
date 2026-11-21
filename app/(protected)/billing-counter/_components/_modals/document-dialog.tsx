@@ -2,7 +2,8 @@
 
 import { useRef } from 'react';
 import { format } from 'date-fns';
-import { Mail, MessageCircle, Printer } from 'lucide-react';
+import { CiChat2, CiMail } from 'react-icons/ci';
+import { PiPrinterLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
@@ -287,7 +288,7 @@ export function DocumentDialog({ txn, onClose }: { txn: LedgerTxn | null; onClos
                     toast.success(`Sent to ${patient?.phone ?? 'the Patient'} by WhatsApp (demo).`)
                   }
                 >
-                  <MessageCircle className="size-4" />
+                  <CiChat2 className="size-4" />
                   Send by WhatsApp
                 </Button>
                 <Button
@@ -296,7 +297,7 @@ export function DocumentDialog({ txn, onClose }: { txn: LedgerTxn | null; onClos
                   size="sm"
                   onClick={() => toast.success(`PDF of ${txn.number} emailed (demo).`)}
                 >
-                  <Mail className="size-4" />
+                  <CiMail className="size-4" />
                   Email PDF
                 </Button>
                 <Button
@@ -305,7 +306,7 @@ export function DocumentDialog({ txn, onClose }: { txn: LedgerTxn | null; onClos
                   size="sm"
                   onClick={() => previewRef.current && printPreview(previewRef.current)}
                 >
-                  <Printer className="size-4" />
+                  <PiPrinterLight className="size-4" />
                   Print
                 </Button>
               </div>

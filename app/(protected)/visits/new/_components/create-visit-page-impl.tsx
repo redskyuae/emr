@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
-import { AlertCircle, ArrowLeft, CheckCircle2, RefreshCcw } from 'lucide-react';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiArrowsCounterClockwiseLight, PiLeafLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
+import { visitTypeRequiresDoctor } from '@/app/api/lib/modules/visit/visit-doctor-requirement';
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { getApiErrors } from '@/app/queries/api-error';
 import { useAppointmentQuery } from '@/app/queries/appointments/useAppointment';
@@ -23,29 +25,40 @@ import {
   useCurrentUserQuery,
   useHasPermission,
 } from '@/app/queries/identity-access/useCurrentUser';
+import { useCurrentPatientTreatmentPlansQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { usePatientQuery } from '@/app/queries/patients/usePatients';
+import { useAdmitSourcesQuery } from '@/app/queries/visit-masters/admit-sources/useAdmitSources';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
 import { useCheckInVisit } from '@/app/queries/visits/useCheckInVisit';
 import { useRecentDoctorVisitQuery } from '@/app/queries/visits/useRecentDoctorVisit';
 import { useVisitPatientTypeQuery } from '@/app/queries/visits/useVisitPatientType';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 
 import {
   createVisitFormSchema,
   type CreateVisitFormValues,
 } from '../_utils/create-visit-form-schema';
+import { billingTotals } from '../_utils/billing-choice';
 import { checkInInvoiceNotes } from '../_utils/check-in-invoice-notes';
 import {
   getAppointmentVisitDefaults,
   getWalkInVisitTypeId,
 } from '../_utils/appointment-visit-defaults';
-import { PatientRegistrationSection } from './patient-registration-section';
+import { patientDisplayName } from '../_utils/patient-summary';
+import { CheckInActionBar } from './check-in-action-bar';
+import { CheckInHeader } from './check-in-header';
+import { PatientConfirmation } from './patient-confirmation';
+import { PatientTreatmentsCard } from './patient-treatments-card';
 import { VisitBillingFields } from './visit-billing-fields';
-import { AppointmentContextCard, PatientContextCard } from './visit-context-rail';
 import { VisitDetailsFields, VisitSourceFields } from './visit-form-fields';
 import { useAppointmentVisitPrefill } from './use-appointment-visit-prefill';
 import CreateVisitLoader from '../loader';
@@ -56,6 +69,7 @@ const DEFAULT_VALUES: CreateVisitFormValues = {
   patientId: '',
   doctorId: '',
   visitTypeId: '',
+  admitSourceId: '',
   chiefComplaint: '',
   remarks: '',
   createInvoice: false,
@@ -78,7 +92,7 @@ export function CreateVisitPageImpl({
   initialAppointmentId?: number | null;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<'patient' | 'visit'>('patient');
+  const [confirmedPatientId, setConfirmedPatientId] = useState<number | null>(null);
   const [checkingHistory, setCheckingHistory] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
@@ -104,7 +118,9 @@ export function CreateVisitPageImpl({
   const includeInvoice = useWatch({ control: form.control, name: 'createInvoice' });
   const amountReceived = useWatch({ control: form.control, name: 'amountReceived' });
   const paymentTiming = useWatch({ control: form.control, name: 'paymentTiming' });
+  const chargeAmount = useWatch({ control: form.control, name: 'chargeAmount' });
   const visitTypeId = useWatch({ control: form.control, name: 'visitTypeId' });
+  const doctorId = useWatch({ control: form.control, name: 'doctorId' });
 
   const appointmentsQuery = useAppointmentsQuery({
     statusCategories: ['SCHEDULED', 'CONFIRMED'],
@@ -114,6 +130,7 @@ export function CreateVisitPageImpl({
   const initialAppointmentQuery = useAppointmentQuery(initialAppointmentId);
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
   const visitTypesQuery = useVisitTypesQuery({ limit: 100 });
+  const admitSourcesQuery = useAdmitSourcesQuery({ limit: 100 });
   const chargeItemsQuery = useChargeItemsQuery({ page: 1, limit: 999, isActive: true });
   const currentUserQuery = useCurrentUserQuery();
   const { data: canCreate } = useHasPermission('visit:create');
@@ -123,6 +140,7 @@ export function CreateVisitPageImpl({
   const { data: canFinalizeInvoice } = useHasPermission('invoice:finalize');
   const { data: canRecordPayment } = useHasPermission('payment:record');
   const { data: canReadChargeItems } = useHasPermission('charge-item:read');
+  const { data: canReadTreatmentPlans } = useHasPermission('patient-treatment-plan:read');
   const checkInMutation = useCheckInVisit();
   const createInvoiceMutation = useCreateInvoice();
   const addInvoiceLineMutation = useAddInvoiceLine();
@@ -139,6 +157,7 @@ export function CreateVisitPageImpl({
     : listedAppointments;
   const doctors = doctorsQuery.data?.data ?? [];
   const visitTypes = visitTypesQuery.data?.data ?? EMPTY_VISIT_TYPES;
+  const admitSources = admitSourcesQuery.data?.data ?? [];
   const chargeItems = chargeItemsQuery.data?.data ?? [];
   const canBill = Boolean(
     canCreateInvoice &&
@@ -172,6 +191,10 @@ export function CreateVisitPageImpl({
   const patientQuery = usePatientQuery(selectedPatientId);
   const patient = patientQuery.data ?? null;
   const patientTypeQuery = useVisitPatientTypeQuery(selectedPatientId);
+  const treatmentPlansQuery = useCurrentPatientTreatmentPlansQuery(
+    selectedPatientId,
+    Boolean(canReadTreatmentPlans)
+  );
   const selectedVisitType = visitTypes.find((type) => String(type.id) === visitTypeId);
   const referenceDate = currentUserQuery.data?.tenant.timeZone
     ? tenantLocalDateTime(new Date(), currentUserQuery.data.tenant.timeZone).date
@@ -182,12 +205,14 @@ export function CreateVisitPageImpl({
     initialAppointmentQuery.isLoading ||
     doctorsQuery.isLoading ||
     visitTypesQuery.isLoading ||
+    admitSourcesQuery.isLoading ||
     currentUserQuery.isLoading;
   const dependencyError =
     appointmentsQuery.error ??
     initialAppointmentQuery.error ??
     doctorsQuery.error ??
     visitTypesQuery.error ??
+    admitSourcesQuery.error ??
     currentUserQuery.error;
 
   async function retryDependencies() {
@@ -196,11 +221,23 @@ export function CreateVisitPageImpl({
       initialAppointmentId ? initialAppointmentQuery.refetch() : Promise.resolve(),
       doctorsQuery.refetch(),
       visitTypesQuery.refetch(),
+      admitSourcesQuery.refetch(),
       currentUserQuery.refetch(),
     ]);
   }
 
-  async function continueToVisit() {
+  // Confirmation belongs to one Patient: choosing another Patient or Appointment
+  // for a different Patient re-locks the Visit and Billing sections.
+  const confirmed = selectedPatientId !== null && confirmedPatientId === selectedPatientId;
+  const stepRef = useRef<HTMLDivElement>(null);
+
+  // Moving between the Patient step and the Visit step swaps the page content,
+  // so bring the new step into view instead of leaving staff mid-scroll.
+  useEffect(() => {
+    stepRef.current?.scrollIntoView?.({ block: 'start' });
+  }, [confirmed]);
+
+  async function confirmPatient() {
     setCheckingHistory(true);
 
     try {
@@ -220,7 +257,7 @@ export function CreateVisitPageImpl({
         form.setValue('visitTypeId', visitTypeId, { shouldValidate: true });
       }
 
-      setStep('visit');
+      setConfirmedPatientId(selectedPatientId);
     } finally {
       setCheckingHistory(false);
     }
@@ -230,9 +267,9 @@ export function CreateVisitPageImpl({
     setServerErrors([]);
     let paymentReceiptPath: string | null = null;
     if (createdVisit) return;
-    if (!patient) {
+    if (!patient || !confirmed) {
       setServerErrors(['Select a Patient or Appointment before creating the Visit.']);
-      setStep('patient');
+      setConfirmedPatientId(null);
       return;
     }
     const patientTypeCheck = await patientTypeQuery.refetch();
@@ -242,11 +279,15 @@ export function CreateVisitPageImpl({
     }
     if (values.mode === 'appointment' && !appointment) {
       form.setError('appointmentId', { message: 'Select an Appointment scheduled today.' });
-      setStep('patient');
+      setConfirmedPatientId(null);
       return;
     }
-    if (values.mode === 'appointment' && !appointment?.doctor && !values.doctorId) {
-      form.setError('doctorId', { message: 'Doctor is required for this Appointment.' });
+    const chosenVisitType = visitTypes.find((type) => String(type.id) === values.visitTypeId);
+    const hasDoctor = Boolean(
+      (values.mode === 'appointment' && appointment?.doctor) || values.doctorId
+    );
+    if (visitTypeRequiresDoctor(chosenVisitType?.code) && !hasDoctor) {
+      form.setError('doctorId', { message: 'Doctor is required for an OPD Consultation.' });
       return;
     }
 
@@ -267,12 +308,16 @@ export function CreateVisitPageImpl({
     try {
       result = await checkInMutation.mutateAsync({
         visitTypeId: Number(values.visitTypeId),
+        admitSourceId: values.admitSourceId ? Number(values.admitSourceId) : undefined,
         ...(values.mode === 'appointment'
           ? {
               appointmentId: Number(values.appointmentId),
               doctorId: values.doctorId ? Number(values.doctorId) : undefined,
             }
-          : { patientId: Number(values.patientId), doctorId: Number(values.doctorId) }),
+          : {
+              patientId: Number(values.patientId),
+              doctorId: values.doctorId ? Number(values.doctorId) : undefined,
+            }),
         chiefComplaint: values.chiefComplaint || undefined,
         remarks: values.remarks || undefined,
       });
@@ -328,91 +373,138 @@ export function CreateVisitPageImpl({
     router.push(paymentReceiptPath ?? `/visits?date=${encodeURIComponent(result.data.visitDate)}`);
   });
 
-  if (loading) return <CreateVisitLoader />;
+  const submitting = checkInMutation.isPending || billingPending;
+  const assignedDoctorName =
+    appointment?.doctor?.name ?? doctors.find((doctor) => String(doctor.id) === doctorId)?.name;
+  const primaryLabel = submitting
+    ? billingPending
+      ? 'Completing Billing…'
+      : 'Creating Visit…'
+    : createdVisit
+      ? 'Visit created'
+      : !confirmed
+        ? checkingHistory
+          ? 'Checking Visit history…'
+          : 'Confirm Patient'
+        : includeInvoice && paymentTiming === 'NOW' && Number(amountReceived) > 0
+          ? 'Create Visit & Record Payment'
+          : includeInvoice
+            ? 'Create Visit & Invoice'
+            : 'Create Visit';
+  const primaryDisabled = !confirmed
+    ? !patient || patient.registrationStatus !== 'registered' || checkingHistory || loading
+    : !canCreate || loading || submitting || Boolean(createdVisit);
 
   return (
-    <div className="space-y-4 pb-20">
-      <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
-        <Link href="/visits">
-          <ArrowLeft className="size-4" />
-          Visits
-        </Link>
-      </Button>
+    <SkeletonCrossfade isLoading={loading} skeleton={<CreateVisitLoader />}>
+      <div className="space-y-4 pb-28">
+        <CheckInHeader referenceDate={referenceDate} confirmed={confirmed} />
 
-      <Card className="shadow-fluent-2 py-3">
-        <CardContent className="space-y-3 px-4">
-          <div className="flex items-center justify-between gap-4 text-sm font-medium">
-            <span className={step === 'patient' ? 'text-primary' : 'text-muted-foreground'}>
-              1 · Patient information
-            </span>
-            <span className={step === 'visit' ? 'text-primary' : 'text-muted-foreground'}>
-              2 · Visit details
-            </span>
-          </div>
-          <Progress
-            value={step === 'patient' ? 50 : 100}
-            aria-label={`Step ${step === 'patient' ? 1 : 2} of 2`}
-          />
-        </CardContent>
-      </Card>
+        {dependencyError ? (
+          <Alert variant="destructive">
+            <CiCircleAlert className="size-4" />
+            <AlertTitle>Could not load Visit options</AlertTitle>
+            <AlertDescription className="space-y-2">
+              <p>{getApiErrors(dependencyError)[0]}</p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void retryDependencies()}
+              >
+                <PiArrowsCounterClockwiseLight className="size-4" />
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
-      {dependencyError ? (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertTitle>Could not load Visit options</AlertTitle>
-          <AlertDescription className="space-y-2">
-            <p>{getApiErrors(dependencyError)[0]}</p>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => void retryDependencies()}
-            >
-              <RefreshCcw className="size-4" />
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      ) : null}
+        {serverErrors.length > 0 ? (
+          <Alert variant="destructive" role="alert">
+            <CiCircleAlert className="size-4" />
+            <AlertTitle>
+              {createdVisit ? 'Visit created; Billing needs attention' : 'Could not create Visit'}
+            </AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc pl-4">
+                {serverErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+              {createdVisit ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/visits/${createdVisit.id}`}>Open {createdVisit.visitNumber}</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      href={
+                        createdInvoiceId
+                          ? `/billing/${createdInvoiceId}`
+                          : `/billing?invoice=new&patientId=${createdVisit.patientId}&visitId=${createdVisit.id}`
+                      }
+                    >
+                      {createdInvoiceId ? 'Finish Invoice' : 'Create Invoice in Billing'}
+                    </Link>
+                  </Button>
+                </div>
+              ) : null}
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
-      {serverErrors.length > 0 ? (
-        <Alert variant="destructive" role="alert">
-          <AlertCircle className="size-4" />
-          <AlertTitle>
-            {createdVisit ? 'Visit created; Billing needs attention' : 'Could not create Visit'}
-          </AlertTitle>
-          <AlertDescription>
-            <ul className="list-disc pl-4">
-              {serverErrors.map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
-            {createdVisit ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/visits/${createdVisit.id}`}>Open {createdVisit.visitNumber}</Link>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <Link
-                    href={
-                      createdInvoiceId
-                        ? `/billing/${createdInvoiceId}`
-                        : `/billing?invoice=new&patientId=${createdVisit.patientId}&visitId=${createdVisit.id}`
-                    }
-                  >
-                    {createdInvoiceId ? 'Finish Invoice' : 'Create Invoice in Billing'}
-                  </Link>
-                </Button>
+        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div ref={stepRef} className="scroll-mt-20 space-y-4">
+            {confirmed ? (
+              <div className="space-y-4" inert={Boolean(createdVisit)}>
+                <div className="bg-card rounded-xl">
+                  <PatientConfirmation
+                    key={patient?.id ?? 'none'}
+                    patient={patient}
+                    appointment={appointment}
+                    loading={patientQuery.isLoading}
+                    error={patientQuery.error}
+                    onRetry={() => void patientQuery.refetch()}
+                    confirmed
+                    onConfirm={confirmPatient}
+                    onChange={() => setConfirmedPatientId(null)}
+                  />
+                </div>
+                <VisitDetailsFields
+                  control={form.control}
+                  errors={form.formState.errors}
+                  setValue={form.setValue}
+                  resetField={form.resetField}
+                  appointments={appointments}
+                  selectedPatient={patient}
+                  doctors={doctors}
+                  visitTypes={visitTypes}
+                  admitSources={admitSources}
+                  loading={loading}
+                  historyError={historyError}
+                  recentDoctorVisit={recentDoctorVisitQuery.data}
+                  patientType={patientTypeQuery.data ?? null}
+                  patientTypeLoading={patientTypeQuery.isLoading || patientTypeQuery.isFetching}
+                  patientTypeError={patientTypeQuery.isError}
+                  onRetryPatientType={() => void patientTypeQuery.refetch()}
+                />
+                <VisitBillingFields
+                  control={form.control}
+                  errors={form.formState.errors}
+                  setValue={form.setValue}
+                  chargeItems={chargeItems}
+                  canBill={canBill}
+                  canCollectPayment={Boolean(canRecordPayment)}
+                  visitTypeCode={selectedVisitType?.code.toUpperCase() ?? null}
+                  patientType={patientTypeQuery.data?.patientType ?? null}
+                  visitDate={referenceDate}
+                  hasRecentDoctorVisit={Boolean(recentDoctorVisitQuery.data)}
+                  loading={chargeItemsQuery.isLoading}
+                  error={chargeItemsQuery.isError}
+                  onRetry={() => void chargeItemsQuery.refetch()}
+                />
               </div>
-            ) : null}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="space-y-4">
-          {step === 'patient' ? (
-            <>
+            ) : (
               <VisitSourceFields
                 control={form.control}
                 errors={form.formState.errors}
@@ -422,111 +514,75 @@ export function CreateVisitPageImpl({
                 selectedPatient={patient}
                 doctors={doctors}
                 visitTypes={visitTypes}
+                admitSources={admitSources}
                 loading={loading}
-              />
-              <PatientRegistrationSection
-                patient={patient}
-                loading={patientQuery.isLoading}
-                error={patientQuery.error}
-                onRetry={() => void patientQuery.refetch()}
-                onContinue={continueToVisit}
-                continuing={checkingHistory}
-              />
-            </>
-          ) : (
-            <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={checkInMutation.isPending || billingPending || Boolean(createdVisit)}
-                onClick={() => setStep('patient')}
               >
-                <ArrowLeft className="size-4" />
-                Patient information
-              </Button>
-              <VisitDetailsFields
-                control={form.control}
-                errors={form.formState.errors}
-                setValue={form.setValue}
-                resetField={form.resetField}
-                appointments={appointments}
-                selectedPatient={patient}
-                doctors={doctors}
-                visitTypes={visitTypes}
-                loading={loading}
-                historyError={historyError}
-                recentDoctorVisit={recentDoctorVisitQuery.data}
-                patientType={patientTypeQuery.data ?? null}
-                patientTypeLoading={patientTypeQuery.isLoading || patientTypeQuery.isFetching}
-                patientTypeError={patientTypeQuery.isError}
-                onRetryPatientType={() => void patientTypeQuery.refetch()}
+                <PatientConfirmation
+                  key={patient?.id ?? 'none'}
+                  patient={patient}
+                  appointment={appointment}
+                  loading={patientQuery.isLoading}
+                  error={patientQuery.error}
+                  onRetry={() => void patientQuery.refetch()}
+                  confirmed={false}
+                  onConfirm={confirmPatient}
+                  onChange={() => setConfirmedPatientId(null)}
+                />
+              </VisitSourceFields>
+            )}
+          </div>
+          <aside
+            aria-label="Patient context"
+            className="space-y-4 xl:sticky xl:top-20 xl:-mx-1 xl:max-h-[calc(100svh-10rem)] xl:overflow-y-auto xl:px-1 xl:pb-1"
+          >
+            {selectedPatientId !== null && canReadTreatmentPlans ? (
+              <PatientTreatmentsCard
+                plans={treatmentPlansQuery.data ?? []}
+                loading={treatmentPlansQuery.isLoading}
+                error={treatmentPlansQuery.isError}
+                onRetry={() => void treatmentPlansQuery.refetch()}
+                linkedBookingNumber={appointment?.bookingNumber ?? null}
               />
-              <VisitBillingFields
-                control={form.control}
-                errors={form.formState.errors}
-                setValue={form.setValue}
-                chargeItems={chargeItems}
-                canBill={canBill}
-                canCollectPayment={Boolean(canRecordPayment)}
-                visitTypeCode={selectedVisitType?.code.toUpperCase() ?? null}
-                patientType={patientTypeQuery.data?.patientType ?? null}
-                visitDate={referenceDate}
-                hasRecentDoctorVisit={Boolean(recentDoctorVisitQuery.data)}
-                loading={chargeItemsQuery.isLoading}
-                error={chargeItemsQuery.isError}
-                onRetry={() => void chargeItemsQuery.refetch()}
-              />
-            </>
-          )}
+            ) : (
+              <Empty className="bg-card border">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <PiLeafLight className="size-5" />
+                  </EmptyMedia>
+                  <EmptyTitle>Treatment Plans</EmptyTitle>
+                  <EmptyDescription>
+                    {selectedPatientId === null
+                      ? "The Patient's Treatment Plans appear here once a Patient is selected."
+                      : 'You do not have permission to view Treatment Plans.'}
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+          </aside>
         </div>
-        <aside className="space-y-4 xl:sticky xl:top-20">
-          <PatientContextCard patient={patient} loading={patientQuery.isLoading} />
-          <AppointmentContextCard appointment={appointment} />
-          {patient ? <Badge variant="outline">{patient.mrn}</Badge> : null}
-        </aside>
-      </div>
 
-      {step === 'visit' ? (
-        <Card className="acrylic shadow-fluent-16 fixed right-4 bottom-4 left-4 z-20 py-3 lg:left-[calc(var(--sidebar-width)+1rem)]">
-          <CardContent className="flex justify-end gap-2 px-3">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={checkInMutation.isPending || billingPending || Boolean(createdVisit)}
-              onClick={() => setStep('patient')}
-            >
-              Back
-            </Button>
-            <Button
-              type="button"
-              disabled={
-                !canCreate ||
-                !patient ||
-                loading ||
-                checkInMutation.isPending ||
-                billingPending ||
-                Boolean(createdVisit)
-              }
-              aria-busy={checkInMutation.isPending || billingPending}
-              onClick={() => void submit()}
-            >
-              <CheckCircle2 className="size-4" />
-              {checkInMutation.isPending || billingPending
-                ? billingPending
-                  ? 'Completing Billing…'
-                  : 'Creating Visit…'
-                : createdVisit
-                  ? 'Visit created'
-                  : includeInvoice && paymentTiming === 'NOW' && Number(amountReceived) > 0
-                    ? 'Create Visit & Record Payment'
-                    : includeInvoice
-                      ? 'Create Visit & Invoice'
-                      : 'Create Visit'}
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
-    </div>
+        <CheckInActionBar
+          patientName={patient ? patientDisplayName(patient) : null}
+          visitSummary={
+            confirmed
+              ? [selectedVisitType?.name, assignedDoctorName].filter(Boolean).join(' · ') || null
+              : null
+          }
+          totals={billingTotals({
+            createInvoice: includeInvoice,
+            paymentTiming,
+            chargeAmount,
+            amountReceived,
+          })}
+          showTotals={confirmed}
+          primaryLabel={primaryLabel}
+          primaryDisabled={primaryDisabled}
+          busy={checkInMutation.isPending || billingPending || checkingHistory}
+          backDisabled={checkInMutation.isPending || billingPending || Boolean(createdVisit)}
+          onBack={confirmed ? () => setConfirmedPatientId(null) : undefined}
+          onPrimary={() => (confirmed ? void submit() : void confirmPatient())}
+        />
+      </div>
+    </SkeletonCrossfade>
   );
 }

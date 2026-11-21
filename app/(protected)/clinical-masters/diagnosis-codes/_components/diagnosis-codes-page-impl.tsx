@@ -6,16 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
 import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  LayoutList,
-  Plus,
-  Search,
-  Stethoscope,
-  Table as TableIcon,
-} from 'lucide-react';
+  CiBoxList,
+  CiCircleAlert,
+  CiGrid41,
+  CiSearch,
+  CiStethoscope,
+  CiViewTable,
+} from 'react-icons/ci';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { DiagnosisCode } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
 import { createDiagnosisCodeSchema } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
@@ -24,6 +22,7 @@ import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis
 import { useCreateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useCreateDiagnosisCode';
 import { useUpdateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useUpdateDiagnosisCode';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -178,8 +177,8 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
   return (
     <>
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
+        <Card>
+          <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <ToggleGroup
               type="single"
               value={viewLayout}
@@ -191,22 +190,22 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
               spacing={0}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
-                <TableIcon className="size-4" />
+                <CiViewTable className="size-4" />
                 Table
               </ToggleGroupItem>
               <ToggleGroupItem value="card" aria-label="Card view">
-                <LayoutGrid className="size-4" />
+                <CiGrid41 className="size-4" />
                 Card
               </ToggleGroupItem>
               <ToggleGroupItem value="list" aria-label="List view">
-                <LayoutList className="size-4" />
+                <CiBoxList className="size-4" />
                 List
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <InputGroup className="bg-background shadow-fluent-2 h-9 lg:max-w-sm">
+            <InputGroup className="lg:max-w-sm">
               <InputGroupAddon>
-                <Search className="size-4" />
+                <CiSearch className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
                 type="search"
@@ -220,7 +219,7 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
             {canCreate ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end lg:ml-auto">
                 <Button type="button" size="lg" onClick={openAddSheet}>
-                  <Plus className="size-4" />
+                  <PiPlusLight className="size-4" />
                   Add Diagnosis Code
                 </Button>
               </div>
@@ -230,106 +229,109 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
 
         {diagnosisCodesQuery.isError ? (
           <Alert variant="destructive">
-            <AlertCircle className="size-4" />
+            <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Diagnosis Codes</AlertTitle>
             <AlertDescription>{getApiErrorMessage(diagnosisCodesQuery.error)}</AlertDescription>
           </Alert>
         ) : null}
 
-        {diagnosisCodesQuery.isLoading ? (
-          <ViewSkeleton layout={viewLayout} />
-        ) : diagnosisCodes.length === 0 && !debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Stethoscope />
-              </EmptyMedia>
-              <EmptyTitle>No Diagnosis Codes yet</EmptyTitle>
-              <EmptyDescription>
-                Add ICD-10 Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.
-              </EmptyDescription>
-            </EmptyHeader>
-            {canCreate ? (
-              <EmptyContent>
-                <Button type="button" onClick={openAddSheet}>
-                  <Plus className="size-4" />
-                  Add Diagnosis Code
-                </Button>
-              </EmptyContent>
-            ) : null}
-          </Empty>
-        ) : diagnosisCodes.length === 0 && debouncedSearch ? (
-          <Empty className="bg-card shadow-fluent-2 min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Search />
-              </EmptyMedia>
-              <EmptyTitle>No results found</EmptyTitle>
-              <EmptyDescription>
-                No Diagnosis Codes match &ldquo;{debouncedSearch}&rdquo;. Try a different search
-                term.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <>
-            {viewLayout === 'table' ? (
-              <DiagnosisCodeTableView
-                diagnosisCodes={diagnosisCodes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setDiagnosisCodePendingDelete}
-              />
-            ) : viewLayout === 'card' ? (
-              <DiagnosisCodeCardView
-                diagnosisCodes={diagnosisCodes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setDiagnosisCodePendingDelete}
-              />
-            ) : (
-              <DiagnosisCodeListView
-                diagnosisCodes={diagnosisCodes}
-                canEdit={canUpdate}
-                canDelete={canDelete}
-                onEdit={openEditSheet}
-                onDelete={setDiagnosisCodePendingDelete}
-              />
-            )}
+        <SkeletonCrossfade
+          isLoading={diagnosisCodesQuery.isLoading}
+          skeleton={<ViewSkeleton layout={viewLayout} canEdit={canUpdate} canDelete={canDelete} />}
+        >
+          {diagnosisCodes.length === 0 && !debouncedSearch ? (
+            <Empty className="bg-card min-h-80 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiStethoscope />
+                </EmptyMedia>
+                <EmptyTitle>No Diagnosis Codes yet</EmptyTitle>
+                <EmptyDescription>
+                  Add ICD-10-CM Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.
+                </EmptyDescription>
+              </EmptyHeader>
+              {canCreate ? (
+                <EmptyContent>
+                  <Button type="button" onClick={openAddSheet}>
+                    <PiPlusLight className="size-4" />
+                    Add Diagnosis Code
+                  </Button>
+                </EmptyContent>
+              ) : null}
+            </Empty>
+          ) : diagnosisCodes.length === 0 && debouncedSearch ? (
+            <Empty className="bg-card min-h-72 border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CiSearch />
+                </EmptyMedia>
+                <EmptyTitle>No results found</EmptyTitle>
+                <EmptyDescription>
+                  No Diagnosis Codes match &ldquo;{debouncedSearch}&rdquo;. Try a different search
+                  term.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <div className="space-y-4">
+              {viewLayout === 'table' ? (
+                <DiagnosisCodeTableView
+                  diagnosisCodes={diagnosisCodes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setDiagnosisCodePendingDelete}
+                />
+              ) : viewLayout === 'card' ? (
+                <DiagnosisCodeCardView
+                  diagnosisCodes={diagnosisCodes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setDiagnosisCodePendingDelete}
+                />
+              ) : (
+                <DiagnosisCodeListView
+                  diagnosisCodes={diagnosisCodes}
+                  canEdit={canUpdate}
+                  canDelete={canDelete}
+                  onEdit={openEditSheet}
+                  onDelete={setDiagnosisCodePendingDelete}
+                />
+              )}
 
-            {totalPages > 0 ? (
-              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-muted-foreground text-sm">
-                  Showing {rangeStart}&ndash;{rangeEnd} of {total}
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <ChevronLeft className="size-4" />
-                    Previous
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {totalPages > 0 ? (
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-muted-foreground text-sm">
+                    Showing {rangeStart}&ndash;{rangeEnd} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <PiCaretLeftLight className="size-4" />
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                      <PiCaretRightLight className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </div>
+          )}
+        </SkeletonCrossfade>
       </div>
 
       <DiagnosisCodeFormSheet

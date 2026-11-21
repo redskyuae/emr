@@ -1,7 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, TriangleAlert } from 'lucide-react';
+import { CiWarning } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -186,7 +187,7 @@ export function AddTreatmentPlanSessionsDialog({
 
           {form.formState.errors.root?.message ? (
             <Alert variant="destructive">
-              <TriangleAlert className="size-4" />
+              <CiWarning className="size-4" />
               <AlertTitle>Sessions not added</AlertTitle>
               <AlertDescription>{form.formState.errors.root.message}</AlertDescription>
             </Alert>
@@ -206,7 +207,7 @@ export function AddTreatmentPlanSessionsDialog({
               disabled={addSessions.isPending || plans.length === 0}
               aria-busy={addSessions.isPending}
             >
-              <Plus className="size-4" />
+              <PiPlusLight className="size-4" />
               {addSessions.isPending ? 'Saving…' : 'Save Sessions'}
             </Button>
           </DialogFooter>

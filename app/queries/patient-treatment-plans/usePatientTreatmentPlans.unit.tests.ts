@@ -9,6 +9,7 @@ vi.mock('@tanstack/react-query', () => ({ useQuery: useQueryMock }));
 import {
   patientTreatmentPlanHistoryQueryKey,
   patientTreatmentPlansQueryKey,
+  useCurrentPatientTreatmentPlansQuery,
   usePatientTreatmentPlanHistoryQuery,
   usePatientTreatmentPlansQuery,
 } from './usePatientTreatmentPlans';
@@ -54,10 +55,46 @@ describe('Patient Treatment Plan query', () => {
     const options = capturedQueryOptions();
 
     expect(options.queryKey).toEqual(patientTreatmentPlanHistoryQueryKey(42));
+    expect(options.enabled).toBe(true);
     await expect(options.queryFn()).resolves.toBe(response);
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/patients/42/treatment-plans?status=all', {
       credentials: 'same-origin',
     });
+  });
+
+  it.each([
+    { label: 'no selected Patient', patientId: null, enabled: true },
+    { label: 'a caller without access', patientId: 42, enabled: false },
+  ])('should keep the Plan history query disabled for $label', ({ patientId, enabled }) => {
+    usePatientTreatmentPlanHistoryQuery(patientId, enabled);
+
+    expect(capturedQueryOptions().enabled).toBe(false);
+  });
+
+  it('should fetch only current Plans for Visit creation', async () => {
+    const response: ListPatientTreatmentPlansResponse = { data: [] };
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => response });
+    vi.stubGlobal('fetch', fetchMock);
+
+    useCurrentPatientTreatmentPlansQuery(42);
+    const options = capturedQueryOptions();
+
+    expect(options.queryKey).toEqual(patientTreatmentPlansQueryKey(42));
+    expect(options.enabled).toBe(true);
+    await expect(options.queryFn()).resolves.toBe(response);
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/patients/42/treatment-plans?status=current', {
+      credentials: 'same-origin',
+    });
+    expect(options.select(response)).toBe(response.data);
+  });
+
+  it.each([
+    { label: 'no selected Patient', patientId: null, enabled: true },
+    { label: 'a caller without access', patientId: 42, enabled: false },
+  ])('should keep the current-Plan query disabled for $label', ({ patientId, enabled }) => {
+    useCurrentPatientTreatmentPlansQuery(patientId, enabled);
+
+    expect(capturedQueryOptions().enabled).toBe(false);
   });
 
   it.each([

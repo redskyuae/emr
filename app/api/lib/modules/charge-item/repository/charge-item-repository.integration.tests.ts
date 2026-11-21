@@ -17,6 +17,7 @@ const createChargeItem = (
     tenantId,
     name,
     code,
+    codeType: 'LOCAL',
     category: overrides.category ?? 'CONSULTATION',
     unitPrice: overrides.unitPrice ?? 500,
     description: `${name} desc`,
@@ -29,6 +30,12 @@ describe('ChargeItem repository', () => {
     const first = await chargeItemRepository.getChargeItems({ tenantId: tenantA, limit: 100 });
 
     expect(first.data).toHaveLength(4);
+    expect(first.data.map(({ codeType }) => codeType)).toEqual([
+      'LOCAL',
+      'LOCAL',
+      'LOCAL',
+      'LOCAL',
+    ]);
     expect(first.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: 'CONS_NEW', unitPrice: 200, cashPrice: 200 }),
@@ -56,6 +63,7 @@ describe('ChargeItem repository', () => {
       tenantId: tenantA,
       name: 'Custom Established Consultation',
       code: 'CUSTOM_EST',
+      codeType: 'LOCAL',
       category: 'CONSULTATION',
       unitPrice: 175,
       visitChargeKind: 'ESTABLISHED_CONSULTATION',
@@ -65,6 +73,7 @@ describe('ChargeItem repository', () => {
       tenantId: tenantA,
       name: 'New Consultation',
       code: 'CONS_NEW',
+      codeType: 'LOCAL',
       category: 'CONSULTATION',
       unitPrice: 225,
       visitChargeKind: 'NEW_CONSULTATION',
@@ -103,6 +112,7 @@ describe('ChargeItem repository', () => {
       tenantId: tenantA,
       name: 'Established Patient Level Three',
       code: '99213',
+      codeType: 'CPT',
       category: 'CONSULTATION',
       unitPrice: 150,
       cashPrice: 150,
@@ -115,6 +125,7 @@ describe('ChargeItem repository', () => {
     await expect(
       chargeItemRepository.getChargeItemById(created.id, tenantA)
     ).resolves.toMatchObject({
+      codeType: 'CPT',
       cashPrice: 150,
       insuranceContractPrice: 120,
       freeFollowUpEligible: false,
@@ -125,7 +136,8 @@ describe('ChargeItem repository', () => {
     const updated = await chargeItemRepository.updateChargeItem(created.id, {
       tenantId: tenantA,
       name: 'Established Patient Level Three',
-      code: '99213',
+      code: 'J1100',
+      codeType: 'HCPCS',
       category: 'CONSULTATION',
       unitPrice: 160,
       cashPrice: 140,
@@ -135,6 +147,8 @@ describe('ChargeItem repository', () => {
       isActive: true,
     });
     expect(updated).toMatchObject({
+      code: 'J1100',
+      codeType: 'HCPCS',
       cashPrice: 140,
       insuranceContractPrice: 125,
       effectiveDate: '2026-06-01',

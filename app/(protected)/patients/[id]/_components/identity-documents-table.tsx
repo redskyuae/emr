@@ -2,6 +2,7 @@
 
 import type { PatientIdentityDocument } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -63,6 +64,42 @@ export function IdentityDocumentsTable({ documents }: { documents: PatientIdenti
               </TableRow>
             );
           })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// Mirrors the loaded table: the same header and one sized skeleton per cell.
+export function IdentityDocumentsTableSkeleton() {
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Type</TableHead>
+            <TableHead>Number</TableHead>
+            <TableHead>Issuing country</TableHead>
+            <TableHead>Expiry</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 2 }, (_, row) => (
+            <TableRow key={row}>
+              <TableCell>
+                <Skeleton className="h-4 w-28" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-20" />
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>

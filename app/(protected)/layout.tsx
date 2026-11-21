@@ -1,10 +1,11 @@
-import { ReactNode } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { demoPagesEnabled } from '@/lib/demo-pages';
 import { getSession } from '@/app/api/lib/utils/auth-helpers';
 import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
+import { AppPageHeader } from '@/components/app/app-page-header';
 import { AppShellGate } from '@/components/app/app-shell-gate';
 import { AppSidebar } from '@/components/app/app-sidebar';
 import { AppTopbar } from '@/components/app/app-topbar';
@@ -41,7 +42,10 @@ export default async function AppLayout({
     <TabSessionGate>
       <AppShellGate>
         <TooltipProvider>
-          <SidebarProvider defaultOpen={defaultOpen}>
+          <SidebarProvider
+            defaultOpen={defaultOpen}
+            style={{ '--sidebar-width': '16.5rem' } as CSSProperties}
+          >
             <AppSidebar
               appointmentsOnly={appointmentsOnly}
               showVisits={showVisits}
@@ -49,7 +53,8 @@ export default async function AppLayout({
             />
             <SidebarInset>
               <AppTopbar />
-              <div className="flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+              <AppPageHeader />
+              <div className="flex min-w-0 flex-1 flex-col px-4 pt-4 pb-10 sm:px-6 lg:px-8">
                 {children}
               </div>
             </SidebarInset>

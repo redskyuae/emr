@@ -1,6 +1,12 @@
 'use client';
 
-import { Check, LoaderCircle, RefreshCw, Search, UserRound } from 'lucide-react';
+import { CiSearch, CiUser } from 'react-icons/ci';
+import {
+  PiArrowsClockwiseLight,
+  PiCheckLight,
+  PiCircleNotchLight,
+  PiUserPlusLight,
+} from 'react-icons/pi';
 import { Controller, useFormState, type Control } from 'react-hook-form';
 
 import { BookingStatusBadge } from './booking-status-badge';
@@ -58,11 +64,11 @@ export function PatientSection({
   const showResults =
     !selectedPatient || search !== selectedPatient.firstName + ' ' + selectedPatient.lastName;
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader className="border-b">
         <div className="flex items-start gap-3">
           <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
-            <UserRound className="size-4" />
+            <CiUser className="size-4" />
           </span>
           <div>
             <CardTitle>Patient</CardTitle>
@@ -81,9 +87,11 @@ export function PatientSection({
         >
           <TabsList className="w-full">
             <TabsTrigger value="existing" className="flex-1">
+              <CiUser aria-hidden="true" />
               Existing Patient
             </TabsTrigger>
             <TabsTrigger value="provisional" className="flex-1">
+              <PiUserPlusLight aria-hidden="true" />
               Provisional Patient
             </TabsTrigger>
           </TabsList>
@@ -97,9 +105,9 @@ export function PatientSection({
                     *
                   </span>
                 </FieldLabel>
-                <InputGroup className="bg-background shadow-fluent-2">
+                <InputGroup>
                   <InputGroupAddon>
-                    <Search className="size-4" />
+                    <CiSearch className="size-4" />
                   </InputGroupAddon>
                   <InputGroupInput
                     aria-required="true"
@@ -137,7 +145,7 @@ export function PatientSection({
                       )}
                     >
                       <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-                        <UserRound className="size-4" />
+                        <CiUser className="size-4" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-medium">
@@ -150,7 +158,7 @@ export function PatientSection({
                       <Badge variant={selectedPatient?.id === patient.id ? 'default' : 'secondary'}>
                         {selectedPatient?.id === patient.id ? (
                           <>
-                            <Check className="size-3" /> Selected
+                            <PiCheckLight className="size-3" /> Selected
                           </>
                         ) : (
                           'Registered'
@@ -160,7 +168,8 @@ export function PatientSection({
                   ))
                 ) : isSearchLoading ? (
                   <div className="text-muted-foreground flex items-center gap-2 rounded-lg border p-3 text-sm">
-                    <LoaderCircle className="size-4 animate-spin" /> Loading Registered Patients…
+                    <PiCircleNotchLight className="size-4 animate-spin" /> Loading Registered
+                    Patients…
                   </div>
                 ) : searchError ? (
                   <div className="border-destructive/25 bg-destructive/5 rounded-lg border p-3 text-sm">
@@ -172,7 +181,7 @@ export function PatientSection({
                       className="mt-2"
                       onClick={onRetrySearch}
                     >
-                      <RefreshCw className="size-3.5" /> Retry
+                      <PiArrowsClockwiseLight className="size-3.5" /> Retry
                     </Button>
                   </div>
                 ) : (

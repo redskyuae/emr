@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { db } from '@/app/db';
+import { admitSource as admitSourceTable } from '@/app/db/schema/admit-source';
 import { appointment as appointmentTable } from '@/app/db/schema/appointment';
 import { appointmentMode as appointmentModeTable } from '@/app/db/schema/appointment-mode';
 import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/appointment-reason';
@@ -18,8 +20,13 @@ import {
   patientTreatmentPlanSessionReservation as patientTreatmentPlanSessionReservationTable,
 } from '@/app/db/schema/patient-treatment-plan';
 import { specialty as specialtyTable } from '@/app/db/schema/specialty';
-import { treatment as treatmentTable } from '@/app/db/schema/treatment';
+import {
+  treatment as treatmentTable,
+  treatmentSession as treatmentSessionTable,
+} from '@/app/db/schema/treatment';
+import { visit as visitTable } from '@/app/db/schema/visit';
 import { visitType as visitTypeTable } from '@/app/db/schema/visit-type';
+import { admitSourceRepository } from '../../admit-source/repository/admit-source-repository';
 import type { AppointmentStatusCategory } from '../../appointment-status/schemas/appointment-status-schema';
 import { patientTreatmentPlanRepository } from '../../patient-treatment-plan/repository/patient-treatment-plan-repository';
 import { visitDocumentRepository } from '../../visit-document/repository/visit-document-repository';
@@ -84,6 +91,15 @@ async function createVisitType(tenantId: string) {
     .returning({ id: visitTypeTable.id });
 
   return visitType.id;
+}
+
+async function createAdmitSource(tenantId: string) {
+  const [admitSource] = await db
+    .insert(admitSourceTable)
+    .values({ tenantId, name: 'Doctor Referral', code: 'DOCREF' })
+    .returning({ id: admitSourceTable.id });
+
+  return admitSource.id;
 }
 
 async function createTenantFixtures(tenantId: string): Promise<TenantFixtures> {
@@ -359,6 +375,39 @@ describe('Visit repository', () => {
       });
     });
 
+    it('should record the Admit Source supplied at check-in', async () => {
+      const admitSourceId = await createAdmitSource(tenantA);
+
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { admitSourceId })
+      );
+
+      expect(result).toMatchObject({
+        success: true,
+        data: { admitSource: { id: admitSourceId, name: 'Doctor Referral', code: 'DOCREF' } },
+      });
+    });
+
+    it('should leave the Admit Source empty when none is supplied', async () => {
+      const result = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+
+      expect(result).toMatchObject({ success: true, data: { admitSource: null } });
+    });
+
+    it('should still read a Visit whose Admit Source was soft-deleted', async () => {
+      const admitSourceId = await createAdmitSource(tenantA);
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { admitSourceId })
+      );
+      if (!result.success) throw new Error('Check-in failed');
+
+      await admitSourceRepository.deleteAdmitSource(admitSourceId, tenantA);
+
+      await expect(visitRepository.getVisitById(result.data.id, tenantA)).resolves.toMatchObject({
+        admitSource: { id: admitSourceId, name: 'Doctor Referral' },
+      });
+    });
+
     it('should attach documents supplied at check-in to the created visit', async () => {
       const result = await visitRepository.checkInVisit(
         checkInData(tenantA, fixturesA, {
@@ -460,6 +509,72 @@ describe('Visit repository', () => {
       );
 
       expect(second).toMatchObject({ success: true, data: { queueToken: 2 } });
+    });
+
+    it('should create a Visit without a Doctor and read it back with no Doctor', async () => {
+      const result = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { doctorId: null })
+      );
+
+      expect(result).toMatchObject({ success: true, data: { doctor: null, queueToken: 1 } });
+      if (!result.success) throw new Error('check-in failed');
+      await expect(visitRepository.getVisitById(result.data.id, tenantA)).resolves.toMatchObject({
+        doctor: null,
+        patient: { id: fixturesA.patientId },
+      });
+    });
+
+    it('should number Doctorless Visits in their own daily queue, apart from each Doctor', async () => {
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+      const thirdPatient = await createPatient(tenantA, 'Chitra');
+
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA, { doctorId: null }));
+      const secondUnassigned = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: secondPatient, doctorId: null })
+      );
+      const doctorVisit = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: thirdPatient })
+      );
+
+      expect(secondUnassigned).toMatchObject({ success: true, data: { queueToken: 2 } });
+      expect(doctorVisit).toMatchObject({ success: true, data: { queueToken: 1 } });
+    });
+
+    it('should restart the unassigned queue per Tenant and per day', async () => {
+      const fixturesB = await createTenantFixtures(tenantB);
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA, { doctorId: null }));
+      const tenantBVisit = await visitRepository.checkInVisit(
+        checkInData(tenantB, fixturesB, { doctorId: null })
+      );
+      const nextDay = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, {
+          patientId: secondPatient,
+          doctorId: null,
+          visitDate: '2026-07-17',
+        })
+      );
+
+      expect(tenantBVisit).toMatchObject({ success: true, data: { queueToken: 1 } });
+      expect(nextDay).toMatchObject({ success: true, data: { queueToken: 1 } });
+    });
+
+    it('should list a Doctorless Visit and leave it out of a Doctor filter', async () => {
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { doctorId: null })
+      );
+      if (!created.success) throw new Error('check-in failed');
+
+      const all = await visitRepository.getVisits({ tenantId: tenantA, visitDate: TODAY });
+      const byDoctor = await visitRepository.getVisits({
+        tenantId: tenantA,
+        visitDate: TODAY,
+        doctorId: fixturesA.doctorId,
+      });
+
+      expect(all).toMatchObject({ data: [{ id: created.data.id, doctor: null }] });
+      expect(byDoctor).toMatchObject({ data: [] });
     });
 
     it('should move the linked appointment to its checked-in status', async () => {
@@ -1061,6 +1176,238 @@ describe('Visit repository', () => {
     });
   });
 
+  describe('amendVisit', () => {
+    async function createCompletedVisit() {
+      const created = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { chiefComplaint: 'Fever', remarks: 'Walk-in' })
+      );
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantA);
+      const completed = await visitRepository.completeVisit(created.data.id, tenantA);
+      if (completed.outcome !== 'updated') throw new Error(completed.outcome);
+
+      return completed.data;
+    }
+
+    async function createTreatmentWithSession(tenantId: string) {
+      const [treatment] = await db
+        .insert(treatmentTable)
+        .values({ tenantId, name: 'Abhyanga Therapy', code: 'ABHY' })
+        .returning({ id: treatmentTable.id });
+      const [session] = await db
+        .insert(treatmentSessionTable)
+        .values({
+          tenantId,
+          treatmentId: treatment.id,
+          sessionNumber: 1,
+          label: 'Session 1',
+          procedure: 'Abhyanga Therapy',
+          durationMinutes: 50,
+          setupMinutes: 10,
+          cleaningMinutes: 5,
+        })
+        .returning({ id: treatmentSessionTable.id });
+
+      return { treatmentId: treatment.id, treatmentSessionId: session.id };
+    }
+
+    it('should skip a Queue Token an amend moved into the unassigned queue', async () => {
+      const completed = await createCompletedVisit();
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+      const thirdPatient = await createPatient(tenantA, 'Chitra');
+
+      await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId: null,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        visitTypeId: fixturesA.visitTypeId,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+      const next = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: secondPatient, doctorId: null })
+      );
+      const after = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: thirdPatient, doctorId: null })
+      );
+
+      expect(completed.queueToken).toBe(1);
+      expect(next).toMatchObject({ success: true, data: { queueToken: 2 } });
+      expect(after).toMatchObject({ success: true, data: { queueToken: 3 } });
+    });
+
+    it("should skip a Queue Token an amend moved into another Doctor's queue", async () => {
+      const completed = await createCompletedVisit();
+      const otherDoctorId = await createDoctor(tenantA, 'Dr Iyer');
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+
+      await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId: otherDoctorId,
+        remarks: undefined,
+        treatmentId: null,
+        admitSourceId: null,
+        visitTypeId: fixturesA.visitTypeId,
+        chiefComplaint: undefined,
+        treatmentSessionId: null,
+      });
+      const next = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: secondPatient, doctorId: otherDoctorId })
+      );
+
+      expect(completed.queueToken).toBe(1);
+      expect(next).toMatchObject({ success: true, data: { queueToken: 2 } });
+    });
+
+    it('should rewrite every encounter detail and leave the lifecycle untouched', async () => {
+      const completed = await createCompletedVisit();
+      const doctorId = await createDoctor(tenantA, 'Dr Iyer');
+      const admitSourceId = await createAdmitSource(tenantA);
+      const [visitType] = await db
+        .insert(visitTypeTable)
+        .values({ tenantId: tenantA, name: 'Follow-up', code: 'FUP' })
+        .returning({ id: visitTypeTable.id });
+      const { treatmentId, treatmentSessionId } = await createTreatmentWithSession(tenantA);
+
+      const amended = await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId,
+        admitSourceId,
+        treatmentId,
+        treatmentSessionId,
+        remarks: 'Corrected after review',
+        visitTypeId: visitType.id,
+        chiefComplaint: 'Fever for 3 days',
+      });
+
+      expect(amended).toMatchObject({
+        id: completed.id,
+        status: 'COMPLETED',
+        visitDate: completed.visitDate,
+        queueToken: completed.queueToken,
+        visitNumber: completed.visitNumber,
+        checkedInAt: completed.checkedInAt,
+        completedAt: completed.completedAt,
+        consultationStartedAt: completed.consultationStartedAt,
+        remarks: 'Corrected after review',
+        chiefComplaint: 'Fever for 3 days',
+        doctor: { id: doctorId, name: 'Dr Iyer' },
+        visitType: { id: visitType.id, code: 'FUP' },
+        admitSource: { id: admitSourceId, code: 'DOCREF' },
+        treatment: { id: treatmentId, code: 'ABHY' },
+        treatmentSession: { id: treatmentSessionId, sessionNumber: 1 },
+      });
+    });
+
+    it('should clear the optional details when they are null or absent', async () => {
+      const completed = await createCompletedVisit();
+
+      const amended = await visitRepository.amendVisit(completed.id, tenantA, {
+        doctorId: fixturesA.doctorId,
+        visitTypeId: fixturesA.visitTypeId,
+        treatmentId: null,
+        admitSourceId: null,
+        treatmentSessionId: null,
+        remarks: undefined,
+        chiefComplaint: undefined,
+      });
+
+      expect(amended).toMatchObject({
+        remarks: null,
+        treatment: null,
+        admitSource: null,
+        chiefComplaint: null,
+        treatmentSession: null,
+      });
+    });
+
+    it('should not amend a Visit belonging to another Tenant', async () => {
+      const completed = await createCompletedVisit();
+
+      await expect(
+        visitRepository.amendVisit(completed.id, tenantB, {
+          doctorId: fixturesA.doctorId,
+          visitTypeId: fixturesA.visitTypeId,
+          treatmentId: null,
+          admitSourceId: null,
+          treatmentSessionId: null,
+          remarks: undefined,
+          chiefComplaint: 'Hijacked',
+        })
+      ).resolves.toBeUndefined();
+      await expect(visitRepository.getVisitById(completed.id, tenantA)).resolves.toMatchObject({
+        chiefComplaint: 'Fever',
+      });
+    });
+
+    it('should not amend a soft-deleted Visit', async () => {
+      const completed = await createCompletedVisit();
+      await visitRepository.deleteVisit(completed.id, tenantA);
+
+      await expect(
+        visitRepository.amendVisit(completed.id, tenantA, {
+          doctorId: fixturesA.doctorId,
+          visitTypeId: fixturesA.visitTypeId,
+          treatmentId: null,
+          admitSourceId: null,
+          treatmentSessionId: null,
+          remarks: undefined,
+          chiefComplaint: 'Too late',
+        })
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('countVisitsByStatus', () => {
+    it('should count one day of the tenant by status with zeros for missing statuses', async () => {
+      const fixturesB = await createTenantFixtures(tenantB);
+      const [bilal, chitra] = await Promise.all([
+        createPatient(tenantA, 'Bilal'),
+        createPatient(tenantA, 'Chitra'),
+      ]);
+
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      const started = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: bilal })
+      );
+      if (!started.success) throw new Error(started.outcome);
+      await visitRepository.startConsultation(started.data.id, tenantA);
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: chitra, visitDate: '2026-07-17' })
+      );
+      await visitRepository.checkInVisit(checkInData(tenantB, fixturesB));
+
+      await expect(
+        visitRepository.countVisitsByStatus({ tenantId: tenantA, visitDate: TODAY })
+      ).resolves.toEqual({ CHECKED_IN: 1, IN_CONSULTATION: 1, COMPLETED: 0, CANCELLED: 0 });
+    });
+
+    it('should filter by Doctor and skip deleted Visits', async () => {
+      const otherDoctor = await createDoctor(tenantA, 'Dr Rao');
+      const [bilal, chitra] = await Promise.all([
+        createPatient(tenantA, 'Bilal'),
+        createPatient(tenantA, 'Chitra'),
+      ]);
+
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: bilal, doctorId: otherDoctor })
+      );
+      const deleted = await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: chitra })
+      );
+      if (!deleted.success) throw new Error(deleted.outcome);
+      await visitRepository.deleteVisit(deleted.data.id, tenantA);
+
+      await expect(
+        visitRepository.countVisitsByStatus({
+          tenantId: tenantA,
+          visitDate: TODAY,
+          doctorId: fixturesA.doctorId,
+        })
+      ).resolves.toEqual({ CHECKED_IN: 1, IN_CONSULTATION: 0, COMPLETED: 0, CANCELLED: 0 });
+    });
+  });
+
   describe('getVisits', () => {
     it('should list only the tenant visits for a day ordered by queue token', async () => {
       const fixturesB = await createTenantFixtures(tenantB);
@@ -1094,6 +1441,76 @@ describe('Visit repository', () => {
       expect(result.data[0].visitDate).toBe('17-07-2026');
     });
 
+    it('should filter by an inclusive date range ordered most recent first', async () => {
+      const patients = await Promise.all(
+        ['Bilal', 'Chitra', 'Dev'].map((name) => createPatient(tenantA, name))
+      );
+      const dates = ['2026-07-10', '2026-07-12', '2026-07-14'];
+
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { visitDate: '2026-07-09' })
+      );
+      for (const [index, visitDate] of dates.entries()) {
+        await visitRepository.checkInVisit(
+          checkInData(tenantA, fixturesA, { patientId: patients[index], visitDate })
+        );
+      }
+
+      const result = await visitRepository.getVisits({
+        tenantId: tenantA,
+        fromDate: '2026-07-10',
+        toDate: '2026-07-14',
+      });
+
+      expect(result.total).toBe(3);
+      expect(result.data.map((visit) => visit.visitDate)).toEqual([
+        '14-07-2026',
+        '12-07-2026',
+        '10-07-2026',
+      ]);
+      await expect(
+        visitRepository.getVisits({ tenantId: tenantA, fromDate: '2026-07-13' })
+      ).resolves.toMatchObject({ total: 1 });
+      await expect(
+        visitRepository.getVisits({ tenantId: tenantA, toDate: '2026-07-10' })
+      ).resolves.toMatchObject({ total: 2 });
+    });
+
+    it('should not leak another tenant visits into a date range', async () => {
+      const fixturesB = await createTenantFixtures(tenantB);
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      await visitRepository.checkInVisit(checkInData(tenantB, fixturesB));
+
+      const result = await visitRepository.getVisits({
+        tenantId: tenantA,
+        fromDate: '2026-07-01',
+        toDate: '2026-07-31',
+      });
+
+      expect(result.total).toBe(1);
+      expect(result.data[0].tenantId).toBe(tenantA);
+    });
+
+    it('should filter by Visit Type', async () => {
+      const [followUp] = await db
+        .insert(visitTypeTable)
+        .values({ tenantId: tenantA, name: 'Follow-up', code: 'FUP' })
+        .returning({ id: visitTypeTable.id });
+      const secondPatient = await createPatient(tenantA, 'Bilal');
+      await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      await visitRepository.checkInVisit(
+        checkInData(tenantA, fixturesA, { patientId: secondPatient, visitTypeId: followUp.id })
+      );
+
+      const result = await visitRepository.getVisits({
+        tenantId: tenantA,
+        visitTypeId: followUp.id,
+      });
+
+      expect(result.total).toBe(1);
+      expect(result.data[0].visitType.code).toBe('FUP');
+    });
+
     it('should filter by doctor, status and patient', async () => {
       const otherDoctor = await createDoctor(tenantA, 'Dr Iyer');
       const secondPatient = await createPatient(tenantA, 'Bilal');
@@ -1115,7 +1532,7 @@ describe('Visit repository', () => {
       ).resolves.toMatchObject({ total: 1 });
     });
 
-    it('should search by visit number, mrn and patient name', async () => {
+    it('should search by visit number, mrn, phone and patient name', async () => {
       await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
 
       await expect(
@@ -1128,8 +1545,28 @@ describe('Visit repository', () => {
         visitRepository.getVisits({ tenantId: tenantA, query: 'asha' })
       ).resolves.toMatchObject({ total: 1 });
       await expect(
+        visitRepository.getVisits({ tenantId: tenantA, query: '9876543210' })
+      ).resolves.toMatchObject({ total: 1 });
+      await expect(
+        visitRepository.getVisits({ tenantId: tenantA, query: 'asha rao' })
+      ).resolves.toMatchObject({ total: 1 });
+      await expect(
         visitRepository.getVisits({ tenantId: tenantA, query: 'nobody' })
       ).resolves.toMatchObject({ total: 0 });
+    });
+
+    it('should search an imported visit by its legacy visit number', async () => {
+      const created = await visitRepository.checkInVisit(checkInData(tenantA, fixturesA));
+      if (!created.success) throw new Error('check-in failed');
+      await db
+        .update(visitTable)
+        .set({ legacyVisitNumber: '1453' })
+        .where(eq(visitTable.id, created.data.id));
+
+      const result = await visitRepository.getVisits({ tenantId: tenantA, query: '1453' });
+
+      expect(result.total).toBe(1);
+      expect(result.data[0].legacyVisitNumber).toBe('1453');
     });
 
     it('should exclude soft-deleted visits from the list', async () => {
@@ -1159,5 +1596,162 @@ describe('Visit repository', () => {
       expect(page.total).toBe(2);
       expect(page.data.map((visit) => visit.queueToken)).toEqual([2]);
     });
+  });
+});
+
+describe('Visit repository started Patient Treatment Plan Sessions', () => {
+  let fixtures: TenantFixtures;
+
+  beforeEach(async () => {
+    mrnSequence = 0;
+    fixtures = await createTenantFixtures(tenantA);
+  });
+
+  async function startWalkInSession() {
+    const [plan] = await db
+      .insert(patientTreatmentPlanTable)
+      .values({
+        tenantId: tenantA,
+        patientId: fixtures.patientId,
+        treatmentName: 'Abhyanga Therapy',
+        treatmentCode: 'ABHY',
+        sessionStructure: 'REPEATABLE',
+        totalSessions: 1,
+      })
+      .returning({ id: patientTreatmentPlanTable.id });
+    const [session] = await db
+      .insert(patientTreatmentPlanSessionTable)
+      .values({
+        tenantId: tenantA,
+        patientTreatmentPlanId: plan.id,
+        sessionNumber: 1,
+        procedure: 'Abhyanga Therapy',
+      })
+      .returning({ id: patientTreatmentPlanSessionTable.id });
+    const created = await visitRepository.checkInVisit(checkInData(tenantA, fixtures));
+    if (!created.success) throw new Error(created.outcome);
+    await patientTreatmentPlanRepository.startSession({
+      tenantId: tenantA,
+      patientId: fixtures.patientId,
+      patientTreatmentPlanId: plan.id,
+      patientTreatmentPlanSessionId: session.id,
+      visitId: created.data.id,
+    });
+
+    return { visitId: created.data.id, sessionId: session.id };
+  }
+
+  async function startedStateOf(sessionId: number) {
+    const [row] = await db
+      .select({
+        startedAt: patientTreatmentPlanSessionTable.startedAt,
+        startedVisitId: patientTreatmentPlanSessionTable.startedVisitId,
+      })
+      .from(patientTreatmentPlanSessionTable)
+      .where(eq(patientTreatmentPlanSessionTable.id, sessionId));
+
+    return { ...row, ...(await planSessionCompletionOf(sessionId)) };
+  }
+
+  it('should complete a Session started in a walk-in Visit when the Visit completes', async () => {
+    const { visitId, sessionId } = await startWalkInSession();
+    await visitRepository.startConsultation(visitId, tenantA);
+
+    const completed = await visitRepository.completeVisit(visitId, tenantA);
+    if (completed.outcome !== 'updated') throw new Error(completed.outcome);
+
+    expect(await startedStateOf(sessionId)).toMatchObject({
+      startedVisitId: visitId,
+      completionStatus: 'COMPLETED',
+      completionSource: 'VISIT',
+      completedVisitId: visitId,
+      completedAt: completed.data.completedAt,
+    });
+  });
+
+  it('should return a started Session to pending when the Visit is cancelled', async () => {
+    const { visitId, sessionId } = await startWalkInSession();
+
+    await visitRepository.cancelVisit(visitId, tenantA, 'Patient left before treatment.');
+
+    expect(await startedStateOf(sessionId)).toMatchObject({
+      startedAt: null,
+      startedVisitId: null,
+      completionStatus: 'PENDING',
+    });
+  });
+
+  it('should return a started Session to pending when the Visit is deleted', async () => {
+    const { visitId, sessionId } = await startWalkInSession();
+
+    await visitRepository.deleteVisit(visitId, tenantA);
+
+    expect(await startedStateOf(sessionId)).toMatchObject({
+      startedVisitId: null,
+      completionStatus: 'PENDING',
+    });
+  });
+});
+
+describe('Visit repository legacy Visit number', () => {
+  let fixtures: TenantFixtures;
+
+  beforeEach(async () => {
+    mrnSequence = 0;
+    fixtures = await createTenantFixtures(tenantA);
+  });
+
+  async function checkIn(remarks: string, legacyVisitNumber: string | null = null) {
+    const created = await visitRepository.checkInVisit(checkInData(tenantA, fixtures, { remarks }));
+    if (!created.success) throw new Error(created.outcome);
+    await db
+      .update(visitTable)
+      .set({ legacyVisitNumber, status: 'COMPLETED' })
+      .where(eq(visitTable.id, created.data.id));
+    return created.data.id;
+  }
+
+  async function executeMigration() {
+    const migration = await readFile(
+      new URL('../../../../../db/drizzle/0074_visit_legacy_visit_number.sql', import.meta.url),
+      'utf8'
+    );
+
+    for (const statement of migration.split('--> statement-breakpoint')) {
+      if (statement.trim()) await db.execute(sql.raw(statement));
+    }
+  }
+
+  it('should leave the legacy Visit number empty for a Visit checked in here', async () => {
+    const created = await visitRepository.checkInVisit(checkInData(tenantA, fixtures));
+    if (!created.success) throw new Error(created.outcome);
+
+    expect(created.data.legacyVisitNumber).toBeNull();
+  });
+
+  it('should return the legacy Visit number of an imported Visit', async () => {
+    const id = await checkIn('Imported', '1453');
+
+    await expect(visitRepository.getVisitById(id, tenantA)).resolves.toMatchObject({
+      legacyVisitNumber: '1453',
+    });
+  });
+
+  it('should backfill the legacy Visit number from imported remarks idempotently', async () => {
+    const imported = await checkIn('Source visit 1453. Treatments: DAMC325 s1 completed');
+    const bare = await checkIn('Source visit 1465');
+    const local = await checkIn('Referred by GP; see Source visit 9 notes');
+    const kept = await checkIn('Source visit 2001', '1999');
+
+    await executeMigration();
+    await executeMigration();
+
+    const numbers = await Promise.all(
+      [imported, bare, local, kept].map(async (id) => {
+        const visit = await visitRepository.getVisitById(id, tenantA);
+        return visit?.legacyVisitNumber;
+      })
+    );
+    expect(numbers).toEqual(['1453', '1465', null, '1999']);
   });
 });

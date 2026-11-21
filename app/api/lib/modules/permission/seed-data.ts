@@ -173,6 +173,8 @@ const permissionGroups = [
     actions: [
       ['read', 'View Patient Treatment Plans and Sessions.'],
       ['assign', 'Assign Treatments to Patients and create Patient Treatment Plans.'],
+      ['update', 'Edit the plan of Patient Treatment Plan Sessions.'],
+      ['start', 'Start Patient Treatment Plan Sessions in a Visit.'],
     ],
   },
   {
@@ -287,6 +289,16 @@ const permissionGroups = [
   },
   {
     module: 'clinical-masters',
+    resource: 'ayurveda-diagnosis-code',
+    actions: [
+      ['read', 'View Ayurveda Diagnosis Codes.'],
+      ['create', 'Create Ayurveda Diagnosis Codes.'],
+      ['update', 'Update Ayurveda Diagnosis Codes.'],
+      ['delete', 'Delete Ayurveda Diagnosis Codes.'],
+    ],
+  },
+  {
+    module: 'clinical-masters',
     resource: 'allergen',
     actions: [
       ['read', 'View Allergens.'],
@@ -378,6 +390,16 @@ const permissionGroups = [
   },
   {
     module: 'visits',
+    resource: 'admit-source',
+    actions: [
+      ['read', 'View Admit Sources.'],
+      ['create', 'Create Admit Sources.'],
+      ['update', 'Update Admit Sources.'],
+      ['delete', 'Delete Admit Sources.'],
+    ],
+  },
+  {
+    module: 'visits',
     resource: 'visit',
     actions: [
       ['read', 'View Visits.'],
@@ -387,6 +409,7 @@ const permissionGroups = [
       ['start', 'Start the consultation for a Visit.'],
       ['complete', 'Complete a Visit.'],
       ['cancel', 'Cancel a Visit.'],
+      ['amend', 'Amend a Completed Visit, its Clinical Notes and Vital Signs.'],
     ],
   },
   {

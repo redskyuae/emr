@@ -8,12 +8,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 type ViewLayout = 'table' | 'card' | 'list';
 
-function TableSkeleton() {
+// Same page size as the Doctors list, so the skeleton holds the height of a full page.
+const ROW_COUNT = 10;
+
+// A text placeholder held to the line height of the text it stands in for.
+function TextLine({ line = 'h-5', className }: { line?: string; className: string }) {
   return (
-    <Card className="shadow-fluent-2">
+    <div className={cn('flex items-center', line)}>
+      <Skeleton className={cn('h-3.5', className)} />
+    </div>
+  );
+}
+
+function TableSkeleton({ showActions }: { showActions: boolean }) {
+  return (
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[920px] table-fixed">
@@ -28,25 +41,26 @@ function TableSkeleton() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Array.from({ length: 6 }, (_, i) => (
+              {Array.from({ length: ROW_COUNT }, (_, i) => (
                 <TableRow key={i}>
                   <TableCell className="pl-4">
-                    <Skeleton className="h-5 w-40" />
+                    <TextLine className="w-32" />
+                    <TextLine line="h-4" className="h-3 w-40" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-5 w-28" />
+                    <TextLine className="w-28" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-5 w-20" />
+                    <TextLine className="w-20" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-5 w-32" />
+                    <TextLine className="w-32" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <Skeleton className="ml-auto h-8 w-8" />
+                    {showActions ? <Skeleton className="ml-auto size-8" /> : null}
                   </TableCell>
                 </TableRow>
               ))}
@@ -58,23 +72,31 @@ function TableSkeleton() {
   );
 }
 
-function CardViewSkeleton() {
+function CardViewSkeleton({ showActions }: { showActions: boolean }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }, (_, i) => (
-        <Card key={i} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
-            <div className="flex items-start justify-between">
+      {Array.from({ length: ROW_COUNT }, (_, i) => (
+        <Card key={i}>
+          <CardContent className="space-y-3">
+            <div className="flex items-start justify-between gap-2">
               <Skeleton className="size-10 rounded-full" />
-              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-16 rounded-full" />
             </div>
-            <Skeleton className="h-5 w-36" />
-            <Skeleton className="h-4 w-44" />
-            <Skeleton className="h-4 w-28" />
-            <div className="flex gap-2 border-t pt-3">
-              <Skeleton className="h-8 w-14" />
-              <Skeleton className="h-8 w-24" />
+            <div className="space-y-1">
+              <TextLine line="h-6" className="h-4 w-36" />
+              <TextLine className="w-44" />
+              <div className="flex h-5 items-center gap-1.5">
+                <Skeleton className="size-3.5 rounded-full" />
+                <Skeleton className="h-3.5 w-28" />
+              </div>
+              <TextLine className="w-32" />
             </div>
+            {showActions ? (
+              <div className="flex gap-2 border-t pt-3">
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-28" />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -82,19 +104,29 @@ function CardViewSkeleton() {
   );
 }
 
-function ListViewSkeleton() {
+function ListViewSkeleton({ showActions }: { showActions: boolean }) {
   return (
     <div className="space-y-3">
-      {Array.from({ length: 5 }, (_, i) => (
-        <Card key={i} className="shadow-fluent-2">
-          <CardContent className="flex items-center gap-4 p-4">
-            <Skeleton className="size-10 shrink-0 rounded-full" />
-            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-6">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-5 w-28" />
-              <Skeleton className="h-6 w-20 rounded-full" />
+      {Array.from({ length: ROW_COUNT }, (_, i) => (
+        <Card key={i}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <Skeleton className="size-10 shrink-0 rounded-full" />
+              <div className="min-w-0">
+                <TextLine line="h-6" className="h-4 w-32" />
+                <TextLine className="w-44" />
+              </div>
             </div>
-            <Skeleton className="h-8 w-8 shrink-0" />
+            <div className="flex min-w-0 flex-1 flex-col gap-1 pl-14 sm:flex-row sm:items-center sm:gap-6 sm:pl-0">
+              <TextLine className="w-28" />
+              <TextLine className="w-32" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+            {showActions ? (
+              <div className="shrink-0 pl-14 sm:pl-0">
+                <Skeleton className="size-8" />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -102,8 +134,40 @@ function ListViewSkeleton() {
   );
 }
 
-export function DoctorViewSkeleton({ layout }: { layout: ViewLayout }) {
-  if (layout === 'card') return <CardViewSkeleton />;
-  if (layout === 'list') return <ListViewSkeleton />;
-  return <TableSkeleton />;
+function PaginationSkeleton() {
+  return (
+    <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+      <TextLine className="w-36" />
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-8 w-20" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Mirrors the current Doctors layout (table, card or list) and the pagination row beneath it.
+ * `showActions` matches the action permissions the loaded view renders; the route loader cannot
+ * know them yet, so it keeps the default.
+ */
+export function DoctorViewSkeleton({
+  layout,
+  showActions = true,
+}: {
+  layout: ViewLayout;
+  showActions?: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      {layout === 'card' ? (
+        <CardViewSkeleton showActions={showActions} />
+      ) : layout === 'list' ? (
+        <ListViewSkeleton showActions={showActions} />
+      ) : (
+        <TableSkeleton showActions={showActions} />
+      )}
+      <PaginationSkeleton />
+    </div>
+  );
 }

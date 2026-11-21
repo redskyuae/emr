@@ -1,6 +1,7 @@
 'use client';
 
-import { ChevronDown, MessageSquare } from 'lucide-react';
+import { CiChat1 } from 'react-icons/ci';
+import { PiCaretDownLight } from 'react-icons/pi';
 import { Controller, useFormState, type Control } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -18,9 +19,9 @@ export function BookingRemarks({ control }: { control: Control<BookAppointmentFo
           variant="ghost"
           className="group h-auto w-full justify-start gap-2 p-4"
         >
-          <MessageSquare className="text-muted-foreground size-4" /> Operational remarks
+          <CiChat1 className="text-muted-foreground size-4" /> Operational remarks
           <span className="text-muted-foreground text-xs font-normal">Optional</span>
-          <ChevronDown className="ml-auto size-4 group-data-[state=open]:rotate-180" />
+          <PiCaretDownLight className="ml-auto size-4 group-data-[state=open]:rotate-180" />
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="px-4 pb-4">

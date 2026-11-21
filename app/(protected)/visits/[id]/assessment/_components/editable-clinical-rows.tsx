@@ -1,5 +1,5 @@
 import type { Dispatch, InputHTMLAttributes } from 'react';
-import { Trash2Icon } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -46,7 +46,7 @@ function RowHeader({
         type="button"
         variant="ghost"
       >
-        <Trash2Icon aria-hidden="true" />
+        <CiTrash aria-hidden="true" />
         Remove
       </Button>
     </div>

@@ -1,0 +1,140 @@
+import { StatusCodes } from 'http-status-codes';
+import { NextRequest, NextResponse } from 'next/server';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { amendVisitDiagnosesCommand } from '@/app/api/lib/modules/visit-diagnosis/commands/amend-visit-diagnoses-command';
+import type { VisitDiagnosis } from '@/app/api/lib/modules/visit-diagnosis/schemas/visit-diagnosis-schema';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { PUT } from './route';
+
+vi.mock('@/app/api/lib/modules/visit-diagnosis/commands/amend-visit-diagnoses-command', () => ({
+  amendVisitDiagnosesCommand: vi.fn(),
+}));
+vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
+  requireTenantPermissions: vi.fn(),
+  requireTenantSession: vi.fn(),
+}));
+
+const amendDiagnoses = vi.mocked(amendVisitDiagnosesCommand);
+const requirePermissions = vi.mocked(requireTenantPermissions);
+const requireSession = vi.mocked(requireTenantSession);
+
+const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'user-1' } } };
+const diagnosis = { id: 1, visitId: 42, code: 'AYU-AMV' } as VisitDiagnosis;
+const body = {
+  diagnoses: [{ codeSystem: 'AYURVEDA', ayurvedaDiagnosisCodeId: 3, diagnosisType: 'PRINCIPAL' }],
+};
+
+function request(rawBody = JSON.stringify(body)) {
+  return new NextRequest('http://localhost/api/v1/visits/42/diagnoses/amend', {
+    method: 'PUT',
+    body: rawBody,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function context(id = '42') {
+  return { params: Promise.resolve({ id }) };
+}
+
+describe('Visit diagnoses amend route', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    requireSession.mockResolvedValue(tenantSession as never);
+    requirePermissions.mockResolvedValue(null);
+    amendDiagnoses.mockResolvedValue({ success: true, data: [diagnosis] });
+  });
+
+  it('should return unauthorized without checking permission or amending', async () => {
+    requireSession.mockResolvedValue(
+      NextResponse.json({ message: 'Unauthorized' }, { status: StatusCodes.UNAUTHORIZED })
+    );
+
+    const response = await PUT(request(), context());
+
+    expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
+    expect(requirePermissions).not.toHaveBeenCalled();
+    expect(amendDiagnoses).not.toHaveBeenCalled();
+  });
+
+  it('should return forbidden without amending when visit:amend is absent', async () => {
+    requirePermissions.mockResolvedValue(
+      NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+    );
+
+    const response = await PUT(request(), context());
+
+    expect(response.status).toBe(StatusCodes.FORBIDDEN);
+    expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['visit:amend']);
+    expect(amendDiagnoses).not.toHaveBeenCalled();
+  });
+
+  it('should reject invalid JSON before amending', async () => {
+    const response = await PUT(request('{'), context());
+
+    expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+    await expect(response.json()).resolves.toEqual({ message: 'Request body must be valid JSON' });
+    expect(amendDiagnoses).not.toHaveBeenCalled();
+  });
+
+  it('should pass the Visit id, active Tenant, and body to the command', async () => {
+    const response = await PUT(request(), context());
+
+    expect(response.status).toBe(StatusCodes.OK);
+    await expect(response.json()).resolves.toEqual({ data: [diagnosis] });
+    expect(amendDiagnoses).toHaveBeenCalledWith('42', 'tenant-1', body);
+  });
+
+  it('should surface a not-completed Visit as a conflict message', async () => {
+    amendDiagnoses.mockResolvedValue({
+      success: false,
+      errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+      status: StatusCodes.CONFLICT,
+    });
+
+    const response = await PUT(request(), context());
+
+    expect(response.status).toBe(StatusCodes.CONFLICT);
+    await expect(response.json()).resolves.toEqual({
+      message: 'Visit VST-1001 is not completed and cannot be amended.',
+      errors: ['Visit VST-1001 is not completed and cannot be amended.'],
+    });
+  });
+
+  it('should map a missing Visit to not found', async () => {
+    amendDiagnoses.mockResolvedValue({
+      success: false,
+      errors: ['Visit not found'],
+      status: StatusCodes.NOT_FOUND,
+    });
+
+    const response = await PUT(request(), context());
+
+    expect(response.status).toBe(StatusCodes.NOT_FOUND);
+    await expect(response.json()).resolves.toEqual({
+      message: 'Visit not found',
+      errors: ['Visit not found'],
+    });
+  });
+
+  it('should map validation failures to bad request', async () => {
+    amendDiagnoses.mockResolvedValue({
+      success: false,
+      errors: ['Diagnosis code M06.9 is listed more than once.'],
+    });
+
+    const response = await PUT(request(), context());
+
+    expect(response.status).toBe(StatusCodes.BAD_REQUEST);
+    await expect(response.json()).resolves.toMatchObject({ message: 'Validation failed' });
+  });
+
+  it('should return an internal server error when the command throws', async () => {
+    amendDiagnoses.mockRejectedValue(new Error('database down'));
+
+    const response = await PUT(request(), context());
+
+    expect(response.status).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
+    await expect(response.json()).resolves.toEqual({ message: 'Internal Server Error' });
+  });
+});

@@ -1,7 +1,7 @@
 'use client';
 
 import type { UseFormReturn } from 'react-hook-form';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -58,7 +58,7 @@ export function DiagnosisCodeFormSheet({
           </SheetTitle>
           <SheetDescription>
             {isCreating
-              ? 'Add an ICD-10 diagnosis code to this Tenant catalogue.'
+              ? 'Add an ICD-10-CM Diagnosis Code to this Tenant catalogue.'
               : 'Update the Diagnosis Code details.'}
           </SheetDescription>
         </SheetHeader>
@@ -73,7 +73,7 @@ export function DiagnosisCodeFormSheet({
           <div className="flex-1 overflow-y-auto p-4">
             {serverErrors.length > 0 ? (
               <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="size-4" />
+                <CiCircleAlert className="size-4" />
                 <AlertTitle>Save failed</AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc space-y-1 pl-4">
@@ -88,7 +88,7 @@ export function DiagnosisCodeFormSheet({
             <FieldGroup className="gap-4">
               <Field data-invalid={!!errors.code}>
                 <FieldLabel htmlFor="diagnosis-code-code">
-                  Code{' '}
+                  ICD-10-CM code{' '}
                   <span aria-hidden="true" className="text-destructive">
                     *
                   </span>
@@ -102,12 +102,16 @@ export function DiagnosisCodeFormSheet({
                   })}
                   disabled={isSaving}
                   maxLength={10}
-                  placeholder="e.g. I10"
+                  placeholder="e.g. M54.5"
                   className="font-mono"
                   aria-required="true"
                   aria-invalid={!!errors.code}
+                  aria-describedby="diagnosis-code-code-help"
                 />
                 <FieldError errors={[errors.code]} />
+                <p id="diagnosis-code-code-help" className="text-muted-foreground text-xs">
+                  A valid ICD-10-CM code, e.g. M54.5 or I10. UAE insurance claims use this code.
+                </p>
               </Field>
 
               <Field data-invalid={!!errors.title}>
@@ -136,7 +140,7 @@ export function DiagnosisCodeFormSheet({
                   {...register('category')}
                   disabled={isSaving}
                   maxLength={100}
-                  placeholder="Optional ICD chapter or grouping"
+                  placeholder="Optional ICD-10-CM chapter or grouping"
                 />
                 <FieldError errors={[errors.category]} />
               </Field>
@@ -148,7 +152,7 @@ export function DiagnosisCodeFormSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
-              <Save className="size-4" />
+              <CiFloppyDisk className="size-4" />
               Save
             </Button>
           </SheetFooter>

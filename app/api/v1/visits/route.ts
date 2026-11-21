@@ -33,8 +33,11 @@ export async function GET(request: NextRequest) {
       tenantId: tenantSession.tenantId,
       filters: {
         visitDate: searchParams.get('visitDate')?.trim() || undefined,
+        fromDate: searchParams.get('fromDate')?.trim() || undefined,
+        toDate: searchParams.get('toDate')?.trim() || undefined,
         doctorId: searchParams.get('doctorId')?.trim() || undefined,
         patientId: searchParams.get('patientId')?.trim() || undefined,
+        visitTypeId: searchParams.get('visitTypeId')?.trim() || undefined,
         status: searchParams.get('status')?.trim() || undefined,
         query: searchParams.get('query')?.trim() || searchParams.get('search')?.trim() || undefined,
         page: safePage,

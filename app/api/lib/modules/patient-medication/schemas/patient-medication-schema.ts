@@ -113,4 +113,5 @@ export type PatientMedicationListParams = {
   patientId: number;
   page?: number;
   limit?: number;
+  status?: MedicationStatus;
 };

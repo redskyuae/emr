@@ -7,6 +7,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import type { TreatmentSessionSummary } from '@/app/api/lib/modules/treatment/schemas/treatment-schema';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { RichTextEditor } from '@/components/clinical/rich-text-editor';
 import { getApiErrors } from '@/app/queries/api-error';
 import { useAppointmentQuery } from '@/app/queries/appointments/useAppointment';
@@ -51,6 +52,7 @@ export function DailyTreatmentSheet({
 }) {
   const appointment = useAppointmentQuery(appointmentId);
   const room = useRoomQuery(appointment.data?.roomId ?? null);
+  const contextLoading = appointment.isLoading || room.isLoading;
   const noteTypes = useClinicalNoteTypesQuery({ limit: 100 });
   const [selectedNoteTypeId, setSelectedNoteTypeId] = useState<number | null>(null);
   const progressType = noteTypes.data?.data.find((type) => type.code === 'PROG');
@@ -128,23 +130,25 @@ export function DailyTreatmentSheet({
                 Planned duration:{' '}
                 {session.durationMinutes ? `${session.durationMinutes} minutes` : 'Not configured'}
               </p>
-              {appointment.isLoading || room.isLoading ? (
-                <Skeleton className="h-4 w-48" aria-label="Loading Appointment and Room" />
-              ) : appointment.isError || room.isError ? (
+              {(appointment.isError || room.isError) && !contextLoading ? (
                 <p className="text-destructive">Appointment or Room details could not be loaded.</p>
               ) : (
-                <p className="text-muted-foreground">
-                  Therapist: {appointment.data?.therapist?.name ?? 'Not assigned'} · Room:{' '}
-                  {room.data?.roomNumber ?? 'Not assigned'}
-                </p>
+                <SkeletonCrossfade
+                  isLoading={contextLoading}
+                  skeleton={
+                    <Skeleton
+                      className="my-0.5 h-4 w-64 max-w-full"
+                      aria-label="Loading Appointment and Room"
+                    />
+                  }
+                >
+                  <p className="text-muted-foreground">
+                    Therapist: {appointment.data?.therapist?.name ?? 'Not assigned'} · Room:{' '}
+                    {room.data?.roomNumber ?? 'Not assigned'}
+                  </p>
+                </SkeletonCrossfade>
               )}
             </div>
-            {noteTypes.isLoading ? (
-              <div className="space-y-2" aria-label="Loading Clinical Note Types">
-                <Skeleton className="h-4 w-36" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ) : null}
             {noteTypes.isError ? (
               <Alert variant="destructive">
                 <AlertTitle>Clinical Note Types could not be loaded</AlertTitle>
@@ -160,32 +164,43 @@ export function DailyTreatmentSheet({
                 </AlertDescription>
               </Alert>
             ) : null}
-            {availableNoteTypes.length === 0 && !noteTypes.isLoading && !noteTypes.isError ? (
-              <Alert variant="destructive">
-                <AlertTitle>No Clinical Note Types configured</AlertTitle>
-                <AlertDescription>
-                  <Link href="/clinical-masters/note-types" className="underline">
-                    Configure a Clinical Note Type
-                  </Link>{' '}
-                  before saving.
-                </AlertDescription>
-              </Alert>
-            ) : null}
-            {availableNoteTypes.length > 0 ? (
-              <Field>
-                <FieldLabel htmlFor="treatment-note-type">Clinical Note Type</FieldLabel>
-                <NativeSelect
-                  id="treatment-note-type"
-                  value={String(noteTypeId)}
-                  onChange={(event) => setSelectedNoteTypeId(Number(event.target.value))}
-                >
-                  {availableNoteTypes.map((type) => (
-                    <NativeSelectOption key={type.id} value={String(type.id)}>
-                      {type.name}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </Field>
+            {!noteTypes.isError || availableNoteTypes.length > 0 ? (
+              <SkeletonCrossfade
+                isLoading={noteTypes.isLoading}
+                skeleton={
+                  <div className="space-y-2" aria-label="Loading Clinical Note Types">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                }
+              >
+                {availableNoteTypes.length === 0 ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>No Clinical Note Types configured</AlertTitle>
+                    <AlertDescription>
+                      <Link href="/clinical-masters/note-types" className="underline">
+                        Configure a Clinical Note Type
+                      </Link>{' '}
+                      before saving.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Field>
+                    <FieldLabel htmlFor="treatment-note-type">Clinical Note Type</FieldLabel>
+                    <NativeSelect
+                      id="treatment-note-type"
+                      value={String(noteTypeId)}
+                      onChange={(event) => setSelectedNoteTypeId(Number(event.target.value))}
+                    >
+                      {availableNoteTypes.map((type) => (
+                        <NativeSelectOption key={type.id} value={String(type.id)}>
+                          {type.name}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                )}
+              </SkeletonCrossfade>
             ) : null}
             {form.formState.errors.root ? (
               <Alert variant="destructive">

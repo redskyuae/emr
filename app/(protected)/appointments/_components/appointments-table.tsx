@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarClock, CircleX, MoreHorizontal, Phone, Plus, UserRound } from 'lucide-react';
+import { CiCalendarDate, CiCircleRemove, CiPhone, CiUser } from 'react-icons/ci';
+import { PiDotsThreeLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  tableCellClass,
+  tableHeadCellClass,
+  tableHeadRowClass,
+} from '@/components/ui/table-styles';
 import { cn } from '@/lib/utils';
 import { canCancelAppointment } from '../_utils/appointment-cancellation';
 import { appointmentStatusVariant } from '../_utils/appointment-status';
@@ -58,23 +64,20 @@ export function AppointmentsTable({
   label?: string;
 }) {
   return (
-    <div
-      className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border"
-      aria-busy={isFetching}
-    >
+    <div className="bg-card overflow-hidden rounded-xl border" aria-busy={isFetching}>
       <div className={cn('overflow-x-auto', isFetching && 'opacity-70 transition-opacity')}>
         <table aria-label={label} className="w-full min-w-[1080px] text-sm">
           <thead>
-            <tr className="text-muted-foreground border-b text-left">
-              <th className="p-3 pl-4 font-medium">Booking</th>
-              <th className="p-3 font-medium">Date / Slot</th>
-              <th className="p-3 font-medium">Patient</th>
-              <th className="p-3 font-medium">Doctor</th>
-              <th className="p-3 font-medium">Therapist</th>
-              <th className="p-3 font-medium">Type</th>
-              <th className="p-3 font-medium">Mode</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 pr-4 text-right font-medium">Actions</th>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Booking</th>
+              <th className={tableHeadCellClass}>Date / Slot</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Therapist</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Mode</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -86,7 +89,7 @@ export function AppointmentsTable({
 
               return (
                 <tr key={appointment.id} className="hover:bg-muted/50 border-b last:border-b-0">
-                  <td className="p-3 pl-4">
+                  <td className={tableCellClass}>
                     <p className="font-mono text-sm font-medium">{appointment.bookingNumber}</p>
                     <p className="text-muted-foreground text-xs">
                       {appointment.bookingPath === 'PROCEDURE'
@@ -94,13 +97,13 @@ export function AppointmentsTable({
                         : (appointment.rotaName ?? 'Consultation')}
                     </p>
                   </td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>
                     <p className="font-medium tabular-nums">{appointment.slotDate}</p>
                     <p className="text-muted-foreground text-xs tabular-nums">
                       {formatSlotRange(appointment)}
                     </p>
                   </td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>
                     <Link
                       href={`/patients/${appointment.patient.id}`}
                       className="font-medium hover:underline"
@@ -113,28 +116,28 @@ export function AppointmentsTable({
                       className="text-primary inline-flex items-center gap-1 text-xs hover:underline"
                       aria-label={`Call ${appointment.patient.firstName} ${appointment.patient.lastName} at ${appointment.patient.phone}`}
                     >
-                      <Phone className="size-3" aria-hidden="true" />
+                      <CiPhone className="size-3" aria-hidden="true" />
                       {appointment.patient.phone}
                     </a>
                   </td>
-                  <td className="p-3">{appointment.doctor?.name ?? 'N/A'}</td>
-                  <td className="p-3">{appointment.therapist?.name ?? 'N/A'}</td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>{appointment.doctor?.name ?? 'N/A'}</td>
+                  <td className={tableCellClass}>{appointment.therapist?.name ?? 'N/A'}</td>
+                  <td className={tableCellClass}>
                     <Badge variant="secondary">
                       {appointment.appointmentType?.code ?? appointment.bookingPath}
                     </Badge>
                   </td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>
                     <Badge variant="outline">{appointment.appointmentMode?.code ?? 'N/A'}</Badge>
                   </td>
-                  <td className="p-3">
+                  <td className={tableCellClass}>
                     <Badge
                       variant={appointmentStatusVariant(appointment.appointmentStatus.category)}
                     >
                       {appointment.appointmentStatus.name}
                     </Badge>
                   </td>
-                  <td className="p-3 pr-4 text-right">
+                  <td className={cn(tableCellClass, 'text-right')}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -142,20 +145,20 @@ export function AppointmentsTable({
                           size="icon"
                           aria-label={`Actions for ${appointment.bookingNumber}`}
                         >
-                          <MoreHorizontal className="size-4" />
+                          <PiDotsThreeLight className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canReschedule ? (
                           <DropdownMenuItem asChild>
                             <Link href={`/appointments/${appointment.id}/reschedule`}>
-                              <CalendarClock className="size-4" />
+                              <CiCalendarDate className="size-4" />
                               Reschedule
                             </Link>
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem disabled>
-                            <CalendarClock className="size-4" />
+                            <CiCalendarDate className="size-4" />
                             Reschedule
                           </DropdownMenuItem>
                         )}
@@ -164,18 +167,18 @@ export function AppointmentsTable({
                           className="text-destructive focus:text-destructive"
                           onSelect={() => onCancel(appointment)}
                         >
-                          <CircleX className="size-4" />
+                          <CiCircleRemove className="size-4" />
                           Cancel Appointment
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href={`/patients/${appointment.patient.id}`}>
-                            <UserRound className="size-4" />
+                            <CiUser className="size-4" />
                             Open Patient
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href={`/visits/new?appointmentId=${appointment.id}`}>
-                            <Plus className="size-4" />
+                            <PiPlusLight className="size-4" />
                             Create Visit
                           </Link>
                         </DropdownMenuItem>
@@ -220,27 +223,76 @@ export function AppointmentsTable({
   );
 }
 
+// Mirrors the loaded table: the same header, one sized skeleton per cell for a full page
+// (five rows), and the "Showing … of …" footer with its pager.
 export function AppointmentsTableSkeleton() {
   return (
-    <div className="bg-card shadow-fluent-2 overflow-hidden rounded-lg border p-3">
-      {Array.from({ length: 5 }, (_, index) => (
-        <div key={index} className="flex items-center gap-4 border-b p-2 last:border-b-0">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-32" />
-          <div className="space-y-1">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-3 w-28" />
-          </div>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="ml-auto h-8 w-10" />
-        </div>
-      ))}
-      <div className="flex items-center justify-between border-t p-3">
-        <Skeleton className="h-5 w-36" />
+    <div className="bg-card overflow-hidden rounded-xl border">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1080px] text-sm">
+          <thead>
+            <tr className={tableHeadRowClass}>
+              <th className={tableHeadCellClass}>Booking</th>
+              <th className={tableHeadCellClass}>Date / Slot</th>
+              <th className={tableHeadCellClass}>Patient</th>
+              <th className={tableHeadCellClass}>Doctor</th>
+              <th className={tableHeadCellClass}>Therapist</th>
+              <th className={tableHeadCellClass}>Type</th>
+              <th className={tableHeadCellClass}>Mode</th>
+              <th className={tableHeadCellClass}>Status</th>
+              <th className={cn(tableHeadCellClass, 'text-right')}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 5 }, (_, row) => (
+              <tr key={row} className="border-b last:border-b-0">
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                    <div className="flex items-center gap-1">
+                      <Skeleton className="size-3 rounded-full" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-28" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-4 w-24" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-14 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-12 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </td>
+                <td className={tableCellClass}>
+                  <Skeleton className="ml-auto size-9" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-col items-center justify-between gap-3 border-t p-3 sm:flex-row">
+        <Skeleton className="h-4 w-40" />
         <div className="flex gap-2">
           <Skeleton className="h-8 w-20" />
           <Skeleton className="h-8 w-16" />

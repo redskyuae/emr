@@ -1,6 +1,7 @@
 import { and, count, desc, eq, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
+import { user as userTable } from '@/app/db/schema/auth';
 import { clinicalNote as clinicalNoteTable } from '@/app/db/schema/clinical-note';
 import type {
   ClinicalNote,
@@ -25,6 +26,13 @@ const clinicalNoteColumns = {
   signedAt: clinicalNoteTable.signedAt,
   authorUserId: clinicalNoteTable.authorUserId,
   recordedByUserId: clinicalNoteTable.recordedByUserId,
+  amendedAt: clinicalNoteTable.amendedAt,
+  amendedByUserId: clinicalNoteTable.amendedByUserId,
+  // A correlated subquery (not a join) so the same column set also works in RETURNING.
+  amendedByUserName: sql<string | null>`(
+    select ${userTable.name} from ${userTable}
+    where ${userTable.id} = ${clinicalNoteTable.amendedByUserId}
+  )`.as('amended_by_user_name'),
   createdOn: clinicalNoteTable.createdOn,
   modifiedOn: clinicalNoteTable.modifiedOn,
 };
@@ -68,9 +76,29 @@ async function updateClinicalNote(
   id: number,
   data: UpdateClinicalNoteData
 ): Promise<ClinicalNote | undefined> {
+  return writeClinicalNoteContent(id, data, {});
+}
+
+// Amending a note on a Completed Visit rewrites the same content as an ordinary
+// update and also stamps who amended it and when, so a signed note shows that its
+// text changed after signing.
+async function amendClinicalNote(
+  id: number,
+  data: UpdateClinicalNoteData,
+  amendedByUserId: string
+): Promise<ClinicalNote | undefined> {
+  return writeClinicalNoteContent(id, data, { amendedAt: new Date(), amendedByUserId });
+}
+
+async function writeClinicalNoteContent(
+  id: number,
+  data: UpdateClinicalNoteData,
+  amendment: { amendedAt?: Date; amendedByUserId?: string }
+): Promise<ClinicalNote | undefined> {
   const [updated] = await db
     .update(clinicalNoteTable)
     .set({
+      ...amendment,
       noteTypeId: data.noteTypeId,
       // Preserve the existing Visit/Admission link unless the client explicitly
       // sends one. A chart edit that omits both must not orphan an Admission-linked
@@ -178,6 +206,7 @@ async function getClinicalNotes({
 
 export const clinicalNoteRepository = {
   getClinicalNotes,
+  amendClinicalNote,
   createClinicalNote,
   updateClinicalNote,
   signClinicalNote,

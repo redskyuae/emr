@@ -16,7 +16,8 @@ export type BookingSession = {
   therapistSkillId?: number | null;
   status: 'Pending' | 'Completed' | 'Unavailable';
   isBookable: boolean;
-  unavailableReason: 'Completed' | 'Reserved by another Appointment' | null;
+  unavailableReason:
+    'Completed' | 'Reserved by another Appointment' | 'In progress in a Visit' | null;
   completedAt: Date | string | null;
   reservedAppointment: {
     bookingNumber: string;
@@ -153,7 +154,9 @@ export function toBookingPatientTreatmentPlan(plan: PatientTreatmentPlan): Booki
           ? 'Completed'
           : session.unavailableReason === 'RESERVED'
             ? 'Reserved by another Appointment'
-            : null,
+            : session.unavailableReason === 'IN_PROGRESS'
+              ? 'In progress in a Visit'
+              : null,
       completedAt: session.completedAt,
       reservedAppointment: session.reservedAppointment,
     })),

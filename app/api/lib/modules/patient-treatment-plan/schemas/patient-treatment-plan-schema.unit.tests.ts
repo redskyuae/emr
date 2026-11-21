@@ -9,6 +9,8 @@ import {
   patientTreatmentPlanSessionIdSchema,
   patientTreatmentPlanSessionSchema,
   patientTreatmentPlanTenantIdSchema,
+  startPatientTreatmentPlanSessionSchema,
+  updatePatientTreatmentPlanSessionSchema,
 } from './patient-treatment-plan-schema';
 
 describe('Patient Treatment Plan schema', () => {
@@ -118,9 +120,73 @@ describe('Patient Treatment Plan schema', () => {
       completionSource: 'LEGACY_IMPORT',
       completedVisitId: null,
       completedAt: null,
+      startedVisitId: null,
+      startedAt: null,
       createdOn: new Date(),
       modifiedOn: new Date(),
     };
     expect(patientTreatmentPlanSessionSchema.parse(session)).toEqual(session);
+  });
+
+  it('should trim Session plan text and clear empty optional fields', () => {
+    expect(
+      updatePatientTreatmentPlanSessionSchema.parse({
+        procedure: '  Abhyanga with Ksheerabala taila  ',
+        preparation: '  Warm the oil.  ',
+        warning: '   ',
+        equipment: null,
+        durationMinutes: 50,
+        setupMinutes: 0,
+      })
+    ).toEqual({
+      procedure: 'Abhyanga with Ksheerabala taila',
+      preparation: 'Warm the oil.',
+      warning: null,
+      equipment: null,
+      durationMinutes: 50,
+      setupMinutes: 0,
+    });
+  });
+
+  it('should reject an empty Session plan update with the exact message', () => {
+    const result = updatePatientTreatmentPlanSessionSchema.safeParse({});
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.message)).toEqual([
+      'At least one Session plan field is required',
+    ]);
+  });
+
+  it('should enforce Session plan boundaries and reject unknown fields', () => {
+    const messages = (payload: unknown) =>
+      updatePatientTreatmentPlanSessionSchema
+        .safeParse(payload)
+        .error?.issues.map((issue) => issue.message);
+
+    expect(messages({ procedure: '  ' })).toEqual(['Procedure cannot be empty']);
+    expect(messages({ procedure: null })).toEqual(['Procedure must be text']);
+    expect(messages({ procedure: 'a'.repeat(5001) })).toEqual([
+      'Procedure must be at most 5000 characters',
+    ]);
+    expect(messages({ durationMinutes: 0 })).toEqual(['Duration minutes must be at least 1']);
+    expect(messages({ durationMinutes: 481 })).toEqual(['Duration minutes must be at most 480']);
+    expect(messages({ cleaningMinutes: -1 })).toEqual(['Cleaning minutes must be at least 0']);
+    expect(messages({ setupMinutes: 1.5 })).toEqual(['Setup minutes must be an integer']);
+    expect(updatePatientTreatmentPlanSessionSchema.parse({ durationMinutes: 480 })).toEqual({
+      durationMinutes: 480,
+    });
+    expect(
+      updatePatientTreatmentPlanSessionSchema.safeParse({ label: 'Session 1', warning: 'x' })
+        .success
+    ).toBe(false);
+  });
+
+  it('should require a positive Visit ID to start a Session', () => {
+    expect(startPatientTreatmentPlanSessionSchema.parse({ visitId: '5120' })).toEqual({
+      visitId: 5120,
+    });
+    for (const payload of [{}, { visitId: 0 }, { visitId: 1.5 }, { visitId: 1, tenantId: 'x' }]) {
+      expect(startPatientTreatmentPlanSessionSchema.safeParse(payload).success).toBe(false);
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CiCircleCheck } from 'react-icons/ci';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { NativeSelect } from '@/components/ui/native-select';
+import { tableHeadRowClass } from '@/components/ui/table-styles';
 import { cn } from '@/lib/utils';
 import { APPROVERS } from '../_data/counter-seed';
 import {
@@ -27,7 +28,7 @@ import { Money, TenderChips, TxnTypeBadge } from './txn-cells';
 
 function Kpi({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className={cn('bg-card shadow-fluent-2 rounded-lg border border-t-2 p-3', accent)}>
+    <div className={cn('bg-card rounded-lg border border-t-2 p-3', accent)}>
       <p className="text-muted-foreground text-xs">{label}</p>
       <p className="font-heading text-lg font-semibold tabular-nums">{value}</p>
     </div>
@@ -52,10 +53,10 @@ function ClosedShiftSummary() {
   }
 
   return (
-    <Card className="shadow-fluent-2">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CheckCircle2 className="text-success size-4" />
+          <CiCircleCheck className="text-success size-4" />
           Shift {state.shift.no} closed at {closing.closedAt}
         </CardTitle>
         <CardDescription>
@@ -181,7 +182,7 @@ export function DayCloseTab() {
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-4">
-          <Card className="shadow-fluent-2">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">
                 Transactions · {totals.invoices} Invoices · {txns.length} entries
@@ -193,15 +194,15 @@ export function DayCloseTab() {
             <CardContent className="overflow-x-auto p-0">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
-                  <tr className="text-muted-foreground border-y text-left text-xs">
-                    <th className="p-2 pl-4 font-medium">Time</th>
-                    <th className="p-2 font-medium">No.</th>
-                    <th className="p-2 font-medium">Type</th>
-                    <th className="p-2 font-medium">Patient</th>
-                    <th className="p-2 font-medium">Tenders</th>
-                    <th className="p-2 text-right font-medium">Patient paid</th>
-                    <th className="p-2 text-right font-medium">Payer share</th>
-                    <th className="p-2 pr-4 text-right font-medium">Outstanding</th>
+                  <tr className={cn(tableHeadRowClass, 'border-y')}>
+                    <th className="p-2 pl-4 font-semibold">Time</th>
+                    <th className="p-2 font-semibold">No.</th>
+                    <th className="p-2 font-semibold">Type</th>
+                    <th className="p-2 font-semibold">Patient</th>
+                    <th className="p-2 font-semibold">Tenders</th>
+                    <th className="p-2 text-right font-semibold">Patient paid</th>
+                    <th className="p-2 text-right font-semibold">Payer share</th>
+                    <th className="p-2 pr-4 text-right font-semibold">Outstanding</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -247,7 +248,7 @@ export function DayCloseTab() {
           <MethodBreakdown txns={txns} />
 
           {outstandingTxns.length > 0 ? (
-            <Card className="shadow-fluent-2">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-base">Outstanding Invoices carried forward</CardTitle>
                 <CardDescription>
@@ -270,7 +271,7 @@ export function DayCloseTab() {
           ) : null}
 
           {state.closedShifts.length > 0 ? (
-            <Card className="shadow-fluent-2">
+            <Card>
               <CardHeader>
                 <CardTitle className="text-base">Earlier shifts today</CardTitle>
               </CardHeader>
@@ -294,7 +295,7 @@ export function DayCloseTab() {
         </div>
 
         {shiftOpen ? (
-          <Card className="shadow-fluent-4">
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">
                 Cash reconciliation · {state.shift.counter}

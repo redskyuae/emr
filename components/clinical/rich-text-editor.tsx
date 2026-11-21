@@ -28,16 +28,14 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { $createHeadingNode, $isHeadingNode, HeadingNode } from '@lexical/rich-text';
+import { CiRedo, CiUndo, CiViewList } from 'react-icons/ci';
 import {
-  Bold,
-  Heading2,
-  Italic,
-  List,
-  ListOrdered,
-  Redo2,
-  Strikethrough,
-  Undo2,
-} from 'lucide-react';
+  PiListNumbersLight,
+  PiTextBLight,
+  PiTextHTwoLight,
+  PiTextItalicLight,
+  PiTextStrikethroughLight,
+} from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -157,7 +155,7 @@ function Toolbar() {
 
   return (
     <div
-      className="bg-muted/40 flex flex-wrap gap-0.5 border-b p-1"
+      className="bg-muted/40 hidden flex-wrap gap-0.5 border-t p-1 group-focus-within/editor:flex"
       role="toolbar"
       aria-label="Text formatting"
     >
@@ -166,44 +164,44 @@ function Toolbar() {
         pressed={active.bold}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')}
       >
-        <Bold className="size-4" />
+        <PiTextBLight className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         label="Italic"
         pressed={active.italic}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')}
       >
-        <Italic className="size-4" />
+        <PiTextItalicLight className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         label="Strikethrough"
         pressed={active.strike}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')}
       >
-        <Strikethrough className="size-4" />
+        <PiTextStrikethroughLight className="size-4" />
       </ToolbarButton>
       <span className="bg-border mx-1 w-px" aria-hidden="true" />
       <ToolbarButton label="Heading" pressed={active.heading} onClick={() => toggleHeading(editor)}>
-        <Heading2 className="size-4" />
+        <PiTextHTwoLight className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         label="Bulleted list"
         onClick={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)}
       >
-        <List className="size-4" />
+        <CiViewList className="size-4" />
       </ToolbarButton>
       <ToolbarButton
         label="Numbered list"
         onClick={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)}
       >
-        <ListOrdered className="size-4" />
+        <PiListNumbersLight className="size-4" />
       </ToolbarButton>
       <span className="bg-border mx-1 w-px" aria-hidden="true" />
       <ToolbarButton label="Undo" onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}>
-        <Undo2 className="size-4" />
+        <CiUndo className="size-4" />
       </ToolbarButton>
       <ToolbarButton label="Redo" onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}>
-        <Redo2 className="size-4" />
+        <CiRedo className="size-4" />
       </ToolbarButton>
     </div>
   );
@@ -253,13 +251,12 @@ export function RichTextEditor({
     <LexicalComposer initialConfig={initialConfig}>
       <div
         className={cn(
-          'border-input bg-background focus-within:border-ring focus-within:ring-ring/50 rounded-md border text-sm focus-within:ring-[3px]',
-          invalid && 'border-destructive',
-          disabled && 'bg-muted/50 opacity-70',
+          'group/editor border-input focus-within:border-ring focus-within:ring-ring/50 dark:bg-input/30 overflow-hidden rounded-lg border bg-transparent text-sm transition-colors focus-within:ring-3',
+          invalid && 'border-destructive ring-destructive/20 dark:ring-destructive/40 ring-3',
+          disabled && 'bg-input/50 opacity-70',
           className
         )}
       >
-        {!disabled ? <Toolbar /> : null}
         <div className="relative">
           <RichTextPlugin
             contentEditable={
@@ -269,12 +266,12 @@ export function RichTextEditor({
                 aria-required={required}
                 aria-invalid={invalid}
                 onBlur={onBlur}
-                className="min-h-24 w-full px-3 py-2 outline-none [&_p]:min-h-5"
+                className="min-h-20 w-full px-2.5 py-2 outline-none [&_p]:min-h-5"
               />
             }
             placeholder={
               placeholder ? (
-                <span className="text-muted-foreground pointer-events-none absolute top-2 left-3">
+                <span className="text-muted-foreground pointer-events-none absolute top-2 left-2.5">
                   {placeholder}
                 </span>
               ) : null
@@ -286,6 +283,7 @@ export function RichTextEditor({
           <ValuePlugin value={value} onChange={onChange} />
           <EditableStatePlugin disabled={disabled} />
         </div>
+        {!disabled ? <Toolbar /> : null}
       </div>
     </LexicalComposer>
   );

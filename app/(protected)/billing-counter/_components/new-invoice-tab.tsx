@@ -121,7 +121,7 @@ export function NewInvoiceTab({
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-4">
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardHeader>
             <CardTitle className="text-base">Patient &amp; Visit</CardTitle>
           </CardHeader>
@@ -159,7 +159,7 @@ export function NewInvoiceTab({
           </CardContent>
         </Card>
 
-        <Card className="shadow-fluent-2">
+        <Card>
           <CardHeader>
             <CardTitle className="text-base">Charges</CardTitle>
             <CardDescription>

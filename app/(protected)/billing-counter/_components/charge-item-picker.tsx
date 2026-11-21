@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronsUpDown, Plus } from 'lucide-react';
+import { PiCaretUpDownLight, PiPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -40,10 +40,10 @@ export function ChargeItemPicker({ onPick }: { onPick: (item: ChargeItem) => voi
           className="w-full justify-between font-normal"
         >
           <span className="text-muted-foreground flex items-center gap-2">
-            <Plus className="size-4" />
+            <PiPlusLight className="size-4" />
             Add a charge — search service or CPT code
           </span>
-          <ChevronsUpDown className="text-muted-foreground size-4" />
+          <PiCaretUpDownLight className="text-muted-foreground size-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-(--radix-popover-trigger-width) p-0">

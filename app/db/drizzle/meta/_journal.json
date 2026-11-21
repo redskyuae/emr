@@ -491,6 +491,83 @@
       "when": 1792994595929,
       "tag": "0069_default-visit-charge-items",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1793942617784,
+      "tag": "0070_admit_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1793942620987,
+      "tag": "0071_seed_admit_sources",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1794304124022,
+      "tag": "0072_patient_treatment_plan_session_start",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1794409419052,
+      "tag": "0073_patient_treatment_plan_session_started_visit_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1794548141839,
+      "tag": "0074_visit_legacy_visit_number",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1794847122005,
+      "tag": "0075_visit_amend_permission",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1794852464003,
+      "tag": "0076_ayurveda_diagnosis_and_visit_diagnosis",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1794852468839,
+      "tag": "0077_ayurveda_diagnosis_code_permission",
+      "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1794862501597,
+      "tag": "0078_clinical_note_amended_by",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1794888161688,
+      "tag": "0079_seed_ayurveda_diagnosis_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1794890697261,
+      "tag": "0080_visit_doctor_optional",
+      "breakpoints": true
     }
   ]
 }

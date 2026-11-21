@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { CiTrash } from 'react-icons/ci';
 
 import type { Religion } from '@/app/queries/global-references/religions/useReligions';
 import {
@@ -29,7 +29,7 @@ export function ReligionDeleteDialog({
       <AlertDialogContent className="shadow-fluent-64">
         <AlertDialogHeader>
           <AlertDialogMedia className="text-destructive">
-            <Trash2 />
+            <CiTrash />
           </AlertDialogMedia>
           <AlertDialogTitle>Delete Religion?</AlertDialogTitle>
           <AlertDialogDescription>

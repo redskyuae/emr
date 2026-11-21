@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -11,10 +11,12 @@ import type { SaveLanguageRequest } from '@/app/api/v1/languages/types';
 import { type Language } from '@/app/queries/global-references/languages/useLanguages';
 import { useCreateLanguage } from '@/app/queries/global-references/languages/useCreateLanguage';
 import { useUpdateLanguage } from '@/app/queries/global-references/languages/useUpdateLanguage';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet,
   SheetContent,
@@ -32,6 +34,22 @@ const EMPTY_DEFAULTS: LanguageFormValues = {
 
 function hasCode(record: Language): record is Language & { code: string } {
   return 'code' in record;
+}
+
+// Mirrors the form while the Language loads: a label and an input per field.
+function LanguageFormSkeleton() {
+  return (
+    <FieldGroup className="gap-4">
+      <Field>
+        <Skeleton className="h-4 w-14" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+      <Field>
+        <Skeleton className="h-4 w-12" />
+        <Skeleton className="h-10 w-full rounded-lg" />
+      </Field>
+    </FieldGroup>
+  );
 }
 
 export function LanguageFormSheet({
@@ -133,24 +151,16 @@ export function LanguageFormSheet({
           <SheetDescription>{sheetDescription}</SheetDescription>
         </SheetHeader>
 
-        {isResolving ? (
-          <div className="flex-1 p-4">
-            <div className="space-y-4">
-              {Array.from({ length: 3 }, (_, i) => (
-                <div key={i} className="bg-muted h-10 animate-pulse rounded-md" />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <form
-            id="language-form"
-            onSubmit={onSubmit}
-            className="flex flex-1 flex-col overflow-hidden"
-          >
-            <div className="flex-1 overflow-y-auto p-4">
+        <form
+          id="language-form"
+          onSubmit={onSubmit}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto p-4">
+            <SkeletonCrossfade isLoading={isResolving} skeleton={<LanguageFormSkeleton />}>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Save failed</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc space-y-1 pl-4">
@@ -215,19 +225,23 @@ export function LanguageFormSheet({
                   )}
                 />
               </FieldGroup>
-            </div>
+            </SkeletonCrossfade>
+          </div>
 
-            <SheetFooter className="bg-background flex-row justify-end border-t p-4">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSaving} aria-busy={isSaving}>
-                <Save className="size-4" />
-                Save
-              </Button>
-            </SheetFooter>
-          </form>
-        )}
+          <SheetFooter className="bg-background flex-row justify-end border-t p-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSaving || isResolving}
+              aria-busy={isSaving || isResolving}
+            >
+              <CiFloppyDisk className="size-4" />
+              Save
+            </Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
   );

@@ -11,12 +11,20 @@ import {
 
 type ViewLayout = 'table' | 'card' | 'list';
 
-function TableSkeleton() {
+type ActionFlags = { canEdit: boolean; canDelete: boolean };
+
+// One page of Allergens, matching PAGE_SIZE in the page container.
+const ROW_COUNT = 10;
+const CARD_COUNT = 6;
+
+// Mirrors AllergenTableView: the same header and one sized skeleton per cell. The actions cell
+// stays empty when the user can neither edit nor delete, as it does in the loaded table.
+function TableSkeleton({ canEdit, canDelete }: ActionFlags) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-[600px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Name</TableHead>
@@ -26,19 +34,19 @@ function TableSkeleton() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Array.from({ length: 5 }, (_, i) => (
+              {Array.from({ length: ROW_COUNT }, (_, i) => (
                 <TableRow key={i}>
                   <TableCell className="pl-4">
-                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-32" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-4 w-16" />
                   </TableCell>
                   <TableCell>
-                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
                   </TableCell>
                   <TableCell className="pr-4 text-right">
-                    <Skeleton className="ml-auto h-8 w-8" />
+                    {canEdit || canDelete ? <Skeleton className="ml-auto size-8" /> : null}
                   </TableCell>
                 </TableRow>
               ))}
@@ -50,20 +58,24 @@ function TableSkeleton() {
   );
 }
 
-function CardViewSkeleton() {
+function CardViewSkeleton({ canEdit, canDelete }: ActionFlags) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }, (_, i) => (
-        <Card key={i} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+      {Array.from({ length: CARD_COUNT }, (_, i) => (
+        <Card key={i}>
+          <CardContent className="space-y-3">
             <Skeleton className="size-10 rounded-full" />
-            <Skeleton className="h-5 w-36" />
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-5 w-20 rounded-full" />
-            <div className="flex gap-2 pt-1">
-              <Skeleton className="h-8 w-14" />
-              <Skeleton className="h-8 w-16" />
+            <div>
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="mt-1.5 h-4 w-24" />
+              <Skeleton className="mt-1.5 h-6 w-20 rounded-full" />
             </div>
+            {canEdit || canDelete ? (
+              <div className="flex gap-2 border-t pt-3">
+                {canEdit ? <Skeleton className="h-8 w-16" /> : null}
+                {canDelete ? <Skeleton className="h-8 w-20" /> : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -71,19 +83,25 @@ function CardViewSkeleton() {
   );
 }
 
-function ListViewSkeleton() {
+function ListViewSkeleton({ canEdit, canDelete }: ActionFlags) {
   return (
     <div className="space-y-3">
-      {Array.from({ length: 5 }, (_, i) => (
-        <Card key={i} className="shadow-fluent-2">
-          <CardContent className="flex items-center gap-4 p-4">
-            <Skeleton className="size-10 shrink-0 rounded-full" />
-            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-6">
+      {Array.from({ length: ROW_COUNT }, (_, i) => (
+        <Card key={i}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Skeleton className="size-10 shrink-0 rounded-full" />
               <Skeleton className="h-5 w-36" />
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-5 w-20 rounded-full" />
             </div>
-            <Skeleton className="h-8 w-8 shrink-0" />
+            <div className="flex min-w-0 flex-1 flex-col gap-1 pl-13 sm:flex-row sm:items-center sm:gap-6 sm:pl-0">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            {canEdit || canDelete ? (
+              <div className="shrink-0 pl-13 sm:pl-0">
+                <Skeleton className="size-8" />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}
@@ -91,8 +109,31 @@ function ListViewSkeleton() {
   );
 }
 
-export function ViewSkeleton({ layout }: { layout: ViewLayout }) {
-  if (layout === 'card') return <CardViewSkeleton />;
-  if (layout === 'list') return <ListViewSkeleton />;
-  return <TableSkeleton />;
+function PaginationSkeleton() {
+  return (
+    <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+      <Skeleton className="h-4 w-36" />
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-8 w-20" />
+      </div>
+    </div>
+  );
+}
+
+// The current layout's skeleton plus the pagination row below it, so the loading state has the
+// same shape as the loaded page.
+export function ViewSkeleton({ layout, ...flags }: { layout: ViewLayout } & ActionFlags) {
+  return (
+    <div className="space-y-4">
+      {layout === 'card' ? (
+        <CardViewSkeleton {...flags} />
+      ) : layout === 'list' ? (
+        <ListViewSkeleton {...flags} />
+      ) : (
+        <TableSkeleton {...flags} />
+      )}
+      <PaginationSkeleton />
+    </div>
+  );
 }

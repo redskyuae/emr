@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Save } from 'lucide-react';
+import { CiCircleAlert, CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
 import type { AdmissionType } from '@/app/api/lib/modules/admission-type/schemas/admission-type-schema';
@@ -135,7 +135,7 @@ export function AdmissionTypeFormSheet({
             <FieldGroup>
               {serverErrors.length > 0 ? (
                 <Alert variant="destructive">
-                  <AlertCircle className="size-4" />
+                  <CiCircleAlert className="size-4" />
                   <AlertTitle>Could not save the Admission Type</AlertTitle>
                   <AlertDescription>
                     <ul className="list-disc pl-4">
@@ -200,7 +200,7 @@ export function AdmissionTypeFormSheet({
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
-              <Save className="size-4" />
+              <CiFloppyDisk className="size-4" />
               {isSaving ? 'Saving…' : isCreating ? 'Create Admission Type' : 'Save changes'}
             </Button>
           </SheetFooter>

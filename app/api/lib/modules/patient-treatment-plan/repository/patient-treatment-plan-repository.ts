@@ -21,6 +21,8 @@ import type {
   PatientTreatmentPlanSessionReservedAppointment,
   PatientTreatmentPlanStatus,
   AddPatientTreatmentPlanSessionsInput,
+  StartPatientTreatmentPlanSessionInput,
+  UpdatePatientTreatmentPlanSessionInput,
 } from '../schemas/patient-treatment-plan-schema';
 import { resequencePatientTreatmentPlanSessionLabel } from '../patient-treatment-plan-session-label';
 
@@ -110,6 +112,8 @@ const sessionColumns = {
   completionSource: sessionTable.completionSource,
   completedVisitId: sessionTable.completedVisitId,
   completedAt: sessionTable.completedAt,
+  startedVisitId: sessionTable.startedVisitId,
+  startedAt: sessionTable.startedAt,
   createdOn: sessionTable.createdOn,
   modifiedOn: sessionTable.modifiedOn,
 };
@@ -175,7 +179,13 @@ function withAvailability(
   reservedAppointment: PatientTreatmentPlanSessionReservedAppointment | null
 ): PatientTreatmentPlanReadSession {
   const isCompleted = session.completionStatus === 'COMPLETED';
-  const unavailableReason = isCompleted ? 'COMPLETED' : isReserved ? 'RESERVED' : null;
+  const unavailableReason = isCompleted
+    ? 'COMPLETED'
+    : isReserved
+      ? 'RESERVED'
+      : session.startedVisitId !== null
+        ? 'IN_PROGRESS'
+        : null;
 
   return {
     ...session,
@@ -363,6 +373,7 @@ async function getPlanSessionForBooking(
         eq(sessionTable.id, sessionId),
         eq(sessionTable.tenantId, tenantId),
         eq(sessionTable.completionStatus, 'PENDING'),
+        isNull(sessionTable.startedVisitId),
         eq(sessionTable.isDeleted, false)
       )
     )
@@ -890,14 +901,162 @@ async function completeSessionForVisit(
     );
 }
 
+// Only a pending Session of a current Plan owned by the Patient can be edited or started.
+function pendingPlanSessionWhere(
+  input: Pick<
+    UpdatePatientTreatmentPlanSessionInput,
+    'tenantId' | 'patientId' | 'patientTreatmentPlanId' | 'patientTreatmentPlanSessionId'
+  >
+) {
+  const currentPlanIds = db
+    .select({ id: planTable.id })
+    .from(planTable)
+    .where(
+      and(
+        eq(planTable.id, input.patientTreatmentPlanId),
+        eq(planTable.patientId, input.patientId),
+        eq(planTable.tenantId, input.tenantId),
+        isNull(planTable.statusOverride),
+        eq(planTable.isDeleted, false)
+      )
+    );
+
+  return and(
+    eq(sessionTable.id, input.patientTreatmentPlanSessionId),
+    eq(sessionTable.tenantId, input.tenantId),
+    inArray(sessionTable.patientTreatmentPlanId, currentPlanIds),
+    eq(sessionTable.completionStatus, 'PENDING'),
+    eq(sessionTable.isDeleted, false)
+  );
+}
+
+async function getCurrentPlan(patientId: number, planId: number, tenantId: string) {
+  const plans = await getCurrentByPatientId(patientId, tenantId);
+  return plans.find((plan) => plan.id === planId);
+}
+
+// The plan is frozen once the Session is started, so it cannot change mid-treatment.
+async function updateSessionPlan(
+  input: UpdatePatientTreatmentPlanSessionInput
+): Promise<PatientTreatmentPlan | undefined> {
+  const [updated] = await db
+    .update(sessionTable)
+    .set({ ...input.plan, modifiedOn: new Date() })
+    .where(and(pendingPlanSessionWhere(input), isNull(sessionTable.startedVisitId)))
+    .returning({ id: sessionTable.id });
+
+  if (!updated) return undefined;
+
+  return getCurrentPlan(input.patientId, input.patientTreatmentPlanId, input.tenantId);
+}
+
+async function startSession(
+  input: StartPatientTreatmentPlanSessionInput
+): Promise<PatientTreatmentPlan | undefined> {
+  const started = await db.transaction(async (tx) => {
+    // Validation happens before this transaction. Lock the Visit and re-check that it is
+    // still active, so a concurrent complete/cancel/delete cannot strand the Session.
+    const [visit] = await tx
+      .select({ id: visitTable.id })
+      .from(visitTable)
+      .where(
+        and(
+          eq(visitTable.id, input.visitId),
+          eq(visitTable.tenantId, input.tenantId),
+          eq(visitTable.patientId, input.patientId),
+          inArray(visitTable.status, ['CHECKED_IN', 'IN_CONSULTATION']),
+          eq(visitTable.isDeleted, false)
+        )
+      )
+      .for('update')
+      .limit(1);
+
+    if (!visit) return undefined;
+
+    const startedAt = new Date();
+    const [session] = await tx
+      .update(sessionTable)
+      .set({ startedVisitId: input.visitId, startedAt, modifiedOn: startedAt })
+      .where(and(pendingPlanSessionWhere(input), isNull(sessionTable.startedVisitId)))
+      .returning({ id: sessionTable.id });
+
+    return session;
+  });
+
+  if (!started) return undefined;
+
+  return getCurrentPlan(input.patientId, input.patientTreatmentPlanId, input.tenantId);
+}
+
+async function completeStartedSessionsForVisit(
+  visitId: number,
+  tenantId: string,
+  tx: PatientTreatmentPlanTransaction
+): Promise<void> {
+  const [visit] = await tx
+    .select({ completedAt: visitTable.completedAt })
+    .from(visitTable)
+    .where(
+      and(
+        eq(visitTable.id, visitId),
+        eq(visitTable.tenantId, tenantId),
+        eq(visitTable.status, 'COMPLETED'),
+        eq(visitTable.isDeleted, false)
+      )
+    )
+    .limit(1);
+
+  if (!visit?.completedAt) return;
+
+  await tx
+    .update(sessionTable)
+    .set({
+      completionStatus: 'COMPLETED',
+      completionSource: 'VISIT',
+      completedVisitId: visitId,
+      completedAt: visit.completedAt,
+      modifiedOn: visit.completedAt,
+    })
+    .where(
+      and(
+        eq(sessionTable.startedVisitId, visitId),
+        eq(sessionTable.tenantId, tenantId),
+        eq(sessionTable.completionStatus, 'PENDING'),
+        eq(sessionTable.isDeleted, false)
+      )
+    );
+}
+
+async function releaseStartedSessionsForVisit(
+  visitId: number,
+  tenantId: string,
+  tx: PatientTreatmentPlanTransaction
+): Promise<void> {
+  await tx
+    .update(sessionTable)
+    .set({ startedVisitId: null, startedAt: null, modifiedOn: new Date() })
+    .where(
+      and(
+        eq(sessionTable.startedVisitId, visitId),
+        eq(sessionTable.tenantId, tenantId),
+        eq(sessionTable.completionStatus, 'PENDING'),
+        eq(sessionTable.isDeleted, false)
+      )
+    );
+}
+
 export const patientTreatmentPlanRepository = {
-  addSessionsToPlan,
-  assignTreatmentToPatient,
+  startSession,
   reserveSession,
+  addSessionsToPlan,
+  updateSessionPlan,
+  assignTreatmentToPatient,
   createPlanFromTreatment,
   getCurrentByPatientId,
   getAllByPatientId,
   completeSessionForVisit,
   getPlanSessionForBooking,
+  releaseStartedSessionsForVisit,
+  completeStartedSessionsForVisit,
   releaseReservationForAppointment,
 };

@@ -1,6 +1,7 @@
 'use client';
 
-import { FileSpreadsheet, FileText } from 'lucide-react';
+import { CiFileOn } from 'react-icons/ci';
+import { PiFileXlsLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type {
@@ -44,7 +45,7 @@ export function AppointmentExportActions({
         aria-busy={pendingFormat === 'excel'}
         onClick={() => void download('excel')}
       >
-        <FileSpreadsheet className="size-4" aria-hidden="true" />
+        <PiFileXlsLight className="size-4" aria-hidden="true" />
         {pendingFormat === 'excel' ? 'Generating Excel...' : 'Download Excel'}
       </Button>
       <Button
@@ -55,7 +56,7 @@ export function AppointmentExportActions({
         aria-busy={pendingFormat === 'pdf'}
         onClick={() => void download('pdf')}
       >
-        <FileText className="size-4" aria-hidden="true" />
+        <CiFileOn className="size-4" aria-hidden="true" />
         {pendingFormat === 'pdf' ? 'Generating PDF...' : 'Download PDF'}
       </Button>
     </div>

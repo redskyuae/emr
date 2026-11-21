@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { CiSearch } from 'react-icons/ci';
+import { PiPlusLight } from 'react-icons/pi';
 
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
@@ -59,9 +60,9 @@ export function InventoryToolbar({
   return (
     <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
       <div className="grid gap-2 sm:grid-cols-3 2xl:w-full 2xl:max-w-xl">
-        <InputGroup className="bg-background h-9 sm:col-span-2">
+        <InputGroup className="sm:col-span-2">
           <InputGroupAddon>
-            <Search className="size-4" />
+            <CiSearch className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
             type="search"
@@ -77,7 +78,7 @@ export function InventoryToolbar({
           value={categoryValue || ALL}
           onValueChange={(value) => onCategoryChange(value === ALL ? '' : value)}
         >
-          <SelectTrigger className="bg-background h-9 w-full sm:col-span-1">
+          <SelectTrigger className="w-full sm:col-span-1">
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
@@ -128,7 +129,7 @@ export function InventoryToolbar({
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center 2xl:ml-auto 2xl:justify-end">
         <Button type="button" className="w-full sm:w-auto" onClick={onAddAsset}>
-          <Plus className="size-4" />
+          <PiPlusLight className="size-4" />
           <span>Add Asset</span>
         </Button>
       </div>

@@ -1,20 +1,27 @@
 'use client';
 
-import { useQueryState } from 'nuqs';
-
+import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
+import type { InvoiceListItem } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import type { PatientChart } from '@/app/api/lib/modules/patient-chart/schemas/patient-chart-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
-import { useInvoicesQuery } from '@/app/queries/billing/invoices/useInvoices';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientTreatmentPlanHistoryQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { useVisitDocumentsQuery } from '@/app/queries/visits/useVisitDocuments';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { isAyurvedaBrand } from '@/components/brand/brand-config';
+import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 
 import { VisitBillingPanel } from './visit-billing-panel';
-import { VisitClinicalPanel } from './visit-clinical-panel';
+import { VisitClinicalNotesCard } from './visit-clinical-notes-card';
+import { VisitConsultationPanel } from './visit-consultation-panel';
+import { VisitDiagnosesPanel } from './visit-diagnoses-panel';
+import { VisitDetailsDisclosure } from './visit-details-disclosure';
 import { VisitDocumentsCard } from './visit-documents-card';
-import { VisitTodayPanel } from './visit-today-panel';
+import { VisitObjectiveVitals } from './visit-objective-vitals';
+import { VisitPlanSession } from './visit-plan-session';
+import { VisitReviewChecklist } from './visit-review-checklist';
 import { VisitTreatmentPlansPanel } from './visit-treatment-plans-panel';
 
 type Props = {
@@ -22,151 +29,185 @@ type Props = {
   chart: PatientChart | undefined;
   chartLoading: boolean;
   chartError: boolean;
+  invoices: InvoiceListItem[];
+  invoicesLoading: boolean;
+  invoicesError: boolean;
+  canStart: boolean;
+  canAmend: boolean;
+  starting: boolean;
+  onStart: () => void;
+  onAmendVisit: () => void;
+  onAmendNote: (noteId: number) => void;
+  onAmendVitalSign: (vitalId: number) => void;
+  onConsultationDirtyChange: (dirty: boolean) => void;
   onRecordVitals: () => void;
   onAddNote: () => void;
   onAddClinicalNote: () => void;
-  onAddAllergy: () => void;
-  onAddMedication: () => void;
-  onDoctorConsultation: () => void;
   onDailyTreatment: () => void;
   onAssignPlan: () => void;
+  onAddPlanSessions: (planId: number) => void;
+  onOpenPlanSession: (sessionId: number) => void;
+  onSignNote: (note: ClinicalNote) => void;
 };
 
-const sections = ['today', 'clinical', 'plans', 'billing', 'docs'] as const;
-
+/**
+ * The whole Visit as one stepped pathway: each step carries the records that belong to it,
+ * so Visit details, Vital Signs, Treatment Plans, Clinical Notes, Billing and Documents
+ * sit beside the part of the consultation where the Doctor needs them.
+ */
 export function VisitCarePathway({
   visit,
   chart,
   chartLoading,
   chartError,
+  invoices,
+  invoicesLoading,
+  invoicesError,
+  canStart,
+  canAmend,
+  starting,
+  onStart,
+  onAmendVisit,
+  onAmendNote,
+  onAmendVitalSign,
+  onConsultationDirtyChange,
   onRecordVitals,
   onAddNote,
   onAddClinicalNote,
-  onAddAllergy,
-  onAddMedication,
-  onDoctorConsultation,
   onDailyTreatment,
   onAssignPlan,
+  onAddPlanSessions,
+  onOpenPlanSession,
+  onSignNote,
 }: Props) {
-  const [sectionParam, setSectionParam] = useQueryState('section');
-  const section = sections.find((value) => value === sectionParam) ?? 'today';
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
-  const invoicesQuery = useInvoicesQuery({ patientId: visit.patient.id, page: 1, limit: 999 });
   const documentsQuery = useVisitDocumentsQuery(visit.id);
+  const { data: currentUser } = useCurrentUserQuery();
+  // Same fallback as the other Tenant-time pages, so times never show in the browser's zone.
+  const timeZone = currentUser?.tenant.timeZone ?? 'Asia/Kolkata';
   const { data: canAssignPlan } = useHasPermission('patient-treatment-plan:assign');
   const { data: canReadPlan } = useHasPermission('patient-treatment-plan:read');
+  const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
   const { data: canRecordVitals } = useHasPermission('vital-sign:create');
   const { data: canCreateNote } = useHasPermission('clinical-note:create');
   const { data: canCreateInvoice } = useHasPermission('invoice:create');
   const { data: canBookAppointment } = useHasPermission('appointment:create');
+  const { data: canUpdateVisit } = useHasPermission('visit:update');
+  const showAyurveda = isAyurvedaBrand(useBrandLogoVariant());
 
   const plans = plansQuery.data ?? [];
-  const invoices = (invoicesQuery.data?.data ?? []).filter((item) => item.visit?.id === visit.id);
-  const noteCount = (chart?.clinicalNotes ?? []).filter((item) => item.visitId === visit.id).length;
+  const notes = (chart?.clinicalNotes ?? []).filter((item) => item.visitId === visit.id);
+  const vitals = chart?.vitalSigns ?? [];
   const active = visit.status === 'CHECKED_IN' || visit.status === 'IN_CONSULTATION';
+  const canRecordResponse = active && Boolean(canCreateNote);
 
-  return (
-    <Tabs
-      value={section}
-      onValueChange={(value) => void setSectionParam(value === 'today' ? null : value)}
-      className="space-y-3"
-    >
-      <div className="overflow-x-auto border-b">
-        <TabsList variant="line" aria-label="Visit sections" className="h-11 w-max gap-5 px-0">
-          <TabsTrigger value="today" className="h-10 flex-none rounded-none px-1">
-            Today&apos;s session
-          </TabsTrigger>
-          <TabsTrigger value="clinical" className="h-10 flex-none rounded-none px-1">
-            Clinical{' '}
-            {noteCount > 0 ? (
-              <Badge variant="secondary" className="rounded-full">
-                {noteCount}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="plans" className="h-10 flex-none rounded-none px-1">
-            Treatment plans{' '}
-            {plans.length > 0 ? (
-              <Badge variant="secondary" className="rounded-full">
-                {plans.length}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="billing" className="h-10 flex-none rounded-none px-1">
-            Billing{' '}
-            {invoices.length > 0 ? (
-              <Badge variant="secondary" className="rounded-full">
-                {invoices.length}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="docs" className="h-10 flex-none rounded-none px-1">
-            Documents{' '}
-            {(documentsQuery.data?.length ?? 0) > 0 ? (
-              <Badge variant="secondary" className="rounded-full">
-                {documentsQuery.data?.length}
-              </Badge>
-            ) : null}
-          </TabsTrigger>
-        </TabsList>
-      </div>
-
-      <TabsContent value="today">
-        <VisitTodayPanel
+  const slots = {
+    subjective: (
+      <VisitDetailsDisclosure visit={visit} onAmend={canAmend ? onAmendVisit : undefined} />
+    ),
+    objective: (
+      <VisitObjectiveVitals
+        visitId={visit.id}
+        readings={vitals}
+        timeZone={timeZone}
+        loading={chartLoading}
+        error={chartError}
+        canRecord={active && Boolean(canRecordVitals)}
+        onRecord={onRecordVitals}
+        onAmend={canAmend ? onAmendVitalSign : undefined}
+      />
+    ),
+    assessment: (
+      <VisitDiagnosesPanel
+        visit={visit}
+        showAyurveda={showAyurveda}
+        mode={active && canUpdateVisit ? 'edit' : canAmend ? 'amend' : 'read'}
+      />
+    ),
+    plan: (
+      <div className="space-y-4">
+        <VisitPlanSession
           visit={visit}
-          chart={chart}
-          chartLoading={chartLoading}
-          chartError={chartError}
-          invoiceCount={invoices.length}
-          invoiceLoading={invoicesQuery.isLoading}
-          invoiceError={invoicesQuery.isError}
-          canRecordVitals={Boolean(canRecordVitals)}
-          canCreateNote={Boolean(canCreateNote)}
-          canCreateInvoice={Boolean(canCreateInvoice)}
-          canBookAppointment={Boolean(canBookAppointment)}
-          onRecordVitals={onRecordVitals}
-          onDoctorConsultation={onDoctorConsultation}
+          canRecordResponse={canRecordResponse}
           onDailyTreatment={onDailyTreatment}
         />
-      </TabsContent>
-      <TabsContent value="clinical">
-        <VisitClinicalPanel
+        {canReadPlan ? (
+          <VisitTreatmentPlansPanel
+            visit={visit}
+            plans={plans}
+            loading={plansQuery.isLoading}
+            error={plansQuery.isError}
+            canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
+            canBookAppointment={Boolean(canBookAppointment)}
+            canStartSession={Boolean(canStartPlanSession && canReadPlan)}
+            onAssignPlan={onAssignPlan}
+            onAddSessions={onAddPlanSessions}
+            onOpenSession={onOpenPlanSession}
+          />
+        ) : null}
+      </div>
+    ),
+    review: (
+      <div className="space-y-4">
+        <VisitReviewChecklist
           visit={visit}
-          chart={chart}
+          vitalsCount={vitals.filter((item) => item.visitId === visit.id).length}
+          noteCount={notes.length}
+          signedNoteCount={notes.filter((note) => note.status === 'signed').length}
+          invoiceCount={invoices.length}
+          documentCount={documentsQuery.data?.length ?? 0}
           chartLoading={chartLoading}
-          chartError={chartError}
-          canRecordVitals={Boolean(canRecordVitals)}
-          canCreateNote={Boolean(canCreateNote)}
+          invoicesLoading={invoicesLoading}
+          invoicesError={invoicesError}
+          documentsLoading={documentsQuery.isLoading}
+          canRecordVitals={active && Boolean(canRecordVitals)}
+          canRecordResponse={canRecordResponse}
           onRecordVitals={onRecordVitals}
+          onDailyTreatment={onDailyTreatment}
+        />
+        <VisitClinicalNotesCard
+          notes={notes}
+          timeZone={timeZone}
+          loading={chartLoading}
+          error={chartError}
+          active={active}
+          canCreateNote={Boolean(canCreateNote)}
           onAddClinicalNote={onAddClinicalNote}
           onNursingHandoff={onAddNote}
-          onAddAllergy={onAddAllergy}
-          onAddMedication={onAddMedication}
+          onSignNote={onSignNote}
+          onAmendNote={canAmend ? onAmendNote : undefined}
         />
-      </TabsContent>
-      <TabsContent value="plans">
-        <VisitTreatmentPlansPanel
-          visit={visit}
-          plans={plans}
-          loading={plansQuery.isLoading}
-          error={plansQuery.isError}
-          canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
-          canBookAppointment={Boolean(canBookAppointment)}
-          onAssignPlan={onAssignPlan}
-        />
-      </TabsContent>
-      <TabsContent value="billing">
         <VisitBillingPanel
           visit={visit}
           invoices={invoices}
-          loading={invoicesQuery.isLoading}
-          error={invoicesQuery.isError}
+          loading={invoicesLoading}
+          error={invoicesError}
           canCreateInvoice={Boolean(canCreateInvoice)}
         />
-      </TabsContent>
-      <TabsContent value="docs">
-        <VisitDocumentsCard visitId={visit.id} active={active} />
-      </TabsContent>
-    </Tabs>
+        <div id="visit-documents" className="scroll-mt-4">
+          <VisitDocumentsCard visitId={visit.id} active={active} />
+        </div>
+      </div>
+    ),
+  };
+
+  return (
+    <div className="min-w-0 xl:h-full xl:min-h-0 xl:overflow-y-auto xl:p-0.5">
+      <VisitConsultationPanel
+        visit={visit}
+        notes={notes}
+        chartLoading={chartLoading}
+        chartError={chartError}
+        canCreateNote={Boolean(canCreateNote)}
+        canStart={canStart}
+        starting={starting}
+        onStart={onStart}
+        onAddNote={onAddClinicalNote}
+        onAmendVisit={canAmend ? onAmendVisit : undefined}
+        onAmendNote={canAmend ? onAmendNote : undefined}
+        onDirtyChange={onConsultationDirtyChange}
+        slots={slots}
+      />
+    </div>
   );
 }

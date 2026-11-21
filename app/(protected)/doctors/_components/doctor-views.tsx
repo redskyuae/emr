@@ -1,4 +1,5 @@
-import { CircleOff, MoreVertical, Pencil, RotateCcw, Stethoscope, UserRound } from 'lucide-react';
+import { CiEdit, CiMenuKebab, CiNoWaitingSign, CiStethoscope, CiUser } from 'react-icons/ci';
+import { PiArrowCounterClockwiseLight } from 'react-icons/pi';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +56,7 @@ function DoctorStatusBadge({ doctor }: { doctor: Doctor }) {
 function DoctorAvatar() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
-      <Stethoscope className="size-5" />
+      <CiStethoscope className="size-5" />
     </div>
   );
 }
@@ -91,13 +92,13 @@ function DoctorActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${doctor.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(doctor)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
@@ -106,7 +107,11 @@ function DoctorActionsMenu({
             variant={doctor.isActive ? 'destructive' : 'default'}
             onClick={() => onStatusAction(doctor, statusAction)}
           >
-            {doctor.isActive ? <CircleOff className="size-4" /> : <RotateCcw className="size-4" />}
+            {doctor.isActive ? (
+              <CiNoWaitingSign className="size-4" />
+            ) : (
+              <PiArrowCounterClockwiseLight className="size-4" />
+            )}
             {doctor.isActive ? 'Deactivate' : 'Reactivate'}
           </DropdownMenuItem>
         ) : null}
@@ -124,7 +129,7 @@ export function DoctorTableView({
   onStatusAction,
 }: DoctorViewProps) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[920px] table-fixed">
@@ -188,8 +193,8 @@ export function DoctorCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {doctors.map((doctor) => (
-        <Card key={doctor.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={doctor.id}>
+          <CardContent className="space-y-3">
             <div className="flex items-start justify-between gap-2">
               <DoctorAvatar />
               <DoctorStatusBadge doctor={doctor} />
@@ -199,7 +204,7 @@ export function DoctorCardView({
               <h3 className="font-heading text-base font-semibold">{doctor.name}</h3>
               <p className="text-muted-foreground text-sm">{doctor.email}</p>
               <p className="flex items-center gap-1.5 text-sm">
-                <UserRound className="text-muted-foreground size-3.5" />
+                <CiUser className="text-muted-foreground size-3.5" />
                 {dash(doctor.specialtyName)}
               </p>
               <p className="text-muted-foreground text-sm">{dash(doctor.designation)}</p>
@@ -209,7 +214,7 @@ export function DoctorCardView({
               <div className="flex flex-wrap gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(doctor)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -226,9 +231,9 @@ export function DoctorCardView({
                     }
                   >
                     {doctor.isActive ? (
-                      <CircleOff className="size-3.5" />
+                      <CiNoWaitingSign className="size-3.5" />
                     ) : (
-                      <RotateCcw className="size-3.5" />
+                      <PiArrowCounterClockwiseLight className="size-3.5" />
                     )}
                     {doctor.isActive ? 'Deactivate' : 'Reactivate'}
                   </Button>
@@ -253,8 +258,8 @@ export function DoctorListView({
   return (
     <div className="space-y-3">
       {doctors.map((doctor) => (
-        <Card key={doctor.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={doctor.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex min-w-0 items-center gap-3">
               <DoctorAvatar />
               <div className="min-w-0">

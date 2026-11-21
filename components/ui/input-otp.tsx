@@ -4,7 +4,7 @@ import { ComponentProps, useContext } from 'react';
 import { OTPInput, OTPInputContext } from 'input-otp';
 
 import { cn } from '@/lib/utils';
-import { MinusIcon } from 'lucide-react';
+import { PiMinusLight } from 'react-icons/pi';
 
 function InputOTP({
   className,
@@ -78,7 +78,7 @@ function InputOTPSeparator({ ...props }: ComponentProps<'div'>) {
       role="separator"
       {...props}
     >
-      <MinusIcon />
+      <PiMinusLight />
     </div>
   );
 }

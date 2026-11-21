@@ -2,57 +2,200 @@ import { z } from 'zod';
 
 const narrative = z.string().trim().max(5000, 'This section must be at most 5000 characters.');
 
-export const doctorConsultationFormSchema = z.object({
+/**
+ * Chief complaint is a one-line field, but the Visit's purpose of visit and older drafts
+ * may hold rich text: drop list and emphasis marks and fold line breaks into spaces.
+ */
+export function oneLine(value: string) {
+  return value
+    .replace(/^\s*(?:[-+>#]+|\d+\.)\s+/gm, '')
+    .replace(/[*`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// The API limit for one SOAP section. Five narrative fields share Subjective.
+const SOAP_SECTION_LIMIT = 20000;
+
+export const SOAP_SECTIONS = [
+  { key: 'subjective', label: 'Subjective' },
+  { key: 'objective', label: 'Objective' },
+  { key: 'assessment', label: 'Diagnosis' },
+  { key: 'plan', label: 'Plan' },
+] as const;
+
+const consultationFieldsSchema = z.object({
+  noteTypeId: z.string().min(1, 'Note type is required.'),
   chiefComplaint: narrative.min(1, 'Chief complaint is required.'),
   hpi: narrative,
   medicalHistory: narrative,
   surgicalHistory: narrative,
   familySocialHistory: narrative,
   examination: narrative,
-  diagnosisCodeId: z.string(),
+  modernDiagnosis: z.string().trim(),
   ayurvedicDiagnosis: narrative,
   prakriti: narrative,
   vikriti: narrative,
   precautions: narrative,
 });
 
-export type DoctorConsultationFormValues = z.infer<typeof doctorConsultationFormSchema>;
+export type DoctorConsultationFormValues = z.infer<typeof consultationFieldsSchema>;
+
+export const EMPTY_CONSULTATION: DoctorConsultationFormValues = {
+  hpi: '',
+  vikriti: '',
+  prakriti: '',
+  noteTypeId: '',
+  examination: '',
+  precautions: '',
+  chiefComplaint: '',
+  medicalHistory: '',
+  modernDiagnosis: '',
+  surgicalHistory: '',
+  ayurvedicDiagnosis: '',
+  familySocialHistory: '',
+};
+
+type NarrativeField = Exclude<keyof DoctorConsultationFormValues, 'modernDiagnosis' | 'noteTypeId'>;
+
+/**
+ * The `**Label:**` headings this form writes into a note. The Visit Summary reads notes back by
+ * these labels, so rename a label here, never in a copy.
+ */
+export const CONSULTATION_LABELS = {
+  hpi: 'Present condition / HPI',
+  vikriti: 'Vikriti / body condition',
+  prakriti: 'Prakriti',
+  examination: 'Examination / red flags',
+  precautions: 'Treatment precautions',
+  chiefComplaint: 'Chief complaint',
+  medicalHistory: 'Past medical history',
+  surgicalHistory: 'Past surgical history',
+  ayurvedicDiagnosis: 'Ayurvedic diagnosis',
+  familySocialHistory: 'Family / social history',
+} as const satisfies Record<NarrativeField, string>;
+
+function labelsFor(fields: NarrativeField[]): [NarrativeField, string][] {
+  return fields.map((field) => [field, CONSULTATION_LABELS[field]]);
+}
+
+const SUBJECTIVE_LABELS = labelsFor([
+  'chiefComplaint',
+  'hpi',
+  'medicalHistory',
+  'surgicalHistory',
+  'familySocialHistory',
+]);
+
+const OBJECTIVE_LABELS = labelsFor(['examination', 'prakriti', 'vikriti']);
+
+const ASSESSMENT_LABELS = labelsFor(['ayurvedicDiagnosis']);
+
+const PLAN_LABELS = labelsFor(['precautions']);
+
+export const MODERN_DIAGNOSIS_PREFIX = 'Modern diagnosis: ';
 
 function labelled(label: string, value: string) {
   return value ? `**${label}:**\n\n${value}` : null;
 }
 
-export function consultationToSoap(
+function labelledSections(
   values: DoctorConsultationFormValues,
-  modernDiagnosis?: { code: string; title: string }
+  labels: [NarrativeField, string][]
 ) {
+  return labels.map(([field, label]) => labelled(label, values[field]));
+}
+
+function joinSections(sections: (string | null)[]) {
+  return sections.filter(Boolean).join('\n\n');
+}
+
+export function consultationToSoap(values: DoctorConsultationFormValues) {
   return {
-    subjective: [
-      labelled('Chief complaint', values.chiefComplaint),
-      labelled('Present condition / HPI', values.hpi),
-      labelled('Past medical history', values.medicalHistory),
-      labelled('Past surgical history', values.surgicalHistory),
-      labelled('Family / social history', values.familySocialHistory),
-    ]
-      .filter(Boolean)
-      .join('\n\n'),
-    objective:
-      [
-        labelled('Examination / red flags', values.examination),
-        labelled('Prakriti', values.prakriti),
-        labelled('Vikriti / body condition', values.vikriti),
-      ]
-        .filter(Boolean)
-        .join('\n\n') || undefined,
+    subjective: joinSections(labelledSections(values, SUBJECTIVE_LABELS)),
+    objective: joinSections(labelledSections(values, OBJECTIVE_LABELS)) || undefined,
     assessment:
-      [
-        modernDiagnosis
-          ? `Modern diagnosis: ${modernDiagnosis.code} — ${modernDiagnosis.title}`
-          : null,
-        labelled('Ayurvedic diagnosis', values.ayurvedicDiagnosis),
-      ]
-        .filter(Boolean)
-        .join('\n\n') || undefined,
-    plan: labelled('Treatment precautions', values.precautions) ?? undefined,
+      joinSections([
+        values.modernDiagnosis ? `${MODERN_DIAGNOSIS_PREFIX}${values.modernDiagnosis}` : null,
+        ...labelledSections(values, ASSESSMENT_LABELS),
+      ]) || undefined,
+    plan: joinSections(labelledSections(values, PLAN_LABELS)) || undefined,
   };
+}
+
+export const doctorConsultationFormSchema = consultationFieldsSchema.superRefine(
+  (values, context) => {
+    if (consultationToSoap(values).subjective.length <= SOAP_SECTION_LIMIT) return;
+
+    const [longest] = SUBJECTIVE_LABELS.map(([field]) => field).sort(
+      (a, b) => values[b].length - values[a].length
+    );
+
+    context.addIssue({
+      code: 'custom',
+      path: [longest],
+      message: `Complaint and history together must be at most ${SOAP_SECTION_LIMIT} characters.`,
+    });
+  }
+);
+
+function readLabelled(
+  section: string,
+  labels: [NarrativeField, string][],
+  values: DoctorConsultationFormValues
+) {
+  const markers = labels
+    .map(([field, label]) => ({
+      field,
+      marker: `**${label}:**\n\n`,
+      index: section.indexOf(`**${label}:**\n\n`),
+    }))
+    .filter((item) => item.index >= 0)
+    .sort((a, b) => a.index - b.index);
+
+  markers.forEach((item, position) => {
+    const end = markers[position + 1]?.index ?? section.length;
+    values[item.field] = section.slice(item.index + item.marker.length, end).trim();
+  });
+}
+
+type ConsultationNoteSections = {
+  noteTypeId: number;
+  subjective: string | null;
+  objective: string | null;
+  assessment: string | null;
+  plan: string | null;
+};
+
+/**
+ * Rebuilds the form from a saved draft so the Doctor resumes it instead of
+ * creating a second note. Returns null when the note was written outside this
+ * form: re-saving it through the form would drop text the labels cannot hold.
+ */
+export function soapToConsultation(
+  note: ConsultationNoteSections
+): DoctorConsultationFormValues | null {
+  const values = { ...EMPTY_CONSULTATION, noteTypeId: String(note.noteTypeId) };
+  const assessment = note.assessment ?? '';
+
+  readLabelled(note.subjective ?? '', SUBJECTIVE_LABELS, values);
+  readLabelled(note.objective ?? '', OBJECTIVE_LABELS, values);
+  readLabelled(assessment, ASSESSMENT_LABELS, values);
+  readLabelled(note.plan ?? '', PLAN_LABELS, values);
+
+  if (assessment.startsWith(MODERN_DIAGNOSIS_PREFIX)) {
+    values.modernDiagnosis = assessment
+      .slice(MODERN_DIAGNOSIS_PREFIX.length)
+      .split('\n\n')[0]
+      .trim();
+  }
+
+  const rebuilt = consultationToSoap(values);
+  const matches =
+    rebuilt.subjective === (note.subjective ?? '') &&
+    (rebuilt.objective ?? '') === (note.objective ?? '') &&
+    (rebuilt.assessment ?? '') === assessment &&
+    (rebuilt.plan ?? '') === (note.plan ?? '');
+
+  return matches ? values : null;
 }

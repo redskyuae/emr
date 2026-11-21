@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { CHARGE_ITEM_CATEGORIES, VISIT_CHARGE_KINDS } from '@/app/db/schema/charge-item';
+import {
+  CHARGE_ITEM_CATEGORIES,
+  CHARGE_ITEM_CODE_TYPES,
+  VISIT_CHARGE_KINDS,
+} from '@/app/db/schema/charge-item';
+
+export { CHARGE_ITEM_CODE_TYPES };
 
 const tenantIdSchema = z
   .string({ error: 'Tenant ID is required' })
@@ -27,6 +33,31 @@ const chargeItemCodeSchema = z
     'Charge item code must contain only letters, numbers, hyphens, and underscores.'
   )
   .transform((code) => code.toUpperCase());
+
+const chargeItemCodeTypeSchema = z.enum(CHARGE_ITEM_CODE_TYPES, {
+  error: `Charge item code type must be one of ${CHARGE_ITEM_CODE_TYPES.join(', ')}`,
+});
+
+// CPT and HCPCS codes have fixed shapes that payers validate on claims; SERVICE
+// (UAE regulator service code) and LOCAL (Tenant code) keep the general code rule.
+const CHARGE_ITEM_CODE_FORMATS: Partial<
+  Record<ChargeItemCodeType, { pattern: RegExp; message: string }>
+> = {
+  CPT: {
+    pattern: /^\d{4}[0-9FTU]$/,
+    message: 'Charge item code must be a valid 5-character CPT code, e.g. 99213.',
+  },
+  HCPCS: {
+    pattern: /^[A-V]\d{4}$/,
+    message: 'Charge item code must be a valid HCPCS code, e.g. J1100.',
+  },
+};
+
+export function getChargeItemCodeFormatError(code: string, codeType: ChargeItemCodeType) {
+  const format = CHARGE_ITEM_CODE_FORMATS[codeType];
+
+  return format && !format.pattern.test(code) ? format.message : undefined;
+}
 
 const chargeItemCategorySchema = z.enum(CHARGE_ITEM_CATEGORIES, {
   error: `Charge item category must be one of ${CHARGE_ITEM_CATEGORIES.join(', ')}`,
@@ -92,6 +123,7 @@ export const chargeItemCategoryFilterSchema = chargeItemCategorySchema.optional(
 const chargeItemBaseSchema = z.object({
   name: chargeItemNameSchema,
   code: chargeItemCodeSchema,
+  codeType: chargeItemCodeTypeSchema.optional(),
   category: chargeItemCategorySchema,
   unitPrice: chargeItemUnitPriceSchema,
   cashPrice: optionalPriceSchema('Cash price'),
@@ -107,6 +139,13 @@ function validateVisitPricing(
   value: z.infer<typeof chargeItemBaseSchema>,
   context: z.RefinementCtx
 ) {
+  const codeFormatError = value.codeType
+    ? getChargeItemCodeFormatError(value.code, value.codeType)
+    : undefined;
+
+  if (codeFormatError) {
+    context.addIssue({ code: 'custom', path: ['code'], message: codeFormatError });
+  }
   if (value.visitChargeKind === 'TREATMENT_SESSION' && value.category !== 'PROCEDURE') {
     context.addIssue({
       code: 'custom',
@@ -142,6 +181,7 @@ function validateVisitPricing(
 export const createChargeItemSchema = chargeItemBaseSchema
   .extend({
     isActive: chargeItemIsActiveSchema,
+    codeType: chargeItemCodeTypeSchema.optional().default('LOCAL'),
   })
   .superRefine(validateVisitPricing);
 
@@ -149,10 +189,12 @@ export const createChargeItemSchema = chargeItemBaseSchema
 // "leave the current Active state as-is," not "reactivate." Defaulting it to
 // true (as create does) would silently reactivate a deliberately-retired
 // Charge Item for any client that only means to edit name/code/price.
-// The validator fills the omitted value from the existing row.
+// The validator fills the omitted value from the existing row. codeType follows
+// the same rule, so an edit that omits it never reclassifies a CPT Charge Item.
 export const updateChargeItemSchema = chargeItemBaseSchema.superRefine(validateVisitPricing);
 
 export type ChargeItemCategory = (typeof CHARGE_ITEM_CATEGORIES)[number];
+export type ChargeItemCodeType = (typeof CHARGE_ITEM_CODE_TYPES)[number];
 export type VisitChargeKind = (typeof VISIT_CHARGE_KINDS)[number];
 export type ChargeItemIdInput = z.infer<typeof chargeItemIdSchema>;
 export type ChargeItemTenantIdInput = z.infer<typeof chargeItemTenantIdSchema>;
@@ -166,6 +208,7 @@ export type ChargeItem = {
   name: string;
   code: string;
   tenantId: string;
+  codeType: ChargeItemCodeType;
   isActive: boolean;
   unitPrice: number;
   cashPrice: number | null;

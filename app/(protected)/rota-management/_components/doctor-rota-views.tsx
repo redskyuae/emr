@@ -1,4 +1,4 @@
-import { Clock3, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { CiClock1, CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
 
 import type { DoctorRota } from '@/app/api/lib/modules/doctor-rota/schemas/doctor-rota-schema';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,7 @@ function formatTimeWindow(rota: DoctorRota) {
 function DoctorRotaIcon() {
   return (
     <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-      <Clock3 className="size-5" />
+      <CiClock1 className="size-5" />
     </div>
   );
 }
@@ -65,19 +65,19 @@ function DoctorRotaActionsMenu({
           size="icon-sm"
           aria-label={`Actions for ${rota.name}`}
         >
-          <MoreVertical className="size-4" />
+          <CiMenuKebab className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         {canEdit ? (
           <DropdownMenuItem onClick={() => onEdit(rota)}>
-            <Pencil className="size-4" />
+            <CiEdit className="size-4" />
             Edit
           </DropdownMenuItem>
         ) : null}
         {canDelete ? (
           <DropdownMenuItem variant="destructive" onClick={() => onDelete(rota)}>
-            <Trash2 className="size-4" />
+            <CiTrash className="size-4" />
             Delete
           </DropdownMenuItem>
         ) : null}
@@ -100,7 +100,7 @@ export function DoctorRotaTableView({
   onDelete: (rota: DoctorRota) => void;
 }) {
   return (
-    <Card className="shadow-fluent-2">
+    <Card className="py-0">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table className="min-w-[600px]">
@@ -155,8 +155,8 @@ export function DoctorRotaCardView({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {rotas.map((rota) => (
-        <Card key={rota.id} className="shadow-fluent-2">
-          <CardContent className="space-y-3 p-4">
+        <Card key={rota.id}>
+          <CardContent className="space-y-3">
             <DoctorRotaIcon />
 
             <div>
@@ -173,7 +173,7 @@ export function DoctorRotaCardView({
               <div className="flex gap-2 border-t pt-3">
                 {canEdit ? (
                   <Button type="button" variant="ghost" size="sm" onClick={() => onEdit(rota)}>
-                    <Pencil className="size-3.5" />
+                    <CiEdit className="size-3.5" />
                     Edit
                   </Button>
                 ) : null}
@@ -185,7 +185,7 @@ export function DoctorRotaCardView({
                     onClick={() => onDelete(rota)}
                     className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="size-3.5" />
+                    <CiTrash className="size-3.5" />
                     Delete
                   </Button>
                 ) : null}
@@ -214,8 +214,8 @@ export function DoctorRotaListView({
   return (
     <div className="space-y-3">
       {rotas.map((rota) => (
-        <Card key={rota.id} className="shadow-fluent-2">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+        <Card key={rota.id}>
+          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <DoctorRotaIcon />
               <div className="min-w-0">
