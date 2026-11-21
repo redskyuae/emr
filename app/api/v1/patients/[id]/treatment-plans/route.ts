@@ -8,6 +8,8 @@ import type {
   AddPatientTreatmentPlanSessionsResponse,
   ListPatientTreatmentPlansResponse,
 } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { treatmentPlanSessionsAddedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 export async function GET(
   request: NextRequest,
@@ -99,6 +101,10 @@ export async function POST(
 
       return NextResponse.json({ message, errors: result.errors }, { status });
     }
+
+    recordLifecycleEvent(tenantSession, request, 'treatment_plan_sessions_added', () =>
+      treatmentPlanSessionsAddedProperties(payload)
+    );
 
     return NextResponse.json<AddPatientTreatmentPlanSessionsResponse>({ data: result.data });
   } catch {

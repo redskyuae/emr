@@ -49,11 +49,15 @@ const checkInData = {
   remarks: undefined,
   visitDate: '2026-07-16',
 };
+const checkInTiming = { timeZone: 'Asia/Kolkata', appointmentStartTime: '09:00' };
 
 describe('Visit commands', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    validateCheckIn.mockResolvedValue({ success: true, data: checkInData });
+    validateCheckIn.mockResolvedValue({
+      success: true,
+      data: { ...checkInData, ...checkInTiming },
+    });
     validateById.mockReturnValue({ success: true, data: { id: 1, tenantId: 'tenant-1' } });
     validateCancel.mockReturnValue({
       success: true,
@@ -90,16 +94,36 @@ describe('Visit commands', () => {
       expect(repo.checkInVisit).not.toHaveBeenCalled();
     });
 
-    it('should pass the validated data to the repository', async () => {
+    it('should pass the validated data to the repository without the Check-in timing', async () => {
       await checkInVisitCommand({}, 'tenant-1');
 
       expect(repo.checkInVisit).toHaveBeenCalledWith(checkInData);
     });
 
-    it('should return the created visit on success', async () => {
+    it('should return the created visit with the Check-in timing beside it on success', async () => {
       await expect(checkInVisitCommand({}, 'tenant-1')).resolves.toEqual({
         success: true,
         data: visit,
+        ...checkInTiming,
+        documentCount: 0,
+      });
+    });
+
+    it('should count the documents attached at Check-in', async () => {
+      const document = {
+        fileName: 'referral.pdf',
+        fileUrl: 'https://blob.example.com/referral.pdf',
+        contentType: 'application/pdf',
+        fileSize: 1024,
+      };
+      validateCheckIn.mockResolvedValue({
+        success: true,
+        data: { ...checkInData, ...checkInTiming, documents: [document, document] },
+      });
+
+      await expect(checkInVisitCommand({}, 'tenant-1')).resolves.toMatchObject({
+        success: true,
+        documentCount: 2,
       });
     });
 

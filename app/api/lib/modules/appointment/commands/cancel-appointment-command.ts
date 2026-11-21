@@ -1,22 +1,26 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { appointmentRepository } from '../repository/appointment-repository';
 import type { Appointment } from '../schemas/appointment-schema';
 import { validateCancelAppointment } from '../validator/cancel-appointment-validator';
+
+/** Internal only (analytics); the cancellation response returns `data` alone. */
+type CancelAppointmentInternals = { timeZone: string | null };
 
 export async function cancelAppointmentCommand(
   id: unknown,
   payload: unknown,
   tenantId: string
-): Promise<CommandResult<Appointment>> {
+): Promise<CommandResultWith<Appointment, CancelAppointmentInternals>> {
   const validationResult = await validateCancelAppointment(id, payload, tenantId);
 
   if (!validationResult.success) return validationResult;
 
-  const result = await appointmentRepository.cancelAppointment(validationResult.data);
+  const { timeZone, ...cancellation } = validationResult.data;
+  const result = await appointmentRepository.cancelAppointment(cancellation);
 
-  if (result.success) return result;
+  if (result.success) return { ...result, timeZone };
 
   if (result.outcome === 'not-found') {
     return {

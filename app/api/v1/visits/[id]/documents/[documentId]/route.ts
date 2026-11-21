@@ -3,6 +3,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteVisitDocumentCommand } from '@/app/api/lib/modules/visit-document/commands/delete-visit-document-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitDocumentProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type VisitDocumentRouteContext = {
   params: Promise<{ id: string; documentId: string }>;
@@ -20,7 +22,7 @@ function errorMessage(status: number, errors: string[]) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
-export async function DELETE(_request: NextRequest, context: VisitDocumentRouteContext) {
+export async function DELETE(request: NextRequest, context: VisitDocumentRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -39,6 +41,10 @@ export async function DELETE(_request: NextRequest, context: VisitDocumentRouteC
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_document_removed', () =>
+      visitDocumentProperties(result.data)
+    );
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

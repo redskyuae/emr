@@ -7,7 +7,11 @@ import { listVisitDiagnosesQuery } from '@/app/api/lib/modules/visit-diagnosis/q
 import type { VisitDiagnosis } from '@/app/api/lib/modules/visit-diagnosis/schemas/visit-diagnosis-schema';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { GET, PUT } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/visit-diagnosis/commands/save-visit-diagnoses-command', () => ({
   saveVisitDiagnosesCommand: vi.fn(),
 }));
@@ -148,6 +152,13 @@ describe('Visit diagnoses route', () => {
       expect(response.status).toBe(StatusCodes.OK);
       await expect(response.json()).resolves.toEqual({ data: [diagnosis] });
       expect(saveDiagnoses).toHaveBeenCalledWith('42', 'tenant-1', body);
+      expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+      expect(recordLifecycleEvent).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'visit_diagnoses_saved',
+        expect.any(Function)
+      );
     });
 
     it('should surface a single conflict as the message', async () => {
@@ -191,6 +202,7 @@ describe('Visit diagnoses route', () => {
         message: 'Validation failed',
         errors: ['Choose exactly one Principal ICD-10-CM diagnosis.'],
       });
+      expect(recordLifecycleEvent).not.toHaveBeenCalled();
     });
 
     it('should map a missing Visit to not found', async () => {

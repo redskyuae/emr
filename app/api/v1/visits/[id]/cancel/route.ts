@@ -4,6 +4,8 @@ import type { CancelVisitResponse } from './types';
 
 import { cancelVisitCommand } from '@/app/api/lib/modules/visit/commands/cancel-visit-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitCancelledProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type VisitRouteContext = {
   params: Promise<{ id: string }>;
@@ -51,6 +53,10 @@ export async function POST(request: NextRequest, context: VisitRouteContext) {
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_cancelled', () =>
+      visitCancelledProperties(result.data)
+    );
 
     return NextResponse.json<CancelVisitResponse>({ data: result.data });
   } catch {

@@ -4,6 +4,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { amendVisitClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/commands/amend-visit-clinical-note-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { AmendVisitClinicalNoteResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { visitAmendedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type AmendVisitClinicalNoteRouteContext = {
   params: Promise<{ id: string; noteId: string }>;
@@ -59,6 +61,10 @@ export async function PUT(request: NextRequest, context: AmendVisitClinicalNoteR
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'visit_amended', () =>
+      visitAmendedProperties('clinical_note', result.visitCompletedAt)
+    );
 
     return NextResponse.json<AmendVisitClinicalNoteResponse>({ data: result.data });
   } catch {

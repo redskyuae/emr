@@ -6,6 +6,7 @@ import { deletePatientMedicationCommand } from '@/app/api/lib/modules/patient-me
 import { updatePatientMedicationCommand } from '@/app/api/lib/modules/patient-medication/commands/update-patient-medication-command';
 import { getPatientMedicationByIdQuery } from '@/app/api/lib/modules/patient-medication/queries/get-patient-medication-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type PatientMedicationRouteContext = {
   params: Promise<{ id: string; medicationId: string }>;
@@ -99,6 +100,11 @@ export async function PUT(request: NextRequest, context: PatientMedicationRouteC
       );
     }
 
+    recordLifecycleEvent(tenantSession, request, 'patient_chart_item_changed', () => ({
+      kind: 'medication',
+      action: 'updated',
+    }));
+
     return NextResponse.json<UpdatePatientMedicationResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -108,7 +114,7 @@ export async function PUT(request: NextRequest, context: PatientMedicationRouteC
   }
 }
 
-export async function DELETE(_request: NextRequest, context: PatientMedicationRouteContext) {
+export async function DELETE(request: NextRequest, context: PatientMedicationRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -136,6 +142,11 @@ export async function DELETE(_request: NextRequest, context: PatientMedicationRo
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'patient_chart_item_changed', () => ({
+      kind: 'medication',
+      action: 'removed',
+    }));
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

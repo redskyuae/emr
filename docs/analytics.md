@@ -125,7 +125,73 @@ browser blocks tab storage (see the tab marker rules in `CLAUDE.md`).
 
 ### Server outcome events: Appointments, Visits, Patients, Admissions and Billing
 
-Added by #358 (`lib/analytics/events/server-lifecycle-events.ts`).
+Declared in `lib/analytics/events/server-lifecycle-events.ts` (#358). Each route records its event
+from the success branch, once, through `recordLifecycleEvent`
+(`app/api/lib/analytics/lifecycle-event-recorder.ts`), which builds the properties lazily inside a
+guard so a failure to build them never changes the response. The properties come from the request
+payload and the command result, through the pure builders in
+`app/api/lib/analytics/lifecycle-*-properties.ts`. Where neither carries a value, the command
+returns it beside `data` (`CommandResultWith`), never in the response.
+
+- Durations are whole minutes or days elapsed, rounded down and never negative. Lead times are
+  calendar days on the Tenant's clock. Only `minutes_vs_appointment_start` may be negative (early).
+- Never sent: Patient details, record ids or numbers, other Staff ids (`has_doctor` instead), money
+  amounts, typed text, or clinical catalogue codes and names. The Discharge Disposition, allergy
+  severity, Patient flags and the Patient Identification Category are left out on purpose.
+
+#### Appointments
+
+| Event                     | Recorded by                          | Properties                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `appointment_booked`      | `POST /appointments`                 | `booking_path` (`CONSULTATION`, `PROCEDURE`), `patient_kind` (`existing`, `provisional_new`), `appointment_mode_code`, `appointment_type_code`, `appointment_reason_code` (Consultation only), `slot_count` (Consultation only), `lead_time_days`, `is_same_day`, `procedure_source` (`existing_plan`, `catalogue_treatment`; Procedure only), `has_doctor`, `has_remarks` |
+| `appointment_rescheduled` | `POST /appointments/{id}/reschedule` | `booking_path`, `doctor_changed`, `lead_time_days` (to the new date)                                                                                                                                                                                                                                                                                                       |
+| `appointment_cancelled`   | `POST /appointments/{id}/cancel`     | `booking_path`, `cancelled_reason_code`, `lead_time_days`, `released_plan_session` (every Scheduled or Confirmed Procedure holds a plan session, so it is `true` for Procedures)                                                                                                                                                                                           |
+
+#### Visits and clinical records
+
+| Event                                             | Recorded by                                                                                      | Properties                                                                                                                                                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `visit_checked_in`                                | `POST /visits`                                                                                   | `check_in_mode` (`appointment`, `walk_in`), `visit_type_code`, `admit_source_code`, `has_doctor`, `has_treatment_session`, `document_count`, `minutes_vs_appointment_start` (Appointment Check-in) |
+| `visit_consultation_started`                      | `POST /visits/{id}/start`                                                                        | `visit_type_code`, `minutes_since_check_in`                                                                                                                                                        |
+| `visit_completed`                                 | `POST /visits/{id}/complete`                                                                     | `visit_type_code`, `minutes_since_check_in`, `minutes_in_consultation`                                                                                                                             |
+| `visit_cancelled`                                 | `POST /visits/{id}/cancel`                                                                       | `from_status` (`CHECKED_IN`, `IN_CONSULTATION`), `minutes_since_check_in`                                                                                                                          |
+| `visit_amended`                                   | `PUT /visits/{id}/amend`, `/diagnoses/amend`, `/notes/{noteId}/amend`, `/vitals/{vitalId}/amend` | `amended_part` (`visit`, `diagnoses`, `clinical_note`, `vital_sign`), `days_since_completed`                                                                                                       |
+| `visit_diagnoses_saved`                           | `PUT /visits/{id}/diagnoses` (Active Visit)                                                      | `icd10_count`, `ayurveda_count`                                                                                                                                                                    |
+| `visit_document_added` / `visit_document_removed` | `POST /visits/{id}/documents`, `DELETE /visits/{id}/documents/{documentId}`                      | `content_type` (one of the accepted document types; any other is dropped)                                                                                                                          |
+| `clinical_note_created`                           | `POST /patients/{id}/notes`                                                                      | `note_type_code`, `context` (`visit`, `admission`, `patient`)                                                                                                                                      |
+| `clinical_note_signed`                            | `POST /patients/{id}/notes/{noteId}/sign`                                                        | `note_type_code`, `minutes_since_created`                                                                                                                                                          |
+| `vital_signs_recorded`                            | `POST /patients/{id}/vitals`                                                                     | `context`, `fields_recorded_count` (measurements taken; BMI is derived and not counted)                                                                                                            |
+| `patient_chart_item_changed`                      | `POST /patients/{id}/allergies`, `/problems`, `/medications`; `PUT` and `DELETE` on each item    | `kind` (`allergy`, `problem`, `medication`), `action` (`created`, `updated`, `removed`)                                                                                                            |
+| `treatment_plan_assigned`                         | `POST /patients/{id}/treatment-plans/assign`                                                     | `session_structure` (`REPEATABLE`, `SEQUENCED`), `session_count`                                                                                                                                   |
+| `treatment_plan_sessions_added`                   | `POST /patients/{id}/treatment-plans`                                                            | `added_count`                                                                                                                                                                                      |
+| `treatment_plan_session_started`                  | `POST /patients/{id}/treatment-plans/{planId}/sessions/{sessionId}/start`                        | `session_structure`                                                                                                                                                                                |
+
+#### Patients
+
+| Event                                         | Recorded by                                                                                                         | Properties                                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `patient_registered`                          | `POST /patients` (`direct`); `PUT /patients/{id}` when it registers a Provisional Patient (`completed_provisional`) | `registration_path`, `has_emirates_id`, `is_medical_tourist`, `identity_document_count` |
+| `patient_deactivated` / `patient_reactivated` | `PATCH /patients/{id}/deactivate`, `/reactivate`                                                                    | none                                                                                    |
+
+#### Admissions
+
+| Event                  | Recorded by                       | Properties                                                         |
+| ---------------------- | --------------------------------- | ------------------------------------------------------------------ |
+| `patient_admitted`     | `POST /admissions`                | `admission_type_code`, `from_visit`, `has_expected_discharge_date` |
+| `bed_transferred`      | `POST /admissions/{id}/transfer`  | `same_ward`                                                        |
+| `admission_discharged` | `POST /admissions/{id}/discharge` | `length_of_stay_days`, `has_discharge_summary`                     |
+| `admission_cancelled`  | `POST /admissions/{id}/cancel`    | none                                                               |
+
+#### Billing
+
+| Event                   | Recorded by                       | Properties                                                                                                                                               |
+| ----------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `invoice_created`       | `POST /invoices`                  | `linked_to` (`visit`, `admission`, `none`)                                                                                                               |
+| `invoice_finalized`     | `POST /invoices/{id}/finalize`    | `linked_to`, `line_count`, `manual_line_count`, `bed_auto_line_count`, `has_discount`, `resulting_status`, `minutes_since_created`                       |
+| `invoice_voided`        | `POST /invoices/{id}/void`        | `from_status` (`DRAFT`, `FINALIZED`)                                                                                                                     |
+| `invoice_deleted`       | `DELETE /invoices/{id}`           | none                                                                                                                                                     |
+| `payment_recorded`      | `POST /invoices/{id}/payments`    | `payment_method`, `resulting_invoice_status`, `payment_sequence` (1 for the first Payment), `linked_to`, `minutes_since_visit_check_in` (Visit Invoices) |
+| `bed_charges_generated` | `POST /invoices/{id}/bed-charges` | `line_count`                                                                                                                                             |
 
 ### Server outcome events: Tenant, access and configuration
 

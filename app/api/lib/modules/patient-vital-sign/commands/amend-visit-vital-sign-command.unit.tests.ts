@@ -17,6 +17,7 @@ const repo = vi.mocked(patientVitalSignRepository);
 const validateAmend = vi.mocked(validateAmendVisitVitalSign);
 
 const existingRecordedAt = new Date('2026-07-16T04:30:00.000Z');
+const visitCompletedAt = new Date('2026-07-15T11:00:00.000Z');
 const amendedReading = { id: 8, visitId: 1, recordedAt: existingRecordedAt } as PatientVitalSign;
 
 describe('amendVisitVitalSignCommand', () => {
@@ -24,7 +25,12 @@ describe('amendVisitVitalSignCommand', () => {
     vi.clearAllMocks();
     validateAmend.mockResolvedValue({
       success: true,
-      data: { id: 8, payload: { heightCm: 170, weightKg: 65 }, existingRecordedAt },
+      data: {
+        id: 8,
+        payload: { heightCm: 170, weightKg: 65 },
+        existingRecordedAt,
+        visitCompletedAt,
+      },
     });
     repo.updatePatientVitalSign.mockResolvedValue(amendedReading);
   });
@@ -54,6 +60,7 @@ describe('amendVisitVitalSignCommand', () => {
     await expect(amendVisitVitalSignCommand('1', '8', 'tenant-1', {})).resolves.toEqual({
       success: true,
       data: amendedReading,
+      visitCompletedAt,
     });
     expect(repo.updatePatientVitalSign).toHaveBeenCalledWith(8, {
       heightCm: 170,
@@ -68,7 +75,12 @@ describe('amendVisitVitalSignCommand', () => {
     const corrected = new Date('2026-07-16T05:00:00.000Z');
     validateAmend.mockResolvedValue({
       success: true,
-      data: { id: 8, payload: { pulseBpm: 72, recordedAt: corrected }, existingRecordedAt },
+      data: {
+        id: 8,
+        payload: { pulseBpm: 72, recordedAt: corrected },
+        existingRecordedAt,
+        visitCompletedAt,
+      },
     });
 
     await amendVisitVitalSignCommand('1', '8', 'tenant-1', {});

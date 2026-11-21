@@ -90,10 +90,11 @@ describe('createAppointmentCommand', () => {
     expect(repo.createAppointment).not.toHaveBeenCalled();
   });
 
-  it('should return created appointment on repository success', async () => {
+  it('should return created appointment and the Tenant time zone on repository success', async () => {
     await expect(createAppointmentCommand({}, 'tenant-1')).resolves.toEqual({
       success: true,
       data: appointment,
+      timeZone: 'Asia/Kolkata',
     });
     expect(repo.createAppointment).toHaveBeenCalledWith(validatedData);
   });

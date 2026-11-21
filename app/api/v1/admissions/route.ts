@@ -6,6 +6,8 @@ import { admitPatientCommand } from '@/app/api/lib/modules/admission/commands/ad
 import { getAdmissionsQuery } from '@/app/api/lib/modules/admission/queries/get-admissions-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { patientAdmittedProperties } from '@/app/api/lib/analytics/lifecycle-patient-properties';
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.CONFLICT && errors.length === 1) {
@@ -103,6 +105,10 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'patient_admitted', () =>
+      patientAdmittedProperties(result.data)
+    );
 
     return NextResponse.json<AdmitPatientResponse>(
       { data: result.data },

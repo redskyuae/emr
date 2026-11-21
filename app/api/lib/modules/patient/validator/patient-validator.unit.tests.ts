@@ -298,6 +298,20 @@ describe('Patient update validator', () => {
     expect(nationality.getNationalityById).not.toHaveBeenCalled();
   });
 
+  it('should carry the Registration Status the Patient had before the update', async () => {
+    repo.getPatientById.mockResolvedValue({
+      ...(existing as object),
+      registrationStatus: 'provisional',
+    } as never);
+
+    const result = await validateUpdatePatient('1', 'tenant-1', validPayload);
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { id: 1, previousRegistrationStatus: 'provisional' },
+    });
+  });
+
   it('should store a changed valid phone as +<code><number>', async () => {
     const result = await validateUpdatePatient('1', 'tenant-1', {
       ...validPayload,

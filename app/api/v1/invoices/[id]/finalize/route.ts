@@ -4,6 +4,8 @@ import type { FinalizeInvoiceResponse } from './types';
 
 import { finalizeInvoiceCommand } from '@/app/api/lib/modules/invoice/commands/finalize-invoice-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { invoiceFinalizedProperties } from '@/app/api/lib/analytics/lifecycle-billing-properties';
 
 type FinalizeRouteContext = {
   params: Promise<{ id: string }>;
@@ -20,7 +22,7 @@ function errorMessage(status: number, errors: string[]) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
-export async function POST(_request: NextRequest, context: FinalizeRouteContext) {
+export async function POST(request: NextRequest, context: FinalizeRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -39,6 +41,10 @@ export async function POST(_request: NextRequest, context: FinalizeRouteContext)
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'invoice_finalized', () =>
+      invoiceFinalizedProperties(result.data)
+    );
 
     return NextResponse.json<FinalizeInvoiceResponse>({ data: result.data });
   } catch {

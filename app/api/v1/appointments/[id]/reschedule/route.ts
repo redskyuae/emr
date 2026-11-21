@@ -4,6 +4,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { rescheduleAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/reschedule-appointment-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { RescheduleAppointmentResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { appointmentRescheduledProperties } from '@/app/api/lib/analytics/lifecycle-appointment-properties';
 
 type AppointmentRouteContext = {
   params: Promise<{ id: string }>;
@@ -42,6 +44,10 @@ export async function POST(request: NextRequest, context: AppointmentRouteContex
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'appointment_rescheduled', () =>
+      appointmentRescheduledProperties(result.data, result.doctorChanged, result.timeZone)
+    );
 
     return NextResponse.json<RescheduleAppointmentResponse>({ data: result.data });
   } catch {

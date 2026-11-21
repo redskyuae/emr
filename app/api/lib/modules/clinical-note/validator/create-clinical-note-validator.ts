@@ -16,7 +16,10 @@ export async function validateCreateClinicalNote(
   patientId: unknown,
   tenantId: string,
   payload: unknown
-): Promise<ValidationResult<{ patientId: number; payload: CreateClinicalNoteInput }>> {
+): Promise<
+  // `noteTypeCode` is reported with the new note; it is not written.
+  ValidationResult<{ patientId: number; payload: CreateClinicalNoteInput; noteTypeCode: string }>
+> {
   const patientIdResult = clinicalNoteIdSchema.safeParse(patientId);
   const payloadResult = createClinicalNoteSchema.safeParse(payload);
 
@@ -70,5 +73,12 @@ export async function validateCreateClinicalNote(
     }
   }
 
-  return { success: true, data: { patientId: patientIdResult.data, payload: payloadResult.data } };
+  return {
+    success: true,
+    data: {
+      patientId: patientIdResult.data,
+      payload: payloadResult.data,
+      noteTypeCode: noteTypeResult.data.code,
+    },
+  };
 }

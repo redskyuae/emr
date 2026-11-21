@@ -4,6 +4,8 @@ import type { VoidInvoiceResponse } from './types';
 
 import { voidInvoiceCommand } from '@/app/api/lib/modules/invoice/commands/void-invoice-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { invoiceVoidedProperties } from '@/app/api/lib/analytics/lifecycle-billing-properties';
 
 type VoidRouteContext = {
   params: Promise<{ id: string }>;
@@ -50,6 +52,10 @@ export async function POST(request: NextRequest, context: VoidRouteContext) {
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'invoice_voided', () =>
+      invoiceVoidedProperties(result.data)
+    );
 
     return NextResponse.json<VoidInvoiceResponse>({ data: result.data });
   } catch {

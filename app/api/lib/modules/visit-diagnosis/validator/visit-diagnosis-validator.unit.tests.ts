@@ -184,10 +184,13 @@ describe('VisitDiagnosis validators', () => {
       visitRepo.getVisitById.mockResolvedValue(visitWith('COMPLETED'));
     });
 
-    it('should accept a Completed Visit', async () => {
+    it('should accept a Completed Visit and carry its completion time', async () => {
+      const completedAt = new Date('2026-07-15T11:00:00.000Z');
+      visitRepo.getVisitById.mockResolvedValue({ ...visitWith('COMPLETED'), completedAt });
+
       await expect(validateAmendVisitDiagnoses('9', payload, 'tenant-1')).resolves.toMatchObject({
         success: true,
-        data: { visitId: 9 },
+        data: { visitId: 9, visitCompletedAt: completedAt },
       });
     });
 

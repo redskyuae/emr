@@ -4,7 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { assignPatientTreatmentPlanCommand } from '@/app/api/lib/modules/patient-treatment-plan/commands/assign-patient-treatment-plan-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { POST } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock(
   '@/app/api/lib/modules/patient-treatment-plan/commands/assign-patient-treatment-plan-command',
   () => ({
@@ -62,6 +66,13 @@ describe('POST Patient Treatment Plan assignment', () => {
     expect(command).toHaveBeenCalledWith('7', 'tenant-a', { treatmentId: 11, totalSessions: 5 });
     expect(response.status).toBe(201);
     expect(await response.json()).toEqual({ data: { id: 21 } });
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'treatment_plan_assigned',
+      expect.any(Function)
+    );
   });
 
   it('should pass additional Sessions for a Sequenced Treatment assignment', async () => {
@@ -87,5 +98,6 @@ describe('POST Patient Treatment Plan assignment', () => {
     expect(await response.json()).toMatchObject({
       errors: ['Treatment has no Session templates.'],
     });
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 });

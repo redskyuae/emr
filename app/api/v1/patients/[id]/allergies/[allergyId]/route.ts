@@ -6,6 +6,7 @@ import { deletePatientAllergyCommand } from '@/app/api/lib/modules/patient-aller
 import { updatePatientAllergyCommand } from '@/app/api/lib/modules/patient-allergy/commands/update-patient-allergy-command';
 import { getPatientAllergyByIdQuery } from '@/app/api/lib/modules/patient-allergy/queries/get-patient-allergy-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type PatientAllergyRouteContext = {
   params: Promise<{ id: string; allergyId: string }>;
@@ -89,6 +90,11 @@ export async function PUT(request: NextRequest, context: PatientAllergyRouteCont
       );
     }
 
+    recordLifecycleEvent(tenantSession, request, 'patient_chart_item_changed', () => ({
+      kind: 'allergy',
+      action: 'updated',
+    }));
+
     return NextResponse.json<UpdatePatientAllergyResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -98,7 +104,7 @@ export async function PUT(request: NextRequest, context: PatientAllergyRouteCont
   }
 }
 
-export async function DELETE(_request: NextRequest, context: PatientAllergyRouteContext) {
+export async function DELETE(request: NextRequest, context: PatientAllergyRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -123,6 +129,11 @@ export async function DELETE(_request: NextRequest, context: PatientAllergyRoute
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'patient_chart_item_changed', () => ({
+      kind: 'allergy',
+      action: 'removed',
+    }));
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

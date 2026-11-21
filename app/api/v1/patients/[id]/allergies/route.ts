@@ -6,6 +6,7 @@ import { createPatientAllergyCommand } from '@/app/api/lib/modules/patient-aller
 import { getPatientAllergiesQuery } from '@/app/api/lib/modules/patient-allergy/queries/get-patient-allergies-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type PatientAllergiesRouteContext = {
   params: Promise<{ id: string }>;
@@ -104,6 +105,11 @@ export async function POST(request: NextRequest, context: PatientAllergiesRouteC
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'patient_chart_item_changed', () => ({
+      kind: 'allergy',
+      action: 'created',
+    }));
 
     return NextResponse.json<SavePatientAllergyResponse>(
       { data: result.data },

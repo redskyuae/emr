@@ -4,6 +4,7 @@ import type { ReactivatePatientResponse } from './types';
 
 import { reactivatePatientCommand } from '@/app/api/lib/modules/patient/commands/reactivate-patient-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type PatientRouteContext = {
   params: Promise<{ id: string }>;
@@ -17,7 +18,7 @@ function errorMessage(status: number) {
   return 'Validation failed';
 }
 
-export async function PATCH(_request: NextRequest, context: PatientRouteContext) {
+export async function PATCH(request: NextRequest, context: PatientRouteContext) {
   try {
     // Any authenticated Tenant member may reactivate a Patient — see the note on
     // POST in ../../route.ts for why this isn't requireTenantAdminSession.
@@ -38,6 +39,8 @@ export async function PATCH(_request: NextRequest, context: PatientRouteContext)
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'patient_reactivated', () => ({}));
 
     return NextResponse.json<ReactivatePatientResponse>({ data: result.data });
   } catch {

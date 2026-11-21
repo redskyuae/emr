@@ -5,7 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { rescheduleAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/reschedule-appointment-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { POST } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/appointment/commands/reschedule-appointment-command', () => ({
   rescheduleAppointmentCommand: vi.fn(),
 }));
@@ -38,6 +42,8 @@ describe('Reschedule Appointment route', () => {
     reschedule.mockResolvedValue({
       success: true,
       data: { id: 10, bookingNumber: 'APT-1001', slotDate: '31-12-2099' } as never,
+      timeZone: 'Asia/Kolkata',
+      doctorChanged: false,
     });
   });
 
@@ -49,6 +55,13 @@ describe('Reschedule Appointment route', () => {
     await expect(response.json()).resolves.toMatchObject({
       data: { id: 10, bookingNumber: 'APT-1001' },
     });
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'appointment_rescheduled',
+      expect.any(Function)
+    );
   });
 
   it('should return an auth response before reading the request body', async () => {
@@ -91,5 +104,6 @@ describe('Reschedule Appointment route', () => {
       message: 'Only Scheduled or Confirmed Appointments can be rescheduled.',
       errors: ['Only Scheduled or Confirmed Appointments can be rescheduled.'],
     });
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 });

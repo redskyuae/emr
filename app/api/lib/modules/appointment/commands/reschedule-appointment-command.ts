@@ -1,25 +1,36 @@
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { StatusCodes } from 'http-status-codes';
 import { appointmentRepository } from '../repository/appointment-repository';
 import type { Appointment } from '../schemas/appointment-schema';
 import { validateRescheduleAppointment } from '../validator/reschedule-appointment-validator';
 
+/** Internal only (analytics); the reschedule response returns `data` alone. */
+type RescheduleAppointmentInternals = { timeZone: string; doctorChanged: boolean };
+
 export async function rescheduleAppointmentCommand(
   id: unknown,
   payload: unknown,
   tenantId: string
-): Promise<CommandResult<Appointment>> {
+): Promise<CommandResultWith<Appointment, RescheduleAppointmentInternals>> {
   const validationResult = await validateRescheduleAppointment(id, payload, tenantId);
 
   if (!validationResult.success) {
     return validationResult;
   }
 
-  try {
-    const result = await appointmentRepository.rescheduleAppointment(validationResult.data);
+  const { previousDoctorId, ...reschedule } = validationResult.data;
 
-    if (result.success) return result;
+  try {
+    const result = await appointmentRepository.rescheduleAppointment(reschedule);
+
+    if (result.success) {
+      return {
+        ...result,
+        timeZone: reschedule.timeZone,
+        doctorChanged: (result.data.doctor?.id ?? null) !== previousDoctorId,
+      };
+    }
 
     if (result.outcome === 'not-found') {
       return {

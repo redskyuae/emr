@@ -4,6 +4,7 @@ import type { TransferBedResponse } from './types';
 
 import { transferBedCommand } from '@/app/api/lib/modules/admission/commands/transfer-bed-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type AdmissionRouteContext = {
   params: Promise<{ id: string }>;
@@ -51,6 +52,10 @@ export async function POST(request: NextRequest, context: AdmissionRouteContext)
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'bed_transferred', () => ({
+      same_ward: result.sameWard,
+    }));
 
     return NextResponse.json<TransferBedResponse>({ data: result.data });
   } catch {

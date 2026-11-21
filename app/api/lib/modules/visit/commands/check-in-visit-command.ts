@@ -1,15 +1,22 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
 import { visitRepository } from '../repository/visit-repository';
 import type { Visit } from '../schemas/visit-schema';
 import { validateCheckInVisit } from '../validator/check-in-visit-validator';
 
+/** Internal only (analytics); the Check-in response returns `data` alone. */
+type CheckInVisitInternals = {
+  timeZone: string;
+  appointmentStartTime: string | null;
+  documentCount: number;
+};
+
 export async function checkInVisitCommand(
   payload: unknown,
   tenantId: string
-): Promise<CommandResult<Visit>> {
+): Promise<CommandResultWith<Visit, CheckInVisitInternals>> {
   const validationResult = await validateCheckInVisit(payload, tenantId);
 
   if (!validationResult.success) {
@@ -20,13 +27,18 @@ export async function checkInVisitCommand(
     };
   }
 
-  const data = validationResult.data;
+  const { timeZone, appointmentStartTime, ...data } = validationResult.data;
 
   try {
     const result = await visitRepository.checkInVisit(data);
 
     if (result.success) {
-      return result;
+      return {
+        ...result,
+        timeZone,
+        appointmentStartTime,
+        documentCount: data.documents?.length ?? 0,
+      };
     }
 
     if (result.outcome === 'appointment-ineligible') {

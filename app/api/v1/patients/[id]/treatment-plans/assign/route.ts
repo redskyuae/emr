@@ -4,6 +4,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { assignPatientTreatmentPlanCommand } from '@/app/api/lib/modules/patient-treatment-plan/commands/assign-patient-treatment-plan-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { AssignPatientTreatmentPlanResponse } from './types';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { treatmentPlanAssignedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 export async function POST(
   request: NextRequest,
@@ -38,6 +40,10 @@ export async function POST(
         { status }
       );
     }
+    recordLifecycleEvent(tenantSession, request, 'treatment_plan_assigned', () =>
+      treatmentPlanAssignedProperties(result.data)
+    );
+
     return NextResponse.json<AssignPatientTreatmentPlanResponse>(
       { data: result.data },
       { status: StatusCodes.CREATED }

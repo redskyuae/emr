@@ -6,6 +6,8 @@ import { createClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/c
 import { getClinicalNotesQuery } from '@/app/api/lib/modules/clinical-note/queries/get-clinical-notes-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { clinicalNoteCreatedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
 type ClinicalNotesRouteContext = {
   params: Promise<{ id: string }>;
@@ -104,6 +106,10 @@ export async function POST(request: NextRequest, context: ClinicalNotesRouteCont
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'clinical_note_created', () =>
+      clinicalNoteCreatedProperties(result.data, result.noteTypeCode)
+    );
 
     return NextResponse.json<SaveClinicalNoteResponse>(
       { data: result.data },

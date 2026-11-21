@@ -6,7 +6,11 @@ import { checkInVisitCommand } from '@/app/api/lib/modules/visit/commands/check-
 import { getVisitsQuery } from '@/app/api/lib/modules/visit/queries/get-visits-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { GET, POST } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/visit/commands/check-in-visit-command', () => ({
   checkInVisitCommand: vi.fn(),
 }));
@@ -37,7 +41,13 @@ describe('Visits route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireSession.mockResolvedValue(tenantSession as never);
-    checkIn.mockResolvedValue({ success: true, data: visit as never });
+    checkIn.mockResolvedValue({
+      success: true,
+      data: visit as never,
+      timeZone: 'Asia/Kolkata',
+      appointmentStartTime: null,
+      documentCount: 0,
+    });
     getVisits.mockResolvedValue({ success: true, data: [visit as never], total: 1 });
   });
 
@@ -91,6 +101,13 @@ describe('Visits route', () => {
 
       expect(response.status).toBe(StatusCodes.CREATED);
       await expect(response.json()).resolves.toEqual({ data: visit });
+      expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+      expect(recordLifecycleEvent).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        'visit_checked_in',
+        expect.any(Function)
+      );
     });
 
     it('should surface a single conflict error as the message', async () => {
@@ -107,6 +124,7 @@ describe('Visits route', () => {
         message: 'Patient 7 already has an active visit.',
         errors: ['Patient 7 already has an active visit.'],
       });
+      expect(recordLifecycleEvent).not.toHaveBeenCalled();
     });
 
     it('should default a validation failure to 400', async () => {

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { tenantRepository } from '@/app/api/lib/modules/tenant/repository/tenant-repository';
+import { visitRepository } from '@/app/api/lib/modules/visit/repository/visit-repository';
 import { invoiceRepository } from '../repository/invoice-repository';
 import { validateAddInvoiceLine } from '../validator/add-invoice-line-validator';
 import { validateCreateInvoice } from '../validator/create-invoice-validator';
@@ -38,6 +39,9 @@ vi.mock('../validator/generate-bed-charges-validator', () => ({
 vi.mock('@/app/api/lib/modules/tenant/repository/tenant-repository', () => ({
   tenantRepository: { getTenantById: vi.fn() },
 }));
+vi.mock('@/app/api/lib/modules/visit/repository/visit-repository', () => ({
+  visitRepository: { getVisitById: vi.fn() },
+}));
 
 const repo = vi.mocked(invoiceRepository);
 const validateCreate = vi.mocked(validateCreateInvoice);
@@ -47,6 +51,7 @@ const validateVoid = vi.mocked(validateVoidInvoice);
 const validatePayment = vi.mocked(validateRecordPayment);
 const validateBedCharges = vi.mocked(validateGenerateBedCharges);
 const tenantRepo = vi.mocked(tenantRepository);
+const visitRepo = vi.mocked(visitRepository);
 
 const invoice = { id: 1, invoiceNumber: 'INV-1001', status: 'DRAFT' } as never;
 
@@ -208,6 +213,41 @@ describe('Invoice commands', () => {
       await expect(recordPaymentCommand('1', 'tenant-1', {})).resolves.toEqual({
         success: true,
         data: { invoice, payment },
+        visitCheckedInAt: null,
+      });
+      expect(visitRepo.getVisitById).not.toHaveBeenCalled();
+    });
+
+    it('should return the linked Visit check-in time beside the receipt', async () => {
+      const payment = { id: 1, receiptNumber: 'RCP-1001' } as never;
+      const visitInvoice = { id: 1, status: 'PAID', visit: { id: 77, visitNumber: 'VST-1' } };
+      const checkedInAt = new Date('2026-07-16T04:30:00.000Z');
+      repo.recordPayment.mockResolvedValue({
+        outcome: 'recorded',
+        data: visitInvoice as never,
+        payment,
+      });
+      visitRepo.getVisitById.mockResolvedValue({ id: 77, checkedInAt } as never);
+
+      await expect(recordPaymentCommand('1', 'tenant-1', {})).resolves.toMatchObject({
+        success: true,
+        visitCheckedInAt: checkedInAt,
+      });
+      expect(visitRepo.getVisitById).toHaveBeenCalledWith(77, 'tenant-1');
+    });
+
+    it('should still succeed when the linked Visit cannot be read', async () => {
+      const payment = { id: 1, receiptNumber: 'RCP-1001' } as never;
+      repo.recordPayment.mockResolvedValue({
+        outcome: 'recorded',
+        data: { id: 1, visit: { id: 77, visitNumber: 'VST-1' } } as never,
+        payment,
+      });
+      visitRepo.getVisitById.mockRejectedValue(new Error('database down'));
+
+      await expect(recordPaymentCommand('1', 'tenant-1', {})).resolves.toMatchObject({
+        success: true,
+        visitCheckedInAt: null,
       });
     });
 

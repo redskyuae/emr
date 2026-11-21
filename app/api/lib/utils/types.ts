@@ -6,6 +6,13 @@ export type ValidationResult<T> = { success: true; data: T } | ResultFailure;
 
 export type CommandResult<T> = { success: true; data: T } | ResultFailure;
 
+/**
+ * A CommandResult whose success also carries internal-only fields beside `data`, such as the inputs
+ * of an Analytics Event. Routes respond with `data` alone, so these never reach the client.
+ */
+export type CommandResultWith<T, Internal> =
+  ({ success: true; data: T } & Internal) | ResultFailure;
+
 export type SingleQueryResult<T> = { success: true; data: T } | ResultFailure;
 
 export type ListQueryResult<T> = { success: true; data: T[]; total: number } | ResultFailure;

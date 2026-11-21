@@ -6,7 +6,11 @@ import { amendVisitDiagnosesCommand } from '@/app/api/lib/modules/visit-diagnosi
 import type { VisitDiagnosis } from '@/app/api/lib/modules/visit-diagnosis/schemas/visit-diagnosis-schema';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { PUT } from './route';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
+vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
+  recordLifecycleEvent: vi.fn(),
+}));
 vi.mock('@/app/api/lib/modules/visit-diagnosis/commands/amend-visit-diagnoses-command', () => ({
   amendVisitDiagnosesCommand: vi.fn(),
 }));
@@ -37,12 +41,21 @@ function context(id = '42') {
   return { params: Promise.resolve({ id }) };
 }
 
+function recordedProperties() {
+  const [, , , buildProperties] = vi.mocked(recordLifecycleEvent).mock.calls[0];
+  return buildProperties();
+}
+
 describe('Visit diagnoses amend route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireSession.mockResolvedValue(tenantSession as never);
     requirePermissions.mockResolvedValue(null);
-    amendDiagnoses.mockResolvedValue({ success: true, data: [diagnosis] });
+    amendDiagnoses.mockResolvedValue({
+      success: true,
+      data: [diagnosis],
+      visitCompletedAt: new Date('2026-07-15T11:00:00.000Z'),
+    });
   });
 
   it('should return unauthorized without checking permission or amending', async () => {
@@ -83,6 +96,14 @@ describe('Visit diagnoses amend route', () => {
     expect(response.status).toBe(StatusCodes.OK);
     await expect(response.json()).resolves.toEqual({ data: [diagnosis] });
     expect(amendDiagnoses).toHaveBeenCalledWith('42', 'tenant-1', body);
+    expect(recordLifecycleEvent).toHaveBeenCalledTimes(1);
+    expect(recordLifecycleEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'visit_amended',
+      expect.any(Function)
+    );
+    expect(recordedProperties()).toMatchObject({ amended_part: 'diagnoses' });
   });
 
   it('should surface a not-completed Visit as a conflict message', async () => {
@@ -127,6 +148,7 @@ describe('Visit diagnoses amend route', () => {
 
     expect(response.status).toBe(StatusCodes.BAD_REQUEST);
     await expect(response.json()).resolves.toMatchObject({ message: 'Validation failed' });
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 
   it('should return an internal server error when the command throws', async () => {

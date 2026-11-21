@@ -6,6 +6,11 @@ import { deletePatientCommand } from '@/app/api/lib/modules/patient/commands/del
 import { updatePatientCommand } from '@/app/api/lib/modules/patient/commands/update-patient-command';
 import { getPatientByIdQuery } from '@/app/api/lib/modules/patient/queries/get-patient-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import {
+  patientRegisteredProperties,
+  registrationPathAfterUpdate,
+} from '@/app/api/lib/analytics/lifecycle-patient-properties';
 
 type PatientRouteContext = {
   params: Promise<{ id: string }>;
@@ -82,6 +87,17 @@ export async function PUT(request: NextRequest, context: PatientRouteContext) {
       return NextResponse.json(
         { message: errorMessage(status, result.errors), errors: result.errors },
         { status }
+      );
+    }
+
+    const registrationPath = registrationPathAfterUpdate(
+      result.previousRegistrationStatus,
+      result.data
+    );
+
+    if (registrationPath) {
+      recordLifecycleEvent(tenantSession, request, 'patient_registered', () =>
+        patientRegisteredProperties(result.data, registrationPath)
       );
     }
 

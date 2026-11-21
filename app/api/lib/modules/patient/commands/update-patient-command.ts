@@ -1,8 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { patientRepository } from '../repository/patient-repository';
-import type { Patient } from '../schemas/patient-schema';
+import type { Patient, PatientRegistrationStatus } from '../schemas/patient-schema';
 import { getPatientUniqueConstraintErrors } from '../validator/patient-emirates-id-validator';
 import { validateUpdatePatient } from '../validator/update-patient-validator';
 
@@ -10,7 +10,8 @@ export async function updatePatientCommand(
   id: unknown,
   tenantId: string,
   payload: unknown
-): Promise<CommandResult<Patient>> {
+  // `previousRegistrationStatus` is internal only (analytics); the response returns `data` alone.
+): Promise<CommandResultWith<Patient, { previousRegistrationStatus: PatientRegistrationStatus }>> {
   const validationResult = await validateUpdatePatient(id, tenantId, payload);
 
   if (!validationResult.success) {
@@ -33,7 +34,11 @@ export async function updatePatientCommand(
       return { success: false, errors: ['Patient not found'], status: StatusCodes.NOT_FOUND };
     }
 
-    return { success: true, data: updatedPatient };
+    return {
+      success: true,
+      data: updatedPatient,
+      previousRegistrationStatus: validationResult.data.previousRegistrationStatus,
+    };
   } catch (error) {
     const constraintErrors = getPatientUniqueConstraintErrors(error, patientData);
 

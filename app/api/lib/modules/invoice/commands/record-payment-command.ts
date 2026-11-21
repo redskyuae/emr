@@ -1,7 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
 
-import type { CommandResult } from '@/app/api/lib/utils/types';
+import type { CommandResultWith } from '@/app/api/lib/utils/types';
 import { getDatabaseError } from '@/app/api/lib/utils/db-errors';
+import { visitRepository } from '../../visit/repository/visit-repository';
 import { invoiceRepository } from '../repository/invoice-repository';
 import { roundMoney, type Invoice, type Payment } from '../schemas/invoice-schema';
 import { validateRecordPayment } from '../validator/record-payment-validator';
@@ -15,7 +16,8 @@ export async function recordPaymentCommand(
   id: unknown,
   tenantId: string,
   payload: unknown
-): Promise<CommandResult<RecordPaymentCommandData>> {
+  // `visitCheckedInAt` is internal only (analytics); the response returns `data` alone.
+): Promise<CommandResultWith<RecordPaymentCommandData, { visitCheckedInAt: Date | null }>> {
   const validationResult = await validateRecordPayment(id, payload, tenantId);
 
   if (!validationResult.success) {
@@ -68,5 +70,14 @@ export async function recordPaymentCommand(
     };
   }
 
-  return { success: true, data: { invoice: result.data, payment: result.payment } };
+  // The Payment is already recorded, so a failed read here must not fail the request.
+  const visit = result.data.visit
+    ? await visitRepository.getVisitById(result.data.visit.id, tenantId).catch(() => undefined)
+    : undefined;
+
+  return {
+    success: true,
+    data: { invoice: result.data, payment: result.payment },
+    visitCheckedInAt: visit?.checkedInAt ?? null,
+  };
 }

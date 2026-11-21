@@ -5,6 +5,8 @@ import type { ListPaymentsResponse, RecordPaymentResponse } from './types';
 import { recordPaymentCommand } from '@/app/api/lib/modules/invoice/commands/record-payment-command';
 import { getInvoiceByIdQuery } from '@/app/api/lib/modules/invoice/queries/get-invoice-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { paymentRecordedProperties } from '@/app/api/lib/analytics/lifecycle-billing-properties';
 
 type PaymentsRouteContext = {
   params: Promise<{ id: string }>;
@@ -80,6 +82,10 @@ export async function POST(request: NextRequest, context: PaymentsRouteContext) 
         { status }
       );
     }
+
+    recordLifecycleEvent(tenantSession, request, 'payment_recorded', () =>
+      paymentRecordedProperties(result.data.invoice, result.data.payment, result.visitCheckedInAt)
+    );
 
     return NextResponse.json<RecordPaymentResponse>(
       { data: result.data },
