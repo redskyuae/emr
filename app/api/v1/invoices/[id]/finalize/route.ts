@@ -4,6 +4,7 @@ import type { FinalizeInvoiceResponse } from './types';
 
 import { finalizeInvoiceCommand } from '@/app/api/lib/modules/invoice/commands/finalize-invoice-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { invoiceFinalizedProperties } from '@/app/api/lib/analytics/lifecycle-billing-properties';
 
@@ -45,6 +46,13 @@ export async function POST(request: NextRequest, context: FinalizeRouteContext) 
     recordLifecycleEvent(tenantSession, request, 'invoice_finalized', () =>
       invoiceFinalizedProperties(result.data)
     );
+
+    await recordAuditEvent(tenantSession, request, 'invoice.finalize', {
+      entityId: result.data.id,
+      visitId: result.data.visit?.id ?? null,
+      patientId: result.data.patient.id,
+      entityLabel: result.data.invoiceNumber,
+    });
 
     return NextResponse.json<FinalizeInvoiceResponse>({ data: result.data });
   } catch {

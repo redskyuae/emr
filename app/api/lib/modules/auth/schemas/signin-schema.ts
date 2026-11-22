@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import type { Tenant } from '../../tenant/schemas/tenant-schema';
 
-const emailSchema = z
+export const signinEmailSchema = z
   .string({ error: 'Email is required' })
   .trim()
   .min(1, 'Email is required')
@@ -16,7 +16,7 @@ const passwordSchema = z
 
 export const signinSchema = z
   .object({
-    email: emailSchema,
+    email: signinEmailSchema,
     password: passwordSchema,
     rememberMe: z.boolean({ error: 'Remember me must be a boolean' }).optional().default(false),
   })
@@ -27,7 +27,11 @@ export type SigninInput = z.infer<typeof signinSchema>;
 export type SigninResult = {
   tenant: Tenant;
   setCookies: string[];
-  /** Internal only (analytics); the sign-in response returns `tenant` alone. */
+  /** Internal only (analytics, Audit Log); the sign-in response returns `tenant` alone. */
   userId: string;
+  userName: string;
+  userEmail: string;
+  /** The new Session's id (never its token), or null if it could not be read back. */
+  sessionId: string | null;
   rememberMe: boolean;
 };

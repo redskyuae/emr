@@ -6,10 +6,22 @@ import { deleteVisitCommand } from '@/app/api/lib/modules/visit/commands/delete-
 import { updateVisitCommand } from '@/app/api/lib/modules/visit/commands/update-visit-command';
 import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { diffAuditFields, VISIT_AUDIT_FIELDS } from '@/app/api/lib/audit/audit-changes';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 
 type VisitRouteContext = {
   params: Promise<{ id: string }>;
 };
+
+function visitAuditTarget(visit: Visit) {
+  return {
+    entityId: visit.id,
+    visitId: visit.id,
+    patientId: visit.patient.id,
+    entityLabel: visit.visitNumber,
+  };
+}
 
 function errorMessage(status: number, errors: string[]) {
   if (status === StatusCodes.NOT_FOUND) {
@@ -23,7 +35,7 @@ function errorMessage(status: number, errors: string[]) {
   return status === StatusCodes.CONFLICT ? 'Conflict' : 'Validation failed';
 }
 
-export async function GET(_request: NextRequest, context: VisitRouteContext) {
+export async function GET(request: NextRequest, context: VisitRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -42,6 +54,8 @@ export async function GET(_request: NextRequest, context: VisitRouteContext) {
         { status }
       );
     }
+
+    await recordAuditEvent(tenantSession, request, 'visit.view', visitAuditTarget(result.data));
 
     return NextResponse.json<GetVisitResponse>({ data: result.data });
   } catch {
@@ -72,6 +86,8 @@ export async function PUT(request: NextRequest, context: VisitRouteContext) {
       );
     }
 
+    // Read before writing so the Audit Event can carry the before/after.
+    const before = await getVisitByIdQuery(id, tenantSession.tenantId);
     const result = await updateVisitCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
@@ -83,6 +99,13 @@ export async function PUT(request: NextRequest, context: VisitRouteContext) {
       );
     }
 
+    await recordAuditEvent(tenantSession, request, 'visit.update', {
+      ...visitAuditTarget(result.data),
+      changes: before.success
+        ? diffAuditFields(before.data, result.data, VISIT_AUDIT_FIELDS)
+        : null,
+    });
+
     return NextResponse.json<UpdateVisitResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -92,7 +115,7 @@ export async function PUT(request: NextRequest, context: VisitRouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: VisitRouteContext) {
+export async function DELETE(request: NextRequest, context: VisitRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -101,6 +124,7 @@ export async function DELETE(_request: NextRequest, context: VisitRouteContext) 
     }
 
     const { id } = await context.params;
+    const before = await getVisitByIdQuery(id, tenantSession.tenantId);
     const result = await deleteVisitCommand(id, tenantSession.tenantId);
 
     if (!result.success) {
@@ -111,6 +135,13 @@ export async function DELETE(_request: NextRequest, context: VisitRouteContext) 
         { status }
       );
     }
+
+    await recordAuditEvent(
+      tenantSession,
+      request,
+      'visit.delete',
+      before.success ? visitAuditTarget(before.data) : { entityId: id }
+    );
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

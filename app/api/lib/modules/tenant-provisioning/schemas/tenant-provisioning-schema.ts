@@ -46,6 +46,10 @@ export type TenantProvisioningResult = {
   setCookies: string[];
   /** Internal only (analytics): the new Tenant Owner. The signup response returns `tenant` alone. */
   userId: string;
+  /** Internal only (Audit Log): the Tenant Owner's name, email and the Session signup started. */
+  userName: string;
+  userEmail: string;
+  sessionId: string | null;
 };
 
 export type TenantOnboardingResult = {

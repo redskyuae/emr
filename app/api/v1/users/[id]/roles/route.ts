@@ -9,6 +9,8 @@ import {
 import { assignRolesCommand } from '@/app/api/lib/modules/user-role/commands/assign-roles-command';
 import { getUserRolesQuery } from '@/app/api/lib/modules/user-role/queries/get-user-roles-query';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getStaffByIdQuery } from '@/app/api/lib/modules/staff/queries/get-staff-by-id-query';
 
 type UserRolesRouteContext = {
   params: Promise<{ id: string }>;
@@ -78,6 +80,7 @@ export async function POST(request: NextRequest, context: UserRolesRouteContext)
       );
     }
 
+    const before = await getUserRolesQuery(userId, tenantSession.tenantId);
     const result = await assignRolesCommand(
       userId,
       tenantSession.tenantId,
@@ -96,6 +99,20 @@ export async function POST(request: NextRequest, context: UserRolesRouteContext)
 
     recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_roles_changed', {
       role_count: result.data.length,
+    });
+
+    const staff = await getStaffByIdQuery(userId, tenantSession.tenantId);
+    const beforeIds = new Set(before.success ? before.data.map(({ id }) => id) : []);
+
+    await recordAuditEvent(tenantSession, request, 'user.role-assign', {
+      entityId: userId,
+      entityLabel: staff.success ? staff.data.email : null,
+      metadata: {
+        assigned: result.data
+          .filter(({ id }) => !beforeIds.has(id))
+          .map(({ id, name }) => ({ roleId: id, roleName: name })),
+        roleCount: result.data.length,
+      },
     });
 
     return NextResponse.json<AssignUserRolesResponse>({ data: result.data });

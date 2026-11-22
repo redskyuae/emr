@@ -3,6 +3,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { amendVisitDiagnosesCommand } from '@/app/api/lib/modules/visit-diagnosis/commands/amend-visit-diagnoses-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
+import { listVisitDiagnosesQuery } from '@/app/api/lib/modules/visit-diagnosis/queries/list-visit-diagnoses-query';
+import { diagnosisAuditMetadata } from '@/app/api/lib/audit/audit-diagnosis-metadata';
 import type { SaveVisitDiagnosesResponse } from './types';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { visitAmendedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
@@ -49,6 +53,8 @@ export async function PUT(request: NextRequest, context: AmendVisitDiagnosesRout
     }
 
     const { id } = await context.params;
+    // Read before writing so the Audit Event can name the codes added and removed.
+    const before = await listVisitDiagnosesQuery(id, tenantSession.tenantId);
     const result = await amendVisitDiagnosesCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
@@ -63,6 +69,16 @@ export async function PUT(request: NextRequest, context: AmendVisitDiagnosesRout
     recordLifecycleEvent(tenantSession, request, 'visit_amended', () =>
       visitAmendedProperties('diagnoses', result.visitCompletedAt)
     );
+
+    const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
+
+    await recordAuditEvent(tenantSession, request, 'visit-diagnosis.amend', {
+      entityId: id,
+      visitId: visit.success ? visit.data.id : null,
+      patientId: visit.success ? visit.data.patient.id : null,
+      entityLabel: visit.success ? visit.data.visitNumber : null,
+      metadata: before.success ? diagnosisAuditMetadata(before.data, result.data) : null,
+    });
 
     return NextResponse.json<SaveVisitDiagnosesResponse>({ data: result.data });
   } catch {

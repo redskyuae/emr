@@ -1,19 +1,15 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { getExportBrand } from '@/app/api/lib/export/export-brand';
 import {
   createAppointmentExport,
-  type AppointmentExportBrand,
   type AppointmentExportFormat,
 } from '@/app/api/lib/modules/appointment/export/appointment-export';
 import { filterAppointmentsForDayView } from '@/app/api/lib/modules/appointment/appointment-day-view';
 import { getAppointmentsQuery } from '@/app/api/lib/modules/appointment/queries/get-appointments-query';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
-import { brandLogos, getConfiguredBrandLogoVariant } from '@/components/brand/brand-config';
 
 export const runtime = 'nodejs';
 
@@ -70,37 +66,6 @@ function getFilterSummary(searchParams: URLSearchParams, appointments: Appointme
   }
 
   return parts.length > 0 ? parts.join(' · ') : 'none';
-}
-
-async function getExportBrand(): Promise<AppointmentExportBrand> {
-  const variant = getConfiguredBrandLogoVariant();
-
-  if (variant === 'none') {
-    return {
-      organizationName: 'Medical EMR',
-      organizationSubtitle: 'Redsky Consultancy',
-    };
-  }
-
-  const configuredBrand = brandLogos[variant];
-  let logo: Uint8Array | undefined;
-
-  try {
-    const logoPath = path.join(
-      process.cwd(),
-      'public',
-      configuredBrand.markSrc.replace(/^\/+/, '')
-    );
-    logo = await readFile(logoPath);
-  } catch {
-    // The report generator falls back to organization initials if the asset is unavailable.
-  }
-
-  return {
-    organizationName: configuredBrand.name,
-    organizationSubtitle: configuredBrand.subtitle,
-    logo,
-  };
 }
 
 export async function GET(request: NextRequest) {

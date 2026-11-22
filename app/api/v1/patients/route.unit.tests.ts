@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { createPatientCommand } from '@/app/api/lib/modules/patient/commands/create-patient-command';
 import { getPatientsQuery } from '@/app/api/lib/modules/patient/queries/get-patients-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -10,6 +11,7 @@ import { GET, POST } from './route';
 vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
   recordLifecycleEvent: vi.fn(),
 }));
+vi.mock('@/app/api/lib/audit/audit-recorder', () => ({ recordAuditEvent: vi.fn() }));
 vi.mock('@/app/api/lib/modules/patient/commands/create-patient-command', () => ({
   createPatientCommand: vi.fn(),
 }));
@@ -24,6 +26,7 @@ vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
 const getPatients = vi.mocked(getPatientsQuery);
 const createPatient = vi.mocked(createPatientCommand);
 const recordEvent = vi.mocked(recordLifecycleEvent);
+const recordAudit = vi.mocked(recordAuditEvent);
 const requireSession = vi.mocked(requireTenantSession);
 
 describe('Patients route', () => {
@@ -101,6 +104,22 @@ describe('Register Patient route', () => {
     });
   });
 
+  it('should record a patient.create Audit Event for the created Patient', async () => {
+    createPatient.mockResolvedValue({
+      success: true,
+      data: { id: 9, mrn: 'MRN-0009', registrationStatus: 'provisional' } as never,
+    });
+
+    await POST(postRequest());
+
+    expect(recordAudit).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      'patient.create',
+      expect.objectContaining({ entityId: 9, patientId: 9, entityLabel: 'MRN-0009' })
+    );
+  });
+
   it('should record nothing when registration is rejected', async () => {
     createPatient.mockResolvedValue({ success: false, errors: ['First name is required'] });
 
@@ -108,5 +127,6 @@ describe('Register Patient route', () => {
 
     expect(response.status).toBe(400);
     expect(recordEvent).not.toHaveBeenCalled();
+    expect(recordAudit).not.toHaveBeenCalled();
   });
 });

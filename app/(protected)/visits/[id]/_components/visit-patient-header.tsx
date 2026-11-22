@@ -50,6 +50,7 @@ export function VisitPatientHeader({
   canAssignPlan,
   canBookAppointment,
   canAmend,
+  canViewAudit,
   starting,
   onStart,
   onAmend,
@@ -73,6 +74,7 @@ export function VisitPatientHeader({
   canAssignPlan: boolean;
   canBookAppointment: boolean;
   canAmend: boolean;
+  canViewAudit: boolean;
   starting: boolean;
   onStart: () => void;
   onAmend: () => void;
@@ -204,6 +206,14 @@ export function VisitPatientHeader({
                   Open Patient Chart
                 </Link>
               </DropdownMenuItem>
+              {canViewAudit ? (
+                <DropdownMenuItem asChild>
+                  <Link href={`/audit-log?visit=${visit.id}`}>
+                    <CiWavePulse1 className="size-4" />
+                    Audit history
+                  </Link>
+                </DropdownMenuItem>
+              ) : null}
               {canCreateInvoice ? (
                 <DropdownMenuItem asChild>
                   <Link

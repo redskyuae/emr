@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { amendVisitVitalSignCommand } from '@/app/api/lib/modules/patient-vital-sign/commands/amend-visit-vital-sign-command';
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getPatientVitalSignByIdQuery } from '@/app/api/lib/modules/patient-vital-sign/queries/get-patient-vital-sign-by-id-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { PUT } from './route';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
@@ -14,6 +16,11 @@ vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
 vi.mock('@/app/api/lib/modules/patient-vital-sign/commands/amend-visit-vital-sign-command', () => ({
   amendVisitVitalSignCommand: vi.fn(),
 }));
+vi.mock('@/app/api/lib/audit/audit-recorder', () => ({ recordAuditEvent: vi.fn() }));
+vi.mock(
+  '@/app/api/lib/modules/patient-vital-sign/queries/get-patient-vital-sign-by-id-query',
+  () => ({ getPatientVitalSignByIdQuery: vi.fn() })
+);
 vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
   requireTenantPermissions: vi.fn(),
   requireTenantSession: vi.fn(),
@@ -22,9 +29,11 @@ vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
 const amendVital = vi.mocked(amendVisitVitalSignCommand);
 const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
+const getBefore = vi.mocked(getPatientVitalSignByIdQuery);
+const recordAudit = vi.mocked(recordAuditEvent);
 
 const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'user-1' } } };
-const reading = { id: 4, visitId: 1, pulseBpm: 72 } as PatientVitalSign;
+const reading = { id: 4, visitId: 1, patientId: 9, pulseBpm: 72 } as PatientVitalSign;
 const body = { pulseBpm: 72, notes: 'Rechecked after rest' };
 
 function request(rawBody = JSON.stringify(body)) {
@@ -54,6 +63,8 @@ describe('Visit Vital Sign amend route', () => {
       data: reading,
       visitCompletedAt: new Date('2026-07-15T11:00:00.000Z'),
     });
+
+    getBefore.mockResolvedValue({ success: true, data: { ...reading, pulseBpm: 80 } });
   });
 
   it('should return unauthorized without checking permission or amending', async () => {
@@ -102,6 +113,30 @@ describe('Visit Vital Sign amend route', () => {
       expect.any(Function)
     );
     expect(recordedProperties()).toMatchObject({ amended_part: 'vital_sign' });
+  });
+
+  it('should record a vital-sign.amend Audit Event with the before/after', async () => {
+    await PUT(request(), context());
+
+    expect(recordAudit).toHaveBeenCalledWith(
+      tenantSession,
+      expect.anything(),
+      'vital-sign.amend',
+      expect.objectContaining({
+        entityId: 4,
+        visitId: 1,
+        patientId: 9,
+        changes: [{ field: 'pulseBpm', label: 'Pulse (bpm)', from: 80, to: 72 }],
+      })
+    );
+  });
+
+  it('should not record an Audit Event when the amend fails', async () => {
+    amendVital.mockResolvedValue({ success: false, errors: ['Invalid'] });
+
+    await PUT(request(), context());
+
+    expect(recordAudit).not.toHaveBeenCalled();
   });
 
   it('should map validation failures to bad request', async () => {

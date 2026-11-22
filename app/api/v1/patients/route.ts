@@ -9,6 +9,7 @@ import type {
   PatientRegistrationStatus,
 } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { patientRegisteredProperties } from '@/app/api/lib/analytics/lifecycle-patient-properties';
@@ -151,6 +152,12 @@ export async function POST(request: NextRequest) {
         { status }
       );
     }
+
+    await recordAuditEvent(tenantSession, request, 'patient.create', {
+      entityId: result.data.id,
+      patientId: result.data.id,
+      entityLabel: result.data.mrn,
+    });
 
     if (result.data.registrationStatus === 'registered') {
       recordLifecycleEvent(tenantSession, request, 'patient_registered', () =>

@@ -5,6 +5,7 @@ import type { ListPaymentsResponse, RecordPaymentResponse } from './types';
 import { recordPaymentCommand } from '@/app/api/lib/modules/invoice/commands/record-payment-command';
 import { getInvoiceByIdQuery } from '@/app/api/lib/modules/invoice/queries/get-invoice-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import {
   analyticsActorFromSession,
   recordServerEventAfterLookup,
@@ -106,6 +107,19 @@ export async function POST(request: NextRequest, context: PaymentsRouteContext) 
         );
       }
     );
+
+    await recordAuditEvent(tenantSession, request, 'payment.record', {
+      entityId: payment.id,
+      visitId: invoice.visit?.id ?? null,
+      patientId: invoice.patient.id,
+      entityLabel: payment.receiptNumber,
+      metadata: {
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        method: payment.method,
+        amount: payment.amount,
+      },
+    });
 
     return NextResponse.json<RecordPaymentResponse>(
       { data: result.data },

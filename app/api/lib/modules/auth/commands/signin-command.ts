@@ -122,6 +122,9 @@ export async function signinCommand(
     }
 
     const [activeTenant] = activeTenants;
+    const sessionId = signInResult.response.token
+      ? await authRepository.findSessionIdByToken(signInResult.response.token)
+      : undefined;
     const setActiveResult = await auth.api.setActiveOrganization({
       body: { organizationId: activeTenant.id },
       headers: new Headers({ cookie: signInCookieHeader }),
@@ -135,6 +138,9 @@ export async function signinCommand(
         tenant: activeTenant,
         setCookies: [...signInSetCookies, ...setActiveSetCookies],
         userId: signInResult.response.user.id,
+        userName: signInResult.response.user.name,
+        userEmail: signInResult.response.user.email,
+        sessionId: sessionId ?? null,
         rememberMe: validationResult.data.rememberMe,
       },
     };

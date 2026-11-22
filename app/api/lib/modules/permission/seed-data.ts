@@ -584,6 +584,14 @@ const permissionGroups = [
       ['record', 'Record Payments against Invoices.'],
     ],
   },
+  {
+    module: 'audit',
+    resource: 'audit-log',
+    actions: [
+      ['read', 'View the Audit Log.'],
+      ['export', 'Export the Audit Log.'],
+    ],
+  },
 ] satisfies PermissionGroup[];
 
 export const permissionSeedData: PermissionSeed[] = permissionGroups.flatMap((group) =>

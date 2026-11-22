@@ -2,11 +2,13 @@ import { StatusCodes } from 'http-status-codes';
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { getConsolidatedPatientReportQuery } from '@/app/api/lib/modules/consolidated-patient-report/queries/get-consolidated-patient-report-query';
 import type { ConsolidatedPatientReport } from '@/app/api/lib/modules/consolidated-patient-report/schemas/consolidated-patient-report-schema';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { GET } from './route';
 
+vi.mock('@/app/api/lib/audit/audit-recorder', () => ({ recordAuditEvent: vi.fn() }));
 vi.mock(
   '@/app/api/lib/modules/consolidated-patient-report/queries/get-consolidated-patient-report-query',
   () => ({ getConsolidatedPatientReportQuery: vi.fn() })
@@ -19,12 +21,16 @@ vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
 const getReport = vi.mocked(getConsolidatedPatientReportQuery);
 const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
+const recordAudit = vi.mocked(recordAuditEvent);
 
 const tenantSession = {
   tenantId: 'tenant-1',
   session: { user: { id: 'user-1', name: 'Dr. Lakshmi Menon' } },
 };
-const report = { patient: { id: 7, mrn: 'MRN-1284' } } as ConsolidatedPatientReport;
+const report = {
+  patient: { id: 7, mrn: 'MRN-1284' },
+  period: { fromDate: '01-11-2026', toDate: '20-11-2026' },
+} as ConsolidatedPatientReport;
 
 function request(query = '?fromDate=01-11-2026&toDate=20-11-2026') {
   return new NextRequest(`http://localhost/api/v1/patients/7/consolidated-report${query}`);
@@ -63,6 +69,31 @@ describe('Consolidated Patient Report route', () => {
     expect(response.status).toBe(StatusCodes.FORBIDDEN);
     expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['visit:read']);
     expect(getReport).not.toHaveBeenCalled();
+  });
+
+  it('should record a consolidated-report.view Audit Event with the report period', async () => {
+    await GET(request(), context('7'));
+
+    expect(recordAudit).toHaveBeenCalledWith(
+      tenantSession,
+      expect.anything(),
+      'consolidated-report.view',
+      expect.objectContaining({
+        patientId: 7,
+        entityLabel: 'MRN-1284',
+        metadata: { from: '01-11-2026', to: '20-11-2026' },
+      })
+    );
+  });
+
+  it('should record nothing when the report is not read', async () => {
+    requirePermissions.mockResolvedValue(
+      NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+    );
+
+    await GET(request(), context());
+
+    expect(recordAudit).not.toHaveBeenCalled();
   });
 
   it('should pass the Patient, period and generating user to the query', async () => {

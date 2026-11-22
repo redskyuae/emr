@@ -1,6 +1,5 @@
-import { AuditLogPageImpl } from '@/app/(protected)/audit-log/_components/audit-log-page-impl';
-import { iamAuditEvents } from '@/app/(protected)/audit-log/_utils/audit-log-mock';
+import { AuditLogPageImpl } from './_components/audit-log-page-impl';
 
 export default function AuditLogPage() {
-  return <AuditLogPageImpl events={iamAuditEvents} />;
+  return <AuditLogPageImpl />;
 }

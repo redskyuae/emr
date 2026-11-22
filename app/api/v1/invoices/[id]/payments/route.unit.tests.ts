@@ -6,6 +6,7 @@ import {
   analyticsActorFromSession,
   recordServerEventAfterLookup,
 } from '@/app/api/lib/analytics/server-analytics';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { recordPaymentCommand } from '@/app/api/lib/modules/invoice/commands/record-payment-command';
 import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -15,6 +16,7 @@ vi.mock('@/app/api/lib/analytics/server-analytics', () => ({
   analyticsActorFromSession: vi.fn(() => ({ userId: 'user-1', tenantId: 'tenant-1' })),
   recordServerEventAfterLookup: vi.fn(),
 }));
+vi.mock('@/app/api/lib/audit/audit-recorder', () => ({ recordAuditEvent: vi.fn() }));
 vi.mock('@/app/api/lib/modules/invoice/commands/record-payment-command', () => ({
   recordPaymentCommand: vi.fn(),
 }));
@@ -30,13 +32,22 @@ const recordPayment = vi.mocked(recordPaymentCommand);
 const getVisit = vi.mocked(getVisitByIdQuery);
 const requireSession = vi.mocked(requireTenantSession);
 const recordAfterLookup = vi.mocked(recordServerEventAfterLookup);
+const recordAudit = vi.mocked(recordAuditEvent);
 
 const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'user-1' } } };
 const context = { params: Promise.resolve({ id: '5' }) };
-const payment = { id: 1, method: 'CASH', receivedAt: new Date('2026-11-21T09:45:00.000Z') };
+const payment = {
+  id: 1,
+  amount: 300,
+  method: 'CASH',
+  receiptNumber: 'RCP-1',
+  receivedAt: new Date('2026-11-21T09:45:00.000Z'),
+};
 const invoice = {
   id: 5,
   status: 'PAID',
+  invoiceNumber: 'INV-1001',
+  patient: { id: 9, mrn: 'MRN-9', firstName: 'Aisha', lastName: 'Khan' },
   visit: { id: 77, visitNumber: 'VST-1' },
   admission: null,
   payments: [payment],
@@ -94,6 +105,25 @@ describe('Record Payment route', () => {
     expect(properties).not.toHaveProperty('minutes_since_visit_check_in', expect.any(Number));
   });
 
+  it('should record a payment.record Audit Event with the method and amount', async () => {
+    recordPayment.mockResolvedValue({ success: true, data: { invoice, payment } } as never);
+
+    await POST(request(), context);
+
+    expect(recordAudit).toHaveBeenCalledWith(
+      tenantSession,
+      expect.anything(),
+      'payment.record',
+      expect.objectContaining({
+        entityId: 1,
+        visitId: 77,
+        patientId: 9,
+        entityLabel: 'RCP-1',
+        metadata: expect.objectContaining({ invoiceId: 5, method: 'CASH', amount: 300 }),
+      })
+    );
+  });
+
   it('should record nothing when the payment is rejected', async () => {
     recordPayment.mockResolvedValue({
       success: false,
@@ -105,5 +135,6 @@ describe('Record Payment route', () => {
 
     expect(response.status).toBe(StatusCodes.CONFLICT);
     expect(recordAfterLookup).not.toHaveBeenCalled();
+    expect(recordAudit).not.toHaveBeenCalled();
   });
 });

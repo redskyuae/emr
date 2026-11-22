@@ -13,7 +13,34 @@ import {
 import { assignPermissionsCommand } from '@/app/api/lib/modules/role-permission/commands/assign-permissions-command';
 import { setPermissionsCommand } from '@/app/api/lib/modules/role-permission/commands/set-permissions-command';
 import { getRolePermissionsQuery } from '@/app/api/lib/modules/role-permission/queries/get-role-permissions-query';
-import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantAdminSession, type TenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getRoleByIdQuery } from '@/app/api/lib/modules/role/queries/get-role-by-id-query';
+import type { AssignedPermission } from '@/app/api/lib/modules/role-permission/schemas/role-permission-schema';
+
+// Both writes return the Role's full permission set, so the grant/revoke lists are
+// the difference between the set read before the write and the set after it.
+async function recordPermissionsChange(
+  tenantSession: TenantSession,
+  request: NextRequest,
+  roleId: string,
+  before: AssignedPermission[] | null,
+  after: AssignedPermission[]
+) {
+  const role = await getRoleByIdQuery(roleId, tenantSession.tenantId);
+  const beforeNames = new Set((before ?? []).map(({ name }) => name));
+  const afterNames = new Set(after.map(({ name }) => name));
+
+  await recordAuditEvent(tenantSession, request, 'role.permissions-change', {
+    entityId: roleId,
+    entityLabel: role.success ? role.data.name : null,
+    metadata: {
+      granted: [...afterNames].filter((name) => !beforeNames.has(name)),
+      revoked: before ? [...beforeNames].filter((name) => !afterNames.has(name)) : [],
+      permissionCount: after.length,
+    },
+  });
+}
 
 type RolePermissionsRouteContext = {
   params: Promise<{ id: string }>;
@@ -76,6 +103,7 @@ export async function POST(request: NextRequest, context: RolePermissionsRouteCo
       );
     }
 
+    const before = await getRolePermissionsQuery(roleId, tenantSession.tenantId);
     const result = await assignPermissionsCommand(roleId, tenantSession.tenantId, payload);
 
     if (!result.success) {
@@ -91,6 +119,14 @@ export async function POST(request: NextRequest, context: RolePermissionsRouteCo
       analyticsActorFromSession(tenantSession, request),
       'role_permissions_changed',
       { permission_count: result.data.length }
+    );
+
+    await recordPermissionsChange(
+      tenantSession,
+      request,
+      roleId,
+      before.success ? before.data : null,
+      result.data
     );
 
     return NextResponse.json<AssignRolePermissionsResponse>({ data: result.data });
@@ -122,6 +158,7 @@ export async function PUT(request: NextRequest, context: RolePermissionsRouteCon
       );
     }
 
+    const before = await getRolePermissionsQuery(roleId, tenantSession.tenantId);
     const result = await setPermissionsCommand(roleId, tenantSession.tenantId, payload);
 
     if (!result.success) {
@@ -137,6 +174,14 @@ export async function PUT(request: NextRequest, context: RolePermissionsRouteCon
       analyticsActorFromSession(tenantSession, request),
       'role_permissions_changed',
       { permission_count: result.data.length }
+    );
+
+    await recordPermissionsChange(
+      tenantSession,
+      request,
+      roleId,
+      before.success ? before.data : null,
+      result.data
     );
 
     return NextResponse.json<SetRolePermissionsResponse>({ data: result.data });

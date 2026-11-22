@@ -9,6 +9,18 @@ import {
 import { updateStaffCommand } from '@/app/api/lib/modules/staff/commands/update-staff-command';
 import { getStaffByIdQuery } from '@/app/api/lib/modules/staff/queries/get-staff-by-id-query';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { diffAuditFields, type AuditField } from '@/app/api/lib/audit/audit-changes';
+
+const STAFF_AUDIT_FIELDS = [
+  { path: 'name', label: 'Name' },
+  { path: 'email', label: 'Email' },
+  { path: 'phone', label: 'Phone' },
+  { path: 'gender', label: 'Gender' },
+  { path: 'staffCode', label: 'Staff code' },
+  { path: 'dateOfBirth', label: 'Date of birth' },
+  { path: 'designation', label: 'Designation' },
+] as const satisfies readonly AuditField[];
 
 type StaffRouteContext = {
   params: Promise<{ id: string }>;
@@ -75,6 +87,8 @@ export async function PUT(request: NextRequest, context: StaffRouteContext) {
       );
     }
 
+    // Read before writing so the Audit Event can carry the before/after.
+    const before = await getStaffByIdQuery(id, tenantSession.tenantId);
     const result = await updateStaffCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
@@ -89,6 +103,14 @@ export async function PUT(request: NextRequest, context: StaffRouteContext) {
     recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_changed', {
       profile_kind: 'staff',
       action: 'updated',
+    });
+
+    await recordAuditEvent(tenantSession, request, 'user.update', {
+      entityId: result.data.id,
+      entityLabel: result.data.email,
+      changes: before.success
+        ? diffAuditFields(before.data, result.data, STAFF_AUDIT_FIELDS)
+        : null,
     });
 
     return NextResponse.json<UpdateStaffResponse>({ data: result.data });

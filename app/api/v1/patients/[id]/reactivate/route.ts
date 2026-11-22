@@ -4,6 +4,7 @@ import type { ReactivatePatientResponse } from './types';
 
 import { reactivatePatientCommand } from '@/app/api/lib/modules/patient/commands/reactivate-patient-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
 type PatientRouteContext = {
@@ -39,6 +40,12 @@ export async function PATCH(request: NextRequest, context: PatientRouteContext) 
         { status }
       );
     }
+
+    await recordAuditEvent(tenantSession, request, 'patient.reactivate', {
+      entityId: result.data.id,
+      patientId: result.data.id,
+      entityLabel: result.data.mrn,
+    });
 
     recordLifecycleEvent(tenantSession, request, 'patient_reactivated', () => ({}));
 

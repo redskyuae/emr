@@ -640,6 +640,22 @@ A single lifecycle transition that appears on the Patient Timeline, such as a Vi
 
 The kind of record a Timeline Event was derived from: Appointment, Visit, Admission, Bed Transfer, Invoice, Payment, Visit Document, Clinical Note, or Patient. Distinct from Visit Status or Admission Status, which are lifecycle states of one record rather than a classification of feed entries.
 
+## Audit Log
+
+The Tenant's append-only record of who did what to which record, and to which Patient: opening a Patient, a Visit or a Consolidated Patient Report, every Visit lifecycle step and amendment, changes to Clinical Notes, Vital Signs, Visit Diagnoses, Visit Documents, Patients, Invoices, Payments, Roles and Staff, and exports of the Audit Log itself. It is made of Audit Events, stays inside the EMR, and is read and exported only by users holding `audit-log:read` and `audit-log:export`. Distinct from Analytics Events, which leave the system and never carry Patient data, and from Timeline Events, which are derived from a Patient's records and carry no actor.
+
+## Audit Event
+
+One entry in the Audit Log: an Audit Action, the actor (with their name, email and Roles as they were at the time), the record it concerns, the Patient and Visit when known, the time, the IP address and user agent, and for an update or amendment the before and after of each audited field. An Audit Event can never be changed or deleted.
+
+## User Audit
+
+The per-person view of the Audit Log: for each member of the Tenant, when they signed in, each Session from sign-in to how it ended (signed out, ended by an admin or from another of their Sessions, expired, or still active), failed sign-in attempts, the IP addresses and browsers or devices they used, and what they did by Module. It is read from Audit Events and the live Session store; nothing is recorded only for it. The sidebar's Audit Log section lists All Audit Events first, then this view as User Audit Events; both export as CSV or PDF.
+
+## Audit Action
+
+The kind of thing an Audit Event records, such as `visit.amend`, `patient.view` or `audit-log.export`, declared once in the Audit Action catalogue. Each Audit Action belongs to one Module (Visits, Patients, Billing, Identity & Access or Audit Log), one Operation (View, Create, Update, Amend, Delete, Sign, Status change, Assign, Revoke or Export) and one category (access, create, update, delete, export or admin). Everything recorded inside a Visit belongs to the Visits Module.
+
 ## Analytics Event
 
 A record of one thing a signed-in user did in the EMR, sent to the vendor's product analytics (PostHog) so the product and customer-success team can see how the product is used. It names the Tenant, the user's internal id and Role codes, and carries only fixed categories, workflow Master codes, yes/no flags, counts and durations: never Patient data, a record identifier, a money amount or anything a user typed. Every Analytics Event is declared in one typed catalogue (`lib/analytics/catalogue.ts`), and anything not declared there is not sent. Distinct from a Timeline Event, which is derived from a Patient's records and shown to staff, and from the Audit Log, which records who did what to which Patient.

@@ -10,6 +10,14 @@ import { deleteRoleCommand } from '@/app/api/lib/modules/role/commands/delete-ro
 import { updateRoleCommand } from '@/app/api/lib/modules/role/commands/update-role-command';
 import { getRoleByIdQuery } from '@/app/api/lib/modules/role/queries/get-role-by-id-query';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { diffAuditFields, type AuditField } from '@/app/api/lib/audit/audit-changes';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+
+const ROLE_AUDIT_FIELDS = [
+  { path: 'name', label: 'Name' },
+  { path: 'code', label: 'Code' },
+  { path: 'description', label: 'Description' },
+] as const satisfies readonly AuditField[];
 
 type RoleRouteContext = {
   params: Promise<{ id: string }>;
@@ -83,6 +91,8 @@ export async function PUT(request: NextRequest, context: RoleRouteContext) {
       );
     }
 
+    // Read before writing so the Audit Event can carry the before/after.
+    const before = await getRoleByIdQuery(id, tenantSession.tenantId);
     const result = await updateRoleCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
@@ -97,6 +107,12 @@ export async function PUT(request: NextRequest, context: RoleRouteContext) {
     recordServerEvent(analyticsActorFromSession(tenantSession, request), 'role_changed', {
       action: 'updated',
       is_system_role: result.data.isSystem,
+    });
+
+    await recordAuditEvent(tenantSession, request, 'role.update', {
+      entityId: result.data.id,
+      entityLabel: result.data.name,
+      changes: before.success ? diffAuditFields(before.data, result.data, ROLE_AUDIT_FIELDS) : null,
     });
 
     return NextResponse.json<UpdateRoleResponse>({ data: result.data });
@@ -135,6 +151,12 @@ export async function DELETE(request: NextRequest, context: RoleRouteContext) {
     recordServerEvent(analyticsActorFromSession(tenantSession, request), 'role_changed', {
       action: 'deleted',
       is_system_role: result.data.isSystem,
+    });
+
+    await recordAuditEvent(tenantSession, request, 'role.delete', {
+      entityId: result.data.id,
+      entityLabel: result.data.name,
+      metadata: { code: result.data.code },
     });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { checkInVisitCommand } from '@/app/api/lib/modules/visit/commands/check-in-visit-command';
 import { getVisitsQuery } from '@/app/api/lib/modules/visit/queries/get-visits-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
@@ -11,6 +12,7 @@ import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-re
 vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
   recordLifecycleEvent: vi.fn(),
 }));
+vi.mock('@/app/api/lib/audit/audit-recorder', () => ({ recordAuditEvent: vi.fn() }));
 vi.mock('@/app/api/lib/modules/visit/commands/check-in-visit-command', () => ({
   checkInVisitCommand: vi.fn(),
 }));
@@ -24,7 +26,7 @@ const getVisits = vi.mocked(getVisitsQuery);
 const requireSession = vi.mocked(requireTenantSession);
 
 const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'admin-1' } } };
-const visit = { id: 1, visitNumber: 'VST-1001', queueToken: 1 };
+const visit = { id: 1, visitNumber: 'VST-1001', queueToken: 1, patient: { id: 7 } };
 
 function postRequest(body: unknown) {
   return new NextRequest('http://localhost/api/v1/visits', {
@@ -108,6 +110,23 @@ describe('Visits route', () => {
         'visit_checked_in',
         expect.any(Function)
       );
+    });
+
+    it('should record a visit.check-in Audit Event for the created Visit', async () => {
+      await POST(postRequest({ appointmentId: 5, visitTypeId: 2 }));
+
+      expect(vi.mocked(recordAuditEvent)).toHaveBeenCalledWith(
+        tenantSession,
+        expect.anything(),
+        'visit.check-in',
+        expect.objectContaining({ entityId: 1, visitId: 1, patientId: 7, entityLabel: 'VST-1001' })
+      );
+    });
+
+    it('should not record an Audit Event when listing Visits', async () => {
+      await GET(getRequest());
+
+      expect(vi.mocked(recordAuditEvent)).not.toHaveBeenCalled();
     });
 
     it('should surface a single conflict error as the message', async () => {

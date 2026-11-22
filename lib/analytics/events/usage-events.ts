@@ -125,7 +125,10 @@ export const usageEvents = {
   },
   export_downloaded: {
     source: 'client',
-    properties: { export: prop.enum(['appointments']), format: prop.enum(['excel', 'pdf']) },
+    properties: {
+      export: prop.enum(['appointments', 'audit_events', 'user_audit_list', 'user_audit']),
+      format: prop.enum(['excel', 'pdf', 'csv']),
+    },
   },
   consolidated_report_opened: {
     source: 'client',

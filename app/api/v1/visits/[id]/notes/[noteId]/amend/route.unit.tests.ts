@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { amendVisitClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/commands/amend-visit-clinical-note-command';
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getClinicalNoteByIdQuery } from '@/app/api/lib/modules/clinical-note/queries/get-clinical-note-by-id-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { PUT } from './route';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
@@ -14,6 +16,10 @@ vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
 vi.mock('@/app/api/lib/modules/clinical-note/commands/amend-visit-clinical-note-command', () => ({
   amendVisitClinicalNoteCommand: vi.fn(),
 }));
+vi.mock('@/app/api/lib/audit/audit-recorder', () => ({ recordAuditEvent: vi.fn() }));
+vi.mock('@/app/api/lib/modules/clinical-note/queries/get-clinical-note-by-id-query', () => ({
+  getClinicalNoteByIdQuery: vi.fn(),
+}));
 vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
   requireTenantPermissions: vi.fn(),
   requireTenantSession: vi.fn(),
@@ -22,9 +28,17 @@ vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
 const amendNote = vi.mocked(amendVisitClinicalNoteCommand);
 const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
+const getBefore = vi.mocked(getClinicalNoteByIdQuery);
+const recordAudit = vi.mocked(recordAuditEvent);
 
 const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'user-1' } } };
-const note = { id: 4, visitId: 1, status: 'signed' } as ClinicalNote;
+const note = {
+  id: 4,
+  visitId: 1,
+  patientId: 9,
+  status: 'signed',
+  assessment: 'Vata imbalance',
+} as ClinicalNote;
 const body = { noteTypeId: 2, assessment: 'Vata imbalance' };
 
 function request(rawBody = JSON.stringify(body)) {
@@ -53,6 +67,11 @@ describe('Visit Clinical Note amend route', () => {
       success: true,
       data: note,
       visitCompletedAt: new Date('2026-07-15T11:00:00.000Z'),
+    });
+
+    getBefore.mockResolvedValue({
+      success: true,
+      data: { ...note, assessment: 'Pitta imbalance' },
     });
   });
 
@@ -102,6 +121,37 @@ describe('Visit Clinical Note amend route', () => {
       expect.any(Function)
     );
     expect(recordedProperties()).toMatchObject({ amended_part: 'clinical_note' });
+  });
+
+  it('should record a clinical-note.amend Audit Event with the before/after', async () => {
+    await PUT(request(), context());
+
+    expect(recordAudit).toHaveBeenCalledWith(
+      tenantSession,
+      expect.anything(),
+      'clinical-note.amend',
+      expect.objectContaining({
+        entityId: 4,
+        visitId: 1,
+        patientId: 9,
+        changes: [
+          {
+            field: 'assessment',
+            label: 'Assessment',
+            from: 'Pitta imbalance',
+            to: 'Vata imbalance',
+          },
+        ],
+      })
+    );
+  });
+
+  it('should not record an Audit Event when the amend fails', async () => {
+    amendNote.mockResolvedValue({ success: false, errors: ['Invalid'] });
+
+    await PUT(request(), context());
+
+    expect(recordAudit).not.toHaveBeenCalled();
   });
 
   it('should map validation failures to bad request', async () => {
