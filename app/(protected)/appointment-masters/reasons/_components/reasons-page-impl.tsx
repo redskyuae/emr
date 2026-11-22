@@ -9,8 +9,9 @@ import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react
 import {
   PiCaretLeftLight,
   PiCaretRightLight,
-  PiClipboardTextLight,
   PiPlusLight,
+  PiChatCircleTextDuotone,
+  PiMagnifyingGlassDuotone,
 } from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { AppointmentReason } from '@/app/api/lib/modules/appointment-reason/schemas/appointment-reason-schema';
@@ -20,18 +21,11 @@ import { useAppointmentReasonsQuery } from '@/app/queries/appointment-masters/re
 import { useCreateAppointmentReason } from '@/app/queries/appointment-masters/reasons/useCreateAppointmentReason';
 import { useUpdateAppointmentReason } from '@/app/queries/appointment-masters/reasons/useUpdateAppointmentReason';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ReasonDeleteDialog } from './_modals/delete-reason-dialog';
@@ -260,39 +254,34 @@ export function ReasonsPageImpl() {
           }
         >
           {reasons.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiClipboardTextLight />
-                </EmptyMedia>
-                <EmptyTitle>No Appointment Reasons yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Appointment Reasons to define booking reasons for Appointments in this
-                  Tenant.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiChatCircleTextDuotone}
+              title="No Appointment Reasons yet"
+              className="bg-card min-h-80 border"
+              description="Create Appointment Reasons to define booking reasons for Appointments in this Tenant."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={openAddSheet}>
                     <PiPlusLight className="size-4" />
                     Add Appointment Reason
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : reasons.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Appointment Reasons match &ldquo;{debouncedSearch}&rdquo;. Try a different
                   search term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

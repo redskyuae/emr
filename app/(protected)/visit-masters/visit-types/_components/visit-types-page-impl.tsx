@@ -7,26 +7,20 @@ import { CiCircleAlert, CiSearch } from 'react-icons/ci';
 import {
   PiCaretLeftLight,
   PiCaretRightLight,
-  PiClipboardTextLight,
   PiPlusLight,
+  PiStackDuotone,
+  PiMagnifyingGlassDuotone,
 } from 'react-icons/pi';
 
 import type { VisitType } from '@/app/api/lib/modules/visit-type/schemas/visit-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useVisitTypes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { DeleteVisitTypeDialog } from './_modals/delete-visit-type-dialog';
 import { VisitTypeFormSheet } from './_sheets/visit-type-form-sheet';
@@ -116,38 +110,33 @@ export function VisitTypesPageImpl() {
           skeleton={<VisitTypeTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
         >
           {visitTypes.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiClipboardTextLight />
-                </EmptyMedia>
-                <EmptyTitle>No Visit Types yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Visit Types to classify the clinical nature of a Visit, such as OPD
-                  Consultation or Follow-up.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiStackDuotone}
+              title="No Visit Types yet"
+              className="bg-card min-h-80 border"
+              description="Create Visit Types to classify the clinical nature of a Visit, such as OPD Consultation or Follow-up."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setVisitTypeParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Visit Type
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : visitTypes.length === 0 ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Visit Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               <VisitTypeTable

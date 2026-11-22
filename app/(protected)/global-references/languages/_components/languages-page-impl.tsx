@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight, PiTranslateLight } from 'react-icons/pi';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiTranslateDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -15,18 +21,11 @@ import {
 import { useLanguageQuery } from '@/app/queries/global-references/languages/useLanguage';
 import { useDeleteLanguage } from '@/app/queries/global-references/languages/useDeleteLanguage';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { LanguageDeleteDialog } from './_modals/delete-language-dialog';
@@ -195,37 +194,33 @@ export function LanguagesPageImpl() {
           }
         >
           {languages.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiTranslateLight />
-                </EmptyMedia>
-                <EmptyTitle>No Languages yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Languages used when recording Patient demographics.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiTranslateDuotone}
+              title="No Languages yet"
+              className="bg-card min-h-80 border"
+              description="Create Languages used when recording Patient demographics."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setRecordParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Language
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : languages.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Languages match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

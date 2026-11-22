@@ -5,15 +5,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
 import {
-  CiBoxList,
-  CiCircleAlert,
-  CiGrid41,
-  CiSearch,
-  CiStethoscope,
-  CiViewTable,
-} from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiStethoscopeDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { DiagnosisCode } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
 import { createDiagnosisCodeSchema } from '@/app/api/lib/modules/diagnosis-code/schemas/diagnosis-code-schema';
@@ -22,18 +21,11 @@ import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis
 import { useCreateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useCreateDiagnosisCode';
 import { useUpdateDiagnosisCode } from '@/app/queries/clinical-masters/diagnosis-codes/useUpdateDiagnosisCode';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { DeleteDiagnosisCodeDialog } from './_modals/delete-diagnosis-code-dialog';
@@ -240,38 +232,36 @@ export function DiagnosisCodesPageImpl({ initialCreateOpen }: { initialCreateOpe
           skeleton={<ViewSkeleton layout={viewLayout} canEdit={canUpdate} canDelete={canDelete} />}
         >
           {diagnosisCodes.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiStethoscope />
-                </EmptyMedia>
-                <EmptyTitle>No Diagnosis Codes yet</EmptyTitle>
-                <EmptyDescription>
-                  Add ICD-10-CM Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiStethoscopeDuotone}
+              title="No Diagnosis Codes yet"
+              className="bg-card min-h-80 border"
+              description={
+                <>Add ICD-10-CM Diagnosis Codes to build this Tenant&apos;s diagnosis catalogue.</>
+              }
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={openAddSheet}>
                     <PiPlusLight className="size-4" />
                     Add Diagnosis Code
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : diagnosisCodes.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Diagnosis Codes match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                   term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

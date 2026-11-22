@@ -4,25 +4,24 @@ import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiCircleAlert, CiSearch } from 'react-icons/ci';
-import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiBedDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 
 import type { Bed } from '@/app/api/lib/modules/bed/schemas/bed-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useBedsQuery } from '@/app/queries/inpatient-masters/beds/useBeds';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
@@ -144,38 +143,29 @@ export function BedsPageImpl() {
           skeleton={<BedTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
         >
           {beds.length === 0 && !isFiltered ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiBedLight />
-                </EmptyMedia>
-                <EmptyTitle>No Beds yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Beds inside Wards so Patients can be admitted. Create a Ward first if none
-                  exist.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiBedDuotone}
+              title="No Beds yet"
+              className="bg-card min-h-80 border"
+              description="Create Beds inside Wards so Patients can be admitted. Create a Ward first if none exist."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setBedParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Bed
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : beds.length === 0 ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
-                  No Beds match the current filters. Try a different search term or Ward.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description="No Beds match the current filters. Try a different search term or Ward."
+            />
           ) : (
             <div className="space-y-4">
               <BedTable

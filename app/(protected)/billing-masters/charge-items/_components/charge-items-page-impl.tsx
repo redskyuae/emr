@@ -3,25 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { CiCircleAlert, CiReceipt, CiSearch } from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiReceiptDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 
 import type { ChargeItem } from '@/app/api/lib/modules/charge-item/schemas/charge-item-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useChargeItemsQuery } from '@/app/queries/billing/charge-items/useChargeItems';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
@@ -156,39 +155,29 @@ export function ChargeItemsPageImpl() {
           skeleton={<ChargeItemTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
         >
           {chargeItems.length === 0 && !isFiltered ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiReceipt />
-                </EmptyMedia>
-                <EmptyTitle>No Charge Items yet</EmptyTitle>
-                <EmptyDescription>
-                  Build your priced catalogue of consultations, procedures, investigations and
-                  consumables so cashiers can add them to Invoices.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiReceiptDuotone}
+              title="No Charge Items yet"
+              className="bg-card min-h-80 border"
+              description="Build your priced catalogue of consultations, procedures, investigations and consumables so cashiers can add them to Invoices."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setChargeItemParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Charge Item
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : chargeItems.length === 0 ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
-                  No Charge Items match the current filters. Try a different search term or
-                  category.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description="No Charge Items match the current filters. Try a different search term or category."
+            />
           ) : (
             <div className="space-y-4">
               <ChargeItemTable

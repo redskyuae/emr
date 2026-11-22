@@ -4,24 +4,23 @@ import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight, PiWrenchLight } from 'react-icons/pi';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiWrenchDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import type { WorkOrderType } from '@/app/api/lib/modules/work-order-type/schemas/work-order-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWorkOrderTypeQuery } from '@/app/queries/asset-masters/work-order-types/useWorkOrderType';
 import { useWorkOrderTypesQuery } from '@/app/queries/asset-masters/work-order-types/useWorkOrderTypes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { WorkOrderTypeDeleteDialog } from './_modals/work-order-type-delete-dialog';
@@ -172,38 +171,34 @@ export function WorkOrderTypePageImpl() {
           }
         >
           {types.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiWrenchLight />
-                </EmptyMedia>
-                <EmptyTitle>No Work Order Types yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Work Order Types to classify the nature of maintenance work in this Tenant.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiWrenchDuotone}
+              title="No Work Order Types yet"
+              className="bg-card min-h-80 border"
+              description="Create Work Order Types to classify the nature of maintenance work in this Tenant."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setTypeParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Work Order Type
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : types.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Work Order Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                   term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (
