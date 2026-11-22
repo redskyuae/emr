@@ -210,7 +210,12 @@ export function AppointmentsPageImpl() {
         onValueChange={(value) => void setViewParam(value === 'upcoming' ? value : null)}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList aria-label="Appointment schedule views">
+          {/* On a phone the two tabs are wider than the screen, so the track scrolls within itself
+              instead of pushing the page sideways (DESIGN.md, Tabs). */}
+          <TabsList
+            aria-label="Appointment schedule views"
+            className="max-w-full [scrollbar-width:none] justify-start overflow-x-auto [&::-webkit-scrollbar]:hidden"
+          >
             <TabsTrigger value="today">
               <CiCalendar aria-hidden="true" />
               Today&apos;s Appointments
