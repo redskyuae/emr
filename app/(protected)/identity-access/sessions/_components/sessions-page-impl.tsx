@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { CiSearch, CiWarning } from 'react-icons/ci';
-import { PiShieldSlashLight } from 'react-icons/pi';
+import { PiMagnifyingGlassDuotone, PiShieldSlashLight } from 'react-icons/pi';
 
 import type { IamSession } from '@/app/(protected)/identity-access/sessions/_utils/sessions-mock';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -20,15 +20,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Table,
@@ -224,17 +218,13 @@ export function SessionsPageImpl({ sessions }: { sessions: IamSession[] }) {
               </TableBody>
             </Table>
           ) : (
-            <Empty className="min-h-72 border-0">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiShieldSlashLight className="size-5" />
-                </EmptyMedia>
-                <EmptyTitle>No sessions match.</EmptyTitle>
-                <EmptyDescription>
-                  Try a different user, device, IP address, or location search.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              tone="neutral"
+              className="min-h-72"
+              title="No sessions match."
+              icon={PiMagnifyingGlassDuotone}
+              description="Try a different user, device, IP address, or location search."
+            />
           )}
         </CardContent>
       </Card>

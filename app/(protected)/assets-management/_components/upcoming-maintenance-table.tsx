@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PiArrowRightLight, PiWrenchLight } from 'react-icons/pi';
+import { PiArrowRightLight, PiWrenchDuotone } from 'react-icons/pi';
 
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { EmptyState } from '@/components/app/empty-state';
 import {
   Table,
   TableBody,
@@ -64,17 +58,13 @@ export function UpcomingMaintenanceTable({ workOrders }: UpcomingMaintenanceTabl
       </CardHeader>
       <CardContent className="p-0">
         {workOrders.length === 0 ? (
-          <Empty className="min-h-40 border-0">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiWrenchLight className="size-5" />
-              </EmptyMedia>
-              <EmptyTitle>No upcoming maintenance</EmptyTitle>
-              <EmptyDescription>
-                No scheduled or in-progress Work Orders right now.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <EmptyState
+            size="sm"
+            tone="orange"
+            icon={PiWrenchDuotone}
+            title="No upcoming maintenance"
+            description="No scheduled or in-progress Work Orders right now."
+          />
         ) : (
           <Table className="min-w-max">
             <TableHeader>

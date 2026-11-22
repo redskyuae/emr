@@ -135,6 +135,8 @@ export function MaintenancePageImpl() {
               hasActiveFilters={Boolean(search.trim() || typeId)}
               page={page}
               onPageChange={(next) => void setPage(next)}
+              canCreate={canCreate}
+              onNewWorkOrder={() => void setWorkOrderParam('new')}
             />
           </CardContent>
         </Card>

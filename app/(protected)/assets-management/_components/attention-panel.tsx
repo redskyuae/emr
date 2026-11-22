@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { CiWarning } from 'react-icons/ci';
-import { PiArrowRightLight } from 'react-icons/pi';
+import { PiArrowRightLight, PiCheckCircleDuotone } from 'react-icons/pi';
 
 import { useSuspenseAttentionWorkOrders } from '@/app/queries/assets-management/assets-overview/useWorkOrders';
 import type { WorkOrder } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
@@ -16,13 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { EmptyState } from '@/components/app/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { WidgetErrorBoundary } from './widget-error-boundary';
@@ -83,15 +77,14 @@ export function AttentionPanel({ workOrders }: AttentionPanelProps) {
       </CardHeader>
       <CardContent className="divide-y p-0">
         {workOrders.length === 0 ? (
-          <Empty className="min-h-40 border-0">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiWarning className="size-5" />
-              </EmptyMedia>
-              <EmptyTitle>Nothing needs attention</EmptyTitle>
-              <EmptyDescription>No overdue or critical Work Orders right now.</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          // An all-clear, so the one green empty state on the overview.
+          <EmptyState
+            size="sm"
+            tone="green"
+            icon={PiCheckCircleDuotone}
+            title="Nothing needs attention"
+            description="No overdue or critical Work Orders right now."
+          />
         ) : (
           workOrders.map((workOrder) => <AttentionRow key={workOrder.id} workOrder={workOrder} />)
         )}

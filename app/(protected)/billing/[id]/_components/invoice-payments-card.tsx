@@ -1,8 +1,10 @@
 'use client';
 
 import { CiReceipt } from 'react-icons/ci';
+import { PiCreditCardDuotone } from 'react-icons/pi';
 
 import type { Invoice, Payment } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -38,7 +40,12 @@ export function InvoicePaymentsCard({
       </CardHeader>
       <CardContent className="p-0">
         {invoice.payments.length === 0 ? (
-          <p className="text-muted-foreground p-4 text-sm">No payments recorded yet.</p>
+          <EmptyState
+            size="sm"
+            tone="green"
+            icon={PiCreditCardDuotone}
+            title="No payments recorded yet"
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">

@@ -2,8 +2,7 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { CiBoxes } from 'react-icons/ci';
-import { PiArrowRightLight } from 'react-icons/pi';
+import { PiArrowRightLight, PiChartPieSliceDuotone } from 'react-icons/pi';
 
 import { useSuspenseAssetSummary } from '@/app/queries/assets-management/assets-overview/useAssetSummary';
 import type { AssetCategoryCount } from '@/app/api/lib/modules/asset/schemas/asset-schema';
@@ -16,13 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { EmptyState } from '@/components/app/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { WidgetErrorBoundary } from './widget-error-boundary';
 
@@ -83,17 +76,13 @@ export function CategoryDistribution({ byCategory }: CategoryDistributionProps) 
       </CardHeader>
       <CardContent className="space-y-5 p-4">
         {byCategory.length === 0 ? (
-          <Empty className="min-h-40 border-0">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiBoxes className="size-5" />
-              </EmptyMedia>
-              <EmptyTitle>No Asset Categories yet</EmptyTitle>
-              <EmptyDescription>
-                Create Asset Categories to see the distribution here.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <EmptyState
+            size="sm"
+            tone="orange"
+            icon={PiChartPieSliceDuotone}
+            title="No Asset Categories yet"
+            description="Create Asset Categories to see the distribution here."
+          />
         ) : (
           byCategory.map((category) => (
             <CategoryDistributionRow

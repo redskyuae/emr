@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CiCircleAlert, CiSearch } from 'react-icons/ci';
-import { PiBedLight } from 'react-icons/pi';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiBedDuotone, PiBedLight, PiMagnifyingGlassDuotone } from 'react-icons/pi';
 
 import type { BedBoardBed } from '@/app/api/lib/modules/bed/schemas/bed-schema';
 import { BED_STATUSES } from '@/app/db/schema/bed';
@@ -13,19 +13,12 @@ import {
   getBedStatusClassName,
   getBedStatusLabel,
 } from '@/app/(protected)/inpatient-masters/beds/_utils/bed-status';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import {
   Select,
   SelectContent,
@@ -99,32 +92,26 @@ export function BedBoardImpl() {
 
       <SkeletonCrossfade isLoading={boardQuery.isLoading} skeleton={<BedBoardSkeleton />}>
         {allWards.length === 0 ? (
-          <Empty className="bg-card min-h-80 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <PiBedLight />
-              </EmptyMedia>
-              <EmptyTitle>No Beds configured</EmptyTitle>
-              <EmptyDescription>
-                Create Wards and Beds under Inpatient Masters to see the occupancy board.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
+          <EmptyState
+            tone="sky"
+            icon={PiBedDuotone}
+            title="No Beds configured"
+            className="bg-card min-h-80 border"
+            description="Create Wards and Beds under Inpatient Masters to see the occupancy board."
+            actions={
               <Button asChild>
                 <Link href="/inpatient-masters/beds">Configure Beds</Link>
               </Button>
-            </EmptyContent>
-          </Empty>
+            }
+          />
         ) : wards.every((ward) => ward.visibleBeds.length === 0) ? (
-          <Empty className="bg-card min-h-72 border">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiSearch />
-              </EmptyMedia>
-              <EmptyTitle>No Beds match</EmptyTitle>
-              <EmptyDescription>No Beds match the current filters.</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+          <EmptyState
+            tone="neutral"
+            title="No results found"
+            icon={PiMagnifyingGlassDuotone}
+            className="bg-card min-h-72 border"
+            description="No Beds match the current filters."
+          />
         ) : (
           <div className="space-y-4">
             {wards
