@@ -1,18 +1,38 @@
+import Link from 'next/link';
 import { CiCalendar, CiCalendarDate } from 'react-icons/ci';
+import { PiCalendarBlankDuotone, PiMagnifyingGlassDuotone, PiPlusLight } from 'react-icons/pi';
 
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppointmentsTable, AppointmentsTableSkeleton } from './appointments-table';
+
+const EMPTY_COPY = {
+  today: {
+    title: 'No Appointments today',
+    description: 'Appointments booked for today appear here.',
+    filtered: 'No Appointments scheduled for today match the current filters.',
+  },
+  upcoming: {
+    title: 'No upcoming Appointments',
+    filtered: 'No future Appointments match the current filters.',
+    description: 'Future Appointments appear here once they are booked.',
+  },
+};
 
 type AppointmentDaySectionProps = {
   id: string;
   title: string;
   appointments: Appointment[];
   description: string;
-  emptyDescription: string;
+  /** A Doctor, Therapist or status filter, or a search, is narrowing the list. */
+  isFiltered: boolean;
+  /** The user may book, so the "nothing yet" state offers Book Appointment. */
+  canCreate: boolean;
   kind: 'today' | 'upcoming';
   total: number;
   totalPages: number;
@@ -30,7 +50,8 @@ export function AppointmentDaySection({
   title,
   appointments,
   description,
-  emptyDescription,
+  isFiltered,
+  canCreate,
   total,
   totalPages,
   page,
@@ -79,7 +100,31 @@ export function AppointmentDaySection({
         ) : (
           <Card>
             <CardContent>
-              <p className="text-muted-foreground text-sm">{emptyDescription}</p>
+              {isFiltered ? (
+                <EmptyState
+                  tone="neutral"
+                  icon={PiMagnifyingGlassDuotone}
+                  title="No results found"
+                  description={EMPTY_COPY[kind].filtered}
+                />
+              ) : (
+                <EmptyState
+                  tone="teal"
+                  icon={PiCalendarBlankDuotone}
+                  title={EMPTY_COPY[kind].title}
+                  description={EMPTY_COPY[kind].description}
+                  actions={
+                    canCreate ? (
+                      <Button type="button" asChild>
+                        <Link href="/appointments/new">
+                          <PiPlusLight className="size-4" />
+                          Book Appointment
+                        </Link>
+                      </Button>
+                    ) : null
+                  }
+                />
+              )}
             </CardContent>
           </Card>
         )}

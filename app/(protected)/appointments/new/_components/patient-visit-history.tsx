@@ -1,11 +1,13 @@
 import { CiCalendar } from 'react-icons/ci';
 import {
-  PiArrowsClockwiseLight,
   PiCircleNotchLight,
+  PiArrowsClockwiseLight,
   PiClockCounterClockwiseLight,
+  PiClockCounterClockwiseDuotone,
 } from 'react-icons/pi';
 
 import type { Visit, VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
 import { getRecentVisits } from '../_utils/patient-visit-history';
 import { BookingStatusBadge } from './booking-status-badge';
@@ -108,10 +110,13 @@ export function PatientVisitHistory({
           })}
         </div>
       ) : (
-        <div className="text-muted-foreground flex items-center gap-2 px-3 py-4 text-sm">
-          <CiCalendar className="size-4" aria-hidden="true" />
-          No previous Visits for this Patient.
-        </div>
+        <EmptyState
+          size="sm"
+          tone="teal"
+          title="No previous Visits"
+          icon={PiClockCounterClockwiseDuotone}
+          description="This Patient has not had a Visit yet."
+        />
       )}
     </section>
   );

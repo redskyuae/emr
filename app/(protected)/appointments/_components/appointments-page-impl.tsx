@@ -68,6 +68,10 @@ export function AppointmentsPageImpl() {
     appointmentStatusId,
     query: debouncedSearch || undefined,
   };
+  // The same values the queries use, so the empty state always agrees with the list on screen.
+  const isFiltered = Boolean(
+    doctorId || therapistId || appointmentStatusId || debouncedSearch.trim()
+  );
   const todayAppointmentsQuery = useAppointmentsQuery(
     {
       ...sharedFilters,
@@ -206,7 +210,12 @@ export function AppointmentsPageImpl() {
         onValueChange={(value) => void setViewParam(value === 'upcoming' ? value : null)}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList aria-label="Appointment schedule views">
+          {/* On a phone the two tabs are wider than the screen, so the track scrolls within itself
+              instead of pushing the page sideways (DESIGN.md, Tabs). */}
+          <TabsList
+            aria-label="Appointment schedule views"
+            className="max-w-full [scrollbar-width:none] justify-start overflow-x-auto [&::-webkit-scrollbar]:hidden"
+          >
             <TabsTrigger value="today">
               <CiCalendar aria-hidden="true" />
               Today&apos;s Appointments
@@ -263,7 +272,8 @@ export function AppointmentsPageImpl() {
               isLoading={todayLoading}
               isFetching={todayAppointmentsQuery.isFetching}
               description={`Appointments scheduled for today, ${todayDate}.`}
-              emptyDescription="No Appointments scheduled for today match the current filters."
+              isFiltered={isFiltered}
+              canCreate={canCreate}
               onPageChange={(page) => void setTodayPage(page)}
               onCancel={(appointment) => void setCancelParam(String(appointment.id))}
             />
@@ -306,7 +316,8 @@ export function AppointmentsPageImpl() {
               isLoading={upcomingLoading}
               isFetching={upcomingAppointmentsQuery.isFetching}
               description={`Future Appointments from ${tomorrowDate} onward.`}
-              emptyDescription="No future Appointments match the current filters."
+              isFiltered={isFiltered}
+              canCreate={canCreate}
               onPageChange={(page) => void setUpcomingPage(page)}
               onCancel={(appointment) => void setCancelParam(String(appointment.id))}
             />
