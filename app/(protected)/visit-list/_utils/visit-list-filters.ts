@@ -117,9 +117,20 @@ export function summarizeVisits(rows: VisitListRow[]) {
   return { total: rows.length, byStatus, balanceDue, unbilledCompleted };
 }
 
-export function countActiveFilters(filters: VisitListFilters) {
-  const { from, to, query, ...rest } = filters;
-  const dropdowns = Object.values(rest).filter((value) => value !== null).length;
+/** Row-1 filters: the date range (counted once) and non-blank search text. */
+function countRowOneFilters({ from, to, query }: VisitListFilters) {
+  return (query.trim() ? 1 : 0) + (from || to ? 1 : 0);
+}
 
-  return dropdowns + (query.trim() ? 1 : 0) + (from || to ? 1 : 0);
+/** Applied advanced filters (every dropdown), for the Advanced filters toggle. */
+export function countAdvancedFilters(filters: VisitListFilters) {
+  const { type, doctor, status, source, billing, patientType } = filters;
+
+  return [type, doctor, status, source, billing, patientType].filter((value) => value !== null)
+    .length;
+}
+
+/** Every applied filter, for the Clear filters badge. */
+export function countActiveFilters(filters: VisitListFilters) {
+  return countRowOneFilters(filters) + countAdvancedFilters(filters);
 }

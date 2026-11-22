@@ -23,6 +23,7 @@ import {
   PATIENT_TYPE_OPTIONS,
   SOURCE_OPTIONS,
   countActiveFilters,
+  countAdvancedFilters,
   filterVisits,
   summarizeVisits,
   type VisitListFilters,
@@ -86,6 +87,7 @@ export function VisitListPageImpl() {
   const summary = useMemo(() => summarizeVisits(scopedRows), [scopedRows]);
 
   const activeCount = countActiveFilters(filters);
+  const advancedCount = countAdvancedFilters(filters);
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -118,6 +120,7 @@ export function VisitListPageImpl() {
         filters={filters}
         searchTerm={searchTerm}
         activeCount={activeCount}
+        advancedCount={advancedCount}
         onSearchChange={(value) => {
           setSearchTerm(value);
           setPage(1);

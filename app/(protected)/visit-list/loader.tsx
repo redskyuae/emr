@@ -24,21 +24,16 @@ export default function VisitListPageLoader() {
       </div>
 
       <Card>
-        <CardContent className="space-y-3">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-            <Skeleton className="h-10 w-full xl:max-w-sm" />
-            <Skeleton className="h-8 w-full xl:w-96" />
-            <div className="flex items-center gap-2 xl:ml-auto">
-              <Skeleton className="h-10 w-full sm:w-40" />
-              <Skeleton className="h-4 w-4" />
-              <Skeleton className="h-10 w-full sm:w-40" />
-            </div>
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <Skeleton className="h-10 w-full sm:w-auto sm:min-w-64 sm:flex-1 xl:max-w-sm" />
+          <Skeleton className="h-10 w-full sm:w-96" />
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <Skeleton className="h-10 flex-1 sm:w-40 sm:flex-none" />
+            <Skeleton className="h-4 w-4" />
+            <Skeleton className="h-10 flex-1 sm:w-40 sm:flex-none" />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-            {Array.from({ length: 7 }, (_, index) => (
-              <Skeleton key={index} className="h-10" />
-            ))}
-          </div>
+          <Skeleton className="h-10 w-44" />
+          <Skeleton className="ml-auto h-10 w-32" />
         </CardContent>
       </Card>
 
