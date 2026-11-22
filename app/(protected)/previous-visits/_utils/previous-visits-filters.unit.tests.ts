@@ -4,6 +4,7 @@ import { previousVisitsFilterFormSchema } from './previous-visits-filter-form-sc
 import {
   appliedFilterNames,
   countActiveFilters,
+  countAdvancedFilters,
   defaultRange,
   formatVisitDay,
   rangeLabel,
@@ -111,6 +112,31 @@ describe('previous visits filters', () => {
     });
   });
 
+  describe('countAdvancedFilters', () => {
+    it('should count nothing for a fresh page', () => {
+      expect(countAdvancedFilters(resolveFilters(emptyParams, today))).toBe(0);
+    });
+
+    it('should count each applied Doctor, status and Visit Type once', () => {
+      const filters = resolveFilters(
+        { ...emptyParams, doctor: '3', status: 'COMPLETED', type: '2' },
+        today
+      );
+
+      expect(countAdvancedFilters(filters)).toBe(3);
+    });
+
+    it('should never count the date range or the search term', () => {
+      const filters = resolveFilters(
+        { ...emptyParams, q: 'rao', from: '2026-07-01', to: '2026-07-10' },
+        today
+      );
+
+      expect(countAdvancedFilters(filters)).toBe(0);
+      expect(countActiveFilters(filters, today)).toBe(2);
+    });
+  });
+
   describe('toVisitsParams', () => {
     it('should convert to the API date format and numeric ids', () => {
       expect(
@@ -165,13 +191,24 @@ describe('previous visits filters', () => {
       from: '2026-07-01',
       to: '2026-07-16',
       query: '',
-      status: 'all',
-      doctorId: 'all',
-      visitTypeId: 'all',
+      status: null,
+      doctorId: null,
+      visitTypeId: null,
     };
 
     it('should accept a valid range', () => {
       expect(previousVisitsFilterFormSchema.safeParse(values).success).toBe(true);
+    });
+
+    it('should accept chosen Doctor, status and Visit Type values', () => {
+      expect(
+        previousVisitsFilterFormSchema.safeParse({
+          ...values,
+          status: 'COMPLETED',
+          doctorId: '3',
+          visitTypeId: '2',
+        }).success
+      ).toBe(true);
     });
 
     it('should accept a blank From date for all dates', () => {

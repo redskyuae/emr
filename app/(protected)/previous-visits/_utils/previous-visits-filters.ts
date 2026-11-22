@@ -82,18 +82,23 @@ export function resolveFilters(
   };
 }
 
-/** How many filters differ from a fresh page, for the Reset button badge. */
-export function countActiveFilters(filters: PreviousVisitsFilters, today: Date) {
+/** Row-1 filters (date range and search) that differ from a fresh page. */
+function countRowOneFilters(filters: PreviousVisitsFilters, today: Date) {
   const fallback = defaultRange(today);
   const rangeChanged = filters.from !== fallback.from || filters.to !== fallback.to;
 
-  return [
-    rangeChanged,
-    filters.query !== '',
-    filters.status !== null,
-    filters.doctorId !== null,
-    filters.visitTypeId !== null,
-  ].filter(Boolean).length;
+  return [rangeChanged, filters.query !== ''].filter(Boolean).length;
+}
+
+/** Applied advanced filters (Doctor, Status, Visit Type), for the Advanced filters toggle. */
+export function countAdvancedFilters(filters: PreviousVisitsFilters) {
+  return [filters.status, filters.doctorId, filters.visitTypeId].filter((value) => value !== null)
+    .length;
+}
+
+/** How many filters differ from a fresh page, for the Reset button badge. */
+export function countActiveFilters(filters: PreviousVisitsFilters, today: Date) {
+  return countRowOneFilters(filters, today) + countAdvancedFilters(filters);
 }
 
 /**
