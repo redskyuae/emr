@@ -16,7 +16,8 @@ function SubHeading({ children }: { children: string }) {
   return <h3 className="mb-1.5 text-[12.5px] font-semibold">{children}</h3>;
 }
 
-function Empty({ children }: { children: string }) {
+// A printed "nothing in this period" line, named so it is not mistaken for the shared Empty primitive.
+function ReportEmptyLine({ children }: { children: string }) {
   return (
     <p className="text-muted-foreground border-border border border-dashed px-3 py-3 text-center text-[12px]">
       {children}
@@ -56,7 +57,7 @@ export function ReportTreatmentPlan({
             ])}
           />
         ) : (
-          <Empty>No Treatment Plan in this period.</Empty>
+          <ReportEmptyLine>No Treatment Plan in this period.</ReportEmptyLine>
         )}
       </div>
 
@@ -73,7 +74,7 @@ export function ReportTreatmentPlan({
             ])}
           />
         ) : (
-          <Empty>No medicines in this period.</Empty>
+          <ReportEmptyLine>No medicines in this period.</ReportEmptyLine>
         )}
       </div>
     </section>

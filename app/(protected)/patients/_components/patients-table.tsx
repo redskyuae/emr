@@ -3,24 +3,24 @@
 import Link from 'next/link';
 import type { IconType } from 'react-icons';
 import { CiCircleAlert, CiPhone } from 'react-icons/ci';
-import { PiGenderFemaleLight, PiGenderMaleLight, PiUsersLight } from 'react-icons/pi';
+import {
+  PiGenderMaleLight,
+  PiUserPlusLight,
+  PiGenderFemaleLight,
+  PiUsersThreeDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { getPatientGenderLabel } from '@/app/(protected)/patients/_utils/patient-value-sets';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -40,6 +40,10 @@ type PatientsTableProps = {
   isError: boolean;
   error: unknown;
   page: number;
+  /** A search, gender or status filter is narrowing the list. */
+  isFiltered: boolean;
+  /** The user may register, so the "nothing yet" state offers Register patient. */
+  canCreate: boolean;
   onPageChange: (next: number) => void;
 };
 
@@ -122,6 +126,8 @@ export function PatientsTable({
   isError,
   error,
   page,
+  isFiltered,
+  canCreate,
   onPageChange,
 }: PatientsTableProps) {
   if (isError) {
@@ -142,17 +148,33 @@ export function PatientsTable({
       <CardContent className="p-0">
         <SkeletonCrossfade isLoading={isLoading} skeleton={<PatientsTableSkeleton />}>
           {patients.length === 0 ? (
-            <Empty className="min-h-72 border-0">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiUsersLight className="size-5" />
-                </EmptyMedia>
-                <EmptyTitle>No Patients found.</EmptyTitle>
-                <EmptyDescription>
-                  Try a different search term or filter — or register a new Patient.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            isFiltered ? (
+              <EmptyState
+                tone="neutral"
+                className="min-h-72"
+                title="No results found"
+                icon={PiMagnifyingGlassDuotone}
+                description="No Patients match the current search and filters."
+              />
+            ) : (
+              <EmptyState
+                tone="violet"
+                className="min-h-72"
+                title="No Patients yet"
+                icon={PiUsersThreeDuotone}
+                description="Register the first Patient to start their record."
+                actions={
+                  canCreate ? (
+                    <Button type="button" asChild>
+                      <Link href="/patients/new">
+                        <PiUserPlusLight className="size-4" />
+                        Register patient
+                      </Link>
+                    </Button>
+                  ) : null
+                }
+              />
+            )
           ) : (
             <>
               <Table className={cn('min-w-max', isFetching && 'opacity-70 transition-opacity')}>

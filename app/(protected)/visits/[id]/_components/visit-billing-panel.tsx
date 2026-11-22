@@ -1,20 +1,15 @@
 import Link from 'next/link';
 import { CiReceipt } from 'react-icons/ci';
+import { PiReceiptDuotone } from 'react-icons/pi';
 
 import type { InvoiceListItem } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 
 import {
   formatMoney,
@@ -75,17 +70,14 @@ export function VisitBillingPanel({ visit, invoices, loading, error, canCreateIn
         ) : (
           <SkeletonCrossfade isLoading={loading} skeleton={<InvoiceListSkeleton />}>
             {invoices.length === 0 ? (
-              <Empty className="min-h-56 rounded-lg border border-dashed">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CiReceipt className="size-5" />
-                  </EmptyMedia>
-                  <EmptyTitle>No Invoice yet</EmptyTitle>
-                  <EmptyDescription>
-                    Create an Invoice to record charges and Payments for this Visit.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              <EmptyState
+                size="sm"
+                tone="green"
+                title="No Invoice yet"
+                icon={PiReceiptDuotone}
+                className="min-h-56 rounded-lg border border-dashed"
+                description="Create an Invoice to record charges and Payments for this Visit."
+              />
             ) : (
               <ul className="space-y-3">
                 {invoices.map((invoice) => (

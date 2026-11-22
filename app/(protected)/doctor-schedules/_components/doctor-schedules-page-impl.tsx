@@ -46,6 +46,8 @@ export function DoctorSchedulesPageImpl() {
     Number.isInteger(parsedDoctorId) && parsedDoctorId > 0 ? parsedDoctorId : undefined;
   const fromDate = isDateOnly(fromDateParam) ? fromDateParam : undefined;
   const toDate = isDateOnly(toDateParam) ? toDateParam : undefined;
+  // The same values the query uses, so the empty state always agrees with the list on screen.
+  const isFiltered = Boolean(doctorId || fromDate || toDate);
 
   const doctorsQuery = useDoctorsQuery({ page: 1, limit: 999 });
   const rotasQuery = useDoctorRotasQuery({ page: 1, limit: 999 });
@@ -169,6 +171,9 @@ export function DoctorSchedulesPageImpl() {
           onPageChange={(next) => void setPage(next)}
           onEdit={(schedule) => void setScheduleParam(String(schedule.id))}
           canEdit={canUpdate}
+          isFiltered={isFiltered}
+          canCreate={canCreate}
+          onAddSchedule={() => void setScheduleParam('new')}
         />
       </div>
 

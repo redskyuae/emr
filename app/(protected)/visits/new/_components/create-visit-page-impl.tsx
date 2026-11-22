@@ -6,7 +6,11 @@ import { useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { CiCircleAlert } from 'react-icons/ci';
-import { PiArrowsCounterClockwiseLight, PiLeafLight } from 'react-icons/pi';
+import {
+  PiLockKeyDuotone,
+  PiUserFocusDuotone,
+  PiArrowsCounterClockwiseLight,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
@@ -32,16 +36,10 @@ import { useVisitTypesQuery } from '@/app/queries/visit-masters/visit-types/useV
 import { useCheckInVisit } from '@/app/queries/visits/useCheckInVisit';
 import { useRecentDoctorVisitQuery } from '@/app/queries/visits/useRecentDoctorVisit';
 import { useVisitPatientTypeQuery } from '@/app/queries/visits/useVisitPatientType';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import type { CheckInBillingStep } from '@/lib/analytics/events/funnel-events';
 
 import {
@@ -565,19 +563,18 @@ export function CreateVisitPageImpl({
                 linkedBookingNumber={appointment?.bookingNumber ?? null}
               />
             ) : (
-              <Empty className="bg-card border">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <PiLeafLight className="size-5" />
-                  </EmptyMedia>
-                  <EmptyTitle>Treatment Plans</EmptyTitle>
-                  <EmptyDescription>
-                    {selectedPatientId === null
-                      ? "The Patient's Treatment Plans appear here once a Patient is selected."
-                      : 'You do not have permission to view Treatment Plans.'}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              <EmptyState
+                size="sm"
+                tone="neutral"
+                title="Treatment Plans"
+                className="bg-card border"
+                icon={selectedPatientId === null ? PiUserFocusDuotone : PiLockKeyDuotone}
+                description={
+                  selectedPatientId === null
+                    ? "The Patient's Treatment Plans appear here once a Patient is selected."
+                    : 'You do not have permission to view Treatment Plans.'
+                }
+              />
             )}
           </aside>
         </div>

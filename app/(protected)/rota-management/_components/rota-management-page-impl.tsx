@@ -3,33 +3,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useQueryState } from 'nuqs';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
 import {
-  CiBoxList,
-  CiCalendarDate,
-  CiCircleAlert,
-  CiGrid41,
-  CiSearch,
-  CiViewTable,
-} from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+  PiPlusLight,
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiCalendarBlankDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 
 import type { DoctorRota } from '@/app/api/lib/modules/doctor-rota/schemas/doctor-rota-schema';
 import { ApiError, getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorRotaQuery } from '@/app/queries/rota-management/useDoctorRota';
 import { useDoctorRotasQuery } from '@/app/queries/rota-management/useDoctorRotas';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
@@ -197,38 +189,34 @@ export function RotaManagementPageImpl() {
           skeleton={<ViewSkeleton layout={viewLayout} showActions={canUpdate || canDelete} />}
         >
           {rotas.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiCalendarDate />
-                </EmptyMedia>
-                <EmptyTitle>No Doctor Rotas yet</EmptyTitle>
-                <EmptyDescription>
-                  Create reusable time-window templates before assigning Doctor schedules.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="teal"
+              title="No Doctor Rotas yet"
+              icon={PiCalendarBlankDuotone}
+              className="bg-card min-h-80 border"
+              description="Create reusable time-window templates before assigning Doctor schedules."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={openAddSheet}>
                     <PiPlusLight className="size-4" />
                     Add Doctor Rota
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : rotas.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              title="No results found"
+              icon={PiMagnifyingGlassDuotone}
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Doctor Rotas match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                   term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

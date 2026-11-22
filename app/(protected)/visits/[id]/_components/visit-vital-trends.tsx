@@ -1,6 +1,8 @@
 import { CiWarning } from 'react-icons/ci';
+import { PiHeartbeatDuotone } from 'react-icons/pi';
 
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
@@ -74,13 +76,15 @@ export function VisitVitalTrends({
   readings,
   loading,
   error,
-  emptyText,
+  emptyTitle,
+  emptyDescription,
   layout = 'list',
 }: {
   readings: PatientVitalSign[];
   loading: boolean;
   error: boolean;
-  emptyText: string;
+  emptyTitle: string;
+  emptyDescription: string;
   /** `list` suits the narrow context pane; `tiles` spreads the readings across a wide step. */
   layout?: 'list' | 'tiles';
 }) {
@@ -90,7 +94,15 @@ export function VisitVitalTrends({
   const result = vitalTrends(readings);
 
   if (!result || result.trends.length === 0) {
-    return <p className="text-muted-foreground text-sm">{emptyText}</p>;
+    return (
+      <EmptyState
+        size="sm"
+        tone="blue"
+        title={emptyTitle}
+        icon={PiHeartbeatDuotone}
+        description={emptyDescription}
+      />
+    );
   }
 
   const shared = Boolean(result.previousAt);

@@ -1,6 +1,9 @@
 'use client';
 
+import { PiIdentificationCardDuotone } from 'react-icons/pi';
+
 import type { PatientIdentityDocument } from '@/app/api/lib/modules/patient/schemas/patient-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -23,7 +26,14 @@ import {
 // whole reason the expiry date is stored.
 export function IdentityDocumentsTable({ documents }: { documents: PatientIdentityDocument[] }) {
   if (documents.length === 0) {
-    return <p className="text-muted-foreground text-sm">No identity documents recorded.</p>;
+    return (
+      <EmptyState
+        size="sm"
+        tone="violet"
+        icon={PiIdentificationCardDuotone}
+        title="No identity documents recorded"
+      />
+    );
   }
 
   return (

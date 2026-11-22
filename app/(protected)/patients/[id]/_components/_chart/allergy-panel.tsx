@@ -1,6 +1,6 @@
 'use client';
 
-import { PiShieldWarningLight } from 'react-icons/pi';
+import { PiShieldWarningLight, PiWarningDiamondDuotone } from 'react-icons/pi';
 
 import type { PatientAllergy } from '@/app/api/lib/modules/patient-allergy/schemas/patient-allergy-schema';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ export function AllergyPanel({
       onAdd={onAdd}
     >
       {allergies.length === 0 ? (
-        <ChartPanelEmpty message="No known allergies recorded." />
+        <ChartPanelEmpty icon={PiWarningDiamondDuotone} title="No known allergies recorded" />
       ) : (
         <ul className="divide-border/60 divide-y">
           {allergies.map((allergy) => (

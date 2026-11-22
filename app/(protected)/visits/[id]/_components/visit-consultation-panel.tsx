@@ -2,8 +2,8 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { CiCircleAlert, CiEdit, CiMemoPad, CiStethoscope } from 'react-icons/ci';
-import { PiPlayCircleLight } from 'react-icons/pi';
+import { CiCircleAlert, CiEdit, CiMemoPad } from 'react-icons/ci';
+import { PiPlayCircleLight, PiStethoscopeDuotone } from 'react-icons/pi';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
@@ -12,19 +12,12 @@ import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-t
 import { isAyurvedaBrand } from '@/components/brand/brand-config';
 import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { isActiveVisit } from '../../_utils/visit-status';
@@ -164,35 +157,32 @@ function RecordedNote({
   }
 
   return (
-    <Empty className="bg-card min-h-72 border">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <CiStethoscope />
-        </EmptyMedia>
-        <EmptyTitle>
-          {visit.status === 'CHECKED_IN'
-            ? 'Consultation not started'
-            : 'No consultation was recorded'}
-        </EmptyTitle>
-        <EmptyDescription>
-          {visit.status === 'CHECKED_IN'
-            ? canStart
-              ? 'Start the consultation to open the note. Vital Signs can be recorded now.'
-              : 'The Doctor starts the consultation when the Patient is called in.'
-            : inConsultation
-              ? 'You do not have permission to record a Clinical Note.'
-              : `This Visit is closed without a consultation note.`}
-        </EmptyDescription>
-      </EmptyHeader>
-      {visit.status === 'CHECKED_IN' && canStart ? (
-        <EmptyContent>
+    <EmptyState
+      size="md"
+      tone="blue"
+      icon={PiStethoscopeDuotone}
+      className="bg-card min-h-72 border"
+      title={
+        visit.status === 'CHECKED_IN' ? 'Consultation not started' : 'No consultation was recorded'
+      }
+      description={
+        visit.status === 'CHECKED_IN'
+          ? canStart
+            ? 'Start the consultation to open the note. Vital Signs can be recorded now.'
+            : 'The Doctor starts the consultation when the Patient is called in.'
+          : inConsultation
+            ? 'You do not have permission to record a Clinical Note.'
+            : `This Visit is closed without a consultation note.`
+      }
+      actions={
+        visit.status === 'CHECKED_IN' && canStart ? (
           <Button type="button" disabled={starting} aria-busy={starting} onClick={onStart}>
             <PiPlayCircleLight className="size-4" />
             {starting ? 'Starting consultation…' : 'Start consultation'}
           </Button>
-        </EmptyContent>
-      ) : null}
-    </Empty>
+        ) : null
+      }
+    />
   );
 }
 

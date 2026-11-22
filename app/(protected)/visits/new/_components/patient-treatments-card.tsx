@@ -1,6 +1,7 @@
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
-import { PiArrowsCounterClockwiseLight, PiLeafLight } from 'react-icons/pi';
+import { PiLeafLight, PiClipboardTextDuotone, PiArrowsCounterClockwiseLight } from 'react-icons/pi';
 
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -185,9 +186,13 @@ export function PatientTreatmentsCard({
                 ))}
               </ul>
             ) : (
-              <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-center text-sm">
-                This Patient has no ongoing or not started Treatment Plans.
-              </p>
+              <EmptyState
+                size="sm"
+                tone="blue"
+                title="No open Treatment Plans"
+                icon={PiClipboardTextDuotone}
+                description="This Patient has no ongoing or not started Treatment Plans."
+              />
             )}
           </SkeletonCrossfade>
         )}

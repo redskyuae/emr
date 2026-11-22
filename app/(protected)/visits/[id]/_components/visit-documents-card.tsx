@@ -2,23 +2,18 @@
 
 import { useState } from 'react';
 import { CiFileOn, CiImport, CiTrash } from 'react-icons/ci';
+import { PiFilesDuotone } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { VisitDocument } from '@/app/api/lib/modules/visit-document/schemas/visit-document-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAddVisitDocument } from '@/app/queries/visits/useAddVisitDocument';
 import { useVisitDocumentsQuery } from '@/app/queries/visits/useVisitDocuments';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { formatFileSize } from '../../_utils/format-file-size';
 import { VisitDocumentUploadButton } from '../../_components/visit-document-upload';
 import { DeleteVisitDocumentDialog } from './_modals/delete-visit-document-dialog';
@@ -67,17 +62,14 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
             }
           >
             {documents.length === 0 ? (
-              <Empty className="min-h-56 rounded-lg border border-dashed">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CiFileOn className="size-5" />
-                  </EmptyMedia>
-                  <EmptyTitle>No documents yet</EmptyTitle>
-                  <EmptyDescription>
-                    Upload reports, images, or other files for this Visit.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              <EmptyState
+                size="sm"
+                tone="blue"
+                icon={PiFilesDuotone}
+                title="No documents yet"
+                className="min-h-56 rounded-lg border border-dashed"
+                description="Upload reports, images, or other files for this Visit."
+              />
             ) : (
               <ul className="space-y-2 text-sm">
                 {documents.map((document) => (

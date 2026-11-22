@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
 import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
 import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
@@ -36,6 +37,10 @@ export function PatientsPageImpl() {
     gender,
     isActive,
   });
+
+  // The same values the query uses, so the empty state always agrees with the list on screen.
+  const isFiltered = Boolean(search.trim() || gender || isActive !== undefined);
+  const { data: canCreate } = useHasPermission('patient:create');
 
   const patients = patientsQuery.data?.data ?? [];
   const meta = patientsQuery.data?.meta;
@@ -94,6 +99,8 @@ export function PatientsPageImpl() {
         isError={patientsQuery.isError}
         error={patientsQuery.error}
         page={page}
+        isFiltered={isFiltered}
+        canCreate={canCreate}
         onPageChange={(next) => void setPage(next)}
       />
     </div>

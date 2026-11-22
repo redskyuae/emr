@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { PiArrowLeftLight } from 'react-icons/pi';
+import { PiArrowLeftLight, PiFileMagnifyingGlassDuotone } from 'react-icons/pi';
 
 import { useConsolidatedPatientReportQuery } from '@/app/queries/patients/useConsolidatedPatientReport';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
 import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
@@ -63,12 +64,14 @@ export function ConsolidatedReportPageImpl() {
 
   if (!ready) {
     return (
-      <div className="bg-card flex flex-col items-start gap-3 rounded-xl border p-4" role="alert">
-        <p className="text-sm">
-          Choose a Patient and a date range on the Reports page to generate this report.
-        </p>
-        <BackToReports />
-      </div>
+      <EmptyState
+        tone="neutral"
+        actions={<BackToReports />}
+        title="Nothing to generate yet"
+        className="bg-card min-h-72 border"
+        icon={PiFileMagnifyingGlassDuotone}
+        description="Choose a Patient and a date range on the Reports page to generate this report."
+      />
     );
   }
 

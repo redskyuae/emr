@@ -1,7 +1,9 @@
 import { CiEdit, CiMemoPad } from 'react-icons/ci';
+import { PiNotePencilDuotone } from 'react-icons/pi';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-types/useClinicalNoteTypes';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Badge } from '@/components/ui/badge';
@@ -102,9 +104,13 @@ export function VisitClinicalNotesCard({
         ) : (
           <SkeletonCrossfade isLoading={notesLoading} skeleton={<ClinicalNoteListSkeleton />}>
             {notes.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No Clinical Notes authored during this Visit.
-              </p>
+              <EmptyState
+                size="sm"
+                tone="blue"
+                title="No Clinical Notes yet"
+                icon={PiNotePencilDuotone}
+                description="No Clinical Notes authored during this Visit."
+              />
             ) : (
               <ul className="space-y-2 text-sm">
                 {notes.map((note) => {
