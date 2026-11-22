@@ -73,18 +73,16 @@ export function CollapsibleFilterToolbar({
 
       if (!region || prefersReducedMotion()) return;
 
-      const tween = {
-        duration: EXPAND_DURATION,
-        ease: 'power3.out',
-        overwrite: 'auto' as const,
-      };
+      const tween = { duration: EXPAND_DURATION, ease: 'power3.out' };
+      // A toggle mid-animation starts from where the rows are now. The running tween is killed
+      // outright, with its onComplete, so a stale collapse can't hide rows that were reopened.
+      const midTween = gsap.isTweening(region);
+      gsap.killTweensOf(region);
 
       if (expanded) {
         gsap.fromTo(
           region,
-          gsap.isTweening(region)
-            ? { overflow: 'hidden' }
-            : { height: 0, autoAlpha: 0, overflow: 'hidden' },
+          midTween ? { overflow: 'hidden' } : { height: 0, autoAlpha: 0, overflow: 'hidden' },
           {
             ...tween,
             height: 'auto',
