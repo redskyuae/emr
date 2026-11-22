@@ -3,15 +3,14 @@
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
 import {
-  CiBoxList,
-  CiCircleAlert,
-  CiGrid41,
-  CiMapPin,
-  CiSearch,
-  CiViewTable,
-} from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiMapPinDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -20,18 +19,11 @@ import { type State, useStatesQuery } from '@/app/queries/global-references/stat
 import { useStateQuery } from '@/app/queries/global-references/states/useState';
 import { useDeleteState } from '@/app/queries/global-references/states/useDeleteState';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
@@ -266,33 +258,29 @@ export function StatesPageImpl() {
           }
         >
           {states.length === 0 && !hasActiveFilter ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiMapPin />
-                </EmptyMedia>
-                <EmptyTitle>No States yet</EmptyTitle>
-                <EmptyDescription>
-                  Create States under Countries for address context.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiMapPinDuotone}
+              title="No States yet"
+              className="bg-card min-h-80 border"
+              description="Create States under Countries for address context."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setRecordParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add State
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : states.length === 0 && hasActiveFilter ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   {debouncedSearch && countryFilter !== 'all' ? (
                     <>
                       No States match &ldquo;{debouncedSearch}&rdquo; in Country &ldquo;
@@ -308,9 +296,9 @@ export function StatesPageImpl() {
                       different Country or clear the filter.
                     </>
                   )}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

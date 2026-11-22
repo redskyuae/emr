@@ -7,26 +7,20 @@ import { CiCircleAlert, CiSearch } from 'react-icons/ci';
 import {
   PiCaretLeftLight,
   PiCaretRightLight,
-  PiClipboardTextLight,
   PiPlusLight,
+  PiBuildingsDuotone,
+  PiMagnifyingGlassDuotone,
 } from 'react-icons/pi';
 
 import type { Ward } from '@/app/api/lib/modules/ward/schemas/ward-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWardsQuery } from '@/app/queries/inpatient-masters/wards/useWards';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { DeleteWardDialog } from './_modals/delete-ward-dialog';
 import { WardFormSheet } from './_sheets/ward-form-sheet';
@@ -114,38 +108,31 @@ export function WardsPageImpl() {
           skeleton={<WardTableSkeleton canEdit={canUpdate} canDelete={canDelete} />}
         >
           {wards.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiClipboardTextLight />
-                </EmptyMedia>
-                <EmptyTitle>No Wards yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Wards to organise inpatient Beds into named sections of the Facility, such
-                  as ICU, General Ward, or Maternity.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiBuildingsDuotone}
+              title="No Wards yet"
+              className="bg-card min-h-80 border"
+              description="Create Wards to organise inpatient Beds into named sections of the Facility, such as ICU, General Ward, or Maternity."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setWardParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Ward
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : wards.length === 0 ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
-                  No Wards match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>No Wards match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.</>
+              }
+            />
           ) : (
             <div className="space-y-4">
               <WardTable

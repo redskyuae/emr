@@ -6,7 +6,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useRouter } from 'next/navigation';
 import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight, PiSparkleLight } from 'react-icons/pi';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiSparkleDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { TherapistSkill } from '@/app/api/lib/modules/therapist-skill/schemas/therapist-skill-schema';
 import { getApiErrorMessage, getApiErrors } from '@/app/queries/api-error';
@@ -14,18 +20,11 @@ import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useCreateTherapistSkill } from '@/app/queries/therapist-skills/useCreateTherapistSkill';
 import { useTherapistSkillsQuery } from '@/app/queries/therapist-skills/useTherapistSkills';
 import { useUpdateTherapistSkill } from '@/app/queries/therapist-skills/useUpdateTherapistSkill';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
@@ -224,38 +223,34 @@ export function TherapistSkillsPageImpl({ initialCreateOpen }: { initialCreateOp
           skeleton={<ViewSkeleton layout={viewLayout} canEdit={canUpdate} canDelete={canDelete} />}
         >
           {skills.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiSparkleLight />
-                </EmptyMedia>
-                <EmptyTitle>No Therapist Skills yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Therapist Skills to qualify Therapists in this Tenant.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiSparkleDuotone}
+              title="No Therapist Skills yet"
+              className="bg-card min-h-80 border"
+              description="Create Therapist Skills to qualify Therapists in this Tenant."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={openAddSheet}>
                     <PiPlusLight className="size-4" />
                     Add Therapist Skill
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : skills.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Therapist Skills match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                   term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

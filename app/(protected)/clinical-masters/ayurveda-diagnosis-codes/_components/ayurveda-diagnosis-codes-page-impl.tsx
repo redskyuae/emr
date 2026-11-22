@@ -4,24 +4,23 @@ import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiCircleAlert, CiSearch } from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiLeafLight, PiPlusLight } from 'react-icons/pi';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiLeafDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 
 import type { AyurvedaDiagnosisCode } from '@/app/api/lib/modules/ayurveda-diagnosis-code/schemas/ayurveda-diagnosis-code-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAyurvedaDiagnosisCodesQuery } from '@/app/queries/clinical-masters/ayurveda-diagnosis-codes/useAyurvedaDiagnosisCodes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { DeleteAyurvedaDiagnosisCodeDialog } from './_modals/delete-ayurveda-diagnosis-code-dialog';
 import { AyurvedaDiagnosisCodeFormSheet } from './_sheets/ayurveda-diagnosis-code-form-sheet';
@@ -133,39 +132,39 @@ export function AyurvedaDiagnosisCodesPageImpl() {
         >
           {ayurvedaDiagnosisCodesQuery.isError ? null : ayurvedaDiagnosisCodes.length === 0 &&
             !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiLeafLight />
-                </EmptyMedia>
-                <EmptyTitle>No Ayurveda Diagnosis Codes yet</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="amber"
+              icon={PiLeafDuotone}
+              title="No Ayurveda Diagnosis Codes yet"
+              className="bg-card min-h-80 border"
+              description={
+                <>
                   Build this Tenant&apos;s Ayurveda diagnosis catalogue and map each code to an
                   ICD-10-CM Diagnosis Code for insurance claims.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+                </>
+              }
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={openCreateSheet}>
                     <PiPlusLight className="size-4" />
                     Add Ayurveda Diagnosis Code
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : ayurvedaDiagnosisCodes.length === 0 ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Ayurveda Diagnosis Codes match &ldquo;{debouncedSearch}&rdquo;. Try a different
                   search term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               <AyurvedaDiagnosisCodeTable

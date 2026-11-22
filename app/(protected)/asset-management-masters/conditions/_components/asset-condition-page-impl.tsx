@@ -4,24 +4,23 @@ import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiGaugeLight, PiPlusLight } from 'react-icons/pi';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiGaugeDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import type { AssetCondition } from '@/app/api/lib/modules/asset-condition/schemas/asset-condition-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetConditionQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetCondition';
 import { useAssetConditionsQuery } from '@/app/queries/asset-masters/asset-conditions/useAssetConditions';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AssetConditionDeleteDialog } from './_modals/asset-condition-delete-dialog';
@@ -179,39 +178,34 @@ export function AssetConditionPageImpl() {
           }
         >
           {conditions.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiGaugeLight />
-                </EmptyMedia>
-                <EmptyTitle>No Asset Conditions yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Asset Conditions to grade the physical condition of equipment and assets in
-                  this Tenant.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiGaugeDuotone}
+              title="No Asset Conditions yet"
+              className="bg-card min-h-80 border"
+              description="Create Asset Conditions to grade the physical condition of equipment and assets in this Tenant."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setConditionParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Asset Condition
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : conditions.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Asset Conditions match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                   term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

@@ -3,31 +3,23 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
 import {
-  CiBoxList,
-  CiCircleAlert,
-  CiGrid41,
-  CiSearch,
-  CiShoppingTag,
-  CiViewTable,
-} from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiTagDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetCategoryQuery } from '@/app/queries/asset-masters/useAssetCategory';
 import { useAssetCategoriesQuery } from '@/app/queries/asset-masters/useAssetCategories';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AssetCategoryDeleteDialog } from './_modals/asset-category-delete-dialog';
@@ -218,39 +210,34 @@ export function AssetCategoryPageImpl() {
           }
         >
           {categories.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiShoppingTag />
-                </EmptyMedia>
-                <EmptyTitle>No Asset Categories yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Asset Categories to classify the equipment and assets tracked in this
-                  Tenant.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiTagDuotone}
+              title="No Asset Categories yet"
+              className="bg-card min-h-80 border"
+              description="Create Asset Categories to classify the equipment and assets tracked in this Tenant."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setCategoryParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Asset Category
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : categories.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Asset Categories match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                   term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

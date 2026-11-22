@@ -9,8 +9,9 @@ import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react
 import {
   PiCaretLeftLight,
   PiCaretRightLight,
-  PiClipboardTextLight,
   PiPlusLight,
+  PiTrafficSignalDuotone,
+  PiMagnifyingGlassDuotone,
 } from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { AppointmentStatus } from '@/app/api/lib/modules/appointment-status/schemas/appointment-status-schema';
@@ -20,18 +21,11 @@ import { useAppointmentStatusesQuery } from '@/app/queries/appointment-masters/s
 import { useCreateAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useCreateAppointmentStatus';
 import { useUpdateAppointmentStatus } from '@/app/queries/appointment-masters/statuses/useUpdateAppointmentStatus';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { StatusDeleteDialog } from './_modals/delete-status-dialog';
@@ -239,39 +233,34 @@ export function StatusesPageImpl({ initialCreateOpen }: { initialCreateOpen: boo
           }
         >
           {statuses.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiClipboardTextLight />
-                </EmptyMedia>
-                <EmptyTitle>No Appointment Statuses yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Appointment Statuses to define lifecycle states for Appointments in this
-                  Tenant.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiTrafficSignalDuotone}
+              title="No Appointment Statuses yet"
+              className="bg-card min-h-80 border"
+              description="Create Appointment Statuses to define lifecycle states for Appointments in this Tenant."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={openAddSheet}>
                     <PiPlusLight className="size-4" />
                     Add Appointment Status
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : statuses.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Appointment Statuses match &ldquo;{debouncedSearch}&rdquo;. Try a different
                   search term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

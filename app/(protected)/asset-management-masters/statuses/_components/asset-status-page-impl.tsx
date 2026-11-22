@@ -3,31 +3,23 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
 import {
-  CiBoxList,
-  CiCircleAlert,
-  CiGrid41,
-  CiSearch,
-  CiViewTable,
-  CiWavePulse1,
-} from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiPulseDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetStatusQuery } from '@/app/queries/asset-masters/asset-statuses/useAssetStatus';
 import { useAssetStatusesQuery } from '@/app/queries/asset-masters/asset-statuses/useAssetStatuses';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { AssetStatusDeleteDialog } from './_modals/asset-status-delete-dialog';
@@ -198,39 +190,34 @@ export function AssetStatusPageImpl() {
           }
         >
           {statuses.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiWavePulse1 />
-                </EmptyMedia>
-                <EmptyTitle>No Asset Statuses yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Asset Statuses to track the operational lifecycle state of equipment and
-                  assets in this Tenant.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiPulseDuotone}
+              title="No Asset Statuses yet"
+              className="bg-card min-h-80 border"
+              description="Create Asset Statuses to track the operational lifecycle state of equipment and assets in this Tenant."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setStatusParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Asset Status
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : statuses.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Asset Statuses match &ldquo;{debouncedSearch}&rdquo;. Try a different search
                   term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

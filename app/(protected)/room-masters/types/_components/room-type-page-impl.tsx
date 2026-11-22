@@ -4,25 +4,24 @@ import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
-import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiDoorDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 import type { RoomType } from '@/app/api/lib/modules/room-type/schemas/room-type-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useRoomTypeQuery } from '@/app/queries/room-masters/room-types/useRoomType';
 import { useRoomTypesQuery } from '@/app/queries/room-masters/room-types/useRoomTypes';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { RoomTypeDeleteDialog } from './_modals/room-type-delete-dialog';
@@ -178,37 +177,33 @@ export function RoomTypePageImpl() {
           }
         >
           {roomTypes.length === 0 && !debouncedSearch ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiBedLight />
-                </EmptyMedia>
-                <EmptyTitle>No Room Types yet</EmptyTitle>
-                <EmptyDescription>
-                  Create Room Types to classify the Rooms in this Tenant and set their daily rate.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="amber"
+              icon={PiDoorDuotone}
+              title="No Room Types yet"
+              className="bg-card min-h-80 border"
+              description="Create Room Types to classify the Rooms in this Tenant and set their daily rate."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setRoomTypeParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Room Type
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : roomTypes.length === 0 && debouncedSearch ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
+            <EmptyState
+              tone="neutral"
+              icon={PiMagnifyingGlassDuotone}
+              title="No results found"
+              className="bg-card min-h-72 border"
+              description={
+                <>
                   No Room Types match &ldquo;{debouncedSearch}&rdquo;. Try a different search term.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </>
+              }
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

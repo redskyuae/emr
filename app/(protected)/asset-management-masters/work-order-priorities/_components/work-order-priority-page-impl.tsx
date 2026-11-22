@@ -3,25 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { CiBoxList, CiCircleAlert, CiFlag1, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
+import {
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiPlusLight,
+  PiFlagDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import type { WorkOrderPriority } from '@/app/api/lib/modules/work-order-priority/schemas/work-order-priority-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useWorkOrderPriorityQuery } from '@/app/queries/asset-masters/work-order-priorities/useWorkOrderPriority';
 import { useWorkOrderPrioritiesQuery } from '@/app/queries/asset-masters/work-order-priorities/useWorkOrderPriorities';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { WorkOrderPriorityDeleteDialog } from './_modals/work-order-priority-delete-dialog';
@@ -184,38 +183,34 @@ export function WorkOrderPriorityPageImpl() {
             }
           >
             {priorities.length === 0 && !debouncedSearch ? (
-              <Empty className="bg-card min-h-80 border">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CiFlag1 />
-                  </EmptyMedia>
-                  <EmptyTitle>No Work Order Priorities yet</EmptyTitle>
-                  <EmptyDescription>
-                    Create Work Order Priorities to rank the urgency of Work Orders in this Tenant.
-                  </EmptyDescription>
-                </EmptyHeader>
-                {canCreate ? (
-                  <EmptyContent>
+              <EmptyState
+                tone="amber"
+                icon={PiFlagDuotone}
+                title="No Work Order Priorities yet"
+                className="bg-card min-h-80 border"
+                description="Create Work Order Priorities to rank the urgency of Work Orders in this Tenant."
+                actions={
+                  canCreate ? (
                     <Button type="button" onClick={() => void setPriorityParam('new')}>
                       <PiPlusLight className="size-4" />
                       Add Work Order Priority
                     </Button>
-                  </EmptyContent>
-                ) : null}
-              </Empty>
+                  ) : null
+                }
+              />
             ) : priorities.length === 0 && debouncedSearch ? (
-              <Empty className="bg-card min-h-72 border">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CiSearch />
-                  </EmptyMedia>
-                  <EmptyTitle>No results found</EmptyTitle>
-                  <EmptyDescription>
+              <EmptyState
+                tone="neutral"
+                icon={PiMagnifyingGlassDuotone}
+                title="No results found"
+                className="bg-card min-h-72 border"
+                description={
+                  <>
                     No Work Order Priorities match &ldquo;{debouncedSearch}&rdquo;. Try a different
                     search term.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+                  </>
+                }
+              />
             ) : (
               <div className="space-y-4">
                 {viewLayout === 'table' ? (
