@@ -2,26 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { CiBoxList, CiGrid41, CiSearch, CiUser, CiViewTable } from 'react-icons/ci';
-import { PiPlusLight } from 'react-icons/pi';
+import { CiBoxList, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
+import { PiMagnifyingGlassDuotone, PiPlusLight, PiUserCircleDuotone } from 'react-icons/pi';
 import { useQueryState } from 'nuqs';
 
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useTherapistsQuery } from '@/app/queries/therapists/useTherapists';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { TherapistStatusDialog } from './_modals/therapist-status-dialog';
@@ -70,6 +63,8 @@ export function TherapistsPageImpl() {
     status,
   });
   const therapists = list.data?.data ?? [];
+  // The same values the query uses, so the empty state always agrees with the list on screen.
+  const isFiltered = Boolean(debouncedSearch.trim() || status);
   const isCreating = therapistParam === 'new' && canCreate;
   const editingTherapistId =
     therapistParam && therapistParam !== 'new' && /^\d+$/.test(therapistParam)
@@ -185,25 +180,31 @@ export function TherapistsPageImpl() {
         }
       >
         {therapists.length === 0 ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <CiUser />
-              </EmptyMedia>
-              <EmptyTitle>No Therapists yet</EmptyTitle>
-              <EmptyDescription>
-                Create a Therapist to assign Ayurvedic Treatment Sessions.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              {canCreate ? (
-                <Button onClick={() => void setTherapistParam('new')}>
-                  <PiPlusLight className="size-4" />
-                  Add Therapist
-                </Button>
-              ) : null}
-            </EmptyContent>
-          </Empty>
+          isFiltered ? (
+            <EmptyState
+              tone="neutral"
+              title="No results found"
+              icon={PiMagnifyingGlassDuotone}
+              className="bg-card min-h-72 border"
+              description="No Therapists match the current search and filters."
+            />
+          ) : (
+            <EmptyState
+              tone="violet"
+              title="No Therapists yet"
+              icon={PiUserCircleDuotone}
+              className="bg-card min-h-80 border"
+              description="Create a Therapist to assign Ayurvedic Treatment Sessions."
+              actions={
+                canCreate ? (
+                  <Button onClick={() => void setTherapistParam('new')}>
+                    <PiPlusLight className="size-4" />
+                    Add Therapist
+                  </Button>
+                ) : null
+              }
+            />
+          )
         ) : viewLayout === 'table' ? (
           <TherapistTableView {...viewProps} />
         ) : viewLayout === 'card' ? (
@@ -212,25 +213,28 @@ export function TherapistsPageImpl() {
           <TherapistListView {...viewProps} />
         )}
       </SkeletonCrossfade>
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page <= 1}
-          onClick={() => setPage((value) => value - 1)}
-        >
-          Previous
-        </Button>
-        <span className="text-muted-foreground text-sm">Page {page}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={!list.data?.meta || page >= list.data.meta.totalPages}
-          onClick={() => setPage((value) => value + 1)}
-        >
-          Next
-        </Button>
-      </div>
+      {/* Paging means nothing under an empty state; while loading it stays, as the loader draws it. */}
+      {list.isLoading || therapists.length > 0 ? (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((value) => value - 1)}
+          >
+            Previous
+          </Button>
+          <span className="text-muted-foreground text-sm">Page {page}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!list.data?.meta || page >= list.data.meta.totalPages}
+            onClick={() => setPage((value) => value + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      ) : null}
 
       <TherapistFormSheet
         open={isOpen}

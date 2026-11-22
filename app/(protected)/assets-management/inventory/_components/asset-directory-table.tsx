@@ -2,23 +2,18 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CiBoxes, CiCircleAlert, CiRead, CiSearch } from 'react-icons/ci';
+import { CiBoxes, CiCircleAlert, CiRead } from 'react-icons/ci';
+import { PiMagnifyingGlassDuotone, PiPackageDuotone, PiPlusLight } from 'react-icons/pi';
 
 import type { Asset, AssetMasterSummary } from '@/app/api/lib/modules/asset/schemas/asset-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { formatAedCompact } from '@/lib/format-currency';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -40,6 +35,8 @@ type AssetDirectoryTableProps = {
   hasActiveFilters: boolean;
   page: number;
   onPageChange: (next: number) => void;
+  /** The page's Add Asset action, offered again by the "nothing yet" state. */
+  onAddAsset: () => void;
 };
 
 function formatAssetValue(value: number | null) {
@@ -127,6 +124,7 @@ export function AssetDirectoryTable({
   hasActiveFilters,
   page,
   onPageChange,
+  onAddAsset,
 }: AssetDirectoryTableProps) {
   const router = useRouter();
 
@@ -149,19 +147,30 @@ export function AssetDirectoryTable({
   return (
     <SkeletonCrossfade isLoading={isLoading} skeleton={<AssetDirectoryTableSkeleton />}>
       {assets.length === 0 ? (
-        <Empty className="bg-card min-h-72 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiSearch />
-            </EmptyMedia>
-            <EmptyTitle>No assets found</EmptyTitle>
-            <EmptyDescription>
-              {hasActiveFilters
-                ? 'Try a different search, category, or status.'
-                : 'Add an Asset to start tracking your equipment inventory.'}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        hasActiveFilters ? (
+          <EmptyState
+            tone="neutral"
+            className="min-h-72"
+            title="No results found"
+            icon={PiMagnifyingGlassDuotone}
+            description="Try a different search, category, or status."
+          />
+        ) : (
+          // The Add Asset action has no permission check on this page, so neither does this one.
+          <EmptyState
+            tone="orange"
+            className="min-h-72"
+            title="No Assets yet"
+            icon={PiPackageDuotone}
+            description="Add an Asset to start tracking your equipment inventory."
+            actions={
+              <Button type="button" onClick={onAddAsset}>
+                <PiPlusLight className="size-4" />
+                Add Asset
+              </Button>
+            }
+          />
+        )
       ) : (
         <div className="space-y-4">
           <Table className={cn('table-fixed', isFetching && 'opacity-70 transition-opacity')}>

@@ -1,9 +1,10 @@
 'use client';
 
 import { CiTrash } from 'react-icons/ci';
-import { PiPlusLight } from 'react-icons/pi';
+import { PiListPlusDuotone, PiPlusLight } from 'react-icons/pi';
 
 import type { Invoice, InvoiceLine } from '@/app/api/lib/modules/invoice/schemas/invoice-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,9 +60,13 @@ export function InvoiceLinesCard({
       </CardHeader>
       <CardContent className="p-0">
         {invoice.lines.length === 0 ? (
-          <p className="text-muted-foreground p-4 text-sm">
-            No line items yet. {showAddLine ? 'Add a Charge Item to get started.' : null}
-          </p>
+          <EmptyState
+            size="sm"
+            tone="green"
+            title="No line items yet"
+            icon={PiListPlusDuotone}
+            description={showAddLine ? 'Add a Charge Item to get started.' : undefined}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-sm">

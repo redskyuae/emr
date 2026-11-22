@@ -1,20 +1,15 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CiImport, CiSearch, CiWavePulse1 } from 'react-icons/ci';
+import { CiImport, CiSearch } from 'react-icons/ci';
+import { PiMagnifyingGlassDuotone } from 'react-icons/pi';
 
 import type { IamAuditEvent } from '@/app/(protected)/audit-log/_utils/audit-log-mock';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Table,
@@ -197,15 +192,13 @@ export function AuditLogPageImpl({ events }: { events: IamAuditEvent[] }) {
               </TableBody>
             </Table>
           ) : (
-            <Empty className="min-h-72 border-0">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiWavePulse1 className="size-5" />
-                </EmptyMedia>
-                <EmptyTitle>No events match.</EmptyTitle>
-                <EmptyDescription>Try a different search term or type filter.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              tone="neutral"
+              className="min-h-72"
+              title="No events match."
+              icon={PiMagnifyingGlassDuotone}
+              description="Try a different search term or type filter."
+            />
           )}
         </CardContent>
       </Card>

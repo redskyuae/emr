@@ -1,11 +1,12 @@
 'use client';
 
 import { CiCircleAlert, CiEdit, CiMenuKebab } from 'react-icons/ci';
-import { PiUserCheckLight, PiUserMinusLight, PiUsersLight } from 'react-icons/pi';
+import { PiMagnifyingGlassDuotone, PiUserCheckLight, PiUserMinusLight } from 'react-icons/pi';
 
 import type { StaffWithRoles } from '@/app/api/lib/modules/staff/schemas/staff-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -18,13 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -111,17 +105,14 @@ export function UsersTable({
           }
         >
           {staff.length === 0 ? (
-            <Empty className="min-h-72 border-0">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiUsersLight className="size-5" />
-                </EmptyMedia>
-                <EmptyTitle>No Staff found.</EmptyTitle>
-                <EmptyDescription>
-                  Try a different search term, Role, or status filter — or add a new Staff member.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            // The list always holds at least the signed-in user, so empty only ever means no match.
+            <EmptyState
+              tone="neutral"
+              className="min-h-72"
+              title="No Staff found"
+              icon={PiMagnifyingGlassDuotone}
+              description="Try a different search term, Role, or status filter."
+            />
           ) : (
             <>
               <Table className={cn('min-w-max', isFetching && 'opacity-70 transition-opacity')}>

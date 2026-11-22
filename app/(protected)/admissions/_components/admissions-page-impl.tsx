@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiCircleAlert, CiSearch } from 'react-icons/ci';
-import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
 
 import type { Admission } from '@/app/api/lib/modules/admission/schemas/admission-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -16,14 +16,6 @@ import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
@@ -37,6 +29,7 @@ import { CancelAdmissionDialog } from './_modals/cancel-admission-dialog';
 import { DischargeDialog } from './_modals/discharge-dialog';
 import { TransferBedDialog } from './_modals/transfer-bed-dialog';
 import { AdmitPatientSheet } from './_sheets/admit-patient-sheet';
+import { AdmissionsEmptyState } from './admissions-empty-state';
 import { AdmissionsTable, AdmissionsTableSkeleton } from './admissions-table';
 
 const ALL_FILTER = 'all';
@@ -70,6 +63,10 @@ export function AdmissionsPageImpl() {
   const effectiveStatus = statusParam === null ? 'ADMITTED' : status;
   const wardId = wardParam && wardParam !== ALL_FILTER ? Number(wardParam) : undefined;
   const doctorId = doctorParam && doctorParam !== ALL_FILTER ? Number(doctorParam) : undefined;
+  // The same values the query uses; the default Admitted status is not a filter.
+  const isFiltered = Boolean(
+    debouncedSearch.trim() || effectiveStatus !== 'ADMITTED' || wardId || doctorId
+  );
 
   const admissionsQuery = useAdmissionsQuery({
     status: effectiveStatus,
@@ -217,26 +214,11 @@ export function AdmissionsPageImpl() {
           skeleton={<AdmissionsTableSkeleton canDischarge={canDischarge} />}
         >
           {admissions.length === 0 ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiBedLight />
-                </EmptyMedia>
-                <EmptyTitle>No Admissions match</EmptyTitle>
-                <EmptyDescription>
-                  Admit a Patient to a free Bed to start the inpatient census. Configure Wards and
-                  Beds under Inpatient Masters first.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
-                  <Button type="button" onClick={() => void setAdmitParam('new')}>
-                    <PiPlusLight className="size-4" />
-                    Admit Patient
-                  </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+            <AdmissionsEmptyState
+              isFiltered={isFiltered}
+              canCreate={canCreate}
+              onAdmit={() => void setAdmitParam('new')}
+            />
           ) : (
             <div className="space-y-4">
               <AdmissionsTable

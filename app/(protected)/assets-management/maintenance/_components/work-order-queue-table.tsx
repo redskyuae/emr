@@ -1,6 +1,7 @@
 'use client';
 
-import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiMagnifyingGlassDuotone, PiPlusLight, PiWrenchDuotone } from 'react-icons/pi';
 
 import type {
   WorkOrder,
@@ -8,17 +9,11 @@ import type {
 } from '@/app/api/lib/modules/work-order/schemas/work-order-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -40,6 +35,9 @@ type WorkOrderQueueTableProps = {
   hasActiveFilters: boolean;
   page: number;
   onPageChange: (next: number) => void;
+  /** The user may raise Work Orders, so the "nothing yet" state offers New work order. */
+  canCreate: boolean;
+  onNewWorkOrder: () => void;
 };
 
 function formatCreatedOn(value: Date | string) {
@@ -117,6 +115,8 @@ export function WorkOrderQueueTable({
   hasActiveFilters,
   page,
   onPageChange,
+  canCreate,
+  onNewWorkOrder,
 }: WorkOrderQueueTableProps) {
   if (isError) {
     return (
@@ -137,19 +137,31 @@ export function WorkOrderQueueTable({
   return (
     <SkeletonCrossfade isLoading={isLoading} skeleton={<WorkOrderQueueTableSkeleton />}>
       {workOrders.length === 0 ? (
-        <Empty className="bg-card min-h-72 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiSearch />
-            </EmptyMedia>
-            <EmptyTitle>No Work Orders found</EmptyTitle>
-            <EmptyDescription>
-              {hasActiveFilters
-                ? 'Try a different search or type filter.'
-                : 'Raise a Work Order to start tracking maintenance jobs.'}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        hasActiveFilters ? (
+          <EmptyState
+            tone="neutral"
+            className="min-h-72"
+            title="No results found"
+            icon={PiMagnifyingGlassDuotone}
+            description="Try a different search or type filter."
+          />
+        ) : (
+          <EmptyState
+            tone="orange"
+            className="min-h-72"
+            icon={PiWrenchDuotone}
+            title="No Work Orders yet"
+            description="Raise a Work Order to start tracking maintenance jobs."
+            actions={
+              canCreate ? (
+                <Button type="button" onClick={onNewWorkOrder}>
+                  <PiPlusLight className="size-4" />
+                  New work order
+                </Button>
+              ) : null
+            }
+          />
+        )
       ) : (
         <div className="space-y-4">
           <Table className={cn('min-w-max', isFetching && 'opacity-70 transition-opacity')}>

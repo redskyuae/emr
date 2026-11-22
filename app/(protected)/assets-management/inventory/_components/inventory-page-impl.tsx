@@ -111,6 +111,7 @@ export function InventoryPageImpl() {
               hasActiveFilters={Boolean(search.trim() || categoryId || statusId)}
               page={page}
               onPageChange={(next) => void setPage(next)}
+              onAddAsset={() => void setAssetParam('new')}
             />
           </CardContent>
         </Card>

@@ -1,7 +1,8 @@
 import { CiEdit, CiMenuKebab, CiTrash } from 'react-icons/ci';
-import { PiKeyLight, PiPlusLight, PiShieldCheckLight, PiUsersLight } from 'react-icons/pi';
+import { PiKeyLight, PiPlusLight, PiShieldCheckDuotone, PiUsersLight } from 'react-icons/pi';
 
 import type { RoleWithStats } from '@/app/api/lib/modules/role/schemas/role-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,14 +13,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import { formatCount } from '@/lib/format-count';
 
@@ -134,25 +127,21 @@ export function RoleGrid({
   return (
     <SkeletonCrossfade isLoading={isLoading} skeleton={<RoleGridSkeleton canEdit={canEdit} />}>
       {roles.length === 0 ? (
-        <Empty className="bg-card min-h-80 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <PiShieldCheckLight />
-            </EmptyMedia>
-            <EmptyTitle>No Roles yet</EmptyTitle>
-            <EmptyDescription>
-              Create Roles to group Permission Assignments for Staff in this Tenant.
-            </EmptyDescription>
-          </EmptyHeader>
-          {canCreate ? (
-            <EmptyContent>
+        <EmptyState
+          tone="violet"
+          title="No Roles yet"
+          icon={PiShieldCheckDuotone}
+          className="bg-card min-h-80 border"
+          description="Create Roles to group Permission Assignments for Staff in this Tenant."
+          actions={
+            canCreate ? (
               <Button type="button" onClick={onCreate}>
                 <PiPlusLight className="size-4" />
                 Create Role
               </Button>
-            </EmptyContent>
-          ) : null}
-        </Empty>
+            ) : null
+          }
+        />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {roles.map((role) => (

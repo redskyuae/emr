@@ -1,14 +1,9 @@
-import { PiKeyLight } from 'react-icons/pi';
+import { PiKeyDuotone } from 'react-icons/pi';
+
+import { EmptyState } from '@/components/app/empty-state';
 
 import type { PermissionListItem } from '@/app/api/lib/modules/permission/schemas/permission-schema';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
 
 import {
@@ -42,17 +37,14 @@ export function PermissionMatrix({
 }) {
   if (sections.length === 0) {
     return (
-      <Empty className="bg-card min-h-64 border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <PiKeyLight />
-          </EmptyMedia>
-          <EmptyTitle>No Permissions in the catalogue</EmptyTitle>
-          <EmptyDescription>
-            The Permission Catalogue is created during Tenant Provisioning.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <EmptyState
+        size="sm"
+        tone="violet"
+        icon={PiKeyDuotone}
+        className="bg-card border"
+        title="No Permissions in the catalogue"
+        description="The Permission Catalogue is created during Tenant Provisioning."
+      />
     );
   }
 

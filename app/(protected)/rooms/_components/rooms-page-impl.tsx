@@ -4,7 +4,13 @@ import { useEffect, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
-import { PiBedLight, PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+import {
+  PiPlusLight,
+  PiDoorDuotone,
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import type { Room, RoomStatus } from '@/app/api/lib/modules/room/schemas/room-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
@@ -12,18 +18,11 @@ import { useRoomTypesQuery } from '@/app/queries/room-masters/room-types/useRoom
 import { useRoomQuery } from '@/app/queries/rooms/useRoom';
 import { useRoomSummaryQuery } from '@/app/queries/rooms/useRoomSummary';
 import { useRoomsQuery } from '@/app/queries/rooms/useRooms';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
@@ -230,37 +229,29 @@ export function RoomsPageImpl() {
           skeleton={<ViewSkeleton layout={viewLayout} showActions={canUpdate || canDelete} />}
         >
           {rooms.length === 0 && !hasFilters ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiBedLight />
-                </EmptyMedia>
-                <EmptyTitle>No Rooms yet</EmptyTitle>
-                <EmptyDescription>
-                  Add the Rooms in this Tenant to track their Room Type, Beds, and availability.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="sky"
+              title="No Rooms yet"
+              icon={PiDoorDuotone}
+              className="bg-card min-h-80 border"
+              description="Add the Rooms in this Tenant to track their Room Type, Beds, and availability."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setRoomParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Room
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : rooms.length === 0 ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
-                  No Rooms match the current search and filters. Try widening them.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              tone="neutral"
+              title="No results found"
+              icon={PiMagnifyingGlassDuotone}
+              className="bg-card min-h-72 border"
+              description="No Rooms match the current search and filters. Try widening them."
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

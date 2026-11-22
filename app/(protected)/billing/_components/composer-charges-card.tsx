@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiTrash } from 'react-icons/ci';
-import { PiPlusLight } from 'react-icons/pi';
+import { PiListPlusDuotone, PiPlusLight } from 'react-icons/pi';
 
 import { useChargeItemsQuery } from '@/app/queries/billing/charge-items/useChargeItems';
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -100,9 +101,13 @@ export function ComposerChargesCard({
           </p>
         ) : null}
         {lines.length === 0 ? (
-          <p className="text-muted-foreground rounded-md border p-4 text-sm">
-            No Charges added yet.
-          </p>
+          <EmptyState
+            size="sm"
+            tone="green"
+            icon={PiListPlusDuotone}
+            title="No Charges added yet"
+            className="rounded-md border"
+          />
         ) : (
           <div className="space-y-2">
             {lines.map((line) => (

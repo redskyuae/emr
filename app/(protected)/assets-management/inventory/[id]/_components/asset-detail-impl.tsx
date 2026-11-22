@@ -2,22 +2,16 @@
 
 import Link from 'next/link';
 import { CiBoxes } from 'react-icons/ci';
-import { PiArrowLeftLight } from 'react-icons/pi';
+import { PiArrowLeftLight, PiPackageDuotone } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useAssetQuery } from '@/app/queries/assets-management/useAsset';
 import { formatAedCompact } from '@/lib/format-currency';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function BackLink() {
@@ -106,15 +100,14 @@ export function AssetDetailImpl({ assetId }: { assetId: number }) {
     return (
       <div className="space-y-4">
         <BackLink />
-        <Empty className="min-h-72">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiBoxes className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>Asset not found</EmptyTitle>
-            <EmptyDescription>{getApiErrorMessage(assetQuery.error)}</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          tone="danger"
+          orbit={false}
+          className="min-h-72"
+          title="Asset not found"
+          icon={PiPackageDuotone}
+          description={getApiErrorMessage(assetQuery.error)}
+        />
       </div>
     );
   }

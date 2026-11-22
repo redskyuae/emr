@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useDebouncedValue } from '@tanstack/react-pacer';
+import { CiBoxList, CiCircleAlert, CiGrid41, CiSearch, CiViewTable } from 'react-icons/ci';
 import {
-  CiBoxList,
-  CiCircleAlert,
-  CiGrid41,
-  CiSearch,
-  CiStethoscope,
-  CiViewTable,
-} from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+  PiPlusLight,
+  PiCaretLeftLight,
+  PiCaretRightLight,
+  PiStethoscopeDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 import { useQueryState } from 'nuqs';
 
 import type {
@@ -22,18 +21,11 @@ import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useDoctorQuery } from '@/app/queries/doctors/useDoctor';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useSpecialtiesQuery } from '@/app/queries/specialties/useSpecialties';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
@@ -257,37 +249,29 @@ export function DoctorsPageImpl() {
           }
         >
           {doctors.length === 0 && !hasFilters ? (
-            <Empty className="bg-card min-h-80 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiStethoscope />
-                </EmptyMedia>
-                <EmptyTitle>No Doctors yet</EmptyTitle>
-                <EmptyDescription>
-                  Add Doctors in this Tenant so Doctor Schedules and Appointments can use them.
-                </EmptyDescription>
-              </EmptyHeader>
-              {canCreate ? (
-                <EmptyContent>
+            <EmptyState
+              tone="violet"
+              title="No Doctors yet"
+              icon={PiStethoscopeDuotone}
+              className="bg-card min-h-80 border"
+              description="Add Doctors in this Tenant so Doctor Schedules and Appointments can use them."
+              actions={
+                canCreate ? (
                   <Button type="button" onClick={() => void setDoctorParam('new')}>
                     <PiPlusLight className="size-4" />
                     Add Doctor
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                ) : null
+              }
+            />
           ) : doctors.length === 0 ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiSearch />
-                </EmptyMedia>
-                <EmptyTitle>No results found</EmptyTitle>
-                <EmptyDescription>
-                  No Doctors match the current search and filters. Try widening them.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              tone="neutral"
+              title="No results found"
+              icon={PiMagnifyingGlassDuotone}
+              className="bg-card min-h-72 border"
+              description="No Doctors match the current search and filters. Try widening them."
+            />
           ) : (
             <div className="space-y-4">
               {viewLayout === 'table' ? (

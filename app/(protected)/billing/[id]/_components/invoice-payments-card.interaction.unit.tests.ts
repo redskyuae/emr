@@ -61,3 +61,23 @@ describe('Invoice Payments receipt action', () => {
     expect(onViewReceipt).toHaveBeenCalledWith(payment);
   });
 });
+
+describe('Invoice Payments empty state', () => {
+  it('should show a small green empty state with no description when nothing is paid', () => {
+    const { container } = render(
+      createElement(InvoicePaymentsCard, {
+        invoice: { ...invoice, payments: [], status: 'FINALIZED', amountPaid: 0, balanceDue: 300 },
+        canRecordPayment: true,
+        onRecordPayment: vi.fn(),
+        onViewReceipt: vi.fn(),
+      })
+    );
+
+    const root = container.querySelector('[data-slot="empty"]');
+
+    expect(screen.getByText('No payments recorded yet')).toBeTruthy();
+    expect(root?.getAttribute('data-tone')).toBe('green');
+    expect(root?.getAttribute('data-size')).toBe('sm');
+    expect(root?.querySelector('[data-slot="empty-description"]')).toBeNull();
+  });
+});

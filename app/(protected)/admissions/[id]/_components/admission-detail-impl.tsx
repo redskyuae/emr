@@ -12,7 +12,13 @@ import {
   CiUser,
   CiWavePulse1,
 } from 'react-icons/ci';
-import { PiArrowsLeftRightLight, PiBedLight } from 'react-icons/pi';
+import {
+  PiBedLight,
+  PiHeartbeatDuotone,
+  PiNotePencilDuotone,
+  PiArrowsLeftRightLight,
+  PiArrowsLeftRightDuotone,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { AllergyBanner } from '@/app/(protected)/patients/[id]/_components/_chart/allergy-banner';
@@ -26,6 +32,7 @@ import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientCha
 import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/app/empty-state';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -249,9 +256,13 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             </CardHeader>
             <CardContent>
               {admission.transfers.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  No transfers — the Patient has been in {admission.bed.bedNumber} since admission.
-                </p>
+                <EmptyState
+                  size="sm"
+                  tone="sky"
+                  title="No transfers"
+                  icon={PiArrowsLeftRightDuotone}
+                  description={`The Patient has been in ${admission.bed.bedNumber} since admission.`}
+                />
               ) : (
                 <ul className="space-y-2 text-sm">
                   {admission.transfers.map((transfer) => (
@@ -289,9 +300,13 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             </CardHeader>
             <CardContent>
               {admissionVitals.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  No vitals recorded during this Admission.
-                </p>
+                <EmptyState
+                  size="sm"
+                  tone="blue"
+                  title="No vitals recorded"
+                  icon={PiHeartbeatDuotone}
+                  description="Nothing has been recorded during this Admission."
+                />
               ) : (
                 <ul className="space-y-2 text-sm">
                   {admissionVitals.map((vitalSign) => (
@@ -336,9 +351,13 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             </CardHeader>
             <CardContent>
               {admissionNotes.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  No notes authored during this Admission.
-                </p>
+                <EmptyState
+                  size="sm"
+                  tone="blue"
+                  title="No notes yet"
+                  icon={PiNotePencilDuotone}
+                  description="Nothing has been authored during this Admission."
+                />
               ) : (
                 <ul className="space-y-2 text-sm">
                   {admissionNotes.map((note) => (

@@ -4,24 +4,23 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
-import { CiCircleAlert, CiReceipt, CiSearch } from 'react-icons/ci';
-import { PiCaretLeftLight, PiCaretRightLight, PiPlusLight } from 'react-icons/pi';
+import { CiCircleAlert, CiSearch } from 'react-icons/ci';
+import {
+  PiPlusLight,
+  PiCaretLeftLight,
+  PiReceiptDuotone,
+  PiCaretRightLight,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useInvoicesQuery } from '@/app/queries/billing/invoices/useInvoices';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import {
   Select,
@@ -182,40 +181,31 @@ export function BillingPageImpl() {
             skeleton={<InvoiceTableSkeleton />}
           >
             {invoices.length === 0 && !isFiltered ? (
-              <Empty className="bg-card min-h-80 border">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CiReceipt />
-                  </EmptyMedia>
-                  <EmptyTitle>No Invoices yet</EmptyTitle>
-                  <EmptyDescription>
-                    Raise a bill for a Patient, optionally linked to a Visit or Admission, then add
-                    priced Charge Items to it.
-                  </EmptyDescription>
-                </EmptyHeader>
-                {canCreate ? (
-                  <EmptyContent>
+              <EmptyState
+                tone="green"
+                title="No Invoices yet"
+                icon={PiReceiptDuotone}
+                className="bg-card min-h-80 border"
+                description="Raise a bill for a Patient, optionally linked to a Visit or Admission, then add priced Charge Items to it."
+                actions={
+                  canCreate ? (
                     <Button asChild>
                       <Link href="/billing?invoice=new">
                         <PiPlusLight className="size-4" />
                         New Invoice
                       </Link>
                     </Button>
-                  </EmptyContent>
-                ) : null}
-              </Empty>
+                  ) : null
+                }
+              />
             ) : invoices.length === 0 ? (
-              <Empty className="bg-card min-h-72 border">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CiSearch />
-                  </EmptyMedia>
-                  <EmptyTitle>No results found</EmptyTitle>
-                  <EmptyDescription>
-                    No Invoices match the current filters. Try a different search term or status.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              <EmptyState
+                tone="neutral"
+                title="No results found"
+                icon={PiMagnifyingGlassDuotone}
+                className="bg-card min-h-72 border"
+                description="No Invoices match the current filters. Try a different search term or status."
+              />
             ) : (
               <div className="space-y-4">
                 <InvoiceTable invoices={invoices} />
