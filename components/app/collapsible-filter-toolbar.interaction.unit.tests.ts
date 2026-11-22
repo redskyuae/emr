@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createElement, type ComponentProps } from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CollapsibleFilterToolbar, FilterSelect } from './collapsible-filter-toolbar';
@@ -110,6 +110,27 @@ describe('CollapsibleFilterToolbar', () => {
 
       expect(toggleButton()).toHaveProperty('ariaExpanded', 'false');
       expect(advancedRegion().hasAttribute('inert')).toBe(true);
+    } finally {
+      window.matchMedia = matchMedia;
+    }
+  });
+
+  it('should keep the rows shown when reopened before a collapse animation ends', async () => {
+    const matchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
+
+    try {
+      renderToolbar({ defaultExpanded: true });
+
+      fireEvent.click(toggleButton());
+      fireEvent.click(toggleButton());
+
+      // Outlast the 0.3s collapse, so a collapse that was not cancelled would have finished.
+      await act(() => new Promise((resolve) => setTimeout(resolve, 600)));
+
+      expect(toggleButton()).toHaveProperty('ariaExpanded', 'true');
+      expect(advancedRegion().hidden).toBe(false);
+      expect(advancedRegion().hasAttribute('inert')).toBe(false);
     } finally {
       window.matchMedia = matchMedia;
     }
