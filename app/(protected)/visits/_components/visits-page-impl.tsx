@@ -1,17 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiCircleAlert, CiSearch } from 'react-icons/ci';
-import {
-  PiCaretLeftLight,
-  PiCaretRightLight,
-  PiClipboardTextLight,
-  PiPlusLight,
-} from 'react-icons/pi';
+import { PiCaretLeftLight, PiCaretRightLight } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
@@ -23,14 +17,6 @@ import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,6 +36,7 @@ import {
 } from '../_utils/visit-status';
 import { CancelVisitDialog } from './_modals/cancel-visit-dialog';
 import { VisitQueueSummary } from './visit-queue-summary';
+import { VisitsQueueEmptyState } from './visits-queue-empty-state';
 import { VisitsTable, VisitsTableSkeleton } from './visits-table';
 
 const ALL_FILTER = 'all';
@@ -83,6 +70,8 @@ export function VisitsPageImpl() {
   const startMutation = useStartConsultation();
 
   const { data: canCreate } = useHasPermission('visit:create');
+  // The same values the query uses, so the empty state always agrees with the queue on screen.
+  const isFiltered = Boolean(doctorId || status || debouncedSearch.trim());
   const { data: canStart } = useHasPermission('visit:start');
   const { data: canCancel } = useHasPermission('visit:cancel');
 
@@ -207,28 +196,11 @@ export function VisitsPageImpl() {
         {visitsQuery.isError ? null : (
           <SkeletonCrossfade isLoading={visitsQuery.isLoading} skeleton={<VisitsTableSkeleton />}>
             {visits.length === 0 ? (
-              <Empty className="bg-card min-h-80 border">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <PiClipboardTextLight />
-                  </EmptyMedia>
-                  <EmptyTitle>No Visits for {visitDate}</EmptyTitle>
-                  <EmptyDescription>
-                    Create a Visit from a booked Appointment or for a Walk-in Patient to start
-                    today&apos;s queue.
-                  </EmptyDescription>
-                </EmptyHeader>
-                {canCreate ? (
-                  <EmptyContent>
-                    <Button asChild>
-                      <Link href="/visits/new">
-                        <PiPlusLight className="size-4" />
-                        Create Visit
-                      </Link>
-                    </Button>
-                  </EmptyContent>
-                ) : null}
-              </Empty>
+              <VisitsQueueEmptyState
+                visitDate={visitDate}
+                isFiltered={isFiltered}
+                canCreate={canCreate}
+              />
             ) : (
               <div className="space-y-4">
                 <VisitsTable

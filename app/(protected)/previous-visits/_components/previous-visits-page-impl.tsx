@@ -3,24 +3,17 @@
 import { useEffect, useState } from 'react';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { CiCircleAlert } from 'react-icons/ci';
-import { PiClockCounterClockwiseLight } from 'react-icons/pi';
+import { PiClockCounterClockwiseDuotone, PiMagnifyingGlassDuotone } from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
 import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import {
   PREVIOUS_VISITS_PAGE_SIZE,
   appliedFilterNames,
@@ -154,36 +147,28 @@ export function PreviousVisitsPageImpl() {
           skeleton={<PreviousVisitsTableSkeleton />}
         >
           {visits.length === 0 ? (
-            <Empty className="bg-card min-h-72 border">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiClockCounterClockwiseLight />
-                </EmptyMedia>
-                {activeCount > 0 ? (
-                  <>
-                    <EmptyTitle>No Visits match these filters</EmptyTitle>
-                    <EmptyDescription>
-                      Widen the date range, clear the search, or choose a different Doctor, status
-                      or Visit Type.
-                    </EmptyDescription>
-                  </>
-                ) : (
-                  <>
-                    <EmptyTitle>No past Visits yet</EmptyTitle>
-                    <EmptyDescription>
-                      Visits appear here once Patients have been checked in.
-                    </EmptyDescription>
-                  </>
-                )}
-              </EmptyHeader>
-              {activeCount > 0 ? (
-                <EmptyContent>
+            activeCount > 0 ? (
+              <EmptyState
+                tone="neutral"
+                icon={PiMagnifyingGlassDuotone}
+                title="No Visits match these filters"
+                className="bg-card min-h-72 border"
+                description="Widen the date range, clear the search, or choose a different Doctor, status or Visit Type."
+                actions={
                   <Button type="button" variant="outline" onClick={resetFilters}>
                     Reset filters
                   </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
+                }
+              />
+            ) : (
+              <EmptyState
+                tone="teal"
+                title="No past Visits yet"
+                icon={PiClockCounterClockwiseDuotone}
+                className="bg-card min-h-72 border"
+                description="Visits appear here once Patients have been checked in."
+              />
+            )
           ) : (
             <PreviousVisitsTable
               visits={visits}

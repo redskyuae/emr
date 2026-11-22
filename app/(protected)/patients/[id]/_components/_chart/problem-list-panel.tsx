@@ -1,6 +1,6 @@
 'use client';
 
-import { PiClipboardTextLight } from 'react-icons/pi';
+import { PiClipboardTextLight, PiListChecksDuotone } from 'react-icons/pi';
 
 import type { PatientProblem } from '@/app/api/lib/modules/patient-problem/schemas/patient-problem-schema';
 import { Badge } from '@/components/ui/badge';
@@ -75,7 +75,7 @@ export function ProblemListPanel({
       onAdd={onAdd}
     >
       {problems.length === 0 ? (
-        <ChartPanelEmpty message="No problems recorded." />
+        <ChartPanelEmpty icon={PiListChecksDuotone} title="No problems recorded" />
       ) : (
         <div className="space-y-4">
           {active.length > 0 ? (

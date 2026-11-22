@@ -1,6 +1,7 @@
 'use client';
 
 import { CiPill } from 'react-icons/ci';
+import { PiPillDuotone } from 'react-icons/pi';
 
 import type { PatientMedication } from '@/app/api/lib/modules/patient-medication/schemas/patient-medication-schema';
 import { Badge } from '@/components/ui/badge';
@@ -71,7 +72,7 @@ export function MedicationsPanel({
       onAdd={onAdd}
     >
       {medications.length === 0 ? (
-        <ChartPanelEmpty message="No medications recorded." />
+        <ChartPanelEmpty icon={PiPillDuotone} title="No medications recorded" />
       ) : (
         <div className="space-y-4">
           {active.length > 0 ? (

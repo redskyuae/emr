@@ -12,7 +12,12 @@ import {
   CiUser,
   CiViewTimeline,
 } from 'react-icons/ci';
-import { PiArrowLeftLight, PiUserCheckLight, PiUserMinusLight, PiUsersLight } from 'react-icons/pi';
+import {
+  PiArrowLeftLight,
+  PiUserCheckLight,
+  PiUserMinusLight,
+  PiUserMinusDuotone,
+} from 'react-icons/pi';
 
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
@@ -29,6 +34,7 @@ import {
   getPatientRaceLabel,
   getPatientTitleLabel,
 } from '@/app/(protected)/patients/_utils/patient-value-sets';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -40,13 +46,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -278,15 +277,14 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
     return (
       <div className="space-y-4">
         <BackLink />
-        <Empty className="min-h-72">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <PiUsersLight className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>Patient not found</EmptyTitle>
-            <EmptyDescription>{getApiErrorMessage(patientQuery.error)}</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          tone="danger"
+          orbit={false}
+          className="min-h-72"
+          title="Patient not found"
+          icon={PiUserMinusDuotone}
+          description={getApiErrorMessage(patientQuery.error)}
+        />
       </div>
     );
   }

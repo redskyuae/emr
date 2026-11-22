@@ -1,21 +1,16 @@
 'use client';
 
-import { CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiPlusLight, PiCalendarBlankDuotone, PiMagnifyingGlassDuotone } from 'react-icons/pi';
 
 import type { TherapistSchedule } from '@/app/api/lib/modules/therapist-schedule/schemas/therapist-schedule-schema';
 import type { Therapist } from '@/app/api/lib/modules/therapist/schemas/therapist-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
 import { TherapistScheduleViewSkeleton } from './therapist-schedule-skeletons';
 import {
@@ -38,6 +33,11 @@ type Props = {
   meta: Paginated<TherapistSchedule>['meta'] | undefined;
   onEdit: (schedule: TherapistSchedule) => void;
   onPageChange: (next: number) => void;
+  /** The Therapist or date range is narrowing the list, as the query applies it. */
+  isFiltered: boolean;
+  /** The user may create, so the "nothing yet" state offers New Therapist Schedule. */
+  canCreate: boolean;
+  onAddSchedule: () => void;
 };
 
 export function TherapistSchedulesResults({
@@ -53,6 +53,9 @@ export function TherapistSchedulesResults({
   isLoading,
   isFetching,
   onPageChange,
+  isFiltered,
+  canCreate,
+  onAddSchedule,
 }: Props) {
   if (isError) {
     return (
@@ -78,17 +81,31 @@ export function TherapistSchedulesResults({
       skeleton={<TherapistScheduleViewSkeleton layout={layout} canEdit={canEdit} />}
     >
       {schedules.length === 0 ? (
-        <Empty className="bg-card min-h-72 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiCalendarDate className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>No Therapist Schedules found.</EmptyTitle>
-            <EmptyDescription>
-              Create a schedule or adjust the Therapist and date filters.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        isFiltered ? (
+          <EmptyState
+            tone="neutral"
+            title="No results found"
+            icon={PiMagnifyingGlassDuotone}
+            className="bg-card min-h-72 border"
+            description="No Therapist Schedules match the Therapist and date filters."
+          />
+        ) : (
+          <EmptyState
+            tone="teal"
+            icon={PiCalendarBlankDuotone}
+            title="No Therapist Schedules yet"
+            className="bg-card min-h-72 border"
+            description="Create a Therapist Schedule to get started."
+            actions={
+              canCreate ? (
+                <Button type="button" onClick={onAddSchedule}>
+                  <PiPlusLight className="size-4" />
+                  New Therapist Schedule
+                </Button>
+              ) : null
+            }
+          />
+        )
       ) : (
         <div className="space-y-4">
           <div className={cn(isFetching && 'opacity-70 transition-opacity')}>

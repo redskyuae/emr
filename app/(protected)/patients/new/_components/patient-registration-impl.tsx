@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { PiArrowLeftLight, PiUserMinusLight } from 'react-icons/pi';
+import { PiArrowLeftLight, PiLockKeyDuotone } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { PatientForm } from '@/app/(protected)/patients/_components/patient-form';
@@ -13,14 +13,8 @@ import {
 import { useRegisterPatient } from '@/app/queries/patients/useRegisterPatient';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientFormAnalytics } from '@/app/(protected)/patients/_components/use-patient-form-analytics';
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 
 export function PatientRegistrationImpl() {
   const router = useRouter();
@@ -37,15 +31,14 @@ export function PatientRegistrationImpl() {
             Patients
           </Link>
         </Button>
-        <Empty className="min-h-72">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <PiUserMinusLight className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>You don&apos;t have permission to register Patients.</EmptyTitle>
-            <EmptyDescription>Contact a Tenant Admin if you need access.</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          tone="danger"
+          orbit={false}
+          className="min-h-72"
+          icon={PiLockKeyDuotone}
+          title="You don't have permission to register Patients."
+          description="Contact a Tenant Admin if you need access."
+        />
       </div>
     );
   }

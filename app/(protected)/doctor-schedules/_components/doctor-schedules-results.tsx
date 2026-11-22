@@ -1,21 +1,16 @@
 'use client';
 
-import { CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiPlusLight, PiCalendarBlankDuotone, PiMagnifyingGlassDuotone } from 'react-icons/pi';
 
 import type { Doctor } from '@/app/api/lib/modules/doctor/schemas/doctor-schema';
 import type { DoctorSchedule } from '@/app/api/lib/modules/doctor-schedule/schemas/doctor-schedule-schema';
 import type { Paginated } from '@/app/api/lib/utils/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
 import { DoctorScheduleViewSkeleton } from './doctor-schedule-skeletons';
 import {
@@ -38,6 +33,11 @@ type DoctorSchedulesResultsProps = {
   onEdit: (schedule: DoctorSchedule) => void;
   onPageChange: (next: number) => void;
   canEdit: boolean;
+  /** The Doctor or date range is narrowing the list, as the query applies it. */
+  isFiltered: boolean;
+  /** The user may create, so the "nothing yet" state offers New Doctor Schedule. */
+  canCreate: boolean;
+  onAddSchedule: () => void;
 };
 
 function buildDoctorNameMap(doctors: Doctor[]) {
@@ -57,6 +57,9 @@ export function DoctorSchedulesResults({
   isFetching,
   onPageChange,
   canEdit,
+  isFiltered,
+  canCreate,
+  onAddSchedule,
 }: DoctorSchedulesResultsProps) {
   if (isError) {
     return (
@@ -81,17 +84,31 @@ export function DoctorSchedulesResults({
       skeleton={<DoctorScheduleViewSkeleton layout={layout} canEdit={canEdit} />}
     >
       {schedules.length === 0 ? (
-        <Empty className="bg-card min-h-72 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiCalendarDate className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>No Doctor Schedules found.</EmptyTitle>
-            <EmptyDescription>
-              Create a schedule or adjust the Doctor and date filters.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        isFiltered ? (
+          <EmptyState
+            tone="neutral"
+            title="No results found"
+            icon={PiMagnifyingGlassDuotone}
+            className="bg-card min-h-72 border"
+            description="No Doctor Schedules match the Doctor and date filters."
+          />
+        ) : (
+          <EmptyState
+            tone="teal"
+            icon={PiCalendarBlankDuotone}
+            title="No Doctor Schedules yet"
+            className="bg-card min-h-72 border"
+            description="Create a Doctor Schedule to get started."
+            actions={
+              canCreate ? (
+                <Button type="button" onClick={onAddSchedule}>
+                  <PiPlusLight className="size-4" />
+                  New Doctor Schedule
+                </Button>
+              ) : null
+            }
+          />
+        )
       ) : (
         <div className="space-y-4">
           <div className={cn(isFetching && 'opacity-70 transition-opacity')}>

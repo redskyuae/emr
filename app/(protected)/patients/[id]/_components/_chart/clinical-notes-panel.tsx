@@ -1,6 +1,7 @@
 'use client';
 
 import { CiFileOn } from 'react-icons/ci';
+import { PiNotePencilDuotone } from 'react-icons/pi';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
@@ -124,7 +125,7 @@ export function ClinicalNotesPanel({
       onAdd={onAdd}
     >
       {notes.length === 0 ? (
-        <ChartPanelEmpty message="No clinical notes recorded." />
+        <ChartPanelEmpty icon={PiNotePencilDuotone} title="No clinical notes recorded" />
       ) : (
         <ul className="space-y-3">
           {notes.map((note) => (

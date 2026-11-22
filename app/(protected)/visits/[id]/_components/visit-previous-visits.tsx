@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { PiCaretRightLight } from 'react-icons/pi';
+import { PiCaretRightLight, PiClockCounterClockwiseDuotone } from 'react-icons/pi';
 
 import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
 import { Badge } from '@/components/ui/badge';
@@ -75,7 +76,13 @@ export function VisitPreviousVisits({
       ) : (
         <SkeletonCrossfade isLoading={visitsQuery.isLoading} skeleton={<PreviousVisitsSkeleton />}>
           {previous.length === 0 ? (
-            <p className="text-muted-foreground">No earlier Visits for this Patient.</p>
+            <EmptyState
+              size="sm"
+              tone="teal"
+              title="No earlier Visits"
+              icon={PiClockCounterClockwiseDuotone}
+              description="No earlier Visits for this Patient."
+            />
           ) : (
             <div className="space-y-2">
               {previous.map((item) => {

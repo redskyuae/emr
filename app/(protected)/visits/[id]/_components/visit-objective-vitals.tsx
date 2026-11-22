@@ -68,7 +68,8 @@ export function VisitObjectiveVitals({
         readings={upToThisVisit}
         loading={loading}
         error={error}
-        emptyText="Not recorded for this Visit yet."
+        emptyTitle="No Vital Signs recorded"
+        emptyDescription="Not recorded for this Visit yet."
         layout="tiles"
       />
       {onAmend && !loading && !error && visitReadings.length ? (

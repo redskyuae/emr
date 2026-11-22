@@ -1,6 +1,7 @@
 'use client';
 
 import { CiWavePulse1 } from 'react-icons/ci';
+import { PiHeartbeatDuotone } from 'react-icons/pi';
 
 import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
@@ -53,7 +54,7 @@ export function VitalsPanel({
       onAdd={onAdd}
     >
       {vitalSigns.length === 0 || !latest ? (
-        <ChartPanelEmpty message="No vital signs recorded." />
+        <ChartPanelEmpty icon={PiHeartbeatDuotone} title="No vital signs recorded" />
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

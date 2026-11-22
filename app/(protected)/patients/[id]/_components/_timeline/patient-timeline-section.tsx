@@ -3,7 +3,8 @@
 import { useCallback } from 'react';
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { useQueryState } from 'nuqs';
-import { CiCalendarDate } from 'react-icons/ci';
+import { CiCircleAlert } from 'react-icons/ci';
+import { PiClockCounterClockwiseDuotone, PiMagnifyingGlassDuotone } from 'react-icons/pi';
 
 import {
   TIMELINE_FEEDS,
@@ -15,14 +16,9 @@ import {
   patientTimelineQueryKey,
   usePatientTimelineQuery,
 } from '@/app/queries/patients/timeline/usePatientTimeline';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
@@ -101,34 +97,32 @@ export function PatientTimelineSection({ patientId }: { patientId: number }) {
       <TimelineFilterChips feed={feed} onFeedChange={handleFeedChange} />
 
       {timelineQuery.isError ? (
-        <Empty className="min-h-56">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiCalendarDate className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>Could not load the Timeline</EmptyTitle>
-            <EmptyDescription>{getApiErrorMessage(timelineQuery.error)}</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <Alert variant="destructive">
+          <CiCircleAlert className="size-4" />
+          <AlertTitle>Could not load the Timeline</AlertTitle>
+          <AlertDescription>{getApiErrorMessage(timelineQuery.error)}</AlertDescription>
+        </Alert>
       ) : null}
 
       {/* A failed "load more" keeps the pages already loaded on screen under the error. */}
       {timelineQuery.isError && loadedCount === 0 ? null : (
         <SkeletonCrossfade isLoading={timelineQuery.isLoading} skeleton={<TimelineSkeleton />}>
           {loadedCount === 0 ? (
-            <Empty className="min-h-56">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CiCalendarDate className="size-5" />
-                </EmptyMedia>
-                <EmptyTitle>Nothing to show yet</EmptyTitle>
-                <EmptyDescription>
-                  {feed === 'all'
-                    ? 'This Patient has no recorded activity.'
-                    : 'No activity matches this filter.'}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            feed === 'all' ? (
+              <EmptyState
+                tone="teal"
+                title="Nothing to show yet"
+                icon={PiClockCounterClockwiseDuotone}
+                description="This Patient has no recorded activity."
+              />
+            ) : (
+              <EmptyState
+                tone="neutral"
+                title="No results found"
+                icon={PiMagnifyingGlassDuotone}
+                description="No activity matches this filter."
+              />
+            )
           ) : (
             <div className="space-y-4">
               {groups.map((group) => (

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { PiArrowLeftLight, PiUserMinusLight, PiUsersLight } from 'react-icons/pi';
+import { PiArrowLeftLight, PiLockKeyDuotone, PiUserMinusDuotone } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { PatientForm } from '@/app/(protected)/patients/_components/patient-form';
@@ -17,16 +17,10 @@ import { useUpdatePatient } from '@/app/queries/patients/useUpdatePatient';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientFormAnalytics } from '@/app/(protected)/patients/_components/use-patient-form-analytics';
 import { patientEditFormMode } from '@/app/(protected)/patients/_utils/patient-form-analytics';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // The edit form: the read-only MRN card, the form cards, then Cancel / Save changes.
@@ -77,15 +71,14 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
     return (
       <div className="space-y-4">
         <BackLink patientId={patientId} />
-        <Empty className="min-h-72">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <PiUserMinusLight className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>You don&apos;t have permission to edit Patients.</EmptyTitle>
-            <EmptyDescription>Contact a Tenant Admin if you need access.</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          tone="danger"
+          orbit={false}
+          className="min-h-72"
+          icon={PiLockKeyDuotone}
+          title="You don't have permission to edit Patients."
+          description="Contact a Tenant Admin if you need access."
+        />
       </div>
     );
   }
@@ -94,15 +87,14 @@ export function PatientEditImpl({ patientId }: { patientId: number }) {
     return (
       <div className="space-y-4">
         <BackLink patientId={patientId} />
-        <Empty className="min-h-72">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <PiUsersLight className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>Patient not found</EmptyTitle>
-            <EmptyDescription>{getApiErrorMessage(patientQuery.error)}</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          tone="danger"
+          orbit={false}
+          className="min-h-72"
+          title="Patient not found"
+          icon={PiUserMinusDuotone}
+          description={getApiErrorMessage(patientQuery.error)}
+        />
       </div>
     );
   }

@@ -188,7 +188,8 @@ export function VisitContextPane({
                 readings={vitalSigns}
                 loading={chartLoading}
                 error={chartError}
-                emptyText="No Vital Signs recorded for this Patient."
+                emptyTitle="No Vital Signs recorded"
+                emptyDescription="Nothing has been recorded for this Patient yet."
               />
             </PaneSection>
 

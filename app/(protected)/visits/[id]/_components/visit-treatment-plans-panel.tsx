@@ -4,23 +4,18 @@ import {
   PiCalendarPlusLight,
   PiCheckLight,
   PiClipboardTextLight,
+  PiClipboardTextDuotone,
   PiPlusLight,
   PiXLight,
 } from 'react-icons/pi';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import type { PatientTreatmentPlan } from '@/app/api/lib/modules/patient-treatment-plan/schemas/patient-treatment-plan-schema';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -263,9 +258,13 @@ function TreatmentPlansContent({
         ))}
       </div>
     ) : (
-      <p className="text-muted-foreground text-sm">
-        No Treatment Plan Sessions were delivered in this Visit.
-      </p>
+      <EmptyState
+        size="sm"
+        tone="blue"
+        title="No Sessions delivered"
+        icon={PiClipboardTextDuotone}
+        description="No Treatment Plan Sessions were delivered in this Visit."
+      />
     );
   }
 
@@ -286,17 +285,14 @@ function TreatmentPlansContent({
       ) : (
         <Card>
           <CardContent>
-            <Empty className="min-h-48">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <PiClipboardTextLight className="size-5" />
-                </EmptyMedia>
-                <EmptyTitle>No active Patient Treatment Plan</EmptyTitle>
-                <EmptyDescription>
-                  Assign a Treatment to create Patient-specific Sessions.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <EmptyState
+              size="md"
+              tone="blue"
+              className="min-h-48"
+              icon={PiClipboardTextDuotone}
+              title="No active Patient Treatment Plan"
+              description="Assign a Treatment to create Patient-specific Sessions."
+            />
           </CardContent>
         </Card>
       )}

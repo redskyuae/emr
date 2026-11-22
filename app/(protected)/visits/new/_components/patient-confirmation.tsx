@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
 import type { Patient } from '@/app/api/lib/modules/patient/schemas/patient-schema';
-import { CiCalendarDate, CiCircleAlert, CiCircleCheck, CiUser } from 'react-icons/ci';
-import { PiArrowsCounterClockwiseLight } from 'react-icons/pi';
+import { CiCalendarDate, CiCircleAlert, CiCircleCheck } from 'react-icons/ci';
+import { PiArrowsCounterClockwiseLight, PiUserFocusDuotone } from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import { PatientForm } from '@/app/(protected)/patients/_components/patient-form';
@@ -18,18 +18,12 @@ import {
 } from '@/app/(protected)/patients/_utils/patient-form-values';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useUpdatePatient } from '@/app/queries/patients/useUpdatePatient';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import {
@@ -148,17 +142,14 @@ export function PatientConfirmation({
       skeleton={<PatientConfirmationSkeleton confirmed={confirmed} />}
     >
       {!patient ? (
-        <Empty className="border border-dashed py-8">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <CiUser className="size-5" />
-            </EmptyMedia>
-            <EmptyTitle>No Patient selected</EmptyTitle>
-            <EmptyDescription>
-              Select an Appointment or search for a Patient to confirm their details.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState
+          size="md"
+          tone="neutral"
+          title="No Patient selected"
+          icon={PiUserFocusDuotone}
+          className="border border-dashed"
+          description="Select an Appointment or search for a Patient to confirm their details."
+        />
       ) : (
         <div className="space-y-4">
           <section

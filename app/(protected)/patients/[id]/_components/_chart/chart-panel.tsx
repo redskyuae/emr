@@ -1,8 +1,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import type { IconType } from 'react-icons';
 import { PiPlusLight } from 'react-icons/pi';
 
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -41,12 +43,11 @@ export function ChartPanel({
   );
 }
 
-export function ChartPanelEmpty({ message }: { message: string }) {
-  return (
-    <p className="text-muted-foreground border-border/60 rounded-lg border border-dashed px-4 py-6 text-center text-sm">
-      {message}
-    </p>
-  );
+// The one empty state for the five Chart panels. The title is clinical wording, so callers keep it
+// exactly ("No known allergies recorded" must not read as a finding); the panel header keeps its
+// Add button.
+export function ChartPanelEmpty({ icon, title }: { icon: IconType; title: string }) {
+  return <EmptyState size="sm" tone="blue" icon={icon} title={title} />;
 }
 
 // Shared row-action menu (edit / delete) used by chart panels.

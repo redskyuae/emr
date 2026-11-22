@@ -39,14 +39,18 @@ export function TherapistSchedulesPageImpl() {
   const parsedTherapistId = therapistParam ? Number(therapistParam) : Number.NaN;
   const therapistId =
     Number.isInteger(parsedTherapistId) && parsedTherapistId > 0 ? parsedTherapistId : undefined;
+  const fromDate = isDateOnly(fromDateParam) ? fromDateParam : undefined;
+  const toDate = isDateOnly(toDateParam) ? toDateParam : undefined;
+  // The same values the query uses, so the empty state always agrees with the list on screen.
+  const isFiltered = Boolean(therapistId || fromDate || toDate);
   const therapistsQuery = useTherapistsQuery({ page: 1, limit: 999 });
   const rotasQuery = useDoctorRotasQuery({ page: 1, limit: 999 });
   const schedulesQuery = useTherapistSchedulesQuery({
     page,
     limit: PAGE_SIZE,
     therapistId,
-    fromDate: isDateOnly(fromDateParam) ? fromDateParam : undefined,
-    toDate: isDateOnly(toDateParam) ? toDateParam : undefined,
+    fromDate,
+    toDate,
   });
   const therapists = therapistsQuery.data?.data ?? [];
   const rotas = rotasQuery.data?.data ?? [];
@@ -144,6 +148,9 @@ export function TherapistSchedulesPageImpl() {
           canEdit={Boolean(canUpdate)}
           onPageChange={(next) => void setPage(next)}
           onEdit={({ id }) => void setScheduleParam(String(id))}
+          isFiltered={isFiltered}
+          canCreate={Boolean(canCreate)}
+          onAddSchedule={() => void setScheduleParam('new')}
         />
       </div>
       <TherapistScheduleFormSheet

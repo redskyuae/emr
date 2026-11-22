@@ -7,22 +7,15 @@ import { useDebouncedValue } from '@tanstack/react-pacer';
 import {
   PiCaretLeftLight,
   PiCaretRightLight,
-  PiClipboardTextLight,
   PiPlusLight,
+  PiMagnifyingGlassDuotone,
 } from 'react-icons/pi';
 
 import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { DemoDataBanner } from '@/components/app/demo-data-banner';
+import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { VISIT_STATUS_FILTERS } from '../../visits/_utils/visit-status';
 import { staticVisitList } from '../_data/static-visit-list';
 import {
@@ -134,30 +127,28 @@ export function VisitListPageImpl() {
       />
 
       {rows.length === 0 ? (
-        <Empty className="bg-card min-h-72 border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <PiClipboardTextLight />
-            </EmptyMedia>
-            <EmptyTitle>No Visits match these filters</EmptyTitle>
-            <EmptyDescription>
-              Widen the date range or clear a filter to see more of this Tenant&apos;s Visits.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent className="flex-row justify-center">
-            <Button type="button" variant="outline" onClick={clearFilters}>
-              Clear filters
-            </Button>
-            {canCreate ? (
-              <Button asChild>
-                <Link href="/visits/new">
-                  <PiPlusLight className="size-4" />
-                  Create Visit
-                </Link>
+        <EmptyState
+          tone="neutral"
+          icon={PiMagnifyingGlassDuotone}
+          title="No Visits match these filters"
+          className="bg-card min-h-72 border"
+          description="Widen the date range or clear a filter to see more of this Tenant's Visits."
+          actions={
+            <>
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Clear filters
               </Button>
-            ) : null}
-          </EmptyContent>
-        </Empty>
+              {canCreate ? (
+                <Button asChild>
+                  <Link href="/visits/new">
+                    <PiPlusLight className="size-4" />
+                    Create Visit
+                  </Link>
+                </Button>
+              ) : null}
+            </>
+          }
+        />
       ) : (
         <>
           <VisitListTable rows={pageRows} today={today} />
