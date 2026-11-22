@@ -11,6 +11,7 @@ import {
   CiTrash,
   CiUser,
   CiViewTimeline,
+  CiWavePulse1,
 } from 'react-icons/ci';
 import {
   PiArrowLeftLight,
@@ -258,6 +259,7 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
   const { data: canDeactivate } = useHasPermission('patient:deactivate');
   const { data: canReactivate } = useHasPermission('patient:reactivate');
   const { data: canDelete } = useHasPermission('patient:delete');
+  const { data: canViewAudit } = useHasPermission('audit-log:read');
 
   const tab = parsePatientTab(tabParam);
   const shownTab = patientQuery.data ? `${patientId}|${tab}` : null;
@@ -370,21 +372,31 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                     )
                   ) : null}
 
-                  {canDelete ? (
+                  {canDelete || canViewAudit ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button type="button" variant="ghost" size="icon" aria-label="More actions">
                           <CiMenuKebab className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onSelect={() => setPatientPendingDelete(patient)}
-                        >
-                          <CiTrash className="size-4" />
-                          Delete
-                        </DropdownMenuItem>
+                      <DropdownMenuContent align="end" className="w-44">
+                        {canViewAudit ? (
+                          <DropdownMenuItem asChild>
+                            <Link href={`/audit-log?patient=${patient.id}`}>
+                              <CiWavePulse1 className="size-4" />
+                              Audit history
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : null}
+                        {canDelete ? (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => setPatientPendingDelete(patient)}
+                          >
+                            <CiTrash className="size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        ) : null}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : null}

@@ -9,6 +9,7 @@ import {
 import { createRoleCommand } from '@/app/api/lib/modules/role/commands/create-role-command';
 import { getRolesQuery } from '@/app/api/lib/modules/role/queries/get-roles-query';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 
 function mutationMessage(status: number, errors: string[]) {
@@ -102,6 +103,12 @@ export async function POST(request: NextRequest) {
     recordServerEvent(analyticsActorFromSession(tenantSession, request), 'role_changed', {
       action: 'created',
       is_system_role: result.data.isSystem,
+    });
+
+    await recordAuditEvent(tenantSession, request, 'role.create', {
+      entityId: result.data.id,
+      entityLabel: result.data.name,
+      metadata: { code: result.data.code },
     });
 
     return NextResponse.json<SaveRoleResponse>(

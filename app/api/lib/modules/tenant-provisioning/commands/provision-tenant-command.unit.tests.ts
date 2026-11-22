@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { auth } from '@/app/lib/auth';
 import { createCookieHeader, getSetCookies } from '@/app/api/lib/utils/auth-cookie-helpers';
+import { authRepository } from '../../auth/repository/auth-repository';
 import { permissionRepository } from '../../permission/repository/permission-repository';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { tenantProvisioningRepository } from '../repository/tenant-provisioning-repository';
@@ -26,6 +27,10 @@ vi.mock('@/app/lib/auth', () => ({
 vi.mock('@/app/api/lib/utils/auth-cookie-helpers', () => ({
   getSetCookies: vi.fn(),
   createCookieHeader: vi.fn(),
+}));
+
+vi.mock('../../auth/repository/auth-repository', () => ({
+  authRepository: { findSessionIdByToken: vi.fn() },
 }));
 
 vi.mock('../validator/tenant-provisioning-validator', () => ({
@@ -65,6 +70,7 @@ vi.mock('./seed-default-work-order-masters-command', () => ({
 }));
 
 const api = vi.mocked(auth.api);
+const authRepo = vi.mocked(authRepository);
 const validate = vi.mocked(validateTenantProvisioning);
 const permissionRepo = vi.mocked(permissionRepository);
 const tenantRepo = vi.mocked(tenantRepository);
@@ -100,7 +106,11 @@ describe('ProvisionTenant command', () => {
     validate.mockResolvedValue({ success: true, data: validatedInput });
     api.createUser.mockResolvedValue({ user: { id: 'user-1' } } as never);
     api.createOrganization.mockResolvedValue({ id: 'org-1' } as never);
-    api.signInEmail.mockResolvedValue({ headers: new Headers() } as never);
+    api.signInEmail.mockResolvedValue({
+      headers: new Headers(),
+      response: { token: 'token-1' },
+    } as never);
+    authRepo.findSessionIdByToken.mockResolvedValue('session-1');
     api.setActiveOrganization.mockResolvedValue({ headers: new Headers() } as never);
     tenantRepo.getTenantById.mockResolvedValue(tenant);
     mockedGetSetCookies
@@ -136,8 +146,12 @@ describe('ProvisionTenant command', () => {
         tenant,
         setCookies: ['session=abc', 'active-org=org-1'],
         userId: 'user-1',
+        userName: 'Dr. Priya Raghavan',
+        userEmail: 'priya@apollo.example',
+        sessionId: 'session-1',
       },
     });
+    expect(authRepo.findSessionIdByToken).toHaveBeenCalledWith('token-1');
     expect(api.createUser).toHaveBeenCalledTimes(1);
     expect(api.createOrganization).toHaveBeenCalledTimes(1);
     expect(api.signInEmail).toHaveBeenCalledTimes(1);
@@ -147,6 +161,14 @@ describe('ProvisionTenant command', () => {
     expect(seedAppointmentMasters).not.toHaveBeenCalled();
     expect(seedAssetMasters).not.toHaveBeenCalled();
     expect(seedWorkOrderMasters).not.toHaveBeenCalled();
+  });
+
+  it('should leave the Session id empty when the Session cannot be found', async () => {
+    authRepo.findSessionIdByToken.mockResolvedValue(undefined);
+
+    const result = await provisionTenantCommand({});
+
+    expect(result.success && result.data.sessionId).toBeNull();
   });
 
   it('should clean up the created user and tenant when the tenant cannot be read back', async () => {

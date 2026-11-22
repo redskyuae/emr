@@ -4,6 +4,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { recordRolePermissionRemoved } from '@/app/api/lib/analytics/access-assignment-event';
 import { removePermissionCommand } from '@/app/api/lib/modules/role-permission/commands/remove-permission-command';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getRoleByIdQuery } from '@/app/api/lib/modules/role/queries/get-role-by-id-query';
 
 type RolePermissionRouteContext = {
   params: Promise<{ id: string; permissionId: string }>;
@@ -42,6 +44,14 @@ export async function DELETE(request: NextRequest, context: RolePermissionRouteC
     }
 
     recordRolePermissionRemoved(tenantSession, request, result.data.roleId);
+
+    const role = await getRoleByIdQuery(result.data.roleId, tenantSession.tenantId);
+
+    await recordAuditEvent(tenantSession, request, 'role.permissions-change', {
+      entityId: result.data.roleId,
+      entityLabel: role.success ? role.data.name : null,
+      metadata: { granted: [], revoked: [result.data.permissionId] },
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

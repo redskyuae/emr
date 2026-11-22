@@ -86,6 +86,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     'patient-treatment-plan:read'
   );
   const { data: canBookAppointment } = useHasPermission('appointment:create');
+  const { data: canViewAudit } = useHasPermission('audit-log:read');
   const { data: canUpdatePlanSession } = useHasPermission('patient-treatment-plan:update');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
   const { data: canAmendVisit, isLoading: amendPermissionLoading } =
@@ -226,6 +227,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           canCreateNote={Boolean(canCreateNote)}
           canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
           canBookAppointment={Boolean(canBookAppointment)}
+          canViewAudit={Boolean(canViewAudit)}
           canAmend={canAmend}
           starting={startMutation.isPending}
           onStart={() => void startConsultation()}

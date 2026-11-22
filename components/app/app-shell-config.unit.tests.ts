@@ -5,6 +5,7 @@ import {
   getAppPageGroup,
   getAppPageMeta,
   getVisibleNavGroups,
+  isNavItemActive,
 } from './app-shell-config';
 
 function getVisibleGroup(groupTitle: string, permissions: string[]) {
@@ -388,5 +389,34 @@ describe('App shell navigation permissions', () => {
 
   it('should have no group for a page outside the navigation', () => {
     expect(getAppPageGroup('/somewhere-else')).toBeUndefined();
+  });
+});
+
+describe('Audit Log navigation', () => {
+  function auditLogItems() {
+    return appNavGroups.find((group) => group.title === 'Audit Log')?.items ?? [];
+  }
+
+  it('should list All Audit Events, then User Audit Events, under the Audit Log', () => {
+    expect(auditLogItems().map(({ title, href }) => [title, href])).toEqual([
+      ['All Audit Events', '/audit-log'],
+      ['User Audit Events', '/audit-log/users'],
+    ]);
+  });
+
+  it('should mark only User Audit Events active on a user page', () => {
+    const [events, users] = auditLogItems();
+    if (!events || !users) throw new Error('Audit Log items are missing');
+
+    expect(isNavItemActive('/audit-log/users/abc', events)).toBe(false);
+    expect(isNavItemActive('/audit-log/users/abc', users)).toBe(true);
+    expect(isNavItemActive('/audit-log', events)).toBe(true);
+  });
+
+  it('should title the Audit Log pages and group them under it', () => {
+    expect(getAppPageMeta('/audit-log').title).toBe('All Audit Events');
+    expect(getAppPageMeta('/audit-log/users').title).toBe('User Audit Events');
+    expect(getAppPageMeta('/audit-log/users/abc').title).toBe('User Audit Events');
+    expect(getAppPageGroup('/audit-log/users/abc')).toBe('Audit Log');
   });
 });

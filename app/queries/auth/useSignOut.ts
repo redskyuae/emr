@@ -7,8 +7,9 @@ import { clearTabSession } from '@/app/lib/tab-session';
 import { resetAnalyticsUser } from '@/lib/analytics/analytics-client';
 import type { SignOutTrigger } from '@/lib/analytics/events/foundation-events';
 
-async function signOut(): Promise<SignoutResponse> {
-  const response = await fetch('/api/v1/signout', {
+async function signOut(trigger: SignOutTrigger): Promise<SignoutResponse> {
+  // The trigger tells the Audit Log why the Session ended.
+  const response = await fetch(`/api/v1/signout?trigger=${encodeURIComponent(trigger)}`, {
     method: 'POST',
     credentials: 'same-origin',
   });
@@ -23,7 +24,7 @@ export function useSignOut(trigger: SignOutTrigger, onSuccess?: () => void) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: signOut,
+    mutationFn: () => signOut(trigger),
     onSuccess: () => {
       resetAnalyticsUser(trigger);
       clearTabSession();

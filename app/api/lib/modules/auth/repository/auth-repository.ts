@@ -1,7 +1,7 @@
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 
 import { db } from '@/app/db';
-import { member, organization } from '@/app/db/schema/auth';
+import { member, organization, session, user } from '@/app/db/schema/auth';
 import type { Tenant } from '../../tenant/schemas/tenant-schema';
 
 const DEFAULT_TENANT_TIME_ZONE = 'Asia/Kolkata';
@@ -75,6 +75,33 @@ async function listActiveTenantsForUser(userId: string) {
   return tenants.map((tenant) => toTenant(tenant)).filter((tenant) => tenant.isActive);
 }
 
+// The id of the Session a sign-in just created. The token is only used to find the
+// row and is never returned or stored, so the Audit Log can name the Session
+// without holding anything that could be replayed.
+async function findSessionIdByToken(token: string): Promise<string | undefined> {
+  const [row] = await db
+    .select({ id: session.id })
+    .from(session)
+    .where(eq(session.token, token))
+    .limit(1);
+
+  return row?.id;
+}
+
+async function findUserByEmail(
+  email: string
+): Promise<{ id: string; name: string; email: string } | undefined> {
+  const [row] = await db
+    .select({ id: user.id, name: user.name, email: user.email })
+    .from(user)
+    .where(eq(sql`lower(${user.email})`, email.toLowerCase()))
+    .limit(1);
+
+  return row;
+}
+
 export const authRepository = {
+  findUserByEmail,
+  findSessionIdByToken,
   listActiveTenantsForUser,
 };

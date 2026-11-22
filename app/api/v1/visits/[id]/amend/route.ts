@@ -1,7 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { diffAuditFields, VISIT_AUDIT_FIELDS } from '@/app/api/lib/audit/audit-changes';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { amendVisitCommand } from '@/app/api/lib/modules/visit/commands/amend-visit-command';
+import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { AmendVisitResponse } from './types';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
@@ -49,6 +52,8 @@ export async function PUT(request: NextRequest, context: AmendVisitRouteContext)
     }
 
     const { id } = await context.params;
+    // Read before writing so the Audit Event can carry the before/after.
+    const before = await getVisitByIdQuery(id, tenantSession.tenantId);
     const result = await amendVisitCommand(id, tenantSession.tenantId, payload);
 
     if (!result.success) {
@@ -63,6 +68,16 @@ export async function PUT(request: NextRequest, context: AmendVisitRouteContext)
     recordLifecycleEvent(tenantSession, request, 'visit_amended', () =>
       visitAmendedProperties('visit', result.data.completedAt)
     );
+
+    await recordAuditEvent(tenantSession, request, 'visit.amend', {
+      entityId: result.data.id,
+      visitId: result.data.id,
+      patientId: result.data.patient.id,
+      entityLabel: result.data.visitNumber,
+      changes: before.success
+        ? diffAuditFields(before.data, result.data, VISIT_AUDIT_FIELDS)
+        : null,
+    });
 
     return NextResponse.json<AmendVisitResponse>({ data: result.data });
   } catch {

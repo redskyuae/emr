@@ -365,3 +365,58 @@ describe('OpenAPI Visit Summary contract', () => {
     );
   });
 });
+
+describe('OpenAPI Audit Log contract', () => {
+  it('should document the list and export operations with their permissions', () => {
+    const list = openApiDocument.paths['/api/v1/audit-log'].get;
+    const exportOperation = openApiDocument.paths['/api/v1/audit-log/export'].get;
+
+    expect(list.description).toContain('`audit-log:read`');
+    expect(exportOperation.description).toContain('`audit-log:export`');
+    expect(exportOperation.responses).toHaveProperty('422');
+    expect(openApiDocument.components.schemas.AuditEvent.properties).toHaveProperty('changes');
+    expect(openApiDocument.components.schemas.AuditEvent.properties).toHaveProperty('actorRoles');
+    expect(list.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'module' }),
+        expect.objectContaining({ name: 'operation' }),
+      ])
+    );
+    expect(exportOperation.description).toContain('one row per field');
+  });
+});
+
+describe('OpenAPI User Audit contract', () => {
+  it('should document the User Audit list and detail operations', () => {
+    expect(openApiDocument.paths['/api/v1/audit-log/users'].get.description).toContain(
+      '`audit-log:read`'
+    );
+    expect(openApiDocument.paths['/api/v1/audit-log/users/{userId}'].get.responses).toHaveProperty(
+      '404'
+    );
+    expect(openApiDocument.components.schemas).toHaveProperty('UserAuditDetail');
+  });
+
+  it('should document CSV and PDF exports for both Audit Log pages', () => {
+    for (const path of [
+      '/api/v1/audit-log/export',
+      '/api/v1/audit-log/users/export',
+      '/api/v1/audit-log/users/{userId}/export',
+    ] as const) {
+      const operation = openApiDocument.paths[path].get;
+
+      expect(operation.description).toContain('`audit-log:export`');
+      expect(operation.parameters).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: 'format' })])
+      );
+      expect(operation.responses['200'].content).toHaveProperty('application/pdf');
+      expect(operation.responses['200'].content).toHaveProperty('text/csv');
+    }
+  });
+
+  it('should document why a sign-out happened', () => {
+    expect(openApiDocument.paths['/api/v1/signout'].post.parameters).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'trigger' })])
+    );
+  });
+});

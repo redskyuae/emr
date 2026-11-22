@@ -4,6 +4,7 @@ import type { CompleteVisitResponse } from './types';
 
 import { completeVisitCommand } from '@/app/api/lib/modules/visit/commands/complete-visit-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { visitCompletedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
@@ -46,6 +47,13 @@ export async function POST(request: NextRequest, context: VisitRouteContext) {
     recordLifecycleEvent(tenantSession, request, 'visit_completed', () =>
       visitCompletedProperties(result.data)
     );
+
+    await recordAuditEvent(tenantSession, request, 'visit.complete', {
+      entityId: result.data.id,
+      visitId: result.data.id,
+      patientId: result.data.patient.id,
+      entityLabel: result.data.visitNumber,
+    });
 
     return NextResponse.json<CompleteVisitResponse>({ data: result.data });
   } catch {

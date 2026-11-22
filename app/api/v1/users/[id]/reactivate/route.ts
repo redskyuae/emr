@@ -8,6 +8,7 @@ import {
 } from '@/app/api/lib/analytics/server-analytics';
 import { reactivateStaffCommand } from '@/app/api/lib/modules/staff/commands/reactivate-staff-command';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 
 type StaffRouteContext = {
   params: Promise<{ id: string }>;
@@ -44,6 +45,11 @@ export async function PATCH(request: NextRequest, context: StaffRouteContext) {
     recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_changed', {
       profile_kind: 'staff',
       action: 'reactivated',
+    });
+
+    await recordAuditEvent(tenantSession, request, 'user.reactivate', {
+      entityId: result.data.id,
+      entityLabel: result.data.email,
     });
 
     return NextResponse.json<ReactivateStaffResponse>({ data: result.data });

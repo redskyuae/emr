@@ -3,6 +3,9 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { amendVisitClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/commands/amend-visit-clinical-note-command';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { CLINICAL_NOTE_AUDIT_FIELDS, diffAuditFields } from '@/app/api/lib/audit/audit-changes';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getClinicalNoteByIdQuery } from '@/app/api/lib/modules/clinical-note/queries/get-clinical-note-by-id-query';
 import type { AmendVisitClinicalNoteResponse } from './types';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { visitAmendedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
@@ -45,6 +48,8 @@ export async function PUT(request: NextRequest, context: AmendVisitClinicalNoteR
     }
 
     const { id, noteId } = await context.params;
+    // Read before writing so the Audit Event can carry the before/after.
+    const before = await getClinicalNoteByIdQuery(noteId, tenantSession.tenantId);
     const result = await amendVisitClinicalNoteCommand(
       id,
       noteId,
@@ -65,6 +70,15 @@ export async function PUT(request: NextRequest, context: AmendVisitClinicalNoteR
     recordLifecycleEvent(tenantSession, request, 'visit_amended', () =>
       visitAmendedProperties('clinical_note', result.visitCompletedAt)
     );
+
+    await recordAuditEvent(tenantSession, request, 'clinical-note.amend', {
+      entityId: result.data.id,
+      visitId: result.data.visitId,
+      patientId: result.data.patientId,
+      changes: before.success
+        ? diffAuditFields(before.data, result.data, CLINICAL_NOTE_AUDIT_FIELDS)
+        : null,
+    });
 
     return NextResponse.json<AmendVisitClinicalNoteResponse>({ data: result.data });
   } catch {

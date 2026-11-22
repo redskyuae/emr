@@ -1,0 +1,2 @@
+ALTER TABLE "audit_event" ADD COLUMN "session_id" varchar(255);--> statement-breakpoint
+CREATE INDEX "audit_event_tenant_session_idx" ON "audit_event" USING btree ("tenant_id","session_id") WHERE "audit_event"."session_id" is not null;

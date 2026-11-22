@@ -26,6 +26,7 @@ import {
   PiListChecksLight,
   PiShieldCheckLight,
   PiUserGearLight,
+  PiUserListLight,
   PiUsersLight,
   PiWrenchLight,
 } from 'react-icons/pi';
@@ -41,6 +42,8 @@ export type AppNavItem = {
     title: string;
     href: string;
     badge?: string;
+    /** Active only on this exact path, for a sub-item whose href is its parent's. */
+    exact?: boolean;
     permission?: string;
   }[];
 };
@@ -246,12 +249,20 @@ export const appNavGroups: AppNavGroup[] = [
     ],
   },
   {
-    title: 'Activity',
+    title: 'Audit Log',
     items: [
       {
-        title: 'Audit Log',
+        title: 'All Audit Events',
         href: '/audit-log',
         icon: CiWavePulse1,
+        exact: true,
+        permission: 'audit-log',
+      },
+      {
+        title: 'User Audit Events',
+        href: '/audit-log/users',
+        icon: PiUserListLight,
+        permission: 'audit-log',
       },
     ],
   },
@@ -444,6 +455,8 @@ export const appNavGroups: AppNavGroup[] = [
 
 const appointmentNavHrefs = new Set([
   '/dashboard',
+  '/audit-log',
+  '/audit-log/users',
   '/patients',
   '/appointments',
   '/appointments/new',
@@ -546,8 +559,12 @@ const pageMetaByHref: Record<string, AppPageMeta> = {
     subtitle: 'Tenant-scoped skills used to qualify Therapists for Treatment Sessions.',
   },
   '/audit-log': {
-    title: 'Audit Log',
-    subtitle: 'Identity and access audit activity for this Tenant.',
+    title: 'All Audit Events',
+    subtitle: 'Who did what to which record, and to which Patient, in this Tenant.',
+  },
+  '/audit-log/users': {
+    title: 'User Audit Events',
+    subtitle: 'Sign-ins, Sessions, devices and activity for each person in this Tenant.',
   },
   '/tenant-profile': {
     title: 'Tenant Profile',

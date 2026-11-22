@@ -5,6 +5,7 @@ import type { SignClinicalNoteResponse } from './types';
 import { signClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/commands/sign-clinical-note-command';
 import { getClinicalNoteByIdQuery } from '@/app/api/lib/modules/clinical-note/queries/get-clinical-note-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { clinicalNoteSignedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
@@ -48,6 +49,12 @@ export async function POST(request: NextRequest, context: SignClinicalNoteRouteC
         { status }
       );
     }
+
+    await recordAuditEvent(tenantSession, request, 'clinical-note.sign', {
+      entityId: result.data.id,
+      visitId: result.data.visitId,
+      patientId: result.data.patientId,
+    });
 
     recordLifecycleEvent(tenantSession, request, 'clinical_note_signed', () =>
       clinicalNoteSignedProperties(result.data, result.noteTypeCode)

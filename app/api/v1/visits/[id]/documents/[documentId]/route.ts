@@ -3,6 +3,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteVisitDocumentCommand } from '@/app/api/lib/modules/visit-document/commands/delete-visit-document-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { visitDocumentProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
@@ -45,6 +47,17 @@ export async function DELETE(request: NextRequest, context: VisitDocumentRouteCo
     recordLifecycleEvent(tenantSession, request, 'visit_document_removed', () =>
       visitDocumentProperties(result.data)
     );
+
+    // The Visit supplies the Patient; the file name is recorded, never its contents or URL.
+    const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
+
+    await recordAuditEvent(tenantSession, request, 'visit-document.delete', {
+      entityId: result.data.id,
+      visitId: result.data.visitId,
+      patientId: visit.success ? visit.data.patient.id : null,
+      entityLabel: result.data.fileName,
+      metadata: { contentType: result.data.contentType, fileSize: result.data.fileSize },
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

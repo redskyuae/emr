@@ -37,6 +37,7 @@ function renderHeader(value: Visit) {
     canAssignPlan: false,
     canBookAppointment: false,
     canAmend: false,
+    canViewAudit: false,
     starting: false,
     onStart: noop,
     onAmend: noop,
