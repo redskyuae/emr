@@ -81,12 +81,19 @@ a pull request, say so and stop. Don't guess a PR.
       `gh pr view --json baseRefName -q .baseRefName` (stacked PRs sit on
       another branch, not `main`).
    3. `main`.
-2. `git fetch origin <base> --quiet`, then
-   `MB=$(git merge-base origin/<base> HEAD)`.
+2. Resolve the base ref. If `git ls-remote --exit-code --heads origin <base>`
+   finds it, run `git fetch origin <base> --quiet` and use `origin/<base>`.
+   Otherwise, if `git rev-parse --verify --quiet refs/heads/<base>` finds a
+   local branch, use `<base>` and say the base is local only. If neither
+   exists, say so and stop. Below, `<base-ref>` is the ref you resolved:
+   `MB=$(git merge-base <base-ref> HEAD)`.
 3. Collect the full change:
    - `git log --oneline $MB..HEAD`: commits on this branch.
-   - `git diff $MB --stat` and `git diff $MB`: commits **plus staged plus
-     unstaged** changes, against the merge base.
+   - `git diff $MB --stat` and `git diff $MB`: commits **plus unstaged**
+     changes, against the merge base.
+   - `git diff --cached $MB --stat` and `git diff --cached $MB`: **staged**
+     changes against the merge base, including a file staged as new and then
+     deleted from the working tree.
    - `git ls-files --others --exclude-standard`: untracked files. They are
      part of the change; read each one in full.
    - If you are on `<base>` itself and `$MB` is `HEAD`, this is just the
@@ -99,7 +106,11 @@ a pull request, say so and stop. Don't guess a PR.
 ### PR mode
 
 1. Parse `<owner>/<repo>` and `<n>`. A bare number means this checkout's
-   `origin`.
+   `origin`. Then pick where to fetch from, before fetching anything:
+   `<remote>` is `origin` when `<owner>/<repo>` matches
+   `gh repo view --json nameWithOwner -q .nameWithOwner` run in this
+   checkout, and `https://github.com/<owner>/<repo>.git` otherwise. Fetching
+   from the URL adds no remote and changes no config.
 2. Fetch the PR:
 
    ```bash
@@ -113,17 +124,18 @@ a pull request, say so and stop. Don't guess a PR.
    (the session scratchpad when there is one):
 
    ```bash
-   git fetch origin "pull/<n>/head:refs/code-review/pr-<n>" --force
-   git fetch origin <baseRefName> --quiet
+   git fetch <remote> "pull/<n>/head:refs/code-review/pr-<n>" --force
+   git fetch <remote> "<baseRefName>:refs/code-review/pr-<n>-base" --force
    git worktree add --detach "<tmp>/pr-<n>" refs/code-review/pr-<n>
-   MB=$(git merge-base origin/<baseRefName> refs/code-review/pr-<n>)
+   MB=$(git merge-base refs/code-review/pr-<n>-base refs/code-review/pr-<n>)
    git diff $MB refs/code-review/pr-<n>
    ```
 
-   Read files from the worktree, never from the main checkout, which holds a
-   different branch. For a PR in a repository other than this checkout's
-   `origin`, use `gh pr diff <n> --repo <owner>/<repo>` and read files with
-   `gh api repos/<owner>/<repo>/contents/<path>?ref=<headRefOid>`.
+   In PR mode, `<base-ref>` is `refs/code-review/pr-<n>-base`, and every
+   later step (the diff, the checks, drift from the base) uses it and the
+   same `<owner>/<repo>`. Read files from the worktree, never from the main
+   checkout, which holds a different branch and may be a different
+   repository.
 
 4. Read what reviewers already said, so you don't repeat it:
 
@@ -133,7 +145,8 @@ a pull request, say so and stop. Don't guess a PR.
    ```
 
 5. Remove the worktree (`git worktree remove --force <tmp>/pr-<n>`) and the
-   `refs/code-review/pr-<n>` ref when the review is finished, posted or not.
+   `refs/code-review/pr-<n>` and `refs/code-review/pr-<n>-base` refs when the
+   review is finished, posted or not.
 
 ## Step 2: Understand the intent before judging the code
 
@@ -166,8 +179,21 @@ does. Then go through
 areas the change touches. It holds the EMR rules, the Next.js 16 and React
 checks, the test checks and the design checks.
 
-**Mechanical checks** (local mode, and PR mode when the worktree's lockfile
-matches the main checkout's, after `ln -s <repo>/node_modules <tmp>/pr-<n>/node_modules`):
+**Mechanical checks.** These run the change's own code and config (test
+files, `eslint.config.*`, `vitest.config.*`) with the engineer's access to
+files and credentials, so run them only on code you can trust:
+
+- Local mode: always. It is the engineer's own work.
+- PR mode: only when the PR is in the same repository as this checkout
+  (`isCrossRepository` is false and `<remote>` is `origin`), so its author
+  already has write access, and the worktree's lockfile matches the main
+  checkout's. Then link the dependencies in with
+  `ln -s <repo>/node_modules <tmp>/pr-<n>/node_modules`. Never run
+  `bun install` in the worktree.
+- A PR from a fork or another repository: never run its code locally. Use
+  its CI as evidence (below) and say so in the summary.
+
+The checks:
 
 - `bunx tsc --noEmit`: a type error the change introduces is Must Fix.
 - `bunx eslint <changed files>`: report only errors the change introduces.
@@ -190,16 +216,16 @@ branched from, but it merges into the base as it is now. When the base has
 moved on, check what moved:
 
 1. Count how far behind the change is:
-   `git rev-list --count $MB..origin/<base>`. If that's 0, skip the rest.
+   `git rev-list --count $MB..<base-ref>`. If that's 0, skip the rest.
 2. Find the conflicts:
-   `git merge-tree --write-tree --name-only origin/<base> <head>`, where
+   `git merge-tree --write-tree --name-only <base-ref> <head>`, where
    `<head>` is `refs/code-review/pr-<n>` in PR mode and `HEAD` in local mode.
    In local mode this covers commits only, so check staged, unstaged and
    untracked files by hand against step 3.
 3. Find what the base changed underneath the change. List the files the
    changed code imports from or calls into, and intersect them with
-   `git diff --name-only $MB origin/<base>`. For each file in both lists,
-   read `git diff $MB origin/<base> -- <file>` and look for: a function
+   `git diff --name-only $MB <base-ref>`. For each file in both lists,
+   read `git diff $MB <base-ref> -- <file>` and look for: a function
    signature with a new required parameter, an export that was renamed or
    removed, a type that was narrowed, a new rule in `CLAUDE.md`,
    `docs/analytics.md` or an ADR that the change now breaks, and a new
@@ -311,7 +337,7 @@ Writing rules, after Google's comment guidance:
 ### Local mode: report in the terminal
 
 ```
-Reviewed <n> files against origin/<base> @ <short-sha> (<scope line from Step 1>)
+Reviewed <n> files against <base-ref> @ <short-sha> (<scope line from Step 1>)
 Checks: tsc ✓ | eslint ✓ (2 new warnings) | unit tests ✓ (34 passed) | <check not run, and why>
 
 Must Fix (2) · Chore (3) · Nit (1)

@@ -157,6 +157,7 @@ If `gh` is missing or not signed in, say so, ask the engineer to run
 ```bash
 git worktree remove --force "<tmp>/pr-<n>"
 git update-ref -d refs/code-review/pr-<n>
+git update-ref -d refs/code-review/pr-<n>-base
 ```
 
 Do this whether the review was posted, changed or abandoned.
