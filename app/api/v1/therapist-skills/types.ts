@@ -5,7 +5,7 @@ export type ListTherapistSkillsResponse = Paginated<TherapistSkill>;
 export type TherapistSkillResponse = { data: TherapistSkill };
 export type SaveTherapistSkillRequest = {
   name: string;
-  code?: string | null;
+  code?: string;
   description?: string | null;
 };
 export type SaveTherapistSkillResponse = TherapistSkillResponse;

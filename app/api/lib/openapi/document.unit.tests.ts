@@ -70,6 +70,31 @@ describe('OpenAPI Therapist contracts', () => {
     expect(openApiDocument.components.schemas.SaveTherapistSkillRequest.required).toEqual(['name']);
   });
 
+  it('should document a Therapist Skill code as a string because the API rejects null', () => {
+    expect(
+      openApiDocument.components.schemas.SaveTherapistSkillRequest.properties.code.type
+    ).toEqual('string');
+  });
+
+  it('should let a validation error and an invalid JSON error both match the 400 schema', () => {
+    for (const path of ['/api/v1/therapist-skills', '/api/v1/therapists'] as const) {
+      const schema =
+        openApiDocument.paths[path].post.responses['400'].content['application/json'].schema;
+
+      expect(schema).toHaveProperty('anyOf');
+      expect(schema).not.toHaveProperty('oneOf');
+    }
+  });
+
+  it('should document an unknown Therapist Skill on a Therapist as a 409 conflict', () => {
+    const responses = openApiDocument.paths['/api/v1/therapists'].post.responses;
+
+    expect(responses['409'].content['application/json'].examples).toHaveProperty('invalidSkill');
+    expect(responses['400'].content['application/json'].examples).not.toHaveProperty(
+      'invalidSkill'
+    );
+  });
+
   it('should document the Therapist registry and lifecycle operations', () => {
     expect(Object.keys(openApiDocument.paths['/api/v1/therapists/{id}'])).toEqual(['get', 'patch']);
     expect(

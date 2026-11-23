@@ -1807,7 +1807,7 @@ const therapistSkillValidationFailed = {
   description: 'Therapist Skill validation failed or the request body is not valid JSON.',
   content: {
     'application/json': {
-      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      schema: { anyOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
       examples: {
         missingName: {
           summary: 'Missing Therapist Skill name',
@@ -1918,18 +1918,11 @@ const therapistValidationFailed = {
   description: 'Therapist validation failed or the request body is not valid JSON.',
   content: {
     'application/json': {
-      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      schema: { anyOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
       examples: {
         missingEmail: {
           summary: 'Missing required email',
           value: { message: 'Validation failed', errors: ['Email is required'] },
-        },
-        invalidSkill: {
-          summary: 'A Therapist Skill is not in the active Tenant',
-          value: {
-            message: 'Validation failed',
-            errors: ['One or more Therapist Skills are Invalid.'],
-          },
         },
         emptyUpdate: {
           summary: 'Update with no fields',
@@ -1969,11 +1962,18 @@ const therapistCreateNotFound = {
 
 const therapistConflict = {
   description:
-    'Therapist registration number already exists, or the login already belongs to a Tenant.',
+    'Therapist registration number already exists, a Therapist Skill is not in the active Tenant, or the login already belongs to a Tenant.',
   content: {
     'application/json': {
       schema: schemaRef('ConflictError'),
       examples: {
+        invalidSkill: {
+          summary: 'A Therapist Skill is not in the active Tenant',
+          value: {
+            message: 'One or more Therapist Skills are Invalid.',
+            errors: ['One or more Therapist Skills are Invalid.'],
+          },
+        },
         duplicateRegistration: {
           summary: 'Registration number already exists',
           value: {
@@ -4869,7 +4869,7 @@ export const openApiDocument = {
         tags: ['Therapist Skill'],
         summary: 'Create Therapist Skill',
         description:
-          'Creates a Therapist Skill in the Tenant resolved from the authenticated Session. Tenant Admin authority is required. A non-empty code is trimmed and normalized to uppercase; an omitted, null, or blank code is stored as null.',
+          'Creates a Therapist Skill in the Tenant resolved from the authenticated Session. Tenant Admin authority is required. A non-empty code is trimmed and normalized to uppercase; an omitted or blank code is stored as null. A null code is rejected.',
         security: [{ cookieAuth: [] }],
         requestBody: requestBody('SaveTherapistSkillRequest', therapistSkillRequestExample),
         responses: {
@@ -4909,7 +4909,7 @@ export const openApiDocument = {
         tags: ['Therapist Skill'],
         summary: 'Update Therapist Skill',
         description:
-          'Fully replaces the editable Therapist Skill fields in the active Tenant. Tenant Admin authority is required. Name is required; omitted, null, or blank optional fields are cleared.',
+          'Fully replaces the editable Therapist Skill fields in the active Tenant. Tenant Admin authority is required. Name is required; omitted or blank optional fields are cleared, and a null description is also cleared. A null code is rejected; omit it or send a blank string to clear it.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Therapist Skill')],
         requestBody: requestBody('SaveTherapistSkillRequest', therapistSkillRequestExample),
@@ -12659,11 +12659,11 @@ export const openApiDocument = {
               'Therapist Skill name. Letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses only. Trimmed before saving.',
           },
           code: {
-            type: ['string', 'null'],
+            type: 'string',
             maxLength: 20,
             pattern: '^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$',
             description:
-              'Optional Tenant-scoped Therapist Skill code. Non-empty values may contain only letters, numbers, hyphens, and underscores; they are trimmed and normalized to uppercase. Null, blank, and omitted values are stored as null, and on update they clear the code.',
+              'Optional Tenant-scoped Therapist Skill code. Non-empty values may contain only letters, numbers, hyphens, and underscores; they are trimmed and normalized to uppercase. Blank and omitted values are stored as null, and on update they clear the code. Null is not accepted.',
           },
           description: {
             type: ['string', 'null'],
