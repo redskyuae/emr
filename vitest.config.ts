@@ -1,5 +1,8 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
+
+// Agent worktrees under .claude/ hold full checkouts of other branches; never run their tests.
+const exclude = [...configDefaults.exclude, '.claude/**'];
 
 export default defineConfig({
   test: {
@@ -11,6 +14,7 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           include: ['**/*.unit.tests.ts'],
+          exclude,
           setupFiles: ['./test/setup/unit.ts'],
         },
       },
@@ -20,6 +24,7 @@ export default defineConfig({
           name: 'integration',
           environment: 'node',
           include: ['**/*.integration.tests.ts'],
+          exclude,
           setupFiles: ['./test/setup/integration.ts'],
           testTimeout: 120_000,
           hookTimeout: 120_000,

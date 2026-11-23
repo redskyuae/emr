@@ -1787,6 +1787,233 @@ const doctorMutationErrorResponses = {
   '409': doctorConflict,
 };
 
+const therapistSkillExample = {
+  id: 3,
+  tenantId: 'org_apollo',
+  name: 'Abhyanga',
+  code: 'ABHY',
+  description: 'Full-body warm herbal oil massage',
+  createdOn: '2026-09-02T06:00:00.000Z',
+  modifiedOn: '2026-09-02T06:00:00.000Z',
+};
+
+const therapistSkillRequestExample = {
+  name: 'Abhyanga',
+  code: 'abhy',
+  description: 'Full-body warm herbal oil massage',
+};
+
+const therapistSkillValidationFailed = {
+  description: 'Therapist Skill validation failed or the request body is not valid JSON.',
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        missingName: {
+          summary: 'Missing Therapist Skill name',
+          value: { message: 'Validation failed', errors: ['Therapist Skill name is required'] },
+        },
+        invalidCode: {
+          summary: 'Code with unsupported characters',
+          value: {
+            message: 'Validation failed',
+            errors: [
+              'Therapist Skill code must contain only letters, numbers, hyphens, and underscores.',
+            ],
+          },
+        },
+        invalidId: {
+          summary: 'Invalid Therapist Skill identifier',
+          value: { message: 'Validation failed', errors: ['Therapist Skill abc is Invalid.'] },
+        },
+        invalidJson: {
+          summary: 'Malformed JSON request body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+};
+
+const therapistSkillNotFound = {
+  description: 'Therapist Skill was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Therapist Skill not found',
+    errors: ['Therapist Skill not found'],
+  }),
+};
+
+const therapistSkillConflict = {
+  description: 'Therapist Skill name or non-null code already exists in the active Tenant.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateName: {
+          summary: 'Duplicate Therapist Skill name',
+          value: {
+            message: 'Therapist Skill name Abhyanga already exists.',
+            errors: ['Therapist Skill name Abhyanga already exists.'],
+          },
+        },
+        duplicateCode: {
+          summary: 'Duplicate normalized Therapist Skill code',
+          value: {
+            message: 'Therapist Skill code ABHY already exists.',
+            errors: ['Therapist Skill code ABHY already exists.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const therapistSkillReadErrorResponses = {
+  '400': therapistSkillValidationFailed,
+  '401': specialtyUnauthorized,
+  '403': specialtyForbidden,
+  '404': therapistSkillNotFound,
+  '500': responseRef('InternalServerError'),
+};
+
+const therapistSkillMutationErrorResponses = {
+  ...therapistSkillReadErrorResponses,
+  '409': therapistSkillConflict,
+};
+
+const therapistRequestExample = {
+  name: 'Lakshmi Nair',
+  email: 'lakshmi.nair@apollo.example',
+  password: 'StrongerPass123',
+  phone: '+971501234567',
+  gender: 'Female',
+  dateOfBirth: '1990-08-21',
+  staffCode: 'THR-2031',
+  designation: 'Senior Panchakarma Therapist',
+  registrationNumber: 'DHA-THR-40218',
+  qualifications: 'BAMS, Diploma in Panchakarma',
+  therapistSkillIds: [3],
+};
+
+const therapistExample = {
+  id: 27,
+  tenantId: 'org_apollo',
+  userId: 'usr_lakshmi_nair',
+  name: therapistRequestExample.name,
+  email: therapistRequestExample.email,
+  phone: therapistRequestExample.phone,
+  staffCode: therapistRequestExample.staffCode,
+  designation: therapistRequestExample.designation,
+  gender: therapistRequestExample.gender,
+  dateOfBirth: therapistRequestExample.dateOfBirth,
+  qualifications: therapistRequestExample.qualifications,
+  registrationNumber: therapistRequestExample.registrationNumber,
+  isActive: true,
+  createdOn: '2026-09-02T06:30:00.000Z',
+  modifiedOn: '2026-09-02T06:30:00.000Z',
+  skills: [{ id: 3, name: 'Abhyanga', code: 'ABHY' }],
+};
+
+const therapistValidationFailed = {
+  description: 'Therapist validation failed or the request body is not valid JSON.',
+  content: {
+    'application/json': {
+      schema: { oneOf: [schemaRef('ValidationError'), schemaRef('InvalidJsonError')] },
+      examples: {
+        missingEmail: {
+          summary: 'Missing required email',
+          value: { message: 'Validation failed', errors: ['Email is required'] },
+        },
+        invalidSkill: {
+          summary: 'A Therapist Skill is not in the active Tenant',
+          value: {
+            message: 'Validation failed',
+            errors: ['One or more Therapist Skills are Invalid.'],
+          },
+        },
+        emptyUpdate: {
+          summary: 'Update with no fields',
+          value: {
+            message: 'Validation failed',
+            errors: ['At least one Therapist field is required'],
+          },
+        },
+        invalidId: {
+          summary: 'Invalid Therapist identifier',
+          value: { message: 'Validation failed', errors: ['Therapist abc is Invalid.'] },
+        },
+        invalidJson: {
+          summary: 'Malformed JSON request body',
+          value: { message: 'Request body must be valid JSON' },
+        },
+      },
+    },
+  },
+};
+
+const therapistNotFound = {
+  description: 'Therapist was not found in the active Tenant.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Therapist not found',
+    errors: ['Therapist not found'],
+  }),
+};
+
+const therapistCreateNotFound = {
+  description: 'The Tenant has no Therapist System Role to assign.',
+  content: jsonContent(schemaRef('NotFoundError'), {
+    message: 'Therapist role not found',
+    errors: ['Therapist role not found'],
+  }),
+};
+
+const therapistConflict = {
+  description:
+    'Therapist registration number already exists, or the login already belongs to a Tenant.',
+  content: {
+    'application/json': {
+      schema: schemaRef('ConflictError'),
+      examples: {
+        duplicateRegistration: {
+          summary: 'Registration number already exists',
+          value: {
+            message: 'Therapist registration number DHA-THR-40218 already exists.',
+            errors: ['Therapist registration number DHA-THR-40218 already exists.'],
+          },
+        },
+        tenantMembership: {
+          summary: 'Login already belongs to a Tenant',
+          value: {
+            message: 'Staff user already belongs to a Tenant.',
+            errors: ['Staff user already belongs to a Tenant.'],
+          },
+        },
+      },
+    },
+  },
+};
+
+const therapistDeactivateConflict = {
+  description: 'The Therapist is assigned to a future Procedure Appointment.',
+  content: jsonContent(schemaRef('ConflictError'), {
+    message: 'Therapist cannot be deactivated while assigned to a future Procedure Appointment.',
+    errors: ['Therapist cannot be deactivated while assigned to a future Procedure Appointment.'],
+  }),
+};
+
+const therapistReadErrorResponses = {
+  '400': therapistValidationFailed,
+  '401': specialtyUnauthorized,
+  '403': specialtyForbidden,
+  '404': therapistNotFound,
+  '500': responseRef('InternalServerError'),
+};
+
+const therapistMutationErrorResponses = {
+  ...therapistReadErrorResponses,
+  '409': therapistConflict,
+};
+
 const assetCategoryExample = {
   id: 1,
   tenantId: 'org_apollo',
@@ -3078,6 +3305,14 @@ export const openApiDocument = {
     },
     { name: 'Specialty', description: 'Tenant-scoped Specialty Master APIs.' },
     { name: 'Doctor', description: 'Tenant-scoped Doctor registry and lifecycle APIs.' },
+    {
+      name: 'Therapist Skill',
+      description: 'Tenant-scoped Therapist Skill Master APIs.',
+    },
+    {
+      name: 'Therapist',
+      description: 'Tenant-scoped Therapist registry and lifecycle APIs.',
+    },
     {
       name: 'Doctor Rota',
       description: 'Tenant-scoped reusable Doctor scheduling template APIs.',
@@ -4605,6 +4840,234 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedListErrorResponses,
+        },
+      },
+    },
+    '/api/v1/therapist-skills': {
+      get: {
+        tags: ['Therapist Skill'],
+        summary: 'List Therapist Skills',
+        description:
+          'Returns active Therapist Skills for the Tenant resolved from the authenticated Session. Any authenticated member of the active Tenant may read this list. Search matches Therapist Skill name and code.',
+        security: [{ cookieAuth: [] }],
+        parameters: listParameters,
+        responses: {
+          '200': {
+            description: 'Paginated Therapist Skill list.',
+            content: jsonContent(paginatedSchema('TherapistSkill'), {
+              data: [therapistSkillExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': therapistSkillValidationFailed,
+          '401': specialtyUnauthorized,
+          '403': specialtyForbidden,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Therapist Skill'],
+        summary: 'Create Therapist Skill',
+        description:
+          'Creates a Therapist Skill in the Tenant resolved from the authenticated Session. Tenant Admin authority is required. A non-empty code is trimmed and normalized to uppercase; an omitted, null, or blank code is stored as null.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('SaveTherapistSkillRequest', therapistSkillRequestExample),
+        responses: {
+          '201': {
+            description: 'Therapist Skill created.',
+            content: jsonContent(dataEnvelopeSchema('TherapistSkill'), {
+              data: therapistSkillExample,
+            }),
+          },
+          '400': therapistSkillValidationFailed,
+          '401': specialtyUnauthorized,
+          '403': specialtyForbidden,
+          '409': therapistSkillConflict,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/therapist-skills/{id}': {
+      get: {
+        tags: ['Therapist Skill'],
+        summary: 'Get Therapist Skill',
+        description:
+          'Returns an active Therapist Skill from the Tenant resolved from the authenticated Session. Cross-Tenant and soft-deleted records are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Therapist Skill')],
+        responses: {
+          '200': {
+            description: 'Therapist Skill found.',
+            content: jsonContent(dataEnvelopeSchema('TherapistSkill'), {
+              data: therapistSkillExample,
+            }),
+          },
+          ...therapistSkillReadErrorResponses,
+        },
+      },
+      put: {
+        tags: ['Therapist Skill'],
+        summary: 'Update Therapist Skill',
+        description:
+          'Fully replaces the editable Therapist Skill fields in the active Tenant. Tenant Admin authority is required. Name is required; omitted, null, or blank optional fields are cleared.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Therapist Skill')],
+        requestBody: requestBody('SaveTherapistSkillRequest', therapistSkillRequestExample),
+        responses: {
+          '200': {
+            description: 'Therapist Skill updated.',
+            content: jsonContent(dataEnvelopeSchema('TherapistSkill'), {
+              data: therapistSkillExample,
+            }),
+          },
+          ...therapistSkillMutationErrorResponses,
+        },
+      },
+      delete: {
+        tags: ['Therapist Skill'],
+        summary: 'Delete Therapist Skill',
+        description:
+          'Soft-deletes a Therapist Skill in the active Tenant. Tenant Admin authority is required.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Therapist Skill')],
+        responses: {
+          '204': { description: 'Therapist Skill deleted.' },
+          ...therapistSkillReadErrorResponses,
+        },
+      },
+    },
+    '/api/v1/therapists': {
+      get: {
+        tags: ['Therapist'],
+        summary: 'List Therapists',
+        description:
+          'Returns Therapists in the Tenant resolved from the authenticated Session, each with its Therapist Skills. Any authenticated member of the active Tenant may read this list. Search matches joined Staff identity fields and registration number; filters support a Therapist Skill and the coupled active status.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          ...listParameters,
+          {
+            name: 'therapistSkillId',
+            in: 'query',
+            description: 'Filter to Therapists who have this Therapist Skill in the active Tenant.',
+            schema: { type: 'integer', minimum: 1 },
+          },
+          {
+            name: 'status',
+            in: 'query',
+            description: 'Filter by the coupled Therapist and Staff active state.',
+            schema: { type: 'string', enum: ['active', 'inactive'] },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated Therapist list.',
+            content: jsonContent(paginatedSchema('Therapist'), {
+              data: [therapistExample],
+              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+            }),
+          },
+          '400': therapistValidationFailed,
+          '401': specialtyUnauthorized,
+          '403': specialtyForbidden,
+          '500': responseRef('InternalServerError'),
+        },
+      },
+      post: {
+        tags: ['Therapist'],
+        summary: 'Create Therapist',
+        description:
+          'Creates a Therapist aggregate in the active Tenant: login, Staff profile, Therapist System Role Assignment, clinical Therapist record, and its Therapist Skills. Tenant Admin authority is required. tenantId and assignedBy come from the Session, and callers must not send roleIds.',
+        security: [{ cookieAuth: [] }],
+        requestBody: requestBody('CreateTherapistRequest', therapistRequestExample),
+        responses: {
+          '201': {
+            description: 'Therapist created and Therapist System Role auto-assigned.',
+            content: jsonContent(dataEnvelopeSchema('Therapist'), { data: therapistExample }),
+          },
+          ...therapistMutationErrorResponses,
+          '404': therapistCreateNotFound,
+        },
+      },
+    },
+    '/api/v1/therapists/{id}': {
+      get: {
+        tags: ['Therapist'],
+        summary: 'Get Therapist',
+        description:
+          'Returns the joined Staff identity, Therapist clinical record, and Therapist Skills in the active Tenant. Cross-Tenant identifiers are treated as not found.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Therapist')],
+        responses: {
+          '200': {
+            description: 'Therapist found.',
+            content: jsonContent(dataEnvelopeSchema('Therapist'), { data: therapistExample }),
+          },
+          ...therapistReadErrorResponses,
+        },
+      },
+      patch: {
+        tags: ['Therapist'],
+        summary: 'Update Therapist',
+        description:
+          'Partially updates permitted Staff person fields and Therapist clinical fields atomically. Tenant Admin authority is required. Email and password are not editable here. Sending therapistSkillIds replaces the Therapist Skills; omitting it keeps them.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Therapist')],
+        requestBody: requestBody('UpdateTherapistRequest', {
+          designation: 'Lead Panchakarma Therapist',
+          therapistSkillIds: [3, 5],
+        }),
+        responses: {
+          '200': {
+            description: 'Therapist updated.',
+            content: jsonContent(dataEnvelopeSchema('Therapist'), {
+              data: {
+                ...therapistExample,
+                designation: 'Lead Panchakarma Therapist',
+                skills: [
+                  { id: 3, name: 'Abhyanga', code: 'ABHY' },
+                  { id: 5, name: 'Shirodhara', code: 'SHIRO' },
+                ],
+              },
+            }),
+          },
+          ...therapistMutationErrorResponses,
+        },
+      },
+    },
+    '/api/v1/therapists/{id}/deactivate': {
+      post: {
+        tags: ['Therapist'],
+        summary: 'Deactivate Therapist',
+        description:
+          'Atomically deactivates the Therapist, underlying Staff profile, and login, and revokes active Sessions. Tenant Admin authority is required. A Therapist assigned to a future Procedure Appointment cannot be deactivated.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Therapist')],
+        responses: {
+          '200': {
+            description: 'Therapist and Staff login deactivated.',
+            content: jsonContent(dataEnvelopeSchema('Therapist'), {
+              data: { ...therapistExample, isActive: false },
+            }),
+          },
+          ...therapistReadErrorResponses,
+          '409': therapistDeactivateConflict,
+        },
+      },
+    },
+    '/api/v1/therapists/{id}/reactivate': {
+      post: {
+        tags: ['Therapist'],
+        summary: 'Reactivate Therapist',
+        description:
+          'Atomically reactivates the Therapist, underlying Staff profile, and login. Tenant Admin authority is required.',
+        security: [{ cookieAuth: [] }],
+        parameters: [numberIdPathParameter('Therapist')],
+        responses: {
+          '200': {
+            description: 'Therapist and Staff login reactivated.',
+            content: jsonContent(dataEnvelopeSchema('Therapist'), { data: therapistExample }),
+          },
+          ...therapistReadErrorResponses,
         },
       },
     },
@@ -12181,6 +12644,174 @@ export const openApiDocument = {
             format: 'date',
             description: 'ISO date that must be today or later in the active Tenant time zone.',
           },
+        },
+      },
+      SaveTherapistSkillRequest: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 100,
+            pattern: "^(?=.*\\p{L})[\\p{L} ,&'()/-]+$",
+            description:
+              'Therapist Skill name. Letters, spaces, hyphens, ampersands, slashes, apostrophes, commas, and parentheses only. Trimmed before saving.',
+          },
+          code: {
+            type: ['string', 'null'],
+            maxLength: 20,
+            pattern: '^(?=.*[A-Za-z0-9])[A-Za-z0-9_-]+$',
+            description:
+              'Optional Tenant-scoped Therapist Skill code. Non-empty values may contain only letters, numbers, hyphens, and underscores; they are trimmed and normalized to uppercase. Null, blank, and omitted values are stored as null, and on update they clear the code.',
+          },
+          description: {
+            type: ['string', 'null'],
+            maxLength: 500,
+            description:
+              'Optional Therapist Skill description. Null, blank, and omitted values are stored as null, and on update they clear it.',
+          },
+        },
+        description: 'Used for both create and full update. tenantId is not accepted.',
+      },
+      TherapistSkill: {
+        type: 'object',
+        required: ['id', 'tenantId', 'name', 'code', 'description', 'createdOn', 'modifiedOn'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the authenticated Session.',
+          },
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: { type: ['string', 'null'], maxLength: 20 },
+          description: { type: ['string', 'null'], maxLength: 500 },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+        },
+      },
+      TherapistSkillSummary: {
+        type: 'object',
+        required: ['id', 'name', 'code'],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          code: { type: ['string', 'null'], maxLength: 20 },
+        },
+      },
+      CreateTherapistRequest: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['name', 'email', 'password'],
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 8, maxLength: 128, writeOnly: true },
+          phone: { type: 'string' },
+          gender: {
+            type: 'string',
+            enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+          },
+          dateOfBirth: { type: 'string', format: 'date' },
+          staffCode: { type: 'string', maxLength: 20 },
+          designation: { type: 'string', maxLength: 100 },
+          registrationNumber: { type: 'string', maxLength: 100 },
+          qualifications: { type: 'string' },
+          therapistSkillIds: {
+            type: 'array',
+            items: { type: 'integer', minimum: 1 },
+            default: [],
+            description: 'Therapist Skills in the active Tenant. Defaults to none.',
+          },
+        },
+        description:
+          'Creates the Staff and Therapist aggregate. Blank optional strings are stored as null. roleIds and tenantId are intentionally not accepted.',
+      },
+      UpdateTherapistRequest: {
+        type: 'object',
+        additionalProperties: false,
+        minProperties: 1,
+        properties: {
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          phone: { type: ['string', 'null'] },
+          gender: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+              },
+              { type: 'null' },
+            ],
+          },
+          dateOfBirth: { type: ['string', 'null'], format: 'date' },
+          staffCode: { type: ['string', 'null'], maxLength: 20 },
+          designation: { type: ['string', 'null'], maxLength: 100 },
+          registrationNumber: { type: ['string', 'null'], maxLength: 100 },
+          qualifications: { type: ['string', 'null'] },
+          therapistSkillIds: {
+            type: 'array',
+            items: { type: 'integer', minimum: 1 },
+            description:
+              'Replaces the Therapist Skills when sent. An empty array removes them all; omitting it keeps them.',
+          },
+        },
+        description:
+          'At least one field is required. Null or blank optional strings clear the field. Email, password, roleIds, and tenantId are intentionally not accepted.',
+      },
+      Therapist: {
+        type: 'object',
+        required: [
+          'id',
+          'tenantId',
+          'userId',
+          'name',
+          'email',
+          'phone',
+          'staffCode',
+          'designation',
+          'gender',
+          'dateOfBirth',
+          'qualifications',
+          'registrationNumber',
+          'isActive',
+          'createdOn',
+          'modifiedOn',
+          'skills',
+        ],
+        properties: {
+          id: { type: 'integer', minimum: 1 },
+          tenantId: {
+            type: 'string',
+            minLength: 1,
+            description: 'Tenant identifier resolved from the authenticated Session.',
+          },
+          userId: { type: 'string', minLength: 1 },
+          name: { type: 'string', minLength: 1, maxLength: 100 },
+          email: { type: 'string', format: 'email' },
+          phone: { type: ['string', 'null'] },
+          staffCode: { type: ['string', 'null'], maxLength: 20 },
+          designation: { type: ['string', 'null'], maxLength: 100 },
+          gender: {
+            oneOf: [
+              {
+                type: 'string',
+                enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+              },
+              { type: 'null' },
+            ],
+          },
+          dateOfBirth: { type: ['string', 'null'], format: 'date' },
+          qualifications: { type: ['string', 'null'] },
+          registrationNumber: { type: ['string', 'null'], maxLength: 100 },
+          isActive: {
+            type: 'boolean',
+            description:
+              'Coupled active state shared with the underlying Staff identity and login.',
+          },
+          createdOn: { type: 'string', format: 'date-time' },
+          modifiedOn: { type: 'string', format: 'date-time' },
+          skills: { type: 'array', items: schemaRef('TherapistSkillSummary') },
         },
       },
       TherapistSchedule: {

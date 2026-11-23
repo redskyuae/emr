@@ -158,6 +158,13 @@ describe('AssetCondition validators', () => {
     expect(validateGetAssetConditionById('1', '  ')).toMatchObject({ success: false });
   });
 
+  it('should return the exact invalid id message for get-by-id', () => {
+    expect(validateGetAssetConditionById('abc', 'tenant_1')).toEqual({
+      success: false,
+      errors: ['Asset condition abc is Invalid.'],
+    });
+  });
+
   it('should validate list tenant input', () => {
     expect(validateGetAssetConditions('tenant-1')).toEqual({ success: true, data: 'tenant-1' });
     expect(validateGetAssetConditions('  ')).toMatchObject({

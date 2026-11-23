@@ -169,6 +169,15 @@ describe('WorkOrderStatus validators', () => {
     ).toEqual({ success: true, data: undefined });
   });
 
+  it('should allow a display-only update to a system status', () => {
+    expect(
+      validateSystemWorkOrderStatusUpdate(
+        { code: 'INPROG', category: 'IN_PROGRESS', isSystem: true },
+        { code: 'INPROG', category: 'IN_PROGRESS' }
+      )
+    ).toEqual({ success: true, data: undefined });
+  });
+
   it('should flag protected system code and category changes', () => {
     expect(
       validateSystemWorkOrderStatusUpdate(

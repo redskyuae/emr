@@ -136,4 +136,20 @@ describe('AssetStatus schema', () => {
       )
     ).toContain('Asset status code must contain only letters, numbers, hyphens, and underscores.');
   });
+
+  it('should keep a lowercase hex color as sent and normalize the other fields', () => {
+    expect(
+      createAssetStatusSchema.parse({
+        name: ' Diagnostic Imaging ',
+        code: ' img ',
+        color: '#2563eb',
+        description: ' ',
+      })
+    ).toEqual({
+      name: 'Diagnostic Imaging',
+      code: 'IMG',
+      color: '#2563eb',
+      description: undefined,
+    });
+  });
 });

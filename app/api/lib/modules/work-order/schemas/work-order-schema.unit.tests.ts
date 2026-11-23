@@ -58,4 +58,29 @@ describe('WorkOrder schema', () => {
     expect(workOrderTenantIdSchema.safeParse('tenant-1').success).toBe(true);
     expect(workOrderTenantIdSchema.safeParse('   ').success).toBe(false);
   });
+
+  it('should trim technician and note, drop a null due date and strip server-managed fields', () => {
+    expect(
+      createWorkOrderSchema.parse({
+        assetId: 12,
+        typeId: 3,
+        priorityId: 2,
+        statusId: 4,
+        technician: '  Vendor (Lumenis)  ',
+        dueDate: null,
+        note: '  Beam alignment fault  ',
+        code: 'WO-0001',
+        completedOn: '2026-06-27T10:00:00.000Z',
+        tenantId: 'another-tenant',
+      })
+    ).toEqual({
+      assetId: 12,
+      typeId: 3,
+      priorityId: 2,
+      statusId: 4,
+      technician: 'Vendor (Lumenis)',
+      dueDate: undefined,
+      note: 'Beam alignment fault',
+    });
+  });
 });

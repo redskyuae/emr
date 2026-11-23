@@ -150,4 +150,20 @@ describe('WorkOrderPriority schema', () => {
       'Work order priority code must contain only letters, numbers, hyphens, and underscores.'
     );
   });
+
+  it('should keep a lowercase hex color as sent and normalize the other fields', () => {
+    expect(
+      createWorkOrderPrioritySchema.parse({
+        name: ' Critical ',
+        code: ' crit ',
+        color: '#dc2626',
+        description: ' ',
+      })
+    ).toEqual({
+      name: 'Critical',
+      code: 'CRIT',
+      color: '#dc2626',
+      description: undefined,
+    });
+  });
 });
