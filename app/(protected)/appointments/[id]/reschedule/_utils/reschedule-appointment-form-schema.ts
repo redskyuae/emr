@@ -25,7 +25,6 @@ export const rescheduleAppointmentFormSchema = z
     phone: z.string(),
     email: z.string(),
     patientMode: z.enum(['existing', 'provisional']),
-    facilityId: z.string(),
     visitType: z.enum(['CONSULTATION', 'PROCEDURE']).or(z.literal('')),
     doctorId: z.string(),
     appointmentModeId: z.string(),

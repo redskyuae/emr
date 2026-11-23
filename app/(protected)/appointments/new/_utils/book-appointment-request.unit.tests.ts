@@ -19,7 +19,6 @@ describe('Book Appointment request', () => {
       slotTimes: ['09:00', '09:15'],
       startTime: '09:00',
       endTime: '09:30',
-      facilityId: '4',
       remarks: 'Follow-up requested',
     });
 

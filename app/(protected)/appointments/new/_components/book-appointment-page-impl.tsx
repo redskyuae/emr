@@ -9,7 +9,6 @@ import {
   PiArrowLeftLight,
   PiArrowRightLight,
   PiArrowsClockwiseLight,
-  PiBuildingsLight,
   PiCheckLight,
   PiLockKeyDuotone,
 } from 'react-icons/pi';
@@ -30,7 +29,6 @@ import { canAllocateProcedureResources } from '../_utils/appointment-time';
 import { AppointmentDetailsSection } from './appointment-details-section';
 import { AppointmentScheduleSection } from './appointment-schedule-section';
 import { AddTreatmentPlanSessionsDialog } from './_modals/add-treatment-plan-sessions-dialog';
-import { DEMO_FACILITY } from './book-appointment-demo-data';
 import { BookingPathSelector } from './booking-path-selector';
 import { BookingRemarks } from './booking-remarks';
 import { BookingSummary } from './booking-summary';
@@ -90,19 +88,10 @@ export function BookAppointmentPageImpl() {
 
 function BookAppointmentHeader() {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-3">
+    <header>
       <p className="text-muted-foreground text-sm">
         Select the Patient, Booking Path, and exact Appointment time.
       </p>
-      <div className="flex items-center gap-2 text-sm">
-        <PiBuildingsLight className="text-primary size-4 shrink-0" />
-        <div>
-          <p className="font-medium">{DEMO_FACILITY.name}</p>
-          <p className="text-muted-foreground text-xs">
-            {DEMO_FACILITY.emirate} · {DEMO_FACILITY.timeZone}
-          </p>
-        </div>
-      </div>
     </header>
   );
 }

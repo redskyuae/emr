@@ -9,17 +9,8 @@ export default function BookAppointmentLoader() {
       aria-busy="true"
       role="status"
     >
-      {/* The page header: the instructions and the Facility with its time zone. */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Skeleton className="h-4 w-80 max-w-full" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-4 shrink-0 rounded-full" />
-          <div className="space-y-1.5">
-            <Skeleton className="h-4 w-36" />
-            <Skeleton className="h-3 w-40" />
-          </div>
-        </div>
-      </div>
+      {/* The page header: the booking instructions. */}
+      <Skeleton className="h-4 w-80 max-w-full" />
 
       <BookAppointmentWorkflowSkeleton />
     </div>

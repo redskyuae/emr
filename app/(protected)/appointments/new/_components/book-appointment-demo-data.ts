@@ -208,14 +208,6 @@ export function getDefaultTreatmentSelection(
   };
 }
 
-export const DEMO_FACILITY = {
-  id: '4',
-  name: 'Ayurvedtha Hospital',
-  emirate: 'Dubai',
-  authority: 'DHA / TCIM',
-  timeZone: 'Asia/Dubai (GST)',
-};
-
 const abhyangaSessions: BookingSession[] = [
   {
     id: '300-3',

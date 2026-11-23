@@ -45,7 +45,6 @@ import {
   type BookingConfirmation,
 } from '../_utils/submit-book-appointment';
 import {
-  DEMO_FACILITY,
   getDefaultTreatmentSelection,
   getTreatmentSelectionState,
   toBookingPatientTreatmentPlan,
@@ -64,7 +63,6 @@ const initialValues: BookAppointmentFormValues = {
   phone: '',
   email: '',
   patientMode: 'existing',
-  facilityId: DEMO_FACILITY.id,
   visitType: '',
   doctorId: '',
   appointmentModeId: '',
