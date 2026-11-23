@@ -1,6 +1,7 @@
 # Plans
 
 Write the next implementation plan here.
+
 # Plan: Audit Log (v1)
 
 > Standalone implementation plan. Read `CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, `DESIGN.md`,
