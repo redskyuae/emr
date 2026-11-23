@@ -164,7 +164,7 @@ export type Staff = {
 
 // Lean Role shape embedded on each Staff row in the list response. Full Role
 // data still comes from /roles and /users/[id]/roles — see
-// docs/adr/0012-staff-list-embeds-assigned-roles.md.
+// docs/adr/0052-staff-list-embeds-assigned-roles.md.
 export type StaffRoleSummary = {
   id: number;
   name: string;

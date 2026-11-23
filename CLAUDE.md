@@ -8,13 +8,13 @@ API-first hospital management platform. A **Tenant** is a hospital group (e.g., 
 
 | Layer           | Tool                              |
 | --------------- | --------------------------------- |
-| Framework       | Next.js 16.2.7 (App Router)       |
+| Framework       | Next.js 16.2.10 (App Router)      |
 | Language        | TypeScript                        |
 | Database        | PostgreSQL via Drizzle ORM        |
 | Validation      | Zod v4                            |
 | Auth            | BetterAuth (Organizations plugin) |
 | Styles          | Tailwind CSS v4                   |
-| UI components   | shadcn/ui (full set, themed)      |
+| UI components   | shadcn/ui (themed; added on use)  |
 | Animation       | GSAP + @gsap/react                |
 | Package manager | Bun                               |
 
@@ -24,7 +24,7 @@ All UI work follows the design system in `DESIGN.md` (Microsoft Fluent-inspired,
 
 Key facts:
 
-- Themed shadcn components live in `components/ui/` (do not fork them); domain composite in `components/{brand,marketing,auth}/`. Page-specific React components under `app/` must live in the route-local `_components/` directory. Design tokens live only in `app/globals.css`.
+- Themed shadcn components live in `components/ui/` (do not fork them). Only components in use are kept: add one with the shadcn CLI when a screen first needs it; domain composite in `components/{brand,marketing,auth}/`. Page-specific React components under `app/` must live in the route-local `_components/` directory. Design tokens live only in `app/globals.css`.
 - `LOGIN_LOGO_VARIANT` selects `dhathri-ayurvedic`, `dhathri-gram`, or `none` throughout the UI. Shared brand data lives in `components/brand/brand-config.ts`; `BrandProvider` carries the server-selected variant to client components. Use `Logo` or `LogoMark` for new visual brand placements rather than reading the environment variable in client code.
 - `AUTH_SHOW_CREATE_WORKSPACE_LINK` and `AUTH_SHOW_BACK_TO_SITE_LINK` independently enable the optional links on auth screens. Both are hidden unless set to `true`.
 - `SIDEBAR_APPOINTMENTS_ONLY` defaults to enabled. Set it to `false` to restore the full sidebar; the reduced sidebar shows the Appointment Dashboard, Appointments, booking resources and their Masters, plus Billing Masters > Charge Items, subject to the usual permissions. This changes navigation visibility only, not route authorization.
@@ -128,7 +128,7 @@ There is no Platform Admin role in the domain. When Tenant Provisioning creates 
 
 Tenant creation happens only through public signup/Tenant Provisioning. Tenant management APIs are Tenant-scoped. Do not expose a global Tenant list endpoint or an authenticated create-Tenant endpoint. Tenant Owners may update Tenant display details and deactivate or reactivate their Tenant. Any authenticated Tenant member may read that Tenant's basic profile by ID.
 
-`session.session.activeOrganizationId` is the auth-layer source of `tenantId`. Existing route handlers may still accept legacy request-provided `tenantId` until the dedicated migration task removes that path.
+`session.session.activeOrganizationId` is the auth-layer source of `tenantId`. Route handlers resolve it through the session helpers (`requireTenantSession`, `requireTenantAdminSession`, `requireTenantPermissions`); no route accepts a request-provided `tenantId`.
 
 ## Lessons Learned
 
@@ -156,7 +156,7 @@ When updating Swagger/OpenAPI docs:
 - Use the canonical domain terms from `CONTEXT.md` exactly.
 - Document all path parameters, query parameters, request bodies, response schemas, status codes, auth/session requirements, and common error shapes.
 - Include proper examples for each operation. Examples should be realistic EMR data, show transformed fields where applicable (for example uppercased codes), and cover both success and important failure cases such as validation errors, conflicts, not found, unauthorized access, and invalid JSON.
-- Keep tenant-scoped APIs explicit about how `tenantId` is resolved or supplied during the current migration period.
+- Keep tenant-scoped APIs explicit that `tenantId` is resolved from the authenticated Session, never from the request.
 - If the implementation changes validation messages or response envelopes, update Swagger examples in the same change.
 
 ## Database commands

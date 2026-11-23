@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Agent worktrees: full checkouts of other branches, with their own build output.
+    '.claude/**',
   ]),
   // Disable ESLint rules that would conflict with Prettier
   eslintConfigPrettier,

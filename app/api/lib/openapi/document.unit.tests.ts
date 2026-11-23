@@ -1,6 +1,113 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, sep } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { openApiDocument } from './document';
+
+const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'];
+const API_ROOT = join(process.cwd(), 'app', 'api', 'v1');
+
+// Route files name path parameters freely ([id], [roleId]) and the document may
+// name the same segment differently ({userId}), so compare path shapes only.
+const pathShape = (path: string) => path.replace(/\{[^}]+\}/g, '{}');
+
+function routeOperations() {
+  const operations: string[] = [];
+  const routeFiles = readdirSync(API_ROOT, { recursive: true, encoding: 'utf8' }).filter(
+    (file) => file === 'route.ts' || file.endsWith(`${sep}route.ts`)
+  );
+  for (const file of routeFiles) {
+    const segments = file.split(sep).slice(0, -1);
+    const path = ['/api/v1', ...segments.map((s) => s.replace(/^\[(.+)\]$/, '{$1}'))].join('/');
+    const source = readFileSync(join(API_ROOT, file), 'utf8');
+    for (const [, method] of source.matchAll(
+      /export async function (GET|POST|PUT|PATCH|DELETE)\b/g
+    )) {
+      operations.push(`${method.toLowerCase()} ${pathShape(path)}`);
+    }
+  }
+  return operations.sort();
+}
+
+function documentedOperations() {
+  return Object.entries(openApiDocument.paths)
+    .filter(([path]) => path.startsWith('/api/v1/'))
+    .flatMap(([path, item]) =>
+      Object.keys(item)
+        .filter((method) => HTTP_METHODS.includes(method))
+        .map((method) => `${method} ${pathShape(path)}`)
+    )
+    .sort();
+}
+
+describe('OpenAPI route coverage', () => {
+  it('should find the API route operations to compare', () => {
+    expect(routeOperations().length).toBeGreaterThan(300);
+  });
+
+  it('should document every app/api/v1 route operation', () => {
+    const documented = new Set(documentedOperations());
+
+    expect(routeOperations().filter((operation) => !documented.has(operation))).toEqual([]);
+  });
+
+  it('should not document an operation that has no app/api/v1 route', () => {
+    const routes = new Set(routeOperations());
+
+    expect(documentedOperations().filter((operation) => !routes.has(operation))).toEqual([]);
+  });
+});
+
+describe('OpenAPI Therapist contracts', () => {
+  it('should document the Therapist Skill Master operations', () => {
+    expect(Object.keys(openApiDocument.paths['/api/v1/therapist-skills'])).toEqual(['get', 'post']);
+    expect(Object.keys(openApiDocument.paths['/api/v1/therapist-skills/{id}'])).toEqual([
+      'get',
+      'put',
+      'delete',
+    ]);
+    expect(openApiDocument.components.schemas.SaveTherapistSkillRequest.required).toEqual(['name']);
+  });
+
+  it('should document a Therapist Skill code as a string because the API rejects null', () => {
+    expect(
+      openApiDocument.components.schemas.SaveTherapistSkillRequest.properties.code.type
+    ).toEqual('string');
+  });
+
+  it('should let a validation error and an invalid JSON error both match the 400 schema', () => {
+    for (const path of ['/api/v1/therapist-skills', '/api/v1/therapists'] as const) {
+      const schema =
+        openApiDocument.paths[path].post.responses['400'].content['application/json'].schema;
+
+      expect(schema).toHaveProperty('anyOf');
+      expect(schema).not.toHaveProperty('oneOf');
+    }
+  });
+
+  it('should document an unknown Therapist Skill on a Therapist as a 409 conflict', () => {
+    const responses = openApiDocument.paths['/api/v1/therapists'].post.responses;
+
+    expect(responses['409'].content['application/json'].examples).toHaveProperty('invalidSkill');
+    expect(responses['400'].content['application/json'].examples).not.toHaveProperty(
+      'invalidSkill'
+    );
+  });
+
+  it('should document the Therapist registry and lifecycle operations', () => {
+    expect(Object.keys(openApiDocument.paths['/api/v1/therapists/{id}'])).toEqual(['get', 'patch']);
+    expect(
+      openApiDocument.paths['/api/v1/therapists/{id}/deactivate'].post.responses
+    ).toHaveProperty('409');
+    expect(openApiDocument.paths['/api/v1/therapists/{id}/reactivate'].post).toBeDefined();
+    expect(openApiDocument.components.schemas.CreateTherapistRequest.required).toEqual([
+      'name',
+      'email',
+      'password',
+    ]);
+  });
+});
 
 describe('OpenAPI Visit Patient type contract', () => {
   it('documents three-year classification and lookup errors', () => {

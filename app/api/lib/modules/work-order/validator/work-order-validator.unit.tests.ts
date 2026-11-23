@@ -41,6 +41,28 @@ describe('WorkOrder validators', () => {
     });
   });
 
+  it('should report every invalid reference in a fixed order', async () => {
+    references.getAssetById.mockResolvedValue(undefined);
+    references.getWorkOrderTypeById.mockResolvedValue(undefined);
+    references.getWorkOrderPriorityById.mockResolvedValue(undefined);
+    references.getWorkOrderStatusById.mockResolvedValue(undefined);
+    const result = await validateCreateWorkOrder(
+      { assetId: 999, typeId: 998, priorityId: 997, statusId: 996 },
+      'tenant-a',
+      references
+    );
+    expect(result).toEqual({
+      success: false,
+      status: StatusCodes.CONFLICT,
+      errors: [
+        'Asset 999 is Invalid.',
+        'Work order type 998 is Invalid.',
+        'Work order priority 997 is Invalid.',
+        'Work order status 996 is Invalid.',
+      ],
+    });
+  });
+
   it('should return parsed data when all references resolve', async () => {
     await expect(validateCreateWorkOrder(payload, 'tenant-1', references)).resolves.toMatchObject({
       success: true,

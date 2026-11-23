@@ -128,4 +128,23 @@ describe('WorkOrderStatus schema', () => {
       'Work order status code must contain only letters, numbers, hyphens, and underscores.'
     );
   });
+
+  it('should drop a client-sent isSystem flag and keep a lowercase hex color', () => {
+    expect(
+      createWorkOrderStatusSchema.parse({
+        name: ' In Progress ',
+        code: ' inprog ',
+        category: 'IN_PROGRESS',
+        color: '#2563eb',
+        description: ' ',
+        isSystem: true,
+      })
+    ).toEqual({
+      name: 'In Progress',
+      code: 'INPROG',
+      category: 'IN_PROGRESS',
+      color: '#2563eb',
+      description: undefined,
+    });
+  });
 });
