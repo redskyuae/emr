@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { staticVisitList } from '../_data/static-visit-list';
 import {
   countActiveFilters,
+  countAdvancedFilters,
   datePresetRange,
   filterVisits,
   summarizeVisits,
@@ -134,5 +135,29 @@ describe('countActiveFilters', () => {
         doctor: 'nisha',
       })
     ).toBe(2);
+  });
+});
+
+describe('countAdvancedFilters', () => {
+  it('should count each applied dropdown once', () => {
+    expect(countAdvancedFilters(noFilters)).toBe(0);
+    expect(
+      countAdvancedFilters({
+        ...noFilters,
+        type: 'OPD',
+        doctor: 'nisha',
+        status: 'COMPLETED',
+        source: 'walk-in',
+        billing: 'PAID',
+        patientType: 'New',
+      })
+    ).toBe(6);
+  });
+
+  it('should never count the date range or the search text', () => {
+    const filters = { ...noFilters, from: '2026-10-20', to: '2026-10-27', query: 'rao' };
+
+    expect(countAdvancedFilters(filters)).toBe(0);
+    expect(countActiveFilters(filters)).toBe(2);
   });
 });

@@ -18,6 +18,7 @@ import {
   PREVIOUS_VISITS_PAGE_SIZE,
   appliedFilterNames,
   countActiveFilters,
+  countAdvancedFilters,
   rangeLabel,
   resolveFilters,
   tenantToday,
@@ -55,6 +56,7 @@ export function PreviousVisitsPageImpl() {
 
   const filters = resolveFilters(params, today);
   const activeCount = countActiveFilters(filters, today);
+  const advancedCount = countAdvancedFilters(filters);
   // Guard against invalid URL values (?page=0, ?page=-1) reaching the query.
   const page = params.page !== null && params.page > 0 ? params.page : 1;
 
@@ -116,6 +118,7 @@ export function PreviousVisitsPageImpl() {
       <PreviousVisitsFilterForm
         applied={filters}
         activeCount={activeCount}
+        advancedCount={advancedCount}
         onApply={applyFilters}
         onReset={resetFilters}
       />
