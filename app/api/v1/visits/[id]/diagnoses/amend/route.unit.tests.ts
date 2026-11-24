@@ -59,6 +59,13 @@ function recordedProperties() {
   return buildProperties();
 }
 
+/** The details the route handed the recorder, resolving a lazy lookup as the recorder does. */
+async function recordedDetails() {
+  const details = recordAudit.mock.calls[0]?.[3];
+
+  return typeof details === 'function' ? await details() : details;
+}
+
 describe('Visit diagnoses amend route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -131,12 +138,22 @@ describe('Visit diagnoses amend route', () => {
       tenantSession,
       expect.anything(),
       'visit-diagnosis.amend',
-      expect.objectContaining({
-        visitId: 42,
-        patientId: 9,
-        metadata: { added: ['AYU-AMV'], removed: [] },
-      })
+      expect.any(Function)
     );
+    await expect(recordedDetails()).resolves.toMatchObject({
+      visitId: 42,
+      patientId: 9,
+      metadata: { added: ['AYU-AMV'], removed: [] },
+    });
+  });
+
+  it('should answer without waiting on the Visit lookup that only serves the Audit Event', async () => {
+    getVisitById.mockRejectedValue(new Error('database down'));
+
+    const response = await PUT(request(), context('42'));
+
+    expect(response.status).toBe(StatusCodes.OK);
+    expect(getVisitById).not.toHaveBeenCalled();
   });
 
   it('should surface a not-completed Visit as a conflict message', async () => {

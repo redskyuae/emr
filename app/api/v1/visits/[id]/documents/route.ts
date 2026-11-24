@@ -91,14 +91,16 @@ export async function POST(request: NextRequest, context: VisitDocumentsRouteCon
     );
 
     // The Visit supplies the Patient; the file name is recorded, never its contents or URL.
-    const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
+    await recordAuditEvent(tenantSession, request, 'visit-document.add', async () => {
+      const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
 
-    await recordAuditEvent(tenantSession, request, 'visit-document.add', {
-      entityId: result.data.id,
-      visitId: result.data.visitId,
-      patientId: visit.success ? visit.data.patient.id : null,
-      entityLabel: result.data.fileName,
-      metadata: { contentType: result.data.contentType, fileSize: result.data.fileSize },
+      return {
+        entityId: result.data.id,
+        visitId: result.data.visitId,
+        patientId: visit.success ? visit.data.patient.id : null,
+        entityLabel: result.data.fileName,
+        metadata: { contentType: result.data.contentType, fileSize: result.data.fileSize },
+      };
     });
 
     return NextResponse.json<AddVisitDocumentResponse>(

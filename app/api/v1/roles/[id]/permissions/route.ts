@@ -27,18 +27,21 @@ async function recordPermissionsChange(
   before: AssignedPermission[] | null,
   after: AssignedPermission[]
 ) {
-  const role = await getRoleByIdQuery(roleId, tenantSession.tenantId);
   const beforeNames = new Set((before ?? []).map(({ name }) => name));
   const afterNames = new Set(after.map(({ name }) => name));
 
-  await recordAuditEvent(tenantSession, request, 'role.permissions-change', {
-    entityId: roleId,
-    entityLabel: role.success ? role.data.name : null,
-    metadata: {
-      granted: [...afterNames].filter((name) => !beforeNames.has(name)),
-      revoked: before ? [...beforeNames].filter((name) => !afterNames.has(name)) : [],
-      permissionCount: after.length,
-    },
+  await recordAuditEvent(tenantSession, request, 'role.permissions-change', async () => {
+    const role = await getRoleByIdQuery(roleId, tenantSession.tenantId);
+
+    return {
+      entityId: roleId,
+      entityLabel: role.success ? role.data.name : null,
+      metadata: {
+        granted: [...afterNames].filter((name) => !beforeNames.has(name)),
+        revoked: before ? [...beforeNames].filter((name) => !afterNames.has(name)) : [],
+        permissionCount: after.length,
+      },
+    };
   });
 }
 

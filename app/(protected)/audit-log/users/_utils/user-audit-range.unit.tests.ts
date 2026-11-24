@@ -30,6 +30,17 @@ describe('User Audit range', () => {
     );
   });
 
+  it('should fall back for a date that is not on the calendar', () => {
+    const fallback = defaultUserAuditRange('2026-11-22');
+
+    expect(resolveUserAuditRange({ from: '2026-02-30', to: null }, '2026-11-22')).toEqual(fallback);
+    expect(resolveUserAuditRange({ from: '0000-01-01', to: null }, '2026-11-22')).toEqual(fallback);
+    expect(resolveUserAuditRange({ from: '2024-02-29', to: '2024-03-01' }, '2026-11-22')).toEqual({
+      from: '2024-02-29',
+      to: '2024-03-01',
+    });
+  });
+
   it('should tell the default range apart and label ranges briefly', () => {
     expect(isDefaultUserAuditRange(defaultUserAuditRange('2026-11-22'), '2026-11-22')).toBe(true);
     expect(userAuditRangeLabel({ from: '2026-10-24', to: '2026-11-22' })).toBe(

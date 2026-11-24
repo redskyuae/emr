@@ -1,6 +1,8 @@
 import type { AuditExportFormatParam } from '@/app/api/v1/audit-log/export/types';
 import { parseApiError } from '@/app/queries/api-error';
 
+import { auditSearchParams } from './audit-search-params';
+
 export type AuditExportFormat = AuditExportFormatParam;
 
 /** The query string for an export: its filters, minus empty ones, plus the format. */
@@ -8,11 +10,7 @@ export function auditExportSearchParams(
   filters: Record<string, string | number | undefined>,
   format: AuditExportFormat
 ) {
-  const searchParams = new URLSearchParams();
-
-  for (const [name, value] of Object.entries(filters)) {
-    if (value !== undefined && value !== '') searchParams.set(name, String(value));
-  }
+  const searchParams = auditSearchParams(filters);
 
   searchParams.set('format', format);
   return searchParams;
@@ -45,8 +43,11 @@ export async function downloadAuditExport(
 
   link.href = objectUrl;
   link.download = filenameFrom(response, format);
+  // Firefox and Safari only download from an attached link, and need the URL past this tick.
+  document.body.append(link);
   link.click();
-  URL.revokeObjectURL(objectUrl);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
 
   return { rowCount };
 }

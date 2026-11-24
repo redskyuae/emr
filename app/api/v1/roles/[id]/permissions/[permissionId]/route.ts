@@ -6,6 +6,7 @@ import { removePermissionCommand } from '@/app/api/lib/modules/role-permission/c
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
 import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { getRoleByIdQuery } from '@/app/api/lib/modules/role/queries/get-role-by-id-query';
+import { getPermissionByIdQuery } from '@/app/api/lib/modules/permission/queries/get-permission-by-id-query';
 
 type RolePermissionRouteContext = {
   params: Promise<{ id: string; permissionId: string }>;
@@ -45,12 +46,21 @@ export async function DELETE(request: NextRequest, context: RolePermissionRouteC
 
     recordRolePermissionRemoved(tenantSession, request, result.data.roleId);
 
-    const role = await getRoleByIdQuery(result.data.roleId, tenantSession.tenantId);
+    // Recorded by name, like the grant/revoke lists of the bulk permission routes.
+    await recordAuditEvent(tenantSession, request, 'role.permissions-change', async () => {
+      const [role, permission] = await Promise.all([
+        getRoleByIdQuery(result.data.roleId, tenantSession.tenantId),
+        getPermissionByIdQuery(result.data.permissionId),
+      ]);
 
-    await recordAuditEvent(tenantSession, request, 'role.permissions-change', {
-      entityId: result.data.roleId,
-      entityLabel: role.success ? role.data.name : null,
-      metadata: { granted: [], revoked: [result.data.permissionId] },
+      return {
+        entityId: result.data.roleId,
+        entityLabel: role.success ? role.data.name : null,
+        metadata: {
+          granted: [],
+          revoked: [permission.success ? permission.data.name : String(result.data.permissionId)],
+        },
+      };
     });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });

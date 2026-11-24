@@ -31,8 +31,11 @@ function tooManyEvents(format: AuditExportFormat, total: number) {
     : `Export is limited to ${limit.toLocaleString('en-US')} Audit Events; ${found}. Narrow the filters and try again.`;
 }
 
-// Counts first and refuses an export over the cap for its format, rather than
-// silently truncating it: a partial audit export reads as a complete one.
+// Reads one row past the cap for its format and refuses the export when that row
+// comes back, rather than silently truncating it: a partial audit export reads as
+// a complete one. Reading the rows in one query (not count-then-fetch) means
+// events recorded in between cannot push the oldest rows out unnoticed. Only a
+// refused export is counted, for the figure in the message.
 export async function exportAuditEventsQuery(
   filters: unknown,
   tenantId: unknown
@@ -48,17 +51,17 @@ export async function exportAuditEventsQuery(
   const timeZone = tenant?.timeZone ?? DEFAULT_TIME_ZONE;
   const params = { ...validFilters, tenantId: validTenantId, timeZone };
   const limit = format === 'pdf' ? AUDIT_PDF_EXPORT_MAX_ROWS : AUDIT_EXPORT_MAX_ROWS;
-  const total = await auditLogRepository.countAuditEvents(params);
+  const events = await auditLogRepository.getAuditEventsForExport(params, limit + 1);
 
-  if (total > limit) {
+  if (events.length > limit) {
+    const total = await auditLogRepository.countAuditEvents(params);
+
     return {
       success: false,
       status: StatusCodes.UNPROCESSABLE_ENTITY,
-      errors: [tooManyEvents(format, total)],
+      errors: [tooManyEvents(format, Math.max(total, events.length))],
     };
   }
-
-  const events = await auditLogRepository.getAuditEventsForExport(params, limit);
 
   return {
     success: true,

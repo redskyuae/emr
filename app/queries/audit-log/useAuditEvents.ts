@@ -7,6 +7,8 @@ import type {
 import type { ListAuditEventsResponse } from '@/app/api/v1/audit-log/types';
 import { parseApiError } from '@/app/queries/api-error';
 
+import { auditSearchParams } from './audit-search-params';
+
 export type AuditEventsParams = {
   fromDate?: string;
   toDate?: string;
@@ -23,19 +25,8 @@ export type AuditEventsParams = {
 
 const AUDIT_EVENTS_KEY = ['audit-events'] as const;
 
-/** The query string both the list and the export accept; paging is ignored by the export. */
-export function auditEventsSearchParams(params: AuditEventsParams) {
-  const searchParams = new URLSearchParams();
-
-  for (const [name, value] of Object.entries(params)) {
-    if (value !== undefined && value !== '') searchParams.set(name, String(value));
-  }
-
-  return searchParams;
-}
-
 async function fetchAuditEvents(params: AuditEventsParams): Promise<ListAuditEventsResponse> {
-  const response = await fetch(`/api/v1/audit-log?${auditEventsSearchParams(params)}`, {
+  const response = await fetch(`/api/v1/audit-log?${auditSearchParams(params)}`, {
     credentials: 'same-origin',
   });
 

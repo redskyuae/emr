@@ -25,7 +25,7 @@ CREATE INDEX "audit_event_tenant_patient_idx" ON "audit_event" USING btree ("ten
 CREATE INDEX "audit_event_tenant_visit_idx" ON "audit_event" USING btree ("tenant_id","visit_id","occurred_on" DESC NULLS LAST) WHERE "audit_event"."visit_id" is not null;--> statement-breakpoint
 CREATE INDEX "audit_event_tenant_actor_idx" ON "audit_event" USING btree ("tenant_id","actor_user_id","occurred_on" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "audit_event_tenant_entity_idx" ON "audit_event" USING btree ("tenant_id","entity_type","entity_id");--> statement-breakpoint
--- Audit Events are append-only (ADR 0052): no role used by the application may
+-- Audit Events are append-only (ADR 0053): no role used by the application may
 -- rewrite or remove one. TRUNCATE is a separate statement-level event and is not
 -- blocked, so the integration-test reset keeps working.
 CREATE OR REPLACE FUNCTION "audit_event_reject_change"() RETURNS trigger AS $$

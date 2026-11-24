@@ -37,13 +37,21 @@ export function moduleBarWidth(count: number, maxCount: number) {
   return Math.max(2, Math.round((count / maxCount) * 100));
 }
 
-/** The Audit Log filtered to this user, optionally to one Module or Session. */
-export function auditLogHref(filters: { actor?: string; module?: string; session?: string }) {
+/** The Audit Log filtered to this user, optionally to one Module or Session and a date range. */
+export function auditLogHref(filters: {
+  to?: string;
+  from?: string;
+  actor?: string;
+  module?: string;
+  session?: string;
+}) {
   const params = new URLSearchParams();
 
   if (filters.actor) params.set('actor', filters.actor);
   if (filters.module) params.set('module', filters.module);
   if (filters.session) params.set('session', filters.session);
+  if (filters.from) params.set('from', filters.from);
+  if (filters.to) params.set('to', filters.to);
 
   return `/audit-log?${params.toString()}`;
 }

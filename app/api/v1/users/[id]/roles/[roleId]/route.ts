@@ -57,15 +57,17 @@ export async function DELETE(request: NextRequest, context: UserRoleRouteContext
 
     recordStaffRoleRemoved(tenantSession, request, result.data.userId);
 
-    const [staff, role] = await Promise.all([
-      getStaffByIdQuery(result.data.userId, tenantSession.tenantId),
-      getRoleByIdQuery(result.data.roleId, tenantSession.tenantId),
-    ]);
+    await recordAuditEvent(tenantSession, request, 'user.role-remove', async () => {
+      const [staff, role] = await Promise.all([
+        getStaffByIdQuery(result.data.userId, tenantSession.tenantId),
+        getRoleByIdQuery(result.data.roleId, tenantSession.tenantId),
+      ]);
 
-    await recordAuditEvent(tenantSession, request, 'user.role-remove', {
-      entityId: result.data.userId,
-      entityLabel: staff.success ? staff.data.email : null,
-      metadata: { roleId: result.data.roleId, roleName: role.success ? role.data.name : null },
+      return {
+        entityId: result.data.userId,
+        entityLabel: staff.success ? staff.data.email : null,
+        metadata: { roleId: result.data.roleId, roleName: role.success ? role.data.name : null },
+      };
     });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });

@@ -18,28 +18,34 @@ function readPath(source: unknown, path: string): unknown {
   }, source);
 }
 
-function toAuditValue(value: unknown): AuditValue {
+function normaliseAuditValue(value: unknown): AuditValue {
   if (value === null || value === undefined || value === '') return null;
   if (typeof value === 'number' || typeof value === 'boolean') return value;
   if (value instanceof Date) return value.toISOString();
 
-  const text = typeof value === 'string' ? value : JSON.stringify(value);
-
-  return text.length > AUDIT_CHANGE_VALUE_MAX_LENGTH
-    ? `${text.slice(0, AUDIT_CHANGE_VALUE_MAX_LENGTH)}…`
-    : text;
+  return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
+function truncateAuditValue(value: AuditValue): AuditValue {
+  return typeof value === 'string' && value.length > AUDIT_CHANGE_VALUE_MAX_LENGTH
+    ? `${value.slice(0, AUDIT_CHANGE_VALUE_MAX_LENGTH)}…`
+    : value;
+}
+
+// Compares the full values and cuts only what is stored, so an edit past the
+// cut-off in a long note is still recorded as a change.
 export function diffAuditFields(
   before: unknown,
   after: unknown,
   fields: readonly AuditField[]
 ): AuditChange[] {
   return fields.flatMap(({ path, label }) => {
-    const from = toAuditValue(readPath(before, path));
-    const to = toAuditValue(readPath(after, path));
+    const from = normaliseAuditValue(readPath(before, path));
+    const to = normaliseAuditValue(readPath(after, path));
 
-    return from === to ? [] : [{ field: path, label, from, to }];
+    return from === to
+      ? []
+      : [{ field: path, label, from: truncateAuditValue(from), to: truncateAuditValue(to) }];
   });
 }
 

@@ -34,6 +34,36 @@ describe('cleanPath', () => {
     expect(cleanPath('/things/3f2504e0-4f89-11d3-9a0c-0305e82c3301')).toBe('/things/:id');
   });
 
+  it('should replace a BetterAuth user id segment', () => {
+    expect(cleanPath('/audit-log/users/Xk3mP9qL2vR8tY5wZ1nB6cD4fG7hJ0sA')).toBe(
+      '/audit-log/users/:id'
+    );
+    expect(cleanPath('/api/v1/audit-log/users/Xk3mP9qL2vR8tY5wZ1nB6cD4fG7hJ0sA/export')).toBe(
+      '/api/v1/audit-log/users/:id/export'
+    );
+  });
+
+  it('should keep word segments, however long', () => {
+    expect(cleanPath('/audit-log/users')).toBe('/audit-log/users');
+    expect(cleanPath('/appointment-masters/appointment-cancelled-reason')).toBe(
+      '/appointment-masters/appointment-cancelled-reason'
+    );
+    expect(cleanPath('/reports/consolidated-patient-report')).toBe(
+      '/reports/consolidated-patient-report'
+    );
+    // 32 characters but hyphenated, as page names are.
+    expect(cleanPath('/x/appointment-cancelled-reason-xyz')).toBe(
+      '/x/appointment-cancelled-reason-xyz'
+    );
+    // 31 and 33 characters: only an exact 32-character id is a BetterAuth id.
+    expect(cleanPath('/x/abcdefghijklmnopqrstuvwxyzABCDE')).toBe(
+      '/x/abcdefghijklmnopqrstuvwxyzABCDE'
+    );
+    expect(cleanPath('/x/abcdefghijklmnopqrstuvwxyzABCDEFG')).toBe(
+      '/x/abcdefghijklmnopqrstuvwxyzABCDEFG'
+    );
+  });
+
   it('should drop the query string and fragment', () => {
     expect(cleanPath('/patients?q=Asha%20Nair&page=2')).toBe('/patients');
     expect(cleanPath('/reports/consolidated?patient=42&from=2026-01-01')).toBe(

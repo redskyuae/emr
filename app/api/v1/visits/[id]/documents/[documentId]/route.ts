@@ -49,14 +49,16 @@ export async function DELETE(request: NextRequest, context: VisitDocumentRouteCo
     );
 
     // The Visit supplies the Patient; the file name is recorded, never its contents or URL.
-    const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
+    await recordAuditEvent(tenantSession, request, 'visit-document.delete', async () => {
+      const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
 
-    await recordAuditEvent(tenantSession, request, 'visit-document.delete', {
-      entityId: result.data.id,
-      visitId: result.data.visitId,
-      patientId: visit.success ? visit.data.patient.id : null,
-      entityLabel: result.data.fileName,
-      metadata: { contentType: result.data.contentType, fileSize: result.data.fileSize },
+      return {
+        entityId: result.data.id,
+        visitId: result.data.visitId,
+        patientId: visit.success ? visit.data.patient.id : null,
+        entityLabel: result.data.fileName,
+        metadata: { contentType: result.data.contentType, fileSize: result.data.fileSize },
+      };
     });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });

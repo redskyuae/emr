@@ -11,7 +11,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 /**
- * One Audit Event: who did what to which record, and to which Patient (ADR 0052).
+ * One Audit Event: who did what to which record, and to which Patient (ADR 0053).
  *
  * Append-only. There is no `isDeleted`, no `modifiedOn`, and a database trigger
  * (migration 0081) rejects every UPDATE and DELETE, so an Audit Event can never be

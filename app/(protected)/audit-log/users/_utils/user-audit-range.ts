@@ -1,4 +1,4 @@
-import { format, isValid, parseISO, subDays } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 
 import { tenantLocalDateTime } from '@/app/api/lib/modules/appointment/schemas/appointment-slot';
 
@@ -7,8 +7,18 @@ const DEFAULT_RANGE_DAYS = 30;
 
 export type UserAuditRange = { from: string; to: string };
 
+/** A real calendar date as YYYY-MM-DD; `2026-02-30` and `0000-01-01` are not. */
 function isIsoDate(value: string | null): value is string {
-  return value !== null && /^\d{4}-\d{2}-\d{2}$/.test(value) && isValid(parseISO(value));
+  if (value === null || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  // Date rolls an impossible day over (30 Feb is 2 Mar), so it must round-trip.
+  const parsed = new Date(`${value}T00:00:00Z`);
+
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.getUTCFullYear() >= 1 &&
+    parsed.toISOString().startsWith(value)
+  );
 }
 
 /** Today in the Tenant's time zone (the browser's until it is known), as YYYY-MM-DD. */

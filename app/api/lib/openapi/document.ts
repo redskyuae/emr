@@ -1,3 +1,11 @@
+import {
+  AUDIT_ACTION_KEYS,
+  AUDIT_CATEGORIES,
+  AUDIT_ENTITY_TYPES,
+  AUDIT_MODULES,
+  AUDIT_OPERATIONS,
+} from '@/app/api/lib/modules/audit-log/schemas/audit-action-catalogue';
+
 type SchemaObject = Record<string, unknown>;
 type OperationObject = Record<string, unknown>;
 type PathItemObject = Record<string, OperationObject>;
@@ -42,30 +50,13 @@ const schemaRef = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const responseRef = (name: string) => ({ $ref: `#/components/responses/${name}` });
 const parameterRef = (name: string) => ({ $ref: `#/components/parameters/${name}` });
 
-// Audit Log (ADR 0052).
-const AUDIT_CATEGORY_VALUES = ['access', 'create', 'update', 'delete', 'export', 'admin', 'auth'];
-const AUDIT_MODULE_VALUES = [
-  'Visits',
-  'Patients',
-  'Billing',
-  'Identity & Access',
-  'Audit Log',
-  'Sign-in & Sessions',
-];
-const AUDIT_OPERATION_VALUES = [
-  'View',
-  'Create',
-  'Update',
-  'Amend',
-  'Delete',
-  'Sign',
-  'Status change',
-  'Assign',
-  'Revoke',
-  'Export',
-  'Sign in',
-  'Sign out',
-];
+// Audit Log (ADR 0053). Every value list comes from the Audit Action catalogue,
+// so Swagger stays in step when an action, Module or Operation is added.
+const AUDIT_ACTION_VALUES = [...AUDIT_ACTION_KEYS];
+const AUDIT_CATEGORY_VALUES = [...AUDIT_CATEGORIES];
+const AUDIT_ENTITY_TYPE_VALUES = [...AUDIT_ENTITY_TYPES];
+const AUDIT_MODULE_VALUES = [...AUDIT_MODULES];
+const AUDIT_OPERATION_VALUES = [...AUDIT_OPERATIONS];
 
 const auditEventExample = {
   id: 4812,
@@ -143,7 +134,7 @@ const auditFilterParameters = [
     in: 'query',
     required: false,
     description: 'Only events of this Audit Action, e.g. `visit.amend`.',
-    schema: { type: 'string', example: 'visit.amend' },
+    schema: { type: 'string', enum: AUDIT_ACTION_VALUES, example: 'visit.amend' },
   },
   {
     name: 'patientId',
@@ -164,7 +155,7 @@ const auditFilterParameters = [
     in: 'query',
     required: false,
     description: 'Only events about this kind of record, e.g. `clinical-note`.',
-    schema: { type: 'string' },
+    schema: { type: 'string', enum: AUDIT_ENTITY_TYPE_VALUES, example: 'clinical-note' },
   },
   {
     name: 'entityId',
@@ -3566,7 +3557,7 @@ export const openApiDocument = {
     {
       name: 'Audit Log',
       description:
-        'Read and export the append-only Audit Log: who did what to which record, and to which Patient, with each event labelled by Module and Operation and each changed field shown with its old and new value. Events are recorded by the server when a Visit, a Patient record, Clinical Notes, Vital Signs, Visit Diagnoses, Visit Documents, Invoices, Payments, Roles or Staff change, and when a Patient, a Visit or the Consolidated Patient Report is opened. Audit Events cannot be created, changed or deleted through the API.',
+        'Read and export the append-only Audit Log: who did what to which record, and to which Patient, with each event labelled by Module and Operation and each changed field shown with its old and new value. Events are recorded by the server when a Visit, a Patient record, Clinical Notes, Vital Signs, Visit Diagnoses, Visit Documents, Invoices, Payments, Roles or Staff change, and when a Patient, a Visit or the Consolidated Patient Report is opened. Sign-in and Sessions are recorded too: each sign-in (`auth.sign-in`), failed sign-in attempt (`auth.sign-in-failed`), sign-out (`auth.sign-out`), a user revoking one or all of their other Sessions (`auth.session-revoke`) and a Tenant Admin revoking a Staff member’s Sessions (`user.sessions-revoke`). Audit Events cannot be created, changed or deleted through the API.',
     },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
     { name: 'Session', description: 'Authenticated user Session management APIs.' },
@@ -3700,7 +3691,7 @@ export const openApiDocument = {
         tags: ['Audit Log'],
         summary: 'List Audit Events',
         description:
-          "Lists the active Tenant's Audit Events, newest first, with the Patient each concerns. `changes` holds the field-level before and after for updates and amendments; `metadata` holds other context, such as the codes added and removed by a diagnosis save or the filters of an export. Actor name and email are snapshots taken when the event was recorded. `occurredOn` is UTC; fromDate and toDate are the Tenant's local days. Reading the Audit Log is not itself recorded; exporting it is. The Tenant is resolved from the active Session. Requires the `audit-log:read` permission.",
+          "Lists the active Tenant's Audit Events, newest first, with the Patient each concerns. `changes` holds the field-level before and after for updates and amendments; `metadata` holds other context, such as the codes added, removed and changed by a diagnosis save or the filters of an export. Actor name and email are snapshots taken when the event was recorded. `occurredOn` is UTC; fromDate and toDate are the Tenant's local days. Reading the Audit Log is not itself recorded; exporting it is. The Tenant is resolved from the active Session. Requires the `audit-log:read` permission.",
         security: [{ cookieAuth: [] }],
         parameters: [
           ...auditFilterParameters,
@@ -3965,7 +3956,7 @@ export const openApiDocument = {
         tags: ['Authentication'],
         summary: 'Sign in and select active Tenant',
         description:
-          'Authenticates a user with email and password, creates a Session, and sets the sole Active Tenant available to that user as the active Tenant for tenant-scoped APIs.',
+          'Authenticates a user with email and password, creates a Session, and sets the sole Active Tenant available to that user as the active Tenant for tenant-scoped APIs. A successful sign-in is recorded as an `auth.sign-in` Audit Event for the new Session; a 401 or 403 is recorded as an `auth.sign-in-failed` Audit Event in each Tenant of the user the email names (never the password, and nothing when the email names no one), at most 10 per user per Tenant in 15 minutes.',
         requestBody: requestBody('SigninRequest', {
           email: 'priya.raghavan@apollo.example',
           password: 'StrongerPass123',
@@ -4309,7 +4300,7 @@ export const openApiDocument = {
         tags: ['Session'],
         summary: 'Revoke Other Current User Sessions',
         description:
-          'Revokes all Sessions for the authenticated user except the Session making this request. Use BetterAuth sign-out to end the current Session.',
+          'Revokes all Sessions for the authenticated user except the Session making this request. Use BetterAuth sign-out to end the current Session. Records an `auth.session-revoke` Audit Event in the active Tenant listing the revoked Session ids.',
         security: [{ cookieAuth: [] }],
         responses: {
           '204': { description: 'Other Sessions revoked.' },
@@ -4323,7 +4314,7 @@ export const openApiDocument = {
         tags: ['Session'],
         summary: 'Revoke Current User Session',
         description:
-          'Revokes one Session owned by the authenticated user. The current Session cannot be revoked through this endpoint.',
+          'Revokes one Session owned by the authenticated user. The current Session cannot be revoked through this endpoint. Records an `auth.session-revoke` Audit Event in the active Tenant whose record is the revoked Session.',
         security: [{ cookieAuth: [] }],
         parameters: [namedStringPathParameter('sessionId', 'Session')],
         responses: {
@@ -4587,7 +4578,7 @@ export const openApiDocument = {
         tags: ['Session'],
         summary: 'Revoke Staff Sessions',
         description:
-          'Force-revokes all Sessions for a Staff member in the active Tenant, including that Staff member’s current Session if they are online. Requires the caller to be a Tenant Admin for the active Tenant.',
+          'Force-revokes all Sessions for a Staff member in the active Tenant, including that Staff member’s current Session if they are online. Requires the caller to be a Tenant Admin for the active Tenant. Records a `user.sessions-revoke` Audit Event whose record is the Staff member, listing the revoked Session ids.',
         security: [{ cookieAuth: [] }],
         parameters: [namedStringPathParameter('userId', 'Staff')],
         responses: {
@@ -11005,7 +10996,7 @@ export const openApiDocument = {
               "The user's Roles at event time, comma separated, with Tenant Owner or Tenant Admin membership first.",
             example: 'Doctor, Tenant Admin',
           },
-          action: { type: 'string', example: 'clinical-note.amend' },
+          action: { type: 'string', enum: AUDIT_ACTION_VALUES, example: 'clinical-note.amend' },
           module: {
             type: 'string',
             enum: AUDIT_MODULE_VALUES,
@@ -11018,7 +11009,7 @@ export const openApiDocument = {
           },
           category: { type: 'string', enum: AUDIT_CATEGORY_VALUES },
           outcome: { type: 'string', example: 'success' },
-          entityType: { type: 'string', example: 'clinical-note' },
+          entityType: { type: 'string', enum: AUDIT_ENTITY_TYPE_VALUES, example: 'clinical-note' },
           entityId: { type: ['string', 'null'] },
           entityLabel: {
             type: ['string', 'null'],
@@ -11032,10 +11023,16 @@ export const openApiDocument = {
             type: ['object', 'null'],
             additionalProperties: true,
             description:
-              'Other context, e.g. `{ added, removed }` diagnosis codes, export filters, or `impersonatedBy` when support staff acted through an impersonated Session.',
+              'Other context, e.g. `{ added, removed, changed }` diagnosis codes (`changed` lists each kept code whose type or notes changed, with `from` and `to`), export filters, or `impersonatedBy` when support staff acted through an impersonated Session.',
           },
-          ipAddress: { type: ['string', 'null'] },
-          userAgent: { type: ['string', 'null'] },
+          ipAddress: {
+            type: ['string', 'null'],
+            description: 'The client IP address, cut to 64 characters.',
+          },
+          userAgent: {
+            type: ['string', 'null'],
+            description: 'The client user agent, cut to 1,000 characters.',
+          },
           patient: {
             oneOf: [
               { type: 'null' },

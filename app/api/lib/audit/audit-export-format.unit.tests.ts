@@ -8,6 +8,7 @@ import {
   auditReportDetails,
   auditReportFooter,
   auditTruncate,
+  describeAuditMetadata,
   type AuditReportContext,
 } from './audit-export-format';
 
@@ -37,6 +38,17 @@ describe('Audit export formatting', () => {
     expect(auditPeriodLabel('2026-11-01', undefined)).toBe('From 01-11-2026');
     expect(auditPeriodLabel(undefined, '2026-11-22')).toBe('Up to 22-11-2026');
     expect(auditPeriodLabel(undefined, undefined)).toBe('All dates');
+  });
+
+  it('should spell out object items in metadata lists rather than print [object Object]', () => {
+    expect(
+      describeAuditMetadata({
+        added: [],
+        changed: [{ code: 'M54.5', from: { type: 'Secondary' }, to: { type: 'Principal' } }],
+      })
+    ).toBe(
+      'added: —; changed: {"code":"M54.5","from":{"type":"Secondary"},"to":{"type":"Principal"}}'
+    );
   });
 
   it('should cut long values with an ellipsis', () => {

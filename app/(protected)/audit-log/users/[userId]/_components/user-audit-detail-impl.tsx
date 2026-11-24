@@ -186,7 +186,11 @@ export function UserAuditDetailImpl({ userId }: { userId: string }) {
                 <IpAddressesCard ipAddresses={detail.ipAddresses} timeZone={displayTimeZone} />
                 <DevicesCard devices={detail.devices} timeZone={displayTimeZone} />
               </div>
-              <ActivityByModuleCard userId={userId} activity={detail.activityByModule} />
+              <ActivityByModuleCard
+                userId={userId}
+                range={range}
+                activity={detail.activityByModule}
+              />
             </div>
           ) : null}
         </SkeletonCrossfade>

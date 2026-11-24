@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { auditLogRepository } from '../repository/audit-log-repository';
-import { AUDIT_EXPORT_MAX_ROWS, AUDIT_PDF_EXPORT_MAX_ROWS } from '../schemas/audit-log-schema';
+import {
+  AUDIT_EXPORT_MAX_ROWS,
+  AUDIT_PDF_EXPORT_MAX_ROWS,
+  type AuditEventListItem,
+} from '../schemas/audit-log-schema';
 import { exportAuditEventsQuery } from './export-audit-events-query';
 import { getAuditEventsQuery } from './get-audit-events-query';
 
@@ -19,6 +23,8 @@ vi.mock('../../tenant/repository/tenant-repository', () => ({
 }));
 
 const repo = vi.mocked(auditLogRepository);
+const rows = (n: number) =>
+  Array.from({ length: n }, (_, index) => ({ id: index + 1 }) as AuditEventListItem);
 const tenants = vi.mocked(tenantRepository);
 
 describe('Audit Log queries', () => {
@@ -72,12 +78,27 @@ describe('Audit Log queries', () => {
     );
   });
 
-  it('should refuse an export above the row cap without reading the rows', async () => {
-    repo.countAuditEvents.mockResolvedValue(AUDIT_EXPORT_MAX_ROWS + 1);
+  it('should refuse an export when a row past the cap comes back', async () => {
+    repo.getAuditEventsForExport.mockResolvedValue(rows(AUDIT_EXPORT_MAX_ROWS + 1));
+    repo.countAuditEvents.mockResolvedValue(AUDIT_EXPORT_MAX_ROWS + 20);
     const result = await exportAuditEventsQuery({}, 'tenant-1');
 
-    expect(result).toMatchObject({ success: false, status: StatusCodes.UNPROCESSABLE_ENTITY });
-    expect(repo.getAuditEventsForExport).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      success: false,
+      status: StatusCodes.UNPROCESSABLE_ENTITY,
+      errors: [
+        'Export is limited to 50,000 Audit Events; this selection has 50,020. Narrow the filters and try again.',
+      ],
+    });
+  });
+
+  it('should export exactly the cap without counting', async () => {
+    repo.getAuditEventsForExport.mockResolvedValue(rows(AUDIT_EXPORT_MAX_ROWS));
+    const result = await exportAuditEventsQuery({}, 'tenant-1');
+
+    expect(result).toMatchObject({ success: true });
+    expect(result.success && result.data.events).toHaveLength(AUDIT_EXPORT_MAX_ROWS);
+    expect(repo.countAuditEvents).not.toHaveBeenCalled();
   });
 
   it('should return the exported rows with the applied filters', async () => {
@@ -85,7 +106,7 @@ describe('Audit Log queries', () => {
 
     expect(repo.getAuditEventsForExport).toHaveBeenCalledWith(
       { patientId: 7, tenantId: 'tenant-1', timeZone: 'Asia/Dubai' },
-      AUDIT_EXPORT_MAX_ROWS
+      AUDIT_EXPORT_MAX_ROWS + 1
     );
     expect(result).toEqual({
       success: true,
@@ -104,7 +125,7 @@ describe('Audit Log queries', () => {
 
     expect(repo.getAuditEventsForExport).toHaveBeenCalledWith(
       { module: 'Visits', tenantId: 'tenant-1', timeZone: 'Asia/Dubai' },
-      AUDIT_PDF_EXPORT_MAX_ROWS
+      AUDIT_PDF_EXPORT_MAX_ROWS + 1
     );
     expect(result).toMatchObject({
       success: true,
@@ -113,6 +134,7 @@ describe('Audit Log queries', () => {
   });
 
   it('should refuse a PDF above its cap and point to the CSV export', async () => {
+    repo.getAuditEventsForExport.mockResolvedValue(rows(AUDIT_PDF_EXPORT_MAX_ROWS + 1));
     repo.countAuditEvents.mockResolvedValue(AUDIT_PDF_EXPORT_MAX_ROWS + 1);
 
     const result = await exportAuditEventsQuery({ format: 'pdf' }, 'tenant-1');
@@ -124,14 +146,14 @@ describe('Audit Log queries', () => {
         'PDF export is limited to 5,000 Audit Events; this selection has 5,001. Narrow the filters or export CSV.',
       ],
     });
-    expect(repo.getAuditEventsForExport).not.toHaveBeenCalled();
   });
 
-  it('should reject an unknown export format without counting', async () => {
+  it('should reject an unknown export format without reading the rows', async () => {
     await expect(exportAuditEventsQuery({ format: 'xlsx' }, 'tenant-1')).resolves.toEqual({
       success: false,
       errors: ['Format must be csv or pdf'],
     });
+    expect(repo.getAuditEventsForExport).not.toHaveBeenCalled();
     expect(repo.countAuditEvents).not.toHaveBeenCalled();
   });
 });

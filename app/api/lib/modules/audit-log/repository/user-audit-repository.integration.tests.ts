@@ -175,4 +175,89 @@ describe('User Audit repository', () => {
     );
     expect(distinct).toEqual({ ipAddressCount: 2, deviceCount: 2 });
   });
+
+  it('should read only the given Tenant’s data for a user who belongs to two Tenants', async () => {
+    const sara = await seedMember(tenantA, 'Sara Ali');
+    await seedOrganization(tenantB);
+    await addOrganizationMember(tenantB, sara.id, 'member');
+    const sessionA = await seedSession(sara.id, tenantA, 5);
+    const sessionB = await seedSession(sara.id, tenantB, 5);
+
+    await record(tenantA, sara.id, 'auth.sign-in', {
+      entityId: sessionA,
+      sessionId: sessionA,
+      ipAddress: '10.0.0.1',
+      userAgent: 'Agent A',
+    });
+    await record(tenantA, sara.id, 'auth.sign-in-failed', {
+      ipAddress: '10.0.0.1',
+      userAgent: 'Agent A',
+    });
+    await record(tenantA, sara.id, 'patient.view', {
+      sessionId: sessionA,
+      ipAddress: '10.0.0.1',
+      userAgent: 'Agent A',
+    });
+    await record(tenantA, sara.id, 'auth.sign-out', { entityId: 'ended-a' });
+
+    // The same user's trail in tenantB, on another IP address and device.
+    const elsewhere = { ipAddress: '172.16.0.9', userAgent: 'Agent B' };
+    await record(tenantB, sara.id, 'auth.sign-in', {
+      entityId: sessionB,
+      sessionId: sessionB,
+      ...elsewhere,
+    });
+    await record(tenantB, sara.id, 'auth.sign-in-failed', elsewhere);
+    await record(tenantB, sara.id, 'auth.sign-in-failed', elsewhere);
+    await record(tenantB, sara.id, 'visit.view', { sessionId: sessionB, ...elsewhere });
+    await record(tenantB, sara.id, 'visit.view', { sessionId: sessionA, ...elsewhere });
+    await record(tenantB, sara.id, 'auth.session-revoke', { entityId: 'ended-b' });
+    await record(tenantB, 'admin-b', 'user.sessions-revoke', {
+      entityId: sara.id,
+      metadata: { sessionIds: [sessionB] },
+    });
+
+    const [list, member, signIns, ends, activity, live, failed, ips, devices, actions, distinct] =
+      await Promise.all([
+        userAuditRepository.getUserAuditList(rangeA),
+        userAuditRepository.getUserAuditMember(rangeA, sara.id),
+        userAuditRepository.getSignIns(rangeA, sara.id, 10),
+        userAuditRepository.getSessionEndEvents(tenantA, sara.id, new Date(0)),
+        userAuditRepository.getSessionActivity(tenantA, [sessionA, sessionB]),
+        userAuditRepository.getLiveSessions(tenantA, sara.id),
+        userAuditRepository.getFailedSignIns(rangeA, sara.id, 10),
+        userAuditRepository.getIpAddresses(rangeA, sara.id, 10),
+        userAuditRepository.getDevices(rangeA, sara.id, 10),
+        userAuditRepository.getActionCounts(rangeA, sara.id),
+        userAuditRepository.countDistinctInRange(rangeA, sara.id),
+      ]);
+
+    const tenantAFigures = {
+      signInCount: 1,
+      failedSignInCount: 1,
+      actionCount: 1,
+      activeSessionCount: 1,
+      lastSignInIp: '10.0.0.1',
+      lastSignInUserAgent: 'Agent A',
+    };
+    expect(list.data).toEqual([expect.objectContaining(tenantAFigures)]);
+    expect(member).toMatchObject(tenantAFigures);
+    expect(signIns.map(({ sessionId }) => sessionId)).toEqual([sessionA]);
+    expect(ends.map(({ entityId }) => entityId)).toEqual(['ended-a']);
+    expect(activity).toEqual([expect.objectContaining({ sessionId: sessionA, actionCount: 1 })]);
+    expect(live.map(({ id }) => id)).toEqual([sessionA]);
+    expect(failed).toEqual([expect.objectContaining({ ipAddress: '10.0.0.1' })]);
+    expect(ips).toEqual([expect.objectContaining({ ipAddress: '10.0.0.1', eventCount: 3 })]);
+    expect(devices).toEqual([expect.objectContaining({ userAgent: 'Agent A', eventCount: 3 })]);
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        { action: 'auth.sign-in', count: 1 },
+        { action: 'auth.sign-in-failed', count: 1 },
+        { action: 'patient.view', count: 1 },
+        { action: 'auth.sign-out', count: 1 },
+      ])
+    );
+    expect(actions).toHaveLength(4);
+    expect(distinct).toEqual({ ipAddressCount: 1, deviceCount: 1 });
+  });
 });

@@ -54,4 +54,14 @@ describe('diffAuditFields', () => {
 
     expect(String(change.to)).toHaveLength(AUDIT_CHANGE_VALUE_MAX_LENGTH + 1);
   });
+
+  it('should record a change made after the cut-off and store both sides cut', () => {
+    const plan = 'p'.repeat(12_000);
+    const amended = `${plan.slice(0, 11_000)}q${plan.slice(11_001)}`;
+    const changes = diffAuditFields({ plan }, { plan: amended }, [{ path: 'plan', label: 'Plan' }]);
+
+    expect(changes).toHaveLength(1);
+    expect(changes[0].from).toBe(`${'p'.repeat(AUDIT_CHANGE_VALUE_MAX_LENGTH)}…`);
+    expect(changes[0].to).toBe(`${'p'.repeat(AUDIT_CHANGE_VALUE_MAX_LENGTH)}…`);
+  });
 });

@@ -4,9 +4,11 @@ import type { ListUserAuditResponse } from '@/app/api/v1/audit-log/users/types';
 import type { GetUserAuditResponse } from '@/app/api/v1/audit-log/users/[userId]/types';
 import { parseApiError } from '@/app/queries/api-error';
 
-export type UserAuditRangeParams = { fromDate?: string; toDate?: string };
+import { auditSearchParams } from './audit-search-params';
 
-export type UserAuditListParams = UserAuditRangeParams & {
+type UserAuditRangeParams = { fromDate?: string; toDate?: string };
+
+type UserAuditListParams = UserAuditRangeParams & {
   query?: string;
   page?: number;
   limit?: number;
@@ -14,18 +16,8 @@ export type UserAuditListParams = UserAuditRangeParams & {
 
 const USER_AUDIT_KEY = ['user-audit'] as const;
 
-function searchParamsOf(params: Record<string, string | number | undefined>) {
-  const searchParams = new URLSearchParams();
-
-  for (const [name, value] of Object.entries(params)) {
-    if (value !== undefined && value !== '') searchParams.set(name, String(value));
-  }
-
-  return searchParams;
-}
-
 async function fetchUserAuditList(params: UserAuditListParams): Promise<ListUserAuditResponse> {
-  const response = await fetch(`/api/v1/audit-log/users?${searchParamsOf(params)}`, {
+  const response = await fetch(`/api/v1/audit-log/users?${auditSearchParams(params)}`, {
     credentials: 'same-origin',
   });
 
@@ -41,7 +33,7 @@ async function fetchUserAudit(
   params: UserAuditRangeParams
 ): Promise<GetUserAuditResponse> {
   const response = await fetch(
-    `/api/v1/audit-log/users/${encodeURIComponent(userId)}?${searchParamsOf(params)}`,
+    `/api/v1/audit-log/users/${encodeURIComponent(userId)}?${auditSearchParams(params)}`,
     { credentials: 'same-origin' }
   );
 

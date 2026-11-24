@@ -101,18 +101,20 @@ export async function POST(request: NextRequest, context: UserRolesRouteContext)
       role_count: result.data.length,
     });
 
-    const staff = await getStaffByIdQuery(userId, tenantSession.tenantId);
-    const beforeIds = new Set(before.success ? before.data.map(({ id }) => id) : []);
+    await recordAuditEvent(tenantSession, request, 'user.role-assign', async () => {
+      const staff = await getStaffByIdQuery(userId, tenantSession.tenantId);
+      const beforeIds = new Set(before.success ? before.data.map(({ id }) => id) : []);
 
-    await recordAuditEvent(tenantSession, request, 'user.role-assign', {
-      entityId: userId,
-      entityLabel: staff.success ? staff.data.email : null,
-      metadata: {
-        assigned: result.data
-          .filter(({ id }) => !beforeIds.has(id))
-          .map(({ id, name }) => ({ roleId: id, roleName: name })),
-        roleCount: result.data.length,
-      },
+      return {
+        entityId: userId,
+        entityLabel: staff.success ? staff.data.email : null,
+        metadata: {
+          assigned: result.data
+            .filter(({ id }) => !beforeIds.has(id))
+            .map(({ id, name }) => ({ roleId: id, roleName: name })),
+          roleCount: result.data.length,
+        },
+      };
     });
 
     return NextResponse.json<AssignUserRolesResponse>({ data: result.data });

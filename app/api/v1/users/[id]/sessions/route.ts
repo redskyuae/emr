@@ -90,14 +90,16 @@ export async function DELETE(request: NextRequest, context: UserSessionsRouteCon
       scope: 'user',
     });
 
-    const staff = await getStaffByIdQuery(userId, tenantSession.tenantId);
+    await recordAuditEvent(tenantSession, request, 'user.sessions-revoke', async () => {
+      const staff = await getStaffByIdQuery(userId, tenantSession.tenantId);
 
-    await recordAuditEvent(tenantSession, request, 'user.sessions-revoke', {
-      entityId: userId,
-      entityLabel: staff.success ? staff.data.email : null,
-      metadata: {
-        sessionIds: ending.success && 'total' in ending ? ending.data.map(({ id }) => id) : [],
-      },
+      return {
+        entityId: userId,
+        entityLabel: staff.success ? staff.data.email : null,
+        metadata: {
+          sessionIds: ending.success && 'total' in ending ? ending.data.map(({ id }) => id) : [],
+        },
+      };
     });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });

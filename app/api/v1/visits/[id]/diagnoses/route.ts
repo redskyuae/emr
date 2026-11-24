@@ -99,14 +99,16 @@ export async function PUT(request: NextRequest, context: VisitDiagnosesRouteCont
       visitDiagnosesSavedProperties(result.data)
     );
 
-    const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
+    await recordAuditEvent(tenantSession, request, 'visit-diagnosis.save', async () => {
+      const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
 
-    await recordAuditEvent(tenantSession, request, 'visit-diagnosis.save', {
-      entityId: id,
-      visitId: visit.success ? visit.data.id : null,
-      patientId: visit.success ? visit.data.patient.id : null,
-      entityLabel: visit.success ? visit.data.visitNumber : null,
-      metadata: before.success ? diagnosisAuditMetadata(before.data, result.data) : null,
+      return {
+        entityId: id,
+        visitId: visit.success ? visit.data.id : null,
+        patientId: visit.success ? visit.data.patient.id : null,
+        entityLabel: visit.success ? visit.data.visitNumber : null,
+        metadata: before.success ? diagnosisAuditMetadata(before.data, result.data) : null,
+      };
     });
 
     return NextResponse.json<SaveVisitDiagnosesResponse>({ data: result.data });

@@ -56,14 +56,34 @@ const optionalText = (fieldName: string, max: number) =>
     .transform((value) => value || null)
     .nullish();
 
-const isoDateSchema = (fieldName: string) =>
+// Truncates instead of rejecting: these come from client-controlled headers, and
+// an over-long one must not cost the Audit Event.
+const truncatedText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .transform((value) => value.slice(0, max) || null)
+    .nullish();
+
+// `Date.parse` rolls impossible days over (2026-02-30 becomes 2 March), so the
+// date is round-tripped: it is valid only if it reads back as the same day.
+function isCalendarDate(value: string) {
+  const parsed = new Date(`${value}T00:00:00Z`);
+
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.getUTCFullYear() >= 1 &&
+    parsed.toISOString().startsWith(value)
+  );
+}
+
+/** A From/To day filter, shared by the Audit Log and User Audit schemas. */
+export const auditIsoDateSchema = (fieldName: string) =>
   z
     .string()
     .trim()
     .regex(/^\d{4}-\d{2}-\d{2}$/, `${fieldName} must be a date in YYYY-MM-DD format`)
-    .refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`)), {
-      message: `${fieldName} is Invalid.`,
-    });
+    .refine(isCalendarDate, { message: `${fieldName} is Invalid.` });
 
 const changeValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 
@@ -101,8 +121,8 @@ export const recordAuditEventSchema = z.object({
   reason: optionalText('Reason', 2000),
   changes: z.array(auditChangeSchema).max(200).nullish(),
   metadata: z.record(z.string(), z.unknown()).nullish(),
-  ipAddress: optionalText('IP address', 64),
-  userAgent: optionalText('User agent', 1000),
+  ipAddress: truncatedText(64),
+  userAgent: truncatedText(1000),
 });
 
 export type RecordAuditEventInput = z.input<typeof recordAuditEventSchema>;
@@ -114,8 +134,8 @@ export type ValidatedAuditEvent = Omit<z.output<typeof recordAuditEventSchema>, 
 };
 
 const auditFilterShape = {
-  toDate: isoDateSchema('To date').optional(),
-  fromDate: isoDateSchema('From date').optional(),
+  toDate: auditIsoDateSchema('To date').optional(),
+  fromDate: auditIsoDateSchema('From date').optional(),
   action: z.enum(AUDIT_ACTION_KEYS, { error: 'Audit action is Invalid.' }).optional(),
   visitId: positiveIdSchema('Visit ID').optional(),
   category: z.enum(AUDIT_CATEGORIES, { error: 'Audit category is Invalid.' }).optional(),

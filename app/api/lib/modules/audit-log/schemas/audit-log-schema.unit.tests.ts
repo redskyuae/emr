@@ -15,7 +15,11 @@ import {
   listAuditEventsSchema,
   recordAuditEventSchema,
 } from './audit-log-schema';
-import { exportUserAuditDetailSchema, exportUserAuditListSchema } from './user-audit-schema';
+import {
+  exportUserAuditDetailSchema,
+  exportUserAuditListSchema,
+  userAuditDetailSchema,
+} from './user-audit-schema';
 
 const validEvent = {
   tenantId: 'tenant-1',
@@ -112,6 +116,45 @@ describe('Audit Log schema', () => {
     expect(errorsOf(auditEventFiltersSchema.safeParse({ fromDate: '20-11-2026' }))).toContain(
       'From date must be a date in YYYY-MM-DD format'
     );
+  });
+
+  it.each(['2026-02-30', '2026-13-01', '0000-01-01'])(
+    'should reject the impossible date %s as Invalid',
+    (value) => {
+      expect(errorsOf(auditEventFiltersSchema.safeParse({ fromDate: value }))).toEqual([
+        'From date is Invalid.',
+      ]);
+      expect(errorsOf(userAuditDetailSchema.safeParse({ toDate: value }))).toEqual([
+        'To date is Invalid.',
+      ]);
+    }
+  );
+
+  it('should accept a leap day in a leap year', () => {
+    expect(auditEventFiltersSchema.parse({ fromDate: '2028-02-29' })).toEqual({
+      fromDate: '2028-02-29',
+    });
+    expect(userAuditDetailSchema.parse({ toDate: '2028-02-29' })).toEqual({
+      toDate: '2028-02-29',
+    });
+  });
+
+  it('should truncate an over-long user agent and IP address instead of rejecting the event', () => {
+    const result = recordAuditEventSchema.safeParse({
+      ...validEvent,
+      ipAddress: ` ${'1'.repeat(80)} `,
+      userAgent: 'u'.repeat(1500),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.ipAddress).toBe('1'.repeat(64));
+    expect(result.data?.userAgent).toBe('u'.repeat(1000));
+  });
+
+  it('should store a blank user agent and IP address as null', () => {
+    expect(
+      recordAuditEventSchema.parse({ ...validEvent, ipAddress: ' ', userAgent: '' })
+    ).toMatchObject({ ipAddress: null, userAgent: null });
   });
 
   it('should reject an unknown category and a page size over 100', () => {

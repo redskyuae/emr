@@ -85,6 +85,21 @@ describe('Audit Log filters', () => {
     expect(toAuditEventsParams(filters)).toMatchObject({ actorUserId: 'liEjlOC0cra1U8rb' });
   });
 
+  it('should drop a date that is not on the calendar', () => {
+    expect(resolveFilters({ ...emptyUrl, from: '2026-02-30', to: '2026-13-01' })).toMatchObject({
+      from: null,
+      to: null,
+    });
+    expect(resolveFilters({ ...emptyUrl, from: '0000-01-01', to: '2026-02-29' })).toMatchObject({
+      from: null,
+      to: null,
+    });
+    expect(resolveFilters({ ...emptyUrl, from: '2024-02-29', to: '2026-11-22' })).toMatchObject({
+      from: '2024-02-29',
+      to: '2026-11-22',
+    });
+  });
+
   it('should drop both dates when the range is inverted', () => {
     const filters = resolveFilters({ ...emptyUrl, from: '2026-11-20', to: '2026-11-01' });
 
@@ -141,6 +156,23 @@ describe('Audit Log filters', () => {
     expect(eventDetails(event({ metadata: { added: ['R51'], removed: ['M54.5'] } }))).toBe(
       'Added R51; Removed M54.5'
     );
+    expect(
+      eventDetails(
+        event({
+          metadata: {
+            added: [],
+            removed: [],
+            changed: [
+              {
+                code: 'M54.5',
+                from: { type: 'PRINCIPAL', notes: null },
+                to: { type: 'SECONDARY', notes: null },
+              },
+            ],
+          },
+        })
+      )
+    ).toBe('Changed M54.5');
     expect(eventDetails(event({ metadata: { rowCount: 40 } }))).toBe('40 events exported');
     expect(eventDetails(event({ metadata: { method: 'cash', impersonatedBy: 'x' } }))).toBe(
       'method: cash'

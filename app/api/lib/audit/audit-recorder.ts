@@ -1,8 +1,12 @@
-// Records an Audit Event from a route's success branch (ADR 0052). The actor comes
+// Records an Audit Event from a route's success branch (ADR 0053). The actor comes
 // from the Session and the request context from headers, never from a request
 // body. Recording is awaited, so the event is written before the response leaves,
 // but a failure to record is logged and swallowed: the action has already
 // happened, and failing the response would invite a duplicate retry.
+//
+// Details that need a read of their own after the write (a label, the Patient)
+// are passed as a function, which runs inside the same try/catch: a failed
+// lookup costs the Audit Event, never the response.
 
 import { recordAuditEventCommand } from '@/app/api/lib/modules/audit-log/commands/record-audit-event-command';
 import type { AuditAction } from '@/app/api/lib/modules/audit-log/schemas/audit-action-catalogue';
@@ -22,6 +26,9 @@ type AuditEventDetails = {
   metadata?: Record<string, unknown> | null;
   outcome?: (typeof AUDIT_OUTCOMES)[number];
 };
+
+type AuditEventDetailsSource =
+  AuditEventDetails | (() => AuditEventDetails | Promise<AuditEventDetails>);
 
 /** Who acted, for an event recorded where there is no Session yet (a sign-in). */
 type AuditActor = {
@@ -43,9 +50,10 @@ export async function recordAuditEventFor(
   actor: AuditActor,
   request: Request,
   action: AuditAction,
-  details: AuditEventDetails = {}
+  detailsSource: AuditEventDetailsSource = {}
 ): Promise<void> {
   try {
+    const details = typeof detailsSource === 'function' ? await detailsSource() : detailsSource;
     // Support access must be visible to the Tenant: an impersonated Session is
     // recorded as the impersonated user, with the real operator alongside.
     const metadata = actor.impersonatedBy
@@ -77,7 +85,7 @@ export async function recordAuditEvent(
   tenantSession: TenantSession,
   request: Request,
   action: AuditAction,
-  details: AuditEventDetails = {}
+  details: AuditEventDetailsSource = {}
 ): Promise<void> {
   // Read defensively: a malformed Session must not turn a successful action into an error.
   const { user, session } = (tenantSession.session ?? {}) as Partial<TenantSession['session']>;

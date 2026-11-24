@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { userAuditRepository } from '../repository/user-audit-repository';
-import { USER_AUDIT_EXPORT_MAX_USERS, type UserAuditDetail } from '../schemas/user-audit-schema';
+import {
+  USER_AUDIT_EXPORT_MAX_USERS,
+  type UserAuditDetail,
+  type UserAuditListItem,
+} from '../schemas/user-audit-schema';
 import { exportUserAuditDetailQuery } from './export-user-audit-detail-query';
 import { exportUserAuditListQuery } from './export-user-audit-list-query';
 import { getUserAuditDetailQuery } from './get-user-audit-detail-query';
@@ -46,7 +50,7 @@ describe('User Audit export queries', () => {
       tenantId: 'tenant-1',
       timeZone: 'Asia/Dubai',
       page: 1,
-      limit: USER_AUDIT_EXPORT_MAX_USERS,
+      limit: USER_AUDIT_EXPORT_MAX_USERS + 1,
     });
     expect(result).toEqual({
       success: true,
@@ -70,6 +74,24 @@ describe('User Audit export queries', () => {
     repo.getUserAuditList.mockResolvedValue({ data: [], total: USER_AUDIT_EXPORT_MAX_USERS + 1 });
 
     await expect(exportUserAuditListQuery({}, 'tenant-1')).resolves.toEqual({
+      success: false,
+      status: StatusCodes.UNPROCESSABLE_ENTITY,
+      errors: [
+        'Export is limited to 5,000 users; this search has 5,001. Narrow the search and try again.',
+      ],
+    });
+  });
+
+  it('should refuse a list export when a member past the cap comes back after the count', async () => {
+    repo.getUserAuditList.mockResolvedValue({
+      data: Array.from(
+        { length: USER_AUDIT_EXPORT_MAX_USERS + 1 },
+        (_, index) => ({ userId: `user-${index}` }) as UserAuditListItem
+      ),
+      total: USER_AUDIT_EXPORT_MAX_USERS,
+    });
+
+    await expect(exportUserAuditListQuery({}, 'tenant-1')).resolves.toMatchObject({
       success: false,
       status: StatusCodes.UNPROCESSABLE_ENTITY,
       errors: [

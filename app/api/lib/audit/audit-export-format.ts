@@ -55,7 +55,11 @@ export function describeAuditMetadata(metadata: Record<string, unknown> | null) 
     .filter(([key]) => key !== 'impersonatedBy')
     .map(([key, value]) => {
       const text = Array.isArray(value)
-        ? value.join(', ') || '—'
+        ? value
+            .map((item) =>
+              typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item)
+            )
+            .join(', ') || '—'
         : typeof value === 'object' && value !== null
           ? JSON.stringify(value)
           : String(value);

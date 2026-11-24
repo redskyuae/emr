@@ -21,7 +21,7 @@ export const AUDIT_LOG_PAGE_SIZE = 25;
 export const VISIBLE_CHANGES = 3;
 
 /** Filters as they appear in the URL. */
-export type AuditLogUrlParams = {
+type AuditLogUrlParams = {
   q: string | null;
   to: string | null;
   from: string | null;
@@ -78,8 +78,18 @@ export function recordTypeLabel(entityType: string) {
   return AUDIT_ENTITY_LABELS[entityType as keyof typeof AUDIT_ENTITY_LABELS] ?? entityType;
 }
 
+/** A real calendar date as YYYY-MM-DD; `2026-02-30` and `0000-01-01` are not. */
 function isIsoDate(value: string | null): value is string {
-  return value !== null && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
+  if (value === null || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  // Date rolls an impossible day over (30 Feb is 2 Mar), so it must round-trip.
+  const parsed = new Date(`${value}T00:00:00Z`);
+
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.getUTCFullYear() >= 1 &&
+    parsed.toISOString().startsWith(value)
+  );
 }
 
 function isOpaqueId(value: string | null | undefined): value is string {
@@ -202,11 +212,19 @@ export function eventDetails(event: AuditEventListItem) {
   const metadata = event.metadata ?? {};
   const added = Array.isArray(metadata.added) ? metadata.added : [];
   const removed = Array.isArray(metadata.removed) ? metadata.removed : [];
+  // Diagnosis codes kept on both sides whose type or notes changed.
+  const changed = Array.isArray(metadata.changed)
+    ? metadata.changed.flatMap((entry: unknown) => {
+        const code = (entry as { code?: unknown } | null)?.code;
+        return typeof code === 'string' ? [code] : [];
+      })
+    : [];
 
-  if (added.length || removed.length) {
+  if (added.length || removed.length || changed.length) {
     return [
       added.length ? `Added ${added.join(', ')}` : null,
       removed.length ? `Removed ${removed.join(', ')}` : null,
+      changed.length ? `Changed ${changed.join(', ')}` : null,
     ]
       .filter(Boolean)
       .join('; ');

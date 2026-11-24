@@ -36,6 +36,9 @@ describe('User Audit detail helpers', () => {
     expect(auditLogHref({ actor: 'u1', module: 'Identity & Access' })).toBe(
       '/audit-log?actor=u1&module=Identity+%26+Access'
     );
+    expect(
+      auditLogHref({ actor: 'u1', module: 'Visits', from: '2026-11-16', to: '2026-11-22' })
+    ).toBe('/audit-log?actor=u1&module=Visits&from=2026-11-16&to=2026-11-22');
   });
 
   it('should require an ordered date range', () => {

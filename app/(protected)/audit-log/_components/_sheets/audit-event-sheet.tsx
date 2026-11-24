@@ -75,7 +75,11 @@ function metadataEntries(metadata: Record<string, unknown>) {
   return Object.entries(metadata).map(([key, value]) => [
     key,
     Array.isArray(value)
-      ? value.join(', ') || '—'
+      ? value
+          .map((item) =>
+            typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item)
+          )
+          .join(', ') || '—'
       : typeof value === 'object' && value !== null
         ? JSON.stringify(value)
         : String(value),

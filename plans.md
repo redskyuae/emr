@@ -6,7 +6,7 @@ Write the next implementation plan here.
 
 > Standalone implementation plan. Read `CLAUDE.md`, `AGENTS.md`, `CONTEXT.md`, `DESIGN.md`,
 > `lessons.md`, and `docs/backend-testing.md` first; they remain the binding _how_. The decision
-> record is `docs/adr/0052-audit-log-is-an-append-only-event-table.md`.
+> record is `docs/adr/0053-audit-log-is-an-append-only-event-table.md`.
 >
 > Supersedes the previous plan in this file (Emirates ID and Identity Documents on Patient), which
 > is implemented and committed (ADRs 0042, 0043).
@@ -78,7 +78,7 @@ storage), alerting.
 ### Phase 3 — Contracts and docs
 
 - [x] Swagger: both Audit Log operations with examples and errors
-- [x] ADR 0052; CONTEXT.md Audit Log / Audit Event entries
+- [x] ADR 0053; CONTEXT.md Audit Log / Audit Event entries
 
 ### Phase 4 — Frontend
 

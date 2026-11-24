@@ -84,6 +84,28 @@ describe('recordAuditEvent', () => {
     expect(console.error).toHaveBeenCalled();
   });
 
+  it('should resolve lazy details before recording them', async () => {
+    await recordAuditEvent(tenantSession(), request, 'visit-document.add', async () => ({
+      visitId: 12,
+      patientId: 7,
+    }));
+
+    expect(command).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'visit-document.add', visitId: 12, patientId: 7 })
+    );
+  });
+
+  it('should skip the event without throwing when a lazy detail lookup fails', async () => {
+    const lookup = vi.fn().mockRejectedValue(new Error('database down'));
+
+    await expect(
+      recordAuditEvent(tenantSession(), request, 'visit-document.add', lookup)
+    ).resolves.toBeUndefined();
+    expect(lookup).toHaveBeenCalled();
+    expect(command).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalled();
+  });
+
   it('should log a rejected event instead of throwing', async () => {
     command.mockResolvedValue({ success: false, errors: ['Audit action is Invalid.'] });
 

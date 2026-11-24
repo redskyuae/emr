@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import type { AuditModule } from './audit-action-catalogue';
-import { auditExportFormatSchema } from './audit-log-schema';
+import { auditExportFormatSchema, auditIsoDateSchema } from './audit-log-schema';
 
 // A user's detail page lists at most this many Sessions and failed attempts in
 // the range; the full trail stays in the Audit Log.
@@ -11,18 +11,9 @@ export const USER_AUDIT_DETAIL_LIMIT = 100;
 // narrows it with the search.
 export const USER_AUDIT_EXPORT_MAX_USERS = 5_000;
 
-const isoDateSchema = (fieldName: string) =>
-  z
-    .string()
-    .trim()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, `${fieldName} must be a date in YYYY-MM-DD format`)
-    .refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00Z`)), {
-      message: `${fieldName} is Invalid.`,
-    });
-
 const rangeShape = {
-  toDate: isoDateSchema('To date').optional(),
-  fromDate: isoDateSchema('From date').optional(),
+  toDate: auditIsoDateSchema('To date').optional(),
+  fromDate: auditIsoDateSchema('From date').optional(),
 };
 
 function fromBeforeTo(filters: { fromDate?: string; toDate?: string }) {

@@ -116,6 +116,14 @@ export function AuditLogPageImpl() {
     }
   }, [page, params.page, setParams, totalPages]);
 
+  // An ?event= that is not on the loaded page (a stale link, or the event moved
+  // to another page) opens nothing, so drop it rather than leave it in the URL.
+  useEffect(() => {
+    if (params.event !== null && eventsQuery.isSuccess && !openEvent) {
+      void setParams({ event: null }, { history: 'replace' });
+    }
+  }, [params.event, eventsQuery.isSuccess, openEvent, setParams]);
+
   function applyFilters(next: EditableAuditLogFilters) {
     void setParams({
       q: next.query || null,

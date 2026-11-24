@@ -53,6 +53,13 @@ function context(id = '42') {
   return { params: Promise.resolve({ id }) };
 }
 
+/** The details the route handed the recorder, resolving a lazy lookup as the recorder does. */
+async function recordedDetails() {
+  const details = recordAudit.mock.calls[0]?.[3];
+
+  return typeof details === 'function' ? await details() : details;
+}
+
 describe('Visit diagnoses route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -186,13 +193,23 @@ describe('Visit diagnoses route', () => {
         tenantSession,
         expect.anything(),
         'visit-diagnosis.save',
-        expect.objectContaining({
-          visitId: 42,
-          patientId: 9,
-          entityLabel: 'VST-1042',
-          metadata: { added: ['M06.9'], removed: ['R51'] },
-        })
+        expect.any(Function)
       );
+      await expect(recordedDetails()).resolves.toMatchObject({
+        visitId: 42,
+        patientId: 9,
+        entityLabel: 'VST-1042',
+        metadata: { added: ['M06.9'], removed: ['R51'] },
+      });
+    });
+
+    it('should answer without waiting on the Visit lookup that only serves the Audit Event', async () => {
+      getVisitById.mockRejectedValue(new Error('database down'));
+
+      const response = await PUT(request('PUT'), context('42'));
+
+      expect(response.status).toBe(StatusCodes.OK);
+      expect(getVisitById).not.toHaveBeenCalled();
     });
 
     it('should not record an Audit Event when listing diagnoses', async () => {

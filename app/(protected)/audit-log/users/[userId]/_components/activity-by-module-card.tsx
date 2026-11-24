@@ -4,13 +4,16 @@ import { PiListChecksDuotone } from 'react-icons/pi';
 import type { UserAuditDetail } from '@/app/api/lib/modules/audit-log/schemas/user-audit-schema';
 import { EmptyState } from '@/components/app/empty-state';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { UserAuditRange } from '../../_utils/user-audit-range';
 import { auditLogHref, moduleBarWidth } from '../_utils/user-audit-detail';
 
 export function ActivityByModuleCard({
+  range,
   userId,
   activity,
 }: {
   userId: string;
+  range: UserAuditRange;
   activity: UserAuditDetail['activityByModule'];
 }) {
   const maxCount = Math.max(0, ...activity.map(({ count }) => count));
@@ -37,7 +40,7 @@ export function ActivityByModuleCard({
             {activity.map(({ module, count }) => (
               <li key={module}>
                 <Link
-                  href={auditLogHref({ actor: userId, module })}
+                  href={auditLogHref({ actor: userId, module, from: range.from, to: range.to })}
                   className="hover:bg-muted/50 grid grid-cols-[minmax(8rem,12rem)_1fr_auto] items-center gap-3 px-4 py-3"
                 >
                   <span className="truncate text-sm font-medium">{module}</span>

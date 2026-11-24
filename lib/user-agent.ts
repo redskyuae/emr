@@ -4,7 +4,7 @@
 
 type DeviceType = 'Desktop' | 'Mobile' | 'Tablet';
 
-export type ParsedUserAgent = {
+type ParsedUserAgent = {
   browser: string | null;
   browserVersion: string | null;
   os: string | null;

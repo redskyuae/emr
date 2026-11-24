@@ -39,15 +39,18 @@ export async function exportUserAuditListQuery(
     tenantId: validTenantId,
     timeZone,
     page: 1,
-    limit: USER_AUDIT_EXPORT_MAX_USERS,
+    // One past the cap, so a member added after the count still refuses the export.
+    limit: USER_AUDIT_EXPORT_MAX_USERS + 1,
   });
 
-  if (total > USER_AUDIT_EXPORT_MAX_USERS) {
+  if (data.length > USER_AUDIT_EXPORT_MAX_USERS || total > USER_AUDIT_EXPORT_MAX_USERS) {
+    const found = Math.max(total, data.length);
+
     return {
       success: false,
       status: StatusCodes.UNPROCESSABLE_ENTITY,
       errors: [
-        `Export is limited to ${USER_AUDIT_EXPORT_MAX_USERS.toLocaleString('en-US')} users; this search has ${total.toLocaleString('en-US')}. Narrow the search and try again.`,
+        `Export is limited to ${USER_AUDIT_EXPORT_MAX_USERS.toLocaleString('en-US')} users; this search has ${found.toLocaleString('en-US')}. Narrow the search and try again.`,
       ],
     };
   }
