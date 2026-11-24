@@ -19,18 +19,26 @@ const geistMono = Geist_Mono({
 export function generateMetadata(): Metadata {
   const variant = getConfiguredBrandLogoVariant();
   const icon = variant === 'none' ? '/brand/medical-emr.ico' : brandLogos[variant].markSrc;
+  const shareImages = variant === 'none' ? undefined : [{ url: icon, width: 1254, height: 1254 }];
+
+  // Link previews (WhatsApp, Facebook, LinkedIn, X, Telegram, Slack, iMessage…) read these.
+  const title = 'Medical EMR — One platform for every facility in your hospital group';
+  const description =
+    'Medical EMR is an API-first, multi-tenant hospital management platform. Run every hospital, clinic, and lab in your group on one secure, tenant-isolated system — with AI-assisted documentation, FHIR/HL7 interoperability, and real-time operations.';
 
   return {
-    title: {
-      default:
-        'Medical EMR from Redsky Consultancy — One platform for every facility in your hospital group',
-      template: '%s · Medical EMR',
-    },
-    description:
-      'Medical EMR by Redsky Consultancy is an API-first, multi-tenant hospital management platform. Run every hospital, clinic, and lab in your group on one secure, tenant-isolated system — with AI-assisted documentation, FHIR/HL7 interoperability, and real-time operations.',
+    title: { default: title, template: '%s · Medical EMR' },
+    description,
     applicationName: 'Medical EMR',
-    authors: [{ name: 'Redsky Consultancy', url: 'https://redskyconsultancy.com/' }],
     icons: { icon },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      siteName: 'Medical EMR',
+      images: shareImages,
+    },
+    twitter: { card: 'summary', title, description, images: shareImages },
   };
 }
 

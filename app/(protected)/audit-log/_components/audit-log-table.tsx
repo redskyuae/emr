@@ -1,7 +1,8 @@
 'use client';
 
+import { useEffect, useRef, type MouseEvent } from 'react';
 import Link from 'next/link';
-import { CiRead } from 'react-icons/ci';
+import { PiCaretDownLight } from 'react-icons/pi';
 
 import type { AuditEventListItem } from '@/app/api/lib/modules/audit-log/schemas/audit-log-schema';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,8 @@ import {
   recordTypeLabel,
   splitAuditTime,
 } from '../_utils/audit-log-filters';
+import { AuditEventDetails } from './audit-event-details';
+import { useExpandReveal } from './use-expand-reveal';
 
 const COLUMNS = [
   'Date & time',
@@ -53,10 +56,32 @@ const COLUMNS = [
 // Wide enough that every column keeps its content on readable lines; the card scrolls sideways.
 const TABLE_MIN_WIDTH = 'min-w-[2050px]';
 
+// The expand/collapse chevron leads each row; the button's own padding stands in for the cell's,
+// and the negative margin lines the 36px button up with the first line of the row's text.
+const TOGGLE_CELL = 'w-12 pr-0 first:pl-3 [&>button]:-my-2';
+
 type RowProps = {
   timeZone: string | undefined;
-  onOpen: (event: AuditEventListItem) => void;
+  expandedId: number | null;
+  onToggle: (event: AuditEventListItem) => void;
 };
+
+// The phone cards and the desktop table are both in the DOM, so each layout gets its own id.
+type Layout = 'card' | 'row';
+const detailsId = (event: AuditEventListItem, layout: Layout) =>
+  `audit-event-${event.id}-${layout}-details`;
+
+/**
+ * Clicking anywhere on a row or card toggles its details, except on its own links and buttons,
+ * and except when the click ends a text selection (reviewers copy values out of the log).
+ */
+function toggleOnClick(event: AuditEventListItem, onToggle: RowProps['onToggle']) {
+  return (click: MouseEvent<HTMLElement>) => {
+    if ((click.target as HTMLElement).closest('a, button')) return;
+    if (window.getSelection()?.toString()) return;
+    onToggle(event);
+  };
+}
 
 function OperationBadge({ operation }: { operation: string }) {
   return (
@@ -69,16 +94,33 @@ function OperationBadge({ operation }: { operation: string }) {
   );
 }
 
-function OpenButton({ event, onOpen }: { event: AuditEventListItem; onOpen: RowProps['onOpen'] }) {
+function ToggleButton({
+  event,
+  layout,
+  expanded,
+  onToggle,
+}: {
+  event: AuditEventListItem;
+  layout: Layout;
+  expanded: boolean;
+  onToggle: RowProps['onToggle'];
+}) {
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon"
+      aria-expanded={expanded}
+      aria-controls={expanded ? detailsId(event, layout) : undefined}
       aria-label={`Details of ${actionLabel(event.action)} by ${event.actorName}`}
-      onClick={() => onOpen(event)}
+      onClick={() => onToggle(event)}
     >
-      <CiRead className="size-4" />
+      <PiCaretDownLight
+        className={cn(
+          'size-4 transition-transform duration-300 motion-reduce:transition-none',
+          expanded && 'rotate-180'
+        )}
+      />
     </Button>
   );
 }
@@ -86,7 +128,7 @@ function OpenButton({ event, onOpen }: { event: AuditEventListItem; onOpen: RowP
 /**
  * One line per changed field, in the same order and height in the Field, Old value and New value
  * columns so they read across. Extra changes are counted on a last line and shown in full in the
- * detail sheet.
+ * row's details.
  */
 function ChangeLines({
   event,
@@ -122,143 +164,193 @@ function ChangeLines({
   );
 }
 
-function EventCards({ events, timeZone, onOpen }: RowProps & { events: AuditEventListItem[] }) {
+function EventCard({
+  event,
+  timeZone,
+  expandedId,
+  onToggle,
+}: RowProps & { event: AuditEventListItem }) {
+  const expanded = event.id === expandedId;
+  const { ref: revealRef, rendered: revealed } = useExpandReveal<HTMLDivElement>(expanded);
+
+  return (
+    <li className={cn('transition-colors', expanded && 'bg-muted/40')}>
+      <div className="cursor-pointer space-y-2 p-3" onClick={toggleOnClick(event, onToggle)}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-medium">{actionLabel(event.action)}</p>
+            <p className="text-muted-foreground text-xs">
+              {event.module} · {recordTypeLabel(event.entityType)}
+              {event.entityLabel ? ` ${event.entityLabel}` : ''}
+            </p>
+            <p className="text-muted-foreground truncate text-xs">
+              {event.actorName}
+              {event.actorRoles ? ` · ${event.actorRoles}` : ''}
+            </p>
+            {event.patient ? (
+              <p className="text-muted-foreground font-mono text-xs">
+                {patientName(event)} · {event.patient.mrn}
+              </p>
+            ) : null}
+            {event.changes?.length ? (
+              <p className="text-muted-foreground text-xs">
+                {formatCount(event.changes.length, 'field')} changed
+              </p>
+            ) : null}
+          </div>
+          <OperationBadge operation={event.operation} />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-muted-foreground font-mono text-xs">
+            {formatAuditTime(event.occurredOn, timeZone)}
+          </span>
+          <ToggleButton event={event} layout="card" expanded={expanded} onToggle={onToggle} />
+        </div>
+      </div>
+      {revealed ? (
+        <div ref={revealRef} id={detailsId(event, 'card')} className="overflow-hidden">
+          <div className="border-t">
+            <AuditEventDetails event={event} timeZone={timeZone} />
+          </div>
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+function EventCards({ events, ...rowProps }: RowProps & { events: AuditEventListItem[] }) {
   return (
     <ul className="divide-y md:hidden" aria-label="Audit Events">
       {events.map((event) => (
-        <li key={event.id} className="space-y-2 p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-medium">{actionLabel(event.action)}</p>
-              <p className="text-muted-foreground text-xs">
-                {event.module} · {recordTypeLabel(event.entityType)}
-                {event.entityLabel ? ` ${event.entityLabel}` : ''}
-              </p>
-              <p className="text-muted-foreground truncate text-xs">
-                {event.actorName}
-                {event.actorRoles ? ` · ${event.actorRoles}` : ''}
-              </p>
-              {event.patient ? (
-                <p className="text-muted-foreground font-mono text-xs">
-                  {patientName(event)} · {event.patient.mrn}
-                </p>
-              ) : null}
-              {event.changes?.length ? (
-                <p className="text-muted-foreground text-xs">
-                  {formatCount(event.changes.length, 'field')} changed
-                </p>
-              ) : null}
-            </div>
-            <OperationBadge operation={event.operation} />
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground font-mono text-xs">
-              {formatAuditTime(event.occurredOn, timeZone)}
-            </span>
-            <OpenButton event={event} onOpen={onOpen} />
-          </div>
-        </li>
+        <EventCard key={event.id} event={event} {...rowProps} />
       ))}
     </ul>
   );
 }
 
-function EventRow({ event, timeZone, onOpen }: RowProps & { event: AuditEventListItem }) {
+function EventRow({
+  event,
+  timeZone,
+  expandedId,
+  onToggle,
+}: RowProps & { event: AuditEventListItem }) {
+  const expanded = event.id === expandedId;
+  const { ref: revealRef, rendered: revealed } = useExpandReveal<HTMLDivElement>(expanded);
   const when = splitAuditTime(event.occurredOn, timeZone);
   const device = describeDevice(event.userAgent);
   const operator = impersonatedBy(event);
   const details = eventDetails(event);
 
   return (
-    <TableRow className="align-top">
-      <TableCell className="pl-4 whitespace-nowrap">
-        <p className="font-medium">{when.date}</p>
-        <p className="text-muted-foreground font-mono text-xs">{when.time}</p>
-      </TableCell>
-      <TableCell className="max-w-56">
-        <p className="truncate font-medium">{event.actorName}</p>
-        <p className="text-muted-foreground truncate text-xs">{event.actorEmail}</p>
-        {event.actorRoles ? (
-          <p className="text-muted-foreground truncate text-xs" title={event.actorRoles}>
-            {event.actorRoles}
+    <>
+      <TableRow className="cursor-pointer align-top" onClick={toggleOnClick(event, onToggle)}>
+        <TableCell className={TOGGLE_CELL}>
+          <ToggleButton event={event} layout="row" expanded={expanded} onToggle={onToggle} />
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          <p className="font-medium">{when.date}</p>
+          <p className="text-muted-foreground font-mono text-xs">{when.time}</p>
+        </TableCell>
+        <TableCell className="max-w-56">
+          <p className="truncate font-medium">{event.actorName}</p>
+          <p className="text-muted-foreground truncate text-xs">{event.actorEmail}</p>
+          {event.actorRoles ? (
+            <p className="text-muted-foreground truncate text-xs" title={event.actorRoles}>
+              {event.actorRoles}
+            </p>
+          ) : null}
+          {operator ? (
+            <p className="text-destructive truncate text-xs">Support access: {operator}</p>
+          ) : null}
+        </TableCell>
+        <TableCell className="whitespace-nowrap">{event.module}</TableCell>
+        <TableCell>
+          <OperationBadge operation={event.operation} />
+        </TableCell>
+        <TableCell className="max-w-52">
+          <p className="font-medium">{actionLabel(event.action)}</p>
+          <p className="text-muted-foreground truncate font-mono text-xs">{event.action}</p>
+        </TableCell>
+        <TableCell className="max-w-48">
+          <p className="truncate">{recordTypeLabel(event.entityType)}</p>
+          <p className="text-muted-foreground truncate font-mono text-xs">
+            {event.entityLabel ?? (event.entityId ? `#${event.entityId}` : '—')}
           </p>
-        ) : null}
-        {operator ? (
-          <p className="text-destructive truncate text-xs">Support access: {operator}</p>
-        ) : null}
-      </TableCell>
-      <TableCell className="whitespace-nowrap">{event.module}</TableCell>
-      <TableCell>
-        <OperationBadge operation={event.operation} />
-      </TableCell>
-      <TableCell className="max-w-52">
-        <p className="font-medium">{actionLabel(event.action)}</p>
-        <p className="text-muted-foreground truncate font-mono text-xs">{event.action}</p>
-      </TableCell>
-      <TableCell className="max-w-48">
-        <p className="truncate">{recordTypeLabel(event.entityType)}</p>
-        <p className="text-muted-foreground truncate font-mono text-xs">
-          {event.entityLabel ?? (event.entityId ? `#${event.entityId}` : '—')}
-        </p>
-      </TableCell>
-      <TableCell className="max-w-56">
-        {event.patient ? (
-          <>
+        </TableCell>
+        <TableCell className="max-w-56">
+          {event.patient ? (
+            <>
+              <Link
+                href={`/patients/${event.patient.id}`}
+                className="hover:text-primary block truncate font-medium hover:underline"
+              >
+                {patientName(event)}
+              </Link>
+              <p className="text-muted-foreground font-mono text-xs">{event.patient.mrn}</p>
+            </>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
+          {event.visitId ? (
             <Link
-              href={`/patients/${event.patient.id}`}
-              className="hover:text-primary block truncate font-medium hover:underline"
+              href={`/visits/${event.visitId}`}
+              className="hover:text-primary font-mono text-xs hover:underline"
             >
-              {patientName(event)}
+              #{event.visitId}
             </Link>
-            <p className="text-muted-foreground font-mono text-xs">{event.patient.mrn}</p>
-          </>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </TableCell>
-      <TableCell className="whitespace-nowrap">
-        {event.visitId ? (
-          <Link
-            href={`/visits/${event.visitId}`}
-            className="hover:text-primary font-mono text-xs hover:underline"
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </TableCell>
+        <TableCell>
+          <ChangeLines event={event} className="font-medium" render={(change) => change.label} />
+        </TableCell>
+        <TableCell>
+          <ChangeLines
+            event={event}
+            className="text-muted-foreground"
+            render={(change) => formatChangeValue(change.from)}
+          />
+        </TableCell>
+        <TableCell>
+          <ChangeLines event={event} render={(change) => formatChangeValue(change.to)} />
+        </TableCell>
+        <TableCell className="text-muted-foreground max-w-64">
+          <p className="line-clamp-3 whitespace-normal" title={details ?? undefined}>
+            {details ?? '—'}
+          </p>
+        </TableCell>
+        <TableCell className="text-muted-foreground font-mono text-xs whitespace-nowrap">
+          {event.ipAddress ?? '—'}
+        </TableCell>
+        <TableCell
+          className="text-muted-foreground pr-4 text-xs whitespace-nowrap"
+          title={event.userAgent ?? undefined}
+        >
+          {device ?? '—'}
+        </TableCell>
+      </TableRow>
+      {revealed ? (
+        <TableRow className="bg-muted/20 hover:bg-muted/20">
+          <TableCell
+            colSpan={COLUMNS.length + 1}
+            className="p-0 align-top whitespace-normal first:pl-0 last:pr-0"
           >
-            #{event.visitId}
-          </Link>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </TableCell>
-      <TableCell>
-        <ChangeLines event={event} className="font-medium" render={(change) => change.label} />
-      </TableCell>
-      <TableCell>
-        <ChangeLines
-          event={event}
-          className="text-muted-foreground"
-          render={(change) => formatChangeValue(change.from)}
-        />
-      </TableCell>
-      <TableCell>
-        <ChangeLines event={event} render={(change) => formatChangeValue(change.to)} />
-      </TableCell>
-      <TableCell className="text-muted-foreground max-w-64">
-        <p className="line-clamp-3 whitespace-normal" title={details ?? undefined}>
-          {details ?? '—'}
-        </p>
-      </TableCell>
-      <TableCell className="text-muted-foreground font-mono text-xs whitespace-nowrap">
-        {event.ipAddress ?? '—'}
-      </TableCell>
-      <TableCell
-        className="text-muted-foreground text-xs whitespace-nowrap"
-        title={event.userAgent ?? undefined}
-      >
-        {device ?? '—'}
-      </TableCell>
-      <TableCell className="pr-4 text-right">
-        <OpenButton event={event} onOpen={onOpen} />
-      </TableCell>
-    </TableRow>
+            {/* Pinned to the visible part of the sideways-scrolling table, so the details are
+              never pushed off screen by the table's width. */}
+            <div
+              ref={revealRef}
+              id={detailsId(event, 'row')}
+              className="sticky left-0 w-(--audit-table-viewport,100%) overflow-hidden"
+            >
+              <AuditEventDetails event={event} timeZone={timeZone} />
+            </div>
+          </TableCell>
+        </TableRow>
+      ) : null}
+    </>
   );
 }
 
@@ -266,27 +358,43 @@ function TableHeadings() {
   return (
     <TableHeader>
       <TableRow>
+        <TableHead className={TOGGLE_CELL}>
+          <span className="sr-only">Details</span>
+        </TableHead>
         {COLUMNS.map((column, index) => (
-          <TableHead key={column} className={cn('whitespace-nowrap', index === 0 && 'pl-4')}>
+          <TableHead
+            key={column}
+            className={cn('whitespace-nowrap', index === COLUMNS.length - 1 && 'pr-4')}
+          >
             {column}
           </TableHead>
         ))}
-        <TableHead className="pr-4 text-right">
-          <span className="sr-only">Open</span>
-        </TableHead>
       </TableRow>
     </TableHeader>
   );
 }
 
-function EventTable({ events, timeZone, onOpen }: RowProps & { events: AuditEventListItem[] }) {
+function EventTable({ events, ...rowProps }: RowProps & { events: AuditEventListItem[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Publish the visible width of the table as a CSS variable for the pinned details panel.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      el.style.setProperty('--audit-table-viewport', `${entry.contentRect.width}px`);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="hidden md:block">
+    <div ref={ref} className="hidden md:block">
       <Table className={TABLE_MIN_WIDTH}>
         <TableHeadings />
         <TableBody>
           {events.map((event) => (
-            <EventRow key={event.id} event={event} timeZone={timeZone} onOpen={onOpen} />
+            <EventRow key={event.id} event={event} {...rowProps} />
           ))}
         </TableBody>
       </Table>
@@ -301,7 +409,8 @@ export function AuditLogTable({
   totalPages,
   timeZone,
   isFetching,
-  onOpen,
+  expandedId,
+  onToggle,
   onPageChange,
 }: RowProps & {
   events: AuditEventListItem[];
@@ -311,12 +420,14 @@ export function AuditLogTable({
   isFetching: boolean;
   onPageChange: (next: number) => void;
 }) {
+  const rowProps = { events, timeZone, expandedId, onToggle };
+
   return (
     <Card className="py-0">
       <CardContent className="p-0">
         <div className={cn(isFetching && 'opacity-70 transition-opacity')}>
-          <EventCards events={events} timeZone={timeZone} onOpen={onOpen} />
-          <EventTable events={events} timeZone={timeZone} onOpen={onOpen} />
+          <EventCards {...rowProps} />
+          <EventTable {...rowProps} />
         </div>
 
         <div className="flex flex-col items-center justify-between gap-3 border-t p-3 sm:flex-row">
@@ -402,17 +513,20 @@ export function AuditLogTableSkeleton() {
             <TableBody>
               {Array.from({ length: AUDIT_LOG_PAGE_SIZE }, (_, row) => (
                 <TableRow key={row}>
+                  <TableCell className={TOGGLE_CELL}>
+                    <Skeleton className="size-9" />
+                  </TableCell>
                   {SKELETON_CELLS.map(([first, second], index) => (
-                    <TableCell key={index} className={cn(index === 0 && 'pl-4')}>
+                    <TableCell
+                      key={index}
+                      className={cn(index === SKELETON_CELLS.length - 1 && 'pr-4')}
+                    >
                       <div className="space-y-1.5">
                         <Skeleton className={cn('h-4', first)} />
                         {second ? <Skeleton className={cn('h-3', second)} /> : null}
                       </div>
                     </TableCell>
                   ))}
-                  <TableCell className="pr-4">
-                    <Skeleton className="ml-auto size-9" />
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
