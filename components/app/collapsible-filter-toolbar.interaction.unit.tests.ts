@@ -2,6 +2,7 @@
 
 import { createElement, type ComponentProps } from 'react';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import gsap from 'gsap';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CollapsibleFilterToolbar, FilterSelect } from './collapsible-filter-toolbar';
@@ -111,6 +112,33 @@ describe('CollapsibleFilterToolbar', () => {
       expect(toggleButton()).toHaveProperty('ariaExpanded', 'false');
       expect(advancedRegion().hasAttribute('inert')).toBe(true);
     } finally {
+      window.matchMedia = matchMedia;
+    }
+  });
+
+  it('should hide the rows before clearing the collapse styles, so no frame shows them', async () => {
+    const matchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
+    const originalSet = gsap.set.bind(gsap);
+    const set = vi.spyOn(gsap, 'set');
+
+    try {
+      renderToolbar({ defaultExpanded: true });
+      const region = advancedRegion();
+      const hiddenWhenCleared: boolean[] = [];
+      set.mockImplementation((target, vars) => {
+        if (target === region) hiddenWhenCleared.push(region.hidden);
+        return originalSet(target, vars);
+      });
+
+      fireEvent.click(toggleButton());
+
+      // Outlast the 0.3s collapse.
+      await act(() => new Promise((resolve) => setTimeout(resolve, 600)));
+
+      expect(hiddenWhenCleared).toEqual([true]);
+    } finally {
+      set.mockRestore();
       window.matchMedia = matchMedia;
     }
   });

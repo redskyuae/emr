@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useId, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { PiFunnelSimpleLight } from 'react-icons/pi';
@@ -14,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 
 gsap.registerPlugin(useGSAP);
 
@@ -97,7 +97,9 @@ export function CollapsibleFilterToolbar({
           autoAlpha: 0,
           overflow: 'hidden',
           onComplete: () => {
-            setShown(false);
+            // Commit `hidden` before the inline styles go, or the browser paints one frame of
+            // the rows at full height: this runs in a rAF tick, where a plain setState waits.
+            flushSync(() => setShown(false));
             gsap.set(region, { clearProps: 'height,opacity,visibility,overflow' });
           },
         });
@@ -164,7 +166,6 @@ type FilterSelectProps = {
   value: string | null;
   allLabel: string;
   disabled?: boolean;
-  className?: string;
   options: ReadonlyArray<{ value: string; label: string }>;
   onChange: (value: string | null) => void;
 };
@@ -175,7 +176,6 @@ export function FilterSelect({
   value,
   allLabel,
   disabled,
-  className,
   options,
   onChange,
 }: FilterSelectProps) {
@@ -185,7 +185,7 @@ export function FilterSelect({
       disabled={disabled}
       onValueChange={(next) => onChange(next === ALL ? null : next)}
     >
-      <SelectTrigger className={cn('w-full', className)} aria-label={label}>
+      <SelectTrigger className="w-full" aria-label={label}>
         <SelectValue placeholder={allLabel} />
       </SelectTrigger>
       <SelectContent>
