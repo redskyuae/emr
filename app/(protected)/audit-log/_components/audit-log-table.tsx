@@ -56,6 +56,10 @@ const COLUMNS = [
 // Wide enough that every column keeps its content on readable lines; the card scrolls sideways.
 const TABLE_MIN_WIDTH = 'min-w-[2050px]';
 
+// The expand/collapse chevron leads each row; the button's own padding stands in for the cell's,
+// and the negative margin lines the 36px button up with the first line of the row's text.
+const TOGGLE_CELL = 'w-12 pr-0 first:pl-3 [&>button]:-my-2';
+
 type RowProps = {
   timeZone: string | undefined;
   expandedId: number | null;
@@ -240,7 +244,10 @@ function EventRow({
   return (
     <>
       <TableRow className="cursor-pointer align-top" onClick={toggleOnClick(event, onToggle)}>
-        <TableCell className="pl-4 whitespace-nowrap">
+        <TableCell className={TOGGLE_CELL}>
+          <ToggleButton event={event} layout="row" expanded={expanded} onToggle={onToggle} />
+        </TableCell>
+        <TableCell className="whitespace-nowrap">
           <p className="font-medium">{when.date}</p>
           <p className="text-muted-foreground font-mono text-xs">{when.time}</p>
         </TableCell>
@@ -319,13 +326,10 @@ function EventRow({
           {event.ipAddress ?? '—'}
         </TableCell>
         <TableCell
-          className="text-muted-foreground text-xs whitespace-nowrap"
+          className="text-muted-foreground pr-4 text-xs whitespace-nowrap"
           title={event.userAgent ?? undefined}
         >
           {device ?? '—'}
-        </TableCell>
-        <TableCell className="pr-4 text-right">
-          <ToggleButton event={event} layout="row" expanded={expanded} onToggle={onToggle} />
         </TableCell>
       </TableRow>
       {revealed ? (
@@ -354,14 +358,17 @@ function TableHeadings() {
   return (
     <TableHeader>
       <TableRow>
+        <TableHead className={TOGGLE_CELL}>
+          <span className="sr-only">Details</span>
+        </TableHead>
         {COLUMNS.map((column, index) => (
-          <TableHead key={column} className={cn('whitespace-nowrap', index === 0 && 'pl-4')}>
+          <TableHead
+            key={column}
+            className={cn('whitespace-nowrap', index === COLUMNS.length - 1 && 'pr-4')}
+          >
             {column}
           </TableHead>
         ))}
-        <TableHead className="pr-4 text-right">
-          <span className="sr-only">Details</span>
-        </TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -506,17 +513,20 @@ export function AuditLogTableSkeleton() {
             <TableBody>
               {Array.from({ length: AUDIT_LOG_PAGE_SIZE }, (_, row) => (
                 <TableRow key={row}>
+                  <TableCell className={TOGGLE_CELL}>
+                    <Skeleton className="size-9" />
+                  </TableCell>
                   {SKELETON_CELLS.map(([first, second], index) => (
-                    <TableCell key={index} className={cn(index === 0 && 'pl-4')}>
+                    <TableCell
+                      key={index}
+                      className={cn(index === SKELETON_CELLS.length - 1 && 'pr-4')}
+                    >
                       <div className="space-y-1.5">
                         <Skeleton className={cn('h-4', first)} />
                         {second ? <Skeleton className={cn('h-3', second)} /> : null}
                       </div>
                     </TableCell>
                   ))}
-                  <TableCell className="pr-4">
-                    <Skeleton className="ml-auto size-9" />
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
