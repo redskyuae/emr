@@ -24,7 +24,6 @@ import {
   resolveFilters,
   toAuditEventsParams,
 } from '../_utils/audit-log-filters';
-import { AuditEventSheet } from './_sheets/audit-event-sheet';
 import { AuditExportMenu } from './audit-export-menu';
 import { AuditLogFilterForm, type EditableAuditLogFilters } from './audit-log-filter-form';
 import { AuditLogTable, AuditLogTableSkeleton } from './audit-log-table';
@@ -93,8 +92,9 @@ export function AuditLogPageImpl() {
   const events = eventsQuery.data?.data ?? [];
   const total = eventsQuery.data?.meta.total ?? 0;
   const totalPages = eventsQuery.data?.meta.totalPages ?? 0;
-  // The sheet resolves its event from the page already loaded (ADR 0010).
-  const openEvent = events.find((event) => event.id === params.event) ?? null;
+  // The row expanded in place lives in ?event= and resolves from the page already loaded, so a
+  // link to one Audit Event survives refresh (ADR 0010).
+  const expandedEvent = events.find((event) => event.id === params.event) ?? null;
   const scopedPatient = filters.patientId
     ? events.find((event) => event.patient?.id === Number(filters.patientId))
     : undefined;
@@ -117,12 +117,12 @@ export function AuditLogPageImpl() {
   }, [page, params.page, setParams, totalPages]);
 
   // An ?event= that is not on the loaded page (a stale link, or the event moved
-  // to another page) opens nothing, so drop it rather than leave it in the URL.
+  // to another page) expands nothing, so drop it rather than leave it in the URL.
   useEffect(() => {
-    if (params.event !== null && eventsQuery.isSuccess && !openEvent) {
+    if (params.event !== null && eventsQuery.isSuccess && !expandedEvent) {
       void setParams({ event: null }, { history: 'replace' });
     }
-  }, [params.event, eventsQuery.isSuccess, openEvent, setParams]);
+  }, [params.event, eventsQuery.isSuccess, expandedEvent, setParams]);
 
   function applyFilters(next: EditableAuditLogFilters) {
     void setParams({
@@ -254,18 +254,15 @@ export function AuditLogPageImpl() {
               timeZone={timeZone}
               totalPages={totalPages}
               isFetching={eventsQuery.isFetching}
-              onOpen={(event) => void setParams({ event: event.id })}
+              expandedId={expandedEvent?.id ?? null}
+              onToggle={(event) =>
+                void setParams({ event: event.id === expandedEvent?.id ? null : event.id })
+              }
               onPageChange={(next) => void setParams({ page: next > 1 ? next : null, event: null })}
             />
           )}
         </SkeletonCrossfade>
       )}
-
-      <AuditEventSheet
-        event={openEvent}
-        timeZone={timeZone}
-        onClose={() => void setParams({ event: null })}
-      />
     </div>
   );
 }
