@@ -25,13 +25,19 @@ export function useExpandReveal<T extends HTMLElement>(open: boolean) {
   }
 
   useGSAP(
-    () => {
+    (context) => {
       const el = ref.current;
       if (!el) return;
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       if (open) {
-        if (reduceMotion) return;
+        if (reduceMotion) {
+          // Reopened mid-close after reduced motion was switched on: stop the close so it cannot
+          // hide the panel, and show it at full height at once.
+          gsap.killTweensOf(el);
+          gsap.set(el, { clearProps: 'height,opacity,visibility' });
+          return;
+        }
         // Reopened while still closing: carry on from the current height instead of jumping.
         if (!gsap.isTweening(el)) gsap.set(el, { height: 0, autoAlpha: 0 });
         gsap.to(el, {
@@ -51,7 +57,12 @@ export function useExpandReveal<T extends HTMLElement>(open: boolean) {
         duration: reduceMotion ? 0 : 0.35,
         ease: 'power3.inOut',
         overwrite: true,
-        onComplete: () => setRendered(false),
+        onComplete: () => {
+          // The hook's context lives as long as the row, so let go of this cycle's finished
+          // tweens (and the panel they point at) instead of keeping them until unmount.
+          context.clear();
+          setRendered(false);
+        },
       });
     },
     { dependencies: [open, rendered] }
