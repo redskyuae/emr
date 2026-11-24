@@ -4,6 +4,7 @@ import type { VoidInvoiceResponse } from './types';
 
 import { voidInvoiceCommand } from '@/app/api/lib/modules/invoice/commands/void-invoice-command';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { invoiceVoidedProperties } from '@/app/api/lib/analytics/lifecycle-billing-properties';
 
@@ -56,6 +57,14 @@ export async function POST(request: NextRequest, context: VoidRouteContext) {
     recordLifecycleEvent(tenantSession, request, 'invoice_voided', () =>
       invoiceVoidedProperties(result.data)
     );
+
+    await recordAuditEvent(tenantSession, request, 'invoice.void', {
+      entityId: result.data.id,
+      visitId: result.data.visit?.id ?? null,
+      patientId: result.data.patient.id,
+      entityLabel: result.data.invoiceNumber,
+      reason: result.data.voidReason,
+    });
 
     return NextResponse.json<VoidInvoiceResponse>({ data: result.data });
   } catch {

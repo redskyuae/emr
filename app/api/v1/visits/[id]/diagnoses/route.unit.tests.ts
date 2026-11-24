@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveVisitDiagnosesCommand } from '@/app/api/lib/modules/visit-diagnosis/commands/save-visit-diagnoses-command';
 import { listVisitDiagnosesQuery } from '@/app/api/lib/modules/visit-diagnosis/queries/list-visit-diagnoses-query';
 import type { VisitDiagnosis } from '@/app/api/lib/modules/visit-diagnosis/schemas/visit-diagnosis-schema';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { GET, PUT } from './route';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
@@ -18,6 +20,10 @@ vi.mock('@/app/api/lib/modules/visit-diagnosis/commands/save-visit-diagnoses-com
 vi.mock('@/app/api/lib/modules/visit-diagnosis/queries/list-visit-diagnoses-query', () => ({
   listVisitDiagnosesQuery: vi.fn(),
 }));
+vi.mock('@/app/api/lib/audit/audit-recorder', () => ({ recordAuditEvent: vi.fn() }));
+vi.mock('@/app/api/lib/modules/visit/queries/get-visit-by-id-query', () => ({
+  getVisitByIdQuery: vi.fn(),
+}));
 vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
   requireTenantPermissions: vi.fn(),
   requireTenantSession: vi.fn(),
@@ -27,6 +33,8 @@ const saveDiagnoses = vi.mocked(saveVisitDiagnosesCommand);
 const listDiagnoses = vi.mocked(listVisitDiagnosesQuery);
 const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
+const getVisitById = vi.mocked(getVisitByIdQuery);
+const recordAudit = vi.mocked(recordAuditEvent);
 
 const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'user-1' } } };
 const diagnosis = { id: 1, visitId: 42, code: 'M06.9' } as VisitDiagnosis;
@@ -45,6 +53,13 @@ function context(id = '42') {
   return { params: Promise.resolve({ id }) };
 }
 
+/** The details the route handed the recorder, resolving a lazy lookup as the recorder does. */
+async function recordedDetails() {
+  const details = recordAudit.mock.calls[0]?.[3];
+
+  return typeof details === 'function' ? await details() : details;
+}
+
 describe('Visit diagnoses route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,6 +67,10 @@ describe('Visit diagnoses route', () => {
     requirePermissions.mockResolvedValue(null);
     listDiagnoses.mockResolvedValue({ success: true, data: [diagnosis], total: 1 });
     saveDiagnoses.mockResolvedValue({ success: true, data: [diagnosis] });
+    getVisitById.mockResolvedValue({
+      success: true,
+      data: { id: 42, visitNumber: 'VST-1042', patient: { id: 9 } } as never,
+    });
   });
 
   describe('GET', () => {
@@ -159,6 +178,44 @@ describe('Visit diagnoses route', () => {
         'visit_diagnoses_saved',
         expect.any(Function)
       );
+    });
+
+    it('should record a visit-diagnosis.save Audit Event with the codes added and removed', async () => {
+      listDiagnoses.mockResolvedValue({
+        success: true,
+        data: [{ ...diagnosis, code: 'R51' }],
+        total: 1,
+      });
+
+      await PUT(request('PUT'), context('42'));
+
+      expect(recordAudit).toHaveBeenCalledWith(
+        tenantSession,
+        expect.anything(),
+        'visit-diagnosis.save',
+        expect.any(Function)
+      );
+      await expect(recordedDetails()).resolves.toMatchObject({
+        visitId: 42,
+        patientId: 9,
+        entityLabel: 'VST-1042',
+        metadata: { added: ['M06.9'], removed: ['R51'] },
+      });
+    });
+
+    it('should answer without waiting on the Visit lookup that only serves the Audit Event', async () => {
+      getVisitById.mockRejectedValue(new Error('database down'));
+
+      const response = await PUT(request('PUT'), context('42'));
+
+      expect(response.status).toBe(StatusCodes.OK);
+      expect(getVisitById).not.toHaveBeenCalled();
+    });
+
+    it('should not record an Audit Event when listing diagnoses', async () => {
+      await GET(request('GET'), context('42'));
+
+      expect(recordAudit).not.toHaveBeenCalled();
     });
 
     it('should surface a single conflict as the message', async () => {

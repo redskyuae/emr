@@ -5,6 +5,9 @@ import { recordStaffRoleRemoved } from '@/app/api/lib/analytics/access-assignmen
 import { removeRoleCommand } from '@/app/api/lib/modules/user-role/commands/remove-role-command';
 import { USER_MUST_HAVE_ROLE_MESSAGE } from '@/app/api/lib/modules/user-role/validator/remove-role-validator';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getRoleByIdQuery } from '@/app/api/lib/modules/role/queries/get-role-by-id-query';
+import { getStaffByIdQuery } from '@/app/api/lib/modules/staff/queries/get-staff-by-id-query';
 
 type UserRoleRouteContext = {
   params: Promise<{ id: string; roleId: string }>;
@@ -53,6 +56,19 @@ export async function DELETE(request: NextRequest, context: UserRoleRouteContext
     }
 
     recordStaffRoleRemoved(tenantSession, request, result.data.userId);
+
+    await recordAuditEvent(tenantSession, request, 'user.role-remove', async () => {
+      const [staff, role] = await Promise.all([
+        getStaffByIdQuery(result.data.userId, tenantSession.tenantId),
+        getRoleByIdQuery(result.data.roleId, tenantSession.tenantId),
+      ]);
+
+      return {
+        entityId: result.data.userId,
+        entityLabel: staff.success ? staff.data.email : null,
+        metadata: { roleId: result.data.roleId, roleName: role.success ? role.data.name : null },
+      };
+    });
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

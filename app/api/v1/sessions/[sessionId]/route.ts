@@ -6,6 +6,7 @@ import {
   revokeSessionCommand,
 } from '@/app/api/lib/modules/session/commands/revoke-session-command';
 import { recordOwnSessionsRevoked } from '@/app/api/lib/analytics/access-session-event';
+import { recordAuditEventFor } from '@/app/api/lib/audit/audit-recorder';
 import { requireAuth } from '@/app/api/lib/utils/auth-helpers';
 
 type SessionRouteContext = {
@@ -51,6 +52,26 @@ export async function DELETE(request: NextRequest, context: SessionRouteContext)
     }
 
     recordOwnSessionsRevoked(session, request, 'single');
+
+    if (session.session.activeOrganizationId) {
+      await recordAuditEventFor(
+        {
+          tenantId: session.session.activeOrganizationId,
+          userId: session.user.id,
+          name: session.user.name,
+          email: session.user.email,
+          sessionId: session.session.id,
+          impersonatedBy: session.session.impersonatedBy ?? null,
+        },
+        request,
+        'auth.session-revoke',
+        {
+          entityId: sessionId,
+          entityLabel: session.user.email,
+          metadata: { sessionIds: [sessionId] },
+        }
+      );
+    }
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

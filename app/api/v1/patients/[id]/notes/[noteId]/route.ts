@@ -6,10 +6,17 @@ import { deleteClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/c
 import { updateClinicalNoteCommand } from '@/app/api/lib/modules/clinical-note/commands/update-clinical-note-command';
 import { getClinicalNoteByIdQuery } from '@/app/api/lib/modules/clinical-note/queries/get-clinical-note-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { CLINICAL_NOTE_AUDIT_FIELDS, diffAuditFields } from '@/app/api/lib/audit/audit-changes';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import type { ClinicalNote } from '@/app/api/lib/modules/clinical-note/schemas/clinical-note-schema';
 
 type ClinicalNoteRouteContext = {
   params: Promise<{ id: string; noteId: string }>;
 };
+
+function noteAuditTarget(note: ClinicalNote) {
+  return { entityId: note.id, visitId: note.visitId, patientId: note.patientId };
+}
 
 function errorMessage(status: number, errors: string[]) {
   if (status === StatusCodes.NOT_FOUND) {
@@ -95,6 +102,12 @@ export async function PUT(request: NextRequest, context: ClinicalNoteRouteContex
       );
     }
 
+    // `owned` is the note as it was before the update.
+    await recordAuditEvent(tenantSession, request, 'clinical-note.update', {
+      ...noteAuditTarget(result.data),
+      changes: diffAuditFields(owned.data, result.data, CLINICAL_NOTE_AUDIT_FIELDS),
+    });
+
     return NextResponse.json<UpdateClinicalNoteResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -104,7 +117,7 @@ export async function PUT(request: NextRequest, context: ClinicalNoteRouteContex
   }
 }
 
-export async function DELETE(_request: NextRequest, context: ClinicalNoteRouteContext) {
+export async function DELETE(request: NextRequest, context: ClinicalNoteRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -132,6 +145,13 @@ export async function DELETE(_request: NextRequest, context: ClinicalNoteRouteCo
         { status }
       );
     }
+
+    await recordAuditEvent(
+      tenantSession,
+      request,
+      'clinical-note.delete',
+      noteAuditTarget(owned.data)
+    );
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

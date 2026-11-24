@@ -5,6 +5,8 @@ import type { AddVisitDocumentResponse, ListVisitDocumentsResponse } from './typ
 import { addVisitDocumentCommand } from '@/app/api/lib/modules/visit-document/commands/add-visit-document-command';
 import { listVisitDocumentsQuery } from '@/app/api/lib/modules/visit-document/queries/list-visit-documents-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { visitDocumentProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
@@ -87,6 +89,19 @@ export async function POST(request: NextRequest, context: VisitDocumentsRouteCon
     recordLifecycleEvent(tenantSession, request, 'visit_document_added', () =>
       visitDocumentProperties(result.data)
     );
+
+    // The Visit supplies the Patient; the file name is recorded, never its contents or URL.
+    await recordAuditEvent(tenantSession, request, 'visit-document.add', async () => {
+      const visit = await getVisitByIdQuery(id, tenantSession.tenantId);
+
+      return {
+        entityId: result.data.id,
+        visitId: result.data.visitId,
+        patientId: visit.success ? visit.data.patient.id : null,
+        entityLabel: result.data.fileName,
+        metadata: { contentType: result.data.contentType, fileSize: result.data.fileSize },
+      };
+    });
 
     return NextResponse.json<AddVisitDocumentResponse>(
       { data: result.data },

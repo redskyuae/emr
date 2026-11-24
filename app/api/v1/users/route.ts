@@ -10,6 +10,7 @@ import { createStaffCommand } from '@/app/api/lib/modules/staff/commands/create-
 import { getStaffQuery } from '@/app/api/lib/modules/staff/queries/get-staff-query';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 import { requireTenantAdminSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 
 function mutationMessage(status: number, errors: string[]) {
   if (status === StatusCodes.NOT_FOUND && errors.includes('Staff not found')) {
@@ -123,6 +124,11 @@ export async function POST(request: NextRequest) {
     recordServerEvent(analyticsActorFromSession(tenantSession, request), 'staff_changed', {
       profile_kind: 'staff',
       action: 'created',
+    });
+
+    await recordAuditEvent(tenantSession, request, 'user.create', {
+      entityId: result.data.id,
+      entityLabel: result.data.email,
     });
 
     return NextResponse.json<SaveStaffResponse>(

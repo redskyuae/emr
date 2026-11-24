@@ -2,7 +2,9 @@ import { StatusCodes } from 'http-status-codes';
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { amendVisitCommand } from '@/app/api/lib/modules/visit/commands/amend-visit-command';
+import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { PUT } from './route';
@@ -10,6 +12,10 @@ import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-re
 
 vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
   recordLifecycleEvent: vi.fn(),
+}));
+vi.mock('@/app/api/lib/audit/audit-recorder', () => ({ recordAuditEvent: vi.fn() }));
+vi.mock('@/app/api/lib/modules/visit/queries/get-visit-by-id-query', () => ({
+  getVisitByIdQuery: vi.fn(),
 }));
 vi.mock('@/app/api/lib/modules/visit/commands/amend-visit-command', () => ({
   amendVisitCommand: vi.fn(),
@@ -20,11 +26,20 @@ vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
 }));
 
 const amendVisit = vi.mocked(amendVisitCommand);
+const getVisitById = vi.mocked(getVisitByIdQuery);
+const recordAudit = vi.mocked(recordAuditEvent);
 const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
 
 const tenantSession = { tenantId: 'tenant-1', session: { user: { id: 'user-1' } } };
-const visit = { id: 1, visitNumber: 'VST-1001', status: 'COMPLETED' } as Visit;
+const visit = {
+  id: 1,
+  visitNumber: 'VST-1001',
+  status: 'COMPLETED',
+  chiefComplaint: 'Fever for 3 days',
+  patient: { id: 9 },
+} as Visit;
+const visitBefore = { ...visit, chiefComplaint: 'Fever' } as Visit;
 const body = { doctorId: 3, visitTypeId: 2, chiefComplaint: 'Fever for 3 days' };
 
 function request(rawBody = JSON.stringify(body)) {
@@ -45,6 +60,7 @@ describe('Visit amend route', () => {
     requireSession.mockResolvedValue(tenantSession as never);
     requirePermissions.mockResolvedValue(null);
     amendVisit.mockResolvedValue({ success: true, data: visit });
+    getVisitById.mockResolvedValue({ success: true, data: visitBefore });
   });
 
   it('should return unauthorized without checking permission or amending', async () => {
@@ -92,6 +108,39 @@ describe('Visit amend route', () => {
       'visit_amended',
       expect.any(Function)
     );
+  });
+
+  it('should record a visit.amend Audit Event with the before/after', async () => {
+    await PUT(request(), context('1'));
+
+    expect(getVisitById).toHaveBeenCalledWith('1', 'tenant-1');
+    expect(recordAudit).toHaveBeenCalledWith(
+      tenantSession,
+      expect.anything(),
+      'visit.amend',
+      expect.objectContaining({
+        entityId: 1,
+        visitId: 1,
+        patientId: 9,
+        entityLabel: 'VST-1001',
+        changes: [
+          {
+            field: 'chiefComplaint',
+            label: 'Chief complaint',
+            from: 'Fever',
+            to: 'Fever for 3 days',
+          },
+        ],
+      })
+    );
+  });
+
+  it('should not record an Audit Event when the amend fails', async () => {
+    amendVisit.mockResolvedValue({ success: false, errors: ['Doctor ID is required'] });
+
+    await PUT(request(), context());
+
+    expect(recordAudit).not.toHaveBeenCalled();
   });
 
   it('should map validation failures to bad request', async () => {

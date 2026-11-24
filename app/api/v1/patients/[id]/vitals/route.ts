@@ -6,6 +6,7 @@ import { createPatientVitalSignCommand } from '@/app/api/lib/modules/patient-vit
 import { getPatientVitalSignsQuery } from '@/app/api/lib/modules/patient-vital-sign/queries/get-patient-vital-signs-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { vitalSignsRecordedProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
 
@@ -106,6 +107,12 @@ export async function POST(request: NextRequest, context: PatientVitalSignsRoute
         { status }
       );
     }
+
+    await recordAuditEvent(tenantSession, request, 'vital-sign.create', {
+      entityId: result.data.id,
+      visitId: result.data.visitId,
+      patientId: result.data.patientId,
+    });
 
     recordLifecycleEvent(tenantSession, request, 'vital_signs_recorded', () =>
       vitalSignsRecordedProperties(result.data)

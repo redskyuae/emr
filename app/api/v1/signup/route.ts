@@ -7,6 +7,7 @@ import {
   analyticsSessionIdFromRequest,
   recordServerEvent,
 } from '@/app/api/lib/analytics/server-analytics';
+import { recordAuditEventFor } from '@/app/api/lib/audit/audit-recorder';
 import { provisionTenantCommand } from '@/app/api/lib/modules/tenant-provisioning/commands/provision-tenant-command';
 
 function mutationMessage(status: number, errors: string[]) {
@@ -61,7 +62,16 @@ export async function POST(request: NextRequest) {
     appendSetCookies(response, result.data.setCookies);
 
     // No Session exists before signup, so the actor is the new Tenant Owner and Tenant.
-    const { tenant, userId } = result.data;
+    const { tenant, userId, userName, userEmail, sessionId } = result.data;
+
+    // Signup signs the new Tenant Owner in, so their first Session is recorded like any other
+    // sign-in. BetterAuth remembers a Session unless told otherwise, and signup does not ask.
+    await recordAuditEventFor(
+      { tenantId: tenant.id, userId, name: userName, email: userEmail, sessionId },
+      request,
+      'auth.sign-in',
+      { entityId: sessionId, entityLabel: userEmail, metadata: { rememberMe: true, signup: true } }
+    );
 
     recordServerEvent(
       { userId, tenantId: tenant.id, sessionId: analyticsSessionIdFromRequest(request) },

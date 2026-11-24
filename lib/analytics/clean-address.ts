@@ -5,6 +5,9 @@
 const ID_PLACEHOLDER = ':id';
 const ALL_DIGITS = /^\d+$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// BetterAuth's default ids (user, Session, Tenant): 32 random characters from a-z, A-Z and 0-9.
+// No static route segment is that long without a hyphen, so this cannot catch a page name.
+const AUTH_ID = /^[A-Za-z0-9]{32}$/;
 
 function decodeSegment(segment: string) {
   try {
@@ -15,11 +18,11 @@ function decodeSegment(segment: string) {
   }
 }
 
-/** Plain or percent-encoded (`%34%32` is `42`) record ids. */
+/** Plain or percent-encoded (`%34%32` is `42`) record ids, UUIDs and BetterAuth ids. */
 function isIdSegment(segment: string) {
   const decoded = decodeSegment(segment);
 
-  return ALL_DIGITS.test(decoded) || UUID.test(decoded);
+  return ALL_DIGITS.test(decoded) || UUID.test(decoded) || AUTH_ID.test(decoded);
 }
 
 /** `/patients/42/edit?q=Asha#notes` → `/patients/:id/edit` */

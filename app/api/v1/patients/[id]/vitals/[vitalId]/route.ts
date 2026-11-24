@@ -6,10 +6,17 @@ import { deletePatientVitalSignCommand } from '@/app/api/lib/modules/patient-vit
 import { updatePatientVitalSignCommand } from '@/app/api/lib/modules/patient-vital-sign/commands/update-patient-vital-sign-command';
 import { getPatientVitalSignByIdQuery } from '@/app/api/lib/modules/patient-vital-sign/queries/get-patient-vital-sign-by-id-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { diffAuditFields, VITAL_SIGN_AUDIT_FIELDS } from '@/app/api/lib/audit/audit-changes';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
+import type { PatientVitalSign } from '@/app/api/lib/modules/patient-vital-sign/schemas/patient-vital-sign-schema';
 
 type PatientVitalSignRouteContext = {
   params: Promise<{ id: string; vitalId: string }>;
 };
+
+function vitalSignAuditTarget(vitalSign: PatientVitalSign) {
+  return { entityId: vitalSign.id, visitId: vitalSign.visitId, patientId: vitalSign.patientId };
+}
 
 function errorMessage(status: number) {
   if (status === StatusCodes.NOT_FOUND) {
@@ -95,6 +102,12 @@ export async function PUT(request: NextRequest, context: PatientVitalSignRouteCo
       );
     }
 
+    // `owned` is the reading as it was before the update.
+    await recordAuditEvent(tenantSession, request, 'vital-sign.update', {
+      ...vitalSignAuditTarget(result.data),
+      changes: diffAuditFields(owned.data, result.data, VITAL_SIGN_AUDIT_FIELDS),
+    });
+
     return NextResponse.json<UpdatePatientVitalSignResponse>({ data: result.data });
   } catch {
     return NextResponse.json(
@@ -104,7 +117,7 @@ export async function PUT(request: NextRequest, context: PatientVitalSignRouteCo
   }
 }
 
-export async function DELETE(_request: NextRequest, context: PatientVitalSignRouteContext) {
+export async function DELETE(request: NextRequest, context: PatientVitalSignRouteContext) {
   try {
     const tenantSession = await requireTenantSession();
 
@@ -132,6 +145,13 @@ export async function DELETE(_request: NextRequest, context: PatientVitalSignRou
         { status }
       );
     }
+
+    await recordAuditEvent(
+      tenantSession,
+      request,
+      'vital-sign.delete',
+      vitalSignAuditTarget(owned.data)
+    );
 
     return new Response(null, { status: StatusCodes.NO_CONTENT });
   } catch {

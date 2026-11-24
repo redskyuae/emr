@@ -1,3 +1,11 @@
+import {
+  AUDIT_ACTION_KEYS,
+  AUDIT_CATEGORIES,
+  AUDIT_ENTITY_TYPES,
+  AUDIT_MODULES,
+  AUDIT_OPERATIONS,
+} from '@/app/api/lib/modules/audit-log/schemas/audit-action-catalogue';
+
 type SchemaObject = Record<string, unknown>;
 type OperationObject = Record<string, unknown>;
 type PathItemObject = Record<string, OperationObject>;
@@ -41,6 +49,300 @@ const patientPhoneRequestSchema = (required: boolean) => ({
 const schemaRef = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 const responseRef = (name: string) => ({ $ref: `#/components/responses/${name}` });
 const parameterRef = (name: string) => ({ $ref: `#/components/parameters/${name}` });
+
+// Audit Log (ADR 0053). Every value list comes from the Audit Action catalogue,
+// so Swagger stays in step when an action, Module or Operation is added.
+const AUDIT_ACTION_VALUES = [...AUDIT_ACTION_KEYS];
+const AUDIT_CATEGORY_VALUES = [...AUDIT_CATEGORIES];
+const AUDIT_ENTITY_TYPE_VALUES = [...AUDIT_ENTITY_TYPES];
+const AUDIT_MODULE_VALUES = [...AUDIT_MODULES];
+const AUDIT_OPERATION_VALUES = [...AUDIT_OPERATIONS];
+
+const auditEventExample = {
+  id: 4812,
+  tenantId: 'org_apollo_dubai',
+  occurredOn: '2026-11-22T06:15:42.118Z',
+  actorUserId: 'usr_sara_ali',
+  actorName: 'Dr. Sara Ali',
+  actorEmail: 'sara.ali@hospital.example',
+  actorRoles: 'Doctor, Tenant Admin',
+  sessionId: 'kE3pR8vQ2mZ7xT1nB4cY6dH9',
+  action: 'clinical-note.amend',
+  module: 'Visits',
+  operation: 'Amend',
+  category: 'update',
+  outcome: 'success',
+  entityType: 'clinical-note',
+  entityId: '318',
+  entityLabel: null,
+  patientId: 1042,
+  visitId: 7731,
+  reason: null,
+  changes: [
+    {
+      field: 'plan',
+      label: 'Plan',
+      from: 'Rest and review in one week.',
+      to: 'Physiotherapy twice weekly; review in two weeks.',
+    },
+  ],
+  metadata: null,
+  ipAddress: '10.24.44.19',
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_1) AppleWebKit/605.1.15',
+  patient: { id: 1042, mrn: 'MRN-001042', firstName: 'Ahmed', lastName: 'Khan' },
+};
+
+const auditFilterParameters = [
+  {
+    name: 'fromDate',
+    in: 'query',
+    required: false,
+    description: "First day to include, as a date in the Tenant's time zone.",
+    schema: { type: 'string', format: 'date', example: '2026-11-01' },
+  },
+  {
+    name: 'toDate',
+    in: 'query',
+    required: false,
+    description:
+      "Last day to include, as a date in the Tenant's time zone. Must not be before fromDate.",
+    schema: { type: 'string', format: 'date', example: '2026-11-22' },
+  },
+  {
+    name: 'category',
+    in: 'query',
+    required: false,
+    description: 'Only events of this category.',
+    schema: { type: 'string', enum: AUDIT_CATEGORY_VALUES },
+  },
+  {
+    name: 'module',
+    in: 'query',
+    required: false,
+    description: 'Only events in this Module.',
+    schema: { type: 'string', enum: AUDIT_MODULE_VALUES },
+  },
+  {
+    name: 'operation',
+    in: 'query',
+    required: false,
+    description: 'Only events of this Operation.',
+    schema: { type: 'string', enum: AUDIT_OPERATION_VALUES },
+  },
+  {
+    name: 'action',
+    in: 'query',
+    required: false,
+    description: 'Only events of this Audit Action, e.g. `visit.amend`.',
+    schema: { type: 'string', enum: AUDIT_ACTION_VALUES, example: 'visit.amend' },
+  },
+  {
+    name: 'patientId',
+    in: 'query',
+    required: false,
+    description: 'Only events concerning this Patient (their access and change history).',
+    schema: { type: 'integer', minimum: 1 },
+  },
+  {
+    name: 'visitId',
+    in: 'query',
+    required: false,
+    description: 'Only events concerning this Visit and the records captured in it.',
+    schema: { type: 'integer', minimum: 1 },
+  },
+  {
+    name: 'entityType',
+    in: 'query',
+    required: false,
+    description: 'Only events about this kind of record, e.g. `clinical-note`.',
+    schema: { type: 'string', enum: AUDIT_ENTITY_TYPE_VALUES, example: 'clinical-note' },
+  },
+  {
+    name: 'entityId',
+    in: 'query',
+    required: false,
+    description: 'Only events about this record id (combine with entityType).',
+    schema: { type: 'string' },
+  },
+  {
+    name: 'actorUserId',
+    in: 'query',
+    required: false,
+    description: 'Only events performed by this user.',
+    schema: { type: 'string' },
+  },
+  {
+    name: 'sessionId',
+    in: 'query',
+    required: false,
+    description: 'Only events recorded in this Session (its id, never its token).',
+    schema: { type: 'string' },
+  },
+  {
+    name: 'query',
+    in: 'query',
+    required: false,
+    description:
+      'Case-insensitive search across the action code, the user name, email and Roles, the record label, and the Patient MRN and name. At most 100 characters.',
+    schema: { type: 'string', maxLength: 100 },
+  },
+];
+
+const userAuditListItemExample = {
+  userId: 'usr_sara_ali',
+  name: 'Dr. Sara Ali',
+  email: 'sara.ali@hospital.example',
+  roles: 'Doctor',
+  isActive: true,
+  staffCode: 'DR-014',
+  lastSignInAt: '2026-11-22T04:02:11.000Z',
+  lastSignInIp: '10.24.44.19',
+  lastSignInUserAgent:
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0 Safari/537.36',
+  lastActivityAt: '2026-11-22T06:15:42.118Z',
+  signInCount: 18,
+  failedSignInCount: 2,
+  actionCount: 412,
+  activeSessionCount: 1,
+};
+
+const userAuditDetailExample = {
+  timeZone: 'Asia/Dubai',
+  user: {
+    userId: 'usr_sara_ali',
+    name: 'Dr. Sara Ali',
+    email: 'sara.ali@hospital.example',
+    roles: 'Doctor',
+    isActive: true,
+    staffCode: 'DR-014',
+    memberSince: '2026-03-02T05:00:00.000Z',
+    accountCreatedAt: '2026-03-02T05:00:00.000Z',
+  },
+  summary: {
+    signInCount: 18,
+    failedSignInCount: 2,
+    actionCount: 412,
+    activeSessionCount: 1,
+    ipAddressCount: 2,
+    deviceCount: 2,
+    lastSignInAt: '2026-11-22T04:02:11.000Z',
+    lastActivityAt: '2026-11-22T06:15:42.118Z',
+  },
+  sessions: [
+    {
+      sessionId: 'kE3pR8vQ2mZ7xT1nB4cY6dH9',
+      signedInAt: '2026-11-22T04:02:11.000Z',
+      endedAt: null,
+      status: 'active',
+      endReason: null,
+      expiresAt: '2026-11-23T04:02:11.000Z',
+      lastActivityAt: '2026-11-22T06:15:42.118Z',
+      actionCount: 37,
+      ipAddress: '10.24.44.19',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/156.0 Safari/537.36',
+      rememberMe: false,
+      signInRecorded: true,
+    },
+    {
+      sessionId: 'Wq9nL2sX5vB8kP1rT6yM3cJ4',
+      signedInAt: '2026-11-21T03:58:40.000Z',
+      endedAt: '2026-11-21T12:10:05.000Z',
+      status: 'signed-out',
+      endReason: 'Signed out by the user',
+      expiresAt: null,
+      lastActivityAt: '2026-11-21T12:08:51.000Z',
+      actionCount: 64,
+      ipAddress: '10.24.44.19',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/156.0 Safari/537.36',
+      rememberMe: false,
+      signInRecorded: true,
+    },
+  ],
+  sessionsTruncated: false,
+  failedSignIns: [
+    {
+      occurredOn: '2026-11-20T03:55:02.000Z',
+      ipAddress: '185.220.101.7',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0 Safari/537.36',
+      reason: 'Invalid email or password',
+    },
+  ],
+  ipAddresses: [
+    {
+      ipAddress: '10.24.44.19',
+      eventCount: 401,
+      firstSeenAt: '2026-10-24T04:01:00.000Z',
+      lastSeenAt: '2026-11-22T06:15:42.118Z',
+    },
+  ],
+  devices: [
+    {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/156.0 Safari/537.36',
+      eventCount: 398,
+      firstSeenAt: '2026-10-24T04:01:00.000Z',
+      lastSeenAt: '2026-11-22T06:15:42.118Z',
+    },
+  ],
+  activityByModule: [
+    { module: 'Visits', count: 301 },
+    { module: 'Patients', count: 97 },
+    { module: 'Sign-in & Sessions', count: 34 },
+  ],
+};
+
+const auditValidationErrorResponse = {
+  description: 'A filter is invalid, such as an unknown category or a From date after the To date.',
+  content: jsonContent(schemaRef('ValidationError'), {
+    message: 'Validation failed',
+    errors: ['From date must be on or before To date'],
+  }),
+};
+
+const auditExportFormatParameter = {
+  name: 'format',
+  in: 'query',
+  required: false,
+  description:
+    'File format: `csv` (every field, for spreadsheets) or `pdf` (a branded, printable report). Defaults to `csv`.',
+  schema: { type: 'string', enum: ['csv', 'pdf'], default: 'csv' },
+};
+
+const auditExportValidationErrorResponse = {
+  description:
+    'A filter or the format is invalid, such as `format=xlsx` or a From date after the To date.',
+  content: jsonContent(schemaRef('ValidationError'), {
+    message: 'Validation failed',
+    errors: ['Format must be csv or pdf'],
+  }),
+};
+
+const auditExportForbiddenResponse = {
+  description: 'No active Tenant, or the user lacks `audit-log:read` or `audit-log:export`.',
+  content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+};
+
+// The 200 response of an Audit Log export: a CSV or PDF file, never JSON.
+function auditExportFileResponse(file: {
+  description: string;
+  filename: string;
+  rowCount: string;
+  csvExample: string;
+}) {
+  return {
+    description: file.description,
+    headers: {
+      'Content-Disposition': {
+        description: `Attachment filename, e.g. \`attachment; filename="${file.filename}.pdf"\` (or \`.csv\`).`,
+        schema: { type: 'string' },
+      },
+      'X-Audit-Row-Count': { description: file.rowCount, schema: { type: 'integer' } },
+    },
+    content: {
+      'text/csv': { schema: { type: 'string' }, example: file.csvExample },
+      'application/pdf': { schema: { type: 'string', format: 'binary' } },
+    },
+  };
+}
 
 const idPathParameter = (entityName: string) => ({
   name: 'id',
@@ -3252,6 +3554,11 @@ export const openApiDocument = {
         'Public signup API that provisions a Tenant and Tenant Owner, plus the session-scoped Tenant Onboarding API that installs baseline defaults.',
     },
     { name: 'Tenant', description: 'Tenant management APIs.' },
+    {
+      name: 'Audit Log',
+      description:
+        'Read and export the append-only Audit Log: who did what to which record, and to which Patient, with each event labelled by Module and Operation and each changed field shown with its old and new value. Events are recorded by the server when a Visit, a Patient record, Clinical Notes, Vital Signs, Visit Diagnoses, Visit Documents, Invoices, Payments, Roles or Staff change, and when a Patient, a Visit or the Consolidated Patient Report is opened. Sign-in and Sessions are recorded too: each sign-in (`auth.sign-in`), failed sign-in attempt (`auth.sign-in-failed`), sign-out (`auth.sign-out`), a user revoking one or all of their other Sessions (`auth.session-revoke`) and a Tenant Admin revoking a Staff member’s Sessions (`user.sessions-revoke`). Audit Events cannot be created, changed or deleted through the API.',
+    },
     { name: 'Staff', description: 'Staff user management APIs for Tenant Admins.' },
     { name: 'Session', description: 'Authenticated user Session management APIs.' },
     {
@@ -3379,12 +3686,277 @@ export const openApiDocument = {
     },
   ],
   paths: {
+    '/api/v1/audit-log': {
+      get: {
+        tags: ['Audit Log'],
+        summary: 'List Audit Events',
+        description:
+          "Lists the active Tenant's Audit Events, newest first, with the Patient each concerns. `changes` holds the field-level before and after for updates and amendments; `metadata` holds other context, such as the codes added, removed and changed by a diagnosis save or the filters of an export. Actor name and email are snapshots taken when the event was recorded. `occurredOn` is UTC; fromDate and toDate are the Tenant's local days. Reading the Audit Log is not itself recorded; exporting it is. The Tenant is resolved from the active Session. Requires the `audit-log:read` permission.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          ...auditFilterParameters,
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            description: 'Page number.',
+            schema: { type: 'integer', minimum: 1, default: 1 },
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            description: 'Page size, at most 100.',
+            schema: { type: 'integer', minimum: 1, maximum: 100, default: 25 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated Audit Events.',
+            content: jsonContent(paginatedSchema('AuditEvent'), {
+              data: [
+                auditEventExample,
+                {
+                  ...auditEventExample,
+                  id: 4811,
+                  occurredOn: '2026-11-22T06:02:10.004Z',
+                  action: 'visit.view',
+                  operation: 'View',
+                  category: 'access',
+                  entityType: 'visit',
+                  entityId: '7731',
+                  entityLabel: 'VST-2026-07731',
+                  changes: null,
+                },
+              ],
+              meta: { total: 2, totalPages: 1, pageSize: 25, pageNumber: 1 },
+            }),
+          },
+          '400': auditValidationErrorResponse,
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `audit-log:read` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/audit-log/users': {
+      get: {
+        tags: ['Audit Log'],
+        summary: 'List users for User Audit',
+        description:
+          "Lists every member of the active Tenant with their sign-in and activity figures for the date range: Roles (Tenant Owner or Tenant Admin membership first, then assigned Roles), Active or Deactivated status, staff code, the last recorded sign-in with its IP address and user agent, last activity, sign-ins, failed sign-in attempts, actions (events other than sign-in and Session events), and Sessions live right now. Most recently active first. fromDate and toDate are the Tenant's local days; leave them out for all time. The Tenant is resolved from the active Session. Requires the `audit-log:read` permission.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          auditFilterParameters[0],
+          auditFilterParameters[1],
+          {
+            name: 'query',
+            in: 'query',
+            required: false,
+            description: 'Case-insensitive search on name, email or staff code.',
+            schema: { type: 'string', maxLength: 100 },
+          },
+          {
+            name: 'page',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 1, default: 1 },
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 1, maximum: 100, default: 25 },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Paginated users with their figures.',
+            content: jsonContent(paginatedSchema('UserAuditListItem'), {
+              data: [userAuditListItemExample],
+              meta: { total: 1, totalPages: 1, pageSize: 25, pageNumber: 1 },
+            }),
+          },
+          '400': auditValidationErrorResponse,
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `audit-log:read` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/audit-log/users/{userId}': {
+      get: {
+        tags: ['Audit Log'],
+        summary: 'Get one user’s audit',
+        description:
+          'Everything the User Audit page shows for one member of the active Tenant in the date range: who they are, summary figures, their Sessions from sign-in to however each ended (signed out with the reason, ended by an admin or from another of their Sessions, expired, or still active) with duration, last activity, actions taken in it, IP address and user agent, failed sign-in attempts, the IP addresses and devices they used, and their activity counted by Module. Sessions and failed attempts are limited to the 100 most recent (`sessionsTruncated` says when Sessions were cut). Live Sessions with no recorded sign-in (started before tracking began) are included with `signInRecorded` false. A user who is not a member of the Tenant is not found. Requires the `audit-log:read` permission.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'userId',
+            in: 'path',
+            required: true,
+            description: 'The user id.',
+            schema: { type: 'string' },
+          },
+          auditFilterParameters[0],
+          auditFilterParameters[1],
+        ],
+        responses: {
+          '200': {
+            description: 'The user’s audit.',
+            content: jsonContent(dataEnvelopeSchema('UserAuditDetail'), {
+              data: userAuditDetailExample,
+            }),
+          },
+          '400': auditValidationErrorResponse,
+          '401': responseRef('Unauthorized'),
+          '403': {
+            description: 'No active Tenant or the user lacks the `audit-log:read` permission.',
+            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+          },
+          '404': {
+            description: 'No member with this id in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'User not found',
+              errors: ['User not found'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/audit-log/export': {
+      get: {
+        tags: ['Audit Log'],
+        summary: 'Export Audit Events as CSV or PDF',
+        description:
+          'Downloads every Audit Event matching the filters, newest first, as the All Audit Events export. Takes the same filters as GET /api/v1/audit-log, without paging, plus `format`. **CSV** (the default) is a UTF-8 file with a byte-order mark so spreadsheets keep Arabic and accented names. An event that changed several fields becomes one row per field, with Field, Old value and New value columns; the Event ID column ties those rows together, and an event with no field changes is one row with those columns blank. Every row carries the Event ID and Session ID, the date and time in the Tenant time zone (DD-MM-YYYY and HH:MM:SS) and in UTC, the user with their email and Roles, Module, Operation, the action label and code, category, outcome, record type, ID and label, the Patient MRN and name, the Visit ID, the reason, other details, the IP address, browser, operating system, device type, the raw user agent and, for an impersonated Session, the acting support user. Cells that a spreadsheet would run as a formula (starting with =, +, -, @, tab or carriage return) are prefixed with an apostrophe. **PDF** is a landscape A4 report headed with the organization, Tenant, period, event count, who exported it and when, and the filters in words; it has one row per event with every changed field stacked in a Changes cell (up to 8 per event, the CSV has the rest), and every page is footed as confidential with page numbers. The PDF is set in Noto Sans and Noto Sans Arabic, so Arabic names print as written; characters outside Latin, Greek, Cyrillic and Arabic (for example Devanagari) show as "?", and the CSV keeps them exactly. An export over 50,000 events (CSV) or 5,000 events (PDF) is refused rather than truncated. The export is itself recorded as an `audit-log.export` Audit Event carrying its filters, format and row count. The `X-Audit-Row-Count` header gives the number of Audit Events in the file (CSV rows can be more, one per changed field). The Tenant is resolved from the active Session. Requires both `audit-log:read` and `audit-log:export`.',
+        security: [{ cookieAuth: [] }],
+        parameters: [...auditFilterParameters, auditExportFormatParameter],
+        responses: {
+          '200': auditExportFileResponse({
+            description: 'The CSV or PDF file.',
+            filename: 'audit-events-2026-11-22',
+            rowCount: 'Number of Audit Events in the file.',
+            csvExample:
+              'Event ID,Session ID,Date,Time,Time zone,Date and time (UTC),User,User email,User roles,Module,Operation,Action,Action code,Category,Outcome,Record type,Record ID,Record,Patient MRN,Patient name,Visit ID,Field,Old value,New value,Reason,Details,IP address,Browser,Operating system,Device type,Device,Acting support user\r\n4812,9f2c7e1a,22-11-2026,10:15:42,Asia/Dubai,2026-11-22T06:15:42.118Z,Dr. Sara Ali,sara.ali@hospital.example,"Doctor, Tenant Admin",Visits,Amend,Amended Clinical Note,clinical-note.amend,update,success,Clinical Note,318,,MRN-001042,Ahmed Khan,7731,Plan,Rest and review in one week.,"Physiotherapy twice weekly; review in two weeks.",,,10.24.44.19,Safari 18,macOS,desktop,Mozilla/5.0 (Macintosh),\r\n',
+          }),
+          '400': auditExportValidationErrorResponse,
+          '401': responseRef('Unauthorized'),
+          '403': auditExportForbiddenResponse,
+          '422': {
+            description:
+              'More Audit Events match the filters than the format allows: 50,000 for CSV, 5,000 for PDF.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message:
+                'PDF export is limited to 5,000 Audit Events; this selection has 6,120. Narrow the filters or export CSV.',
+              errors: [
+                'PDF export is limited to 5,000 Audit Events; this selection has 6,120. Narrow the filters or export CSV.',
+              ],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/audit-log/users/export': {
+      get: {
+        tags: ['Audit Log'],
+        summary: 'Export the User Audit list as CSV or PDF',
+        description:
+          'Downloads every member of the active Tenant that the User Audit Events list shows for the range and search, with the same figures: name, email, staff code, Roles, Active or Deactivated status, last sign-in with its IP address, browser and operating system, last activity, sign-ins, failed sign-ins, Sessions live right now and actions. **CSV** (the default) has one row per member, each stating the period its counts cover and the time zone. **PDF** is a landscape A4 report headed with the organization, Tenant, period, user count, who exported it and when, and the search. More than 5,000 members is refused rather than truncated. The export is recorded as a `user-audit.list-export` Audit Event with its filters, format and row count. Requires both `audit-log:read` and `audit-log:export`.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          auditFilterParameters[0],
+          auditFilterParameters[1],
+          {
+            name: 'query',
+            in: 'query',
+            required: false,
+            description: 'Case-insensitive search on name, email or staff code.',
+            schema: { type: 'string', maxLength: 100 },
+          },
+          auditExportFormatParameter,
+        ],
+        responses: {
+          '200': auditExportFileResponse({
+            description: 'The CSV or PDF file.',
+            filename: 'user-audit-events-2026-11-22',
+            rowCount: 'Number of users in the file.',
+            csvExample:
+              'User,Email,Staff code,Roles,Status,Last sign-in,Last sign-in IP address,Last sign-in browser,Last sign-in operating system,Last activity,Sign-ins,Failed sign-ins,Active Sessions,Actions,Counts cover,Time zone,User ID\r\nDr. Sara Ali,sara.ali@hospital.example,DR-014,"Doctor, Tenant Admin",Active,22-11-2026 08:02:11,10.24.44.19,Chrome 156,macOS,22-11-2026 10:15:42,14,1,1,236,24-10-2026 to 22-11-2026,Asia/Dubai,u_8hT2kq\r\n',
+          }),
+          '400': auditExportValidationErrorResponse,
+          '401': responseRef('Unauthorized'),
+          '403': auditExportForbiddenResponse,
+          '422': {
+            description: 'More than 5,000 members match the search.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message:
+                'Export is limited to 5,000 users; this search has 5,210. Narrow the search and try again.',
+              errors: [
+                'Export is limited to 5,000 users; this search has 5,210. Narrow the search and try again.',
+              ],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
+    '/api/v1/audit-log/users/{userId}/export': {
+      get: {
+        tags: ['Audit Log'],
+        summary: 'Export one user’s audit as CSV or PDF',
+        description:
+          'Downloads everything the User Audit page shows for one member of the active Tenant in the range: who they are (name, email, staff code, Roles, status, member since), summary figures, their Sessions (signed in, ended, status, how it ended, duration, last activity, actions, IP address, browser, operating system, device type, Remember me, whether the sign-in was recorded), failed sign-in attempts, IP addresses, devices and browsers, and activity by Module. **CSV** (the default) holds these as labelled sections one after another. **PDF** is a landscape A4 report with the same sections, headed with the organization, the user, Tenant, period, who exported it and when. Sessions and failed attempts are limited to the 100 most recent, and the file says when Sessions were cut. A user who is not a member of the Tenant is not found. The export is recorded as a `user-audit.export` Audit Event whose record is the user. The `X-Audit-Row-Count` header gives the number of Sessions in the file. Requires both `audit-log:read` and `audit-log:export`.',
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: 'userId',
+            in: 'path',
+            required: true,
+            description: 'The user id.',
+            schema: { type: 'string' },
+          },
+          auditFilterParameters[0],
+          auditFilterParameters[1],
+          auditExportFormatParameter,
+        ],
+        responses: {
+          '200': auditExportFileResponse({
+            description: 'The CSV or PDF file.',
+            filename: 'user-audit-dr-sara-ali-2026-11-22',
+            rowCount: 'Number of Sessions in the file.',
+            csvExample:
+              'User Audit,Dr. Sara Ali\r\nEmail,sara.ali@hospital.example\r\nStaff code,DR-014\r\nRoles,"Doctor, Tenant Admin"\r\nStatus,Active\r\nMember since,05-01-2026 10:00:00\r\nPeriod,24-10-2026 to 22-11-2026\r\nTime zone,Asia/Dubai\r\nUser ID,u_8hT2kq\r\n\r\nSummary\r\nSign-ins,14\r\nFailed sign-ins,1\r\n\r\nSessions\r\nSession ID,Signed in,Ended,Status,How it ended,Duration,Last activity,Actions,IP address,Browser,Operating system,Device type,Remember me,Sign-in recorded,Device\r\n9f2c7e1a,22-11-2026 08:02:11,22-11-2026 10:16:03,Signed out,Signed out by the user,2 h 13 min,22-11-2026 10:15:42,31,10.24.44.19,Chrome 156,macOS,desktop,Yes,Yes,Mozilla/5.0 (Macintosh)\r\n',
+          }),
+          '400': auditExportValidationErrorResponse,
+          '401': responseRef('Unauthorized'),
+          '403': auditExportForbiddenResponse,
+          '404': {
+            description: 'No member with this id in the active Tenant.',
+            content: jsonContent(schemaRef('ValidationError'), {
+              message: 'User not found',
+              errors: ['User not found'],
+            }),
+          },
+          '500': responseRef('InternalServerError'),
+        },
+      },
+    },
     '/api/v1/signin': {
       post: {
         tags: ['Authentication'],
         summary: 'Sign in and select active Tenant',
         description:
-          'Authenticates a user with email and password, creates a Session, and sets the sole Active Tenant available to that user as the active Tenant for tenant-scoped APIs.',
+          'Authenticates a user with email and password, creates a Session, and sets the sole Active Tenant available to that user as the active Tenant for tenant-scoped APIs. A successful sign-in is recorded as an `auth.sign-in` Audit Event for the new Session; a 401 or 403 is recorded as an `auth.sign-in-failed` Audit Event in each Tenant of the user the email names (never the password, and nothing when the email names no one), at most 10 per user per Tenant in 15 minutes.',
         requestBody: requestBody('SigninRequest', {
           email: 'priya.raghavan@apollo.example',
           password: 'StrongerPass123',
@@ -3451,8 +4023,21 @@ export const openApiDocument = {
         tags: ['Authentication'],
         summary: 'Sign out current Session',
         description:
-          'Ends the current Session if one exists and clears the BetterAuth Session cookies for this browser.',
+          'Ends the current Session if one exists and clears the BetterAuth Session cookies for this browser. When a Session ended, an `auth.sign-out` Audit Event is recorded for it, with the reason given by `trigger`.',
         security: [],
+        parameters: [
+          {
+            name: 'trigger',
+            in: 'query',
+            required: false,
+            description:
+              'Why the browser is ending the Session, recorded as the reason in the Audit Log: `user` (Signed out by the user), `stale_tab` (the browser tab was closed or reopened), `session_expired`, or `tab_storage_unavailable`. Any other value is recorded with no reason.',
+            schema: {
+              type: 'string',
+              enum: ['user', 'stale_tab', 'session_expired', 'tab_storage_unavailable'],
+            },
+          },
+        ],
         responses: {
           '204': {
             description: 'Current Session ended and Session cookies cleared.',
@@ -3467,7 +4052,7 @@ export const openApiDocument = {
         tags: ['Tenant Provisioning'],
         summary: 'Signup and provision Tenant',
         description:
-          'First phase of Tenant Provisioning: creates the Tenant Owner user, provisions a Tenant, signs the owner in, and sets the new Tenant as active. Baseline configuration (Permission Catalogue and default Specialty, Appointment, Asset, and Work Order masters) is installed by the second phase, Tenant Onboarding, via POST /api/v1/onboarding; the returned Tenant has isOnboarded false until that phase completes.',
+          'First phase of Tenant Provisioning: creates the Tenant Owner user, provisions a Tenant, signs the owner in, and sets the new Tenant as active. Baseline configuration (Permission Catalogue and default Specialty, Appointment, Asset, and Work Order masters) is installed by the second phase, Tenant Onboarding, via POST /api/v1/onboarding; the returned Tenant has isOnboarded false until that phase completes. The owner\u2019s first Session is recorded in the Audit Log as a sign-in (`auth.sign-in`, metadata `signup: true`) and shows on their User Audit.',
         requestBody: requestBody('SignupRequest', {
           tenantName: 'Apollo Hospitals',
           ownerName: 'Dr. Priya Raghavan',
@@ -3715,7 +4300,7 @@ export const openApiDocument = {
         tags: ['Session'],
         summary: 'Revoke Other Current User Sessions',
         description:
-          'Revokes all Sessions for the authenticated user except the Session making this request. Use BetterAuth sign-out to end the current Session.',
+          'Revokes all Sessions for the authenticated user except the Session making this request. Use BetterAuth sign-out to end the current Session. Records an `auth.session-revoke` Audit Event in the active Tenant listing the revoked Session ids.',
         security: [{ cookieAuth: [] }],
         responses: {
           '204': { description: 'Other Sessions revoked.' },
@@ -3729,7 +4314,7 @@ export const openApiDocument = {
         tags: ['Session'],
         summary: 'Revoke Current User Session',
         description:
-          'Revokes one Session owned by the authenticated user. The current Session cannot be revoked through this endpoint.',
+          'Revokes one Session owned by the authenticated user. The current Session cannot be revoked through this endpoint. Records an `auth.session-revoke` Audit Event in the active Tenant whose record is the revoked Session.',
         security: [{ cookieAuth: [] }],
         parameters: [namedStringPathParameter('sessionId', 'Session')],
         responses: {
@@ -3993,7 +4578,7 @@ export const openApiDocument = {
         tags: ['Session'],
         summary: 'Revoke Staff Sessions',
         description:
-          'Force-revokes all Sessions for a Staff member in the active Tenant, including that Staff member’s current Session if they are online. Requires the caller to be a Tenant Admin for the active Tenant.',
+          'Force-revokes all Sessions for a Staff member in the active Tenant, including that Staff member’s current Session if they are online. Requires the caller to be a Tenant Admin for the active Tenant. Records a `user.sessions-revoke` Audit Event whose record is the Staff member, listing the revoked Session ids.',
         security: [{ cookieAuth: [] }],
         parameters: [namedStringPathParameter('userId', 'Staff')],
         responses: {
@@ -10271,6 +10856,200 @@ export const openApiDocument = {
       },
     },
     schemas: {
+      UserAuditListItem: {
+        type: 'object',
+        description: 'One Tenant member with their sign-in and activity figures for the range.',
+        additionalProperties: false,
+        required: [
+          'userId',
+          'name',
+          'email',
+          'roles',
+          'isActive',
+          'staffCode',
+          'lastSignInAt',
+          'lastActivityAt',
+          'signInCount',
+          'failedSignInCount',
+          'actionCount',
+          'activeSessionCount',
+        ],
+        properties: {
+          userId: { type: 'string' },
+          name: { type: 'string' },
+          email: { type: 'string' },
+          roles: { type: ['string', 'null'] },
+          isActive: { type: 'boolean' },
+          staffCode: { type: ['string', 'null'] },
+          lastSignInAt: { type: ['string', 'null'], format: 'date-time' },
+          lastSignInIp: { type: ['string', 'null'] },
+          lastSignInUserAgent: { type: ['string', 'null'] },
+          lastActivityAt: { type: ['string', 'null'], format: 'date-time' },
+          signInCount: { type: 'integer' },
+          failedSignInCount: { type: 'integer' },
+          actionCount: {
+            type: 'integer',
+            description: 'Events other than sign-in and Session events.',
+          },
+          activeSessionCount: { type: 'integer', description: 'Sessions live right now.' },
+        },
+      },
+      UserAuditDetail: {
+        type: 'object',
+        description: 'One member’s User Audit for the range.',
+        required: [
+          'timeZone',
+          'user',
+          'summary',
+          'sessions',
+          'sessionsTruncated',
+          'failedSignIns',
+          'ipAddresses',
+          'devices',
+          'activityByModule',
+        ],
+        properties: {
+          timeZone: { type: 'string' },
+          user: { type: 'object', additionalProperties: true },
+          summary: { type: 'object', additionalProperties: true },
+          sessions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                sessionId: { type: 'string' },
+                signedInAt: { type: 'string', format: 'date-time' },
+                endedAt: { type: ['string', 'null'], format: 'date-time' },
+                status: { type: 'string', enum: ['active', 'signed-out', 'revoked', 'expired'] },
+                endReason: { type: ['string', 'null'] },
+                expiresAt: { type: ['string', 'null'], format: 'date-time' },
+                lastActivityAt: { type: ['string', 'null'], format: 'date-time' },
+                actionCount: { type: 'integer' },
+                ipAddress: { type: ['string', 'null'] },
+                userAgent: { type: ['string', 'null'] },
+                rememberMe: { type: ['boolean', 'null'] },
+                signInRecorded: { type: 'boolean' },
+              },
+            },
+          },
+          sessionsTruncated: { type: 'boolean' },
+          failedSignIns: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          ipAddresses: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          devices: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          activityByModule: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: { module: { type: 'string' }, count: { type: 'integer' } },
+            },
+          },
+        },
+      },
+      AuditChange: {
+        type: 'object',
+        description: 'One field that an update or amendment changed.',
+        required: ['field', 'label', 'from', 'to'],
+        properties: {
+          field: { type: 'string', example: 'plan' },
+          label: { type: 'string', example: 'Plan' },
+          from: {
+            type: ['string', 'number', 'boolean', 'null'],
+            example: 'Rest and review in one week.',
+          },
+          to: {
+            type: ['string', 'number', 'boolean', 'null'],
+            example: 'Physiotherapy twice weekly.',
+          },
+        },
+      },
+      AuditEvent: {
+        type: 'object',
+        description: 'One Audit Event, with the Patient it concerns.',
+        required: [
+          'id',
+          'tenantId',
+          'occurredOn',
+          'actorUserId',
+          'actorName',
+          'actorRoles',
+          'action',
+          'module',
+          'operation',
+          'category',
+          'outcome',
+          'entityType',
+        ],
+        properties: {
+          id: { type: 'integer' },
+          tenantId: { type: 'string' },
+          occurredOn: { type: 'string', format: 'date-time', description: 'UTC.' },
+          actorUserId: { type: ['string', 'null'], description: 'Null only for a system actor.' },
+          actorName: { type: 'string', description: 'Snapshot at event time.' },
+          actorEmail: { type: ['string', 'null'], description: 'Snapshot at event time.' },
+          sessionId: {
+            type: ['string', 'null'],
+            description: 'The Session the user acted in (its id, never its token).',
+          },
+          actorRoles: {
+            type: ['string', 'null'],
+            description:
+              "The user's Roles at event time, comma separated, with Tenant Owner or Tenant Admin membership first.",
+            example: 'Doctor, Tenant Admin',
+          },
+          action: { type: 'string', enum: AUDIT_ACTION_VALUES, example: 'clinical-note.amend' },
+          module: {
+            type: 'string',
+            enum: AUDIT_MODULE_VALUES,
+            description: 'The area of the EMR, derived from the action.',
+          },
+          operation: {
+            type: 'string',
+            enum: AUDIT_OPERATION_VALUES,
+            description: 'What the action did, derived from the action.',
+          },
+          category: { type: 'string', enum: AUDIT_CATEGORY_VALUES },
+          outcome: { type: 'string', example: 'success' },
+          entityType: { type: 'string', enum: AUDIT_ENTITY_TYPE_VALUES, example: 'clinical-note' },
+          entityId: { type: ['string', 'null'] },
+          entityLabel: {
+            type: ['string', 'null'],
+            description: 'Human-readable snapshot of the target, such as a Visit Number or MRN.',
+          },
+          patientId: { type: ['integer', 'null'] },
+          visitId: { type: ['integer', 'null'] },
+          reason: { type: ['string', 'null'], description: 'Why, for a cancellation or void.' },
+          changes: { type: ['array', 'null'], items: schemaRef('AuditChange') },
+          metadata: {
+            type: ['object', 'null'],
+            additionalProperties: true,
+            description:
+              'Other context, e.g. `{ added, removed, changed }` diagnosis codes (`changed` lists each kept code whose type or notes changed, with `from` and `to`), export filters, or `impersonatedBy` when support staff acted through an impersonated Session.',
+          },
+          ipAddress: {
+            type: ['string', 'null'],
+            description: 'The client IP address, cut to 64 characters.',
+          },
+          userAgent: {
+            type: ['string', 'null'],
+            description: 'The client user agent, cut to 1,000 characters.',
+          },
+          patient: {
+            oneOf: [
+              { type: 'null' },
+              {
+                type: 'object',
+                required: ['id', 'mrn', 'firstName', 'lastName'],
+                properties: {
+                  id: { type: 'integer' },
+                  mrn: { type: 'string' },
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                },
+              },
+            ],
+          },
+        },
+      },
       PaginationMeta: {
         type: 'object',
         required: ['total', 'pageNumber', 'pageSize', 'totalPages'],

@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { auth } from '@/app/lib/auth';
 import { createCookieHeader, getSetCookies } from '@/app/api/lib/utils/auth-cookie-helpers';
 import type { CommandResult } from '@/app/api/lib/utils/types';
+import { authRepository } from '../../auth/repository/auth-repository';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { getTenantUniqueConstraintErrors } from '../../tenant/validator/tenant-uniqueness-validator';
 import type { TenantProvisioningResult } from '../schemas/tenant-provisioning-schema';
@@ -127,6 +128,10 @@ export async function provisionTenantCommand(
       headers: new Headers({ cookie: cookieHeader }),
     });
     const setActiveSetCookies = getSetCookies(setActiveResult.headers);
+    const sessionToken = signInResult.response.token;
+    const sessionId = sessionToken
+      ? await authRepository.findSessionIdByToken(sessionToken)
+      : undefined;
 
     return {
       success: true,
@@ -134,6 +139,9 @@ export async function provisionTenantCommand(
         tenant: createdTenant,
         setCookies: [...signInSetCookies, ...setActiveSetCookies],
         userId: createdUser.user.id,
+        userName: validationResult.data.ownerName,
+        userEmail: validationResult.data.ownerEmail,
+        sessionId: sessionId ?? null,
       },
     };
   } catch (error) {

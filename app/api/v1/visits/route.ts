@@ -5,6 +5,7 @@ import type { CheckInVisitResponse, ListVisitsResponse } from './types';
 import { checkInVisitCommand } from '@/app/api/lib/modules/visit/commands/check-in-visit-command';
 import { getVisitsQuery } from '@/app/api/lib/modules/visit/queries/get-visits-query';
 import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { parsePositiveInteger } from '@/app/api/lib/utils/parser';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { visitCheckedInProperties } from '@/app/api/lib/analytics/lifecycle-visit-properties';
@@ -114,6 +115,13 @@ export async function POST(request: NextRequest) {
     recordLifecycleEvent(tenantSession, request, 'visit_checked_in', () =>
       visitCheckedInProperties(result.data, result)
     );
+
+    await recordAuditEvent(tenantSession, request, 'visit.check-in', {
+      entityId: result.data.id,
+      visitId: result.data.id,
+      patientId: result.data.patient.id,
+      entityLabel: result.data.visitNumber,
+    });
 
     return NextResponse.json<CheckInVisitResponse>(
       { data: result.data },

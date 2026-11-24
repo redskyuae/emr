@@ -1,207 +1,271 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { CiImport, CiSearch } from 'react-icons/ci';
-import { PiMagnifyingGlassDuotone } from 'react-icons/pi';
+import { useEffect } from 'react';
+import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
+import { CiCircleAlert, CiCircleRemove } from 'react-icons/ci';
+import { PiClipboardTextDuotone, PiLockKeyDuotone, PiMagnifyingGlassDuotone } from 'react-icons/pi';
 
-import type { IamAuditEvent } from '@/app/(protected)/audit-log/_utils/audit-log-mock';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { EmptyState } from '@/components/app/empty-state';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { ApiError, getApiErrorMessage } from '@/app/queries/api-error';
+import { useAuditEventsQuery } from '@/app/queries/audit-log/useAuditEvents';
+import { useExportAuditLog } from '@/app/queries/audit-log/useExportAuditLog';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { formatCount } from '@/lib/format-count';
-import { cn } from '@/lib/utils';
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
+import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  AUDIT_LOG_PAGE_SIZE,
+  countActiveFilters,
+  patientName,
+  resolveFilters,
+  toAuditEventsParams,
+} from '../_utils/audit-log-filters';
+import { AuditEventSheet } from './_sheets/audit-event-sheet';
+import { AuditExportMenu } from './audit-export-menu';
+import { AuditLogFilterForm, type EditableAuditLogFilters } from './audit-log-filter-form';
+import { AuditLogTable, AuditLogTableSkeleton } from './audit-log-table';
 
-type AuditTypeFilter = 'All' | 'Auth' | 'Create' | 'Edit' | 'Delete' | 'Critical';
-
-const auditTypeFilters: AuditTypeFilter[] = ['All', 'Auth', 'Create', 'Edit', 'Delete', 'Critical'];
-
-const eventTypeByFilter: Partial<Record<AuditTypeFilter, IamAuditEvent['type']>> = {
-  Auth: 'AUTH',
-  Create: 'CREATE',
-  Edit: 'MODIFY',
-  Delete: 'DELETE',
-  Critical: 'CRITICAL',
+const urlParsers = {
+  q: parseAsString,
+  to: parseAsString,
+  from: parseAsString,
+  page: parseAsInteger,
+  visit: parseAsString,
+  event: parseAsInteger,
+  actor: parseAsString,
+  module: parseAsString,
+  patient: parseAsString,
+  session: parseAsString,
+  operation: parseAsString,
 };
 
-const auditTypeLabelByType: Record<IamAuditEvent['type'], string> = {
-  AUTH: 'Auth',
-  CREATE: 'Create',
-  MODIFY: 'Modify',
-  DELETE: 'Delete',
-  CRITICAL: 'Critical',
+const CLEARED_PARAMS = {
+  q: null,
+  to: null,
+  from: null,
+  page: null,
+  visit: null,
+  event: null,
+  actor: null,
+  module: null,
+  patient: null,
+  session: null,
+  operation: null,
 };
 
-const auditBadgeClassByType: Record<IamAuditEvent['type'], string> = {
-  AUTH: 'border-chart-5/20 bg-chart-5/10 text-chart-5',
-  CREATE: 'border-chart-4/20 bg-chart-4/10 text-chart-4',
-  MODIFY: 'border-chart-2/20 bg-chart-2/10 text-chart-2',
-  DELETE: 'border-destructive/20 bg-destructive/10 text-destructive',
-  CRITICAL: 'border-destructive/20 bg-destructive/10 text-destructive',
-};
-
-function eventMatchesTypeFilter(filter: AuditTypeFilter, event: IamAuditEvent) {
-  if (filter === 'All') {
-    return true;
-  }
-
-  return event.type === eventTypeByFilter[filter];
-}
-
-function eventMatchesSearch(searchTerm: string, event: IamAuditEvent) {
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-
-  if (!normalizedSearch) {
-    return true;
-  }
-
-  return [
-    event.when,
-    event.actorName,
-    event.actorEmail,
-    event.action,
-    event.target,
-    event.details,
-    event.ipAddress,
-    auditTypeLabelByType[event.type],
-  ]
-    .join(' ')
-    .toLowerCase()
-    .includes(normalizedSearch);
-}
-
-export function AuditLogPageImpl({ events }: { events: IamAuditEvent[] }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<AuditTypeFilter>('All');
-
-  const filteredEvents = useMemo(
-    () =>
-      events.filter(
-        (event) =>
-          eventMatchesTypeFilter(typeFilter, event) && eventMatchesSearch(searchTerm, event)
-      ),
-    [events, searchTerm, typeFilter]
+function ScopeChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <Badge variant="secondary" className="gap-1 py-1 pr-1 pl-2.5">
+      {label}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="size-5"
+        aria-label={`Clear ${label}`}
+        onClick={onClear}
+      >
+        <CiCircleRemove className="size-4" />
+      </Button>
+    </Badge>
   );
+}
+
+export function AuditLogPageImpl() {
+  const { data: currentUser } = useCurrentUserQuery();
+  const { data: canExport } = useHasPermission('audit-log:export');
+  const timeZone = currentUser?.tenant.timeZone;
+  const [params, setParams] = useQueryStates(urlParsers, { history: 'push' });
+
+  const filters = resolveFilters(params);
+  const activeCount = countActiveFilters(filters);
+  // Guard against invalid URL values (?page=0, ?page=-1) reaching the query.
+  const page = params.page !== null && params.page > 0 ? params.page : 1;
+  const apiParams = toAuditEventsParams(filters);
+
+  const eventsQuery = useAuditEventsQuery({ ...apiParams, page, limit: AUDIT_LOG_PAGE_SIZE });
+  const exportMutation = useExportAuditLog();
+
+  const events = eventsQuery.data?.data ?? [];
+  const total = eventsQuery.data?.meta.total ?? 0;
+  const totalPages = eventsQuery.data?.meta.totalPages ?? 0;
+  // The sheet resolves its event from the page already loaded (ADR 0010).
+  const openEvent = events.find((event) => event.id === params.event) ?? null;
+  const scopedPatient = filters.patientId
+    ? events.find((event) => event.patient?.id === Number(filters.patientId))
+    : undefined;
+  const scopedActor = filters.actorUserId
+    ? events.find((event) => event.actorUserId === filters.actorUserId)
+    : undefined;
+  const isForbidden = eventsQuery.error instanceof ApiError && eventsQuery.error.status === 403;
+
+  // Re-sync the URL when the requested page is invalid or now out of range, so
+  // the list never sticks on an empty page with pagination hidden.
+  useEffect(() => {
+    if (params.page !== null && params.page !== page) {
+      void setParams({ page: null }, { history: 'replace' });
+      return;
+    }
+
+    if (totalPages && page > totalPages) {
+      void setParams({ page: totalPages > 1 ? totalPages : null }, { history: 'replace' });
+    }
+  }, [page, params.page, setParams, totalPages]);
+
+  // An ?event= that is not on the loaded page (a stale link, or the event moved
+  // to another page) opens nothing, so drop it rather than leave it in the URL.
+  useEffect(() => {
+    if (params.event !== null && eventsQuery.isSuccess && !openEvent) {
+      void setParams({ event: null }, { history: 'replace' });
+    }
+  }, [params.event, eventsQuery.isSuccess, openEvent, setParams]);
+
+  function applyFilters(next: EditableAuditLogFilters) {
+    void setParams({
+      q: next.query || null,
+      to: next.to,
+      from: next.from,
+      page: null,
+      event: null,
+      module: next.module,
+      operation: next.operation,
+    });
+  }
+
+  if (isForbidden) {
+    return (
+      <EmptyState
+        tone="danger"
+        orbit={false}
+        icon={PiLockKeyDuotone}
+        className="bg-card min-h-72 border"
+        title="You do not have access to the Audit Log"
+        description="Ask a Tenant Admin for the Audit Log permission."
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <InputGroup className="lg:max-w-sm">
-            <InputGroupAddon>
-              <CiSearch className="size-4" />
-            </InputGroupAddon>
-            <InputGroupInput
-              type="search"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search audit events"
-              aria-label="Search audit events"
+      <AuditLogFilterForm
+        applied={filters}
+        activeCount={activeCount}
+        onApply={applyFilters}
+        onReset={() => void setParams(CLEARED_PARAMS)}
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-base font-semibold">Audit Events</h2>
+          {filters.patientId ? (
+            <ScopeChip
+              label={
+                scopedPatient?.patient
+                  ? `Patient ${patientName(scopedPatient)} · ${scopedPatient.patient.mrn}`
+                  : `Patient #${filters.patientId}`
+              }
+              onClear={() => void setParams({ patient: null, page: null, event: null })}
             />
-          </InputGroup>
+          ) : null}
+          {filters.actorUserId ? (
+            <ScopeChip
+              label={scopedActor ? `User ${scopedActor.actorName}` : 'One user'}
+              onClear={() => void setParams({ actor: null, page: null, event: null })}
+            />
+          ) : null}
+          {filters.sessionId ? (
+            <ScopeChip
+              label={`Session …${filters.sessionId.slice(-6)}`}
+              onClear={() => void setParams({ session: null, page: null, event: null })}
+            />
+          ) : null}
+          {filters.visitId ? (
+            <ScopeChip
+              label={`Visit #${filters.visitId}`}
+              onClear={() => void setParams({ visit: null, page: null, event: null })}
+            />
+          ) : null}
+        </div>
+        {canExport ? (
+          <AuditExportMenu
+            countNoun="event"
+            analyticsExport="audit_events"
+            disabled={total === 0}
+            pendingFormat={exportMutation.isPending ? exportMutation.variables?.format : undefined}
+            onExport={(format) => exportMutation.mutateAsync({ format, filters: apiParams })}
+          />
+        ) : null}
+      </div>
 
-          <div className="flex flex-wrap gap-2">
-            {auditTypeFilters.map((filter) => (
-              <Button
-                key={filter}
-                type="button"
-                size="sm"
-                variant={typeFilter === filter ? 'default' : 'outline'}
-                onClick={() => setTypeFilter(filter)}
-                aria-pressed={typeFilter === filter}
-              >
-                {filter}
-              </Button>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:ml-auto">
-            <span className="text-muted-foreground text-sm">
-              {formatCount(filteredEvents.length, 'event')} shown
-            </span>
-            <Button type="button" variant="outline" className="w-full sm:w-auto">
-              <CiImport className="size-4" />
-              Export
+      {eventsQuery.isError ? (
+        <Alert variant="destructive">
+          <CiCircleAlert className="size-4" />
+          <AlertTitle>Could not load the Audit Events</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center gap-2">
+            {getApiErrorMessage(eventsQuery.error)}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void eventsQuery.refetch()}
+            >
+              Retry
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="py-0">
-        <CardContent className="p-0">
-          {filteredEvents.length ? (
-            <Table className="min-w-max">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="pl-4">Timestamp</TableHead>
-                  <TableHead>Actor</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Target</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead>IP</TableHead>
-                  <TableHead className="pr-4">Type</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredEvents.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell className="text-muted-foreground pl-4 font-mono text-xs">
-                      {event.when}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex min-w-0 items-center gap-3">
-                        <Avatar>
-                          <AvatarFallback>{event.actorInitials}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">{event.actorName}</p>
-                          <p className="text-muted-foreground truncate text-xs">
-                            {event.actorEmail}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{event.action}</TableCell>
-                    <TableCell className="text-muted-foreground">{event.target}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-sm whitespace-normal">
-                      {event.details}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground font-mono text-xs">
-                      {event.ipAddress}
-                    </TableCell>
-                    <TableCell className="pr-4">
-                      <Badge
-                        variant="outline"
-                        className={cn('font-mono', auditBadgeClassByType[event.type])}
-                      >
-                        {auditTypeLabelByType[event.type]}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <SkeletonCrossfade isLoading={eventsQuery.isLoading} skeleton={<AuditLogTableSkeleton />}>
+          {events.length === 0 ? (
+            activeCount > 0 ? (
+              <EmptyState
+                tone="neutral"
+                icon={PiMagnifyingGlassDuotone}
+                title="No Audit Events match these filters"
+                className="bg-card min-h-72 border"
+                description="Widen the date range, clear the search, or choose a different Module or Operation."
+                actions={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void setParams(CLEARED_PARAMS)}
+                  >
+                    Reset filters
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                tone="teal"
+                icon={PiClipboardTextDuotone}
+                title="No Audit Events yet"
+                className="bg-card min-h-72 border"
+                description="Events appear here as staff open and change Patients, Visits and other records."
+              />
+            )
           ) : (
-            <EmptyState
-              tone="neutral"
-              className="min-h-72"
-              title="No events match."
-              icon={PiMagnifyingGlassDuotone}
-              description="Try a different search term or type filter."
+            <AuditLogTable
+              events={events}
+              total={total}
+              page={page}
+              timeZone={timeZone}
+              totalPages={totalPages}
+              isFetching={eventsQuery.isFetching}
+              onOpen={(event) => void setParams({ event: event.id })}
+              onPageChange={(next) => void setParams({ page: next > 1 ? next : null, event: null })}
             />
           )}
-        </CardContent>
-      </Card>
+        </SkeletonCrossfade>
+      )}
+
+      <AuditEventSheet
+        event={openEvent}
+        timeZone={timeZone}
+        onClose={() => void setParams({ event: null })}
+      />
     </div>
   );
 }
