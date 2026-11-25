@@ -20,14 +20,20 @@ const loadingStates: LoadingState[] = [
   { text: 'Finishing touches' },
 ];
 
-export function OnboardingPageImpl({ tenantName }: { tenantName: string }) {
+type OnboardingPageImplProps = {
+  tenantName: string;
+  trackIdleActivity: boolean;
+};
+
+export function OnboardingPageImpl({ tenantName, trackIdleActivity }: OnboardingPageImplProps) {
   const router = useRouter();
   const hasStarted = useRef(false);
 
   const onboardMutation = useOnboardTenant({
     onSuccess: () => {
-      // Onboarding has no idle tracking, so the app shell's clock starts here.
-      recordActivity(Date.now());
+      // Onboarding has no idle tracking, so the app shell's clock starts here. With the
+      // feature off nothing is stored, so turning it on later finds no outdated time.
+      if (trackIdleActivity) recordActivity(Date.now());
       router.replace('/dashboard');
       router.refresh();
     },

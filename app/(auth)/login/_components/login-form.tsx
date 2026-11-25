@@ -24,12 +24,14 @@ import { signInFailureKind } from '@/app/(auth)/login/_utils/sign-in-failure-kin
 type LoginFormProps = {
   notice?: string;
   redirectTo?: string;
+  trackIdleActivity?: boolean;
   showCreateWorkspaceLink?: boolean;
 };
 
 export function LoginForm({
   notice,
   redirectTo = '/dashboard',
+  trackIdleActivity = false,
   showCreateWorkspaceLink = false,
 }: LoginFormProps) {
   const router = useRouter();
@@ -46,7 +48,8 @@ export function LoginForm({
         return;
       }
 
-      recordActivity(Date.now());
+      // With the feature off nothing is stored, so turning it on later finds no outdated time.
+      if (trackIdleActivity) recordActivity(Date.now());
       router.replace(redirectTo);
       router.refresh();
     },

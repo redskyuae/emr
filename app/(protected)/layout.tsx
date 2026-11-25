@@ -39,7 +39,28 @@ export default async function AppLayout({
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
   const appointmentsOnly = process.env.SIDEBAR_APPOINTMENTS_ONLY !== 'false';
   const showVisits = process.env.SIDEBAR_SHOW_VISITS === 'true';
-  const idleTimeoutMinutes = parseIdleTimeoutMinutes(process.env.IDLE_TIMEOUT_MINUTES);
+  const idleTimeoutEnabled = process.env.IDLE_TIMEOUT_ENABLED === 'true';
+
+  const shell = (
+    <TooltipProvider>
+      <SidebarProvider
+        defaultOpen={defaultOpen}
+        style={{ '--sidebar-width': '16.5rem' } as CSSProperties}
+      >
+        <AppSidebar
+          appointmentsOnly={appointmentsOnly}
+          showVisits={showVisits}
+          showDemoPages={demoPagesEnabled()}
+        />
+        <SidebarInset>
+          <AppPageHeader />
+          <div className="flex min-w-0 flex-1 flex-col px-4 pt-4 pb-10 sm:px-6 lg:px-8">
+            {children}
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
+  );
 
   return (
     <TabSessionGate>
@@ -47,26 +68,15 @@ export default async function AppLayout({
         <Suspense fallback={null}>
           <SurfaceAnalytics />
         </Suspense>
-        <IdleSessionGuard timeoutMinutes={idleTimeoutMinutes}>
-          <TooltipProvider>
-            <SidebarProvider
-              defaultOpen={defaultOpen}
-              style={{ '--sidebar-width': '16.5rem' } as CSSProperties}
-            >
-              <AppSidebar
-                appointmentsOnly={appointmentsOnly}
-                showVisits={showVisits}
-                showDemoPages={demoPagesEnabled()}
-              />
-              <SidebarInset>
-                <AppPageHeader />
-                <div className="flex min-w-0 flex-1 flex-col px-4 pt-4 pb-10 sm:px-6 lg:px-8">
-                  {children}
-                </div>
-              </SidebarInset>
-            </SidebarProvider>
-          </TooltipProvider>
-        </IdleSessionGuard>
+        {idleTimeoutEnabled ? (
+          <IdleSessionGuard
+            timeoutMinutes={parseIdleTimeoutMinutes(process.env.IDLE_TIMEOUT_MINUTES)}
+          >
+            {shell}
+          </IdleSessionGuard>
+        ) : (
+          shell
+        )}
       </AppShellGate>
     </TabSessionGate>
   );

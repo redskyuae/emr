@@ -68,15 +68,24 @@ export function readLastActivity() {
 
 // Where the idle clock starts when the app shell loads. Loading is not user activity: a
 // reload, a restored crashed tab or a discarded background tab coming back must not earn a
-// fresh timeout, so the recorded time is used as is. Sign-in records a fresh time and
-// sign-out clears it, so a missing record cannot prove recent activity and returns null
-// (sign out). Without readable storage or a recorded time, the load is the only reference.
+// fresh timeout, so the recorded time is used as is. With no recorded time (a Session from
+// before this feature shipped, or cleared site data) the clock starts now: the server has
+// already checked the Session and TabSessionGate the tab marker. That start is stored so a
+// later reload keeps it rather than restarting the clock again.
 export function getStartingActivity(now: number) {
+  let recorded: number | null;
+
   try {
-    return newest(parseActivity(window.localStorage.getItem(LAST_ACTIVITY_KEY)));
+    recorded = newest(parseActivity(window.localStorage.getItem(LAST_ACTIVITY_KEY)));
   } catch {
-    return memoryActivity ?? now;
+    recorded = memoryActivity;
   }
+
+  if (recorded !== null) return recorded;
+
+  recordActivity(now);
+
+  return now;
 }
 
 export function recordActivity(at: number) {

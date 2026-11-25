@@ -129,11 +129,21 @@ describe('shared activity and sign-out storage', () => {
     expect(values.get(LAST_ACTIVITY_KEY)).toBe('1000');
   });
 
-  it('should give no starting time when nothing proves recent activity', () => {
-    expect(getStartingActivity(999_999)).toBeNull();
+  it('should start the idle clock now and store it when no time was recorded', () => {
+    expect(getStartingActivity(999_999)).toBe(999_999);
+    expect(values.get(LAST_ACTIVITY_KEY)).toBe('999999');
+  });
 
+  it('should keep the stored start on a later load instead of restarting the clock', () => {
+    getStartingActivity(1000);
+
+    expect(getStartingActivity(999_999)).toBe(1000);
+  });
+
+  it('should start the idle clock now when the stored time is unreadable', () => {
     values.set(LAST_ACTIVITY_KEY, 'not-a-time');
-    expect(getStartingActivity(999_999)).toBeNull();
+
+    expect(getStartingActivity(999_999)).toBe(999_999);
   });
 
   it('should remove the stored time on sign-out', () => {
@@ -240,7 +250,7 @@ describe('activity time when storage reads work but writes fail', () => {
     clearLastActivity();
 
     expect(readLastActivity()).toBeNull();
-    expect(getStartingActivity(999_999)).toBeNull();
+    expect(getStartingActivity(999_999)).toBe(999_999);
   });
 });
 

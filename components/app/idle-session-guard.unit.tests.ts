@@ -105,10 +105,15 @@ describe('IdleSessionGuard on mount', () => {
     expect(signOut).toHaveBeenCalledWith('user', expect.anything());
   });
 
-  it('should sign out when no activity was recorded since the last sign-out', () => {
+  it('should keep a signed-in user with no stored time and start the clock now', () => {
+    // A Session from before this feature shipped has no stored time.
+    const before = Date.now();
+
     mountGuard();
 
-    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(signOut).not.toHaveBeenCalled();
+    expect(Number(window.localStorage.getItem(LAST_ACTIVITY_KEY))).toBeGreaterThanOrEqual(before);
+    expect(screen.getByRole('button', { name: 'Save Patient' })).toBeTruthy();
   });
 });
 
@@ -154,12 +159,13 @@ describe('IdleSessionGuard when localStorage refuses writes', () => {
     expect(screen.queryByRole('button', { name: 'Save Patient' })).toBeNull();
   });
 
-  it('should still sign out when nothing was recorded in this tab or storage', () => {
+  it('should keep the user signed in when nothing was recorded in this tab or storage', () => {
     failStorageWrites();
 
     mountGuard();
 
-    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(signOut).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Save Patient' })).toBeTruthy();
   });
 });
 

@@ -14,8 +14,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const redirectTo = getSafeNextPath(next, DEFAULT_AUTH_REDIRECT_PATH);
   const logoVariant = getConfiguredBrandLogoVariant();
   const { showCreateWorkspaceLink } = getAuthLinkFlags();
+  const idleTimeoutEnabled = process.env.IDLE_TIMEOUT_ENABLED === 'true';
   const notice =
-    reason === 'idle'
+    reason === 'idle' && idleTimeoutEnabled
       ? getIdleSignOutMessage(parseIdleTimeoutMinutes(process.env.IDLE_TIMEOUT_MINUTES))
       : undefined;
 
@@ -25,6 +26,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <LoginForm
         notice={notice}
         redirectTo={redirectTo}
+        trackIdleActivity={idleTimeoutEnabled}
         showCreateWorkspaceLink={showCreateWorkspaceLink}
       />
     </div>

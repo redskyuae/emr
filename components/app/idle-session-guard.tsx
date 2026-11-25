@@ -65,8 +65,7 @@ export function IdleSessionGuard({ children, timeoutMinutes }: IdleSessionGuardP
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let currentPhase: Phase = 'active';
-    const startingActivity = getStartingActivity(Date.now());
-    let lastActivity = startingActivity ?? 0;
+    let lastActivity = getStartingActivity(Date.now());
     let lastWrite = lastActivity;
 
     function changePhase(next: Phase) {
@@ -175,11 +174,7 @@ export function IdleSessionGuard({ children, timeoutMinutes }: IdleSessionGuardP
 
     // Mounting is not activity, so the stored time is kept: a reload after a long idle spell
     // signs out at once, and one inside the warning period shows the warning straight away.
-    if (startingActivity === null) {
-      expire('idle');
-    } else {
-      evaluate();
-    }
+    evaluate();
 
     return () => {
       clearTimeout(timer);
