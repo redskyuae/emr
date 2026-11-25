@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CiRead } from 'react-icons/ci';
-import { PiEyeSlashLight } from 'react-icons/pi';
 import { AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
@@ -101,6 +99,11 @@ export function LoginForm({
                 </ul>
               )}
             </AlertDescription>
+          </Alert>
+        ) : notice ? (
+          <Alert>
+            <Info className="size-4" />
+            <AlertDescription>{notice}</AlertDescription>
           </Alert>
         ) : notice ? (
           <Alert>
