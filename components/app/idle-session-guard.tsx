@@ -2,7 +2,6 @@
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
 
 import { clearTabSession } from '@/app/lib/tab-session';
 import { useSignOut } from '@/app/queries/auth/useSignOut';
@@ -35,7 +34,6 @@ type IdleSessionGuardProps = {
 
 export function IdleSessionGuard({ children, timeoutMinutes }: IdleSessionGuardProps) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const timeoutMs = timeoutMinutes * 60_000;
 
   const [phase, setPhase] = useState<Phase>('active');
@@ -139,16 +137,12 @@ export function IdleSessionGuard({ children, timeoutMinutes }: IdleSessionGuardP
         return;
       }
 
-      const reason = readSignOutBroadcast(event.key, event.newValue);
-      if (!reason) return;
-
-      // Another tab already ended the shared Session on the server.
-      clearTimeout(timer);
-      currentPhase = 'expired';
-      clearTabSession();
-      queryClient.clear();
-      router.replace(getSignedOutPath(reason));
-      router.refresh();
+      // Another tab already ended the shared Session; SignOutSync redirects this tab, so
+      // only the idle clock stops here, keeping it from sending a second sign-out.
+      if (readSignOutBroadcast(event.key, event.newValue)) {
+        clearTimeout(timer);
+        currentPhase = 'expired';
+      }
     }
 
     function handleVisibility() {
@@ -186,7 +180,7 @@ export function IdleSessionGuard({ children, timeoutMinutes }: IdleSessionGuardP
       window.removeEventListener('focus', evaluate);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [timeoutMs, signOut, queryClient, router]);
+  }, [timeoutMs, signOut]);
 
   // Once the Session has expired the app is unmounted, not just covered: open forms, their
   // Sheet/Dialog portals and focus traps are all gone, so nothing behind the sign-out

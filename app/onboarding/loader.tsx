@@ -11,6 +11,8 @@ export default function OnboardingLoader() {
       </div>
       <div className="flex flex-1 items-center justify-center px-6 pb-16">
         <div className="w-full max-w-sm space-y-6">
+          {/* `trackIdleActivity` only decides whether completing setup records an activity
+              time for the idle timeout; it renders nothing, so this shape is unchanged. */}
           <div className="space-y-1.5">
             <Skeleton className="h-8 w-64 max-w-full" />
             <Skeleton className="h-4 w-72 max-w-full" />

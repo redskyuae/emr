@@ -10,6 +10,7 @@ import { AppPageHeader } from '@/components/app/app-page-header';
 import { AppShellGate } from '@/components/app/app-shell-gate';
 import { AppSidebar } from '@/components/app/app-sidebar';
 import { parseIdleTimeoutMinutes } from '@/app/lib/idle-session';
+import { SignOutSync } from '@/components/app/sign-out-sync';
 import { TabSessionGate } from '@/components/app/tab-session-gate';
 import { IdleSessionGuard } from '@/components/app/idle-session-guard';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -68,6 +69,7 @@ export default async function AppLayout({
         <Suspense fallback={null}>
           <SurfaceAnalytics />
         </Suspense>
+        <SignOutSync />
         {idleTimeoutEnabled ? (
           <IdleSessionGuard
             timeoutMinutes={parseIdleTimeoutMinutes(process.env.IDLE_TIMEOUT_MINUTES)}

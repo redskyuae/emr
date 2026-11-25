@@ -8,14 +8,12 @@ import { clearLastActivity, LAST_ACTIVITY_KEY, recordActivity } from '@/app/lib/
 
 import { IdleSessionGuard } from './idle-session-guard';
 
-const { signOut, router, queryClient } = vi.hoisted(() => ({
+const { signOut, router } = vi.hoisted(() => ({
   signOut: vi.fn(),
   router: { replace: vi.fn(), refresh: vi.fn() },
-  queryClient: { clear: vi.fn() },
 }));
 
 vi.mock('next/navigation', () => ({ useRouter: () => router }));
-vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => queryClient }));
 vi.mock('@/app/queries/auth/useSignOut', () => ({
   useSignOut: () => ({ mutate: signOut, isError: false, isPending: false }),
 }));
@@ -93,6 +91,24 @@ describe('IdleSessionGuard on mount', () => {
     expect(signOut).not.toHaveBeenCalled();
     expect(screen.getByRole('alertdialog')).toBeTruthy();
     expect(screen.getByText('Your Session is about to expire')).toBeTruthy();
+  });
+
+  it('should stop its idle clock when another tab signs out, leaving the redirect to SignOutSync', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    storeLastActivity(TIMEOUT_MINUTES - 0.5);
+    mountGuard();
+
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'emr-sign-out',
+        newValue: JSON.stringify({ reason: 'manual', at: Date.now() }),
+      })
+    );
+    vi.advanceTimersByTime(MINUTE);
+    vi.useRealTimers();
+
+    expect(signOut).not.toHaveBeenCalled();
+    expect(router.replace).not.toHaveBeenCalled();
   });
 
   it('should record Logout Now as a sign-out by the user', () => {
