@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { TimerIcon } from 'lucide-react';
+import { CiTimer } from 'react-icons/ci';
 
 import { IDLE_WARNING_MS } from '@/app/lib/idle-session';
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ export function IdleWarningDialog({
       >
         <AlertDialogHeader>
           <AlertDialogMedia>
-            <TimerIcon />
+            <CiTimer />
           </AlertDialogMedia>
           <AlertDialogTitle>Your Session is about to expire</AlertDialogTitle>
           <AlertDialogDescription>

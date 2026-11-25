@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
+import { CiCircleInfo, CiRead } from 'react-icons/ci';
+import { PiEyeSlashLight } from 'react-icons/pi';
 
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { markTabSession } from '@/app/lib/tab-session';
@@ -11,6 +12,7 @@ import { recordActivity } from '@/app/lib/idle-session';
 import { useSignIn } from '@/app/queries/auth/useSignIn';
 import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { AuthErrorCallout } from '@/components/auth/auth-error-callout';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,29 +87,14 @@ export function LoginForm({
         }}
       >
         {errors.length > 0 ? (
-          <Alert variant="destructive">
-            <AlertCircle className="size-4" />
-            <AlertTitle>Could not sign in</AlertTitle>
-            <AlertDescription>
-              {errors.length === 1 ? (
-                errors[0]
-              ) : (
-                <ul className="list-disc space-y-1 pl-4">
-                  {errors.map((error) => (
-                    <li key={error}>{error}</li>
-                  ))}
-                </ul>
-              )}
-            </AlertDescription>
-          </Alert>
+          <AuthErrorCallout
+            key={signInMutation.submittedAt}
+            leadIn="Could not sign in:"
+            messages={errors}
+          />
         ) : notice ? (
           <Alert>
-            <Info className="size-4" />
-            <AlertDescription>{notice}</AlertDescription>
-          </Alert>
-        ) : notice ? (
-          <Alert>
-            <Info className="size-4" />
+            <CiCircleInfo className="size-4" />
             <AlertDescription>{notice}</AlertDescription>
           </Alert>
         ) : null}

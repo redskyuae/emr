@@ -9,7 +9,6 @@ import { SurfaceAnalytics } from '@/components/analytics/surface-analytics';
 import { AppPageHeader } from '@/components/app/app-page-header';
 import { AppShellGate } from '@/components/app/app-shell-gate';
 import { AppSidebar } from '@/components/app/app-sidebar';
-import { AppTopbar } from '@/components/app/app-topbar';
 import { parseIdleTimeoutMinutes } from '@/app/lib/idle-session';
 import { TabSessionGate } from '@/components/app/tab-session-gate';
 import { IdleSessionGuard } from '@/components/app/idle-session-guard';
@@ -45,17 +44,23 @@ export default async function AppLayout({
   return (
     <TabSessionGate>
       <AppShellGate>
+        <Suspense fallback={null}>
+          <SurfaceAnalytics />
+        </Suspense>
         <IdleSessionGuard timeoutMinutes={idleTimeoutMinutes}>
           <TooltipProvider>
-            <SidebarProvider defaultOpen={defaultOpen}>
+            <SidebarProvider
+              defaultOpen={defaultOpen}
+              style={{ '--sidebar-width': '16.5rem' } as CSSProperties}
+            >
               <AppSidebar
                 appointmentsOnly={appointmentsOnly}
                 showVisits={showVisits}
                 showDemoPages={demoPagesEnabled()}
               />
               <SidebarInset>
-                <AppTopbar />
-                <div className="flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+                <AppPageHeader />
+                <div className="flex min-w-0 flex-1 flex-col px-4 pt-4 pb-10 sm:px-6 lg:px-8">
                   {children}
                 </div>
               </SidebarInset>

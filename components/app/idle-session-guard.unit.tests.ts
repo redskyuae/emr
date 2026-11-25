@@ -69,6 +69,7 @@ describe('IdleSessionGuard on mount', () => {
     mountGuard();
 
     expect(signOut).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledWith('session_expired', expect.anything());
     expect(window.localStorage.getItem(LAST_ACTIVITY_KEY)).toBe(stored);
     expect(window.sessionStorage.getItem('emr-tab-session')).toBeNull();
   });

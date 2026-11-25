@@ -45,14 +45,18 @@ export function IdleSessionGuard({ children, timeoutMinutes }: IdleSessionGuardP
   const reasonRef = useRef<SignOutReason>('idle');
   const actionsRef = useRef<{ continueSession: () => void; signOutNow: () => void } | null>(null);
 
-  const signOutMutation = useSignOut(() => {
+  const signOutMutation = useSignOut('session_expired', () => {
     broadcastSignOut(reasonRef.current);
     router.replace(getSignedOutPath(reasonRef.current));
     router.refresh();
   });
   const { mutate } = signOutMutation;
+  // The Audit Log records Logout Now as the user's choice and a timeout as an expiry.
   const signOut = useCallback(
-    () => mutate(undefined, { onError: () => setSignOutFailed(true) }),
+    () =>
+      mutate(reasonRef.current === 'manual' ? 'user' : 'session_expired', {
+        onError: () => setSignOutFailed(true),
+      }),
     [mutate]
   );
 
