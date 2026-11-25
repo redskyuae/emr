@@ -53,7 +53,11 @@ export default function RootLayout({
   preconnect('https://cdn.fontshare.com', { crossOrigin: 'anonymous' });
 
   return (
-    <html lang="en" className={`${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${geistMono.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
+    >
       <body className="flex min-h-full flex-col">
         <BrandProvider variant={variant}>
           <AnalyticsProvider settings={getClientAnalyticsSettings()} sidebarMode={getSidebarMode()}>

@@ -125,7 +125,7 @@ describe('CollapsibleFilterToolbar', () => {
     try {
       renderToolbar({ defaultExpanded: true });
       const region = advancedRegion();
-      const hiddenWhenCleared: boolean[] = [];
+      const hiddenWhenCleared: HTMLElement['hidden'][] = [];
       set.mockImplementation((target, vars) => {
         if (target === region) hiddenWhenCleared.push(region.hidden);
         return originalSet(target, vars);
