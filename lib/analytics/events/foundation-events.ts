@@ -3,6 +3,7 @@ import { prop, type EventSpec } from '@/lib/analytics/event-spec';
 export const SIGN_OUT_TRIGGERS = [
   'user',
   'stale_tab',
+  'idle_timeout',
   'session_expired',
   'tab_storage_unavailable',
 ] as const;

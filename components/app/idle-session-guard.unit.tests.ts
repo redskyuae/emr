@@ -69,7 +69,7 @@ describe('IdleSessionGuard on mount', () => {
     mountGuard();
 
     expect(signOut).toHaveBeenCalledTimes(1);
-    expect(signOut).toHaveBeenCalledWith('session_expired', expect.anything());
+    expect(signOut).toHaveBeenCalledWith('idle_timeout', expect.anything());
     expect(window.localStorage.getItem(LAST_ACTIVITY_KEY)).toBe(stored);
     expect(window.sessionStorage.getItem('emr-tab-session')).toBeNull();
   });
@@ -93,6 +93,16 @@ describe('IdleSessionGuard on mount', () => {
     expect(signOut).not.toHaveBeenCalled();
     expect(screen.getByRole('alertdialog')).toBeTruthy();
     expect(screen.getByText('Your Session is about to expire')).toBeTruthy();
+  });
+
+  it('should record Logout Now as a sign-out by the user', () => {
+    storeLastActivity(TIMEOUT_MINUTES - 0.5);
+
+    mountGuard();
+    fireEvent.click(screen.getByRole('button', { name: 'Logout Now' }));
+
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledWith('user', expect.anything());
   });
 
   it('should sign out when no activity was recorded since the last sign-out', () => {

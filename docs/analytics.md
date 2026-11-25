@@ -118,7 +118,7 @@ sense as a visible one.
 | `$pageview` / `$pageleave` | every page change (path, not query) | the common properties, `is_demo_page`                                                                   |
 | `sign_in_failed`           | the sign-in request is rejected     | `status`, `failure_kind`: `invalid_credentials`, `no_active_tenant`, `multiple_active_tenants`, `other` |
 | `signup_failed`            | the signup request is rejected      | `status`, `failure_kind`: `validation`, `conflict`, `other`                                             |
-| `signed_out`               | just before identity is cleared     | `trigger`: `user`, `stale_tab`, `session_expired`, `tab_storage_unavailable`                            |
+| `signed_out`               | just before identity is cleared     | `trigger`: `user`, `stale_tab`, `idle_timeout`, `session_expired`, `tab_storage_unavailable`            |
 
 `tab_storage_unavailable` is the login or signup form ending the Session it just created because the
 browser blocks tab storage (see the tab marker rules in `CLAUDE.md`).
