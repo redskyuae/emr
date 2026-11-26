@@ -2,9 +2,10 @@ import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-sche
 
 export type VisitWorkflowInput = {
   status: VisitStatus;
-  vitalsCount: number;
-  noteCount: number;
-  draftNoteCount: number;
+  /** The Patient Chart counts below are `null` when the user cannot read the Patient Chart. */
+  vitalsCount: number | null;
+  noteCount: number | null;
+  draftNoteCount: number | null;
   invoiceCount: number;
   /** The consultation form has changes that are not saved yet. */
   consultationDirty?: boolean;
@@ -24,14 +25,14 @@ export const VISIT_OUTSTANDING_KINDS = [
 
 type VisitOutstandingKind = (typeof VISIT_OUTSTANDING_KINDS)[number];
 
-/** The kinds of what is still open on the Visit. */
+/** The kinds of what is still open on the Visit. A Patient Chart count that is unknown is skipped. */
 export function visitOutstandingKinds(input: VisitWorkflowInput): VisitOutstandingKind[] {
   const kinds: VisitOutstandingKind[] = [];
 
   if (input.consultationDirty) kinds.push('unsaved_consultation');
   if (input.vitalsCount === 0) kinds.push('no_vital_signs');
   if (input.noteCount === 0) kinds.push('no_clinical_note');
-  if (input.draftNoteCount > 0) kinds.push('draft_clinical_notes');
+  if ((input.draftNoteCount ?? 0) > 0) kinds.push('draft_clinical_notes');
   if (input.invoiceCount === 0) kinds.push('no_invoice');
 
   return kinds;

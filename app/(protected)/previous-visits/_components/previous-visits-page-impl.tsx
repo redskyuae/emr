@@ -56,10 +56,20 @@ const CLEARED_PARAMS = {
 };
 
 export function PreviousVisitsPageImpl() {
-  const { data: canRead, isLoading } = useHasPermission('previous-visit:read');
+  const { data: canRead, isLoading, isError } = useHasPermission('previous-visit:read');
 
   if (isLoading) {
     return null;
+  }
+
+  if (isError && !canRead) {
+    return (
+      <Alert variant="destructive">
+        <CiCircleAlert className="size-4" />
+        <AlertTitle>Could not check Previous Visits access</AlertTitle>
+        <AlertDescription>Refresh the page and try again.</AlertDescription>
+      </Alert>
+    );
   }
 
   if (!canRead) {

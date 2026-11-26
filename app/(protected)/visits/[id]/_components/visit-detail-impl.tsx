@@ -105,11 +105,16 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     allergensQuery.data?.data.find((allergen) => allergen.id === id)?.name ?? 'Allergen';
   const invoices = (invoicesQuery.data?.data ?? []).filter((item) => item.visit?.id === visit.id);
   const visitNotes = (chart?.clinicalNotes ?? []).filter((item) => item.visitId === visit.id);
+  // Without `patient-chart:read` the chart never loads, so its counts are unknown rather than zero.
   const workflow = {
     status: visit.status,
-    vitalsCount: (chart?.vitalSigns ?? []).filter((item) => item.visitId === visit.id).length,
-    noteCount: visitNotes.length,
-    draftNoteCount: visitNotes.filter((note) => note.status === 'draft').length,
+    vitalsCount: canReadChart
+      ? (chart?.vitalSigns ?? []).filter((item) => item.visitId === visit.id).length
+      : null,
+    noteCount: canReadChart ? visitNotes.length : null,
+    draftNoteCount: canReadChart
+      ? visitNotes.filter((note) => note.status === 'draft').length
+      : null,
     invoiceCount: invoices.length,
     consultationDirty,
   };

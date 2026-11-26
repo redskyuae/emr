@@ -1,10 +1,12 @@
 'use client';
 
 import type { ComponentType } from 'react';
+import { CiCircleAlert } from 'react-icons/ci';
 import { PiLockKeyDuotone } from 'react-icons/pi';
 
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { EmptyState } from '@/components/app/empty-state';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import { ConsolidatedReportCard } from './consolidated-report-card';
 
@@ -27,10 +29,20 @@ const REPORT_SECTIONS: ReportSection[] = [
 ];
 
 export function ReportsPageImpl() {
-  const { data: canRead, isLoading } = useHasPermission('report:read');
+  const { data: canRead, isLoading, isError } = useHasPermission('report:read');
 
   if (isLoading) {
     return null;
+  }
+
+  if (isError && !canRead) {
+    return (
+      <Alert variant="destructive">
+        <CiCircleAlert className="size-4" />
+        <AlertTitle>Could not check Reports access</AlertTitle>
+        <AlertDescription>Refresh the page and try again.</AlertDescription>
+      </Alert>
+    );
   }
 
   if (!canRead) {

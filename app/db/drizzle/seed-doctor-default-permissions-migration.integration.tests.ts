@@ -49,11 +49,6 @@ describe('0084 Doctor default permissions migration', () => {
   it('should give existing Doctor roles the onboarding defaults idempotently', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const existing = await seedRoles(tenantId);
-    const onboarded = await seedRoles(onboardedTenantId);
-    await rolePermissionRepository.seedDefaultPermissionsForSystemRoles(
-      onboardedTenantId,
-      onboarded.roles
-    );
 
     for (const fileName of [
       '0084_seed_doctor_default_permissions.sql',
@@ -62,6 +57,13 @@ describe('0084 Doctor default permissions migration', () => {
     ]) {
       await executeMigration(fileName);
     }
+
+    // Onboarded after the migrations, so they cannot add to the reference Roles.
+    const onboarded = await seedRoles(onboardedTenantId);
+    await rolePermissionRepository.seedDefaultPermissionsForSystemRoles(
+      onboardedTenantId,
+      onboarded.roles
+    );
 
     const [doctorPermissions, onboardedDoctorPermissions, nursePermissions] = await Promise.all([
       getAssignedNames(existing.findRole('DOCTOR').id, tenantId),

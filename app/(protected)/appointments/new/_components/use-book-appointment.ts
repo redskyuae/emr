@@ -18,7 +18,10 @@ import {
 import { useDoctorSlotsQuery } from '@/app/queries/appointments/useDoctorSlots';
 import { useProcedureResourceAvailabilityQuery } from '@/app/queries/appointments/useProcedureResourceAvailability';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientsQuery } from '@/app/queries/patients/usePatients';
 import { usePatientTreatmentPlansQuery } from '@/app/queries/patient-treatment-plans/usePatientTreatmentPlans';
 import { useRoomsQuery } from '@/app/queries/rooms/useRooms';
@@ -163,10 +166,11 @@ export function useBookAppointment() {
     !isProcedurePath && values.doctorId && values.doctorId !== 'not-applicable'
       ? Number(values.doctorId)
       : null;
-  const { data: canViewDoctorSlots } = useHasPermission('doctor-slot:read');
+  const currentUserQuery = useCurrentUserQuery();
+  const slotPermission = useHasPermission('doctor-slot:read');
   const doctorSlotsQuery = useDoctorSlotsQuery(
     { doctorId, slotDate: values.slotDate },
-    { enabled: canViewDoctorSlots }
+    { enabled: slotPermission.data }
   );
   const rotas = doctorSlotsQuery.data ?? [];
   const selectedRota = rotas.find((rota) => rota.id === values.doctorRotaId) ?? null;
@@ -717,9 +721,14 @@ export function useBookAppointment() {
         : modesQuery.isLoading || typesQuery.isLoading || reasonsQuery.isLoading),
     bookingDependencyError: dependencyErrors[0] ?? null,
     rotas,
-    canViewDoctorSlots,
-    isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
-    doctorSlotsError: getErrorMessage(doctorSlotsQuery.error),
+    // Only a confirmed denial hides Doctor Slots; a failed permission check is reported as an error.
+    canViewDoctorSlots: slotPermission.data || slotPermission.isLoading || slotPermission.isError,
+    isDoctorSlotsLoading:
+      slotPermission.isLoading || doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
+    doctorSlotsError:
+      slotPermission.isError && !slotPermission.data
+        ? 'Could not check Doctor availability access. Try again.'
+        : getErrorMessage(doctorSlotsQuery.error),
     roomOptions,
     patientHasConflictingAppointment,
     isResourceAvailabilityLoading,
@@ -761,7 +770,10 @@ export function useBookAppointment() {
     onSubmit,
     retryPatientSearch: patientsQuery.refetch,
     retryPatientVisits: patientVisitsQuery.refetch,
-    retryDoctorSlots: doctorSlotsQuery.refetch,
+    retryDoctorSlots:
+      slotPermission.isError && !slotPermission.data
+        ? currentUserQuery.refetch
+        : doctorSlotsQuery.refetch,
     retryPlans: plansQuery.refetch,
     retryTreatments: treatmentsQuery.refetch,
     retryBookingDependencies: () => {

@@ -55,10 +55,10 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
     !isProcedure && values.doctorId && values.doctorId !== 'not-applicable'
       ? Number(values.doctorId)
       : null;
-  const { data: canViewDoctorSlots } = useHasPermission('doctor-slot:read');
+  const slotPermission = useHasPermission('doctor-slot:read');
   const doctorSlotsQuery = useDoctorSlotsQuery(
     { doctorId, slotDate: values.slotDate, reschedulingAppointmentId: appointmentId },
-    { enabled: canViewDoctorSlots }
+    { enabled: slotPermission.data }
   );
   const rotas = doctorSlotsQuery.data ?? [];
   const selectedRota = rotas.find((rota) => rota.id === values.doctorRotaId) ?? null;
@@ -194,9 +194,16 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
       (!isProcedure ? doctorsQuery.error : null) ??
       currentUserQuery.error,
     isEligible,
-    canViewDoctorSlots,
-    isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
-    doctorSlotsError: doctorSlotsQuery.error ? getApiErrorMessage(doctorSlotsQuery.error) : null,
+    // Only a confirmed denial hides Doctor Slots; a failed permission check is reported as an error.
+    canViewDoctorSlots: slotPermission.data || slotPermission.isLoading || slotPermission.isError,
+    isDoctorSlotsLoading:
+      slotPermission.isLoading || doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
+    doctorSlotsError:
+      slotPermission.isError && !slotPermission.data
+        ? 'Could not check Doctor availability access. Try again.'
+        : doctorSlotsQuery.error
+          ? getApiErrorMessage(doctorSlotsQuery.error)
+          : null,
     mutation,
     changeDoctor,
     changeScheduleContext,
@@ -207,6 +214,9 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
     changeProcedureEndTime,
     onSubmit,
     retryAppointment: appointmentQuery.refetch,
-    retryDoctorSlots: doctorSlotsQuery.refetch,
+    retryDoctorSlots:
+      slotPermission.isError && !slotPermission.data
+        ? currentUserQuery.refetch
+        : doctorSlotsQuery.refetch,
   };
 }

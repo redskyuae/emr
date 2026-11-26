@@ -31,10 +31,20 @@ type RescheduleForm = ReturnType<typeof useRescheduleAppointmentForm>;
 type RescheduleTarget = NonNullable<RescheduleForm['appointment']>;
 
 export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId: number }) {
-  const { data: canReschedule, isLoading } = useHasPermission('appointment:reschedule');
+  const { data: canReschedule, isLoading, isError } = useHasPermission('appointment:reschedule');
 
   if (isLoading) {
     return <RescheduleAppointmentSkeleton />;
+  }
+
+  if (isError && !canReschedule) {
+    return (
+      <Alert variant="destructive">
+        <CiCircleAlert className="size-4" />
+        <AlertTitle>Could not check reschedule access</AlertTitle>
+        <AlertDescription>Refresh the page and try again.</AlertDescription>
+      </Alert>
+    );
   }
 
   if (!canReschedule) {

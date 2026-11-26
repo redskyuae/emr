@@ -63,4 +63,10 @@ describe('visitOutstandingKinds', () => {
       visitOutstandingKinds({ ...base, vitalsCount: 2, noteCount: 1, invoiceCount: 1 })
     ).toEqual([]);
   });
+
+  it('should skip the Patient Chart checks when the chart counts are unknown', () => {
+    expect(
+      visitOutstandingKinds({ ...base, vitalsCount: null, noteCount: null, draftNoteCount: null })
+    ).toEqual(['no_invoice']);
+  });
 });

@@ -2,12 +2,14 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { CiCircleAlert } from 'react-icons/ci';
 import { PiArrowLeftLight, PiFileMagnifyingGlassDuotone, PiLockKeyDuotone } from 'react-icons/pi';
 
 import { useConsolidatedPatientReportQuery } from '@/app/queries/patients/useConsolidatedPatientReport';
 import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { EmptyState } from '@/components/app/empty-state';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 
@@ -36,7 +38,11 @@ function BackToReports() {
 /** The report for the Patient and period in the URL, generated from the Reports page. */
 export function ConsolidatedReportPageImpl() {
   const [criteria] = useConsolidatedReportCriteria();
-  const { data: canRead, isLoading: permissionLoading } = useHasPermission('report:read');
+  const {
+    data: canRead,
+    isError: permissionError,
+    isLoading: permissionLoading,
+  } = useHasPermission('report:read');
   const ready = criteria.patient !== null && criteria.patient > 0 && isValidPeriod(criteria);
   const report = useConsolidatedPatientReportQuery(
     ready && canRead
@@ -66,6 +72,16 @@ export function ConsolidatedReportPageImpl() {
 
   if (permissionLoading) {
     return null;
+  }
+
+  if (permissionError && !canRead) {
+    return (
+      <Alert variant="destructive">
+        <CiCircleAlert className="size-4" />
+        <AlertTitle>Could not check Consolidated Patient Report access</AlertTitle>
+        <AlertDescription>Refresh the page and try again.</AlertDescription>
+      </Alert>
+    );
   }
 
   if (!canRead) {

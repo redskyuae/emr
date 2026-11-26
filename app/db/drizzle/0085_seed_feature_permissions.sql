@@ -44,7 +44,8 @@ FROM (
     ('appointment:export', 'appointment:read'),
     ('doctor-slot:read', 'appointment:create')
 ) AS "rule" ("granted_name", "source_name")
-INNER JOIN "permission" AS "source" ON "source"."name" = "rule"."source_name"
+INNER JOIN "permission" AS "source"
+  ON "source"."name" = "rule"."source_name" AND "source"."is_active" = true
 INNER JOIN "role_permission" AS "existing" ON "existing"."permission_id" = "source"."id"
 INNER JOIN "role" ON "role"."id" = "existing"."role_id" AND "role"."is_deleted" = false
 INNER JOIN "permission" AS "granted"
