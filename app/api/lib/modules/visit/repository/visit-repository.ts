@@ -4,6 +4,7 @@ import { db } from '@/app/db';
 import { appointment as appointmentTable } from '@/app/db/schema/appointment';
 import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
 import { user as userTable } from '@/app/db/schema/auth';
+import { clinicalNote as clinicalNoteTable } from '@/app/db/schema/clinical-note';
 import { doctor as doctorTable } from '@/app/db/schema/doctor';
 import { patient as patientTable } from '@/app/db/schema/patient';
 import {
@@ -40,6 +41,17 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 const ACTIVE_VISIT_STATUSES: VisitStatus[] = ['CHECKED_IN', 'IN_CONSULTATION'];
 
+// The Doctor's sign-off is read from the Visit's signed Clinical Notes rather than stored as a
+// Visit Status, so signing never changes the Visit lifecycle.
+const doctorSignedAt = sql<Date | null>`(
+  select max(${clinicalNoteTable.signedAt})
+  from ${clinicalNoteTable}
+  where ${clinicalNoteTable.visitId} = ${visitTable.id}
+    and ${clinicalNoteTable.tenantId} = ${visitTable.tenantId}
+    and ${clinicalNoteTable.status} = 'signed'
+    and ${clinicalNoteTable.isDeleted} = false
+)`.mapWith((value: Date | string) => new Date(value));
+
 const visitColumns = {
   id: visitTable.id,
   status: visitTable.status,
@@ -53,6 +65,7 @@ const visitColumns = {
   checkedInAt: visitTable.checkedInAt,
   cancelledAt: visitTable.cancelledAt,
   visitNumber: visitTable.visitNumber,
+  doctorSignedAt,
   chiefComplaint: visitTable.chiefComplaint,
   legacyVisitNumber: visitTable.legacyVisitNumber,
   cancellationReason: visitTable.cancellationReason,

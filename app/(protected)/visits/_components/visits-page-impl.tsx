@@ -13,7 +13,7 @@ import { getApiErrorMessage } from '@/app/queries/api-error';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
 import { useStartConsultation } from '@/app/queries/visits/useStartConsultation';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { useDoctorScope, useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,27 +51,43 @@ export function VisitsPageImpl() {
   const [page, setPage] = useState(1);
   const [visitPendingCancel, setVisitPendingCancel] = useState<Visit | null>(null);
 
+  // A Doctor sees only their own Visits, so the Doctor filter is theirs and not a choice; the
+  // board waits for the Current User rather than briefly listing every Doctor's Visits.
+  const { data: doctorScope } = useDoctorScope();
+  const ownDoctorId = doctorScope?.isDoctor ? doctorScope.doctorId : undefined;
+  const isDoctor = doctorScope?.isDoctor ?? false;
+  const isUnlinkedDoctor = isDoctor && ownDoctorId === null;
+  const canListVisits = doctorScope !== undefined && !isUnlinkedDoctor;
+
   // The board is a day view: the date always resolves to something, defaulting
   // to the browser's today until the user picks another day.
   const visitDate = dateParam ?? todayDisplayDate();
-  const doctorId = doctorParam && doctorParam !== ALL_FILTER ? Number(doctorParam) : undefined;
+  const filterDoctorId =
+    doctorParam && doctorParam !== ALL_FILTER ? Number(doctorParam) : undefined;
+  const doctorId = isDoctor ? (ownDoctorId ?? undefined) : filterDoctorId;
   const status = statusParam && statusParam !== ALL_FILTER ? statusParam : undefined;
 
-  const visitsQuery = useVisitsQuery({
-    visitDate,
-    doctorId,
-    status,
-    query: debouncedSearch || undefined,
-    page,
-    limit: VISITS_PAGE_SIZE,
-  });
-  const doctorsQuery = useDoctorsQuery({ page: 1, limit: 100, status: 'active' });
+  const visitsQuery = useVisitsQuery(
+    {
+      visitDate,
+      doctorId,
+      status,
+      query: debouncedSearch || undefined,
+      page,
+      limit: VISITS_PAGE_SIZE,
+    },
+    { enabled: canListVisits }
+  );
+  const doctorsQuery = useDoctorsQuery(
+    { page: 1, limit: 100, status: 'active' },
+    { enabled: doctorScope !== undefined && !isDoctor }
+  );
 
   const startMutation = useStartConsultation();
 
   const { data: canCreate } = useHasPermission('visit:create');
   // The same values the query uses, so the empty state always agrees with the queue on screen.
-  const isFiltered = Boolean(doctorId || status || debouncedSearch.trim());
+  const isFiltered = Boolean((!isDoctor && filterDoctorId) || status || debouncedSearch.trim());
   const { data: canStart } = useHasPermission('visit:start');
   const { data: canCancel } = useHasPermission('visit:cancel');
 
@@ -96,15 +112,26 @@ export function VisitsPageImpl() {
   return (
     <>
       <div className="space-y-4">
-        <VisitQueueSummary
-          visitDate={visitDate}
-          doctorId={doctorId}
-          status={status}
-          onStatusChange={(next) => {
-            setPage(1);
-            void setStatusParam(next);
-          }}
-        />
+        {isUnlinkedDoctor ? (
+          <Alert>
+            <CiCircleAlert className="size-4" />
+            <AlertTitle>No Doctor profile is linked to your account</AlertTitle>
+            <AlertDescription>
+              Your Visits appear here once a Tenant Admin links your user to a Doctor.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <VisitQueueSummary
+            visitDate={visitDate}
+            doctorId={doctorId}
+            status={status}
+            enabled={canListVisits}
+            onStatusChange={(next) => {
+              setPage(1);
+              void setStatusParam(next);
+            }}
+          />
+        )}
 
         <Card className="py-0">
           <CardContent className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center">
@@ -119,35 +146,37 @@ export function VisitsPageImpl() {
               }}
             />
 
-            <SkeletonCrossfade
-              isLoading={doctorsQuery.isLoading}
-              className="lg:w-52"
-              skeleton={<Skeleton className="h-10 w-full" aria-label="Loading Doctor filter" />}
-            >
-              <Select
-                value={doctorParam ?? ALL_FILTER}
-                onValueChange={(value) => {
-                  setPage(1);
-                  void setDoctorParam(value === ALL_FILTER ? null : value);
-                }}
+            {isDoctor ? null : (
+              <SkeletonCrossfade
+                isLoading={doctorsQuery.isLoading}
+                className="lg:w-52"
+                skeleton={<Skeleton className="h-10 w-full" aria-label="Loading Doctor filter" />}
               >
-                <SelectTrigger
-                  className="w-full"
-                  aria-label="Filter by doctor"
-                  disabled={doctorsQuery.isError}
+                <Select
+                  value={doctorParam ?? ALL_FILTER}
+                  onValueChange={(value) => {
+                    setPage(1);
+                    void setDoctorParam(value === ALL_FILTER ? null : value);
+                  }}
                 >
-                  <SelectValue placeholder="All doctors" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_FILTER}>All doctors</SelectItem>
-                  {(doctorsQuery.data?.data ?? []).map((doctor) => (
-                    <SelectItem key={doctor.id} value={String(doctor.id)}>
-                      {doctor.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </SkeletonCrossfade>
+                  <SelectTrigger
+                    className="w-full"
+                    aria-label="Filter by doctor"
+                    disabled={doctorsQuery.isError}
+                  >
+                    <SelectValue placeholder="All doctors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_FILTER}>All doctors</SelectItem>
+                    {(doctorsQuery.data?.data ?? []).map((doctor) => (
+                      <SelectItem key={doctor.id} value={String(doctor.id)}>
+                        {doctor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </SkeletonCrossfade>
+            )}
 
             <InputGroup className="lg:ml-auto lg:max-w-xs">
               <InputGroupAddon>
@@ -175,7 +204,7 @@ export function VisitsPageImpl() {
           </Alert>
         ) : null}
 
-        {doctorsQuery.isError ? (
+        {!isDoctor && doctorsQuery.isError ? (
           <Alert variant="destructive">
             <CiCircleAlert className="size-4" />
             <AlertTitle>Could not load Doctor filter</AlertTitle>
@@ -193,8 +222,8 @@ export function VisitsPageImpl() {
           </Alert>
         ) : null}
 
-        {visitsQuery.isError ? null : (
-          <SkeletonCrossfade isLoading={visitsQuery.isLoading} skeleton={<VisitsTableSkeleton />}>
+        {visitsQuery.isError || isUnlinkedDoctor ? null : (
+          <SkeletonCrossfade isLoading={visitsQuery.isPending} skeleton={<VisitsTableSkeleton />}>
             {visits.length === 0 ? (
               <VisitsQueueEmptyState
                 visitDate={visitDate}

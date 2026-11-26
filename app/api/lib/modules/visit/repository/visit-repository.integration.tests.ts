@@ -12,6 +12,8 @@ import { appointmentReason as appointmentReasonTable } from '@/app/db/schema/app
 import { appointmentStatus as appointmentStatusTable } from '@/app/db/schema/appointment-status';
 import { appointmentType as appointmentTypeTable } from '@/app/db/schema/appointment-type';
 import { organization, user } from '@/app/db/schema/auth';
+import { clinicalNote as clinicalNoteTable } from '@/app/db/schema/clinical-note';
+import { clinicalNoteType as clinicalNoteTypeTable } from '@/app/db/schema/clinical-note-type';
 import { doctor as doctorTable } from '@/app/db/schema/doctor';
 import { patient as patientTable } from '@/app/db/schema/patient';
 import {
@@ -1405,6 +1407,96 @@ describe('Visit repository', () => {
           doctorId: fixturesA.doctorId,
         })
       ).resolves.toEqual({ CHECKED_IN: 1, IN_CONSULTATION: 0, COMPLETED: 0, CANCELLED: 0 });
+    });
+  });
+
+  describe('doctorSignedAt', () => {
+    async function createVisitNote(
+      tenantId: string,
+      fixtures: TenantFixtures,
+      visitId: number,
+      note: { status: 'draft' | 'signed'; signedAt?: Date; isDeleted?: boolean }
+    ) {
+      const [noteType] = await db
+        .insert(clinicalNoteTypeTable)
+        .values({ tenantId, name: `Consultation ${randomUUID()}`, code: randomUUID().slice(0, 8) })
+        .returning({ id: clinicalNoteTypeTable.id });
+
+      await db.insert(clinicalNoteTable).values({
+        tenantId,
+        visitId,
+        patientId: fixtures.patientId,
+        noteTypeId: noteType.id,
+        authorUserId: 'doctor-user',
+        recordedByUserId: 'doctor-user',
+        ...note,
+      });
+    }
+
+    async function checkInAndStart(tenantId: string, fixtures: TenantFixtures) {
+      const created = await visitRepository.checkInVisit(checkInData(tenantId, fixtures));
+      if (!created.success) throw new Error('check-in failed');
+      await visitRepository.startConsultation(created.data.id, tenantId);
+
+      return created.data.id;
+    }
+
+    it('should leave a Visit without a signed Clinical Note unsigned', async () => {
+      const visitId = await checkInAndStart(tenantA, fixturesA);
+      await createVisitNote(tenantA, fixturesA, visitId, { status: 'draft' });
+
+      await expect(visitRepository.getVisitById(visitId, tenantA)).resolves.toMatchObject({
+        status: 'IN_CONSULTATION',
+        doctorSignedAt: null,
+      });
+    });
+
+    it('should read the latest signing of the Visit Clinical Notes in the list and by ID', async () => {
+      const visitId = await checkInAndStart(tenantA, fixturesA);
+      const firstSignedAt = new Date('2026-07-16T05:00:00.000Z');
+      const latestSignedAt = new Date('2026-07-16T06:30:00.000Z');
+      await createVisitNote(tenantA, fixturesA, visitId, {
+        status: 'signed',
+        signedAt: firstSignedAt,
+      });
+      await createVisitNote(tenantA, fixturesA, visitId, {
+        status: 'signed',
+        signedAt: latestSignedAt,
+      });
+
+      await expect(visitRepository.getVisitById(visitId, tenantA)).resolves.toMatchObject({
+        doctorSignedAt: latestSignedAt,
+      });
+      const list = await visitRepository.getVisits({ tenantId: tenantA, visitDate: TODAY });
+      expect(list.data).toEqual([
+        expect.objectContaining({ id: visitId, doctorSignedAt: latestSignedAt }),
+      ]);
+    });
+
+    it('should ignore a soft-deleted signed Clinical Note', async () => {
+      const visitId = await checkInAndStart(tenantA, fixturesA);
+      await createVisitNote(tenantA, fixturesA, visitId, {
+        status: 'signed',
+        signedAt: new Date('2026-07-16T05:00:00.000Z'),
+        isDeleted: true,
+      });
+
+      await expect(visitRepository.getVisitById(visitId, tenantA)).resolves.toMatchObject({
+        doctorSignedAt: null,
+      });
+    });
+
+    it('should ignore a signed Clinical Note recorded by another Tenant', async () => {
+      const fixturesB = await createTenantFixtures(tenantB);
+      const visitId = await checkInAndStart(tenantA, fixturesA);
+      await createVisitNote(tenantB, fixturesB, visitId, {
+        status: 'signed',
+        signedAt: new Date('2026-07-16T05:00:00.000Z'),
+      });
+
+      await expect(visitRepository.getVisitById(visitId, tenantA)).resolves.toMatchObject({
+        doctorSignedAt: null,
+      });
     });
   });
 

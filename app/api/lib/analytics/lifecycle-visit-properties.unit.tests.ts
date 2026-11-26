@@ -36,6 +36,7 @@ function makeVisit(overrides: Partial<Visit> = {}): Visit {
     completedAt: null,
     cancelledAt: null,
     cancellationReason: null,
+    doctorSignedAt: null,
     createdOn: checkedInAt,
     modifiedOn: checkedInAt,
     patient: {

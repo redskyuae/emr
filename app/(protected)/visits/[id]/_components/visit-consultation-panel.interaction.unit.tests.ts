@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   update: vi.fn(),
   sign: vi.fn(),
+  push: vi.fn(),
+  doctorScope: { isDoctor: false } as { isDoctor: false } | { isDoctor: true; doctorId: number },
   brand: { variant: 'dhathri-gram' as BrandLogoVariant },
   noteTypes: [] as { id: number; code: string; name: string }[],
 }));
@@ -80,6 +82,10 @@ vi.mock('@/components/ui/combobox', async () => {
     ComboboxList: Passthrough,
   };
 });
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock('@/app/queries/identity-access/useCurrentUser', () => ({
+  useDoctorScope: () => ({ data: mocks.doctorScope }),
+}));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const visit = {
@@ -161,7 +167,20 @@ beforeEach(() => {
   mocks.create.mockReset().mockResolvedValue({ data: { id: 30 } });
   mocks.update.mockReset().mockResolvedValue({ data: { id: 20 } });
   mocks.sign.mockReset().mockResolvedValue({ data: { id: 20 } });
+  mocks.push.mockReset();
+  mocks.doctorScope = { isDoctor: false };
 });
+
+async function confirmSign() {
+  openStep(/Review & complete/);
+  fireEvent.click(screen.getByRole('button', { name: 'Save and sign' }));
+  const dialog = await screen.findByRole('alertdialog');
+  fireEvent.click(
+    Array.from(dialog.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Save and sign'
+    )!
+  );
+}
 
 afterEach(cleanup);
 
@@ -233,6 +252,38 @@ describe('Visit consultation', () => {
     expect(mocks.update.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.sign.mock.invocationCallOrder[0]
     );
+  });
+
+  it('should return a Doctor to the Visits list once they sign the consultation', async () => {
+    mocks.doctorScope = { isDoctor: true, doctorId: 12 };
+    renderPanel({ notes: [note({})] });
+
+    await confirmSign();
+
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/visits'));
+    expect(mocks.push.mock.invocationCallOrder[0]).toBeGreaterThan(
+      mocks.sign.mock.invocationCallOrder[0]
+    );
+  });
+
+  it('should keep a user without the Doctor Role on the Visit after signing', async () => {
+    renderPanel({ notes: [note({})] });
+
+    await confirmSign();
+
+    await waitFor(() => expect(mocks.sign).toHaveBeenCalledOnce());
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it('should keep a Doctor on the Visit when signing fails', async () => {
+    mocks.doctorScope = { isDoctor: true, doctorId: 12 };
+    mocks.sign.mockRejectedValue(new Error('Clinical note 20 is already signed.'));
+    renderPanel({ notes: [note({})] });
+
+    await confirmSign();
+
+    await waitFor(() => expect(mocks.sign).toHaveBeenCalledOnce());
+    expect(mocks.push).not.toHaveBeenCalled();
   });
 
   it('should show the error and not sign when saving fails', async () => {

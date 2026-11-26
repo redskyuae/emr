@@ -488,6 +488,22 @@ const visitNavHrefs = new Set(['/reports', '/visit-list']);
 
 const demoNavHrefs = new Set(['/visit-list', '/billing-counter']);
 
+// Hidden from a user with the Doctor Role whatever their Permissions: Book Appointment, Doctors
+// and every Masters menu. The read Permissions behind them stay granted because the Doctor's own
+// screens use them for lookups, so this hides navigation only and never blocks the route.
+const doctorHiddenNavHrefs = new Set([
+  '/doctors',
+  '/visit-masters',
+  '/room-masters',
+  '/billing-masters',
+  '/appointments/new',
+  '/clinical-masters',
+  '/global-references',
+  '/inpatient-masters',
+  '/appointment-masters',
+  '/asset-management-masters',
+]);
+
 const pageMetaByHref: Record<string, AppPageMeta> = {
   '/dashboard': {
     title: 'Appointment Dashboard',
@@ -800,10 +816,12 @@ function filterNavItem(
   grantedResources: Set<string>,
   appointmentsOnly: boolean,
   showVisits: boolean,
-  showDemoPages: boolean
+  showDemoPages: boolean,
+  isDoctor: boolean
 ): AppNavItem | null {
   if (
     !hasNavPermission(item.permission, grantedResources) ||
+    (isDoctor && doctorHiddenNavHrefs.has(item.href)) ||
     (!showDemoPages && demoNavHrefs.has(item.href)) ||
     (appointmentsOnly &&
       !appointmentNavHrefs.has(item.href) &&
@@ -830,7 +848,8 @@ export function getVisibleNavGroups(
   permissions: string[],
   appointmentsOnly = false,
   showVisits = false,
-  showDemoPages = false
+  showDemoPages = false,
+  isDoctor = false
 ): AppNavGroup[] {
   const grantedResources = new Set(permissions.map((permission) => permission.split(':')[0]));
 
@@ -839,7 +858,14 @@ export function getVisibleNavGroups(
       ...group,
       items: group.items
         .map((item) =>
-          filterNavItem(item, grantedResources, appointmentsOnly, showVisits, showDemoPages)
+          filterNavItem(
+            item,
+            grantedResources,
+            appointmentsOnly,
+            showVisits,
+            showDemoPages,
+            isDoctor
+          )
         )
         .filter((item): item is AppNavItem => item !== null),
     }))

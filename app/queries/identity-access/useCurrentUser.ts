@@ -1,6 +1,10 @@
 import { type QueryClient, useQuery } from '@tanstack/react-query';
 
-import { DEFAULT_AUTH_REDIRECT_PATH, getHomePathForUser } from '@/app/lib/auth-route-guards';
+import {
+  DEFAULT_AUTH_REDIRECT_PATH,
+  getHomePathForUser,
+  hasDoctorRole,
+} from '@/app/lib/auth-route-guards';
 import { ApiError, parseApiError } from '@/app/queries/api-error';
 import type { MeResponse } from '@/app/api/v1/me/types';
 
@@ -80,4 +84,29 @@ export function useHasPermission(permissionName: string) {
   });
 
   return { data: query.data ?? false, isLoading: query.isLoading, isError: query.isError };
+}
+
+type DoctorScope = { isDoctor: false } | { isDoctor: true; doctorId: number | null };
+
+function toDoctorScope(response: MeResponse): DoctorScope {
+  const { roles, user } = response.data;
+
+  return hasDoctorRole(roles)
+    ? { isDoctor: true, doctorId: user.doctorProfile?.id ?? null }
+    : { isDoctor: false };
+}
+
+/**
+ * Which Visits the Current User works: a user with the Doctor Role sees only the Visits of
+ * their own Doctor record (`doctorId` is null when no Doctor is linked to them); anyone else
+ * sees every Visit. `data` is undefined while the Current User loads.
+ */
+export function useDoctorScope() {
+  const query = useQuery({
+    queryKey: currentUserQueryKey,
+    queryFn: fetchCurrentUser,
+    select: toDoctorScope,
+  });
+
+  return { data: query.data, isLoading: query.isLoading, isError: query.isError };
 }

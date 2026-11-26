@@ -4,6 +4,7 @@ import {
   DEFAULT_AUTH_REDIRECT_PATH,
   getHomePathForUser,
   getSafeNextPath,
+  hasDoctorRole,
   isPublicPagePath,
 } from './auth-route-guards';
 
@@ -44,6 +45,12 @@ describe('auth route guards', () => {
     for (const value of unsafeNextValues) {
       expect(getSafeNextPath(value)).toBe(DEFAULT_AUTH_REDIRECT_PATH);
     }
+  });
+
+  it('should recognise the Doctor Role among a user Roles by its code', () => {
+    expect(hasDoctorRole([{ code: 'THERAPIST' }, { code: 'DOCTOR' }])).toBe(true);
+    expect(hasDoctorRole([{ code: 'NURSE' }])).toBe(false);
+    expect(hasDoctorRole([])).toBe(false);
   });
 
   it('should send a Doctor with Visit permission straight to Visits', () => {

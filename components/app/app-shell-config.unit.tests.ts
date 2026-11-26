@@ -155,7 +155,7 @@ describe('App shell navigation permissions', () => {
     expect(outpatientTitles(['report:read'])).toEqual(['Reports']);
   });
 
-  it('should show a Doctor Patients, Appointments, Book Appointment, Visits and Previous Visits', () => {
+  it('should show a Doctor Patients, Appointments, Visits and Previous Visits', () => {
     const doctorPermissions = [
       'patient:read',
       'patient:create',
@@ -170,14 +170,60 @@ describe('App shell navigation permissions', () => {
       'report:read',
     ];
 
-    const groups = getVisibleNavGroups(appNavGroups, doctorPermissions, true);
+    const groups = getVisibleNavGroups(appNavGroups, doctorPermissions, true, false, false, true);
 
     expect(
       groups.find(({ title }) => title === 'Clinical')?.items.map(({ title }) => title)
-    ).toEqual(['Patients', 'Appointments', 'Book Appointment']);
+    ).toEqual(['Patients', 'Appointments']);
     expect(
       groups.find(({ title }) => title === 'Outpatient')?.items.map(({ title }) => title)
     ).toEqual(['Visits', 'Previous Visits']);
+  });
+
+  it('should hide Book Appointment, Doctors and every Masters menu from a Doctor', () => {
+    const permissions = [
+      'appointment:read',
+      'appointment:create',
+      'doctor:read',
+      'appointment-mode:read',
+      'appointment-type:read',
+      'visit-type:read',
+      'room-type:read',
+      'charge-item:read',
+      'allergen:read',
+      'ward:read',
+      'asset-category:read',
+      'language:read',
+    ];
+    const titles = (sidebarAppointmentsOnly: boolean, isDoctor: boolean) =>
+      getVisibleNavGroups(
+        appNavGroups,
+        permissions,
+        sidebarAppointmentsOnly,
+        false,
+        false,
+        isDoctor
+      ).flatMap(({ items }) => items.map(({ title }) => title));
+    const hidden = [
+      'Book Appointment',
+      'Doctors',
+      'Appointment Masters',
+      'Visit Masters',
+      'Inpatient Masters',
+      'Asset Management',
+      'Room Masters',
+      'Billing Masters',
+      'Clinical Masters',
+      'Global References',
+    ];
+
+    expect(titles(false, false)).toEqual(expect.arrayContaining(hidden));
+    for (const sidebarAppointmentsOnly of [false, true]) {
+      const doctorTitles = titles(sidebarAppointmentsOnly, true);
+
+      expect(doctorTitles).toContain('Appointments');
+      for (const title of hidden) expect(doctorTitles).not.toContain(title);
+    }
   });
 
   it('should hide the static demo pages unless demo pages are enabled', () => {

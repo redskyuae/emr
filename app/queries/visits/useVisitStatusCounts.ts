@@ -34,8 +34,12 @@ function selectCounts(response: GetVisitStatusCountsResponse) {
 
 // Keyed under VISITS_KEY so every Visit mutation that refreshes the board
 // refreshes the tiles too.
-export function useVisitStatusCountsQuery(params: VisitStatusCountsParams) {
+export function useVisitStatusCountsQuery(
+  params: VisitStatusCountsParams,
+  options?: { enabled?: boolean }
+) {
   return useQuery({
+    enabled: options?.enabled,
     queryKey: [...VISITS_KEY, 'status-counts', params] as const,
     queryFn: () => fetchVisitStatusCounts(params),
     select: selectCounts,

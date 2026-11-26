@@ -1566,8 +1566,21 @@ const visitExample = {
   completedAt: null,
   cancelledAt: null,
   cancellationReason: null,
+  doctorSignedAt: null,
   createdOn: '2026-07-16T04:30:00.000Z',
   modifiedOn: '2026-07-16T04:30:00.000Z',
+};
+
+// An In Consultation Visit whose Doctor has signed the consultation: the Visits list shows it as
+// Doctor Signed until it is completed.
+const doctorSignedVisitExample = {
+  ...visitExample,
+  id: 503,
+  visitNumber: 'VST-1003',
+  queueToken: 3,
+  status: 'IN_CONSULTATION',
+  consultationStartedAt: '2026-07-16T04:45:00.000Z',
+  doctorSignedAt: '2026-07-16T05:05:00.000Z',
 };
 
 const doctorlessVisitExample = {
@@ -4173,6 +4186,7 @@ export const openApiDocument = {
                     dateOfBirth: '1985-04-12',
                     isActive: true,
                   },
+                  doctorProfile: { id: 42, isActive: true },
                 },
                 tenant: {
                   id: 'org_123',
@@ -6366,8 +6380,8 @@ export const openApiDocument = {
             description:
               "Today's Visit queue, or the Visits matching the date range and filters (for example GET /api/v1/visits?fromDate=01-07-2026&toDate=16-07-2026&status=COMPLETED&query=asha).",
             content: jsonContent(paginatedSchema('Visit'), {
-              data: [visitExample],
-              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+              data: [visitExample, doctorSignedVisitExample],
+              meta: { total: 2, totalPages: 1, pageSize: 10, pageNumber: 1 },
             }),
           },
           '400': {
@@ -8768,7 +8782,7 @@ export const openApiDocument = {
         tags: ['Clinical Note'],
         summary: 'Sign Clinical Note',
         description:
-          'Signs a draft Clinical Note for the Patient in the active Tenant, setting status to "signed" and stamping signedAt. A signed note is immutable — subsequent updates are rejected with 409 Conflict, and re-signing an already-signed note returns 409 Conflict.',
+          'Signs a draft Clinical Note for the Patient in the active Tenant, setting status to "signed" and stamping signedAt. A signed note is immutable — subsequent updates are rejected with 409 Conflict, and re-signing an already-signed note returns 409 Conflict. Signing a note recorded on a Visit sets the Visit doctorSignedAt, so an In Consultation Visit then reads as Doctor Signed.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Patient'),
@@ -11400,7 +11414,16 @@ export const openApiDocument = {
       },
       CurrentUserIdentity: {
         type: 'object',
-        required: ['id', 'name', 'email', 'image', 'phone', 'emailVerified', 'staffProfile'],
+        required: [
+          'id',
+          'name',
+          'email',
+          'image',
+          'phone',
+          'emailVerified',
+          'staffProfile',
+          'doctorProfile',
+        ],
         properties: {
           id: { type: 'string', description: 'BetterAuth user ID.' },
           name: { type: 'string' },
@@ -11411,6 +11434,23 @@ export const openApiDocument = {
           staffProfile: {
             oneOf: [schemaRef('CurrentUserStaffProfile'), { type: 'null' }],
           },
+          doctorProfile: {
+            oneOf: [schemaRef('CurrentUserDoctorProfile'), { type: 'null' }],
+            description:
+              'The Doctor record linked to this user in the Active Tenant, or null when the user is not a Doctor. A user with the Doctor Role works the Visits of this Doctor.',
+          },
+        },
+      },
+      CurrentUserDoctorProfile: {
+        type: 'object',
+        required: ['id', 'isActive'],
+        properties: {
+          id: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Doctor ID, as used by doctorId filters.',
+          },
+          isActive: { type: 'boolean' },
         },
       },
       CurrentUserTenant: {
@@ -12474,6 +12514,7 @@ export const openApiDocument = {
           'admitSource',
           'appointment',
           'checkedInAt',
+          'doctorSignedAt',
           'createdOn',
           'modifiedOn',
         ],
@@ -12541,6 +12582,13 @@ export const openApiDocument = {
           cancellationReason: {
             type: ['string', 'null'],
             description: 'Plain text or Markdown formatting.',
+          },
+          doctorSignedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            description:
+              'When the latest Clinical Note recorded on this Visit was signed, or null while none is signed. Derived from the Visit Clinical Notes, not a Visit Status: an In Consultation Visit with a value reads as Doctor Signed.',
+            example: '2026-07-16T05:05:00.000Z',
           },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },

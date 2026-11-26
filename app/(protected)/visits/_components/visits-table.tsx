@@ -23,7 +23,7 @@ import {
 import {
   VISITS_PAGE_SIZE,
   isActiveVisit,
-  visitStatusPresentation,
+  visitListStatusPresentation,
   waitingLabel,
 } from '../_utils/visit-status';
 import { visitDoctorLabel } from '@/lib/visit-doctor-label';
@@ -116,7 +116,7 @@ export function VisitsTable({
     <>
       <ul className="space-y-3 md:hidden" aria-label="Visits">
         {visits.map((visit) => {
-          const status = visitStatusPresentation(visit.status);
+          const status = visitListStatusPresentation(visit);
 
           return (
             <li key={visit.id} className="bg-card space-y-3 rounded-xl border p-4">
@@ -133,7 +133,9 @@ export function VisitsTable({
                   </p>
                   <p className="text-muted-foreground text-xs">{visitDoctorLabel(visit)}</p>
                 </div>
-                <Badge variant={status.variant}>{status.label}</Badge>
+                <Badge variant={status.variant} className={status.className}>
+                  {status.label}
+                </Badge>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-muted-foreground text-xs tabular-nums">
@@ -165,7 +167,7 @@ export function VisitsTable({
             </thead>
             <tbody>
               {visits.map((visit) => {
-                const status = visitStatusPresentation(visit.status);
+                const status = visitListStatusPresentation(visit);
 
                 return (
                   <tr key={visit.id} className="hover:bg-muted/50 border-b last:border-b-0">
@@ -197,7 +199,9 @@ export function VisitsTable({
                       <Badge variant="secondary">{visit.visitType.code}</Badge>
                     </td>
                     <td className={tableCellClass}>
-                      <Badge variant={status.variant}>{status.label}</Badge>
+                      <Badge variant={status.variant} className={status.className}>
+                        {status.label}
+                      </Badge>
                     </td>
                     <td className={cn(tableCellClass, 'text-muted-foreground tabular-nums')}>
                       {formatTime(visit.checkedInAt)}

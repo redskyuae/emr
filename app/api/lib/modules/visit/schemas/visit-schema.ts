@@ -309,6 +309,11 @@ export type Visit = {
   completedAt: Date | null;
   cancelledAt: Date | null;
   cancellationReason: string | null;
+  /**
+   * When the latest Clinical Note recorded on this Visit was signed; null while none is signed.
+   * An In Consultation Visit with a signed note reads as Doctor Signed.
+   */
+  doctorSignedAt: Date | null;
   createdOn: Date;
   modifiedOn: Date;
   patient: VisitPatientSummary;

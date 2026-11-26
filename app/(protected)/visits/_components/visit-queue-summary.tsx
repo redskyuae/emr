@@ -67,15 +67,18 @@ export function VisitQueueSummary({
   visitDate,
   doctorId,
   status,
+  enabled = true,
   onStatusChange,
 }: {
   visitDate: string;
   doctorId: number | undefined;
   status: string | undefined;
+  /** False until the board knows whose Visits to count. */
+  enabled?: boolean;
   onStatusChange: (status: VisitStatus | null) => void;
 }) {
   // One request feeds every tile, so the counts always come from the same moment.
-  const countsQuery = useVisitStatusCountsQuery({ visitDate, doctorId });
+  const countsQuery = useVisitStatusCountsQuery({ visitDate, doctorId }, { enabled });
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Visits by status">
@@ -86,7 +89,7 @@ export function VisitQueueSummary({
           status={filter.value}
           counts={countsQuery.data}
           isError={countsQuery.isError}
-          isLoading={countsQuery.isLoading}
+          isLoading={countsQuery.isPending}
           selected={status === filter.value}
           onToggle={() => onStatusChange(status === filter.value ? null : filter.value)}
         />

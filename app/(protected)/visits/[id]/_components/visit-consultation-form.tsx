@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CiCircleCheck, CiFloppyDisk } from 'react-icons/ci';
 import { Controller, useForm, useWatch, type FieldErrors } from 'react-hook-form';
@@ -8,6 +9,7 @@ import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { getApiErrors } from '@/app/queries/api-error';
+import { useDoctorScope } from '@/app/queries/identity-access/useCurrentUser';
 import { useCreateClinicalNote } from '@/app/queries/patients/chart/useCreateClinicalNote';
 import { useSignClinicalNote } from '@/app/queries/patients/chart/useSignClinicalNote';
 import { useUpdateClinicalNote } from '@/app/queries/patients/chart/useUpdateClinicalNote';
@@ -98,6 +100,8 @@ export function VisitConsultationForm({
   const createNote = useCreateClinicalNote();
   const updateNote = useUpdateClinicalNote();
   const signNote = useSignClinicalNote();
+  const router = useRouter();
+  const { data: doctorScope } = useDoctorScope();
   const askNoteType = defaultNoteTypeId === null && !initialValues;
   const saving = createNote.isPending || updateNote.isPending || signNote.isPending;
   const patientId = visit.patient.id;
@@ -160,6 +164,8 @@ export function VisitConsultationForm({
       form.reset(values);
       await signNote.mutateAsync({ patientId, noteId: id });
       toast.success('Consultation signed.');
+      // Signing is the end of a Doctor's part of the Visit, so they go back to their Visits.
+      if (doctorScope?.isDoctor) router.push('/visits');
     } catch (error) {
       form.setError('root', { message: getApiErrors(error).join(' ') });
     }
