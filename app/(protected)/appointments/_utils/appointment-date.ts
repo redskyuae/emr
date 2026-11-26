@@ -44,7 +44,6 @@ export function tomorrowDisplayDate(now = new Date(), timeZone?: string) {
   });
 }
 
-
 export function fromDateParamToDisplayDate(param: string | null) {
   const match = param ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(param) : null;
 
