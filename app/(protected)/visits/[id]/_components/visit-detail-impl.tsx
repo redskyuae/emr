@@ -96,7 +96,8 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   // Only a Completed Visit is amended; an active one is still edited in place.
   const canAmend = visit.status === 'COMPLETED' && Boolean(canAmendVisit);
 
-  const chart = chartQuery.data;
+  // Gated on the Permission too, so a chart cached before access was removed is never shown.
+  const chart = canReadChart ? chartQuery.data : undefined;
   const safetyLoading = chartQuery.isLoading || allergensQuery.isLoading;
   const activeAllergyCount = (chart?.allergies ?? []).filter(
     (item) => item.status === 'active'
@@ -105,16 +106,13 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     allergensQuery.data?.data.find((allergen) => allergen.id === id)?.name ?? 'Allergen';
   const invoices = (invoicesQuery.data?.data ?? []).filter((item) => item.visit?.id === visit.id);
   const visitNotes = (chart?.clinicalNotes ?? []).filter((item) => item.visitId === visit.id);
-  // Without `patient-chart:read` the chart never loads, so its counts are unknown rather than zero.
+  // Until the chart is available (no `patient-chart:read`, still loading, or failed), its counts
+  // are unknown rather than zero.
   const workflow = {
     status: visit.status,
-    vitalsCount: canReadChart
-      ? (chart?.vitalSigns ?? []).filter((item) => item.visitId === visit.id).length
-      : null,
-    noteCount: canReadChart ? visitNotes.length : null,
-    draftNoteCount: canReadChart
-      ? visitNotes.filter((note) => note.status === 'draft').length
-      : null,
+    vitalsCount: chart ? chart.vitalSigns.filter((item) => item.visitId === visit.id).length : null,
+    noteCount: chart ? visitNotes.length : null,
+    draftNoteCount: chart ? visitNotes.filter((note) => note.status === 'draft').length : null,
     invoiceCount: invoices.length,
     consultationDirty,
   };

@@ -11,7 +11,11 @@ const state = vi.hoisted(() => ({
   canAmend: false,
   canAssignPlan: false,
   canReadChart: true,
+  chartLoaded: true,
+  noteStatus: 'signed',
   chartQueryOptions: [] as unknown[],
+  outstanding: [] as string[],
+  carePathwayChart: undefined as unknown,
   plansFailed: false,
   initialParams: {} as Record<string, number | string>,
   paramWrites: [] as [string, unknown][],
@@ -65,15 +69,18 @@ vi.mock('@/app/queries/patients/chart/usePatientChart', () => ({
   usePatientChartQuery: (_patientId: number, options: unknown) => {
     state.chartQueryOptions.push(options);
 
+    // The query returns cached data whatever `enabled` says, as React Query does.
     return {
-      data: {
-        allergies: [],
-        medications: [],
-        vitalSigns: [{ id: 61, visitId: 7 }],
-        clinicalNotes: [{ id: 55, visitId: 7, status: 'signed' }],
-      },
-      isSuccess: true,
-      isLoading: false,
+      data: state.chartLoaded
+        ? {
+            allergies: [],
+            medications: [],
+            vitalSigns: [{ id: 61, visitId: 7 }],
+            clinicalNotes: [{ id: 55, visitId: 7, status: state.noteStatus }],
+          }
+        : undefined,
+      isSuccess: state.chartLoaded,
+      isLoading: !state.chartLoaded,
       isError: false,
     };
   },
@@ -157,7 +164,12 @@ vi.mock('./_modals/add-plan-sessions-dialog', async () => {
       createElement('div', { 'data-testid': 'add-plan-sessions-dialog' }, plan.id),
   };
 });
-vi.mock('./_modals/complete-visit-dialog', () => ({ CompleteVisitDialog: () => null }));
+vi.mock('./_modals/complete-visit-dialog', () => ({
+  CompleteVisitDialog: ({ outstanding }: { outstanding: string[] }) => {
+    state.outstanding = outstanding;
+    return null;
+  },
+}));
 vi.mock('./_modals/sign-clinical-note-dialog', () => ({ SignClinicalNoteDialog: () => null }));
 vi.mock('./visit-patient-header', async () => {
   const { createElement } = await import('react');
@@ -187,24 +199,29 @@ vi.mock('./visit-care-pathway', async () => {
   const { createElement } = await import('react');
   return {
     VisitCarePathway: ({
+      chart,
       onAddPlanSessions,
       onOpenPlanSession,
       onAmendNote,
       onAmendVitalSign,
     }: {
+      chart: unknown;
       onAddPlanSessions: (planId: number) => void;
       onOpenPlanSession: (sessionId: number) => void;
       onAmendNote: (noteId: number) => void;
       onAmendVitalSign: (vitalId: number) => void;
-    }) =>
-      createElement(
+    }) => {
+      state.carePathwayChart = chart;
+
+      return createElement(
         'div',
         null,
         createElement('button', { onClick: () => onAddPlanSessions(81) }, 'Add Sessions to 81'),
         createElement('button', { onClick: () => onOpenPlanSession(902) }, 'Open Session 2'),
         createElement('button', { onClick: () => onAmendNote(55) }, 'Amend note 55'),
         createElement('button', { onClick: () => onAmendVitalSign(61) }, 'Amend reading 61')
-      ),
+      );
+    },
   };
 });
 
@@ -214,7 +231,11 @@ afterEach(() => {
   state.canAmend = false;
   state.canAssignPlan = false;
   state.canReadChart = true;
+  state.chartLoaded = true;
+  state.noteStatus = 'signed';
   state.chartQueryOptions = [];
+  state.outstanding = [];
+  state.carePathwayChart = undefined;
   state.plansFailed = false;
   state.initialParams = {};
   state.paramWrites = [];
@@ -234,6 +255,32 @@ describe('Visit detail capture routing', () => {
 
     expect(state.chartQueryOptions.at(-1)).toEqual({ enabled: false });
     expect(screen.getByText('Patient Chart not shown')).toBeTruthy();
+  });
+
+  it('should not show a cached Patient Chart without patient-chart:read', () => {
+    state.canReadChart = false;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.carePathwayChart).toBeUndefined();
+    expect(state.outstanding).toEqual(['No Invoice linked to this Visit.']);
+  });
+
+  it('should not report chart items as missing while the Patient Chart is loading', () => {
+    state.chartLoaded = false;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.outstanding).toEqual(['No Invoice linked to this Visit.']);
+  });
+
+  it('should report chart items from a loaded Patient Chart', () => {
+    state.noteStatus = 'draft';
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.carePathwayChart).toBeDefined();
+    expect(state.outstanding).toEqual([
+      '1 Clinical Note is still a draft.',
+      'No Invoice linked to this Visit.',
+    ]);
   });
 
   it('opens the Allergy form for an Allergy action', () => {
