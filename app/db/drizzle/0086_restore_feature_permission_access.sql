@@ -4,8 +4,11 @@
 --   (`appointment:read`), not only to Roles with `appointment:create`.
 -- * Visit Document upload and delete were open to anyone who could open a Visit
 --   (`visit:read`), not only to Roles with `visit:create` or `visit:update`.
--- This grants them from the wider source so no Role loses access. It runs after 0085 on
--- databases that already applied it, and is idempotent via ON CONFLICT DO NOTHING.
+-- This grants them from the wider source so no Role loses access it had through a screen.
+-- A Role with neither `appointment:read` nor `appointment:create` (or without `visit:read`)
+-- could only reach these actions by calling the API directly, so it is not granted them; a
+-- Tenant Admin grants them in the Role editor if needed. It runs after 0085 on databases that
+-- already applied it, and is idempotent via ON CONFLICT DO NOTHING.
 INSERT INTO "role_permission" ("tenant_id", "role_id", "permission_id")
 SELECT DISTINCT "role"."tenant_id", "role"."id", "granted"."id"
 FROM (

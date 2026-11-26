@@ -23,7 +23,10 @@ ON CONFLICT ("name") DO NOTHING;
 --> statement-breakpoint
 -- Every Role (System or custom) that already reached a feature through an older Permission is
 -- granted the new Permission that now guards it. 0086 widens the sources for Cancel,
--- Reschedule, Doctor Slots and Visit Document upload/delete so that no Role loses access.
+-- Reschedule, Doctor Slots and Visit Document upload/delete so that no Role loses access it had
+-- through a screen. The one exception: a Role with no Appointment Permission (or no Visit
+-- Permission) never saw those screens and could only call the API directly; it gets nothing,
+-- and a Tenant Admin grants the new Permission in the Role editor if it is needed.
 INSERT INTO "role_permission" ("tenant_id", "role_id", "permission_id")
 SELECT DISTINCT "role"."tenant_id", "role"."id", "granted"."id"
 FROM (
