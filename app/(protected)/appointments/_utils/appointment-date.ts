@@ -44,6 +44,24 @@ export function tomorrowDisplayDate(now = new Date(), timeZone?: string) {
   });
 }
 
+
+export function fromDateParamToDisplayDate(param: string | null) {
+  const match = param ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(param) : null;
+
+  if (!match) {
+    return undefined;
+  }
+
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+    return undefined;
+  }
+
+  return displayDate({ year, month, day });
+}
+
 export function toDateInputValue(displayDate: string) {
   const [day, month, year] = displayDate.split('-');
 

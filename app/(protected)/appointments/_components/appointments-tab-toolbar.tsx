@@ -1,10 +1,17 @@
 'use client';
 
 import { CiSearch } from 'react-icons/ci';
+import { PiArrowCounterClockwiseLight } from 'react-icons/pi';
 
 import type { DownloadAppointmentsExportRequest } from '@/app/api/v1/appointments/export/types';
 import { Card, CardContent } from '@/components/ui/card';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+} from '@/components/ui/input-group';
 import {
   Select,
   SelectContent,
@@ -28,9 +35,12 @@ export function AppointmentsTabToolbar({
   doctorId,
   doctors,
   exportFilters,
+  fromDateValue,
   hasAppointments,
+  hasCustomFromDate,
   onAppointmentStatusChange,
   onDoctorChange,
+  onFromDateChange,
   onSearchChange,
   onTherapistChange,
   searchTerm,
@@ -43,9 +53,13 @@ export function AppointmentsTabToolbar({
   doctorId: string | null;
   doctors: FilterOption[];
   exportFilters: Omit<DownloadAppointmentsExportRequest, 'format'>;
+  fromDateValue?: string;
   hasAppointments: boolean;
+  /** A From Date other than the default is chosen, so its reset button is enabled. */
+  hasCustomFromDate?: boolean;
   onAppointmentStatusChange: (value: string | null) => void;
   onDoctorChange: (value: string | null) => void;
+  onFromDateChange?: (value: string | null) => void;
   onSearchChange: (value: string) => void;
   onTherapistChange: (value: string | null) => void;
   searchTerm: string;
@@ -105,6 +119,31 @@ export function AppointmentsTabToolbar({
             ))}
           </SelectContent>
         </Select>
+
+        {onFromDateChange ? (
+          <InputGroup className="lg:w-60">
+            <InputGroupAddon>
+              <InputGroupText>From</InputGroupText>
+            </InputGroupAddon>
+            <InputGroupInput
+              type="date"
+              value={fromDateValue ?? ''}
+              onChange={(event) => onFromDateChange(event.target.value || null)}
+              aria-label="Filter appointments from date"
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                size="icon-xs"
+                disabled={!hasCustomFromDate}
+                onClick={() => onFromDateChange(null)}
+                aria-label="Reset From Date to tomorrow"
+                title="Reset From Date"
+              >
+                <PiArrowCounterClockwiseLight className="size-4" aria-hidden="true" />
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
+        ) : null}
 
         <InputGroup className="lg:max-w-xs">
           <InputGroupAddon>
