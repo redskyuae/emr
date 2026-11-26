@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { rescheduleAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/reschedule-appointment-command';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { POST } from './route';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
@@ -14,11 +14,14 @@ vi.mock('@/app/api/lib/modules/appointment/commands/reschedule-appointment-comma
   rescheduleAppointmentCommand: vi.fn(),
 }));
 vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
+  requireTenantPermissions: vi.fn(),
   requireTenantSession: vi.fn(),
 }));
 
 const reschedule = vi.mocked(rescheduleAppointmentCommand);
+const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
+const tenantSession = { tenantId: 'tenant-1' };
 const context = { params: Promise.resolve({ id: '10' }) };
 const payload = {
   bookingPath: 'PROCEDURE',
@@ -38,7 +41,8 @@ function request(body: unknown) {
 describe('Reschedule Appointment route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    requireSession.mockResolvedValue({ tenantId: 'tenant-1' } as never);
+    requireSession.mockResolvedValue(tenantSession as never);
+    requirePermissions.mockResolvedValue(null);
     reschedule.mockResolvedValue({
       success: true,
       data: { id: 10, bookingNumber: 'APT-1001', slotDate: '31-12-2099' } as never,
@@ -73,6 +77,25 @@ describe('Reschedule Appointment route', () => {
 
     expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
     expect(reschedule).not.toHaveBeenCalled();
+  });
+
+  it('should require appointment:reschedule', async () => {
+    await POST(request(payload), context);
+
+    expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['appointment:reschedule']);
+  });
+
+  it('should return forbidden without rescheduling when appointment:reschedule is absent', async () => {
+    requirePermissions.mockResolvedValue(
+      NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+    );
+
+    const response = await POST(request(payload), context);
+
+    expect(response.status).toBe(StatusCodes.FORBIDDEN);
+    await expect(response.json()).resolves.toEqual({ message: 'Forbidden' });
+    expect(reschedule).not.toHaveBeenCalled();
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 
   it('should reject an invalid JSON request body', async () => {

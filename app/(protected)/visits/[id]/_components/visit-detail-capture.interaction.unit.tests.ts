@@ -10,6 +10,8 @@ const state = vi.hoisted(() => ({
   status: 'CHECKED_IN',
   canAmend: false,
   canAssignPlan: false,
+  canReadChart: true,
+  chartQueryOptions: [] as unknown[],
   plansFailed: false,
   initialParams: {} as Record<string, number | string>,
   paramWrites: [] as [string, unknown][],
@@ -60,17 +62,21 @@ vi.mock('@/app/queries/visits/useVisit', () => ({
   }),
 }));
 vi.mock('@/app/queries/patients/chart/usePatientChart', () => ({
-  usePatientChartQuery: () => ({
-    data: {
-      allergies: [],
-      medications: [],
-      vitalSigns: [{ id: 61, visitId: 7 }],
-      clinicalNotes: [{ id: 55, visitId: 7, status: 'signed' }],
-    },
-    isSuccess: true,
-    isLoading: false,
-    isError: false,
-  }),
+  usePatientChartQuery: (_patientId: number, options: unknown) => {
+    state.chartQueryOptions.push(options);
+
+    return {
+      data: {
+        allergies: [],
+        medications: [],
+        vitalSigns: [{ id: 61, visitId: 7 }],
+        clinicalNotes: [{ id: 55, visitId: 7, status: 'signed' }],
+      },
+      isSuccess: true,
+      isLoading: false,
+      isError: false,
+    };
+  },
 }));
 vi.mock('@/app/queries/clinical-masters/allergens/useAllergens', () => ({
   useAllergensQuery: () => ({ data: { data: [] }, isLoading: false, isError: false }),
@@ -79,6 +85,7 @@ vi.mock('@/app/queries/identity-access/useCurrentUser', () => ({
   useHasPermission: (key: string) => ({
     data:
       (key === 'visit:amend' && state.canAmend) ||
+      (key === 'patient-chart:read' && state.canReadChart) ||
       (key.startsWith('patient-treatment-plan:') && state.canAssignPlan),
     isLoading: false,
   }),
@@ -206,12 +213,29 @@ afterEach(() => {
   state.status = 'CHECKED_IN';
   state.canAmend = false;
   state.canAssignPlan = false;
+  state.canReadChart = true;
+  state.chartQueryOptions = [];
   state.plansFailed = false;
   state.initialParams = {};
   state.paramWrites = [];
 });
 
 describe('Visit detail capture routing', () => {
+  it('should load the Patient Chart with patient-chart:read', () => {
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.chartQueryOptions.at(-1)).toEqual({ enabled: true });
+    expect(screen.queryByText('Patient Chart not shown')).toBeNull();
+  });
+
+  it('should not load the Patient Chart without patient-chart:read', () => {
+    state.canReadChart = false;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.chartQueryOptions.at(-1)).toEqual({ enabled: false });
+    expect(screen.getByText('Patient Chart not shown')).toBeTruthy();
+  });
+
   it('opens the Allergy form for an Allergy action', () => {
     render(createElement(VisitDetailImpl, { visitId: 7 }));
 

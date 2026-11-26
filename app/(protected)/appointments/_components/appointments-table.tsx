@@ -51,6 +51,7 @@ export function AppointmentsTable({
   isFetching,
   onPageChange,
   onCancel,
+  canReschedule,
   label = 'Appointments',
 }: {
   appointments: Appointment[];
@@ -60,7 +61,10 @@ export function AppointmentsTable({
   pageSize: number;
   isFetching: boolean;
   onPageChange: (page: number) => void;
-  onCancel: (appointment: Appointment) => void;
+  /** Omitted without `appointment:cancel`, which hides Cancel Appointment. */
+  onCancel?: (appointment: Appointment) => void;
+  /** The user holds `appointment:reschedule`; without it Reschedule is hidden. */
+  canReschedule: boolean;
   label?: string;
 }) {
   return (
@@ -82,10 +86,10 @@ export function AppointmentsTable({
           </thead>
           <tbody>
             {appointments.map((appointment) => {
-              const canReschedule =
+              const reschedulable =
                 appointment.appointmentStatus.category === 'scheduled' ||
                 appointment.appointmentStatus.category === 'confirmed';
-              const canCancel = canCancelAppointment(appointment.appointmentStatus.category);
+              const cancellable = canCancelAppointment(appointment.appointmentStatus.category);
 
               return (
                 <tr key={appointment.id} className="hover:bg-muted/50 border-b last:border-b-0">
@@ -149,7 +153,7 @@ export function AppointmentsTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {canReschedule ? (
+                        {!canReschedule ? null : reschedulable ? (
                           <DropdownMenuItem asChild>
                             <Link href={`/appointments/${appointment.id}/reschedule`}>
                               <CiCalendarDate className="size-4" />
@@ -162,14 +166,16 @@ export function AppointmentsTable({
                             Reschedule
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem
-                          disabled={!canCancel}
-                          className="text-destructive focus:text-destructive"
-                          onSelect={() => onCancel(appointment)}
-                        >
-                          <CiCircleRemove className="size-4" />
-                          Cancel Appointment
-                        </DropdownMenuItem>
+                        {onCancel ? (
+                          <DropdownMenuItem
+                            disabled={!cancellable}
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => onCancel(appointment)}
+                          >
+                            <CiCircleRemove className="size-4" />
+                            Cancel Appointment
+                          </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuItem asChild>
                           <Link href={`/patients/${appointment.patient.id}`}>
                             <CiUser className="size-4" />

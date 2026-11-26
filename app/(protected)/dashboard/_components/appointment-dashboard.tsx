@@ -33,7 +33,9 @@ import { TodayAppointmentList } from './today-appointment-list';
 export function AppointmentDashboard() {
   const slotDate = todayDisplayDate();
   const currentUserQuery = useCurrentUserQuery();
-  const canRead = currentUserQuery.data?.permissions.includes('appointment:read') ?? false;
+  const permissions = currentUserQuery.data?.permissions ?? [];
+  const canViewDashboard = permissions.includes('dashboard:read');
+  const canRead = canViewDashboard && permissions.includes('appointment:read');
   const appointmentsQuery = useAppointmentDashboardQuery(slotDate, canRead);
 
   if (currentUserQuery.isError || (!currentUserQuery.isLoading && !currentUserQuery.data)) {
@@ -43,6 +45,19 @@ export function AppointmentDashboard() {
         <AlertTitle>Could not load your dashboard</AlertTitle>
         <AlertDescription>{getApiErrorMessage(currentUserQuery.error)}</AlertDescription>
       </Alert>
+    );
+  }
+
+  if (!currentUserQuery.isLoading && !canViewDashboard) {
+    return (
+      <EmptyState
+        tone="danger"
+        orbit={false}
+        className="min-h-72"
+        icon={PiLockKeyDuotone}
+        title="You don't have permission to view the Appointment Dashboard."
+        description="Contact a Tenant Admin if you need access."
+      />
     );
   }
 

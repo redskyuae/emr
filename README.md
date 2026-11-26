@@ -36,7 +36,7 @@ See `.env.example` for the full list with example values.
 | `AUTH_SHOW_CREATE_WORKSPACE_LINK` | No       | `true` shows the create-workspace link on auth screens.                               |
 | `AUTH_SHOW_BACK_TO_SITE_LINK`     | No       | `true` shows the back-to-site link on auth screens.                                   |
 | `SIDEBAR_APPOINTMENTS_ONLY`       | No       | Defaults to `true` (reduced sidebar). Set `false` for the full menu.                  |
-| `SIDEBAR_SHOW_VISITS`             | No       | `true` adds Visits and Reports to the reduced sidebar.                                |
+| `SIDEBAR_SHOW_VISITS`             | No       | `true` adds Reports to the reduced sidebar (each page follows its own Permission).    |
 | `ENABLE_DEMO_PAGES`               | No       | `true` enables the static-data demo pages. Keep it off in production.                 |
 | `ANALYTICS_ENABLED`               | No       | `true` turns on product analytics. Read `docs/analytics.md` first.                    |
 | `POSTHOG_PROJECT_KEY`             | No       | PostHog project key, used only when analytics is enabled.                             |

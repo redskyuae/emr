@@ -75,6 +75,7 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: PiGaugeLight,
+        permission: 'dashboard',
       },
     ],
   },
@@ -115,13 +116,13 @@ export const appNavGroups: AppNavGroup[] = [
         title: 'Previous Visits',
         href: '/previous-visits',
         icon: PiClockCounterClockwiseLight,
-        permission: 'visit',
+        permission: 'previous-visit',
       },
       {
         title: 'Reports',
         href: '/reports',
         icon: CiFileOn,
-        permission: 'visit',
+        permission: 'report',
       },
       {
         title: 'Visit List',
@@ -460,6 +461,8 @@ const appointmentNavHrefs = new Set([
   '/patients',
   '/appointments',
   '/appointments/new',
+  '/visits',
+  '/previous-visits',
   '/rooms',
   '/doctors',
   '/therapists',
@@ -480,7 +483,8 @@ const appointmentNavHrefs = new Set([
   '/billing-masters/charge-items',
 ]);
 
-const visitNavHrefs = new Set(['/visits', '/previous-visits', '/reports', '/visit-list']);
+/** Visits and Previous Visits are in the reduced sidebar, each behind its own Permission. */
+const visitNavHrefs = new Set(['/reports', '/visit-list']);
 
 const demoNavHrefs = new Set(['/visit-list', '/billing-counter']);
 

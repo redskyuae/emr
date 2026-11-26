@@ -163,7 +163,11 @@ export function useBookAppointment() {
     !isProcedurePath && values.doctorId && values.doctorId !== 'not-applicable'
       ? Number(values.doctorId)
       : null;
-  const doctorSlotsQuery = useDoctorSlotsQuery({ doctorId, slotDate: values.slotDate });
+  const { data: canViewDoctorSlots } = useHasPermission('doctor-slot:read');
+  const doctorSlotsQuery = useDoctorSlotsQuery(
+    { doctorId, slotDate: values.slotDate },
+    { enabled: canViewDoctorSlots }
+  );
   const rotas = doctorSlotsQuery.data ?? [];
   const selectedRota = rotas.find((rota) => rota.id === values.doctorRotaId) ?? null;
 
@@ -713,6 +717,7 @@ export function useBookAppointment() {
         : modesQuery.isLoading || typesQuery.isLoading || reasonsQuery.isLoading),
     bookingDependencyError: dependencyErrors[0] ?? null,
     rotas,
+    canViewDoctorSlots,
     isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
     doctorSlotsError: getErrorMessage(doctorSlotsQuery.error),
     roomOptions,

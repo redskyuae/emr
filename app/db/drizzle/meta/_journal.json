@@ -589,6 +589,20 @@
       "when": 1795341117989,
       "tag": "0083_audit_event_session",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1795590518334,
+      "tag": "0084_seed_doctor_default_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1795606852249,
+      "tag": "0085_seed_feature_permissions",
+      "breakpoints": true
     }
   ]
 }

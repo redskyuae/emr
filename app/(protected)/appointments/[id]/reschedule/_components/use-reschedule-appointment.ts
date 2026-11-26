@@ -11,7 +11,10 @@ import { useAppointmentQuery } from '@/app/queries/appointments/useAppointment';
 import { useDoctorSlotsQuery } from '@/app/queries/appointments/useDoctorSlots';
 import { useRescheduleAppointment } from '@/app/queries/appointments/useRescheduleAppointment';
 import { useDoctorsQuery } from '@/app/queries/doctors/useDoctors';
-import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
 import {
   EMPTY_BOOK_APPOINTMENT_FORM_VALUES,
   type BookAppointmentFormValues,
@@ -52,11 +55,11 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
     !isProcedure && values.doctorId && values.doctorId !== 'not-applicable'
       ? Number(values.doctorId)
       : null;
-  const doctorSlotsQuery = useDoctorSlotsQuery({
-    doctorId,
-    slotDate: values.slotDate,
-    reschedulingAppointmentId: appointmentId,
-  });
+  const { data: canViewDoctorSlots } = useHasPermission('doctor-slot:read');
+  const doctorSlotsQuery = useDoctorSlotsQuery(
+    { doctorId, slotDate: values.slotDate, reschedulingAppointmentId: appointmentId },
+    { enabled: canViewDoctorSlots }
+  );
   const rotas = doctorSlotsQuery.data ?? [];
   const selectedRota = rotas.find((rota) => rota.id === values.doctorRotaId) ?? null;
   const selectedDoctor = doctors.find((doctor) => String(doctor.id) === values.doctorId) ?? null;
@@ -191,6 +194,7 @@ export function useRescheduleAppointmentForm(appointmentId: number) {
       (!isProcedure ? doctorsQuery.error : null) ??
       currentUserQuery.error,
     isEligible,
+    canViewDoctorSlots,
     isDoctorSlotsLoading: doctorSlotsQuery.isLoading || doctorSlotsQuery.isFetching,
     doctorSlotsError: doctorSlotsQuery.error ? getApiErrorMessage(doctorSlotsQuery.error) : null,
     mutation,

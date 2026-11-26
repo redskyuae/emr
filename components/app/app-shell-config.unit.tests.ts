@@ -16,9 +16,12 @@ function getVisibleParent(groupTitle: string, parentTitle: string, permissions: 
   return getVisibleGroup(groupTitle, permissions)?.items.find(({ title }) => title === parentTitle);
 }
 
+const VISIT_PAGES = ['visit:read', 'previous-visit:read', 'report:read'];
+
 describe('App shell navigation permissions', () => {
   it('should show only Appointment booking modules and masters when the sidebar flag is on', () => {
     const permissions = [
+      'dashboard:read',
       'patient:read',
       'appointment:read',
       'room:read',
@@ -37,6 +40,7 @@ describe('App shell navigation permissions', () => {
       'asset:read',
       'invoice:read',
       'visit:read',
+      'previous-visit:read',
     ];
 
     const groups = getVisibleNavGroups(appNavGroups, permissions, true);
@@ -44,6 +48,7 @@ describe('App shell navigation permissions', () => {
     expect(groups.map(({ title }) => title)).toEqual([
       'Overview',
       'Clinical',
+      'Outpatient',
       'Operations',
       'Configuration',
     ]);
@@ -53,29 +58,30 @@ describe('App shell navigation permissions', () => {
       'Appointments',
       'Book Appointment',
     ]);
-    expect(groups[2].items.map(({ title }) => title)).toEqual([
+    expect(groups[2].items.map(({ title }) => title)).toEqual(['Visits', 'Previous Visits']);
+    expect(groups[3].items.map(({ title }) => title)).toEqual([
       'Rooms',
       'Doctors',
       'Therapists',
       'Doctor Schedules',
       'Therapist Schedules',
     ]);
-    expect(groups[3].items.map(({ title }) => title)).toEqual([
+    expect(groups[4].items.map(({ title }) => title)).toEqual([
       'Rota Management',
       'Appointment Masters',
       'Room Masters',
       'Clinical Masters',
     ]);
     expect(
-      groups[3].items.find(({ title }) => title === 'Appointment Masters')?.items
+      groups[4].items.find(({ title }) => title === 'Appointment Masters')?.items
     ).toHaveLength(5);
     expect(
-      groups[3].items
+      groups[4].items
         .find(({ title }) => title === 'Room Masters')
         ?.items?.map(({ title }) => title)
     ).toEqual(['Room Type']);
     expect(
-      groups[3].items
+      groups[4].items
         .find(({ title }) => title === 'Clinical Masters')
         ?.items?.map(({ title }) => title)
     ).toEqual(['Therapist Skills']);
@@ -83,6 +89,23 @@ describe('App shell navigation permissions', () => {
 
   it('should preserve permission filtering in the reduced sidebar', () => {
     const groups = getVisibleNavGroups(appNavGroups, ['appointment:read'], true);
+
+    expect(groups.map(({ title }) => title)).toEqual(['Clinical']);
+    expect(groups[0].items.map(({ title }) => title)).toEqual(['Appointments', 'Book Appointment']);
+  });
+
+  it('should show the Dashboard only with Dashboard permission', () => {
+    const overview = (permissions: string[]) =>
+      getVisibleNavGroups(appNavGroups, permissions, true).find(
+        ({ title }) => title === 'Overview'
+      );
+
+    expect(overview(['dashboard:read'])?.items.map(({ title }) => title)).toEqual(['Dashboard']);
+    expect(overview(['appointment:read'])).toBeUndefined();
+  });
+
+  it('should keep the reduced sidebar filtered by permission', () => {
+    const groups = getVisibleNavGroups(appNavGroups, ['dashboard:read', 'appointment:read'], true);
 
     expect(groups.map(({ title }) => title)).toEqual(['Overview', 'Clinical']);
     expect(groups[1].items.map(({ title }) => title)).toEqual(['Appointments', 'Book Appointment']);
@@ -107,28 +130,58 @@ describe('App shell navigation permissions', () => {
     ).toBe(false);
   });
 
-  it('should show Visits in the reduced sidebar only when enabled and permitted', () => {
-    const permissions = ['appointment:read', 'visit:read'];
+  it('should show Visits and Previous Visits in the reduced sidebar with their permissions', () => {
+    const permissions = ['appointment:read', 'visit:read', 'previous-visit:read', 'report:read'];
+    const outpatientTitles = (showVisits: boolean) =>
+      getVisibleNavGroups(appNavGroups, permissions, true, showVisits, true)
+        .find(({ title }) => title === 'Outpatient')
+        ?.items.map(({ title }) => title);
 
-    const enabledGroups = getVisibleNavGroups(appNavGroups, permissions, true, true, true);
-    expect(enabledGroups.map(({ title }) => title)).toEqual(['Overview', 'Clinical', 'Outpatient']);
-    expect(enabledGroups[2].items.map(({ title }) => title)).toEqual([
-      'Visits',
-      'Previous Visits',
-      'Reports',
-      'Visit List',
-    ]);
-
-    expect(getVisibleNavGroups(appNavGroups, permissions, true, false)).not.toContainEqual(
-      expect.objectContaining({ title: 'Outpatient' })
-    );
+    expect(outpatientTitles(false)).toEqual(['Visits', 'Previous Visits']);
+    expect(outpatientTitles(true)).toEqual(['Visits', 'Previous Visits', 'Reports', 'Visit List']);
     expect(getVisibleNavGroups(appNavGroups, ['appointment:read'], true, true)).not.toContainEqual(
       expect.objectContaining({ title: 'Outpatient' })
     );
   });
 
+  it('should show Previous Visits and Reports only with their own permissions', () => {
+    const outpatientTitles = (permissions: string[]) =>
+      getVisibleNavGroups(appNavGroups, permissions, false, false, false)
+        .find(({ title }) => title === 'Outpatient')
+        ?.items.map(({ title }) => title) ?? [];
+
+    expect(outpatientTitles(['visit:read'])).toEqual(['Visits']);
+    expect(outpatientTitles(['previous-visit:read'])).toEqual(['Previous Visits']);
+    expect(outpatientTitles(['report:read'])).toEqual(['Reports']);
+  });
+
+  it('should show a Doctor Patients, Appointments, Book Appointment, Visits and Previous Visits', () => {
+    const doctorPermissions = [
+      'patient:read',
+      'patient:create',
+      'patient:update',
+      'appointment:read',
+      'appointment:create',
+      'visit:read',
+      'visit:create',
+      'visit:start',
+      'visit:complete',
+      'previous-visit:read',
+      'report:read',
+    ];
+
+    const groups = getVisibleNavGroups(appNavGroups, doctorPermissions, true);
+
+    expect(
+      groups.find(({ title }) => title === 'Clinical')?.items.map(({ title }) => title)
+    ).toEqual(['Patients', 'Appointments', 'Book Appointment']);
+    expect(
+      groups.find(({ title }) => title === 'Outpatient')?.items.map(({ title }) => title)
+    ).toEqual(['Visits', 'Previous Visits']);
+  });
+
   it('should hide the static demo pages unless demo pages are enabled', () => {
-    const permissions = ['visit:read', 'invoice:read'];
+    const permissions = ['visit:read', 'previous-visit:read', 'invoice:read'];
     const titles = (showDemoPages: boolean) =>
       getVisibleNavGroups(appNavGroups, permissions, false, false, showDemoPages).flatMap(
         ({ items }) => items.map(({ title }) => title)
@@ -142,7 +195,7 @@ describe('App shell navigation permissions', () => {
     expect(titles(true)).toEqual(expect.arrayContaining(['Visit List', 'Billing Counter']));
   });
 
-  it('should show Reports below Previous Visits only with Visit permission', () => {
+  it('should show Reports below Previous Visits only with Report permission', () => {
     const outpatientTitles = (
       permissions: string[],
       appointmentsOnly: boolean,
@@ -152,18 +205,18 @@ describe('App shell navigation permissions', () => {
         .find(({ title }) => title === 'Outpatient')
         ?.items.map(({ title }) => title) ?? [];
 
-    expect(outpatientTitles(['visit:read'], false, false)).toEqual([
+    expect(outpatientTitles(VISIT_PAGES, false, false)).toEqual([
       'Visits',
       'Previous Visits',
       'Reports',
       'Visit List',
     ]);
     expect(outpatientTitles(['appointment:read'], false, false)).not.toContain('Reports');
-    expect(outpatientTitles(['visit:read'], true, false)).not.toContain('Reports');
-    expect(outpatientTitles(['visit:read'], true, true)).toContain('Reports');
+    expect(outpatientTitles(VISIT_PAGES, true, false)).not.toContain('Reports');
+    expect(outpatientTitles(VISIT_PAGES, true, true)).toContain('Reports');
   });
 
-  it('should show Reports with Visit permission whether or not demo pages are enabled', () => {
+  it('should show Reports with Report permission whether or not demo pages are enabled', () => {
     const outpatientTitles = (
       permissions: string[],
       appointmentsOnly: boolean,
@@ -173,17 +226,17 @@ describe('App shell navigation permissions', () => {
         .find(({ title }) => title === 'Outpatient')
         ?.items.map(({ title }) => title) ?? [];
 
-    expect(outpatientTitles(['visit:read'], false, false)).toEqual([
+    expect(outpatientTitles(VISIT_PAGES, false, false)).toEqual([
       'Visits',
       'Previous Visits',
       'Reports',
     ]);
-    expect(outpatientTitles(['visit:read'], true, true)).toEqual([
+    expect(outpatientTitles(VISIT_PAGES, true, true)).toEqual([
       'Visits',
       'Previous Visits',
       'Reports',
     ]);
-    expect(outpatientTitles(['visit:read'], true, false)).toEqual([]);
+    expect(outpatientTitles(VISIT_PAGES, true, false)).toEqual(['Visits', 'Previous Visits']);
     expect(outpatientTitles(['appointment:read'], false, false)).toEqual([]);
   });
 

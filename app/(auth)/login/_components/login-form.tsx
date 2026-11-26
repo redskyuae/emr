@@ -3,13 +3,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { CiRead } from 'react-icons/ci';
 import { PiEyeSlashLight } from 'react-icons/pi';
 
+import { DEFAULT_AUTH_REDIRECT_PATH } from '@/app/lib/auth-route-guards';
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { markTabSession } from '@/app/lib/tab-session';
 import { useSignIn } from '@/app/queries/auth/useSignIn';
 import { useSignOut } from '@/app/queries/auth/useSignOut';
+import { fetchCurrentUserHomePath } from '@/app/queries/identity-access/useCurrentUser';
 import { AuthErrorCallout } from '@/components/auth/auth-error-callout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,24 +28,31 @@ type LoginFormProps = {
 };
 
 export function LoginForm({
-  redirectTo = '/dashboard',
+  redirectTo = DEFAULT_AUTH_REDIRECT_PATH,
   showCreateWorkspaceLink = false,
 }: LoginFormProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [showPassword, setShowPassword] = useState(false);
   const [storageError, setStorageError] = useState(false);
   const signOutMutation = useSignOut('tab_storage_unavailable');
 
   const signInMutation = useSignIn({
-    onSuccess: () => {
+    onSuccess: async () => {
       if (!markTabSession()) {
         setStorageError(true);
         signOutMutation.mutate();
         return;
       }
 
-      router.replace(redirectTo);
+      // A requested page wins; otherwise the user's Role decides where they land.
+      const destination =
+        redirectTo === DEFAULT_AUTH_REDIRECT_PATH
+          ? await fetchCurrentUserHomePath(queryClient)
+          : redirectTo;
+
+      router.replace(destination);
       router.refresh();
     },
     onError: (error) => {

@@ -50,10 +50,20 @@ import { AddNoteSheet } from './_sheets/add-note-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
 import { AdmissionStatusTimeline } from './admission-status-timeline';
 
+// Vital Signs and Clinical Notes are read from the Patient Chart, which needs `patient-chart:read`.
+function ChartAccessNotice() {
+  return (
+    <p className="text-muted-foreground text-sm">
+      You do not have permission to view the Patient Chart.
+    </p>
+  );
+}
+
 export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
   const [captureParam, setCaptureParam] = useQueryState('capture');
   const { data: admission } = useAdmission(admissionId);
-  const chartQuery = usePatientChartQuery(admission.patient.id);
+  const { data: canReadChart } = useHasPermission('patient-chart:read');
+  const chartQuery = usePatientChartQuery(admission.patient.id, { enabled: canReadChart });
   const allergensQuery = useAllergensQuery({ limit: 100 });
   const noteTypesQuery = useClinicalNoteTypesQuery({ limit: 100 });
   const [transferOpen, setTransferOpen] = useState(false);
@@ -114,7 +124,9 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
       <div className="space-y-4">
         {/* The same safety banner the Patient Chart shows — ward staff must see
             allergies without leaving the Admission. */}
-        <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
+        {canReadChart ? (
+          <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
+        ) : null}
 
         <Card>
           <CardContent className="space-y-4">
@@ -299,7 +311,9 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
               ) : null}
             </CardHeader>
             <CardContent>
-              {admissionVitals.length === 0 ? (
+              {!canReadChart ? (
+                <ChartAccessNotice />
+              ) : admissionVitals.length === 0 ? (
                 <EmptyState
                   size="sm"
                   tone="blue"
@@ -350,7 +364,9 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
               ) : null}
             </CardHeader>
             <CardContent>
-              {admissionNotes.length === 0 ? (
+              {!canReadChart ? (
+                <ChartAccessNotice />
+              ) : admissionNotes.length === 0 ? (
                 <EmptyState
                   size="sm"
                   tone="blue"

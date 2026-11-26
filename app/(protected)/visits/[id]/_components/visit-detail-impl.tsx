@@ -64,7 +64,8 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const [amendVitalParam, setAmendVitalParam] = useQueryState('amendVital', parseAsInteger);
   const { data: visit } = useVisit(visitId);
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
-  const chartQuery = usePatientChartQuery(visit.patient.id);
+  const { data: canReadChart } = useHasPermission('patient-chart:read');
+  const chartQuery = usePatientChartQuery(visit.patient.id, { enabled: canReadChart });
   const allergensQuery = useAllergensQuery({ limit: 100 });
   const invoicesQuery = useInvoicesQuery({ patientId: visit.patient.id, page: 1, limit: 999 });
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -87,6 +88,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   );
   const { data: canBookAppointment } = useHasPermission('appointment:create');
   const { data: canViewAudit } = useHasPermission('audit-log:read');
+  const { data: canViewDocuments } = useHasPermission('visit-document:read');
   const { data: canUpdatePlanSession } = useHasPermission('patient-treatment-plan:update');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
   const { data: canAmendVisit, isLoading: amendPermissionLoading } =
@@ -120,7 +122,9 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   // Clear-on-deny: once permission and the chart have loaded, an amend param that
   // cannot open a sheet (no permission, Visit not Completed, or an id outside this
   // Visit) is dropped so a stale link cannot open the sheet later.
-  const amendTargetsResolved = !amendPermissionLoading && (!canAmend || chartQuery.isSuccess);
+  // Without `patient-chart:read` the chart never loads, so no target can resolve either.
+  const amendTargetsResolved =
+    !amendPermissionLoading && (!canAmend || !canReadChart || chartQuery.isSuccess);
   const staleAmendNote = amendNoteParam !== null && amendTargetsResolved && !noteToAmend;
   const staleAmendVital = amendVitalParam !== null && amendTargetsResolved && !vitalToAmend;
 
@@ -182,7 +186,16 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
         {/* The same safety banner the Patient Chart shows — the consulting
             Doctor must see allergies without leaving the Visit. */}
         <div className="flex-none space-y-3 empty:hidden">
-          {chartQuery.isError ? (
+          {!canReadChart ? (
+            <Alert>
+              <CiCircleAlert className="size-4" />
+              <AlertTitle>Patient Chart not shown</AlertTitle>
+              <AlertDescription>
+                You do not have permission to view the Patient Chart, so allergies, Vital Signs and
+                Clinical Notes are not shown on this Visit.
+              </AlertDescription>
+            </Alert>
+          ) : chartQuery.isError ? (
             <Alert variant="destructive">
               <CiCircleAlert className="size-4" />
               <AlertTitle>Patient safety information unavailable</AlertTitle>
@@ -228,6 +241,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
           canBookAppointment={Boolean(canBookAppointment)}
           canViewAudit={Boolean(canViewAudit)}
+          canViewDocuments={Boolean(canViewDocuments)}
           canAmend={canAmend}
           starting={startMutation.isPending}
           onStart={() => void startConsultation()}

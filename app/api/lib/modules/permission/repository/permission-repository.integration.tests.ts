@@ -195,6 +195,39 @@ describe('Permission repository', () => {
     });
   });
 
+  it('should seed the feature Permissions for screens that were open to every signed-in user', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const permissions = await permissionRepository.getPermissions();
+    const featureResources = new Set([
+      'dashboard',
+      'doctor-slot',
+      'patient-chart',
+      'patient-timeline',
+      'previous-visit',
+      'visit-document',
+      'visit-diagnosis',
+      'report',
+    ]);
+
+    expect(
+      permissions
+        .filter(({ resource }) => featureResources.has(resource))
+        .map(({ module, name }) => `${module} ${name}`)
+    ).toEqual([
+      'dashboard dashboard:read',
+      'doctor-scheduling doctor-slot:read',
+      'patient-management patient-chart:read',
+      'patient-management patient-timeline:read',
+      'visits previous-visit:read',
+      'visits visit-document:read',
+      'visits visit-document:upload',
+      'visits visit-document:delete',
+      'visits visit-diagnosis:read',
+      'visits visit-diagnosis:update',
+      'reports report:read',
+    ]);
+  });
+
   it('should seed every unrepresented operational permission exposed by implemented APIs', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const permissions = await permissionRepository.getPermissions();
@@ -222,7 +255,7 @@ describe('Permission repository', () => {
     expect(operationalPermissions).toEqual({
       appointment: {
         module: 'appointments',
-        actions: ['read', 'create', 'reassign-therapist'],
+        actions: ['read', 'create', 'reassign-therapist', 'cancel', 'reschedule', 'export'],
       },
       'doctor-rota': {
         module: 'doctor-scheduling',

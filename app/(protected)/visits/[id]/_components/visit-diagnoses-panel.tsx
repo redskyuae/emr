@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useAyurvedaDiagnosisCodesQuery } from '@/app/queries/clinical-masters/ayurveda-diagnosis-codes/useAyurvedaDiagnosisCodes';
 import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes';
 import { useSaveVisitDiagnoses } from '@/app/queries/visits/useSaveVisitDiagnoses';
@@ -352,7 +353,8 @@ export function VisitDiagnosesPanel({
   mode: VisitDiagnosesMode;
   showAyurveda: boolean;
 }) {
-  const diagnosesQuery = useVisitDiagnosesQuery(visit.id);
+  const { data: canRead, isLoading: permissionLoading } = useHasPermission('visit-diagnosis:read');
+  const diagnosesQuery = useVisitDiagnosesQuery(visit.id, { enabled: canRead });
   const saveMutation = useSaveVisitDiagnoses();
   const [draft, setDraft] = useState<DiagnosisDraft[] | null>(null);
   const editable = mode !== 'read';
@@ -387,10 +389,16 @@ export function VisitDiagnosesPanel({
         <h3 id="visit-diagnoses" className="text-sm font-semibold">
           Coded diagnoses
         </h3>
-        {mode === 'amend' ? <Badge variant="outline">Amending a Completed Visit</Badge> : null}
+        {mode === 'amend' && canRead ? (
+          <Badge variant="outline">Amending a Completed Visit</Badge>
+        ) : null}
       </div>
 
-      {diagnosesQuery.isError ? (
+      {!permissionLoading && !canRead ? (
+        <p className="text-muted-foreground text-sm">
+          You do not have permission to view Visit Diagnoses.
+        </p>
+      ) : diagnosesQuery.isError ? (
         <div className="flex flex-wrap items-center gap-2" role="alert">
           <p className="text-destructive text-sm">Diagnoses could not be loaded.</p>
           <Button
@@ -404,7 +412,7 @@ export function VisitDiagnosesPanel({
         </div>
       ) : (
         <SkeletonCrossfade
-          isLoading={diagnosesQuery.isLoading}
+          isLoading={permissionLoading || diagnosesQuery.isLoading}
           skeleton={<DiagnosesSkeleton systemCount={systems.length} editable={editable} />}
         >
           <div className="space-y-4">

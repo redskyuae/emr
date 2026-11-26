@@ -3,17 +3,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getDoctorSlotsQuery } from '@/app/api/lib/modules/doctor-schedule/queries/get-doctor-slots-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { GET } from './route';
 
 vi.mock('@/app/api/lib/modules/doctor-schedule/queries/get-doctor-slots-query', () => ({
   getDoctorSlotsQuery: vi.fn(),
 }));
 vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
+  requireTenantPermissions: vi.fn(),
   requireTenantSession: vi.fn(),
 }));
 
 const getDoctorSlots = vi.mocked(getDoctorSlotsQuery);
+const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
 
 const tenantSession = {
@@ -25,6 +27,7 @@ describe('Doctor slots route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireSession.mockResolvedValue(tenantSession as never);
+    requirePermissions.mockResolvedValue(null);
     getDoctorSlots.mockResolvedValue({ success: true, data: [], total: 0 });
   });
 
@@ -75,6 +78,24 @@ describe('Doctor slots route', () => {
     const response = await GET(new NextRequest('http://localhost/api/v1/doctor-slots'));
 
     expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
+    expect(getDoctorSlots).not.toHaveBeenCalled();
+  });
+
+  it('should require doctor-slot:read', async () => {
+    await GET(new NextRequest('http://localhost/api/v1/doctor-slots'));
+
+    expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['doctor-slot:read']);
+  });
+
+  it('should return forbidden without calling the slots query when doctor-slot:read is absent', async () => {
+    requirePermissions.mockResolvedValue(
+      NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+    );
+
+    const response = await GET(new NextRequest('http://localhost/api/v1/doctor-slots'));
+
+    expect(response.status).toBe(StatusCodes.FORBIDDEN);
+    await expect(response.json()).resolves.toEqual({ message: 'Forbidden' });
     expect(getDoctorSlots).not.toHaveBeenCalled();
   });
 });

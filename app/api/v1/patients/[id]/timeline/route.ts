@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { getPatientTimelineQuery } from '@/app/api/lib/modules/patient-timeline/queries/get-patient-timeline-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { GetPatientTimelineResponse } from './types';
 
 type PatientTimelineRouteContext = {
@@ -15,6 +15,14 @@ export async function GET(request: NextRequest, context: PatientTimelineRouteCon
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'patient-timeline:read',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     const { id } = await context.params;

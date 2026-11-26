@@ -1,5 +1,24 @@
 export const DEFAULT_AUTH_REDIRECT_PATH = '/dashboard';
 
+const DOCTOR_HOME_PATH = '/visits';
+
+type HomePathUser = {
+  roles: { code: string }[];
+  permissions: string[];
+};
+
+/**
+ * Where a signed-in user lands when no specific page was requested. A Doctor starts in today's
+ * Visits queue, provided their Role still grants Visit access; everyone else gets the dashboard.
+ */
+export function getHomePathForUser({ roles, permissions }: HomePathUser): string {
+  const isDoctor = roles.some(({ code }) => code === 'DOCTOR');
+
+  return isDoctor && permissions.includes('visit:read')
+    ? DOCTOR_HOME_PATH
+    : DEFAULT_AUTH_REDIRECT_PATH;
+}
+
 const PUBLIC_PAGE_PATHS = new Set(['/', '/site', '/login', '/signup', '/swagger']);
 const AUTH_PAGE_PATHS = new Set(['/login', '/signup']);
 const STATIC_FILE_PATTERN =

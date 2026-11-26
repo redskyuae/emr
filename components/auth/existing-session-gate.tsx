@@ -2,14 +2,16 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { DEFAULT_AUTH_REDIRECT_PATH } from '@/app/lib/auth-route-guards';
 import { hasTabSession } from '@/app/lib/tab-session';
 import { useSignOut } from '@/app/queries/auth/useSignOut';
+import { fetchCurrentUserHomePath } from '@/app/queries/identity-access/useCurrentUser';
 import { AppSplashError, AppSplashLoading } from '@/components/app/app-splash';
 
 export function ExistingSessionGate() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const signOutMutation = useSignOut('stale_tab', () => router.refresh());
   const checkedRef = useRef(false);
   const { mutate: signOutStaleSession } = signOutMutation;
@@ -19,11 +21,11 @@ export function ExistingSessionGate() {
     checkedRef.current = true;
 
     if (hasTabSession()) {
-      router.replace(DEFAULT_AUTH_REDIRECT_PATH);
+      void fetchCurrentUserHomePath(queryClient).then((homePath) => router.replace(homePath));
     } else {
       signOutStaleSession();
     }
-  }, [router, signOutStaleSession]);
+  }, [queryClient, router, signOutStaleSession]);
 
   if (signOutMutation.isError) {
     return (

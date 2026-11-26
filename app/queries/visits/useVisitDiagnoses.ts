@@ -23,10 +23,11 @@ function transformVisitDiagnosesResponse(response: ListVisitDiagnosesResponse) {
 }
 
 // Non-suspense: the Diagnosis step owns its own loading and error state.
-export function useVisitDiagnosesQuery(visitId: number) {
+export function useVisitDiagnosesQuery(visitId: number, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: visitDiagnosesQueryKey(visitId),
     queryFn: () => fetchVisitDiagnoses(visitId),
     select: transformVisitDiagnosesResponse,
+    enabled: options?.enabled ?? true,
   });
 }

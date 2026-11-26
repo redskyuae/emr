@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { type QueryClient, useQuery } from '@tanstack/react-query';
 
+import { DEFAULT_AUTH_REDIRECT_PATH, getHomePathForUser } from '@/app/lib/auth-route-guards';
 import { ApiError, parseApiError } from '@/app/queries/api-error';
 import type { MeResponse } from '@/app/api/v1/me/types';
 
@@ -34,6 +35,25 @@ async function fetchCurrentUser(): Promise<MeResponse> {
   }
 
   return response.json() as Promise<MeResponse>;
+}
+
+/**
+ * Resolves the signed-in user's home page and primes the Current User cache for the app shell.
+ * Fetches fresh so a previous user's cached profile is never used; falls back to the dashboard
+ * if the profile cannot be loaded, where the app shell shows its own error.
+ */
+export async function fetchCurrentUserHomePath(queryClient: QueryClient): Promise<string> {
+  try {
+    const response = await queryClient.fetchQuery({
+      queryKey: currentUserQueryKey,
+      queryFn: fetchCurrentUser,
+      staleTime: 0,
+    });
+
+    return getHomePathForUser(response.data);
+  } catch {
+    return DEFAULT_AUTH_REDIRECT_PATH;
+  }
 }
 
 function transformCurrentUserResponse(response: MeResponse) {

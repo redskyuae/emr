@@ -81,7 +81,8 @@ export function VisitCarePathway({
   onSignNote,
 }: Props) {
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
-  const documentsQuery = useVisitDocumentsQuery(visit.id);
+  const { data: canReadDocuments } = useHasPermission('visit-document:read');
+  const documentsQuery = useVisitDocumentsQuery(visit.id, { enabled: canReadDocuments });
   const { data: currentUser } = useCurrentUserQuery();
   // Same fallback as the other Tenant-time pages, so times never show in the browser's zone.
   const timeZone = currentUser?.tenant.timeZone ?? 'Asia/Kolkata';
@@ -92,7 +93,7 @@ export function VisitCarePathway({
   const { data: canCreateNote } = useHasPermission('clinical-note:create');
   const { data: canCreateInvoice } = useHasPermission('invoice:create');
   const { data: canBookAppointment } = useHasPermission('appointment:create');
-  const { data: canUpdateVisit } = useHasPermission('visit:update');
+  const { data: canUpdateDiagnoses } = useHasPermission('visit-diagnosis:update');
   const showAyurveda = isAyurvedaBrand(useBrandLogoVariant());
 
   const plans = plansQuery.data ?? [];
@@ -121,7 +122,7 @@ export function VisitCarePathway({
       <VisitDiagnosesPanel
         visit={visit}
         showAyurveda={showAyurveda}
-        mode={active && canUpdateVisit ? 'edit' : canAmend ? 'amend' : 'read'}
+        mode={active && canUpdateDiagnoses ? 'edit' : canAmend ? 'amend' : 'read'}
       />
     ),
     plan: (
@@ -155,7 +156,7 @@ export function VisitCarePathway({
           noteCount={notes.length}
           signedNoteCount={notes.filter((note) => note.status === 'signed').length}
           invoiceCount={invoices.length}
-          documentCount={documentsQuery.data?.length ?? 0}
+          documentCount={canReadDocuments ? (documentsQuery.data?.length ?? 0) : null}
           chartLoading={chartLoading}
           invoicesLoading={invoicesLoading}
           invoicesError={invoicesError}
@@ -184,9 +185,11 @@ export function VisitCarePathway({
           error={invoicesError}
           canCreateInvoice={Boolean(canCreateInvoice)}
         />
-        <div id="visit-documents" className="scroll-mt-4">
-          <VisitDocumentsCard visitId={visit.id} active={active} />
-        </div>
+        {canReadDocuments ? (
+          <div id="visit-documents" className="scroll-mt-4">
+            <VisitDocumentsCard visitId={visit.id} active={active} />
+          </div>
+        ) : null}
       </div>
     ),
   };

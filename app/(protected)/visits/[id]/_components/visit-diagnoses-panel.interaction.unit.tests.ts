@@ -12,9 +12,17 @@ import { useVisitDiagnosesQuery } from '@/app/queries/visits/useVisitDiagnoses';
 import { VisitDiagnosesPanel } from './visit-diagnoses-panel';
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+const permissions = vi.hoisted(() => ({ granted: new Set<string>() }));
 
 vi.mock('sonner', () => ({ toast }));
 vi.mock('@/app/queries/visits/useVisitDiagnoses', () => ({ useVisitDiagnosesQuery: vi.fn() }));
+vi.mock('@/app/queries/identity-access/useCurrentUser', () => ({
+  useHasPermission: (permission: string) => ({
+    data: permissions.granted.has(permission),
+    isLoading: false,
+    isError: false,
+  }),
+}));
 vi.mock('@/app/queries/visits/useSaveVisitDiagnoses', () => ({ useSaveVisitDiagnoses: vi.fn() }));
 vi.mock('@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes', () => ({
   useDiagnosisCodesQuery: () => ({ data: { data: [] }, isFetching: false, isError: false }),
@@ -79,6 +87,7 @@ function renderPanel(mode: 'edit' | 'amend' | 'read', showAyurveda = true) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  permissions.granted = new Set(['visit-diagnosis:read']);
   mutateAsync.mockResolvedValue({ data: saved });
   vi.mocked(useVisitDiagnosesQuery).mockReturnValue({
     data: saved,
@@ -177,6 +186,22 @@ describe('Visit diagnoses panel', () => {
     expect(
       (screen.getByRole('button', { name: 'Save diagnoses' }) as HTMLButtonElement).disabled
     ).toBe(true);
+  });
+
+  it('should load the Visit Diagnoses only with visit-diagnosis:read', () => {
+    renderPanel('read');
+
+    expect(useVisitDiagnosesQuery).toHaveBeenCalledWith(5120, { enabled: true });
+  });
+
+  it('should not load or show Visit Diagnoses without visit-diagnosis:read', () => {
+    permissions.granted = new Set();
+    renderPanel('edit');
+
+    expect(useVisitDiagnosesQuery).toHaveBeenCalledWith(5120, { enabled: false });
+    expect(screen.getByText('You do not have permission to view Visit Diagnoses.')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'ICD-10-CM' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Save/ })).toBeNull();
   });
 
   it('should hide the Ayurveda column on a non-Ayurveda deployment with no Ayurveda codes', () => {

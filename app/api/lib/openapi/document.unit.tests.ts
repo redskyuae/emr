@@ -443,7 +443,8 @@ describe('OpenAPI clinical coding contracts', () => {
     const amend = openApiDocument.paths['/api/v1/visits/{id}/diagnoses/amend'].put;
 
     expect(Object.keys(diagnoses)).toEqual(expect.arrayContaining(['get', 'put']));
-    expect(diagnoses.put.description).toContain('`visit:update`');
+    expect(diagnoses.get.description).toContain('`visit-diagnosis:read`');
+    expect(diagnoses.put.description).toContain('`visit-diagnosis:update`');
     expect(amend.description).toContain('`visit:amend`');
     expect(Object.keys(amend.responses)).toEqual(
       expect.arrayContaining(['200', '400', '401', '403', '404', '409', '500'])
@@ -455,6 +456,34 @@ describe('OpenAPI clinical coding contracts', () => {
     expect(openApiDocument.components.schemas.SaveVisitDiagnosesRequest.properties).toMatchObject({
       diagnoses: { maxItems: 20 },
     });
+  });
+});
+
+describe('OpenAPI feature permission contracts', () => {
+  it.each([
+    ['/api/v1/visits/documents', 'post', 'visit-document:upload'],
+    ['/api/v1/visits/{id}/documents', 'get', 'visit-document:read'],
+    ['/api/v1/visits/{id}/documents', 'post', 'visit-document:upload'],
+    ['/api/v1/visits/{id}/documents/{documentId}', 'delete', 'visit-document:delete'],
+    ['/api/v1/visits/{id}/diagnoses', 'get', 'visit-diagnosis:read'],
+    ['/api/v1/visits/{id}/diagnoses', 'put', 'visit-diagnosis:update'],
+    ['/api/v1/patients/{id}/chart', 'get', 'patient-chart:read'],
+    ['/api/v1/patients/{id}/timeline', 'get', 'patient-timeline:read'],
+    ['/api/v1/patients/{id}/consolidated-report', 'get', 'report:read'],
+    ['/api/v1/appointments/{id}/cancel', 'post', 'appointment:cancel'],
+    ['/api/v1/appointments/{id}/reschedule', 'post', 'appointment:reschedule'],
+    ['/api/v1/appointments/export', 'get', 'appointment:export'],
+    ['/api/v1/doctor-slots', 'get', 'doctor-slot:read'],
+  ])('should document %s %s as requiring %s', (path, method, permission) => {
+    const paths = openApiDocument.paths as Record<string, Record<string, unknown>>;
+    const operation = paths[path][method] as {
+      description: string;
+      responses: Record<string, { description?: string }>;
+    };
+
+    expect(operation.description).toContain(`Requires \`${permission}\`.`);
+    expect(operation.responses['403'].description).toContain(`\`${permission}\``);
+    expect(JSON.stringify(operation.responses['403'])).toContain('Forbidden');
   });
 });
 

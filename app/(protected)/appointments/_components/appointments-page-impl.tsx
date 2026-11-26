@@ -47,6 +47,11 @@ export function AppointmentsPageImpl() {
 
   const { data: currentUser } = useCurrentUserQuery();
   const canCreate = currentUser?.permissions.includes('appointment:create') ?? false;
+  const canCancel = currentUser?.permissions.includes('appointment:cancel') ?? false;
+  const canReschedule = currentUser?.permissions.includes('appointment:reschedule') ?? false;
+  const openCancel = canCancel
+    ? (appointment: { id: number }) => void setCancelParam(String(appointment.id))
+    : undefined;
   const tenantTimeZone = currentUser?.tenant.timeZone ?? 'Asia/Kolkata';
 
   const now = new Date();
@@ -109,8 +114,9 @@ export function AppointmentsPageImpl() {
   });
   const cancellingAppointmentId =
     cancelParam && /^\d+$/.test(cancelParam) ? Number(cancelParam) : null;
-  const cancellingAppointment =
-    appointments.find((appointment) => appointment.id === cancellingAppointmentId) ?? null;
+  const cancellingAppointment = canCancel
+    ? (appointments.find((appointment) => appointment.id === cancellingAppointmentId) ?? null)
+    : null;
 
   useEffect(() => {
     const correction = getPaginationCorrection({
@@ -275,7 +281,8 @@ export function AppointmentsPageImpl() {
               isFiltered={isFiltered}
               canCreate={canCreate}
               onPageChange={(page) => void setTodayPage(page)}
-              onCancel={(appointment) => void setCancelParam(String(appointment.id))}
+              onCancel={openCancel}
+              canReschedule={canReschedule}
             />
           )}
         </TabsContent>
@@ -319,7 +326,8 @@ export function AppointmentsPageImpl() {
               isFiltered={isFiltered}
               canCreate={canCreate}
               onPageChange={(page) => void setUpcomingPage(page)}
-              onCancel={(appointment) => void setCancelParam(String(appointment.id))}
+              onCancel={openCancel}
+              canReschedule={canReschedule}
             />
           )}
         </TabsContent>
