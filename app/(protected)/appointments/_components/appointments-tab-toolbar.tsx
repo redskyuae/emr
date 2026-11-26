@@ -55,7 +55,7 @@ export function AppointmentsTabToolbar({
   exportFilters: Omit<DownloadAppointmentsExportRequest, 'format'>;
   fromDateValue?: string;
   hasAppointments: boolean;
-  /** A From Date other than the default is chosen, so its reset button is enabled. */
+  /** A From Date other than the default is chosen, so its reset button shows. */
   hasCustomFromDate?: boolean;
   onAppointmentStatusChange: (value: string | null) => void;
   onDoctorChange: (value: string | null) => void;
@@ -69,6 +69,33 @@ export function AppointmentsTabToolbar({
   return (
     <Card>
       <CardContent className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+        {onFromDateChange ? (
+          <InputGroup className="lg:w-56">
+            <InputGroupAddon>
+              <InputGroupText>From</InputGroupText>
+            </InputGroupAddon>
+            <InputGroupInput
+              type="date"
+              value={fromDateValue ?? ''}
+              onChange={(event) => onFromDateChange(event.target.value || null)}
+              aria-label="Filter appointments from date"
+            />
+            {/* Shown only when needed: a disabled control inside InputGroup greys out the whole field. */}
+            {hasCustomFromDate ? (
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  size="icon-xs"
+                  onClick={() => onFromDateChange(null)}
+                  aria-label="Reset From Date to tomorrow"
+                  title="Reset From Date"
+                >
+                  <PiArrowCounterClockwiseLight className="size-4" aria-hidden="true" />
+                </InputGroupButton>
+              </InputGroupAddon>
+            ) : null}
+          </InputGroup>
+        ) : null}
+
         <Select
           value={doctorId ?? ALL_FILTER}
           onValueChange={(value) => onDoctorChange(value === ALL_FILTER ? null : value)}
@@ -119,31 +146,6 @@ export function AppointmentsTabToolbar({
             ))}
           </SelectContent>
         </Select>
-
-        {onFromDateChange ? (
-          <InputGroup className="lg:w-60">
-            <InputGroupAddon>
-              <InputGroupText>From</InputGroupText>
-            </InputGroupAddon>
-            <InputGroupInput
-              type="date"
-              value={fromDateValue ?? ''}
-              onChange={(event) => onFromDateChange(event.target.value || null)}
-              aria-label="Filter appointments from date"
-            />
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                size="icon-xs"
-                disabled={!hasCustomFromDate}
-                onClick={() => onFromDateChange(null)}
-                aria-label="Reset From Date to tomorrow"
-                title="Reset From Date"
-              >
-                <PiArrowCounterClockwiseLight className="size-4" aria-hidden="true" />
-              </InputGroupButton>
-            </InputGroupAddon>
-          </InputGroup>
-        ) : null}
 
         <InputGroup className="lg:max-w-xs">
           <InputGroupAddon>
