@@ -5,13 +5,9 @@ import { useDebouncedValue } from '@tanstack/react-pacer';
 import { CiFloppyDisk } from 'react-icons/ci';
 import { toast } from 'sonner';
 
-import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useAyurvedaDiagnosisCodesQuery } from '@/app/queries/clinical-masters/ayurveda-diagnosis-codes/useAyurvedaDiagnosisCodes';
 import { useDiagnosisCodesQuery } from '@/app/queries/clinical-masters/diagnosis-codes/useDiagnosisCodes';
-import { useSaveVisitDiagnoses } from '@/app/queries/visits/useSaveVisitDiagnoses';
-import { useVisitDiagnosesQuery } from '@/app/queries/visits/useVisitDiagnoses';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,15 +31,11 @@ import {
   draftKey,
   setPrimaryDiagnosis,
   setSecondaryDiagnoses,
-  toDiagnosisDrafts,
-  toSaveVisitDiagnosesRequest,
   type DiagnosisCodeSystem,
   type DiagnosisDraft,
   type DiagnosisOption,
 } from '../_utils/visit-diagnoses';
-
-/** `edit` for an Active Visit, `amend` for a Completed one, otherwise read-only. */
-export type VisitDiagnosesMode = 'edit' | 'amend' | 'read';
+import type { VisitDiagnosesDraft } from './use-visit-diagnoses-draft';
 
 const SEARCH_LIMIT = 20;
 
@@ -342,41 +334,26 @@ function DiagnosesSkeleton({ systemCount, editable }: { systemCount: number; edi
 /**
  * The coded diagnoses for this Visit: ICD-10-CM for claims and, where the clinic
  * practises Ayurveda, the Ayurveda diagnosis. Each code system has one Primary and any
- * number of Secondary diagnoses.
+ * number of Secondary diagnoses. The Visit owns the codes chosen but not saved yet
+ * (`useVisitDiagnosesDraft`), so the consultation's save also saves them.
  */
 export function VisitDiagnosesPanel({
-  visit,
-  mode,
+  diagnoses,
   showAyurveda,
 }: {
-  visit: Visit;
-  mode: VisitDiagnosesMode;
+  diagnoses: VisitDiagnosesDraft;
   showAyurveda: boolean;
 }) {
-  const { data: canRead, isLoading: permissionLoading } = useHasPermission('visit-diagnosis:read');
-  const diagnosesQuery = useVisitDiagnosesQuery(visit.id, { enabled: canRead });
-  const saveMutation = useSaveVisitDiagnoses();
-  const [draft, setDraft] = useState<DiagnosisDraft[] | null>(null);
+  const { mode, drafts, dirty, canRead, loading, saving } = diagnoses;
   const editable = mode !== 'read';
-  const saved = toDiagnosisDrafts(diagnosesQuery.data ?? []);
-  const drafts = draft ?? saved;
   const systems: DiagnosisCodeSystem[] =
     showAyurveda || drafts.some((item) => item.codeSystem === 'AYURVEDA')
       ? ['ICD10CM', 'AYURVEDA']
       : ['ICD10CM'];
 
-  function change(next: (current: DiagnosisDraft[]) => DiagnosisDraft[]) {
-    setDraft((current) => next(current ?? saved));
-  }
-
   async function save() {
     try {
-      await saveMutation.mutateAsync({
-        visitId: visit.id,
-        amend: mode === 'amend',
-        request: toSaveVisitDiagnosesRequest(drafts),
-      });
-      setDraft(null);
+      await diagnoses.save();
       toast.success(mode === 'amend' ? 'Diagnoses amended.' : 'Diagnoses saved.');
     } catch (error) {
       toast.error(getApiErrorMessage(error));
@@ -391,28 +368,25 @@ export function VisitDiagnosesPanel({
         </h3>
         {mode === 'amend' && canRead ? (
           <Badge variant="outline">Amending a Completed Visit</Badge>
+        ) : dirty ? (
+          <Badge variant="secondary">Not saved yet</Badge>
         ) : null}
       </div>
 
-      {!permissionLoading && !canRead ? (
+      {!loading && !canRead ? (
         <p className="text-muted-foreground text-sm">
           You do not have permission to view Visit Diagnoses.
         </p>
-      ) : diagnosesQuery.isError ? (
+      ) : diagnoses.loadFailed ? (
         <div className="flex flex-wrap items-center gap-2" role="alert">
           <p className="text-destructive text-sm">Diagnoses could not be loaded.</p>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => void diagnosesQuery.refetch()}
-          >
+          <Button type="button" size="sm" variant="outline" onClick={diagnoses.retry}>
             Retry
           </Button>
         </div>
       ) : (
         <SkeletonCrossfade
-          isLoading={permissionLoading || diagnosesQuery.isLoading}
+          isLoading={loading}
           skeleton={<DiagnosesSkeleton systemCount={systems.length} editable={editable} />}
         >
           <div className="space-y-4">
@@ -423,7 +397,7 @@ export function VisitDiagnosesPanel({
                     key={system}
                     codeSystem={system}
                     drafts={drafts}
-                    onChange={change}
+                    onChange={diagnoses.change}
                   />
                 ) : (
                   <CodeSystemSummary key={system} codeSystem={system} drafts={drafts} />
@@ -432,12 +406,12 @@ export function VisitDiagnosesPanel({
             </div>
             {editable ? (
               <div className="flex flex-wrap items-center justify-end gap-2">
-                {draft ? (
+                {dirty ? (
                   <Button
                     type="button"
                     variant="ghost"
-                    disabled={saveMutation.isPending}
-                    onClick={() => setDraft(null)}
+                    disabled={saving}
+                    onClick={diagnoses.discard}
                   >
                     Discard changes
                   </Button>
@@ -445,16 +419,12 @@ export function VisitDiagnosesPanel({
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={!draft || saveMutation.isPending}
-                  aria-busy={saveMutation.isPending}
+                  disabled={!dirty || saving}
+                  aria-busy={saving}
                   onClick={() => void save()}
                 >
                   <CiFloppyDisk className="size-4" />
-                  {saveMutation.isPending
-                    ? 'Saving…'
-                    : mode === 'amend'
-                      ? 'Save amendment'
-                      : 'Save diagnoses'}
+                  {saving ? 'Saving…' : mode === 'amend' ? 'Save amendment' : 'Save diagnoses'}
                 </Button>
               </div>
             ) : null}

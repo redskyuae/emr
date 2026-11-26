@@ -13,6 +13,7 @@ import { useVisitDocumentsQuery } from '@/app/queries/visits/useVisitDocuments';
 import { isAyurvedaBrand } from '@/components/brand/brand-config';
 import { useBrandLogoVariant } from '@/components/brand/brand-provider';
 
+import type { VisitDiagnosesDraft } from './use-visit-diagnoses-draft';
 import { VisitBillingPanel } from './visit-billing-panel';
 import { VisitClinicalNotesCard } from './visit-clinical-notes-card';
 import { VisitConsultationPanel } from './visit-consultation-panel';
@@ -32,6 +33,7 @@ type Props = {
   invoices: InvoiceListItem[];
   invoicesLoading: boolean;
   invoicesError: boolean;
+  diagnoses: VisitDiagnosesDraft;
   canStart: boolean;
   canAmend: boolean;
   starting: boolean;
@@ -63,6 +65,7 @@ export function VisitCarePathway({
   invoices,
   invoicesLoading,
   invoicesError,
+  diagnoses,
   canStart,
   canAmend,
   starting,
@@ -93,7 +96,6 @@ export function VisitCarePathway({
   const { data: canCreateNote } = useHasPermission('clinical-note:create');
   const { data: canCreateInvoice } = useHasPermission('invoice:create');
   const { data: canBookAppointment } = useHasPermission('appointment:create');
-  const { data: canUpdateDiagnoses } = useHasPermission('visit-diagnosis:update');
   const showAyurveda = isAyurvedaBrand(useBrandLogoVariant());
 
   const plans = plansQuery.data ?? [];
@@ -118,13 +120,7 @@ export function VisitCarePathway({
         onAmend={canAmend ? onAmendVitalSign : undefined}
       />
     ),
-    assessment: (
-      <VisitDiagnosesPanel
-        visit={visit}
-        showAyurveda={showAyurveda}
-        mode={active && canUpdateDiagnoses ? 'edit' : canAmend ? 'amend' : 'read'}
-      />
-    ),
+    assessment: <VisitDiagnosesPanel diagnoses={diagnoses} showAyurveda={showAyurveda} />,
     plan: (
       <div className="space-y-4">
         <VisitPlanSession
@@ -209,6 +205,7 @@ export function VisitCarePathway({
         onAmendVisit={canAmend ? onAmendVisit : undefined}
         onAmendNote={canAmend ? onAmendNote : undefined}
         onDirtyChange={onConsultationDirtyChange}
+        pendingDiagnoses={diagnoses}
         slots={slots}
       />
     </div>

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +19,14 @@ const state = vi.hoisted(() => ({
   plansFailed: false,
   initialParams: {} as Record<string, number | string>,
   paramWrites: [] as [string, unknown][],
+  diagnosesDirty: false,
+  push: vi.fn(),
+  linksFollowed: [] as string[],
+}));
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: state.push }) }));
+vi.mock('./use-visit-diagnoses-draft', () => ({
+  useVisitDiagnosesDraft: () => ({ dirty: state.diagnosesDirty }),
 }));
 
 vi.mock('nuqs', async () => {
@@ -200,22 +208,40 @@ vi.mock('./visit-care-pathway', async () => {
   return {
     VisitCarePathway: ({
       chart,
+      onConsultationDirtyChange,
       onAddPlanSessions,
       onOpenPlanSession,
       onAmendNote,
       onAmendVitalSign,
     }: {
       chart: unknown;
+      onConsultationDirtyChange: (dirty: boolean) => void;
       onAddPlanSessions: (planId: number) => void;
       onOpenPlanSession: (sessionId: number) => void;
       onAmendNote: (noteId: number) => void;
       onAmendVitalSign: (vitalId: number) => void;
     }) => {
       state.carePathwayChart = chart;
+      // Stands in for Next's Link: its click handler is what navigates.
+      const link = (href: string, label: string) =>
+        createElement(
+          'a',
+          {
+            href,
+            onClick: (event: MouseEvent) => {
+              event.preventDefault();
+              state.linksFollowed.push(href);
+            },
+          },
+          label
+        );
 
       return createElement(
         'div',
         null,
+        createElement('button', { onClick: () => onConsultationDirtyChange(true) }, 'Edit note'),
+        link('/previous-visits', 'Previous Visits'),
+        link('/visits/7?step=plan', 'Plan step'),
         createElement('button', { onClick: () => onAddPlanSessions(81) }, 'Add Sessions to 81'),
         createElement('button', { onClick: () => onOpenPlanSession(902) }, 'Open Session 2'),
         createElement('button', { onClick: () => onAmendNote(55) }, 'Amend note 55'),
@@ -239,6 +265,9 @@ afterEach(() => {
   state.plansFailed = false;
   state.initialParams = {};
   state.paramWrites = [];
+  state.diagnosesDirty = false;
+  state.push.mockReset();
+  state.linksFollowed = [];
 });
 
 describe('Visit detail capture routing', () => {
@@ -449,5 +478,69 @@ describe('Visit detail capture routing', () => {
 
     expect(state.paramWrites).toEqual([]);
     expect(screen.getByTestId('note-sheet').textContent).toBe('55');
+  });
+
+  it('should warn on completing that coded diagnoses are not saved yet', () => {
+    state.status = 'IN_CONSULTATION';
+    state.diagnosesDirty = true;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.outstanding).toContain('The coded diagnoses have unsaved changes.');
+  });
+});
+
+describe('Leaving a Visit with unsaved changes', () => {
+  function renderOnVisit() {
+    state.status = 'IN_CONSULTATION';
+    window.history.replaceState(null, '', '/visits/7');
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+  }
+
+  it('should hold an in-app link until the user chooses to leave without saving', async () => {
+    renderOnVisit();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit note' }));
+
+    fireEvent.click(screen.getByRole('link', { name: 'Previous Visits' }));
+
+    expect(state.linksFollowed).toEqual([]);
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog.textContent).toContain('The consultation has unsaved changes.');
+    fireEvent.click(screen.getByRole('button', { name: 'Leave without saving' }));
+    expect(state.push).toHaveBeenCalledWith('/previous-visits');
+  });
+
+  it('should stay on the Visit when the user chooses to stay', async () => {
+    state.diagnosesDirty = true;
+    renderOnVisit();
+
+    fireEvent.click(screen.getByRole('link', { name: 'Previous Visits' }));
+    expect((await screen.findByRole('alertdialog')).textContent).toContain(
+      'The coded diagnoses have unsaved changes.'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Stay on Visit' }));
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(state.push).not.toHaveBeenCalled();
+    expect(state.linksFollowed).toEqual([]);
+  });
+
+  it('should let links through when nothing is unsaved', () => {
+    renderOnVisit();
+
+    fireEvent.click(screen.getByRole('link', { name: 'Previous Visits' }));
+
+    expect(state.linksFollowed).toEqual(['/previous-visits']);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+
+  it('should let through a link that stays on this Visit or opens a new tab', () => {
+    renderOnVisit();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit note' }));
+
+    fireEvent.click(screen.getByRole('link', { name: 'Plan step' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Previous Visits' }), { metaKey: true });
+
+    expect(state.linksFollowed).toEqual(['/visits/7?step=plan', '/previous-visits']);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });

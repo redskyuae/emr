@@ -6,9 +6,9 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { VisitDiagnosis } from '@/app/api/lib/modules/visit-diagnosis/schemas/visit-diagnosis-schema';
-import type { Visit } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 import { useSaveVisitDiagnoses } from '@/app/queries/visits/useSaveVisitDiagnoses';
 import { useVisitDiagnosesQuery } from '@/app/queries/visits/useVisitDiagnoses';
+import { useVisitDiagnosesDraft } from './use-visit-diagnoses-draft';
 import { VisitDiagnosesPanel } from './visit-diagnoses-panel';
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
@@ -39,7 +39,6 @@ vi.mock(
 );
 
 const mutateAsync = vi.fn();
-const visit = { id: 5120 } as unknown as Visit;
 
 function diagnosis(overrides: Partial<VisitDiagnosis>): VisitDiagnosis {
   return {
@@ -81,8 +80,38 @@ const saved = [
   }),
 ];
 
-function renderPanel(mode: 'edit' | 'amend' | 'read', showAyurveda = true) {
-  render(createElement(VisitDiagnosesPanel, { visit, mode, showAyurveda }));
+type Mode = 'edit' | 'amend' | 'read';
+
+// The Visit owns the draft and the step shows it, as on the Visit page.
+function Visit({
+  mode,
+  showAyurveda = true,
+  showPanel = true,
+}: {
+  mode: Mode;
+  showAyurveda?: boolean;
+  showPanel?: boolean;
+}) {
+  const diagnoses = useVisitDiagnosesDraft(5120, mode);
+  return createElement(
+    'div',
+    null,
+    createElement('output', { 'data-testid': 'unsaved' }, String(diagnoses.dirty)),
+    showPanel ? createElement(VisitDiagnosesPanel, { diagnoses, showAyurveda }) : null
+  );
+}
+
+function renderPanel(mode: Mode, showAyurveda = true) {
+  return render(createElement(Visit, { mode, showAyurveda }));
+}
+
+function unsaved() {
+  return screen.getByTestId('unsaved').textContent;
+}
+
+async function removeLowBackPain(user: ReturnType<typeof userEvent.setup>) {
+  const chip = screen.getByLabelText('M54.5 — Low back pain');
+  await user.click(within(chip).getByRole('button'));
 }
 
 beforeEach(() => {
@@ -214,5 +243,55 @@ describe('Visit diagnoses panel', () => {
 
     expect(screen.queryByRole('region', { name: 'Ayurveda' })).toBeNull();
     expect(screen.getByRole('region', { name: 'ICD-10-CM' })).toBeTruthy();
+  });
+
+  it('should report chosen codes as unsaved and offer to discard them', async () => {
+    const user = userEvent.setup();
+    renderPanel('edit');
+
+    await removeLowBackPain(user);
+
+    expect(unsaved()).toBe('true');
+    expect(screen.getByText('Not saved yet')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Discard changes' }));
+    expect(unsaved()).toBe('false');
+    expect(screen.getByLabelText('M54.5 — Low back pain')).toBeTruthy();
+  });
+
+  it('should keep chosen codes when the Diagnosis step is redrawn, as signing does', async () => {
+    const user = userEvent.setup();
+    const view = renderPanel('edit');
+
+    await removeLowBackPain(user);
+    view.rerender(createElement(Visit, { mode: 'edit', showPanel: false }));
+    view.rerender(createElement(Visit, { mode: 'edit' }));
+
+    expect(screen.queryByLabelText('M54.5 — Low back pain')).toBeNull();
+    expect(unsaved()).toBe('true');
+  });
+
+  it('should not carry codes chosen on an Active Visit into an amendment', async () => {
+    const user = userEvent.setup();
+    const view = renderPanel('edit');
+
+    await removeLowBackPain(user);
+    view.rerender(createElement(Visit, { mode: 'amend' }));
+
+    expect(unsaved()).toBe('false');
+    expect(screen.getByLabelText('M54.5 — Low back pain')).toBeTruthy();
+  });
+
+  it('should keep the chosen codes and say why when saving fails', async () => {
+    const user = userEvent.setup();
+    mutateAsync.mockRejectedValue(new Error('Diagnosis code 13 does not exist.'));
+    renderPanel('edit');
+
+    await removeLowBackPain(user);
+    await user.click(screen.getByRole('button', { name: 'Save diagnoses' }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith('Diagnosis code 13 does not exist.')
+    );
+    expect(unsaved()).toBe('true');
   });
 });

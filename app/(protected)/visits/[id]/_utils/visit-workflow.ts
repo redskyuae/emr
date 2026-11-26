@@ -9,6 +9,8 @@ export type VisitWorkflowInput = {
   invoiceCount: number;
   /** The consultation form has changes that are not saved yet. */
   consultationDirty?: boolean;
+  /** Coded diagnoses were chosen on the Diagnosis step but not saved yet. */
+  diagnosesDirty?: boolean;
 };
 
 /**
@@ -17,6 +19,7 @@ export type VisitWorkflowInput = {
  */
 export const VISIT_OUTSTANDING_KINDS = [
   'unsaved_consultation',
+  'unsaved_diagnoses',
   'no_vital_signs',
   'no_clinical_note',
   'draft_clinical_notes',
@@ -30,6 +33,7 @@ export function visitOutstandingKinds(input: VisitWorkflowInput): VisitOutstandi
   const kinds: VisitOutstandingKind[] = [];
 
   if (input.consultationDirty) kinds.push('unsaved_consultation');
+  if (input.diagnosesDirty) kinds.push('unsaved_diagnoses');
   if (input.vitalsCount === 0) kinds.push('no_vital_signs');
   if (input.noteCount === 0) kinds.push('no_clinical_note');
   if ((input.draftNoteCount ?? 0) > 0) kinds.push('draft_clinical_notes');
@@ -42,6 +46,8 @@ function outstandingItemText(kind: VisitOutstandingKind, input: VisitWorkflowInp
   switch (kind) {
     case 'unsaved_consultation':
       return 'The consultation has unsaved changes.';
+    case 'unsaved_diagnoses':
+      return 'The coded diagnoses have unsaved changes.';
     case 'no_vital_signs':
       return 'No Vital Signs recorded.';
     case 'no_clinical_note':
@@ -53,6 +59,13 @@ function outstandingItemText(kind: VisitOutstandingKind, input: VisitWorkflowInp
     case 'no_invoice':
       return 'No Invoice linked to this Visit.';
   }
+}
+
+/** The changes made on the Visit that are not saved yet, which leaving it would lose. */
+export function visitUnsavedItems(input: VisitWorkflowInput): string[] {
+  return visitOutstandingKinds(input)
+    .filter((kind) => kind === 'unsaved_consultation' || kind === 'unsaved_diagnoses')
+    .map((kind) => outstandingItemText(kind, input));
 }
 
 /** What is still open on the Visit. Completion warns about these; it does not block. */

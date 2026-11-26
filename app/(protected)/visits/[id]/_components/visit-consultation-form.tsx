@@ -37,6 +37,7 @@ import {
   type DoctorConsultationFormValues,
 } from '../_utils/doctor-consultation-note';
 import { SignConsultationDialog } from './_modals/sign-consultation-dialog';
+import type { VisitDiagnosesDraft } from './use-visit-diagnoses-draft';
 import { VisitStepShell } from './visit-step-shell';
 
 type NarrativeName = Exclude<
@@ -57,6 +58,9 @@ const PRAKRITI_SUGGESTIONS = [
 /** Visit records shown in a step beside the note, such as Vital Signs or today's Session. */
 export type ConsultationStepSlots = Partial<Record<ConsultationStepId, ReactNode>>;
 
+/** Coded diagnoses chosen on the Diagnosis step but not saved yet. */
+export type PendingDiagnoses = Pick<VisitDiagnosesDraft, 'dirty' | 'save'>;
+
 export function VisitConsultationForm({
   visit,
   noteTypes,
@@ -64,6 +68,7 @@ export function VisitConsultationForm({
   noteId,
   initialValues,
   onDirtyChange,
+  pendingDiagnoses,
   steps,
   stepId,
   onStepChange,
@@ -75,6 +80,7 @@ export function VisitConsultationForm({
   noteId: number | null;
   initialValues: DoctorConsultationFormValues | null;
   onDirtyChange: (dirty: boolean) => void;
+  pendingDiagnoses?: PendingDiagnoses;
   steps: ConsultationStep[];
   stepId: ConsultationStepId;
   onStepChange: (id: ConsultationStepId) => void;
@@ -97,13 +103,17 @@ export function VisitConsultationForm({
   const [savedNoteId, setSavedNoteId] = useState(noteId);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [signOpen, setSignOpen] = useState(false);
+  const [savingDiagnoses, setSavingDiagnoses] = useState(false);
   const createNote = useCreateClinicalNote();
   const updateNote = useUpdateClinicalNote();
   const signNote = useSignClinicalNote();
   const router = useRouter();
   const { data: doctorScope } = useDoctorScope();
   const askNoteType = defaultNoteTypeId === null && !initialValues;
-  const saving = createNote.isPending || updateNote.isPending || signNote.isPending;
+  const saving =
+    createNote.isPending || updateNote.isPending || signNote.isPending || savingDiagnoses;
+  // Unsaved coded diagnoses count as unsaved consultation changes.
+  const unsaved = isDirty || Boolean(pendingDiagnoses?.dirty);
   const patientId = visit.patient.id;
   function openFirstError(fieldErrors: FieldErrors<DoctorConsultationFormValues>) {
     setSignOpen(false);
@@ -118,18 +128,14 @@ export function VisitConsultationForm({
     dirtyRef.current = onDirtyChange;
   }, [onDirtyChange]);
 
+  // The Visit warns before leaving with unsaved changes; the form only reports them.
   useEffect(() => {
     dirtyRef.current(isDirty);
-    if (!isDirty) return;
-
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
   }, [isDirty]);
 
   useEffect(() => () => dirtyRef.current(false), []);
 
-  async function persist(values: DoctorConsultationFormValues) {
+  async function persistNote(values: DoctorConsultationFormValues) {
     const body = {
       noteTypeId: Number(values.noteTypeId),
       visitId: visit.id,
@@ -146,10 +152,28 @@ export function VisitConsultationForm({
     return created.data.id;
   }
 
+  /** Saves the note, then the coded diagnoses chosen on the Diagnosis step. */
+  async function persist(values: DoctorConsultationFormValues) {
+    const id = await persistNote(values);
+    form.reset(values);
+    if (pendingDiagnoses?.dirty) {
+      setSavingDiagnoses(true);
+      try {
+        await pendingDiagnoses.save();
+      } catch (error) {
+        throw new Error(
+          `The note was saved, but the diagnoses were not: ${getApiErrors(error).join(' ')}`
+        );
+      } finally {
+        setSavingDiagnoses(false);
+      }
+    }
+    return id;
+  }
+
   const saveDraft = form.handleSubmit(async (values) => {
     try {
       await persist(values);
-      form.reset(values);
       setSavedAt(new Date());
       toast.success('Consultation draft saved.');
     } catch (error) {
@@ -160,8 +184,8 @@ export function VisitConsultationForm({
   const saveAndSign = form.handleSubmit(async (values) => {
     setSignOpen(false);
     try {
+      // Diagnoses that fail to save stop the signing, so nothing is signed without them.
       const id = await persist(values);
-      form.reset(values);
       await signNote.mutateAsync({ patientId, noteId: id });
       toast.success('Consultation signed.');
       // Signing is the end of a Doctor's part of the Visit, so they go back to their Visits.
@@ -195,7 +219,7 @@ export function VisitConsultationForm({
     );
   }
 
-  const saveStatus = isDirty
+  const saveStatus = unsaved
     ? 'Unsaved changes'
     : savedAt
       ? `Draft saved at ${savedAt.toLocaleTimeString(undefined, {
@@ -380,7 +404,7 @@ export function VisitConsultationForm({
               aria-hidden="true"
               className={cn(
                 'size-2 shrink-0 rounded-full',
-                isDirty ? 'bg-warning' : savedNoteId ? 'bg-success' : 'bg-input'
+                unsaved ? 'bg-warning' : savedNoteId ? 'bg-success' : 'bg-input'
               )}
             />
             {saveStatus}
@@ -389,7 +413,9 @@ export function VisitConsultationForm({
         actions={
           <Button type="submit" variant="outline" disabled={saving}>
             <CiFloppyDisk className="size-4" />
-            {createNote.isPending || updateNote.isPending ? 'Saving…' : 'Save draft'}
+            {createNote.isPending || updateNote.isPending || savingDiagnoses
+              ? 'Saving…'
+              : 'Save draft'}
           </Button>
         }
         finalAction={

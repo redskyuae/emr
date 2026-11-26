@@ -104,6 +104,14 @@ export function setSecondaryDiagnoses(
   return [...others, ...(primary ? [primary] : []), ...secondaries];
 }
 
+/** Whether two lists would save the same diagnoses, so choosing and then undoing is not a change. */
+export function sameDiagnoses(a: DiagnosisDraft[], b: DiagnosisDraft[]) {
+  return (
+    JSON.stringify(toSaveVisitDiagnosesRequest(a)) ===
+    JSON.stringify(toSaveVisitDiagnosesRequest(b))
+  );
+}
+
 /** Principal first within each code system, so the saved order reads like a claim. */
 export function toSaveVisitDiagnosesRequest(drafts: DiagnosisDraft[]): SaveVisitDiagnosesRequest {
   const ordered = [...drafts].sort(

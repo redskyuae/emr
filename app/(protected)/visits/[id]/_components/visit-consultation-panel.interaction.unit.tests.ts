@@ -116,6 +116,7 @@ function renderPanel(
     canStart?: boolean;
     onStart?: () => void;
     slots?: Record<string, ReactNode>;
+    pendingDiagnoses?: { dirty: boolean; save: () => Promise<void> };
   } = {},
   variant: BrandLogoVariant = 'dhathri-gram'
 ) {
@@ -301,6 +302,61 @@ describe('Visit consultation', () => {
 
     await screen.findByText('Could not save consultation');
     expect(mocks.sign).not.toHaveBeenCalled();
+  });
+
+  it('should save chosen diagnoses with the note before signing', async () => {
+    const pendingDiagnoses = { dirty: true, save: vi.fn().mockResolvedValue(undefined) };
+    renderPanel({ notes: [note({})], pendingDiagnoses });
+
+    await confirmSign();
+
+    await waitFor(() => expect(mocks.sign).toHaveBeenCalledOnce());
+    expect(pendingDiagnoses.save).toHaveBeenCalledOnce();
+    expect(mocks.update.mock.invocationCallOrder[0]).toBeLessThan(
+      pendingDiagnoses.save.mock.invocationCallOrder[0]
+    );
+    expect(pendingDiagnoses.save.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.sign.mock.invocationCallOrder[0]
+    );
+  });
+
+  it('should not sign and should say so when the diagnoses fail to save', async () => {
+    const pendingDiagnoses = {
+      dirty: true,
+      save: vi.fn().mockRejectedValue(new Error('Diagnosis code 13 does not exist.')),
+    };
+    mocks.doctorScope = { isDoctor: true, doctorId: 12 };
+    renderPanel({ notes: [note({})], pendingDiagnoses });
+
+    await confirmSign();
+
+    await screen.findByText(
+      'The note was saved, but the diagnoses were not: Diagnosis code 13 does not exist.'
+    );
+    expect(mocks.update).toHaveBeenCalledOnce();
+    expect(mocks.sign).not.toHaveBeenCalled();
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it('should save chosen diagnoses with a draft and show them as unsaved until then', async () => {
+    const pendingDiagnoses = { dirty: true, save: vi.fn().mockResolvedValue(undefined) };
+    renderPanel({ pendingDiagnoses });
+
+    expect(screen.getByText('Unsaved changes')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    await waitFor(() => expect(pendingDiagnoses.save).toHaveBeenCalledOnce());
+    expect(mocks.create).toHaveBeenCalledOnce();
+  });
+
+  it('should not save diagnoses that have no changes', async () => {
+    const pendingDiagnoses = { dirty: false, save: vi.fn() };
+    renderPanel({ notes: [note({})], pendingDiagnoses });
+
+    await confirmSign();
+
+    await waitFor(() => expect(mocks.sign).toHaveBeenCalledOnce());
+    expect(pendingDiagnoses.save).not.toHaveBeenCalled();
   });
 
   it('should show a signed consultation read-only', () => {

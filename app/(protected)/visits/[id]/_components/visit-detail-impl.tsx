@@ -24,9 +24,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
 import { isActiveVisit } from '../../_utils/visit-status';
 import { isCurrentPlan } from '../_utils/visit-treatment-plan';
-import { visitOutstandingItems, visitOutstandingKinds } from '../_utils/visit-workflow';
+import {
+  visitOutstandingItems,
+  visitOutstandingKinds,
+  visitUnsavedItems,
+} from '../_utils/visit-workflow';
 import { AddPlanSessionsDialog } from './_modals/add-plan-sessions-dialog';
 import { CompleteVisitDialog } from './_modals/complete-visit-dialog';
+import { LeaveVisitDialog } from './_modals/leave-visit-dialog';
 import { AmendVisitSheet } from './_sheets/amend-visit-sheet';
 import { SignClinicalNoteDialog } from './_modals/sign-clinical-note-dialog';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
@@ -35,6 +40,8 @@ import { DailyTreatmentSheet } from './_sheets/daily-treatment-sheet';
 import { PlanSessionSheet } from './_sheets/plan-session-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
 import { useCompleteVisitAnalytics } from './use-complete-visit-analytics';
+import { useLeaveVisitGuard } from './use-leave-visit-guard';
+import { useVisitDiagnosesDraft } from './use-visit-diagnoses-draft';
 import { VisitCarePathway } from './visit-care-pathway';
 import { VisitContextPane } from './visit-context-pane';
 import { VisitPatientHeader } from './visit-patient-header';
@@ -93,8 +100,13 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
   const { data: canAmendVisit, isLoading: amendPermissionLoading } =
     useHasPermission('visit:amend');
+  const { data: canUpdateDiagnoses } = useHasPermission('visit-diagnosis:update');
   // Only a Completed Visit is amended; an active one is still edited in place.
   const canAmend = visit.status === 'COMPLETED' && Boolean(canAmendVisit);
+  const diagnoses = useVisitDiagnosesDraft(
+    visit.id,
+    isActiveVisit(visit.status) && canUpdateDiagnoses ? 'edit' : canAmend ? 'amend' : 'read'
+  );
 
   // Gated on the Permission too, so a chart cached before access was removed is never shown.
   const chart = canReadChart ? chartQuery.data : undefined;
@@ -115,7 +127,9 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     draftNoteCount: chart ? visitNotes.filter((note) => note.status === 'draft').length : null,
     invoiceCount: invoices.length,
     consultationDirty,
+    diagnosesDirty: diagnoses.dirty,
   };
+  const leaveGuard = useLeaveVisitGuard(consultationDirty || diagnoses.dirty);
   const noteToAmend = canAmend ? visitNotes.find((note) => note.id === amendNoteParam) : undefined;
   const vitalToAmend = canAmend
     ? (chart?.vitalSigns ?? []).find(
@@ -274,6 +288,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
               invoices={invoices}
               invoicesLoading={invoicesQuery.isLoading}
               invoicesError={invoicesQuery.isError}
+              diagnoses={diagnoses}
               canStart={Boolean(canStart)}
               canAmend={canAmend}
               starting={startMutation.isPending}
@@ -416,6 +431,13 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
       />
 
       <CancelVisitDialog visit={cancelOpen ? visit : null} onClose={() => setCancelOpen(false)} />
+
+      <LeaveVisitDialog
+        open={leaveGuard.pendingHref !== null}
+        unsavedItems={visitUnsavedItems(workflow)}
+        onStay={leaveGuard.stay}
+        onLeave={leaveGuard.leave}
+      />
     </>
   );
 }
