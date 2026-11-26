@@ -18,6 +18,7 @@ export default function AppointmentsPageLoader() {
         <div className="space-y-4">
           <Card>
             <CardContent className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+              <Skeleton className="h-10 lg:w-56" aria-label="Loading From Date filter" />
               <Skeleton className="h-10 lg:w-52" aria-label="Loading Doctor filter" />
               <Skeleton className="h-10 lg:w-52" aria-label="Loading Therapist filter" />
               <Skeleton className="h-10 lg:w-48" aria-label="Loading Appointment status filter" />

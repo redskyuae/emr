@@ -336,6 +336,9 @@ export function AppointmentsPageImpl() {
                   : `Future Appointments from ${tomorrowDate} onward.`
               }
               isFiltered={isFiltered || Boolean(customFromDate)}
+              filteredEmptyDescription={
+                customFromDate ? 'No Appointments match the current filters.' : undefined
+              }
               canCreate={canCreate}
               onPageChange={(page) => void setUpcomingPage(page)}
               onCancel={(appointment) => void setCancelParam(String(appointment.id))}

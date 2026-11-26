@@ -10,13 +10,18 @@ afterEach(cleanup);
 
 function renderEmptySection(
   kind: 'today' | 'upcoming',
-  { isFiltered, canCreate }: { isFiltered: boolean; canCreate: boolean }
+  {
+    isFiltered,
+    canCreate,
+    filteredEmptyDescription,
+  }: { isFiltered: boolean; canCreate: boolean; filteredEmptyDescription?: string }
 ) {
   return render(
     createElement(AppointmentDaySection, {
       kind,
       isFiltered,
       canCreate,
+      filteredEmptyDescription,
       page: 1,
       total: 0,
       pageSize: 5,
@@ -86,4 +91,15 @@ describe('Appointment tab empty states', () => {
       expect(screen.queryByRole('link', { name: 'Book Appointment' })).toBeNull();
     }
   );
+
+  it('should show the given no-results text instead of the future-only text', () => {
+    renderEmptySection('upcoming', {
+      isFiltered: true,
+      canCreate: true,
+      filteredEmptyDescription: 'No Appointments match the current filters.',
+    });
+
+    expect(screen.getByText('No Appointments match the current filters.')).toBeTruthy();
+    expect(screen.queryByText('No future Appointments match the current filters.')).toBeNull();
+  });
 });
