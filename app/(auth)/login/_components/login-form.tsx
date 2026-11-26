@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CiCircleInfo, CiRead } from 'react-icons/ci';
 import { useQueryClient } from '@tanstack/react-query';
-import { CiRead } from 'react-icons/ci';
 import { PiEyeSlashLight } from 'react-icons/pi';
 
 import { DEFAULT_AUTH_REDIRECT_PATH } from '@/app/lib/auth-route-guards';
@@ -34,7 +33,6 @@ type LoginFormProps = {
 
 export function LoginForm({
   notice,
-  redirectTo = '/dashboard',
   trackIdleActivity = false,
   redirectTo = DEFAULT_AUTH_REDIRECT_PATH,
   showCreateWorkspaceLink = false,
@@ -56,7 +54,6 @@ export function LoginForm({
 
       // With the feature off nothing is stored, so turning it on later finds no outdated time.
       if (trackIdleActivity) recordActivity(Date.now());
-      router.replace(redirectTo);
       // A requested page wins; otherwise the user's Role decides where they land.
       const destination =
         redirectTo === DEFAULT_AUTH_REDIRECT_PATH
