@@ -346,7 +346,7 @@ The lifecycle state of a Visit: Checked In, In Consultation, Completed, or Cance
 
 ## Doctor Signed
 
-How the Visits list shows an In Consultation Visit once its Doctor has signed a Clinical Note recorded on it: the Doctor's part of the Visit is done and it waits to be completed. Doctor Signed is not a Visit Status — signing never changes the Visit lifecycle, and the Visit stays an Active Visit until it is completed or cancelled. It is read from the Visit's signed Clinical Notes (`doctorSignedAt`).
+How the Visits list shows an In Consultation Visit once its Doctor has signed a Clinical Note they wrote on it: the Doctor's part of the Visit is done and it waits to be completed. Doctor Signed is not a Visit Status — signing never changes the Visit lifecycle, and the Visit stays an Active Visit until it is completed or cancelled. It is read from the signed Clinical Notes written by the Visit's Doctor (`doctorSignedAt`); a note signed by anyone else, such as a Nursing note, does not make a Visit Doctor Signed.
 
 ## Diagnosis Code
 

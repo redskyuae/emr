@@ -1411,25 +1411,41 @@ describe('Visit repository', () => {
   });
 
   describe('doctorSignedAt', () => {
+    async function doctorUserId(fixtures: TenantFixtures) {
+      const [doctor] = await db
+        .select({ userId: doctorTable.userId })
+        .from(doctorTable)
+        .where(eq(doctorTable.id, fixtures.doctorId));
+
+      return doctor.userId;
+    }
+
+    /** A note on the Visit, written by the fixtures' Doctor unless another author is given. */
     async function createVisitNote(
       tenantId: string,
       fixtures: TenantFixtures,
       visitId: number,
-      note: { status: 'draft' | 'signed'; signedAt?: Date; isDeleted?: boolean }
+      note: {
+        status: 'draft' | 'signed';
+        signedAt?: Date;
+        isDeleted?: boolean;
+        authorUserId?: string;
+      }
     ) {
       const [noteType] = await db
         .insert(clinicalNoteTypeTable)
         .values({ tenantId, name: `Consultation ${randomUUID()}`, code: randomUUID().slice(0, 8) })
         .returning({ id: clinicalNoteTypeTable.id });
+      const authorUserId = note.authorUserId ?? (await doctorUserId(fixtures));
 
       await db.insert(clinicalNoteTable).values({
         tenantId,
         visitId,
         patientId: fixtures.patientId,
         noteTypeId: noteType.id,
-        authorUserId: 'doctor-user',
-        recordedByUserId: 'doctor-user',
+        recordedByUserId: authorUserId,
         ...note,
+        authorUserId,
       });
     }
 
@@ -1486,12 +1502,28 @@ describe('Visit repository', () => {
       });
     });
 
+    it('should ignore a signed Clinical Note written by anyone but the Visit Doctor', async () => {
+      const visitId = await checkInAndStart(tenantA, fixturesA);
+      // For example a nurse signing a Nursing note during the consultation.
+      await createVisitNote(tenantA, fixturesA, visitId, {
+        status: 'signed',
+        signedAt: new Date('2026-07-16T05:00:00.000Z'),
+        authorUserId: 'nurse-user',
+      });
+
+      await expect(visitRepository.getVisitById(visitId, tenantA)).resolves.toMatchObject({
+        doctorSignedAt: null,
+      });
+    });
+
     it('should ignore a signed Clinical Note recorded by another Tenant', async () => {
       const fixturesB = await createTenantFixtures(tenantB);
       const visitId = await checkInAndStart(tenantA, fixturesA);
+      // Written by the Visit Doctor, so only the Tenant filter keeps it out.
       await createVisitNote(tenantB, fixturesB, visitId, {
         status: 'signed',
         signedAt: new Date('2026-07-16T05:00:00.000Z'),
+        authorUserId: await doctorUserId(fixturesA),
       });
 
       await expect(visitRepository.getVisitById(visitId, tenantA)).resolves.toMatchObject({

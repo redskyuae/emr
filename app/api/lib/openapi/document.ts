@@ -8782,7 +8782,7 @@ export const openApiDocument = {
         tags: ['Clinical Note'],
         summary: 'Sign Clinical Note',
         description:
-          'Signs a draft Clinical Note for the Patient in the active Tenant, setting status to "signed" and stamping signedAt. A signed note is immutable — subsequent updates are rejected with 409 Conflict, and re-signing an already-signed note returns 409 Conflict. Signing a note recorded on a Visit sets the Visit doctorSignedAt, so an In Consultation Visit then reads as Doctor Signed.',
+          'Signs a draft Clinical Note for the Patient in the active Tenant, setting status to "signed" and stamping signedAt. A signed note is immutable — subsequent updates are rejected with 409 Conflict, and re-signing an already-signed note returns 409 Conflict. Signing a note that the Doctor of the Visit wrote on it sets the Visit doctorSignedAt, so an In Consultation Visit then reads as Doctor Signed; a note by anyone else, such as a Nursing note, does not.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Patient'),
@@ -12587,7 +12587,7 @@ export const openApiDocument = {
             type: ['string', 'null'],
             format: 'date-time',
             description:
-              'When the latest Clinical Note recorded on this Visit was signed, or null while none is signed. Derived from the Visit Clinical Notes, not a Visit Status: an In Consultation Visit with a value reads as Doctor Signed.',
+              "When the latest Clinical Note written by the Visit's Doctor on this Visit was signed, or null while none is signed. Notes by other users, such as a signed Nursing note, do not count. Derived from the Visit Clinical Notes, not a Visit Status: an In Consultation Visit with a value reads as Doctor Signed.",
             example: '2026-07-16T05:05:00.000Z',
           },
           createdOn: { type: 'string', format: 'date-time' },

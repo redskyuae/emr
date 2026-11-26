@@ -42,12 +42,15 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 const ACTIVE_VISIT_STATUSES: VisitStatus[] = ['CHECKED_IN', 'IN_CONSULTATION'];
 
 // The Doctor's sign-off is read from the Visit's signed Clinical Notes rather than stored as a
-// Visit Status, so signing never changes the Visit lifecycle.
+// Visit Status, so signing never changes the Visit lifecycle. Only notes written by the Visit's
+// own Doctor count: a signed Nursing note, or any other user's note, is not the Doctor's sign-off.
+// It references the Doctor that `visitJoins` joins, its only caller.
 const doctorSignedAt = sql<Date | null>`(
   select max(${clinicalNoteTable.signedAt})
   from ${clinicalNoteTable}
   where ${clinicalNoteTable.visitId} = ${visitTable.id}
     and ${clinicalNoteTable.tenantId} = ${visitTable.tenantId}
+    and ${clinicalNoteTable.authorUserId} = ${doctorTable.userId}
     and ${clinicalNoteTable.status} = 'signed'
     and ${clinicalNoteTable.isDeleted} = false
 )`.mapWith((value: Date | string) => new Date(value));

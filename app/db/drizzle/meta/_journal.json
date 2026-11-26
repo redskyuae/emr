@@ -610,6 +610,13 @@
       "when": 1795667623499,
       "tag": "0086_restore_feature_permission_access",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1795684126494,
+      "tag": "0087_flimsy_silvermane",
+      "breakpoints": true
     }
   ]
 }
