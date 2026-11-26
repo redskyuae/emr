@@ -14,6 +14,11 @@ type PermissionGroup = {
 
 const permissionGroups = [
   {
+    module: 'dashboard',
+    resource: 'dashboard',
+    actions: [['read', 'View the Dashboard.']],
+  },
+  {
     module: 'tenant-management',
     resource: 'tenant',
     actions: [
@@ -118,6 +123,11 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'doctor-scheduling',
+    resource: 'doctor-slot',
+    actions: [['read', 'View available Doctor Slots when booking or rescheduling.']],
+  },
+  {
     module: 'therapist-scheduling',
     resource: 'therapist-schedule',
     actions: [
@@ -159,12 +169,25 @@ const permissionGroups = [
     ],
   },
   {
+    module: 'patient-management',
+    resource: 'patient-chart',
+    actions: [['read', 'View the Patient Chart.']],
+  },
+  {
+    module: 'patient-management',
+    resource: 'patient-timeline',
+    actions: [['read', 'View the Patient Timeline.']],
+  },
+  {
     module: 'appointments',
     resource: 'appointment',
     actions: [
       ['read', 'View Appointments.'],
       ['create', 'Book Appointments.'],
       ['reassign-therapist', 'Reassign Therapists on Procedure Appointments.'],
+      ['cancel', 'Cancel Appointments.'],
+      ['reschedule', 'Reschedule Appointments.'],
+      ['export', 'Export Appointments.'],
     ],
   },
   {
@@ -411,6 +434,33 @@ const permissionGroups = [
       ['cancel', 'Cancel a Visit.'],
       ['amend', 'Amend a Completed Visit, its Clinical Notes and Vital Signs.'],
     ],
+  },
+  {
+    module: 'visits',
+    resource: 'previous-visit',
+    actions: [['read', 'View Previous Visits.']],
+  },
+  {
+    module: 'visits',
+    resource: 'visit-document',
+    actions: [
+      ['read', 'View Visit Documents.'],
+      ['upload', 'Upload Visit Documents.'],
+      ['delete', 'Delete Visit Documents.'],
+    ],
+  },
+  {
+    module: 'visits',
+    resource: 'visit-diagnosis',
+    actions: [
+      ['read', 'View Visit Diagnoses.'],
+      ['update', 'Record and update Visit Diagnoses.'],
+    ],
+  },
+  {
+    module: 'reports',
+    resource: 'report',
+    actions: [['read', 'View Reports, including the Consolidated Patient Report.']],
   },
   {
     module: 'room-masters',

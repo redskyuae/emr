@@ -119,7 +119,8 @@ export function AppointmentsTabToolbar({
           />
         </InputGroup>
 
-        <div className="flex flex-wrap gap-2 lg:ml-auto">
+        {/* Empty, and so hidden, without `appointment:export`. */}
+        <div className="flex flex-wrap gap-2 empty:hidden lg:ml-auto">
           <AppointmentExportActions
             filters={exportFilters}
             hasAppointments={hasAppointments}

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createElement, type ComponentProps } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -23,7 +24,10 @@ function visit(overrides: Partial<Visit> = {}) {
   } as unknown as Visit;
 }
 
-function renderHeader(value: Visit) {
+function renderHeader(
+  value: Visit,
+  overrides: Partial<ComponentProps<typeof VisitPatientHeader>> = {}
+) {
   const noop = vi.fn();
   const props: ComponentProps<typeof VisitPatientHeader> = {
     visit: value,
@@ -38,6 +42,7 @@ function renderHeader(value: Visit) {
     canBookAppointment: false,
     canAmend: false,
     canViewAudit: false,
+    canViewDocuments: false,
     starting: false,
     onStart: noop,
     onAmend: noop,
@@ -49,6 +54,7 @@ function renderHeader(value: Visit) {
     onAddMedication: noop,
     onAssignPlan: noop,
     onOpenDocuments: noop,
+    ...overrides,
   };
 
   render(createElement(VisitPatientHeader, props));
@@ -67,5 +73,23 @@ describe('Visit patient header', () => {
     renderHeader(visit());
 
     expect(screen.getByText(/OPD Consultation · Dr\. Iyer · Walk-in$/)).toBeTruthy();
+  });
+
+  it('should offer Documents to a user holding visit-document:read', async () => {
+    const user = userEvent.setup();
+    renderHeader(visit(), { canViewDocuments: true });
+
+    await user.click(screen.getByRole('button', { name: 'Actions for VST-1007' }));
+
+    expect(screen.getByRole('menuitem', { name: 'Documents' })).toBeTruthy();
+  });
+
+  it('should hide Documents without visit-document:read', async () => {
+    const user = userEvent.setup();
+    renderHeader(visit());
+
+    await user.click(screen.getByRole('button', { name: 'Actions for VST-1007' }));
+
+    expect(screen.queryByRole('menuitem', { name: 'Documents' })).toBeNull();
   });
 });

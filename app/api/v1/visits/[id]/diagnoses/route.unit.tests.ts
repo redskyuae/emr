@@ -82,6 +82,7 @@ describe('Visit diagnoses route', () => {
       const response = await GET(request('GET'), context());
 
       expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
+      expect(requirePermissions).not.toHaveBeenCalled();
       expect(listDiagnoses).not.toHaveBeenCalled();
     });
 
@@ -91,7 +92,24 @@ describe('Visit diagnoses route', () => {
       expect(response.status).toBe(StatusCodes.OK);
       await expect(response.json()).resolves.toEqual({ data: [diagnosis] });
       expect(listDiagnoses).toHaveBeenCalledWith('42', 'tenant-1');
-      expect(requirePermissions).not.toHaveBeenCalled();
+    });
+
+    it('should require visit-diagnosis:read', async () => {
+      await GET(request('GET'), context());
+
+      expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['visit-diagnosis:read']);
+    });
+
+    it('should return forbidden without listing when visit-diagnosis:read is absent', async () => {
+      requirePermissions.mockResolvedValue(
+        NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+      );
+
+      const response = await GET(request('GET'), context());
+
+      expect(response.status).toBe(StatusCodes.FORBIDDEN);
+      await expect(response.json()).resolves.toEqual({ message: 'Forbidden' });
+      expect(listDiagnoses).not.toHaveBeenCalled();
     });
 
     it('should map a missing Visit to not found', async () => {
@@ -132,7 +150,7 @@ describe('Visit diagnoses route', () => {
   });
 
   describe('PUT', () => {
-    it('should return forbidden without saving when visit:update is absent', async () => {
+    it('should return forbidden without saving when visit-diagnosis:update is absent', async () => {
       requirePermissions.mockResolvedValue(
         NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
       );
@@ -140,8 +158,9 @@ describe('Visit diagnoses route', () => {
       const response = await PUT(request('PUT'), context());
 
       expect(response.status).toBe(StatusCodes.FORBIDDEN);
-      expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['visit:update']);
+      expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['visit-diagnosis:update']);
       expect(saveDiagnoses).not.toHaveBeenCalled();
+      expect(listDiagnoses).not.toHaveBeenCalled();
     });
 
     it('should return unauthorized without checking permission', async () => {

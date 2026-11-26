@@ -7,7 +7,7 @@ import {
   MAX_VISIT_DOCUMENT_BYTES,
 } from '@/app/api/lib/modules/visit-document/schemas/visit-document-schema';
 import { uploadVisitDocument } from '@/app/api/lib/storage/visit-document-storage';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 const ACCEPTED_TYPES = new Set<string>(ACCEPTED_VISIT_DOCUMENT_TYPES);
 
@@ -20,6 +20,14 @@ export async function POST(request: NextRequest) {
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'visit-document:upload',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     let formData: FormData;

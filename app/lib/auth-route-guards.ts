@@ -1,5 +1,45 @@
 export const DEFAULT_AUTH_REDIRECT_PATH = '/dashboard';
 
+const DOCTOR_HOME_PATH = '/visits';
+
+const DOCTOR_ROLE_CODE = 'DOCTOR';
+
+type HomePathUser = {
+  roles: { code: string }[];
+  permissions: string[];
+};
+
+// Where a user without `dashboard:read` lands instead, in order: the first page they can open.
+const FALLBACK_HOME_PATHS = [
+  { path: '/visits', permission: 'visit:read' },
+  { path: '/appointments', permission: 'appointment:read' },
+  { path: '/patients', permission: 'patient:read' },
+];
+
+/** Whether the user holds the Doctor System Role, which shapes their navigation and Visit list. */
+export function hasDoctorRole(roles: { code: string }[]): boolean {
+  return roles.some(({ code }) => code === DOCTOR_ROLE_CODE);
+}
+
+/**
+ * Where a signed-in user lands when no specific page was requested. A Doctor starts in today's
+ * Visits queue, provided their Role still grants Visit access; everyone else gets the dashboard
+ * when they may view it, or else the first page they can open.
+ */
+export function getHomePathForUser({ roles, permissions }: HomePathUser): string {
+  if (hasDoctorRole(roles) && permissions.includes('visit:read')) {
+    return DOCTOR_HOME_PATH;
+  }
+
+  if (permissions.includes('dashboard:read')) {
+    return DEFAULT_AUTH_REDIRECT_PATH;
+  }
+
+  const fallback = FALLBACK_HOME_PATHS.find(({ permission }) => permissions.includes(permission));
+
+  return fallback?.path ?? DEFAULT_AUTH_REDIRECT_PATH;
+}
+
 const PUBLIC_PAGE_PATHS = new Set(['/', '/site', '/login', '/signup', '/swagger']);
 const AUTH_PAGE_PATHS = new Set(['/login', '/signup']);
 const STATIC_FILE_PATTERN =

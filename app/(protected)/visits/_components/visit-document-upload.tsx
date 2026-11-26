@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import type { UploadVisitDocumentResponse } from '@/app/api/v1/visits/documents/types';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useUploadVisitDocument } from '@/app/queries/visits/useUploadVisitDocument';
 import { Button } from '@/components/ui/button';
 
@@ -17,7 +18,7 @@ const ACCEPTED_TYPES = 'application/pdf,image/png,image/jpeg,image/webp,image/gi
 
 // A file picker that uploads each selected file to Blob and hands its metadata
 // back. The caller decides what to do with it — collect it for a check-in, or
-// persist it against an existing Visit.
+// persist it against an existing Visit. Hidden without `visit-document:upload`.
 export function VisitDocumentUploadButton({
   onUploaded,
   disabled,
@@ -29,6 +30,7 @@ export function VisitDocumentUploadButton({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadVisitDocument();
+  const { data: canUpload } = useHasPermission('visit-document:upload');
 
   async function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) {
@@ -48,6 +50,10 @@ export function VisitDocumentUploadButton({
     if (inputRef.current) {
       inputRef.current.value = '';
     }
+  }
+
+  if (!canUpload) {
+    return null;
   }
 
   return (

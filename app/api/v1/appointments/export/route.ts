@@ -9,7 +9,7 @@ import {
 import { filterAppointmentsForDayView } from '@/app/api/lib/modules/appointment/appointment-day-view';
 import { getAppointmentsQuery } from '@/app/api/lib/modules/appointment/queries/get-appointments-query';
 import type { Appointment } from '@/app/api/lib/modules/appointment/schemas/appointment-schema';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 export const runtime = 'nodejs';
 
@@ -74,6 +74,14 @@ export async function GET(request: NextRequest) {
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'appointment:export',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     const searchParams = request.nextUrl.searchParams;

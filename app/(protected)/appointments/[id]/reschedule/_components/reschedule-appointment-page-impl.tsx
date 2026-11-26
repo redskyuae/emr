@@ -3,7 +3,12 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { CiCalendarDate, CiCircleAlert } from 'react-icons/ci';
-import { PiArrowLeftLight, PiArrowsClockwiseLight, PiBuildingsLight } from 'react-icons/pi';
+import {
+  PiArrowLeftLight,
+  PiArrowsClockwiseLight,
+  PiBuildingsLight,
+  PiLockKeyDuotone,
+} from 'react-icons/pi';
 
 import { AppointmentScheduleSection } from '@/app/(protected)/appointments/new/_components/appointment-schedule-section';
 import { BookingSummary } from '@/app/(protected)/appointments/new/_components/booking-summary';
@@ -11,6 +16,8 @@ import { DoctorSelectionSection } from '@/app/(protected)/appointments/new/_comp
 import { ProcedureScheduleSection } from '@/app/(protected)/appointments/new/_components/procedure-schedule-section';
 import { getDurationMinutes } from '@/app/(protected)/appointments/new/_utils/appointment-time';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
+import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +31,48 @@ type RescheduleForm = ReturnType<typeof useRescheduleAppointmentForm>;
 type RescheduleTarget = NonNullable<RescheduleForm['appointment']>;
 
 export function RescheduleAppointmentPageImpl({ appointmentId }: { appointmentId: number }) {
+  const { data: canReschedule, isLoading, isError } = useHasPermission('appointment:reschedule');
+
+  if (isLoading) {
+    return <RescheduleAppointmentSkeleton />;
+  }
+
+  if (isError && !canReschedule) {
+    return (
+      <Alert variant="destructive">
+        <CiCircleAlert className="size-4" />
+        <AlertTitle>Could not check reschedule access</AlertTitle>
+        <AlertDescription>Refresh the page and try again.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!canReschedule) {
+    return (
+      <div className="space-y-4">
+        <Button type="button" variant="ghost" size="sm" asChild className="-ml-2">
+          <Link href="/appointments">
+            <PiArrowLeftLight className="size-4" />
+            Appointments
+          </Link>
+        </Button>
+        <EmptyState
+          tone="danger"
+          orbit={false}
+          className="min-h-72"
+          icon={PiLockKeyDuotone}
+          title="You don't have permission to reschedule Appointments."
+          description="Contact a Tenant Admin if you need access."
+        />
+      </div>
+    );
+  }
+
+  return <RescheduleAppointmentContent appointmentId={appointmentId} />;
+}
+
+// Mounted only with `appointment:reschedule`, so the Appointment is never requested without it.
+function RescheduleAppointmentContent({ appointmentId }: { appointmentId: number }) {
   const reschedule = useRescheduleAppointmentForm(appointmentId);
   const { appointment } = reschedule;
 
@@ -199,6 +248,7 @@ function RescheduleAppointmentForm({
             timeZoneLabel="the Tenant time zone"
             isLoading={reschedule.isDoctorSlotsLoading}
             error={reschedule.doctorSlotsError}
+            canViewDoctorSlots={reschedule.canViewDoctorSlots}
             onRetry={() => void reschedule.retryDoctorSlots()}
             onContextChange={reschedule.changeScheduleContext}
             onRotaChange={reschedule.changeRota}

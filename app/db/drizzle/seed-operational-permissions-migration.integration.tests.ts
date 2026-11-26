@@ -49,12 +49,20 @@ describe('0056 operational permissions migration', () => {
     await executeMigration();
     await executeMigration();
 
+    // Later migrations (0085 and others) add these to the same modules.
+    const addedByLaterMigrations = new Set([
+      'appointment:reassign-therapist',
+      'appointment:cancel',
+      'appointment:reschedule',
+      'appointment:export',
+      'doctor-slot:read',
+    ]);
     const expectedPermissionNames = permissionSeedData
       .filter(
         ({ module, name, resource }) =>
           operationalModules.has(module) &&
           resource !== 'patient-treatment-plan' &&
-          name !== 'appointment:reassign-therapist'
+          !addedByLaterMigrations.has(name)
       )
       .map(({ name }) => name)
       .sort();

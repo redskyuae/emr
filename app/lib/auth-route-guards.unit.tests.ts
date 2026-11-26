@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_AUTH_REDIRECT_PATH, getSafeNextPath, isPublicPagePath } from './auth-route-guards';
+import {
+  DEFAULT_AUTH_REDIRECT_PATH,
+  getHomePathForUser,
+  getSafeNextPath,
+  hasDoctorRole,
+  isPublicPagePath,
+} from './auth-route-guards';
 
 describe('auth route guards', () => {
   it('should treat only the entry, marketing, auth, and Swagger pages as public', () => {
@@ -39,5 +45,54 @@ describe('auth route guards', () => {
     for (const value of unsafeNextValues) {
       expect(getSafeNextPath(value)).toBe(DEFAULT_AUTH_REDIRECT_PATH);
     }
+  });
+
+  it('should recognise the Doctor Role among a user Roles by its code', () => {
+    expect(hasDoctorRole([{ code: 'THERAPIST' }, { code: 'DOCTOR' }])).toBe(true);
+    expect(hasDoctorRole([{ code: 'NURSE' }])).toBe(false);
+    expect(hasDoctorRole([])).toBe(false);
+  });
+
+  it('should send a Doctor with Visit permission straight to Visits', () => {
+    expect(getHomePathForUser({ roles: [{ code: 'DOCTOR' }], permissions: ['visit:read'] })).toBe(
+      '/visits'
+    );
+    expect(
+      getHomePathForUser({
+        roles: [{ code: 'THERAPIST' }, { code: 'DOCTOR' }],
+        permissions: ['appointment:read', 'visit:read'],
+      })
+    ).toBe('/visits');
+  });
+
+  it('should send everyone else, and a Doctor without Visit permission, to the dashboard', () => {
+    expect(
+      getHomePathForUser({
+        roles: [{ code: 'DOCTOR' }],
+        permissions: ['dashboard:read', 'patient:read'],
+      })
+    ).toBe(DEFAULT_AUTH_REDIRECT_PATH);
+    expect(
+      getHomePathForUser({
+        roles: [{ code: 'THERAPIST' }],
+        permissions: ['dashboard:read', 'visit:read'],
+      })
+    ).toBe(DEFAULT_AUTH_REDIRECT_PATH);
+    expect(getHomePathForUser({ roles: [], permissions: ['dashboard:read', 'visit:read'] })).toBe(
+      DEFAULT_AUTH_REDIRECT_PATH
+    );
+  });
+
+  it('should send a user without dashboard:read to the first page they can open', () => {
+    expect(
+      getHomePathForUser({ roles: [], permissions: ['patient:read', 'appointment:read'] })
+    ).toBe('/appointments');
+    expect(getHomePathForUser({ roles: [], permissions: ['patient:read', 'visit:read'] })).toBe(
+      '/visits'
+    );
+    expect(getHomePathForUser({ roles: [], permissions: ['patient:read'] })).toBe('/patients');
+    expect(getHomePathForUser({ roles: [], permissions: ['therapist:read'] })).toBe(
+      DEFAULT_AUTH_REDIRECT_PATH
+    );
   });
 });

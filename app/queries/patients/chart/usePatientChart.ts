@@ -24,10 +24,11 @@ function transformPatientChartResponse(response: GetPatientChartResponse): Patie
   return response.data;
 }
 
-export function usePatientChartQuery(patientId: number) {
+export function usePatientChartQuery(patientId: number, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: patientChartQueryKey(patientId),
     queryFn: () => fetchPatientChart(patientId),
     select: transformPatientChartResponse,
+    enabled: options?.enabled ?? true,
   });
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,9 +10,23 @@ const state = vi.hoisted(() => ({
   status: 'CHECKED_IN',
   canAmend: false,
   canAssignPlan: false,
+  canReadChart: true,
+  chartLoaded: true,
+  noteStatus: 'signed',
+  chartQueryOptions: [] as unknown[],
+  outstanding: [] as string[],
+  carePathwayChart: undefined as unknown,
   plansFailed: false,
   initialParams: {} as Record<string, number | string>,
   paramWrites: [] as [string, unknown][],
+  diagnosesDirty: false,
+  push: vi.fn(),
+  linksFollowed: [] as string[],
+}));
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: state.push }) }));
+vi.mock('./use-visit-diagnoses-draft', () => ({
+  useVisitDiagnosesDraft: () => ({ dirty: state.diagnosesDirty }),
 }));
 
 vi.mock('nuqs', async () => {
@@ -60,17 +74,24 @@ vi.mock('@/app/queries/visits/useVisit', () => ({
   }),
 }));
 vi.mock('@/app/queries/patients/chart/usePatientChart', () => ({
-  usePatientChartQuery: () => ({
-    data: {
-      allergies: [],
-      medications: [],
-      vitalSigns: [{ id: 61, visitId: 7 }],
-      clinicalNotes: [{ id: 55, visitId: 7, status: 'signed' }],
-    },
-    isSuccess: true,
-    isLoading: false,
-    isError: false,
-  }),
+  usePatientChartQuery: (_patientId: number, options: unknown) => {
+    state.chartQueryOptions.push(options);
+
+    // The query returns cached data whatever `enabled` says, as React Query does.
+    return {
+      data: state.chartLoaded
+        ? {
+            allergies: [],
+            medications: [],
+            vitalSigns: [{ id: 61, visitId: 7 }],
+            clinicalNotes: [{ id: 55, visitId: 7, status: state.noteStatus }],
+          }
+        : undefined,
+      isSuccess: state.chartLoaded,
+      isLoading: !state.chartLoaded,
+      isError: false,
+    };
+  },
 }));
 vi.mock('@/app/queries/clinical-masters/allergens/useAllergens', () => ({
   useAllergensQuery: () => ({ data: { data: [] }, isLoading: false, isError: false }),
@@ -79,6 +100,7 @@ vi.mock('@/app/queries/identity-access/useCurrentUser', () => ({
   useHasPermission: (key: string) => ({
     data:
       (key === 'visit:amend' && state.canAmend) ||
+      (key === 'patient-chart:read' && state.canReadChart) ||
       (key.startsWith('patient-treatment-plan:') && state.canAssignPlan),
     isLoading: false,
   }),
@@ -150,7 +172,12 @@ vi.mock('./_modals/add-plan-sessions-dialog', async () => {
       createElement('div', { 'data-testid': 'add-plan-sessions-dialog' }, plan.id),
   };
 });
-vi.mock('./_modals/complete-visit-dialog', () => ({ CompleteVisitDialog: () => null }));
+vi.mock('./_modals/complete-visit-dialog', () => ({
+  CompleteVisitDialog: ({ outstanding }: { outstanding: string[] }) => {
+    state.outstanding = outstanding;
+    return null;
+  },
+}));
 vi.mock('./_modals/sign-clinical-note-dialog', () => ({ SignClinicalNoteDialog: () => null }));
 vi.mock('./visit-patient-header', async () => {
   const { createElement } = await import('react');
@@ -180,24 +207,47 @@ vi.mock('./visit-care-pathway', async () => {
   const { createElement } = await import('react');
   return {
     VisitCarePathway: ({
+      chart,
+      onConsultationDirtyChange,
       onAddPlanSessions,
       onOpenPlanSession,
       onAmendNote,
       onAmendVitalSign,
     }: {
+      chart: unknown;
+      onConsultationDirtyChange: (dirty: boolean) => void;
       onAddPlanSessions: (planId: number) => void;
       onOpenPlanSession: (sessionId: number) => void;
       onAmendNote: (noteId: number) => void;
       onAmendVitalSign: (vitalId: number) => void;
-    }) =>
-      createElement(
+    }) => {
+      state.carePathwayChart = chart;
+      // Stands in for Next's Link: its click handler is what navigates.
+      const link = (href: string, label: string) =>
+        createElement(
+          'a',
+          {
+            href,
+            onClick: (event: MouseEvent) => {
+              event.preventDefault();
+              state.linksFollowed.push(href);
+            },
+          },
+          label
+        );
+
+      return createElement(
         'div',
         null,
+        createElement('button', { onClick: () => onConsultationDirtyChange(true) }, 'Edit note'),
+        link('/previous-visits', 'Previous Visits'),
+        link('/visits/7?step=plan', 'Plan step'),
         createElement('button', { onClick: () => onAddPlanSessions(81) }, 'Add Sessions to 81'),
         createElement('button', { onClick: () => onOpenPlanSession(902) }, 'Open Session 2'),
         createElement('button', { onClick: () => onAmendNote(55) }, 'Amend note 55'),
         createElement('button', { onClick: () => onAmendVitalSign(61) }, 'Amend reading 61')
-      ),
+      );
+    },
   };
 });
 
@@ -206,12 +256,62 @@ afterEach(() => {
   state.status = 'CHECKED_IN';
   state.canAmend = false;
   state.canAssignPlan = false;
+  state.canReadChart = true;
+  state.chartLoaded = true;
+  state.noteStatus = 'signed';
+  state.chartQueryOptions = [];
+  state.outstanding = [];
+  state.carePathwayChart = undefined;
   state.plansFailed = false;
   state.initialParams = {};
   state.paramWrites = [];
+  state.diagnosesDirty = false;
+  state.push.mockReset();
+  state.linksFollowed = [];
 });
 
 describe('Visit detail capture routing', () => {
+  it('should load the Patient Chart with patient-chart:read', () => {
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.chartQueryOptions.at(-1)).toEqual({ enabled: true });
+    expect(screen.queryByText('Patient Chart not shown')).toBeNull();
+  });
+
+  it('should not load the Patient Chart without patient-chart:read', () => {
+    state.canReadChart = false;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.chartQueryOptions.at(-1)).toEqual({ enabled: false });
+    expect(screen.getByText('Patient Chart not shown')).toBeTruthy();
+  });
+
+  it('should not show a cached Patient Chart without patient-chart:read', () => {
+    state.canReadChart = false;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.carePathwayChart).toBeUndefined();
+    expect(state.outstanding).toEqual(['No Invoice linked to this Visit.']);
+  });
+
+  it('should not report chart items as missing while the Patient Chart is loading', () => {
+    state.chartLoaded = false;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.outstanding).toEqual(['No Invoice linked to this Visit.']);
+  });
+
+  it('should report chart items from a loaded Patient Chart', () => {
+    state.noteStatus = 'draft';
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.carePathwayChart).toBeDefined();
+    expect(state.outstanding).toEqual([
+      '1 Clinical Note is still a draft.',
+      'No Invoice linked to this Visit.',
+    ]);
+  });
+
   it('opens the Allergy form for an Allergy action', () => {
     render(createElement(VisitDetailImpl, { visitId: 7 }));
 
@@ -378,5 +478,69 @@ describe('Visit detail capture routing', () => {
 
     expect(state.paramWrites).toEqual([]);
     expect(screen.getByTestId('note-sheet').textContent).toBe('55');
+  });
+
+  it('should warn on completing that coded diagnoses are not saved yet', () => {
+    state.status = 'IN_CONSULTATION';
+    state.diagnosesDirty = true;
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+
+    expect(state.outstanding).toContain('The coded diagnoses have unsaved changes.');
+  });
+});
+
+describe('Leaving a Visit with unsaved changes', () => {
+  function renderOnVisit() {
+    state.status = 'IN_CONSULTATION';
+    window.history.replaceState(null, '', '/visits/7');
+    render(createElement(VisitDetailImpl, { visitId: 7 }));
+  }
+
+  it('should hold an in-app link until the user chooses to leave without saving', async () => {
+    renderOnVisit();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit note' }));
+
+    fireEvent.click(screen.getByRole('link', { name: 'Previous Visits' }));
+
+    expect(state.linksFollowed).toEqual([]);
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog.textContent).toContain('The consultation has unsaved changes.');
+    fireEvent.click(screen.getByRole('button', { name: 'Leave without saving' }));
+    expect(state.push).toHaveBeenCalledWith('/previous-visits');
+  });
+
+  it('should stay on the Visit when the user chooses to stay', async () => {
+    state.diagnosesDirty = true;
+    renderOnVisit();
+
+    fireEvent.click(screen.getByRole('link', { name: 'Previous Visits' }));
+    expect((await screen.findByRole('alertdialog')).textContent).toContain(
+      'The coded diagnoses have unsaved changes.'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Stay on Visit' }));
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(state.push).not.toHaveBeenCalled();
+    expect(state.linksFollowed).toEqual([]);
+  });
+
+  it('should let links through when nothing is unsaved', () => {
+    renderOnVisit();
+
+    fireEvent.click(screen.getByRole('link', { name: 'Previous Visits' }));
+
+    expect(state.linksFollowed).toEqual(['/previous-visits']);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+
+  it('should let through a link that stays on this Visit or opens a new tab', () => {
+    renderOnVisit();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit note' }));
+
+    fireEvent.click(screen.getByRole('link', { name: 'Plan step' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Previous Visits' }), { metaKey: true });
+
+    expect(state.linksFollowed).toEqual(['/visits/7?step=plan', '/previous-visits']);
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });

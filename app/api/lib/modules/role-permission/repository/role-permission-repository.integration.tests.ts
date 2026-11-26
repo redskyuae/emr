@@ -353,7 +353,7 @@ describe('Role-Permission repository', () => {
     ]);
   });
 
-  it('should seed exactly the Doctor System Role clinical read permissions', async () => {
+  it('should seed exactly the Doctor System Role clinical permissions', async () => {
     await permissionRepository.seedPermissionCatalogue();
     const roles = await roleRepository.seedSystemRolesForTenant(tenantA);
 
@@ -369,6 +369,7 @@ describe('Role-Permission repository', () => {
       tenantA
     );
     const expectedPermissionNames = [
+      'dashboard:read',
       'appointment-mode:read',
       'appointment-type:read',
       'appointment-status:read',
@@ -382,11 +383,99 @@ describe('Role-Permission repository', () => {
       'specialty:read',
       'doctor:read',
       'patient:read',
+      'patient:create',
+      'patient:update',
+      'patient-chart:read',
+      'patient-timeline:read',
+      'appointment:read',
+      'appointment:create',
+      'appointment:cancel',
+      'appointment:reschedule',
+      'appointment:export',
+      'doctor-slot:read',
+      'visit:read',
+      'visit:create',
+      'visit:update',
+      'visit:start',
+      'visit:complete',
+      'visit:cancel',
+      'previous-visit:read',
+      'visit-document:read',
+      'visit-document:upload',
+      'visit-document:delete',
+      'visit-diagnosis:read',
+      'visit-diagnosis:update',
+      'report:read',
+      'visit-type:read',
+      'admit-source:read',
+      'clinical-note:read',
+      'clinical-note:create',
+      'clinical-note:update',
+      'clinical-note:sign',
+      'vital-sign:read',
+      'vital-sign:create',
+      'vital-sign:update',
+      'allergy:read',
+      'allergy:create',
+      'allergy:update',
+      'problem:read',
+      'problem:create',
+      'problem:update',
+      'medication:read',
+      'medication:create',
+      'medication:update',
+      'diagnosis-code:read',
+      'ayurveda-diagnosis-code:read',
+      'allergen:read',
+      'clinical-note-type:read',
+      'treatment:read',
+      'patient-treatment-plan:read',
+      'patient-treatment-plan:assign',
+      'patient-treatment-plan:update',
     ];
 
+    expect(assigned.map((permission) => permission.name)).not.toContain('visit:amend');
     expect(assigned.map((permission) => permission.name).sort()).toEqual(
       expectedPermissionNames.sort()
     );
+  });
+
+  it('should seed the Therapist clinical reads and the Dashboard for every other System Role', async () => {
+    await permissionRepository.seedPermissionCatalogue();
+    const roles = await roleRepository.seedSystemRolesForTenant(tenantA);
+
+    await rolePermissionRepository.seedDefaultPermissionsForSystemRoles(tenantA, roles);
+
+    const namesByCode = new Map<string, string[]>();
+
+    for (const role of roles) {
+      const assigned = await rolePermissionRepository.getAssignedPermissionsByRole(
+        role.id,
+        tenantA
+      );
+      namesByCode.set(role.code, assigned.map(({ name }) => name).sort());
+    }
+
+    expect(namesByCode.get('THERAPIST')).toEqual(
+      [
+        'dashboard:read',
+        'appointment:read',
+        'appointment:cancel',
+        'appointment:reschedule',
+        'appointment:export',
+        'doctor-slot:read',
+        'patient:read',
+        'patient-chart:read',
+        'patient-timeline:read',
+        'treatment:read',
+        'therapist:read',
+        'therapist-skill:read',
+      ].sort()
+    );
+
+    for (const code of ['NURSE', 'LAB_TECH', 'PHARMACIST', 'RECEPTIONIST', 'BILLING_STAFF']) {
+      expect(namesByCode.get(code), code).toEqual(['dashboard:read']);
+    }
   });
 
   it('should not duplicate default permissions on repeated seed', async () => {

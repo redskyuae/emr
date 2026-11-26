@@ -67,9 +67,9 @@ async function fetchDoctorSlots(filters: {
   return response.json() as Promise<ListDoctorSlotsResponse>;
 }
 
-export function useDoctorSlotsQuery(filters: DoctorSlotsFilters) {
+export function useDoctorSlotsQuery(filters: DoctorSlotsFilters, options?: { enabled?: boolean }) {
   return useQuery({
-    enabled: filters.doctorId !== null && filters.slotDate.length > 0,
+    enabled: (options?.enabled ?? true) && filters.doctorId !== null && filters.slotDate.length > 0,
     queryKey: doctorSlotsQueryKey(filters),
     queryFn: () =>
       fetchDoctorSlots({

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { cancelAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/cancel-appointment-command';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { POST } from './route';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 
@@ -13,10 +13,15 @@ vi.mock('@/app/api/lib/analytics/lifecycle-event-recorder', () => ({
 vi.mock('@/app/api/lib/modules/appointment/commands/cancel-appointment-command', () => ({
   cancelAppointmentCommand: vi.fn(),
 }));
-vi.mock('@/app/api/lib/utils/auth-helpers', () => ({ requireTenantSession: vi.fn() }));
+vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
+  requireTenantPermissions: vi.fn(),
+  requireTenantSession: vi.fn(),
+}));
 
 const cancelAppointment = vi.mocked(cancelAppointmentCommand);
+const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
+const tenantSession = { tenantId: 'tenant-1' };
 
 function request(body: unknown) {
   return new NextRequest('http://localhost/api/v1/appointments/12/cancel', {
@@ -30,7 +35,8 @@ const context = { params: Promise.resolve({ id: '12' }) };
 describe('Cancel Appointment route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    requireSession.mockResolvedValue({ tenantId: 'tenant-1' } as never);
+    requireSession.mockResolvedValue(tenantSession as never);
+    requirePermissions.mockResolvedValue(null);
     cancelAppointment.mockResolvedValue({
       success: true,
       data: {
@@ -73,6 +79,25 @@ describe('Cancel Appointment route', () => {
 
     expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
     expect(cancelAppointment).not.toHaveBeenCalled();
+  });
+
+  it('should require appointment:cancel', async () => {
+    await POST(request({ appointmentCancelledReasonId: 7 }), context);
+
+    expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['appointment:cancel']);
+  });
+
+  it('should return forbidden without cancelling when appointment:cancel is absent', async () => {
+    requirePermissions.mockResolvedValue(
+      NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+    );
+
+    const response = await POST(request({ appointmentCancelledReasonId: 7 }), context);
+
+    expect(response.status).toBe(StatusCodes.FORBIDDEN);
+    await expect(response.json()).resolves.toEqual({ message: 'Forbidden' });
+    expect(cancelAppointment).not.toHaveBeenCalled();
+    expect(recordLifecycleEvent).not.toHaveBeenCalled();
   });
 
   it('should reject an invalid JSON body', async () => {

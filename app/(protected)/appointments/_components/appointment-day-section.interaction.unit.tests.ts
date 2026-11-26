@@ -28,6 +28,7 @@ function renderEmptySection(
       title: kind === 'today' ? "Today's Appointments" : 'Upcoming Appointments',
       description: 'Appointments in this view.',
       onCancel: () => undefined,
+      canReschedule: false,
       onPageChange: () => undefined,
     })
   );

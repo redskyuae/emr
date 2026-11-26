@@ -4,7 +4,7 @@ import type { AddVisitDocumentResponse, ListVisitDocumentsResponse } from './typ
 
 import { addVisitDocumentCommand } from '@/app/api/lib/modules/visit-document/commands/add-visit-document-command';
 import { listVisitDocumentsQuery } from '@/app/api/lib/modules/visit-document/queries/list-visit-documents-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
@@ -34,6 +34,14 @@ export async function GET(_request: NextRequest, context: VisitDocumentsRouteCon
       return tenantSession;
     }
 
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'visit-document:read',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
+    }
+
     const { id } = await context.params;
     const result = await listVisitDocumentsQuery(id, tenantSession.tenantId);
 
@@ -61,6 +69,14 @@ export async function POST(request: NextRequest, context: VisitDocumentsRouteCon
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'visit-document:upload',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     const { id } = await context.params;
