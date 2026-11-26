@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { PiCaretRightLight } from 'react-icons/pi';
 
+import { hasDoctorRole } from '@/app/lib/auth-route-guards';
 import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
 import {
   appNavGroups,
@@ -171,9 +172,10 @@ export function AppSidebar({
         currentUser?.permissions ?? [],
         appointmentsOnly,
         showVisits,
-        showDemoPages
+        showDemoPages,
+        hasDoctorRole(currentUser?.roles ?? [])
       ),
-    [currentUser?.permissions, appointmentsOnly, showVisits, showDemoPages]
+    [currentUser?.permissions, currentUser?.roles, appointmentsOnly, showVisits, showDemoPages]
   );
 
   return (

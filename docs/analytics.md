@@ -279,11 +279,11 @@ sent.
 
 #### Consultation (`/visits/[id]`)
 
-| Event                             | When                                      | Properties                                                                                                                                          |
-| --------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `consultation_step_viewed`        | the consultation step (`?step=`) is shown | `step`, `previous_step`: `subjective`, `objective`, `assessment`, `plan`, `review`; `seconds_on_previous_step`; `visit_status`; `is_ayurveda_brand` |
-| `consultation_complete_opened`    | the complete-Visit dialog opens           | `outstanding_item_count`, `outstanding_kinds`: `unsaved_consultation`, `no_vital_signs`, `no_clinical_note`, `draft_clinical_notes`, `no_invoice`   |
-| `consultation_complete_dismissed` | the dialog closes without completing      | `outstanding_item_count` (as when it opened)                                                                                                        |
+| Event                             | When                                      | Properties                                                                                                                                                             |
+| --------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `consultation_step_viewed`        | the consultation step (`?step=`) is shown | `step`, `previous_step`: `subjective`, `objective`, `assessment`, `plan`, `review`; `seconds_on_previous_step`; `visit_status`; `is_ayurveda_brand`                    |
+| `consultation_complete_opened`    | the complete-Visit dialog opens           | `outstanding_item_count`, `outstanding_kinds`: `unsaved_consultation`, `unsaved_diagnoses`, `no_vital_signs`, `no_clinical_note`, `draft_clinical_notes`, `no_invoice` |
+| `consultation_complete_dismissed` | the dialog closes without completing      | `outstanding_item_count` (as when it opened)                                                                                                                           |
 
 ### Usage and friction events
 

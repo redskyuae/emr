@@ -260,8 +260,16 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
   const { data: canReactivate } = useHasPermission('patient:reactivate');
   const { data: canDelete } = useHasPermission('patient:delete');
   const { data: canViewAudit } = useHasPermission('audit-log:read');
+  const { data: canReadChart } = useHasPermission('patient-chart:read');
+  const { data: canReadTimeline } = useHasPermission('patient-timeline:read');
 
-  const tab = parsePatientTab(tabParam);
+  // A Chart or Timeline link the user may not open falls back to Overview, so its
+  // section never mounts and never requests data the API would refuse.
+  const requestedTab = parsePatientTab(tabParam);
+  const tab =
+    (requestedTab === 'chart' && !canReadChart) || (requestedTab === 'timeline' && !canReadTimeline)
+      ? 'overview'
+      : requestedTab;
   const shownTab = patientQuery.data ? `${patientId}|${tab}` : null;
   const recordedTab = useRef<string | null>(null);
 
@@ -414,14 +422,18 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                   <CiGrid41 aria-hidden="true" />
                   Overview
                 </TabsTrigger>
-                <TabsTrigger value="chart">
-                  <CiMedicalClipboard aria-hidden="true" />
-                  Chart
-                </TabsTrigger>
-                <TabsTrigger value="timeline">
-                  <CiViewTimeline aria-hidden="true" />
-                  Timeline
-                </TabsTrigger>
+                {canReadChart ? (
+                  <TabsTrigger value="chart">
+                    <CiMedicalClipboard aria-hidden="true" />
+                    Chart
+                  </TabsTrigger>
+                ) : null}
+                {canReadTimeline ? (
+                  <TabsTrigger value="timeline">
+                    <CiViewTimeline aria-hidden="true" />
+                    Timeline
+                  </TabsTrigger>
+                ) : null}
               </TabsList>
 
               <TabsContent value="overview" className="mt-4 space-y-4">
@@ -575,13 +587,17 @@ export function PatientDetailImpl({ patientId }: { patientId: number }) {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="chart" className="mt-4">
-                <PatientChartSection patientId={patient.id} />
-              </TabsContent>
+              {canReadChart ? (
+                <TabsContent value="chart" className="mt-4">
+                  <PatientChartSection patientId={patient.id} />
+                </TabsContent>
+              ) : null}
 
-              <TabsContent value="timeline" className="mt-4">
-                <PatientTimelineSection patientId={patient.id} />
-              </TabsContent>
+              {canReadTimeline ? (
+                <TabsContent value="timeline" className="mt-4">
+                  <PatientTimelineSection patientId={patient.id} />
+                </TabsContent>
+              ) : null}
             </Tabs>
 
             <DeactivatePatientDialog

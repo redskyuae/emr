@@ -51,6 +51,7 @@ export function VisitPatientHeader({
   canBookAppointment,
   canAmend,
   canViewAudit,
+  canViewDocuments,
   starting,
   onStart,
   onAmend,
@@ -75,6 +76,7 @@ export function VisitPatientHeader({
   canBookAppointment: boolean;
   canAmend: boolean;
   canViewAudit: boolean;
+  canViewDocuments: boolean;
   starting: boolean;
   onStart: () => void;
   onAmend: () => void;
@@ -188,10 +190,12 @@ export function VisitPatientHeader({
                   Assign Treatment Plan
                 </DropdownMenuItem>
               ) : null}
-              <DropdownMenuItem onSelect={onOpenDocuments}>
-                <PiFilePlusLight className="size-4" />
-                Documents
-              </DropdownMenuItem>
+              {canViewDocuments ? (
+                <DropdownMenuItem onSelect={onOpenDocuments}>
+                  <PiFilePlusLight className="size-4" />
+                  Documents
+                </DropdownMenuItem>
+              ) : null}
               {canBookAppointment ? (
                 <DropdownMenuItem asChild>
                   <Link href="/appointments/new">

@@ -22,10 +22,11 @@ function transformVisitDocumentsResponse(response: ListVisitDocumentsResponse) {
   return response.data;
 }
 
-export function useVisitDocumentsQuery(visitId: number) {
+export function useVisitDocumentsQuery(visitId: number, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: visitDocumentsQueryKey(visitId),
     queryFn: () => fetchVisitDocuments(visitId),
     select: transformVisitDocumentsResponse,
+    enabled: options?.enabled ?? true,
   });
 }

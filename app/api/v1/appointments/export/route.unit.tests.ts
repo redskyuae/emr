@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppointmentExport } from '@/app/api/lib/modules/appointment/export/appointment-export';
 import { getAppointmentsQuery } from '@/app/api/lib/modules/appointment/queries/get-appointments-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { getConfiguredBrandLogoVariant } from '@/components/brand/brand-config';
 import { GET } from './route';
 
@@ -19,6 +19,7 @@ vi.mock('@/app/api/lib/modules/appointment/queries/get-appointments-query', () =
   getAppointmentsQuery: vi.fn(),
 }));
 vi.mock('@/app/api/lib/utils/auth-helpers', () => ({
+  requireTenantPermissions: vi.fn(),
   requireTenantSession: vi.fn(),
 }));
 vi.mock('@/components/brand/brand-config', () => ({
@@ -39,6 +40,7 @@ vi.mock('@/components/brand/brand-config', () => ({
 
 const createExport = vi.mocked(createAppointmentExport);
 const getAppointments = vi.mocked(getAppointmentsQuery);
+const requirePermissions = vi.mocked(requireTenantPermissions);
 const requireSession = vi.mocked(requireTenantSession);
 const configuredBrand = vi.mocked(getConfiguredBrandLogoVariant);
 const readLogo = vi.mocked(readFile);
@@ -56,6 +58,7 @@ describe('Appointment export route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireSession.mockResolvedValue(tenantSession as never);
+    requirePermissions.mockResolvedValue(null);
     configuredBrand.mockReturnValue('dhathri-gram');
     readLogo.mockResolvedValue(Buffer.from([1, 2, 3]));
     getAppointments.mockResolvedValue({
@@ -88,6 +91,25 @@ describe('Appointment export route', () => {
 
     expect(response.status).toBe(StatusCodes.UNAUTHORIZED);
     expect(getAppointments).not.toHaveBeenCalled();
+  });
+
+  it('should require appointment:export', async () => {
+    await GET(request('?format=excel'));
+
+    expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['appointment:export']);
+  });
+
+  it('should return forbidden without querying Appointments when appointment:export is absent', async () => {
+    requirePermissions.mockResolvedValue(
+      NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
+    );
+
+    const response = await GET(request('?format=excel'));
+
+    expect(response.status).toBe(StatusCodes.FORBIDDEN);
+    await expect(response.json()).resolves.toEqual({ message: 'Forbidden' });
+    expect(getAppointments).not.toHaveBeenCalled();
+    expect(createExport).not.toHaveBeenCalled();
   });
 
   it('should reject an unsupported export format', async () => {

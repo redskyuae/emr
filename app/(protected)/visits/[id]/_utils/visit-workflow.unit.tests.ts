@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   visitOutstandingItems,
   visitOutstandingKinds,
+  visitUnsavedItems,
   type VisitWorkflowInput,
 } from './visit-workflow';
 
@@ -45,6 +46,15 @@ describe('visitOutstandingItems', () => {
   });
 });
 
+describe('visitUnsavedItems', () => {
+  it('should list only the unsaved changes, not the other open items', () => {
+    expect(visitUnsavedItems({ ...base, diagnosesDirty: true })).toEqual([
+      'The coded diagnoses have unsaved changes.',
+    ]);
+    expect(visitUnsavedItems(base)).toEqual([]);
+  });
+});
+
 describe('visitOutstandingKinds', () => {
   it('should give one fixed kind per open item, in the order the items are listed', () => {
     const input = { ...base, consultationDirty: true, noteCount: 3, draftNoteCount: 2 };
@@ -58,9 +68,32 @@ describe('visitOutstandingKinds', () => {
     expect(visitOutstandingKinds(input)).toHaveLength(visitOutstandingItems(input).length);
   });
 
+  it('should warn about coded diagnoses that are not saved, after the consultation', () => {
+    const input = {
+      ...base,
+      vitalsCount: 1,
+      noteCount: 1,
+      invoiceCount: 1,
+      consultationDirty: true,
+      diagnosesDirty: true,
+    };
+
+    expect(visitOutstandingKinds(input)).toEqual(['unsaved_consultation', 'unsaved_diagnoses']);
+    expect(visitOutstandingItems(input)).toEqual([
+      'The consultation has unsaved changes.',
+      'The coded diagnoses have unsaved changes.',
+    ]);
+  });
+
   it('should be empty when nothing is open', () => {
     expect(
       visitOutstandingKinds({ ...base, vitalsCount: 2, noteCount: 1, invoiceCount: 1 })
     ).toEqual([]);
+  });
+
+  it('should skip the Patient Chart checks when the chart counts are unknown', () => {
+    expect(
+      visitOutstandingKinds({ ...base, vitalsCount: null, noteCount: null, draftNoteCount: null })
+    ).toEqual(['no_invoice']);
   });
 });

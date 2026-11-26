@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { VisitDiagnosis } from '@/app/api/lib/modules/visit-diagnosis/schemas/visit-diagnosis-schema';
 import {
+  sameDiagnoses,
   setPrimaryDiagnosis,
   setSecondaryDiagnoses,
   toDiagnosisDrafts,
@@ -93,6 +94,27 @@ describe('setSecondaryDiagnoses', () => {
       ['M54.5', 'PRINCIPAL'],
       ['E66.9', 'SECONDARY'],
     ]);
+  });
+});
+
+describe('sameDiagnoses', () => {
+  it('should treat choosing a code and then undoing it as no change', () => {
+    const saved = setPrimaryDiagnosis([], 'ICD10CM', ra);
+    const undone = setPrimaryDiagnosis(
+      setPrimaryDiagnosis(saved, 'ICD10CM', backPain),
+      'ICD10CM',
+      ra
+    );
+
+    expect(sameDiagnoses(undone, saved)).toBe(true);
+  });
+
+  it('should see an added Secondary or a new Primary as a change', () => {
+    const saved = setPrimaryDiagnosis([], 'ICD10CM', ra);
+
+    expect(sameDiagnoses(setSecondaryDiagnoses(saved, 'ICD10CM', [obesity]), saved)).toBe(false);
+    expect(sameDiagnoses(setPrimaryDiagnosis(saved, 'ICD10CM', backPain), saved)).toBe(false);
+    expect(sameDiagnoses([], saved)).toBe(false);
   });
 });
 

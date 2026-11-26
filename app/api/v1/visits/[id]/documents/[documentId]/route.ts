@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { deleteVisitDocumentCommand } from '@/app/api/lib/modules/visit-document/commands/delete-visit-document-command';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import { recordAuditEvent } from '@/app/api/lib/audit/audit-recorder';
 import { getVisitByIdQuery } from '@/app/api/lib/modules/visit/queries/get-visit-by-id-query';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
@@ -30,6 +30,14 @@ export async function DELETE(request: NextRequest, context: VisitDocumentRouteCo
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'visit-document:delete',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     const { id, documentId } = await context.params;

@@ -59,7 +59,7 @@ describe('Consolidated Patient Report route', () => {
     expect(getReport).not.toHaveBeenCalled();
   });
 
-  it('should return forbidden without reading the report when visit:read is absent', async () => {
+  it('should return forbidden without reading the report when report:read is absent', async () => {
     requirePermissions.mockResolvedValue(
       NextResponse.json({ message: 'Forbidden' }, { status: StatusCodes.FORBIDDEN })
     );
@@ -67,7 +67,7 @@ describe('Consolidated Patient Report route', () => {
     const response = await GET(request(), context());
 
     expect(response.status).toBe(StatusCodes.FORBIDDEN);
-    expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['visit:read']);
+    expect(requirePermissions).toHaveBeenCalledWith(tenantSession, ['report:read']);
     expect(getReport).not.toHaveBeenCalled();
   });
 

@@ -76,7 +76,8 @@ export function VisitReviewChecklist({
   noteCount: number;
   signedNoteCount: number;
   invoiceCount: number;
-  documentCount: number;
+  // Null without `visit-document:read`, which leaves the Documents row out.
+  documentCount: number | null;
   chartLoading: boolean;
   invoicesLoading: boolean;
   invoicesError: boolean;
@@ -136,15 +137,17 @@ export function VisitReviewChecklist({
               : 'Not created yet'
         }
       />
-      <ChecklistRow
-        label="Documents"
-        loading={documentsLoading}
-        optional
-        done={documentCount > 0}
-        detail={
-          documentCount ? `${count(documentCount, 'file', 'files')} attached` : 'None attached'
-        }
-      />
+      {documentCount !== null ? (
+        <ChecklistRow
+          label="Documents"
+          loading={documentsLoading}
+          optional
+          done={documentCount > 0}
+          detail={
+            documentCount ? `${count(documentCount, 'file', 'files')} attached` : 'None attached'
+          }
+        />
+      ) : null}
     </ul>
   );
 }

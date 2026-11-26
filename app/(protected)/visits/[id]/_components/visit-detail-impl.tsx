@@ -24,9 +24,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CancelVisitDialog } from '../../_components/_modals/cancel-visit-dialog';
 import { isActiveVisit } from '../../_utils/visit-status';
 import { isCurrentPlan } from '../_utils/visit-treatment-plan';
-import { visitOutstandingItems, visitOutstandingKinds } from '../_utils/visit-workflow';
+import {
+  visitOutstandingItems,
+  visitOutstandingKinds,
+  visitUnsavedItems,
+} from '../_utils/visit-workflow';
 import { AddPlanSessionsDialog } from './_modals/add-plan-sessions-dialog';
 import { CompleteVisitDialog } from './_modals/complete-visit-dialog';
+import { LeaveVisitDialog } from './_modals/leave-visit-dialog';
 import { AmendVisitSheet } from './_sheets/amend-visit-sheet';
 import { SignClinicalNoteDialog } from './_modals/sign-clinical-note-dialog';
 import { AddNoteSheet } from './_sheets/add-note-sheet';
@@ -35,6 +40,8 @@ import { DailyTreatmentSheet } from './_sheets/daily-treatment-sheet';
 import { PlanSessionSheet } from './_sheets/plan-session-sheet';
 import { RecordVitalsSheet } from './_sheets/record-vitals-sheet';
 import { useCompleteVisitAnalytics } from './use-complete-visit-analytics';
+import { useLeaveVisitGuard } from './use-leave-visit-guard';
+import { useVisitDiagnosesDraft } from './use-visit-diagnoses-draft';
 import { VisitCarePathway } from './visit-care-pathway';
 import { VisitContextPane } from './visit-context-pane';
 import { VisitPatientHeader } from './visit-patient-header';
@@ -64,7 +71,8 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   const [amendVitalParam, setAmendVitalParam] = useQueryState('amendVital', parseAsInteger);
   const { data: visit } = useVisit(visitId);
   const plansQuery = usePatientTreatmentPlanHistoryQuery(visit.patient.id);
-  const chartQuery = usePatientChartQuery(visit.patient.id);
+  const { data: canReadChart } = useHasPermission('patient-chart:read');
+  const chartQuery = usePatientChartQuery(visit.patient.id, { enabled: canReadChart });
   const allergensQuery = useAllergensQuery({ limit: 100 });
   const invoicesQuery = useInvoicesQuery({ patientId: visit.patient.id, page: 1, limit: 999 });
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -87,14 +95,21 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   );
   const { data: canBookAppointment } = useHasPermission('appointment:create');
   const { data: canViewAudit } = useHasPermission('audit-log:read');
+  const { data: canViewDocuments } = useHasPermission('visit-document:read');
   const { data: canUpdatePlanSession } = useHasPermission('patient-treatment-plan:update');
   const { data: canStartPlanSession } = useHasPermission('patient-treatment-plan:start');
   const { data: canAmendVisit, isLoading: amendPermissionLoading } =
     useHasPermission('visit:amend');
+  const { data: canUpdateDiagnoses } = useHasPermission('visit-diagnosis:update');
   // Only a Completed Visit is amended; an active one is still edited in place.
   const canAmend = visit.status === 'COMPLETED' && Boolean(canAmendVisit);
+  const diagnoses = useVisitDiagnosesDraft(
+    visit.id,
+    isActiveVisit(visit.status) && canUpdateDiagnoses ? 'edit' : canAmend ? 'amend' : 'read'
+  );
 
-  const chart = chartQuery.data;
+  // Gated on the Permission too, so a chart cached before access was removed is never shown.
+  const chart = canReadChart ? chartQuery.data : undefined;
   const safetyLoading = chartQuery.isLoading || allergensQuery.isLoading;
   const activeAllergyCount = (chart?.allergies ?? []).filter(
     (item) => item.status === 'active'
@@ -103,14 +118,18 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
     allergensQuery.data?.data.find((allergen) => allergen.id === id)?.name ?? 'Allergen';
   const invoices = (invoicesQuery.data?.data ?? []).filter((item) => item.visit?.id === visit.id);
   const visitNotes = (chart?.clinicalNotes ?? []).filter((item) => item.visitId === visit.id);
+  // Until the chart is available (no `patient-chart:read`, still loading, or failed), its counts
+  // are unknown rather than zero.
   const workflow = {
     status: visit.status,
-    vitalsCount: (chart?.vitalSigns ?? []).filter((item) => item.visitId === visit.id).length,
-    noteCount: visitNotes.length,
-    draftNoteCount: visitNotes.filter((note) => note.status === 'draft').length,
+    vitalsCount: chart ? chart.vitalSigns.filter((item) => item.visitId === visit.id).length : null,
+    noteCount: chart ? visitNotes.length : null,
+    draftNoteCount: chart ? visitNotes.filter((note) => note.status === 'draft').length : null,
     invoiceCount: invoices.length,
     consultationDirty,
+    diagnosesDirty: diagnoses.dirty,
   };
+  const leaveGuard = useLeaveVisitGuard(consultationDirty || diagnoses.dirty);
   const noteToAmend = canAmend ? visitNotes.find((note) => note.id === amendNoteParam) : undefined;
   const vitalToAmend = canAmend
     ? (chart?.vitalSigns ?? []).find(
@@ -120,7 +139,9 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
   // Clear-on-deny: once permission and the chart have loaded, an amend param that
   // cannot open a sheet (no permission, Visit not Completed, or an id outside this
   // Visit) is dropped so a stale link cannot open the sheet later.
-  const amendTargetsResolved = !amendPermissionLoading && (!canAmend || chartQuery.isSuccess);
+  // Without `patient-chart:read` the chart never loads, so no target can resolve either.
+  const amendTargetsResolved =
+    !amendPermissionLoading && (!canAmend || !canReadChart || chartQuery.isSuccess);
   const staleAmendNote = amendNoteParam !== null && amendTargetsResolved && !noteToAmend;
   const staleAmendVital = amendVitalParam !== null && amendTargetsResolved && !vitalToAmend;
 
@@ -182,7 +203,16 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
         {/* The same safety banner the Patient Chart shows — the consulting
             Doctor must see allergies without leaving the Visit. */}
         <div className="flex-none space-y-3 empty:hidden">
-          {chartQuery.isError ? (
+          {!canReadChart ? (
+            <Alert>
+              <CiCircleAlert className="size-4" />
+              <AlertTitle>Patient Chart not shown</AlertTitle>
+              <AlertDescription>
+                You do not have permission to view the Patient Chart, so allergies, Vital Signs and
+                Clinical Notes are not shown on this Visit.
+              </AlertDescription>
+            </Alert>
+          ) : chartQuery.isError ? (
             <Alert variant="destructive">
               <CiCircleAlert className="size-4" />
               <AlertTitle>Patient safety information unavailable</AlertTitle>
@@ -228,6 +258,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
           canAssignPlan={Boolean(canAssignPlan && canReadPlan)}
           canBookAppointment={Boolean(canBookAppointment)}
           canViewAudit={Boolean(canViewAudit)}
+          canViewDocuments={Boolean(canViewDocuments)}
           canAmend={canAmend}
           starting={startMutation.isPending}
           onStart={() => void startConsultation()}
@@ -257,6 +288,7 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
               invoices={invoices}
               invoicesLoading={invoicesQuery.isLoading}
               invoicesError={invoicesQuery.isError}
+              diagnoses={diagnoses}
               canStart={Boolean(canStart)}
               canAmend={canAmend}
               starting={startMutation.isPending}
@@ -399,6 +431,13 @@ export function VisitDetailImpl({ visitId }: { visitId: number }) {
       />
 
       <CancelVisitDialog visit={cancelOpen ? visit : null} onClose={() => setCancelOpen(false)} />
+
+      <LeaveVisitDialog
+        open={leaveGuard.pendingHref !== null}
+        unsavedItems={visitUnsavedItems(workflow)}
+        onStay={leaveGuard.stay}
+        onLeave={leaveGuard.leave}
+      />
     </>
   );
 }

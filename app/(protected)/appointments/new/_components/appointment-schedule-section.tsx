@@ -35,6 +35,7 @@ export function AppointmentScheduleSection({
   timeZoneLabel = 'GST',
   isLoading,
   error,
+  canViewDoctorSlots,
   onRetry,
   onContextChange,
   onRotaChange,
@@ -52,6 +53,8 @@ export function AppointmentScheduleSection({
   timeZoneLabel?: string;
   isLoading: boolean;
   error: string | null;
+  /** Without `doctor-slot:read` no Doctor Slots are requested and no time can be picked. */
+  canViewDoctorSlots: boolean;
   onRetry: () => void;
   onContextChange: () => void;
   onRotaChange: (value: string) => void;
@@ -106,7 +109,7 @@ export function AppointmentScheduleSection({
           <RotaField
             rotas={rotas}
             value={selectedRotaId}
-            disabled={!slotDate || isLoading}
+            disabled={!slotDate || isLoading || !canViewDoctorSlots}
             error={errors.doctorRotaId}
             onChange={onRotaChange}
           />
@@ -125,7 +128,12 @@ export function AppointmentScheduleSection({
             ) : null}
           </div>
 
-          {isLoading && doctorId && slotDate ? (
+          {!canViewDoctorSlots ? (
+            <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+              You do not have permission to view Doctor availability, so no Doctor Slots can be
+              shown.
+            </div>
+          ) : isLoading && doctorId && slotDate ? (
             <div className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed p-4 text-sm">
               <PiCircleNotchLight className="size-4 animate-spin" /> Loading Doctor slots…
             </div>

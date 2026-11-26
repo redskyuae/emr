@@ -3,10 +3,17 @@
 import { useEffect, useState } from 'react';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { CiCircleAlert } from 'react-icons/ci';
-import { PiClockCounterClockwiseDuotone, PiMagnifyingGlassDuotone } from 'react-icons/pi';
+import {
+  PiClockCounterClockwiseDuotone,
+  PiLockKeyDuotone,
+  PiMagnifyingGlassDuotone,
+} from 'react-icons/pi';
 
 import { getApiErrorMessage } from '@/app/queries/api-error';
-import { useCurrentUserQuery } from '@/app/queries/identity-access/useCurrentUser';
+import {
+  useCurrentUserQuery,
+  useHasPermission,
+} from '@/app/queries/identity-access/useCurrentUser';
 import { useVisitsQuery } from '@/app/queries/visits/useVisits';
 import { EmptyState } from '@/components/app/empty-state';
 import { SkeletonCrossfade } from '@/components/app/skeleton-crossfade';
@@ -49,6 +56,40 @@ const CLEARED_PARAMS = {
 };
 
 export function PreviousVisitsPageImpl() {
+  const { data: canRead, isLoading, isError } = useHasPermission('previous-visit:read');
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (isError && !canRead) {
+    return (
+      <Alert variant="destructive">
+        <CiCircleAlert className="size-4" />
+        <AlertTitle>Could not check Previous Visits access</AlertTitle>
+        <AlertDescription>Refresh the page and try again.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!canRead) {
+    return (
+      <EmptyState
+        tone="danger"
+        orbit={false}
+        className="min-h-72"
+        icon={PiLockKeyDuotone}
+        title="You don't have permission to view Previous Visits."
+        description="Contact a Tenant Admin if you need access."
+      />
+    );
+  }
+
+  return <PreviousVisitsContent />;
+}
+
+// Mounted only with `previous-visit:read`, so its Visit and filter-option queries never fire without it.
+function PreviousVisitsContent() {
   const [now] = useState(() => new Date());
   const { data: currentUser } = useCurrentUserQuery();
   const today = tenantToday(now, currentUser?.tenant.timeZone);

@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type { ListDoctorSlotsResponse } from './types';
 
 import { getDoctorSlotsQuery } from '@/app/api/lib/modules/doctor-schedule/queries/get-doctor-slots-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +11,12 @@ export async function GET(request: NextRequest) {
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, ['doctor-slot:read']);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     const doctorId = request.nextUrl.searchParams.get('doctorId') ?? undefined;

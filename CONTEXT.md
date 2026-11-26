@@ -344,6 +344,10 @@ The permanent, human-facing identifier assigned by the system to a Visit within 
 
 The lifecycle state of a Visit: Checked In, In Consultation, Completed, or Cancelled. Unlike AppointmentStatus, Visit Status is a fixed system-defined set rather than a Tenant-scoped Master — the same values apply to every Tenant.
 
+## Doctor Signed
+
+How the Visits list shows an In Consultation Visit once its Doctor has signed a Clinical Note they wrote on it: the Doctor's part of the Visit is done and it waits to be completed. Doctor Signed is not a Visit Status — signing never changes the Visit lifecycle, and the Visit stays an Active Visit until it is completed or cancelled. It is read from the signed Clinical Notes written by the Visit's Doctor (`doctorSignedAt`); a note signed by anyone else, such as a Nursing note, does not make a Visit Doctor Signed.
+
 ## Diagnosis Code
 
 A Tenant-scoped Master of ICD-10-CM codes, each with a title and optional category. ICD-10-CM is the diagnosis code set UAE payers accept on claims, so codes must match the ICD-10-CM format (for example M54.5).

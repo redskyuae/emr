@@ -47,8 +47,9 @@ async function fetchVisits(params: VisitsParams): Promise<ListVisitsResponse> {
 
 // Non-suspense: the board's date/doctor/status filters drive this query, and
 // switching a filter must not blow away the surrounding toolbar and chrome.
-export function useVisitsQuery(params: VisitsParams) {
+export function useVisitsQuery(params: VisitsParams, options?: { enabled?: boolean }) {
   return useQuery({
+    enabled: options?.enabled,
     queryKey: visitsQueryKey(params),
     queryFn: () => fetchVisits(params),
   });

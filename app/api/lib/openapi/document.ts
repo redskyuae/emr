@@ -321,6 +321,14 @@ const auditExportForbiddenResponse = {
   content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
 };
 
+// The 403 of an operation gated by a single Permission.
+function permissionForbiddenResponse(permission: string) {
+  return {
+    description: `No active Tenant or the user lacks the \`${permission}\` permission.`,
+    content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
+  };
+}
+
 // The 200 response of an Audit Log export: a CSV or PDF file, never JSON.
 function auditExportFileResponse(file: {
   description: string;
@@ -1558,8 +1566,21 @@ const visitExample = {
   completedAt: null,
   cancelledAt: null,
   cancellationReason: null,
+  doctorSignedAt: null,
   createdOn: '2026-07-16T04:30:00.000Z',
   modifiedOn: '2026-07-16T04:30:00.000Z',
+};
+
+// An In Consultation Visit whose Doctor has signed the consultation: the Visits list shows it as
+// Doctor Signed until it is completed.
+const doctorSignedVisitExample = {
+  ...visitExample,
+  id: 503,
+  visitNumber: 'VST-1003',
+  queueToken: 3,
+  status: 'IN_CONSULTATION',
+  consultationStartedAt: '2026-07-16T04:45:00.000Z',
+  doctorSignedAt: '2026-07-16T05:05:00.000Z',
 };
 
 const doctorlessVisitExample = {
@@ -4171,6 +4192,7 @@ export const openApiDocument = {
                     dateOfBirth: '1985-04-12',
                     isActive: true,
                   },
+                  doctorProfile: { id: 42, isActive: true },
                 },
                 tenant: {
                   id: 'org_123',
@@ -5391,7 +5413,7 @@ export const openApiDocument = {
         tags: ['Doctor Schedule'],
         summary: 'List Doctor Slots',
         description:
-          'Generates available DoctorSlots for a Doctor on one date from active DoctorSchedules and assigned DoctorRotas. During rescheduling, the target Appointment may be supplied so its own reservations remain selectable.',
+          'Generates available DoctorSlots for a Doctor on one date from active DoctorSchedules and assigned DoctorRotas. During rescheduling, the target Appointment may be supplied so its own reservations remain selectable. Requires `doctor-slot:read`.',
         security: [{ cookieAuth: [] }],
         parameters: [
           {
@@ -5431,6 +5453,7 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedListErrorResponses,
+          '403': permissionForbiddenResponse('doctor-slot:read'),
         },
       },
     },
@@ -5972,7 +5995,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Download an Appointment schedule',
         description:
-          'Generates a branded Excel workbook or PDF document on the server for Appointments matching the supplied active-Tenant filters. Use fromDate and statusCategory for future schedules. The document header records the active Doctor, Therapist, Patient, Status, and search filters, or states that no filters were applied.',
+          'Generates a branded Excel workbook or PDF document on the server for Appointments matching the supplied active-Tenant filters. Use fromDate and statusCategory for future schedules. The document header records the active Doctor, Therapist, Patient, Status, and search filters, or states that no filters were applied. Requires `appointment:export`.',
         security: [{ cookieAuth: [] }],
         parameters: [
           {
@@ -6059,6 +6082,7 @@ export const openApiDocument = {
             },
           },
           ...authenticatedListErrorResponses,
+          '403': permissionForbiddenResponse('appointment:export'),
           '409': {
             description:
               'The matching Appointment count exceeds the server export limit. Narrow the filters before retrying.',
@@ -6362,8 +6386,8 @@ export const openApiDocument = {
             description:
               "Today's Visit queue, or the Visits matching the date range and filters (for example GET /api/v1/visits?fromDate=01-07-2026&toDate=16-07-2026&status=COMPLETED&query=asha).",
             content: jsonContent(paginatedSchema('Visit'), {
-              data: [visitExample],
-              meta: { total: 1, totalPages: 1, pageSize: 10, pageNumber: 1 },
+              data: [visitExample, doctorSignedVisitExample],
+              meta: { total: 2, totalPages: 1, pageSize: 10, pageNumber: 1 },
             }),
           },
           '400': {
@@ -7010,7 +7034,7 @@ export const openApiDocument = {
         tags: ['Visit Diagnosis'],
         summary: 'List Visit diagnoses',
         description:
-          "Returns the ICD-10-CM and Ayurveda diagnoses recorded on a Visit of any status, ICD-10-CM first, the Principal diagnosis first within each code system, then in saved order. code and title come from the referenced Diagnosis Code or Ayurveda Diagnosis Code even if it was deleted after recording; icdMapping is the Ayurveda code's current ICD-10-CM mapping. The Tenant is resolved from the active Session.",
+          "Returns the ICD-10-CM and Ayurveda diagnoses recorded on a Visit of any status, ICD-10-CM first, the Principal diagnosis first within each code system, then in saved order. code and title come from the referenced Diagnosis Code or Ayurveda Diagnosis Code even if it was deleted after recording; icdMapping is the Ayurveda code's current ICD-10-CM mapping. The Tenant is resolved from the active Session. Requires `visit-diagnosis:read`.",
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         responses: {
@@ -7028,7 +7052,7 @@ export const openApiDocument = {
             }),
           },
           '401': responseRef('Unauthorized'),
-          '403': responseRef('Forbidden'),
+          '403': permissionForbiddenResponse('visit-diagnosis:read'),
           '404': visitNotFoundResponse,
           '500': responseRef('InternalServerError'),
         },
@@ -7037,7 +7061,7 @@ export const openApiDocument = {
         tags: ['Visit Diagnosis'],
         summary: 'Save Visit diagnoses',
         description:
-          'Replaces the whole diagnosis list of an Active (Checked-in or In Consultation) Visit in one transaction; an empty list clears it. Each entry names its codeSystem: ICD10CM entries need diagnosisCodeId and AYURVEDA entries need ayurvedaDiagnosisCodeId (the other id is ignored). A code system with entries needs exactly one PRINCIPAL; a code may appear once per code system; at most 20 entries. sortOrder follows array position, starting at 1. Referenced codes must exist in the Tenant and not be deleted, except a code this Visit already records. Notes are trimmed, at most 500 characters, and blank notes are stored as null. A Completed Visit is corrected with PUT /api/v1/visits/{id}/diagnoses/amend. The Tenant is resolved from the active Session. Requires the `visit:update` permission.',
+          'Replaces the whole diagnosis list of an Active (Checked-in or In Consultation) Visit in one transaction; an empty list clears it. Each entry names its codeSystem: ICD10CM entries need diagnosisCodeId and AYURVEDA entries need ayurvedaDiagnosisCodeId (the other id is ignored). A code system with entries needs exactly one PRINCIPAL; a code may appear once per code system; at most 20 entries. sortOrder follows array position, starting at 1. Referenced codes must exist in the Tenant and not be deleted, except a code this Visit already records. Notes are trimmed, at most 500 characters, and blank notes are stored as null. A Completed Visit is corrected with PUT /api/v1/visits/{id}/diagnoses/amend. The Tenant is resolved from the active Session. Requires `visit-diagnosis:update`.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         requestBody: requestBody('SaveVisitDiagnosesRequest', visitDiagnosesRequestExample),
@@ -7050,10 +7074,7 @@ export const openApiDocument = {
           },
           '400': visitDiagnosesBadRequestResponse,
           '401': responseRef('Unauthorized'),
-          '403': {
-            description: 'No active Tenant or the user lacks the `visit:update` permission.',
-            content: jsonContent(schemaRef('ForbiddenError'), { message: 'Forbidden' }),
-          },
+          '403': permissionForbiddenResponse('visit-diagnosis:update'),
           '404': visitNotFoundResponse,
           '409': {
             description:
@@ -7345,7 +7366,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Upload a Visit document to Blob',
         description:
-          'Uploads a single file to Blob storage and returns its URL and metadata. This does not persist anything against a Visit — send the returned metadata in a Check-in payload (documents[]) or to POST /api/v1/visits/{id}/documents. Accepts a PDF or an image (PNG, JPEG, WEBP, GIF, TIFF) up to 4.5MB.',
+          'Uploads a single file to Blob storage and returns its URL and metadata. This does not persist anything against a Visit — send the returned metadata in a Check-in payload (documents[]) or to POST /api/v1/visits/{id}/documents. Accepts a PDF or an image (PNG, JPEG, WEBP, GIF, TIFF) up to 4.5MB. Requires `visit-document:upload`.',
         security: [{ cookieAuth: [] }],
         requestBody: {
           required: true,
@@ -7375,7 +7396,7 @@ export const openApiDocument = {
             }),
           },
           '401': responseRef('Unauthorized'),
-          '403': responseRef('Forbidden'),
+          '403': permissionForbiddenResponse('visit-document:upload'),
           '500': responseRef('InternalServerError'),
         },
       },
@@ -7384,7 +7405,8 @@ export const openApiDocument = {
       get: {
         tags: ['Visit'],
         summary: 'List Visit documents',
-        description: 'Lists the documents attached to a Visit in the active Tenant.',
+        description:
+          'Lists the documents attached to a Visit in the active Tenant. Requires `visit-document:read`.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         responses: {
@@ -7395,13 +7417,14 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedErrorResponses,
+          '403': permissionForbiddenResponse('visit-document:read'),
         },
       },
       post: {
         tags: ['Visit'],
         summary: 'Attach a document to a Visit',
         description:
-          'Persists a document (already uploaded via POST /api/v1/visits/documents) against an Active Visit. A Completed or Cancelled Visit cannot be edited.',
+          'Persists a document (already uploaded via POST /api/v1/visits/documents) against an Active Visit. A Completed or Cancelled Visit cannot be edited. Requires `visit-document:upload`.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Visit')],
         requestBody: requestBody('VisitDocumentMetadata', uploadedVisitDocumentExample),
@@ -7414,7 +7437,7 @@ export const openApiDocument = {
           },
           '400': responseRef('ValidationFailed'),
           '401': responseRef('Unauthorized'),
-          '403': responseRef('Forbidden'),
+          '403': permissionForbiddenResponse('visit-document:upload'),
           '404': responseRef('NotFound'),
           '409': {
             description: 'The Visit is Completed or Cancelled.',
@@ -7432,7 +7455,7 @@ export const openApiDocument = {
         tags: ['Visit'],
         summary: 'Delete a Visit document',
         description:
-          'Removes a document from an Active Visit and deletes the underlying Blob file. A Completed or Cancelled Visit cannot be edited.',
+          'Removes a document from an Active Visit and deletes the underlying Blob file. A Completed or Cancelled Visit cannot be edited. Requires `visit-document:delete`.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Visit'),
@@ -7447,7 +7470,7 @@ export const openApiDocument = {
         responses: {
           '204': { description: 'Document deleted.' },
           '401': responseRef('Unauthorized'),
-          '403': responseRef('Forbidden'),
+          '403': permissionForbiddenResponse('visit-document:delete'),
           '404': {
             description: 'The Visit or document was not found.',
             content: jsonContent(schemaRef('ValidationError'), {
@@ -8765,7 +8788,7 @@ export const openApiDocument = {
         tags: ['Clinical Note'],
         summary: 'Sign Clinical Note',
         description:
-          'Signs a draft Clinical Note for the Patient in the active Tenant, setting status to "signed" and stamping signedAt. A signed note is immutable — subsequent updates are rejected with 409 Conflict, and re-signing an already-signed note returns 409 Conflict.',
+          'Signs a draft Clinical Note for the Patient in the active Tenant, setting status to "signed" and stamping signedAt. A signed note is immutable — subsequent updates are rejected with 409 Conflict, and re-signing an already-signed note returns 409 Conflict. Signing a note that the Doctor of the Visit wrote on it sets the Visit doctorSignedAt, so an In Consultation Visit then reads as Doctor Signed; a note by anyone else, such as a Nursing note, does not.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Patient'),
@@ -8787,7 +8810,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Get Patient Chart',
         description:
-          'Returns the aggregated Patient Chart for one Patient in the active Tenant — Allergies, Problem List, Vital Signs, Medications, and Clinical Notes in a single payload for the chart initial load. Each collection is capped at its most-recent 100 records; the per-record endpoints remain the source of truth for pagination and writes. The tenantId is resolved from the active authenticated Session.',
+          'Returns the aggregated Patient Chart for one Patient in the active Tenant — Allergies, Problem List, Vital Signs, Medications, and Clinical Notes in a single payload for the chart initial load. Each collection is capped at its most-recent 100 records; the per-record endpoints remain the source of truth for pagination and writes. The tenantId is resolved from the active authenticated Session. Requires `patient-chart:read`.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Patient')],
         responses: {
@@ -8804,6 +8827,7 @@ export const openApiDocument = {
             }),
           },
           ...authenticatedErrorResponses,
+          '403': permissionForbiddenResponse('patient-chart:read'),
         },
       },
     },
@@ -8812,7 +8836,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Get Consolidated Patient Report',
         description:
-          'Reads everything needed to print one Consolidated Patient Report: the course of care of one Patient in the active Tenant across a report period. Requires `visit:read`. The period is given as `fromDate` and `toDate` in DD-MM-YYYY, both ends inclusive, and may be at most 366 days; `period` echoes it back in DD-MM-YYYY. Cancelled Visits are left out and Visits are listed oldest first. Each Visit carries its signed Clinical Notes (drafts are never included), the Treatment Sessions given in it, and `painScore` from the latest Vital Signs set of that Visit that recorded one. `diagnoses` lists each Visit Diagnosis once across the period, in the order first recorded, with `firstRecordedOn` as DD-MM-YYYY. `treatmentPlans` lists the Patient Treatment Plans worked on in the period plus Pending and In Progress plans that existed by the period end. `medications` lists those taken at any time in the period; a stopped or completed medication without an end date is treated as ending when it was last changed. `consultingDoctor` is the Doctor of the latest Visit that had one, or null. `latestPlan` is the plan text of the latest signed Clinical Note that has one, or null. Identity documents, Emirates ID and passport are never returned. Times are UTC; `timeZone` is the Tenant operational time zone to display them in. The tenantId is resolved from the active authenticated Session.',
+          'Reads everything needed to print one Consolidated Patient Report: the course of care of one Patient in the active Tenant across a report period. Requires `report:read`. The period is given as `fromDate` and `toDate` in DD-MM-YYYY, both ends inclusive, and may be at most 366 days; `period` echoes it back in DD-MM-YYYY. Cancelled Visits are left out and Visits are listed oldest first. Each Visit carries its signed Clinical Notes (drafts are never included), the Treatment Sessions given in it, and `painScore` from the latest Vital Signs set of that Visit that recorded one. `diagnoses` lists each Visit Diagnosis once across the period, in the order first recorded, with `firstRecordedOn` as DD-MM-YYYY. `treatmentPlans` lists the Patient Treatment Plans worked on in the period plus Pending and In Progress plans that existed by the period end. `medications` lists those taken at any time in the period; a stopped or completed medication without an end date is treated as ending when it was last changed. `consultingDoctor` is the Doctor of the latest Visit that had one, or null. `latestPlan` is the plan text of the latest signed Clinical Note that has one, or null. Identity documents, Emirates ID and passport are never returned. Times are UTC; `timeZone` is the Tenant operational time zone to display them in. The tenantId is resolved from the active authenticated Session.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Patient'),
@@ -8852,7 +8876,7 @@ export const openApiDocument = {
             }),
           },
           '401': responseRef('Unauthorized'),
-          '403': responseRef('Forbidden'),
+          '403': permissionForbiddenResponse('report:read'),
           '404': {
             description: 'No Patient with this ID in the active Tenant.',
             content: jsonContent(schemaRef('ValidationError'), {
@@ -9320,7 +9344,7 @@ export const openApiDocument = {
         tags: ['Patient'],
         summary: 'Get Patient Timeline',
         description:
-          'Returns one page of the Patient Timeline — the reverse-chronological feed of Timeline Events for a single Patient in the active Tenant. A Timeline Event is one lifecycle transition, not one record: a Visit that was checked in, seen and completed yields three Timeline Events. Events are derived at read time from transition timestamps on the source records and are never stored, so a transition whose timestamp is absent does not appear. Occurrence instants are returned as UTC; the client renders them in its own time zone. Paging is by opaque cursor rather than page number, because the feed receives new events at the top and offsets would repeat rows across pages. The tenantId is resolved from the active authenticated Session.',
+          'Returns one page of the Patient Timeline — the reverse-chronological feed of Timeline Events for a single Patient in the active Tenant. A Timeline Event is one lifecycle transition, not one record: a Visit that was checked in, seen and completed yields three Timeline Events. Events are derived at read time from transition timestamps on the source records and are never stored, so a transition whose timestamp is absent does not appear. Occurrence instants are returned as UTC; the client renders them in its own time zone. Paging is by opaque cursor rather than page number, because the feed receives new events at the top and offsets would repeat rows across pages. The tenantId is resolved from the active authenticated Session. Requires `patient-timeline:read`.',
         security: [{ cookieAuth: [] }],
         parameters: [
           numberIdPathParameter('Patient'),
@@ -9423,7 +9447,7 @@ export const openApiDocument = {
             }),
           },
           '401': responseRef('Unauthorized'),
-          '403': responseRef('Forbidden'),
+          '403': permissionForbiddenResponse('patient-timeline:read'),
           '500': responseRef('InternalServerError'),
         },
       },
@@ -9466,7 +9490,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Reschedule Appointment',
         description:
-          'Changes the schedule of a Scheduled or Confirmed Appointment in the active Tenant while preserving its Booking Number and non-scheduling details. A Rescheduling reason is required and recorded on the Appointment. Consultation rescheduling may change the Doctor and atomically replaces Slot Reservations. Procedure rescheduling changes only its direct date/time window. A successful reschedule returns the Appointment to the system Scheduled status.',
+          'Changes the schedule of a Scheduled or Confirmed Appointment in the active Tenant while preserving its Booking Number and non-scheduling details. A Rescheduling reason is required and recorded on the Appointment. Consultation rescheduling may change the Doctor and atomically replaces Slot Reservations. Procedure rescheduling changes only its direct date/time window. A successful reschedule returns the Appointment to the system Scheduled status. Requires `appointment:reschedule`.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Appointment')],
         requestBody: {
@@ -9501,7 +9525,7 @@ export const openApiDocument = {
             }),
           },
           '401': responseRef('Unauthorized'),
-          '403': responseRef('Forbidden'),
+          '403': permissionForbiddenResponse('appointment:reschedule'),
           '404': {
             description: 'No such Appointment exists in the active Tenant.',
             content: jsonContent(schemaRef('NotFoundError'), {
@@ -9541,7 +9565,7 @@ export const openApiDocument = {
         tags: ['Appointment'],
         summary: 'Cancel Appointment',
         description:
-          'Irreversibly changes a Scheduled or Confirmed Appointment in the active Tenant to the system Cancelled status. The operation records an active Tenant Appointment Cancelled Reason and cancellation time while preserving the Booking Number and original schedule. Consultation Slot Reservations are released atomically. Repeated or concurrent cancellation attempts are rejected.',
+          'Irreversibly changes a Scheduled or Confirmed Appointment in the active Tenant to the system Cancelled status. The operation records an active Tenant Appointment Cancelled Reason and cancellation time while preserving the Booking Number and original schedule. Consultation Slot Reservations are released atomically. Repeated or concurrent cancellation attempts are rejected. Requires `appointment:cancel`.',
         security: [{ cookieAuth: [] }],
         parameters: [numberIdPathParameter('Appointment')],
         requestBody: requestBody('CancelAppointmentRequest', cancelAppointmentRequestExample),
@@ -9560,7 +9584,7 @@ export const openApiDocument = {
             }),
           },
           '401': responseRef('Unauthorized'),
-          '403': responseRef('Forbidden'),
+          '403': permissionForbiddenResponse('appointment:cancel'),
           '404': {
             description: 'No such Appointment exists in the active Tenant.',
             content: jsonContent(schemaRef('NotFoundError'), {
@@ -11396,7 +11420,16 @@ export const openApiDocument = {
       },
       CurrentUserIdentity: {
         type: 'object',
-        required: ['id', 'name', 'email', 'image', 'phone', 'emailVerified', 'staffProfile'],
+        required: [
+          'id',
+          'name',
+          'email',
+          'image',
+          'phone',
+          'emailVerified',
+          'staffProfile',
+          'doctorProfile',
+        ],
         properties: {
           id: { type: 'string', description: 'BetterAuth user ID.' },
           name: { type: 'string' },
@@ -11407,6 +11440,23 @@ export const openApiDocument = {
           staffProfile: {
             oneOf: [schemaRef('CurrentUserStaffProfile'), { type: 'null' }],
           },
+          doctorProfile: {
+            oneOf: [schemaRef('CurrentUserDoctorProfile'), { type: 'null' }],
+            description:
+              'The Doctor record linked to this user in the Active Tenant, or null when the user is not a Doctor. A user with the Doctor Role works the Visits of this Doctor.',
+          },
+        },
+      },
+      CurrentUserDoctorProfile: {
+        type: 'object',
+        required: ['id', 'isActive'],
+        properties: {
+          id: {
+            type: 'integer',
+            minimum: 1,
+            description: 'Doctor ID, as used by doctorId filters.',
+          },
+          isActive: { type: 'boolean' },
         },
       },
       CurrentUserTenant: {
@@ -11725,6 +11775,10 @@ export const openApiDocument = {
               'replace',
               'remove',
               'revoke',
+              'cancel',
+              'reschedule',
+              'export',
+              'upload',
             ],
           },
           name: {
@@ -11773,6 +11827,10 @@ export const openApiDocument = {
               'replace',
               'remove',
               'revoke',
+              'cancel',
+              'reschedule',
+              'export',
+              'upload',
             ],
           },
           description: { type: ['string', 'null'], maxLength: 500 },
@@ -11823,6 +11881,10 @@ export const openApiDocument = {
               'replace',
               'remove',
               'revoke',
+              'cancel',
+              'reschedule',
+              'export',
+              'upload',
             ],
           },
           name: {
@@ -12458,6 +12520,7 @@ export const openApiDocument = {
           'admitSource',
           'appointment',
           'checkedInAt',
+          'doctorSignedAt',
           'createdOn',
           'modifiedOn',
         ],
@@ -12525,6 +12588,13 @@ export const openApiDocument = {
           cancellationReason: {
             type: ['string', 'null'],
             description: 'Plain text or Markdown formatting.',
+          },
+          doctorSignedAt: {
+            type: ['string', 'null'],
+            format: 'date-time',
+            description:
+              "When the latest Clinical Note written by the Visit's Doctor on this Visit was signed, or null while none is signed. Notes by other users, such as a signed Nursing note, do not count. Derived from the Visit Clinical Notes, not a Visit Status: an In Consultation Visit with a value reads as Doctor Signed.",
+            example: '2026-07-16T05:05:00.000Z',
           },
           createdOn: { type: 'string', format: 'date-time' },
           modifiedOn: { type: 'string', format: 'date-time' },

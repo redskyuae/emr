@@ -450,6 +450,7 @@ function BookAppointmentWorkflow() {
                     recommendedDuration={booking.selectedRota?.duration ?? 30}
                     isLoading={booking.isDoctorSlotsLoading}
                     error={booking.doctorSlotsError}
+                    canViewDoctorSlots={booking.canViewDoctorSlots}
                     onRetry={() => void booking.retryDoctorSlots()}
                     onContextChange={booking.changeSchedule}
                     onRotaChange={booking.changeRota}

@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 
 import type { SingleQueryResult } from '@/app/api/lib/utils/types';
 import { hasTenantAdminRole } from '@/app/api/lib/utils/auth-helpers';
+import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { staffRepository } from '../../staff/repository/staff-repository';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { userRoleRepository } from '../../user-role/repository/user-role-repository';
@@ -34,8 +35,9 @@ export async function getCurrentUserQuery(
     return { success: false, errors: ['Tenant not found'], status: StatusCodes.NOT_FOUND };
   }
 
-  const [staff, assignedRoles] = await Promise.all([
+  const [staff, doctor, assignedRoles] = await Promise.all([
     staffRepository.getStaffByUserId(userId, tenantId),
+    doctorRepository.findByUserId(tenantId, userId),
     userRoleRepository.getAssignedRolesByUser(userId, tenantId),
   ]);
 
@@ -65,6 +67,7 @@ export async function getCurrentUserQuery(
               dateOfBirth: staff.dateOfBirth,
             }
           : null,
+        doctorProfile: doctor ? { id: doctor.id, isActive: doctor.isActive } : null,
       },
       tenant: {
         id: tenant.id,

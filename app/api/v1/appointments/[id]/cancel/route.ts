@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { cancelAppointmentCommand } from '@/app/api/lib/modules/appointment/commands/cancel-appointment-command';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 import type { CancelAppointmentResponse } from './types';
 import { recordLifecycleEvent } from '@/app/api/lib/analytics/lifecycle-event-recorder';
 import { appointmentCancelledProperties } from '@/app/api/lib/analytics/lifecycle-appointment-properties';
@@ -19,6 +19,9 @@ export async function POST(request: NextRequest, context: AppointmentRouteContex
   try {
     const tenantSession = await requireTenantSession();
     if (tenantSession instanceof Response) return tenantSession;
+
+    const denied = await requireTenantPermissions(tenantSession, ['appointment:cancel']);
+    if (denied) return denied;
 
     const { id } = await context.params;
     let payload: unknown;

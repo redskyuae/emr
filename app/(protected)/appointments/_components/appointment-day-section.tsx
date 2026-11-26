@@ -41,7 +41,9 @@ type AppointmentDaySectionProps = {
   isLoading: boolean;
   isFetching: boolean;
   onPageChange: (page: number) => void;
-  onCancel: (appointment: Appointment) => void;
+  /** Omitted without `appointment:cancel`. */
+  onCancel?: (appointment: Appointment) => void;
+  canReschedule: boolean;
 };
 
 export function AppointmentDaySection({
@@ -60,6 +62,7 @@ export function AppointmentDaySection({
   isFetching,
   onPageChange,
   onCancel,
+  canReschedule,
 }: AppointmentDaySectionProps) {
   const Icon = kind === 'today' ? CiCalendar : CiCalendarDate;
 
@@ -96,6 +99,7 @@ export function AppointmentDaySection({
             isFetching={isFetching}
             onPageChange={onPageChange}
             onCancel={onCancel}
+            canReschedule={canReschedule}
           />
         ) : (
           <Card>

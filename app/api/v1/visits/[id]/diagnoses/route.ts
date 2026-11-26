@@ -35,6 +35,14 @@ export async function GET(_request: NextRequest, context: VisitDiagnosesRouteCon
       return tenantSession;
     }
 
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'visit-diagnosis:read',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
+    }
+
     const { id } = await context.params;
     const result = await listVisitDiagnosesQuery(id, tenantSession.tenantId);
 
@@ -64,7 +72,9 @@ export async function PUT(request: NextRequest, context: VisitDiagnosesRouteCont
       return tenantSession;
     }
 
-    const permissionResponse = await requireTenantPermissions(tenantSession, ['visit:update']);
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'visit-diagnosis:update',
+    ]);
 
     if (permissionResponse) {
       return permissionResponse;

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import type { VisitDocument } from '@/app/api/lib/modules/visit-document/schemas/visit-document-schema';
 import { getApiErrorMessage } from '@/app/queries/api-error';
+import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { useAddVisitDocument } from '@/app/queries/visits/useAddVisitDocument';
 import { useVisitDocumentsQuery } from '@/app/queries/visits/useVisitDocuments';
 import { EmptyState } from '@/components/app/empty-state';
@@ -18,9 +19,14 @@ import { formatFileSize } from '../../_utils/format-file-size';
 import { VisitDocumentUploadButton } from '../../_components/visit-document-upload';
 import { DeleteVisitDocumentDialog } from './_modals/delete-visit-document-dialog';
 
+// Rendered only with `visit-document:read`; Upload and Remove each need their own permission.
 export function VisitDocumentsCard({ visitId, active }: { visitId: number; active: boolean }) {
   const documentsQuery = useVisitDocumentsQuery(visitId);
   const addMutation = useAddVisitDocument();
+  const { data: canUpload } = useHasPermission('visit-document:upload');
+  const { data: canDelete } = useHasPermission('visit-document:delete');
+  const showUpload = active && canUpload;
+  const showDelete = active && canDelete;
   const [pendingDelete, setPendingDelete] = useState<VisitDocument | null>(null);
 
   const documents = documentsQuery.data ?? [];
@@ -40,7 +46,9 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
     <Card>
       <CardHeader className="flex items-center justify-between">
         <CardTitle className="text-base">Documents this Visit</CardTitle>
-        {active ? <VisitDocumentUploadButton label="Upload" onUploaded={handleUploaded} /> : null}
+        {showUpload ? (
+          <VisitDocumentUploadButton label="Upload" onUploaded={handleUploaded} />
+        ) : null}
       </CardHeader>
       <CardContent>
         {documentsQuery.isError ? (
@@ -55,7 +63,7 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
                     <Skeleton className="size-4 shrink-0" />
                     <Skeleton className="h-4 max-w-56 flex-1" />
                     <Skeleton className="ml-auto h-3 w-12" />
-                    {active ? <Skeleton className="size-7 shrink-0" /> : null}
+                    {showDelete ? <Skeleton className="size-7 shrink-0" /> : null}
                   </li>
                 ))}
               </ul>
@@ -68,7 +76,11 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
                 icon={PiFilesDuotone}
                 title="No documents yet"
                 className="min-h-56 rounded-lg border border-dashed"
-                description="Upload reports, images, or other files for this Visit."
+                description={
+                  showUpload
+                    ? 'Upload reports, images, or other files for this Visit.'
+                    : 'Reports, images, or other files added to this Visit appear here.'
+                }
               />
             ) : (
               <ul className="space-y-2 text-sm">
@@ -87,7 +99,7 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
                     <span className="text-muted-foreground shrink-0 text-xs">
                       {formatFileSize(document.fileSize)}
                     </span>
-                    {active ? (
+                    {showDelete ? (
                       <Button
                         type="button"
                         variant="ghost"
@@ -109,7 +121,7 @@ export function VisitDocumentsCard({ visitId, active }: { visitId: number; activ
 
       <DeleteVisitDocumentDialog
         visitId={visitId}
-        document={pendingDelete}
+        document={showDelete ? pendingDelete : null}
         onClose={() => setPendingDelete(null)}
       />
     </Card>

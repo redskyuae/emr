@@ -28,7 +28,11 @@ import {
 } from '../_utils/consultation-steps';
 import { SOAP_SECTIONS, soapToConsultation } from '../_utils/doctor-consultation-note';
 import { useConsultationStepAnalytics } from './use-consultation-step-analytics';
-import { VisitConsultationForm, type ConsultationStepSlots } from './visit-consultation-form';
+import {
+  VisitConsultationForm,
+  type ConsultationStepSlots,
+  type PendingDiagnoses,
+} from './visit-consultation-form';
 import { STEP_LAYOUT, VisitStepShell } from './visit-step-shell';
 
 function RecordedSection({ label, value }: { label: string; value: string }) {
@@ -239,6 +243,7 @@ export function VisitConsultationPanel({
   onAmendVisit,
   onAmendNote,
   onDirtyChange,
+  pendingDiagnoses,
   slots = {},
 }: {
   visit: Visit;
@@ -253,6 +258,8 @@ export function VisitConsultationPanel({
   onAmendVisit?: () => void;
   onAmendNote?: (noteId: number) => void;
   onDirtyChange: (dirty: boolean) => void;
+  /** The Visit's coded diagnoses not saved yet, saved with the consultation. */
+  pendingDiagnoses?: PendingDiagnoses;
   slots?: ConsultationStepSlots;
 }) {
   const noteTypes = useClinicalNoteTypesQuery({ limit: 100 });
@@ -367,6 +374,7 @@ export function VisitConsultationPanel({
           noteId={draft?.id ?? null}
           initialValues={draft ? soapToConsultation(draft) : null}
           onDirtyChange={onDirtyChange}
+          pendingDiagnoses={pendingDiagnoses}
           steps={steps}
           stepId={stepId}
           onStepChange={goTo}

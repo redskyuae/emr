@@ -1,3 +1,4 @@
+import type { Doctor } from '../../doctor/schemas/doctor-schema';
 import type { Role } from '../../role/schemas/role-schema';
 import type { Staff } from '../../staff/schemas/staff-schema';
 import type { Tenant } from '../../tenant/schemas/tenant-schema';
@@ -15,6 +16,9 @@ export type CurrentUserStaffProfile = Pick<
   'isActive' | 'gender' | 'staffCode' | 'designation' | 'dateOfBirth'
 >;
 
+/** The Doctor record linked to this user in the Active Tenant, used to scope their own Visits. */
+export type CurrentUserDoctorProfile = Pick<Doctor, 'id' | 'isActive'>;
+
 export type CurrentUserIdentity = {
   id: string;
   name: string;
@@ -23,6 +27,7 @@ export type CurrentUserIdentity = {
   phone: string | null;
   emailVerified: boolean;
   staffProfile: CurrentUserStaffProfile | null;
+  doctorProfile: CurrentUserDoctorProfile | null;
 };
 
 export type CurrentUser = {

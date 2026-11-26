@@ -1,0 +1,1 @@
+CREATE INDEX "clinical_note_tenant_visit_idx" ON "clinical_note" USING btree ("tenant_id","visit_id");

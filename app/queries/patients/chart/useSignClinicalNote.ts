@@ -4,6 +4,7 @@ import { useMutation, useQueryClient, type UseMutationOptions } from '@tanstack/
 
 import { parseApiError } from '@/app/queries/api-error';
 import type { SignClinicalNoteResponse } from '@/app/api/v1/patients/[id]/notes/[noteId]/sign/types';
+import { VISITS_KEY } from '@/app/queries/visits/useVisits';
 import { patientChartQueryKey } from './usePatientChart';
 
 type SignClinicalNoteVariables = {
@@ -43,6 +44,8 @@ export function useSignClinicalNote(options?: UseSignClinicalNoteOptions) {
       await queryClient.invalidateQueries({
         queryKey: patientChartQueryKey(args[1].patientId),
       });
+      // The Visit Doctor's signed note makes its In Consultation Visit read as Doctor Signed.
+      await queryClient.invalidateQueries({ queryKey: VISITS_KEY });
       await onSuccess?.(...args);
     },
   });

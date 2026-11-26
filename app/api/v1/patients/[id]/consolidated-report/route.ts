@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, context: ConsolidatedReportRoute
     const tenantSession = await requireTenantSession();
     if (tenantSession instanceof Response) return tenantSession;
 
-    const denied = await requireTenantPermissions(tenantSession, ['visit:read']);
+    const denied = await requireTenantPermissions(tenantSession, ['report:read']);
     if (denied) return denied;
 
     const { id } = await context.params;

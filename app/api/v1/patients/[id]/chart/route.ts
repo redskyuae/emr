@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type { GetPatientChartResponse } from './types';
 
 import { getPatientChartQuery } from '@/app/api/lib/modules/patient-chart/queries/get-patient-chart-query';
-import { requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
+import { requireTenantPermissions, requireTenantSession } from '@/app/api/lib/utils/auth-helpers';
 
 type PatientChartRouteContext = {
   params: Promise<{ id: string }>;
@@ -15,6 +15,14 @@ export async function GET(_request: NextRequest, context: PatientChartRouteConte
 
     if (tenantSession instanceof Response) {
       return tenantSession;
+    }
+
+    const permissionResponse = await requireTenantPermissions(tenantSession, [
+      'patient-chart:read',
+    ]);
+
+    if (permissionResponse) {
+      return permissionResponse;
     }
 
     const { id } = await context.params;

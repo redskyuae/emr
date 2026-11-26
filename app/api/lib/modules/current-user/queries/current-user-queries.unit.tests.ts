@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { hasTenantAdminRole } from '@/app/api/lib/utils/auth-helpers';
+import type { Doctor } from '../../doctor/schemas/doctor-schema';
+import { doctorRepository } from '../../doctor/repository/doctor-repository';
 import { staffRepository } from '../../staff/repository/staff-repository';
 import { tenantRepository } from '../../tenant/repository/tenant-repository';
 import { userRoleRepository } from '../../user-role/repository/user-role-repository';
@@ -8,6 +10,9 @@ import { currentUserRepository } from '../repository/current-user-repository';
 import { getCurrentUserQuery } from './get-current-user-query';
 
 vi.mock('@/app/api/lib/utils/auth-helpers', () => ({ hasTenantAdminRole: vi.fn() }));
+vi.mock('../../doctor/repository/doctor-repository', () => ({
+  doctorRepository: { findByUserId: vi.fn() },
+}));
 vi.mock('../../staff/repository/staff-repository', () => ({
   staffRepository: { getStaffByUserId: vi.fn() },
 }));
@@ -26,6 +31,7 @@ vi.mock('../repository/current-user-repository', () => ({
 }));
 
 const currentUserRepo = vi.mocked(currentUserRepository);
+const doctorRepo = vi.mocked(doctorRepository);
 const staffRepo = vi.mocked(staffRepository);
 const tenantRepo = vi.mocked(tenantRepository);
 const userRoleRepo = vi.mocked(userRoleRepository);
@@ -59,6 +65,7 @@ describe('CurrentUser queries', () => {
       isOnboarded: true,
     });
     staffRepo.getStaffByUserId.mockResolvedValue(undefined);
+    doctorRepo.findByUserId.mockResolvedValue(undefined);
     userRoleRepo.getAssignedRolesByUser.mockResolvedValue([]);
     isTenantAdmin.mockReturnValue(true);
     currentUserRepo.getAllActivePermissionKeys.mockResolvedValue(['appointment:read']);
@@ -70,6 +77,24 @@ describe('CurrentUser queries', () => {
     expect(result).toMatchObject({
       success: true,
       data: { tenant: { id: 'tenant-1', timeZone: 'Asia/Dubai' } },
+    });
+  });
+
+  it('should have no Doctor profile when the user is not a Doctor', async () => {
+    const result = await getCurrentUserQuery('user-1', 'tenant-1');
+
+    expect(result).toMatchObject({ success: true, data: { user: { doctorProfile: null } } });
+  });
+
+  it('should expose the Doctor linked to the user in the Active Tenant', async () => {
+    doctorRepo.findByUserId.mockResolvedValue({ id: 31, isActive: true } as Doctor);
+
+    const result = await getCurrentUserQuery('user-1', 'tenant-1');
+
+    expect(doctorRepo.findByUserId).toHaveBeenCalledWith('tenant-1', 'user-1');
+    expect(result).toMatchObject({
+      success: true,
+      data: { user: { doctorProfile: { id: 31, isActive: true } } },
     });
   });
 });

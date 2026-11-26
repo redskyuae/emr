@@ -1,8 +1,9 @@
-import type { VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
+import type { Visit, VisitStatus } from '@/app/api/lib/modules/visit/schemas/visit-schema';
 
 type VisitStatusPresentation = {
   label: string;
   variant: 'default' | 'secondary' | 'outline' | 'destructive';
+  className?: string;
 };
 
 const VISIT_STATUS_PRESENTATION: Record<VisitStatus, VisitStatusPresentation> = {
@@ -22,8 +23,25 @@ export const VISIT_STATUS_FILTERS = [
   { value: 'CANCELLED', label: 'Cancelled' },
 ] as const;
 
+// Not a Visit Status: an In Consultation Visit whose Doctor has signed a Clinical Note.
+const DOCTOR_SIGNED_PRESENTATION: VisitStatusPresentation = {
+  label: 'Doctor Signed',
+  variant: 'outline',
+  className: 'border-primary/40 text-primary',
+};
+
 export function visitStatusPresentation(status: VisitStatus) {
   return VISIT_STATUS_PRESENTATION[status];
+}
+
+/**
+ * The status the Visits list shows: Doctor Signed once the Doctor has signed their part of an
+ * In Consultation Visit, otherwise the Visit Status itself.
+ */
+export function visitListStatusPresentation(visit: Pick<Visit, 'status' | 'doctorSignedAt'>) {
+  return visit.status === 'IN_CONSULTATION' && visit.doctorSignedAt
+    ? DOCTOR_SIGNED_PRESENTATION
+    : VISIT_STATUS_PRESENTATION[visit.status];
 }
 
 export function isActiveVisit(status: VisitStatus) {

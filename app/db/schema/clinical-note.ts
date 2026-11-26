@@ -45,5 +45,8 @@ export const clinicalNote = pgTable(
       sql`not (${table.visitId} is not null and ${table.admissionId} is not null)`
     ),
     tenantPatientIdx: index('clinical_note_tenant_patient_idx').on(table.tenantId, table.patientId),
+    // Every Visit read looks up the Visit's signed notes (Doctor Signed), so it must not scan
+    // all of the Tenant's notes.
+    tenantVisitIdx: index('clinical_note_tenant_visit_idx').on(table.tenantId, table.visitId),
   })
 );
