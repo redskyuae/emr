@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQueryState } from 'nuqs';
 import Link from 'next/link';
 import {
+  CiCircleAlert,
   CiCircleRemove,
   CiFloppyDisk,
   CiLogout,
@@ -30,6 +31,7 @@ import { useClinicalNoteTypesQuery } from '@/app/queries/clinical-masters/note-t
 import { useHasPermission } from '@/app/queries/identity-access/useCurrentUser';
 import { usePatientChartQuery } from '@/app/queries/patients/chart/usePatientChart';
 import { RichTextContent } from '@/components/clinical/rich-text-content';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/app/empty-state';
@@ -126,7 +128,17 @@ export function AdmissionDetailImpl({ admissionId }: { admissionId: number }) {
             allergies without leaving the Admission. */}
         {canReadChart ? (
           <AllergyBanner allergies={chartQuery.data?.allergies ?? []} allergenName={allergenName} />
-        ) : null}
+        ) : (
+          // Without this, "no access" would look the same as "no allergies".
+          <Alert>
+            <CiCircleAlert className="size-4" />
+            <AlertTitle>Patient Chart not shown</AlertTitle>
+            <AlertDescription>
+              You do not have permission to view the Patient Chart, so allergies, Vital Signs and
+              Clinical Notes are not shown on this Admission.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card>
           <CardContent className="space-y-4">

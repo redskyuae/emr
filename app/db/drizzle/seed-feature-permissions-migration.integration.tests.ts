@@ -31,17 +31,23 @@ const featurePermissionNames = [
   'report:read',
 ];
 
-async function executeMigration() {
-  const migration = await readFile(
-    new URL('./0085_seed_feature_permissions.sql', import.meta.url),
-    'utf8'
-  );
+const FEATURE_MIGRATION = '0085_seed_feature_permissions.sql';
+const RESTORE_MIGRATION = '0086_restore_feature_permission_access.sql';
+
+async function executeMigration(fileName: string) {
+  const migration = await readFile(new URL(`./${fileName}`, import.meta.url), 'utf8');
 
   for (const statement of migration.split('--> statement-breakpoint')) {
     if (statement.trim()) {
       await db.execute(sql.raw(statement));
     }
   }
+}
+
+// 0086 completes 0085, so a fresh database runs both in order.
+async function executeMigrations() {
+  await executeMigration(FEATURE_MIGRATION);
+  await executeMigration(RESTORE_MIGRATION);
 }
 
 async function onboardTenant(tenantId: string) {
@@ -111,12 +117,12 @@ async function arrangeExistingTenant() {
   return { systemRoles, frontDesk, clinician, retired };
 }
 
-describe('0085 feature permissions migration', () => {
+describe('0085 and 0086 feature permissions migrations', () => {
   it('should add the feature Permissions to the catalogue as onboarding seeds them', async () => {
     await arrangeExistingTenant();
 
-    await executeMigration();
-    await executeMigration();
+    await executeMigrations();
+    await executeMigrations();
 
     const rows = await db
       .select({
@@ -146,8 +152,8 @@ describe('0085 feature permissions migration', () => {
   it('should give existing System Roles the same Permissions a new onboarding gives', async () => {
     const { systemRoles } = await arrangeExistingTenant();
 
-    await executeMigration();
-    await executeMigration();
+    await executeMigrations();
+    await executeMigrations();
 
     const onboardedRoles = await onboardTenant(onboardedTenantId);
 
@@ -170,7 +176,7 @@ describe('0085 feature permissions migration', () => {
   it('should grant custom Roles the Permissions that now guard what they could already reach', async () => {
     const { frontDesk, clinician, retired } = await arrangeExistingTenant();
 
-    await executeMigration();
+    await executeMigrations();
 
     const [frontDeskNames, clinicianNames, retiredNames] = await Promise.all([
       getAssignedNames(frontDesk.id, existingTenantId),
@@ -180,13 +186,17 @@ describe('0085 feature permissions migration', () => {
 
     expect(frontDeskNames).toEqual(
       [
+        'appointment:cancel',
         'appointment:export',
         'appointment:read',
+        'appointment:reschedule',
         'dashboard:read',
+        'doctor-slot:read',
         'patient-chart:read',
         'previous-visit:read',
         'report:read',
         'visit-diagnosis:read',
+        'visit-document:delete',
         'visit-document:read',
         'visit-document:upload',
         'visit:create',
@@ -215,5 +225,32 @@ describe('0085 feature permissions migration', () => {
       ].sort()
     );
     expect(retiredNames).toEqual(['appointment:create', 'visit:read']);
+  });
+
+  it('should restore the wider access on a database that already applied 0085', async () => {
+    const { systemRoles, frontDesk } = await arrangeExistingTenant();
+    const therapist = systemRoles.find(({ code }) => code === 'THERAPIST')!;
+    const restored = [
+      'appointment:cancel',
+      'appointment:reschedule',
+      'doctor-slot:read',
+      'visit-document:delete',
+    ];
+
+    await executeMigration(FEATURE_MIGRATION);
+
+    expect(await getAssignedNames(frontDesk.id, existingTenantId)).not.toEqual(
+      expect.arrayContaining(restored)
+    );
+
+    await executeMigration(RESTORE_MIGRATION);
+    await executeMigration(RESTORE_MIGRATION);
+
+    expect(await getAssignedNames(frontDesk.id, existingTenantId)).toEqual(
+      expect.arrayContaining(restored)
+    );
+    expect(await getAssignedNames(therapist.id, existingTenantId)).toEqual(
+      expect.arrayContaining(['appointment:cancel', 'appointment:reschedule', 'doctor-slot:read'])
+    );
   });
 });

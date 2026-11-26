@@ -603,6 +603,13 @@
       "when": 1795606852249,
       "tag": "0085_seed_feature_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1795667623499,
+      "tag": "0086_restore_feature_permission_access",
+      "breakpoints": true
     }
   ]
 }

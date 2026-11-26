@@ -21,8 +21,9 @@ VALUES
   ('reports', 'report', 'read', 'report:read', 'View Reports, including the Consolidated Patient Report.')
 ON CONFLICT ("name") DO NOTHING;
 --> statement-breakpoint
--- Nobody loses access: every Role (System or custom) that already reached a feature through an
--- older Permission is granted the new Permission that now guards it.
+-- Every Role (System or custom) that already reached a feature through an older Permission is
+-- granted the new Permission that now guards it. 0086 widens the sources for Cancel,
+-- Reschedule, Doctor Slots and Visit Document upload/delete so that no Role loses access.
 INSERT INTO "role_permission" ("tenant_id", "role_id", "permission_id")
 SELECT DISTINCT "role"."tenant_id", "role"."id", "granted"."id"
 FROM (

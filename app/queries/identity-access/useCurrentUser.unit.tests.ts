@@ -31,7 +31,7 @@ describe('fetchCurrentUserHomePath', () => {
     queryClient.setQueryData(currentUserQueryKey, {
       data: { roles: [{ code: 'DOCTOR' }], permissions: ['visit:read'] },
     });
-    const fetchMock = vi.fn().mockResolvedValue(meResponse([], ['appointment:read']));
+    const fetchMock = vi.fn().mockResolvedValue(meResponse([], ['dashboard:read']));
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(fetchCurrentUserHomePath(queryClient)).resolves.toBe('/dashboard');

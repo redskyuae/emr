@@ -31,8 +31,8 @@ const DASHBOARD_PERMISSION = 'dashboard:read';
 const DEFAULT_PERMISSION_NAMES_BY_SYSTEM_ROLE = {
   NURSE: [DASHBOARD_PERMISSION],
   // A Doctor works Patients, Appointments (including Book Appointment), today's Visits,
-  // Previous Visits and Reports. Visit amend and every delete except their own Visit
-  // Documents stay with the Tenant Admin.
+  // Previous Visits and Reports. Visit amend and every delete except Visit Documents stay
+  // with the Tenant Admin.
   DOCTOR: [
     DASHBOARD_PERMISSION,
     'appointment-mode:read',
@@ -98,10 +98,15 @@ const DEFAULT_PERMISSION_NAMES_BY_SYSTEM_ROLE = {
     'patient-treatment-plan:assign',
     'patient-treatment-plan:update',
   ],
+  // A Therapist keeps the Appointment actions that were open to them before they had their
+  // own Permissions.
   THERAPIST: [
     DASHBOARD_PERMISSION,
     'appointment:read',
+    'appointment:cancel',
+    'appointment:reschedule',
     'appointment:export',
+    'doctor-slot:read',
     'patient:read',
     'patient-chart:read',
     'patient-timeline:read',

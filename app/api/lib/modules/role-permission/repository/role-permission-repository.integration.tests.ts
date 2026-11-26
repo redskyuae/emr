@@ -460,7 +460,10 @@ describe('Role-Permission repository', () => {
       [
         'dashboard:read',
         'appointment:read',
+        'appointment:cancel',
+        'appointment:reschedule',
         'appointment:export',
+        'doctor-slot:read',
         'patient:read',
         'patient-chart:read',
         'patient-timeline:read',
