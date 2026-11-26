@@ -37,7 +37,10 @@ export default async function OnboardingPage() {
         </div>
         <div className="flex flex-1 items-center justify-center px-6 pb-16">
           <div className="w-full max-w-sm">
-            <OnboardingPageImpl tenantName={tenant.name} />
+            <OnboardingPageImpl
+              tenantName={tenant.name}
+              trackIdleActivity={process.env.IDLE_TIMEOUT_ENABLED === 'true'}
+            />
           </div>
         </div>
       </div>

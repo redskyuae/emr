@@ -23,6 +23,9 @@ export default function LoginLoader() {
         </div>
 
         <div className="space-y-4">
+          {/* No placeholder for the inactivity sign-out notice (`?reason=idle`): loading UI
+              receives no searchParams, and most sign-ins show no notice, so a placeholder
+              would misshape the common case. */}
           <div className="space-y-2">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-full" />

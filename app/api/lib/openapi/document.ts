@@ -4052,10 +4052,16 @@ export const openApiDocument = {
             in: 'query',
             required: false,
             description:
-              'Why the browser is ending the Session, recorded as the reason in the Audit Log: `user` (Signed out by the user), `stale_tab` (the browser tab was closed or reopened), `session_expired`, or `tab_storage_unavailable`. Any other value is recorded with no reason.',
+              'Why the browser is ending the Session, recorded as the reason in the Audit Log: `user` (Signed out by the user), `stale_tab` (the browser tab was closed or reopened), `idle_timeout` (Signed out after inactivity), `session_expired`, or `tab_storage_unavailable`. Any other value is recorded with no reason.',
             schema: {
               type: 'string',
-              enum: ['user', 'stale_tab', 'session_expired', 'tab_storage_unavailable'],
+              enum: [
+                'user',
+                'stale_tab',
+                'idle_timeout',
+                'session_expired',
+                'tab_storage_unavailable',
+              ],
             },
           },
         ],

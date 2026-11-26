@@ -3,17 +3,19 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { CiCircleInfo, CiRead } from 'react-icons/ci';
 import { useQueryClient } from '@tanstack/react-query';
-import { CiRead } from 'react-icons/ci';
 import { PiEyeSlashLight } from 'react-icons/pi';
 
 import { DEFAULT_AUTH_REDIRECT_PATH } from '@/app/lib/auth-route-guards';
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { markTabSession } from '@/app/lib/tab-session';
+import { recordActivity } from '@/app/lib/idle-session';
 import { useSignIn } from '@/app/queries/auth/useSignIn';
 import { useSignOut } from '@/app/queries/auth/useSignOut';
 import { fetchCurrentUserHomePath } from '@/app/queries/identity-access/useCurrentUser';
 import { AuthErrorCallout } from '@/components/auth/auth-error-callout';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,11 +25,15 @@ import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
 import { signInFailureKind } from '@/app/(auth)/login/_utils/sign-in-failure-kind';
 
 type LoginFormProps = {
+  notice?: string;
   redirectTo?: string;
+  trackIdleActivity?: boolean;
   showCreateWorkspaceLink?: boolean;
 };
 
 export function LoginForm({
+  notice,
+  trackIdleActivity = false,
   redirectTo = DEFAULT_AUTH_REDIRECT_PATH,
   showCreateWorkspaceLink = false,
 }: LoginFormProps) {
@@ -46,6 +52,8 @@ export function LoginForm({
         return;
       }
 
+      // With the feature off nothing is stored, so turning it on later finds no outdated time.
+      if (trackIdleActivity) recordActivity(Date.now());
       // A requested page wins; otherwise the user's Role decides where they land.
       const destination =
         redirectTo === DEFAULT_AUTH_REDIRECT_PATH
@@ -97,6 +105,11 @@ export function LoginForm({
             leadIn="Could not sign in:"
             messages={errors}
           />
+        ) : notice ? (
+          <Alert>
+            <CiCircleInfo className="size-4" />
+            <AlertDescription>{notice}</AlertDescription>
+          </Alert>
         ) : null}
 
         <div className="space-y-2">

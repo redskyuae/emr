@@ -9,7 +9,10 @@ import { SurfaceAnalytics } from '@/components/analytics/surface-analytics';
 import { AppPageHeader } from '@/components/app/app-page-header';
 import { AppShellGate } from '@/components/app/app-shell-gate';
 import { AppSidebar } from '@/components/app/app-sidebar';
+import { parseIdleTimeoutMinutes } from '@/app/lib/idle-session';
+import { SignOutSync } from '@/components/app/sign-out-sync';
 import { TabSessionGate } from '@/components/app/tab-session-gate';
+import { IdleSessionGuard } from '@/components/app/idle-session-guard';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -37,6 +40,28 @@ export default async function AppLayout({
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
   const appointmentsOnly = process.env.SIDEBAR_APPOINTMENTS_ONLY !== 'false';
   const showVisits = process.env.SIDEBAR_SHOW_VISITS === 'true';
+  const idleTimeoutEnabled = process.env.IDLE_TIMEOUT_ENABLED === 'true';
+
+  const shell = (
+    <TooltipProvider>
+      <SidebarProvider
+        defaultOpen={defaultOpen}
+        style={{ '--sidebar-width': '16.5rem' } as CSSProperties}
+      >
+        <AppSidebar
+          appointmentsOnly={appointmentsOnly}
+          showVisits={showVisits}
+          showDemoPages={demoPagesEnabled()}
+        />
+        <SidebarInset>
+          <AppPageHeader />
+          <div className="flex min-w-0 flex-1 flex-col px-4 pt-4 pb-10 sm:px-6 lg:px-8">
+            {children}
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
+  );
 
   return (
     <TabSessionGate>
@@ -44,24 +69,16 @@ export default async function AppLayout({
         <Suspense fallback={null}>
           <SurfaceAnalytics />
         </Suspense>
-        <TooltipProvider>
-          <SidebarProvider
-            defaultOpen={defaultOpen}
-            style={{ '--sidebar-width': '16.5rem' } as CSSProperties}
+        <SignOutSync />
+        {idleTimeoutEnabled ? (
+          <IdleSessionGuard
+            timeoutMinutes={parseIdleTimeoutMinutes(process.env.IDLE_TIMEOUT_MINUTES)}
           >
-            <AppSidebar
-              appointmentsOnly={appointmentsOnly}
-              showVisits={showVisits}
-              showDemoPages={demoPagesEnabled()}
-            />
-            <SidebarInset>
-              <AppPageHeader />
-              <div className="flex min-w-0 flex-1 flex-col px-4 pt-4 pb-10 sm:px-6 lg:px-8">
-                {children}
-              </div>
-            </SidebarInset>
-          </SidebarProvider>
-        </TooltipProvider>
+            {shell}
+          </IdleSessionGuard>
+        ) : (
+          shell
+        )}
       </AppShellGate>
     </TabSessionGate>
   );

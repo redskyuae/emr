@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CiCircleAlert } from 'react-icons/ci';
 
+import { recordActivity } from '@/app/lib/idle-session';
 import { getAuthMutationErrors } from '@/app/queries/auth/auth-api-error';
 import { useOnboardTenant } from '@/app/queries/auth/useOnboardTenant';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -19,12 +20,20 @@ const loadingStates: LoadingState[] = [
   { text: 'Finishing touches' },
 ];
 
-export function OnboardingPageImpl({ tenantName }: { tenantName: string }) {
+type OnboardingPageImplProps = {
+  tenantName: string;
+  trackIdleActivity: boolean;
+};
+
+export function OnboardingPageImpl({ tenantName, trackIdleActivity }: OnboardingPageImplProps) {
   const router = useRouter();
   const hasStarted = useRef(false);
 
   const onboardMutation = useOnboardTenant({
     onSuccess: () => {
+      // Onboarding has no idle tracking, so the app shell's clock starts here. With the
+      // feature off nothing is stored, so turning it on later finds no outdated time.
+      if (trackIdleActivity) recordActivity(Date.now());
       router.replace('/dashboard');
       router.refresh();
     },

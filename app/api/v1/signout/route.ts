@@ -10,6 +10,7 @@ import { getSession } from '@/app/api/lib/utils/auth-helpers';
 const SIGN_OUT_REASONS: Record<string, string> = {
   user: 'Signed out by the user',
   stale_tab: 'Ended because the browser tab was closed or reopened',
+  idle_timeout: 'Signed out after inactivity',
   session_expired: 'Session expired',
   tab_storage_unavailable: 'Browser storage was unavailable',
 };
