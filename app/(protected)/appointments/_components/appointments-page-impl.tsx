@@ -18,7 +18,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useListSearchAnalytics } from '@/hooks/use-list-search-analytics';
 import { captureAnalyticsEvent } from '@/lib/analytics/analytics-client';
-import { todayDisplayDate, tomorrowDisplayDate } from '../_utils/appointment-date';
+import {
+  fromDateParamToDisplayDate,
+  toDateInputValue,
+  todayDisplayDate,
+  tomorrowDisplayDate,
+} from '../_utils/appointment-date';
 import { getPaginationCorrection } from '../_utils/appointment-pagination';
 import { AppointmentDaySection } from './appointment-day-section';
 import { AppointmentsTabToolbar } from './appointments-tab-toolbar';
@@ -34,12 +39,12 @@ export function AppointmentsPageImpl() {
   const [therapistParam, setTherapistParam] = useQueryState('therapist');
   const [statusParam, setStatusParam] = useQueryState('status');
   const [viewParam, setViewParam] = useQueryState('view');
+  const [fromParam, setFromParam] = useQueryState('from');
   const [todayPageParam, setTodayPage] = useQueryState('todayPage', parseAsInteger.withDefault(1));
   const [upcomingPageParam, setUpcomingPage] = useQueryState(
     'upcomingPage',
     parseAsInteger.withDefault(1)
   );
-  // Deep-link target for Booking entries on the Patient Timeline (ADR 0010).
   const [appointmentParam, setAppointmentParam] = useQueryState('appointment');
   const [cancelParam, setCancelParam] = useQueryState('cancel');
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,6 +62,11 @@ export function AppointmentsPageImpl() {
   const now = new Date();
   const todayDate = todayDisplayDate(now, tenantTimeZone);
   const tomorrowDate = tomorrowDisplayDate(now, tenantTimeZone);
+  const customFromDate = fromDateParamToDisplayDate(fromParam);
+  const upcomingFromDate = customFromDate ?? tomorrowDate;
+  const upcomingStatusCategories = customFromDate
+    ? TODAY_STATUS_CATEGORIES
+    : UPCOMING_STATUS_CATEGORIES;
   const todayPage = Number.isInteger(todayPageParam) && todayPageParam > 0 ? todayPageParam : 1;
   const upcomingPage =
     Number.isInteger(upcomingPageParam) && upcomingPageParam > 0 ? upcomingPageParam : 1;
@@ -73,7 +83,6 @@ export function AppointmentsPageImpl() {
     appointmentStatusId,
     query: debouncedSearch || undefined,
   };
-  // The same values the queries use, so the empty state always agrees with the list on screen.
   const isFiltered = Boolean(
     doctorId || therapistId || appointmentStatusId || debouncedSearch.trim()
   );
@@ -90,10 +99,10 @@ export function AppointmentsPageImpl() {
   const upcomingAppointmentsQuery = useAppointmentsQuery(
     {
       ...sharedFilters,
-      fromDate: tomorrowDate,
+      fromDate: upcomingFromDate,
       page: upcomingPage,
       limit: PAGE_SIZE,
-      statusCategories: [...UPCOMING_STATUS_CATEGORIES],
+      statusCategories: [...upcomingStatusCategories],
     },
     { enabled: activeView === 'upcoming' }
   );
@@ -161,7 +170,10 @@ export function AppointmentsPageImpl() {
     void setUpcomingPage(1);
   }
 
-  function recordFilter(filter: 'status' | 'doctor' | 'therapist', value: string | null) {
+  function recordFilter(
+    filter: 'status' | 'doctor' | 'therapist' | 'date_range',
+    value: string | null
+  ) {
     if (value) {
       captureAnalyticsEvent('list_filtered', { list: 'appointments', filter });
     }
@@ -170,8 +182,6 @@ export function AppointmentsPageImpl() {
   const toolbarDisabled =
     doctorsQuery.isLoading || therapistsQuery.isLoading || statusesQuery.isLoading;
 
-  // keepPreviousData leaves isLoading false after a filter, search, or page change, so
-  // placeholder data (and a search still inside its debounce window) also shows the loader.
   const isSearchPending = searchTerm !== debouncedSearch;
   const todayLoading =
     todayAppointmentsQuery.isLoading || todayAppointmentsQuery.isPlaceholderData || isSearchPending;
@@ -216,8 +226,6 @@ export function AppointmentsPageImpl() {
         onValueChange={(value) => void setViewParam(value === 'upcoming' ? value : null)}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* On a phone the two tabs are wider than the screen, so the track scrolls within itself
-              instead of pushing the page sideways (DESIGN.md, Tabs). */}
           <TabsList
             aria-label="Appointment schedule views"
             className="max-w-full [scrollbar-width:none] justify-start overflow-x-auto [&::-webkit-scrollbar]:hidden"
@@ -291,12 +299,19 @@ export function AppointmentsPageImpl() {
           <AppointmentsTabToolbar
             {...toolbarProps}
             exportFilters={{
-              fromDate: tomorrowDate,
+              fromDate: upcomingFromDate,
               doctorId,
               therapistId,
               appointmentStatusId,
               query: debouncedSearch || undefined,
-              statusCategories: [...UPCOMING_STATUS_CATEGORIES],
+              statusCategories: [...upcomingStatusCategories],
+            }}
+            fromDateValue={toDateInputValue(upcomingFromDate)}
+            hasCustomFromDate={Boolean(customFromDate)}
+            onFromDateChange={(value) => {
+              void setFromParam(value);
+              void setUpcomingPage(1);
+              recordFilter('date_range', value);
             }}
             hasAppointments={(upcomingMeta?.total ?? 0) > 0}
             disabled={toolbarDisabled || upcomingLoading || upcomingAppointmentsQuery.isFetching}
@@ -322,8 +337,15 @@ export function AppointmentsPageImpl() {
               pageSize={PAGE_SIZE}
               isLoading={upcomingLoading}
               isFetching={upcomingAppointmentsQuery.isFetching}
-              description={`Future Appointments from ${tomorrowDate} onward.`}
-              isFiltered={isFiltered}
+              description={
+                customFromDate
+                  ? `Appointments from ${customFromDate} onward.`
+                  : `Future Appointments from ${tomorrowDate} onward.`
+              }
+              isFiltered={isFiltered || Boolean(customFromDate)}
+              filteredEmptyDescription={
+                customFromDate ? 'No Appointments match the current filters.' : undefined
+              }
               canCreate={canCreate}
               onPageChange={(page) => void setUpcomingPage(page)}
               onCancel={openCancel}

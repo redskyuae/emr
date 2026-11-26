@@ -31,6 +31,8 @@ type AppointmentDaySectionProps = {
   description: string;
   /** A Doctor, Therapist or status filter, or a search, is narrowing the list. */
   isFiltered: boolean;
+  /** Replaces the kind's filtered empty-state text, e.g. for a From Date that may be in the past. */
+  filteredEmptyDescription?: string;
   /** The user may book, so the "nothing yet" state offers Book Appointment. */
   canCreate: boolean;
   kind: 'today' | 'upcoming';
@@ -53,6 +55,7 @@ export function AppointmentDaySection({
   appointments,
   description,
   isFiltered,
+  filteredEmptyDescription,
   canCreate,
   total,
   totalPages,
@@ -109,7 +112,7 @@ export function AppointmentDaySection({
                   tone="neutral"
                   icon={PiMagnifyingGlassDuotone}
                   title="No results found"
-                  description={EMPTY_COPY[kind].filtered}
+                  description={filteredEmptyDescription ?? EMPTY_COPY[kind].filtered}
                 />
               ) : (
                 <EmptyState
